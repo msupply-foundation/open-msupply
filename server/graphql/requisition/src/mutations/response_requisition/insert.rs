@@ -94,7 +94,7 @@ impl InsertInput {
 
 pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -140,7 +140,6 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    
 
     use crate::RequisitionMutations;
 
@@ -284,7 +283,7 @@ mod test {
             RequisitionRow {
                 id: "mock_response_draft_requisition".to_string(),
                 requisition_number: 1,
-                name_link_id: "name_b".to_string(),
+                name_id: "name_b".to_string(),
                 store_id: "store_a".to_string(),
                 r#type: RequisitionType::Response,
                 status: RequisitionStatus::Draft,

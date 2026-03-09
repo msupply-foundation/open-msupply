@@ -220,7 +220,7 @@ mod test {
         fn prescription_no_stock() -> InvoiceRow {
             InvoiceRow {
                 id: String::from("prescription_no_stock"),
-                name_link_id: String::from("name_store_a"),
+                name_id: String::from("name_store_a"),
                 store_id: String::from("store_a"),
                 r#type: InvoiceType::Prescription,
                 status: InvoiceStatus::New,
@@ -353,7 +353,7 @@ mod test {
         fn prescription() -> InvoiceRow {
             InvoiceRow {
                 id: "test_prescription_pricing".to_string(),
-                name_link_id: mock_patient().id,
+                name_id: mock_patient().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::Prescription,
                 ..Default::default()
@@ -442,7 +442,7 @@ mod test {
                 insurance_discount_percentage: _,
             } = get_update();
             InvoiceRow {
-                name_link_id: patient_id.unwrap(),
+                name_id: patient_id.unwrap(),
                 clinician_link_id: clinician_id.unwrap().value,
                 comment,
                 colour,
@@ -475,7 +475,7 @@ mod test {
             foreign_currency_price_before_tax: None,
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_link_id: None,
+            donor_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
@@ -483,6 +483,7 @@ mod test {
             shipped_number_of_packs: None,
             volume_per_pack: 0.0,
             shipped_pack_size: None,
+            status: None,
         };
 
         invoice_line_row_repo.upsert_one(&invoice_line).unwrap();
@@ -586,7 +587,7 @@ mod test {
             .unwrap()
             .unwrap()
             .invoice_row;
-        assert_eq!(reverse_prescription.is_cancellation, true);
+        assert!(reverse_prescription.is_cancellation);
 
         let reverse_lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id(&reverse_prescription.id)

@@ -169,7 +169,7 @@ export const QuantityTable = ({
       {
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
-        size: 100,
+        size: 120,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -177,6 +177,7 @@ export const QuantityTable = ({
               updateDraftLine({ shippedPackSize: value, id: row.original.id });
             }}
             disabled={isDisabled}
+            min={1}
           />
         ),
         defaultHideOnMobile: true,
@@ -195,14 +196,14 @@ export const QuantityTable = ({
               });
             }}
             disabled={isDisabled}
-            min={1}
+            min={0}
           />
         ),
       },
       {
         accessorKey: 'packSize',
         header: t('label.received-pack-size'),
-        size: 100,
+        size: 120,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -215,7 +216,11 @@ export const QuantityTable = ({
                   line.sellPricePerPack;
 
               updateDraftLine({
-                volumePerPack: getVolumePerPackFromVariant(line) ?? 0,
+                volumePerPack:
+                  getVolumePerPackFromVariant({
+                    itemVariant: line.itemVariant,
+                    packSize: value,
+                  }) ?? 0,
                 sellPricePerPack: shouldClearSellPrice
                   ? 0
                   : line.sellPricePerPack,
@@ -242,10 +247,53 @@ export const QuantityTable = ({
                 const packToUnits = packSize * value;
                 setPackRoundingMessage?.('');
                 updateDraftLine({
-                  unitsPerPack: packToUnits,
+                  receivedNumberOfUnits: packToUnits,
                   id: row.original.id,
                   numberOfPacks: value,
                 });
+              }
+            }}
+            disabled={isDisabled}
+            min={0}
+          />
+        ),
+      },
+      {
+        accessorKey: 'receivedNumberOfUnits',
+        header: t('label.units-received', {
+          unit: pluralisedUnitName,
+        }),
+        size: 120,
+        defaultHideOnMobile: true,
+        accessorFn: row => {
+          return row.numberOfPacks * row.packSize;
+        },
+        Cell: ({ row, cell }) => (
+          <NumberInputCell
+            cell={cell}
+            debounceTime={500}
+            updateFn={(value: number) => {
+              const { packSize } = row.original;
+              if (packSize !== undefined) {
+                const unitToPacks = value / packSize;
+                const roundedPacks = Math.ceil(unitToPacks);
+                const actualUnits = roundedPacks * packSize;
+                if (roundedPacks === unitToPacks || roundedPacks === 0) {
+                  setPackRoundingMessage?.('');
+                } else {
+                  setPackRoundingMessage?.(
+                    t('messages.under-allocated', {
+                      receivedQuantity: format(NumUtils.round(value, 2)), // round the display value to 2dp
+                      quantity: format(actualUnits),
+                    })
+                  );
+                }
+                updateDraftLine({
+                  receivedNumberOfUnits: actualUnits,
+                  numberOfPacks: roundedPacks,
+                  id: row.original.id,
+                });
+                return actualUnits;
               }
             }}
             disabled={isDisabled}
@@ -264,51 +312,9 @@ export const QuantityTable = ({
         },
       },
       {
-        accessorKey: 'unitsPerPack',
-        header: t('label.units-received', {
-          unit: pluralisedUnitName,
-        }),
-        size: 100,
-        defaultHideOnMobile: true,
-        accessorFn: row => {
-          return row.numberOfPacks * row.packSize;
-        },
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              const { packSize, unitsPerPack } = row.original;
-              if (packSize !== undefined && unitsPerPack !== undefined) {
-                const unitToPacks = value / packSize;
-                const roundedPacks = Math.ceil(unitToPacks);
-                const actualUnits = roundedPacks * packSize;
-                if (roundedPacks === unitToPacks || roundedPacks === 0) {
-                  setPackRoundingMessage?.('');
-                } else {
-                  setPackRoundingMessage?.(
-                    t('messages.under-allocated', {
-                      receivedQuantity: format(NumUtils.round(value, 2)), // round the display value to 2dp
-                      quantity: format(actualUnits),
-                    })
-                  );
-                }
-                updateDraftLine({
-                  unitsPerPack: actualUnits,
-                  numberOfPacks: roundedPacks,
-                  id: row.original.id,
-                });
-                return actualUnits;
-              }
-            }}
-            disabled={isDisabled}
-            min={0}
-          />
-        ),
-      },
-      {
         accessorKey: 'volumePerPack',
         header: t('label.volume-per-pack'),
-        size: 100,
+        size: 140,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -410,6 +416,7 @@ export const PricingTableComponent = ({
         header: t('label.fc-cost-price', {
           currency: currency?.code,
         }),
+        columnType: ColumnType.Currency,
         size: 100,
         accessorFn: row => {
           if (currency) {
@@ -436,6 +443,7 @@ export const PricingTableComponent = ({
       {
         id: 'foreignCurrencySellPricePerPack',
         header: t('label.fc-sell-price'),
+        columnType: ColumnType.Currency,
         size: 100,
         accessorFn: row => {
           if (currency) {
@@ -449,12 +457,14 @@ export const PricingTableComponent = ({
       {
         accessorKey: 'lineTotal',
         header: t('label.line-total'),
+        columnType: ColumnType.Currency,
         size: 100,
         accessorFn: row => row.costPricePerPack * row.numberOfPacks,
       },
       {
         id: 'foreignCurrencyLineTotal',
         header: t('label.fc-line-total'),
+        columnType: ColumnType.Currency,
         size: 100,
         accessorFn: row => {
           if (currency) {

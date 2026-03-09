@@ -211,7 +211,7 @@ mod test {
         fn base_test_shipment() -> InvoiceRow {
             InvoiceRow {
                 store_id: mock_store_b().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 // currency_id: Some(currency_a().id),
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::New,
@@ -351,7 +351,7 @@ mod test {
             InvoiceRow {
                 id: "outbound_to_edit".to_string(),
                 store_id: mock_store_b().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::New,
                 ..Default::default()

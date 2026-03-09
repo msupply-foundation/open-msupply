@@ -3,34 +3,30 @@ import Dropzone, { Accept } from 'react-dropzone';
 import {
   useTranslation,
   alpha,
-  Breakpoints,
   Paper,
   FileUploadIcon,
   Typography,
   BaseButton,
   ButtonWithIcon,
   LinkIcon,
-  useAppTheme,
-  useMediaQuery,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 
 interface UploadDragAndDropProps {
   accept?: Accept;
   color?: 'primary' | 'secondary' | 'gray';
-  maxSize?: number;
+  multiple: boolean;
   onUpload: <T extends File>(files: T[]) => void;
 }
 
 export const UploadDragAndDrop = ({
   accept,
   color = 'secondary',
+  multiple,
   onUpload,
 }: UploadDragAndDropProps) => {
   const t = useTranslation();
-  const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
     <Paper
@@ -63,6 +59,7 @@ export const UploadDragAndDrop = ({
       <Dropzone
         onDrop={acceptedFiles => onUpload(acceptedFiles)}
         accept={accept}
+        multiple={multiple}
       >
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>

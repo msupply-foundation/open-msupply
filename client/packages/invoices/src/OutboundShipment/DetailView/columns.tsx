@@ -1,13 +1,12 @@
 import React, { useMemo } from 'react';
 import {
-  ArrayUtils,
   InvoiceLineNodeType,
   useTranslation,
   usePreferences,
   ColumnDef,
-  Groupable,
   ColumnType,
   Box,
+  weightedAverageByUnits,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 
@@ -19,7 +18,7 @@ export const useOutboundColumns = () => {
   const { manageVaccinesInDoses, manageVvmStatusForStock } = usePreferences();
 
   const columns = useMemo(() => {
-    const cols: ColumnDef<Groupable<StockOutLineFragment>>[] = [
+    const cols: ColumnDef<StockOutLineFragment>[] = [
       {
         accessorKey: 'item.code',
         header: t('label.code'),
@@ -39,6 +38,7 @@ export const useOutboundColumns = () => {
       {
         accessorKey: 'batch',
         header: t('label.batch'),
+        size: 110,
         enableSorting: true,
         defaultHideOnMobile: true,
       },
@@ -47,6 +47,7 @@ export const useOutboundColumns = () => {
         // expiryDate is a string - use accessorFn to convert to Date object for sort and filtering
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
+        size: 110,
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
@@ -67,14 +68,15 @@ export const useOutboundColumns = () => {
         id: 'locationCode',
         accessorFn: row => row.location?.code ?? '',
         header: t('label.location'),
+        size: 120,
         enableColumnFilter: true,
         enableSorting: true,
         defaultHideOnMobile: true,
       },
       {
-        id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        size: 100,
         enableColumnFilter: true,
         filterVariant: 'select',
         defaultHideOnMobile: true,
@@ -88,22 +90,18 @@ export const useOutboundColumns = () => {
       },
       {
         id: 'itemDoses',
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
         header: t('label.doses-per-unit'),
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
         includeColumn: manageVaccinesInDoses,
-        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
       },
       {
         accessorKey: 'numberOfPacks',
         header: t('label.pack-quantity'),
         columnType: ColumnType.Number,
-        accessorFn: row => {
-          if ('subRows' in row)
-            return ArrayUtils.getSum(row.subRows ?? [], 'numberOfPacks');
-
-          return row.numberOfPacks;
-        },
+        aggregationFn: 'sum',
+        enableSorting: true,
       },
       {
         id: 'unitQuantity',
@@ -111,12 +109,8 @@ export const useOutboundColumns = () => {
         description: t('description.unit-quantity'),
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
-        accessorFn: row => {
-          if ('subRows' in row)
-            return ArrayUtils.getUnitQuantity(row.subRows ?? []);
-
-          return row.packSize * row.numberOfPacks;
-        },
+        accessorFn: row => row.packSize * row.numberOfPacks,
+        aggregationFn: 'sum',
       },
       {
         id: 'doseQuantity',
@@ -126,86 +120,49 @@ export const useOutboundColumns = () => {
         includeColumn: manageVaccinesInDoses,
         accessorFn: row => {
           if (!row.item.isVaccine) return null;
-          if ('subRows' in row)
-            return (
-              ArrayUtils.getUnitQuantity(row.subRows ?? []) *
-              (row.item.doses ?? 1)
-            );
-
           return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
         },
+        aggregationFn: 'sum',
       },
       {
         id: 'unitSellPrice',
         header: t('label.unit-sell-price'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
-        accessorFn: rowData => {
-          if ('subRows' in rowData) {
-            return ArrayUtils.getAveragePrice(
-              rowData.subRows ?? [],
-              'sellPricePerPack'
-            );
-          } else {
-            if (isDefaultPlaceholderRow(rowData)) return undefined;
-            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
-          }
+        accessorFn: row => {
+          if (isDefaultPlaceholderRow(row)) return undefined;
+          return (row.sellPricePerPack ?? 0) / row.packSize;
         },
+        aggregationFn: weightedAverageByUnits(),
       },
       {
         id: 'total',
         header: t('label.total'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
-        accessorFn: rowData => {
-          if ('subRows' in rowData) {
-            return Object.values(rowData.subRows ?? []).reduce(
-              (sum, batch) =>
-                sum + batch.sellPricePerPack * batch.numberOfPacks,
-              0
-            );
-          } else {
-            if (isDefaultPlaceholderRow(rowData)) return '';
-
-            const x = rowData.sellPricePerPack * rowData.numberOfPacks;
-            return x;
-          }
+        accessorFn: row => {
+          if (isDefaultPlaceholderRow(row)) return '';
+          return row.sellPricePerPack * row.numberOfPacks;
         },
+        aggregationFn: 'sum',
       },
       {
         id: 'volume',
         header: t('label.volume'),
         size: 100,
         columnType: ColumnType.Number,
-        accessorFn: rowData => {
-          if ('subRows' in rowData) {
-            return (rowData.subRows ?? []).reduce(
-              (sum, batch) =>
-                sum +
-                (batch.stockLine?.volumePerPack ?? 0) * batch.numberOfPacks,
-              0
-            );
-          } else {
-            return (
-              (rowData.stockLine?.volumePerPack ?? 0) * rowData.numberOfPacks
-            );
-          }
-        },
+        accessorFn: row =>
+          (row.stockLine?.volumePerPack ?? 0) * row.numberOfPacks,
+        aggregationFn: 'sum',
         Footer: ({ table }) => {
           const totalVolume = table
             .getFilteredRowModel()
-            .rows.reduce((sum, row) => {
-              const rowVolume = row.original.subRows
-                ? row.original.subRows.reduce(
-                    (subSum, subRow) =>
-                      subSum +
-                      (subRow.stockLine?.volumePerPack ?? 0) *
-                        subRow.numberOfPacks,
-                    0
-                  )
-                : (row.original.stockLine?.volumePerPack ?? 0) *
-                  row.original.numberOfPacks;
-              return sum + rowVolume;
+            .flatRows.reduce((sum, row) => {
+              return (
+                sum +
+                (row.original.stockLine?.volumePerPack ?? 0) *
+                  row.original.numberOfPacks
+              );
             }, 0);
           return (
             <Box
@@ -222,7 +179,7 @@ export const useOutboundColumns = () => {
     ];
 
     return cols;
-  }, [manageVvmStatusForStock, manageVaccinesInDoses]);
+  }, [t, manageVvmStatusForStock, manageVaccinesInDoses]);
 
   return columns;
 };

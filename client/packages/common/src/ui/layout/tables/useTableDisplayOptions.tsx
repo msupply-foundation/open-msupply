@@ -1,9 +1,9 @@
 import React from 'react';
 import {
+  MRT_Row,
   MRT_RowData,
   MRT_ShowHideColumnsButton,
   MRT_TableOptions,
-  MRT_ToggleDensePaddingButton,
   MRT_ToggleFiltersButton,
   MRT_ToggleFullScreenButton,
 } from 'material-react-table';
@@ -13,17 +13,30 @@ import {
   CheckboxIndeterminateIcon,
   CollapseIcon,
   ExpandIcon,
-  RefreshIcon,
 } from '@common/icons';
 import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
+import { SettingsMenu } from './components/SettingsMenu';
+import { ManagedTableState } from './tableState/utils';
+import {
+  useColumnDensity,
+  useColumnOrder,
+  useColumnPinning,
+  useColumnSizing,
+  useColumnVisibility,
+} from './tableState';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
+  tableId,
+  density,
+  columnSizing,
+  columnVisibility,
+  columnPinning,
+  columnOrder,
   resetTableState,
-  hasSavedState,
   onRowClick,
   isGrouped,
   toggleGrouped,
@@ -31,21 +44,47 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
+  isMobile = false,
+  onSaveAsGlobalDefault,
+  globalDefaults,
 }: {
+  tableId: string;
+  density: ReturnType<typeof useColumnDensity>;
+  columnSizing: ReturnType<typeof useColumnSizing>;
+  columnVisibility: ReturnType<typeof useColumnVisibility>;
+  columnPinning: ReturnType<typeof useColumnPinning>;
+  columnOrder: ReturnType<typeof useColumnOrder>;
   resetTableState: () => void;
-  hasSavedState: boolean;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
   hasColumnFilters: boolean;
   toggleGrouped?: () => void;
-  getIsPlaceholderRow?: (row: T) => boolean;
-  getIsRestrictedRow?: (row: T) => boolean;
+  getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
+  getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
+  isMobile?: boolean;
+  onSaveAsGlobalDefault?: () => void;
+  globalDefaults?: ManagedTableState;
 
   // This object is merged with the default row props in muiTableBodyRowProps
   // below. We can do the same for other muiTable props if needed in future.
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+
+  // shared between the table body and head to ensure consistent padding
+  const padding = (
+    density: 'compact' | 'comfortable' | 'spacious',
+    columnSize?: number
+  ) =>
+    density === 'compact'
+      ? '0.2rem 0.5rem'
+      : density === 'comfortable'
+        ? columnSize && columnSize < 100
+          ? '0.35rem 0.25rem' // Reduce the padding when column is narrow
+          : '0.35rem 0.5rem'
+        : columnSize && columnSize < 100
+          ? '0.8rem 0.6rem'
+          : '0.8rem';
 
   return {
     // Add description to column menu
@@ -70,11 +109,18 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         ...internalColumnMenuItems,
       ];
     },
+    // Use column header as action button tooltip
+    muiColumnActionsButtonProps: ({ column }) => {
+      const { header } = column.columnDef as ColumnDef<T>;
+      return {
+        title: header,
+      };
+    },
 
-    // Add reset state button to toolbar
+    // Add grouping toggle and settings menu to toolbar
     renderToolbarInternalActions: ({ table }) => (
       <>
-        {toggleGrouped && (
+        {toggleGrouped && !isMobile && (
           <IconButton
             icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
             onClick={toggleGrouped}
@@ -82,17 +128,22 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             sx={iconButtonProps}
           />
         )}
+        {/* Hiding filter options within the table, hasColumnFilters is hardcoded to false for now */}
         {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
-        <MRT_ToggleDensePaddingButton table={table} />
         <MRT_ShowHideColumnsButton table={table} />
-        <IconButton
-          icon={<RefreshIcon />}
-          onClick={resetTableState}
-          label={t('label.reset-table-defaults')}
-          disabled={!hasSavedState}
-          sx={iconButtonProps}
+        {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
+        <SettingsMenu
+          table={table}
+          tableId={tableId}
+          density={density}
+          columnSizing={columnSizing}
+          columnVisibility={columnVisibility}
+          columnPinning={columnPinning}
+          columnOrder={columnOrder}
+          resetTableState={resetTableState}
+          onSaveAsGlobalDefault={onSaveAsGlobalDefault}
+          globalDefaults={globalDefaults}
         />
-        <MRT_ToggleFullScreenButton table={table} />
       </>
     ),
 
@@ -142,6 +193,15 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         verticalAlign: 'bottom',
         justifyContent: 'space-between',
         opacity: 1,
+        padding: padding(table.getState().density, column.getSize()),
+        // needed to get resize handle to show in the right place (idk why it's hard coded in MRT)
+        paddingRight: column.getCanResize()
+          ? table.getState().density === 'compact'
+            ? '8px'
+            : table.getState().density === 'comfortable'
+              ? '16px'
+              : '24px'
+          : undefined,
         '& .MuiTableSortLabel-root': {
           display: column.getIsSorted() ? undefined : 'none',
         },
@@ -164,16 +224,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           // Date picker should never need to be wider than 170px
           '& .MuiPickersTextField-root': { width: '170px' },
         },
-        button:
-          column.id === 'mrt-row-expand'
-            ? {
-                rotate: table.getIsAllRowsExpanded()
-                  ? '180deg'
-                  : !table.getIsSomeRowsExpanded()
-                    ? '-90deg'
-                    : undefined,
-              }
-            : undefined,
         // For Filter inputs -- add additional classes for other filter types as
         // required
         '& .MuiInputBase-input, & .MuiPickersInputBase-root': {
@@ -189,10 +239,16 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         ? {
             sx: { height: '100%' },
           }
-        : {},
+        : {
+            sx: () => ({
+              '& tr:nth-of-type(odd)': {
+                backgroundColor: 'background.row',
+              },
+            }),
+          },
 
     muiTableBodyRowProps: params => {
-      const { row } = params;
+      const { row, table } = params;
       const customProps =
         typeof muiTableBodyRowProps === 'function'
           ? muiTableBodyRowProps(params)
@@ -206,9 +262,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           if (onRowClick) onRowClick(row.original, isCtrlClick);
         },
         sx: {
-          backgroundColor: row.original['isSubRow']
-            ? 'background.secondary'
-            : 'inherit',
+          backgroundColor: 'inherit',
+          minHeight: table.getState().density === 'compact' ? '32px' : '40px',
           // these two selectors are to change the background color of a selected
           // row from the default which is to use primary.main of the theme
           // with an opacity of 0.2 and 0.4 on hover
@@ -232,70 +287,64 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       };
     },
 
-    muiTableBodyCellProps: ({ row, column, table }) => {
-      const columnWidth = column.getSize();
-      return {
-        sx: {
-          fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
-          fontWeight: 400,
-          opacity: 1,
-          color: getIsPlaceholderRow(row.original)
-            ? 'secondary.light'
-            : getIsRestrictedRow(row.original)
-              ? 'gray.main'
+    muiTableBodyCellProps: ({ row, column, table }) => ({
+      sx: {
+        fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
+        fontWeight: 400,
+        opacity: 1,
+        color: getIsPlaceholderRow(row)
+          ? 'secondary.light'
+          : getIsRestrictedRow(row)
+            ? 'gray.main'
+            : undefined,
+
+        padding: padding(table.getState().density, column.getSize()),
+
+        // Indent "sub-rows" when expanded
+        paddingLeft:
+          !row.getIsGrouped() && table.getState().grouping?.length
+            ? '2em'
+            : // Little bit of extra padding for first column, unless it's the "Select" checkbox column
+              column.getIndex() === 0 && column.id !== 'mrt-row-select'
+              ? '1em'
               : undefined,
+        backgroundColor:
+          column.getIsPinned() || row.getIsSelected()
+            ? // Remove transparency from pinned backgrounds
+              'rgba(252, 252, 252, 1)'
+            : undefined,
 
-          ...(column.id === 'mrt-row-expand' && {
-            // The expand chevron is rotated incorrectly by default (in terms of
-            // consistency with other Accordion/Expando UI elements in the app)
-            button: {
-              rotate: row.getIsExpanded() ? '180deg' : '-90deg',
-              // Height and padding affect the density of the row
-              padding: 0,
-              height: 'unset',
-            },
-            // Hide the icon when there's nothing to expand
-            '& button.Mui-disabled': {
-              color: !row.getCanExpand() ? 'transparent' : undefined,
-            },
-          }),
-          minHeight: table.getState().density === 'compact' ? '32px' : '40px',
-          padding:
-            table.getState().density === 'spacious'
-              ? '0.7rem'
-              : table.getState().density === 'comfortable'
-                ? columnWidth > 100
-                  ? '0.35rem 0.5rem'
-                  : // Reduce the padding when column is narrow
-                    '0.35rem 0.25rem'
-                : undefined, // default for "compact",
+        ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
+          ? {
+              border: '2px solid',
+              borderColor: 'error.main',
+              borderRadius: '8px',
+            }
+          : {
+              borderBottom: '1px solid',
+              borderColor: 'border',
+            }),
+      },
+    }),
 
-          // Indent "sub-rows" when expanded
-          paddingLeft:
-            row.original?.['isSubRow'] && column.id !== 'mrt-row-select'
-              ? '2em'
-              : // Little bit of extra padding for first column, unless it's the "Select" checkbox column
-                column.getIndex() === 0 && column.id !== 'mrt-row-select'
-                ? '1em'
-                : undefined,
-          backgroundColor:
-            column.getIsPinned() || row.getIsSelected()
-              ? // Remove transparency from pinned backgrounds
-                'rgba(252, 252, 252, 1)'
-              : undefined,
+    muiExpandButtonProps: ({ row }) => ({
+      sx: {
+        display: row.getCanExpand() ? 'flex' : 'none',
+        transform: row.getIsExpanded() ? 'rotate(180deg)' : 'rotate(-90deg)',
+        transition: 'transform 0.2s',
+      },
+    }),
 
-          ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
-            ? {
-                border: '2px solid',
-                borderColor: 'error.main',
-                borderRadius: '8px',
-              }
-            : {
-                borderBottom: '1px solid rgba(224, 224, 224, 1)',
-              }),
-        },
-      };
-    },
+    muiExpandAllButtonProps: ({ table }) => ({
+      sx: {
+        transform: table.getIsAllRowsExpanded()
+          ? 'rotate(180deg)'
+          : !table.getIsSomeRowsExpanded()
+            ? 'rotate(-90deg)'
+            : undefined,
+        transition: 'transform 0.2s',
+      },
+    }),
 
     muiSelectAllCheckboxProps: {
       color: 'outline',
@@ -318,6 +367,16 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       'mrt-row-select': {
         size: 50,
         enablePinning: false, // Can't (un-)pin the selection column
+        muiTableHeadCellProps: {
+          align: 'center',
+        },
+        muiTableBodyCellProps: {
+          align: 'center',
+        },
+      },
+      'mrt-row-expand': {
+        size: 50,
+        enablePinning: false, // Can't (un-)pin the expand column
         muiTableHeadCellProps: {
           align: 'center',
         },

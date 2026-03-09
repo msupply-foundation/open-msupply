@@ -22,6 +22,7 @@ import {
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const OutboundShipmentListView = () => {
@@ -105,17 +106,16 @@ export const OutboundShipmentListView = () => {
         defaultHideOnMobile: true,
         Cell: TextWithTooltipCell,
       },
-
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
       {
         accessorKey: 'pricing.totalAfterTax',
         header: t('label.total'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
-      },
-      {
-        accessorKey: 'comment',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
       },
     ],
     []
@@ -131,7 +131,7 @@ export const OutboundShipmentListView = () => {
       data: data?.nodes,
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
-      getIsRestrictedRow: isOutboundDisabled,
+      getIsRestrictedRow: row => isOutboundDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-outbound-shipments')}
@@ -142,6 +142,7 @@ export const OutboundShipmentListView = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       <AppBarButtons
         modalController={modalController}
         simplifiedTabletView={simplifiedTabletView}

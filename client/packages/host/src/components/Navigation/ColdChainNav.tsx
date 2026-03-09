@@ -8,7 +8,7 @@ import {
   AppNavSection,
   ThermometerIcon,
   UserStoreNodeFragment,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -23,36 +23,33 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
   );
   const t = useTranslation();
   const visible = store?.preferences.vaccineModule ?? false;
-  const isGapsStore = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
     <AppNavSection
-      isActive={isGapsStore ? isGapsStore : isActive}
+      isActive={isExtraSmallScreen ? isExtraSmallScreen : isActive}
       to={AppRoute.Coldchain}
     >
       <AppNavLink
         visible={visible}
-        end={false}
+        isParent
         to={AppRoute.Coldchain}
         icon={<ThermometerIcon color="primary" fontSize="small" />}
         text={t('cold-chain')}
-        inactive
       />
-      <Collapse in={isGapsStore ? isGapsStore : isActive}>
+      <Collapse in={isExtraSmallScreen ? isExtraSmallScreen : isActive}>
         <List>
           <AppNavLink
             visible={visible}
-            end
             to={RouteBuilder.create(AppRoute.Coldchain)
               .addPart(AppRoute.Equipment)
               .build()}
             text={t('equipment')}
           />
-          {!isGapsStore && (
+          {!isExtraSmallScreen && (
             <>
               <AppNavLink
                 visible={visible}
-                end
                 to={RouteBuilder.create(AppRoute.Coldchain)
                   .addPart(AppRoute.Monitoring)
                   .build()}
@@ -60,7 +57,6 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
               />
               <AppNavLink
                 visible={visible}
-                end
                 to={RouteBuilder.create(AppRoute.Coldchain)
                   .addPart(AppRoute.Sensors)
                   .build()}

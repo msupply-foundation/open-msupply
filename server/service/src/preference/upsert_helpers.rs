@@ -17,7 +17,7 @@ pub fn upsert_global(
 
     let pref = PreferenceRow {
         // We should only ever have one global preference per key - ID shape ensures upsert
-        id: format!("{}_global", key),
+        id: format!("{key}_global"),
         key,
         value,
         store_id: None,
@@ -43,7 +43,7 @@ pub fn upsert_store(
 
     let pref = PreferenceRow {
         // We should only ever have one store preference per key per store - ID shape ensures upsert
-        id: format!("{}_{}", key, store_id),
+        id: format!("{key}_{store_id}"),
         key,
         value,
         store_id: Some(store_id),

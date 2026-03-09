@@ -108,6 +108,21 @@ fragment ResponseLine on RequisitionLineNode {
   reason {
     ...ReasonOptionRow
   }
+
+  availableVolumeAtLocationType {
+    ...AvailableVolumeAtLocationType
+  }
+  forecastTotalUnits
+  forecastTotalDoses
+  vaccineCourses
+}
+
+fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {
+  locationType {
+    name
+  }
+  availableVolume
+  itemVolumePerUnit
 }
 
 fragment Response on RequisitionNode {

@@ -120,7 +120,7 @@ fn generate_stock_in_out_or_update(
     // Without this, we'd wouldn't be able to clear it...
     let item_variant_id = stocktake_line_row.item_variant_id.clone();
     let campaign_id = stocktake_line_row.campaign_id.clone();
-    let donor_link_id = stocktake_line_row.donor_link_id.clone();
+    let donor_link_id = stocktake_line_row.donor_id.clone();
     let program_id = stocktake_line_row.program_id.clone();
     let expiry_date = stocktake_line_row.expiry_date;
 
@@ -139,7 +139,7 @@ fn generate_stock_in_out_or_update(
             vvm_status_id: vvm_status_id.clone(),
             volume_per_pack: stocktake_line_row.volume_per_pack,
             campaign_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             program_id,
             ..stock_line_row
         }
@@ -158,7 +158,7 @@ fn generate_stock_in_out_or_update(
                 created_datetime: Utc::now().naive_utc(),
                 created_by: ctx.user_id.clone(),
                 store_id: store_id.to_string(),
-                comment: Some(format!("Updated from Stocktake {}", stocktake_number)),
+                comment: Some(format!("Updated from Stocktake {stocktake_number}")),
                 invoice_line_id: None,
             })
         });
@@ -397,7 +397,7 @@ fn generate_new_stock_line(
         item_id,
         note: stocktake_line_row.note,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
-        donor_id: stocktake_line.line.donor_link_id.clone(),
+        donor_id: stocktake_line.line.donor_id.clone(),
         vvm_status_id: stocktake_line.line.vvm_status_id.clone(),
         volume_per_pack: Some(stocktake_line.line.volume_per_pack),
         program_id: stocktake_line_row.program_id.clone(),
@@ -538,7 +538,7 @@ pub fn generate(
         description: input_description.or(existing.description.clone()),
         comment: input_comment.or(existing.comment.clone()),
         is_locked: input_is_locked.unwrap_or(false),
-        stocktake_date: input_stocktake_date.or(existing.stocktake_date.clone()),
+        stocktake_date: input_stocktake_date.or(existing.stocktake_date),
         counted_by: counted_by.or(existing.counted_by.clone()),
         verified_by: verified_by.or(existing.verified_by.clone()),
         ..existing.clone()
@@ -630,7 +630,7 @@ pub fn generate(
         r#type: InvoiceType::InventoryAddition,
         // Same for addition and reduction
         user_id: Some(user_id.to_string()),
-        name_link_id: inventory_adjustment_name.id,
+        name_id: inventory_adjustment_name.id,
         store_id: store_id.to_string(),
         status: InvoiceStatus::New,
         verified_datetime: Some(now),
@@ -663,8 +663,8 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
-        goods_received_id: None,
+        default_donor_id: None,
+        purchase_order_id: None,
         shipping_method_id: None,
     };
 

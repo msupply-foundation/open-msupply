@@ -20,6 +20,7 @@ import {
   InsertInboundShipmentLineFromInternalOrderLineInput,
   RequisitionNodeStatus,
   UpdateDonorInput,
+  PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA, isInboundPlaceholderRow } from '../../utils';
@@ -38,7 +39,7 @@ export type ListParams = {
   filterBy: FilterBy | null;
 };
 
-const inboundParsers = {
+export const inboundParsers = {
   toStatus: (
     patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
   ): UpdateInboundShipmentStatusInput | undefined => {
@@ -89,6 +90,8 @@ const inboundParsers = {
       id: patch.id,
       colour: 'colour' in patch ? patch.colour : undefined,
       comment: 'comment' in patch ? patch.comment : undefined,
+      deliveredDatetime:
+        'deliveredDatetime' in patch ? patch.deliveredDatetime : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
@@ -161,6 +164,7 @@ const inboundParsers = {
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
     volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,
+    status: line.status ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
@@ -272,6 +276,17 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         return result.requisition;
       }
     },
+    listSentPurchaseOrders: async (filterBy: FilterBy | null) => {
+      const filter = {
+        ...filterBy,
+        status: { equalTo: PurchaseOrderNodeStatus.Sent },
+      };
+      const result = await sdk.purchaseOrders({
+        storeId,
+        filter,
+      });
+      return result?.purchaseOrders;
+    },
   },
   delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
     const result =
@@ -297,6 +312,8 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         otherPartyId: patch.otherPartyId,
         storeId,
         requisitionId: patch.requisitionId,
+        purchaseOrderId: patch.purchaseOrderId,
+        insertLinesFromPurchaseOrder: patch.insertLinesFromPurchaseOrder,
       })) || {};
 
     const { insertInboundShipment } = result;

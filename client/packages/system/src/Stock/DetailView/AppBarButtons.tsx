@@ -5,7 +5,7 @@ import {
   Grid,
   useTranslation,
   StockIcon,
-  BarChart2Icon,
+  BarChartIcon,
 } from '@openmsupply-client/common';
 
 interface AppBarButtonProps {
@@ -30,7 +30,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         />
         <ButtonWithIcon
           label={t('button.adjust')}
-          Icon={<BarChart2Icon />}
+          Icon={<BarChartIcon />}
           onClick={openAdjust}
         />
       </Grid>

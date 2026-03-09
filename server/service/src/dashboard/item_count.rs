@@ -9,7 +9,7 @@ use crate::{
     PluginOrRepositoryError,
 };
 
-use repository::{EqualFilter, ItemFilter, ItemRepository, RepositoryError};
+use repository::{ItemFilter, ItemRepository, RepositoryError};
 
 pub struct ItemCounts {
     pub total: i64,
@@ -53,7 +53,7 @@ pub trait ItemCountServiceTrait: Send + Sync {
     fn get_more_than_six_months_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
         item_stats
             .iter()
-            .filter(|&i| (i.average_monthly_consumption > 0.0)) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
+            .filter(|&i| i.average_monthly_consumption > 0.0) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
             .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock > 6.0)
             .count() as i64
@@ -63,13 +63,11 @@ pub trait ItemCountServiceTrait: Send + Sync {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        item_ids: Vec<String>,
+        item_filter: ItemFilter,
     ) -> Result<i64, PluginOrRepositoryError> {
         let items_with_consumption_set = get_items_with_consumption(
             &ctx.connection,
-            ItemFilter::new()
-                .id(EqualFilter::equal_any(item_ids))
-                .has_stock_on_hand(false),
+            item_filter.has_stock_on_hand(false),
             store_id,
         )?;
 
@@ -117,10 +115,9 @@ impl ItemCountServiceTrait for ItemServiceCount {
         store_id: &str,
         low_stock_threshold: i32,
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
-        let visible_or_on_hand_items = ItemRepository::new(&ctx.connection).query_by_filter(
-            ItemFilter::new().visible_or_on_hand(true).is_active(true),
-            Some(store_id.to_string()),
-        )?;
+        let item_filter = ItemFilter::new().is_active(true).visible_or_on_hand(true);
+        let visible_or_on_hand_items = ItemRepository::new(&ctx.connection)
+            .query_by_filter(item_filter, Some(store_id.to_string()))?;
 
         let total_count = visible_or_on_hand_items.len() as i64;
 
@@ -138,8 +135,11 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let more_than_six_months_stock =
             Self::get_more_than_six_months_stock_count(self, &item_stats);
 
-        let out_of_stock_products =
-            self.get_out_of_stock_products_count(ctx, store_id, item_ids.clone())?;
+        let out_of_stock_products = self.get_out_of_stock_products_count(
+            ctx,
+            store_id,
+            ItemFilter::new().is_active(true).has_stock_on_hand(false),
+        )?;
 
         let show_low_stock_alerts = NumberOfMonthsThresholdToShowLowStockAlertsForProducts
             .load(&ctx.connection, Some(store_id.to_string()))
@@ -182,7 +182,8 @@ mod item_count_service_test {
 
     use repository::{
         mock::{common::FullMockMasterList, mock_store_b, MockData, MockDataInserts},
-        ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow, MasterListRow, StockLineRow,
+        EqualFilter, ItemFilter, ItemRow, ItemType, MasterListLineRow, MasterListNameJoinRow,
+        MasterListRow, StockLineRow,
     };
 
     use crate::{
@@ -243,7 +244,7 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_link_id: mock_store_b().name_link_id,
+                        name_id: mock_store_b().name_id,
                     }],
                     lines: vec![MasterListLineRow {
                         id: "listline1".to_string(),
@@ -393,10 +394,14 @@ mod item_count_service_test {
         ];
 
         let result = ItemServiceCount {}
-            .get_out_of_stock_products_count(&service_context, &mock_store_b().id, item_ids)
+            .get_out_of_stock_products_count(
+                &service_context,
+                &mock_store_b().id,
+                ItemFilter::new().id(EqualFilter::equal_any(item_ids)),
+            )
             .unwrap();
 
-        println!("result {:?}", result);
+        println!("result {result:?}");
 
         assert_eq!(result, 1);
     }

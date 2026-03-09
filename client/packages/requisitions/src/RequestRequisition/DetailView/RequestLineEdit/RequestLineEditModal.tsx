@@ -9,6 +9,7 @@ import {
   UserStoreNodeFragment,
   Representation,
   RepresentationValue,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { RequestFragment, useRequest } from '../../api';
@@ -106,8 +107,10 @@ export const RequestLineEditModal = ({
   };
 
   const onNext = async () => {
-    const success = await handleSave();
-    if (!success) return false;
+    if (requisition.status !== RequisitionNodeStatus.Sent) {
+      const success = await handleSave();
+      if (!success) return false;
+    }
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
@@ -140,8 +143,12 @@ export const RequestLineEditModal = ({
           variant="ok"
           disabled={!currentItem || isEditingRequested}
           onClick={async () => {
-            const success = await handleSave();
-            if (success) onClose();
+            if (requisition.status === RequisitionNodeStatus.Sent) {
+              onClose();
+            } else {
+              const success = await handleSave();
+              if (success) onClose();
+            }
           }}
         />
       }

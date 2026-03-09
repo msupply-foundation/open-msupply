@@ -25,11 +25,11 @@ import {
   RequisitionNodeStatus,
   UserPermission,
 } from '@common/types';
-import { useDashboard } from '../api';
-import { useInbound } from '@openmsupply-client/invoices';
+import { useInboundShipment } from '@openmsupply-client/invoices';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDashboardPanels } from '../hooks';
+import { useInboundCounts, useInternalOrderCounts } from '../api';
 
 export const ReplenishmentWidget = ({
   widgetContext,
@@ -42,13 +42,8 @@ export const ReplenishmentWidget = ({
   const formatNumber = useFormatNumber();
   const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();
-  const { data, isLoading, isError, error } = useDashboard.statistics.inbound();
-  const {
-    data: requisitionCount,
-    isLoading: isRequisitionCountLoading,
-    isError: isRequisitionCountError,
-    error: requisitionCountError,
-  } = useDashboard.statistics.requisitions();
+  const inbound = useInboundCounts();
+  const internalOrder = useInternalOrderCounts();
 
   const inboundShipmentsPanelContext = `${widgetContext}-inbound-shipments`;
   const internalOrdersPanelContext = `${widgetContext}-internal-orders`;
@@ -79,7 +74,9 @@ export const ReplenishmentWidget = ({
     )}${RANGE_SPLIT_CHAR}${customDate(endOfWeek, urlQueryDateTime)}`;
   };
 
-  const { mutateAsync: onCreate } = useInbound.document.insert();
+  const {
+    create: { create: onCreate },
+  } = useInboundShipment();
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(
@@ -99,15 +96,15 @@ export const ReplenishmentWidget = ({
   const corePanels = [
     <StatsPanel
       key={inboundShipmentsPanelContext}
-      error={error as ApiException}
-      isError={isError}
-      isLoading={isLoading}
+      error={inbound.error as ApiException}
+      isError={inbound.isError}
+      isLoading={inbound.isLoading}
       title={t('inbound-shipment')}
       panelContext={inboundShipmentsPanelContext}
       stats={[
         {
           label: t('label.today'),
-          value: formatNumber.round(data?.today),
+          value: formatNumber.round(inbound.stats?.today),
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InboundShipment)
             .addQuery({
@@ -118,7 +115,7 @@ export const ReplenishmentWidget = ({
         },
         {
           label: t('label.this-week'),
-          value: formatNumber.round(data?.thisWeek),
+          value: formatNumber.round(inbound.stats?.thisWeek),
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InboundShipment)
             .addQuery({
@@ -129,7 +126,7 @@ export const ReplenishmentWidget = ({
         },
         {
           label: t('label.inbound-not-delivered'),
-          value: formatNumber.round(data?.notDelivered),
+          value: formatNumber.round(inbound.stats?.notDelivered),
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InboundShipment)
             .addQuery({ status: InvoiceNodeStatus.Shipped })
@@ -143,15 +140,15 @@ export const ReplenishmentWidget = ({
     />,
     <StatsPanel
       key={internalOrdersPanelContext}
-      error={requisitionCountError as ApiException}
-      isError={isRequisitionCountError}
-      isLoading={isRequisitionCountLoading}
+      error={internalOrder.error as ApiException}
+      isError={internalOrder.isError}
+      isLoading={internalOrder.isLoading}
       title={t('internal-order')}
       panelContext={internalOrdersPanelContext}
       stats={[
         {
           label: t('label.new'),
-          value: formatNumber.round(requisitionCount?.request?.draft),
+          value: formatNumber.round(internalOrder.stats?.count),
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InternalOrder)
             .addQuery({ status: RequisitionNodeStatus.Draft })
@@ -175,20 +172,20 @@ export const ReplenishmentWidget = ({
           onClose={modalControl.toggleOff}
           onChange={async ({ id: otherPartyId }) => {
             modalControl.toggleOff();
-            await onCreate(
-              {
+            try {
+              const invoiceId = await onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId,
-              },
-              { onError }
-            ).then(invoiceId => {
+              });
               navigate(
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
                   .addPart(invoiceId)
                   .build()
               );
-            });
+            } catch (e) {
+              onError(e);
+            }
           }}
         />
       ) : null}

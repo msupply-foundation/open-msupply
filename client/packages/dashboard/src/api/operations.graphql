@@ -1,20 +1,3 @@
-query stockCounts(
-  $storeId: String!
-  $daysTillExpired: Int
-  $timezoneOffset: Int
-) {
-  stockCounts(
-    storeId: $storeId
-    daysTillExpired: $daysTillExpired
-    timezoneOffset: $timezoneOffset
-  ) {
-    expired
-    expiringSoon
-    expiringBetweenThresholds
-    expiringInNextThreeMonths
-  }
-}
-
 query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
   itemCounts(lowStockThreshold: $lowStockThreshold, storeId: $storeId) {
     itemCounts {
@@ -29,11 +12,36 @@ query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
   }
 }
 
-query requisitionCounts($storeId: String!) {
+query inboundCounts($storeId: String!) {
+  invoiceCounts(storeId: $storeId) {
+    inbound {
+      created {
+        today
+        thisWeek
+      }
+      notDelivered
+    }
+  }
+}
+
+query outboundCounts($storeId: String!) {
+  invoiceCounts(storeId: $storeId) {
+    outbound {
+      notShipped
+    }
+  }
+}
+
+query internalOrderCounts($storeId: String!) {
   requisitionCounts(storeId: $storeId) {
     request {
       draft
     }
+  }
+}
+
+query requisitionCounts($storeId: String!) {
+  requisitionCounts(storeId: $storeId) {
     response {
       new
     }
@@ -43,26 +51,11 @@ query requisitionCounts($storeId: String!) {
   }
 }
 
-query outboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
-  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-    outbound {
-      created {
-        today
-        thisWeek
-      }
-      notShipped
-    }
-  }
-}
-
-query inboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
-  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-    inbound {
-      created {
-        today
-        thisWeek
-      }
-      notDelivered
-    }
+query stockCounts($storeId: String!, $daysTillExpired: Int) {
+  stockCounts(storeId: $storeId, daysTillExpired: $daysTillExpired) {
+    expired
+    expiringSoon
+    expiringBetweenThresholds
+    expiringInNextThreeMonths
   }
 }

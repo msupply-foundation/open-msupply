@@ -39,6 +39,7 @@ interface ResponseLineEditProps {
   isUpdateMode?: boolean;
   isReasonsError: boolean;
   setIsEditingSupply: (isEditingSupply: boolean) => void;
+  displayForecasting: boolean;
 }
 
 export const ResponseLineEdit = ({
@@ -55,6 +56,7 @@ export const ResponseLineEdit = ({
   disabled = false,
   isUpdateMode = false,
   setIsEditingSupply,
+  displayForecasting,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
@@ -80,6 +82,11 @@ export const ResponseLineEdit = ({
   );
 
   const { available, mos } = useStockCalculations(draft);
+  const itemVolume =
+    (draft?.availableVolumeAtLocationType?.itemVolumePerUnit ?? 0) *
+    (draft?.supplyQuantity ?? 0);
+  const availableVolume = draft?.availableVolumeAtLocationType?.availableVolume;
+  const volumeFull = availableVolume! - itemVolume <= 0;
 
   const commonProps = {
     defaultPackSize,
@@ -342,6 +349,14 @@ export const ResponseLineEdit = ({
               }}
               {...commonProps}
             />
+            {displayForecasting && (
+              <ResponseNumInputRow
+                label={t('label.target-stock-population')}
+                value={draft?.forecastTotalUnits ?? 0}
+                disabledOverride={true}
+                {...commonProps}
+              />
+            )}
           </>
         ) : null}
 
@@ -380,6 +395,14 @@ export const ResponseLineEdit = ({
                 isVisibleOrOnHand: true,
               }}
             />
+          )}
+          {!!volumeFull && (
+            <Alert sx={{ mt: 1 }} severity="warning">
+              {t('label.location-type-full-warning', {
+                locationType:
+                  draft?.availableVolumeAtLocationType?.locationType.name,
+              })}
+            </Alert>
           )}
         </>
       }

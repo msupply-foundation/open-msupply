@@ -53,8 +53,9 @@ fn check_same_stocktake_does_not_exist(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<bool, RepositoryError> {
-    let count = StocktakeRepository::new(connection)
-        .count(Some(StocktakeFilter::new().id(EqualFilter::equal_to(id.to_string()))))?;
+    let count = StocktakeRepository::new(connection).count(Some(
+        StocktakeFilter::new().id(EqualFilter::equal_to(id.to_string())),
+    ))?;
     Ok(count == 0)
 }
 

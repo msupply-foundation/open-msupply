@@ -44,7 +44,7 @@ pub fn generate(
         &ctx.connection,
         ItemPriceLookup {
             item_ids: vec![item_row.id.clone()],
-            customer_name_id: Some(invoice.name_link_id.clone()),
+            customer_name_id: Some(invoice.name_id.clone()),
         },
     )?
     .remove(&item_row.id)
@@ -69,8 +69,7 @@ pub fn generate(
                 invoice_line_id: new_line.id.clone(),
                 comment: Some(format!(
                     "Updated from {} #{}",
-                    invoice.r#type.to_string(),
-                    invoice.invoice_number
+                    invoice.r#type, invoice.invoice_number
                 )),
             }))
         } else {
@@ -144,7 +143,7 @@ fn generate_batch_update(
         item_variant_id: item_variant_id
             .map(|i| i.value)
             .unwrap_or(batch.item_variant_id),
-        donor_link_id: donor_id.map(|d| d.value).unwrap_or(batch.donor_link_id),
+        donor_id: donor_id.map(|d| d.value).unwrap_or(batch.donor_id),
         ..batch
     }
 }
@@ -188,7 +187,7 @@ fn generate_line(
         expiry_date,
         location_id,
         item_variant_id,
-        donor_link_id,
+        donor_id: donor_link_id,
         vvm_status_id,
         volume_per_pack,
         campaign_id,
@@ -237,7 +236,7 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax_percentage,
-        donor_link_id,
+        donor_id: donor_link_id,
         note,
         foreign_currency_price_before_tax,
         vvm_status_id,
@@ -250,6 +249,7 @@ fn generate_line(
         shipped_pack_size: (r#type == StockOutType::OutboundShipment).then_some(pack_size),
         linked_invoice_id: None,
         reason_option_id: None,
+        status: None,
     })
 }
 

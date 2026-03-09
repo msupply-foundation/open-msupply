@@ -20,6 +20,7 @@ import {
 import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const PrescriptionListView = () => {
@@ -45,6 +46,7 @@ export const PrescriptionListView = () => {
       },
     ],
   });
+
   const listParams = {
     sortBy,
     first,
@@ -137,11 +139,12 @@ export const PrescriptionListView = () => {
         onCreate={modalController.toggleOn}
       />
     ),
-    getIsRestrictedRow: isPrescriptionDisabled,
+    getIsRestrictedRow: row => isPrescriptionDisabled(row.original),
   });
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         modalController={modalController}
         filterBy={filterBy}

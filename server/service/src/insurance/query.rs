@@ -101,7 +101,7 @@ mod query {
         // Create insurance entries
         let insurance_a = NameInsuranceJoinRow {
             id: "1".to_string(),
-            name_link_id: mock_patient().id.clone(),
+            name_id: mock_patient().id.clone(),
             insurance_provider_id: insurance_provider_a.id.clone(),
             policy_number_person: Some("12345".to_string()),
             policy_number_family: Some("67890".to_string()),
@@ -116,7 +116,7 @@ mod query {
 
         let insurance_b = NameInsuranceJoinRow {
             id: "2".to_string(),
-            name_link_id: mock_patient().id.clone(),
+            name_id: mock_patient().id.clone(),
             insurance_provider_id: insurance_provider_b.id.clone(),
             policy_number_person: Some("54321".to_string()),
             policy_number_family: Some("09876".to_string()),

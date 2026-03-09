@@ -26,6 +26,8 @@ table! {
         approval_comment -> Nullable<Text>,
         price_per_unit -> Nullable<Double>,
         comment -> Nullable<Text>,
+        available_volume -> Nullable<Double>,
+        location_type_id -> Nullable<Text>,
         // Manual requisition fields
         initial_stock_on_hand_units -> Double,
         incoming_units -> Double,
@@ -34,7 +36,11 @@ table! {
         addition_in_units -> Double,
         expiring_units -> Double,
         days_out_of_stock -> Double,
-        option_id -> Nullable<Text>
+        option_id -> Nullable<Text>,
+        // Population forcasting fields
+        forecast_total_units -> Nullable<Double>,
+        forecast_total_doses -> Nullable<Double>,
+        vaccine_courses -> Nullable<Text>,
     }
 }
 
@@ -62,6 +68,8 @@ pub struct RequisitionLineRow {
     pub approval_comment: Option<String>,
     pub price_per_unit: Option<f64>,
     pub comment: Option<String>,
+    pub available_volume: Option<f64>,
+    pub location_type_id: Option<String>,
     // Manual requisition fields
     pub initial_stock_on_hand_units: f64,
     pub incoming_units: f64,
@@ -71,6 +79,10 @@ pub struct RequisitionLineRow {
     pub expiring_units: f64,
     pub days_out_of_stock: f64,
     pub option_id: Option<String>,
+    // Population forecasting fields
+    pub forecast_total_units: Option<f64>,
+    pub forecast_total_doses: Option<f64>,
+    pub vaccine_courses: Option<String>,
 }
 
 pub struct RequisitionLineRowRepository<'a> {
@@ -135,7 +147,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(requisition.store_id.clone()),
-            name_link_id: Some(requisition.name_link_id.clone()),
+            name_id: Some(requisition.name_id.clone()),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

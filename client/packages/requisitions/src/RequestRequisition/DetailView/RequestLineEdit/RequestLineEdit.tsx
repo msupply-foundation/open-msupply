@@ -35,9 +35,11 @@ import {
 } from './ModalContentPanels';
 import {
   CONSUMPTION_HISTORY_INFO,
+  FORECAST_QUANTITY_INFO,
   STOCK_DISTRIBUTION_INFO,
   STOCK_EVOLUTION_INFO,
 } from '../utils';
+import ForecastCalculationDisplay from '../../../common/ForecastCalculationDisplay';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -74,7 +76,11 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    warningForExcessRequest,
+    displayPopulationBasedForecasting,
+  } = usePreferences();
 
   const isInfoVisible = useCallback(
     (infoType: string) =>
@@ -91,6 +97,8 @@ export const RequestLineEdit = ({
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
+  const displayForecasting =
+    displayPopulationBasedForecasting && !!draft?.forecastTotalUnits;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -260,7 +268,29 @@ export const RequestLineEdit = ({
                   value={currentItem?.doses}
                 />
               ) : null}
-              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {renderValueInfoRows(getLeftPanel(t, draft))}
+              <InfoRow
+                label={t('label.months-of-stock')}
+                value={draft?.itemStats?.availableMonthsOfStockOnHand}
+                packagingDisplay={t('label.months')}
+              />
+              {displayForecasting &&
+                renderValueInfoRows([
+                  {
+                    label: t('label.target-stock-population'),
+                    value: line?.forecastTotalUnits
+                      ? Math.ceil(line.forecastTotalUnits)
+                      : undefined,
+                  },
+                ])}
+              ,
+              {showExtraFields &&
+                renderValueInfoRows([
+                  {
+                    label: t('label.short-expiry'),
+                    value: draft?.expiringUnits,
+                  } as ValueInfo,
+                ])}
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (
@@ -295,44 +325,50 @@ export const RequestLineEdit = ({
             gap: 2,
           }}
         >
-          {isInfoVisible(STOCK_DISTRIBUTION_INFO) && (
-            <Box
-              sx={{
-                width: '100%',
-                maxWidth: 900,
-                mx: 'auto',
-                p: '8px 16px',
-              }}
-            >
-              <StockDistribution
-                availableStockOnHand={line.itemStats?.availableStockOnHand}
-                averageMonthlyConsumption={
-                  line.itemStats?.averageMonthlyConsumption
-                }
-                suggestedQuantity={line.suggestedQuantity}
-              />
-            </Box>
+          {displayForecasting && isInfoVisible(FORECAST_QUANTITY_INFO) ? (
+            <ForecastCalculationDisplay vaccineCourses={line.vaccineCourses} />
+          ) : (
+            <>
+              {isInfoVisible(STOCK_DISTRIBUTION_INFO) && (
+                <Box
+                  sx={{
+                    width: '100%',
+                    maxWidth: 900,
+                    mx: 'auto',
+                    p: '8px 16px',
+                  }}
+                >
+                  <StockDistribution
+                    availableStockOnHand={line.itemStats?.availableStockOnHand}
+                    averageMonthlyConsumption={
+                      line.itemStats?.averageMonthlyConsumption
+                    }
+                    suggestedQuantity={line.suggestedQuantity}
+                  />
+                </Box>
+              )}
+              <Box
+                display="flex"
+                justifyContent="center"
+                gap={2}
+                sx={{
+                  padding: 2,
+                  flexDirection: {
+                    xs: 'column',
+                    md: 'row',
+                  },
+                  alignItems: 'center',
+                }}
+              >
+                {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
+                  <ConsumptionHistory id={line.id} />
+                )}
+                {isInfoVisible(STOCK_EVOLUTION_INFO) && (
+                  <StockEvolution id={line.id} />
+                )}
+              </Box>
+            </>
           )}
-          <Box
-            display="flex"
-            justifyContent="center"
-            gap={2}
-            sx={{
-              padding: 2,
-              flexDirection: {
-                xs: 'column',
-                md: 'row',
-              },
-              alignItems: 'center',
-            }}
-          >
-            {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
-              <ConsumptionHistory id={line.id} />
-            )}
-            {isInfoVisible(STOCK_EVOLUTION_INFO) && (
-              <StockEvolution id={line.id} />
-            )}
-          </Box>
         </Box>
       )}
     </>
