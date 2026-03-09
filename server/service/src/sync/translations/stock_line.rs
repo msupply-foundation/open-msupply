@@ -66,6 +66,10 @@ pub struct LegacyStockLineRow {
     pub donor_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<StockLineRowOmsFields>,
@@ -125,6 +129,7 @@ impl SyncTranslation for StockLineTranslation {
             item_variant_id,
             donor_id,
             vvm_status_id,
+            manufacturer_id,
             oms_fields,
             total_volume,
             volume_per_pack,
@@ -156,6 +161,7 @@ impl SyncTranslation for StockLineTranslation {
             barcode_id,
             item_variant_id,
             donor_id: donor_id,
+            manufacturer_id,
             vvm_status_id,
             campaign_id,
             program_id,
@@ -201,6 +207,7 @@ impl SyncTranslation for StockLineTranslation {
                     barcode_id,
                     item_variant_id,
                     donor_id: donor_link_id,
+                    manufacturer_id: manufacturer_link_id,
                     vvm_status_id,
                     campaign_id,
                     program_id,
@@ -236,6 +243,7 @@ impl SyncTranslation for StockLineTranslation {
             item_variant_id,
             donor_id: donor_link_id,
             vvm_status_id,
+            manufacturer_id: manufacturer_link_id,
             oms_fields,
             total_volume,
             volume_per_pack,
