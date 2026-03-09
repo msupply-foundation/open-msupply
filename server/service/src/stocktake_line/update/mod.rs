@@ -25,6 +25,7 @@ pub struct UpdateStocktakeLine {
     pub note: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
