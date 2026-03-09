@@ -134,6 +134,7 @@ pub fn generate(
                 barcode: None,
                 stock_on_hold: false,
                 donor_id: None,
+                manufacturer_id: None,
                 campaign_id: None,
                 program_id: None,
                 shipped_number_of_packs: None,
