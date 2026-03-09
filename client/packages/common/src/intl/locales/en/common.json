@@ -2361,7 +2361,7 @@
   "preference.showIndicativePriceInRequisitions": "Show indicative price on internal orders and requisitions",
   "preference.skipIntermediateStatusesInOutbound": "Skip 'Picked' and 'Allocated' statuses in outbound shipments",
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
-  "preference.storeCustomColour": "Custom colour of page footer (hex code, e.g. #000000 for black)",
+  "preference.storeCustomColour": "Custom colour of page footer",
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
   "preference.useProcurementFunctionality": "Use procurement functionality",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
