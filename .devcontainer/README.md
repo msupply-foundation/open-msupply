@@ -16,7 +16,9 @@ This directory contains configuration for a VS Code dev container, providing an 
 3. Open this repository in VS Code and click **Reopen in Container** when prompted (or run **Dev Containers: Reopen in Container** from the command palette) (or click the remote connection icon in the bottom left a full list of options like rebuild container).
 4. Wait for the container to build and dependencies to install — this may take several minutes on first run.
 
-When using a git worktree there is an [experimental setting](https://github.com/devcontainers/cli/issues/796#issuecomment-3906955615) to mount the parent git folder into the container so git still works (requires the worktree to be created with `--relative-paths`).
+When using a git worktree there is an [experimental setting](https://github.com/devcontainers/cli/issues/796#issuecomment-3906955615) to mount the parent git folder into the container so git still works (requires the worktree to be created with `--relative-paths` e.g. `git worktree add --relative-paths ../open-msupply-2 develop`).
+
+If you run into any firewall issues it's possible this domain was missed in the firewall rules. Add the domain to the `.devcontainer.json` file under the firewall feature: `"hosts": "host.docker.internal,<new domain here>"`.
 
 ## Connecting to services on your host machine
 
@@ -34,7 +36,7 @@ database:
   host: "host.docker.internal"
 ```
 
-You may also need to change the Open mSupply central server url for the central site in mSupply.
+You may also need to change the Open mSupply central server url for the central site in mSupply. If this is set to `localhost` the container will try to connect to itself and fail. Instead set it to your network ip `192.168.1.x`.
 
 ## Limitations
 

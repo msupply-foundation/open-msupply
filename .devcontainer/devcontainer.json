@@ -24,7 +24,7 @@
     "ghcr.io/w3cj/devcontainer-features/firewall:latest": {
       // don't run services on your host that could lead to a prompt injection
       // (services on your host are available in the container)
-      "hosts": "host.docker.internal",
+      "hosts": "host.docker.internal,static.rust-lang.org",
       "allAiProviders": true,
       "cratesIoRegistry": true,
       "githubDomains": true,
