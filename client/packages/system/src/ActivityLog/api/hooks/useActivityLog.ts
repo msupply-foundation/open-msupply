@@ -4,6 +4,7 @@ import {
   ActivityLogSortInput,
   ActivityLogSortFieldInput,
   ActivityLogNodeType,
+  isEnumValue,
 } from '@openmsupply-client/common';
 import { ActivityLogRowFragment } from '../operations.generated';
 import { useActivityLogGraphQL } from '../useActivityLogGraphQL';
@@ -44,5 +45,7 @@ const getSortInput = (
   sortBy: SortBy<ActivityLogRowFragment>
 ): ActivityLogSortInput => ({
   desc: sortBy.isDesc,
-  key: sortBy.key as ActivityLogSortFieldInput,
+  key: isEnumValue(ActivityLogSortFieldInput, sortBy.key)
+    ? sortBy.key
+    : ActivityLogSortFieldInput.ActivityLogType,
 });
