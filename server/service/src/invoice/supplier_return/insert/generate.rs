@@ -110,6 +110,7 @@ pub fn generate(
             volume_per_pack: None,
             item_variant_id: None,
             donor_id: None,
+            manufacturer_id: None,
         })
         .collect();
 

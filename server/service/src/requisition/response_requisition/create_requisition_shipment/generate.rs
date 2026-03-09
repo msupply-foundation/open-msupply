@@ -125,6 +125,7 @@ pub fn generate_invoice_lines(
             prescribed_quantity: None,
             linked_invoice_id: None,
             donor_id: None,
+            manufacturer_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
