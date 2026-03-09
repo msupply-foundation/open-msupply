@@ -21,7 +21,7 @@
     "ghcr.io/devcontainers-extra/features/fish-apt-get:1": {},
     "ghcr.io/nikobockerman/devcontainer-features/fish-persistent-data:2": {},
     // adds a restrictive firewall
-    "ghcr.io/w3cj/devcontainer-features/firewall:latest": {
+    "ghcr.io/w3cj/devcontainer-features/firewall:0.0.2": {
       // don't run services on your host that could lead to a prompt injection
       // (services on your host are available in the container)
       "hosts": "host.docker.internal,static.rust-lang.org",
