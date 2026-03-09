@@ -33,6 +33,7 @@ pub enum UpdatePurchaseOrderLineInputError {
     DatabaseError(RepositoryError),
     ItemDoesNotExist,
     CannotChangeStatus,
+    CannotEditExpectedDeliveryDate,
     ItemCannotBeOrdered(PurchaseOrderLine),
 }
 
