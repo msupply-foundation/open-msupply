@@ -20,4 +20,4 @@ mod add_from_purchase_order;
 pub use self::add_from_purchase_order::*;
 
 mod permission;
-pub use self::permission::check_inbound_shipment_mutation_permission;
+pub use self::permission::{check_inbound_shipment_mutation_permission, check_inbound_shipment_verify_permission};

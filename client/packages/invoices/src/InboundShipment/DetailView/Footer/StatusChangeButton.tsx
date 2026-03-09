@@ -83,10 +83,12 @@ const StatusChangeButtonContent = ({
   data,
   update,
   isStatusChangeDisabled,
+  hasVerifyPermission,
 }: {
   data: NonNullable<ReturnType<typeof useInboundShipment>['query']['data']>;
   update: ReturnType<typeof useInboundShipment>['update']['update'];
   isStatusChangeDisabled: boolean;
+  hasVerifyPermission: boolean;
 }) => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
@@ -157,7 +159,15 @@ const StatusChangeButtonContent = ({
     t('messages.pending-lines')
   );
 
+  const verifyPermissionNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+
   const onVerify = () => {
+    if (!hasVerifyPermission) {
+      verifyPermissionNotification();
+      return;
+    }
     getConfirmation();
   };
 
@@ -216,6 +226,7 @@ export const StatusChangeButton = () => {
     query: { data, loading },
     update: { update },
     isStatusChangeDisabled,
+    hasVerifyPermission,
   } = useInboundShipment();
 
   if (loading || !data) return null;
@@ -225,6 +236,7 @@ export const StatusChangeButton = () => {
       data={data}
       update={update}
       isStatusChangeDisabled={isStatusChangeDisabled}
+      hasVerifyPermission={hasVerifyPermission}
     />
   );
 };
