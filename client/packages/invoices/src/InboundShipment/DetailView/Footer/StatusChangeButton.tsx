@@ -82,11 +82,13 @@ const getStatusOptions = (
 const StatusChangeButtonContent = ({
   data,
   update,
+  hasMutatePermission,
   isStatusChangeDisabled,
   hasVerifyPermission,
 }: {
   data: NonNullable<ReturnType<typeof useInboundShipment>['query']['data']>;
   update: ReturnType<typeof useInboundShipment>['update']['update'];
+  hasMutatePermission: boolean;
   isStatusChangeDisabled: boolean;
   hasVerifyPermission: boolean;
 }) => {
@@ -159,13 +161,13 @@ const StatusChangeButtonContent = ({
     t('messages.pending-lines')
   );
 
-  const verifyPermissionNotification = useDisabledNotificationToast(
+  const permissionDeniedNotification = useDisabledNotificationToast(
     t('auth.permission-denied')
   );
 
   const onVerify = () => {
     if (!hasVerifyPermission) {
-      verifyPermissionNotification();
+      permissionDeniedNotification();
       return;
     }
     getConfirmation();
@@ -175,6 +177,7 @@ const StatusChangeButtonContent = ({
   if (isStatusChangeDisabled) return null;
 
   const onStatusClick = () => {
+    if (!hasMutatePermission) return permissionDeniedNotification();
     if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
     if (selectedOption?.value === InvoiceNodeStatus.Received || selectedOption?.value === InvoiceNodeStatus.Verified) {
@@ -225,6 +228,7 @@ export const StatusChangeButton = () => {
   const {
     query: { data, loading },
     update: { update },
+    hasMutatePermission,
     isStatusChangeDisabled,
     hasVerifyPermission,
   } = useInboundShipment();
@@ -235,6 +239,7 @@ export const StatusChangeButton = () => {
     <StatusChangeButtonContent
       data={data}
       update={update}
+      hasMutatePermission={hasMutatePermission}
       isStatusChangeDisabled={isStatusChangeDisabled}
       hasVerifyPermission={hasVerifyPermission}
     />

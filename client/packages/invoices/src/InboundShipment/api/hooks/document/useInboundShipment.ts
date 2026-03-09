@@ -111,6 +111,7 @@ export const useInboundShipment = (id?: string) => {
   return {
     query: { data, loading, error },
     isDisabled,
+    hasMutatePermission,
     isHoldable,
     isStatusChangeDisabled,
     hasVerifyPermission,
