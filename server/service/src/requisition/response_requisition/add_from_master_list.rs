@@ -171,6 +171,9 @@ fn generate(
                 approval_comment: None,
                 available_volume: None,
                 location_type_id: None,
+                forecast_total_units: None,
+                forecast_total_doses: None,
+                vaccine_courses: None,
             }
         })
         .collect();

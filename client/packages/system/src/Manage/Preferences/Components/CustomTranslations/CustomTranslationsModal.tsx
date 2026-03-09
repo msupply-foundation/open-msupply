@@ -7,9 +7,14 @@ import {
   UploadFile,
   ConfirmationModal,
 } from '@common/components';
-import { Box, Typography} from '@openmsupply-client/common';
-
-import { SaveIcon, DownloadIcon, DeleteIcon, EditIcon, UploadIcon } from '@common/icons';
+import { Box, Typography } from '@openmsupply-client/common';
+import {
+  SaveIcon,
+  DownloadIcon,
+  DeleteIcon,
+  EditIcon,
+  UploadIcon,
+} from '@common/icons';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
 import { mapTranslationsToArray, mapTranslationsToObject } from './helpers';
@@ -99,7 +104,7 @@ export const CustomTranslationsModal = ({
 
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = e => {
       try {
         const content = e.target?.result as string;
         const parsed = JSON.parse(content);
@@ -214,7 +219,7 @@ export const CustomTranslationsModal = ({
 
       {showUploadModal && (
         <CustomTranslationsUploadModal
-          onUpload={(files) => {
+          onUpload={files => {
             handleUploadTranslations(files);
             setShowUploadModal(false);
           }}

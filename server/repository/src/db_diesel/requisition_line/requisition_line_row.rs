@@ -37,6 +37,10 @@ table! {
         expiring_units -> Double,
         days_out_of_stock -> Double,
         option_id -> Nullable<Text>,
+        // Population forcasting fields
+        forecast_total_units -> Nullable<Double>,
+        forecast_total_doses -> Nullable<Double>,
+        vaccine_courses -> Nullable<Text>,
     }
 }
 
@@ -75,6 +79,10 @@ pub struct RequisitionLineRow {
     pub expiring_units: f64,
     pub days_out_of_stock: f64,
     pub option_id: Option<String>,
+    // Population forecasting fields
+    pub forecast_total_units: Option<f64>,
+    pub forecast_total_doses: Option<f64>,
+    pub vaccine_courses: Option<String>,
 }
 
 pub struct RequisitionLineRowRepository<'a> {
