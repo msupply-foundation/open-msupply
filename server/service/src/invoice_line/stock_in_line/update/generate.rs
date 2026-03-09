@@ -144,6 +144,7 @@ fn generate_line(
         item_variant_id,
         vvm_status_id,
         donor_id,
+        manufacturer_id,
         campaign_id,
         program_id,
         shipped_number_of_packs,
@@ -189,6 +190,10 @@ fn generate_line(
     update_line.donor_id = donor_id
         .map(|d| d.value)
         .unwrap_or(update_line.donor_id);
+
+    update_line.manufacturer_id = manufacturer_id
+        .map(|m| m.value)
+        .unwrap_or(update_line.manufacturer_id);
 
     update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
 
