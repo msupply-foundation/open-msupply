@@ -28,6 +28,20 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
+        sql!(
+            connection,
+            r#"
+                UPDATE stock_line
+                SET manufacturer_link_id = (
+                    SELECT iv.manufacturer_link_id
+                    FROM item_variant iv
+                    WHERE iv.id = stock_line.item_variant_id
+                )
+                WHERE stock_line.item_variant_id IS NOT NULL
+                AND stock_line.manufacturer_link_id IS NULL;
+            "#
+        )?;
+
         Ok(())
     }
 }
