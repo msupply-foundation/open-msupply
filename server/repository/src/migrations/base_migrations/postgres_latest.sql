@@ -1105,8 +1105,7 @@ CREATE TABLE public.barcode (
     pack_size double precision,
     parent_id text,
     is_sync_update boolean DEFAULT false NOT NULL,
-    manufacturer_link_id text,
-    manufacture_date date
+    manufacturer_link_id text
 );
 
 

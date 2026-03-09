@@ -7,7 +7,6 @@ pub fn barcode_a() -> BarcodeRow {
         item_id: String::from("item_a"),
         pack_size: Some(1.0),
         parent_id: None,
-        manufacture_date: None,
         manufacturer_id: Some(String::from("manufacturer_a")),
     }
 }
@@ -19,7 +18,6 @@ pub fn barcode_b() -> BarcodeRow {
         item_id: String::from("item_b"),
         pack_size: Some(1.0),
         parent_id: None,
-        manufacture_date: None,
         manufacturer_id: Some(String::from("manufacturer_a")),
     }
 }

@@ -605,7 +605,7 @@ CREATE TABLE barcode (
                 gtin text NOT NULL UNIQUE,
                 item_id text NOT NULL REFERENCES item(id),
                 parent_id text
-            , is_sync_update bool NOT NULL DEFAULT False, manufacturer_link_id TEXT REFERENCES name_link(id), pack_size REAL, manufacture_date DATE);
+            , is_sync_update bool NOT NULL DEFAULT False, manufacturer_link_id TEXT REFERENCES name_link(id), pack_size REAL);
 CREATE TABLE context (
           id TEXT NOT NULL PRIMARY KEY,
           name TEXT NOT NULL

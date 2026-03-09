@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use crate::Upsert;
 
 use super::{
@@ -20,7 +19,6 @@ define_linked_tables! {
         item_id -> Text,
         pack_size -> Nullable<Double>,
         parent_id -> Nullable<Text>,
-        manufacture_date -> Nullable<Date>,
     },
     links: {},
     optional_links: {
@@ -44,7 +42,6 @@ pub struct BarcodeRow {
     pub item_id: String,
     pub pack_size: Option<f64>,
     pub parent_id: Option<String>,
-    pub manufacture_date: Option<NaiveDate>,
     // Resolved from name_link - must be last to match view column order
     pub manufacturer_id: Option<String>,
 }
