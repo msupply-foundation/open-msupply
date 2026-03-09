@@ -59,6 +59,7 @@ define_linked_tables! {
     },
     optional_links: {
         donor_link_id -> donor_id,
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
@@ -129,6 +130,7 @@ pub struct InvoiceLineRow {
     pub status: Option<InvoiceLineStatus>,
     // Resolved from name_link - must be last to match view column order
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
