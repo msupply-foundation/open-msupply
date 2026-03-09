@@ -237,7 +237,6 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       input: {
         itemId: string;
         packSize?: number | null;
-        manufactureDate?: string | null;
         gtin: string;
       };
     }): Promise<string> => {

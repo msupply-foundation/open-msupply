@@ -186,7 +186,6 @@ export type BarcodeFragment = {
   id: string;
   itemId: string;
   packSize?: number | null;
-  manufactureDate?: string | null;
   gtin: string;
 };
 
@@ -591,7 +590,6 @@ export type BarcodeByGtinQuery = {
         id: string;
         itemId: string;
         packSize?: number | null;
-        manufactureDate?: string | null;
         gtin: string;
       }
     | { __typename: 'NodeError' };
@@ -1085,7 +1083,6 @@ export type InsertBarcodeMutation = {
     id: string;
     itemId: string;
     packSize?: number | null;
-    manufactureDate?: string | null;
     gtin: string;
   };
 };
@@ -1219,7 +1216,6 @@ export const BarcodeFragmentDoc = gql`
     id
     itemId
     packSize
-    manufactureDate
     gtin
   }
 `;

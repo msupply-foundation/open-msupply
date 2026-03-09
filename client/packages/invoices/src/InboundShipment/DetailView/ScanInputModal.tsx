@@ -178,9 +178,6 @@ export const ScanInputModal = ({
             gtin: draftState.gtin,
             itemId: draftState.itemId,
             packSize: draftState.packSize,
-            manufactureDate: draftState.manufactureDate
-              ? draftState.manufactureDate.toISOString().substring(0, 10)
-              : null,
           },
         });
       }
@@ -254,7 +251,15 @@ export const ScanInputModal = ({
       }
 
       setErrorMessage(undefined);
-      const { content, gtin, batch, expiryDate, packSize, quantity } = barcode;
+      const {
+        content,
+        gtin,
+        batch,
+        expiryDate,
+        manufactureDate,
+        packSize,
+        quantity,
+      } = barcode;
 
       // Perform async lookup first if needed
       const barcodeToLookup = gtin ?? content;
@@ -294,16 +299,15 @@ export const ScanInputModal = ({
             newState.itemId = dbBarcodeData.itemId;
             if (dbBarcodeData.packSize)
               newState.packSize = dbBarcodeData.packSize;
-            if (dbBarcodeData.manufactureDate)
-              newState.manufactureDate = new Date(
-                dbBarcodeData.manufactureDate
-              );
             newState.gtin = dbBarcodeData.gtin;
           }
         }
         if (batch) newState.batch = batch;
         if (expiryDate) {
           newState.expiryDate = new Date(expiryDate);
+        }
+        if (manufactureDate) {
+          newState.manufactureDate = new Date(manufactureDate);
         }
 
         if (packSize) newState.packSize = packSize;
@@ -464,9 +468,7 @@ export const ScanInputModal = ({
           Input={
             <DatePicker
               value={draftState.manufactureDate}
-              // If a manufacture date is associated with a particular GTIN, it
-              // should not change
-              disabled={!!barcodeData?.manufactureDate || isLoading}
+              disabled={isLoading}
               onChange={value =>
                 setDraftState(current => ({
                   ...current,
