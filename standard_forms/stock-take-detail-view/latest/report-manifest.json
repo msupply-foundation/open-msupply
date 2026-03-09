@@ -6,6 +6,5 @@
   "name": "Stocktake",
   "queries": { "gql": "StocktakeDetailQuery.graphql" },
   "arguments": {},
-  "header": "header.html",
-  "footer": "footer.html"
+  "header": "header.html"
 }
