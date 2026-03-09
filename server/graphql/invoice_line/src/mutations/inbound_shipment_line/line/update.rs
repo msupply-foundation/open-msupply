@@ -35,6 +35,7 @@ pub struct UpdateInput {
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdateInput<String>>,
+    pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
     pub note: Option<NullableUpdateInput<String>>,
@@ -110,6 +111,7 @@ impl UpdateInput {
             item_variant_id,
             vvm_status_id,
             donor_id,
+            manufacturer_id,
             campaign_id,
             program_id,
             note,
@@ -145,6 +147,9 @@ impl UpdateInput {
             note: note.map(|note| NullableUpdate { value: note.value }),
             donor_id: donor_id.map(|donor_id| NullableUpdate {
                 value: donor_id.value,
+            }),
+            manufacturer_id: manufacturer_id.map(|manufacturer_id| NullableUpdate {
+                value: manufacturer_id.value,
             }),
             campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
                 value: campaign_id.value,
