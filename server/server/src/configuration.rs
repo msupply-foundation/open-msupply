@@ -167,9 +167,9 @@ fn derive_file_paths(config_file: Option<PathBuf>) -> Result<ConfigFilePaths, Se
 impl Debug for SettingsError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
-            SettingsError::Config(err) => write!(f, "{:?}", err),
-            SettingsError::Environment(err) => write!(f, "{:?}", err),
-            SettingsError::File(err) => write!(f, "{:?}", err),
+            SettingsError::Config(err) => write!(f, "{err:?}"),
+            SettingsError::Environment(err) => write!(f, "{err:?}"),
+            SettingsError::File(err) => write!(f, "{err:?}"),
         }
     }
 }
@@ -177,9 +177,9 @@ impl Debug for SettingsError {
 impl Display for SettingsError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
-            SettingsError::Config(err) => write!(f, "{}", err),
-            SettingsError::Environment(err) => write!(f, "{}", err),
-            SettingsError::File(err) => write!(f, "{}", err),
+            SettingsError::Config(err) => write!(f, "{err}"),
+            SettingsError::Environment(err) => write!(f, "{err}"),
+            SettingsError::File(err) => write!(f, "{err}"),
         }
     }
 }
@@ -214,8 +214,7 @@ pub fn get_or_create_token_secret(connection: &StorageConnection) -> String {
     let token_secret = uuid();
     if let Err(err) = kv_repo.set_string(KeyType::SettingsTokenSecret, Some(token_secret.clone())) {
         log::error!(
-            "Unable to save token secret to key value store, it will not be persisted across restarts : {}",
-            err
+            "Unable to save token secret to key value store, it will not be persisted across restarts : {err}"
         )
     }
 

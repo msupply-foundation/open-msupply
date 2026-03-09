@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useInbound } from '.';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   useConfirmOnLeaving,
   useNotification,
@@ -11,6 +10,9 @@ import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
 import { ScannedBatchData } from '../../DetailView';
+import { useInboundShipment } from './document/useInboundShipment';
+import { useSaveInboundLines } from './utils';
+import { getInboundStockLines } from '../../../utils';
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
@@ -23,9 +25,20 @@ export const useDraftInboundLines = (
 
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
-  const { id } = useInbound.document.fields('id');
-  const { data: lines } = useInbound.lines.list(itemId ?? '');
-  const { mutateAsync, isLoading } = useInbound.lines.save();
+  const {
+    query: { data },
+  } = useInboundShipment();
+  const id = data?.id ?? '';
+
+  // Derive lines from the same data source, filtering by itemId if provided
+  const lines = useMemo(() => {
+    if (!data) return undefined;
+    return itemId
+      ? data.lines.nodes.filter(({ item }) => itemId === item.id)
+      : getInboundStockLines(data.lines.nodes);
+  }, [data, itemId]);
+
+  const { mutateAsync, isLoading } = useSaveInboundLines();
   const { mutateAsync: deleteMutation } = useDeleteInboundLines();
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
@@ -36,6 +49,12 @@ export const useDraftInboundLines = (
   } = useItem(itemId ?? '');
 
   useEffect(() => {
+    // Don't overwrite the user's in-progress edits with a background refetch
+    // from React Query (e.g. triggered by window focus). isDirty is cleared by
+    // saveLines before the modal closes, so the effect still runs correctly
+    // after a successful save.
+    if (isDirty) return;
+
     if (lines && item) {
       const drafts = lines.map(line =>
         CreateDraft.stockInLine({
@@ -62,7 +81,7 @@ export const useDraftInboundLines = (
     } else {
       setDraftLines([]);
     }
-  }, [lines, item, id]);
+  }, [lines, item, id, isDirty]);
 
   const addDraftLine = () => {
     if (item) {
@@ -147,6 +166,12 @@ export const useDraftInboundLines = (
     }
   };
 
+  // Used by scanning modal for updating one line at a time. Modal manages own
+  // draft state, so we pass that in here
+  const saveSingleLine = async (line: Partial<DraftInboundLine>) => {
+    await mutateAsync([line as DraftInboundLine]);
+  };
+
   return {
     draftLines: draftLines.filter(line => !line.isDeleted),
     addDraftLine,
@@ -154,5 +179,6 @@ export const useDraftInboundLines = (
     removeDraftLine,
     isLoading,
     saveLines,
+    saveSingleLine,
   };
 };

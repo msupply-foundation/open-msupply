@@ -15,8 +15,7 @@ pub enum UpdateSettingsError {
 fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
     if let Err(err) = Url::parse(&settings.url) {
         return Err(UpdateSettingsError::InvalidSettings(format!(
-            "Invalid url: {:?}",
-            err
+            "Invalid url: {err:?}"
         )));
     }
 

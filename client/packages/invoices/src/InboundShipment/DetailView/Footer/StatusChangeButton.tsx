@@ -20,7 +20,7 @@ import {
   getPreviousStatus,
   getStatusTranslator,
 } from '../../../utils';
-import { InboundLineFragment, useInbound } from '../../api';
+import { InboundLineFragment, useInboundShipment } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -81,12 +81,21 @@ const getStatusOptions = (
   return options;
 };
 
-const useStatusChangeButton = () => {
+const StatusChangeButtonContent = ({
+  data,
+  update,
+  isStatusChangeDisabled,
+}: {
+  data: NonNullable<ReturnType<typeof useInboundShipment>['query']['data']>;
+  update: ReturnType<typeof useInboundShipment>['update']['update'];
+  isStatusChangeDisabled: boolean;
+}) => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
-  const { status, onHold, linkedShipment, update, lines } =
-    useInbound.document.fields(['status', 'onHold', 'linkedShipment', 'lines']);
   const { success, error } = useNotification();
+  const { userHasPermission } = useAuthContext();
+
+  const { status, onHold, linkedShipment, lines } = data;
   const isManuallyCreated = !linkedShipment?.id;
 
   const options = useMemo(() => {
@@ -101,7 +110,7 @@ const useStatusChangeButton = () => {
       );
     }
     return statusOptions;
-  }, [status, isManuallyCreated, invoiceStatusOptions]);
+  }, [status, isManuallyCreated, invoiceStatusOptions, t]);
 
   const currentStatus = invoiceStatusOptions?.includes(status)
     ? status
@@ -113,7 +122,7 @@ const useStatusChangeButton = () => {
     );
 
   const onConfirmStatusChange = async () => {
-    if (!selectedOption) return null;
+    if (!selectedOption) return;
     try {
       await update({ status: selectedOption.value });
       success(t('messages.shipment-saved'))();
@@ -136,20 +145,70 @@ const useStatusChangeButton = () => {
     onConfirm: onConfirmStatusChange,
   });
 
-  // When the status of the invoice changes (after an update), set the selected option to the next status.
-  // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
     setSelectedOption(() => getNextStatusOption(currentStatus, options));
-  }, [status, options]);
+  }, [status, options, currentStatus]);
 
-  return {
-    options,
-    selectedOption,
-    setSelectedOption,
-    getConfirmation,
-    onHold,
-    lines,
+  const noLinesNotification = useDisabledNotificationToast(
+    t('messages.no-lines')
+  );
+
+  const onHoldNotification = useDisabledNotificationToast(
+    t('messages.on-hold-inbound')
+  );
+
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+
+  const pendingLinesNotification = useDisabledNotificationToast(
+    t('messages.pending-lines')
+  );
+
+  const onVerify = () => {
+    if (userHasPermission(UserPermission.InboundShipmentVerify)) {
+      getConfirmation();
+    } else {
+      permissionDeniedNotification();
+    }
   };
+
+  if (!selectedOption) return null;
+  if (isStatusChangeDisabled) return null;
+
+  const onStatusClick = () => {
+    if (!validateEmptyInvoice(lines)) return noLinesNotification();
+    if (onHold) return onHoldNotification();
+    if (
+      selectedOption?.value === InvoiceNodeStatus.Received ||
+      selectedOption?.value === InvoiceNodeStatus.Verified
+    ) {
+      if (!validateNoPendingLines(lines)) {
+        return pendingLinesNotification();
+      }
+    }
+    if (selectedOption?.value === InvoiceNodeStatus.Verified) return onVerify();
+    return getConfirmation();
+  };
+
+  return (
+    <SplitButton
+      options={options}
+      selectedOption={selectedOption}
+      onSelectOption={setSelectedOption}
+      Icon={<ArrowRightIcon />}
+      onClick={onStatusClick}
+    />
+  );
+};
+
+const validateNoPendingLines = (lines: {
+  totalCount: number;
+  nodes: InboundLineFragment[];
+}): boolean => {
+  // Should only proceed if there are no pending lines
+  if (lines.nodes.some(line => line.status === 'PENDING')) return false;
+  return true;
 };
 
 export const validateEmptyInvoice = (lines: {
@@ -169,54 +228,18 @@ export const validateEmptyInvoice = (lines: {
 
 export const StatusChangeButton = () => {
   const {
-    options,
-    selectedOption,
-    setSelectedOption,
-    getConfirmation,
-    onHold,
-    lines,
-  } = useStatusChangeButton();
-  const t = useTranslation();
-  const { userHasPermission } = useAuthContext();
-  const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
+    query: { data, loading },
+    update: { update },
+    isStatusChangeDisabled,
+  } = useInboundShipment();
 
-  const onVerify = () => {
-    if (userHasPermission(UserPermission.InboundShipmentVerify)) {
-      getConfirmation();
-    } else {
-      permissionDeniedNotification();
-    }
-  };
-
-  const noLinesNotification = useDisabledNotificationToast(
-    t('messages.no-lines')
-  );
-
-  const onHoldNotification = useDisabledNotificationToast(
-    t('messages.on-hold')
-  );
-
-  const permissionDeniedNotification = useDisabledNotificationToast(
-    t('auth.permission-denied')
-  );
-
-  if (!selectedOption) return null;
-  if (isStatusChangeDisabled) return null;
-
-  const onStatusClick = () => {
-    if (!validateEmptyInvoice(lines)) return noLinesNotification();
-    if (onHold) return onHoldNotification();
-    if (selectedOption?.value === InvoiceNodeStatus.Verified) return onVerify();
-    return getConfirmation();
-  };
+  if (loading || !data) return null;
 
   return (
-    <SplitButton
-      options={options}
-      selectedOption={selectedOption}
-      onSelectOption={setSelectedOption}
-      Icon={<ArrowRightIcon />}
-      onClick={onStatusClick}
+    <StatusChangeButtonContent
+      data={data}
+      update={update}
+      isStatusChangeDisabled={isStatusChangeDisabled}
     />
   );
 };

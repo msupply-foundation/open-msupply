@@ -110,7 +110,7 @@ impl<'a> BackendPluginRowRepository<'a> {
             record_id: uid.to_string(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -181,13 +181,13 @@ mod test {
         let repo = BackendPluginRowRepository::new(&connection);
         // Try upsert all plugin_variant types, confirm that diesel enums match postgres
         for variant in PluginVariantType::iter() {
-            let id = format!("{:?}", variant);
+            let id = format!("{variant:?}");
             let result = repo.upsert_one(BackendPluginRow {
                 id: id.clone(),
                 variant_type: variant.clone(),
                 ..Default::default()
             });
-            let _ = assert_variant!(result, Ok(_) => {});
+            assert_variant!(result, Ok(_) => {});
 
             let result = repo.find_one_by_id(&id).unwrap().unwrap();
             assert_eq!(result.variant_type, variant);

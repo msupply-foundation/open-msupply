@@ -64,7 +64,7 @@ pub async fn item_price(
     let pricing = service_provider
         .pricing_service
         .get_pricing_for_item(&service_context, input.to_domain())
-        .map_err(|e| StandardGraphqlError::from_repository_error(e))?
+        .map_err(StandardGraphqlError::from_repository_error)?
         .remove(&item_id)
         .unwrap_or_default();
 

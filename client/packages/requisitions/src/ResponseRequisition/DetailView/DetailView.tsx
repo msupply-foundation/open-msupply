@@ -28,6 +28,7 @@ import { buildIndicatorEditRoute } from './utils';
 import { ResponseLineEditModal } from './ResponseLineEdit';
 import { useResponseColumns } from './columns';
 import { isResponseLinePlaceholderRow } from '../../utils';
+import { useResponseLines } from '../api/hooks/line/useResponseLines';
 
 const DetailViewInner = () => {
   const t = useTranslation();
@@ -45,6 +46,7 @@ const DetailViewInner = () => {
 
   const { data, isLoading, isFetching, isError, invalidateQueries } =
     useResponse.document.get();
+  const { lines } = useResponseLines();
   const { columns } = useResponseColumns();
   const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
@@ -91,10 +93,10 @@ const DetailViewInner = () => {
   const { table, selectedRows } = useNonPaginatedMaterialTable({
     tableId: 'response-requisition-detail',
     columns,
-    data: data?.lines.nodes,
+    data: lines,
     isLoading: isFetching,
     isError,
-    getIsPlaceholderRow: isResponseLinePlaceholderRow,
+    getIsPlaceholderRow: row => isResponseLinePlaceholderRow(row.original),
     onRowClick,
     initialSort: { key: 'itemName', dir: 'asc' },
     noDataElement: (

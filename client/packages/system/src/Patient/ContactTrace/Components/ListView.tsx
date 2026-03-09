@@ -2,7 +2,6 @@ import React, { FC, useMemo } from 'react';
 import {
   NothingHere,
   useUrlQueryParams,
-  ContactTraceSortFieldInput,
   useNavigate,
   RouteBuilder,
   useTranslation,
@@ -17,7 +16,6 @@ import {
   PatientModal,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
-import { useQueryParamsStore } from '@common/hooks';
 import { ContactTraceRowFragment } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -70,21 +68,16 @@ const useContactTraceListColumns = () => {
 
 export const ContactTraceListView: FC = () => {
   const t = useTranslation();
-  const {
-    sort: { sortBy },
-  } = useQueryParamsStore();
-
   const { queryParams } = useUrlQueryParams();
-
   const patientId = usePatient.utils.id();
+  const sortBy = queryParams.sortBy.key
+    ? queryParams.sortBy
+    : { key: 'datetime', order: 'desc' };
 
   const { data, isError, isLoading } = useContactTraces.document.list({
     ...queryParams,
-    sortBy: {
-      key: sortBy.key as ContactTraceSortFieldInput,
-      isDesc: sortBy.isDesc,
-    },
     filterBy: { patientId: { equalTo: patientId } },
+    sortBy,
   });
   const navigate = useNavigate();
   const { setModal: selectModal } = usePatientModalStore();

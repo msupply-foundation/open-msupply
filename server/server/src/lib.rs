@@ -99,12 +99,17 @@ pub async fn start_server(
     // Run info log here. The system log for server starting is after the migrations
     // because it can't upsert until the database is running. If there is an error in
     // migrations the system log won't run.
-    info!("{}", server_start_message);
+    info!("{server_start_message}");
 
     // ON STARTUP OVERRIDE IS CENTRAL SERVER
     if settings.server.override_is_central_server {
         CentralServerConfig::set_is_central_server_on_startup();
     }
+
+    // CREATE BASE DIRECTORY IF IT DOESN'T EXIST
+    let base_dir = &settings.server.base_dir;
+    info!("Creating base directory if needed: {}", base_dir);
+    std::fs::create_dir_all(base_dir)?;
 
     // INITIALISE DATABASE CONNECTION
     let connection_manager = get_storage_connection_manager(&settings.database);

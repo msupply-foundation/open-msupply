@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -11,7 +11,6 @@ import {
   useSimplifiedTabletUI,
   Box,
   useNonPaginatedMaterialTable,
-  Groupable,
   NothingHere,
   MaterialTable,
 } from '@openmsupply-client/common';
@@ -52,37 +51,30 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: stocktake?.stocktakeNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, stocktake?.stocktakeNumber]);
 
-  const getIsPlaceholderRow = useCallback(
-    (row: Groupable<StocktakeLineFragment>) =>
-      !!(
-        isUncounted(row) ||
-        // Also mark parent rows as placeholder if any subRows are placeholders
-        row.subRows?.some(isUncounted)
-      ),
-    []
-  );
-
   const columns = useStocktakeColumns();
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<
-    Groupable<StocktakeLineFragment>
-  >({
-    tableId: 'stocktake-detail',
-    columns,
-    isLoading: rowsLoading,
-    data: lines,
-    onRowClick: row => onOpen(row.item),
-    grouping: { enabled: true, groupedByDefault: true },
-    initialSort: { key: 'itemName', dir: 'asc' },
-    getIsPlaceholderRow,
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-stocktake-items')}
-        onCreate={isDisabled ? undefined : onOpen}
-        buttonText={t('button.add-item')}
-      />
-    ),
-  });
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<StocktakeLineFragment>({
+      tableId: 'stocktake-detail',
+      columns,
+      isLoading: rowsLoading,
+      data: lines,
+      onRowClick: row => onOpen(row.item),
+      grouping: { field: 'item.code' },
+      initialSort: { key: 'itemName', dir: 'asc' },
+      manualFiltering: true,
+      getIsPlaceholderRow: row =>
+        isUncounted(row.original) ||
+        // Also mark parent rows as placeholder if any of its children are uncounted
+        row.getLeafRows().some(leaf => isUncounted(leaf.original)),
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-stocktake-items')}
+          onCreate={isDisabled ? undefined : onOpen}
+          buttonText={t('button.add-item')}
+        />
+      ),
+    });
 
   const tabs = [
     {

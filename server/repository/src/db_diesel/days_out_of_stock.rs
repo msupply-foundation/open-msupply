@@ -146,7 +146,7 @@ pub(crate) mod test {
 
         let result: Vec<DaysOutOfStockRow> = connection
             .transaction_sync(|con| {
-                let repo = DaysOutOfStockRepository::new(&con);
+                let repo = DaysOutOfStockRepository::new(con);
                 // Set timezone, otherwise would use whatever is configured in postgres system
                 if cfg!(feature = "postgres") {
                     diesel::sql_query("SET TIME ZONE 'Pacific/Auckland';")

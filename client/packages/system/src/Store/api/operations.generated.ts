@@ -77,16 +77,13 @@ export function getSdk(
   return {
     stores(
       variables?: StoresQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<StoresQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StoresQuery>({
-            document: StoresDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<StoresQuery>(StoresDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'stores',
         'query',

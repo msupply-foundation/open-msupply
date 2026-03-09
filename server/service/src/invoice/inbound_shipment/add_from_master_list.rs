@@ -19,6 +19,7 @@ pub enum AddToInboundShipmentFromMasterListError {
     CannotEditShipment,
     MasterListNotFoundForThisStore,
     NotAnInboundShipment,
+    NotAnInternalInboundShipment,
     DatabaseError(RepositoryError),
 }
 
@@ -76,6 +77,10 @@ fn validate(
 
     if invoice_row.r#type != InvoiceType::InboundShipment {
         return Err(InError::NotAnInboundShipment);
+    }
+
+    if invoice_row.purchase_order_id.is_some() {
+        return Err(InError::NotAnInternalInboundShipment);
     }
 
     check_master_list_for_store(connection, &invoice_row.store_id, &input.master_list_id)?
@@ -206,11 +211,11 @@ mod test {
     async fn add_from_master_list_success() {
         fn master_list() -> FullMockMasterList {
             let id = "master_list".to_string();
-            let join1 = format!("{}1", id);
-            let line1 = format!("{}1", id);
-            let line2 = format!("{}2", id);
-            let line3 = format!("{}3", id);
-            let line4 = format!("{}4", id);
+            let join1 = format!("{id}1");
+            let line1 = format!("{id}1");
+            let line2 = format!("{id}2");
+            let line3 = format!("{id}3");
+            let line4 = format!("{id}4");
 
             FullMockMasterList {
                 master_list: MasterListRow {
@@ -224,7 +229,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_link_id: mock_name_store_a().id,
+                    name_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {

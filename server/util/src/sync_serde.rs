@@ -55,7 +55,7 @@ pub fn object_fields_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
 ) -> Result<Option<T>, D::Error> {
     // error if cannot deserialize into a Value (which includes null, empty string or empty object)
     let value: Value = Value::deserialize(d)?;
-    return match value {
+    match value {
         Value::Null => Ok(None),
         Value::String(s) if s.is_empty() => Ok(None),
         // check if values as an empty object `{}`
@@ -68,7 +68,7 @@ pub fn object_fields_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
                 .map_err(Error::custom);
             result
         }
-    };
+    }
 }
 
 pub fn date_and_time_to_datetime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
@@ -196,7 +196,7 @@ mod test {
                     "contract_signed_datetime": "2021-01-22T15:16:00"
                 }
             }"#;
-        let a = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_1);
+        let a = serde_json::from_str::<LegacyRowWithOmsObjectField>(LEGACY_ROW_1);
         assert!(a.is_ok());
         let fields = a.unwrap().oms_fields.unwrap();
         assert_eq!(fields.foreign_exchange_rate, Some(1.6));
@@ -213,7 +213,7 @@ mod test {
                 "ID": "LEGACY_ROW_2",
                 "oms_fields": {}
             }"#;
-        let b = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_2);
+        let b = serde_json::from_str::<LegacyRowWithOmsObjectField>(LEGACY_ROW_2);
         assert!(b.is_ok());
 
         // case with empty string
@@ -221,7 +221,7 @@ mod test {
                 "ID": "LEGACY_ROW_3",
                 "oms_fields": ""
             }"#;
-        let c = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_3).unwrap();
+        let c = serde_json::from_str::<LegacyRowWithOmsObjectField>(LEGACY_ROW_3).unwrap();
         assert_eq!(c.oms_fields, None);
 
         // case with null
@@ -229,13 +229,13 @@ mod test {
                 "ID": "LEGACY_ROW_4",
                 "oms_fields": null
             }"#;
-        let d = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_4);
+        let d = serde_json::from_str::<LegacyRowWithOmsObjectField>(LEGACY_ROW_4);
         assert!(d.is_ok());
 
         // case with no value
         const LEGACY_ROW_5: &str = r#"{
                 "ID": "LEGACY_ROW_5"            }"#;
-        let e = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_5);
+        let e = serde_json::from_str::<LegacyRowWithOmsObjectField>(LEGACY_ROW_5);
         assert!(e.is_ok());
     }
 
@@ -247,7 +247,7 @@ mod test {
                     "some_enum_field": ""
                 }
             }"#;
-        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(raw_json);
         assert!(row.is_ok(), "Empty string to None is OK");
         let fields = row.unwrap().oms_fields.unwrap();
         assert_eq!(fields.some_enum_field, None);
@@ -258,7 +258,7 @@ mod test {
                     "some_enum_field": null
                 }
             }"#;
-        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(raw_json);
         assert!(row.is_ok(), "null to None is OK");
         let fields = row.unwrap().oms_fields.unwrap();
         assert_eq!(fields.some_enum_field, None);
@@ -269,7 +269,7 @@ mod test {
                     "some_enum_field": "FINALISED"
                 }
             }"#;
-        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(raw_json);
         assert!(row.is_ok(), "Valid enum variant is OK");
         let fields = row.unwrap().oms_fields.unwrap();
         assert_eq!(fields.some_enum_field, Some(Status::Finalised));
@@ -280,7 +280,7 @@ mod test {
                     "some_enum_field": "not valid variant"
                 }
             }"#;
-        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(raw_json);
         assert!(row.is_ok(), "Invalid enum to None is OK");
         let fields = row.unwrap().oms_fields.unwrap();
         assert_eq!(fields.some_enum_field, None);
@@ -305,7 +305,7 @@ mod test {
                 "option_t": 12
             }"#,
         );
-        let a = serde_json::from_str::<LegacyRowWithOptionNonString>(&LEGACY_ROW_1.1);
+        let a = serde_json::from_str::<LegacyRowWithOptionNonString>(LEGACY_ROW_1.1);
         assert!(a.is_ok());
         assert_eq!(a.unwrap().option_t, Some(12));
 
@@ -317,7 +317,7 @@ mod test {
                 "option_t": null
             }"#,
         );
-        let c = serde_json::from_str::<LegacyRowWithOptionNonString>(&LEGACY_ROW_3.1);
+        let c = serde_json::from_str::<LegacyRowWithOptionNonString>(LEGACY_ROW_3.1);
         assert!(c.is_ok());
         assert_eq!(c.unwrap().option_t, None);
 
@@ -328,7 +328,7 @@ mod test {
                 "ID": "LEGACY_ROW_4"
             }"#,
         );
-        let d = serde_json::from_str::<LegacyRowWithOptionNonString>(&LEGACY_ROW_4.1);
+        let d = serde_json::from_str::<LegacyRowWithOptionNonString>(LEGACY_ROW_4.1);
         assert!(d.is_ok());
         assert_eq!(d.unwrap().option_t, None);
     }
@@ -353,7 +353,7 @@ mod test {
                 "date_of_birth": "2022-01-01"
             }"#,
         );
-        let a = serde_json::from_str::<LegacyRowWithOptionDate>(&NORMAL_DATE.1);
+        let a = serde_json::from_str::<LegacyRowWithOptionDate>(NORMAL_DATE.1);
         assert!(a.is_ok());
         assert_eq!(
             a.unwrap().date_of_birth,
@@ -368,7 +368,7 @@ mod test {
                 "date_of_birth": "0000-00-00"
             }"#,
         );
-        let b = serde_json::from_str::<LegacyRowWithOptionDate>(&ZERO_DATE.1);
+        let b = serde_json::from_str::<LegacyRowWithOptionDate>(ZERO_DATE.1);
         assert!(b.is_ok());
         assert_eq!(b.unwrap().date_of_birth, None);
 
@@ -380,7 +380,7 @@ mod test {
                 "date_of_birth": "2022-01-02T00:00:00"
             }"#,
         );
-        let c = serde_json::from_str::<LegacyRowWithOptionDate>(&T_FORMAT_DATE.1);
+        let c = serde_json::from_str::<LegacyRowWithOptionDate>(T_FORMAT_DATE.1);
         assert!(c.is_ok());
         assert_eq!(
             c.unwrap().date_of_birth,
@@ -395,7 +395,7 @@ mod test {
                 "date_of_birth": "2022-01-03 00:00:00"
             }"#,
         );
-        let d = serde_json::from_str::<LegacyRowWithOptionDate>(&WITHOUT_T_FORMAT_DATE.1);
+        let d = serde_json::from_str::<LegacyRowWithOptionDate>(WITHOUT_T_FORMAT_DATE.1);
         assert!(d.is_ok());
         assert_eq!(
             d.unwrap().date_of_birth,
@@ -410,7 +410,7 @@ mod test {
                 "date_of_birth": "not a date"
             }"#,
         );
-        let d = serde_json::from_str::<LegacyRowWithOptionDate>(&INVALID_DATE.1);
+        let d = serde_json::from_str::<LegacyRowWithOptionDate>(INVALID_DATE.1);
         assert!(d.is_err());
         println!("Error message: {}", d.err().unwrap());
     }

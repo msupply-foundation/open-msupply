@@ -45,7 +45,7 @@ fn check_if_asset_already_exists(
     let serial_number = gs1
         .serial_number()
         .ok_or(AssetFromGs1Error::MissingSerialNumber)?;
-    log::info!("Looking up asset by serial number: {}", serial_number);
+    log::info!("Looking up asset by serial number: {serial_number}");
 
     let mut filter = AssetFilter::new().serial_number(StringFilter::equal_to(&serial_number));
 
@@ -119,7 +119,7 @@ fn create_draft_asset_from_gs1(ctx: &ServiceContext, gs1: GS1) -> Result<Asset, 
     asset.installation_date = Some(Utc::now().naive_local().date()); // Default to today's date
 
     let locked_fields_json = serde_json::to_string(&locked_fields).map_err(|e| {
-        log::error!("Failed to serialize locked fields: {}", e);
+        log::error!("Failed to serialize locked fields: {e}");
         AssetFromGs1Error::ParseError
     })?;
 

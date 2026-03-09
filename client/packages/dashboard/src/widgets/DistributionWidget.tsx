@@ -18,10 +18,10 @@ import {
   StatsPanel,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
-import { useDashboard } from '../api';
 import { useOutbound } from '@openmsupply-client/invoices';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDashboardPanels } from '../hooks';
+import { useOutboundCounts, useRequisitionCounts } from '../api';
 
 export const DistributionWidget = ({
   widgetContext,
@@ -34,18 +34,8 @@ export const DistributionWidget = ({
   const { error: errorNotification } = useNotification();
   const { userHasPermission } = useAuthContext();
   const formatNumber = useFormatNumber();
-  const {
-    data: outboundCount,
-    isLoading: isOutboundCountLoading,
-    isError: isOutboundCountError,
-    error: outboundCountError,
-  } = useDashboard.statistics.outbound();
-  const {
-    data: requisitionCount,
-    isLoading: isRequisitionCountLoading,
-    isError: isRequisitionCountError,
-    error: requisitionCountError,
-  } = useDashboard.statistics.requisitions();
+  const outbound = useOutboundCounts();
+  const requisition = useRequisitionCounts();
 
   const outboundShipmentsPanelContext = `${widgetContext}-outbound-shipments`;
   const customerRequisitionsPanelContext = `${widgetContext}-customer-requisitions`;
@@ -70,15 +60,15 @@ export const DistributionWidget = ({
   const corePanels = [
     <StatsPanel
       key={outboundShipmentsPanelContext}
-      error={outboundCountError as ApiException}
-      isError={isOutboundCountError}
-      isLoading={isOutboundCountLoading}
+      error={outbound.error as ApiException}
+      isError={outbound.isError}
+      isLoading={outbound.isLoading}
       title={t('heading.shipments')}
       panelContext={outboundShipmentsPanelContext}
       stats={[
         {
           label: t('label.have-not-shipped'),
-          value: formatNumber.round(outboundCount?.notShipped),
+          value: formatNumber.round(outbound.stats?.notShipped),
           link: RouteBuilder.create(AppRoute.Distribution)
             .addPart(AppRoute.OutboundShipment)
             .addQuery({
@@ -98,15 +88,15 @@ export const DistributionWidget = ({
     />,
     <StatsPanel
       key={customerRequisitionsPanelContext}
-      error={requisitionCountError as ApiException}
-      isError={isRequisitionCountError}
-      isLoading={isRequisitionCountLoading}
+      error={requisition.error as ApiException}
+      isError={requisition.isError}
+      isLoading={requisition.isLoading}
       title={t('customer-requisition')}
       panelContext={customerRequisitionsPanelContext}
       stats={[
         {
           label: t('label.new'),
-          value: formatNumber.round(requisitionCount?.response?.new),
+          value: formatNumber.round(requisition?.stats?.count),
           link: RouteBuilder.create(AppRoute.Distribution)
             .addPart(AppRoute.CustomerRequisition)
             .addQuery({ status: RequisitionNodeStatus.New })
@@ -115,7 +105,7 @@ export const DistributionWidget = ({
         },
         {
           label: t('label.emergency'),
-          value: formatNumber.round(requisitionCount?.emergency?.new),
+          value: formatNumber.round(requisition?.stats?.emergency),
           link: RouteBuilder.create(AppRoute.Distribution)
             .addPart(AppRoute.CustomerRequisition)
             .addQuery({ isEmergency: true })
@@ -123,8 +113,7 @@ export const DistributionWidget = ({
             .build(),
           statContext: `${customerRequisitionsPanelContext}-emergency`,
           alertFlag:
-            !!requisitionCount?.emergency?.new &&
-            requisitionCount?.emergency?.new > 0,
+            !!requisition.stats?.emergency && requisition.stats?.emergency > 0,
         },
       ]}
       link={RouteBuilder.create(AppRoute.Distribution)

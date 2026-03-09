@@ -217,12 +217,8 @@ impl RequisitionFilterInput {
             id: self.id.map(EqualFilter::from),
             user_id: self.user_id.map(EqualFilter::from),
             requisition_number: self.requisition_number.map(EqualFilter::from),
-            r#type: self
-                .r#type
-                .map(|t| map_filter!(t, |r| RequisitionType::from(r))),
-            status: self
-                .status
-                .map(|t| map_filter!(t, |s| RequisitionStatus::from(s))),
+            r#type: self.r#type.map(|t| map_filter!(t, RequisitionType::from)),
+            status: self.status.map(|t| map_filter!(t, RequisitionStatus::from)),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
             finalised_datetime: self.finalised_datetime.map(DatetimeFilter::from),

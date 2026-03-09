@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DetailContainer,
   Box,
   TabContext,
   DialogButton,
   useTranslation,
+  useNotification,
   BasicSpinner,
   SlidePanel,
   DetailTab,
@@ -30,6 +31,8 @@ export const CreatePatientSlider = ({
   onSelectPatient: onSelect,
 }: CreatePatientSliderProps) => {
   const t = useTranslation();
+  const { error } = useNotification();
+  const [saving, setSaving] = useState(false);
 
   const {
     onNext,
@@ -40,7 +43,6 @@ export const CreatePatientSlider = ({
     tabs,
     currentTab,
     patientSteps,
-    isSaving,
     isLoading,
     isDirty,
     hasError,
@@ -59,8 +61,8 @@ export const CreatePatientSlider = ({
 
   return (
     <SlidePanel
-      title=""
-      width={1000}
+      title={t('label.new-patient')}
+      width="100%"
       open={open}
       okButton={
         currentTab === Tabs.Patient ? (
@@ -68,12 +70,19 @@ export const CreatePatientSlider = ({
             color="secondary"
             label={t('button.save')}
             startIcon={<SaveIcon />}
-            onClick={() => {
-              handleSave();
-              onCreate();
+            onClick={async () => {
+              setSaving(true);
+              try {
+                await handleSave();
+                onCreate();
+              } catch (e) {
+                error(t('error.failed-to-save-patient'))();
+              } finally {
+                setSaving(false);
+              }
             }}
-            isLoading={isSaving}
-            disabled={!isDirty || isSaving || !!validationError}
+            isLoading={saving}
+            disabled={!isDirty || saving || !!validationError}
           />
         ) : (
           <DialogButton
@@ -99,7 +108,7 @@ export const CreatePatientSlider = ({
         />
       }
       onClose={() => {
-        onClose(), setCurrentTab(Tabs.Form);
+        (onClose(), setCurrentTab(Tabs.Form));
       }}
     >
       <DetailContainer>

@@ -10,10 +10,12 @@ use crate::{
     activity_log::activity_log_entry,
     backend_plugin::plugin_provider::PluginError,
     number::next_number,
+    preference::{DisplayPopulationBasedForecasting, Preference},
     pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
     requisition::{
         common::{check_requisition_row_exists, get_indicative_price_pref},
         query::get_requisition,
+        request_requisition::calculate_forecasting_fields,
         requisition_supply_status::get_requisitions_supply_statuses,
     },
     service_provider::ServiceContext,
@@ -143,7 +145,7 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: other_party_id.clone(),
+        name_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -173,27 +175,39 @@ fn generate(
             .into_iter()
             .filter(|s| s.requested_minus_supply_quantity() > 0.0)
             .collect::<Vec<_>>();
+    let item_ids = requisition_supply
+        .iter()
+        .map(|r| r.item_id().to_string())
+        .collect::<Vec<_>>();
 
-    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection)?;
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection, &ctx.store_id)?;
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             &ctx.connection,
             ItemPriceLookup {
-                item_ids: requisition_supply
-                    .iter()
-                    .map(|r| r.item_id().to_string())
-                    .collect(),
+                item_ids: item_ids.clone(),
                 customer_name_id: None,
             },
         )?)
     } else {
         None
     };
+    let display_forecasting = DisplayPopulationBasedForecasting
+        .load(&ctx.connection, None)
+        .unwrap_or(false);
+    let population_forecast = if display_forecasting {
+        calculate_forecasting_fields(ctx, item_ids.clone())?
+    } else {
+        std::collections::HashMap::new()
+    };
 
     let requisition_lines = requisition_supply
         .iter()
         .map(|r| {
             let line = r.requisition_line.requisition_line_row.clone();
+            let population_forecast_for_item = population_forecast
+                .get(r.item_id())
+                .and_then(|opt| opt.as_ref());
 
             RequisitionLineRow {
                 id: uuid(),
@@ -216,7 +230,13 @@ fn generate(
                 } else {
                     None
                 },
+                forecast_total_units: population_forecast_for_item.map(|f| f.forecast_total_units),
+                forecast_total_doses: population_forecast_for_item.map(|f| f.forecast_total_doses),
+                vaccine_courses: population_forecast_for_item
+                    .map(|f| serde_json::to_string(&f.vaccine_courses).unwrap_or_default()),
                 // Defaults
+                available_volume: None,
+                location_type_id: None,
                 initial_stock_on_hand_units: 0.0,
                 incoming_units: 0.0,
                 outgoing_units: 0.0,

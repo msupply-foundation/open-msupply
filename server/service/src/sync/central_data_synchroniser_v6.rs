@@ -163,7 +163,7 @@ impl SynchroniserV6 {
                 changelogs.len(),
                 change_logs_total
             );
-            log::debug!("Records: {:#?}", changelogs);
+            log::debug!("Records: {changelogs:#?}");
 
             let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
                 connection,
