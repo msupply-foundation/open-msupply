@@ -132,6 +132,9 @@ export type RequestByNumberQuery = {
             expiringUnits: number;
             daysOutOfStock: number;
             pricePerUnit?: number | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;
@@ -290,6 +293,9 @@ export type RequestByIdQuery = {
             expiringUnits: number;
             daysOutOfStock: number;
             pricePerUnit?: number | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;

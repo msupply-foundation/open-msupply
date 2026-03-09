@@ -66,6 +66,8 @@ pub mod item_margin_overrides_supplier_margin;
 pub use item_margin_overrides_supplier_margin::*;
 pub mod is_gaps;
 pub use is_gaps::*;
+pub mod display_population_based_forecasting;
+pub use display_population_based_forecasting::*;
 pub mod global_table_configs;
 pub use global_table_configs::*;
 
@@ -85,6 +87,7 @@ pub struct PreferenceProvider {
     pub expired_stock_issue_threshold: ExpiredStockIssueThreshold,
     pub item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
     pub is_gaps: IsGaps,
+    pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub global_table_configs: GlobalTableConfigs,
 
     // Store preferences
@@ -132,6 +135,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         expired_stock_issue_threshold: ExpiredStockIssueThreshold,
         item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
         is_gaps: IsGaps,
+        display_population_based_forecasting: DisplayPopulationBasedForecasting,
         global_table_configs: GlobalTableConfigs,
 
         // Store preferences
