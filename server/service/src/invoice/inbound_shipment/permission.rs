@@ -44,6 +44,11 @@ fn has_permission(
     store_id: &str,
     permission: PermissionType,
 ) -> Result<(), PermissionError> {
+    // System operations (e.g. transfer processors) run without a user context
+    if user_id.is_empty() {
+        return Ok(());
+    }
+
     let user_permissions = UserPermissionRepository::new(connection)
         .query(
             Pagination::all(),

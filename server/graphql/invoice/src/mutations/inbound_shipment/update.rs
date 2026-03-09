@@ -242,14 +242,16 @@ impl ApplyToLinesInput {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
+        assert_graphql_query, assert_standard_graphql_error,
+        test_helpers::{setup_graphql_test, setup_graphql_test_with_data},
     };
     use repository::{
         mock::{
             mock_inbound_shipment_c, mock_name_linked_to_store, mock_name_not_linked_to_store,
-            mock_name_store_a, mock_store_a, mock_store_linked_to_name, MockDataInserts,
+            mock_name_store_a, mock_store_a, mock_store_linked_to_name, MockData, MockDataInserts,
         },
-        Invoice, InvoiceRowRepository, RepositoryError, StorageConnectionManager,
+        Invoice, InvoiceRowRepository, PermissionType, RepositoryError, StorageConnectionManager,
+        UserPermissionRow,
     };
     use serde_json::json;
     use service::{
@@ -507,13 +509,36 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_inbound_shipment_success() {
-        let (mock_data, connection, connection_manager, settings) = setup_graphql_test(
-            EmptyMutation,
-            InvoiceMutations,
-            "test_graphql_update_inbound_shipment_success",
-            MockDataInserts::all(),
-        )
-        .await;
+        // debug_no_access_control uses "dummy_user" which needs inbound shipment permissions
+        let dummy_user_permissions = vec![
+            UserPermissionRow {
+                id: "dummy_user_inbound_mutate".to_string(),
+                user_id: "dummy_user".to_string(),
+                store_id: Some("store_a".to_string()),
+                permission: PermissionType::InboundShipmentMutate,
+                context_id: None,
+            },
+            UserPermissionRow {
+                id: "dummy_user_inbound_verify".to_string(),
+                user_id: "dummy_user".to_string(),
+                store_id: Some("store_a".to_string()),
+                permission: PermissionType::InboundShipmentVerify,
+                context_id: None,
+            },
+        ];
+
+        let (mock_data, connection, connection_manager, settings) =
+            setup_graphql_test_with_data(
+                EmptyMutation,
+                InvoiceMutations,
+                "test_graphql_update_inbound_shipment_success",
+                MockDataInserts::all(),
+                MockData {
+                    user_permissions: dummy_user_permissions,
+                    ..Default::default()
+                },
+            )
+            .await;
 
         let mutation = r#"
         mutation ($storeId: String, $input: UpdateInboundShipmentInput!) {
