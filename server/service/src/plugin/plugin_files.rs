@@ -30,7 +30,7 @@ impl PluginFileService {
     /// Returns the path to the file
     pub fn find_file(
         plugin_bucket: &Mutex<ValidatedPluginBucket>,
-        base_dir: &Option<String>,
+        base_dir: &str,
         PluginInfo { plugin, filename }: &PluginInfo,
     ) -> anyhow::Result<Option<PathBuf>> {
         let plugin_base_dir = get_plugin_dir(base_dir)?;
@@ -46,7 +46,7 @@ impl PluginFileService {
 
     pub fn plugin_files(
         plugin_bucket: &Mutex<ValidatedPluginBucket>,
-        base_dir: &Option<String>,
+        base_dir: &str,
     ) -> anyhow::Result<Vec<PluginFile>> {
         let mut files = Vec::new();
         let plugin_base_dir = get_plugin_dir(base_dir)?;
@@ -88,11 +88,8 @@ impl PluginFileService {
     }
 }
 
-fn get_plugin_dir(base_dir: &Option<String>) -> Result<PathBuf, anyhow::Error> {
-    Ok(match base_dir {
-        Some(file_dir) => PathBuf::from_str(file_dir)?.join(PLUGIN_FILE_DIR),
-        None => PathBuf::from_str(PLUGIN_FILE_DIR)?,
-    })
+fn get_plugin_dir(base_dir: &str) -> Result<PathBuf, anyhow::Error> {
+    Ok(PathBuf::from_str(base_dir)?.join(PLUGIN_FILE_DIR))
 }
 
 fn read_plugin_file(

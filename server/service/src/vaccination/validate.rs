@@ -96,7 +96,8 @@ pub fn get_related_vaccinations(
 ) -> Result<(Option<Vaccination>, Option<Vaccination>), RepositoryError> {
     // Get all doses based on course id
     let all_course_doses = VaccineCourseDoseRepository::new(connection).query_by_filter(
-        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
+        VaccineCourseDoseFilter::new()
+            .vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
     )?;
 
     // Get previous and next dose based on dose_id
@@ -116,7 +117,9 @@ pub fn get_related_vaccinations(
     let previous_vaccination = if let Some(previous_dose) = previous_dose {
         let prev_vaccination = VaccinationRepository::new(connection).query_one(
             VaccinationFilter::new()
-                .vaccine_course_dose_id(EqualFilter::equal_to(previous_dose.vaccine_course_dose_row.id.to_string()))
+                .vaccine_course_dose_id(EqualFilter::equal_to(
+                    previous_dose.vaccine_course_dose_row.id.to_string(),
+                ))
                 .program_enrolment_id(EqualFilter::equal_to(program_enrolment_id.to_string())),
         )?;
 
@@ -132,7 +135,13 @@ pub fn get_related_vaccinations(
 
     let next_vaccination = VaccinationRepository::new(connection).query_one(
         VaccinationFilter::new()
-            .vaccine_course_dose_id(EqualFilter::equal_to(next_dose.unwrap_or_default().vaccine_course_dose_row.id.to_string()))
+            .vaccine_course_dose_id(EqualFilter::equal_to(
+                next_dose
+                    .unwrap_or_default()
+                    .vaccine_course_dose_row
+                    .id
+                    .to_string(),
+            ))
             .program_enrolment_id(EqualFilter::equal_to(program_enrolment_id.to_string())),
     )?;
 

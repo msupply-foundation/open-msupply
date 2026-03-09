@@ -239,7 +239,6 @@ export type PreferencesQuery = {
     __typename: 'PreferencesNode';
     adjustForNumberOfDaysOutOfStock: boolean;
     allowTrackingOfStockByDonor: boolean;
-    authoriseGoodsReceived: boolean;
     authorisePurchaseOrder: boolean;
     canCreateInternalOrderFromARequisition: boolean;
     customTranslations: any;
@@ -265,16 +264,34 @@ export type PreferencesQuery = {
     useSimplifiedMobileUi: boolean;
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
+    displayPopulationBasedForecasting: boolean;
     warningForExcessRequest: boolean;
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
     isGaps: boolean;
+    globalTableConfigs: any;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
       enabled: boolean;
       maxAge: number;
       minItems: number;
+    };
+  };
+};
+
+export type SaveGlobalTableConfigsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpsertPreferencesInput;
+}>;
+
+export type SaveGlobalTableConfigsMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    preferences: {
+      __typename: 'PreferenceMutations';
+      upsertPreferences: { __typename: 'OkResponse'; ok: boolean };
     };
   };
 };
@@ -482,7 +499,6 @@ export const PreferencesDocument = gql`
     preferences(storeId: $storeId) {
       adjustForNumberOfDaysOutOfStock
       allowTrackingOfStockByDonor
-      authoriseGoodsReceived
       authorisePurchaseOrder
       canCreateInternalOrderFromARequisition
       customTranslations
@@ -508,6 +524,7 @@ export const PreferencesDocument = gql`
       useSimplifiedMobileUi
       expiredStockPreventIssue
       expiredStockIssueThreshold
+      displayPopulationBasedForecasting
       warnWhenMissingRecentStocktake {
         enabled
         maxAge
@@ -518,6 +535,21 @@ export const PreferencesDocument = gql`
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
       isGaps
+      globalTableConfigs
+    }
+  }
+`;
+export const SaveGlobalTableConfigsDocument = gql`
+  mutation saveGlobalTableConfigs(
+    $storeId: String!
+    $input: UpsertPreferencesInput!
+  ) {
+    centralServer {
+      preferences {
+        upsertPreferences(storeId: $storeId, input: $input) {
+          ok
+        }
+      }
     }
   }
 `;
@@ -660,6 +692,24 @@ export function getSdk(
           }),
         'preferences',
         'query',
+        variables
+      );
+    },
+    saveGlobalTableConfigs(
+      variables: SaveGlobalTableConfigsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<SaveGlobalTableConfigsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SaveGlobalTableConfigsMutation>({
+            document: SaveGlobalTableConfigsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'saveGlobalTableConfigs',
+        'mutation',
         variables
       );
     },

@@ -103,8 +103,9 @@ fn generate_stocktake_lines(
         .has_packs_in_store(true);
 
     if let Some(master_list_id) = master_list_id {
-        stock_line_filter = stock_line_filter
-            .master_list(MasterListFilter::new().id(EqualFilter::equal_to(master_list_id.to_string())))
+        stock_line_filter = stock_line_filter.master_list(
+            MasterListFilter::new().id(EqualFilter::equal_to(master_list_id.to_string())),
+        )
     }
 
     if let Some(location_id) = location_id {
@@ -113,7 +114,8 @@ fn generate_stocktake_lines(
     }
 
     if let Some(vvm_status_id) = vvm_status_id {
-        stock_line_filter = stock_line_filter.vvm_status_id(EqualFilter::equal_to(vvm_status_id.to_string()));
+        stock_line_filter =
+            stock_line_filter.vvm_status_id(EqualFilter::equal_to(vvm_status_id.to_string()));
     }
 
     if let Some(expires_before_date) = expires_before {

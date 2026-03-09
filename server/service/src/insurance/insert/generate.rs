@@ -46,10 +46,8 @@ pub fn compose_policy_number(
     policy_number_person: Option<String>,
 ) -> String {
     let v = vec![policy_number_family, policy_number_person];
-    
 
-    v
-        .into_iter()
+    v.into_iter()
         .flatten()
         .filter(|n| !n.is_empty())
         .collect::<Vec<_>>()

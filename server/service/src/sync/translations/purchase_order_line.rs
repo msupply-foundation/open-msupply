@@ -46,9 +46,6 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(rename = "quan_adjusted_order")]
     pub adjusted_number_of_units: Option<f64>,
     #[serde(default)]
-    #[serde(rename = "quan_rec_to_date")]
-    pub received_number_of_units: f64,
-    #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "delivery_date_requested")]
@@ -123,7 +120,6 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_pack_size,
             requested_number_of_units,
             adjusted_number_of_units,
-            received_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             supplier_item_code,
@@ -147,7 +143,6 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_number_of_units,
             requested_pack_size,
             adjusted_number_of_units,
-            received_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             stock_on_hand_in_units,
@@ -190,7 +185,6 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_number_of_units,
             requested_pack_size,
             adjusted_number_of_units,
-            received_number_of_units,
             stock_on_hand_in_units,
             supplier_item_code,
             price_per_pack_before_discount,
@@ -225,7 +219,6 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_pack_size,
             requested_number_of_units,
             adjusted_number_of_units,
-            received_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             supplier_item_code,

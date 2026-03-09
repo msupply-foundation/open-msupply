@@ -69,8 +69,7 @@ pub fn generate(
                 invoice_line_id: new_line.id.clone(),
                 comment: Some(format!(
                     "Updated from {} #{}",
-                    invoice.r#type,
-                    invoice.invoice_number
+                    invoice.r#type, invoice.invoice_number
                 )),
             }))
         } else {
@@ -250,6 +249,7 @@ fn generate_line(
         shipped_pack_size: (r#type == StockOutType::OutboundShipment).then_some(pack_size),
         linked_invoice_id: None,
         reason_option_id: None,
+        status: None,
     })
 }
 

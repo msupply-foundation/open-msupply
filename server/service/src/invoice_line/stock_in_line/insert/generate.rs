@@ -8,11 +8,13 @@ use crate::{
         convert_invoice_line_to_single_pack, generate_batch, should_update_stock, StockInType,
         StockLineInput,
     },
+    preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference},
     store_preference::get_store_preferences,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineType,
-    InvoiceRow, ItemRow, RepositoryError, StockLineRow, StockLineRowRepository, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineStatus,
+    InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, StockLineRow, StockLineRowRepository,
+    StorageConnection,
 };
 
 use super::InsertStockInLine;
@@ -33,8 +35,17 @@ pub fn generate(
     existing_invoice_row: InvoiceRow,
 ) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
+    let external_inbound_shipment_lines_must_be_authorised =
+        ExternalInboundShipmentLinesMustBeAuthorised
+            .load(connection, Some(existing_invoice_row.store_id.clone()))
+            .unwrap_or(false);
 
-    let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone()); // include vvm status here
+    let mut new_line = generate_line(
+        input.clone(),
+        item_row,
+        existing_invoice_row.clone(),
+        external_inbound_shipment_lines_must_be_authorised,
+    );
 
     // Check if the stock line already exists, if it does we may need to update it rather than replacing it
     let old_stock_line = match &input.stock_line_id {
@@ -60,42 +71,44 @@ pub fn generate(
 
     let barcode_option = generate_barcode(&input, connection)?;
 
-    let (batch_option, vvm_status_log) =
-        if should_upsert_batch(&input.r#type, &existing_invoice_row) {
-            let batch = generate_batch(
-                connection,
-                new_line.clone(),
-                StockLineInput {
-                    stock_line_id: input.stock_line_id.clone(),
-                    store_id: existing_invoice_row.store_id.clone(),
-                    supplier_id: existing_invoice_row.name_id.clone(),
-                    on_hold: input.stock_on_hold,
-                    barcode_id: barcode_option.clone().map(|b| b.id.clone()),
-                    overwrite_stock_levels: should_overwrite_stock_levels,
-                },
-            )?;
+    let (batch_option, vvm_status_log) = if should_upsert_batch(&input.r#type, &existing_invoice_row)
+        // when this is true, new lines are created with pending status and shouldn't update stock
+        && !external_inbound_shipment_lines_must_be_authorised
+    {
+        let batch = generate_batch(
+            connection,
+            new_line.clone(),
+            StockLineInput {
+                stock_line_id: input.stock_line_id.clone(),
+                store_id: existing_invoice_row.store_id.clone(),
+                supplier_id: existing_invoice_row.name_id.clone(),
+                on_hold: input.stock_on_hold,
+                barcode_id: barcode_option.clone().map(|b| b.id.clone()),
+                overwrite_stock_levels: should_overwrite_stock_levels,
+            },
+        )?;
 
-            // If a new stock line has been created, update the stock_line_id on the invoice line
-            new_line.stock_line_id = Some(batch.id.clone());
+        // If a new stock line has been created, update the stock_line_id on the invoice line
+        new_line.stock_line_id = Some(batch.id.clone());
 
-            let vvm_status_log = if let Some(vvm_status_id) = input.vvm_status_id {
-                Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
-                    id: None,
-                    store_id: existing_invoice_row.store_id.clone(),
-                    created_by: user_id.to_string(),
-                    vvm_status_id,
-                    stock_line_id: batch.id.clone(),
-                    invoice_line_id: new_line.id.clone(),
-                    comment: None,
-                }))
-            } else {
-                None
-            };
-
-            (Some(batch), vvm_status_log)
+        let vvm_status_log = if let Some(vvm_status_id) = input.vvm_status_id {
+            Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+                id: None,
+                store_id: existing_invoice_row.store_id.clone(),
+                created_by: user_id.to_string(),
+                vvm_status_id,
+                stock_line_id: batch.id.clone(),
+                invoice_line_id: new_line.id.clone(),
+                comment: None,
+            }))
         } else {
-            (None, None)
+            None
         };
+
+        (Some(batch), vvm_status_log)
+    } else {
+        (None, None)
+    };
 
     Ok(GenerateResult {
         invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
@@ -142,13 +155,23 @@ fn generate_line(
     InvoiceRow {
         tax_percentage,
         default_donor_id,
+        purchase_order_id,
         ..
     }: InvoiceRow,
+    external_inbound_shipment_lines_must_be_authorised: bool,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
     // default to invoice_row donor_id if none supplied on insert
     let donor_id = donor_id.or(default_donor_id);
+
+    // set to pending for external inbound shipments when the preference is enabled
+    let add_status =
+        purchase_order_id.is_some() && external_inbound_shipment_lines_must_be_authorised;
+    let status = match add_status {
+        true => Some(InvoiceLineStatus::Pending),
+        false => None,
+    };
 
     InvoiceLineRow {
         id,
@@ -181,6 +204,7 @@ fn generate_line(
         linked_invoice_id: None,
         prescribed_quantity: None,
         reason_option_id: None,
+        status,
     }
 }
 
