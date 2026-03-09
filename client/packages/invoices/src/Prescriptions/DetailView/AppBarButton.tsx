@@ -34,11 +34,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     query: { data: prescription },
   } = usePrescription();
   const { OpenButton } = useDetailPanel();
-  const {
-    printLabels: printPrescriptionLabels,
-    isPrintingLabels,
-    DisabledNotification,
-  } = usePrintLabels();
+  const { printLabels: printPrescriptionLabels, isPrintingLabels } =
+    usePrintLabels();
 
   const handlePrintLabels = (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (prescription) {
@@ -120,7 +117,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         />
         {OpenButton}
       </Grid>
-      <DisabledNotification />
     </AppBarButtonsPortal>
   );
 };

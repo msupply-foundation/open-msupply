@@ -3,23 +3,18 @@ use crate::{
         plugin_provider::{PluginError, PluginInstance},
         types::transform_request_requisition_lines::Context,
     },
-    item::item::check_item_exists,
-    requisition::{
-        common::check_requisition_row_exists, request_requisition::generate_requisition_lines,
-    },
-    requisition_line::{
-        common::{check_item_exists_in_requisition, check_requisition_line_exists},
-        query::get_requisition_line,
-    },
+    requisition_line::query::get_requisition_line,
     service_provider::ServiceContext,
     PluginOrRepositoryError,
 };
-
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    PluginDataRowRepository, RepositoryError, RequisitionLine, RequisitionLineRow,
-    RequisitionLineRowRepository, StorageConnection,
+    PluginDataRowRepository, RepositoryError, RequisitionLine, RequisitionLineRowRepository,
 };
+
+mod generate;
+mod validate;
+use generate::generate;
+use validate::validate;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertRequestRequisitionLine {
@@ -82,67 +77,6 @@ pub fn insert_request_requisition_line(
                 .ok_or(OutError::NewlyCreatedRequisitionLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
-    Ok(requisition_line)
-}
-
-fn validate(
-    connection: &StorageConnection,
-    store_id: &str,
-    input: &InsertRequestRequisitionLine,
-) -> Result<RequisitionRow, OutError> {
-    if (check_requisition_line_exists(connection, &input.id)?).is_some() {
-        return Err(OutError::RequisitionLineAlreadyExists);
-    }
-
-    let requisition_row = check_requisition_row_exists(connection, &input.requisition_id)?
-        .ok_or(OutError::RequisitionDoesNotExist)?;
-
-    if requisition_row.program_id.is_some() {
-        return Err(OutError::CannotAddItemToProgramRequisition);
-    }
-
-    if requisition_row.store_id != store_id {
-        return Err(OutError::NotThisStoreRequisition);
-    }
-
-    if requisition_row.r#type != RequisitionType::Request {
-        return Err(OutError::NotARequestRequisition);
-    }
-
-    if requisition_row.status != RequisitionStatus::Draft {
-        return Err(OutError::CannotEditRequisition);
-    }
-
-    if (check_item_exists_in_requisition(connection, &input.requisition_id, &input.item_id)?)
-        .is_some()
-    {
-        return Err(OutError::ItemAlreadyExistInRequisition);
-    }
-
-    if !check_item_exists(connection, store_id.to_string(), &input.item_id)? {
-        return Err(OutError::ItemDoesNotExist);
-    }
-
-    Ok(requisition_row)
-}
-
-fn generate(
-    ctx: &ServiceContext,
-    store_id: &str,
-    requisition_row: &RequisitionRow,
-    InsertRequestRequisitionLine {
-        id,
-        requisition_id: _,
-        item_id,
-    }: InsertRequestRequisitionLine,
-) -> Result<RequisitionLineRow, OutError> {
-    let mut requisition_line =
-        generate_requisition_lines(ctx, store_id, requisition_row, vec![item_id], None)?
-            .pop()
-            .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
-
-    requisition_line.id = id;
-
     Ok(requisition_line)
 }
 
@@ -225,7 +159,6 @@ mod test {
                     item_id: mock_request_draft_requisition_calculation_test().lines[0]
                         .item_link_id
                         .clone(),
-                    ..Default::default()
                 },
             ),
             Err(ServiceError::ItemAlreadyExistInRequisition)
@@ -366,7 +299,6 @@ mod test {
                 requisition_id: mock_request_draft_requisition().id.clone(),
                 id: "new requisition line id2".to_string(),
                 item_id: mock_item_c().id.clone(),
-                ..Default::default()
             },
         );
 
