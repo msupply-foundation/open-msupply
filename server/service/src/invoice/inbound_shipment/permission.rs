@@ -4,6 +4,23 @@ use crate::invoice::inbound_shipment::{
     DeleteInboundShipmentError, UpdateInboundShipmentError,
 };
 
+/// Check if user has permission to verify/authorise the given inbound shipment type
+/// Returns error if user lacks required permission
+pub fn check_inbound_shipment_verify_permission(
+    connection: &StorageConnection,
+    store_id: &str,
+    user_id: &str,
+    is_external: bool,
+) -> Result<(), PermissionError> {
+    let required_permission = if is_external {
+        PermissionType::InboundShipmentExternalAuthorise
+    } else {
+        PermissionType::InboundShipmentVerify
+    };
+
+    has_permission(connection, user_id, store_id, required_permission)
+}
+
 /// Check if user has permission to mutate the given inbound shipment type
 /// Returns error if user lacks required permission
 pub fn check_inbound_shipment_mutation_permission(
