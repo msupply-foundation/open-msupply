@@ -57,7 +57,8 @@
       ],
       "settings": {
         "claudeCode.allowDangerouslySkipPermissions": true,
-        "terminal.integrated.defaultProfile.linux": "fish"
+        "terminal.integrated.defaultProfile.linux": "fish",
+        "dev.containers.experimentalMountGitWorktreeCommonDir": true
       }
     }
   },

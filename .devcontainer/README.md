@@ -16,6 +16,8 @@ This directory contains configuration for a VS Code dev container, providing an 
 3. Open this repository in VS Code and click **Reopen in Container** when prompted (or run **Dev Containers: Reopen in Container** from the command palette) (or click the remote connection icon in the bottom left a full list of options like rebuild container).
 4. Wait for the container to build and dependencies to install — this may take several minutes on first run.
 
+When using a git worktree there is an [experimental setting](https://github.com/devcontainers/cli/issues/796#issuecomment-3906955615) to mount the parent git folder into the container so git still works (requires the worktree to be created with `--relative-paths`).
+
 ## Connecting to services on your host machine
 
 The container runs in an isolated network. Services running on your host (PostgreSQL, mSupply server, etc.) are not reachable via `localhost` — use `host.docker.internal` instead. Any service on your host can be accessed so don't run anything that could lead to prompt injection.
