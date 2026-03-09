@@ -91,7 +91,7 @@ export const AppBarButtons = ({
           .build()
       );
     } catch (e) {
-      errorNotification('Failed to create invoice! ' + (e as Error).message)();
+      errorNotification(t('error.failed-to-create-inbound-shipment', { message: (e as Error).message }))();
     }
   };
 
