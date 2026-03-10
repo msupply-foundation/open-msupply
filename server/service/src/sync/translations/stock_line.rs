@@ -29,6 +29,8 @@ pub struct StockLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -136,6 +138,7 @@ impl SyncTranslation for StockLineTranslation {
         let StockLineRowOmsFields {
             campaign_id,
             program_id,
+            manufacture_date,
         } = oms_fields.unwrap_or_default();
 
         let result = StockLineRow {
@@ -159,7 +162,7 @@ impl SyncTranslation for StockLineTranslation {
             vvm_status_id,
             campaign_id,
             program_id,
-            manufacture_date: None,
+            manufacture_date,
             total_volume,
             volume_per_pack,
         };
@@ -205,7 +208,7 @@ impl SyncTranslation for StockLineTranslation {
                     vvm_status_id,
                     campaign_id,
                     program_id,
-                    manufacture_date: _,
+                    manufacture_date,
                     total_volume,
                     volume_per_pack,
                 },
@@ -217,6 +220,7 @@ impl SyncTranslation for StockLineTranslation {
         let oms_fields = Some(StockLineRowOmsFields {
             campaign_id,
             program_id,
+            manufacture_date,
         });
 
         let legacy_row = LegacyStockLineRow {
