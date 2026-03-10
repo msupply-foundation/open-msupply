@@ -32,6 +32,7 @@ pub struct UpdateInput {
     pub campaign_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
     pub volume_per_pack: Option<f64>,
+    pub manufacturer_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Interface)]
@@ -103,6 +104,7 @@ impl UpdateInput {
             campaign_id,
             program_id,
             volume_per_pack,
+            manufacturer_id,
         } = self;
 
         ServiceInput {
@@ -132,6 +134,9 @@ impl UpdateInput {
                 value: program_id.value,
             }),
             volume_per_pack,
+            manufacturer_id: manufacturer_id.map(|manufacturer_id| NullableUpdate {
+                value: manufacturer_id.value,
+            }),
         }
     }
 }
@@ -152,6 +157,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::DonorDoesNotExist
         | ServiceError::DonorNotVisible
         | ServiceError::DonorIsNotADonor
+        | ServiceError::ManufacturerDoesNotExist
+        | ServiceError::ManufacturerNotVisible
+        | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::VVMStatusDoesNotExist
         | ServiceError::StockDoesNotBelongToStore
         | ServiceError::LocationDoesNotExist
