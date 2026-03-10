@@ -224,13 +224,11 @@ export const useInboundShipmentColumns = (
   }, [
     external,
     showLineStatus,
-    getError,
-    manageVaccinesInDoses,
     t,
     manageVvmStatusForStock,
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
-    statusMap,
     getError,
+    statusMap,
   ]);
 };

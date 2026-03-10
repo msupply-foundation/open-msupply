@@ -27,7 +27,7 @@ const getStatusOptions = (
   getButtonLabel: (status: InvoiceNodeStatus) => string,
   isManuallyCreated: boolean
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  // Manual workflows skip Picked and Shipped statuses
+  // Manual workflows skip Picked status
   const statuses = isManuallyCreated
     ? [
       InvoiceNodeStatus.New,

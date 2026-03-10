@@ -110,6 +110,7 @@ import {
 } from '@common/utils';
 import { useFormatNumber, useCurrency } from '@common/intl';
 import { InputAdornment, Tooltip } from '@common/components';
+import { useBufferState } from '@common/hooks';
 
 export interface NumericInputProps {
   /**
@@ -397,15 +398,15 @@ export const constrain = (
 ) => NumUtils.constrain(NumUtils.round(value, decimals), min, max);
 
 export const BufferedNumericTextInput = (props: NumericTextInputProps) => {
-  const [buffer, setBuffer] = useState<number | undefined>(undefined);
+  const [buffer, setBuffer] = useBufferState(props.value);
 
   return (
     <NumericTextInput
       {...props}
-      value={buffer !== undefined ? buffer : props.value}
+      value={buffer}
       onChange={value => {
-        setBuffer(value);
         props.onChange?.(value);
+        setBuffer(value);
       }}
     />
   );
