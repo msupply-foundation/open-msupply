@@ -90,7 +90,7 @@ impl<'a> StoreRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<StoreFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = Self::create_filtered_query(filter);
         Ok(query
             .count()
             .get_result(self.connection.lock().connection())?)
@@ -111,7 +111,7 @@ impl<'a> StoreRepository<'a> {
         sort: Option<StoreSort>,
     ) -> Result<Vec<Store>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let mut query = create_filtered_query(filter);
+        let mut query = Self::create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
                 StoreSortField::Code => {
@@ -134,6 +134,37 @@ impl<'a> StoreRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
+
+    pub fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
+        let mut query = query().into_boxed();
+
+        if let Some(f) = filter {
+            let StoreFilter {
+                id,
+                code,
+                name_id,
+                name,
+                name_code,
+                site_id,
+                code_or_name,
+            } = f;
+
+            // or filter need to be applied before and filters
+            if code_or_name.is_some() {
+                apply_string_filter!(query, code_or_name.clone(), store::code);
+                apply_string_or_filter!(query, code_or_name, name::name_);
+            }
+
+            apply_equal_filter!(query, id, store::id);
+            apply_string_filter!(query, code, store::code);
+            apply_equal_filter!(query, name_id, name::id);
+            apply_string_filter!(query, name, name::name_);
+            apply_string_filter!(query, name_code, name::code);
+            apply_equal_filter!(query, site_id, store::site_id);
+        }
+
+        query
+    }
 }
 
 #[diesel::dsl::auto_type]
@@ -142,37 +173,6 @@ fn query() -> _ {
 }
 
 type BoxedStoreQuery = IntoBoxed<'static, query, DBType>;
-
-fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
-    let mut query = query().into_boxed();
-
-    if let Some(f) = filter {
-        let StoreFilter {
-            id,
-            code,
-            name_id,
-            name,
-            name_code,
-            site_id,
-            code_or_name,
-        } = f;
-
-        // or filter need to be applied before and filters
-        if code_or_name.is_some() {
-            apply_string_filter!(query, code_or_name.clone(), store::code);
-            apply_string_or_filter!(query, code_or_name, name::name_);
-        }
-
-        apply_equal_filter!(query, id, store::id);
-        apply_string_filter!(query, code, store::code);
-        apply_equal_filter!(query, name_id, store::name_id);
-        apply_string_filter!(query, name, name::name_);
-        apply_string_filter!(query, name_code, name::code);
-        apply_equal_filter!(query, site_id, store::site_id);
-    }
-
-    query
-}
 
 fn to_domain((store_row, name_row): StoreJoin) -> Store {
     Store {

@@ -264,6 +264,7 @@ export type PreferencesQuery = {
     useSimplifiedMobileUi: boolean;
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
+    displayPopulationBasedForecasting: boolean;
     warningForExcessRequest: boolean;
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
@@ -523,6 +524,7 @@ export const PreferencesDocument = gql`
       useSimplifiedMobileUi
       expiredStockPreventIssue
       expiredStockIssueThreshold
+      displayPopulationBasedForecasting
       warnWhenMissingRecentStocktake {
         enabled
         maxAge
