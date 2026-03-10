@@ -13,6 +13,7 @@ import {
   setNullableInput,
   FilterBy,
   StocktakeLineSortFieldInput,
+  isEnumValue,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -117,11 +118,15 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     list:
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
+        const key = isEnumValue(StocktakeSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : StocktakeSortFieldInput.StocktakeNumber;
+
         const result = await sdk.stocktakes({
           storeId,
           page: { offset, first },
           sort: {
-            key: sortBy.key as StocktakeSortFieldInput,
+            key,
             desc: !!sortBy.isDesc,
           },
           filter: filterBy,
@@ -131,10 +136,14 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     listAll:
       ({ sortBy }: { sortBy: SortBy<StocktakeRowFragment> }) =>
       async () => {
+        const key = isEnumValue(StocktakeSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : StocktakeSortFieldInput.StocktakeNumber;
+
         const result = await sdk.stocktakes({
           storeId,
           sort: {
-            key: sortBy.key as StocktakeSortFieldInput,
+            key,
             desc: !!sortBy.isDesc,
           },
         });
@@ -171,7 +180,9 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         page: { offset, first },
         sort: sortBy
           ? {
-              key: sortBy.key as StocktakeLineSortFieldInput,
+              key: isEnumValue(StocktakeLineSortFieldInput, sortBy.key)
+                ? sortBy.key
+                : StocktakeLineSortFieldInput.ItemName,
               desc: !!sortBy.isDesc,
             }
           : undefined,

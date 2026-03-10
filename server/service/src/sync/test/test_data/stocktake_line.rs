@@ -99,6 +99,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 program_id: Some("program_test".to_string()),
                 campaign_id: None,
+                manufacture_date: None,
             })
         }),
     }
@@ -196,6 +197,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id: Some("campaign_a".to_string()),
                 program_id: None,
+                manufacture_date: None,
             }),
         }),
     }
