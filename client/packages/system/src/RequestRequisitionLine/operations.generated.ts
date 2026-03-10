@@ -43,6 +43,9 @@ export type RequestLineFragment = {
   expiringUnits: number;
   daysOutOfStock: number;
   pricePerUnit?: number | null;
+  forecastTotalUnits?: number | null;
+  forecastTotalDoses?: number | null;
+  vaccineCourses?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     availableStockOnHand: number;
@@ -138,6 +141,9 @@ export type RequestFragment = {
       expiringUnits: number;
       daysOutOfStock: number;
       pricePerUnit?: number | null;
+      forecastTotalUnits?: number | null;
+      forecastTotalDoses?: number | null;
+      vaccineCourses?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         availableStockOnHand: number;
@@ -294,6 +300,9 @@ export const RequestLineFragmentDoc = gql`
     reason {
       ...ReasonOptionRow
     }
+    forecastTotalUnits
+    forecastTotalDoses
+    vaccineCourses
   }
   ${ItemWithStatsFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
@@ -430,17 +439,15 @@ export function getSdk(
   return {
     OnlyHereToAvoidUnusedWarnings(
       variables?: OnlyHereToAvoidUnusedWarningsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<OnlyHereToAvoidUnusedWarningsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<OnlyHereToAvoidUnusedWarningsQuery>({
-            document: OnlyHereToAvoidUnusedWarningsDocument,
+          client.request<OnlyHereToAvoidUnusedWarningsQuery>(
+            OnlyHereToAvoidUnusedWarningsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'OnlyHereToAvoidUnusedWarnings',
         'query',
         variables

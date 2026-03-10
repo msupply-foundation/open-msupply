@@ -18,7 +18,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: String::from("name_store_b"),
+            name_id: String::from("name_store_b"),
             store_id: String::from("store_c"),
             invoice_number: 10,
             r#type: InvoiceType::OutboundShipment,
@@ -99,7 +99,7 @@ pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: String::from("name_store_a"),
+            name_id: String::from("name_store_a"),
             store_id: String::from("store_a"),
             invoice_number: 11,
             r#type: InvoiceType::InboundShipment,
@@ -121,7 +121,7 @@ pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: String::from("name_store_a"),
+            name_id: String::from("name_store_a"),
             store_id: String::from("store_c"),
             invoice_number: 11,
             r#type: InvoiceType::OutboundShipment,

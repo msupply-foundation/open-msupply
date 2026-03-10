@@ -2,7 +2,7 @@ use crate::{Delete, Upsert};
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    location_type_row::location_type, name_link_row::name_link, unit_row::unit, ItemLinkRow,
+    location_type_row::location_type, unit_row::unit, ItemLinkRow,
     ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
@@ -42,7 +42,6 @@ table! {
 joinable!(item -> unit (unit_id));
 joinable!(item_is_visible -> item (id));
 allow_tables_to_appear_in_same_query!(item, item_link);
-allow_tables_to_appear_in_same_query!(item, name_link);
 allow_tables_to_appear_in_same_query!(item, clinician_link);
 allow_tables_to_appear_in_same_query!(item, location_type);
 

@@ -21,7 +21,7 @@ pub const PUBLIC_CERT_FILE: &str = "cert.pem";
 
 pub fn find_certs(server_settings: &ServerSettings) -> Option<CertFiles> {
     let cert_dir = PathBuf::new()
-        .join(server_settings.base_dir.clone().unwrap_or(".".to_string()))
+        .join(&server_settings.base_dir)
         .join(CERTS_PATH);
 
     let key_file = PathBuf::new().join(&cert_dir).join(PRIVATE_CERT_FILE);
@@ -95,8 +95,7 @@ impl Certificates {
                     None
                 } else {
                     warn!("No certificates found: Generating self signed certificates");
-                    let base_dir = &settings.base_dir.clone().unwrap_or(".".to_string());
-                    let cert_path = PathBuf::from(base_dir).join(CERTS_PATH);
+                    let cert_path = PathBuf::from(&settings.base_dir).join(CERTS_PATH);
                     let cert_files = match Self::generate_certs(&cert_path) {
                         Ok(cert_files) => cert_files,
                         Err(e) => {

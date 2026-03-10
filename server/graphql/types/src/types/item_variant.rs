@@ -47,7 +47,7 @@ impl ItemVariantNode {
     }
 
     pub async fn manufacturer_id(&self) -> &Option<String> {
-        &self.item_variant.manufacturer_link_id // TODO join to name for manufacturer_id https://github.com/msupply-foundation/open-msupply/issues/5241
+        &self.item_variant.manufacturer_id // TODO join to name for manufacturer_id https://github.com/msupply-foundation/open-msupply/issues/5241
     }
 
     pub async fn location_type_id(&self) -> &Option<String> {
@@ -72,7 +72,7 @@ impl ItemVariantNode {
         ctx: &Context<'_>,
         store_id: String,
     ) -> Result<Option<NameNode>> {
-        let manufacturer_link_id = match &self.item_variant.manufacturer_link_id {
+        let manufacturer_link_id = match &self.item_variant.manufacturer_id {
             Some(manufacturer_link_id) => manufacturer_link_id,
             None => return Ok(None),
         };
