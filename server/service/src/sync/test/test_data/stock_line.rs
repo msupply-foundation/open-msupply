@@ -115,6 +115,7 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(StockLineRowOmsFields {
                 campaign_id: Some("campaign_a".to_string()),
                 program_id: Some("program_a".to_string()),
+                manufacture_date: None,
             }),
             volume_per_pack: 10.0,
             total_volume: 100.0,
@@ -224,6 +225,7 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(StockLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                manufacture_date: None,
             }),
             volume_per_pack: 0.0,
             total_volume: 0.0,
@@ -333,6 +335,7 @@ fn item_line_3_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(StockLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                manufacture_date: None,
             }),
             volume_per_pack: 0.0,
             total_volume: 0.0,
@@ -442,6 +445,7 @@ fn item_line_4_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(StockLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                manufacture_date: None,
             }),
             volume_per_pack: 0.0,
             total_volume: 0.0,
@@ -550,6 +554,7 @@ fn item_line_5_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(StockLineRowOmsFields {
                 campaign_id: None,
                 program_id: None,
+                manufacture_date: None,
             }),
             volume_per_pack: 0.0,
             total_volume: 0.0,
