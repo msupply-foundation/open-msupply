@@ -29,6 +29,7 @@ import {
   ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
+  ManufacturerSearchInput,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
@@ -129,6 +130,7 @@ export const QuantityTable = ({
                 id,
                 itemVariantId: itemVariant?.id,
                 itemVariant,
+                manufacturer: itemVariant?.manufacturer ?? null,
                 volumePerPack: getVolumePerPackFromVariant({
                   packSize,
                   itemVariant,
@@ -560,6 +562,26 @@ export const LocationTableComponent = ({
           />
         ),
         includeColumn: allowTrackingOfStockByDonor,
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        Cell: ({ row: { original: row } }) => (
+          <ManufacturerSearchInput
+            value={row.manufacturer ?? null}
+            disabled={isDisabled ?? false}
+            onChange={manufacturer => {
+              updateDraftLine({
+                id: row.id,
+                manufacturer: manufacturer ?? undefined,
+                ...(row.itemVariant
+                  ? { itemVariantId: undefined, itemVariant: null }
+                  : {}),
+              });
+            }}
+            width={200}
+          />
+        ),
       },
       {
         id: 'campaignOrProgram',
