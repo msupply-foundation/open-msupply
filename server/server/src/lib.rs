@@ -3,7 +3,8 @@ extern crate machine_uid;
 
 use crate::{
     central::config_central, certs::Certificates, cold_chain::config_cold_chain,
-    configuration::get_or_create_token_secret, cors::cors_policy,
+    configuration::{get_or_create_token_secret, save_token_secret},
+    cors::cors_policy,
     custom_translations::config_custom_translations, middleware::central_server_only,
     print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
     support::config_support, upload_fridge_tag::config_upload_fridge_tag,
@@ -136,6 +137,7 @@ pub async fn start_server(
     let certificates = Certificates::try_load(&settings.server).unwrap();
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
+    let token_secret_copy = token_secret.clone();
     let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
     info!("Initialising server context..done");
 
@@ -316,6 +318,9 @@ pub async fn start_server(
 
     add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
+
+    // Persist token secret now that the key_value_store table is guaranteed to exist
+    save_token_secret(&connection, &token_secret_copy);
 
     StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
