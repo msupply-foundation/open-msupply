@@ -107,6 +107,9 @@ pub enum UpdateStockInLineError {
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
+    ManufacturerDoesNotExist,
+    ManufacturerNotVisible,
+    ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
     ProgramNotVisible,
     IncorrectLocationType,
@@ -351,6 +354,21 @@ mod test {
                 },
             ),
             Err(ServiceError::ProgramNotVisible)
+        );
+
+        // ManufacturerDoesNotExist
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    manufacturer_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ManufacturerDoesNotExist)
         );
 
         // NotThisStoreInvoice
