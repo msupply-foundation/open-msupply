@@ -91,7 +91,8 @@ pub fn upsert_item_variant(
 
             let updated_variant = ItemVariantRepository::new(connection)
                 .query_one(
-                    ItemVariantFilter::new().id(EqualFilter::equal_to(new_item_variant.id.to_string())),
+                    ItemVariantFilter::new()
+                        .id(EqualFilter::equal_to(new_item_variant.id.to_string())),
                 )?
                 .ok_or(UpsertItemVariantError::CreatedRecordNotFound)?;
 

@@ -30,7 +30,7 @@ pub fn create_patient_name_store_join(
         let name_store_join_repo = NameStoreJoinRepository::new(con);
         name_store_join_repo.upsert_one(&NameStoreJoinRow {
             id: name_store_join_id.unwrap_or(uuid()),
-            name_link_id: name_id.to_string(),
+            name_id: name_id.to_string(),
             store_id: store_id.to_string(),
             name_is_customer: true,
             name_is_supplier: false,
@@ -88,17 +88,13 @@ pub(crate) fn patient_to_name_row(
     let contact = contact_details.as_ref().and_then(|it| it.first());
     let date_of_birth = match date_of_birth {
         Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
-            UpdateProgramPatientError::InternalError(format!(
-                "Invalid date of birth format: {err}"
-            ))
+            UpdateProgramPatientError::InternalError(format!("Invalid date of birth format: {err}"))
         })?),
         None => None,
     };
     let date_of_death = match date_of_death {
         Some(date_of_death) => Some(NaiveDate::from_str(&date_of_death).map_err(|err| {
-            UpdateProgramPatientError::InternalError(format!(
-                "Invalid date of death format: {err}"
-            ))
+            UpdateProgramPatientError::InternalError(format!("Invalid date of death format: {err}"))
         })?),
         None => None,
     };
@@ -277,9 +273,7 @@ mod test {
         DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter,
         FormSchemaRowRepository, GenderType as GenderRepo, NameRow,
     };
-    use util::{
-        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
-    };
+    use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use crate::{
         programs::patient::{

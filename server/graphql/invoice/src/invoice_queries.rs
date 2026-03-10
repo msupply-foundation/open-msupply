@@ -200,12 +200,8 @@ impl InvoiceFilterInput {
             name: self.other_party_name.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
             user_id: self.user_id.map(EqualFilter::from),
-            r#type: self
-                .r#type
-                .map(|t| map_filter!(t, InvoiceType::from)),
-            status: self
-                .status
-                .map(|t| map_filter!(t, InvoiceStatus::from)),
+            r#type: self.r#type.map(|t| map_filter!(t, InvoiceType::from)),
+            status: self.status.map(|t| map_filter!(t, InvoiceStatus::from)),
             on_hold: self.on_hold,
             comment: self.comment.map(StringFilter::from),
             their_reference: self.their_reference.map(StringFilter::from),

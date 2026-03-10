@@ -17,7 +17,7 @@ mod repository_test {
         pub fn store_1() -> StoreRow {
             StoreRow {
                 id: "store1".to_string(),
-                name_link_id: "name1".to_string(),
+                name_id: "name1".to_string(),
                 code: "code1".to_string(),
                 ..Default::default()
             }
@@ -68,7 +68,7 @@ mod repository_test {
                 on_hold: false,
                 note: None,
                 location_id: None,
-                supplier_link_id: Some(String::from("name1")),
+                supplier_id: Some(String::from("name1")),
                 ..Default::default()
             }
         }
@@ -117,14 +117,14 @@ mod repository_test {
             MasterListNameJoinRow {
                 id: "masterlistnamejoin1".to_string(),
                 master_list_id: master_list_1().id.to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
             }
         }
 
         pub fn invoice_1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceType::InboundShipment,
@@ -140,7 +140,7 @@ mod repository_test {
         pub fn invoice_2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceType::OutboundShipment,
@@ -639,7 +639,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .name_id(EqualFilter::equal_to(item1.name_link_id.to_string())),
+                    .name_id(EqualFilter::equal_to(item1.name_id.to_string())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());

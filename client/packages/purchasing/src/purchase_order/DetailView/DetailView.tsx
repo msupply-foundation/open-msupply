@@ -94,8 +94,8 @@ const DetailViewInner = () => {
       columns,
       data: lines,
       initialSort: { key: 'lineNumber', dir: 'asc' },
-      getIsRestrictedRow: getClosedLine,
-      getIsPlaceholderRow: getPlaceholderRow,
+      getIsRestrictedRow: row => getClosedLine(row.original),
+      getIsPlaceholderRow: row => getPlaceholderRow(row.original),
       manualFiltering: true,
       noDataElement: (
         <NothingHere

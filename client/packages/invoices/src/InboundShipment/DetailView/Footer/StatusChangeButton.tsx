@@ -161,7 +161,7 @@ const StatusChangeButtonContent = ({
   );
 
   const onHoldNotification = useDisabledNotificationToast(
-    t('messages.on-hold')
+    t('messages.on-hold-inbound')
   );
 
   const permissionDeniedNotification = useDisabledNotificationToast(
@@ -186,7 +186,10 @@ const StatusChangeButtonContent = ({
   const onStatusClick = () => {
     if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
-    if (selectedOption?.value === InvoiceNodeStatus.Received || selectedOption?.value === InvoiceNodeStatus.Verified) {
+    if (
+      selectedOption?.value === InvoiceNodeStatus.Received ||
+      selectedOption?.value === InvoiceNodeStatus.Verified
+    ) {
       if (!validateNoPendingLines(lines)) {
         return pendingLinesNotification();
       }

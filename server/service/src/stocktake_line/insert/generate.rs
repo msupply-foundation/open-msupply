@@ -62,7 +62,7 @@ pub fn generate(
         sell_price_per_pack,
         note,
         item_variant_id,
-        donor_link_id: donor_id,
+        donor_id: donor_id,
         reason_option_id,
         vvm_status_id,
         volume_per_pack: volume_per_pack.unwrap_or(0.0),

@@ -1,4 +1,8 @@
-import { LocaleKey, TypedTFunction } from '@common/intl';
+import {
+  DEFAULT_TRANSLATIONS_NAMESPACE,
+  LocaleKey,
+  TypedTFunction,
+} from '@common/intl';
 import { TranslationOption } from './TranslationSearchInput';
 
 export interface Translation {
@@ -15,11 +19,18 @@ export const mapTranslationsToArray = (
   t: TypedTFunction<LocaleKey>
 ): Translation[] => {
   return Object.entries(translations)
-    .filter(([key]) => t(key as LocaleKey) !== '')
+    .filter(
+      ([key]) =>
+        t(key as LocaleKey, {
+          ns: DEFAULT_TRANSLATIONS_NAMESPACE,
+        }) !== ''
+    )
     .map(([key, custom]) => ({
       id: key,
       key,
-      default: t(key as LocaleKey),
+      default: t(key as LocaleKey, {
+        ns: DEFAULT_TRANSLATIONS_NAMESPACE,
+      }),
       custom,
     }));
 };

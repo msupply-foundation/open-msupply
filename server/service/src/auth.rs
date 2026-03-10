@@ -727,8 +727,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::PluginGraphql, PermissionDSL::HasStoreAccess);
 
     // vvm status - queries only need authentication
-    map.insert(Resource::QueryVvmStatus, PermissionDSL::NoPermissionRequired);
-    
+    map.insert(
+        Resource::QueryVvmStatus,
+        PermissionDSL::NoPermissionRequired,
+    );
+
     // vvm status - mutations need permission
     map.insert(
         Resource::MutateVvmStatus,
@@ -1520,7 +1523,7 @@ mod permission_validation_test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 code: "n/a".to_string(),
                 ..Default::default()
             }

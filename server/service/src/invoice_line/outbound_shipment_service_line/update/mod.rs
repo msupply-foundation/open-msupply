@@ -94,7 +94,6 @@ mod test {
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository,
     };
-   
 
     use crate::{
         invoice_line::{

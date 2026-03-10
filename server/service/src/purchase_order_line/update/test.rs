@@ -199,7 +199,7 @@ mod update {
         let invoice = InvoiceRow {
             id: "invoice_for_received".to_string(),
             store_id: mock_store_a().id.clone(),
-            name_link_id: mock_store_a().name_link_id.clone(),
+            name_id: mock_store_a().name_id.clone(),
             purchase_order_id: Some(mock_purchase_order_a().id.clone()),
             status: InvoiceStatus::Shipped,
             ..Default::default()

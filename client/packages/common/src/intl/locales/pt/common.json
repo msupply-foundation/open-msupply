@@ -2011,7 +2011,6 @@
   "messages.notification-breach-detected": "Foi detectada uma brecha de temperatura! {{time}} atrás",
   "messages.notification-excursion-detected": "Foi detectada uma variação de temperatura! {{time}} atrás",
   "messages.off-hold-confirmation": "Isso habilitará mudanças de status",
-  "messages.on-hold": "Não é possível trocar o estado porque a factura está em espera",
   "messages.on-hold-confirmation": "Isso evitará qualquer mudança no status até que se remova a retenção",
   "messages.on-hold-description": "Isso evitará mudanças futuras até que o Inventário seja desbloqueado.",
   "messages.on-hold-stock-take": "Este inventário está retido e não pode ser editado",
