@@ -7,12 +7,14 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_purchase_order::purchase_order_queries::EqualFilterPurchaseOrderStatusInput;
 use graphql_types::types::{
     PurchaseOrderLineConnector, PurchaseOrderLineNode, PurchaseOrderLineStatusNode,
 };
 use repository::{
-    EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
-    PurchaseOrderLineSortField, PurchaseOrderLineStatus,
+    EqualFilter, PaginationOption, PurchaseOrderFilter, PurchaseOrderLineFilter,
+    PurchaseOrderLineSort, PurchaseOrderLineSortField, PurchaseOrderLineStatus,
+    PurchaseOrderStatus,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -38,7 +40,9 @@ pub struct PurchaseOrderLineSortInput {
 pub struct PurchaseOrderLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub purchase_order_id: Option<EqualFilterStringInput>,
+    pub item_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterPurchaseOrderLineStatusInput>,
+    pub purchase_order_status: Option<EqualFilterPurchaseOrderStatusInput>,
     pub received_less_than_adjusted: Option<bool>,
 }
 
@@ -140,8 +144,11 @@ impl PurchaseOrderLineFilterInput {
             received_less_than_adjusted: self.received_less_than_adjusted,
             store_id: None,
             requested_pack_size: None,
-            item_id: None,
-            purchase_order: None,
+            item_id: self.item_id.map(EqualFilter::from),
+            purchase_order: self.purchase_order_status.map(|s| {
+                PurchaseOrderFilter::new()
+                    .status(map_filter!(s, PurchaseOrderStatus::from))
+            }),
         }
     }
 }

@@ -6,6 +6,7 @@ import {
   useTranslation,
   setNullableInput,
   PurchaseOrderLineStatusNode,
+  PurchaseOrderNodeStatus,
   InsertPurchaseOrderLineInput,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
@@ -366,5 +367,47 @@ const useDeleteLines = () => {
     onSuccess: () => {
       queryClient.invalidateQueries([PURCHASE_ORDER]);
     },
+  });
+};
+
+const UNITS_ON_ORDER = 'units_on_order';
+
+export const useUnitsOnOrderForItem = (
+  itemId: string,
+  excludePurchaseOrderId: string,
+  enabled = true
+) => {
+  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
+
+  const queryFn = async () => {
+    const result = await purchaseOrderApi.unitsOnOrderForItem({
+      storeId,
+      itemId: { equalTo: itemId },
+      purchaseOrderId: { notEqualTo: excludePurchaseOrderId },
+      lineStatus: { notEqualTo: PurchaseOrderLineStatusNode.Closed },
+      purchaseOrderStatus: {
+        equalAny: [
+          PurchaseOrderNodeStatus.RequestApproval,
+          PurchaseOrderNodeStatus.Confirmed,
+          PurchaseOrderNodeStatus.Sent,
+        ],
+      },
+    });
+
+    if (result.purchaseOrderLines.__typename === 'PurchaseOrderLineConnector') {
+      return result.purchaseOrderLines.nodes.reduce(
+        (sum, line) =>
+          sum + (line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits),
+        0
+      );
+    }
+
+    return 0;
+  };
+
+  return useQuery({
+    queryKey: [UNITS_ON_ORDER, itemId, excludePurchaseOrderId],
+    queryFn,
+    enabled: enabled && itemId !== '',
   });
 };
