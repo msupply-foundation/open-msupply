@@ -356,6 +356,21 @@ mod test {
             Err(ServiceError::ProgramNotVisible)
         );
 
+        // ManufacturerDoesNotExist
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    manufacturer_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ManufacturerDoesNotExist)
+        );
+
         // NotThisStoreInvoice
         context.store_id = mock_store_a().id;
         assert_eq!(

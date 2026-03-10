@@ -280,6 +280,22 @@ mod stocktake_line_test {
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::VvmStatusDoesNotExist);
 
+        // error: ManufacturerDoesNotExist
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: stocktake_line_a.id,
+                    manufacturer_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::ManufacturerDoesNotExist);
+
         // error: IncorrectLocationType
         let stocktake_line = StocktakeLineRow {
             id: "restricted_location_type_line".to_string(),
