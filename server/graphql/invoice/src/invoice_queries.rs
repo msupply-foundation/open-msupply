@@ -126,11 +126,13 @@ pub fn get_invoices(
     page: Option<PaginationInput>,
     filter: Option<InvoiceFilterInput>,
     sort: Option<Vec<InvoiceSortInput>>,
+    resource: Resource,
+    modify_filter: impl FnOnce(InvoiceFilter) -> InvoiceFilter,
 ) -> Result<InvoicesResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInvoice,
+            resource,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -138,13 +140,16 @@ pub fn get_invoices(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
+    let domain_filter = filter.map(|filter| filter.to_domain()).unwrap_or_default();
+    let domain_filter = modify_filter(domain_filter);
+
     let invoices = service_provider
         .invoice_service
         .get_invoices(
             &service_context,
             Some(&store_id),
             page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
+            Some(domain_filter),
             // Currently only one sort option is supported, use the first from the list.
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
