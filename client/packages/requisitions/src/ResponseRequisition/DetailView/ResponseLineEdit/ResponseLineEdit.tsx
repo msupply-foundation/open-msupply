@@ -39,6 +39,7 @@ interface ResponseLineEditProps {
   isUpdateMode?: boolean;
   isReasonsError: boolean;
   setIsEditingSupply: (isEditingSupply: boolean) => void;
+  displayForecasting: boolean;
 }
 
 export const ResponseLineEdit = ({
@@ -55,6 +56,7 @@ export const ResponseLineEdit = ({
   disabled = false,
   isUpdateMode = false,
   setIsEditingSupply,
+  displayForecasting,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
@@ -347,6 +349,14 @@ export const ResponseLineEdit = ({
               }}
               {...commonProps}
             />
+            {displayForecasting && (
+              <ResponseNumInputRow
+                label={t('label.target-stock-population')}
+                value={draft?.forecastTotalUnits ?? 0}
+                disabledOverride={true}
+                {...commonProps}
+              />
+            )}
           </>
         ) : null}
 

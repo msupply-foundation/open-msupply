@@ -393,7 +393,7 @@ cargo run --bin remote_server_cli -- test-connection -u username -p password -l 
 ## GUI
 
 ```bash
-cargo run --bin test-connection
+cargo run --bin test_connection
 ```
 
 or build and run the binary. Pass in `--features postgres` to run the postgres version.
