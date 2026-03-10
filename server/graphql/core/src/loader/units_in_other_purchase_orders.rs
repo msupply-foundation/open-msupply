@@ -28,7 +28,7 @@ impl Loader<String> for UnitsInOtherPurchaseOrdersLoader {
             let line_row = &line.purchase_order_line_row;
             let item_row = &line.item_row;
 
-            let other_confirmed_orders = repo.query_by_filter(
+            let other_open_order_lines = repo.query_by_filter(
                 PurchaseOrderLineFilter::new()
                     .item_id(EqualFilter::equal_to(item_row.id.to_string()))
                     .purchase_order(
@@ -36,19 +36,24 @@ impl Loader<String> for UnitsInOtherPurchaseOrdersLoader {
                             .id(EqualFilter::not_equal_to(
                                 line_row.purchase_order_id.to_string(),
                             ))
-                            .status(PurchaseOrderStatus::Sent.equal_to()),
+                            .status(EqualFilter::equal_any(vec![
+                                PurchaseOrderStatus::RequestApproval,
+                                PurchaseOrderStatus::Confirmed,
+                                PurchaseOrderStatus::Sent,
+                            ])),
                     )
-                    .status(PurchaseOrderLineStatus::Sent.equal_to()),
+                    .status(EqualFilter::not_equal_to(
+                        PurchaseOrderLineStatus::Closed,
+                    )),
             )?;
 
             // TODO: Reduce any other units received in GRs
-            let units_in_other_orders: f64 = other_confirmed_orders
+            let units_in_other_orders: f64 = other_open_order_lines
                 .iter()
                 .map(|l| {
-                    l.purchase_order_line_row.requested_pack_size
-                        * l.purchase_order_line_row
-                            .adjusted_number_of_units
-                            .unwrap_or(0.0)
+                    l.purchase_order_line_row
+                        .adjusted_number_of_units
+                        .unwrap_or(l.purchase_order_line_row.requested_number_of_units)
                 })
                 .sum();
 
