@@ -51,8 +51,7 @@ fragment StockLineRow on StockLineNode {
     id
   }
   manufacturer(storeId: $storeId) {
-    id
-    name
+    ...NameRow
   }
   program {
     id

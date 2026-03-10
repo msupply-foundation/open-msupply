@@ -28,6 +28,10 @@ fragment InboundLine on InvoiceLineNode {
     name
   }
 
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+
   program {
     id
     name
