@@ -13,7 +13,11 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { ItemStockOnHandFragment } from '@openmsupply-client/system';
-import { PurchaseOrderFragment, usePurchaseOrderLine } from '../../api';
+import {
+  PurchaseOrderFragment,
+  usePurchaseOrderLine,
+  useUnitsOnOrderForItem,
+} from '../../api';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { createDraftPurchaseOrderLine } from './utils';
 
@@ -55,6 +59,16 @@ export const PurchaseOrderLineEditModal = ({
     updatePatch,
   } = usePurchaseOrderLine(lineId);
   const unit = draft?.unit || t('label.unit', { count: 2 });
+
+  // In create mode, fetch units on order via a separate query since the line
+  // doesn't exist yet and the backend loader won't be called.
+  // In update mode, use the value from the backend loader on the line.
+  const { data: unitsOnOrder } = useUnitsOnOrderForItem(
+    draft.item.id,
+    purchaseOrder.id,
+    !isUpdateMode
+  );
+  const unitsOrderedInOthers = unitsOnOrder ?? draft.unitsOrderedInOthers;
 
   const onChangeItem = (item: ItemStockOnHandFragment) => {
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
@@ -152,8 +166,8 @@ export const PurchaseOrderLineEditModal = ({
           <Box display="flex" ml={2} pt={1} gap={1}>
             <Typography width={250}>{t('label.ordered-in-others')}:</Typography>
             <Typography fontWeight={800}>
-              {round(draft.unitsOrderedInOthers)}{' '}
-              {getPlural(unit, draft.unitsOrderedInOthers)}
+              {round(unitsOrderedInOthers)}{' '}
+              {getPlural(unit, unitsOrderedInOthers)}
             </Typography>
           </Box>
         </>

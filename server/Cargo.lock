@@ -5091,6 +5091,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "graphql_purchase_order",
  "graphql_types",
  "repository",
  "serde",
