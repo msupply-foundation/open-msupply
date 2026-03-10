@@ -27,6 +27,7 @@ pub struct UpdateStockInLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdate<NaiveDate>>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<ShipmentTaxUpdate>,
