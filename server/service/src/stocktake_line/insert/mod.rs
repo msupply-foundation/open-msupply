@@ -240,6 +240,24 @@ mod stocktake_line_test {
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::VvmStatusDoesNotExist);
 
+        // error ManufacturerDoesNotExist
+        let stocktake_a = mock_stocktake_a();
+        let stock_line = mock_new_stock_line_for_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line.id),
+                    manufacturer_id: Some("invalid".to_string()),
+                    counted_number_of_packs: Some(17.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::ManufacturerDoesNotExist);
+
         // error IncorrectLocationType
         let stocktake_a = mock_stocktake_a();
         let stock_line = mock_stock_line_restricted_location_type_b();

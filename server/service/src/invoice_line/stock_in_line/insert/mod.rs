@@ -420,6 +420,42 @@ mod test {
             Err(ServiceError::SelectedDonorPartyIsNotADonor)
         );
 
+        // ManufacturerDoesNotExist
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_a().id,
+                    invoice_id: mock_inbound_shipment_e().id,
+                    r#type: StockInType::InboundShipment,
+                    manufacturer_id: Some("invalid".to_string()),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ManufacturerDoesNotExist)
+        );
+
+        // ManufacturerIsNotAManufacturer
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_a().id,
+                    invoice_id: mock_inbound_shipment_e().id,
+                    r#type: StockInType::InboundShipment,
+                    manufacturer_id: Some(mock_name_customer_a().id), // Not a manufacturer
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ManufacturerIsNotAManufacturer)
+        );
+
         // ProgramNotVisible
         assert_eq!(
             insert_stock_in_line(
