@@ -10643,6 +10643,7 @@ export type UpdateStockLineInput = {
   id: Scalars['String']['input'];
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
+  manufacturerId?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
