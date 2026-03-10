@@ -33,7 +33,8 @@ export const DeliveryTab = ({
 
   const inTransit = (row: InboundLineFragment) => {
     const inTransit = row.purchaseOrderLine?.inTransitNumberOfUnits ?? 0;
-    return data?.status === InvoiceNodeStatus.Delivered
+    return data?.status === InvoiceNodeStatus.Delivered ||
+      data?.status === InvoiceNodeStatus.Shipped
       ? inTransit - row.numberOfPacks * row.packSize
       : inTransit;
   };
@@ -94,12 +95,16 @@ export const DeliveryTab = ({
       },
       {
         id: 'remainingToDeliver',
-        accessorFn: row =>
-          (row.purchaseOrderLine?.adjustedNumberOfUnits ??
+        accessorFn: row => {
+          const poQuantity =
+            row.purchaseOrderLine?.adjustedNumberOfUnits ??
             row.purchaseOrderLine?.requestedNumberOfUnits ??
-            0) -
-          (row.purchaseOrderLine?.receivedNumberOfUnits ?? 0) -
-          (row.purchaseOrderLine?.inTransitNumberOfUnits ?? 0),
+            0;
+          const totalDelivered =
+            previousDeliveries(row) + row.numberOfPacks * row.packSize;
+          const inTransitQuantity = inTransit(row);
+          return poQuantity - totalDelivered - inTransitQuantity;
+        },
         header: t('label.remaining'),
         description: t('description.remaining-to-deliver'),
         columnType: ColumnType.Number,

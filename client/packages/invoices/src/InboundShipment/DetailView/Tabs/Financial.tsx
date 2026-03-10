@@ -50,24 +50,22 @@ export const FinancialTab = () => {
         header: t('label.line-total'),
         columnType: ColumnType.Currency,
       },
-      {
-        // TODO: calculate this
-        accessorKey: 'lineTotalLocal',
-        header: t('label.line-total-local'),
-        columnType: ColumnType.Currency,
-      },
-      {
-        // TODO: calculate this
-        accessorKey: 'adjustedTotalLocal',
-        header: t('label.adjusted-total-local'),
-        columnType: ColumnType.Currency,
-      },
-      {
-        // TODO: calculate this
-        accessorKey: 'sellPricePerPack',
-        header: t('label.pack-sell-price'),
-        columnType: ColumnType.Currency,
-      },
+      // TODO: calculate these
+      // {
+      //   accessorKey: 'lineTotalLocal',
+      //   header: t('label.line-total-local'),
+      //   columnType: ColumnType.Currency,
+      // },
+      // {
+      //   accessorKey: 'adjustedTotalLocal',
+      //   header: t('label.adjusted-total-local'),
+      //   columnType: ColumnType.Currency,
+      // },
+      // {
+      //   accessorKey: 'sellPricePerPack',
+      //   header: t('label.pack-sell-price'),
+      //   columnType: ColumnType.Currency,
+      // },
     ],
     []
   );
