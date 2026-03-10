@@ -183,6 +183,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::DonorDoesNotExist
         | ServiceError::DonorNotVisible
         | ServiceError::SelectedDonorPartyIsNotADonor
+        | ServiceError::ManufacturerDoesNotExist
+        | ServiceError::ManufacturerNotVisible
+        | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramNotVisible
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
