@@ -7,6 +7,7 @@ mod add_purchase_order_id_to_invoice;
 mod invoice_line_add_status;
 mod item_category_join_add_item_link_id;
 mod remove_goods_received;
+mod remove_goods_received_cleanup;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -22,6 +23,7 @@ impl Migration for V2_17_00 {
         vec![
             Box::new(add_forecasting_fields_to_requisition_line::Migrate),
             Box::new(remove_goods_received::Migrate),
+            Box::new(remove_goods_received_cleanup::Migrate),
             Box::new(add_purchase_order_id_to_invoice::Migrate),
             Box::new(invoice_line_add_status::Migrate),
             Box::new(item_category_join_add_item_link_id::Migrate),

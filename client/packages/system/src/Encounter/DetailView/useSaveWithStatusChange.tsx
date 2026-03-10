@@ -6,6 +6,7 @@ import {
   EncounterNodeStatus,
   SaveIcon,
   useDialog,
+  useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
@@ -30,6 +31,7 @@ export function useSaveWithStatusChange(
   ) => void;
 } {
   const t = useTranslation();
+  const { error } = useNotification();
 
   const [saveStatus, setSaveStatus] = useState<{
     status: EncounterNodeStatus;
@@ -45,7 +47,11 @@ export function useSaveWithStatusChange(
 
   useEffect(() => {
     if (!!saveStatus && saveStatus.status === encounterData?.status) {
-      onSave();
+      try {
+        onSave();
+      } catch (e) {
+        error(t('error.failed-to-save-encounter'))();
+      }
       if (saveStatus.status === EncounterNodeStatus.Visited)
         saveStatus.callback();
     }
@@ -57,7 +63,11 @@ export function useSaveWithStatusChange(
   ) => {
     if (status === undefined) {
       // no status change
-      onSave();
+      try {
+        onSave();
+      } catch (e) {
+        error(t('error.failed-to-save-encounter'))();
+      }
       return;
     }
     if (status === EncounterNodeStatus.Visited) {
@@ -77,7 +87,11 @@ export function useSaveWithStatusChange(
         <DialogButton
           variant="save"
           onClick={() => {
-            onSave();
+            try {
+              onSave();
+            } catch (e) {
+              error(t('error.failed-to-save-encounter'))();
+            }
             hideDialog();
           }}
         />
