@@ -207,6 +207,14 @@ export const StockListView = () => {
         defaultHideOnMobile: true,
         enableSorting: true,
       },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        accessorFn: row => row.manufacturer?.name ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+      },
       ...(plugins.stockLine?.tableColumn || []),
     ],
     [manageVvmStatusForStock, plugins.stockLine?.tableColumn, t]
