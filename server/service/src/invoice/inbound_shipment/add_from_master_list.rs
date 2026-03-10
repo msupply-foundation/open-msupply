@@ -19,6 +19,7 @@ pub enum AddToInboundShipmentFromMasterListError {
     CannotEditShipment,
     MasterListNotFoundForThisStore,
     NotAnInboundShipment,
+    NotAnInternalInboundShipment,
     DatabaseError(RepositoryError),
 }
 
@@ -76,6 +77,10 @@ fn validate(
 
     if invoice_row.r#type != InvoiceType::InboundShipment {
         return Err(InError::NotAnInboundShipment);
+    }
+
+    if invoice_row.purchase_order_id.is_some() {
+        return Err(InError::NotAnInternalInboundShipment);
     }
 
     check_master_list_for_store(connection, &invoice_row.store_id, &input.master_list_id)?
@@ -224,7 +229,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_link_id: mock_name_store_a().id,
+                    name_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {

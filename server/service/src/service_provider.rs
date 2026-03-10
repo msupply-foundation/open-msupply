@@ -24,8 +24,6 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
     email::{EmailService, EmailServiceTrait},
-    goods_received::{GoodsReceivedService, GoodsReceivedServiceTrait},
-    goods_received_line::{GoodsReceivedLineService, GoodsReceivedLineServiceTrait},
     insurance::{InsuranceService, InsuranceServiceTrait},
     insurance_provider::{InsuranceProviderService, InsuranceProviderServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
@@ -198,8 +196,6 @@ pub struct ServiceProvider {
     // Purchase Orders
     pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
-    pub goods_received_service: Box<dyn GoodsReceivedServiceTrait>,
-    pub goods_received_line_service: Box<dyn GoodsReceivedLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Shipping Method
@@ -312,8 +308,6 @@ impl ServiceProvider {
             campaign_service: Box::new(CampaignService),
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
-            goods_received_service: Box::new(GoodsReceivedService),
-            goods_received_line_service: Box::new(GoodsReceivedLineService),
             contact_service: Box::new(ContactService {}),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),

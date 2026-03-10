@@ -86,6 +86,7 @@ pub struct InvoiceFilterInput {
     pub requisition_id: Option<EqualFilterStringInput>,
     pub linked_invoice_id: Option<EqualFilterStringInput>,
     pub is_program_invoice: Option<bool>,
+    pub purchase_order_id: Option<EqualFilterStringInput>,
     pub program_id: Option<EqualFilterStringInput>,
 }
 
@@ -199,12 +200,8 @@ impl InvoiceFilterInput {
             name: self.other_party_name.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
             user_id: self.user_id.map(EqualFilter::from),
-            r#type: self
-                .r#type
-                .map(|t| map_filter!(t, InvoiceType::from)),
-            status: self
-                .status
-                .map(|t| map_filter!(t, InvoiceStatus::from)),
+            r#type: self.r#type.map(|t| map_filter!(t, InvoiceType::from)),
+            status: self.status.map(|t| map_filter!(t, InvoiceStatus::from)),
             on_hold: self.on_hold,
             comment: self.comment.map(StringFilter::from),
             their_reference: self.their_reference.map(StringFilter::from),
@@ -226,7 +223,7 @@ impl InvoiceFilterInput {
             program_id: self.program_id.map(EqualFilter::from),
             stock_line_id: None,
             is_cancellation: None,
-            goods_received_id: None,
+            purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
         }
     }
 }

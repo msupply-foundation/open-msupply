@@ -61,6 +61,12 @@ android {
             signingConfig signingConfigs.release
         }
     }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     flavorDimensions "abi"
     productFlavors {
         arm64 {

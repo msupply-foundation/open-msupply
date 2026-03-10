@@ -137,7 +137,7 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: rnr_form_row.name_link_id.clone(),
+        name_id: rnr_form_row.name_id.clone(),
         store_id: rnr_form_row.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Sent,
@@ -228,6 +228,9 @@ fn generate(
                     price_per_unit: None,
                     available_volume: None,
                     location_type_id: None,
+                    forecast_total_units: None,
+                    forecast_total_doses: None,
+                    vaccine_courses: None,
                 };
 
                 // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id
