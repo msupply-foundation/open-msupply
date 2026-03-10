@@ -30,6 +30,8 @@ pub struct LegacyStocktakeLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -163,9 +165,9 @@ impl SyncTranslation for StocktakeLineTranslation {
             );
         }
 
-        let (campaign_id, program_id) = oms_fields
-            .map(|fields| (fields.campaign_id, fields.program_id))
-            .unwrap_or((None, None));
+        let (campaign_id, program_id, manufacture_date) = oms_fields
+            .map(|fields| (fields.campaign_id, fields.program_id, fields.manufacture_date))
+            .unwrap_or((None, None, None));
 
         let location_id = clear_invalid_location_id(connection, location_id)?;
         let result = StocktakeLineRow {
@@ -183,7 +185,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_name,
             batch: Batch,
             expiry_date: expiry,
-            manufacture_date: None,
+            manufacture_date,
             pack_size: Some(snapshot_packsize),
             cost_price_per_pack: Some(cost_price),
             sell_price_per_pack: Some(sell_price),
@@ -230,7 +232,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     item_name,
                     batch,
                     expiry_date,
-                    manufacture_date: _,
+                    manufacture_date,
                     pack_size,
                     cost_price_per_pack,
                     sell_price_per_pack,
@@ -248,11 +250,12 @@ impl SyncTranslation for StocktakeLineTranslation {
             ..
         } = stocktake_line;
 
-        let oms_fields = match (&campaign_id, &program_id) {
-            (None, None) => None,
+        let oms_fields = match (&campaign_id, &program_id, &manufacture_date) {
+            (None, None, None) => None,
             _ => Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id,
                 program_id,
+                manufacture_date,
             }),
         };
 
