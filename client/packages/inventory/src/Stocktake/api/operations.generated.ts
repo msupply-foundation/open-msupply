@@ -35,6 +35,7 @@ export type StocktakeLineFragment = {
   donorId?: string | null;
   donorName?: string | null;
   itemVariantId?: string | null;
+  manufacturer?: { __typename: 'NameNode'; id: string; name: string } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -131,6 +132,11 @@ export type StocktakeFragment = {
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        id: string;
+        name: string;
+      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -271,6 +277,11 @@ export type StocktakeQuery = {
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              id: string;
+              name: string;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -387,6 +398,11 @@ export type StocktakeByNumberQuery = {
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              id: string;
+              name: string;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -488,6 +504,11 @@ export type StocktakeLinesQuery = {
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        id: string;
+        name: string;
+      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -796,6 +817,10 @@ export const StocktakeLineFragmentDoc = gql`
     volumePerPack
     donorId
     donorName
+    manufacturer(storeId: $storeId) {
+      id
+      name
+    }
     location {
       __typename
       id

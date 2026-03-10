@@ -30,6 +30,11 @@ fragment StocktakeLine on StocktakeLineNode {
   donorId
   donorName
 
+  manufacturer(storeId: $storeId) {
+    id
+    name
+  }
+
   location {
     __typename
     id
