@@ -339,6 +339,9 @@ impl GraphqlSchema {
                 .finish();
         // Self requester does not need loggers
 
+        // Shared operational status across all schemas
+        let operational_status_ref = Data::new(RwLock::new(operational_status.clone()));
+
         // Operational schema
         let operational_builder =
             OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
@@ -350,6 +353,7 @@ impl GraphqlSchema {
                 .data(validated_plugins.clone())
                 // Add self requester to operational
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
+                .data(operational_status_ref.clone())
                 .extension(GraphQLRequestLogger);
 
         // Initialisation schema should ony need service_provider
@@ -359,10 +363,8 @@ impl GraphqlSchema {
             EmptySubscription,
         )
         .data(service_provider.clone())
+        .data(operational_status_ref.clone())
         .extension(GraphQLRequestLogger);
-
-        // Migration schema shows migration status
-        let operational_status_ref = Data::new(RwLock::new(operational_status.clone()));
 
         let migration_builder =
             MigrationSchema::build(MigrationQueries, EmptyMutation, EmptySubscription)
