@@ -8,6 +8,5 @@
     "gql": "repack.graphql"
   },
   "arguments": {},
-  "header": "header.html",
-  "footer": "footer.html"
+  "header": "header.html"
 }

@@ -15,6 +15,7 @@ import {
   useConfirmOnLeaving,
   useConfirmationModal,
   useEditModal,
+  useNotification,
   isEmpty,
 } from '@openmsupply-client/common';
 import {
@@ -60,6 +61,7 @@ const getPatientBreadcrumbSuffix = (
 
 export const DetailView: FC = () => {
   const t = useTranslation();
+  const { error: errorNotification } = useNotification();
   const id = useEncounter.utils.idFromUrl();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -146,12 +148,16 @@ export const DetailView: FC = () => {
     ) {
       setDeleteRequest(false);
       (async () => {
-        const result = await saveData(true);
-        if (!result) return;
+        try {
+          const result = await saveData(true);
+          if (!result) return;
 
-        // allow the is dirty flag to settle
-        await new Promise(resolve => setTimeout(resolve, 100));
-        navigate(-1);
+          // allow the is dirty flag to settle
+          await new Promise(resolve => setTimeout(resolve, 100));
+          navigate(-1);
+        } catch (e) {
+          errorNotification(t('error.failed-to-save-encounter'))();
+        }
       })();
     }
   }, [deleteRequest, data]);
@@ -329,11 +335,15 @@ export const DetailView: FC = () => {
       <SaveAsVisitedModal />
       <Footer
         documentName={encounter?.document?.name}
-        onSave={() => {
+        onSave={async () => {
           if (suggestSaveWithStatusVisited) {
             showSaveAsVisitedDialog();
           } else {
-            saveData();
+            try {
+              await saveData();
+            } catch (e) {
+              errorNotification(t('error.failed-to-save-encounter'))();
+            }
           }
         }}
         onChangeStatus={status =>

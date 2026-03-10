@@ -8,6 +8,5 @@
     "gql": "picklist.graphql"
   },
   "arguments": {},
-  "header": "header.html",
-  "footer": "footer.html"
+  "header": "header.html"
 }
