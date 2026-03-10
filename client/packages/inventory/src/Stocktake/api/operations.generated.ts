@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 import { VvmStatusFragmentDoc } from '../../../../system/src/Stock/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StocktakeRowFragment = {
@@ -35,7 +36,16 @@ export type StocktakeLineFragment = {
   donorId?: string | null;
   donorName?: string | null;
   itemVariantId?: string | null;
-  manufacturer?: { __typename: 'NameNode'; id: string; name: string } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -134,8 +144,13 @@ export type StocktakeFragment = {
       itemVariantId?: string | null;
       manufacturer?: {
         __typename: 'NameNode';
+        code: string;
         id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
         name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       location?: {
         __typename: 'LocationNode';
@@ -279,8 +294,17 @@ export type StocktakeQuery = {
             itemVariantId?: string | null;
             manufacturer?: {
               __typename: 'NameNode';
+              code: string;
               id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
               name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
             } | null;
             location?: {
               __typename: 'LocationNode';
@@ -400,8 +424,17 @@ export type StocktakeByNumberQuery = {
             itemVariantId?: string | null;
             manufacturer?: {
               __typename: 'NameNode';
+              code: string;
               id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
               name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
             } | null;
             location?: {
               __typename: 'LocationNode';
@@ -506,8 +539,13 @@ export type StocktakeLinesQuery = {
       itemVariantId?: string | null;
       manufacturer?: {
         __typename: 'NameNode';
+        code: string;
         id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
         name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       location?: {
         __typename: 'LocationNode';
@@ -818,8 +856,7 @@ export const StocktakeLineFragmentDoc = gql`
     donorId
     donorName
     manufacturer(storeId: $storeId) {
-      id
-      name
+      ...NameRow
     }
     location {
       __typename
@@ -879,6 +916,7 @@ export const StocktakeLineFragmentDoc = gql`
       name
     }
   }
+  ${NameRowFragmentDoc}
   ${VvmStatusFragmentDoc}
 `;
 export const StocktakeFragmentDoc = gql`

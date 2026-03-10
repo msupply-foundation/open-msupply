@@ -31,8 +31,7 @@ fragment StocktakeLine on StocktakeLineNode {
   donorName
 
   manufacturer(storeId: $storeId) {
-    id
-    name
+    ...NameRow
   }
 
   location {
