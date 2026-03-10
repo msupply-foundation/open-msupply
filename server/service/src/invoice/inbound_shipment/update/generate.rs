@@ -384,6 +384,7 @@ pub fn generate_lines_and_stock_lines(
             location_id,
             batch,
             expiry_date,
+            manufacture_date,
             pack_size,
             donor_id: donor_link_id,
             note,
@@ -416,7 +417,7 @@ pub fn generate_lines_and_stock_lines(
             program_id,
             volume_per_pack,
             total_volume: volume_per_pack * number_of_packs,
-            manufacture_date: None,
+            manufacture_date,
             on_hold: false,
             barcode_id: None,
         };
