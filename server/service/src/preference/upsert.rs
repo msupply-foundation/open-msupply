@@ -26,8 +26,9 @@ pub struct UpsertPreferences {
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
-
     pub is_gaps: Option<bool>,
+    pub display_population_based_forecasting: Option<bool>,
+    pub global_table_configs: Option<serde_json::Value>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -50,7 +51,8 @@ pub struct UpsertPreferences {
         Option<Vec<StorePrefUpdate<i32>>>,
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
-    pub warn_when_missing_recent_stocktake: Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
+    pub warn_when_missing_recent_stocktake:
+        Option<Vec<StorePrefUpdate<WarnWhenMissingRecentStocktakeData>>>,
     pub store_custom_colour: Option<Vec<StorePrefUpdate<String>>>,
     pub invoice_status_options: Option<Vec<StorePrefUpdate<Vec<InvoiceStatus>>>>,
     pub show_indicative_price_in_requisitions: Option<Vec<StorePrefUpdate<bool>>>,
@@ -74,6 +76,8 @@ pub fn upsert_preferences(
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
         is_gaps: is_gaps_input,
+        display_population_based_forecasting: display_population_based_forecasting_input,
+        global_table_configs: global_table_configs_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -95,7 +99,7 @@ pub fn upsert_preferences(
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
             number_of_months_threshold_to_show_low_stock_alerts_for_products_input,
-            number_of_months_threshold_to_show_over_stock_alerts_for_products:
+        number_of_months_threshold_to_show_over_stock_alerts_for_products:
             number_of_months_threshold_to_show_over_stock_alerts_for_products_input,
         first_threshold_for_expiring_items: first_threshold_for_expiring_items_input,
         second_threshold_for_expiring_items: second_threshold_for_expiring_items_input,
@@ -120,6 +124,8 @@ pub fn upsert_preferences(
         expired_stock_issue_threshold,
         item_margin_overrides_supplier_margin,
         is_gaps,
+        display_population_based_forecasting,
+        global_table_configs,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -202,6 +208,14 @@ pub fn upsert_preferences(
             
             if let Some(input) = item_margin_overrides_supplier_margin_input {
                 item_margin_overrides_supplier_margin.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = display_population_based_forecasting_input {
+                display_population_based_forecasting.upsert(connection, input, None)?;
+            }
+            
+            if let Some(input) = global_table_configs_input {
+                global_table_configs.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

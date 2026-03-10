@@ -1,10 +1,10 @@
 use super::{
     campaign_row::campaign, invoice_line_row::invoice_line::dsl::*, invoice_row::invoice,
-    item_link_row::item_link, location_row::location, name_link_row::name_link,
-    reason_option_row::reason_option, stock_line_row::stock_line,
-    vvm_status::vvm_status_row::vvm_status, StorageConnection,
+    item_link_row::item_link, location_row::location, reason_option_row::reason_option,
+    stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
+use crate::diesel_macros::define_linked_tables;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
@@ -18,9 +18,12 @@ use diesel::prelude::*;
 use chrono::NaiveDate;
 use diesel_derive_enum::DbEnum;
 
-table! {
-    invoice_line (id) {
-        id -> Text,
+define_linked_tables! {
+    view: invoice_line = "invoice_line_view",
+    core: invoice_line_with_links = "invoice_line",
+    struct: InvoiceLineRow,
+    repo: InvoiceLineRowRepository,
+    shared: {
         invoice_id -> Text,
         item_link_id -> Text,
         item_name -> Text,
@@ -35,14 +38,14 @@ table! {
         total_before_tax -> Double,
         total_after_tax -> Double,
         tax_percentage -> Nullable<Double>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
+        #[sql_name = "type"]
+        type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
         number_of_packs -> Double,
         prescribed_quantity -> Nullable<Double>,
         note -> Nullable<Text>,
         foreign_currency_price_before_tax -> Nullable<Double>,
         item_variant_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
-        donor_link_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
         reason_option_id -> Nullable<Text>,
         campaign_id -> Nullable<Text>,
@@ -51,6 +54,11 @@ table! {
         volume_per_pack -> Double,
         shipped_pack_size -> Nullable<Double>,
         status -> Nullable<crate::db_diesel::invoice_line_row::InvoiceLineStatusMapping>,
+    },
+    links: {
+    },
+    optional_links: {
+        donor_link_id -> donor_id,
     }
 }
 
@@ -63,7 +71,6 @@ joinable!(invoice_line -> reason_option (reason_option_id));
 joinable!(invoice_line -> campaign (campaign_id));
 
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
-allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 
 table! {
@@ -100,8 +107,7 @@ pub enum InvoiceLineStatus {
     Rejected,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[diesel(treat_none_as_null = true)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default)]
 #[diesel(table_name = invoice_line)]
 pub struct InvoiceLineRow {
     pub id: String,
@@ -129,7 +135,6 @@ pub struct InvoiceLineRow {
     pub foreign_currency_price_before_tax: Option<f64>,
     pub item_variant_id: Option<String>,
     pub linked_invoice_id: Option<String>,
-    pub donor_link_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub campaign_id: Option<String>,
@@ -138,6 +143,8 @@ pub struct InvoiceLineRow {
     pub volume_per_pack: f64,
     pub shipped_pack_size: Option<f64>,
     pub status: Option<InvoiceLineStatus>,
+    // Resolved from name_link - must be last to match view column order
+    pub donor_id: Option<String>,
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
@@ -157,12 +164,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(invoice_line)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
@@ -182,7 +184,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(invoice.store_id.clone()),
-            name_link_id: Some(invoice.name_link_id.clone()),
+            name_id: Some(invoice.name_id.clone()),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -193,9 +195,9 @@ impl<'a> InvoiceLineRowRepository<'a> {
         record_id: &str,
         reason_id: Option<String>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
-            .set(reason_option_id.eq(reason_id))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
+            .set(invoice_line_with_links::reason_option_id.eq(reason_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -206,11 +208,11 @@ impl<'a> InvoiceLineRowRepository<'a> {
         tax_input: Option<f64>,
         total_after_tax_calculation: f64,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
             .set((
-                tax_percentage.eq(tax_input),
-                total_after_tax.eq(total_after_tax_calculation),
+                invoice_line_with_links::tax_percentage.eq(tax_input),
+                invoice_line_with_links::total_after_tax.eq(total_after_tax_calculation),
             ))
             .execute(self.connection.lock().connection())?;
         Ok(())
@@ -221,10 +223,11 @@ impl<'a> InvoiceLineRowRepository<'a> {
         record_id: &str,
         foreign_currency_price_before_tax_calculation: Option<f64>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
             .set(
-                foreign_currency_price_before_tax.eq(foreign_currency_price_before_tax_calculation),
+                invoice_line_with_links::foreign_currency_price_before_tax
+                    .eq(foreign_currency_price_before_tax_calculation),
             )
             .execute(self.connection.lock().connection())?;
         Ok(())
@@ -236,10 +239,10 @@ impl<'a> InvoiceLineRowRepository<'a> {
         item_link: &str,
         new_note: Option<String>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(invoice_id.eq(invoice))
-            .filter(item_link_id.eq(item_link))
-            .set(note.eq(new_note))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::invoice_id.eq(invoice))
+            .filter(invoice_line_with_links::item_link_id.eq(item_link))
+            .set(invoice_line_with_links::note.eq(new_note))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -253,8 +256,10 @@ impl<'a> InvoiceLineRowRepository<'a> {
             }
         };
 
-        diesel::delete(invoice_line.filter(id.eq(invoice_line_id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            invoice_line_with_links::table.filter(invoice_line_with_links::id.eq(invoice_line_id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 

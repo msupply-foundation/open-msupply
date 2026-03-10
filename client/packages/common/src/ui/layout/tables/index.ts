@@ -21,6 +21,7 @@ export {
   ViewportListRef,
 };
 
+export * from './aggregationFns';
 export * from './usePaginatedMaterialTable';
 export * from './useNonPaginatedMaterialTable';
 export * from './useSimpleMaterialTable';

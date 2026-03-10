@@ -71,7 +71,7 @@ pub fn add_from_purchase_order(
             foreign_currency_price_before_tax: None,
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_link_id: None,
+            donor_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,

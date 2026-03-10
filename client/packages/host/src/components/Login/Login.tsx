@@ -5,6 +5,7 @@ import {
   useInterval,
   LoadingButton,
   useHostContext,
+  useAuthContext,
   LocalStorage,
   useFormatDateTime,
   BoxedErrorWithDetails,
@@ -15,9 +16,10 @@ import { LoginLayout } from './LoginLayout';
 import { SiteInfo } from '../SiteInfo';
 import { useHost } from '../../api';
 
-export const Login = () => {
+export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
+  const { logout } = useAuthContext();
   const hashInput = {
     logo: LocalStorage.getItem('/theme/logohash') ?? '',
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
@@ -34,7 +36,7 @@ export const Login = () => {
     onLogin,
     error,
     siteName,
-  } = useLoginForm(passwordRef);
+  } = useLoginForm(passwordRef, fullSize);
   const [timeoutRemaining, setTimeoutRemaining] = useState(
     error?.timeoutRemaining ?? 0
   );
@@ -131,9 +133,13 @@ export const Login = () => {
   }, [displaySettings]);
 
   useEffect(() => {
-    setPageTitle(`${t('app.login')} | ${t('app')} `);
-    LocalStorage.removeItem('/error/auth');
-  }, [setPageTitle, t]);
+    if (fullSize) {
+      logout();
+      setPageTitle(`${t('app.login')} | ${t('app')} `);
+      LocalStorage.removeItem('/error/auth');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setPageTitle, t, fullSize]);
 
   return (
     <LoginLayout
@@ -195,6 +201,7 @@ export const Login = () => {
         if (isValid) await onLogin();
       }}
       SiteInfo={<SiteInfo siteName={siteName} />}
+      fullSize={fullSize}
     />
   );
 };

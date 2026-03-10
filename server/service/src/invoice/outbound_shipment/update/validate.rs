@@ -8,10 +8,9 @@ use crate::invoice::{
 use crate::validate::get_other_party;
 use crate::NullableUpdate;
 use chrono::Utc;
-use repository::{EqualFilter, NameLinkRowRepository};
 use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
-    InvoiceType, StorageConnection,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
+    InvoiceStatus, InvoiceType, StorageConnection,
 };
 
 pub fn validate(
@@ -22,12 +21,8 @@ pub fn validate(
     use UpdateOutboundShipmentError::*;
 
     let invoice = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
-    let other_party_id = NameLinkRowRepository::new(connection)
-        .find_one_by_id(&invoice.name_link_id)?
-        .ok_or(OtherPartyDoesNotExist)?
-        .name_id;
     let other_party =
-        get_other_party(connection, store_id, &other_party_id)?.ok_or(OtherPartyDoesNotExist)?;
+        get_other_party(connection, store_id, &invoice.name_id)?.ok_or(OtherPartyDoesNotExist)?;
 
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);

@@ -73,10 +73,8 @@ fn process_change_log(
 
     // Prepare record
     let (requisition, linked_requisition) = match &log.row_action {
-        RowActionType::Upsert => {
-            get_requisition_and_linked_requisition(connection, &log.record_id)
-                .map_err(Error::GetRequisitionAndLinkedRequisitionError)?
-        }
+        RowActionType::Upsert => get_requisition_and_linked_requisition(connection, &log.record_id)
+            .map_err(Error::GetRequisitionAndLinkedRequisitionError)?,
         RowActionType::Delete => return Ok(()), // Nothing to do for deletes
     };
 

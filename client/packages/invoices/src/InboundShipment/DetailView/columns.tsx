@@ -1,13 +1,12 @@
 import React, { useMemo } from 'react';
 import {
-  ArrayUtils,
   getLinesFromRow,
   usePreferences,
   useTranslation,
   ColumnDef,
-  Groupable,
   ColumnType,
   StatusCell,
+  weightedAverageByUnits,
 } from '@openmsupply-client/common';
 import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLineError';
 import { isInboundPlaceholderRow } from '../../utils';
@@ -27,7 +26,7 @@ export const useInboundShipmentColumns = (
   const { getError } = useInboundShipmentLineErrorContext();
   const statusMap = useInvoiceLineStatusMap();
 
-  return useMemo((): ColumnDef<Groupable<InboundLineFragment>>[] => {
+  return useMemo((): ColumnDef<InboundLineFragment>[] => {
     return [
       {
         accessorKey: 'note',
@@ -116,26 +115,16 @@ export const useInboundShipmentColumns = (
         accessorKey: 'numberOfPacks',
         header: t('label.pack-quantity'),
         columnType: ColumnType.Number,
-        accessorFn: row => {
-          if ('subRows' in row)
-            return ArrayUtils.getSum(row.subRows ?? [], 'numberOfPacks');
-
-          return row.numberOfPacks;
-        },
         size: 100,
       },
       {
         id: 'unitQuantity',
+        accessorFn: row => row.packSize * row.numberOfPacks,
         header: t('label.unit-quantity'),
         description: t('description.unit-quantity'),
         columnType: ColumnType.Number,
+        aggregationFn: 'sum',
         defaultHideOnMobile: true,
-        accessorFn: row => {
-          if ('subRows' in row)
-            return ArrayUtils.getUnitQuantity(row.subRows ?? []);
-
-          return row.packSize * row.numberOfPacks;
-        },
         size: 120,
         includeColumn: !external,
       },
@@ -149,38 +138,27 @@ export const useInboundShipmentColumns = (
       },
       {
         id: 'doseQuantity',
-        header: t('label.doses'),
-        columnType: ColumnType.Number,
-        defaultHideOnMobile: true,
-        includeColumn: manageVaccinesInDoses,
         accessorFn: row => {
           if (!row.item.isVaccine) return null;
-          if ('subRows' in row)
-            return (
-              ArrayUtils.getUnitQuantity(row.subRows ?? []) *
-              (row.item.doses ?? 1)
-            );
-
           return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
         },
+        header: t('label.doses'),
+        columnType: ColumnType.Number,
+        aggregationFn: 'sum',
+        defaultHideOnMobile: true,
+        includeColumn: manageVaccinesInDoses,
         size: 120,
       },
       {
         id: 'costPricePerUnit',
+        accessorFn: row => {
+          if (isInboundPlaceholderRow(row)) return undefined;
+          return row.costPricePerPack / row.packSize;
+        },
         header: t('label.cost-per-unit'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
-        accessorFn: rowData => {
-          if ('subRows' in rowData) {
-            return ArrayUtils.getAveragePrice(
-              rowData.subRows ?? [],
-              'costPricePerPack'
-            );
-          } else {
-            if (isInboundPlaceholderRow(rowData)) return undefined;
-            return (rowData.costPricePerPack ?? 0) / rowData.packSize;
-          }
-        },
+        aggregationFn: weightedAverageByUnits(),
         size: 100,
         includeColumn: !external,
       },
@@ -190,19 +168,10 @@ export const useInboundShipmentColumns = (
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
         accessorFn: rowData => {
-          if ('subRows' in rowData) {
-            return Object.values(rowData.subRows ?? []).reduce(
-              (sum, batch) =>
-                sum + batch.costPricePerPack * batch.numberOfPacks,
-              0
-            );
-          } else {
-            if (isInboundPlaceholderRow(rowData)) return '';
-
-            const x = rowData.costPricePerPack * rowData.numberOfPacks;
-            return x;
-          }
+          if (isInboundPlaceholderRow(rowData)) return null;
+          return rowData.costPricePerPack * rowData.numberOfPacks;
         },
+        aggregationFn: 'sum',
         size: 120,
         includeColumn: !external,
       },

@@ -1,11 +1,11 @@
 use super::{
-    requisition_row::requisition, RequisitionFilter, RequisitionRow, RequisitionSort,
-    RequisitionSortField,
+    requisition_row::requisition,
+    RequisitionFilter, RequisitionRow, RequisitionSort, RequisitionSortField,
 };
 
 use crate::{
     db_diesel::{
-        invoice_row::invoice, name_link_row::name_link, name_row::name, period::period_row::period,
+        invoice_row::invoice, name_row::name, period::period_row::period,
         program_requisition::program_row::program, store_row::store,
     },
     diesel_macros::{
@@ -13,19 +13,18 @@ use crate::{
         apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
-    DBType, EqualFilter, NameLinkRow, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
+    DBType, EqualFilter, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
 };
 
 use crate::Pagination;
 use diesel::{
-    dsl::{sum, InnerJoin, IntoBoxed},
-    helper_types::LeftJoin,
+    dsl::{sum, IntoBoxed},
     prelude::*,
 };
 
 pub type RequisitionJoin = (
     RequisitionRow,
-    (NameLinkRow, NameRow),
+    NameRow,
     StoreRow,
     Option<ProgramRow>,
     Option<PeriodRow>,
@@ -124,39 +123,37 @@ impl<'a> RequisitionRepository<'a> {
             query = query.order(requisition::id.asc())
         }
 
-        let result = query
+        let final_query = query
             .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<RequisitionJoin>(self.connection.lock().connection())?;
+            .limit(pagination.limit as i64);
+
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
+
+        let result = final_query.load::<RequisitionJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedRequisitionQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<
-            InnerJoin<
-                InnerJoin<requisition::table, InnerJoin<name_link::table, name::table>>,
-                store::table,
-            >,
-            program::table,
-        >,
-        period::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    requisition::table
+        .inner_join(name::table)
+        .inner_join(store::table)
+        .left_join(program::table)
+        .left_join(period::table)
+}
+
+type BoxedRequisitionQuery = IntoBoxed<'static, query, DBType>;
 
 fn create_filtered_query(
     filter: Option<RequisitionFilter>,
 ) -> Result<BoxedRequisitionQuery, RepositoryError> {
-    let mut query = requisition::table
-        .inner_join(name_link::table.inner_join(name::table))
-        .inner_join(store::table)
-        .left_join(program::table)
-        .left_join(period::table)
-        .into_boxed();
+    let mut query = query().into_boxed();
 
     if let Some(RequisitionFilter {
         id,
@@ -268,7 +265,7 @@ fn create_filtered_query(
 }
 
 fn to_domain(
-    (requisition_row, (_, name_row), store_row, program, period_row): RequisitionJoin,
+    (requisition_row, name_row, store_row, program, period_row): RequisitionJoin,
 ) -> Requisition {
     Requisition {
         requisition_row,

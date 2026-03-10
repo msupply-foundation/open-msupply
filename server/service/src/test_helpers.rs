@@ -44,7 +44,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             danger_allow_http: false,
             debug_no_access_control: false,
             cors_origins: vec![],
-            base_dir: Some("test_output".to_string()),
+            base_dir: "test_output".to_string(),
             machine_uid: None,
             override_is_central_server: false,
         },

@@ -21,6 +21,9 @@ pub struct RequisitionLineOmsFields {
     pub price_per_unit: Option<f64>,
     pub available_volume: Option<f64>,
     pub location_type_id: Option<String>,
+    pub forecast_total_units: Option<f64>,
+    pub forecast_total_doses: Option<f64>,
+    pub vaccine_courses: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -116,13 +119,24 @@ impl SyncTranslation for RequisitionLineTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyRequisitionLineRow>(&sync_record.data)?;
 
-        let (price_per_unit, available_volume, location_type_id) = match data.oms_fields {
-            Some(fields) => (
-                fields.price_per_unit,
-                fields.available_volume,
-                fields.location_type_id,
-            ),
-            None => (None, None, None),
+        let (
+            price_per_unit,
+            available_volume,
+            location_type_id,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
+        ) = if let Some(oms_fields) = data.oms_fields {
+            (
+                oms_fields.price_per_unit,
+                oms_fields.available_volume,
+                oms_fields.location_type_id,
+                oms_fields.forecast_total_units,
+                oms_fields.forecast_total_doses,
+                oms_fields.vaccine_courses,
+            )
+        } else {
+            (None, None, None, None, None, None)
         };
 
         let result = RequisitionLineRow {
@@ -152,6 +166,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -198,6 +215,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -244,6 +264,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
         });
 
         let legacy_row = LegacyRequisitionLineRow {

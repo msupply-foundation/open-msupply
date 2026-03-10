@@ -124,9 +124,7 @@ impl InsertInput {
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use ServiceError::*;
     let formatted_error = format!("{error:#?}");
-    log::error!(
-        "Error inserting outbound shipment line: {formatted_error}"
-    );
+    log::error!("Error inserting outbound shipment line: {formatted_error}");
 
     let graphql_error = match error {
         // Structured Errors

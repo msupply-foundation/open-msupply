@@ -223,9 +223,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
-                        return Err(anyhow::Error::msg(format!(
-                            "Failed to get item: {item_id}"
-                        )))
+                        return Err(anyhow::Error::msg(format!("Failed to get item: {item_id}")))
                     }
                 };
                 let total_multiplier = match r#type {
@@ -319,7 +317,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            donor_link_id: donor_id,
+            donor_id: donor_id,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -388,7 +386,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
                     vvm_status_id,
                     reason_option_id,
                     campaign_id,

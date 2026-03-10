@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/system';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
 import { isA } from '../../../../utils';
-import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api'
+import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
 
 interface InboundLineEditProps {
   item: ItemRowFragment | null;
