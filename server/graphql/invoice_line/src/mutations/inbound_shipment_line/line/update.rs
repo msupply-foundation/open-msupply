@@ -214,6 +214,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
         | ServiceError::VVMStatusDoesNotExist
+        | ServiceError::ManufacturerDoesNotExist
+        | ServiceError::ManufacturerNotVisible
+        | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramNotVisible
         | ServiceError::CampaignDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),

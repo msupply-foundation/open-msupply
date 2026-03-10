@@ -199,6 +199,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::StockLineDoesNotExist
         | ServiceError::LocationDoesNotExist
         | ServiceError::StocktakeIsLocked
+        | ServiceError::ManufacturerDoesNotExist
+        | ServiceError::ManufacturerNotVisible
+        | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::CampaignDoesNotExist
         | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
