@@ -55,6 +55,7 @@ fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
             item_name: mock_item_a().name,
             batch: Some("item_c_batch_a".to_string()),
             expiry_date: None,
+            manufacture_date: None,
             pack_size: Some(1.0),
             cost_price_per_pack: Some(12.0),
             sell_price_per_pack: Some(15.0),
@@ -98,6 +99,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 program_id: Some("program_test".to_string()),
                 campaign_id: None,
+                manufacture_date: None,
             })
         }),
     }
@@ -151,6 +153,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
             item_name: mock_item_a().name,
             batch: Some("item_c_batch_a".to_string()),
             expiry_date: None,
+            manufacture_date: None,
             pack_size: Some(1.0),
             cost_price_per_pack: Some(12.0),
             sell_price_per_pack: Some(15.0),
@@ -194,6 +197,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
             oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id: Some("campaign_a".to_string()),
                 program_id: None,
+                manufacture_date: None,
             }),
         }),
     }

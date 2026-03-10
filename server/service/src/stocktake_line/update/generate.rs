@@ -12,6 +12,7 @@ pub fn generate(
         counted_number_of_packs,
         batch,
         expiry_date,
+        manufacture_date,
         pack_size,
         cost_price_per_pack,
         sell_price_per_pack,
@@ -45,6 +46,9 @@ pub fn generate(
         expiry_date: expiry_date
             .map(|e| e.value)
             .unwrap_or(existing_line.expiry_date),
+        manufacture_date: manufacture_date
+            .map(|m| m.value)
+            .unwrap_or(existing_line.manufacture_date),
         batch: batch.or(existing_line.batch),
         pack_size: pack_size.or(existing_line.pack_size),
         cost_price_per_pack: cost_price_per_pack.or(existing_line.cost_price_per_pack),
