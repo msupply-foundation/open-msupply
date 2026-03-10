@@ -1,6 +1,13 @@
 @media print {
   @page {
     size: A4 landscape;
+    @bottom-right {
+      font-family: Tahoma;
+      font-size: 8pt;
+      /* do not allow formatter to add a line break in the content */
+      /* prettier-ignore*/
+      content: '{{t(k="report.page",f="Page")}} ' counter(page) ' {{t(k="report.of",f="of")}} ' counter(pages);
+    }
   }
 }
 
@@ -102,13 +109,6 @@ hr {
   width: 100%;
   margin-left: 8px;
   border: 0.1px solid black;
-}
-
-.pageNumber::after {
-  font-family: Tahoma;
-  font-size: 8pt;
-  counter-increment: page;
-  content: "Page " counter(page);
 }
 
 .batch-wrap {
