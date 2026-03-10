@@ -86,6 +86,7 @@ export type StockLineRowFragment = {
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
+  manufacturer?: { __typename: 'NameNode'; id: string; name: string } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   itemVariant?: {
@@ -324,6 +325,11 @@ export type StockLinesQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        id: string;
+        name: string;
+      } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -439,6 +445,11 @@ export type StockLineQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        id: string;
+        name: string;
+      } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -591,6 +602,11 @@ export type UpdateStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        manufacturer?: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -917,6 +933,11 @@ export type InsertStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        manufacturer?: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -1063,6 +1084,10 @@ export const StockLineRowFragmentDoc = gql`
     }
     donor(storeId: $storeId) {
       id
+    }
+    manufacturer(storeId: $storeId) {
+      id
+      name
     }
     program {
       id
