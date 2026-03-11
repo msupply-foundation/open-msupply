@@ -25,6 +25,7 @@ use self::outbound_shipment::BatchOutboundShipment;
 use self::outbound_shipment::BatchOutboundShipmentResult;
 use self::outbound_shipment::UpdateOutboundShipmentName;
 use self::outbound_shipment::UpdateOutboundShipmentNameError;
+pub use self::query::GetInvoiceError;
 use self::query::*;
 use self::supplier_return::delete::*;
 use self::supplier_return::generate_supplier_return_lines::*;
@@ -83,6 +84,25 @@ pub trait InvoiceServiceTrait: Sync + Send {
         id: &str,
     ) -> Result<Option<Invoice>, RepositoryError> {
         get_invoice(ctx, store_id_option, id)
+    }
+
+    fn get_invoice_authorized(
+        &self,
+        ctx: &ServiceContext,
+        store_id_option: Option<&str>,
+        id: &str,
+    ) -> Result<Invoice, GetInvoiceError> {
+        get_invoice_authorized(ctx, store_id_option, id)
+    }
+
+    fn get_invoice_by_number_authorized(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        invoice_number: u32,
+        r#type: InvoiceType,
+    ) -> Result<Invoice, GetInvoiceError> {
+        get_invoice_by_number_authorized(ctx, store_id, invoice_number, r#type)
     }
 
     fn insert_inbound_shipment(

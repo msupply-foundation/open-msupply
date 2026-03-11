@@ -100,7 +100,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
                   }
                 }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::QueryInvoice,
+                resource: Resource::StoreAccess,
                 store_id: Some("some".to_string()),
             },
         },
@@ -114,7 +114,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
                   }
                 }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::QueryInvoice,
+                resource: Resource::StoreAccess,
                 store_id: Some("some".to_string()),
             },
         },
