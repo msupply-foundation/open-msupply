@@ -66,7 +66,7 @@ export const CardList = <T extends MRT_RowData>({
           simpleLayout={!groupIcons}
         />
       ))}
-      <MRT_ShowHideColumnsButton table={table} />
+      <MRT_ShowHideColumnsButton table={table} sx={{ alignSelf: 'center' }} />
     </Stack>
   );
 };
