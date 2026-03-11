@@ -198,7 +198,7 @@ async fn sync_inner<'a>(
             username: settings.username,
             password: settings.password_sha256,
         },
-        batch_size: 50000,
+        batch_size: 5000,
     };
 
     logger.start_step(SyncStep::Push)?;
