@@ -21,7 +21,7 @@ export const CardListFieldGroup = ({
     <Box
       display="grid"
       gridTemplateColumns={`repeat(auto-fill, minmax(${isLandscape ? '140px' : '200px'}, 1fr))`}
-      gap={0.5}
+      gap={1}
       flex={1}
     >
       {children}
@@ -34,7 +34,7 @@ export const CardListFieldGroup = ({
     <Box
       display="flex"
       gap={1}
-      py={0.5}
+      py={1}
       sx={{
         borderLeft: 2,
         borderColor: 'divider',

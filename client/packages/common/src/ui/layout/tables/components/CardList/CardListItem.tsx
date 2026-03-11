@@ -102,9 +102,9 @@ export const CardListItem = <T extends MRT_RowData>({
     >
       <CardContent
         sx={{
-          py: isLandscape ? 0.5 : 1,
-          px: isLandscape ? 1.5 : 2,
-          '&:last-child': { pb: isLandscape ? 0.5 : 1 },
+          py: isLandscape ? 0.5 : 1.5,
+          px: isLandscape ? 1.5 : 2.5,
+          '&:last-child': { pb: isLandscape ? 0.5 : 1.5 },
         }}
       >
         {/* Heading row: summary values + action buttons */}
@@ -113,7 +113,7 @@ export const CardListItem = <T extends MRT_RowData>({
             display="flex"
             alignItems="center"
             gap={1.5}
-            mb={groups.length > 0 ? 0.5 : 0}
+            mb={groups.length > 0 ? 1 : 0}
             py={0.5}
             sx={{
               position: 'sticky',
@@ -123,9 +123,9 @@ export const CardListItem = <T extends MRT_RowData>({
               borderTop: '1px solid',
               borderColor: 'divider',
               borderRadius: '4px 4px 0 0',
-              mx: isLandscape ? -1.5 : -2,
-              px: isLandscape ? 1.5 : 2,
-              mt: isLandscape ? -0.5 : -1,
+              mx: isLandscape ? -1.5 : -2.5,
+              px: isLandscape ? 1.5 : 2.5,
+              mt: isLandscape ? -0.5 : -1.5,
               pt: isLandscape ? 1 : 1.5,
             }}
           >
