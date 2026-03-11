@@ -128,6 +128,8 @@ export const IndicatorLineEdit = ({
     !!currentLine?.customerIndicatorInfo;
   const { width } = useWindowDimensions();
 
+  const isIndicatorInactive = !currentLine?.line.isActive;
+
   return (
     <>
       <Box display="flex" flexDirection="column">
@@ -137,7 +139,7 @@ export const IndicatorLineEdit = ({
               <InputWithLabel
                 key={column.value?.id}
                 data={column}
-                disabled={disabled}
+                disabled={disabled || !column.isActive || isIndicatorInactive}
                 autoFocus={i === 0}
               />
             )
