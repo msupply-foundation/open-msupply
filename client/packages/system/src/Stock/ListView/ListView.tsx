@@ -112,6 +112,17 @@ export const StockListView = () => {
         enableSorting: true,
       },
       {
+        id: 'manufactureDate',
+        header: t('label.manufacture-date'),
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        columnType: ColumnType.Date,
+        size: 100,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
         id: 'vvmStatus',
         header: t('label.vvm-status'),
         accessorFn: row => row.vvmStatus?.description ?? '',

@@ -115,6 +115,7 @@ export const inboundParsers = {
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
       expiryDate: line.expiryDate,
+      manufactureDate: line.manufactureDate,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
@@ -147,6 +148,9 @@ export const inboundParsers = {
     costPricePerPack: line.costPricePerPack,
     expiryDate: {
       value: line.expiryDate || null,
+    },
+    manufactureDate: {
+      value: line.manufactureDate || null,
     },
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,

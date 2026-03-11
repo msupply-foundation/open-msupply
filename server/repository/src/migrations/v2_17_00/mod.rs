@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_forecasting_fields_to_requisition_line;
+mod add_manufacture_date_to_stock_and_invoice_lines;
 mod add_manufacturer_link_id_to_lines;
 mod add_purchase_order_id_to_invoice;
 mod invoice_line_add_status;
@@ -28,6 +29,7 @@ impl Migration for V2_17_00 {
             Box::new(invoice_line_add_status::Migrate),
             Box::new(item_category_join_add_item_link_id::Migrate),
             Box::new(add_manufacturer_link_id_to_lines::Migrate),
+            Box::new(add_manufacture_date_to_stock_and_invoice_lines::Migrate),
         ]
     }
 }

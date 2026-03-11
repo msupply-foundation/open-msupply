@@ -14,6 +14,7 @@ import {
   ColumnType,
   DefaultCellProps,
   ExpiryDateInput,
+  DateTimePickerInput,
   DateUtils,
   Formatter,
   RequiredNumberInputCell,
@@ -110,6 +111,27 @@ export const BatchTable = ({
                 update({
                   id: row.original.id,
                   expiryDate: Formatter.naiveDate(date),
+                })
+              }
+            />
+          );
+        },
+      },
+      {
+        id: 'manufactureDate',
+        header: t('label.manufacture-date'),
+        size: 160,
+        accessorFn: row => DateUtils.getDateOrNull(row.manufactureDate),
+        Cell: ({ cell, row }) => {
+          const value = cell.getValue<Date | null>();
+          return (
+            <DateTimePickerInput
+              value={value}
+              disabled={disabled || !row.original.countThisLine}
+              onChange={date =>
+                update({
+                  id: row.original.id,
+                  manufactureDate: date ? Formatter.naiveDate(date) : null,
                 })
               }
             />

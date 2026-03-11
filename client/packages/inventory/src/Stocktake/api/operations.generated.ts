@@ -26,6 +26,7 @@ export type StocktakeLineFragment = {
   itemName: string;
   id: string;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   packSize?: number | null;
   snapshotNumberOfPacks: number;
   countedNumberOfPacks?: number | null;
@@ -132,6 +133,7 @@ export type StocktakeFragment = {
       itemName: string;
       id: string;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       packSize?: number | null;
       snapshotNumberOfPacks: number;
       countedNumberOfPacks?: number | null;
@@ -282,6 +284,7 @@ export type StocktakeQuery = {
             itemName: string;
             id: string;
             expiryDate?: string | null;
+            manufactureDate?: string | null;
             packSize?: number | null;
             snapshotNumberOfPacks: number;
             countedNumberOfPacks?: number | null;
@@ -412,6 +415,7 @@ export type StocktakeByNumberQuery = {
             itemName: string;
             id: string;
             expiryDate?: string | null;
+            manufactureDate?: string | null;
             packSize?: number | null;
             snapshotNumberOfPacks: number;
             countedNumberOfPacks?: number | null;
@@ -527,6 +531,7 @@ export type StocktakeLinesQuery = {
       itemName: string;
       id: string;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       packSize?: number | null;
       snapshotNumberOfPacks: number;
       countedNumberOfPacks?: number | null;
@@ -846,6 +851,7 @@ export const StocktakeLineFragmentDoc = gql`
     itemName
     id
     expiryDate
+    manufactureDate
     packSize
     snapshotNumberOfPacks
     countedNumberOfPacks

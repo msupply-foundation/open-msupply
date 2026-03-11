@@ -124,6 +124,7 @@ fn generate_stock_in_out_or_update(
     let manufacturer_id = stocktake_line_row.manufacturer_id.clone();
     let program_id = stocktake_line_row.program_id.clone();
     let expiry_date = stocktake_line_row.expiry_date;
+    let manufacture_date = stocktake_line_row.manufacture_date;
 
     log_stock_changes(ctx, stock_line_row.clone(), stocktake_line_row.clone())?;
 
@@ -136,6 +137,7 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            manufacture_date,
             item_variant_id,
             vvm_status_id: vvm_status_id.clone(),
             volume_per_pack: stocktake_line_row.volume_per_pack,
@@ -204,6 +206,7 @@ fn generate_stock_in_out_or_update(
             program_id,
             note: stocktake_line_row.note,
             item_variant_id,
+            manufacture_date,
             // From existing stock line
             stock_line_id: Some(stock_line_row.id),
             item_id: item.id.clone(),
@@ -399,6 +402,7 @@ fn generate_new_stock_line(
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date: stocktake_line_row.expiry_date,
+        manufacture_date: stocktake_line_row.manufacture_date,
         stock_line_id: Some(stock_line_id.clone()),
         item_id,
         note: stocktake_line_row.note,

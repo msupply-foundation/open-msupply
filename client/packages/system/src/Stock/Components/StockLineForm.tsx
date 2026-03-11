@@ -7,6 +7,7 @@ import {
   TextWithLabelRow,
   CurrencyInput,
   ExpiryDateInput,
+  DateTimePickerInput,
   useTranslation,
   Box,
   IconButton,
@@ -362,6 +363,22 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacture-date')}
+                  Input={
+                    <DateTimePickerInput
+                      value={DateUtils.getNaiveDate(draft.manufactureDate)}
+                      onChange={date =>
+                        onUpdate({
+                          manufactureDate: date
+                            ? Formatter.naiveDate(date)
+                            : null,
+                        })
+                      }
+                      width={160}
+                    />
+                  }
+                />
                 {plugins.stockLine?.editViewField.map((Plugin, index) => (
                   <Plugin key={index} stockLine={draft} events={pluginEvents} />
                 ))}
