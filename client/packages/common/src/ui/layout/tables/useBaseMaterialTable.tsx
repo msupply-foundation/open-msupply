@@ -18,10 +18,17 @@ import {
   useColumnSizing,
   useColumnVisibility,
   useColumnPinning,
+  useSaveGlobalTableConfig,
+  useGlobalTableDefaults,
   useColumnGrouping,
 } from './tableState';
-import { clearSavedState } from './tableState/utils';
+import { clearSavedState, getSavedState } from './tableState/utils';
 import { DataError, NothingHere } from '@common/components';
+import {
+  useIsCentralServerApi,
+  useAuthContext,
+  UserPermission,
+} from '@openmsupply-client/common';
 
 export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
   MRT_TableOptions<T>,
@@ -70,6 +77,15 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const t = useTranslation();
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
+  const isCentralServer = useIsCentralServerApi();
+  const { userHasPermission } = useAuthContext();
+  const canEditGlobalDefaults =
+    isCentralServer && userHasPermission(UserPermission.EditCentralData);
+  const { saveGlobalTableConfig } = useSaveGlobalTableConfig();
+  const globalDefaults = useGlobalTableDefaults(tableId);
+  // Admins reset to hard-coded defaults so they can undo their global config;
+  // non-admins reset to global defaults.
+  const resetDefaults = canEditGlobalDefaults ? undefined : globalDefaults;
 
   const { columns } = useMaterialTableColumns(omsColumns);
 
@@ -95,7 +111,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const resetTableState = () => {
     clearSavedState(tableId);
 
-    // We have to call each of these reset fns, as MRT's general
+    // We have to call each of these reset/set fns, as MRT's general
     // reset function doesn't fire the onChange handlers (needed to trigger our
     // state handlers).
     // Seeing as local storage has already been cleared,
@@ -104,13 +120,22 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     table.resetColumnSizing();
     table.resetGrouping();
 
-    // column order doesn't need resetting - state reset directly from clearing
-    // local storage
+    if (resetDefaults?.columnSizing)
+      table.setColumnSizing(resetDefaults.columnSizing);
+    else table.resetColumnSizing();
+
+    if (resetDefaults?.columnOrder)
+      table.setColumnOrder(resetDefaults.columnOrder);
+    else table.resetColumnOrder();
+
+    table.resetGrouping();
 
     // Visibility `initial` could change if prefs have come on/screen size
     // changed so reset to latest initial value rather than default initial
     // mount state
-    table.setColumnVisibility(columnVisibility.initial);
+    table.setColumnVisibility(
+      resetDefaults?.columnVisibility ?? columnVisibility.initial
+    );
 
     // Density doesn't have a `reset` function
     table.setDensity(density.initial);
@@ -118,6 +143,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
   // hiding all table filter related options for now
   const hasColumnFilters = false;
+
+  const onSaveAsGlobalDefault = canEditGlobalDefaults
+    ? () => saveGlobalTableConfig(tableId, getSavedState(tableId) ?? {})
+    : undefined;
 
   const displayOptions = useTableDisplayOptions({
     tableId,
@@ -135,6 +164,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     getIsRestrictedRow,
     muiTableBodyRowProps,
     isMobile,
+    onSaveAsGlobalDefault,
+    globalDefaults: resetDefaults,
   });
 
   const table = useMaterialReactTable<T>({

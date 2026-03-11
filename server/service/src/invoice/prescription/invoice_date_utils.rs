@@ -46,7 +46,7 @@ mod test {
             picked_datetime: Some(invoice_time),
             verified_datetime: None,
             backdated_datetime: None,
-            name_link_id: "test_patient_id".to_string(),
+            name_id: "test_patient_id".to_string(),
             clinician_link_id: None,
             comment: None,
             colour: None,

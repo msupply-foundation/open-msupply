@@ -118,10 +118,13 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("name", "date_of_birth"),
         ("name", "date_of_death"),
         ("stock_line", "expiry_date"),
+        ("stock_line", "manufacture_date"),
         ("requisition", "expected_delivery_date"),
         ("invoice_line", "expiry_date"),
+        ("invoice_line", "manufacture_date"),
         ("stocktake", "stocktake_date"),
         ("stocktake_line", "expiry_date"),
+        ("stocktake_line", "manufacture_date"),
         ("period", "start_date"),
         ("period", "end_date"),
         ("store", "created_date"),
@@ -404,7 +407,7 @@ mod tests {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -417,7 +420,7 @@ mod tests {
         fn invoice2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 2, 1)
                     .unwrap()

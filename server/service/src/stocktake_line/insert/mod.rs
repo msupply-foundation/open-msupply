@@ -22,6 +22,7 @@ pub struct InsertStocktakeLine {
     pub item_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
+    pub manufacture_date: Option<NaiveDate>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
@@ -78,7 +79,7 @@ pub fn insert_stocktake_line(
             // Update stock line donor if provided and stock line exists
             if let (Some(donor_id), Some(existing_stock_line)) = (&input.donor_id, &stock_line) {
                 let mut stock_line_row = existing_stock_line.stock_line_row.clone();
-                stock_line_row.donor_link_id = Some(donor_id.clone());
+                stock_line_row.donor_id = Some(donor_id.clone());
                 StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
             }
 
@@ -370,7 +371,7 @@ mod stocktake_line_test {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
-                supplier_link_id: Some(String::from("name_store_b")),
+                supplier_id: Some(String::from("name_store_b")),
                 ..Default::default()
             }
         }
@@ -414,7 +415,7 @@ mod stocktake_line_test {
             .find_one_by_id(&stock_line.id)
             .unwrap()
             .unwrap();
-        assert_eq!(stock_line_row.donor_link_id, Some(donor_id));
+        assert_eq!(stock_line_row.donor_id, Some(donor_id));
     }
 
     #[actix_rt::test]

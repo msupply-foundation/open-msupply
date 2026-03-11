@@ -49,6 +49,8 @@ pub struct TransLineRowOmsFields {
     pub program_id: Option<String>,
     #[serde(default)]
     pub status: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -292,6 +294,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             campaign_id,
             program_id,
             status,
+            manufacture_date,
         } = oms_fields.unwrap_or_default();
 
         let result = InvoiceLineRow {
@@ -317,7 +320,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            donor_link_id: donor_id,
+            donor_id: donor_id,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -325,6 +328,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacture_date,
             status: match status.as_deref() {
                 Some("PENDING") => Some(repository::InvoiceLineStatus::Pending),
                 Some("PASSED") => Some(repository::InvoiceLineStatus::Passed),
@@ -386,7 +390,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
                     vvm_status_id,
                     reason_option_id,
                     campaign_id,
@@ -395,6 +399,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     volume_per_pack,
                     shipped_pack_size,
                     status,
+                    manufacture_date,
                 },
             item_row,
             ..
@@ -409,6 +414,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 Some(InvoiceLineStatus::Rejected) => Some("REJECTED".to_string()),
                 None => None,
             },
+            manufacture_date,
         });
 
         let legacy_row = LegacyTransLineRow {

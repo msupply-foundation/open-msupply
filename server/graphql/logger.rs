@@ -10,6 +10,22 @@ use rand::Rng;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+fn mask_password_entry(key: &str, value: &mut async_graphql::Value) {
+    if key == "password" {
+        *value = "****".into();
+    } else {
+        mask_passwords(value);
+    }
+}
+
+fn mask_passwords(value: &mut async_graphql::Value) {
+    if let async_graphql::Value::Object(map) = value {
+        for (key, value) in map.iter_mut() {
+            mask_password_entry(key.as_str(), value);
+        }
+    }
+}
+
 pub struct GraphQLRequestLogger;
 
 impl ExtensionFactory for GraphQLRequestLogger {
@@ -85,8 +101,8 @@ impl Extension for LoggerExtension {
             let info = info.inner.lock().await;
 
             let mut variables = variables.clone();
-            if let Some(password) = variables.get_mut("password") {
-                *password = "****".into(); // Mask password variable if present
+            for (key, value) in variables.iter_mut() {
+                mask_password_entry(key.as_str(), value);
             }
 
             for (_, operation) in document.operations.iter() {

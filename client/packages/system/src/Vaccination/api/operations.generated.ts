@@ -417,17 +417,15 @@ export function getSdk(
   return {
     vaccinationCard(
       variables: VaccinationCardQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<VaccinationCardQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<VaccinationCardQuery>({
-            document: VaccinationCardDocument,
+          client.request<VaccinationCardQuery>(
+            VaccinationCardDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'vaccinationCard',
         'query',
         variables
@@ -435,16 +433,13 @@ export function getSdk(
     },
     vaccination(
       variables: VaccinationQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<VaccinationQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<VaccinationQuery>({
-            document: VaccinationDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<VaccinationQuery>(VaccinationDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'vaccination',
         'query',
@@ -453,17 +448,15 @@ export function getSdk(
     },
     vaccineCourseDose(
       variables: VaccineCourseDoseQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<VaccineCourseDoseQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<VaccineCourseDoseQuery>({
-            document: VaccineCourseDoseDocument,
+          client.request<VaccineCourseDoseQuery>(
+            VaccineCourseDoseDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'vaccineCourseDose',
         'query',
         variables
@@ -471,17 +464,15 @@ export function getSdk(
     },
     insertVaccination(
       variables: InsertVaccinationMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertVaccinationMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertVaccinationMutation>({
-            document: InsertVaccinationDocument,
+          client.request<InsertVaccinationMutation>(
+            InsertVaccinationDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertVaccination',
         'mutation',
         variables
@@ -489,17 +480,15 @@ export function getSdk(
     },
     updateVaccination(
       variables: UpdateVaccinationMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateVaccinationMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateVaccinationMutation>({
-            document: UpdateVaccinationDocument,
+          client.request<UpdateVaccinationMutation>(
+            UpdateVaccinationDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateVaccination',
         'mutation',
         variables
