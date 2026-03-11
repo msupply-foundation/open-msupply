@@ -38,15 +38,11 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    let resource = if input.purchase_order_id.is_some() {
-        Resource::MutateInboundShipmentExternal
-    } else {
-        Resource::MutateInboundShipment
-    };
+    // Permissions checked in the service layer, but do an early check here to save some work if user doesn't have access to the store at all
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource,
+            resource: Resource::StoreAccess,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -131,9 +127,11 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::NotAnInternalOrder
         | ServiceError::InternalOrderDoesNotBelongToStore
         | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::PurchaseOrderDoesNotExist
         | ServiceError::AddLinesFromPurchaseOrderWithoutPurchaseOrder => {
             BadUserInput(formatted_error)
         }
+        ServiceError::AuthorisationDenied => Forbidden(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
     };

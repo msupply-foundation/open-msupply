@@ -34,7 +34,7 @@ pub fn insert_inbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let other_party = validate(connection, &ctx.store_id, &input)?;
+            let other_party = validate(connection, &ctx.store_id, &ctx.user_id, &input)?;
             let new_invoice = generate(
                 connection,
                 &ctx.store_id,
@@ -73,6 +73,7 @@ pub fn insert_inbound_shipment(
 #[derive(Debug, PartialEq)]
 pub enum InsertInboundShipmentError {
     InvoiceAlreadyExists,
+    PurchaseOrderDoesNotExist,
     AddLinesFromPurchaseOrderWithoutPurchaseOrder,
     // Name validation
     OtherPartyDoesNotExist,
@@ -82,6 +83,8 @@ pub enum InsertInboundShipmentError {
     RequisitionDoesNotExist,
     InternalOrderDoesNotBelongToStore,
     NotAnInternalOrder,
+    // Permission
+    AuthorisationDenied,
     // Internal error
     NewlyCreatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),

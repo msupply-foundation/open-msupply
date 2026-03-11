@@ -74,10 +74,11 @@ pub enum UpdateResponse {
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
     let service_provider = ctx.service_provider();
+    // Permissions checked in the service layer, but do an early check here to save some work if user doesn't have access to the store at all
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: Resource::StoreAccess,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -207,8 +208,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
         | ServiceError::CannotPutDeliveredDateAfterReceivedDate
-        | ServiceError::CannotSetDeliveredDateInFuture
-        | ServiceError::AuthorisationDenied => BadUserInput(formatted_error),
+        | ServiceError::CannotSetDeliveredDateInFuture => BadUserInput(formatted_error),
+        ServiceError::AuthorisationDenied => Forbidden(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -527,18 +528,17 @@ mod test {
             },
         ];
 
-        let (mock_data, connection, connection_manager, settings) =
-            setup_graphql_test_with_data(
-                EmptyMutation,
-                InvoiceMutations,
-                "test_graphql_update_inbound_shipment_success",
-                MockDataInserts::all(),
-                MockData {
-                    user_permissions: dummy_user_permissions,
-                    ..Default::default()
-                },
-            )
-            .await;
+        let (mock_data, connection, connection_manager, settings) = setup_graphql_test_with_data(
+            EmptyMutation,
+            InvoiceMutations,
+            "test_graphql_update_inbound_shipment_success",
+            MockDataInserts::all(),
+            MockData {
+                user_permissions: dummy_user_permissions,
+                ..Default::default()
+            },
+        )
+        .await;
 
         let mutation = r#"
         mutation ($storeId: String, $input: UpdateInboundShipmentInput!) {

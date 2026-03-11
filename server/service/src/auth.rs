@@ -49,6 +49,7 @@ pub enum Resource {
     MutateTemperatureBreach,
     // store
     QueryStore,
+    StoreAccess,
     // master list
     QueryMasterList,
     // items
@@ -252,6 +253,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     // store: No permission needed
     map.insert(Resource::QueryStore, PermissionDSL::NoPermissionRequired);
+    map.insert(Resource::StoreAccess, PermissionDSL::HasStoreAccess);
     // master list
     map.insert(Resource::QueryMasterList, PermissionDSL::HasStoreAccess);
 
