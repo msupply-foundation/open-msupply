@@ -128,7 +128,7 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::NoPermissionRequired,
+            resource: Resource::StoreAccess,
             store_id: Some(store_id.to_string()),
         },
     )?;
