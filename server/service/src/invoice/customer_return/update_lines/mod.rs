@@ -105,7 +105,7 @@ pub fn update_customer_return_lines(
                 })?;
             }
 
-            get_invoice(ctx, None, &input.customer_return_id)
+            get_invoice(ctx, None, &input.customer_return_id, None)
                 .map_err(UpdateCustomerReturnLinesError::DatabaseError)?
                 .ok_or(UpdateCustomerReturnLinesError::UpdatedReturnDoesNotExist)
         })

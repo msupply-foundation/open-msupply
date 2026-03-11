@@ -59,6 +59,56 @@ pub struct InvoiceSortInput {
     desc: Option<bool>,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "SCREAMING_SNAKE_CASE")]
+pub enum InvoiceScopeInput {
+    OutboundShipment,
+    InboundShipment,
+    InboundShipmentExternal,
+    Prescription,
+    SupplierReturn,
+    CustomerReturn,
+}
+
+impl InvoiceScopeInput {
+    pub fn resource(&self) -> Resource {
+        match self {
+            InvoiceScopeInput::OutboundShipment => Resource::QueryOutboundShipment,
+            InvoiceScopeInput::InboundShipment => Resource::QueryInboundShipment,
+            InvoiceScopeInput::InboundShipmentExternal => Resource::QueryInboundShipmentExternal,
+            InvoiceScopeInput::Prescription => Resource::QueryPrescription,
+            InvoiceScopeInput::SupplierReturn => Resource::QuerySupplierReturn,
+            InvoiceScopeInput::CustomerReturn => Resource::QueryCustomerReturn,
+        }
+    }
+
+    pub fn apply_filter(&self, mut filter: InvoiceFilter) -> InvoiceFilter {
+        match self {
+            InvoiceScopeInput::OutboundShipment => {
+                filter.r#type = Some(InvoiceType::OutboundShipment.equal_to());
+            }
+            InvoiceScopeInput::InboundShipment => {
+                filter.r#type = Some(InvoiceType::InboundShipment.equal_to());
+                filter.purchase_order_id = Some(repository::EqualFilter::is_null(true));
+            }
+            InvoiceScopeInput::InboundShipmentExternal => {
+                filter.r#type = Some(InvoiceType::InboundShipment.equal_to());
+                filter.purchase_order_id = Some(repository::EqualFilter::is_null(false));
+            }
+            InvoiceScopeInput::Prescription => {
+                filter.r#type = Some(InvoiceType::Prescription.equal_to());
+            }
+            InvoiceScopeInput::SupplierReturn => {
+                filter.r#type = Some(InvoiceType::SupplierReturn.equal_to());
+            }
+            InvoiceScopeInput::CustomerReturn => {
+                filter.r#type = Some(InvoiceType::CustomerReturn.equal_to());
+            }
+        }
+        filter
+    }
+}
+
 #[derive(InputObject, Clone)]
 pub struct InvoiceFilterInput {
     pub id: Option<EqualFilterStringInput>,
@@ -94,11 +144,16 @@ pub fn get_invoice(
     ctx: &Context<'_>,
     store_id: Option<String>,
     id: &str,
+    scope: Option<InvoiceScopeInput>,
 ) -> Result<InvoiceResponse> {
+    let resource = scope
+        .map(|s| s.resource())
+        .unwrap_or(Resource::QueryInvoice);
+
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::StoreAccess,
+            resource,
             store_id: store_id.clone(),
         },
     )?;
@@ -108,24 +163,16 @@ pub fn get_invoice(
         service_provider.context(store_id.clone().unwrap_or("".to_string()), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
-    let response =
-        match invoice_service.get_invoice_authorized(&service_context, store_id.as_deref(), id) {
-            Ok(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
-            Err(service::invoice::GetInvoiceError::RecordNotFound) => {
-                InvoiceResponse::Error(NodeError {
-                    error: NodeErrorInterface::record_not_found(),
-                })
-            }
-            Err(service::invoice::GetInvoiceError::AuthorisationDenied) => {
-                return Err(StandardGraphqlError::Forbidden(
-                    "Insufficient permission to view this invoice".to_string(),
-                )
-                .extend())
-            }
-            Err(service::invoice::GetInvoiceError::DatabaseError(error)) => {
-                return Err(StandardGraphqlError::from_repository_error(error))
-            }
-        };
+    let scope_filter = scope.map(|s| s.apply_filter(InvoiceFilter::default()));
+    let invoice_option =
+        invoice_service.get_invoice(&service_context, store_id.as_deref(), id, scope_filter)?;
+
+    let response = match invoice_option {
+        Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
+        None => InvoiceResponse::Error(NodeError {
+            error: NodeErrorInterface::record_not_found(),
+        }),
+    };
 
     Ok(response)
 }
@@ -176,11 +223,16 @@ pub fn get_invoice_by_number(
     store_id: String,
     invoice_number: u32,
     r#type: InvoiceNodeType,
+    scope: Option<InvoiceScopeInput>,
 ) -> Result<InvoiceResponse> {
+    let resource = scope
+        .map(|s| s.resource())
+        .unwrap_or(Resource::QueryInvoice);
+
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::StoreAccess,
+            resource,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -189,27 +241,20 @@ pub fn get_invoice_by_number(
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
-    let response = match invoice_service.get_invoice_by_number_authorized(
+    let scope_filter = scope.map(|s| s.apply_filter(InvoiceFilter::default()));
+    let invoice_option = invoice_service.get_invoice_by_number(
         &service_context,
         &store_id,
         invoice_number,
         InvoiceType::from(r#type),
-    ) {
-        Ok(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
-        Err(service::invoice::GetInvoiceError::RecordNotFound) => {
-            InvoiceResponse::Error(NodeError {
-                error: NodeErrorInterface::record_not_found(),
-            })
-        }
-        Err(service::invoice::GetInvoiceError::AuthorisationDenied) => {
-            return Err(StandardGraphqlError::Forbidden(
-                "Insufficient permission to view this invoice".to_string(),
-            )
-            .extend())
-        }
-        Err(service::invoice::GetInvoiceError::DatabaseError(error)) => {
-            return Err(StandardGraphqlError::from_repository_error(error))
-        }
+        scope_filter,
+    )?;
+
+    let response = match invoice_option {
+        Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
+        None => InvoiceResponse::Error(NodeError {
+            error: NodeErrorInterface::record_not_found(),
+        }),
     };
 
     Ok(response)

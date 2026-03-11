@@ -61,7 +61,7 @@ pub fn insert_inbound_shipment(
                 None,
             )?;
 
-            get_invoice(ctx, None, &new_invoice.id)
+            get_invoice(ctx, None, &new_invoice.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
