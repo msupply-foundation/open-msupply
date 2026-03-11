@@ -65,7 +65,11 @@
     }
   },
   "mounts": [
-    "source=claude-code-config,target=/home/vscode/.claude,type=volume"
+    {
+      "source": "${env:HOME}/.claude",
+      "target": "/home/vscode/.claude",
+      "type": "bind"
+    }
   ],
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
