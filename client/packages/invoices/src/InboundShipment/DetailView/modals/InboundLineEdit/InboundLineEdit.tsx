@@ -20,7 +20,7 @@ import {
   CurrencyRowFragment,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { InboundLineEditTable, QuantityTable } from './TabTables';
+import { InboundLineEditCards } from './InboundLineEditCards';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { ScannedBatchData } from '../../DetailView';
 import { useNextItem } from '../../../../useNextItem';
@@ -99,36 +99,33 @@ export const InboundLineEdit = ({
     prevLineCount.current = draftLines.length;
   }, [draftLines.length]);
 
-  const tableContent = simplifiedTabletView ? (
-    <>
-      <QuantityTable
-        isDisabled={isDisabled}
-        lines={draftLines}
-        updateDraftLine={updateDraftLine}
-        removeDraftLine={removeDraftLine}
-        item={currentItem}
-        hasItemVariantsEnabled={hasItemVariantsEnabled}
-        hasVvmStatusesEnabled={hasVvmStatusesEnabled}
-      />
-      <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
-        <ButtonWithIcon
-          disabled={isDisabled}
-          color="primary"
-          variant="outlined"
-          onClick={addDraftLine}
-          label={`${t('label.add-batch')} (+)`}
-          Icon={<PlusCircleIcon />}
-        />
-      </Box>
-    </>
-  ) : (
+  const cards = (
+    <InboundLineEditCards
+      lines={draftLines}
+      updateDraftLine={updateDraftLine}
+      removeDraftLine={removeDraftLine}
+      isDisabled={isDisabled}
+      currency={currency}
+      isExternalSupplier={isExternalSupplier}
+      item={currentItem}
+      hasItemVariantsEnabled={hasItemVariantsEnabled}
+      hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+      setPackRoundingMessage={setPackRoundingMessage}
+      restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
+      lastCardRef={lastCardRef}
+      simplified={simplifiedTabletView}
+    />
+  );
+
+  const content = (
     <>
       <Box
         flex={1}
         display="flex"
-        justifyContent="flex-end"
+        justifyContent={simplifiedTabletView ? 'flex-start' : 'flex-end'}
         alignItems="center"
         gap={1}
+        margin={simplifiedTabletView ? 3 : 0}
       >
         <ButtonWithIcon
           disabled={isDisabled}
@@ -142,36 +139,27 @@ export const InboundLineEdit = ({
           Icon={<PlusCircleIcon />}
         />
       </Box>
-      <TableContainer
-        sx={{
-          marginTop: 2,
-          height: 'calc(100vh - 300px)',
-          minHeight: 150,
-          overflow: 'auto',
-        }}
-      >
-        <Box width="100%">
-          {packRoundingMessage && (
-            <Alert severity="warning" style={{ marginBottom: 2 }}>
-              {packRoundingMessage}
-            </Alert>
-          )}
-          <InboundLineEditTable
-            lines={draftLines}
-            updateDraftLine={updateDraftLine}
-            removeDraftLine={removeDraftLine}
-            isDisabled={isDisabled}
-            currency={currency}
-            isExternalSupplier={isExternalSupplier}
-            item={currentItem}
-            hasItemVariantsEnabled={hasItemVariantsEnabled}
-            hasVvmStatusesEnabled={hasVvmStatusesEnabled}
-            setPackRoundingMessage={setPackRoundingMessage}
-            restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
-            lastCardRef={lastCardRef}
-          />
-        </Box>
-      </TableContainer>
+      {simplifiedTabletView ? (
+        cards
+      ) : (
+        <TableContainer
+          sx={{
+            marginTop: 2,
+            height: 'calc(100vh - 300px)',
+            minHeight: 150,
+            overflow: 'auto',
+          }}
+        >
+          <Box width="100%">
+            {packRoundingMessage && (
+              <Alert severity="warning" style={{ marginBottom: 2 }}>
+                {packRoundingMessage}
+              </Alert>
+            )}
+            {cards}
+          </Box>
+        </TableContainer>
+      )}
     </>
   );
 
@@ -226,7 +214,7 @@ export const InboundLineEdit = ({
             onChangeItem={setCurrentItem}
           />
           <Divider margin={5} />
-          {tableContent}
+          {content}
         </>
       )}
     </Modal>

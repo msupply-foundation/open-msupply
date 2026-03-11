@@ -5,7 +5,6 @@ import {
   MRT_RowData,
   MRT_ShowHideColumnsButton,
   MRT_TableInstance,
-  MRT_TopToolbar,
 } from 'material-react-table';
 import { CardListItem } from './CardListItem';
 
@@ -53,7 +52,6 @@ export const CardList = <T extends MRT_RowData>({
           : { mx: 'auto', maxWidth: 400 }),
       }}
     >
-      {!groupIcons && <MRT_TopToolbar table={table} />}
       {rows.map((row, index) => (
         <CardListItem
           key={row.id}
