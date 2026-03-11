@@ -11,13 +11,13 @@ import {
 interface DosesCaptionProps {
   value: number;
   dosesPerUnit: number;
-  displayVaccinesInDoses: boolean;
+  isDosesEnabled: boolean;
   sx?: SxProps<Theme>;
 }
 
 export const DosesCaption = ({
   value,
-  displayVaccinesInDoses,
+  isDosesEnabled,
   dosesPerUnit,
   sx,
 }: DosesCaptionProps) => {
@@ -26,7 +26,7 @@ export const DosesCaption = ({
 
   // doses always rounded to display in whole numbers
   const valueInDoses = QuantityUtils.useValueInDoses(
-    displayVaccinesInDoses,
+    isDosesEnabled,
     dosesPerUnit,
     value
   );

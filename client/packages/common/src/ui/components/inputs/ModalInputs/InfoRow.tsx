@@ -80,7 +80,7 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   unitName: string;
   nullDisplay?: string;
   endAdornmentOverride?: string;
-  displayVaccinesInDoses?: boolean;
+  isDosesEnabled?: boolean;
   dosesPerUnit?: number;
   roundUp?: boolean;
 }
@@ -90,7 +90,7 @@ export type ValueInfo = {
   endAdornmentOverride?: string;
   value?: number | null;
   sx?: SxProps<Theme>;
-  displayVaccinesInDoses?: boolean;
+  isDosesEnabled?: boolean;
   dosesPerUnit?: number;
   roundUp?: boolean;
 };
@@ -103,7 +103,7 @@ export const ValueInfoRow = ({
   unitName,
   sx,
   endAdornmentOverride,
-  displayVaccinesInDoses = false,
+  isDosesEnabled = false,
   dosesPerUnit = 1,
   nullDisplay,
   decimalLimit,
@@ -132,11 +132,11 @@ export const ValueInfoRow = ({
   const displayValue = treatAsNull ? nullDisplay : valueInUnitsOrPacks;
 
   const dosesCaption =
-    displayVaccinesInDoses && !!value ? (
+    isDosesEnabled && !!value ? (
       <DosesCaption
         value={value}
         dosesPerUnit={dosesPerUnit}
-        displayVaccinesInDoses={displayVaccinesInDoses}
+        isDosesEnabled={isDosesEnabled}
         sx={{ pr: 0 }}
       />
     ) : null;

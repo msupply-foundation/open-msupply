@@ -29,7 +29,7 @@ interface RequestedSelectionProps {
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
   showExtraFields?: boolean;
-  displayVaccinesInDoses?: boolean;
+  isDosesEnabled?: boolean;
   dosesPerUnit?: number;
   setIsEditingRequested: (isEditingRequested: boolean) => void;
 }
@@ -43,7 +43,7 @@ export const RequestedSelection = ({
   representation,
   setRepresentation,
   unitName,
-  displayVaccinesInDoses = false,
+  isDosesEnabled = false,
   dosesPerUnit = 1,
   setIsEditingRequested,
 }: RequestedSelectionProps) => {
@@ -138,7 +138,7 @@ export const RequestedSelection = ({
               },
             }}
           />
-          {displayVaccinesInDoses && !!value && (
+          {isDosesEnabled && !!value && (
             <DosesCaption
               value={
                 representation === Representation.PACKS
@@ -146,7 +146,7 @@ export const RequestedSelection = ({
                   : value
               }
               dosesPerUnit={dosesPerUnit}
-              displayVaccinesInDoses={displayVaccinesInDoses}
+              isDosesEnabled={isDosesEnabled}
             />
           )}
         </Box>

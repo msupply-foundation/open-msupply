@@ -18,7 +18,7 @@ interface ResponseNumInputRowProps {
   representation: RepresentationValue;
   defaultPackSize: number;
   dosesPerUnit?: number;
-  displayVaccinesInDoses?: boolean;
+  isDosesEnabled?: boolean;
   endAdornmentOverride?: string;
   unitName?: string | null;
   label: string;
@@ -39,7 +39,7 @@ export const ResponseNumInputRow = ({
   endAdornmentOverride,
   disabled,
   disabledOverride,
-  displayVaccinesInDoses = false,
+  isDosesEnabled = false,
   overrideDoseDisplay,
   unitName,
   sx,
@@ -79,11 +79,11 @@ export const ResponseNumInputRow = ({
   };
 
   const dosesCaption =
-    displayVaccinesInDoses && !!value && !overrideDoseDisplay ? (
+    isDosesEnabled && !!value && !overrideDoseDisplay ? (
       <DosesCaption
         value={value}
         dosesPerUnit={dosesPerUnit}
-        displayVaccinesInDoses={displayVaccinesInDoses}
+        isDosesEnabled={isDosesEnabled}
       />
     ) : null;
 

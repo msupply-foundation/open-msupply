@@ -92,8 +92,7 @@ export const RequestLineEdit = ({
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 
   const showContent = !!draft && !!currentItem;
-  const displayVaccinesInDoses =
-    manageVaccinesInDoses && currentItem?.isVaccine;
+  const isDosesEnabled = manageVaccinesInDoses && currentItem?.isVaccine;
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
@@ -118,7 +117,7 @@ export const RequestLineEdit = ({
             value,
             sx,
             endAdornmentOverride,
-            displayVaccinesInDoses: showDoses,
+            isDosesEnabled: dosesEnabled,
             roundUp,
           }) => (
             <ValueInfoRow
@@ -130,7 +129,7 @@ export const RequestLineEdit = ({
               representation={representation}
               unitName={unitName}
               sx={sx}
-              displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
+              isDosesEnabled={dosesEnabled ?? isDosesEnabled}
               dosesPerUnit={currentItem?.doses}
               decimalLimit={0}
               roundUp={roundUp}
@@ -143,7 +142,7 @@ export const RequestLineEdit = ({
       defaultPackSize,
       representation,
       unitName,
-      displayVaccinesInDoses,
+      isDosesEnabled,
       currentItem?.doses,
     ]
   );
@@ -174,7 +173,7 @@ export const RequestLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            displayVaccinesInDoses={displayVaccinesInDoses}
+            isDosesEnabled={isDosesEnabled}
             dosesPerUnit={currentItem?.doses}
             setIsEditingRequested={setIsEditingRequested}
           />
@@ -262,7 +261,7 @@ export const RequestLineEdit = ({
                   value={currentItem?.defaultPackSize}
                 />
               )}
-              {displayVaccinesInDoses && currentItem?.doses ? (
+              {isDosesEnabled && currentItem?.doses ? (
                 <InfoRow
                   label={t('label.doses-per-unit')}
                   value={currentItem?.doses}
