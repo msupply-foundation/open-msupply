@@ -83,6 +83,7 @@ fn generate_line(
         cost_price_per_pack: 0.0,
         batch: None,
         expiry_date: None,
+        manufacture_date: None,
         item_variant_id: None,
         location_id: None,
         foreign_currency_price_before_tax: None,

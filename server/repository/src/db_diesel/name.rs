@@ -9,7 +9,8 @@ use crate::{
     },
     name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StringFilter,
+    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreFilter, StoreRepository,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -54,6 +55,7 @@ pub struct NameFilter {
     pub email: Option<StringFilter>,
 
     pub code_or_name: Option<StringFilter>,
+    pub store: Option<StoreFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -190,6 +192,7 @@ impl<'a> NameRepository<'a> {
                 email,
                 code_or_name,
                 supplying_store_id,
+                store,
             } = f;
 
             // or filter need to be applied before and filters
@@ -246,6 +249,11 @@ impl<'a> NameRepository<'a> {
                 Some(false) => query.filter(store::id.is_null()),
                 None => query,
             };
+
+            if store.is_some() {
+                let store_ids = StoreRepository::create_filtered_query(store).select(store::id);
+                query = query.filter(store::id.eq_any(store_ids));
+            }
         };
 
         // Only return active (not deleted) names
@@ -351,6 +359,11 @@ impl NameFilter {
 
     pub fn supplying_store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.supplying_store_id = Some(filter);
+        self
+    }
+
+    pub fn store(mut self, filter: StoreFilter) -> Self {
+        self.store = Some(filter);
         self
     }
 }

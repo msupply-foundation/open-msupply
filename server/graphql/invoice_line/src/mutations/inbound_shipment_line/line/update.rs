@@ -29,6 +29,7 @@ pub struct UpdateInput {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdateInput<NaiveDate>>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
@@ -102,6 +103,7 @@ impl UpdateInput {
             pack_size,
             batch,
             expiry_date,
+            manufacture_date,
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
@@ -129,6 +131,9 @@ impl UpdateInput {
             batch,
             expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
                 value: expiry_date.value,
+            }),
+            manufacture_date: manufacture_date.map(|manufacture_date| NullableUpdate {
+                value: manufacture_date.value,
             }),
             sell_price_per_pack,
             cost_price_per_pack,
