@@ -1,6 +1,7 @@
 import React from 'react';
 import { Stack, useMediaQuery } from '@mui/material';
 import {
+  MRT_Row,
   MRT_RowData,
   MRT_ShowHideColumnsButton,
   MRT_TableInstance,
@@ -16,20 +17,17 @@ interface CardListProps<T extends MRT_RowData> {
 
 const getRowOnClick = <T extends MRT_RowData>(
   table: MRT_TableInstance<T>,
-  row: ReturnType<MRT_TableInstance<T>['getRowModel']>['rows'][number]
+  row: MRT_Row<T>
 ): React.MouseEventHandler<HTMLDivElement> | undefined => {
+  const muiRowProps = table.options.muiTableBodyRowProps;
   const rowProps =
-    typeof table.options.muiTableBodyRowProps === 'function'
-      ? (
-          table.options.muiTableBodyRowProps as
-            | ((args: {
-                row: typeof row;
-                table: typeof table;
-              }) => React.HTMLProps<HTMLDivElement>)
-            | undefined
-        )?.({ row, table }) ?? {}
-      : (table.options.muiTableBodyRowProps ?? {});
+    typeof muiRowProps === 'function'
+      ? muiRowProps({ row, table, staticRowIndex: 0 })
+      : (muiRowProps ?? {});
 
+  // TableRowProps.onClick is typed for HTMLTableRowElement, but we're
+  // applying it to a Card (HTMLDivElement). The handler signatures are
+  // compatible at runtime, so we need this cast to bridge the element types.
   return rowProps.onClick as
     | React.MouseEventHandler<HTMLDivElement>
     | undefined;

@@ -10,6 +10,13 @@ import { ColumnDef } from '../../types';
 import { CardListField } from './CardListField';
 import { CardListFieldGroup } from './CardListFieldGroup';
 
+/** Access custom ColumnDef fields from an MRT cell.
+ *  ColumnDef<T> extends MRT_ColumnDef<T>, but MRT types columnDef as the
+ *  base type, so we narrow it here once. */
+const colDef = <T extends MRT_RowData>(
+  cell: MRT_Cell<T, unknown>
+): ColumnDef<T> => cell.column.columnDef as ColumnDef<T>;
+
 interface CardListItemProps<T extends MRT_RowData> {
   row: MRT_Row<T>;
   cardRef?: React.Ref<HTMLDivElement>;
@@ -22,21 +29,20 @@ interface CardListItemProps<T extends MRT_RowData> {
 const isActionCell = <T extends MRT_RowData>(
   cell: MRT_Cell<T, unknown>
 ): boolean => {
-  const colDef = cell.column.columnDef as ColumnDef<T>;
-  return !colDef.header || colDef.pin === 'right';
+  const def = colDef(cell);
+  return !def.header || def.pin === 'right';
 };
 
 const isSummaryCell = <T extends MRT_RowData>(
   cell: MRT_Cell<T, unknown>
-): boolean => {
-  const colDef = cell.column.columnDef as ColumnDef<T>;
-  return !!colDef.cardSummary;
-};
+): boolean => !!colDef(cell).cardSummary;
 
-const getCellContent = <T extends MRT_RowData>(cell: MRT_Cell<T, unknown>) =>
+const getCellContent = <T extends MRT_RowData>(
+  cell: MRT_Cell<T, unknown>
+): React.ReactNode =>
   cell.column.columnDef.Cell
     ? flexRender(cell.column.columnDef.Cell, cell.getContext())
-    : cell.renderValue();
+    : cell.renderValue<React.ReactNode>();
 
 const SummaryCell = <T extends MRT_RowData>({
   cell,
@@ -52,7 +58,7 @@ const SummaryCell = <T extends MRT_RowData>({
   );
   const value = (
     <Typography variant="subtitle2" fontWeight={700} noWrap>
-      {cell.renderValue() as React.ReactNode}
+      {cell.renderValue<React.ReactNode>()}
     </Typography>
   );
   return (
@@ -113,7 +119,7 @@ export const CardListItem = <T extends MRT_RowData>({
   const groupMap = new Map<string | undefined, typeof dataCells>();
 
   for (const cell of dataCells) {
-    const groupName = (cell.column.columnDef as ColumnDef<T>).columnGroup;
+    const groupName = colDef(cell).columnGroup;
     let group = groupMap.get(groupName);
     if (!group) {
       group = [];
@@ -165,7 +171,7 @@ export const CardListItem = <T extends MRT_RowData>({
           >
             {actionCells.map(cell => (
               <Box key={cell.id} flexShrink={0}>
-                {getCellContent(cell) as React.ReactNode}
+                {getCellContent(cell)}
               </Box>
             ))}
             {summaryCells.slice(0, 1).map(cell => (
@@ -200,7 +206,7 @@ export const CardListItem = <T extends MRT_RowData>({
                     wordBreak: 'break-word',
                   }}
                 >
-                  {getCellContent(cell) as React.ReactNode}
+                  {getCellContent(cell)}
                 </Box>
               </Box>
             ))
@@ -217,11 +223,9 @@ export const CardListItem = <T extends MRT_RowData>({
                       cell.column.columnDef.header,
                       cell.getContext()
                     )}
-                    span={
-                      (cell.column.columnDef as ColumnDef<T>).cardSpan
-                    }
+                    span={colDef(cell).cardSpan}
                   >
-                    {getCellContent(cell) as React.ReactNode}
+                    {getCellContent(cell)}
                   </CardListField>
                 ))}
               </CardListFieldGroup>
