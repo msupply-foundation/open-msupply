@@ -6,7 +6,7 @@ export const useViewMode = (
   defaultMode: ViewMode = 'table'
 ) => {
   const [viewMode, setViewModeState] = useState<ViewMode>(
-    getSavedState(tableId).viewMode ?? defaultMode
+    getSavedState(tableId)?.viewMode ?? defaultMode
   );
 
   const setViewMode = useCallback(
