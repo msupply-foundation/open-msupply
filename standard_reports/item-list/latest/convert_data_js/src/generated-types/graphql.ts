@@ -21,7 +21,18 @@ export type ItemListQuery = {
       stats: {
         __typename?: 'ItemStatsNode',
         stockOnHand: number
-      }
+      },
+      categories: Array<{
+        __typename?: 'ItemCategoryNode',
+        name: string
+      }>,
+      itemStoreProperties?: {
+        __typename?: 'ItemStorePropertiesNode',
+        defaultLocation?: {
+          __typename?: 'LocationNode',
+          code: string
+        } | null
+      } | null
     }>
   }
 };

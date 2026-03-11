@@ -2,15 +2,8 @@ import { ConvertData } from '../convertDataType';
 import { Arguments } from './generated-types/arguments';
 import { ItemListQuery } from './generated-types/graphql';
 import { sortNodes } from '../../../../utils';
-import groupBy from 'lodash/groupBy';
 
-type CategorySqlResult = { item_id: string; category_name: string }[];
-type LocationSqlResult = { item_id: string; location_name: string }[];
-
-export type Data = ItemListQuery & {
-  itemCategory: CategorySqlResult;
-  itemDefaultLocation: LocationSqlResult;
-};
+export type Data = ItemListQuery;
 
 type OutputNode = {
   id: string;
@@ -28,17 +21,15 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
   data,
   arguments: { sort, dir, onlyOutOfStock, venCategory },
 }) => {
-  const categoryMap = groupBy(data.itemCategory, 'item_id');
-  const locationMap = groupBy(data.itemDefaultLocation, 'item_id');
-
   let output: OutputNode[] = data.items.nodes.map(item => ({
     id: item.id,
     code: item.code,
     name: item.name,
     venCategory: item.venCategory,
     SOH: item.stats?.stockOnHand ?? 0,
-    locationName: locationMap[item.id]?.[0]?.location_name ?? '',
-    categoryName: categoryMap[item.id]?.[0]?.category_name ?? '',
+    locationName: item.itemStoreProperties?.defaultLocation?.code ?? '',
+    categoryName:
+      item.categories?.map(c => c.name).join(', ') ?? '',
   }));
 
   // Filter: Only out of stock

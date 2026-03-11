@@ -1,13 +1,5 @@
 {
   "data": {
-    "itemCategory": [
-      { "item_id": "101", "category_name": "Antibiotics" },
-      { "item_id": "102", "category_name": "Analgesics" }
-    ],
-    "itemDefaultLocation": [
-      { "item_id": "101", "location_name": "Shelf A1" },
-      { "item_id": "103", "location_name": "Shelf B2" }
-    ],
     "items": {
       "nodes": [
         {
@@ -15,21 +7,31 @@
           "code": "ABC001",
           "name": "Amoxicillin",
           "venCategory": "V",
-          "stats": { "stockOnHand": 500 }
+          "stats": { "stockOnHand": 500 },
+          "categories": [{ "name": "Antibiotics" }],
+          "itemStoreProperties": {
+            "defaultLocation": { "code": "Shelf A1" }
+          }
         },
         {
           "id": "102",
           "code": "DEF002",
           "name": "Paracetamol",
           "venCategory": "E",
-          "stats": { "stockOnHand": 0 }
+          "stats": { "stockOnHand": 0 },
+          "categories": [{ "name": "Analgesics" }],
+          "itemStoreProperties": null
         },
         {
           "id": "103",
           "code": "GHI003",
           "name": "Bandages",
           "venCategory": "NotAssigned",
-          "stats": { "stockOnHand": 200 }
+          "stats": { "stockOnHand": 200 },
+          "categories": [],
+          "itemStoreProperties": {
+            "defaultLocation": { "code": "Shelf B2" }
+          }
         }
       ]
     }
