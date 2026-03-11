@@ -12,8 +12,6 @@ name: Generate Database Schema
 
 on:
   push:
-    branches:
-      - copilot/add-static-document-database-schema # remove before merging
     tags:
       - 'v[0-9]*.[0-9]*.[0-9]*'
   workflow_dispatch:
@@ -52,7 +50,15 @@ jobs:
 
       - name: Extract version
         run: |
-          echo "VERSION=2.16.0" >> $GITHUB_ENV
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            echo "Error: No version specified and no tag found"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libpq-dev
