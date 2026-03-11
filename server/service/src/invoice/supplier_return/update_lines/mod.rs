@@ -154,7 +154,7 @@ mod test {
         fn base_test_return() -> InvoiceRow {
             InvoiceRow {
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_a().id,
+                name_id: mock_name_store_a().id,
                 r#type: InvoiceType::SupplierReturn,
                 status: InvoiceStatus::New,
                 ..Default::default()

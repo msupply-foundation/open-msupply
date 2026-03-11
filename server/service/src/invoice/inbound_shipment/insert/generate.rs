@@ -21,7 +21,8 @@ pub fn generate(
         their_reference,
         colour,
         requisition_id,
-        goods_received_id,
+        purchase_order_id,
+        insert_lines_from_purchase_order: _,
     }: InsertInboundShipment,
     other_party: Name,
 ) -> Result<InvoiceRow, RepositoryError> {
@@ -34,7 +35,7 @@ pub fn generate(
     let result = InvoiceRow {
         id,
         user_id: Some(user_id.to_string()),
-        name_link_id: other_party_id,
+        name_id: other_party_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         r#type: InvoiceType::InboundShipment,
         comment,
@@ -46,7 +47,7 @@ pub fn generate(
         on_hold: on_hold.unwrap_or(false),
         colour,
         requisition_id,
-        goods_received_id,
+        purchase_order_id,
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
@@ -70,7 +71,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
+        default_donor_id: None,
         shipping_method_id: None,
     };
 

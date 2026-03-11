@@ -25,6 +25,7 @@ export type StocktakeLineFragment = {
   itemName: string;
   id: string;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   packSize?: number | null;
   snapshotNumberOfPacks: number;
   countedNumberOfPacks?: number | null;
@@ -121,6 +122,7 @@ export type StocktakeFragment = {
       itemName: string;
       id: string;
       expiryDate?: string | null;
+  manufactureDate?: string | null;
       packSize?: number | null;
       snapshotNumberOfPacks: number;
       countedNumberOfPacks?: number | null;
@@ -261,6 +263,7 @@ export type StocktakeQuery = {
             itemName: string;
             id: string;
             expiryDate?: string | null;
+  manufactureDate?: string | null;
             packSize?: number | null;
             snapshotNumberOfPacks: number;
             countedNumberOfPacks?: number | null;
@@ -377,6 +380,7 @@ export type StocktakeByNumberQuery = {
             itemName: string;
             id: string;
             expiryDate?: string | null;
+  manufactureDate?: string | null;
             packSize?: number | null;
             snapshotNumberOfPacks: number;
             countedNumberOfPacks?: number | null;
@@ -478,6 +482,7 @@ export type StocktakeLinesQuery = {
       itemName: string;
       id: string;
       expiryDate?: string | null;
+  manufactureDate?: string | null;
       packSize?: number | null;
       snapshotNumberOfPacks: number;
       countedNumberOfPacks?: number | null;
@@ -787,6 +792,7 @@ export const StocktakeLineFragmentDoc = gql`
     itemName
     id
     expiryDate
+    manufactureDate
     packSize
     snapshotNumberOfPacks
     countedNumberOfPacks
@@ -1153,16 +1159,13 @@ export function getSdk(
   return {
     stocktakes(
       variables: StocktakesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<StocktakesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StocktakesQuery>({
-            document: StocktakesDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<StocktakesQuery>(StocktakesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'stocktakes',
         'query',
@@ -1171,16 +1174,13 @@ export function getSdk(
     },
     stocktake(
       variables: StocktakeQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<StocktakeQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StocktakeQuery>({
-            document: StocktakeDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<StocktakeQuery>(StocktakeDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'stocktake',
         'query',
@@ -1189,17 +1189,15 @@ export function getSdk(
     },
     stocktakeByNumber(
       variables: StocktakeByNumberQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<StocktakeByNumberQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StocktakeByNumberQuery>({
-            document: StocktakeByNumberDocument,
+          client.request<StocktakeByNumberQuery>(
+            StocktakeByNumberDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'stocktakeByNumber',
         'query',
         variables
@@ -1207,17 +1205,15 @@ export function getSdk(
     },
     stocktakeLines(
       variables: StocktakeLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<StocktakeLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StocktakeLinesQuery>({
-            document: StocktakeLinesDocument,
+          client.request<StocktakeLinesQuery>(
+            StocktakeLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'stocktakeLines',
         'query',
         variables
@@ -1225,17 +1221,15 @@ export function getSdk(
     },
     upsertStocktakeLines(
       variables: UpsertStocktakeLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpsertStocktakeLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertStocktakeLinesMutation>({
-            document: UpsertStocktakeLinesDocument,
+          client.request<UpsertStocktakeLinesMutation>(
+            UpsertStocktakeLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'upsertStocktakeLines',
         'mutation',
         variables
@@ -1243,17 +1237,15 @@ export function getSdk(
     },
     deleteStocktakes(
       variables: DeleteStocktakesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteStocktakesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteStocktakesMutation>({
-            document: DeleteStocktakesDocument,
+          client.request<DeleteStocktakesMutation>(
+            DeleteStocktakesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deleteStocktakes',
         'mutation',
         variables
@@ -1261,17 +1253,15 @@ export function getSdk(
     },
     updateStocktake(
       variables: UpdateStocktakeMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateStocktakeMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateStocktakeMutation>({
-            document: UpdateStocktakeDocument,
+          client.request<UpdateStocktakeMutation>(
+            UpdateStocktakeDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateStocktake',
         'mutation',
         variables
@@ -1279,17 +1269,15 @@ export function getSdk(
     },
     insertStocktake(
       variables: InsertStocktakeMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertStocktakeMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertStocktakeMutation>({
-            document: InsertStocktakeDocument,
+          client.request<InsertStocktakeMutation>(
+            InsertStocktakeDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertStocktake',
         'mutation',
         variables

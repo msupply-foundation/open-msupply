@@ -1,10 +1,10 @@
 [package]
-name = "test-connection"
+name = "test_connection"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "test-connection"
+name = "test_connection"
 path = "src/main.rs"
 
 [dependencies]

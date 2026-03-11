@@ -3,6 +3,7 @@ fragment StockLineRow on StockLineNode {
   batch
   costPricePerPack
   expiryDate
+  manufactureDate
   id
   itemId
   locationId

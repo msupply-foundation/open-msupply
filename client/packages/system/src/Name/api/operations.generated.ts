@@ -436,16 +436,13 @@ export function getSdk(
   return {
     names(
       variables: NamesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<NamesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<NamesQuery>({
-            document: NamesDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<NamesQuery>(NamesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'names',
         'query',
@@ -454,16 +451,13 @@ export function getSdk(
     },
     facilities(
       variables: FacilitiesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<FacilitiesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<FacilitiesQuery>({
-            document: FacilitiesDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<FacilitiesQuery>(FacilitiesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'facilities',
         'query',
@@ -472,16 +466,13 @@ export function getSdk(
     },
     nameById(
       variables: NameByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<NameByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<NameByIdQuery>({
-            document: NameByIdDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<NameByIdQuery>(NameByIdDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'nameById',
         'query',
@@ -490,17 +481,15 @@ export function getSdk(
     },
     nameProperties(
       variables?: NamePropertiesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<NamePropertiesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<NamePropertiesQuery>({
-            document: NamePropertiesDocument,
+          client.request<NamePropertiesQuery>(
+            NamePropertiesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'nameProperties',
         'query',
         variables
@@ -508,17 +497,15 @@ export function getSdk(
     },
     updateNameProperties(
       variables: UpdateNamePropertiesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateNamePropertiesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateNamePropertiesMutation>({
-            document: UpdateNamePropertiesDocument,
+          client.request<UpdateNamePropertiesMutation>(
+            UpdateNamePropertiesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateNameProperties',
         'mutation',
         variables

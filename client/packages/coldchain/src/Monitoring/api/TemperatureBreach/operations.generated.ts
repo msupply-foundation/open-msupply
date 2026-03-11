@@ -146,17 +146,15 @@ export function getSdk(
   return {
     temperatureBreaches(
       variables: TemperatureBreachesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<TemperatureBreachesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<TemperatureBreachesQuery>({
-            document: TemperatureBreachesDocument,
+          client.request<TemperatureBreachesQuery>(
+            TemperatureBreachesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'temperatureBreaches',
         'query',
         variables
@@ -164,17 +162,15 @@ export function getSdk(
     },
     updateTemperatureBreach(
       variables: UpdateTemperatureBreachMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateTemperatureBreachMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateTemperatureBreachMutation>({
-            document: UpdateTemperatureBreachDocument,
+          client.request<UpdateTemperatureBreachMutation>(
+            UpdateTemperatureBreachDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateTemperatureBreach',
         'mutation',
         variables

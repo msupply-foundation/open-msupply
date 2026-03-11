@@ -114,12 +114,6 @@ pub async fn get_loaders(
         },
         tokio::spawn,
     );
-    let name_by_name_link_id_loader = DataLoader::new(
-        NameByNameLinkIdLoader {
-            service_provider: service_provider.clone(),
-        },
-        tokio::spawn,
-    );
 
     let location_by_id_loader = DataLoader::new(
         LocationByIdLoader {
@@ -158,13 +152,6 @@ pub async fn get_loaders(
 
     let purchase_order_by_id_loader = DataLoader::new(
         PurchaseOrderByIdLoader {
-            service_provider: service_provider.clone(),
-        },
-        tokio::spawn,
-    );
-
-    let goods_received_line_by_goods_received_id_loader = DataLoader::new(
-        GoodsReceivedLinesByGoodsReceivedIdLoader {
             service_provider: service_provider.clone(),
         },
         tokio::spawn,
@@ -270,7 +257,6 @@ pub async fn get_loaders(
 
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
-    loaders.insert(name_by_name_link_id_loader);
     loaders.insert(store_by_id_loader);
     loaders.insert(invoice_by_id_loader);
     loaders.insert(invoice_by_requisition_id_loader);
@@ -287,7 +273,6 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
     loaders.insert(purchase_order_line_by_purchase_order_id_loader);
     loaders.insert(purchase_order_by_id_loader);
-    loaders.insert(goods_received_line_by_goods_received_id_loader);
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
     loaders.insert(requisition_line_supply_status_loader);
@@ -546,12 +531,6 @@ pub async fn get_loaders(
     ));
     loaders.insert(DataLoader::new(
         ProgramsByItemIdLoader {
-            service_provider: service_provider.clone(),
-        },
-        tokio::spawn,
-    ));
-    loaders.insert(DataLoader::new(
-        GoodsReceivedLinesByGoodsReceivedIdLoader {
             service_provider: service_provider.clone(),
         },
         tokio::spawn,

@@ -16,11 +16,32 @@ export type InitialisationStatusQuery = {
   };
 };
 
+export type MigrationStatusQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type MigrationStatusQuery = {
+  __typename: 'Queries';
+  migrationStatus: {
+    __typename: 'MigrationStatusNode';
+    inProgress: boolean;
+    version?: string | null;
+  };
+};
+
 export const InitialisationStatusDocument = gql`
   query initialisationStatus {
     initialisationStatus {
       status
       siteName
+    }
+  }
+`;
+export const MigrationStatusDocument = gql`
+  query migrationStatus {
+    migrationStatus {
+      inProgress
+      version
     }
   }
 `;
@@ -46,18 +67,34 @@ export function getSdk(
   return {
     initialisationStatus(
       variables?: InitialisationStatusQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InitialisationStatusQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InitialisationStatusQuery>({
-            document: InitialisationStatusDocument,
+          client.request<InitialisationStatusQuery>(
+            InitialisationStatusDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'initialisationStatus',
+        'query',
+        variables
+      );
+    },
+    migrationStatus(
+      variables?: MigrationStatusQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<MigrationStatusQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<MigrationStatusQuery>({
+            document: MigrationStatusDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'initialisationStatus',
+        'migrationStatus',
         'query',
         variables
       );

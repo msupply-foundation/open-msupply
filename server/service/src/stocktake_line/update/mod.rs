@@ -19,6 +19,7 @@ pub struct UpdateStocktakeLine {
     pub counted_number_of_packs: Option<f64>,
     pub batch: Option<String>,
     pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdate<NaiveDate>>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
@@ -129,7 +130,7 @@ mod stocktake_line_test {
         fn outbound_shipment() -> InvoiceRow {
             InvoiceRow {
                 id: "reduced_stock_outbound_shipment".to_string(),
-                name_link_id: "name_store_b".to_string(),
+                name_id: "name_store_b".to_string(),
                 store_id: "store_a".to_string(),
                 invoice_number: 15,
                 r#type: InvoiceType::OutboundShipment,
@@ -502,7 +503,7 @@ mod stocktake_line_test {
             .unwrap();
 
         // check that the fields were set correctly
-        assert_eq!(line.line.donor_link_id, Some(donor_id.clone()));
+        assert_eq!(line.line.donor_id, Some(donor_id.clone()));
         assert_eq!(
             line.line.expiry_date,
             Some(NaiveDate::from_ymd_opt(2025, 10, 1).unwrap())
@@ -522,7 +523,7 @@ mod stocktake_line_test {
             .unwrap();
 
         // Fields stayed the same
-        assert_eq!(line.line.donor_link_id, Some(donor_id));
+        assert_eq!(line.line.donor_id, Some(donor_id));
         assert_eq!(
             line.line.expiry_date,
             Some(NaiveDate::from_ymd_opt(2025, 10, 1).unwrap())
@@ -542,7 +543,7 @@ mod stocktake_line_test {
             .unwrap();
 
         // Fields stayed the same
-        assert_eq!(line.line.donor_link_id, None);
+        assert_eq!(line.line.donor_id, None);
         assert_eq!(line.line.expiry_date, None);
     }
 }
