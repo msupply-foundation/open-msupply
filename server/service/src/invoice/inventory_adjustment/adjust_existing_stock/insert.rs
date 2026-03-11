@@ -99,7 +99,7 @@ pub fn insert_inventory_adjustment(
                 None,
             )?;
 
-            get_invoice(ctx, None, &verified_invoice.id)
+            get_invoice(ctx, None, &verified_invoice.id, None)
                 .map_err(InsertInventoryAdjustmentError::DatabaseError)?
                 .ok_or(InsertInventoryAdjustmentError::NewlyCreatedInvoiceDoesNotExist)
         })

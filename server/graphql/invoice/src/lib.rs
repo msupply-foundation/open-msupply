@@ -26,8 +26,9 @@ impl InvoiceQueries {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "id of the invoice")] id: String,
+        #[graphql(desc = "Optional scope to check type-specific permissions")] scope: Option<InvoiceScopeInput>,
     ) -> Result<InvoiceResponse> {
-        get_invoice(ctx, Some(store_id), &id)
+        get_invoice(ctx, Some(store_id), &id, scope)
     }
 
     pub async fn invoice_by_number(
@@ -36,8 +37,9 @@ impl InvoiceQueries {
         store_id: String,
         invoice_number: u32,
         r#type: InvoiceNodeType,
+        #[graphql(desc = "Optional scope to check type-specific permissions")] scope: Option<InvoiceScopeInput>,
     ) -> Result<InvoiceResponse> {
-        get_invoice_by_number(ctx, store_id, invoice_number, r#type)
+        get_invoice_by_number(ctx, store_id, invoice_number, r#type, scope)
     }
 
     /// Use the type-specific query endpoints instead (e.g. outbound_shipments, inbound_shipments, etc.)

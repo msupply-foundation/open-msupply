@@ -7,7 +7,7 @@ mod test {
     use repository::mock::MockDataInserts;
     use repository::mock::{mock_name_store_a, mock_outbound_shipment_a, mock_store_a};
     use repository::InvoiceType;
-    use repository::{Invoice, RepositoryError, StorageConnectionManager};
+    use repository::{Invoice, InvoiceFilter, RepositoryError, StorageConnectionManager};
     use serde_json::json;
     use service::invoice::InvoiceServiceTrait;
     use service::service_provider::{ServiceContext, ServiceProvider};
@@ -25,6 +25,7 @@ mod test {
             _: &str,
             invoice_number: u32,
             r#type: InvoiceType,
+            _filter: Option<InvoiceFilter>,
         ) -> Result<Option<Invoice>, RepositoryError> {
             self.0(invoice_number, r#type)
         }

@@ -1,10 +1,8 @@
 use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
-use repository::{
-    EqualFilter, Pagination, PaginationOption, PermissionType, UserPermissionFilter,
-    UserPermissionRepository,
-};
+use repository::EqualFilter;
+use repository::PaginationOption;
 use repository::{
     Invoice, InvoiceFilter, InvoiceRepository, InvoiceSort, InvoiceType, RepositoryError,
 };
@@ -31,132 +29,40 @@ pub fn get_invoices(
     })
 }
 
-#[derive(Debug, PartialEq)]
-pub enum GetInvoiceError {
-    AuthorisationDenied,
-    RecordNotFound,
-    DatabaseError(RepositoryError),
-}
-
-impl From<RepositoryError> for GetInvoiceError {
-    fn from(error: RepositoryError) -> Self {
-        GetInvoiceError::DatabaseError(error)
-    }
-}
-
-/// Determine the query permission required for a given invoice
-fn query_permission_for_invoice(invoice: &Invoice) -> PermissionType {
-    match invoice.invoice_row.r#type {
-        InvoiceType::OutboundShipment => PermissionType::OutboundShipmentQuery,
-        InvoiceType::InboundShipment => {
-            if invoice.invoice_row.purchase_order_id.is_some() {
-                PermissionType::InboundShipmentExternalQuery
-            } else {
-                PermissionType::InboundShipmentQuery
-            }
-        }
-        InvoiceType::Prescription => PermissionType::PrescriptionQuery,
-        InvoiceType::SupplierReturn => PermissionType::SupplierReturnQuery,
-        InvoiceType::CustomerReturn => PermissionType::CustomerReturnQuery,
-        InvoiceType::InventoryAddition | InvoiceType::InventoryReduction | InvoiceType::Repack => {
-            PermissionType::StocktakeQuery
-        }
-    }
-}
-
-fn check_invoice_query_permission(
-    ctx: &ServiceContext,
-    invoice: &Invoice,
-) -> Result<(), GetInvoiceError> {
-    // System operations (e.g. transfer processors) run without a user context
-    if ctx.user_id.is_empty() {
-        return Ok(());
-    }
-
-    let required_permission = query_permission_for_invoice(invoice);
-
-    let user_permissions = UserPermissionRepository::new(&ctx.connection).query(
-        Pagination::all(),
-        Some(
-            UserPermissionFilter::new()
-                .user_id(EqualFilter::equal_to(ctx.user_id.clone()))
-                .store_id(EqualFilter::equal_to(ctx.store_id.clone())),
-        ),
-        None,
-    )?;
-
-    if user_permissions
-        .iter()
-        .any(|p| p.permission == required_permission)
-    {
-        Ok(())
-    } else {
-        Err(GetInvoiceError::AuthorisationDenied)
-    }
-}
-
-/// Get an invoice by ID (no permission check - for internal use)
 pub fn get_invoice(
     ctx: &ServiceContext,
     store_id_option: Option<&str>,
     id: &str,
+    filter: Option<InvoiceFilter>,
 ) -> Result<Option<Invoice>, RepositoryError> {
-    let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to(id.to_string()));
-    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
+    let mut f = filter.unwrap_or_default();
+    f.id = Some(EqualFilter::equal_to(id.to_string()));
+    f.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
 
-    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(filter)?;
+    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(f)?;
 
     Ok(result.pop())
 }
 
-/// Get an invoice by ID with permission check based on invoice type
-pub fn get_invoice_authorized(
-    ctx: &ServiceContext,
-    store_id_option: Option<&str>,
-    id: &str,
-) -> Result<Invoice, GetInvoiceError> {
-    let invoice = get_invoice(ctx, store_id_option, id)?
-        .ok_or(GetInvoiceError::RecordNotFound)?;
-
-    check_invoice_query_permission(ctx, &invoice)?;
-
-    Ok(invoice)
-}
-
-/// Get an invoice by number (no permission check - for internal use)
 pub fn get_invoice_by_number(
     ctx: &ServiceContext,
     store_id: &str,
     invoice_number: u32,
     r#type: InvoiceType,
+    filter: Option<InvoiceFilter>,
 ) -> Result<Option<Invoice>, RepositoryError> {
-    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(
-        InvoiceFilter::new()
-            .invoice_number(EqualFilter::equal_to(invoice_number as i64))
-            // Reverse "cancellation" prescription will have the same Invoice
-            // Number as their linked prescription, so we don't want to return
-            // them
-            .is_cancellation(false)
-            .store_id(EqualFilter::equal_to(store_id.to_string()))
-            .r#type(r#type.equal_to()),
-    )?;
+    let mut f = filter.unwrap_or_default();
+    f.invoice_number = Some(EqualFilter::equal_to(invoice_number as i64));
+    // Reverse "cancellation" prescription will have the same Invoice
+    // Number as their linked prescription, so we don't want to return
+    // them
+    f.is_cancellation = Some(false);
+    f.store_id = Some(EqualFilter::equal_to(store_id.to_string()));
+    f.r#type = Some(r#type.equal_to());
+
+    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(f)?;
 
     Ok(result.pop())
-}
-
-/// Get an invoice by number with permission check based on invoice type
-pub fn get_invoice_by_number_authorized(
-    ctx: &ServiceContext,
-    store_id: &str,
-    invoice_number: u32,
-    r#type: InvoiceType,
-) -> Result<Invoice, GetInvoiceError> {
-    let invoice = get_invoice_by_number(ctx, store_id, invoice_number, r#type)?
-        .ok_or(GetInvoiceError::RecordNotFound)?;
-
-    check_invoice_query_permission(ctx, &invoice)?;
-
-    Ok(invoice)
 }
 
 #[cfg(test)]
@@ -180,7 +86,7 @@ mod test_query {
 
         // Not found
         assert_eq!(
-            service.get_invoice_by_number(&context, "store_a", 200, InvoiceType::OutboundShipment),
+            service.get_invoice_by_number(&context, "store_a", 200, InvoiceType::OutboundShipment, None),
             Ok(None)
         );
 
@@ -193,6 +99,7 @@ mod test_query {
                 "store_a",
                 invoice_to_find.invoice_number as u32,
                 InvoiceType::OutboundShipment,
+                None,
             ),
             Ok(None)
         );
@@ -204,6 +111,7 @@ mod test_query {
                 "store_a",
                 invoice_to_find.invoice_number as u32,
                 InvoiceType::InboundShipment,
+                None,
             )
             .unwrap()
             .unwrap();

@@ -121,7 +121,7 @@ pub fn insert_customer_return(
                 None,
             )?;
 
-            get_invoice(ctx, None, &customer_return.id)
+            get_invoice(ctx, None, &customer_return.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
