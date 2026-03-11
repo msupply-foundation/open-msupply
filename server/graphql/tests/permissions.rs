@@ -119,6 +119,18 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             },
         },
         TestData {
+            name: "outboundShipmentCounts",
+            query: r#"query Query {
+                outboundShipmentCounts(storeId: "") {
+                  notShipped
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::QueryOutboundShipment,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
             name: "invoiceCounts",
             query: r#"query Query {
                 invoiceCounts(storeId: "") {

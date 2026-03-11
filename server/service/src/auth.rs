@@ -79,7 +79,7 @@ pub enum Resource {
     UpdateStocktakeLine,
     DeleteStocktakeLine,
     // invoice
-    InvoiceCount,
+    InvoiceCount, // Deprecated: requires all invoice count permissions combined
     QueryInvoice,
     QueryOutboundShipment,
     QueryInboundShipment,
@@ -457,15 +457,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
         ]),
     );
+    // Deprecated: combined invoice count resource requiring all query permissions
     map.insert(
         Resource::InvoiceCount,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
-            PermissionDSL::Any(vec![
-                PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
-                PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
-            ]),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
         ]),
     );
     // outbound shipment

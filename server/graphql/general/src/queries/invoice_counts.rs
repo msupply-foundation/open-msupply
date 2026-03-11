@@ -131,8 +131,7 @@ impl OutboundInvoiceCounts {
 pub struct InboundInvoiceCounts {
     timezone_offset: FixedOffset,
     store_id: String,
-    /// None = all inbound, Some(false) = internal only, Some(true) = external only
-    is_external: Option<bool>,
+    is_external: bool,
 }
 
 #[Object]
@@ -143,7 +142,7 @@ impl InboundInvoiceCounts {
             invoice_status: InvoiceStatus::New,
             timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
-            is_external: self.is_external,
+            is_external: Some(self.is_external),
         }
     }
 
@@ -156,25 +155,91 @@ impl InboundInvoiceCounts {
         })?;
         let service = &service_provider.invoice_count_service;
 
-        let not_delivered: i64 = match self.is_external {
-            None => service
-                .inbound_invoices_not_delivered_count(&service_ctx, &self.store_id),
-            Some(is_external) => service
-                .inbound_invoices_not_delivered_count_by_external(
-                    &service_ctx,
-                    &self.store_id,
-                    is_external,
-                ),
-        }
-        .map_err(|_| Error {
-            message: "InternalError".to_string(),
-            source: None,
-            extensions: None,
-        })?;
+        let not_delivered: i64 = service
+            .inbound_invoices_not_delivered_count_by_external(
+                &service_ctx,
+                &self.store_id,
+                self.is_external,
+            )
+            .map_err(|_| Error {
+                message: "InternalError".to_string(),
+                source: None,
+                extensions: None,
+            })?;
 
         Ok(not_delivered)
     }
 }
+
+fn parse_timezone(timezone_offset: &Option<i32>) -> Result<FixedOffset> {
+    offset_to_timezone(timezone_offset).ok_or(
+        StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string()).extend(),
+    )
+}
+
+pub fn outbound_shipment_counts(
+    ctx: &Context<'_>,
+    store_id: String,
+    timezone_offset: Option<i32>,
+) -> Result<OutboundInvoiceCounts> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryOutboundShipment,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+
+    let timezone_offset = parse_timezone(&timezone_offset)?;
+    Ok(OutboundInvoiceCounts {
+        timezone_offset,
+        store_id,
+    })
+}
+
+pub fn inbound_shipment_counts(
+    ctx: &Context<'_>,
+    store_id: String,
+    timezone_offset: Option<i32>,
+) -> Result<InboundInvoiceCounts> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryInboundShipment,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+
+    let timezone_offset = parse_timezone(&timezone_offset)?;
+    Ok(InboundInvoiceCounts {
+        timezone_offset,
+        store_id,
+        is_external: false,
+    })
+}
+
+pub fn inbound_shipment_external_counts(
+    ctx: &Context<'_>,
+    store_id: String,
+    timezone_offset: Option<i32>,
+) -> Result<InboundInvoiceCounts> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryInboundShipmentExternal,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+
+    let timezone_offset = parse_timezone(&timezone_offset)?;
+    Ok(InboundInvoiceCounts {
+        timezone_offset,
+        store_id,
+        is_external: true,
+    })
+}
+
+// --- Deprecated combined query ---
 
 pub struct InvoiceCounts {
     timezone_offset: FixedOffset,
@@ -190,21 +255,12 @@ impl InvoiceCounts {
         }
     }
 
-    /// All inbound shipments (internal + external)
+    /// Internal inbound shipments only (no purchase order)
     async fn inbound(&self) -> InboundInvoiceCounts {
         InboundInvoiceCounts {
             timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
-            is_external: None,
-        }
-    }
-
-    /// Internal inbound shipments only (no purchase order)
-    async fn inbound_internal(&self) -> InboundInvoiceCounts {
-        InboundInvoiceCounts {
-            timezone_offset: self.timezone_offset,
-            store_id: self.store_id.clone(),
-            is_external: Some(false),
+            is_external: false,
         }
     }
 
@@ -213,11 +269,12 @@ impl InvoiceCounts {
         InboundInvoiceCounts {
             timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
-            is_external: Some(true),
+            is_external: true,
         }
     }
 }
 
+#[deprecated(note = "Use outbound_shipment_counts, inbound_shipment_counts, or inbound_shipment_external_counts instead")]
 pub fn invoice_counts(
     ctx: &Context<'_>,
     store_id: String,
@@ -231,9 +288,7 @@ pub fn invoice_counts(
         },
     )?;
 
-    let timezone_offset = offset_to_timezone(&timezone_offset).ok_or(
-        StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string()),
-    )?;
+    let timezone_offset = parse_timezone(&timezone_offset)?;
     Ok(InvoiceCounts {
         timezone_offset,
         store_id,
