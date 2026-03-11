@@ -4,6 +4,7 @@ import { NumUtils } from '../numbers';
 export const Representation = {
   PACKS: 'packs',
   UNITS: 'units',
+  DOSES: 'doses',
 } as const;
 
 export type RepresentationValue =

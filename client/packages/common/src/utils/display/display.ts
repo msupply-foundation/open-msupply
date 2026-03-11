@@ -16,7 +16,9 @@ export const DisplayUtils = {
         endAdornmentOverride ??
         (representation === Representation.PACKS
           ? getPlural(t('label.pack').toLowerCase(), valueInUnitsOrPacks)
-          : getPlural(unitName.toLowerCase(), valueInUnitsOrPacks)),
+          : representation === Representation.DOSES
+            ? getPlural(t('label.dose').toLowerCase(), valueInUnitsOrPacks)
+            : getPlural(unitName.toLowerCase(), valueInUnitsOrPacks)),
       [
         t,
         getPlural,

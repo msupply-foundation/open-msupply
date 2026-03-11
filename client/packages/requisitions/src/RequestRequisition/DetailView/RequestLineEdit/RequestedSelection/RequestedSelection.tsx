@@ -69,14 +69,19 @@ export const RequestedSelection = ({
     const displayValue = value === 1 ? 1 : 2;
     const unitPlural = getPlural(unitName.toLowerCase(), displayValue);
     const packPlural = getPlural(t('label.pack'), displayValue).toLowerCase();
+    const dosePlural = getPlural(t('label.dose').toLowerCase(), displayValue);
 
-    if (!isPacksEnabled)
-      return [{ label: unitName, value: Representation.UNITS }];
-    return [
-      { label: unitPlural, value: Representation.UNITS },
-      { label: packPlural, value: Representation.PACKS },
-    ];
-  }, [unitName, currentValue, isPacksEnabled]);
+    const opts: Option[] = [{ label: unitPlural, value: Representation.UNITS }];
+
+    if (isPacksEnabled)
+      opts.push({ label: packPlural, value: Representation.PACKS });
+
+    if (isDosesEnabled && dosesPerUnit > 0) {
+      opts.push({ label: dosePlural, value: Representation.DOSES });
+    }
+
+    return opts;
+  }, [unitName, currentValue, isPacksEnabled, isDosesEnabled, dosesPerUnit]);
 
   const debouncedUpdate = useDebounceCallback(
     (value?: number) => {
