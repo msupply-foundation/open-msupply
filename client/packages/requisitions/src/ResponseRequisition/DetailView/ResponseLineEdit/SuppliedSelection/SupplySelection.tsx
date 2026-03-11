@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
-  DosesCaption,
+  DosesOrUnitsCaption,
   NumericTextInput,
   Select,
   Typography,
@@ -135,14 +135,13 @@ export const SupplySelection = ({
             }}
           />
           {isDosesEnabled && !!value && (
-            <DosesCaption
+            <DosesOrUnitsCaption
               value={
                 representation === Representation.PACKS
                   ? value * (defaultPackSize ?? 1)
                   : value
               }
               dosesPerUnit={dosesPerUnit}
-              isDosesEnabled={isDosesEnabled}
             />
           )}
         </Box>

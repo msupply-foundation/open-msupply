@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  DosesCaption,
+  DosesOrUnitsCaption,
   Grid,
   NumericTextDisplay,
   QuantityUtils,
@@ -19,7 +19,7 @@ interface InfoRowProps {
   packagingDisplay?: string;
   sx?: SxProps<Theme>;
   decimalLimit?: number;
-  dosesCaption?: React.ReactNode;
+  caption?: React.ReactNode;
   roundUp?: boolean;
 }
 
@@ -29,7 +29,7 @@ export const InfoRow = ({
   packagingDisplay,
   sx,
   decimalLimit,
-  dosesCaption,
+  caption,
   roundUp = false,
 }: InfoRowProps) => {
   return (
@@ -61,7 +61,7 @@ export const InfoRow = ({
               decimalLimit={decimalLimit}
               roundUp={roundUp}
             />
-            {dosesCaption}
+            {caption}
           </>
         ) : (
           <Typography variant="body1">
@@ -131,12 +131,11 @@ export const ValueInfoRow = ({
 
   const displayValue = treatAsNull ? nullDisplay : valueInUnitsOrPacks;
 
-  const dosesCaption =
+  const caption =
     isDosesEnabled && !!value ? (
-      <DosesCaption
+      <DosesOrUnitsCaption
         value={value}
         dosesPerUnit={dosesPerUnit}
-        isDosesEnabled={isDosesEnabled}
         sx={{ pr: 0 }}
       />
     ) : null;
@@ -149,7 +148,7 @@ export const ValueInfoRow = ({
         packagingDisplay={treatAsNull ? '' : endAdornment}
         sx={sx}
         decimalLimit={decimalLimit}
-        dosesCaption={dosesCaption}
+        caption={caption}
         roundUp={roundUp}
       />
     </>
