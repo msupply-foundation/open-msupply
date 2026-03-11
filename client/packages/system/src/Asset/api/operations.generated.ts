@@ -607,15 +607,17 @@ export function getSdk(
   return {
     assetCatalogueItems(
       variables: AssetCatalogueItemsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AssetCatalogueItemsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AssetCatalogueItemsQuery>(
-            AssetCatalogueItemsDocument,
+          client.request<AssetCatalogueItemsQuery>({
+            document: AssetCatalogueItemsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'assetCatalogueItems',
         'query',
         variables
@@ -623,15 +625,17 @@ export function getSdk(
     },
     assetCatalogueItemById(
       variables: AssetCatalogueItemByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AssetCatalogueItemByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AssetCatalogueItemByIdQuery>(
-            AssetCatalogueItemByIdDocument,
+          client.request<AssetCatalogueItemByIdQuery>({
+            document: AssetCatalogueItemByIdDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'assetCatalogueItemById',
         'query',
         variables
@@ -639,13 +643,16 @@ export function getSdk(
     },
     assetClasses(
       variables?: AssetClassesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AssetClassesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AssetClassesQuery>(AssetClassesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<AssetClassesQuery>({
+            document: AssetClassesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'assetClasses',
         'query',
@@ -654,13 +661,16 @@ export function getSdk(
     },
     assetTypes(
       variables?: AssetTypesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AssetTypesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AssetTypesQuery>(AssetTypesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<AssetTypesQuery>({
+            document: AssetTypesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'assetTypes',
         'query',
@@ -669,15 +679,17 @@ export function getSdk(
     },
     assetCategories(
       variables?: AssetCategoriesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AssetCategoriesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AssetCategoriesQuery>(
-            AssetCategoriesDocument,
+          client.request<AssetCategoriesQuery>({
+            document: AssetCategoriesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'assetCategories',
         'query',
         variables
@@ -685,15 +697,17 @@ export function getSdk(
     },
     assetProperties(
       variables?: AssetPropertiesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AssetPropertiesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AssetPropertiesQuery>(
-            AssetPropertiesDocument,
+          client.request<AssetPropertiesQuery>({
+            document: AssetPropertiesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'assetProperties',
         'query',
         variables
@@ -701,15 +715,17 @@ export function getSdk(
     },
     assetLogReasons(
       variables: AssetLogReasonsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AssetLogReasonsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AssetLogReasonsQuery>(
-            AssetLogReasonsDocument,
+          client.request<AssetLogReasonsQuery>({
+            document: AssetLogReasonsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'assetLogReasons',
         'query',
         variables
@@ -717,15 +733,17 @@ export function getSdk(
     },
     insertAssetCatalogueItem(
       variables: InsertAssetCatalogueItemMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertAssetCatalogueItemMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertAssetCatalogueItemMutation>(
-            InsertAssetCatalogueItemDocument,
+          client.request<InsertAssetCatalogueItemMutation>({
+            document: InsertAssetCatalogueItemDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertAssetCatalogueItem',
         'mutation',
         variables
@@ -733,15 +751,17 @@ export function getSdk(
     },
     deleteAssetCatalogueItem(
       variables: DeleteAssetCatalogueItemMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteAssetCatalogueItemMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteAssetCatalogueItemMutation>(
-            DeleteAssetCatalogueItemDocument,
+          client.request<DeleteAssetCatalogueItemMutation>({
+            document: DeleteAssetCatalogueItemDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteAssetCatalogueItem',
         'mutation',
         variables
@@ -749,15 +769,17 @@ export function getSdk(
     },
     insertAssetLogReason(
       variables: InsertAssetLogReasonMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertAssetLogReasonMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertAssetLogReasonMutation>(
-            InsertAssetLogReasonDocument,
+          client.request<InsertAssetLogReasonMutation>({
+            document: InsertAssetLogReasonDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertAssetLogReason',
         'mutation',
         variables
@@ -765,15 +787,17 @@ export function getSdk(
     },
     deleteLogReason(
       variables: DeleteLogReasonMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteLogReasonMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteLogReasonMutation>(
-            DeleteLogReasonDocument,
+          client.request<DeleteLogReasonMutation>({
+            document: DeleteLogReasonDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteLogReason',
         'mutation',
         variables

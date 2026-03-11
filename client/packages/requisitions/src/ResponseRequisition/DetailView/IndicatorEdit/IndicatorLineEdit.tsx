@@ -118,6 +118,8 @@ export const IndicatorLineEdit = ({
     .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
     .sort((a, b) => a.columnNumber - b.columnNumber);
 
+  const isIndicatorInactive = !currentLine?.line.isActive;
+
   return (
     <>
       <Box display="flex" flexDirection="column">
@@ -126,7 +128,7 @@ export const IndicatorLineEdit = ({
             <InputWithLabel
               key={column.value?.id}
               data={column}
-              disabled={disabled}
+              disabled={disabled || !column.isActive || isIndicatorInactive}
               autoFocus={i === 0}
             />
           );
