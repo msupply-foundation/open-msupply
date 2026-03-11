@@ -9,7 +9,7 @@ import {
   QuantityUtils,
   DisplayUtils,
   Representation,
-  DosesCaption,
+  DosesOrUnitsCaption,
 } from '@openmsupply-client/common';
 
 interface ResponseNumInputRowProps {
@@ -80,11 +80,7 @@ export const ResponseNumInputRow = ({
 
   const dosesCaption =
     isDosesEnabled && !!value && !overrideDoseDisplay ? (
-      <DosesCaption
-        value={value}
-        dosesPerUnit={dosesPerUnit}
-        isDosesEnabled={isDosesEnabled}
-      />
+      <DosesOrUnitsCaption value={value} dosesPerUnit={dosesPerUnit} />
     ) : null;
 
   return (
@@ -96,7 +92,7 @@ export const ResponseNumInputRow = ({
       disabled={disabled}
       disabledOverride={disabledOverride}
       sx={sx}
-      dosesCaption={dosesCaption}
+      caption={dosesCaption}
       roundUp={roundUp}
     />
   );

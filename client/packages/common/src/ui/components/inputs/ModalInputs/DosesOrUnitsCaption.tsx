@@ -2,34 +2,36 @@ import React from 'react';
 import {
   useTranslation,
   Typography,
-  useFormatNumber,
   SxProps,
   Theme,
   QuantityUtils,
 } from '@openmsupply-client/common';
 
-interface DosesCaptionProps {
+interface DosesOrUnitsCaptionProps {
+  /** Input value always in units */
   value: number;
   dosesPerUnit: number;
-  isDosesEnabled: boolean;
+  dosesSelected?: boolean;
+  unitsLabel?: string;
   sx?: SxProps<Theme>;
 }
 
-export const DosesCaption = ({
+export const DosesOrUnitsCaption = ({
   value,
-  isDosesEnabled,
   dosesPerUnit,
+  dosesSelected = false,
+  unitsLabel,
   sx,
-}: DosesCaptionProps) => {
+}: DosesOrUnitsCaptionProps) => {
   const t = useTranslation();
-  const { round } = useFormatNumber();
 
-  // doses always rounded to display in whole numbers
-  const valueInDoses = QuantityUtils.useValueInDoses(
-    isDosesEnabled,
-    dosesPerUnit,
-    value
-  );
+  const displayValue = dosesSelected
+    ? value
+    : QuantityUtils.calculateValueInDoses(dosesPerUnit, value);
+
+  const label = dosesSelected
+    ? (unitsLabel ?? t('label.unit')).toLowerCase()
+    : t('label.doses').toLowerCase();
 
   return (
     <Typography
@@ -43,7 +45,7 @@ export const DosesCaption = ({
         ...sx,
       }}
     >
-      {round(valueInDoses)} {t('label.doses').toLowerCase()}
+      {displayValue} {label}
     </Typography>
   );
 };
