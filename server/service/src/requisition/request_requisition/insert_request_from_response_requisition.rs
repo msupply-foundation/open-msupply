@@ -51,7 +51,7 @@ pub struct InsertFromResponseRequisition {
     pub status: Option<InsertFromResponseStatus>,
 }
 
-pub fn insert_from_response_requisition(
+pub fn insert_request_from_response_requisition(
     ctx: &ServiceContext,
     input: InsertFromResponseRequisition,
 ) -> Result<Requisition, OutError> {
@@ -259,7 +259,7 @@ impl From<RepositoryError> for InsertFromResponseRequisitionError {
 }
 
 #[cfg(test)]
-mod test_insert_from_response_requisition {
+mod test_insert_request_from_response_requisition {
     use crate::{
         requisition::request_requisition::InsertFromResponseRequisition,
         service_provider::ServiceProvider,
@@ -275,9 +275,9 @@ mod test_insert_from_response_requisition {
     use util::uuid::uuid;
 
     #[actix_rt::test]
-    async fn insert_from_response_requisition_success() {
+    async fn insert_request_from_response_requisition_success() {
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "insert_from_response_requisition_success",
+            "insert_request_from_response_requisition_success",
             MockDataInserts::all(),
             MockData::default(),
         )
@@ -293,7 +293,7 @@ mod test_insert_from_response_requisition {
         let new_requisition_id = uuid();
 
         let result = service
-            .insert_from_response_requisition(
+            .insert_request_from_response_requisition(
                 &context,
                 InsertFromResponseRequisition {
                     id: new_requisition_id.clone(),

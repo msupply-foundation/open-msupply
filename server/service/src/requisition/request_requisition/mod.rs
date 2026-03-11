@@ -26,5 +26,5 @@ pub use self::add_from_master_list::*;
 mod indicator_information;
 pub use self::indicator_information::*;
 
-mod insert_from_response_requisition;
-pub use self::insert_from_response_requisition::*;
+mod insert_request_from_response_requisition;
+pub use self::insert_request_from_response_requisition::*;

@@ -672,7 +672,7 @@ mutation insertRequestFromResponseRequisition(
   $storeId: String!
   $input: InsertFromResponseRequisitionInput!
 ) {
-  insertFromResponseRequisition(input: $input, storeId: $storeId) {
+  insertRequestFromResponseRequisition(input: $input, storeId: $storeId) {
     ... on RequisitionNode {
       __typename
       id
