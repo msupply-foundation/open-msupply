@@ -6,6 +6,7 @@ mod add_manufacture_date_to_stock_and_invoice_lines;
 mod add_purchase_order_id_to_invoice;
 mod invoice_line_add_status;
 mod item_category_join_add_item_link_id;
+mod requisition_add_original_customer_link_id;
 mod remove_goods_received;
 mod remove_goods_received_cleanup;
 
@@ -21,6 +22,7 @@ impl Migration for V2_17_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
+            Box::new(requisition_add_original_customer_link_id::Migrate),
             Box::new(add_forecasting_fields_to_requisition_line::Migrate),
             Box::new(remove_goods_received::Migrate),
             Box::new(remove_goods_received_cleanup::Migrate),
