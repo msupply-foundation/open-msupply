@@ -16,9 +16,10 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, strum::EnumString, strum::Display)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+#[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
 pub enum PermissionType {
     ServerAdmin,
 

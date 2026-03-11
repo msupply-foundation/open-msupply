@@ -3,8 +3,8 @@ use chrono::{DateTime, Utc};
 use log::error;
 use repository::{
     get_storage_connection_manager, migrations::Version, EqualFilter, Pagination, PaginationOption,
-    Report, ReportFilter, ReportMetaData, ReportRepository, ReportRowRepository, ReportSort,
-    RepositoryError,
+    PermissionType, Report, ReportFilter, ReportMetaData, ReportRepository, ReportRowRepository,
+    ReportSort, RepositoryError, UserPermissionFilter, UserPermissionRepository,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, time::SystemTime};
@@ -61,6 +61,7 @@ pub enum ReportError {
     HTMLToPDFError(String),
     TranslationError,
     ConvertDataError(ConvertDataError),
+    PermissionDenied { required_permission: String },
 }
 
 #[derive(Debug, Error)]
@@ -454,8 +455,41 @@ fn resolve_report(
 ) -> Result<ResolvedReportDefinition, ReportError> {
     let repo = ReportRowRepository::new(&ctx.connection);
 
-    let (report_name, main, excel_template_buffer) = load_report_definition(&repo, report_id)?;
-    resolve_report_definition(ctx, report_name, main, excel_template_buffer)
+    // Load the row first to check required_permission before resolving
+    let row = repo.find_one_by_id(report_id)?.ok_or_else(|| {
+        ReportError::ReportDefinitionNotFound {
+            report_id: report_id.to_string(),
+            msg: "Can't find root report".to_string(),
+        }
+    })?;
+
+    if let Some(ref required_permission) = row.required_permission {
+        let permission_type: PermissionType = required_permission
+            .parse()
+            .map_err(|_| ReportError::InvalidReportDefinition(
+                format!("Invalid required_permission value: {required_permission}"),
+            ))?;
+
+        let has_permission = UserPermissionRepository::new(&ctx.connection)
+            .query_one(UserPermissionFilter {
+                user_id: Some(EqualFilter::equal_to(ctx.user_id.clone())),
+                store_id: Some(EqualFilter::equal_to(ctx.store_id.clone())),
+                permission: Some(permission_type.equal_to()),
+                ..Default::default()
+            })?
+            .is_some();
+
+        if !has_permission {
+            return Err(ReportError::PermissionDenied {
+                required_permission: required_permission.clone(),
+            });
+        }
+    }
+
+    let def = serde_json::from_str::<ReportDefinition>(&row.template).map_err(|err| {
+        ReportError::InvalidReportDefinition(format!("Can't parse report: {err}"))
+    })?;
+    resolve_report_definition(ctx, row.name, def, row.excel_template_buffer)
 }
 
 fn resolve_report_definition(
@@ -899,6 +933,7 @@ mod report_service_test {
             code: "report_1".to_string(),
             is_active: true,
             excel_template_buffer: None,
+            required_permission: None,
         })
         .unwrap();
 
@@ -915,6 +950,7 @@ mod report_service_test {
             code: "report_base_1".to_string(),
             is_active: true,
             excel_template_buffer: None,
+            required_permission: None,
         })
         .unwrap();
 

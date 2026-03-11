@@ -643,6 +643,7 @@ async fn main() -> anyhow::Result<()> {
                 code: id,
                 is_active: true,
                 excel_template_buffer,
+                required_permission: None,
             })?;
 
             info!("Report upserted");

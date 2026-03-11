@@ -13,6 +13,7 @@ fragment ReportRow on ReportNode {
     jsonSchema
     uiSchema
   }
+  requiredPermission
 }
 
 query report($storeId: String!, $userLanguage: String!, $id: String!) {
@@ -93,6 +94,11 @@ query generateReport(
           __typename
           description
           errors
+        }
+        ... on PermissionDeniedError {
+          __typename
+          description
+          requiredPermission
         }
         description
       }

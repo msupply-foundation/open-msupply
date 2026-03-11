@@ -24,10 +24,25 @@ impl FailedToFetchReportData {
     }
 }
 
+pub struct PermissionDeniedError {
+    required_permission: String,
+}
+#[Object]
+impl PermissionDeniedError {
+    pub async fn description(&self) -> &str {
+        "Missing required permission to run this report"
+    }
+
+    pub async fn required_permission(&self) -> &str {
+        &self.required_permission
+    }
+}
+
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum PrintReportErrorInterface {
     FailedToFetchReportData(FailedToFetchReportData),
+    PermissionDeniedError(PermissionDeniedError),
 }
 
 #[derive(SimpleObject)]
@@ -387,6 +402,15 @@ fn map_error(error: ReportError) -> Result<PrintReportErrorInterface> {
         }
         ReportError::TranslationError | ReportError::ConvertDataError(_) => {
             StandardGraphqlError::InternalError(formatted_error)
+        }
+        ReportError::PermissionDenied {
+            required_permission,
+        } => {
+            return Ok(PrintReportErrorInterface::PermissionDeniedError(
+                PermissionDeniedError {
+                    required_permission,
+                },
+            ))
         }
     };
 

@@ -19,6 +19,7 @@ export type ReportRowFragment = {
     jsonSchema: any;
     uiSchema: any;
   } | null;
+  requiredPermission?: string | null;
 };
 
 export type ReportQueryVariables = Types.Exact<{
@@ -50,6 +51,7 @@ export type ReportQuery = {
           jsonSchema: any;
           uiSchema: any;
         } | null;
+        requiredPermission?: string | null;
       };
 };
 
@@ -87,6 +89,7 @@ export type ReportsQuery = {
             jsonSchema: any;
             uiSchema: any;
           } | null;
+          requiredPermission?: string | null;
         }>;
       };
 };
@@ -106,11 +109,17 @@ export type GenerateReportQuery = {
   generateReport:
     | {
         __typename: 'PrintReportError';
-        error: {
-          __typename: 'FailedToFetchReportData';
-          description: string;
-          errors: any;
-        };
+        error:
+          | {
+              __typename: 'FailedToFetchReportData';
+              description: string;
+              errors: any;
+            }
+          | {
+              __typename: 'PermissionDeniedError';
+              description: string;
+              requiredPermission: string;
+            };
       }
     | { __typename: 'PrintReportNode'; fileId: string };
 };
@@ -147,6 +156,7 @@ export const ReportRowFragmentDoc = gql`
       jsonSchema
       uiSchema
     }
+    requiredPermission
   }
 `;
 export const ReportDocument = gql`
@@ -232,6 +242,11 @@ export const GenerateReportDocument = gql`
             __typename
             description
             errors
+          }
+          ... on PermissionDeniedError {
+            __typename
+            description
+            requiredPermission
           }
           description
         }

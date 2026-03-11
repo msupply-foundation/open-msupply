@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod item_category_join_add_item_link_id;
 mod item_store_join_add_default_location_id;
+mod report_add_required_permission;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -18,6 +19,7 @@ impl Migration for V2_17_00 {
         vec![
             Box::new(item_category_join_add_item_link_id::Migrate),
             Box::new(item_store_join_add_default_location_id::Migrate),
+            Box::new(report_add_required_permission::Migrate),
         ]
     }
 }

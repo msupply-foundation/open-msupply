@@ -163,6 +163,10 @@ impl ReportNode {
     pub async fn version(&self) -> &str {
         &self.row.report_row.version
     }
+
+    pub async fn required_permission(&self) -> &Option<String> {
+        &self.row.report_row.required_permission
+    }
 }
 
 impl ReportNode {

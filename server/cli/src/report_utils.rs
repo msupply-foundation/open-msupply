@@ -184,6 +184,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         code,
         form_schema: form_schema_json,
         excel_template_buffer,
+        required_permission: manifest.required_permission,
     })
 }
 
@@ -237,6 +238,7 @@ pub struct Manifest {
     pub convert_data_type: ConvertDataType,
     pub query_default: Option<String>,
     pub excel_template: Option<String>,
+    pub required_permission: Option<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   BasicSpinner,
   LocaleKey,
-  noOtherVariants,
   NothingHere,
   PrintFormat,
   TypedTFunction,
@@ -69,6 +68,23 @@ const DetailViewInner = ({
   const { updateQuery } = useUrlQuery();
   const downloadFile = useDownloadFile();
 
+  const getPermissionErrorMessage = useCallback(
+    (report: ReportRowFragment) => {
+      const reportName = translateDynamicKey(
+        `report-code.${report.code}`,
+        report.name
+      );
+      const permissionName = report.requiredPermission
+        ? translateDynamicKey(
+            `permission.${report.requiredPermission}`,
+            report.requiredPermission
+          )
+        : '';
+      return t('error.missing-permission-report', { reportName, permissionName });
+    },
+    [translateDynamicKey, t]
+  );
+
   // When reportWithArgs is undefined, args modal is closed
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
@@ -117,22 +133,16 @@ const DetailViewInner = ({
         if (result?.__typename === 'PrintReportError') {
           const err = result.error;
 
-          if (err.__typename === 'FailedToFetchReportData') {
-            const errors = err.errors;
-
-            if (errors[0].extensions?.details?.includes('permission')) {
-              setState({
-                s: 'error',
-                errorMessage: t('error.no-permission-report'),
-              });
-            } else {
-              setState({
-                s: 'error',
-                errorMessage: t('error.failed-to-generate-report'),
-              });
-            }
+          if (err.__typename === 'PermissionDeniedError') {
+            setState({
+              s: 'error',
+              errorMessage: getPermissionErrorMessage(report),
+            });
           } else {
-            noOtherVariants(err.__typename);
+            setState({
+              s: 'error',
+              errorMessage: t('error.failed-to-generate-report'),
+            });
           }
         }
       } catch (error) {
@@ -172,22 +182,16 @@ const DetailViewInner = ({
       if (result?.__typename === 'PrintReportError') {
         const err = result.error;
 
-        if (err.__typename === 'FailedToFetchReportData') {
-          const errors = err.errors;
-
-          if (errors[0].extensions?.details?.includes('permission')) {
-            setState({
-              s: 'error',
-              errorMessage: t('error.no-permission-report'),
-            });
-          } else {
-            setState({
-              s: 'error',
-              errorMessage: t('error.failed-to-generate-report'),
-            });
-          }
+        if (err.__typename === 'PermissionDeniedError') {
+          setState({
+            s: 'error',
+            errorMessage: getPermissionErrorMessage(report),
+          });
         } else {
-          noOtherVariants(err.__typename);
+          setState({
+            s: 'error',
+            errorMessage: t('error.failed-to-generate-report'),
+          });
         }
       }
     } catch (error) {

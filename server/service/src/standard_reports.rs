@@ -90,6 +90,7 @@ impl StandardReports {
                     code: report.code.clone(),
                     is_active: set_active,
                     excel_template_buffer: report.excel_template_buffer,
+                    required_permission: report.required_permission.clone(),
                 })?;
                 upserted_reports.push(ReportMetaDataRow {
                     id: report.id,
@@ -125,4 +126,5 @@ pub struct ReportData {
     pub code: String,
     pub form_schema: Option<FormSchemaJson>,
     pub excel_template_buffer: Option<Vec<u8>>,
+    pub required_permission: Option<String>,
 }

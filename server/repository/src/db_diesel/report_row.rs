@@ -52,6 +52,7 @@ table! {
       code -> Text,
       is_active -> Bool,
       excel_template_buffer -> Nullable<Blob>,
+      required_permission -> Nullable<Text>,
   }
 }
 
@@ -77,6 +78,7 @@ pub struct ReportRow {
     pub code: String,
     pub is_active: bool,
     pub excel_template_buffer: Option<Vec<u8>>,
+    pub required_permission: Option<String>,
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable, Default)]
@@ -230,6 +232,7 @@ mod test {
             code: "TEST_CODE".to_string(),
             is_active: true,
             excel_template_buffer: Some(vec![1, 2, 3, 4, 5]),
+            required_permission: Some("STOCK_LINE_QUERY".to_string()),
         };
         let result = repo.upsert_one(&row);
         assert_matches!(result, Ok(_));

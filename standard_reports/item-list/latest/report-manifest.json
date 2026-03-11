@@ -17,5 +17,6 @@
     "ui": "argument_schemas/arguments_ui.json"
   },
   "convert_data": "convert_data_js",
-  "convert_data_type": "BoaJs"
+  "convert_data_type": "BoaJs",
+  "required_permission": "STOCK_LINE_QUERY"
 }
