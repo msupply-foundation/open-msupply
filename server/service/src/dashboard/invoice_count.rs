@@ -232,7 +232,7 @@ mod invoice_count_service_test {
         name_repo.insert_one(&name_store_b).await.unwrap();
 
         let store_repo = StoreRowRepository::new(&connection);
-        store_repo.insert_one(&store_1).await.unwrap();
+        store_repo.upsert_one(&store_1).unwrap();
         CurrencyRowRepository::new(&connection)
             .upsert_one(&currency_a())
             .unwrap();

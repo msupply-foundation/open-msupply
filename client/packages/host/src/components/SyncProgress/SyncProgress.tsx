@@ -124,6 +124,7 @@ const getSteps = (
         case syncStatus?.pullCentral:
         case syncStatus?.pullRemote:
         case syncStatus?.pullV6:
+        case syncStatus?.pull:
           icon = <ChevronsDownIcon />;
           break;
         case syncStatus?.integration:
@@ -153,22 +154,28 @@ const getSteps = (
   // and push is only run when operational.
   const steps = [];
 
-  if (!isOperational) {
+  if (!isOperational && isCentralServer) {
     steps.push(getStep('sync-status.prepare', syncStatus?.prepareInitial));
   }
 
   if (isOperational) {
-    if (!isCentralServer) {
-      steps.push(getStep('sync-status.push-v6', syncStatus?.pushV6));
-    }
     steps.push(getStep('sync-status.push', syncStatus?.push));
   }
 
-  steps.push(getStep('sync-status.pull-central', syncStatus?.pullCentral));
-  steps.push(getStep('sync-status.pull-remote', syncStatus?.pullRemote));
-
+  if (isCentralServer) {
+    steps.push(getStep('sync-status.pull-central', syncStatus?.pullCentral));
+    steps.push(getStep('sync-status.pull-remote', syncStatus?.pullRemote));
+  }
+  if (!isCentralServer && isOperational) {
+    steps.push(
+      getStep(
+        'sync-info.waiting-for-integration',
+        syncStatus?.waitingForIntegration
+      )
+    );
+  }
   if (!isCentralServer) {
-    steps.push(getStep('sync-status.pull-v6', syncStatus?.pullV6));
+    steps.push(getStep('sync-status.pull', syncStatus?.pull));
   }
 
   steps.push(getStep('sync-status.integrate', syncStatus?.integration));

@@ -221,22 +221,22 @@ pub(crate) fn integrate(
     integration_records: &[(Option<i32>, IntegrationOperation)],
 ) -> Result<(), RepositoryError> {
     for (source_site_id, integration_record) in integration_records.iter() {
-        if cfg!(feature = "postgres") {
-            // In Postgres the parent transaction fails when there is a DB error in any of the
-            // statements executed in the transaction. Thus, integrate every record in a nested
-            // transaction to catch potential errors (e.g. foreign key violations).
-            // Note, this is not a problem in Sqlite.
-            connection
-                .transaction_sync_etc(
-                    |sub_tx| integration_record.integrate(sub_tx, *source_site_id),
-                    false,
-                )
-                .map_err(|e| e.to_inner_error())?;
-        } else {
-            // For Sqlite, integrating without nested transaction is faster, especially if there are
-            // errors (see the bench_error_performance() test).
-            integration_record.integrate(connection, *source_site_id)?;
-        }
+        // if cfg!(feature = "postgres") {
+        //     // In Postgres the parent transaction fails when there is a DB error in any of the
+        //     // statements executed in the transaction. Thus, integrate every record in a nested
+        //     // transaction to catch potential errors (e.g. foreign key violations).
+        //     // Note, this is not a problem in Sqlite.
+        //     connection
+        //         .transaction_sync_etc(
+        //             |sub_tx| integration_record.integrate(sub_tx, *source_site_id),
+        //             false,
+        //         )
+        //         .map_err(|e| e.to_inner_error())?;
+        // } else {
+        //     // For Sqlite, integrating without nested transaction is faster, especially if there are
+        //     // errors (see the bench_error_performance() test).
+        integration_record.integrate(connection, *source_site_id)?;
+        // }
     }
 
     Ok(())

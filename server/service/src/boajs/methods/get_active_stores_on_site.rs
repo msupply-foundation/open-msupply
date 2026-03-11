@@ -16,7 +16,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                     .connection()
                     .map_err(std_error_to_js_error)?;
 
-                ActiveStoresOnSite::get(&connection)
+                ActiveStoresOnSite::get(&connection, None)
             }
             .map_err(std_error_to_js_error)?;
 

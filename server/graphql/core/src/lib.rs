@@ -6,6 +6,7 @@ pub mod simple_generic_errors;
 pub mod standard_graphql_error;
 pub mod test_helpers;
 
+use std::path::PathBuf;
 use std::sync::Mutex;
 
 use actix_web::cookie::Cookie;
@@ -14,7 +15,8 @@ use actix_web::HttpRequest;
 use async_graphql::{Context, Request, Response};
 
 use actix_web::http::header::COOKIE;
-use repository::StorageConnectionManager;
+use repository::{StorageConnectionManager, SyncLogV7Row};
+use serde::{Deserialize, Serialize};
 use service::auth_data::AuthData;
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
@@ -22,6 +24,7 @@ use service::service_provider::ServiceProvider;
 use loader::LoaderRegistry;
 use service::settings::Settings;
 use tokio::sync::mpsc::Sender;
+use ts_rs::TS;
 
 /// Performs a query to ourself, e.g. the report endpoint can query
 #[async_trait::async_trait]
@@ -133,6 +136,15 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
         refresh_token,
         override_user_id: None,
     }
+}
+
+#[derive(Serialize, Deserialize, TS)]
+struct TStypes {
+    sync_lov_v7: SyncLogV7Row,
+}
+
+pub fn export_graphql_typescript(path: PathBuf) {
+    TStypes::export_all_to(path).unwrap();
 }
 
 #[macro_export]

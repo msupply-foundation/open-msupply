@@ -1,0 +1,85 @@
+use repository::{
+    syncv7::{SyncType, Upsert},
+    SyncBufferV7Row,
+};
+use thiserror::Error;
+
+use crate::sync::ActiveStoresOnSite;
+
+#[derive(Debug, Error)]
+pub enum ValidationError {
+    #[error("Store is not active on site")]
+    InactiveStore,
+    #[error("Store is active but site already initialised")]
+    SiteAlreadyInitialised,
+    #[error("Name is not active, cannot be transfered")]
+    InactiveName,
+    #[error("No store id found on sync buffer row")]
+    NoStoreId,
+    #[error("Central records can only be edited on central")]
+    CentralRecordEditsOnCentralOnly,
+}
+
+pub(crate) fn validate_on_remote(
+    sync_buffer_row: &SyncBufferV7Row,
+    upsert: &Box<dyn Upsert>,
+    active_on_site: &ActiveStoresOnSite,
+    is_initialising: bool,
+) -> Result<(), ValidationError> {
+    match upsert.sync_type() {
+        SyncType::Central => {}
+        SyncType::Remote => {
+            let Some(store_id) = sync_buffer_row.store_id.clone() else {
+                return Err(ValidationError::NoStoreId);
+            };
+            let is_active_store = active_on_site.store_id_match(&store_id);
+            let is_active_name = sync_buffer_row
+                .name_id
+                .clone()
+                .map_or(false, |name_id| active_on_site.name_id_match(&name_id));
+            // If name is active, it's transfer it's ok to integrate
+            if is_active_name {
+                return Ok(());
+            }
+
+            // If name is not active then store must be active
+            if !is_active_store {
+                return Err(ValidationError::InactiveStore);
+            }
+
+            // If store is active, integrate only when initialising
+            if !is_initialising {
+                return Err(ValidationError::SiteAlreadyInitialised);
+            }
+        }
+        SyncType::Name =>
+            /* TODO is it central name or patient with name_store_join here */
+            {}
+    };
+
+    Ok(())
+}
+
+pub(crate) fn validate_on_central(
+    sync_buffer_row: &SyncBufferV7Row,
+    upsert: &Box<dyn Upsert>,
+    active_on_site: &ActiveStoresOnSite,
+) -> Result<(), ValidationError> {
+    match upsert.sync_type() {
+        SyncType::Central => return Err(ValidationError::CentralRecordEditsOnCentralOnly),
+        SyncType::Remote => {
+            let Some(store_id) = sync_buffer_row.store_id.clone() else {
+                return Err(ValidationError::NoStoreId);
+            };
+
+            if !active_on_site.store_id_match(&store_id) {
+                return Err(ValidationError::InactiveStore);
+            }
+        }
+        SyncType::Name =>
+            /* TODO don't allow central name changes only allow edits of patients from sites with name_store_join */
+            {}
+    };
+
+    Ok(())
+}

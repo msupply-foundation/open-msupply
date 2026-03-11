@@ -81,7 +81,7 @@ pub fn insert_asset(
 
             // Automatically create a location for this asset (if it's a cold chain asset, and store is active on this site)
             if new_asset.asset_class_id == Some(COLD_CHAIN_EQUIPMENT_UUID.to_string()) {
-                let active_stores = ActiveStoresOnSite::get(&ctx.connection);
+                let active_stores = ActiveStoresOnSite::get(&ctx.connection, None);
                 let active_store_ids = match active_stores {
                     Ok(active_stores) => active_stores.store_ids(),
                     Err(_) => {

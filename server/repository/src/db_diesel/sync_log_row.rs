@@ -1,9 +1,8 @@
+use crate::RepositoryError;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use std::sync::RwLock;
-
-use crate::RepositoryError;
 
 use super::StorageConnection;
 

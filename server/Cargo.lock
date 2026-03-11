@@ -1928,6 +1928,7 @@ dependencies = [
  "egui",
  "egui_extras",
  "graphql",
+ "graphql_core",
  "log",
  "machine-uid",
  "report_builder",
@@ -3900,6 +3901,7 @@ dependencies = [
  "strum 0.27.2",
  "thiserror 2.0.17",
  "tokio",
+ "ts-rs",
  "util",
 ]
 
@@ -7159,6 +7161,7 @@ dependencies = [
  "pretty_assertions",
  "rand 0.8.5",
  "regex",
+ "reqwest",
  "rusqlite",
  "rust-embed",
  "serde",

@@ -15,7 +15,7 @@ use crate::{
     sync::{
         api::SyncApiV5,
         settings::{SyncSettings, SYNC_V5_VERSION},
-        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
+        ActiveStoresOnSite, CentralServerConfig, GetCurrentSiteIdError,
     },
 };
 
@@ -190,7 +190,7 @@ pub enum AddPatientToCentralError {
     #[error(transparent)]
     CentralPatientRequestError(CentralPatientRequestError),
     #[error(transparent)]
-    ActiveStoresOnSiteError(GetActiveStoresOnSiteError),
+    ActiveStoresOnSiteError(GetCurrentSiteIdError),
     #[error("No active store found for this site")]
     NoActiveStore,
 }
@@ -204,7 +204,7 @@ pub async fn add_patient_to_oms_central(
         return Err(AddPatientToCentralError::NotACentralServer);
     }
 
-    let central_stores = ActiveStoresOnSite::get(&ctx.connection).map_err(|err| {
+    let central_stores = ActiveStoresOnSite::get(&ctx.connection, None).map_err(|err| {
         error!("Failed to get active stores on site: {}", err);
         AddPatientToCentralError::ActiveStoresOnSiteError(err)
     })?;

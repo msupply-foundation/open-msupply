@@ -2950,12 +2950,14 @@ export type FullSyncStatusNode = {
   isSyncing: Scalars['Boolean']['output'];
   lastSuccessfulSync?: Maybe<SyncStatusNode>;
   prepareInitial?: Maybe<SyncStatusNode>;
+  pull?: Maybe<SyncStatusWithProgressNode>;
   pullCentral?: Maybe<SyncStatusWithProgressNode>;
   pullRemote?: Maybe<SyncStatusWithProgressNode>;
   pullV6?: Maybe<SyncStatusWithProgressNode>;
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  waitingForIntegration?: Maybe<SyncStatusNode>;
   warningThreshold: Scalars['Int']['output'];
 };
 
