@@ -45,6 +45,9 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   /** Show this column's value as read-only summary text in the card heading.
    * The column still appears as an editable field in its group. */
   cardSummary?: boolean;
+
+  /** Number of grid columns to span in card view. Defaults to 1. */
+  cardSpan?: number;
 };
 
 export type DefaultCellProps<T extends MRT_RowData> = Parameters<

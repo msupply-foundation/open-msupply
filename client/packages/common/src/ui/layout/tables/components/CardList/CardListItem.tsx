@@ -217,6 +217,9 @@ export const CardListItem = <T extends MRT_RowData>({
                       cell.column.columnDef.header,
                       cell.getContext()
                     )}
+                    span={
+                      (cell.column.columnDef as ColumnDef<T>).cardSpan
+                    }
                   >
                     {getCellContent(cell) as React.ReactNode}
                   </CardListField>

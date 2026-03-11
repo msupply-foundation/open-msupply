@@ -819,6 +819,7 @@ export const InboundLineEditTable = ({
         header: t('label.stocktake-comment'),
         size: 200,
         columnGroup: 'other',
+        cardSpan: 2,
         Cell: ({ cell, row }) => (
           <TextInputCell
             cell={cell}
