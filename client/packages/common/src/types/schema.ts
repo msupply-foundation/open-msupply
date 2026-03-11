@@ -4788,7 +4788,6 @@ export type ItemStatsNode = {
 export type ItemStorePropertiesNode = {
   __typename: 'ItemStorePropertiesNode';
   defaultLocation?: Maybe<LocationNode>;
-  defaultLocationId?: Maybe<Scalars['String']['output']>;
   defaultSellPricePerPack: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   ignoreForOrders: Scalars['Boolean']['output'];
