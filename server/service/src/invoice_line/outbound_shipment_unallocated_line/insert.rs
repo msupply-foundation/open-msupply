@@ -118,6 +118,7 @@ fn generate(
         location_id: None,
         batch: None,
         expiry_date: None,
+        manufacture_date: None,
         sell_price_per_pack: 0.0,
         cost_price_per_pack: 0.0,
         stock_line_id: None,
@@ -125,7 +126,7 @@ fn generate(
         item_variant_id: None,
         prescribed_quantity: None,
         linked_invoice_id: None,
-        donor_link_id: None,
+        donor_id: None,
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,
@@ -133,6 +134,7 @@ fn generate(
         shipped_number_of_packs: None,
         volume_per_pack: 0.0,
         shipped_pack_size: None,
+        status: None,
     };
 
     Ok(new_line)

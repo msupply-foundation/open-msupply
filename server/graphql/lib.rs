@@ -7,6 +7,8 @@ use logger::{GraphQLRequestLogger, QueryLogInfo};
 use std::sync::Mutex;
 use tokio::sync::RwLock;
 
+pub use graphql_core::OperationalStatus;
+
 use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
@@ -35,10 +37,8 @@ use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
-    InitialisationMutations, InitialisationQueries,
+    InitialisationMutations, InitialisationQueries, MigrationQueries,
 };
-use graphql_goods_received::{GoodsReceivedMutations, GoodsReceivedQueries};
-use graphql_goods_received_line::{GoodsReceivedLineMutations, GoodsReceivedLineQueries};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
@@ -79,6 +79,9 @@ pub type InitialisationSchema = async_graphql::Schema<
     InitialisationMutations,
     async_graphql::EmptySubscription,
 >;
+pub type MigrationSchema =
+    async_graphql::Schema<MigrationQueries, EmptyMutation, async_graphql::EmptySubscription>;
+
 #[derive(Default, Clone)]
 pub struct CentralServerMutationNode;
 #[Object]
@@ -190,8 +193,6 @@ pub struct Queries(
     pub CampaignQueries,
     pub PurchaseOrderQueries,
     pub PurchaseOrderLineQueries,
-    pub GoodsReceivedQueries,
-    pub GoodsReceivedLineQueries,
 );
 
 impl Queries {
@@ -228,8 +229,6 @@ impl Queries {
             CampaignQueries,
             PurchaseOrderQueries,
             PurchaseOrderLineQueries,
-            GoodsReceivedQueries,
-            GoodsReceivedLineQueries,
         )
     }
 }
@@ -261,8 +260,6 @@ pub struct Mutations(
     pub ClinicianMutations,
     pub PurchaseOrderMutations,
     pub PurchaseOrderLineMutations,
-    pub GoodsReceivedMutations,
-    pub GoodsReceivedLineMutations,
 );
 
 impl Mutations {
@@ -293,8 +290,6 @@ impl Mutations {
             ClinicianMutations,
             PurchaseOrderMutations,
             PurchaseOrderLineMutations,
-            GoodsReceivedMutations,
-            GoodsReceivedLineMutations,
         )
     }
 }
@@ -305,8 +300,9 @@ impl Mutations {
 pub struct GraphqlSchema {
     pub(crate) operational: OperationalSchema,
     initialisation: InitialisationSchema,
+    migration: MigrationSchema,
     /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
-    is_operational: RwLock<bool>,
+    operational_status: Data<RwLock<OperationalStatus>>,
 }
 
 pub struct GraphSchemaData {
@@ -319,7 +315,7 @@ pub struct GraphSchemaData {
 }
 
 impl GraphqlSchema {
-    pub fn new(data: GraphSchemaData, is_operational: bool) -> GraphqlSchema {
+    pub fn new(data: GraphSchemaData, operational_status: OperationalStatus) -> GraphqlSchema {
         let GraphSchemaData {
             connection_manager,
             loader_registry,
@@ -343,6 +339,9 @@ impl GraphqlSchema {
                 .finish();
         // Self requester does not need loggers
 
+        // Shared operational status across all schemas
+        let operational_status_ref = Data::new(RwLock::new(operational_status.clone()));
+
         // Operational schema
         let operational_builder =
             OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
@@ -354,6 +353,7 @@ impl GraphqlSchema {
                 .data(validated_plugins.clone())
                 // Add self requester to operational
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
+                .data(operational_status_ref.clone())
                 .extension(GraphQLRequestLogger);
 
         // Initialisation schema should ony need service_provider
@@ -363,29 +363,43 @@ impl GraphqlSchema {
             EmptySubscription,
         )
         .data(service_provider.clone())
+        .data(operational_status_ref.clone())
         .extension(GraphQLRequestLogger);
+
+        let migration_builder =
+            MigrationSchema::build(MigrationQueries, EmptyMutation, EmptySubscription)
+                .data(service_provider.clone())
+                .data(operational_status_ref.clone())
+                .extension(GraphQLRequestLogger);
 
         GraphqlSchema {
             operational: operational_builder.finish(),
             initialisation: initialisation_builder.finish(),
-            is_operational: RwLock::new(is_operational),
+            migration: migration_builder.finish(),
+            operational_status: operational_status_ref.clone(),
         }
     }
 
-    pub async fn toggle_is_operational(&self, is_operational: bool) {
-        (*self.is_operational.write().await) = is_operational;
+    pub async fn set_operational_status(&self, operational_status: OperationalStatus) {
+        (*self.operational_status.write().await) = operational_status;
+    }
+
+    pub async fn get_operational_status(&self) -> OperationalStatus {
+        self.operational_status.read().await.clone()
     }
 
     async fn execute(&self, http_req: HttpRequest, req: GraphQLRequest) -> Response {
         let mut req = req.into_inner();
         req = req.data(QueryLogInfo::new());
 
-        if *self.is_operational.read().await {
-            // auth_data is only available in schema in operational mode
-            let user_data = auth_data_from_request(&http_req);
-            self.operational.execute(req.data(user_data)).await
-        } else {
-            self.initialisation.execute(req).await
+        match &*self.operational_status.read().await {
+            OperationalStatus::Operational => {
+                // auth_data is only available in schema in operational mode
+                let user_data = auth_data_from_request(&http_req);
+                self.operational.execute(req.data(user_data)).await
+            }
+            OperationalStatus::MigratingDatabase => self.migration.execute(req).await,
+            OperationalStatus::Initialising => self.initialisation.execute(req).await,
         }
     }
 }

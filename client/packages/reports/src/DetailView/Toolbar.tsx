@@ -7,14 +7,14 @@ import {
   useTranslation,
   ChevronDownIcon,
   LocaleKey,
+  useTranslationAdvanced,
 } from '@openmsupply-client/common';
 
 interface ToolbarProps {
-  reportName: string;
-  isCustom: boolean;
+  reportCode: string;
 }
 
-export const Toolbar = ({ reportName, isCustom }: ToolbarProps) => {
+export const Toolbar = ({ reportCode }: ToolbarProps) => {
   const t = useTranslation();
   const [expand, setExpand] = useState(false);
   const chevronCommonStyles = {
@@ -22,10 +22,14 @@ export const Toolbar = ({ reportName, isCustom }: ToolbarProps) => {
     marginTop: '0.1em',
     height: '0.6em',
   };
-  const reportFormat = reportName.toLowerCase().replace(' ', '-');
+
+  const key = `messages.how-to-read-${reportCode}` as LocaleKey;
+
+  const { i18n } = useTranslationAdvanced();
+  const exists = i18n.exists(key);
 
   return (
-    !isCustom && (
+    exists && (
       <AppBarContentPortal
         sx={{
           display: 'flex',
@@ -66,7 +70,7 @@ export const Toolbar = ({ reportName, isCustom }: ToolbarProps) => {
                 sx={{ textWrap: 'wrap', whiteSpace: 'pre-line' }}
                 variant="body2"
               >
-                {t(`messages.how-to-read-${reportFormat}` as LocaleKey)}
+                {t(key)}
               </Typography>
             </Grid>
           )}

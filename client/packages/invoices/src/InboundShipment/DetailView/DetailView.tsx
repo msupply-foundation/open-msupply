@@ -142,7 +142,9 @@ const DetailViewInner = () => {
       updateQuery({ tab: InboundShipmentDetailTabs.Documents });
   }, [toggleUploadModal, urlQuery, updateQuery]);
 
-  const columns = useInboundShipmentColumns();
+  const external = data?.purchaseOrder !== null;
+  const showLineStatus = data?.lines.nodes.some(line => line.status != null) ?? false;
+  const columns = useInboundShipmentColumns(external, showLineStatus);
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<InboundLineFragment>({
@@ -262,6 +264,7 @@ const DetailViewInner = () => {
               onReturnLines={onReturn}
               selectedRows={selectedRows}
               resetRowSelection={table.resetRowSelection}
+              showLineStatus={showLineStatus}
             />
           )}
           <SidePanel />
