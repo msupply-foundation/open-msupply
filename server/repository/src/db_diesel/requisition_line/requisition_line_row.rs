@@ -1,4 +1,6 @@
-use crate::db_diesel::{item_link_row::item_link, requisition_row::requisition};
+use crate::db_diesel::item_row::item;
+use crate::db_diesel::requisition_row::requisition;
+use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
 use crate::{RequisitionRowRepository, StorageConnection};
 use diesel::prelude::*;
@@ -10,11 +12,13 @@ use crate::{Delete, Upsert};
 
 use chrono::NaiveDateTime;
 
-table! {
-    requisition_line (id) {
-        id -> Text,
+define_linked_tables! {
+    view: requisition_line = "requisition_line_view",
+    core: requisition_line_with_links = "requisition_line",
+    struct: RequisitionLineRow,
+    repo: RequisitionLineRowRepository,
+    shared: {
         requisition_id -> Text,
-        item_link_id -> Text,
         item_name -> Text,
         requested_quantity -> Double,
         suggested_quantity -> Double,
@@ -37,26 +41,28 @@ table! {
         expiring_units -> Double,
         days_out_of_stock -> Double,
         option_id -> Nullable<Text>,
-        // Population forcasting fields
+        // Population forecasting fields
         forecast_total_units -> Nullable<Double>,
         forecast_total_doses -> Nullable<Double>,
         vaccine_courses -> Nullable<Text>,
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
     }
 }
 
-joinable!(requisition_line -> item_link (item_link_id));
+joinable!(requisition_line -> item (item_id));
 joinable!(requisition_line -> requisition (requisition_id));
-allow_tables_to_appear_in_same_query!(requisition_line, item_link);
 
 #[derive(
-    TS, Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Serialize, Deserialize,
+    TS, Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
-#[diesel(treat_none_as_null = true)]
 #[diesel(table_name = requisition_line)]
 pub struct RequisitionLineRow {
     pub id: String,
     pub requisition_id: String,
-    pub item_link_id: String,
     pub item_name: String,
     pub requested_quantity: f64,
     pub suggested_quantity: f64,
@@ -83,6 +89,8 @@ pub struct RequisitionLineRow {
     pub forecast_total_units: Option<f64>,
     pub forecast_total_doses: Option<f64>,
     pub vaccine_courses: Option<String>,
+    // Resolved from item_link - must be last to match view column order
+    pub item_id: String,
 }
 
 pub struct RequisitionLineRowRepository<'a> {
@@ -95,32 +103,33 @@ impl<'a> RequisitionLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(requisition_line::table)
-            .values(row)
-            .on_conflict(requisition_line::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
     pub fn update_approved_quantity_by_item_id(
         &self,
-        requisition_id: &str,
-        item_id: &str,
+        requisition_id_param: &str,
+        item_id_param: &str,
         approved_quantity: f64,
     ) -> Result<(), RepositoryError> {
-        let filter = requisition_line::requisition_id
-            .eq(requisition_id)
-            .and(requisition_line::item_link_id.eq(item_id));
-
-        diesel::update(requisition_line::table)
-            .filter(filter)
-            .set(requisition_line::approved_quantity.eq(approved_quantity))
+        // Use core table for updates
+        diesel::update(requisition_line_with_links::table)
+            .filter(
+                requisition_line_with_links::requisition_id
+                    .eq(requisition_id_param)
+                    .and(requisition_line_with_links::item_link_id.eq(item_id_param)),
+            )
+            .set(requisition_line_with_links::approved_quantity.eq(approved_quantity))
             .execute(self.connection.lock().connection())?;
 
+        // Use view table for reads
         let rows: Vec<RequisitionLineRow> = requisition_line::table
-            .filter(filter)
+            .filter(
+                requisition_line::requisition_id
+                    .eq(requisition_id_param)
+                    .and(requisition_line::item_id.eq(item_id_param)),
+            )
             .load(self.connection.lock().connection())?;
 
         for row in rows {
@@ -165,7 +174,8 @@ impl<'a> RequisitionLineRowRepository<'a> {
         };
 
         diesel::delete(
-            requisition_line::table.filter(requisition_line::id.eq(requisition_line_id)),
+            requisition_line_with_links::table
+                .filter(requisition_line_with_links::id.eq(requisition_line_id)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))

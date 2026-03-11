@@ -294,7 +294,7 @@ mod test {
                 invoice_line_row: InvoiceLineRow {
                     id: String::from("inbound_shipment_line_a"),
                     invoice_id: String::from("inbound_shipment_c"),
-                    item_link_id: String::from("item_a"),
+                    item_id: String::from("item_a"),
                     r#type: InvoiceLineType::StockIn,
                     ..Default::default()
                 },

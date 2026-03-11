@@ -1,6 +1,6 @@
 use super::{
     campaign_row::campaign, invoice_line_row::invoice_line::dsl::*, invoice_row::invoice,
-    item_link_row::item_link, location_row::location,
+    item_row::item, location_row::location,
     reason_option_row::reason_option, stock_line_row::stock_line,
     vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
@@ -25,7 +25,6 @@ define_linked_tables! {
     repo: InvoiceLineRowRepository,
     shared: {
         invoice_id -> Text,
-        item_link_id -> Text,
         item_name -> Text,
         item_code -> Text,
         stock_line_id -> Nullable<Text>,
@@ -57,6 +56,7 @@ define_linked_tables! {
         manufacture_date -> Nullable<Date>,
     },
     links: {
+        item_link_id -> item_id,
     },
     optional_links: {
         donor_link_id -> donor_id,
@@ -64,7 +64,7 @@ define_linked_tables! {
     }
 }
 
-joinable!(invoice_line -> item_link (item_link_id));
+joinable!(invoice_line -> item (item_id));
 joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
@@ -72,7 +72,6 @@ joinable!(invoice_line -> vvm_status (vvm_status_id));
 joinable!(invoice_line -> reason_option (reason_option_id));
 joinable!(invoice_line -> campaign (campaign_id));
 
-allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
@@ -98,7 +97,6 @@ pub enum InvoiceLineStatus {
 pub struct InvoiceLineRow {
     pub id: String,
     pub invoice_id: String,
-    pub item_link_id: String,
     pub item_name: String,
     pub item_code: String,
     pub stock_line_id: Option<String>,
@@ -130,7 +128,8 @@ pub struct InvoiceLineRow {
     pub shipped_pack_size: Option<f64>,
     pub status: Option<InvoiceLineStatus>,
     pub manufacture_date: Option<NaiveDate>,
-    // Resolved from name_link - must be last to match view column order
+    // Resolved from link tables - must be last to match view column order
+    pub item_id: String,
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
 }

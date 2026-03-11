@@ -39,7 +39,7 @@ impl VaccineCourseItemInput {
     pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseItemRow {
         VaccineCourseItemRow {
             id: self.id,
-            item_link_id: self.item_id, // Todo item_link_id ? https://github.com/msupply-foundation/open-msupply/issues/4129
+            item_id: self.item_id, // Todo item_id ? https://github.com/msupply-foundation/open-msupply/issues/4129
             vaccine_course_id,
             deleted_datetime: None,
         }

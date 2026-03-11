@@ -2,12 +2,12 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     item_store_join::item_store_join,
     repository_error::RepositoryError,
-    EqualFilter, ItemLinkRow, ItemRow, ItemType, MasterListRepository, Pagination, Sort,
+    EqualFilter, ItemRow, ItemType, MasterListRepository, Pagination, Sort,
 };
 
 use super::{
-    item_link_row::item_link, item_row::item, master_list_line_row::master_list_line,
-    master_list_row::master_list, DBType, MasterListFilter, MasterListLineRow, StorageConnection,
+    item_row::item, master_list_line_row::master_list_line, master_list_row::master_list, DBType,
+    MasterListFilter, MasterListLineRow, StorageConnection,
 };
 
 use diesel::{
@@ -23,7 +23,7 @@ pub struct MasterListLine {
     pub price_per_unit: Option<f64>,
 }
 
-type MasterListLineJoin = (MasterListLineRow, (ItemLinkRow, ItemRow));
+type MasterListLineJoin = (MasterListLineRow, ItemRow);
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct MasterListLineFilter {
@@ -111,7 +111,7 @@ impl<'a> MasterListLineRepository<'a> {
         store_id: Option<String>,
     ) -> Result<BoxedMasterListLineQuery, RepositoryError> {
         let mut query = master_list_line::table
-            .inner_join(item_link::table.inner_join(item::table))
+            .inner_join(item::table)
             .into_boxed();
 
         if let Some(f) = filter {
@@ -129,7 +129,7 @@ impl<'a> MasterListLineRepository<'a> {
 
             if let Some(ignore_for_orders) = f.ignore_for_orders {
                 let mut item_ids_for_ignore_for_orders = item_store_join::table
-                    .select(item_store_join::item_link_id)
+                    .select(item_store_join::item_id)
                     .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
                     .into_boxed();
 
@@ -139,7 +139,7 @@ impl<'a> MasterListLineRepository<'a> {
                 }
 
                 query = query
-                    .filter(master_list_line::item_link_id.eq_any(item_ids_for_ignore_for_orders));
+                    .filter(master_list_line::item_id.eq_any(item_ids_for_ignore_for_orders));
             }
         }
 
@@ -149,11 +149,11 @@ impl<'a> MasterListLineRepository<'a> {
 
 type BoxedMasterListLineQuery = IntoBoxed<
     'static,
-    InnerJoin<master_list_line::table, InnerJoin<item_link::table, item::table>>,
+    InnerJoin<master_list_line::table, item::table>,
     DBType,
 >;
 
-fn to_domain((master_list_line_row, (_, item_row)): MasterListLineJoin) -> MasterListLine {
+fn to_domain((master_list_line_row, item_row): MasterListLineJoin) -> MasterListLine {
     MasterListLine {
         id: master_list_line_row.id,
         master_list_id: master_list_line_row.master_list_id,

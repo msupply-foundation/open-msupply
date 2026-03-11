@@ -44,7 +44,7 @@ pub(crate) fn generate_inbound_lines(
                     total_after_tax: _,
                     linked_invoice_id: _,
                     reason_option_id,
-                    item_link_id,
+                    item_id: _,
                     item_name,
                     item_code,
                     batch,
@@ -111,7 +111,7 @@ pub(crate) fn generate_inbound_lines(
                 InvoiceLineRow {
                     id: uuid(),
                     invoice_id: inbound_invoice_id.to_string(),
-                    item_link_id,
+                    item_id,
                     item_name,
                     item_code,
                     batch,

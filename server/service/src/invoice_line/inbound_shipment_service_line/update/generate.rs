@@ -43,7 +43,7 @@ pub fn generate(
     }
 
     if let Some(input_item_id) = input_item_id {
-        update_line.item_link_id = input_item_id;
+        update_line.item_id = input_item_id;
     }
 
     if let Some(total_before_tax) = input_total_before_tax {
@@ -105,7 +105,7 @@ mod inbound_shipment_service_line_update_test {
             location_row_option: None,
             stock_line_option: None,
         };
-        item1.id.clone_into(&mut line.invoice_line_row.item_link_id);
+        item1.id.clone_into(&mut line.invoice_line_row.item_id);
 
         // no name change
         let result = generate(

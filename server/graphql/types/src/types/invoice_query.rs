@@ -646,7 +646,7 @@ mod test {
             InvoiceLineRow {
                 invoice_id: invoice().id,
                 id: "line1_id".to_string(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 total_after_tax: 110.0,
                 total_before_tax: 100.0,
                 tax_percentage: Some(10.0),
@@ -658,7 +658,7 @@ mod test {
             InvoiceLineRow {
                 invoice_id: invoice().id,
                 id: "line2_id".to_string(),
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 total_after_tax: 50.0,
                 total_before_tax: 50.0,
                 tax_percentage: None,
@@ -670,7 +670,7 @@ mod test {
             InvoiceLineRow {
                 invoice_id: invoice().id,
                 id: "line3_id".to_string(),
-                item_link_id: mock_item_c().id,
+                item_id: mock_item_c().id,
                 total_after_tax: 105.0,
                 total_before_tax: 100.0,
                 tax_percentage: Some(5.0),

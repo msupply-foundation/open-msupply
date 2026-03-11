@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::{
-        item_link_row::item_link, item_row::item, purchase_order_row::purchase_order,
+        item_row::item, purchase_order_row::purchase_order,
     },
     diesel_macros::define_linked_tables,
     Delete, PurchaseOrderRowRepository, Upsert,
@@ -37,7 +37,6 @@ define_linked_tables! {
         store_id -> Text,
         purchase_order_id -> Text,
         line_number -> BigInt,
-        item_link_id -> Text,
         item_name -> Text,
         requested_pack_size -> Double,
         requested_number_of_units -> Double,
@@ -54,6 +53,7 @@ define_linked_tables! {
         status -> crate::db_diesel::purchase_order_line_row::PurchaseOrderLineStatusMapping,
     },
     links: {
+        item_link_id -> item_id,
     },
     optional_links: {
         manufacturer_link_id -> manufacturer_id,
@@ -61,13 +61,11 @@ define_linked_tables! {
 }
 
 joinable!(purchase_order_line -> purchase_order_line_stats (id));
-joinable!(purchase_order_line -> item_link (item_link_id));
+joinable!(purchase_order_line -> item (item_id));
 joinable!(purchase_order_line -> purchase_order (purchase_order_id));
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order_line_stats);
-allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
-allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, purchase_order);
 
@@ -78,7 +76,6 @@ pub struct PurchaseOrderLineRow {
     pub store_id: String,
     pub purchase_order_id: String,
     pub line_number: i64,
-    pub item_link_id: String,
     pub item_name: String,
     pub requested_pack_size: f64,
     pub requested_number_of_units: f64,
@@ -93,7 +90,8 @@ pub struct PurchaseOrderLineRow {
     pub note: Option<String>,
     pub unit: Option<String>,
     pub status: PurchaseOrderLineStatus,
-    // Resolved from name_link - must be last to match view column order
+    // Resolved from link tables - must be last to match view column order
+    pub item_id: String,
     pub manufacturer_id: Option<String>,
 }
 
@@ -192,7 +190,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
     ) -> Result<Option<PurchaseOrderLineRow>, RepositoryError> {
         let result = purchase_order_line::table
             .filter(purchase_order_line::purchase_order_id.eq(purchase_order_id))
-            .filter(purchase_order_line::item_link_id.eq(item_id))
+            .filter(purchase_order_line::item_id.eq(item_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -291,7 +289,7 @@ mod tests {
             purchase_order_id: purchase_order_id.to_string(),
             store_id: mock_store_a().id.clone(),
             line_number: 1,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             comment: Some("Test comment".to_string()),
             ..Default::default()
         };

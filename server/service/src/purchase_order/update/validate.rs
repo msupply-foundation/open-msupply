@@ -94,9 +94,9 @@ fn check_items_orderable(
     let item_store_join_repo = ItemStoreJoinRowRepository::new(connection);
 
     for line in purchase_order_lines {
-        let item_link_id = &line.item_row.id;
+        let item_id = &line.item_row.id;
         let item_store_join =
-            item_store_join_repo.find_one_by_item_and_store_id(item_link_id, store_id)?;
+            item_store_join_repo.find_one_by_item_and_store_id(item_id, store_id)?;
 
         if let Some(item_store_join) = item_store_join {
             if item_store_join.ignore_for_orders {

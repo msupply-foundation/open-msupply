@@ -518,7 +518,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_id".to_string();
-            expected.item_link_id = mock_item_a().id;
+            expected.item_id = mock_item_a().id;
             expected.pack_size = 1.0;
             expected.number_of_packs = 1.0;
             expected
@@ -565,7 +565,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_pack_to_one".to_string();
-            expected.item_link_id = mock_item_a().id;
+            expected.item_id = mock_item_a().id;
             expected.pack_size = 1.0;
             expected.number_of_packs = 200.0;
             expected.sell_price_per_pack = 10.0;

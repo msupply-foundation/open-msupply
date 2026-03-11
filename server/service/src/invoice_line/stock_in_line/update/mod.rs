@@ -180,7 +180,7 @@ mod test {
             InvoiceLineRow {
                 id: "verified_return_line".to_string(),
                 invoice_id: verified_return().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 ..Default::default()
             }
@@ -189,7 +189,7 @@ mod test {
             InvoiceLineRow {
                 id: "item_line_with_restricted_location_type_b".to_string(),
                 invoice_id: mock_inbound_shipment_a().id,
-                item_link_id: mock_item_restricted_location_type_b().id,
+                item_id: mock_item_restricted_location_type_b().id,
                 r#type: InvoiceLineType::StockIn,
                 number_of_packs: 30.0,
                 ..Default::default()
@@ -582,7 +582,7 @@ mod test {
             InvoiceLineRow {
                 id: "received_inbound_passed_line".to_string(),
                 invoice_id: received_inbound().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 status: Some(InvoiceLineStatus::Passed),
                 number_of_packs: 10.0,

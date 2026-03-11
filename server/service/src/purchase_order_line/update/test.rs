@@ -185,7 +185,7 @@ mod update {
             purchase_order_id: mock_purchase_order_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             line_number: 2,
-            item_link_id: mock_item_b().id,
+            item_id: mock_item_b().id,
             requested_pack_size: 2.0,
             requested_number_of_units: 10.0,
             adjusted_number_of_units: Some(20.0),
@@ -212,7 +212,7 @@ mod update {
         let invoice_line = InvoiceLineRow {
             id: "invoice_line_for_received".to_string(),
             invoice_id: invoice.id.clone(),
-            item_link_id: mock_item_b().id,
+            item_id: mock_item_b().id,
             number_of_packs: 8.0,
             pack_size: 2.0,
             ..Default::default()

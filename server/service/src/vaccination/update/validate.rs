@@ -102,7 +102,7 @@ pub fn validate(
     let item_id = input
         .item_id
         .clone()
-        .map_or(vaccination_row.item_link_id.clone(), |u| u.value);
+        .map_or(vaccination_row.item_id.clone(), |u| u.value);
     let stock_line_id = input.stock_line_id.clone().and_then(|u| u.value);
 
     let result = match (vaccination_row.given, input.given) {
