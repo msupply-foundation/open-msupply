@@ -36,7 +36,7 @@ table! {
     sync_buffer (record_id) {
         record_id -> Text,
         data -> Text,
-        action -> crate::migrations::v2_17_00::import_goods_recieved::SyncActionMapping,
+        action -> crate::migrations::v2_17_00::import_goods_received::SyncActionMapping,
         table_name -> Text,
         integration_error -> Nullable<Text>,
     }
@@ -71,8 +71,8 @@ table! {
         store_id -> Text,
         user_id -> Nullable<Text>,
         invoice_number -> BigInt,
-        #[sql_name = "type"] type_ -> crate::migrations::v2_17_00::import_goods_recieved::InvoiceTypeMapping,
-        status -> crate::migrations::v2_17_00::import_goods_recieved::InvoiceStatusMapping,
+        #[sql_name = "type"] type_ -> crate::migrations::v2_17_00::import_goods_received::InvoiceTypeMapping,
+        status -> crate::migrations::v2_17_00::import_goods_received::InvoiceStatusMapping,
         on_hold -> Bool,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
@@ -125,7 +125,7 @@ table! {
         total_before_tax -> Double,
         total_after_tax -> Double,
         tax_percentage -> Nullable<Double>,
-        #[sql_name = "type"] type_ -> crate::migrations::v2_17_00::import_goods_recieved::InvoiceLineTypeMapping,
+        #[sql_name = "type"] type_ -> crate::migrations::v2_17_00::import_goods_received::InvoiceLineTypeMapping,
         number_of_packs -> Double,
         note -> Nullable<Text>,
         volume_per_pack -> Double,
@@ -246,7 +246,7 @@ fn map_status(status: &str) -> InvoiceStatus {
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "import_goods_recieved"
+        "import_goods_received"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -279,9 +279,7 @@ fn import_invoices(connection: &StorageConnection) -> anyhow::Result<()> {
 
         let name_link_id = match &legacy_row.purchase_order_ID {
             None => {
-                println!(
-                    "Warning: goods_received {record_id} has no purchase_order_ID, skipping"
-                );
+                println!("Warning: goods_received {record_id} has no purchase_order_ID, skipping");
                 continue;
             }
             Some(po_id) => {
@@ -324,7 +322,9 @@ fn import_invoices(connection: &StorageConnection) -> anyhow::Result<()> {
             comment: legacy_row.comment,
             their_reference: legacy_row.supplier_reference,
             created_datetime,
-            received_datetime: legacy_row.received_date.and_then(|d| d.and_hms_opt(0, 0, 0)),
+            received_datetime: legacy_row
+                .received_date
+                .and_then(|d| d.and_hms_opt(0, 0, 0)),
             linked_invoice_id: legacy_row.linked_transaction_ID,
             currency_rate: 1.0,
             is_cancellation: false,
