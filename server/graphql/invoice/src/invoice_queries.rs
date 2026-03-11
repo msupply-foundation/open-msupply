@@ -98,7 +98,7 @@ pub fn get_invoice(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInvoice,
+            resource: Resource::StoreAccess,
             store_id: store_id.clone(),
         },
     )?;
@@ -108,14 +108,24 @@ pub fn get_invoice(
         service_provider.context(store_id.clone().unwrap_or("".to_string()), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
-    let invoice_option = invoice_service.get_invoice(&service_context, store_id.as_deref(), id)?;
-
-    let response = match invoice_option {
-        Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
-        None => InvoiceResponse::Error(NodeError {
-            error: NodeErrorInterface::record_not_found(),
-        }),
-    };
+    let response =
+        match invoice_service.get_invoice_authorized(&service_context, store_id.as_deref(), id) {
+            Ok(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
+            Err(service::invoice::GetInvoiceError::RecordNotFound) => {
+                InvoiceResponse::Error(NodeError {
+                    error: NodeErrorInterface::record_not_found(),
+                })
+            }
+            Err(service::invoice::GetInvoiceError::AuthorisationDenied) => {
+                return Err(StandardGraphqlError::Forbidden(
+                    "Insufficient permission to view this invoice".to_string(),
+                )
+                .extend())
+            }
+            Err(service::invoice::GetInvoiceError::DatabaseError(error)) => {
+                return Err(StandardGraphqlError::from_repository_error(error))
+            }
+        };
 
     Ok(response)
 }
@@ -170,7 +180,7 @@ pub fn get_invoice_by_number(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInvoice,
+            resource: Resource::StoreAccess,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -179,18 +189,27 @@ pub fn get_invoice_by_number(
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
-    let invoice_option = invoice_service.get_invoice_by_number(
+    let response = match invoice_service.get_invoice_by_number_authorized(
         &service_context,
         &store_id,
         invoice_number,
         InvoiceType::from(r#type),
-    )?;
-
-    let response = match invoice_option {
-        Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
-        None => InvoiceResponse::Error(NodeError {
-            error: NodeErrorInterface::record_not_found(),
-        }),
+    ) {
+        Ok(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
+        Err(service::invoice::GetInvoiceError::RecordNotFound) => {
+            InvoiceResponse::Error(NodeError {
+                error: NodeErrorInterface::record_not_found(),
+            })
+        }
+        Err(service::invoice::GetInvoiceError::AuthorisationDenied) => {
+            return Err(StandardGraphqlError::Forbidden(
+                "Insufficient permission to view this invoice".to_string(),
+            )
+            .extend())
+        }
+        Err(service::invoice::GetInvoiceError::DatabaseError(error)) => {
+            return Err(StandardGraphqlError::from_repository_error(error))
+        }
     };
 
     Ok(response)
