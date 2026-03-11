@@ -66,7 +66,7 @@ fn generate_line(
     InvoiceLineRow {
         id: uuid(),
         invoice_id,
-        item_link_id: item_id,
+        item_id: item_id,
         pack_size: 1.0,
         note,
         r#type: InvoiceLineType::StockIn,

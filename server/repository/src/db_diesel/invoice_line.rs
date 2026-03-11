@@ -1,9 +1,8 @@
 use super::{
-    invoice_line_row::invoice_line, invoice_line_stats, invoice_row::invoice,
-    item_link_row::item_link, item_row::item, location_row::location,
-    reason_option_row::reason_option, stock_line_row::stock_line, DBType, DatetimeFilter,
-    InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType, InvoiceRow, LocationRow, ReasonOptionRow,
-    StorageConnection,
+    invoice_line_row::invoice_line, invoice_line_stats, invoice_row::invoice, item_row::item,
+    location_row::location, reason_option_row::reason_option, stock_line_row::stock_line, DBType,
+    DatetimeFilter, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType, InvoiceRow, LocationRow,
+    ReasonOptionRow, StorageConnection,
 };
 
 use crate::{
@@ -12,7 +11,7 @@ use crate::{
         apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    EqualFilter, InvoiceStatus, InvoiceType, ItemLinkRow, ItemRow, Pagination, Sort, StockLineRow,
+    EqualFilter, InvoiceStatus, InvoiceType, ItemRow, Pagination, Sort, StockLineRow,
 };
 
 use diesel::{
@@ -199,7 +198,7 @@ impl InvoiceLineFilter {
 
 type InvoiceLineJoin = (
     InvoiceLineRow,
-    (ItemLinkRow, ItemRow),
+    ItemRow,
     InvoiceRow,
     InvoiceLineStatsRow,
     Option<LocationRow>,
@@ -296,7 +295,7 @@ type BoxedInvoiceLineQuery = IntoBoxed<
             LeftJoin<
                 InnerJoin<
                     InnerJoin<
-                        InnerJoin<invoice_line::table, InnerJoin<item_link::table, item::table>>,
+                        InnerJoin<invoice_line::table, item::table>,
                         invoice::table,
                     >,
                     invoice_line_stats::table,
@@ -312,7 +311,7 @@ type BoxedInvoiceLineQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
     let mut query = invoice_line::table
-        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(item::table)
         .inner_join(invoice::table)
         .inner_join(invoice_line_stats::table)
         .left_join(location::table)
@@ -348,7 +347,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
         apply_equal_filter!(query, invoice_id, invoice_line::invoice_id);
         apply_equal_filter!(query, location_id, invoice_line::location_id);
-        apply_equal_filter!(query, item_id, item_link::item_id);
+        apply_equal_filter!(query, item_id, invoice_line::item_id);
         apply_equal_filter!(query, r#type, invoice_line::type_);
         apply_equal_filter!(query, number_of_packs, invoice_line::number_of_packs);
         apply_equal_filter!(query, invoice_type, invoice::type_);
@@ -393,7 +392,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
 fn to_domain(
     (
         invoice_line_row,
-        (_, item_row),
+        item_row,
         invoice_row,
         invoice_line_stats_row,
         location_row_option,

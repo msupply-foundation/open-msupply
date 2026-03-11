@@ -493,7 +493,7 @@ mod test {
             InvoiceLineRow {
                 id: "invoice_line_for_test".to_string(),
                 invoice_id: "invoice_test".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 r#type: InvoiceLineType::StockIn,
@@ -504,7 +504,7 @@ mod test {
             InvoiceLineRow {
                 id: "invoice_line_only_shipped_packs_for_test".to_string(),
                 invoice_id: "invoice_test".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 pack_size: 1.0,
                 number_of_packs: 0.0,
                 shipped_number_of_packs: Some(5.0),
@@ -516,7 +516,7 @@ mod test {
             InvoiceLineRow {
                 id: "invoice_line_placeholder_line_for_test".to_string(),
                 invoice_id: "invoice_test".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 pack_size: 1.0,
                 number_of_packs: 0.0,
                 r#type: InvoiceLineType::StockIn,
@@ -1334,7 +1334,7 @@ mod test {
             InvoiceLineRow {
                 id: "pending_line".to_string(),
                 invoice_id: delivered_invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 pack_size: 1.0,
                 number_of_packs: 10.0,
@@ -1347,7 +1347,7 @@ mod test {
             InvoiceLineRow {
                 id: "passed_line_on_pending_invoice".to_string(),
                 invoice_id: delivered_invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 pack_size: 1.0,
                 number_of_packs: 5.0,
@@ -1419,7 +1419,7 @@ mod test {
             InvoiceLineRow {
                 id: "status_test_passed_line".to_string(),
                 invoice_id: delivered_invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 pack_size: 1.0,
                 number_of_packs: 10.0,
@@ -1432,7 +1432,7 @@ mod test {
             InvoiceLineRow {
                 id: "status_test_rejected_line".to_string(),
                 invoice_id: delivered_invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 pack_size: 1.0,
                 number_of_packs: 5.0,
@@ -1445,7 +1445,7 @@ mod test {
             InvoiceLineRow {
                 id: "status_test_no_status_line".to_string(),
                 invoice_id: delivered_invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 pack_size: 1.0,
                 number_of_packs: 3.0,
@@ -1567,7 +1567,7 @@ mod test {
                 store_id: mock_store_a().id,
                 purchase_order_id: purchase_order().id,
                 line_number: 1,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 item_name: "Item A".to_string(),
                 price_per_pack_after_discount: 10.0,
                 requested_pack_size: 1.0,
@@ -1581,7 +1581,7 @@ mod test {
                 store_id: mock_store_a().id,
                 purchase_order_id: purchase_order().id,
                 line_number: 2,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 item_name: "Item A".to_string(),
                 price_per_pack_after_discount: 20.0,
                 requested_pack_size: 1.0,
@@ -1610,7 +1610,7 @@ mod test {
             InvoiceLineRow {
                 id: "cost_price_test_line_a".to_string(),
                 invoice_id: invoice_with_po().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 1.0,
                 number_of_packs: 5.0,
                 cost_price_per_pack: 10.0,
@@ -1627,7 +1627,7 @@ mod test {
             InvoiceLineRow {
                 id: "cost_price_test_line_b".to_string(),
                 invoice_id: invoice_with_po().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 1.0,
                 number_of_packs: 10.0,
                 cost_price_per_pack: 20.0,
@@ -1929,7 +1929,7 @@ mod test {
             InvoiceLineRow {
                 id: "no_po_cost_test_line".to_string(),
                 invoice_id: invoice_without_po().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 1.0,
                 number_of_packs: 5.0,
                 cost_price_per_pack: 10.0,
@@ -2180,7 +2180,7 @@ mod test {
             InvoiceLineRow {
                 id: "backdate_success_line".to_string(),
                 invoice_id: "received_inbound_backdate_success".to_string(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 stock_line_id: Some(stock_line_id.to_string()),
                 r#type: InvoiceLineType::StockIn,
                 number_of_packs: 10.0,
@@ -2193,7 +2193,7 @@ mod test {
             repository::StockLineRow {
                 id: "backdate_success_stock_line".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 available_number_of_packs: 10.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,

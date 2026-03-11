@@ -70,7 +70,7 @@ pub(crate) mod test {
     pub(crate) fn mock_data() -> MockData {
         let positive_running_balance_fix = StockLineRow {
             id: "positive_running_balance_fix".to_string(),
-            item_link_id: mock_item_a().id.clone(),
+            item_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             pack_size: 1.0,
             available_number_of_packs: 3.0,
@@ -86,7 +86,7 @@ pub(crate) mod test {
 
         let positive_running_balance_fix_no_lines = StockLineRow {
             id: "positive_running_balance_fix_no_lines".to_string(),
-            item_link_id: mock_item_a().id.clone(),
+            item_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             pack_size: 1.0,
             available_number_of_packs: 3.0,

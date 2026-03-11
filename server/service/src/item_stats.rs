@@ -299,7 +299,7 @@ mod test {
     pub(crate) fn mock_data() -> MockData {
         let test_stock_line = StockLineRow {
             id: "test_stock_line".to_string(),
-            item_link_id: mock_item_a().id.clone(),
+            item_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             pack_size: 1.0,
             ..Default::default()

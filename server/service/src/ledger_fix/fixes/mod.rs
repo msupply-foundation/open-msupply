@@ -130,7 +130,7 @@ fn create_inventory_adjustment(
         .id;
 
     let Some(item) =
-        ItemRowRepository::new(connection).find_one_by_item_link_id(&stock_line.item_link_id)?
+        ItemRowRepository::new(connection).find_one_by_item_link_id(&stock_line.item_id)?
     else {
         return LedgerFixError::other("Item not found for inventory adjustment");
     };
@@ -193,7 +193,7 @@ fn create_inventory_adjustment(
     let line = InvoiceLineRow {
         id: uuid(),
         invoice_id: adjustment_invoice.id.clone(),
-        item_link_id: stock_line.item_link_id, // Note if item is unmerged in the future, we should expect the invoice line item to match the stock line item
+        item_id: stock_line.item_id, // Note if item is unmerged in the future, we should expect the invoice line item to match the stock line item
         item_name: item.name,
         item_code: item.code,
         stock_line_id: Some(stock_line.id),

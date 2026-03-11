@@ -1,6 +1,6 @@
 use super::item_row::item;
 use super::{item_direction_row::item_direction, ItemDirectionRow, StorageConnection};
-use super::{item_link, ItemLinkRow, ItemRow};
+use super::ItemRow;
 
 use crate::diesel_macros::apply_equal_filter;
 
@@ -14,7 +14,7 @@ pub struct ItemDirection {
     pub item_row: ItemRow,
 }
 
-type ItemDirectionJoin = (ItemDirectionRow, (ItemLinkRow, ItemRow));
+type ItemDirectionJoin = (ItemDirectionRow, ItemRow);
 
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct ItemDirectionFilter {
@@ -59,7 +59,7 @@ impl<'a> ItemDirectionRepository<'a> {
     }
 }
 
-fn to_domain((item_direction_row, (_, item_row)): ItemDirectionJoin) -> ItemDirection {
+fn to_domain((item_direction_row, item_row): ItemDirectionJoin) -> ItemDirection {
     ItemDirection {
         item_direction_row,
         item_row,
@@ -68,13 +68,13 @@ fn to_domain((item_direction_row, (_, item_row)): ItemDirectionJoin) -> ItemDire
 
 type BoxedItemDirectionQuery = IntoBoxed<
     'static,
-    InnerJoin<item_direction::table, InnerJoin<item_link::table, item::table>>,
+    InnerJoin<item_direction::table, item::table>,
     DBType,
 >;
 
 fn create_filtered_query(filter: Option<ItemDirectionFilter>) -> BoxedItemDirectionQuery {
     let mut query = item_direction::table
-        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(item::table)
         .into_boxed();
 
     if let Some(filter) = filter {

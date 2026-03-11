@@ -89,7 +89,7 @@ pub(crate) mod test {
     pub(crate) fn mock_data() -> MockData {
         let nothing_matches = StockLineRow {
             id: "nothing_matches".to_string(),
-            item_link_id: mock_item_a().id.clone(),
+            item_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             pack_size: 2.0,
             available_number_of_packs: 5.0,
