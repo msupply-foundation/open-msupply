@@ -59,7 +59,6 @@ export const CardList = <T extends MRT_RowData>({
           cardRef={index === rows.length - 1 ? lastItemRef : undefined}
           groupIcons={groupIcons}
           onClick={getRowOnClick(table, row)}
-          simpleLayout={!groupIcons}
         />
       ))}
       <MRT_ShowHideColumnsButton table={table} sx={{ alignSelf: 'center' }} />
