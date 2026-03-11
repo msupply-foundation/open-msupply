@@ -1,4 +1,6 @@
-use repository::{Invoice, InvoiceLine, RepositoryError};
+use repository::{
+    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+};
 
 use crate::{
     invoice_line::{
@@ -41,6 +43,10 @@ pub struct BatchInboundShipment {
     pub update_shipment: Option<Vec<UpdateInboundShipment>>,
     pub delete_shipment: Option<Vec<DeleteInboundShipment>>,
     pub continue_on_error: Option<bool>,
+    /// When Some(true), only operate on invoices with a purchase order (external).
+    /// When Some(false), only operate on invoices without a purchase order (internal).
+    /// When None, no restriction.
+    pub requires_purchase_order: Option<bool>,
 }
 
 pub type InsertShipmentsResult =
@@ -90,6 +96,37 @@ pub struct BatchInboundShipmentResult {
     pub delete_shipment: DeleteShipmentsResult,
 }
 
+/// Check if an invoice's purchase_order status matches the filter.
+/// Returns true if no filter is set, or if the invoice matches.
+fn check_invoice_type(
+    ctx: &ServiceContext,
+    invoice_id: &str,
+    requires_po: Option<bool>,
+) -> Result<bool, RepositoryError> {
+    let requires = match requires_po {
+        None => return Ok(true),
+        Some(r) => r,
+    };
+    let invoice = InvoiceRowRepository::new(&ctx.connection).find_one_by_id(invoice_id)?;
+    Ok(invoice.map_or(false, |i| i.purchase_order_id.is_some() == requires))
+}
+
+/// Check if a line's parent invoice matches the purchase_order filter.
+fn check_line_type(
+    ctx: &ServiceContext,
+    line_id: &str,
+    requires_po: Option<bool>,
+) -> Result<bool, RepositoryError> {
+    if requires_po.is_none() {
+        return Ok(true);
+    }
+    let line = InvoiceLineRowRepository::new(&ctx.connection).find_one_by_id(line_id)?;
+    match line {
+        Some(l) => check_invoice_type(ctx, &l.invoice_id, requires_po),
+        None => Ok(true), // line doesn't exist — will fail in the actual operation
+    }
+}
+
 pub fn batch_inbound_shipment(
     ctx: &ServiceContext,
     input: BatchInboundShipment,
@@ -98,13 +135,19 @@ pub fn batch_inbound_shipment(
         .connection
         .transaction_sync(|_| {
             let continue_on_error = input.continue_on_error.unwrap_or(false);
+            let requires_po = input.requires_purchase_order;
             let mut results = BatchInboundShipmentResult::default();
-
             let mutations_processor = BatchMutationsProcessor::new(ctx);
 
             // Insert Shipment
             let (has_errors, result) =
-                mutations_processor.do_mutations(input.insert_shipment, insert_inbound_shipment);
+                mutations_processor.do_mutations(input.insert_shipment, |ctx, input| {
+                    let invoice = insert_inbound_shipment(ctx, input)?;
+                    if !check_invoice_type(ctx, &invoice.invoice_row.id, requires_po)? {
+                        return Err(InsertInboundShipmentError::InvoiceAlreadyExists);
+                    }
+                    Ok(invoice)
+                });
             results.insert_shipment = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -112,7 +155,12 @@ pub fn batch_inbound_shipment(
 
             let (has_errors, result) = mutations_processor.do_mutations(
                 input.insert_from_internal_order_lines,
-                insert_from_internal_order_line,
+                |ctx, input: InsertFromInternalOrderLine| {
+                    if !check_invoice_type(ctx, &input.invoice_id, requires_po)? {
+                        return Err(InsertFromInternalOrderLineError::InvoiceDoesNotExist);
+                    }
+                    insert_from_internal_order_line(ctx, input)
+                },
             );
             results.insert_from_internal_order_lines = result;
             if has_errors && !continue_on_error {
@@ -120,33 +168,57 @@ pub fn batch_inbound_shipment(
             }
 
             // Normal Line
-
-            let (has_errors, result) =
-                mutations_processor.do_mutations(input.insert_line, insert_stock_in_line);
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.insert_line,
+                |ctx, input: InsertStockInLine| {
+                    if !check_invoice_type(ctx, &input.invoice_id, requires_po)? {
+                        return Err(InsertStockInLineError::InvoiceDoesNotExist);
+                    }
+                    insert_stock_in_line(ctx, input)
+                },
+            );
             results.insert_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
 
-            let (has_errors, result) =
-                mutations_processor.do_mutations(input.update_line, update_stock_in_line);
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.update_line,
+                |ctx, input: UpdateStockInLine| {
+                    if !check_line_type(ctx, &input.id, requires_po)? {
+                        return Err(UpdateStockInLineError::InvoiceDoesNotExist);
+                    }
+                    update_stock_in_line(ctx, input)
+                },
+            );
             results.update_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
 
-            let (has_errors, result) =
-                mutations_processor.do_mutations(input.delete_line, delete_stock_in_line);
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.delete_line,
+                |ctx, input: DeleteStockInLine| {
+                    if !check_line_type(ctx, &input.id, requires_po)? {
+                        return Err(DeleteStockInLineError::InvoiceDoesNotExist);
+                    }
+                    delete_stock_in_line(ctx, input)
+                },
+            );
             results.delete_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
 
             // Service Line
-
             let (has_errors, result) = mutations_processor.do_mutations(
                 input.insert_service_line,
-                insert_inbound_shipment_service_line,
+                |ctx, input: InsertInboundShipmentServiceLine| {
+                    if !check_invoice_type(ctx, &input.invoice_id, requires_po)? {
+                        return Err(InsertInboundShipmentServiceLineError::InvoiceDoesNotExist);
+                    }
+                    insert_inbound_shipment_service_line(ctx, input)
+                },
             );
             results.insert_service_line = result;
             if has_errors && !continue_on_error {
@@ -155,7 +227,12 @@ pub fn batch_inbound_shipment(
 
             let (has_errors, result) = mutations_processor.do_mutations(
                 input.update_service_line,
-                update_inbound_shipment_service_line,
+                |ctx, input: UpdateInboundShipmentServiceLine| {
+                    if !check_line_type(ctx, &input.id, requires_po)? {
+                        return Err(UpdateInboundShipmentServiceLineError::InvoiceDoesNotExist);
+                    }
+                    update_inbound_shipment_service_line(ctx, input)
+                },
             );
             results.update_service_line = result;
             if has_errors && !continue_on_error {
@@ -164,7 +241,12 @@ pub fn batch_inbound_shipment(
 
             let (has_errors, result) = mutations_processor.do_mutations(
                 input.delete_service_line,
-                delete_inbound_shipment_service_line,
+                |ctx, input: DeleteStockInLine| {
+                    if !check_line_type(ctx, &input.id, requires_po)? {
+                        return Err(DeleteInboundShipmentServiceLineError::InvoiceDoesNotExist);
+                    }
+                    delete_inbound_shipment_service_line(ctx, input)
+                },
             );
             results.delete_service_line = result;
             if has_errors && !continue_on_error {
@@ -172,29 +254,29 @@ pub fn batch_inbound_shipment(
             }
 
             // Update and delete shipment
-
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.update_shipment,
+                |ctx, input: UpdateInboundShipment| {
+                    if !check_invoice_type(ctx, &input.id, requires_po)? {
+                        return Err(UpdateInboundShipmentError::InvoiceDoesNotExist);
+                    }
+                    update_inbound_shipment(ctx, input, None)
+                },
+            );
+            results.update_shipment = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
 
-            if let Some(update_shipment_inputs) = input.update_shipment {
-                let mut has_errors = false;
-                let mut result = vec![];
-                for input in update_shipment_inputs {
-                    let mutation_result = update_inbound_shipment(ctx, input.clone(), None);
-                    has_errors = has_errors || mutation_result.is_err();
-                    result.push(InputWithResult {
-                        input,
-                        result: mutation_result,
-                    });
-                }
-                if has_errors && !continue_on_error {
-                    return Err(WithDBError::err(results));
-                }
-            }
-
-            let (has_errors, result) =
-                mutations_processor.do_mutations(input.delete_shipment, delete_inbound_shipment);
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.delete_shipment,
+                |ctx, input: DeleteInboundShipment| {
+                    if !check_invoice_type(ctx, &input.id, requires_po)? {
+                        return Err(DeleteInboundShipmentError::InvoiceDoesNotExist);
+                    }
+                    delete_inbound_shipment(ctx, input)
+                },
+            );
             results.delete_shipment = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -270,6 +352,7 @@ mod test {
             insert_service_line: None,
             update_service_line: None,
             delete_service_line: None,
+            requires_purchase_order: None,
         };
 
         // Test rollback

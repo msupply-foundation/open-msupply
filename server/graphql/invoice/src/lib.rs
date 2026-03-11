@@ -1,9 +1,6 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use graphql_types::types::*;
 use mutations::AddToShipmentFromMasterListInput;
-use repository::InvoiceType;
-use service::auth::Resource;
 
 pub mod invoice_queries;
 use self::invoice_queries::*;
@@ -26,9 +23,10 @@ impl InvoiceQueries {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "id of the invoice")] id: String,
-        #[graphql(desc = "Optional scope to check type-specific permissions")] scope: Option<InvoiceScopeInput>,
+        #[graphql(desc = "Optional type to check type-specific permissions and filter results")]
+        r#type: Option<InvoiceTypeInput>,
     ) -> Result<InvoiceResponse> {
-        get_invoice(ctx, Some(store_id), &id, scope)
+        get_invoice(ctx, Some(store_id), &id, r#type)
     }
 
     pub async fn invoice_by_number(
@@ -36,14 +34,15 @@ impl InvoiceQueries {
         ctx: &Context<'_>,
         store_id: String,
         invoice_number: u32,
-        r#type: InvoiceNodeType,
-        #[graphql(desc = "Optional scope to check type-specific permissions")] scope: Option<InvoiceScopeInput>,
+        r#type: InvoiceTypeInput,
     ) -> Result<InvoiceResponse> {
-        get_invoice_by_number(ctx, store_id, invoice_number, r#type, scope)
+        get_invoice_by_number(ctx, store_id, invoice_number, r#type)
     }
 
     /// Use the type-specific query endpoints instead (e.g. outbound_shipments, inbound_shipments, etc.)
-    #[graphql(deprecation = "Use type-specific query endpoints instead (e.g. outboundShipments, inboundShipments, etc.)")]
+    #[graphql(
+        deprecation = "Use type-specific query endpoints instead (e.g. outboundShipments, inboundShipments, etc.)"
+    )]
     pub async fn invoices(
         &self,
         ctx: &Context<'_>,
@@ -53,7 +52,7 @@ impl InvoiceQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort, Resource::QueryInvoice, |f| f)
+        get_invoices(ctx, store_id, page, filter, sort, None)
     }
 
     pub async fn outbound_shipments(
@@ -65,10 +64,14 @@ impl InvoiceQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort, Resource::QueryOutboundShipment, |mut f| {
-            f.r#type = Some(InvoiceType::OutboundShipment.equal_to());
-            f
-        })
+        get_invoices(
+            ctx,
+            store_id,
+            page,
+            filter,
+            sort,
+            Some(InvoiceTypeInput::OutboundShipment),
+        )
     }
 
     /// Inbound shipments without a linked purchase order
@@ -81,11 +84,14 @@ impl InvoiceQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort, Resource::QueryInboundShipment, |mut f| {
-            f.r#type = Some(InvoiceType::InboundShipment.equal_to());
-            f.purchase_order_id = Some(repository::EqualFilter::is_null(true));
-            f
-        })
+        get_invoices(
+            ctx,
+            store_id,
+            page,
+            filter,
+            sort,
+            Some(InvoiceTypeInput::InboundShipment),
+        )
     }
 
     /// Inbound shipments with a linked purchase order
@@ -98,11 +104,14 @@ impl InvoiceQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort, Resource::QueryInboundShipmentExternal, |mut f| {
-            f.r#type = Some(InvoiceType::InboundShipment.equal_to());
-            f.purchase_order_id = Some(repository::EqualFilter::is_null(false));
-            f
-        })
+        get_invoices(
+            ctx,
+            store_id,
+            page,
+            filter,
+            sort,
+            Some(InvoiceTypeInput::InboundShipmentExternal),
+        )
     }
 
     pub async fn prescriptions(
@@ -114,10 +123,14 @@ impl InvoiceQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort, Resource::QueryPrescription, |mut f| {
-            f.r#type = Some(InvoiceType::Prescription.equal_to());
-            f
-        })
+        get_invoices(
+            ctx,
+            store_id,
+            page,
+            filter,
+            sort,
+            Some(InvoiceTypeInput::Prescription),
+        )
     }
 
     pub async fn supplier_returns(
@@ -129,10 +142,14 @@ impl InvoiceQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort, Resource::QuerySupplierReturn, |mut f| {
-            f.r#type = Some(InvoiceType::SupplierReturn.equal_to());
-            f
-        })
+        get_invoices(
+            ctx,
+            store_id,
+            page,
+            filter,
+            sort,
+            Some(InvoiceTypeInput::SupplierReturn),
+        )
     }
 
     pub async fn customer_returns(
@@ -144,10 +161,14 @@ impl InvoiceQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort, Resource::QueryCustomerReturn, |mut f| {
-            f.r#type = Some(InvoiceType::CustomerReturn.equal_to());
-            f
-        })
+        get_invoices(
+            ctx,
+            store_id,
+            page,
+            filter,
+            sort,
+            Some(InvoiceTypeInput::CustomerReturn),
+        )
     }
 }
 

@@ -16,8 +16,9 @@ impl BatchMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: batch_inbound_shipment::BatchInput,
+        r#type: Option<batch_inbound_shipment::InboundShipmentType>,
     ) -> Result<batch_inbound_shipment::BatchResponse> {
-        batch_inbound_shipment::batch(ctx, &store_id, input)
+        batch_inbound_shipment::batch(ctx, &store_id, input, r#type)
     }
 
     async fn batch_outbound_shipment(

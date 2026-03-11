@@ -69,7 +69,6 @@ pub fn update_inbound_shipment(
             let (invoice, other_party, status_changed) = validate(
                 connection,
                 store_id.unwrap_or(&ctx.store_id),
-                &ctx.user_id,
                 &patch,
             )?;
             let GenerateResult {
@@ -186,8 +185,6 @@ pub enum UpdateInboundShipmentError {
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyNotASupplier,
-    // Permission
-    AuthorisationDenied,
     // Internal
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,
