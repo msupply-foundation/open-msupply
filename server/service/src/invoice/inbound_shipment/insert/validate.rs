@@ -1,4 +1,6 @@
 use crate::invoice::check_invoice_exists;
+use crate::invoice::inbound_shipment::check_inbound_shipment_mutation_permission;
+use crate::purchase_order::validate::check_purchase_order_exists;
 use crate::store_preference::get_store_preferences;
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::{
@@ -11,11 +13,22 @@ use super::{InsertInboundShipment, InsertInboundShipmentError};
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
+    user_id: &str,
     input: &InsertInboundShipment,
 ) -> Result<Name, InsertInboundShipmentError> {
     use InsertInboundShipmentError::*;
+
+    let is_external = input.purchase_order_id.is_some();
+    check_inbound_shipment_mutation_permission(connection, store_id, user_id, is_external)?;
+
     if (check_invoice_exists(&input.id, connection)?).is_some() {
         return Err(InvoiceAlreadyExists);
+    }
+
+    if let Some(purchase_order_id) = &input.purchase_order_id {
+        if check_purchase_order_exists(purchase_order_id, connection)?.is_none() {
+            return Err(PurchaseOrderDoesNotExist);
+        }
     }
 
     let store_pref = get_store_preferences(connection, store_id)?;

@@ -1,7 +1,10 @@
-use repository::{EqualFilter, Pagination, PermissionType, StorageConnection, UserPermissionFilter, UserPermissionRepository};
+use repository::{
+    EqualFilter, Pagination, PermissionType, RepositoryError, StorageConnection,
+    UserPermissionFilter, UserPermissionRepository,
+};
 
 use crate::invoice::inbound_shipment::{
-    DeleteInboundShipmentError, UpdateInboundShipmentError,
+    DeleteInboundShipmentError, InsertInboundShipmentError, UpdateInboundShipmentError,
 };
 
 /// Check if user has permission to verify/authorise the given inbound shipment type
@@ -49,17 +52,15 @@ fn has_permission(
         return Ok(());
     }
 
-    let user_permissions = UserPermissionRepository::new(connection)
-        .query(
-            Pagination::all(),
-            Some(
-                UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(user_id.to_string()))
-                    .store_id(EqualFilter::equal_to(store_id.to_string())),
-            ),
-            None,
-        )
-        .map_err(|_| PermissionError::DatabaseError)?;
+    let user_permissions = UserPermissionRepository::new(connection).query(
+        Pagination::all(),
+        Some(
+            UserPermissionFilter::new()
+                .user_id(EqualFilter::equal_to(user_id.to_string()))
+                .store_id(EqualFilter::equal_to(store_id.to_string())),
+        ),
+        None,
+    )?;
 
     if user_permissions.iter().any(|p| p.permission == permission) {
         Ok(())
@@ -71,14 +72,37 @@ fn has_permission(
 #[derive(Debug)]
 pub enum PermissionError {
     InsufficientPermission,
-    DatabaseError,
+    DatabaseError(RepositoryError),
+}
+
+impl From<RepositoryError> for PermissionError {
+    fn from(error: RepositoryError) -> Self {
+        PermissionError::DatabaseError(error)
+    }
+}
+
+impl From<PermissionError> for InsertInboundShipmentError {
+    fn from(error: PermissionError) -> Self {
+        match error {
+            PermissionError::InsufficientPermission => {
+                InsertInboundShipmentError::AuthorisationDenied
+            }
+            PermissionError::DatabaseError(database_error) => {
+                InsertInboundShipmentError::DatabaseError(database_error)
+            }
+        }
+    }
 }
 
 impl From<PermissionError> for UpdateInboundShipmentError {
     fn from(error: PermissionError) -> Self {
         match error {
-            PermissionError::InsufficientPermission => UpdateInboundShipmentError::AuthorisationDenied,
-            PermissionError::DatabaseError => UpdateInboundShipmentError::AuthorisationDenied,
+            PermissionError::InsufficientPermission => {
+                UpdateInboundShipmentError::AuthorisationDenied
+            }
+            PermissionError::DatabaseError(database_error) => {
+                UpdateInboundShipmentError::DatabaseError(database_error)
+            }
         }
     }
 }
@@ -86,8 +110,12 @@ impl From<PermissionError> for UpdateInboundShipmentError {
 impl From<PermissionError> for DeleteInboundShipmentError {
     fn from(error: PermissionError) -> Self {
         match error {
-            PermissionError::InsufficientPermission => DeleteInboundShipmentError::AuthorisationDenied,
-            PermissionError::DatabaseError => DeleteInboundShipmentError::AuthorisationDenied,
+            PermissionError::InsufficientPermission => {
+                DeleteInboundShipmentError::AuthorisationDenied
+            }
+            PermissionError::DatabaseError(database_error) => {
+                DeleteInboundShipmentError::DatabaseError(database_error)
+            }
         }
     }
 }

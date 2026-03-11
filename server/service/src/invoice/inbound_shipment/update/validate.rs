@@ -23,16 +23,17 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
+
+    // Check permission before revealing further invoice details
+    let is_external = invoice.purchase_order_id.is_some();
+    check_inbound_shipment_mutation_permission(connection, store_id, user_id, is_external)?;
+
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
-
-    // Check if user has permission for this shipment type (internal or external)
-    let is_external = invoice.purchase_order_id.is_some();
-    check_inbound_shipment_mutation_permission(connection, store_id, user_id, is_external)?;
 
     // Status check
     let status_changed = check_status_change(&invoice, patch.full_status());

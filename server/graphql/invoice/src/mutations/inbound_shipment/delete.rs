@@ -33,10 +33,11 @@ pub enum DeleteResponse {
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
     let service_provider = ctx.service_provider();
+    // Permissions checked in the service layer, but do an early check here to save some work if user doesn't have access to the store at all
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: Resource::StoreAccess,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -93,7 +94,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::AuthorisationDenied => BadUserInput(formatted_error),
+        ServiceError::AuthorisationDenied => Forbidden(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::LineDeleteError { .. } => InternalError(formatted_error),
     };
