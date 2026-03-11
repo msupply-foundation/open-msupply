@@ -13,6 +13,7 @@ export type InboundLineFragment = {
   costPricePerPack: number;
   sellPricePerPack: number;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   numberOfPacks: number;
   shippedNumberOfPacks?: number | null;
   shippedPackSize?: number | null;
@@ -152,6 +153,7 @@ export type InboundFragment = {
       costPricePerPack: number;
       sellPricePerPack: number;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       numberOfPacks: number;
       shippedNumberOfPacks?: number | null;
       shippedPackSize?: number | null;
@@ -446,6 +448,7 @@ export type InvoiceQuery = {
             costPricePerPack: number;
             sellPricePerPack: number;
             expiryDate?: string | null;
+            manufactureDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
             shippedPackSize?: number | null;
@@ -671,6 +674,7 @@ export type InboundByNumberQuery = {
             costPricePerPack: number;
             sellPricePerPack: number;
             expiryDate?: string | null;
+            manufactureDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
             shippedPackSize?: number | null;
@@ -1307,6 +1311,7 @@ export const InboundLineFragmentDoc = gql`
     costPricePerPack
     sellPricePerPack
     expiryDate
+    manufactureDate
     numberOfPacks
     shippedNumberOfPacks
     shippedPackSize

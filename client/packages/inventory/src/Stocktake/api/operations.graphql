@@ -19,6 +19,7 @@ fragment StocktakeLine on StocktakeLineNode {
   itemName
   id
   expiryDate
+  manufactureDate
   packSize
   snapshotNumberOfPacks
   countedNumberOfPacks

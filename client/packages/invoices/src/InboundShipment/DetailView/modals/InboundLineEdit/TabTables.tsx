@@ -15,6 +15,7 @@ import {
   ColumnType,
   DateUtils,
   ExpiryDateInput,
+  DateTimePickerInput,
   TextInputCell,
   NumberInputCell,
   CurrencyInputCell,
@@ -104,6 +105,28 @@ export const QuantityTable = ({
                 updateDraftLine({
                   id: row.original.id,
                   expiryDate: Formatter.naiveDate(date),
+                })
+              }
+            />
+          );
+        },
+      },
+      {
+        id: 'manufactureDate',
+        header: t('label.manufacture-date'),
+        size: 150,
+        columnType: ColumnType.Date,
+        accessorFn: row => DateUtils.getDateOrNull(row.manufactureDate),
+        Cell: ({ cell, row }) => {
+          const value = cell.getValue<Date | null>();
+          return (
+            <DateTimePickerInput
+              value={value}
+              disabled={isDisabled}
+              onChange={date =>
+                updateDraftLine({
+                  id: row.original.id,
+                  manufactureDate: date ? Formatter.naiveDate(date) : null,
                 })
               }
             />

@@ -105,6 +105,10 @@ impl StocktakeLineNode {
         &self.line.line.expiry_date
     }
 
+    pub async fn manufacture_date(&self) -> &Option<NaiveDate> {
+        &self.line.line.manufacture_date
+    }
+
     pub async fn pack_size(&self) -> Option<f64> {
         self.line.line.pack_size
     }

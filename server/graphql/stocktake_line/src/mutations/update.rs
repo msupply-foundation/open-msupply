@@ -30,6 +30,7 @@ pub struct UpdateInput {
     pub counted_number_of_packs: Option<f64>,
     pub batch: Option<String>,
     pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdateInput<NaiveDate>>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
@@ -109,6 +110,7 @@ impl UpdateInput {
             counted_number_of_packs,
             batch,
             expiry_date,
+            manufacture_date,
             pack_size,
             cost_price_per_pack,
             sell_price_per_pack,
@@ -140,6 +142,9 @@ impl UpdateInput {
             vvm_status_id,
             expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
                 value: expiry_date.value,
+            }),
+            manufacture_date: manufacture_date.map(|manufacture_date| NullableUpdate {
+                value: manufacture_date.value,
             }),
             item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
                 value: item_variant_id.value,

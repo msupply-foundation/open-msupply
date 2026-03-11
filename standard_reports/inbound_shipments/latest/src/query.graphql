@@ -8,9 +8,9 @@ query InboundShipments(
     storeId: $storeId
     filter: {
       type: { equalTo: INBOUND_SHIPMENT }
-      status: { equalAny: [RECEIVED, VERIFIED]}
+      status: { equalAny: [RECEIVED, VERIFIED] }
       otherPartyId: { equalTo: $otherPartyId }
-      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }
+      receivedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }
     }
   ) {
     ... on InvoiceConnector {
