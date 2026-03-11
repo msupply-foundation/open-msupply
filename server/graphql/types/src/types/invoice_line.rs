@@ -131,6 +131,9 @@ impl InvoiceLineNode {
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {
         &self.row().expiry_date
     }
+    pub async fn manufacture_date(&self) -> &Option<NaiveDate> {
+        &self.row().manufacture_date
+    }
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
         let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
 
