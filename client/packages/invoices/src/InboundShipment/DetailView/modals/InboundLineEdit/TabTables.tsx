@@ -21,7 +21,6 @@ import {
   NumberInputCell,
   CurrencyInputCell,
   CardList,
-  ViewMode,
   StockIcon,
   InvoiceIcon,
   SlidersIcon,
@@ -398,7 +397,6 @@ export const QuantityTable = ({
 
 interface InboundLineEditTableProps extends TableProps {
   removeDraftLine: (id: string) => void;
-  viewMode?: ViewMode;
   lastCardRef?: React.RefObject<HTMLDivElement>;
 }
 
@@ -414,7 +412,6 @@ export const InboundLineEditTable = ({
   item,
   setPackRoundingMessage,
   restrictedToLocationTypeId,
-  viewMode = 'table',
   lastCardRef,
 }: InboundLineEditTableProps) => {
   const t = useTranslation();
@@ -909,21 +906,19 @@ export const InboundLineEditTable = ({
 
   return (
     <>
-      <Box sx={{ display: viewMode === 'card' ? 'none' : undefined }}>
+      <Box sx={{ display: 'none' }}>
         <MaterialTable table={table} />
       </Box>
-      {viewMode === 'card' && (
-        <CardList
-          table={table}
-          lastItemRef={lastCardRef}
-          groupIcons={{
-            general: <EditIcon />,
-            quantities: <StockIcon />,
-            pricing: <InvoiceIcon />,
-            other: <SlidersIcon />,
-          }}
-        />
-      )}
+      <CardList
+        table={table}
+        lastItemRef={lastCardRef}
+        groupIcons={{
+          general: <EditIcon />,
+          quantities: <StockIcon />,
+          pricing: <InvoiceIcon />,
+          other: <SlidersIcon />,
+        }}
+      />
     </>
   );
 };

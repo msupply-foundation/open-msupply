@@ -16,4 +16,3 @@ export * from './UnitsAndDosesCell';
 export * from './StatusCell';
 export * from './ChipTableCell';
 export * from './CardList';
-export * from './ViewModeToggle';
