@@ -231,6 +231,7 @@ fn generate_line(
         pack_size,
         batch,
         expiry_date,
+        manufacture_date: None,
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineType::StockOut,

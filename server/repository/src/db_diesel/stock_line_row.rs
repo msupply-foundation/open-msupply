@@ -40,6 +40,7 @@ define_linked_tables! {
         program_id -> Nullable<Text>,
         total_volume -> Double,
         volume_per_pack -> Double,
+        manufacture_date -> Nullable<Date>,
     },
     links: {
     },
@@ -84,6 +85,7 @@ pub struct StockLineRow {
     pub program_id: Option<String>,
     pub total_volume: f64,
     pub volume_per_pack: f64,
+    pub manufacture_date: Option<NaiveDate>,
     // Resolved from name_link - must be last to match view column order
     pub supplier_id: Option<String>,
     pub donor_id: Option<String>,

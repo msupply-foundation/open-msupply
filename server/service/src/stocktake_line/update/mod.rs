@@ -19,6 +19,7 @@ pub struct UpdateStocktakeLine {
     pub counted_number_of_packs: Option<f64>,
     pub batch: Option<String>,
     pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdate<NaiveDate>>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,

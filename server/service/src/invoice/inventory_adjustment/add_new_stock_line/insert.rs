@@ -25,6 +25,7 @@ pub struct AddNewStockLine {
     pub batch: Option<String>,
     pub location: Option<NullableUpdate<String>>,
     pub expiry_date: Option<NaiveDate>,
+    pub manufacture_date: Option<NaiveDate>,
     pub reason_option_id: Option<String>,
     pub barcode: Option<String>,
     pub item_variant_id: Option<String>,

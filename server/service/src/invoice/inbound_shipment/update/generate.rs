@@ -418,6 +418,7 @@ pub fn generate_lines_and_stock_lines(
             program_id,
             volume_per_pack,
             total_volume: volume_per_pack * number_of_packs,
+            manufacture_date: None,
             on_hold: false,
             barcode_id: None,
         };

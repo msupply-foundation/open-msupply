@@ -137,6 +137,7 @@ pub fn generate(
                 manufacturer_id: None,
                 campaign_id: None,
                 program_id: None,
+                manufacture_date: None,
                 shipped_number_of_packs: None,
                 shipped_pack_size: None,
             },

@@ -10,6 +10,7 @@ export type StockLineRowFragment = {
   batch?: string | null;
   costPricePerPack: number;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   id: string;
   itemId: string;
   locationId?: string | null;
@@ -245,6 +246,7 @@ export type StockLinesQuery = {
       batch?: string | null;
       costPricePerPack: number;
       expiryDate?: string | null;
+  manufactureDate?: string | null;
       id: string;
       itemId: string;
       locationId?: string | null;
@@ -360,6 +362,7 @@ export type StockLineQuery = {
       batch?: string | null;
       costPricePerPack: number;
       expiryDate?: string | null;
+  manufactureDate?: string | null;
       id: string;
       itemId: string;
       locationId?: string | null;
@@ -512,6 +515,7 @@ export type UpdateStockLineMutation = {
         batch?: string | null;
         costPricePerPack: number;
         expiryDate?: string | null;
+  manufactureDate?: string | null;
         id: string;
         itemId: string;
         locationId?: string | null;
@@ -838,6 +842,7 @@ export type InsertStockLineMutation = {
         batch?: string | null;
         costPricePerPack: number;
         expiryDate?: string | null;
+  manufactureDate?: string | null;
         id: string;
         itemId: string;
         locationId?: string | null;
@@ -1017,6 +1022,7 @@ export const StockLineRowFragmentDoc = gql`
     batch
     costPricePerPack
     expiryDate
+    manufactureDate
     id
     itemId
     locationId

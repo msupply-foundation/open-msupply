@@ -77,6 +77,9 @@ impl StockLineNode {
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {
         &self.row().expiry_date
     }
+    pub async fn manufacture_date(&self) -> &Option<NaiveDate> {
+        &self.row().manufacture_date
+    }
     pub async fn on_hold(&self) -> bool {
         self.row().on_hold
     }

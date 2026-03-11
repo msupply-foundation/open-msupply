@@ -54,6 +54,7 @@ define_linked_tables! {
         volume_per_pack -> Double,
         shipped_pack_size -> Nullable<Double>,
         status -> Nullable<crate::db_diesel::invoice_line_row::InvoiceLineStatusMapping>,
+        manufacture_date -> Nullable<Date>,
     },
     links: {
     },
@@ -128,6 +129,7 @@ pub struct InvoiceLineRow {
     pub volume_per_pack: f64,
     pub shipped_pack_size: Option<f64>,
     pub status: Option<InvoiceLineStatus>,
+    pub manufacture_date: Option<NaiveDate>,
     // Resolved from name_link - must be last to match view column order
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,

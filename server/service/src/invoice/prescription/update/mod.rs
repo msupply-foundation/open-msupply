@@ -464,6 +464,7 @@ mod test {
             stock_line_id: Some(mock_stock_line_a().id.clone()),
             location_id: None,
             expiry_date: None,
+            manufacture_date: None,
             pack_size: 0.0,
             cost_price_per_pack: 0.0,
             sell_price_per_pack: 0.0,
