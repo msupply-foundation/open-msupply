@@ -2,19 +2,22 @@ use crate::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
 use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{PluginType, RepositoryError};
 use std::collections::HashMap;
+use tokio::task::JoinHandle;
 use util::format_error;
 
+const SCHEDULE_PLUGIN_POLL_SECS: u64 = 60;
+
 #[derive(Default)]
-pub struct SchedulePluginRunner {
+struct SchedulePluginRunner {
     next_run: HashMap<String, NaiveDateTime>,
 }
 
 impl SchedulePluginRunner {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Default::default()
     }
 
-    pub fn run(&mut self) -> Result<(), RepositoryError> {
+    fn run(&mut self) -> Result<(), RepositoryError> {
         let plugins = PluginInstance::get_all(PluginType::Schedule);
         let now = Utc::now().naive_utc();
 
@@ -46,4 +49,24 @@ impl SchedulePluginRunner {
 
         Ok(())
     }
+}
+
+pub fn spawn() -> JoinHandle<()> {
+    tokio::spawn(async {
+        let mut runner = SchedulePluginRunner::new();
+        let mut interval =
+            tokio::time::interval(std::time::Duration::from_secs(SCHEDULE_PLUGIN_POLL_SECS));
+        loop {
+            interval.tick().await;
+            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| runner.run())) {
+                Ok(Ok(())) => log::info!("Schedule plugin runner complete"),
+                Ok(Err(error)) => {
+                    log::error!("Error running schedule plugins: {error:?}");
+                }
+                Err(panic) => {
+                    log::error!("Schedule plugin runner panicked: {panic:?}");
+                }
+            }
+        }
+    })
 }
