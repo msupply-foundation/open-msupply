@@ -38,6 +38,40 @@ const getCellContent = <T extends MRT_RowData>(cell: MRT_Cell<T, unknown>) =>
     ? flexRender(cell.column.columnDef.Cell, cell.getContext())
     : cell.renderValue();
 
+const SummaryCell = <T extends MRT_RowData>({
+  cell,
+  labelFirst,
+}: {
+  cell: MRT_Cell<T, unknown>;
+  labelFirst?: boolean;
+}) => {
+  const label = (
+    <Typography variant="subtitle2" fontWeight={700} whiteSpace="nowrap">
+      {flexRender(cell.column.columnDef.header, cell.getContext())}
+    </Typography>
+  );
+  const value = (
+    <Typography variant="subtitle2" fontWeight={700} noWrap>
+      {cell.renderValue() as React.ReactNode}
+    </Typography>
+  );
+  return (
+    <Box display="flex" alignItems="center" gap={0.5} minWidth={0}>
+      {labelFirst ? (
+        <>
+          {label}
+          {value}
+        </>
+      ) : (
+        <>
+          {value}
+          {label}
+        </>
+      )}
+    </Box>
+  );
+};
+
 export const CardListItem = <T extends MRT_RowData>({
   row,
   cardRef,
@@ -129,35 +163,17 @@ export const CardListItem = <T extends MRT_RowData>({
               pt: isLandscape ? 1 : 1.5,
             }}
           >
-            {summaryCells.map(cell => (
-              <Box
-                key={cell.id}
-                display="flex"
-                alignItems="center"
-                gap={0.5}
-                minWidth={0}
-              >
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  fontWeight={600}
-                  whiteSpace="nowrap"
-                >
-                  {flexRender(
-                    cell.column.columnDef.header,
-                    cell.getContext()
-                  )}
-                </Typography>
-                <Typography variant="subtitle2" fontWeight={700} noWrap>
-                  {cell.renderValue() as React.ReactNode}
-                </Typography>
-              </Box>
-            ))}
-            <Box flex={1} />
             {actionCells.map(cell => (
               <Box key={cell.id} flexShrink={0}>
                 {getCellContent(cell) as React.ReactNode}
               </Box>
+            ))}
+            {summaryCells.slice(0, 1).map(cell => (
+              <SummaryCell key={cell.id} cell={cell} labelFirst />
+            ))}
+            <Box flex={1} />
+            {summaryCells.slice(1).map(cell => (
+              <SummaryCell key={cell.id} cell={cell} />
             ))}
           </Box>
         )}
