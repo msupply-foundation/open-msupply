@@ -111,12 +111,12 @@ jobs:
           DATABASE_SCHEMA_REPO_TOKEN: ${{ secrets.DATABASE_SCHEMA_REPO_TOKEN }}
         run: |
           git clone https://x-access-token:${DATABASE_SCHEMA_REPO_TOKEN}@github.com/msupply-foundation/open-msupply-database-schema.git /tmp/schema-repo
-          mkdir -p /tmp/schema-repo/${VERSION}
-          cp -r schemaspy/output/. /tmp/schema-repo/${VERSION}/
+          mkdir -p /tmp/schema-repo/docs/${VERSION}
+          cp -r schemaspy/output/. /tmp/schema-repo/docs/${VERSION}/
           cd /tmp/schema-repo
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add ${VERSION}/
+          git add docs/${VERSION}/
           if git diff --cached --quiet; then
             echo "No schema changes for version ${VERSION}, skipping commit."
           else
