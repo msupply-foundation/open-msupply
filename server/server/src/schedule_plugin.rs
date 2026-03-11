@@ -1,4 +1,4 @@
-use crate::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
+use service::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
 use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{PluginType, RepositoryError};
 use std::collections::HashMap;
