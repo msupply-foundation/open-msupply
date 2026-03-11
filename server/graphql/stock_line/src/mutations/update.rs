@@ -22,6 +22,7 @@ pub struct UpdateInput {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdateInput<NaiveDate>>,
     pub batch: Option<String>,
     pub on_hold: Option<bool>,
     /// Empty barcode will unlink barcode from StockLine
@@ -94,6 +95,7 @@ impl UpdateInput {
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            manufacture_date,
             batch,
             on_hold,
             barcode,
@@ -114,6 +116,9 @@ impl UpdateInput {
             sell_price_per_pack,
             expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
                 value: expiry_date.value,
+            }),
+            manufacture_date: manufacture_date.map(|manufacture_date| NullableUpdate {
+                value: manufacture_date.value,
             }),
             batch,
             on_hold,

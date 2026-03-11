@@ -3,7 +3,8 @@ extern crate machine_uid;
 
 use crate::{
     central::config_central, certs::Certificates, cold_chain::config_cold_chain,
-    configuration::get_or_create_token_secret, cors::cors_policy,
+    configuration::{get_or_create_token_secret, save_token_secret},
+    cors::cors_policy,
     custom_translations::config_custom_translations, middleware::central_server_only,
     print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
     support::config_support, upload_fridge_tag::config_upload_fridge_tag,
@@ -16,7 +17,7 @@ use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{
     attach_discovery_graphql_schema, attach_graphql_schema, GraphSchemaData, GraphqlSchema,
-    PluginExecuteGraphql,
+    OperationalStatus, PluginExecuteGraphql,
 };
 use log::info;
 use repository::{
@@ -111,31 +112,9 @@ pub async fn start_server(
     info!("Creating base directory if needed: {}", base_dir);
     std::fs::create_dir_all(base_dir)?;
 
-    // INITIALISE DATABASE AND CONNECTION
+    // INITIALISE DATABASE CONNECTION
     let connection_manager = get_storage_connection_manager(&settings.database);
-
-    if let Some(init_sql) = &settings.database.startup_sql() {
-        connection_manager.execute(init_sql).unwrap();
-    }
-
-    info!("Run DB migrations...");
     let connection = connection_manager.connection().unwrap();
-    let (version, messages) = match migrate(&connection, None) {
-        Ok(result) => result,
-        Err(e) => {
-            log::error!("Failed to run DB migrations: {}", format_error(&e));
-            std::process::exit(1);
-        }
-    };
-    // Log the server starting message with the startup timestamp
-    let status_log = StatusLog(&connection);
-    status_log.no_console_with_timestamp(&server_start_message, server_start_timestamp);
-
-    add_migration_results_to_system_log(&connection, messages).unwrap();
-    info!("Run DB migrations...done");
-
-    // Upsert standard reports
-    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -158,6 +137,7 @@ pub async fn start_server(
     let certificates = Certificates::try_load(&settings.server).unwrap();
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
+    let token_secret_copy = token_secret.clone();
     let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
     info!("Initialising server context..done");
 
@@ -166,25 +146,19 @@ pub async fn start_server(
     // LOGGING
     let log_service = &service_provider.log_service;
     info!("Checking log settings..");
-    let log_level = log_service.get_log_level(&service_context).unwrap();
+    let log_level = log_service.get_log_level(&service_context).ok().flatten();
 
     if settings.logging.is_some() {
-        log_service
-            .set_log_directory(
-                &service_context,
-                settings.logging.clone().unwrap().directory,
-            )
-            .unwrap();
+        log_service.set_log_directory(
+            &service_context,
+            settings.logging.clone().unwrap().directory,
+        );
 
-        log_service
-            .set_log_file_name(&service_context, settings.logging.clone().unwrap().filename)
-            .unwrap();
+        log_service.set_log_file_name(&service_context, settings.logging.clone().unwrap().filename);
     }
 
     if log_level.is_none() && settings.logging.is_some() {
-        log_service
-            .update_log_level(&service_context, settings.logging.clone().unwrap().level)
-            .unwrap();
+        log_service.update_log_level(&service_context, settings.logging.clone().unwrap().level);
     }
 
     // SET HARDWARE UUID
@@ -205,6 +179,173 @@ pub async fn start_server(
         .set_hardware_id(machine_uid.clone())
         .unwrap();
     info!("Setting hardware uuid.. done");
+
+    let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
+    let validated_plugins = Data::new(Mutex::new(validated_plugins));
+
+    let graphql_schema = Data::new(GraphqlSchema::new(
+        GraphSchemaData {
+            connection_manager: Data::new(connection_manager.clone()),
+            loader_registry: Data::new(LoaderRegistry { loaders }),
+            service_provider: service_provider.clone(),
+            settings: Data::new(settings.clone()),
+            auth: auth.clone(),
+            validated_plugins: validated_plugins.clone(),
+        },
+        OperationalStatus::MigratingDatabase,
+    ));
+
+    // Bind trigger to change schema when site is initialised
+    {
+        let graphql_schema = graphql_schema.clone();
+        site_is_initialised_callback.on_trigger(async move {
+            info!("Changing graphql schema to operational mode");
+            graphql_schema
+                .clone()
+                .set_operational_status(OperationalStatus::Operational)
+                .await;
+        });
+    }
+
+    info!("Creating graphql schema..done");
+
+    // START DISCOVERY
+    // Only run discovery on Mac or Windows
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    {
+        use service::settings::DiscoveryMode;
+        let discovery_enabled = match settings.server.discovery {
+            DiscoveryMode::Disabled => false,
+            DiscoveryMode::Enabled => true,
+            DiscoveryMode::Auto => {
+                if is_develop() {
+                    log::warn!("DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on");
+                    false
+                } else {
+                    true
+                }
+            }
+        };
+        if discovery_enabled {
+            info!("Starting server DNS-SD discovery",);
+            discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        } else {
+            info!("Server DNS-SD discovery disabled",);
+        }
+    }
+
+    info!("Starting discovery graphql server",);
+    let closure_service_provider = service_provider.clone();
+    // See attach_discovery_graphql_schema for more details
+    tokio::spawn(
+        HttpServer::new(move || {
+            App::new()
+                .wrap(Cors::permissive())
+                .configure(attach_discovery_graphql_schema(
+                    closure_service_provider.clone(),
+                ))
+        })
+        .bind(settings.server.discovery_address())?
+        .run(),
+    );
+
+    // START SERVER
+    info!("Initialising http server..",);
+    let processors_task = processors.spawn(service_provider.clone().into_inner());
+    let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
+    let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
+
+    let closure_settings = settings.clone();
+    let closure_service_provider = service_provider.clone();
+    let closure_schema = graphql_schema.clone();
+    let mut http_server = HttpServer::new(move || {
+        App::new()
+            .app_data(Data::new(closure_settings.clone()))
+            .wrap(logger_middleware())
+            .wrap(cors_policy(&closure_settings))
+            .wrap(compress_middleware())
+            // needed for static files service
+            .app_data(Data::new(closure_settings.clone()))
+            // Configure JSON payload limit (default is 2MB, setting to 10MB)
+            .app_data(web::JsonConfig::default().limit(10 * 1024 * 1024))
+            // needed for cold chain service
+            .app_data(closure_service_provider.clone())
+            .app_data(auth.clone())
+            .app_data(validated_plugins.clone())
+            .app_data(get_default_directory(&closure_settings))
+            .configure(attach_graphql_schema(closure_schema.clone()))
+            .configure(config_static_files)
+            .configure(config_cold_chain)
+            .configure(config_upload_fridge_tag)
+            .configure(config_server_frontend_plugins)
+            .configure(config_central)
+            .configure(config_support)
+            .configure(config_print)
+            .configure(config_custom_translations)
+            .configure(config_upload)
+            // Needs to be last to capture all unmatches routes
+            .configure(config_serve_frontend)
+    })
+    .disable_signals();
+
+    http_server = match certificates.config() {
+        Some(config) => http_server
+            .bind_rustls_0_23(settings.server.address(), config)
+            .unwrap(),
+        None => http_server.bind(settings.server.address()).unwrap(),
+    };
+    info!("Initialising http server..done",);
+
+    let running_server = http_server.run();
+    let server_handle = running_server.handle();
+
+    // run server in another task so that we can handle restart/off events here
+    tokio::spawn(running_server);
+
+    if let Some(init_sql) = &settings.database.startup_sql() {
+        connection_manager.execute(init_sql).unwrap();
+    }
+
+    info!("Run DB migrations...");
+    // start database migrations
+    let (version, messages) = match migrate(&connection, None) {
+        Ok(result) => result,
+        Err(e) => {
+            log::error!("Failed to run DB migrations: {}", format_error(&e));
+            std::process::exit(1);
+        }
+    };
+
+    add_migration_results_to_system_log(&connection, messages).unwrap();
+    info!("Run DB migrations...done");
+
+    // Persist token secret now that the key_value_store table is guaranteed to exist
+    save_token_secret(&connection, &token_secret_copy);
+
+    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
+
+    // Log the server starting message with the startup timestamp
+    let status_log = StatusLog(&connection);
+    status_log.no_console_with_timestamp(&server_start_message, server_start_timestamp);
+
+    // PLUGIN CONTEXT
+    info!("Creating plugin context and reloading plugins..");
+    BoaJsContext::new(
+        &service_provider,
+        PluginExecuteGraphql(graphql_schema.clone()),
+    )
+    .bind();
+
+    service_provider
+        .plugin_service
+        .reload_all_plugins(&service_context)
+        .unwrap();
+    info!("Creating plugin context and reloading plugins..done");
+
+    graphql_schema
+        .set_operational_status(OperationalStatus::Initialising)
+        .await;
+    info!("GraphQL now in initialisation mode");
 
     // CHECK SYNC STATUS
     info!("Checking sync status..");
@@ -259,160 +400,33 @@ pub async fn start_server(
         (None, None) => false,
     };
 
-    // CREATE GRAPHQL SCHEMA
-    let is_operational = service_provider
+    if service_provider
         .sync_status_service
         .is_initialised(&service_context)
-        .unwrap();
-    info!(
-        "Creating graphql schema in {} mode..",
-        match is_operational {
-            true => "operational",
-            false => "initialisation",
-        }
-    );
-
-    let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
-    let validated_plugins = Data::new(Mutex::new(validated_plugins));
-
-    let graphql_schema = Data::new(GraphqlSchema::new(
-        GraphSchemaData {
-            connection_manager: Data::new(connection_manager),
-            loader_registry: Data::new(LoaderRegistry { loaders }),
-            service_provider: service_provider.clone(),
-            settings: Data::new(settings.clone()),
-            auth: auth.clone(),
-            validated_plugins: validated_plugins.clone(),
-        },
-        is_operational,
-    ));
-    // Bind trigger to change schema when site is initialised
-    if !is_operational {
-        let graphql_schema = graphql_schema.clone();
-        site_is_initialised_callback.on_trigger(async move {
-            info!("Changing graphql schema to operational mode");
-            graphql_schema.clone().toggle_is_operational(true).await;
-        });
-    }
-    info!("Creating graphql schema..done");
-
-    // PLUGIN CONTEXT
-    info!("Creating plugin context and reloading plugins..");
-    BoaJsContext::new(
-        &service_provider,
-        PluginExecuteGraphql(graphql_schema.clone()),
-    )
-    .bind();
-
-    service_provider
-        .plugin_service
-        .reload_all_plugins(&service_context)
-        .unwrap();
-    info!("Creating plugin context and reloading plugins..done");
-
-    // START DISCOVERY
-    // Only run discovery on Mac or Windows
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
+        .unwrap()
+        || !force_trigger_sync_on_startup
     {
-        use service::settings::DiscoveryMode;
-        let discovery_enabled = match settings.server.discovery {
-            DiscoveryMode::Disabled => false,
-            DiscoveryMode::Enabled => true,
-            DiscoveryMode::Auto => {
-                if is_develop() {
-                    log::warn!("DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on");
-                    false
-                } else {
-                    true
-                }
-            }
-        };
-        if discovery_enabled {
-            info!("Starting server DNS-SD discovery",);
-            discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
-        } else {
-            info!("Server DNS-SD discovery disabled",);
-        }
+        graphql_schema
+            .set_operational_status(OperationalStatus::Operational)
+            .await;
+        info!("GraphQL now in operational mode")
     }
 
-    info!("Starting discovery graphql server",);
-    let closure_service_provider = service_provider.clone();
-    // See attach_discovery_graphql_schema for more details
-    tokio::spawn(
-        HttpServer::new(move || {
-            App::new()
-                .wrap(Cors::permissive())
-                .configure(attach_discovery_graphql_schema(
-                    closure_service_provider.clone(),
-                ))
-        })
-        .bind(settings.server.discovery_address())?
-        .run(),
-    );
-
-    // START SERVER
-    info!("Initialising http server..",);
-    let processors_task = processors.spawn(service_provider.clone().into_inner());
     let synchroniser_task = synchroniser_driver.run(
         service_provider.clone().into_inner(),
         force_trigger_sync_on_startup,
     );
-    let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
-    let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
+
+    info!(
+        "Server fully initialised and running on port: {}, version: {}",
+        settings.server.port, version
+    ); // Upsert standard reports
 
     // Scheduled tasks
     let scheduled_task_handle = spawn_scheduled_task_runner(
         service_provider.clone().into_inner(),
         settings.mail.clone().map(|m| m.interval).unwrap_or(60),
     );
-
-    let closure_settings = settings.clone();
-    let mut http_server = HttpServer::new(move || {
-        App::new()
-            .app_data(Data::new(closure_settings.clone()))
-            .wrap(logger_middleware())
-            .wrap(cors_policy(&closure_settings))
-            .wrap(compress_middleware())
-            // needed for static files service
-            .app_data(Data::new(closure_settings.clone()))
-            // Configure JSON payload limit (default is 2MB, setting to 10MB)
-            .app_data(web::JsonConfig::default().limit(10 * 1024 * 1024))
-            // needed for cold chain service
-            .app_data(service_provider.clone())
-            .app_data(auth.clone())
-            .app_data(validated_plugins.clone())
-            .app_data(get_default_directory(&closure_settings))
-            .configure(attach_graphql_schema(graphql_schema.clone()))
-            .configure(config_static_files)
-            .configure(config_cold_chain)
-            .configure(config_upload_fridge_tag)
-            .configure(config_server_frontend_plugins)
-            .configure(config_central)
-            .configure(config_support)
-            .configure(config_print)
-            .configure(config_custom_translations)
-            .configure(config_upload)
-            // Needs to be last to capture all unmatches routes
-            .configure(config_serve_frontend)
-    })
-    .disable_signals();
-
-    http_server = match certificates.config() {
-        Some(config) => http_server
-            .bind_rustls_0_23(settings.server.address(), config)
-            .unwrap(),
-        None => http_server.bind(settings.server.address()).unwrap(),
-    };
-    info!("Initialising http server..done",);
-
-    let running_server = http_server.run();
-    let server_handle = running_server.handle();
-    info!(
-        "Server started, running on port: {}, version: {}",
-        settings.server.port, version
-    );
-    // run server in another task so that we can handle restart/off events here
-    tokio::spawn(running_server);
 
     tokio::select! {
         // TODO log error in ctrl_c and None in off_switch
