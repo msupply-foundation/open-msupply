@@ -198,6 +198,14 @@ export const StockListView = () => {
         defaultHideOnMobile: true,
       },
       {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        accessorFn: row => row.manufacturer?.name ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+      },
+      {
         id: 'supplierName',
         header: t('label.supplier'),
         accessorFn: row =>
@@ -206,14 +214,6 @@ export const StockListView = () => {
         size: 190,
         defaultHideOnMobile: true,
         enableSorting: true,
-      },
-      {
-        id: 'manufacturer',
-        header: t('label.manufacturer'),
-        accessorFn: row => row.manufacturer?.name ?? '',
-        Cell: TextWithTooltipCell,
-        size: 150,
-        defaultHideOnMobile: true,
       },
       ...(plugins.stockLine?.tableColumn || []),
     ],
