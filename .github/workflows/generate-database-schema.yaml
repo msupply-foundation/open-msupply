@@ -78,7 +78,7 @@ jobs:
         run: cargo run --bin remote_server_cli --features postgres -- initialise-database
 
       - name: Create SchemaSpy output directory
-        run: mkdir -p schemaspy/output
+        run: mkdir -p schemaspy/output && chmod 777 schemaspy/output
 
       - name: Create schemaspy.properties
         run: |
