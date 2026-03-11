@@ -484,11 +484,6 @@ export const StockLineForm = ({
                     }
                   />
                 )}
-                <TextWithLabelRow
-                  label={t('label.supplier')}
-                  text={String(supplierName)}
-                  textProps={{ textAlign: 'end' }}
-                />
                 <StyledInputRow
                   label={t('label.manufacturer')}
                   Input={
@@ -504,6 +499,11 @@ export const StockLineForm = ({
                       }}
                     />
                   }
+                />
+                <TextWithLabelRow
+                  label={t('label.supplier')}
+                  text={String(supplierName)}
+                  textProps={{ textAlign: 'end' }}
                 />
                 {showVVMStatus && (
                   <StyledInputRow

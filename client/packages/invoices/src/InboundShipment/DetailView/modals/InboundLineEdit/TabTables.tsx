@@ -528,22 +528,6 @@ export const LocationTableComponent = ({
           );
         },
       },
-
-      {
-        accessorKey: 'note',
-        header: t('label.stocktake-comment'),
-        size: 200,
-        Cell: ({ cell, row }) => (
-          <TextInputCell
-            cell={cell}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, note: value })
-            }
-            disabled={isDisabled ?? false}
-          />
-        ),
-        defaultHideOnMobile: true,
-      },
       {
         id: 'donor',
         header: t('label.donor'),
@@ -562,6 +546,19 @@ export const LocationTableComponent = ({
           />
         ),
         includeColumn: allowTrackingOfStockByDonor,
+      },
+      {
+        id: 'campaignOrProgram',
+        header: t('label.campaign'),
+        Cell: ({ row }) => (
+          <CampaignOrProgramCell
+            row={row.original}
+            disabled={isDisabled ?? false}
+            updateFn={patch =>
+              updateDraftLine({ id: row.original.id, ...patch })
+            }
+          />
+        ),
       },
       {
         id: 'manufacturer',
@@ -584,17 +581,19 @@ export const LocationTableComponent = ({
         ),
       },
       {
-        id: 'campaignOrProgram',
-        header: t('label.campaign'),
-        Cell: ({ row }) => (
-          <CampaignOrProgramCell
-            row={row.original}
-            disabled={isDisabled ?? false}
-            updateFn={patch =>
-              updateDraftLine({ id: row.original.id, ...patch })
+        accessorKey: 'note',
+        header: t('label.stocktake-comment'),
+        size: 200,
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value =>
+              updateDraftLine({ id: row.original.id, note: value })
             }
+            disabled={isDisabled ?? false}
           />
         ),
+        defaultHideOnMobile: true,
       },
     ];
     return cols;

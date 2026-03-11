@@ -409,6 +409,17 @@ export const LocationTable = ({
         includeColumn: allowTrackingOfStockByDonor,
       },
       {
+        id: 'campaignOrProgram',
+        header: t('label.campaign'),
+        Cell: ({ row }) => (
+          <CampaignOrProgramCell
+            row={row.original}
+            disabled={disabled || !row.original.countThisLine}
+            updateFn={patch => update({ id: row.original.id, ...patch })}
+          />
+        ),
+      },
+      {
         id: 'manufacturer',
         header: t('label.manufacturer'),
         Cell: ({ row: { original: row } }) => (
@@ -425,17 +436,6 @@ export const LocationTable = ({
               });
             }}
             width={200}
-          />
-        ),
-      },
-      {
-        id: 'campaignOrProgram',
-        header: t('label.campaign'),
-        Cell: ({ row }) => (
-          <CampaignOrProgramCell
-            row={row.original}
-            disabled={disabled || !row.original.countThisLine}
-            updateFn={patch => update({ id: row.original.id, ...patch })}
           />
         ),
       },
