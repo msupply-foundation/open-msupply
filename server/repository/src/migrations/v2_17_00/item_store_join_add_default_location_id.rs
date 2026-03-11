@@ -15,6 +15,14 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
+        // Force sync inorder to re-integrate item_store_join so default_location_id gets populated
+        sql!(
+            connection,
+            r#"
+                UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'item_store_join';
+            "#
+        )?;
+
         Ok(())
     }
 }

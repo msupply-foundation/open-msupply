@@ -6,11 +6,7 @@
   "sub_context": "StockAndItems",
   "name": "Item List",
   "queries": {
-    "gql": "query.graphql",
-    "sql": [
-      "itemCategory",
-      "itemDefaultLocation"
-    ]
+    "gql": "query.graphql"
   },
   "arguments": {
     "schema": "argument_schemas/arguments.json",

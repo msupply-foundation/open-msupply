@@ -533,6 +533,12 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
+        ItemCategoryLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
         VolumeUsedByLocationLoader {
             connection_manager: connection_manager.clone(),
         },

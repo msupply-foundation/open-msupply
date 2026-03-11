@@ -25,6 +25,14 @@ query ItemList(
         stats: stats(storeId: $storeId) {
           stockOnHand
         }
+        categories {
+          name
+        }
+        itemStoreProperties: itemStoreProperties(storeId: $storeId) {
+          defaultLocation {
+            code
+          }
+        }
       }
     }
   }
