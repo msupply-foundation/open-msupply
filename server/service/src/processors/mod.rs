@@ -23,7 +23,6 @@ mod general_processor;
 mod load_plugin;
 mod plugin_processor;
 mod requisition_auto_finalise;
-pub mod schedule_plugin;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;
