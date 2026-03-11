@@ -52,15 +52,7 @@ jobs:
 
       - name: Extract version
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VERSION="${{ github.event.inputs.version }}"
-          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          else
-            echo "Error: No version specified and no tag found"
-            exit 1
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=2.17.0" >> $GITHUB_ENV
 
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libpq-dev
