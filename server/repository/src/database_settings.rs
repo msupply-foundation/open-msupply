@@ -146,6 +146,89 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
     }
 }
 
+#[cfg(feature = "postgres")]
+#[derive(Debug, Clone, Copy)]
+pub struct PostgresConnectionCustomizer;
+#[cfg(feature = "postgres")]
+impl diesel::r2d2::CustomizeConnection<diesel::PgConnection, diesel::r2d2::Error>
+    for PostgresConnectionCustomizer
+{
+    fn on_acquire(&self, conn: &mut diesel::PgConnection) -> Result<(), diesel::r2d2::Error> {
+        use diesel::RunQueryDsl;
+
+        // Execute each SET command individually
+        diesel::sql_query("SET work_mem = '2GB'")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET hash_mem_multiplier = 3.0")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET max_parallel_workers_per_gather = 4")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET max_parallel_workers = 8")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET parallel_setup_cost = 50")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET parallel_tuple_cost = 0.005")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET join_collapse_limit = 12")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET from_collapse_limit = 12")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET seq_page_cost = 1.0")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET random_page_cost = 1.1")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET effective_cache_size = '8GB'")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET enable_mergejoin = on")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET enable_material = on")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET enable_memoize = on")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET jit = on")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET jit_above_cost = 100000")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        diesel::sql_query("SET jit_optimize_above_cost = 500000")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        Ok(())
+    }
+}
+
 // feature postgres
 #[cfg(feature = "postgres")]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
@@ -195,6 +278,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
                 .connection_pool_timeout_seconds
                 .unwrap_or(DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS),
         ))
+        .connection_customizer(Box::new(PostgresConnectionCustomizer))
         .build(connection_manager)
         .expect("Failed to connect to database");
     StorageConnectionManager::new(pool)

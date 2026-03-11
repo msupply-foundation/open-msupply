@@ -26,6 +26,7 @@ pub mod app_data;
 pub mod boajs;
 pub mod campaign;
 pub mod ledger_fix;
+pub mod sync_v7;
 
 pub mod asset;
 pub mod auth;
