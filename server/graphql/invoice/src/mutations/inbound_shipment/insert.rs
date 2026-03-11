@@ -131,7 +131,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::AddLinesFromPurchaseOrderWithoutPurchaseOrder => {
             BadUserInput(formatted_error)
         }
-        ServiceError::AuthorisationDenied => Forbidden(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
     };

@@ -2,7 +2,6 @@ use repository::Invoice;
 use repository::InvoiceFilter;
 use repository::InvoiceLine;
 use repository::InvoiceSort;
-use repository::InvoiceType;
 use repository::PaginationOption;
 use repository::RepositoryError;
 use repository::StockLine;
@@ -71,10 +70,9 @@ pub trait InvoiceServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         invoice_number: u32,
-        r#type: InvoiceType,
-        filter: Option<InvoiceFilter>,
+        filter: InvoiceFilter,
     ) -> Result<Option<Invoice>, RepositoryError> {
-        get_invoice_by_number(ctx, store_id, invoice_number, r#type, filter)
+        get_invoice_by_number(ctx, store_id, invoice_number, filter)
     }
 
     fn get_invoice(
