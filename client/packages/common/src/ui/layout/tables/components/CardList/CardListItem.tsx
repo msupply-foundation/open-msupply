@@ -44,39 +44,9 @@ const getCellContent = <T extends MRT_RowData>(
     ? flexRender(cell.column.columnDef.Cell, cell.getContext())
     : cell.renderValue<React.ReactNode>();
 
-const SummaryCell = <T extends MRT_RowData>({
-  cell,
-  labelFirst,
-}: {
-  cell: MRT_Cell<T, unknown>;
-  labelFirst?: boolean;
-}) => {
-  const label = (
-    <Typography variant="subtitle2" fontWeight={700} whiteSpace="nowrap">
-      {flexRender(cell.column.columnDef.header, cell.getContext())}
-    </Typography>
-  );
-  const value = (
-    <Typography variant="subtitle2" fontWeight={700} noWrap>
-      {cell.renderValue<React.ReactNode>()}
-    </Typography>
-  );
-  return (
-    <Box display="flex" alignItems="center" gap={0.5} minWidth={0}>
-      {labelFirst ? (
-        <>
-          {label}
-          {value}
-        </>
-      ) : (
-        <>
-          {value}
-          {label}
-        </>
-      )}
-    </Box>
-  );
-};
+const getSummaryContent = <T extends MRT_RowData>(
+  cell: MRT_Cell<T, unknown>
+): React.ReactNode => colDef(cell).cardSummary!(cell.row.original);
 
 export const CardListItem = <T extends MRT_RowData>({
   row,
@@ -174,12 +144,13 @@ export const CardListItem = <T extends MRT_RowData>({
                 {getCellContent(cell)}
               </Box>
             ))}
-            {summaryCells.slice(0, 1).map(cell => (
-              <SummaryCell key={cell.id} cell={cell} labelFirst />
-            ))}
-            <Box flex={1} />
-            {summaryCells.slice(1).map(cell => (
-              <SummaryCell key={cell.id} cell={cell} />
+            {summaryCells.map((cell, index) => (
+              <React.Fragment key={cell.id}>
+                {index === 1 && <Box flex={1} />}
+                <Typography variant="subtitle2" fontWeight={700} noWrap>
+                  {getSummaryContent(cell)}
+                </Typography>
+              </React.Fragment>
             ))}
           </Box>
         )}

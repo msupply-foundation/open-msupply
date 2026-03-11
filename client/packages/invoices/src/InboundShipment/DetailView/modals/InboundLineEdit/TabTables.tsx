@@ -437,7 +437,8 @@ export const InboundLineEditTable = ({
         header: t('label.batch'),
         size: 100,
         columnGroup: 'general',
-        cardSummary: true,
+        cardSummary: row =>
+          `${t('label.batch')} ${row.batch || ''}`,
         Cell: ({ row, cell }) => (
           <TextInputCell
             cell={cell}
@@ -608,7 +609,8 @@ export const InboundLineEditTable = ({
         header: t('label.packs-received'),
         size: 100,
         columnGroup: 'quantities',
-        cardSummary: true,
+        cardSummary: row =>
+          `${row.numberOfPacks} ${t('label.packs-received')}`,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
