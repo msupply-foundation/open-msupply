@@ -78,7 +78,7 @@ pub fn generate(
         given,
         given_store_id: given.then_some(store_id),
         stock_line_id,
-        item_link_id: item_id,
+        item_id: item_id,
         not_given_reason,
         comment,
         facility_name_id: resolved_facility_name_id,

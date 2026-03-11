@@ -124,7 +124,7 @@ pub fn mock_sent_request_requisition_line() -> RequisitionLineRow {
     RequisitionLineRow {
         id: "mock_sent_request_requisition_line".to_string(),
         requisition_id: mock_sent_request_requisition().id,
-        item_link_id: mock_item_a().id,
+        item_id: mock_item_a().id,
         requested_quantity: 10.0,
         suggested_quantity: 5.0,
         available_stock_on_hand: 1.0,
@@ -155,7 +155,7 @@ pub fn mock_finalised_request_requisition_line() -> RequisitionLineRow {
     RequisitionLineRow {
         id: "mock_finalised_request_requisition_line".to_string(),
         requisition_id: mock_finalised_response_requisition().id,
-        item_link_id: mock_item_a().id,
+        item_id: mock_item_a().id,
         requested_quantity: 10.0,
         suggested_quantity: 5.0,
         available_stock_on_hand: 1.0,
@@ -204,7 +204,7 @@ pub fn mock_new_response_requisition_for_update_test_line() -> RequisitionLineRo
     RequisitionLineRow {
         id: "mock_new_response_requisition_for_update_test_line".to_string(),
         requisition_id: mock_new_response_requisition_for_update_test().id,
-        item_link_id: mock_item_a().id,
+        item_id: mock_item_a().id,
         requested_quantity: 10.0,
         suggested_quantity: 5.0,
         available_stock_on_hand: 1.0,
@@ -233,7 +233,7 @@ pub fn mock_full_new_response_requisition_for_update_test() -> FullMockRequisiti
         lines: vec![RequisitionLineRow {
             id: "mock_full_new_response_requisition_for_update_test_line".to_string(),
             requisition_id: "mock_full_new_response_requisition_for_update_test".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             requested_quantity: 10.0,
             suggested_quantity: 5.0,
             available_stock_on_hand: 1.0,
@@ -269,7 +269,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             RequisitionLineRow {
                 id: line1_id,
                 requisition_id: requisition_id.clone(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 5.0,
                 available_stock_on_hand: 1.0,
@@ -279,7 +279,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             RequisitionLineRow {
                 id: line2_id,
                 requisition_id: requisition_id.clone(),
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 5.0,
                 available_stock_on_hand: 1.0,
@@ -288,7 +288,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             RequisitionLineRow {
                 id: line3_id,
                 requisition_id: requisition_id.clone(),
-                item_link_id: mock_item_c().id,
+                item_id: mock_item_c().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 5.0,
                 available_stock_on_hand: 6.0,
@@ -298,7 +298,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             RequisitionLineRow {
                 id: line4_id,
                 requisition_id,
-                item_link_id: mock_item_d().id,
+                item_id: mock_item_d().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 200.0,
                 available_stock_on_hand: 20.0,
@@ -350,7 +350,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             RequisitionLineRow {
                 id: line1_id,
                 requisition_id: requisition_id.clone(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 5.0,
                 supply_quantity: 50.0,
@@ -361,7 +361,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             RequisitionLineRow {
                 id: line2_id,
                 requisition_id,
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 requested_quantity: 11.0,
                 suggested_quantity: 5.0,
                 supply_quantity: 100.0,
@@ -400,7 +400,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
                     r#type: InvoiceLineType::StockOut,
                     pack_size: 2.0,
                     number_of_packs: 2.0,
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     item_name: mock_item_a().name,
                     item_code: mock_item_a().code,
                     cost_price_per_pack: 0.0,
@@ -419,7 +419,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
                     r#type: InvoiceLineType::UnallocatedStock,
                     pack_size: 1.0,
                     number_of_packs: 2.0,
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     item_name: mock_item_a().name,
                     item_code: mock_item_a().code,
                     cost_price_per_pack: 0.0,
@@ -478,7 +478,7 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
         lines: vec![RequisitionLineRow {
             id: line1_id,
             requisition_id,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             requested_quantity: 10.0,
             suggested_quantity: 10.0,
             supply_quantity: 100.0,
@@ -515,7 +515,7 @@ pub fn mock_new_response_program_requisition() -> FullMockRequisition {
             RequisitionLineRow {
                 id: line1_id,
                 requisition_id: requisition_id.clone(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 requested_quantity: 9.0,
                 suggested_quantity: 10.0,
                 supply_quantity: 100.0,
@@ -527,7 +527,7 @@ pub fn mock_new_response_program_requisition() -> FullMockRequisition {
             RequisitionLineRow {
                 id: line2_id,
                 requisition_id,
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 requested_quantity: 10.0,
                 suggested_quantity: 10.0,
                 supply_quantity: 100.0,

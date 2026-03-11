@@ -212,7 +212,7 @@ fn generate(
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition.id.clone(),
-                item_link_id: line.item_link_id.clone(),
+                item_id: line.item_id.clone(),
                 requested_quantity: r.requested_minus_supply_quantity().abs(),
                 snapshot_datetime: line.snapshot_datetime,
                 comment: line.comment.clone(),

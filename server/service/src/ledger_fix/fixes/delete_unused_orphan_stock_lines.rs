@@ -80,7 +80,7 @@ pub(crate) mod test {
     pub(crate) fn mock_data() -> MockData {
         let oms_stock_line = StockLineRow {
             id: "oms-stock-line".to_string(), // OMS ID format
-            item_link_id: mock_item_a().id.clone(),
+            item_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             pack_size: 1.0,
             available_number_of_packs: 3.0,
@@ -117,7 +117,7 @@ pub(crate) mod test {
             id: "stock-take-line".to_string(),
             stocktake_id: stocktake.id.clone(),
             stock_line_id: Some(legacy_stock_line_with_stock_take_line.id.clone()),
-            item_link_id: legacy_stock_line_with_stock_take_line.item_link_id.clone(),
+            item_id: legacy_stock_line_with_stock_take_line.item_id.clone(),
             ..Default::default()
         };
 

@@ -1,11 +1,11 @@
 use super::{
-    item_row::item, purchase_order_line_row::purchase_order_line, DBType, ItemLinkRow, ItemRow,
+    item_row::item, purchase_order_line_row::purchase_order_line, DBType, ItemRow,
     RepositoryError, StorageConnection,
 };
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
-    item_link, purchase_order_line_stats,
+    purchase_order_line_stats,
     purchase_order_row::purchase_order::{self},
     EqualFilter, Pagination, PurchaseOrderFilter, PurchaseOrderLineRow, PurchaseOrderLineStatsRow,
     PurchaseOrderLineStatus, PurchaseOrderRepository, PurchaseOrderRow, Sort,
@@ -18,7 +18,7 @@ use diesel::{
 
 type PurchaseOrderLineJoin = (
     PurchaseOrderLineRow,
-    (ItemLinkRow, ItemRow),
+    ItemRow,
     PurchaseOrderRow,
     PurchaseOrderLineStatsRow,
 );
@@ -135,7 +135,7 @@ type BoxedPurchaseOrderLineQuery = IntoBoxed<
     'static,
     InnerJoin<
         InnerJoin<
-            InnerJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
+            InnerJoin<purchase_order_line::table, item::table>,
             purchase_order::table,
         >,
         purchase_order_line_stats::table,
@@ -145,7 +145,7 @@ type BoxedPurchaseOrderLineQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurchaseOrderLineQuery {
     let mut query = purchase_order_line::table
-        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(item::table)
         .inner_join(purchase_order::table)
         .inner_join(purchase_order_line_stats::table)
         .into_boxed();
@@ -170,7 +170,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             requested_pack_size,
             purchase_order_line::requested_pack_size
         );
-        apply_equal_filter!(query, item_id, item_link::item_id);
+        apply_equal_filter!(query, item_id, purchase_order_line::item_id);
         apply_equal_filter!(query, status, purchase_order_line::status);
         if let Some(true) = received_less_than_adjusted {
             query = query.filter(
@@ -236,7 +236,7 @@ impl PurchaseOrderLineFilter {
 }
 
 fn to_domain(
-    (purchase_order_line_row, (_, item_row), _, purchase_order_line_stats_row): PurchaseOrderLineJoin,
+    (purchase_order_line_row, item_row, _, purchase_order_line_stats_row): PurchaseOrderLineJoin,
 ) -> PurchaseOrderLine {
     PurchaseOrderLine {
         purchase_order_line_row,

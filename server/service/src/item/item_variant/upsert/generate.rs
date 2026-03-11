@@ -32,7 +32,7 @@ pub fn generate(
     ItemVariantRow {
         id,
         name,
-        item_link_id: item_id,
+        item_id: item_id,
         location_type_id: location_type_id.map(|l| l.value).unwrap_or_default(),
         manufacturer_id: manufacturer_id
             .map(|manufacturer_id| manufacturer_id.value)

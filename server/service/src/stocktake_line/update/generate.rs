@@ -41,7 +41,7 @@ pub fn generate(
             .unwrap_or(existing_line.snapshot_number_of_packs),
         counted_number_of_packs: counted_number_of_packs.or(existing_line.counted_number_of_packs),
 
-        item_link_id: existing.item.id,
+        item_id: existing.item.id,
         item_name: existing_line.item_name,
         expiry_date: expiry_date
             .map(|e| e.value)

@@ -44,7 +44,7 @@ impl SyncTranslation for ItemStoreJoinTranslation {
 
         let result = ItemStoreJoinRow {
             id: data.id,
-            item_link_id: data.item_id,
+            item_id: data.item_id,
             store_id: data.store_id,
             default_sell_price_per_pack: data.default_sell_price_per_pack,
             ignore_for_orders: data.ignore_for_orders,

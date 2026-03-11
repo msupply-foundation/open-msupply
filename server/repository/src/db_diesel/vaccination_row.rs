@@ -5,7 +5,7 @@ use crate::{
 use crate::diesel_macros::define_linked_tables;
 
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
+    clinician_link_row::clinician_link, clinician_row::clinician,
     item_row::item, name_row::name, name_store_join::name_store_join,
     store_row::store,
     vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
@@ -33,7 +33,6 @@ define_linked_tables! {
         facility_free_text -> Nullable<Text>,
         invoice_id -> Nullable<Text>,
         stock_line_id -> Nullable<Text>,
-        item_link_id -> Nullable<Text>,
         clinician_link_id -> Nullable<Text>,
         vaccination_date -> Date,
         given -> Bool,
@@ -44,19 +43,19 @@ define_linked_tables! {
         patient_link_id -> patient_id,
     },
     optional_links: {
+        item_link_id -> item_id,
         facility_name_link_id -> facility_name_id,
     }
 }
 
 joinable!(vaccination -> clinician_link (clinician_link_id));
-joinable!(vaccination -> item_link (item_link_id));
+joinable!(vaccination -> item (item_id));
 joinable!(vaccination -> vaccine_course_dose (vaccine_course_dose_id));
 joinable!(vaccination -> name (facility_name_id));
 
 allow_tables_to_appear_in_same_query!(vaccination, name);
 allow_tables_to_appear_in_same_query!(vaccination, clinician_link);
 allow_tables_to_appear_in_same_query!(vaccination, clinician);
-allow_tables_to_appear_in_same_query!(vaccination, item_link);
 allow_tables_to_appear_in_same_query!(vaccination, item);
 allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_dose);
 allow_tables_to_appear_in_same_query!(vaccination, name_store_join);
@@ -80,15 +79,15 @@ pub struct VaccinationRow {
     pub facility_free_text: Option<String>,
     pub invoice_id: Option<String>,
     pub stock_line_id: Option<String>,
-    pub item_link_id: Option<String>,
     pub clinician_link_id: Option<String>,
     /// Event date (e.g. date given, or date marked not given)
     pub vaccination_date: NaiveDate,
     pub given: bool,
     pub not_given_reason: Option<String>,
     pub comment: Option<String>,
-    // Resolved from name_link - must be last to match view column order
+    // Resolved from link tables - must be last to match view column order
     pub patient_id: String,
+    pub item_id: Option<String>,
     pub facility_name_id: Option<String>,
 }
 

@@ -401,7 +401,7 @@ mod test {
                             id: "line_id".to_string(),
                             invoice_id: "line_invoice_id".to_string(),
                             r#type: InvoiceLineType::Service,
-                            item_link_id: "line_item_id".to_string(),
+                            item_id: "line_item_id".to_string(),
                             item_name: "line_item_name".to_string(),
                             item_code: "line_item_code".to_string(),
                             pack_size: 1.0,

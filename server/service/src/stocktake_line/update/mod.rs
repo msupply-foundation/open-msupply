@@ -122,7 +122,7 @@ mod stocktake_line_test {
                 id: "mock_stocktake_line".to_string(),
                 stocktake_id: "stocktake_a".to_string(),
                 snapshot_number_of_packs: 10.0,
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 ..Default::default()
             }
         }
@@ -147,7 +147,7 @@ mod stocktake_line_test {
             InvoiceLineRow {
                 id: "outbound_shipment_line".to_string(),
                 invoice_id: outbound_shipment().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 stock_line_id: Some(mock_stock_line_b().id),
                 number_of_packs: 29.0,
                 ..Default::default()
@@ -159,7 +159,7 @@ mod stocktake_line_test {
                 id: "mock_reduced_stock".to_string(),
                 stocktake_id: "stocktake_a".to_string(),
                 snapshot_number_of_packs: 10.0,
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 stock_line_id: Some(mock_stock_line_b().id),
                 ..Default::default()
             }
@@ -280,7 +280,7 @@ mod stocktake_line_test {
         // error: IncorrectLocationType
         let stocktake_line = StocktakeLineRow {
             id: "restricted_location_type_line".to_string(),
-            item_link_id: mock_item_restricted_location_type_b().id,
+            item_id: mock_item_restricted_location_type_b().id,
             stocktake_id: mock_stocktake_a().id,
             ..Default::default()
         };
@@ -413,7 +413,7 @@ mod stocktake_line_test {
                 sell_price_per_pack: Some(25.0),
                 snapshot_number_of_packs: 40.0,
                 counted_number_of_packs: Some(14.0),
-                item_link_id: stocktake_line_a.item_link_id,
+                item_id: stocktake_line_a.item_id,
                 item_name: stocktake_line_a.item_name,
                 ..Default::default()
             }
@@ -475,7 +475,7 @@ mod stocktake_line_test {
                 id: stocktake_line.id.clone(),
                 stocktake_id: result.line.stocktake_id.clone(),
                 snapshot_number_of_packs: 10.0,
-                item_link_id: stocktake_line.item_link_id,
+                item_id: stocktake_line.item_id,
                 item_name: stocktake_line.item_name,
                 comment: Some("Some comment".to_string()),
                 ..Default::default()

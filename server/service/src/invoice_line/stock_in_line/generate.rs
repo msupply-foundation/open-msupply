@@ -35,7 +35,7 @@ struct StockLevels {
 pub fn generate_batch(
     connection: &StorageConnection,
     InvoiceLineRow {
-        item_link_id,
+        item_id,
         pack_size,
         batch,
         expiry_date,
@@ -94,7 +94,7 @@ pub fn generate_batch(
 
     let stock_line_row = StockLineRow {
         id: stock_line_id,
-        item_link_id,
+        item_id,
         store_id,
         location_id,
         batch,

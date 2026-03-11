@@ -6,13 +6,13 @@ use diesel::{
 };
 
 use crate::{
-    db_diesel::{item_link_row::item_link, item_row::item},
+    db_diesel::item_row::item,
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
-    DBType, EqualFilter, ItemLinkRow, ItemRow, StorageConnection,
+    DBType, EqualFilter, ItemRow, StorageConnection,
 };
 
-type VaccineCourseItemJoin = (VaccineCourseItemRow, (ItemLinkRow, ItemRow));
+type VaccineCourseItemJoin = (VaccineCourseItemRow, ItemRow);
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct VaccineCourseItem {
@@ -93,7 +93,7 @@ impl<'a> VaccineCourseItemRepository<'a> {
 
 type BoxedVaccineCourseItemQuery = IntoBoxed<
     'static,
-    InnerJoin<vaccine_course_item::table, InnerJoin<item_link::table, item::table>>,
+    InnerJoin<vaccine_course_item::table, item::table>,
     DBType,
 >;
 
@@ -101,7 +101,7 @@ fn create_filtered_query(
     filter: Option<VaccineCourseItemFilter>,
 ) -> Result<BoxedVaccineCourseItemQuery, RepositoryError> {
     let mut query = vaccine_course_item::table
-        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(item::table)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -125,7 +125,7 @@ fn create_filtered_query(
     Ok(query)
 }
 
-fn to_domain((vaccine_course_item, (_, item_row)): VaccineCourseItemJoin) -> VaccineCourseItem {
+fn to_domain((vaccine_course_item, item_row): VaccineCourseItemJoin) -> VaccineCourseItem {
     VaccineCourseItem {
         vaccine_course_item,
         item: item_row,

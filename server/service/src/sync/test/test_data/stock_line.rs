@@ -65,7 +65,7 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
         StockLineRow {
             id: ITEM_LINE_1.0.to_string(),
             store_id: "store_a".to_string(),
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             location_id: None,
             batch: Some("stocktake_1".to_string()),
             pack_size: 1.0,
@@ -175,7 +175,7 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
         StockLineRow {
             id: ITEM_LINE_2.0.to_string(),
             store_id: "store_a".to_string(),
-            item_link_id: "item_b".to_string(),
+            item_id: "item_b".to_string(),
             location_id: None,
             batch: Some("none".to_string()),
             pack_size: 1.0,
@@ -285,7 +285,7 @@ fn item_line_3_pull_record() -> TestSyncIncomingRecord {
         StockLineRow {
             id: ITEM_LINE_3.0.to_string(),
             store_id: "store_a".to_string(),
-            item_link_id: "item_b".to_string(),
+            item_id: "item_b".to_string(),
             location_id: None,
             batch: Some("none".to_string()),
             pack_size: 1.0,
@@ -395,7 +395,7 @@ fn item_line_4_pull_record() -> TestSyncIncomingRecord {
         StockLineRow {
             id: ITEM_LINE_4.0.to_string(),
             store_id: "store_a".to_string(),
-            item_link_id: "item_b".to_string(),
+            item_id: "item_b".to_string(),
             location_id: None,
             batch: Some("none".to_string()),
             pack_size: 1.0,
@@ -504,7 +504,7 @@ fn item_line_5_pull_record() -> TestSyncIncomingRecord {
         StockLineRow {
             id: ITEM_LINE_5.0.to_string(),
             store_id: "store_a".to_string(),
-            item_link_id: "item_b".to_string(),
+            item_id: "item_b".to_string(),
             location_id: None,
             batch: Some("none".to_string()),
             pack_size: 1.0,

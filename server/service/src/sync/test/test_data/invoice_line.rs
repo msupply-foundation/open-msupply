@@ -77,7 +77,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
         InvoiceLineRow {
             id: TRANS_LINE_1.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: Some(mock_stock_line_a().id),
@@ -219,7 +219,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
         InvoiceLineRow {
             id: TRANS_LINE_2.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: Some(mock_stock_line_a().id),
@@ -368,7 +368,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
         InvoiceLineRow {
             id: TRANS_LINE_OM_FIELDS.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: Some(mock_stock_line_a().id),
@@ -513,7 +513,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
         InvoiceLineRow {
             id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: Some(mock_stock_line_a().id),
@@ -658,7 +658,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
         InvoiceLineRow {
             id: TRANS_LINE_NEGATIVE.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: Some(mock_stock_line_a().id),
@@ -804,7 +804,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
         InvoiceLineRow {
             id: TRANS_LINE_PRESCRIBED_QUANTITY.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: Some(mock_stock_line_a().id),
@@ -949,7 +949,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
         InvoiceLineRow {
             id: TRANS_LINE_INVALID_STOCKLINE.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: None,
@@ -1093,7 +1093,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
         InvoiceLineRow {
             id: TRANS_LINE_EMPTY_STOCKLINE.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: None,

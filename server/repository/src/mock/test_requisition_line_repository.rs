@@ -17,7 +17,7 @@ pub fn mock_draft_request_requisition_line() -> RequisitionLineRow {
     RequisitionLineRow {
         id: "mock_draft_request_requisition_line".to_string(),
         requisition_id: mock_request_draft_requisition().id,
-        item_link_id: mock_item_a().id,
+        item_id: mock_item_a().id,
         requested_quantity: 10.0,
         suggested_quantity: 3.0,
         available_stock_on_hand: 1.0,
@@ -30,7 +30,7 @@ pub fn mock_draft_request_requisition_line2() -> RequisitionLineRow {
     RequisitionLineRow {
         id: "mock_draft_request_requisition_line2".to_string(),
         requisition_id: mock_request_draft_requisition().id,
-        item_link_id: mock_item_a().id,
+        item_id: mock_item_a().id,
         requested_quantity: 10.0,
         suggested_quantity: 3.0,
         available_stock_on_hand: 1.0,

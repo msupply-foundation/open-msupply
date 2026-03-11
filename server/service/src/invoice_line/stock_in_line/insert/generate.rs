@@ -177,7 +177,7 @@ fn generate_line(
     InvoiceLineRow {
         id,
         invoice_id,
-        item_link_id: item_id,
+        item_id: item_id,
         location_id: location.map(|l| l.value).unwrap_or_default(),
         pack_size,
         batch,

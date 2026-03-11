@@ -213,7 +213,7 @@ fn generate_line(
     }
 
     if let Some(item) = new_item_option {
-        update_line.item_link_id = item.id;
+        update_line.item_id = item.id;
         update_line.item_code = item.code;
         update_line.item_name = item.name;
     }

@@ -51,7 +51,7 @@ pub fn add_from_purchase_order(
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
             invoice_id: invoice_id.clone(),
-            item_link_id: item.id,
+            item_id: item.id,
             item_name: item.name,
             item_code: item.code,
             stock_line_id: None,

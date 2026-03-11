@@ -220,7 +220,7 @@ fn generate_line(
     Ok(InvoiceLineRow {
         id,
         invoice_id,
-        item_link_id: item_id,
+        item_id: item_id,
         location_id,
         pack_size,
         batch,

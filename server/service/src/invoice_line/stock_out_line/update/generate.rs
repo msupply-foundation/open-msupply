@@ -168,7 +168,7 @@ fn generate_line(
     let mut update_line: InvoiceLineRow = InvoiceLineRow {
         id,
         invoice_id,
-        item_link_id: item_id,
+        item_id: item_id,
         location_id,
         pack_size,
         batch,

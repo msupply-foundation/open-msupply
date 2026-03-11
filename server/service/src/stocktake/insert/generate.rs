@@ -147,7 +147,7 @@ fn generate_stocktake_lines(
                          campaign_id,
                          program_id,
                          vvm_status_id,
-                         item_link_id: _,
+                         item_id: _,
                          supplier_id: _,
                          store_id: _,
                          on_hold: _,
@@ -167,7 +167,7 @@ fn generate_stocktake_lines(
                     id: uuid(),
                     stocktake_id: id.to_string(),
                     snapshot_number_of_packs: total_number_of_packs,
-                    item_link_id: item_row.id,
+                    item_id: item_row.id,
                     item_name: item_row.name,
                     location_id,
                     batch,
@@ -216,7 +216,7 @@ fn generate_lines_initial_stocktake(
         .map(|item| StocktakeLineRow {
             id: uuid(),
             stocktake_id: stocktake_id.to_string(),
-            item_link_id: item.id,
+            item_id: item.id,
             item_name: item.name,
             // Defaults
             snapshot_number_of_packs: 0.0,
@@ -312,7 +312,7 @@ fn generate_lines_from_item_ids(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: 0.0,
-                item_link_id: item_id.to_string(),
+                item_id: item_id.to_string(),
                 item_name,
                 location_id: None,
                 batch: None,
@@ -337,7 +337,7 @@ fn generate_lines_from_item_ids(
             stock_lines.into_iter().for_each(|line| {
                 let StockLineRow {
                     id: stock_line_id,
-                    item_link_id: _,
+                    item_id: _,
                     location_id,
                     batch,
                     pack_size,
@@ -365,7 +365,7 @@ fn generate_lines_from_item_ids(
                     id: uuid(),
                     stocktake_id: stocktake_id.to_string(),
                     snapshot_number_of_packs: total_number_of_packs,
-                    item_link_id: line.item_row.id,
+                    item_id: line.item_row.id,
                     item_name: line.item_row.name,
                     location_id,
                     batch,
