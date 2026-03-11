@@ -1,3 +1,4 @@
+import React from 'react';
 import { MRT_ColumnDef, MRT_RowData } from 'material-react-table';
 import { ColumnType } from './useGetColumnDefDefaults';
 
@@ -43,8 +44,10 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
   columnGroup?: string;
 
   /** Show this column's value as read-only summary text in the card heading.
-   * The column still appears as an editable field in its group. */
-  cardSummary?: boolean;
+   * The column still appears as an editable field in its group.
+   * Receives the row data and returns a formatted summary string
+   * (e.g. "Batch abc", "2 Packs Received"). */
+  cardSummary?: (row: T) => React.ReactNode;
 
   /** Number of grid columns to span in card view. Defaults to 1. */
   cardSpan?: number;
