@@ -81,8 +81,6 @@ pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
     let level = log_service.get_log_level(&service_context)?;
 
     Ok(LogLevelNode {
-        level: level
-            .map(LogLevelEnum::from)
-            .unwrap_or(LogLevelEnum::Info),
+        level: level.map(LogLevelEnum::from).unwrap_or(LogLevelEnum::Info),
     })
 }

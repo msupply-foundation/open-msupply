@@ -10,13 +10,14 @@ import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
 import { LanguageButton } from '../LanguageButton';
 
-type LoginLayoutProps = {
+export type LoginLayoutProps = {
   UsernameInput: React.ReactNode;
   PasswordInput: React.ReactNode;
   LoginButton: React.ReactNode;
   ErrorMessage: React.ReactNode;
   SiteInfo: React.ReactNode;
   onLogin: () => Promise<void>;
+  fullSize: boolean;
 };
 
 export const LoginLayout = ({
@@ -26,16 +27,25 @@ export const LoginLayout = ({
   ErrorMessage,
   SiteInfo,
   onLogin,
+  fullSize,
 }: LoginLayoutProps) => {
   const t = useTranslation();
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter') {
-      onLogin();
-    }
-  };
+  const loginForm = (
+    <LoginForm
+      UsernameInput={UsernameInput}
+      PasswordInput={PasswordInput}
+      LoginButton={LoginButton}
+      ErrorMessage={ErrorMessage}
+      SiteInfo={SiteInfo}
+      onLogin={onLogin}
+      fullSize={fullSize}
+    />
+  );
 
-  return (
+  return !fullSize ? (
+    loginForm
+  ) : (
     <Box display="flex" style={{ width: '100%' }}>
       <Box
         flex="1 0 50%"
@@ -107,23 +117,44 @@ export const LoginLayout = ({
             alignItems: 'center',
           }}
         >
-          <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
-            <Stack spacing={5}>
-              <Box display="flex" justifyContent="center">
-                <LoginIcon />
-              </Box>
-              {UsernameInput}
-              {PasswordInput}
-              {ErrorMessage}
-              <Box display="flex" justifyContent="flex-end">
-                {LoginButton}
-              </Box>
-            </Stack>
-          </form>
+          {loginForm}
         </Box>
         <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
         <LanguageButton />
       </Box>
     </Box>
+  );
+};
+
+const LoginForm = ({
+  UsernameInput,
+  PasswordInput,
+  LoginButton,
+  ErrorMessage,
+  onLogin,
+  fullSize,
+}: LoginLayoutProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter') {
+      onLogin();
+    }
+  };
+
+  return (
+    <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
+      <Stack spacing={fullSize ? 5 : 2}>
+        {fullSize && (
+          <Box display="flex" justifyContent="center">
+            <LoginIcon />
+          </Box>
+        )}
+        {UsernameInput}
+        {PasswordInput}
+        {ErrorMessage}
+        <Box display="flex" justifyContent="flex-end">
+          {LoginButton}
+        </Box>
+      </Stack>
+    </form>
   );
 };

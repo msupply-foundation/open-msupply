@@ -24,6 +24,7 @@ pub struct UpdateStockLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdate<NaiveDate>>,
     pub on_hold: Option<bool>,
     pub batch: Option<String>,
     pub barcode: Option<String>,
@@ -164,6 +165,7 @@ fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date,
+        manufacture_date,
         batch,
         on_hold,
         barcode,
@@ -219,6 +221,9 @@ fn generate(
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
 
     existing.expiry_date = expiry_date.map(|v| v.value).unwrap_or(existing.expiry_date);
+    existing.manufacture_date = manufacture_date
+        .map(|v| v.value)
+        .unwrap_or(existing.manufacture_date);
 
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing.barcode_id = barcode_id;
@@ -227,7 +232,7 @@ fn generate(
     existing.item_variant_id = item_variant_id
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
-    existing.donor_link_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_link_id);
+    existing.donor_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_id);
     existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
     existing.program_id = program_id.map(|v| v.value).unwrap_or(existing.program_id);
 

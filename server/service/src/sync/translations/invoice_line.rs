@@ -7,8 +7,8 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineType,
-    InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineStatus,
+    InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -47,6 +47,10 @@ pub struct TransLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -221,9 +225,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
-                        return Err(anyhow::Error::msg(format!(
-                            "Failed to get item: {item_id}"
-                        )))
+                        return Err(anyhow::Error::msg(format!("Failed to get item: {item_id}")))
                     }
                 };
                 let total_multiplier = match r#type {
@@ -291,6 +293,8 @@ impl SyncTranslation for InvoiceLineTranslation {
         let TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status,
+            manufacture_date,
         } = oms_fields.unwrap_or_default();
 
         let result = InvoiceLineRow {
@@ -316,7 +320,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            donor_link_id: donor_id,
+            donor_id: donor_id,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -324,6 +328,13 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacture_date,
+            status: match status.as_deref() {
+                Some("PENDING") => Some(repository::InvoiceLineStatus::Pending),
+                Some("PASSED") => Some(repository::InvoiceLineStatus::Passed),
+                Some("REJECTED") => Some(repository::InvoiceLineStatus::Rejected),
+                _ => None,
+            },
         };
 
         let result = adjust_negative_values(result);
@@ -379,7 +390,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
                     vvm_status_id,
                     reason_option_id,
                     campaign_id,
@@ -387,6 +398,8 @@ impl SyncTranslation for InvoiceLineTranslation {
                     shipped_number_of_packs,
                     volume_per_pack,
                     shipped_pack_size,
+                    status,
+                    manufacture_date,
                 },
             item_row,
             ..
@@ -395,6 +408,13 @@ impl SyncTranslation for InvoiceLineTranslation {
         let oms_fields = Some(TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status: match status {
+                Some(InvoiceLineStatus::Pending) => Some("PENDING".to_string()),
+                Some(InvoiceLineStatus::Passed) => Some("PASSED".to_string()),
+                Some(InvoiceLineStatus::Rejected) => Some("REJECTED".to_string()),
+                None => None,
+            },
+            manufacture_date,
         });
 
         let legacy_row = LegacyTransLineRow {

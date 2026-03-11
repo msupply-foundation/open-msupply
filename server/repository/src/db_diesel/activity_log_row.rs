@@ -102,9 +102,6 @@ pub enum ActivityLogType {
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
     VolumePerPackChanged,
-    GoodsReceivedCreated,
-    GoodsReceivedDeleted,
-    GoodsReceivedStatusFinalised,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
@@ -164,7 +161,7 @@ impl<'a> ActivityLogRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: row.store_id.clone(),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

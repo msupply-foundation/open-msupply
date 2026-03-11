@@ -8,7 +8,6 @@ pub fn mock_item_a_variant_1() -> ItemVariantRow {
         name: "Item A Variant 1".to_string(),
         item_link_id: mock_item_a().id,
         location_type_id: None,
-        manufacturer_link_id: None,
         deleted_datetime: None,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
@@ -16,6 +15,7 @@ pub fn mock_item_a_variant_1() -> ItemVariantRow {
             .and_hms_opt(0, 0, 0)
             .unwrap(),
         created_by: None,
+        manufacturer_id: None,
     }
 }
 
@@ -25,7 +25,6 @@ pub fn mock_item_a_variant_2() -> ItemVariantRow {
         name: "Item A Variant 1".to_string(),
         item_link_id: mock_item_a().id,
         location_type_id: None,
-        manufacturer_link_id: None,
         deleted_datetime: None,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
@@ -33,6 +32,7 @@ pub fn mock_item_a_variant_2() -> ItemVariantRow {
             .and_hms_opt(0, 0, 0)
             .unwrap(),
         created_by: None,
+        manufacturer_id: None,
     }
 }
 
@@ -42,7 +42,6 @@ pub fn mock_item_b_variant_1() -> ItemVariantRow {
         name: "Item B Variant 1".to_string(),
         item_link_id: mock_item_b().id,
         location_type_id: None,
-        manufacturer_link_id: None,
         deleted_datetime: None,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
@@ -50,6 +49,7 @@ pub fn mock_item_b_variant_1() -> ItemVariantRow {
             .and_hms_opt(0, 0, 0)
             .unwrap(),
         created_by: None,
+        manufacturer_id: None,
     }
 }
 
@@ -59,7 +59,6 @@ pub fn mock_item_b_variant_2() -> ItemVariantRow {
         name: "Item B Variant 2".to_string(),
         item_link_id: mock_item_b().id,
         location_type_id: None,
-        manufacturer_link_id: None,
         deleted_datetime: None,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
@@ -67,6 +66,7 @@ pub fn mock_item_b_variant_2() -> ItemVariantRow {
             .and_hms_opt(0, 0, 0)
             .unwrap(),
         created_by: None,
+        manufacturer_id: None,
     }
 }
 
@@ -76,7 +76,6 @@ pub fn mock_item_c_variant_1() -> ItemVariantRow {
         name: "Item C Variant 1".to_string(),
         item_link_id: mock_item_c().id,
         location_type_id: None,
-        manufacturer_link_id: None,
         deleted_datetime: None,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
@@ -84,6 +83,7 @@ pub fn mock_item_c_variant_1() -> ItemVariantRow {
             .and_hms_opt(0, 0, 0)
             .unwrap(),
         created_by: None,
+        manufacturer_id: None,
     }
 }
 
@@ -93,15 +93,14 @@ pub fn mock_vaccine_item_a_variant_1() -> ItemVariantRow {
         name: "Vaccine Item A Variant 1".to_string(),
         item_link_id: mock_vaccine_item_a().id,
         location_type_id: None,
-        manufacturer_link_id: None,
         deleted_datetime: None,
-
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap(),
         created_by: None,
+        manufacturer_id: None,
     }
 }
 

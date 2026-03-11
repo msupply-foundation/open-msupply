@@ -1,11 +1,11 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   Box,
   CircularProgress,
   FlatButton,
+  PaperPopover,
   PaperPopoverSection,
   useAuthContext,
-  usePaperClickPopover,
   useTranslation,
   useNavigate,
   useUserDetails,
@@ -20,9 +20,9 @@ import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly } from '@common/types';
 
 export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
-  const { logout, user, token } = useAuthContext();
+  const { user, token } = useAuthContext();
   const navigate = useNavigate();
-  const { hide, PaperClickPopover } = usePaperClickPopover();
+  const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
   const { isLoading } = useUserDetails(token);
   const t = useTranslation();
   const { getLocalisedFullName } = useIntlUtils();
@@ -30,7 +30,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
 
   const handleLogout = () => {
     navigate(RouteBuilder.create(AppRoute.Login).build());
-    logout();
   };
 
   const showConfirmation = useConfirmationModal({
@@ -44,7 +43,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
       startIcon={<PowerIcon fontSize="small" color="primary" />}
       label={t('logout')}
       onClick={async () => {
-        hide();
+        setPopoverAnchor(null);
         showConfirmation();
       }}
       sx={{
@@ -57,8 +56,14 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
   );
 
   return user ? (
-    <PaperClickPopover
-      placement="top"
+    <PaperPopover
+      mode="click"
+      placement={{
+        vertical: 'top',
+        horizontal: 'center',
+      }}
+      anchorEl={popoverAnchor}
+      onAnchorElChange={setPopoverAnchor}
       Content={
         <PaperPopoverSection
           label={getLocalisedFullName(user.firstName, user.lastName)}
@@ -141,7 +146,7 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
       }
     >
       {children}
-    </PaperClickPopover>
+    </PaperPopover>
   ) : (
     <></>
   );

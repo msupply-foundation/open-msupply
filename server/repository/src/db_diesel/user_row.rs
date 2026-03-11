@@ -1,4 +1,4 @@
-use super::{name_link_row::name_link, StorageConnection};
+use super::StorageConnection;
 
 use crate::{lower, repository_error::RepositoryError, Upsert};
 
@@ -21,7 +21,6 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(user_account, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]

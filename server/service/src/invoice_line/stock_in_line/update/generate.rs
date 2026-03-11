@@ -13,8 +13,9 @@ use crate::{
     store_preference::get_store_preferences,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow, InvoiceRow,
-    ItemRow, RepositoryError, StockLineRow, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow,
+    InvoiceLineStatus, InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, StockLineRow,
+    StorageConnection,
 };
 
 use super::UpdateStockInLine;
@@ -52,7 +53,13 @@ pub fn generate(
         update_line = convert_invoice_line_to_single_pack(update_line);
     }
 
+    // Only update stock when the invoice status has reached a status that effect stock and the line
+    // hasn't be rejected. The current logic makes it so lines can't be rejected after being accepted as
+    // in that case the stock could have already been assigned so it mightn't be possible to then
+    // remove the stock line. This does mean that new lines added when received will be stuck in pending
+    // and can't go into stock.
     let (upsert_batch_option, vvm_status_log_option) = if should_update_stock(&existing_invoice_row)
+        && matches!(update_line.status, None | Some(InvoiceLineStatus::Passed))
     {
         // There will be a batch_to_delete_id if the item has changed
         // If item has changed, we want a new stock line, otherwise keep existing
@@ -67,7 +74,7 @@ pub fn generate(
             StockLineInput {
                 stock_line_id,
                 store_id: existing_invoice_row.store_id.clone(),
-                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                supplier_id: existing_invoice_row.name_id.clone(),
                 on_hold: false,
                 barcode_id: None,
                 overwrite_stock_levels: true,
@@ -129,6 +136,7 @@ fn generate_line(
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date,
+        manufacture_date,
         number_of_packs,
         note,
         location,
@@ -145,6 +153,7 @@ fn generate_line(
         id: _,
         item_id: _,
         r#type: _,
+        status,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -160,6 +169,9 @@ fn generate_line(
     update_line.expiry_date = expiry_date
         .map(|expiry_date| expiry_date.value)
         .unwrap_or(update_line.expiry_date);
+    update_line.manufacture_date = manufacture_date
+        .map(|manufacture_date| manufacture_date.value)
+        .unwrap_or(update_line.manufacture_date);
     update_line.sell_price_per_pack =
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);
     update_line.cost_price_per_pack =
@@ -178,11 +190,27 @@ fn generate_line(
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
 
-    update_line.donor_link_id = donor_id
+    update_line.donor_id = donor_id
         .map(|d| d.value)
-        .unwrap_or(update_line.donor_link_id);
+        .unwrap_or(update_line.donor_id);
 
     update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
+
+    if let Some(status) = status {
+        use InvoiceLineStatus::*;
+        match status.value {
+            // When a line is rejected it's converted to unallocated stock.
+            Some(Rejected) => {
+                update_line.r#type = InvoiceLineType::UnallocatedStock;
+            }
+            // If a line used to be rejected but is now pending or passed, it needs to be converted back to a stock in line.
+            Some(Pending | Passed) => {
+                update_line.r#type = InvoiceLineType::StockIn;
+            }
+            None => {}
+        }
+        update_line.status = status.value;
+    }
 
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;

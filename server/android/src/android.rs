@@ -45,7 +45,7 @@ pub mod android {
                 discovery: DiscoveryMode::Disabled,
                 debug_no_access_control: false,
                 cors_origins: vec!["http://localhost".to_string()],
-                base_dir: Some(files_dir.to_str().unwrap().to_string()),
+                base_dir: files_dir.to_str().unwrap().to_string(),
                 machine_uid: Some(android_id),
                 override_is_central_server: false,
             },
