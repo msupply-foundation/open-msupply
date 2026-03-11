@@ -28,7 +28,7 @@ interface SupplySelectionProps {
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
-  displayVaccinesInDoses?: boolean;
+  isDosesEnabled?: boolean;
   dosesPerUnit: number;
   setIsEditingSupply: (isEditingSupply: boolean) => void;
 }
@@ -42,7 +42,7 @@ export const SupplySelection = ({
   representation,
   setRepresentation,
   unitName,
-  displayVaccinesInDoses = false,
+  isDosesEnabled = false,
   dosesPerUnit,
   setIsEditingSupply,
 }: SupplySelectionProps) => {
@@ -134,7 +134,7 @@ export const SupplySelection = ({
               },
             }}
           />
-          {displayVaccinesInDoses && !!value && (
+          {isDosesEnabled && !!value && (
             <DosesCaption
               value={
                 representation === Representation.PACKS
@@ -142,7 +142,7 @@ export const SupplySelection = ({
                   : value
               }
               dosesPerUnit={dosesPerUnit}
-              displayVaccinesInDoses={displayVaccinesInDoses}
+              isDosesEnabled={isDosesEnabled}
             />
           )}
         </Box>

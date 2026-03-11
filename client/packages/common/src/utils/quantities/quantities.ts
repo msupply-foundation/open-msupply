@@ -83,15 +83,15 @@ export const QuantityUtils = {
   },
 
   useValueInDoses: (
-    displayVaccinesInDoses: boolean,
+    isDosesEnabled: boolean,
     dosesPerUnit: number,
     value?: number | null
   ): number | undefined =>
     useMemo(
       () =>
-        displayVaccinesInDoses
+        isDosesEnabled
           ? QuantityUtils.calculateValueInDoses(dosesPerUnit, value)
           : undefined,
-      [displayVaccinesInDoses, dosesPerUnit, value]
+      [isDosesEnabled, dosesPerUnit, value]
     ),
 };

@@ -65,8 +65,7 @@ export const ResponseLineEdit = ({
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
   const isPacksEnabled = !!currentItem?.defaultPackSize;
   const showContent = !!draft && !!currentItem;
-  const displayVaccinesInDoses =
-    manageVaccinesInDoses && currentItem?.isVaccine;
+  const isDosesEnabled = manageVaccinesInDoses && currentItem?.isVaccine;
   const showExtraFields =
     store?.preferences?.extraFieldsInRequisition && !!requisition.program;
   const isDisabled = disabled || !!requisition.linkedRequisition;
@@ -94,7 +93,7 @@ export const ResponseLineEdit = ({
     unitName,
     disabled: isDisabled,
     showExtraFields,
-    displayVaccinesInDoses,
+    isDosesEnabled,
     dosesPerUnit: currentItem?.doses ?? 1,
     showEndAdornment: true,
   };
@@ -110,7 +109,7 @@ export const ResponseLineEdit = ({
             value={currentItem?.defaultPackSize}
           />
         )}
-        {displayVaccinesInDoses && currentItem?.doses ? (
+        {isDosesEnabled && currentItem?.doses ? (
           <InfoRow
             label={t('label.doses-per-unit')}
             value={currentItem?.doses}
@@ -177,7 +176,7 @@ export const ResponseLineEdit = ({
             value={currentItem?.defaultPackSize}
           />
         )}
-        {displayVaccinesInDoses && currentItem?.doses && !showExtraFields ? (
+        {isDosesEnabled && currentItem?.doses && !showExtraFields ? (
           <InfoRow
             label={t('label.doses-per-unit')}
             value={currentItem?.doses}
@@ -303,7 +302,7 @@ export const ResponseLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            displayVaccinesInDoses={displayVaccinesInDoses}
+            isDosesEnabled={isDosesEnabled}
             dosesPerUnit={currentItem?.doses ?? 1}
             setIsEditingSupply={setIsEditingSupply}
           />
