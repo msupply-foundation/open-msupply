@@ -13,6 +13,7 @@ import {
   setNullableInput,
   FilterBy,
   StocktakeLineSortFieldInput,
+  isEnumValue,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -67,6 +68,11 @@ const stocktakeParser = {
           ? Formatter.naiveDate(new Date(line.expiryDate))
           : null,
       },
+      manufactureDate: {
+        value: line.manufactureDate
+          ? Formatter.naiveDate(new Date(line.manufactureDate))
+          : null,
+      },
       comment: line.comment ?? '',
       itemVariantId: setNullableInput('itemVariantId', {
         itemVariantId: line.itemVariantId,
@@ -92,6 +98,9 @@ const stocktakeParser = {
       expiryDate: line.expiryDate
         ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
+      manufactureDate: line.manufactureDate
+        ? Formatter.naiveDate(new Date(line.manufactureDate))
+        : undefined,
       comment: line.comment ?? '',
       itemVariantId: line.itemVariantId,
       donorId: line.donorId,
@@ -109,11 +118,15 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     list:
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
+        const key = isEnumValue(StocktakeSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : StocktakeSortFieldInput.StocktakeNumber;
+
         const result = await sdk.stocktakes({
           storeId,
           page: { offset, first },
           sort: {
-            key: sortBy.key as StocktakeSortFieldInput,
+            key,
             desc: !!sortBy.isDesc,
           },
           filter: filterBy,
@@ -123,10 +136,14 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     listAll:
       ({ sortBy }: { sortBy: SortBy<StocktakeRowFragment> }) =>
       async () => {
+        const key = isEnumValue(StocktakeSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : StocktakeSortFieldInput.StocktakeNumber;
+
         const result = await sdk.stocktakes({
           storeId,
           sort: {
-            key: sortBy.key as StocktakeSortFieldInput,
+            key,
             desc: !!sortBy.isDesc,
           },
         });
@@ -163,7 +180,9 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         page: { offset, first },
         sort: sortBy
           ? {
-              key: sortBy.key as StocktakeLineSortFieldInput,
+              key: isEnumValue(StocktakeLineSortFieldInput, sortBy.key)
+                ? sortBy.key
+                : StocktakeLineSortFieldInput.ItemName,
               desc: !!sortBy.isDesc,
             }
           : undefined,

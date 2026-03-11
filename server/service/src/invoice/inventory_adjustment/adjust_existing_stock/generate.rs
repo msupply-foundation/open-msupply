@@ -144,6 +144,7 @@ pub fn generate(
             campaign_id,
             program_id,
             volume_per_pack: Some(volume_per_pack),
+            manufacture_date: None,
             // Default
             barcode: None,
             total_before_tax: None,

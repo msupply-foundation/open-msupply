@@ -28,3 +28,6 @@ pub use self::indicator_information::*;
 
 mod insert_from_response_requisition;
 pub use self::insert_from_response_requisition::*;
+
+mod generate_population_forecast;
+pub use self::generate_population_forecast::*;
