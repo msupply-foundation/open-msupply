@@ -12,6 +12,7 @@ export type InboundLineFragment = {
   costPricePerPack: number;
   sellPricePerPack: number;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   numberOfPacks: number;
   shippedNumberOfPacks?: number | null;
   shippedPackSize?: number | null;
@@ -63,6 +64,7 @@ export type InboundLineFragment = {
     batch?: string | null;
     costPricePerPack: number;
     expiryDate?: string | null;
+  manufactureDate?: string | null;
     id: string;
     itemId: string;
     packSize: number;
@@ -141,6 +143,7 @@ export type InboundFragment = {
       costPricePerPack: number;
       sellPricePerPack: number;
       expiryDate?: string | null;
+  manufactureDate?: string | null;
       numberOfPacks: number;
       shippedNumberOfPacks?: number | null;
       shippedPackSize?: number | null;
@@ -196,6 +199,7 @@ export type InboundFragment = {
         batch?: string | null;
         costPricePerPack: number;
         expiryDate?: string | null;
+  manufactureDate?: string | null;
         id: string;
         itemId: string;
         packSize: number;
@@ -425,6 +429,7 @@ export type InvoiceQuery = {
             costPricePerPack: number;
             sellPricePerPack: number;
             expiryDate?: string | null;
+  manufactureDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
             shippedPackSize?: number | null;
@@ -484,6 +489,7 @@ export type InvoiceQuery = {
               batch?: string | null;
               costPricePerPack: number;
               expiryDate?: string | null;
+  manufactureDate?: string | null;
               id: string;
               itemId: string;
               packSize: number;
@@ -636,6 +642,7 @@ export type InboundByNumberQuery = {
             costPricePerPack: number;
             sellPricePerPack: number;
             expiryDate?: string | null;
+  manufactureDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
             shippedPackSize?: number | null;
@@ -695,6 +702,7 @@ export type InboundByNumberQuery = {
               batch?: string | null;
               costPricePerPack: number;
               expiryDate?: string | null;
+  manufactureDate?: string | null;
               id: string;
               itemId: string;
               packSize: number;
@@ -1258,6 +1266,7 @@ export const InboundLineFragmentDoc = gql`
     costPricePerPack
     sellPricePerPack
     expiryDate
+    manufactureDate
     numberOfPacks
     shippedNumberOfPacks
     shippedPackSize

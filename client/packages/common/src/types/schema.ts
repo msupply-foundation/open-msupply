@@ -3364,7 +3364,7 @@ export type InsertInboundShipmentLineInput = {
   itemId: Scalars['String']['input'];
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  manufactureDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
@@ -3914,7 +3914,7 @@ export type InsertStockLineInput = {
   itemId: Scalars['String']['input'];
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  manufactureDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   numberOfPacks: Scalars['Float']['input'];
   onHold: Scalars['Boolean']['input'];
   packSize: Scalars['Float']['input'];
@@ -3964,7 +3964,7 @@ export type InsertStocktakeLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  manufactureDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
   programId?: InputMaybe<Scalars['String']['input']>;
@@ -4318,7 +4318,7 @@ export type InvoiceLineNode = {
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
-  manufacturer?: Maybe<NameNode>;
+  manufactureDate?: Maybe<Scalars['NaiveDate']['output']>;
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
@@ -4345,10 +4345,6 @@ export type InvoiceLineNode = {
 };
 
 export type InvoiceLineNodeDonorArgs = {
-  storeId: Scalars['String']['input'];
-};
-
-export type InvoiceLineNodeManufacturerArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -5199,6 +5195,12 @@ export type MaxOrdersReachedForPeriod =
       __typename: 'MaxOrdersReachedForPeriod';
       description: Scalars['String']['output'];
     };
+
+export type MigrationStatusNode = {
+  __typename: 'MigrationStatusNode';
+  inProgress: Scalars['Boolean']['output'];
+  version?: Maybe<Scalars['String']['output']>;
+};
 
 export type MissingCredentials = UpdateUserErrorInterface & {
   __typename: 'MissingCredentials';
@@ -7339,6 +7341,8 @@ export type Queries = {
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
   me: UserResponse;
+  /** Available without authorisation in all states (Operational, Initialisation and MigratingDatabase) */
+  migrationStatus: MigrationStatusNode;
   nameProperties: NamePropertyResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
@@ -9093,7 +9097,7 @@ export type StockLineNode = {
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
-  manufacturer?: Maybe<NameNode>;
+  manufactureDate?: Maybe<Scalars['NaiveDate']['output']>;
   note?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
   packSize: Scalars['Float']['output'];
@@ -9111,10 +9115,6 @@ export type StockLineNode = {
 };
 
 export type StockLineNodeDonorArgs = {
-  storeId: Scalars['String']['input'];
-};
-
-export type StockLineNodeManufacturerArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -9227,7 +9227,7 @@ export type StocktakeLineNode = {
   itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
-  manufacturer?: Maybe<NameNode>;
+  manufactureDate?: Maybe<Scalars['NaiveDate']['output']>;
   note?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
   program?: Maybe<ProgramNode>;
@@ -9238,10 +9238,6 @@ export type StocktakeLineNode = {
   stocktakeId: Scalars['String']['output'];
   volumePerPack: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
-};
-
-export type StocktakeLineNodeManufacturerArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export enum StocktakeLineSortFieldInput {
@@ -9958,7 +9954,7 @@ export type UpdateInboundShipmentLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
-  manufacturerId?: InputMaybe<NullableStringUpdate>;
+  manufactureDate?: InputMaybe<NullableDateUpdate>;
   note?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
@@ -10643,7 +10639,7 @@ export type UpdateStockLineInput = {
   id: Scalars['String']['input'];
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
-  manufacturerId?: InputMaybe<NullableStringUpdate>;
+  manufactureDate?: InputMaybe<NullableDateUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -10695,7 +10691,7 @@ export type UpdateStocktakeLineInput = {
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
-  manufacturerId?: InputMaybe<NullableStringUpdate>;
+  manufactureDate?: InputMaybe<NullableDateUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;

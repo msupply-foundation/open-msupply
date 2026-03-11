@@ -68,6 +68,7 @@ pub(crate) fn generate_inbound_lines(
                     volume_per_pack,
                     shipped_pack_size,
                     status,
+                    manufacture_date,
                 },
                 ItemRow {
                     id: item_id,
@@ -115,6 +116,7 @@ pub(crate) fn generate_inbound_lines(
                     item_code,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
