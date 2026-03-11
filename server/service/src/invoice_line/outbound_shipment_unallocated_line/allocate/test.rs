@@ -64,7 +64,7 @@ mod test {
             InvoiceLineRow {
                 id: "line".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 20.0,
                 pack_size: 1.0,
@@ -76,7 +76,7 @@ mod test {
             StockLineRow {
                 id: "stock_line".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 2.0,
                 available_number_of_packs: 30.0,
                 ..Default::default()
@@ -88,7 +88,7 @@ mod test {
             StockLineRow {
                 id: "stock_line2".to_string(),
                 store_id: mock_store_b().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 2.0,
                 available_number_of_packs: 30.0,
                 ..Default::default()
@@ -100,7 +100,7 @@ mod test {
             StockLineRow {
                 id: "stock_line3".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 pack_size: 2.0,
                 available_number_of_packs: 30.0,
                 ..Default::default()
@@ -167,7 +167,7 @@ mod test {
             InvoiceLineRow {
                 id: "line".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 50.0,
                 pack_size: 1.0,
@@ -179,7 +179,7 @@ mod test {
             StockLineRow {
                 id: "first_expiring".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 3.0,
                 available_number_of_packs: 10.0,
                 expiry_date: Some(NaiveDate::from_ymd_opt(3021, 1, 1).unwrap()),
@@ -191,7 +191,7 @@ mod test {
             StockLineRow {
                 id: "second_expiring".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 3.0,
                 available_number_of_packs: 2.0,
                 expiry_date: Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap()),
@@ -203,7 +203,7 @@ mod test {
             StockLineRow {
                 id: "non_expiring".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 2.0,
                 expiry_date: None,
@@ -290,7 +290,7 @@ mod test {
             InvoiceLineRow {
                 id: "line".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 3.0,
                 pack_size: 1.0,
@@ -302,7 +302,7 @@ mod test {
             StockLineRow {
                 id: id.to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 1.0,
                 ..Default::default()
@@ -450,7 +450,7 @@ mod test {
             InvoiceLineRow {
                 id: "line".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 50.0,
                 pack_size: 1.0,
@@ -462,7 +462,7 @@ mod test {
             StockLineRow {
                 id: "stock_line".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 30.0,
                 expiry_date: Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap()),
@@ -474,7 +474,7 @@ mod test {
             InvoiceLineRow {
                 id: "allocated_line".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 stock_line_id: Some(stock_line().id),
                 r#type: InvoiceLineType::StockOut,
                 number_of_packs: 2.0,
@@ -487,7 +487,7 @@ mod test {
             StockLineRow {
                 id: "stock_line2".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 5.0,
                 ..Default::default()
@@ -498,7 +498,7 @@ mod test {
             InvoiceLineRow {
                 id: "allocated_line2".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 stock_line_id: Some(stock_line2().id),
                 r#type: InvoiceLineType::StockOut,
                 number_of_packs: 10.0,
@@ -511,7 +511,7 @@ mod test {
             StockLineRow {
                 id: "stock_line3".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 100.0,
                 ..Default::default()
@@ -577,7 +577,7 @@ mod test {
             InvoiceLineRow {
                 id: "line".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 1.0,
                 pack_size: 1.0,
@@ -589,7 +589,7 @@ mod test {
             StockLineRow {
                 id: "stock_line".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 pack_size: 3.0,
                 available_number_of_packs: 3.0,
                 ..Default::default()
@@ -656,7 +656,7 @@ mod test {
             InvoiceLineRow {
                 id: "placeholder".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: mock_vaccine_item_a().id,
+                item_id: mock_vaccine_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 2.0,
                 pack_size: 1.0,
@@ -667,7 +667,7 @@ mod test {
             StockLineRow {
                 id: "vvm_3_unusable_stock_line".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_vaccine_item_a().id,
+                item_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 2.0,
                 vvm_status_id: Some(mock_vvm_status_c_level3_unusable().id), // Level 3
@@ -678,7 +678,7 @@ mod test {
             StockLineRow {
                 id: "vvm_2_stock_line".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_vaccine_item_a().id,
+                item_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 2.0,
                 vvm_status_id: Some(mock_vvm_status_b().id), // Level 2 - allocated after level 1
@@ -691,7 +691,7 @@ mod test {
             StockLineRow {
                 id: "vvm_1_stock_line_expiring".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_vaccine_item_a().id,
+                item_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 2.0,
                 vvm_status_id: Some(mock_vvm_status_a().id), // Level 1 - should be allocated first
@@ -704,7 +704,7 @@ mod test {
             StockLineRow {
                 id: "vvm_1_stock_line_non_expiring".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_vaccine_item_a().id,
+                item_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 2.0,
                 vvm_status_id: Some(mock_vvm_status_a().id), // Level 1 - should be allocated first
@@ -717,7 +717,7 @@ mod test {
             StockLineRow {
                 id: "stock_line_non_expiring_no_vvm".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_vaccine_item_a().id,
+                item_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 2.0,
                 // No expiry, should be allocated last

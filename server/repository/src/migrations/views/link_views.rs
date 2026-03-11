@@ -32,6 +32,14 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS goods_received_line_view;  -- removed but keep drop for cleanup
                 DROP VIEW IF EXISTS item_variant_view;
                 DROP VIEW IF EXISTS program_event_view;
+                DROP VIEW IF EXISTS requisition_line_view;
+                DROP VIEW IF EXISTS master_list_line_view;
+                DROP VIEW IF EXISTS rnr_form_line_view;
+                DROP VIEW IF EXISTS item_category_join_view;
+                DROP VIEW IF EXISTS item_warning_join_view;
+                DROP VIEW IF EXISTS item_direction_view;
+                DROP VIEW IF EXISTS item_store_join_view;
+                DROP VIEW IF EXISTS vaccine_course_item_view;
             "#
         )?;
 
@@ -147,11 +155,14 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW stock_line_view AS
                 SELECT
                     stock_line.*,
+                    item_link.item_id as item_id,
                     supplier_link.name_id as supplier_id,
                     donor_link.name_id as donor_id,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
                     stock_line
+                JOIN
+                    item_link ON stock_line.item_link_id = item_link.id
                 LEFT JOIN
                     name_link AS supplier_link ON stock_line.supplier_link_id = supplier_link.id
                 LEFT JOIN
@@ -174,10 +185,13 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW invoice_line_view AS
                 SELECT
                     invoice_line.*,
+                    item_link.item_id as item_id,
                     donor_link.name_id as donor_id,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
                     invoice_line
+                JOIN
+                    item_link ON invoice_line.item_link_id = item_link.id
                 LEFT JOIN
                     name_link AS donor_link ON invoice_line.donor_link_id = donor_link.id
                 LEFT JOIN
@@ -186,19 +200,25 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW purchase_order_line_view AS
                 SELECT
                     purchase_order_line.*,
+                    item_link.item_id as item_id,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
                     purchase_order_line
+                JOIN
+                    item_link ON purchase_order_line.item_link_id = item_link.id
                 LEFT JOIN
                     name_link AS manufacturer_link ON purchase_order_line.manufacturer_link_id = manufacturer_link.id;
 
                 CREATE VIEW stocktake_line_view AS
                 SELECT
                     stocktake_line.*,
+                    item_link.item_id as item_id,
                     donor_link.name_id as donor_id,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
                     stocktake_line
+                JOIN
+                    item_link ON stocktake_line.item_link_id = item_link.id
                 LEFT JOIN
                     name_link AS donor_link ON stocktake_line.donor_link_id = donor_link.id
                 LEFT JOIN
@@ -226,11 +246,14 @@ impl ViewMigrationFragment for ViewMigration {
                 SELECT
                     vaccination.*,
                     patient_link.name_id as patient_id,
+                    vaccination_item_link.item_id as item_id,
                     facility_link.name_id as facility_name_id
                 FROM
                     vaccination
                 JOIN
                     name_link AS patient_link ON vaccination.patient_link_id = patient_link.id
+                LEFT JOIN
+                    item_link AS vaccination_item_link ON vaccination.item_link_id = vaccination_item_link.id
                 LEFT JOIN
                     name_link AS facility_link ON vaccination.facility_name_link_id = facility_link.id;
 
@@ -246,9 +269,12 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW item_variant_view AS
                 SELECT
                     item_variant.*,
+                    item_link.item_id as item_id,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
                     item_variant
+                JOIN
+                    item_link ON item_variant.item_link_id = item_link.id
                 LEFT JOIN
                     name_link AS manufacturer_link ON item_variant.manufacturer_link_id = manufacturer_link.id;
 
@@ -260,6 +286,78 @@ impl ViewMigrationFragment for ViewMigration {
                     program_event
                 LEFT JOIN
                     name_link AS patient_link ON program_event.patient_link_id = patient_link.id;
+
+                CREATE VIEW requisition_line_view AS
+                SELECT
+                    requisition_line.*,
+                    item_link.item_id as item_id
+                FROM
+                    requisition_line
+                JOIN
+                    item_link ON requisition_line.item_link_id = item_link.id;
+
+                CREATE VIEW master_list_line_view AS
+                SELECT
+                    master_list_line.*,
+                    item_link.item_id as item_id
+                FROM
+                    master_list_line
+                JOIN
+                    item_link ON master_list_line.item_link_id = item_link.id;
+
+                CREATE VIEW rnr_form_line_view AS
+                SELECT
+                    rnr_form_line.*,
+                    item_link.item_id as item_id
+                FROM
+                    rnr_form_line
+                JOIN
+                    item_link ON rnr_form_line.item_link_id = item_link.id;
+
+                CREATE VIEW item_category_join_view AS
+                SELECT
+                    item_category_join.*,
+                    item_link.item_id as item_id
+                FROM
+                    item_category_join
+                JOIN
+                    item_link ON item_category_join.item_link_id = item_link.id;
+
+                CREATE VIEW item_warning_join_view AS
+                SELECT
+                    item_warning_join.*,
+                    item_link.item_id as item_id
+                FROM
+                    item_warning_join
+                JOIN
+                    item_link ON item_warning_join.item_link_id = item_link.id;
+
+                CREATE VIEW item_direction_view AS
+                SELECT
+                    item_direction.*,
+                    item_link.item_id as item_id
+                FROM
+                    item_direction
+                JOIN
+                    item_link ON item_direction.item_link_id = item_link.id;
+
+                CREATE VIEW item_store_join_view AS
+                SELECT
+                    item_store_join.*,
+                    item_link.item_id as item_id
+                FROM
+                    item_store_join
+                JOIN
+                    item_link ON item_store_join.item_link_id = item_link.id;
+
+                CREATE VIEW vaccine_course_item_view AS
+                SELECT
+                    vaccine_course_item.*,
+                    item_link.item_id as item_id
+                FROM
+                    vaccine_course_item
+                JOIN
+                    item_link ON vaccine_course_item.item_link_id = item_link.id;
             "#
         )?;
 

@@ -544,7 +544,7 @@ pub fn generate_lines_and_stock_lines(
         )?;
 
         let InvoiceLineRow {
-            item_link_id,
+            item_id,
             cost_price_per_pack,
             sell_price_per_pack,
             number_of_packs,
@@ -567,7 +567,7 @@ pub fn generate_lines_and_stock_lines(
 
         let stock_line = StockLineRow {
             id: stock_line_id,
-            item_link_id,
+            item_id,
             store_id: store_id.to_string(),
             location_id,
             batch,

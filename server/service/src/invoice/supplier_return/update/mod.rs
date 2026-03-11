@@ -180,7 +180,7 @@ mod test {
             InvoiceLineRow {
                 id: "new_return_line_no_stock_line".to_string(),
                 invoice_id: new_return().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }

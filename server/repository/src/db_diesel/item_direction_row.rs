@@ -1,6 +1,6 @@
 use super::item_direction_row::item_direction::dsl::*;
-use super::item_link;
 use super::item_row::item;
+use crate::diesel_macros::define_linked_tables;
 use crate::Delete;
 use crate::RepositoryError;
 use crate::StorageConnection;
@@ -8,30 +8,36 @@ use crate::Upsert;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    item_direction (id) {
-        id -> Text,
-        item_link_id -> Text,
+define_linked_tables! {
+    view: item_direction = "item_direction_view",
+    core: item_direction_with_links = "item_direction",
+    struct: ItemDirectionRow,
+    repo: ItemDirectionRowRepository,
+    shared: {
         directions -> Text,
         priority -> BigInt,
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
     }
 }
 
+joinable!(item_direction -> item (item_id));
+allow_tables_to_appear_in_same_query!(item_direction, item);
+
 #[derive(
-    Clone, Default, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+    Clone, Default, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize,
 )]
 #[diesel(table_name = item_direction)]
-#[diesel(treat_none_as_null = true)]
 pub struct ItemDirectionRow {
     pub id: String,
-    pub item_link_id: String,
     pub directions: String,
     pub priority: i64,
+    // Resolved from item_link - must be last to match view column order
+    pub item_id: String,
 }
-
-joinable!(item_direction -> item_link (item_link_id));
-allow_tables_to_appear_in_same_query!(item_direction, item);
-allow_tables_to_appear_in_same_query!(item_direction, item_link);
 
 pub struct ItemDirectionRowRepository<'a> {
     connection: &'a StorageConnection,
@@ -43,12 +49,7 @@ impl<'a> ItemDirectionRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ItemDirectionRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(item_direction)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
@@ -69,8 +70,11 @@ impl<'a> ItemDirectionRowRepository<'a> {
     }
 
     pub fn delete(&self, item_direction_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(item_direction.filter(id.eq(item_direction_id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            item_direction_with_links::table
+                .filter(item_direction_with_links::id.eq(item_direction_id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
@@ -78,10 +82,9 @@ impl<'a> ItemDirectionRowRepository<'a> {
 impl Upsert for ItemDirectionRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ItemDirectionRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(None)
     }
 
-    // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ItemDirectionRowRepository::new(con).find_one_by_id(&self.id),
@@ -98,7 +101,6 @@ impl Delete for ItemDirectionRowDelete {
         Ok(None)
     }
 
-    // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             ItemDirectionRowRepository::new(con).find_one_by_id(&self.0),

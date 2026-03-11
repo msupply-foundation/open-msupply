@@ -83,7 +83,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             id: uuid(),
             invoice_id: base_invoice_row.id.clone(),
             r#type: InvoiceLineType::StockIn,
-            item_link_id: uuid(),
+            item_id: uuid(),
             item_name: uuid(),
             item_code: uuid(),
             stock_line_id: None,
@@ -178,7 +178,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         result.push(TestStepData {
             central_upsert: json!({
                 "item": [{
-                    "ID": base_invoice_line_row.item_link_id,
+                    "ID": base_invoice_line_row.item_id,
                     "name": base_invoice_line_row.item_name,
                     "code": base_invoice_line_row.item_code,
                     "type_of": "general"
@@ -225,7 +225,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         // STEP 2 - mutate
         let stock_line_row = StockLineRow {
             id: uuid(),
-            item_link_id: base_invoice_line_row.item_link_id,
+            item_id: base_invoice_line_row.item_id,
             store_id: new_site_properties.store_id.clone(),
             batch: Some("some batch".to_string()),
             pack_size: 20.0,

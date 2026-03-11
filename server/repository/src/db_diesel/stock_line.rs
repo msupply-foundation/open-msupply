@@ -1,6 +1,5 @@
 use super::{
     barcode_row::barcode,
-    item_link_row::item_link,
     item_row::item,
     item_variant::item_variant_row::{item_variant, ItemVariantRow},
     location_row::location,
@@ -18,7 +17,7 @@ use crate::{
     },
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow,
+    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow,
     MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
 };
 
@@ -73,7 +72,7 @@ pub type StockLineSort = Sort<StockLineSortField>;
 
 type StockLineJoin = (
     StockLineRow,
-    (ItemLinkRow, ItemRow),
+    ItemRow,
     Option<ItemVariantRow>,
     Option<LocationRow>,
     Option<NameRow>,
@@ -285,7 +284,7 @@ impl<'a> StockLineRepository<'a> {
 #[diesel::dsl::auto_type]
 fn query() -> _ {
     stock_line::table
-        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(item::table)
         .left_join(item_variant::table)
         .left_join(location::table)
         .left_join(name::table)
@@ -298,7 +297,7 @@ type BoxedStockLineQuery = IntoBoxed<'static, query, DBType>;
 fn to_domain(
     (
         stock_line_row,
-        (_, item_row),
+        item_row,
         item_variant_row,
         location_row,
         supplier_name_row,
@@ -428,7 +427,7 @@ mod test {
             StockLineRow {
                 id: "line1".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 expiry_date: Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap()),
                 ..Default::default()
             }
@@ -438,7 +437,7 @@ mod test {
             StockLineRow {
                 id: "line2".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap()),
                 ..Default::default()
             }
@@ -448,7 +447,7 @@ mod test {
             StockLineRow {
                 id: "line3".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 expiry_date: None,
                 ..Default::default()
             }
@@ -505,7 +504,7 @@ mod test {
             StockLineRow {
                 id: "line1".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 expiry_date: Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap()),
                 available_number_of_packs: 0.0,
                 ..Default::default()
@@ -517,7 +516,7 @@ mod test {
             StockLineRow {
                 id: "line2".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap()),
                 available_number_of_packs: 1.0,
                 ..Default::default()

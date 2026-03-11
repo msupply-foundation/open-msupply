@@ -223,7 +223,7 @@ mod test {
             InvoiceLineRow {
                 id: "no_stock_line".to_string(),
                 invoice_id: mock_supplier_return_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -421,7 +421,7 @@ mod test {
         fn stock_line_store_a() -> StockLineRow {
             StockLineRow {
                 id: "stock_line_store_a".to_string(),
-                item_link_id: "test_item".to_string(),
+                item_id: "test_item".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 5.0,
                 ..Default::default()
@@ -430,7 +430,7 @@ mod test {
         fn stock_line_store_b() -> StockLineRow {
             StockLineRow {
                 id: "stock_line_store_b".to_string(),
-                item_link_id: "test_item".to_string(),
+                item_id: "test_item".to_string(),
                 store_id: "store_b".to_string(),
                 available_number_of_packs: 5.0,
                 ..Default::default()
@@ -482,7 +482,7 @@ mod test {
         fn unavailable_stock_line() -> StockLineRow {
             StockLineRow {
                 id: "unavailable_stock_line".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 0.0,
                 ..Default::default()
@@ -493,7 +493,7 @@ mod test {
             InvoiceLineRow {
                 id: "item_a_return_line".to_string(),
                 invoice_id: mock_supplier_return_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 stock_line_id: Some(unavailable_stock_line().id),
                 number_of_packs: 1.0,
                 note: Some("test note".to_string()),

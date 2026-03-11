@@ -308,7 +308,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         let result = InvoiceLineRow {
             id,
             invoice_id,
-            item_link_id: item_id,
+            item_id: item_id,
             item_name,
             item_code,
             stock_line_id,
@@ -380,7 +380,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 InvoiceLineRow {
                     id,
                     invoice_id,
-                    item_link_id: _,
+                    item_id: _,
                     item_name,
                     item_code,
                     stock_line_id,

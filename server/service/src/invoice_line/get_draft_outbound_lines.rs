@@ -439,7 +439,7 @@ mod test {
             MockData {
                 invoice_lines: vec![InvoiceLineRow {
                     id: "placeholder".to_string(),
-                    item_link_id: mock_item_b().id,
+                    item_id: mock_item_b().id,
                     invoice_id: mock_outbound_shipment_a().id,
                     number_of_packs: 7.0,
                     pack_size: 1.0,
@@ -490,7 +490,7 @@ mod test {
     //         MockData {
     //             stock_lines: vec![StockLineRow {
     //                 id: "stock_line_1".to_string(),
-    //                 item_link_id: mock_item_b().id,
+    //                 item_id: mock_item_b().id,
     //                 store_id: mock_store_b().id,
     //                 available_number_of_packs: 10.0,
     //                 total_number_of_packs: 10.0,

@@ -65,7 +65,7 @@ pub fn mock_stocktake_line_finalised() -> StocktakeLineRow {
         stock_line_id: Some(stock_line.id),
         snapshot_number_of_packs: 11.0,
         counted_number_of_packs: Some(11.0),
-        item_link_id: stock_line.item_link_id,
+        item_id: stock_line.item_id,
         ..Default::default()
     }
 }
@@ -88,7 +88,7 @@ pub fn mock_locked_stocktake_line() -> StocktakeLineRow {
         id: "locked stocktake_line_row".to_string(),
         stocktake_id: mock_locked_stocktake().id,
         stock_line_id: Some(stock_line.id),
-        item_link_id: stock_line.item_link_id,
+        item_id: stock_line.item_id,
         ..Default::default()
     }
 }
@@ -110,7 +110,7 @@ pub fn mock_stocktake_stock_surplus() -> StocktakeRow {
 pub fn mock_stock_line_stocktake_surplus() -> StockLineRow {
     StockLineRow {
         id: String::from("mock_stock_line_stocktake_surplus"),
-        item_link_id: String::from("item_a"),
+        item_id: String::from("item_a"),
         location_id: None,
         store_id: String::from("store_a"),
         batch: Some(String::from("item_a_batch_b")),
@@ -135,7 +135,7 @@ pub fn mock_stocktake_line_stock_surplus() -> StocktakeLineRow {
         stock_line_id: Some(mock_stock_line_stocktake_surplus().id),
         snapshot_number_of_packs: stock_line.total_number_of_packs,
         counted_number_of_packs: Some(stock_line.total_number_of_packs + 10.0),
-        item_link_id: stock_line.item_link_id,
+        item_id: stock_line.item_id,
         ..Default::default()
     }
 }
@@ -158,7 +158,7 @@ pub fn mock_stocktake_stock_deficit() -> StocktakeRow {
 pub fn mock_stock_line_stocktake_deficit() -> StockLineRow {
     StockLineRow {
         id: String::from("mock_stock_line_stocktake_deficit"),
-        item_link_id: String::from("item_a"),
+        item_id: String::from("item_a"),
         location_id: None,
         store_id: String::from("store_a"),
         batch: Some(String::from("item_a_batch_b")),
@@ -183,7 +183,7 @@ pub fn mock_stocktake_line_stock_deficit() -> StocktakeLineRow {
         stock_line_id: Some(mock_stock_line_stocktake_deficit().id),
         snapshot_number_of_packs: stock_line.total_number_of_packs,
         counted_number_of_packs: Some(stock_line.total_number_of_packs - 10.0),
-        item_link_id: mock_stock_line_stocktake_deficit().item_link_id,
+        item_id: mock_stock_line_stocktake_deficit().item_id,
         ..Default::default()
     }
 }
@@ -227,7 +227,7 @@ pub fn mock_stocktake_line_no_count_change() -> StocktakeLineRow {
         stock_line_id: Some(mock_stock_line_b().id),
         snapshot_number_of_packs: stock_line.total_number_of_packs,
         counted_number_of_packs: Some(stock_line.total_number_of_packs),
-        item_link_id: stock_line.item_link_id,
+        item_id: stock_line.item_id,
         ..Default::default()
     }
 }
@@ -268,7 +268,7 @@ pub fn mock_stocktake_line_new_stock_line() -> StocktakeLineRow {
         id: "mock_stocktake_line_new_stock_line".to_string(),
         stocktake_id: mock_stocktake_new_stock_line().id,
         counted_number_of_packs: Some(55.0),
-        item_link_id: mock_item_a().id,
+        item_id: mock_item_a().id,
         expiry_date: Some(NaiveDate::from_ymd_opt(2022, 12, 14).unwrap()),
         batch: Some("batch".to_string()),
         pack_size: Some(10.0),

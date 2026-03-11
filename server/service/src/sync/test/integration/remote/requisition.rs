@@ -50,7 +50,7 @@ impl SyncRecordTester for RequisitionRecordTester {
         let requisition_line_row_1 = RequisitionLineRow {
             id: uuid(),
             requisition_id: requisition_row_1.id.clone(),
-            item_link_id: uuid(),
+            item_id: uuid(),
             item_name: "test item".to_string(),
             requested_quantity: 50.0,
             suggested_quantity: 10.0,
@@ -87,7 +87,7 @@ impl SyncRecordTester for RequisitionRecordTester {
         result.push(TestStepData {
             central_upsert: json!({
                 "item": [{
-                    "ID": requisition_line_row_1.item_link_id,
+                    "ID": requisition_line_row_1.item_id,
                     "type_of": "general"
                 }],
                 "name": [{

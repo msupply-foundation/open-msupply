@@ -398,7 +398,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         InvoiceLineRow {
             id: "invoice_line".to_string(),
             invoice_id: invoice().id,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             ..Default::default()
         }
     }
@@ -416,7 +416,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         RequisitionLineRow {
             id: "requisition_line".to_string(),
             requisition_id: requisition().id,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             ..Default::default()
         }
     }

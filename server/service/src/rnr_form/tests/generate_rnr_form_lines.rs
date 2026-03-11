@@ -47,7 +47,7 @@ mod generate_rnr_form_lines {
                 ],
                 // Current stock on hand for item, 3 packs
                 stock_lines: vec![StockLineRow {
-                    item_link_id: item_query_test1().id,
+                    item_id: item_query_test1().id,
                     store_id: mock_store_a().id,
                     pack_size: 1.0,
                     total_number_of_packs: 3.0,
@@ -93,7 +93,7 @@ mod generate_rnr_form_lines {
             RnRFormLineRow {
                 id: line_id,
                 rnr_form_id: rnr_form_id.clone(),
-                item_link_id: item_query_test1().id,
+                item_id: item_query_test1().id,
                 requisition_line_id: None,
                 initial_balance: 2.0,
                 snapshot_quantity_received: 5.0,
@@ -140,7 +140,7 @@ mod generate_rnr_form_lines {
             RnRFormLineRow {
                 id: line_id,
                 rnr_form_id,
-                item_link_id: item_query_test1().id,
+                item_id: item_query_test1().id,
                 initial_balance: 3.0,
                 final_balance: 3.0,
                 ..Default::default()
@@ -205,7 +205,7 @@ mod generate_rnr_form_lines {
                     invoice_line_inbound(),
                 ],
                 stock_lines: vec![StockLineRow {
-                    item_link_id: item_query_test1().id,
+                    item_id: item_query_test1().id,
                     store_id: mock_store_a().id,
                     pack_size: 1.0,
                     total_number_of_packs: 10.0,
@@ -309,7 +309,7 @@ mod generate_rnr_form_lines {
                 stock_lines: vec![
                     StockLineRow {
                         id: "stock_line_1".to_string(),
-                        item_link_id: item_query_test1().id,
+                        item_id: item_query_test1().id,
                         store_id: mock_store_a().id,
                         pack_size: 1.0,
                         available_number_of_packs: 10.0,
@@ -318,7 +318,7 @@ mod generate_rnr_form_lines {
                     },
                     StockLineRow {
                         id: "stock_line_2".to_string(),
-                        item_link_id: item_query_test1().id,
+                        item_id: item_query_test1().id,
                         store_id: mock_store_a().id,
                         pack_size: 1.0,
                         available_number_of_packs: 3.0,
@@ -327,7 +327,7 @@ mod generate_rnr_form_lines {
                     },
                     StockLineRow {
                         id: "stock_line_3".to_string(),
-                        item_link_id: item_query_test1().id,
+                        item_id: item_query_test1().id,
                         store_id: mock_store_a().id,
                         pack_size: 1.0,
                         available_number_of_packs: 2.0,
@@ -336,7 +336,7 @@ mod generate_rnr_form_lines {
                     },
                     StockLineRow {
                         id: "stock_line_other_item_no_expiry".to_string(),
-                        item_link_id: mock_item_a().id,
+                        item_id: mock_item_a().id,
                         store_id: mock_store_a().id,
                         pack_size: 1.0,
                         available_number_of_packs: 2.0,
@@ -424,21 +424,21 @@ mod generate_rnr_form_lines {
                     RnRFormLineRow {
                         id: "rnr_form_1_line_a".to_string(),
                         rnr_form_id: "rnr_form_1".to_string(),
-                        item_link_id: item_query_test1().id,
+                        item_id: item_query_test1().id,
                         adjusted_quantity_consumed: 1.0,
                         ..Default::default()
                     },
                     RnRFormLineRow {
                         id: "rnr_form_2_line_a".to_string(),
                         rnr_form_id: "rnr_form_2".to_string(),
-                        item_link_id: item_query_test1().id,
+                        item_id: item_query_test1().id,
                         adjusted_quantity_consumed: 2.0,
                         ..Default::default()
                     },
                     RnRFormLineRow {
                         id: "rnr_form_3_line_a".to_string(),
                         rnr_form_id: "rnr_form_3".to_string(),
-                        item_link_id: item_query_test1().id,
+                        item_id: item_query_test1().id,
                         adjusted_quantity_consumed: 3.0,
                         ..Default::default()
                     },
@@ -529,7 +529,7 @@ mod generate_rnr_form_lines {
         InvoiceLineRow {
             id: "adjust_up_invoice_line".to_string(),
             invoice_id: "adjust_up".to_string(),
-            item_link_id: item_query_test1().id,
+            item_id: item_query_test1().id,
             pack_size: 1.0,
             r#type: InvoiceLineType::StockIn,
             number_of_packs: 1.0,
@@ -554,7 +554,7 @@ mod generate_rnr_form_lines {
         InvoiceLineRow {
             id: "outbound_invoice_line".to_string(),
             invoice_id: "outbound".to_string(),
-            item_link_id: item_query_test1().id,
+            item_id: item_query_test1().id,
             // check quantities are correct with diff pack sizes
             pack_size: 3.0,
             r#type: InvoiceLineType::StockOut,
@@ -580,7 +580,7 @@ mod generate_rnr_form_lines {
         InvoiceLineRow {
             id: "inbound_invoice_line".to_string(),
             invoice_id: "inbound".to_string(),
-            item_link_id: item_query_test1().id,
+            item_id: item_query_test1().id,
             pack_size: 1.0,
             r#type: InvoiceLineType::StockIn,
             number_of_packs: 5.0,
@@ -604,7 +604,7 @@ mod generate_rnr_form_lines {
         InvoiceLineRow {
             id: "adjust_down_invoice_line".to_string(),
             invoice_id: "adjust_down".to_string(),
-            item_link_id: item_query_test1().id,
+            item_id: item_query_test1().id,
             pack_size: 1.0,
             r#type: InvoiceLineType::StockOut,
             number_of_packs: 2.0,
