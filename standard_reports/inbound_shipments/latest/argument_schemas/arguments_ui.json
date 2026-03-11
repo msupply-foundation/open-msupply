@@ -26,7 +26,8 @@
       "options": {
         "dateOnly": true,
         "disableFuture": true,
-        "min": "#/properties/after"
+        "min": "#/properties/after",
+        "dateAsEndOfDay": true
       }
     }
   ]

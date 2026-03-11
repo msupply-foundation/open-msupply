@@ -123,7 +123,7 @@ fn process_change_log(
             .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
     };
 
-    // TODO: MERGE: Ignore if invoice name_link_id points to store's name. Supplying to itself! (Can happen with names are merge into stores)
+    // TODO: MERGE: Ignore if invoice name_id points to store's name. Supplying to itself! (Can happen with names are merge into stores)
 
     // Try record against all of the processors
     for processor in processors.iter() {

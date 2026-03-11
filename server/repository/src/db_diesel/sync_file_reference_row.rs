@@ -113,7 +113,10 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
-        self.insert_changelog(sync_file_reference_row.id.to_string(), RowActionType::Upsert)
+        self.insert_changelog(
+            sync_file_reference_row.id.to_string(),
+            RowActionType::Upsert,
+        )
     }
 
     fn insert_changelog(

@@ -67,9 +67,6 @@ impl PluginInstance {
             plugin_data.extend(result.plugin_data.unwrap_or_default());
         }
 
-        Ok((
-            lines,
-            plugin_data,
-        ))
+        Ok((lines, plugin_data))
     }
 }

@@ -7,6 +7,7 @@ import {
   TextWithLabelRow,
   CurrencyInput,
   ExpiryDateInput,
+  DateTimePickerInput,
   useTranslation,
   Box,
   IconButton,
@@ -313,7 +314,13 @@ export const StockLineForm = ({
                 <StyledInputRow
                   label={t('label.barcode')}
                   Input={
-                    <Box style={{ width: 162 }}>
+                    <Box
+                      display="flex"
+                      flexDirection="row"
+                      alignItems="center"
+                      gap={1}
+                      style={{ width: 162 }}
+                    >
                       <BufferedTextInput
                         value={draft.barcode ?? ''}
                         onChange={e => onUpdate({ barcode: e.target.value })}
@@ -355,6 +362,22 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacture-date')}
+                  Input={
+                    <DateTimePickerInput
+                      value={DateUtils.getNaiveDate(draft.manufactureDate)}
+                      onChange={date =>
+                        onUpdate({
+                          manufactureDate: date
+                            ? Formatter.naiveDate(date)
+                            : null,
+                        })
+                      }
+                      width={160}
+                    />
+                  }
+                />
                 {plugins.stockLine?.editViewField.map((Plugin, index) => (
                   <Plugin key={index} stockLine={draft} events={pluginEvents} />
                 ))}

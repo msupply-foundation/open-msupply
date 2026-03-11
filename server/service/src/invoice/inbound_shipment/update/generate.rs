@@ -1,9 +1,9 @@
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, LocationMovementRow,
-    Name, RepositoryError,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
+    LocationMovementRow, Name, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
@@ -53,7 +53,7 @@ pub(crate) fn generate(
 
     let input_donor_id = match patch.default_donor.clone() {
         Some(update) => update.donor_id,
-        None => update_invoice.default_donor_link_id.clone(),
+        None => update_invoice.default_donor_id.clone(),
     };
 
     update_invoice.user_id = Some(ctx.user_id.clone());
@@ -65,7 +65,7 @@ pub(crate) fn generate(
         .tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
-    update_invoice.default_donor_link_id = input_donor_id.clone();
+    update_invoice.default_donor_id = input_donor_id.clone();
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status()
@@ -73,13 +73,16 @@ pub(crate) fn generate(
 
     if let Some(other_party) = other_party_option {
         update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        // Assigning name_row id as name_link is ok, input name_row should always an active name
-        // - only querying needs to go via link table
-        update_invoice.name_link_id = other_party.name_row.id;
+        update_invoice.name_id = other_party.name_row.id;
     }
 
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = patch.currency_rate.unwrap_or(update_invoice.currency_rate);
+
+    // Already validated in validate
+    if let Some(delivered_datetime) = patch.delivered_datetime {
+        update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
+    }
 
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
@@ -88,7 +91,7 @@ pub(crate) fn generate(
                 store_id: &update_invoice.store_id,
                 id: &update_invoice.id,
                 tax_percentage: update_invoice.tax_percentage,
-                supplier_id: &update_invoice.name_link_id,
+                supplier_id: &update_invoice.name_id,
                 currency_id: update_invoice.currency_id.clone(),
                 currency_rate: &update_invoice.currency_rate,
             },
@@ -350,6 +353,13 @@ pub fn generate_lines_and_stock_lines(
         if invoice_line.number_of_packs <= 0.0 {
             continue;
         }
+        // Rejected and pending lines should not create stock entries
+        if matches!(
+            invoice_line.status,
+            Some(InvoiceLineStatus::Rejected | InvoiceLineStatus::Pending)
+        ) {
+            continue;
+        }
         let mut line = invoice_line.clone();
         let stock_line_id = line.stock_line_id.unwrap_or(uuid());
 
@@ -375,7 +385,7 @@ pub fn generate_lines_and_stock_lines(
             batch,
             expiry_date,
             pack_size,
-            donor_link_id,
+            donor_id: donor_link_id,
             note,
             vvm_status_id,
             campaign_id,
@@ -398,14 +408,15 @@ pub fn generate_lines_and_stock_lines(
             total_number_of_packs: number_of_packs,
             expiry_date,
             note,
-            supplier_link_id: Some(supplier_id.to_string()),
+            supplier_id: Some(supplier_id.to_string()),
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             vvm_status_id,
             campaign_id,
             program_id,
             volume_per_pack,
             total_volume: volume_per_pack * number_of_packs,
+            manufacture_date: None,
             on_hold: false,
             barcode_id: None,
         };
@@ -457,21 +468,21 @@ fn update_donor_on_lines_and_stock(
         let mut stock_line = invoice_line.stock_line_option;
 
         let new_donor_id = match donor_update_method.clone() {
-            ApplyDonorToInvoiceLines::None => line.donor_link_id.clone(),
-            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_link_id {
+            ApplyDonorToInvoiceLines::None => line.donor_id.clone(),
+            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_id {
                 Some(_) => updated_default_donor_id.clone(),
                 None => None,
             },
             ApplyDonorToInvoiceLines::AssignIfNone => line
-                .donor_link_id
+                .donor_id
                 .clone()
                 .or(updated_default_donor_id.clone()),
             ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
         };
 
-        line.donor_link_id = new_donor_id.clone();
+        line.donor_id = new_donor_id.clone();
         if let Some(ref mut stock_line) = stock_line {
-            stock_line.donor_link_id = new_donor_id;
+            stock_line.donor_id = new_donor_id;
         }
 
         result.push(LineAndStockLine { line, stock_line });

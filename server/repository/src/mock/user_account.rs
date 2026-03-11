@@ -77,7 +77,6 @@ pub fn mock_user_store_join_empty_hash_password_store_a() -> UserStoreJoinRow {
     }
 }
 
-
 // permissions
 
 pub fn mock_user_permission_a1() -> UserPermissionRow {
@@ -121,7 +120,11 @@ pub fn mock_user_permission_b1() -> UserPermissionRow {
 }
 
 pub fn mock_user_accounts() -> Vec<UserAccountRow> {
-    vec![mock_user_account_a(), mock_user_account_b(), mock_user_empty_hashed_password()]
+    vec![
+        mock_user_account_a(),
+        mock_user_account_b(),
+        mock_user_empty_hashed_password(),
+    ]
 }
 
 pub fn mock_user_store_joins() -> Vec<UserStoreJoinRow> {

@@ -6,9 +6,9 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::InvoiceLineNode;
+use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
 
-use repository::InvoiceLine;
+use repository::{InvoiceLine, InvoiceLineStatus};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_in_line::{
     StockInType, UpdateStockInLine as ServiceInput, UpdateStockInLineError as ServiceError,
@@ -29,6 +29,7 @@ pub struct UpdateInput {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdateInput<NaiveDate>>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
@@ -41,6 +42,7 @@ pub struct UpdateInput {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
+    pub status: Option<Option<InvoiceLineStatusType>>,
 }
 
 #[derive(SimpleObject)]
@@ -101,6 +103,7 @@ impl UpdateInput {
             pack_size,
             batch,
             expiry_date,
+            manufacture_date,
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
@@ -115,6 +118,7 @@ impl UpdateInput {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            status,
         } = self;
 
         ServiceInput {
@@ -127,6 +131,9 @@ impl UpdateInput {
             batch,
             expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
                 value: expiry_date.value,
+            }),
+            manufacture_date: manufacture_date.map(|manufacture_date| NullableUpdate {
+                value: manufacture_date.value,
             }),
             sell_price_per_pack,
             cost_price_per_pack,
@@ -153,6 +160,9 @@ impl UpdateInput {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            status: status.map(|status| NullableUpdate {
+                value: status.map(|s| InvoiceLineStatus::from(s)),
+            }),
         }
     }
 }
@@ -183,6 +193,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             )))
         }
         ServiceError::CannotEditFinalised => {
+            return Ok(UpdateErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+        ServiceError::CannotChangeLineStatusOfReceivedInvoice => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))

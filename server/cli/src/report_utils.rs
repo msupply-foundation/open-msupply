@@ -50,7 +50,10 @@ pub enum ReportError {
 
 use ReportError as Error;
 
-use crate::{helpers::{run_command_with_error, CommandError}, YARN_COMMAND};
+use crate::{
+    helpers::{run_command_with_error, CommandError},
+    YARN_COMMAND,
+};
 
 pub fn generate_reports_recursive(
     reports_data: &mut ReportsData,
@@ -108,6 +111,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
 
     let context = manifest.context;
     let report_name = manifest.name;
+    let report_description = manifest.description;
     let is_custom = manifest.is_custom;
     let id = format!("{code}_{id_version}_{is_custom}");
     let sub_context: Option<String> = manifest.sub_context;
@@ -171,6 +175,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     Ok(ReportData {
         id,
         name: report_name,
+        description: report_description,
         template: report_definition,
         context,
         sub_context,
@@ -198,8 +203,12 @@ fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<S
     )
     .map_err(|e| Error::FailedToYarnInstall(convert_dir.clone(), e))?;
 
-    run_command_with_error(Command::new(YARN_COMMAND).arg("build").current_dir(&convert_dir))
-        .map_err(|e| Error::FailedToBuildConvertData(convert_dir.clone(), e))?;
+    run_command_with_error(
+        Command::new(YARN_COMMAND)
+            .arg("build")
+            .current_dir(&convert_dir),
+    )
+    .map_err(|e| Error::FailedToBuildConvertData(convert_dir.clone(), e))?;
 
     let bundle_path: PathBuf = convert_dir
         .join("dist")
@@ -219,6 +228,7 @@ pub struct Manifest {
     pub context: ContextType,
     pub sub_context: Option<String>,
     pub name: String,
+    pub description: Option<String>,
     pub header: Option<String>,
     pub footer: Option<String>,
     pub queries: Option<ManifestQueries>,

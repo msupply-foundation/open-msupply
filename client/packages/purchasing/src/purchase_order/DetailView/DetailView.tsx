@@ -18,7 +18,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
 import { PurchaseOrderLineFragment, usePurchaseOrder } from '../api';
-import { Details, GoodsReceived, Documents } from './Tabs';
+import { Details, Documents, InboundShipments } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -94,8 +94,8 @@ const DetailViewInner = () => {
       columns,
       data: lines,
       initialSort: { key: 'lineNumber', dir: 'asc' },
-      getIsRestrictedRow: getClosedLine,
-      getIsPlaceholderRow: getPlaceholderRow,
+      getIsRestrictedRow: row => getClosedLine(row.original),
+      getIsPlaceholderRow: row => getPlaceholderRow(row.original),
       manualFiltering: true,
       noDataElement: (
         <NothingHere
@@ -111,8 +111,8 @@ const DetailViewInner = () => {
       value: t('label.general'),
     },
     {
-      Component: <GoodsReceived />,
-      value: t('label.goods-received'),
+      Component: <InboundShipments />,
+      value: t('label.inbound-shipment'),
     },
     {
       Component: <Details draft={draft} onChange={handleChange} />,

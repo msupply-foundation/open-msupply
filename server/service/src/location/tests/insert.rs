@@ -28,7 +28,9 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
+            .query_by_filter(
+                LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())),
+            )
             .unwrap();
 
         assert_eq!(

@@ -26,7 +26,12 @@ The toggle report command can be useful to deactivate standard reports when a cl
 
 ## Workflows
 
-- Always re-generate the relevant files after you update a report, or after you merge in a branch when you're working on reports - otherwise the server will not run. To build the reports: `cd open-msupply/server` then `cargo run --bin remote_server_cli build-reports`.
+#### To Update a Report
+
+Always re-generate the relevant files after you update a report, or after you merge in a branch when you're working on reports - otherwise the server will not run. To do this:
+
+1. If you have not run the reports before or after version changes, install the dependencies: `cd open-msupply/standard_reports` then `yarn`
+2. To build the reports: `cd open-msupply/server` then `cargo run --bin remote_server_cli build-reports`.
 
 #### To Make a New Report
 
