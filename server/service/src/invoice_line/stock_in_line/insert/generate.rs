@@ -81,7 +81,7 @@ pub fn generate(
             StockLineInput {
                 stock_line_id: input.stock_line_id.clone(),
                 store_id: existing_invoice_row.store_id.clone(),
-                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                supplier_id: existing_invoice_row.name_id.clone(),
                 on_hold: input.stock_on_hold,
                 barcode_id: barcode_option.clone().map(|b| b.id.clone()),
                 overwrite_stock_levels: should_overwrite_stock_levels,
@@ -127,6 +127,7 @@ fn generate_line(
         pack_size,
         batch,
         expiry_date,
+        manufacture_date,
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
@@ -154,7 +155,7 @@ fn generate_line(
     }: ItemRow,
     InvoiceRow {
         tax_percentage,
-        default_donor_link_id: default_donor_id,
+        default_donor_id,
         purchase_order_id,
         ..
     }: InvoiceRow,
@@ -181,6 +182,7 @@ fn generate_line(
         pack_size,
         batch,
         expiry_date,
+        manufacture_date,
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineType::StockIn,
@@ -194,7 +196,7 @@ fn generate_line(
         note,
         item_variant_id,
         vvm_status_id,
-        donor_link_id: donor_id,
+        donor_id: donor_id,
         campaign_id,
         program_id,
         shipped_number_of_packs,

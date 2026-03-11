@@ -1969,16 +1969,13 @@ export function getSdk(
   return {
     invoices(
       variables: InvoicesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InvoicesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InvoicesQuery>({
-            document: InvoicesDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<InvoicesQuery>(InvoicesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'invoices',
         'query',
@@ -1987,16 +1984,13 @@ export function getSdk(
     },
     invoice(
       variables: InvoiceQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InvoiceQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InvoiceQuery>({
-            document: InvoiceDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<InvoiceQuery>(InvoiceDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'invoice',
         'query',
@@ -2005,17 +1999,15 @@ export function getSdk(
     },
     outboundByNumber(
       variables: OutboundByNumberQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<OutboundByNumberQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<OutboundByNumberQuery>({
-            document: OutboundByNumberDocument,
+          client.request<OutboundByNumberQuery>(
+            OutboundByNumberDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'outboundByNumber',
         'query',
         variables
@@ -2023,16 +2015,13 @@ export function getSdk(
     },
     invoiceCounts(
       variables: InvoiceCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InvoiceCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InvoiceCountsQuery>({
-            document: InvoiceCountsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'invoiceCounts',
         'query',
@@ -2041,16 +2030,13 @@ export function getSdk(
     },
     barcodeByGtin(
       variables: BarcodeByGtinQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<BarcodeByGtinQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<BarcodeByGtinQuery>({
-            document: BarcodeByGtinDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
+          client.request<BarcodeByGtinQuery>(BarcodeByGtinDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
           }),
         'barcodeByGtin',
         'query',
@@ -2059,17 +2045,15 @@ export function getSdk(
     },
     insertOutboundShipment(
       variables: InsertOutboundShipmentMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertOutboundShipmentMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertOutboundShipmentMutation>({
-            document: InsertOutboundShipmentDocument,
+          client.request<InsertOutboundShipmentMutation>(
+            InsertOutboundShipmentDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertOutboundShipment',
         'mutation',
         variables
@@ -2077,17 +2061,15 @@ export function getSdk(
     },
     updateOutboundShipment(
       variables: UpdateOutboundShipmentMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateOutboundShipmentMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateOutboundShipmentMutation>({
-            document: UpdateOutboundShipmentDocument,
+          client.request<UpdateOutboundShipmentMutation>(
+            UpdateOutboundShipmentDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateOutboundShipment',
         'mutation',
         variables
@@ -2095,17 +2077,15 @@ export function getSdk(
     },
     updateOutboundShipmentName(
       variables: UpdateOutboundShipmentNameMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateOutboundShipmentNameMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateOutboundShipmentNameMutation>({
-            document: UpdateOutboundShipmentNameDocument,
+          client.request<UpdateOutboundShipmentNameMutation>(
+            UpdateOutboundShipmentNameDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'updateOutboundShipmentName',
         'mutation',
         variables
@@ -2113,17 +2093,15 @@ export function getSdk(
     },
     deleteOutboundShipments(
       variables: DeleteOutboundShipmentsMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteOutboundShipmentsMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteOutboundShipmentsMutation>({
-            document: DeleteOutboundShipmentsDocument,
+          client.request<DeleteOutboundShipmentsMutation>(
+            DeleteOutboundShipmentsDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deleteOutboundShipments',
         'mutation',
         variables
@@ -2131,17 +2109,15 @@ export function getSdk(
     },
     upsertOutboundShipment(
       variables: UpsertOutboundShipmentMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpsertOutboundShipmentMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertOutboundShipmentMutation>({
-            document: UpsertOutboundShipmentDocument,
+          client.request<UpsertOutboundShipmentMutation>(
+            UpsertOutboundShipmentDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'upsertOutboundShipment',
         'mutation',
         variables
@@ -2149,17 +2125,15 @@ export function getSdk(
     },
     deleteOutboundShipmentLines(
       variables: DeleteOutboundShipmentLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteOutboundShipmentLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteOutboundShipmentLinesMutation>({
-            document: DeleteOutboundShipmentLinesDocument,
+          client.request<DeleteOutboundShipmentLinesMutation>(
+            DeleteOutboundShipmentLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'deleteOutboundShipmentLines',
         'mutation',
         variables
@@ -2167,17 +2141,15 @@ export function getSdk(
     },
     addToOutboundShipmentFromMasterList(
       variables: AddToOutboundShipmentFromMasterListMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<AddToOutboundShipmentFromMasterListMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AddToOutboundShipmentFromMasterListMutation>({
-            document: AddToOutboundShipmentFromMasterListDocument,
+          client.request<AddToOutboundShipmentFromMasterListMutation>(
+            AddToOutboundShipmentFromMasterListDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'addToOutboundShipmentFromMasterList',
         'mutation',
         variables
@@ -2185,17 +2157,15 @@ export function getSdk(
     },
     saveOutboundShipmentItemLines(
       variables: SaveOutboundShipmentItemLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<SaveOutboundShipmentItemLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SaveOutboundShipmentItemLinesMutation>({
-            document: SaveOutboundShipmentItemLinesDocument,
+          client.request<SaveOutboundShipmentItemLinesMutation>(
+            SaveOutboundShipmentItemLinesDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'saveOutboundShipmentItemLines',
         'mutation',
         variables
@@ -2203,17 +2173,15 @@ export function getSdk(
     },
     insertBarcode(
       variables: InsertBarcodeMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertBarcodeMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertBarcodeMutation>({
-            document: InsertBarcodeDocument,
+          client.request<InsertBarcodeMutation>(
+            InsertBarcodeDocument,
             variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
         'insertBarcode',
         'mutation',
         variables

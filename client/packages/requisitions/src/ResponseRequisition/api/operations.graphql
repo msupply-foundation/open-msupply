@@ -112,6 +112,9 @@ fragment ResponseLine on RequisitionLineNode {
   availableVolumeAtLocationType {
     ...AvailableVolumeAtLocationType
   }
+  forecastTotalUnits
+  forecastTotalDoses
+  vaccineCourses
 }
 
 fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {

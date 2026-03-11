@@ -24,3 +24,4 @@ export const buildItemEditRoute = (requisitionId?: string, itemId?: string) =>
 export const STOCK_DISTRIBUTION_INFO = 'stock-distribution';
 export const CONSUMPTION_HISTORY_INFO = 'consumption-history';
 export const STOCK_EVOLUTION_INFO = 'stock-evolution';
+export const FORECAST_QUANTITY_INFO = 'forecast-quantity-info';
