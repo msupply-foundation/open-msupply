@@ -4,31 +4,38 @@ import {
   NumUtils,
 } from '@openmsupply-client/common';
 
-// Quantity Calculation
-export const calculatePackQuantity = (
-  requestedQuantity?: number,
-  defaultPackSize?: number
+// Calculate stored units to selected representation for display
+export const unitsToRepresentation = (
+  units: number,
+  representation: RepresentationValue,
+  defaultPackSize?: number,
+  dosesPerUnit?: number
 ): number => {
-  const requested = requestedQuantity ?? 0;
-  const defaultSize = defaultPackSize ?? 1;
-
-  if (defaultSize === 0) return 0;
-
-  return NumUtils.round(requested / defaultSize, 2);
+  if (representation === Representation.PACKS) {
+    const defaultSize = defaultPackSize ?? 1;
+    if (defaultSize === 0) return 0;
+    return NumUtils.round(units / defaultSize, 2);
+  }
+  if (representation === Representation.DOSES)
+    return units * (dosesPerUnit || 1);
+  return units;
 };
 
-// Value formatting for requestedQuantity based on Representation
-export const getCurrentValue = (
+// Calculate input value in selected representation to units for saving
+export const representationToUnits = (
+  value: number,
   representation: RepresentationValue,
-  requestedQuantity?: number,
-  defaultPackSize?: number
+  defaultPackSize?: number,
+  dosesPerUnit?: number
 ): number => {
   if (representation === Representation.PACKS)
-    return calculatePackQuantity(requestedQuantity, defaultPackSize);
-  return Math.ceil(requestedQuantity ?? 0);
+    return value * (defaultPackSize ?? 0);
+  if (representation === Representation.DOSES)
+    return Math.ceil(value / (dosesPerUnit || 1));
+  return value;
 };
 
-// Updated Request Calculation
+// Convert display value to update object with units
 interface UpdatedRequest {
   requestedQuantity: number;
   reason?: null;
@@ -38,13 +45,16 @@ export const getUpdatedRequest = (
   value: number | undefined,
   representation: RepresentationValue,
   defaultPackSize?: number,
-  suggestedQuantity?: number
+  suggestedQuantity?: number,
+  dosesPerUnit?: number
 ): UpdatedRequest => {
   const newValue = typeof value === 'number' && !isNaN(value) ? value : 0;
-  const requestedQuantity =
-    representation === Representation.PACKS
-      ? newValue * (defaultPackSize ?? 0)
-      : newValue;
+  const requestedQuantity = representationToUnits(
+    newValue,
+    representation,
+    defaultPackSize,
+    dosesPerUnit
+  );
 
   return suggestedQuantity === requestedQuantity
     ? { requestedQuantity, reason: null }
