@@ -88,6 +88,9 @@ pub fn insert_response_requisition_line(
                 approval_comment: None,
                 available_volume: None,
                 location_type_id: None,
+                forecast_total_units: None,
+                forecast_total_doses: None,
+                vaccine_courses: None,
             };
 
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;

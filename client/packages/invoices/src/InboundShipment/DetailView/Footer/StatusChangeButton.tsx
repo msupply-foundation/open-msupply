@@ -154,7 +154,7 @@ const StatusChangeButtonContent = ({
   );
 
   const onHoldNotification = useDisabledNotificationToast(
-    t('messages.on-hold')
+    t('messages.on-hold-inbound')
   );
 
   const pendingLinesNotification = useDisabledNotificationToast(
@@ -180,7 +180,10 @@ const StatusChangeButtonContent = ({
     if (!hasMutatePermission) return permissionDeniedNotification();
     if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
-    if (selectedOption?.value === InvoiceNodeStatus.Received || selectedOption?.value === InvoiceNodeStatus.Verified) {
+    if (
+      selectedOption?.value === InvoiceNodeStatus.Received ||
+      selectedOption?.value === InvoiceNodeStatus.Verified
+    ) {
       if (!validateNoPendingLines(lines)) {
         return pendingLinesNotification();
       }

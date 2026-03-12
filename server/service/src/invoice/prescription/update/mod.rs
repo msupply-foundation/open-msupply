@@ -450,7 +450,7 @@ mod test {
             }
         });
 
-        // add a an invoice line to the prescription
+        // add an invoice line to the prescription
         let invoice_line_row_repo = InvoiceLineRowRepository::new(&connection);
         let invoice_line = InvoiceLineRow {
             id: "test_invoice_line".to_string(),
@@ -464,6 +464,7 @@ mod test {
             stock_line_id: Some(mock_stock_line_a().id.clone()),
             location_id: None,
             expiry_date: None,
+            manufacture_date: None,
             pack_size: 0.0,
             cost_price_per_pack: 0.0,
             sell_price_per_pack: 0.0,
@@ -476,6 +477,7 @@ mod test {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
+            manufacturer_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
