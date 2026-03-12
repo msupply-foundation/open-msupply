@@ -392,6 +392,7 @@ pub fn generate_lines_and_stock_lines(
             program_id,
             reason_option_id: _,
             volume_per_pack,
+            manufacturer_id,
             ..
         }: InvoiceLineRow = invoice_line;
 
@@ -411,6 +412,7 @@ pub fn generate_lines_and_stock_lines(
             supplier_id: Some(supplier_id.to_string()),
             item_variant_id,
             donor_id: donor_link_id,
+            manufacturer_id,
             vvm_status_id,
             campaign_id,
             program_id,
@@ -473,10 +475,9 @@ fn update_donor_on_lines_and_stock(
                 Some(_) => updated_default_donor_id.clone(),
                 None => None,
             },
-            ApplyDonorToInvoiceLines::AssignIfNone => line
-                .donor_id
-                .clone()
-                .or(updated_default_donor_id.clone()),
+            ApplyDonorToInvoiceLines::AssignIfNone => {
+                line.donor_id.clone().or(updated_default_donor_id.clone())
+            }
             ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
         };
 
