@@ -2395,6 +2395,7 @@
   "report-code.encounters": "Encounters",
   "report-code.expiring-items": "Expiring Items",
   "report-code.inbound": "Inbound Shipment",
+  "report-code.inbound-shipments": "Inbound Shipments",
   "report-code.internal-order": "Internal Order",
   "report-code.inventory_adjustments": "Inventory Adjustments",
   "report-code.item-usage": "Item Usage",
