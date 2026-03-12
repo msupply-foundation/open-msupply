@@ -8,6 +8,7 @@ use util::lock_file;
 
 use crate::{
     database_settings::{DatabaseSettings, SqliteConnectionOptions},
+    db_diesel::key_value_store::clear_key_value_store_cache,
     migrations::{migrate, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     DBBackendConnection, StorageConnectionManager,
@@ -179,6 +180,9 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
         .connection()
         .expect("Failed to connect to database");
 
+    // Clear the static key-value store cache so stale DatabaseVersion entries
+    // from a previous test database don't leak into this fresh database.
+    clear_key_value_store_cache();
     migrate(&connection, version).unwrap();
 
     connection_manager

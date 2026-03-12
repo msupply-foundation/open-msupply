@@ -84,6 +84,11 @@ fn get_cached_row(key: &KeyType) -> Option<KeyValueStoreRow> {
     cache.as_ref()?.get(key).cloned()
 }
 
+pub fn clear_key_value_store_cache() {
+    let mut cache = KEY_VALUE_STORE_CACHE.write().unwrap();
+    *cache = None;
+}
+
 fn set_cached_row(row: KeyValueStoreRow) {
     let mut cache = KEY_VALUE_STORE_CACHE.write().unwrap();
     if cache.is_none() {
