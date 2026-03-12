@@ -9,12 +9,13 @@ use repository::{
     InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceType, Name, StorageConnection,
 };
 
-use super::{UpdateInboundShipment, UpdateInboundShipmentError};
+use super::{super::InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError};
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     patch: &UpdateInboundShipment,
+    r#type: InboundShipmentType,
 ) -> Result<(InvoiceRow, Option<Name>, bool), UpdateInboundShipmentError> {
     use UpdateInboundShipmentError::*;
 
@@ -28,6 +29,9 @@ pub fn validate(
     }
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
+    }
+    if !r#type.matches_input(invoice.purchase_order_id.is_some()) {
+        return Err(WrongInboundShipmentType);
     }
 
     // Status check

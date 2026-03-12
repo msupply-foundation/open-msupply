@@ -1,21 +1,14 @@
 use async_graphql::*;
+use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
 use graphql_invoice::mutations::inbound_shipment;
 use graphql_invoice_line::mutations::inbound_shipment_line;
-use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::*;
 
 use crate::to_standard_error;
 use crate::VecOrNone;
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(rename_items = "SCREAMING_SNAKE_CASE")]
-pub enum InboundShipmentType {
-    InboundShipment,
-    InboundShipmentExternal,
-}
 
 type ServiceInput = BatchInboundShipment;
 type ServiceResult = BatchInboundShipmentResult;
@@ -128,36 +121,16 @@ pub struct BatchInput {
     pub continue_on_error: Option<bool>,
 }
 
-impl InboundShipmentType {
-    fn resource(&self) -> Resource {
-        match self {
-            InboundShipmentType::InboundShipment => Resource::MutateInboundShipment,
-            InboundShipmentType::InboundShipmentExternal => Resource::MutateInboundShipmentExternal,
-        }
-    }
-
-    fn requires_purchase_order(&self) -> bool {
-        match self {
-            InboundShipmentType::InboundShipment => false,
-            InboundShipmentType::InboundShipmentExternal => true,
-        }
-    }
-}
-
 pub fn batch(
     ctx: &Context<'_>,
     store_id: &str,
     input: BatchInput,
-    r#type: Option<InboundShipmentType>,
+    r#type: InboundShipmentType,
 ) -> Result<BatchResponse> {
-    let resource = r#type
-        .map(|s| s.resource())
-        .unwrap_or(Resource::MutateInboundShipment);
-
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -165,17 +138,15 @@ pub fn batch(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    let requires_purchase_order = r#type.map(|s| s.requires_purchase_order());
-
     let response = service_provider
         .invoice_service
-        .batch_inbound_shipment(&service_context, input.to_domain(requires_purchase_order))?;
+        .batch_inbound_shipment(&service_context, input.to_domain(r#type))?;
 
     BatchResponse::from_domain(response)
 }
 
 impl BatchInput {
-    fn to_domain(self, requires_purchase_order: Option<bool>) -> ServiceInput {
+    fn to_domain(self, r#type: InboundShipmentType) -> ServiceInput {
         let BatchInput {
             insert_inbound_shipments,
             insert_inbound_shipment_lines,
@@ -212,7 +183,7 @@ impl BatchInput {
             delete_shipment: delete_inbound_shipments
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             continue_on_error,
-            requires_purchase_order,
+            r#type: r#type.to_domain(),
         }
     }
 }

@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::pagination::PaginationInput;
 use mutations::AddToShipmentFromMasterListInput;
 
@@ -39,10 +40,6 @@ impl InvoiceQueries {
         get_invoice_by_number(ctx, store_id, invoice_number, r#type)
     }
 
-    /// Use the type-specific query endpoints instead (e.g. outbound_shipments, inbound_shipments, etc.)
-    #[graphql(
-        deprecation = "Use type-specific query endpoints instead (e.g. outboundShipments, inboundShipments, etc.)"
-    )]
     pub async fn invoices(
         &self,
         ctx: &Context<'_>,
@@ -51,124 +48,9 @@ impl InvoiceQueries {
         #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
+        r#type: Option<InvoiceTypeInput>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort, None)
-    }
-
-    pub async fn outbound_shipments(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<InvoiceSortInput>>,
-    ) -> Result<InvoicesResponse> {
-        get_invoices(
-            ctx,
-            store_id,
-            page,
-            filter,
-            sort,
-            Some(InvoiceTypeInput::OutboundShipment),
-        )
-    }
-
-    /// Inbound shipments without a linked purchase order
-    pub async fn inbound_shipments(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<InvoiceSortInput>>,
-    ) -> Result<InvoicesResponse> {
-        get_invoices(
-            ctx,
-            store_id,
-            page,
-            filter,
-            sort,
-            Some(InvoiceTypeInput::InboundShipment),
-        )
-    }
-
-    /// Inbound shipments with a linked purchase order
-    pub async fn inbound_shipments_external(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<InvoiceSortInput>>,
-    ) -> Result<InvoicesResponse> {
-        get_invoices(
-            ctx,
-            store_id,
-            page,
-            filter,
-            sort,
-            Some(InvoiceTypeInput::InboundShipmentExternal),
-        )
-    }
-
-    pub async fn prescriptions(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<InvoiceSortInput>>,
-    ) -> Result<InvoicesResponse> {
-        get_invoices(
-            ctx,
-            store_id,
-            page,
-            filter,
-            sort,
-            Some(InvoiceTypeInput::Prescription),
-        )
-    }
-
-    pub async fn supplier_returns(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<InvoiceSortInput>>,
-    ) -> Result<InvoicesResponse> {
-        get_invoices(
-            ctx,
-            store_id,
-            page,
-            filter,
-            sort,
-            Some(InvoiceTypeInput::SupplierReturn),
-        )
-    }
-
-    pub async fn customer_returns(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<InvoiceSortInput>>,
-    ) -> Result<InvoicesResponse> {
-        get_invoices(
-            ctx,
-            store_id,
-            page,
-            filter,
-            sort,
-            Some(InvoiceTypeInput::CustomerReturn),
-        )
+        get_invoices(ctx, store_id, page, filter, sort, r#type)
     }
 }
 
@@ -219,7 +101,26 @@ impl InvoiceMutations {
         store_id: String,
         input: inbound_shipment::insert::InsertInput,
     ) -> Result<inbound_shipment::insert::InsertResponse> {
-        inbound_shipment::insert::insert(ctx, &store_id, input)
+        inbound_shipment::insert::insert(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn insert_inbound_shipment_external(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment::insert::InsertInput,
+    ) -> Result<inbound_shipment::insert::InsertResponse> {
+        inbound_shipment::insert::insert(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn update_inbound_shipment(
@@ -228,7 +129,26 @@ impl InvoiceMutations {
         store_id: String,
         input: inbound_shipment::update::UpdateInput,
     ) -> Result<inbound_shipment::update::UpdateResponse> {
-        inbound_shipment::update::update(ctx, &store_id, input)
+        inbound_shipment::update::update(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn update_inbound_shipment_external(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment::update::UpdateInput,
+    ) -> Result<inbound_shipment::update::UpdateResponse> {
+        inbound_shipment::update::update(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn delete_inbound_shipment(
@@ -237,7 +157,26 @@ impl InvoiceMutations {
         store_id: String,
         input: inbound_shipment::delete::DeleteInput,
     ) -> Result<inbound_shipment::delete::DeleteResponse> {
-        inbound_shipment::delete::delete(ctx, &store_id, input)
+        inbound_shipment::delete::delete(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn delete_inbound_shipment_external(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment::delete::DeleteInput,
+    ) -> Result<inbound_shipment::delete::DeleteResponse> {
+        inbound_shipment::delete::delete(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     /// Add invoice lines from master item master list

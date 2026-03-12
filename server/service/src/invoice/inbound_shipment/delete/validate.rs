@@ -3,12 +3,13 @@ use crate::invoice::{
 };
 use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
-use super::{DeleteInboundShipment, DeleteInboundShipmentError};
+use super::{super::InboundShipmentType, DeleteInboundShipment, DeleteInboundShipmentError};
 
 pub fn validate(
     connection: &StorageConnection,
     input: &DeleteInboundShipment,
     store_id: &str,
+    r#type: InboundShipmentType,
 ) -> Result<InvoiceRow, DeleteInboundShipmentError> {
     use DeleteInboundShipmentError::*;
 
@@ -19,6 +20,9 @@ pub fn validate(
 
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
+    }
+    if !r#type.matches_input(invoice.purchase_order_id.is_some()) {
+        return Err(WrongInboundShipmentType);
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);

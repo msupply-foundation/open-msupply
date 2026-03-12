@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::simple_generic_errors::CannotEditInvoice;
 use graphql_core::simple_generic_errors::RecordNotFound;
 use graphql_core::standard_graphql_error::validate_auth;
@@ -6,7 +7,6 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
-use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::{
     DeleteInboundShipment as ServiceInput, DeleteInboundShipmentError as ServiceError,
@@ -31,23 +31,28 @@ pub enum DeleteResponse {
     Response(GenericDeleteResponse),
 }
 
-pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
-    let service_provider = ctx.service_provider();
-    // Permissions checked in the service layer, but do an early check here to save some work if user doesn't have access to the store at all
+pub fn delete(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: DeleteInput,
+    r#type: InboundShipmentType,
+) -> Result<DeleteResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::StoreAccess,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
+
+    let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_service
-            .delete_inbound_shipment(&service_context, input.to_domain()),
-    )
+    map_response(service_provider.invoice_service.delete_inbound_shipment(
+        &service_context,
+        input.to_domain(),
+        r#type.to_domain(),
+    ))
 }
 
 #[derive(Interface)]
@@ -93,6 +98,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         }
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::LineDeleteError { .. } => InternalError(formatted_error),
@@ -133,6 +139,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: ServiceInput,
+            _expected_type: service::invoice::inbound_shipment::InboundShipmentType,
         ) -> Result<String, ServiceError> {
             self.0(input)
         }

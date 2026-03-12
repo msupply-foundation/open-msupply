@@ -1,11 +1,12 @@
 use async_graphql::*;
 
+use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::{
     InsertInboundShipment as ServiceInput, InsertInboundShipmentError as ServiceError,
 };
@@ -37,12 +38,16 @@ pub enum InsertResponse {
     Response(InvoiceNode),
 }
 
-pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    // Permissions checked in the service layer, but do an early check here to save some work if user doesn't have access to the store at all
+pub fn insert(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: InsertInput,
+    r#type: InboundShipmentType,
+) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::StoreAccess,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -50,11 +55,11 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_service
-            .insert_inbound_shipment(&service_context, input.to_domain()),
-    )
+    map_response(service_provider.invoice_service.insert_inbound_shipment(
+        &service_context,
+        input.to_domain(),
+        r#type.to_domain(),
+    ))
 }
 
 #[derive(Interface)]
@@ -128,9 +133,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::InternalOrderDoesNotBelongToStore
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::PurchaseOrderDoesNotExist
-        | ServiceError::AddLinesFromPurchaseOrderWithoutPurchaseOrder => {
-            BadUserInput(formatted_error)
-        }
+        | ServiceError::AddLinesFromPurchaseOrderWithoutPurchaseOrder
+        | ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -170,6 +174,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: ServiceInput,
+            _type: service::invoice::inbound_shipment::InboundShipmentType,
         ) -> Result<Invoice, ServiceError> {
             self.0(input)
         }
