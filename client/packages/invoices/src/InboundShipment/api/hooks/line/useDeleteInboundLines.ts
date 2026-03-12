@@ -13,35 +13,42 @@ export const useDeleteInboundLines = () => {
   const api = useInboundApi();
   const queryKey = [INBOUND, INBOUND_LINE, inboundId];
 
-  return useMutation(api.deleteLines, {
-    onMutate: async lines => {
-      await queryClient.cancelQueries(queryKey);
-      const previous = queryClient.getQueryData<InboundFragment>(queryKey);
-      if (previous) {
-        const nodes = previous.lines.nodes.filter(
-          ({ id: lineId }) => !lines.find(({ id }) => lineId === id)
-        );
-        queryClient.setQueryData<InboundFragment>(queryKey, {
-          ...previous,
-          lines: {
-            __typename: 'InvoiceLineConnector',
-            nodes,
-            totalCount: nodes.length,
-          },
-        });
-      }
-      return { previous, lines };
+  return useMutation(
+    (lines: { id: string }[]) => {
+      const invoice = queryClient.getQueryData<InboundFragment>(queryKey);
+      const isExternal = !!invoice?.purchaseOrder;
+      return api.deleteLines(lines, isExternal);
     },
-    onError: (_error, _vars, ctx) => {
-      // Having issues typing this correctly. If typing ctx in the args list,
-      // then TS infers the wrong type for the useMutation call and all
-      // hell breaks loose.
-      const context = ctx as {
-        previous: InboundFragment;
-        lines: { id: string }[];
-      };
-      queryClient.setQueryData(queryKey, context?.previous);
-    },
-    onSettled: () => queryClient.invalidateQueries(queryKey),
-  });
+    {
+      onMutate: async lines => {
+        await queryClient.cancelQueries(queryKey);
+        const previous = queryClient.getQueryData<InboundFragment>(queryKey);
+        if (previous) {
+          const nodes = previous.lines.nodes.filter(
+            ({ id: lineId }) => !lines.find(({ id }) => lineId === id)
+          );
+          queryClient.setQueryData<InboundFragment>(queryKey, {
+            ...previous,
+            lines: {
+              __typename: 'InvoiceLineConnector',
+              nodes,
+              totalCount: nodes.length,
+            },
+          });
+        }
+        return { previous, lines };
+      },
+      onError: (_error, _vars, ctx) => {
+        // Having issues typing this correctly. If typing ctx in the args list,
+        // then TS infers the wrong type for the useMutation call and all
+        // hell breaks loose.
+        const context = ctx as {
+          previous: InboundFragment;
+          lines: { id: string }[];
+        };
+        queryClient.setQueryData(queryKey, context?.previous);
+      },
+      onSettled: () => queryClient.invalidateQueries(queryKey),
+    }
+  );
 };

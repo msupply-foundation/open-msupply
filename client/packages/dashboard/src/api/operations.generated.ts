@@ -53,7 +53,7 @@ export type InboundInternalCountsQuery = {
   __typename: 'Queries';
   invoiceCounts: {
     __typename: 'InvoiceCounts';
-    inboundInternal: {
+    inbound: {
       __typename: 'InboundInvoiceCounts';
       notDelivered: number;
       created: {
@@ -172,7 +172,7 @@ export const InboundCountsDocument = gql`
 export const InboundInternalCountsDocument = gql`
   query inboundInternalCounts($storeId: String!) {
     invoiceCounts(storeId: $storeId) {
-      inboundInternal {
+      inbound {
         created {
           today
           thisWeek
