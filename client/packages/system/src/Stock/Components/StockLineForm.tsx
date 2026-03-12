@@ -33,6 +33,7 @@ import { LocationSearchInput } from '../../Location/Components/LocationSearchInp
 import {
   checkInvalidLocationLines,
   DonorSearchInput,
+  ManufacturerSearchInput,
   ReasonOptionsSearchInput,
   VVMStatusSearchInput,
 } from '../..';
@@ -465,6 +466,7 @@ export const StockLineForm = ({
 
                           onUpdate({
                             itemVariant: variant,
+                            manufacturer: variant?.manufacturer ?? null,
                             volumePerPack: newVolume ?? 0,
                           });
                         }}
@@ -499,6 +501,22 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacturer')}
+                  Input={
+                    <ManufacturerSearchInput
+                      value={draft.manufacturer ?? null}
+                      width={160}
+                      onChange={manufacturer => {
+                        const patch: Partial<DraftStockLine> = { manufacturer };
+                        if (draft.itemVariant) {
+                          patch.itemVariant = null;
+                        }
+                        onUpdate(patch);
+                      }}
+                    />
+                  }
+                />
                 <TextWithLabelRow
                   label={t('label.supplier')}
                   text={String(supplierName)}

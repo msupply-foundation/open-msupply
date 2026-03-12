@@ -30,6 +30,7 @@ import {
   ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
+  ManufacturerSearchInput,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
@@ -152,6 +153,7 @@ export const QuantityTable = ({
                 id,
                 itemVariantId: itemVariant?.id,
                 itemVariant,
+                manufacturer: itemVariant?.manufacturer ?? null,
                 volumePerPack: getVolumePerPackFromVariant({
                   packSize,
                   itemVariant,
@@ -549,22 +551,6 @@ export const LocationTableComponent = ({
           );
         },
       },
-
-      {
-        accessorKey: 'note',
-        header: t('label.stocktake-comment'),
-        size: 200,
-        Cell: ({ cell, row }) => (
-          <TextInputCell
-            cell={cell}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, note: value })
-            }
-            disabled={isDisabled ?? false}
-          />
-        ),
-        defaultHideOnMobile: true,
-      },
       {
         id: 'donor',
         header: t('label.donor'),
@@ -596,6 +582,41 @@ export const LocationTableComponent = ({
             }
           />
         ),
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        Cell: ({ row: { original: row } }) => (
+          <ManufacturerSearchInput
+            value={row.manufacturer ?? null}
+            disabled={isDisabled ?? false}
+            onChange={manufacturer => {
+              updateDraftLine({
+                id: row.id,
+                manufacturer: manufacturer ?? undefined,
+                ...(row.itemVariant
+                  ? { itemVariantId: null, itemVariant: null }
+                  : {}),
+              });
+            }}
+            width={200}
+          />
+        ),
+      },
+      {
+        accessorKey: 'note',
+        header: t('label.stocktake-comment'),
+        size: 200,
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value =>
+              updateDraftLine({ id: row.original.id, note: value })
+            }
+            disabled={isDisabled ?? false}
+          />
+        ),
+        defaultHideOnMobile: true,
       },
     ];
     return cols;

@@ -78,6 +78,9 @@ const stocktakeParser = {
         itemVariantId: line.itemVariantId,
       }),
       donorId: setNullableInput('donorId', line),
+      manufacturerId: setNullableInput('manufacturerId', {
+        manufacturerId: line.manufacturer?.id ?? null,
+      }),
       reasonOptionId: line.reasonOption?.id,
       vvmStatusId: line.vvmStatus?.id,
       volumePerPack: line.volumePerPack,
@@ -104,6 +107,7 @@ const stocktakeParser = {
       comment: line.comment ?? '',
       itemVariantId: line.itemVariantId,
       donorId: line.donorId,
+      manufacturerId: line.manufacturer?.id,
       reasonOptionId: line.reasonOption?.id,
       vvmStatusId: line.vvmStatus?.id,
       volumePerPack: line.volumePerPack,

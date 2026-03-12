@@ -3,6 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
+import { NameRowFragmentDoc } from '../../Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StockLineRowFragment = {
   __typename: 'StockLineNode';
@@ -87,6 +88,16 @@ export type StockLineRowFragment = {
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   itemVariant?: {
@@ -326,6 +337,16 @@ export type StockLinesQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -442,6 +463,16 @@ export type StockLineQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -595,6 +626,16 @@ export type UpdateStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        manufacturer?: {
+          __typename: 'NameNode';
+          code: string;
+          id: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -922,6 +963,16 @@ export type InsertStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        manufacturer?: {
+          __typename: 'NameNode';
+          code: string;
+          id: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -1070,6 +1121,9 @@ export const StockLineRowFragmentDoc = gql`
     donor(storeId: $storeId) {
       id
     }
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
     program {
       id
       name
@@ -1091,6 +1145,7 @@ export const StockLineRowFragmentDoc = gql`
   }
   ${LocationRowFragmentDoc}
   ${VvmStatusLogRowFragmentDoc}
+  ${NameRowFragmentDoc}
 `;
 export const RepackStockLineFragmentDoc = gql`
   fragment RepackStockLine on RepackStockLineNode {
