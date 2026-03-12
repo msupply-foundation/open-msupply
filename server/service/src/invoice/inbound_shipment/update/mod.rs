@@ -66,7 +66,6 @@ pub fn update_inbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            log::info!("updating inbound shipment with id: {}", patch.id);
             let (invoice, other_party, status_changed) =
                 validate(connection, store_id.unwrap_or(&ctx.store_id), &patch)?;
             let GenerateResult {
@@ -179,6 +178,7 @@ pub enum UpdateInboundShipmentError {
     CannotSetDeliveredDateInFuture,
     CannotPutDeliveredDateAfterReceivedDate,
     CannotReceiveWithPendingLines,
+    CannotSetShippedStatusOnManualInboundShipment,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,

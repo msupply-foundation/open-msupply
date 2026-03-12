@@ -10,8 +10,8 @@ use dataloader::DataLoader;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByIdLoader,
-        NameByIdLoaderInput, ProgramByIdLoader, ReasonOptionLoader, StockLineByIdLoader,
-        VVMStatusByIdLoader,
+        NameByIdLoaderInput, ProgramByIdLoader, PurchaseOrderLineByIdLoader, ReasonOptionLoader,
+        StockLineByIdLoader, VVMStatusByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,

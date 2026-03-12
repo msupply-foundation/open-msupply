@@ -16,6 +16,8 @@ table! {
     purchase_order_line_stats (purchase_order_line_id) {
         purchase_order_line_id -> Text,
         shipped_number_of_units -> Double,
+        in_transit_number_of_units -> Double,
+        received_number_of_units -> Double,
     }
 }
 
@@ -24,6 +26,8 @@ table! {
 pub struct PurchaseOrderLineStatsRow {
     pub purchase_order_line_id: String,
     pub shipped_number_of_units: f64,
+    pub in_transit_number_of_units: f64,
+    pub received_number_of_units: f64,
 }
 
 define_linked_tables! {
@@ -58,23 +62,13 @@ define_linked_tables! {
     }
 }
 
+joinable!(purchase_order_line -> purchase_order_line_stats (id));
 joinable!(purchase_order_line -> item_link (item_link_id));
 joinable!(purchase_order_line -> purchase_order (purchase_order_id));
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order_line_stats);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
-
-table! {
-    purchase_order_line_stats (purchase_order_line_id) {
-        purchase_order_line_id -> Text,
-        shipped_number_of_units -> Double,
-        in_transit_number_of_units -> Double,
-        received_number_of_units -> Double,
-    }
-}
-
-joinable!(purchase_order_line -> purchase_order_line_stats (id));
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, purchase_order);
@@ -103,15 +97,6 @@ pub struct PurchaseOrderLineRow {
     pub status: PurchaseOrderLineStatus,
     // Resolved from name_link - must be last to match view column order
     pub manufacturer_id: Option<String>,
-}
-
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
-#[diesel(table_name = purchase_order_line_stats)]
-pub struct PurchaseOrderLineStatsRow {
-    pub purchase_order_line_id: String,
-    pub shipped_number_of_units: f64,
-    pub in_transit_number_of_units: f64,
-    pub received_number_of_units: f64,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
