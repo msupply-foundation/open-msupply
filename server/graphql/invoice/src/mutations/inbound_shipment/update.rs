@@ -209,7 +209,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
         | ServiceError::CannotPutDeliveredDateAfterReceivedDate
-        | ServiceError::CannotSetDeliveredDateInFuture => BadUserInput(formatted_error),
+        | ServiceError::CannotSetDeliveredDateInFuture
+        | ServiceError::CannotSetShippedStatusOnManualInboundShipment => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
