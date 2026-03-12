@@ -10,6 +10,7 @@ mod invoice_line_add_status;
 mod item_category_join_add_item_link_id;
 mod remove_goods_received;
 mod remove_goods_received_cleanup;
+mod vaccine_course_store_wastage;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -32,6 +33,7 @@ impl Migration for V2_17_00 {
             Box::new(add_manufacturer_link_id_to_lines::Migrate),
             Box::new(add_manufacture_date_to_stock_and_invoice_lines::Migrate),
             Box::new(import_goods_received::Migrate),
+            Box::new(vaccine_course_store_wastage::Migrate),
         ]
     }
 }
