@@ -8,7 +8,8 @@ use util::uuid::uuid;
 
 use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
-    update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentStatus,
+    update_inbound_shipment, InboundShipmentType, UpdateInboundShipment,
+    UpdateInboundShipmentStatus,
 };
 use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
 use crate::service_provider::ServiceContext;
@@ -215,6 +216,7 @@ pub(crate) fn auto_verify_if_store_preference(
                 ..Default::default()
             },
             Some(&inbound_shipment.store_id),
+            InboundShipmentType::InboundShipment,
         )
         .map_err(|e| {
             log::error!("{e:?}");

@@ -14,7 +14,9 @@ use util::uuid::uuid;
 use crate::{
     invoice::{
         customer_return::{UpdateCustomerReturn, UpdateCustomerReturnStatus},
-        inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
+        inbound_shipment::{
+            InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentStatus,
+        },
         outbound_shipment::update::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
         supplier_return::update::{UpdateSupplierReturn, UpdateSupplierReturnStatus},
     },
@@ -1170,6 +1172,7 @@ impl InvoiceTransferTester {
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1193,6 +1196,7 @@ impl InvoiceTransferTester {
                     status: Some(UpdateInboundShipmentStatus::Verified),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 

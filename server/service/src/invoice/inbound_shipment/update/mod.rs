@@ -17,6 +17,7 @@ use generate::generate;
 use validate::validate;
 
 use self::generate::LineAndStockLine;
+use super::InboundShipmentType;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateInboundShipmentStatus {
@@ -61,15 +62,16 @@ pub fn update_inbound_shipment(
     ctx: &ServiceContext,
     patch: UpdateInboundShipment,
     store_id: Option<&str>,
+    r#type: InboundShipmentType,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            log::info!("updating inbound shipment with id: {}", patch.id);
             let (invoice, other_party, status_changed) = validate(
                 connection,
                 store_id.unwrap_or(&ctx.store_id),
                 &patch,
+                r#type,
             )?;
             let GenerateResult {
                 batches_to_update,
@@ -171,6 +173,7 @@ pub fn update_inbound_shipment(
 pub enum UpdateInboundShipmentError {
     InvoiceDoesNotExist,
     NotAnInboundShipment,
+    WrongInboundShipmentType,
     NotThisStoreInvoice,
     CannotReverseInvoiceStatus,
     CannotEditFinalised,
@@ -247,7 +250,8 @@ mod test {
 
     use crate::{
         invoice::inbound_shipment::{
-            UpdateDefaultDonor, UpdateInboundShipment, UpdateInboundShipmentStatus,
+            InboundShipmentType, UpdateDefaultDonor, UpdateInboundShipment,
+            UpdateInboundShipmentStatus,
         },
         invoice_line::{
             query::get_invoice_lines,
@@ -312,7 +316,8 @@ mod test {
                     id: "invalid".to_string(),
                     other_party_id: Some(mock_name_a().id.clone()),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -324,7 +329,8 @@ mod test {
                     id: mock_outbound_shipment_e().id.clone(),
                     other_party_id: Some(mock_name_a().id.clone()),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
@@ -336,7 +342,8 @@ mod test {
                     id: mock_inbound_shipment_b().id.clone(),
                     comment: Some("comment update".to_string()),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::CannotEditFinalised)
         );
@@ -348,7 +355,8 @@ mod test {
                     id: mock_inbound_shipment_e().id.clone(),
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
         );
@@ -360,7 +368,8 @@ mod test {
                     id: mock_inbound_shipment_a().id.clone(),
                     other_party_id: Some("invalid".to_string()),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -372,7 +381,8 @@ mod test {
                     id: mock_inbound_shipment_a().id.clone(),
                     other_party_id: Some(not_visible().id),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -384,7 +394,8 @@ mod test {
                     id: mock_inbound_shipment_a().id.clone(),
                     other_party_id: Some(not_a_supplier().id),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -396,7 +407,8 @@ mod test {
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_c().id.clone(),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -500,6 +512,7 @@ mod test {
                     other_party_id: Some(supplier().id),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -528,6 +541,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -572,6 +586,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -629,6 +644,7 @@ mod test {
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -685,6 +701,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -745,6 +762,7 @@ mod test {
                     currency_rate: Some(1.0),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -801,6 +819,7 @@ mod test {
                     currency_rate: Some(1.0),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -853,6 +872,7 @@ mod test {
                     currency_rate: Some(1.0),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -924,6 +944,7 @@ mod test {
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -978,6 +999,7 @@ mod test {
                     other_party_id: Some(supplier().id),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -998,6 +1020,7 @@ mod test {
                     other_party_id: Some(mock_name_linked_to_store_join().name_id.clone()),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1023,6 +1046,7 @@ mod test {
                     other_party_id: Some(mock_name_not_linked_to_store_join().name_id.clone()),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1044,6 +1068,7 @@ mod test {
                     on_hold: Some(true),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1148,6 +1173,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1178,6 +1204,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1205,6 +1232,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1228,6 +1256,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1303,7 +1332,8 @@ mod test {
                     id: delivered_invoice().id,
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::CannotReceiveWithPendingLines)
         );
@@ -1316,7 +1346,8 @@ mod test {
                     id: delivered_invoice().id,
                     status: Some(UpdateInboundShipmentStatus::Verified),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::CannotReceiveWithPendingLines)
         );
@@ -1400,6 +1431,7 @@ mod test {
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 

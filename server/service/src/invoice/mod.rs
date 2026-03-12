@@ -88,27 +88,28 @@ pub trait InvoiceServiceTrait: Sync + Send {
     fn insert_inbound_shipment(
         &self,
         ctx: &ServiceContext,
-
         input: InsertInboundShipment,
+        r#type: InboundShipmentType,
     ) -> Result<Invoice, InsertInboundShipmentError> {
-        insert_inbound_shipment(ctx, input)
+        insert_inbound_shipment(ctx, input, r#type)
     }
 
     fn update_inbound_shipment(
         &self,
         ctx: &ServiceContext,
         input: UpdateInboundShipment,
+        expected_type: InboundShipmentType,
     ) -> Result<Invoice, UpdateInboundShipmentError> {
-        update_inbound_shipment(ctx, input, None)
+        update_inbound_shipment(ctx, input, None, expected_type)
     }
 
     fn delete_inbound_shipment(
         &self,
         ctx: &ServiceContext,
-
         input: DeleteInboundShipment,
+        expected_type: InboundShipmentType,
     ) -> Result<String, DeleteInboundShipmentError> {
-        delete_inbound_shipment(ctx, input)
+        delete_inbound_shipment(ctx, input, expected_type)
     }
 
     fn insert_outbound_shipment(
