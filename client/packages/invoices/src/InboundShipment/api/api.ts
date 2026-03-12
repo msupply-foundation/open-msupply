@@ -2,6 +2,7 @@ import {
   InvoiceLineNodeType,
   RecordPatch,
   InvoiceNodeType,
+  InvoiceTypeInput,
   InvoiceSortFieldInput,
   FilterBy,
   SortBy,
@@ -37,6 +38,7 @@ export type ListParams = {
   offset: number;
   sortBy: SortBy<InboundRowFragment>;
   filterBy: FilterBy | null;
+  type?: InvoiceTypeInput;
 };
 
 export const inboundParsers = {
@@ -205,7 +207,7 @@ export const inboundParsers = {
 
 export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({ first, offset, sortBy, filterBy }: ListParams) => {
+    list: async ({ first, offset, sortBy, filterBy, type }: ListParams) => {
       const filter = {
         ...filterBy,
         type: { equalTo: InvoiceNodeType.InboundShipment },
@@ -218,10 +220,17 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy.isDesc,
         filter,
         storeId,
+        type,
       });
       return result?.invoices;
     },
-    listAll: async ({ sortBy }: { sortBy: SortBy<InboundRowFragment> }) => {
+    listAll: async ({
+      sortBy,
+      type,
+    }: {
+      sortBy: SortBy<InboundRowFragment>;
+      type?: InvoiceTypeInput;
+    }) => {
       const filter = {
         type: { equalTo: InvoiceNodeType.InboundShipment },
       };
@@ -231,6 +240,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy.isDesc,
         filter,
         storeId,
+        type,
       });
       return result?.invoices;
     },
@@ -296,14 +306,19 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       return result?.purchaseOrders;
     },
   },
-  delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
-    const result =
-      (await sdk.deleteInboundShipments({
-        storeId,
-        deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
-      })) || {};
+  delete: async (
+    invoices: InboundRowFragment[],
+    isExternal = false
+  ): Promise<string[]> => {
+    const variables = {
+      storeId,
+      deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
+    };
 
-    const { batchInboundShipment } = result;
+    const batchInboundShipment = isExternal
+      ? (await sdk.deleteInboundShipmentsExternal(variables))
+          ?.batchInboundShipmentExternal
+      : (await sdk.deleteInboundShipments(variables))?.batchInboundShipment;
 
     if (batchInboundShipment?.deleteInboundShipments) {
       return batchInboundShipment.deleteInboundShipments.map(({ id }) => id);
@@ -312,82 +327,112 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not delete invoices');
   },
   insert: async (
-    patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>
+    patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>,
+    isExternal = false
   ): Promise<string> => {
-    const result =
-      (await sdk.insertInboundShipment({
-        id: patch.id,
-        otherPartyId: patch.otherPartyId,
-        storeId,
-        requisitionId: patch.requisitionId,
-        purchaseOrderId: patch.purchaseOrderId,
-        insertLinesFromPurchaseOrder: patch.insertLinesFromPurchaseOrder,
-      })) || {};
+    const variables = {
+      id: patch.id,
+      otherPartyId: patch.otherPartyId,
+      storeId,
+      requisitionId: patch.requisitionId,
+      purchaseOrderId: patch.purchaseOrderId,
+      insertLinesFromPurchaseOrder: patch.insertLinesFromPurchaseOrder,
+    };
 
-    const { insertInboundShipment } = result;
+    const insertResult = isExternal
+      ? (await sdk.insertInboundShipmentExternal(variables))
+          ?.insertInboundShipmentExternal
+      : (await sdk.insertInboundShipment(variables))?.insertInboundShipment;
 
-    if (insertInboundShipment?.__typename === 'InvoiceNode') {
-      return insertInboundShipment.id;
+    if (insertResult?.__typename === 'InvoiceNode') {
+      return insertResult.id;
     }
 
-    throw new Error(insertInboundShipment.error.description);
+    throw new Error(
+      (insertResult as any)?.error?.description ?? 'Could not create invoice'
+    );
   },
   update: async (
     patch:
       | RecordPatch<InboundFragment>
       | RecordPatch<InboundRowFragment>
-      | { id: string; defaultDonorUpdate: UpdateDonorInput }
-  ) =>
-    sdk.updateInboundShipment({
+      | { id: string; defaultDonorUpdate: UpdateDonorInput },
+    isExternal = false
+  ) => {
+    const variables = {
       input: inboundParsers.toUpdate(patch),
       storeId,
-    }),
+    };
+    if (isExternal) {
+      return sdk.updateInboundShipmentExternal(variables);
+    }
+    return sdk.updateInboundShipment(variables);
+  },
   insertLinesFromInternalOrder: async (
-    lines: { invoiceId: string; requisitionLineId: string }[]
+    lines: { invoiceId: string; requisitionLineId: string }[],
+    isExternal = false
   ) => {
-    const result = await sdk.insertLinesFromInternalOrder({
+    const variables = {
       storeId,
       input: {
         insertFromInternalOrderLines: lines.map(
           inboundParsers.toInsertLineFromInternalOrder
         ),
       },
-    });
+    };
 
-    return result;
+    if (isExternal) {
+      const result =
+        await sdk.insertLinesFromInternalOrderExternal(variables);
+      return {
+        batchInboundShipment: result.batchInboundShipmentExternal,
+      };
+    }
+    return sdk.insertLinesFromInternalOrder(variables);
   },
-  deleteLines: async (lines: { id: string }[]) => {
-    return sdk.deleteInboundShipmentLines({
+  deleteLines: async (lines: { id: string }[], isExternal = false) => {
+    const variables = {
       storeId,
       input: {
         deleteInboundShipmentLines: lines.map(inboundParsers.toDeleteLine),
       },
-    });
+    };
+
+    if (isExternal) {
+      const result =
+        await sdk.deleteInboundShipmentLinesExternal(variables);
+      return {
+        batchInboundShipment: result.batchInboundShipmentExternal,
+      };
+    }
+    return sdk.deleteInboundShipmentLines(variables);
   },
   updateServiceTax: async ({
     lines,
     taxPercentage,
     type,
+    isExternal = false,
   }: {
     lines: InboundLineFragment[];
     taxPercentage: number;
     type: InvoiceLineNodeType.StockIn | InvoiceLineNodeType.Service;
+    isExternal?: boolean;
   }) => {
     const toUpdateServiceLine = (line: InboundLineFragment) =>
       inboundParsers.toUpdateServiceCharge({ ...line, taxPercentage });
 
-    const result =
-      (await sdk.upsertInboundShipment({
-        storeId,
-        input: {
-          updateInboundShipmentServiceLines:
-            type === InvoiceLineNodeType.Service
-              ? lines.filter(isA.serviceLine).map(toUpdateServiceLine)
-              : [],
-        },
-      })) || {};
+    const input = {
+      updateInboundShipmentServiceLines:
+        type === InvoiceLineNodeType.Service
+          ? lines.filter(isA.serviceLine).map(toUpdateServiceLine)
+          : [],
+    };
 
-    const { batchInboundShipment } = result;
+    const batchInboundShipment = isExternal
+      ? (await sdk.upsertInboundShipmentExternal({ storeId, input }))
+          ?.batchInboundShipmentExternal
+      : (await sdk.upsertInboundShipment({ storeId, input }))
+          ?.batchInboundShipment;
 
     if (batchInboundShipment?.__typename === 'BatchInboundShipmentResponse') {
       return batchInboundShipment;
@@ -395,7 +440,10 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update invoice');
   },
-  updateLines: async (draftInboundLine: DraftInboundLine[]) => {
+  updateLines: async (
+    draftInboundLine: DraftInboundLine[],
+    isExternal = false
+  ) => {
     const input = {
       insertInboundShipmentLines: draftInboundLine
         .filter(
@@ -434,9 +482,18 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         .map(inboundParsers.toDeleteServiceCharge),
     };
 
-    const result = await sdk.upsertInboundShipment({ storeId, input });
+    if (isExternal) {
+      const result = await sdk.upsertInboundShipmentExternal({
+        storeId,
+        input,
+      });
+      // Normalize response so consumers can use the same field name
+      return {
+        batchInboundShipment: result.batchInboundShipmentExternal,
+      };
+    }
 
-    return result;
+    return sdk.upsertInboundShipment({ storeId, input });
   },
   addFromMasterList: async ({
     shipmentId,

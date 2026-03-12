@@ -11,7 +11,6 @@ use graphql_core::{
 };
 use graphql_types::types::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceConnector, InvoiceNode,
-    InvoiceNodeType,
 };
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, InvoiceStatus,
@@ -59,6 +58,56 @@ pub struct InvoiceSortInput {
     desc: Option<bool>,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "SCREAMING_SNAKE_CASE")]
+pub enum InvoiceTypeInput {
+    OutboundShipment,
+    InboundShipment,
+    InboundShipmentExternal,
+    Prescription,
+    SupplierReturn,
+    CustomerReturn,
+}
+
+impl InvoiceTypeInput {
+    pub fn resource(&self) -> Resource {
+        match self {
+            InvoiceTypeInput::OutboundShipment => Resource::QueryOutboundShipment,
+            InvoiceTypeInput::InboundShipment => Resource::QueryInboundShipment,
+            InvoiceTypeInput::InboundShipmentExternal => Resource::QueryInboundShipmentExternal,
+            InvoiceTypeInput::Prescription => Resource::QueryPrescription,
+            InvoiceTypeInput::SupplierReturn => Resource::QuerySupplierReturn,
+            InvoiceTypeInput::CustomerReturn => Resource::QueryCustomerReturn,
+        }
+    }
+
+    pub fn apply_filter(&self, mut filter: InvoiceFilter) -> InvoiceFilter {
+        match self {
+            InvoiceTypeInput::OutboundShipment => {
+                filter.r#type = Some(InvoiceType::OutboundShipment.equal_to());
+            }
+            InvoiceTypeInput::InboundShipment => {
+                filter.r#type = Some(InvoiceType::InboundShipment.equal_to());
+                filter.purchase_order_id = Some(repository::EqualFilter::is_null(true));
+            }
+            InvoiceTypeInput::InboundShipmentExternal => {
+                filter.r#type = Some(InvoiceType::InboundShipment.equal_to());
+                filter.purchase_order_id = Some(repository::EqualFilter::is_null(false));
+            }
+            InvoiceTypeInput::Prescription => {
+                filter.r#type = Some(InvoiceType::Prescription.equal_to());
+            }
+            InvoiceTypeInput::SupplierReturn => {
+                filter.r#type = Some(InvoiceType::SupplierReturn.equal_to());
+            }
+            InvoiceTypeInput::CustomerReturn => {
+                filter.r#type = Some(InvoiceType::CustomerReturn.equal_to());
+            }
+        }
+        filter
+    }
+}
+
 #[derive(InputObject, Clone)]
 pub struct InvoiceFilterInput {
     pub id: Option<EqualFilterStringInput>,
@@ -94,11 +143,16 @@ pub fn get_invoice(
     ctx: &Context<'_>,
     store_id: Option<String>,
     id: &str,
+    r#type: Option<InvoiceTypeInput>,
 ) -> Result<InvoiceResponse> {
+    let resource = r#type
+        .map(|s| s.resource())
+        .unwrap_or(Resource::QueryInvoice);
+
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInvoice,
+            resource,
             store_id: store_id.clone(),
         },
     )?;
@@ -108,7 +162,9 @@ pub fn get_invoice(
         service_provider.context(store_id.clone().unwrap_or("".to_string()), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
-    let invoice_option = invoice_service.get_invoice(&service_context, store_id.as_deref(), id)?;
+    let type_filter = r#type.map(|s| s.apply_filter(InvoiceFilter::default()));
+    let invoice_option =
+        invoice_service.get_invoice(&service_context, store_id.as_deref(), id, type_filter)?;
 
     let response = match invoice_option {
         Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
@@ -126,11 +182,16 @@ pub fn get_invoices(
     page: Option<PaginationInput>,
     filter: Option<InvoiceFilterInput>,
     sort: Option<Vec<InvoiceSortInput>>,
+    r#type: Option<InvoiceTypeInput>,
 ) -> Result<InvoicesResponse> {
+    let resource = r#type
+        .map(|t| t.resource())
+        .unwrap_or(Resource::QueryInvoice);
+
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInvoice,
+            resource,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -138,13 +199,18 @@ pub fn get_invoices(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
+    let mut domain_filter = filter.map(|filter| filter.to_domain()).unwrap_or_default();
+    if let Some(t) = r#type {
+        domain_filter = t.apply_filter(domain_filter);
+    }
+
     let invoices = service_provider
         .invoice_service
         .get_invoices(
             &service_context,
             Some(&store_id),
             page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
+            Some(domain_filter),
             // Currently only one sort option is supported, use the first from the list.
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
@@ -160,12 +226,12 @@ pub fn get_invoice_by_number(
     ctx: &Context<'_>,
     store_id: String,
     invoice_number: u32,
-    r#type: InvoiceNodeType,
+    r#type: InvoiceTypeInput,
 ) -> Result<InvoiceResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryInvoice,
+            resource: r#type.resource(),
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -174,11 +240,12 @@ pub fn get_invoice_by_number(
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
+    let type_filter = r#type.apply_filter(InvoiceFilter::default());
     let invoice_option = invoice_service.get_invoice_by_number(
         &service_context,
         &store_id,
         invoice_number,
-        InvoiceType::from(r#type),
+        type_filter,
     )?;
 
     let response = match invoice_option {

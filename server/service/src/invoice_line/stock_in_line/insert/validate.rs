@@ -1,3 +1,4 @@
+use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
@@ -17,6 +18,7 @@ pub fn validate(
     input: &InsertStockInLine,
     store_id: &str,
     connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<(ItemRow, InvoiceRow), InsertStockInLineError> {
     use InsertStockInLineError::*;
     if (check_line_exists(connection, &input.id)?).is_some() {
@@ -66,6 +68,11 @@ pub fn validate(
     };
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
+    }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);

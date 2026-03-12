@@ -119,6 +119,84 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
             },
         },
         TestData {
+            name: "outboundShipmentCounts",
+            query: r#"query Query {
+                outboundShipmentCounts(storeId: "") {
+                  notShipped
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::QueryOutboundShipment,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
+            name: "inboundShipmentCounts",
+            query: r#"query Query {
+                inboundShipmentCounts(storeId: "") {
+                  notDelivered
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::QueryInboundShipment,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
+            name: "inboundShipmentExternalCounts",
+            query: r#"query Query {
+                inboundShipmentExternalCounts(storeId: "") {
+                  notDelivered
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::QueryInboundShipmentExternal,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
+            name: "inboundShipments",
+            query: r#"query Query {
+                inboundShipments(storeId: "", sort: {key: status}) {
+                  ... on InvoiceConnector {
+                    totalCount
+                  }
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::QueryInboundShipment,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
+            name: "inboundShipmentsExternal",
+            query: r#"query Query {
+                inboundShipmentsExternal(storeId: "", sort: {key: status}) {
+                  ... on InvoiceConnector {
+                    totalCount
+                  }
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::QueryInboundShipmentExternal,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
+            name: "outboundShipments",
+            query: r#"query Query {
+                outboundShipments(storeId: "", sort: {key: status}) {
+                  ... on InvoiceConnector {
+                    totalCount
+                  }
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::QueryOutboundShipment,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
             name: "invoiceCounts",
             query: r#"query Query {
                 invoiceCounts(storeId: "") {
@@ -468,7 +546,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
                 }
               }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::MutateInboundShipment,
+                resource: Resource::StoreAccess,
                 store_id: Some("some".to_string()),
             },
         },
@@ -538,7 +616,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
                 }
               }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::MutateInboundShipment,
+                resource: Resource::StoreAccess,
                 store_id: Some("some".to_string()),
             },
         },
@@ -557,6 +635,20 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             },
         },
         TestData {
+            name: "deleteInboundShipmentExternalLine",
+            query: r#"mutation Mutation {
+                deleteInboundShipmentExternalLine(input: {id: ""}, storeId: "") {
+                  ... on DeleteResponse {
+                    id
+                  }
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::MutateInboundShipmentExternal,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
             name: "deleteInboundShipmentServiceLine",
             query: r#"mutation Mutation {
                 deleteInboundShipmentServiceLine(input: {id: ""}, storeId: "") {
@@ -567,6 +659,20 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
               }"#,
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
+            name: "deleteInboundShipmentExternalServiceLine",
+            query: r#"mutation Mutation {
+                deleteInboundShipmentExternalServiceLine(input: {id: ""}, storeId: "") {
+                  ... on DeleteResponse {
+                    id
+                  }
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
             },
         },
@@ -706,7 +812,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
                 }
               }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::MutateInboundShipment,
+                resource: Resource::StoreAccess,
                 store_id: Some("some".to_string()),
             },
         },
@@ -725,6 +831,20 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             },
         },
         TestData {
+            name: "insertInboundShipmentExternalLine",
+            query: r#"mutation Mutation {
+                insertInboundShipmentExternalLine(input: {id: "", invoiceId: "", itemId: "", packSize: 10, costPricePerPack: 1.5, sellPricePerPack: 1.5, numberOfPacks: 10, totalBeforeTax: 1.5}, storeId: "") {
+                  ... on InvoiceLineNode {
+                    id
+                  }
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::MutateInboundShipmentExternal,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
             name: "insertInboundShipmentServiceLine",
             query: r#"mutation Mutation {
                 insertInboundShipmentServiceLine(input: {id: "", invoiceId: "", totalBeforeTax: 1.5}, storeId: "") {
@@ -735,6 +855,20 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
               }"#,
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
+            name: "insertInboundShipmentExternalServiceLine",
+            query: r#"mutation Mutation {
+                insertInboundShipmentExternalServiceLine(input: {id: "", invoiceId: "", totalBeforeTax: 1.5}, storeId: "") {
+                  ... on InvoiceLineNode {
+                    id
+                  }
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
             },
         },
@@ -891,12 +1025,12 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
                 }
               }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::MutateInboundShipment,
+                resource: Resource::StoreAccess,
                 store_id: Some("some".to_string()),
             },
         },
         TestData {
-            name: "updateInboundShipment",
+            name: "updateInboundShipmentLine",
             query: r#"mutation Mutation {
                 updateInboundShipmentLine(input: {id: ""}, storeId: "") {
                   ... on InvoiceLineNode {
@@ -906,6 +1040,20 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
               }"#,
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
+            name: "updateInboundShipmentExternalLine",
+            query: r#"mutation Mutation {
+                updateInboundShipmentExternalLine(input: {id: ""}, storeId: "") {
+                  ... on InvoiceLineNode {
+                    id
+                  }
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
             },
         },
@@ -920,6 +1068,20 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
               }"#,
             expected: ResourceAccessRequest {
                 resource: Resource::MutateInboundShipment,
+                store_id: Some("some".to_string()),
+            },
+        },
+        TestData {
+            name: "updateInboundShipmentExternalServiceLine",
+            query: r#"mutation Mutation {
+                updateInboundShipmentExternalServiceLine(input: {id: ""}, storeId: "") {
+                  ... on InvoiceLineNode {
+                    id
+                  }
+                }
+              }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::MutateInboundShipmentExternal,
                 store_id: Some("some".to_string()),
             },
         },

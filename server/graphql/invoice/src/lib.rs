@@ -1,6 +1,6 @@
 use async_graphql::*;
+use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::pagination::PaginationInput;
-use graphql_types::types::*;
 use mutations::AddToShipmentFromMasterListInput;
 
 pub mod invoice_queries;
@@ -24,8 +24,10 @@ impl InvoiceQueries {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "id of the invoice")] id: String,
+        #[graphql(desc = "Optional type to check type-specific permissions and filter results")]
+        r#type: Option<InvoiceTypeInput>,
     ) -> Result<InvoiceResponse> {
-        get_invoice(ctx, Some(store_id), &id)
+        get_invoice(ctx, Some(store_id), &id, r#type)
     }
 
     pub async fn invoice_by_number(
@@ -33,7 +35,7 @@ impl InvoiceQueries {
         ctx: &Context<'_>,
         store_id: String,
         invoice_number: u32,
-        r#type: InvoiceNodeType,
+        r#type: InvoiceTypeInput,
     ) -> Result<InvoiceResponse> {
         get_invoice_by_number(ctx, store_id, invoice_number, r#type)
     }
@@ -46,8 +48,9 @@ impl InvoiceQueries {
         #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
+        r#type: Option<InvoiceTypeInput>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort)
+        get_invoices(ctx, store_id, page, filter, sort, r#type)
     }
 }
 
@@ -98,7 +101,26 @@ impl InvoiceMutations {
         store_id: String,
         input: inbound_shipment::insert::InsertInput,
     ) -> Result<inbound_shipment::insert::InsertResponse> {
-        inbound_shipment::insert::insert(ctx, &store_id, input)
+        inbound_shipment::insert::insert(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn insert_inbound_shipment_external(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment::insert::InsertInput,
+    ) -> Result<inbound_shipment::insert::InsertResponse> {
+        inbound_shipment::insert::insert(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn update_inbound_shipment(
@@ -107,7 +129,26 @@ impl InvoiceMutations {
         store_id: String,
         input: inbound_shipment::update::UpdateInput,
     ) -> Result<inbound_shipment::update::UpdateResponse> {
-        inbound_shipment::update::update(ctx, &store_id, input)
+        inbound_shipment::update::update(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn update_inbound_shipment_external(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment::update::UpdateInput,
+    ) -> Result<inbound_shipment::update::UpdateResponse> {
+        inbound_shipment::update::update(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn delete_inbound_shipment(
@@ -116,7 +157,26 @@ impl InvoiceMutations {
         store_id: String,
         input: inbound_shipment::delete::DeleteInput,
     ) -> Result<inbound_shipment::delete::DeleteResponse> {
-        inbound_shipment::delete::delete(ctx, &store_id, input)
+        inbound_shipment::delete::delete(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn delete_inbound_shipment_external(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment::delete::DeleteInput,
+    ) -> Result<inbound_shipment::delete::DeleteResponse> {
+        inbound_shipment::delete::delete(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     /// Add invoice lines from master item master list

@@ -1,11 +1,16 @@
 import {
   RecordPatch,
   UpdateInboundShipmentInput,
+  InvoiceTypeInput,
   useMutation,
   useQuery,
   usePatchState,
   useParams,
+  useAuthContext,
+  useLocation,
+  UserPermission,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   InboundFragment,
   InboundRowFragment,
@@ -24,14 +29,29 @@ import { useMemo } from 'react';
 
 export const useInboundShipment = (id?: string) => {
   const { invoiceId: paramInvoiceId = '' } = useParams();
+  const location = useLocation();
+  const isExternal = location.pathname.includes(
+    AppRoute.InboundShipmentExternal
+  );
 
   // If an id is passed in, use that. Otherwise use the invoice id from the URL
   const invoiceId = !id ? paramInvoiceId : id;
 
-  const { data, isLoading: loading, error } = useGetById(invoiceId);
+  const invoiceType = isExternal
+    ? InvoiceTypeInput.InboundShipmentExternal
+    : InvoiceTypeInput.InboundShipment;
+
+  const { data, isLoading: loading, error } = useGetById(invoiceId, invoiceType);
   const { queryClient } = useInboundGraphQL();
+  const { userHasPermission } = useAuthContext();
   const isHoldable = isInboundHoldable(data);
-  const isDisabled = isInboundDisabled(data);
+  const hasMutatePermission = isExternal
+    ? userHasPermission(UserPermission.InboundShipmentExternalMutate)
+    : userHasPermission(UserPermission.InboundShipmentMutate);
+  const hasVerifyPermission = isExternal
+    ? userHasPermission(UserPermission.InboundShipmentExternalAuthorise)
+    : userHasPermission(UserPermission.InboundShipmentVerify);
+  const isDisabled = isInboundDisabled(data) || !hasMutatePermission;
   const isStatusChangeDisabled = isInboundStatusChangeDisabled(data);
 
   const rows = useMemo(() => {
@@ -101,8 +121,10 @@ export const useInboundShipment = (id?: string) => {
   return {
     query: { data, loading, error },
     isDisabled,
+    hasMutatePermission,
     isHoldable,
     isStatusChangeDisabled,
+    hasVerifyPermission,
     update: { update, isUpdating, updateError },
     create: { create, isCreating, createError },
     delete: { deleteInbound, isDeleting, deleteError },
@@ -113,13 +135,17 @@ export const useInboundShipment = (id?: string) => {
   };
 };
 
-const useGetById = (invoiceId: string | undefined) => {
+const useGetById = (
+  invoiceId: string | undefined,
+  type?: InvoiceTypeInput
+) => {
   const { inboundApi, storeId } = useInboundGraphQL();
 
   const queryFn = async (): Promise<InboundFragment> => {
     const result = await inboundApi.invoice({
       id: invoiceId ?? '',
       storeId,
+      type,
     });
 
     const invoice = result?.invoice;
@@ -147,6 +173,7 @@ const useGetById = (invoiceId: string | undefined) => {
 
 const useUpdate = () => {
   const { inboundApi, storeId, queryClient } = useInboundGraphQL();
+  const { invoiceId = '' } = useParams();
 
   const mutationFn = async (
     patch:
@@ -159,10 +186,19 @@ const useUpdate = () => {
   ) => {
     // The parser handles all types including specialized fields like defaultDonorUpdate
     const input: UpdateInboundShipmentInput = inboundParsers.toUpdate(patch);
-    const result = await inboundApi.updateInboundShipment({
-      input,
-      storeId,
-    });
+    const variables = { input, storeId };
+
+    // Check if this is an external shipment from cached data
+    const invoice = queryClient.getQueryData<InboundFragment>([
+      INBOUND,
+      INBOUND_LINE,
+      invoiceId,
+    ]);
+    const isExternal = !!invoice?.purchaseOrder;
+
+    const result = isExternal
+      ? await inboundApi.updateInboundShipmentExternal(variables)
+      : await inboundApi.updateInboundShipment(variables);
 
     return result;
   };
@@ -181,20 +217,21 @@ const useCreate = () => {
   const mutationFn = async (
     input: Omit<InsertInboundShipmentMutationVariables, 'storeId'>
   ): Promise<string> => {
-    const result =
-      (await inboundApi.insertInboundShipment({
-        ...input,
-        storeId,
-      })) || {};
+    const isExternal = !!input.purchaseOrderId;
+    const variables = { ...input, storeId };
 
-    const { insertInboundShipment } = result;
+    const insertResult = isExternal
+      ? (await inboundApi.insertInboundShipmentExternal(variables))
+          ?.insertInboundShipmentExternal
+      : (await inboundApi.insertInboundShipment(variables))
+          ?.insertInboundShipment;
 
-    if (insertInboundShipment?.__typename === 'InvoiceNode') {
-      return insertInboundShipment.id;
+    if (insertResult?.__typename === 'InvoiceNode') {
+      return insertResult.id;
     }
 
     throw new Error(
-      insertInboundShipment?.error?.description || 'Could not create invoice'
+      (insertResult as any)?.error?.description || 'Could not create invoice'
     );
   };
 

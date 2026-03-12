@@ -1,6 +1,6 @@
 use async_graphql::*;
 use chrono::{NaiveDate, NaiveDateTime};
-use service::report::definition::PrintReportSort;
+use service::{auth::Resource, report::definition::PrintReportSort};
 
 #[derive(InputObject, Clone)]
 pub struct TaxInput {
@@ -58,5 +58,32 @@ pub fn report_sort_to_typed_sort<T: strum::IntoEnumIterator + serde::Serialize>(
                     == key.to_lowercase()
             })
             .map(|variant| (variant, desc)),
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "SCREAMING_SNAKE_CASE")]
+pub enum InboundShipmentType {
+    InboundShipment,
+    InboundShipmentExternal,
+}
+
+impl InboundShipmentType {
+    pub fn resource(&self) -> Resource {
+        match self {
+            InboundShipmentType::InboundShipment => Resource::MutateInboundShipment,
+            InboundShipmentType::InboundShipmentExternal => Resource::MutateInboundShipmentExternal,
+        }
+    }
+
+    pub fn to_domain(self) -> service::invoice::inbound_shipment::InboundShipmentType {
+        match self {
+            InboundShipmentType::InboundShipment => {
+                service::invoice::inbound_shipment::InboundShipmentType::InboundShipment
+            }
+            InboundShipmentType::InboundShipmentExternal => {
+                service::invoice::inbound_shipment::InboundShipmentType::InboundShipmentExternal
+            }
+        }
     }
 }

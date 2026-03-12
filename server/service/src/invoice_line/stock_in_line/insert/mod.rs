@@ -1,6 +1,6 @@
 use crate::{
-    invoice_line::query::get_invoice_line, service_provider::ServiceContext, NullableUpdate,
-    WithDBError,
+    invoice::inbound_shipment::InboundShipmentType, invoice_line::query::get_invoice_line,
+    service_provider::ServiceContext, NullableUpdate, WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -59,11 +59,12 @@ type OutError = InsertStockInLineError;
 pub fn insert_stock_in_line(
     ctx: &ServiceContext,
     input: InsertStockInLine,
+    r#type: Option<InboundShipmentType>,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice) = validate(&input, &ctx.store_id, connection)?;
+            let (item, invoice) = validate(&input, &ctx.store_id, connection, r#type)?;
             let GenerateResult {
                 invoice: invoice_user_update,
                 invoice_line,
@@ -119,6 +120,7 @@ pub enum InsertStockInLineError {
     VVMStatusDoesNotExist,
     ProgramNotVisible,
     IncorrectLocationType,
+    WrongInboundShipmentType,
 }
 
 impl From<RepositoryError> for InsertStockInLineError {
@@ -206,6 +208,7 @@ mod test {
                     id: mock_customer_return_a_invoice_line_a().id,
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::LineAlreadyExists)
         );
@@ -219,6 +222,7 @@ mod test {
                     pack_size: 0.0,
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::PackSizeBelowOne)
         );
@@ -233,6 +237,7 @@ mod test {
                     number_of_packs: -1.0,
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::NumberOfPacksBelowZero)
         );
@@ -248,6 +253,7 @@ mod test {
                     item_id: "invalid".to_string(),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -266,6 +272,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::LocationDoesNotExist)
         );
@@ -284,6 +291,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::IncorrectLocationType)
         );
@@ -300,6 +308,7 @@ mod test {
                     item_variant_id: Some("invalid".to_string()),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ItemVariantDoesNotExist)
         );
@@ -316,6 +325,7 @@ mod test {
                     invoice_id: "new invoice id".to_string(),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -332,6 +342,7 @@ mod test {
                     invoice_id: mock_outbound_shipment_e().id,
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::NotAStockIn)
         );
@@ -348,6 +359,7 @@ mod test {
                     invoice_id: verified_customer_return().id, // VERIFIED
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::CannotEditFinalised)
         );
@@ -364,6 +376,7 @@ mod test {
                     invoice_id: mock_customer_return_a().id, // Store B
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -381,6 +394,7 @@ mod test {
                     vvm_status_id: Some("vvm_status".to_string()),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::VVMStatusDoesNotExist)
         );
@@ -399,6 +413,7 @@ mod test {
                     donor_id: Some("invalid".to_string()),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::DonorDoesNotExist)
         );
@@ -417,6 +432,7 @@ mod test {
                     donor_id: Some(mock_name_customer_a().id), // Not a donor
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::SelectedDonorPartyIsNotADonor)
         );
@@ -471,6 +487,7 @@ mod test {
                     program_id: Some(mock_immunisation_program_a().id), // Not master list visible to store_b
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ProgramNotVisible)
         );
@@ -499,6 +516,7 @@ mod test {
                 barcode: Some(gtin.clone()),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -554,6 +572,7 @@ mod test {
                 sell_price_per_pack: 100.0,
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -588,6 +607,7 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -615,6 +635,7 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -643,6 +664,7 @@ mod test {
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -677,6 +699,7 @@ mod test {
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
