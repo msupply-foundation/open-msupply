@@ -61,7 +61,7 @@ export const IndicatorEditPage = () => {
         2: t('label.indicators'),
         4: `${currentLine?.code} - ${currentLine?.name}`,
       },
-      [1, 2, 3]
+      [2, 3]
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLine?.name, currentLine?.code, response?.requisitionNumber]);
