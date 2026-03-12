@@ -4,6 +4,7 @@ use dataloader::DataLoader;
 use graphql_core::{
     loader::{
         DemographicLoader, VaccineCourseDoseByVaccineCourseIdLoader,
+        VaccineCourseStoreWastageByVaccineCourseIdLoader,
         VaccineCourseItemByVaccineCourseIdLoader,
     },
     ContextExt,
@@ -11,7 +12,10 @@ use graphql_core::{
 
 use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 
-use super::{DemographicNode, VaccineCourseDoseNode, VaccineCourseItemNode};
+use super::{
+    DemographicNode, VaccineCourseDoseNode, VaccineCourseStoreWastageNode,
+    VaccineCourseItemNode,
+};
 
 #[derive(PartialEq, Debug)]
 pub struct VaccineCourseNode {
@@ -90,6 +94,21 @@ impl VaccineCourseNode {
             doses
                 .into_iter()
                 .map(VaccineCourseDoseNode::from_domain)
+                .collect()
+        }))
+    }
+
+    pub async fn store_wastage_rates(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<Vec<VaccineCourseStoreWastageNode>>> {
+        let loader =
+            ctx.get_loader::<DataLoader<VaccineCourseStoreWastageByVaccineCourseIdLoader>>();
+        let result = loader.load_one(self.row().id.clone()).await?;
+
+        Ok(result.map(|rows| {
+            rows.into_iter()
+                .map(VaccineCourseStoreWastageNode::from_domain)
                 .collect()
         }))
     }
