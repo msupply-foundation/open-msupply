@@ -4,7 +4,7 @@ import {
   NumUtils,
 } from '@openmsupply-client/common';
 
-// Calculate stored units to selected representation for display
+// Convert units to the selected representation (packs, doses, or units)
 export const unitsToRepresentation = (
   units: number,
   representation: RepresentationValue,
@@ -12,24 +12,23 @@ export const unitsToRepresentation = (
   dosesPerUnit?: number
 ): number => {
   if (representation === Representation.PACKS) {
-    const defaultSize = defaultPackSize ?? 1;
-    if (defaultSize === 0) return 0;
-    return NumUtils.round(units / defaultSize, 2);
+    return NumUtils.round(units / (defaultPackSize || 1), 2);
   }
   if (representation === Representation.DOSES)
     return units * (dosesPerUnit || 1);
-  return units;
+  return Math.ceil(units);
 };
 
-// Calculate input value in selected representation to units for saving
+// Convert a value in the selected representation back to units
 export const representationToUnits = (
   value: number,
   representation: RepresentationValue,
   defaultPackSize?: number,
   dosesPerUnit?: number
 ): number => {
+  if (isNaN(value)) return 0;
   if (representation === Representation.PACKS)
-    return value * (defaultPackSize ?? 0);
+    return value * (defaultPackSize || 0);
   if (representation === Representation.DOSES)
     return Math.ceil(value / (dosesPerUnit || 1));
   return value;
@@ -48,9 +47,8 @@ export const getUpdatedRequest = (
   suggestedQuantity?: number,
   dosesPerUnit?: number
 ): UpdatedRequest => {
-  const newValue = typeof value === 'number' && !isNaN(value) ? value : 0;
   const requestedQuantity = representationToUnits(
-    newValue,
+    value ?? 0,
     representation,
     defaultPackSize,
     dosesPerUnit
