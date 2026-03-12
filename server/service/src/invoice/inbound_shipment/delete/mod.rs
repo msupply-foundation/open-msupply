@@ -40,6 +40,7 @@ pub fn delete_inbound_shipment(
                         id: line.invoice_line_row.id.clone(),
                         r#type: StockInType::InboundShipment,
                     },
+                    None,
                 )
                 .map_err(|error| DeleteInboundShipmentError::LineDeleteError {
                     line_id: line.invoice_line_row.id,

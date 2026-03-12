@@ -81,7 +81,7 @@ pub fn insert_customer_return(
             InvoiceRowRepository::new(connection).upsert_one(&customer_return)?;
 
             for line in insert_stock_in_lines {
-                insert_stock_in_line(ctx, line.clone()).map_err(|error| {
+                insert_stock_in_line(ctx, line.clone(), None).map_err(|error| {
                     OutError::LineInsertError {
                         line_id: line.id,
                         error,
