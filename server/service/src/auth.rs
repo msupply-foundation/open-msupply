@@ -172,6 +172,7 @@ pub enum Resource {
     MutateInboundShipmentExternal,
     QueryInboundShipmentExternal,
     AuthoriseInboundShipmentExternal,
+    VerifyInboundShipmentExternal,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -505,6 +506,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalMutate),
+        ]),
+    );
+    map.insert(
+        Resource::VerifyInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalVerify),
         ]),
     );
     map.insert(
