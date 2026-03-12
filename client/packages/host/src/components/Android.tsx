@@ -6,11 +6,11 @@ import {
   ButtonWithIcon,
   ConnectionResult,
   ErrorWithDetails,
-  HomeIcon,
+  ExternalLinkIcon,
   getNativeAPI,
   getPreference,
+  MonitorIcon,
   NativeMode,
-  RadioIcon,
   RouteBuilder,
   Stack,
   Theme,
@@ -199,7 +199,7 @@ export const Android = () => {
           </Box>
           <Stack spacing={3} maxWidth={400}>
             <ModeOption
-              icon={<RadioIcon fontSize="small" />}
+              icon={<ExternalLinkIcon fontSize="small" />}
               label={t('label.connect')}
               mode={NativeMode.Client}
               message={t('messages.native-mode-client')}
@@ -207,7 +207,7 @@ export const Android = () => {
               color="secondary"
             />
             <ModeOption
-              icon={<HomeIcon fontSize="small" />}
+              icon={<MonitorIcon fontSize="small" />}
               label={t('label.local')}
               mode={NativeMode.Server}
               message={t('messages.native-mode-server')}
