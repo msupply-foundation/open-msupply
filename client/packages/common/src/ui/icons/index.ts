@@ -51,6 +51,7 @@ export { MessageSquareIcon } from './MessageSquare';
 export { MinimiseIcon } from './Minimise';
 export { MinusIcon } from './Minus';
 export { MinusCircleIcon } from './MinusCircle';
+export { MonitorIcon } from './Monitor';
 export { PlusIcon } from './Plus';
 export { PlusCircleIcon } from './PlusCircle';
 export { PowerIcon } from './Power';
