@@ -17,9 +17,9 @@ import { useSchedulesAndPeriods } from '@openmsupply-client/requisitions/src';
 export const scheduleFormTester = rankWith(10, uiTypeIs('ScheduleForm'));
 
 interface FormState {
-  program: ProgramFragment | null;
-  schedule: PeriodScheduleNode | null;
-  period: PeriodNode | null;
+  programId: string | null;
+  scheduleId: string | null;
+  periodId: string | null;
   after: Date | null;
   before: Date | null;
 }
@@ -27,51 +27,35 @@ interface FormState {
 const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
   const { handleChange } = props;
-  const [form, setForm] = useState<FormState>({
-    program: null,
-    schedule: null,
-    period: null,
-    after: null,
-    before: null,
-  });
 
   const { core } = useJsonForms();
   const { programId, scheduleId, periodId, after, before } = core?.data ?? {};
 
+  const [form, setForm] = useState<FormState>({
+    programId: programId ?? null,
+    scheduleId: scheduleId ?? null,
+    periodId: periodId ?? null,
+    after: after ? new Date(after) : null,
+    before: before ? new Date(before) : null,
+  });
+
   const { data: programData, isLoading: programsLoading } = useProgramList();
   const { data: scheduleData, isLoading: schedulesLoading } =
-    useSchedulesAndPeriods(programId ?? '');
+    useSchedulesAndPeriods(form.programId ?? '');
 
   const programs = programData?.nodes ?? [];
   const schedules = scheduleData?.nodes ?? [];
-  const periods = form.schedule?.periods.map(s => s.period) ?? [];
 
-  if (programId && !form.program) {
-    const program = programs.find(p => p.id === programId);
-    if (program) setForm(prev => ({ ...prev, program }));
-  }
-
-  if (scheduleId && !form.schedule) {
-    const schedule = schedules.find(s => s.id === scheduleId);
-    if (schedule) {
-      const period = schedule.periods
-        .map(s => s.period)
-        .find(p => p.id === periodId);
-      setForm(prev => ({
-        ...prev,
-        schedule,
-        period: period ?? null,
-        after: after ? new Date(after) : null,
-        before: before ? new Date(before) : null,
-      }));
-    }
-  }
+  const program = programs.find(p => p.id === form.programId) ?? null;
+  const schedule = schedules.find(s => s.id === form.scheduleId) ?? null;
+  const periods = schedule?.periods.map(s => s.period) ?? [];
+  const period = periods.find(p => p.id === form.periodId) ?? null;
 
   const onProgramChange = (program: ProgramFragment | null) => {
     setForm({
-      program,
-      schedule: null,
-      period: null,
+      programId: program?.id ?? null,
+      scheduleId: null,
+      periodId: null,
       after: null,
       before: null,
     });
@@ -85,8 +69,8 @@ const UIComponent = (props: ControlProps) => {
   const onScheduleChange = (schedule: PeriodScheduleNode | null) => {
     setForm(prev => ({
       ...prev,
-      schedule,
-      period: null,
+      scheduleId: schedule?.id ?? null,
+      periodId: null,
       after: null,
       before: null,
     }));
@@ -100,7 +84,7 @@ const UIComponent = (props: ControlProps) => {
     const after = period ? new Date(period.startDate) : null;
     const before = period ? new Date(period.endDate) : null;
 
-    setForm(prev => ({ ...prev, period, after, before }));
+    setForm(prev => ({ ...prev, periodId: period?.id ?? null, after, before }));
     handleChange('periodId', period?.id);
     handleChange('after', after?.toISOString());
     handleChange('before', before?.toISOString());
@@ -115,7 +99,7 @@ const UIComponent = (props: ControlProps) => {
     <Box>
       <AutocompleteFilter
         label={t('label.program')}
-        value={form.program}
+        value={program}
         options={programs}
         loading={programsLoading}
         clearable={false}
@@ -123,17 +107,17 @@ const UIComponent = (props: ControlProps) => {
       />
       <AutocompleteFilter
         label={t('label.schedule')}
-        value={form.schedule}
+        value={schedule}
         options={schedules}
         loading={schedulesLoading}
-        disabled={!form.program}
+        disabled={!form.programId}
         handleChange={onScheduleChange}
       />
       <AutocompleteFilter
         label={t('label.period')}
-        value={form.period}
+        value={period}
         options={periods}
-        disabled={!form.schedule}
+        disabled={!form.scheduleId}
         handleChange={onPeriodChange}
       />
       <DateFilter
