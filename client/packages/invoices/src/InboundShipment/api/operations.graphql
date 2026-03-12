@@ -263,12 +263,14 @@ query invoices(
   $desc: Boolean
   $filter: InvoiceFilterInput
   $storeId: String!
+  $type: InvoiceTypeInput
 ) {
   invoices(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
     storeId: $storeId
+    type: $type
   ) {
     ... on InvoiceConnector {
       __typename
@@ -280,8 +282,8 @@ query invoices(
   }
 }
 
-query invoice($id: String!, $storeId: String!) {
-  invoice(id: $id, storeId: $storeId) {
+query invoice($id: String!, $storeId: String!, $type: InvoiceTypeInput) {
+  invoice(id: $id, storeId: $storeId, type: $type) {
     ... on InvoiceNode {
       ...Inbound
     }
