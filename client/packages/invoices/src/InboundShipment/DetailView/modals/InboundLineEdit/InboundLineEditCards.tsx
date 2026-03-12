@@ -25,6 +25,7 @@ import {
   InvoiceIcon,
   SlidersIcon,
   EditIcon,
+  useCurrency,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -39,6 +40,8 @@ import {
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
+import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
+import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
 
 interface CardProps {
   lines: DraftInboundLine[];
@@ -83,6 +86,26 @@ export const InboundLineEditCards = ({
   const { store } = useAuthContext();
   const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
     usePreferences();
+
+  const {
+    query: { data: inboundData },
+  } = useInboundShipment();
+  const purchaseOrderId = inboundData?.purchaseOrder?.id;
+  const { query: poQuery } = usePurchaseOrder(purchaseOrderId);
+
+  const { c: formatCurrency } = useCurrency();
+
+  // Build a set of PO cost prices for the current item to detect changes
+  const poLinePrices = useMemo(() => {
+    if (!purchaseOrderId || !item?.id || !poQuery.data) return null;
+    const prices = new Set<number>();
+    for (const line of poQuery.data.lines.nodes) {
+      if (line.item.id === item.id) {
+        prices.add(line.pricePerPackAfterDiscount);
+      }
+    }
+    return prices;
+  }, [purchaseOrderId, item?.id, poQuery.data]);
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -391,15 +414,43 @@ export const InboundLineEditCards = ({
         header: t('label.pack-cost-price'),
         columnGroup: 'pricing',
         defaultHideOnMobile: true,
-        Cell: ({ cell, row }) => (
-          <CurrencyInputCell
-            cell={cell}
-            disabled={isDisabled}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, costPricePerPack: value })
-            }
-          />
-        ),
+        Cell: ({ cell, row }) => {
+          const costPrice = row.original.costPricePerPack;
+          const differsFromPo =
+            poLinePrices != null &&
+            poLinePrices.size > 0 &&
+            !poLinePrices.has(costPrice);
+          const poPrice = differsFromPo
+            ? [...poLinePrices!]
+                .map(p => formatCurrency(p).format())
+                .join(', ')
+            : '';
+          return (
+            <Box>
+              <CurrencyInputCell
+                cell={cell}
+                disabled={isDisabled}
+                updateFn={value =>
+                  updateDraftLine({
+                    id: row.original.id,
+                    costPricePerPack: value,
+                  })
+                }
+                style={differsFromPo ? { color: 'red' } : undefined}
+              />
+              {differsFromPo && (
+                <Box
+                  sx={{
+                    fontSize: '0.75rem',
+                    color: 'red',
+                  }}
+                >
+                  {t('messages.po-cost-price', { price: poPrice })}
+                </Box>
+              )}
+            </Box>
+          );
+        },
       },
       {
         id: 'foreignCurrencyCostPricePerPack',
@@ -573,6 +624,7 @@ export const InboundLineEditCards = ({
     isExternalSupplier,
     item?.isVaccine,
     pluralisedUnitName,
+    poLinePrices,
     removeDraftLine,
     restrictedToLocationTypeId,
     setPackRoundingMessage,
