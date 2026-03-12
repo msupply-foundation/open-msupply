@@ -159,6 +159,7 @@ const useGetById = (invoiceId: string | undefined) => {
 
 const useUpdate = () => {
   const { inboundApi, storeId, queryClient } = useInboundGraphQL();
+  const { invoiceId = '' } = useParams();
 
   const mutationFn = async (
     patch:
@@ -171,10 +172,19 @@ const useUpdate = () => {
   ) => {
     // The parser handles all types including specialized fields like defaultDonorUpdate
     const input: UpdateInboundShipmentInput = inboundParsers.toUpdate(patch);
-    const result = await inboundApi.updateInboundShipment({
-      input,
-      storeId,
-    });
+    const variables = { input, storeId };
+
+    // Check if this is an external shipment from cached data
+    const invoice = queryClient.getQueryData<InboundFragment>([
+      INBOUND,
+      INBOUND_LINE,
+      invoiceId,
+    ]);
+    const isExternal = !!invoice?.purchaseOrder;
+
+    const result = isExternal
+      ? await inboundApi.updateInboundShipmentExternal(variables)
+      : await inboundApi.updateInboundShipment(variables);
 
     return result;
   };
@@ -193,20 +203,21 @@ const useCreate = () => {
   const mutationFn = async (
     input: Omit<InsertInboundShipmentMutationVariables, 'storeId'>
   ): Promise<string> => {
-    const result =
-      (await inboundApi.insertInboundShipment({
-        ...input,
-        storeId,
-      })) || {};
+    const isExternal = !!input.purchaseOrderId;
+    const variables = { ...input, storeId };
 
-    const { insertInboundShipment } = result;
+    const insertResult = isExternal
+      ? (await inboundApi.insertInboundShipmentExternal(variables))
+          ?.insertInboundShipmentExternal
+      : (await inboundApi.insertInboundShipment(variables))
+          ?.insertInboundShipment;
 
-    if (insertInboundShipment?.__typename === 'InvoiceNode') {
-      return insertInboundShipment.id;
+    if (insertResult?.__typename === 'InvoiceNode') {
+      return insertResult.id;
     }
 
     throw new Error(
-      insertInboundShipment?.error?.description || 'Could not create invoice'
+      (insertResult as any)?.error?.description || 'Could not create invoice'
     );
   };
 

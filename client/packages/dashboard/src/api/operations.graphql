@@ -26,7 +26,7 @@ query inboundCounts($storeId: String!) {
 
 query inboundInternalCounts($storeId: String!) {
   invoiceCounts(storeId: $storeId) {
-    inboundInternal {
+    inbound {
       created {
         today
         thisWeek
