@@ -4,11 +4,12 @@ use crate::StorageConnection;
 mod add_forecasting_fields_to_requisition_line;
 mod add_manufacture_date_to_stock_and_invoice_lines;
 mod add_purchase_order_id_to_invoice;
+mod import_goods_received;
 mod invoice_line_add_status;
 mod item_category_join_add_item_link_id;
+mod item_store_join_add_default_location_id;
 mod remove_goods_received;
 mod remove_goods_received_cleanup;
-mod item_store_join_add_default_location_id;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -22,7 +23,6 @@ impl Migration for V2_17_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
-            
             Box::new(add_forecasting_fields_to_requisition_line::Migrate),
             Box::new(remove_goods_received::Migrate),
             Box::new(remove_goods_received_cleanup::Migrate),
@@ -31,6 +31,7 @@ impl Migration for V2_17_00 {
             Box::new(item_category_join_add_item_link_id::Migrate),
             Box::new(add_manufacture_date_to_stock_and_invoice_lines::Migrate),
             Box::new(item_store_join_add_default_location_id::Migrate),
+            Box::new(import_goods_received::Migrate),
         ]
     }
 }
