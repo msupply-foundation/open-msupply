@@ -83,6 +83,7 @@ pub fn update(
         )
     });
     let needs_authorise = status_is_approve_or_reject || {
+        // TODO: come up with a better way to handle data based permissions. the graphql/service layer split makes it difficult to set permissions based on data
         let line =
             InvoiceLineRowRepository::new(&service_context.connection).find_one_by_id(&input.id)?;
         line.map_or(false, |l| l.status == Some(InvoiceLineStatus::Passed))
