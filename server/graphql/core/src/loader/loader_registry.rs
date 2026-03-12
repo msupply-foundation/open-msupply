@@ -384,6 +384,13 @@ pub async fn get_loaders(
     ));
 
     loaders.insert(DataLoader::new(
+        VaccineCourseStoreWastageByVaccineCourseIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
         RnRFormLinesByRnRFormIdLoader {
             connection_manager: connection_manager.clone(),
         },
