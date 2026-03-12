@@ -32,6 +32,7 @@ pub enum DeleteResponse {
 }
 
 pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
+    let service_provider = ctx.service_provider();
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -39,8 +40,6 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
             store_id: Some(store_id.to_string()),
         },
     )?;
-
-    let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     map_response(
@@ -94,6 +93,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::AuthorisationDenied => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::LineDeleteError { .. } => InternalError(formatted_error),
     };

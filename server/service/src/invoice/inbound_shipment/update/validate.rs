@@ -1,7 +1,7 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
-    inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
+    inbound_shipment::{UpdateInboundShipmentStatus, check_inbound_shipment_mutation_permission, check_inbound_shipment_verify_permission}, InvoiceRowStatusError,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use chrono::{NaiveDateTime, Utc};
@@ -14,6 +14,7 @@ use super::{UpdateInboundShipment, UpdateInboundShipmentError};
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
+    user_id: &str,
     patch: &UpdateInboundShipment,
 ) -> Result<(InvoiceRow, Option<Name>, bool), UpdateInboundShipmentError> {
     use UpdateInboundShipmentError::*;
@@ -28,6 +29,10 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
+
+    // Check if user has permission for this shipment type (internal or external)
+    let is_external = invoice.purchase_order_id.is_some();
+    check_inbound_shipment_mutation_permission(connection, store_id, user_id, is_external)?;
 
     // Status check
     let status_changed = check_status_change(&invoice, patch.full_status());
@@ -47,6 +52,9 @@ pub fn validate(
         use UpdateInboundShipmentStatus::*;
         if matches!(patch.status, Some(Received | Verified)) {
             check_no_pending_lines(&invoice.id, connection)?;
+        }
+        if matches!(patch.status, Some(Verified)) {
+            check_inbound_shipment_verify_permission(connection, store_id, user_id, is_external)?;
         }
     }
 

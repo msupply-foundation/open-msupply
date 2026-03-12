@@ -5,6 +5,8 @@ import {
   useQuery,
   usePatchState,
   useParams,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import {
   InboundFragment,
@@ -30,8 +32,16 @@ export const useInboundShipment = (id?: string) => {
 
   const { data, isLoading: loading, error } = useGetById(invoiceId);
   const { queryClient } = useInboundGraphQL();
+  const { userHasPermission } = useAuthContext();
   const isHoldable = isInboundHoldable(data);
-  const isDisabled = isInboundDisabled(data);
+  const isExternal = !!data?.purchaseOrder;
+  const hasMutatePermission = isExternal
+    ? userHasPermission(UserPermission.InboundShipmentExternalMutate)
+    : userHasPermission(UserPermission.InboundShipmentMutate);
+  const hasVerifyPermission = isExternal
+    ? userHasPermission(UserPermission.InboundShipmentExternalAuthorise)
+    : userHasPermission(UserPermission.InboundShipmentVerify);
+  const isDisabled = isInboundDisabled(data) || !hasMutatePermission;
   const isStatusChangeDisabled = isInboundStatusChangeDisabled(data);
 
   const rows = useMemo(() => {
@@ -101,8 +111,10 @@ export const useInboundShipment = (id?: string) => {
   return {
     query: { data, loading, error },
     isDisabled,
+    hasMutatePermission,
     isHoldable,
     isStatusChangeDisabled,
+    hasVerifyPermission,
     update: { update, isUpdating, updateError },
     create: { create, isCreating, createError },
     delete: { deleteInbound, isDeleting, deleteError },
