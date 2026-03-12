@@ -3,6 +3,7 @@ import { CurrencyInput } from '@common/components';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+const noop = () => {};
 
 interface CurrencyInputCellProps<T extends MRT_RowData> {
   cell: MRT_Cell<T>;
@@ -21,7 +22,7 @@ export const CurrencyInputCell = <T extends MRT_RowData>({
     <CurrencyInput
       disabled={disabled}
       value={value}
-      onChangeNumber={updateFn}
+      onChangeNumber={updateFn ?? noop}
       onKeyDown={e => {
         // Allow using arrow keys to move input cursor without
         // navigating to the next/previous cell
