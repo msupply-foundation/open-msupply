@@ -595,7 +595,7 @@ export const LocationTableComponent = ({
                 id: row.id,
                 manufacturer: manufacturer ?? undefined,
                 ...(row.itemVariant
-                  ? { itemVariantId: undefined, itemVariant: null }
+                  ? { itemVariantId: null, itemVariant: null }
                   : {}),
               });
             }}
