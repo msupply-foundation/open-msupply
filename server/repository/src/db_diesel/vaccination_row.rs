@@ -86,8 +86,11 @@ pub struct VaccinationRow {
     pub not_given_reason: Option<String>,
     pub comment: Option<String>,
     // Resolved from link tables - must be last to match view column order
+    #[serde(alias = "patient_link_id")]
     pub patient_id: String,
+    #[serde(alias = "item_link_id")]
     pub item_id: Option<String>,
+    #[serde(alias = "facility_name_link_id")]
     pub facility_name_id: Option<String>,
 }
 

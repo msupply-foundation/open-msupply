@@ -57,7 +57,9 @@ pub struct ItemVariantRow {
     #[serde(default)]
     pub created_by: Option<String>,
     // Resolved from link tables - must be last to match view column order
+    #[serde(alias = "item_link_id")]
     pub item_id: String,
+    #[serde(alias = "manufacturer_link_id")]
     pub manufacturer_id: Option<String>,
 }
 

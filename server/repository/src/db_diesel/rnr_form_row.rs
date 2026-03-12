@@ -65,6 +65,7 @@ pub struct RnRFormRow {
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     // Resolved from name_link - must be last to match view column order
+    #[serde(alias = "name_link_id")]
     pub name_id: String,
 }
 

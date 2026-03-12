@@ -1,7 +1,7 @@
 use super::{
     campaign_row::campaign, invoice_line_row::invoice_line::dsl::*, invoice_row::invoice,
-    item_row::item, location_row::location, reason_option_row::reason_option,
-    stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status, StorageConnection,
+    location_row::location, reason_option_row::reason_option, stock_line_row::stock_line,
+    vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
 use crate::diesel_macros::define_linked_tables;
@@ -87,7 +87,6 @@ allow_tables_to_appear_in_same_query!(invoice_line_stats, invoice);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, location);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, stock_line);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, reason_option);
-allow_tables_to_appear_in_same_query!(invoice_line_stats, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, item);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]

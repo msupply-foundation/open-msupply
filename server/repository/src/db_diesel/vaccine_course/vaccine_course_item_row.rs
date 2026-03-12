@@ -37,6 +37,7 @@ pub struct VaccineCourseItemRow {
     pub vaccine_course_id: String,
     pub deleted_datetime: Option<NaiveDateTime>,
     // Resolved from item_link - must be last to match view column order
+    #[serde(alias = "item_link_id")]
     pub item_id: String,
 }
 

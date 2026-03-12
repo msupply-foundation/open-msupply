@@ -88,6 +88,7 @@ pub struct RnRFormLineRow {
     pub comment: Option<String>,
     pub confirmed: bool,
     // Resolved from item_link - must be last to match view column order
+    #[serde(alias = "item_link_id")]
     pub item_id: String,
 }
 
