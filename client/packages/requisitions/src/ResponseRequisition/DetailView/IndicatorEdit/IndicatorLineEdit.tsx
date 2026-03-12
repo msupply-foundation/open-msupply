@@ -7,6 +7,7 @@ import {
   IndicatorValueTypeNode,
   InputWithLabelRow,
   NumericTextInput,
+  Typography,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -102,17 +103,21 @@ const InputWithLabel = ({
       />
     );
 
-  const label = indicatorColumnNameToLocal(data.name, t);
   const isInactive = isColumnInactive || isLineInactive;
-  const displayLabel = isInactive && disabled ? `${label} (no longer active)` : label;
 
   return (
-    <InputWithLabelRow
-      Input={inputComponent}
-      labelWidth={LABEL_WIDTH}
-      label={displayLabel}
-      sx={{ marginBottom: 1 }}
-    />
+    <Box sx={{ marginBottom: 1 }}>
+      <InputWithLabelRow
+        Input={inputComponent}
+        labelWidth={LABEL_WIDTH}
+        label={indicatorColumnNameToLocal(data.name, t)}
+      />
+      {isInactive && (
+        <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+          {t('label.indicator-no-longer-active')}
+        </Typography>
+      )}
+    </Box>
   );
 };
 
