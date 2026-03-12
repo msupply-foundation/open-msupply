@@ -414,9 +414,7 @@ export const InboundLineEditCards = ({
           }
           return undefined;
         },
-        Cell: ({ cell }) => (
-          <CurrencyInputCell cell={cell} disabled updateFn={() => {}} />
-        ),
+        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
@@ -446,9 +444,7 @@ export const InboundLineEditCards = ({
           }
           return undefined;
         },
-        Cell: ({ cell }) => (
-          <CurrencyInputCell cell={cell} disabled updateFn={() => {}} />
-        ),
+        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
@@ -459,9 +455,7 @@ export const InboundLineEditCards = ({
         columnGroup: 'pricing',
         defaultHideOnMobile: true,
         accessorFn: row => row.costPricePerPack * row.numberOfPacks,
-        Cell: ({ cell }) => (
-          <CurrencyInputCell cell={cell} disabled updateFn={() => {}} />
-        ),
+        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
       },
       {
         id: 'foreignCurrencyLineTotal',
@@ -474,9 +468,7 @@ export const InboundLineEditCards = ({
           }
           return undefined;
         },
-        Cell: ({ cell }) => (
-          <CurrencyInputCell cell={cell} disabled updateFn={() => {}} />
-        ),
+        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },

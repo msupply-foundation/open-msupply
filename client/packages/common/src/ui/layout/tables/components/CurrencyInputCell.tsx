@@ -6,7 +6,7 @@ const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
 interface CurrencyInputCellProps<T extends MRT_RowData> {
   cell: MRT_Cell<T>;
-  updateFn: (value: number) => void;
+  updateFn?: (value: number) => void;
   disabled?: boolean;
 }
 
