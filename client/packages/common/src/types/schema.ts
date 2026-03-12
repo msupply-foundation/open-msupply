@@ -3306,11 +3306,17 @@ export type InsertFromResponseRequisitionInput = {
   id: Scalars['String']['input'];
   otherPartyId: Scalars['String']['input'];
   responseRequisitionId: Scalars['String']['input'];
+  status?: InputMaybe<InsertFromResponseStatusInput>;
 };
 
 export type InsertFromResponseRequisitionResponse =
   | InsertFromResponseRequisitionError
   | RequisitionNode;
+
+export enum InsertFromResponseStatusInput {
+  Draft = 'DRAFT',
+  Sent = 'SENT',
+}
 
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
@@ -5266,7 +5272,7 @@ export type Mutations = {
   insertDocumentRegistry: InsertDocumentResponse;
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
-  insertFromResponseRequisition: InsertFromResponseRequisitionResponse;
+  insertRequestFromResponseRequisition: InsertFromResponseRequisitionResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
