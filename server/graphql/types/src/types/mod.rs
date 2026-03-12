@@ -112,6 +112,8 @@ pub mod vaccine_course_item;
 pub use self::vaccine_course_item::*;
 pub mod vaccine_course_dose;
 pub use self::vaccine_course_dose::*;
+pub mod vaccine_course_store_wastage;
+pub use self::vaccine_course_store_wastage::*;
 
 pub mod demographic_indicator;
 pub use self::demographic_indicator::*;
