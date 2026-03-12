@@ -25,42 +25,19 @@ export type ItemCountsQuery = {
   };
 };
 
-export type InboundCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-export type InboundCountsQuery = {
-  __typename: 'Queries';
-  invoiceCounts: {
-    __typename: 'InvoiceCounts';
-    inbound: {
-      __typename: 'InboundInvoiceCounts';
-      notDelivered: number;
-      created: {
-        __typename: 'InvoiceCountsSummary';
-        today: number;
-        thisWeek: number;
-      };
-    };
-  };
-};
-
 export type InboundInternalCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 export type InboundInternalCountsQuery = {
   __typename: 'Queries';
-  invoiceCounts: {
-    __typename: 'InvoiceCounts';
-    inbound: {
-      __typename: 'InboundInvoiceCounts';
-      notDelivered: number;
-      created: {
-        __typename: 'InvoiceCountsSummary';
-        today: number;
-        thisWeek: number;
-      };
+  inboundShipmentCounts: {
+    __typename: 'InboundInvoiceCounts';
+    notDelivered: number;
+    created: {
+      __typename: 'InvoiceCountsSummary';
+      today: number;
+      thisWeek: number;
     };
   };
 };
@@ -71,16 +48,13 @@ export type InboundExternalCountsQueryVariables = Types.Exact<{
 
 export type InboundExternalCountsQuery = {
   __typename: 'Queries';
-  invoiceCounts: {
-    __typename: 'InvoiceCounts';
-    inboundExternal: {
-      __typename: 'InboundInvoiceCounts';
-      notDelivered: number;
-      created: {
-        __typename: 'InvoiceCountsSummary';
-        today: number;
-        thisWeek: number;
-      };
+  inboundShipmentExternalCounts: {
+    __typename: 'InboundInvoiceCounts';
+    notDelivered: number;
+    created: {
+      __typename: 'InvoiceCountsSummary';
+      today: number;
+      thisWeek: number;
     };
   };
 };
@@ -91,9 +65,9 @@ export type OutboundCountsQueryVariables = Types.Exact<{
 
 export type OutboundCountsQuery = {
   __typename: 'Queries';
-  invoiceCounts: {
-    __typename: 'InvoiceCounts';
-    outbound: { __typename: 'OutboundInvoiceCounts'; notShipped: number };
+  outboundShipmentCounts: {
+    __typename: 'OutboundInvoiceCounts';
+    notShipped: number;
   };
 };
 
@@ -156,51 +130,32 @@ export const ItemCountsDocument = gql`
     }
   }
 `;
-export const InboundCountsDocument = gql`
-  query inboundCounts($storeId: String!) {
-    invoiceCounts(storeId: $storeId) {
-      inbound {
-        created {
-          today
-          thisWeek
-        }
-        notDelivered
-      }
-    }
-  }
-`;
 export const InboundInternalCountsDocument = gql`
   query inboundInternalCounts($storeId: String!) {
-    invoiceCounts(storeId: $storeId) {
-      inbound {
-        created {
-          today
-          thisWeek
-        }
-        notDelivered
+    inboundShipmentCounts(storeId: $storeId) {
+      created {
+        today
+        thisWeek
       }
+      notDelivered
     }
   }
 `;
 export const InboundExternalCountsDocument = gql`
   query inboundExternalCounts($storeId: String!) {
-    invoiceCounts(storeId: $storeId) {
-      inboundExternal {
-        created {
-          today
-          thisWeek
-        }
-        notDelivered
+    inboundShipmentExternalCounts(storeId: $storeId) {
+      created {
+        today
+        thisWeek
       }
+      notDelivered
     }
   }
 `;
 export const OutboundCountsDocument = gql`
   query outboundCounts($storeId: String!) {
-    invoiceCounts(storeId: $storeId) {
-      outbound {
-        notShipped
-      }
+    outboundShipmentCounts(storeId: $storeId) {
+      notShipped
     }
   }
 `;
@@ -269,24 +224,6 @@ export function getSdk(
             signal,
           }),
         'itemCounts',
-        'query',
-        variables
-      );
-    },
-    inboundCounts(
-      variables: InboundCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<InboundCountsQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<InboundCountsQuery>({
-            document: InboundCountsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'inboundCounts',
         'query',
         variables
       );

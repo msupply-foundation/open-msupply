@@ -1153,13 +1153,16 @@ export function getSdk(
   return {
     stocktakes(
       variables: StocktakesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<StocktakesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StocktakesQuery>(StocktakesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<StocktakesQuery>({
+            document: StocktakesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'stocktakes',
         'query',
@@ -1168,13 +1171,16 @@ export function getSdk(
     },
     stocktake(
       variables: StocktakeQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<StocktakeQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StocktakeQuery>(StocktakeDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<StocktakeQuery>({
+            document: StocktakeDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'stocktake',
         'query',
@@ -1183,15 +1189,17 @@ export function getSdk(
     },
     stocktakeByNumber(
       variables: StocktakeByNumberQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<StocktakeByNumberQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StocktakeByNumberQuery>(
-            StocktakeByNumberDocument,
+          client.request<StocktakeByNumberQuery>({
+            document: StocktakeByNumberDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'stocktakeByNumber',
         'query',
         variables
@@ -1199,15 +1207,17 @@ export function getSdk(
     },
     stocktakeLines(
       variables: StocktakeLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<StocktakeLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StocktakeLinesQuery>(
-            StocktakeLinesDocument,
+          client.request<StocktakeLinesQuery>({
+            document: StocktakeLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'stocktakeLines',
         'query',
         variables
@@ -1215,15 +1225,17 @@ export function getSdk(
     },
     upsertStocktakeLines(
       variables: UpsertStocktakeLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpsertStocktakeLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertStocktakeLinesMutation>(
-            UpsertStocktakeLinesDocument,
+          client.request<UpsertStocktakeLinesMutation>({
+            document: UpsertStocktakeLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'upsertStocktakeLines',
         'mutation',
         variables
@@ -1231,15 +1243,17 @@ export function getSdk(
     },
     deleteStocktakes(
       variables: DeleteStocktakesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteStocktakesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteStocktakesMutation>(
-            DeleteStocktakesDocument,
+          client.request<DeleteStocktakesMutation>({
+            document: DeleteStocktakesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteStocktakes',
         'mutation',
         variables
@@ -1247,15 +1261,17 @@ export function getSdk(
     },
     updateStocktake(
       variables: UpdateStocktakeMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateStocktakeMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateStocktakeMutation>(
-            UpdateStocktakeDocument,
+          client.request<UpdateStocktakeMutation>({
+            document: UpdateStocktakeDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateStocktake',
         'mutation',
         variables
@@ -1263,15 +1279,17 @@ export function getSdk(
     },
     insertStocktake(
       variables: InsertStocktakeMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertStocktakeMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertStocktakeMutation>(
-            InsertStocktakeDocument,
+          client.request<InsertStocktakeMutation>({
+            document: InsertStocktakeDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertStocktake',
         'mutation',
         variables
