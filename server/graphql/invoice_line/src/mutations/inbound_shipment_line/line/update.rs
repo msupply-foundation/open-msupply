@@ -9,8 +9,8 @@ use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
 
 use graphql_core::generic_inputs::InboundShipmentType;
-use repository::{InvoiceLine, InvoiceLineStatus};
-use service::auth::ResourceAccessRequest;
+use repository::{InvoiceLine, InvoiceLineRowRepository, InvoiceLineStatus};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_in_line::{
     StockInType, UpdateStockInLine as ServiceInput, UpdateStockInLineError as ServiceError,
 };
@@ -75,10 +75,33 @@ pub fn update(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    let response = match service_provider
-        .invoice_line_service
-        .update_stock_in_line(&service_context, input.to_domain(), Some(r#type.to_domain()))
-    {
+    // Approving/rejecting a line or editing an already-approved line requires authorise permission
+    let status_is_approve_or_reject = input.status.as_ref().is_some_and(|s| {
+        matches!(
+            s,
+            Some(InvoiceLineStatusType::Passed) | Some(InvoiceLineStatusType::Rejected)
+        )
+    });
+    let needs_authorise = status_is_approve_or_reject || {
+        let line =
+            InvoiceLineRowRepository::new(&service_context.connection).find_one_by_id(&input.id)?;
+        line.map_or(false, |l| l.status == Some(InvoiceLineStatus::Passed))
+    };
+    if needs_authorise {
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::AuthoriseInboundShipmentExternal,
+                store_id: Some(store_id.to_string()),
+            },
+        )?;
+    }
+
+    let response = match service_provider.invoice_line_service.update_stock_in_line(
+        &service_context,
+        input.to_domain(),
+        Some(r#type.to_domain()),
+    ) {
         Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
