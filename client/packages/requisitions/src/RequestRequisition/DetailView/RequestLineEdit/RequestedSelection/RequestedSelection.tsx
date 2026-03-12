@@ -11,7 +11,11 @@ import {
   Representation,
   RepresentationValue,
 } from '@openmsupply-client/common';
-import { getCurrentValue, getUpdatedRequest } from './utils';
+import {
+  unitsToRepresentation,
+  getUpdatedRequest,
+  representationToUnits,
+} from './utils';
 import { DraftRequestLine } from '../hooks';
 
 interface Option {
@@ -52,13 +56,15 @@ export const RequestedSelection = ({
 
   const currentValue = useMemo(
     (): number =>
-      getCurrentValue(
+      unitsToRepresentation(
+        draft?.requestedQuantity ?? 0,
         representation,
-        draft?.requestedQuantity,
-        defaultPackSize
+        defaultPackSize,
+        dosesPerUnit
       ),
-    [representation, draft?.requestedQuantity, defaultPackSize]
+    [representation, draft?.requestedQuantity, defaultPackSize, dosesPerUnit]
   );
+
   const [value, setValue] = useState(currentValue);
 
   useEffect(() => {
@@ -89,7 +95,8 @@ export const RequestedSelection = ({
         value,
         representation,
         defaultPackSize,
-        draft?.suggestedQuantity
+        draft?.suggestedQuantity,
+        dosesPerUnit
       );
       update(updatedRequest);
       setIsEditingRequested(false);
@@ -145,12 +152,14 @@ export const RequestedSelection = ({
           />
           {isDosesEnabled && !!value && (
             <DosesOrUnitsCaption
-              value={
-                representation === Representation.PACKS
-                  ? value * (defaultPackSize ?? 1)
-                  : value
-              }
+              value={representationToUnits(
+                value,
+                representation,
+                defaultPackSize,
+                dosesPerUnit
+              )}
               dosesPerUnit={dosesPerUnit}
+              dosesSelected={representation === Representation.DOSES}
             />
           )}
         </Box>
