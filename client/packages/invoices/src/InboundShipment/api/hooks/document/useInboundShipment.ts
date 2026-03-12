@@ -1,13 +1,16 @@
 import {
   RecordPatch,
   UpdateInboundShipmentInput,
+  InvoiceTypeInput,
   useMutation,
   useQuery,
   usePatchState,
   useParams,
   useAuthContext,
+  useLocation,
   UserPermission,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   InboundFragment,
   InboundRowFragment,
@@ -26,15 +29,22 @@ import { useMemo } from 'react';
 
 export const useInboundShipment = (id?: string) => {
   const { invoiceId: paramInvoiceId = '' } = useParams();
+  const location = useLocation();
+  const isExternal = location.pathname.includes(
+    AppRoute.InboundShipmentExternal
+  );
 
   // If an id is passed in, use that. Otherwise use the invoice id from the URL
   const invoiceId = !id ? paramInvoiceId : id;
 
-  const { data, isLoading: loading, error } = useGetById(invoiceId);
+  const invoiceType = isExternal
+    ? InvoiceTypeInput.InboundShipmentExternal
+    : InvoiceTypeInput.InboundShipment;
+
+  const { data, isLoading: loading, error } = useGetById(invoiceId, invoiceType);
   const { queryClient } = useInboundGraphQL();
   const { userHasPermission } = useAuthContext();
   const isHoldable = isInboundHoldable(data);
-  const isExternal = !!data?.purchaseOrder;
   const hasMutatePermission = isExternal
     ? userHasPermission(UserPermission.InboundShipmentExternalMutate)
     : userHasPermission(UserPermission.InboundShipmentMutate);
@@ -125,13 +135,17 @@ export const useInboundShipment = (id?: string) => {
   };
 };
 
-const useGetById = (invoiceId: string | undefined) => {
+const useGetById = (
+  invoiceId: string | undefined,
+  type?: InvoiceTypeInput
+) => {
   const { inboundApi, storeId } = useInboundGraphQL();
 
   const queryFn = async (): Promise<InboundFragment> => {
     const result = await inboundApi.invoice({
       id: invoiceId ?? '',
       storeId,
+      type,
     });
 
     const invoice = result?.invoice;

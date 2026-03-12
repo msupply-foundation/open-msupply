@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
+  InvoiceTypeInput,
   useNavigate,
   useTranslation,
   NothingHere,
@@ -15,10 +16,10 @@ import {
   MobileCardList,
   DetailTabs,
   ToggleState,
-  useAuthContext,
-  useDisabledNotificationToast,
-  UserPermission,
+  RouteBuilder,
+  useUrlQuery,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButtons';
 import {
   getStatusTranslator,
@@ -78,20 +79,12 @@ const InboundShipments: React.FC<{
 
   const t = useTranslation();
   const navigate = useNavigate();
-  const { userHasPermission } = useAuthContext();
-  const showDisabledNotification = useDisabledNotificationToast();
+  const { urlQuery } = useUrlQuery();
+  const currentTab = urlQuery['tab'] as string | undefined;
+  const isActiveTab = external
+    ? currentTab === t('label.external')
+    : !currentTab || currentTab === t('label.internal');
   const { invoiceStatusOptions } = usePreferences();
-
-  const queryPermission = external
-    ? UserPermission.InboundShipmentExternalQuery
-    : UserPermission.InboundShipmentQuery;
-  const hasViewPermission = userHasPermission(queryPermission);
-
-  useEffect(() => {
-    if (!hasViewPermission) {
-      showDisabledNotification();
-    }
-  }, [hasViewPermission]);
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -129,11 +122,14 @@ const InboundShipments: React.FC<{
         ? { notEqualTo: '' } // Removes results where purchaseOrderId is null
         : { equalAnyOrNull: '' }, // Only gives results where purchaseOrderId is null
     },
+    type: external
+      ? InvoiceTypeInput.InboundShipmentExternal
+      : InvoiceTypeInput.InboundShipment,
   };
 
   const {
     query: { data, isFetching },
-  } = useInboundList(listParams);
+  } = useInboundList(isActiveTab ? listParams : undefined);
   const statuses = inboundStatuses.filter(status =>
     invoiceStatusOptions?.includes(status)
   );
@@ -225,10 +221,18 @@ const InboundShipments: React.FC<{
     {
       tableId: 'inbound-shipment-list-view',
       isLoading: isFetching,
-      onRowClick: row => navigate(row.id),
+      onRowClick: row =>
+        external
+          ? navigate(
+              RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InboundShipmentExternal)
+                .addPart(row.id)
+                .build()
+            )
+          : navigate(row.id),
       columns,
-      data: hasViewPermission ? (data?.nodes ?? []) : [],
-      totalCount: hasViewPermission ? (data?.totalCount ?? 0) : 0,
+      data: data?.nodes ?? [],
+      totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
       getIsRestrictedRow: row => isInboundListItemDisabled(row.original),
       noDataElement: (

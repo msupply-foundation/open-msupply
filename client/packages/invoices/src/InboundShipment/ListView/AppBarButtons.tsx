@@ -58,10 +58,7 @@ export const AppBarButtons = ({
   } = useInboundShipment();
   const {
     query: { isFetching, refetch },
-  } = useInboundList({
-    sortBy: { key: 'createdDateTime', direction: 'desc' },
-    filterBy: null,
-  });
+  } = useInboundList();
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
 
@@ -75,6 +72,7 @@ export const AppBarButtons = ({
     purchaseOrderId?: string,
     insertLinesFromPurchaseOrder?: boolean
   ) => {
+    const isExternal = !!purchaseOrderId;
     try {
       const invoiceId = await onCreate({
         id: FnUtils.generateUUID(),
@@ -84,9 +82,12 @@ export const AppBarButtons = ({
         insertLinesFromPurchaseOrder,
       });
 
+      const route = isExternal
+        ? AppRoute.InboundShipmentExternal
+        : AppRoute.InboundShipment;
       navigate(
         RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InboundShipment)
+          .addPart(route)
           .addPart(invoiceId)
           .build()
       );

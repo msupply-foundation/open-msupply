@@ -16,14 +16,14 @@ export const useInboundInternalCounts = () => {
     }
   );
 
-  if (!data?.invoiceCounts?.inbound) {
+  if (!data?.inboundShipmentCounts) {
     return { stats: undefined, ...rest };
   }
 
   const stats = {
-    today: data.invoiceCounts.inbound.created.today,
-    thisWeek: data.invoiceCounts.inbound.created.thisWeek,
-    notDelivered: data.invoiceCounts.inbound.notDelivered,
+    today: data.inboundShipmentCounts.created.today,
+    thisWeek: data.inboundShipmentCounts.created.thisWeek,
+    notDelivered: data.inboundShipmentCounts.notDelivered,
   };
 
   return { stats, ...rest };

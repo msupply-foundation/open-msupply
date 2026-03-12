@@ -2,6 +2,7 @@ import {
   InvoiceLineNodeType,
   RecordPatch,
   InvoiceNodeType,
+  InvoiceTypeInput,
   InvoiceSortFieldInput,
   FilterBy,
   SortBy,
@@ -37,6 +38,7 @@ export type ListParams = {
   offset: number;
   sortBy: SortBy<InboundRowFragment>;
   filterBy: FilterBy | null;
+  type?: InvoiceTypeInput;
 };
 
 export const inboundParsers = {
@@ -205,7 +207,7 @@ export const inboundParsers = {
 
 export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({ first, offset, sortBy, filterBy }: ListParams) => {
+    list: async ({ first, offset, sortBy, filterBy, type }: ListParams) => {
       const filter = {
         ...filterBy,
         type: { equalTo: InvoiceNodeType.InboundShipment },
@@ -218,10 +220,17 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy.isDesc,
         filter,
         storeId,
+        type,
       });
       return result?.invoices;
     },
-    listAll: async ({ sortBy }: { sortBy: SortBy<InboundRowFragment> }) => {
+    listAll: async ({
+      sortBy,
+      type,
+    }: {
+      sortBy: SortBy<InboundRowFragment>;
+      type?: InvoiceTypeInput;
+    }) => {
       const filter = {
         type: { equalTo: InvoiceNodeType.InboundShipment },
       };
@@ -231,6 +240,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy.isDesc,
         filter,
         storeId,
+        type,
       });
       return result?.invoices;
     },

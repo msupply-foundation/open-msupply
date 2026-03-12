@@ -16,14 +16,14 @@ export const useInboundExternalCounts = () => {
     }
   );
 
-  if (!data?.invoiceCounts?.inboundExternal) {
+  if (!data?.inboundShipmentExternalCounts) {
     return { stats: undefined, ...rest };
   }
 
   const stats = {
-    today: data.invoiceCounts.inboundExternal.created.today,
-    thisWeek: data.invoiceCounts.inboundExternal.created.thisWeek,
-    notDelivered: data.invoiceCounts.inboundExternal.notDelivered,
+    today: data.inboundShipmentExternalCounts.created.today,
+    thisWeek: data.inboundShipmentExternalCounts.created.thisWeek,
+    notDelivered: data.inboundShipmentExternalCounts.notDelivered,
   };
 
   return { stats, ...rest };
