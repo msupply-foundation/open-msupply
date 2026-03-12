@@ -14,6 +14,9 @@ use repository::{
         vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
+        vaccine_course_store_wastage_row::{
+            VaccineCourseStoreWastageRow, VaccineCourseStoreWastageRowRepository,
+        },
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
 };
@@ -72,11 +75,30 @@ impl VaccineCourseDoseInput {
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
+pub struct VaccineCourseStoreWastageInput {
+    pub id: String,
+    pub store_id: String,
+    pub wastage_rate: Option<f64>,
+}
+
+impl VaccineCourseStoreWastageInput {
+    pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseStoreWastageRow {
+        VaccineCourseStoreWastageRow {
+            id: self.id,
+            vaccine_course_id,
+            store_id: self.store_id,
+            wastage_rate: self.wastage_rate,
+        }
+    }
+}
+
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct UpdateVaccineCourse {
     pub id: String,
     pub name: Option<String>,
     pub vaccine_items: Vec<VaccineCourseItemInput>,
     pub doses: Vec<VaccineCourseDoseInput>,
+    pub store_wastage_rates: Vec<VaccineCourseStoreWastageInput>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
@@ -124,6 +146,11 @@ pub fn update_vaccine_course(
             // Upsert the vaccine course doses
             for dose in input.clone().doses {
                 dose_repo.upsert_one(&dose.to_domain(input.clone().id))?;
+            }
+
+            let store_wastage_repo = VaccineCourseStoreWastageRowRepository::new(connection);
+            for wastage in input.clone().store_wastage_rates {
+                store_wastage_repo.upsert_one(&wastage.to_domain(input.clone().id))?;
             }
 
             activity_log_entry(
@@ -202,6 +229,7 @@ fn generate(
         name,
         vaccine_items,
         doses: _,
+        store_wastage_rates: _,
         demographic_id,
         coverage_rate,
         use_in_gaps_calculations,

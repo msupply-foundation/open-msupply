@@ -1,3 +1,7 @@
+use super::{
+    UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput,
+    UpsertVaccineCourseStoreWastageInput,
+};
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{RecordAlreadyExist, RecordProgramCombinationAlreadyExists},
@@ -9,11 +13,9 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::{
         insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
-        update::{VaccineCourseDoseInput, VaccineCourseItemInput},
+        update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreWastageInput},
     },
 };
-
-use super::{UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput};
 
 pub fn insert_vaccine_course(
     ctx: &Context<'_>,
@@ -53,6 +55,7 @@ pub struct InsertVaccineCourseInput {
     pub program_id: String,
     pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
     pub doses: Vec<UpsertVaccineCourseDoseInput>,
+    pub store_wastage_rates: Option<Vec<UpsertVaccineCourseStoreWastageInput>>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
@@ -68,6 +71,7 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
             program_id,
             vaccine_items,
             doses,
+            store_wastage_rates,
             demographic_id,
             coverage_rate,
             use_in_gaps_calculations,
@@ -95,6 +99,15 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
                     max_age: d.max_age,
                     custom_age_label: d.custom_age_label,
                     min_interval_days: d.min_interval_days,
+                })
+                .collect(),
+            store_wastage_rates: store_wastage_rates
+                .unwrap_or_default()
+                .into_iter()
+                .map(|wastage| VaccineCourseStoreWastageInput {
+                    id: wastage.id,
+                    store_id: wastage.store_id,
+                    wastage_rate: wastage.wastage_rate,
                 })
                 .collect(),
             demographic_id,

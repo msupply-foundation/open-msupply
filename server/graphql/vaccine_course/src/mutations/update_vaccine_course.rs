@@ -9,7 +9,7 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::update::{
         UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseDoseInput,
-        VaccineCourseItemInput,
+        VaccineCourseItemInput, VaccineCourseStoreWastageInput,
     },
 };
 
@@ -61,11 +61,19 @@ pub struct UpsertVaccineCourseItemInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct UpsertVaccineCourseStoreWastageInput {
+    pub id: String,
+    pub store_id: String,
+    pub wastage_rate: Option<f64>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct UpdateVaccineCourseInput {
     pub id: String,
     pub name: Option<String>,
     pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
     pub doses: Vec<UpsertVaccineCourseDoseInput>,
+    pub store_wastage_rates: Option<Vec<UpsertVaccineCourseStoreWastageInput>>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
@@ -80,6 +88,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             name,
             vaccine_items,
             doses,
+            store_wastage_rates,
             demographic_id,
             coverage_rate,
             use_in_gaps_calculations,
@@ -106,6 +115,15 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                     max_age: d.max_age,
                     custom_age_label: d.custom_age_label,
                     min_interval_days: d.min_interval_days,
+                })
+                .collect(),
+            store_wastage_rates: store_wastage_rates
+                .unwrap_or_default()
+                .into_iter()
+                .map(|wastage| VaccineCourseStoreWastageInput {
+                    id: wastage.id,
+                    store_id: wastage.store_id,
+                    wastage_rate: wastage.wastage_rate,
                 })
                 .collect(),
             demographic_id,
