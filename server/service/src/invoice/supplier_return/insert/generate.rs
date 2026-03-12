@@ -108,6 +108,7 @@ pub fn generate(
             program_id: None,
             vvm_status_id: None,
             volume_per_pack: None,
+            manufacturer_id: None,
             item_variant_id: None,
             donor_id: None,
         })

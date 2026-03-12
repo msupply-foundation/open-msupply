@@ -190,6 +190,7 @@ fn generate_line(
         item_variant_id,
         vvm_status_id: input.vvm_status_id.or(vvm_status_id),
         donor_id: donor_link_id,
+        manufacturer_id: None,
         campaign_id,
         program_id,
         shipped_number_of_packs,

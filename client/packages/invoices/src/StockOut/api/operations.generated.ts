@@ -98,6 +98,15 @@ export type DraftStockOutLineFragment = {
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    id: string;
+    name: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+  } | null;
   program?: { __typename: 'ProgramNode'; name: string; id: string } | null;
   campaign?: { __typename: 'CampaignNode'; name: string; id: string } | null;
 };
@@ -164,6 +173,15 @@ export type GetOutboundEditLinesQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        id: string;
+        name: string;
+        code: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+      } | null;
       program?: { __typename: 'ProgramNode'; name: string; id: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -271,6 +289,14 @@ export const DraftStockOutLineFragmentDoc = gql`
       id
       name
     }
+    manufacturer(storeId: $storeId) {
+      id
+      name
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+    }
     program {
       name
       id
@@ -347,15 +373,17 @@ export function getSdk(
   return {
     getOutboundEditLines(
       variables: GetOutboundEditLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<GetOutboundEditLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GetOutboundEditLinesQuery>(
-            GetOutboundEditLinesDocument,
+          client.request<GetOutboundEditLinesQuery>({
+            document: GetOutboundEditLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'getOutboundEditLines',
         'query',
         variables

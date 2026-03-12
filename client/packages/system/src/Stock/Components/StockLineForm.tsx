@@ -33,6 +33,7 @@ import { LocationSearchInput } from '../../Location/Components/LocationSearchInp
 import {
   checkInvalidLocationLines,
   DonorSearchInput,
+  ManufacturerSearchInput,
   ReasonOptionsSearchInput,
   VVMStatusSearchInput,
 } from '../..';
@@ -532,6 +533,19 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacturer')}
+                  Input={
+                    <ManufacturerSearchInput
+                      manufacturerId={draft.manufacturer?.id ?? null}
+                      width={160}
+                      onChange={manufacturer =>
+                        onUpdate({ manufacturer })
+                      }
+                      clearable
+                    />
+                  }
+                />
                 <StyledInputRow
                   label={t('label.campaign')}
                   Input={

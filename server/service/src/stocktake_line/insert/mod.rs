@@ -29,6 +29,7 @@ pub struct InsertStocktakeLine {
     pub note: Option<String>,
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,

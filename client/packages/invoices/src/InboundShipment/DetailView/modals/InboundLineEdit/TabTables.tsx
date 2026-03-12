@@ -25,6 +25,7 @@ import {
   CampaignOrProgramCell,
   CurrencyRowFragment,
   DonorSearchInput,
+  ManufacturerSearchInput,
   getVolumePerPackFromVariant,
   ItemRowFragment,
   ItemVariantInput,
@@ -583,6 +584,24 @@ export const LocationTableComponent = ({
           />
         ),
         includeColumn: allowTrackingOfStockByDonor,
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        Cell: ({ row: { original: row } }) => (
+          <ManufacturerSearchInput
+            manufacturerId={row?.manufacturer?.id ?? null}
+            onChange={manufacturer =>
+              updateDraftLine({
+                id: row.id,
+                manufacturer,
+              })
+            }
+            disabled={isDisabled ?? false}
+            fullWidth
+            clearable
+          />
+        ),
       },
       {
         id: 'campaignOrProgram',

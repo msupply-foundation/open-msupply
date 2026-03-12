@@ -165,23 +165,11 @@ export const PurchaseOrderLineEdit = ({
                       status,
                       StatusGroup.AfterConfirmed
                     )}
-                    value={draft?.manufacturer ?? null}
+                    manufacturerId={draft?.manufacturer?.id ?? null}
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
                     }
-                    textSx={
-                      disabled
-                        ? {
-                            backgroundColor: theme =>
-                              theme.palette.background.toolbar,
-                            boxShadow: 'none',
-                          }
-                        : {
-                            backgroundColor: theme =>
-                              theme.palette.background.white,
-                            boxShadow: theme => theme.shadows[2],
-                          }
-                    }
+                    clearable
                     width={185}
                   />
                 }

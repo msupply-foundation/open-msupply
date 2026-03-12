@@ -70,6 +70,7 @@ export const DraftLine = {
       id: FnUtils.generateUUID(),
       itemName: stockLine.item.name,
       donorId: stockLine.donor?.id,
+      manufacturer: stockLine.manufacturer ?? null,
       volumePerPack: stockLine.volumePerPack ?? 0,
       item: {
         __typename: 'ItemNode',

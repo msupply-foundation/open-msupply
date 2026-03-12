@@ -76,6 +76,10 @@ pub struct LegacyStocktakeLineRow {
     #[serde(default)]
     pub donor_id: Option<String>,
 
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub manufacturer_id: Option<String>,
+
     #[serde(rename = "vaccine_vial_monitor_status_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
@@ -138,6 +142,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             reason_option_id,
             item_variant_id,
             donor_id,
+            manufacturer_id,
             vvm_status_id,
             volume_per_pack,
             oms_fields,
@@ -192,6 +197,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             note,
             item_variant_id,
             donor_id: donor_id,
+            manufacturer_id: manufacturer_id,
             reason_option_id,
             vvm_status_id,
             volume_per_pack,
@@ -239,6 +245,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     note,
                     item_variant_id,
                     donor_id,
+                    manufacturer_id,
                     reason_option_id,
                     vvm_status_id,
                     volume_per_pack,
@@ -280,6 +287,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             reason_option_id,
             item_variant_id,
             donor_id,
+            manufacturer_id,
             vvm_status_id,
             volume_per_pack,
             oms_fields,

@@ -112,6 +112,9 @@ pub struct LegacyTransLineRow {
     pub linked_invoice_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub donor_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub manufacturer_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "vaccine_vial_monitor_status_ID")]
     pub vvm_status_id: Option<String>,
@@ -183,6 +186,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             linked_invoice_id,
             donor_id,
+            manufacturer_id,
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,
@@ -321,6 +325,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             linked_invoice_id,
             donor_id: donor_id,
+            manufacturer_id: manufacturer_id,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -391,6 +396,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     item_variant_id,
                     linked_invoice_id,
                     donor_id: donor_link_id,
+                    manufacturer_id: manufacturer_link_id,
                     vvm_status_id,
                     reason_option_id,
                     campaign_id,
@@ -442,6 +448,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             reason_option_id,
             linked_invoice_id,
             donor_id: donor_link_id,
+            manufacturer_id: manufacturer_link_id,
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,

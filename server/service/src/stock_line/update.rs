@@ -31,6 +31,7 @@ pub struct UpdateStockLine {
     pub vvm_status_id: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
     pub campaign_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
     pub volume_per_pack: Option<f64>,
@@ -172,6 +173,7 @@ fn generate(
         vvm_status_id,
         item_variant_id,
         donor_id,
+        manufacturer_id,
         campaign_id,
         program_id,
         volume_per_pack,
@@ -233,6 +235,9 @@ fn generate(
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
     existing.donor_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_id);
+    existing.manufacturer_id = manufacturer_id
+        .map(|v| v.value)
+        .unwrap_or(existing.manufacturer_id);
     existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
     existing.program_id = program_id.map(|v| v.value).unwrap_or(existing.program_id);
 

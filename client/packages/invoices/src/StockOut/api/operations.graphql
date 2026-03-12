@@ -97,6 +97,14 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
     id
     name
   }
+  manufacturer(storeId: $storeId) {
+    id
+    name
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+  }
   program {
     name
     id

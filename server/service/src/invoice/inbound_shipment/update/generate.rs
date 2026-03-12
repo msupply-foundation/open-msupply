@@ -411,6 +411,7 @@ pub fn generate_lines_and_stock_lines(
             supplier_id: Some(supplier_id.to_string()),
             item_variant_id,
             donor_id: donor_link_id,
+            manufacturer_id: None,
             vvm_status_id,
             campaign_id,
             program_id,

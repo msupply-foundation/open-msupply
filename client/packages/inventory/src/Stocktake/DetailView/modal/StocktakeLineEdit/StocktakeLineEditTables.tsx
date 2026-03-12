@@ -28,6 +28,7 @@ import { DraftStocktakeLine } from './utils';
 import {
   CampaignOrProgramCell,
   DonorSearchInput,
+  ManufacturerSearchInput,
   getVolumePerPackFromVariant,
   ItemVariantInput,
   LocationRowFragment,
@@ -427,6 +428,24 @@ export const LocationTable = ({
           />
         ),
         includeColumn: allowTrackingOfStockByDonor,
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        Cell: ({ row: { original: row } }) => (
+          <ManufacturerSearchInput
+            manufacturerId={row.manufacturer?.id ?? null}
+            onChange={manufacturer =>
+              update({
+                id: row.id,
+                manufacturer,
+              })
+            }
+            disabled={disabled || !row.countThisLine}
+            fullWidth
+            clearable
+          />
+        ),
       },
       {
         id: 'campaignOrProgram',

@@ -42,6 +42,14 @@ fragment StockLine on StockLineNode {
   donor(storeId: $storeId) {
     id
   }
+  manufacturer(storeId: $storeId) {
+    id
+    name
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+  }
   vvmStatus {
     __typename
     id

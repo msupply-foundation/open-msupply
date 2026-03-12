@@ -144,6 +144,13 @@ export const useStocktakeColumns = () => {
         defaultHideOnMobile: true,
       },
       {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        enableSorting: true,
+        accessorFn: row => row.manufacturer?.name,
+        defaultHideOnMobile: true,
+      },
+      {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,

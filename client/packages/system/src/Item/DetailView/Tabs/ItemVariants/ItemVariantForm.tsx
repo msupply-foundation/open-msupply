@@ -80,7 +80,7 @@ export const ItemVariantForm = ({
             Input={
               <Box width="100%">
                 <ManufacturerSearchInput
-                  value={variant.manufacturer ?? null}
+                  manufacturerId={variant.manufacturer?.id ?? null}
                   onChange={manufacturer =>
                     updateVariant?.({
                       manufacturer,
@@ -88,6 +88,7 @@ export const ItemVariantForm = ({
                     })
                   }
                   disabled={disabled}
+                  clearable
                 />
               </Box>
             }

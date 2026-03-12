@@ -101,6 +101,7 @@ fn generate_batch_update(
         program_id,
         item_variant_id,
         donor_id,
+        manufacturer_id,
         prescribed_quantity: _,
         note: _,
         id: _,
@@ -144,6 +145,9 @@ fn generate_batch_update(
             .map(|i| i.value)
             .unwrap_or(batch.item_variant_id),
         donor_id: donor_id.map(|d| d.value).unwrap_or(batch.donor_id),
+        manufacturer_id: manufacturer_id
+            .map(|m| m.value)
+            .unwrap_or(batch.manufacturer_id),
         ..batch
     }
 }
@@ -164,6 +168,7 @@ fn generate_line(
         volume_per_pack: _,
         item_variant_id: _,
         donor_id: _,
+        manufacturer_id: _,
         tax_percentage: _,
         location_id: _,
         batch: _,
@@ -188,6 +193,7 @@ fn generate_line(
         location_id,
         item_variant_id,
         donor_id: donor_link_id,
+        manufacturer_id: manufacturer_link_id,
         vvm_status_id,
         volume_per_pack,
         campaign_id,
@@ -238,6 +244,7 @@ fn generate_line(
         total_after_tax,
         tax_percentage,
         donor_id: donor_link_id,
+        manufacturer_id: manufacturer_link_id,
         note,
         foreign_currency_price_before_tax,
         vvm_status_id,

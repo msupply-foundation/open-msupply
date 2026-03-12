@@ -6,8 +6,8 @@ use service::usize_to_u32;
 
 use graphql_core::{
     loader::{
-        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, ProgramByIdLoader,
-        StockLineByIdLoader, VVMStatusByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByIdLoader,
+        NameByIdLoaderInput, ProgramByIdLoader, StockLineByIdLoader, VVMStatusByIdLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -18,8 +18,8 @@ use crate::types::VVMStatusNode;
 use crate::types::{program_node::ProgramNode, CampaignNode};
 
 use super::{
-    InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, ReasonOptionNode,
-    StockLineNode,
+    InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
+    ReasonOptionNode, StockLineNode,
 };
 
 pub struct StocktakeLineNode {
@@ -145,6 +145,27 @@ impl StocktakeLineNode {
 
     pub async fn donor_name(&self) -> Option<String> {
         self.line.donor.clone().map(|d| d.name)
+    }
+
+    pub async fn manufacturer_id(&self) -> &Option<String> {
+        &self.line.line.manufacturer_id
+    }
+
+    pub async fn manufacturer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let manufacturer_id = match &self.line.line.manufacturer_id {
+            None => return Ok(None),
+            Some(manufacturer_id) => manufacturer_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
     }
 
     pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
