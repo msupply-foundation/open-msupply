@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   ColumnDef,
   ColumnType,
-  Groupable,
   MaterialTable,
   useNonPaginatedMaterialTable,
   useTranslation,
@@ -16,7 +15,7 @@ export const FinancialTab = () => {
   } = useInboundShipment();
 
   const columns = useMemo(
-    (): ColumnDef<Groupable<InboundLineFragment>>[] => [
+    (): ColumnDef<InboundLineFragment>[] => [
       {
         accessorKey: 'item.name',
         header: t('label.name'),
@@ -70,14 +69,12 @@ export const FinancialTab = () => {
     []
   );
 
-  const { table } = useNonPaginatedMaterialTable<
-    Groupable<InboundLineFragment>
-  >({
+  const { table } = useNonPaginatedMaterialTable<InboundLineFragment>({
     tableId: 'inbound-shipment-financial-tab-table',
     data: data?.lines.nodes,
     columns,
     isLoading,
-    grouping: { enabled: true },
+    grouping: { field: 'item.code' },
     enableRowSelection: false,
   });
 

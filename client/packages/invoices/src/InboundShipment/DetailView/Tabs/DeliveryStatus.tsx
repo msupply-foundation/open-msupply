@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   ColumnDef,
   ColumnType,
-  Groupable,
   InvoiceNodeStatus,
   MaterialTable,
   StatusCell,
@@ -40,7 +39,7 @@ export const DeliveryTab = ({
   };
 
   const columns = useMemo(
-    (): ColumnDef<Groupable<InboundLineFragment>>[] => [
+    (): ColumnDef<InboundLineFragment>[] => [
       {
         accessorKey: 'status',
         header: t('label.auth-status'),
@@ -110,17 +109,15 @@ export const DeliveryTab = ({
         columnType: ColumnType.Number,
       },
     ],
-    [inTransit, previousDeliveries, statusMap]
+    [inTransit, previousDeliveries, statusMap, showLineStatus]
   );
 
-  const { table } = useNonPaginatedMaterialTable<
-    Groupable<InboundLineFragment>
-  >({
+  const { table } = useNonPaginatedMaterialTable<InboundLineFragment>({
     tableId: 'inbound-shipment-delivery-tab-table',
     data: data?.lines.nodes,
     columns,
     isLoading,
-    grouping: { enabled: true },
+    grouping: { field: 'item.code' },
     enableRowSelection: false,
   });
 
