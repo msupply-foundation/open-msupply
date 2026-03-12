@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
+  Alert,
   Divider,
   useTranslation,
   BasicSpinner,
@@ -11,15 +12,15 @@ import {
   Box,
   ButtonWithIcon,
   PlusCircleIcon,
+  TableContainer,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
-import { TabLayout } from './TabLayout';
 import {
   CurrencyRowFragment,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { QuantityTable } from './TabTables';
+import { InboundLineEditCards } from './InboundLineEditCards';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { ScannedBatchData } from '../../DetailView';
 import { useNextItem } from '../../../../useNextItem';
@@ -76,37 +77,31 @@ export const InboundLineEdit = ({
     l => !l.linkedInvoiceId && isInboundPlaceholderRow(l)
   );
   const simplifiedTabletView = useSimplifiedTabletUI();
+  const [packRoundingMessage, setPackRoundingMessage] = useState('');
+  const lastCardRef = useRef<HTMLDivElement>(null);
+  const prevLineCount = useRef(draftLines.length);
 
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
 
-  const tableContent = simplifiedTabletView ? (
-    <>
-      <QuantityTable
-        isDisabled={isDisabled}
-        lines={draftLines}
-        updateDraftLine={updateDraftLine}
-        removeDraftLine={removeDraftLine}
-        item={currentItem}
-        hasItemVariantsEnabled={hasItemVariantsEnabled}
-        hasVvmStatusesEnabled={hasVvmStatusesEnabled}
-      />
-      <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
-        <ButtonWithIcon
-          disabled={isDisabled}
-          color="primary"
-          variant="outlined"
-          onClick={addDraftLine}
-          label={`${t('label.add-batch')} (+)`}
-          Icon={<PlusCircleIcon />}
-        />
-      </Box>
-    </>
-  ) : (
-    <TabLayout
-      draftLines={draftLines}
-      addDraftLine={addDraftLine}
+  // Auto-scroll to the newly added card
+  useEffect(() => {
+    if (
+      draftLines.length > prevLineCount.current &&
+      lastCardRef.current
+    ) {
+      lastCardRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+    prevLineCount.current = draftLines.length;
+  }, [draftLines.length]);
+
+  const cards = (
+    <InboundLineEditCards
+      lines={draftLines}
       updateDraftLine={updateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
@@ -114,8 +109,58 @@ export const InboundLineEdit = ({
       isExternalSupplier={isExternalSupplier}
       item={currentItem}
       hasItemVariantsEnabled={hasItemVariantsEnabled}
-      hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+      hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+      setPackRoundingMessage={setPackRoundingMessage}
+      restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
+      lastCardRef={lastCardRef}
+      simplified={simplifiedTabletView}
     />
+  );
+
+  const content = (
+    <>
+      <Box
+        flex={1}
+        display="flex"
+        justifyContent={simplifiedTabletView ? 'flex-start' : 'flex-end'}
+        alignItems="center"
+        gap={1}
+        margin={simplifiedTabletView ? 3 : 0}
+      >
+        <ButtonWithIcon
+          disabled={isDisabled}
+          color="primary"
+          variant="outlined"
+          onClick={() => {
+            addDraftLine();
+            setPackRoundingMessage('');
+          }}
+          label={`${t('label.add-batch')} (+)`}
+          Icon={<PlusCircleIcon />}
+        />
+      </Box>
+      {simplifiedTabletView ? (
+        cards
+      ) : (
+        <TableContainer
+          sx={{
+            marginTop: 2,
+            height: 'calc(100vh - 300px)',
+            minHeight: 150,
+            overflow: 'auto',
+          }}
+        >
+          <Box width="100%">
+            {packRoundingMessage && (
+              <Alert severity="warning" style={{ marginBottom: 2 }}>
+                {packRoundingMessage}
+              </Alert>
+            )}
+            {cards}
+          </Box>
+        </TableContainer>
+      )}
+    </>
   );
 
   return (
@@ -169,7 +214,7 @@ export const InboundLineEdit = ({
             onChangeItem={setCurrentItem}
           />
           <Divider margin={5} />
-          {tableContent}
+          {content}
         </>
       )}
     </Modal>

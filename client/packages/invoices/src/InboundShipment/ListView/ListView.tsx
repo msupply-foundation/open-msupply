@@ -12,7 +12,7 @@ import {
   NameAndColorSetterCell,
   usePreferences,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
   DetailTabs,
   ToggleState,
 } from '@openmsupply-client/common';
@@ -227,7 +227,7 @@ const InboundShipments: React.FC<{
     <>
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <MobileCardList table={table} />
+        <CardList table={table} />
       ) : (
         <>
           <Toolbar filter={filter} />
