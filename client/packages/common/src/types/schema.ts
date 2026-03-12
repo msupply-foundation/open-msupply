@@ -7102,7 +7102,9 @@ export type PurchaseOrderLineError = {
 
 export type PurchaseOrderLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderStatus?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
   receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
 };

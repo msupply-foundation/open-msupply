@@ -575,6 +575,26 @@ export type PurchaseOrderLineQuery = {
   };
 };
 
+export type UnitsOnOrderForItemQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId?: Types.InputMaybe<Types.EqualFilterStringInput>;
+  purchaseOrderId?: Types.InputMaybe<Types.EqualFilterStringInput>;
+  lineStatus?: Types.InputMaybe<Types.EqualFilterPurchaseOrderLineStatusInput>;
+  purchaseOrderStatus?: Types.InputMaybe<Types.EqualFilterPurchaseOrderStatusInput>;
+}>;
+
+export type UnitsOnOrderForItemQuery = {
+  __typename: 'Queries';
+  purchaseOrderLines: {
+    __typename: 'PurchaseOrderLineConnector';
+    nodes: Array<{
+      __typename: 'PurchaseOrderLineNode';
+      adjustedNumberOfUnits?: number | null;
+      requestedNumberOfUnits: number;
+    }>;
+  };
+};
+
 export type PurchaseOrderLinesCountQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.PurchaseOrderLineFilterInput>;
   storeId: Types.Scalars['String']['input'];
@@ -987,6 +1007,33 @@ export const PurchaseOrderLineDocument = gql`
   }
   ${PurchaseOrderLineFragmentDoc}
 `;
+export const UnitsOnOrderForItemDocument = gql`
+  query unitsOnOrderForItem(
+    $storeId: String!
+    $itemId: EqualFilterStringInput
+    $purchaseOrderId: EqualFilterStringInput
+    $lineStatus: EqualFilterPurchaseOrderLineStatusInput
+    $purchaseOrderStatus: EqualFilterPurchaseOrderStatusInput
+  ) {
+    purchaseOrderLines(
+      storeId: $storeId
+      filter: {
+        itemId: $itemId
+        purchaseOrderId: $purchaseOrderId
+        status: $lineStatus
+        purchaseOrderStatus: $purchaseOrderStatus
+      }
+    ) {
+      ... on PurchaseOrderLineConnector {
+        __typename
+        nodes {
+          adjustedNumberOfUnits
+          requestedNumberOfUnits
+        }
+      }
+    }
+  }
+`;
 export const PurchaseOrderLinesCountDocument = gql`
   query purchaseOrderLinesCount(
     $filter: PurchaseOrderLineFilterInput
@@ -1277,6 +1324,24 @@ export function getSdk(
             signal,
           }),
         'purchaseOrderLine',
+        'query',
+        variables
+      );
+    },
+    unitsOnOrderForItem(
+      variables: UnitsOnOrderForItemQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UnitsOnOrderForItemQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UnitsOnOrderForItemQuery>({
+            document: UnitsOnOrderForItemDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'unitsOnOrderForItem',
         'query',
         variables
       );
