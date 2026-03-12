@@ -97,6 +97,9 @@ export type ResponseLineFragment = {
   requisitionId: string;
   approvedQuantity: number;
   approvalComment?: string | null;
+  forecastTotalUnits?: number | null;
+  forecastTotalDoses?: number | null;
+  vaccineCourses?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     stockOnHand: number;
@@ -233,6 +236,9 @@ export type ResponseFragment = {
       requisitionId: string;
       approvedQuantity: number;
       approvalComment?: string | null;
+      forecastTotalUnits?: number | null;
+      forecastTotalDoses?: number | null;
+      vaccineCourses?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         stockOnHand: number;
@@ -402,6 +408,9 @@ export type ResponseByNumberQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -579,6 +588,9 @@ export type ResponseByIdQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -1148,7 +1160,7 @@ export type InsertRequestFromResponseRequisitionMutationVariables =
 
 export type InsertRequestFromResponseRequisitionMutation = {
   __typename: 'Mutations';
-  insertFromResponseRequisition:
+  insertRequestFromResponseRequisition:
     | {
         __typename: 'InsertFromResponseRequisitionError';
         error:
@@ -1228,6 +1240,9 @@ export const ResponseLineFragmentDoc = gql`
     availableVolumeAtLocationType {
       ...AvailableVolumeAtLocationType
     }
+    forecastTotalUnits
+    forecastTotalDoses
+    vaccineCourses
   }
   ${ItemWithStatsFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
@@ -1884,7 +1899,7 @@ export const InsertRequestFromResponseRequisitionDocument = gql`
     $storeId: String!
     $input: InsertFromResponseRequisitionInput!
   ) {
-    insertFromResponseRequisition(input: $input, storeId: $storeId) {
+    insertRequestFromResponseRequisition(input: $input, storeId: $storeId) {
       ... on RequisitionNode {
         __typename
         id

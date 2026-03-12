@@ -47,6 +47,7 @@ export type ChangelogTableName =
   | 'VaccineCourseItem'
   | 'VaccineCourseDose'
   | 'Vaccination'
+  | 'Encounter'
   | 'ItemVariant'
   | 'PackagingVariant'
   | 'IndicatorValue'

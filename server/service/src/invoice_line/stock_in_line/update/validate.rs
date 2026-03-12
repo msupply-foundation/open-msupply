@@ -10,6 +10,7 @@ use crate::{
             check_number_of_packs,
         },
     },
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
 use crate::invoice::inbound_shipment::InboundShipmentType;
@@ -97,6 +98,32 @@ pub fn validate(
             return Err(ProgramNotVisible);
         }
     }
+
+    if let Some(NullableUpdate {
+        value: Some(manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => {
+                    return Err(ManufacturerDoesNotExist)
+                }
+                OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
+                OtherPartyErrors::TypeMismatched => {
+                    return Err(ManufacturerIsNotAManufacturer)
+                }
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
 
     if let Some(NullableUpdate {
         value: Some(campaign_id),
