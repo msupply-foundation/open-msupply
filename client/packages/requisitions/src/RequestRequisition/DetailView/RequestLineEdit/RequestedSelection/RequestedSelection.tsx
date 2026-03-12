@@ -56,6 +56,7 @@ export const RequestedSelection = ({
 
   const currentValue = useMemo(
     (): number =>
+      // Display the saved requestedQuantity in the input field in correct representation
       unitsToRepresentation(
         draft?.requestedQuantity ?? 0,
         representation,
@@ -91,6 +92,7 @@ export const RequestedSelection = ({
 
   const debouncedUpdate = useDebounceCallback(
     (value?: number) => {
+      // Save the input value to the draft in units
       const updatedRequest = getUpdatedRequest(
         value,
         representation,
