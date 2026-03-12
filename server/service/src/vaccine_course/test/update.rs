@@ -40,6 +40,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            store_wastage_rates: vec![],
         };
 
         let _result = service
@@ -103,6 +104,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: Some(true),
+            store_wastage_rates: vec![],
         };
 
         let result = service.update_vaccine_course(&context, update).unwrap();
@@ -140,6 +142,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            store_wastage_rates: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -162,6 +165,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            store_wastage_rates: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -192,6 +196,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            store_wastage_rates: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -211,6 +216,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            store_wastage_rates: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -237,6 +243,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            store_wastage_rates: vec![],
         };
 
         let result = service
@@ -257,6 +264,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: None,
+            store_wastage_rates: vec![],
         };
 
         assert_eq!(
