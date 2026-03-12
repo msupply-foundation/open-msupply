@@ -101,24 +101,27 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: InsertStockInLine,
+        inbound_shipment_type: Option<crate::invoice::inbound_shipment::InboundShipmentType>,
     ) -> Result<InvoiceLine, InsertStockInLineError> {
-        insert_stock_in_line(ctx, input)
+        insert_stock_in_line(ctx, input, inbound_shipment_type)
     }
 
     fn update_stock_in_line(
         &self,
         ctx: &ServiceContext,
         input: UpdateStockInLine,
+        inbound_shipment_type: Option<crate::invoice::inbound_shipment::InboundShipmentType>,
     ) -> Result<InvoiceLine, UpdateStockInLineError> {
-        update_stock_in_line(ctx, input)
+        update_stock_in_line(ctx, input, inbound_shipment_type)
     }
 
     fn delete_stock_in_line(
         &self,
         ctx: &ServiceContext,
         input: DeleteStockInLine,
+        inbound_shipment_type: Option<crate::invoice::inbound_shipment::InboundShipmentType>,
     ) -> Result<String, DeleteStockInLineError> {
-        delete_stock_in_line(ctx, input)
+        delete_stock_in_line(ctx, input, inbound_shipment_type)
     }
 
     // Inbound
@@ -126,8 +129,9 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: InsertInboundShipmentServiceLine,
+        inbound_shipment_type: Option<crate::invoice::inbound_shipment::InboundShipmentType>,
     ) -> Result<InvoiceLine, InsertInboundShipmentServiceLineError> {
-        insert_inbound_shipment_service_line(ctx, input)
+        insert_inbound_shipment_service_line(ctx, input, inbound_shipment_type)
     }
 
     fn insert_from_internal_order_line(
@@ -142,16 +146,18 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: UpdateInboundShipmentServiceLine,
+        inbound_shipment_type: Option<crate::invoice::inbound_shipment::InboundShipmentType>,
     ) -> Result<InvoiceLine, UpdateInboundShipmentServiceLineError> {
-        update_inbound_shipment_service_line(ctx, input)
+        update_inbound_shipment_service_line(ctx, input, inbound_shipment_type)
     }
 
     fn delete_inbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
         input: DeleteStockInLine,
+        inbound_shipment_type: Option<crate::invoice::inbound_shipment::InboundShipmentType>,
     ) -> Result<String, DeleteInboundShipmentServiceLineError> {
-        delete_inbound_shipment_service_line(ctx, input)
+        delete_inbound_shipment_service_line(ctx, input, inbound_shipment_type)
     }
 
     // Outbound

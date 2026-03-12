@@ -14,6 +14,8 @@ mod validate;
 use generate::{generate, GenerateResult};
 use validate::validate;
 
+use crate::invoice::inbound_shipment::InboundShipmentType;
+
 use super::StockInType;
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -47,11 +49,13 @@ type OutError = UpdateStockInLineError;
 pub fn update_stock_in_line(
     ctx: &ServiceContext,
     input: UpdateStockInLine,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, invoice) = validate(&input, &ctx.store_id, connection)?;
+            let (line, item, invoice) =
+                validate(&input, &ctx.store_id, connection, inbound_shipment_type)?;
 
             let GenerateResult {
                 invoice_row_option,
@@ -110,6 +114,7 @@ pub enum UpdateStockInLineError {
     ProgramNotVisible,
     IncorrectLocationType,
     CampaignDoesNotExist,
+    WrongInboundShipmentType,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {
@@ -216,7 +221,7 @@ mod test {
                 UpdateStockInLine {
                     id: "invalid".to_string(),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::LineDoesNotExist)
         );
@@ -231,7 +236,7 @@ mod test {
                         value: Some("invalid".to_string()),
                     }),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::LocationDoesNotExist)
         );
@@ -246,7 +251,7 @@ mod test {
                         value: Some("invalid".to_string()),
                     }),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::ItemVariantDoesNotExist)
         );
@@ -259,7 +264,7 @@ mod test {
                     id: mock_customer_return_a_invoice_line_a().id,
                     pack_size: Some(0.0),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::PackSizeBelowOne)
         );
@@ -273,7 +278,7 @@ mod test {
                     pack_size: Some(1.0),
                     number_of_packs: Some(-1.0),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::NumberOfPacksBelowZero)
         );
@@ -288,7 +293,7 @@ mod test {
                     pack_size: Some(1.0),
                     number_of_packs: Some(1.0),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -302,7 +307,7 @@ mod test {
                     pack_size: Some(1.0),
                     number_of_packs: Some(1.0),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::NotAStockIn)
         );
@@ -317,7 +322,7 @@ mod test {
                     pack_size: Some(1.0),
                     number_of_packs: Some(1.0),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::CannotEditFinalised)
         );
@@ -332,7 +337,7 @@ mod test {
                     pack_size: Some(1.0),
                     number_of_packs: Some(1.0),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::BatchIsReserved)
         );
@@ -347,7 +352,7 @@ mod test {
                         value: Some(mock_immunisation_program_a().id)
                     }), // Master list not visible to store_b
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::ProgramNotVisible)
         );
@@ -363,7 +368,7 @@ mod test {
                     pack_size: Some(1.0),
                     number_of_packs: Some(1.0),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -379,7 +384,7 @@ mod test {
                         value: Some(mock_location_with_restricted_location_type_a().id),
                     }),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::IncorrectLocationType)
         );
@@ -404,7 +409,7 @@ mod test {
                 pack_size: Some(2.0),
                 number_of_packs: Some(3.0),
                 ..Default::default()
-            },
+            }, None
         )
         .unwrap();
 
@@ -435,7 +440,7 @@ mod test {
                 sell_price_per_pack: Some(100.0),
                 cost_price_per_pack: Some(60.0),
                 ..Default::default()
-            },
+            }, None
         )
         .unwrap();
 
@@ -461,7 +466,7 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
-            },
+            }, None
         )
         .unwrap();
 
@@ -486,7 +491,7 @@ mod test {
                 vvm_status_id: Some(mock_vvm_status_b().id),
                 r#type: StockInType::InboundShipment,
                 ..Default::default()
-            },
+            }, None
         )
         .unwrap();
         assert_eq!(
@@ -515,7 +520,7 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 expiry_date: NaiveDate::from_ymd_opt(2023, 10, 1),
                 ..Default::default()
-            },
+            }, None
         )
         .unwrap();
         let result = update_stock_in_line(
@@ -527,7 +532,7 @@ mod test {
                 volume_per_pack: Some(10.0),
                 expiry_date: Some(NullableUpdate { value: None }),
                 ..Default::default()
-            },
+            }, None
         )
         .unwrap();
         assert_eq!(result.invoice_line_row.volume_per_pack, 10.0);
@@ -598,7 +603,7 @@ mod test {
                         value: Some(InvoiceLineStatus::Rejected),
                     }),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::CannotChangeLineStatusOfReceivedInvoice)
         );
@@ -614,7 +619,7 @@ mod test {
                         value: Some(InvoiceLineStatus::Pending),
                     }),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::CannotChangeLineStatusOfReceivedInvoice)
         );
@@ -629,7 +634,7 @@ mod test {
                     value: Some(InvoiceLineStatus::Passed),
                 }),
                 ..Default::default()
-            },
+            }, None
         )
         .is_ok());
     }

@@ -918,7 +918,7 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
-            },
+            }, None
         )
         .unwrap();
 
@@ -1142,7 +1142,7 @@ mod test {
                     donor_id: Some(mock_donor_a().id),
                     r#type: StockInType::InboundShipment,
                     ..Default::default()
-                },
+                }, None
             )
             .unwrap();
         invoice_line_service
@@ -1157,7 +1157,7 @@ mod test {
                     donor_id: None,
                     r#type: StockInType::InboundShipment,
                     ..Default::default()
-                },
+                }, None
             )
             .unwrap();
 

@@ -163,7 +163,7 @@ pub fn batch_inbound_shipment(
                     if !check_invoice_type(ctx, &input.invoice_id, r#type)? {
                         return Err(InsertStockInLineError::InvoiceDoesNotExist);
                     }
-                    insert_stock_in_line(ctx, input)
+                    insert_stock_in_line(ctx, input, Some(r#type))
                 },
             );
             results.insert_line = result;
@@ -177,7 +177,7 @@ pub fn batch_inbound_shipment(
                     if !check_line_type(ctx, &input.id, r#type)? {
                         return Err(UpdateStockInLineError::InvoiceDoesNotExist);
                     }
-                    update_stock_in_line(ctx, input)
+                    update_stock_in_line(ctx, input, Some(r#type))
                 },
             );
             results.update_line = result;
@@ -191,7 +191,7 @@ pub fn batch_inbound_shipment(
                     if !check_line_type(ctx, &input.id, r#type)? {
                         return Err(DeleteStockInLineError::InvoiceDoesNotExist);
                     }
-                    delete_stock_in_line(ctx, input)
+                    delete_stock_in_line(ctx, input, Some(r#type))
                 },
             );
             results.delete_line = result;
@@ -206,7 +206,7 @@ pub fn batch_inbound_shipment(
                     if !check_invoice_type(ctx, &input.invoice_id, r#type)? {
                         return Err(InsertInboundShipmentServiceLineError::InvoiceDoesNotExist);
                     }
-                    insert_inbound_shipment_service_line(ctx, input)
+                    insert_inbound_shipment_service_line(ctx, input, Some(r#type))
                 },
             );
             results.insert_service_line = result;
@@ -220,7 +220,7 @@ pub fn batch_inbound_shipment(
                     if !check_line_type(ctx, &input.id, r#type)? {
                         return Err(UpdateInboundShipmentServiceLineError::InvoiceDoesNotExist);
                     }
-                    update_inbound_shipment_service_line(ctx, input)
+                    update_inbound_shipment_service_line(ctx, input, Some(r#type))
                 },
             );
             results.update_service_line = result;
@@ -234,7 +234,7 @@ pub fn batch_inbound_shipment(
                     if !check_line_type(ctx, &input.id, r#type)? {
                         return Err(DeleteInboundShipmentServiceLineError::InvoiceDoesNotExist);
                     }
-                    delete_inbound_shipment_service_line(ctx, input)
+                    delete_inbound_shipment_service_line(ctx, input, Some(r#type))
                 },
             );
             results.delete_service_line = result;
