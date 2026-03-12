@@ -36,6 +36,8 @@ fn create_template_db(
     db_settings: &DatabaseSettings,
     version: Option<Version>,
 ) -> StorageConnectionManager {
+    crate::db_diesel::key_value_store::disable_cache();
+
     diesel::sql_query(format!(
         "DROP DATABASE IF EXISTS \"{}\";",
         &db_settings.database_name
@@ -117,6 +119,8 @@ pub(crate) async fn setup_with_version(
     version: Option<Version>,
     inserts: MockDataInserts,
 ) -> (StorageConnectionManager, MockDataCollection) {
+    crate::db_diesel::key_value_store::disable_cache();
+
     if env_msupply_no_test_db_template() {
         return setup_with_version_no_template(db_settings, version, inserts).await;
     }
