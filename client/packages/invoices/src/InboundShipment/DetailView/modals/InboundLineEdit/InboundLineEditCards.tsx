@@ -107,6 +107,25 @@ export const InboundLineEditCards = ({
     return prices;
   }, [purchaseOrderId, item?.id, poQuery.data]);
 
+  // Calculate outstanding packs for the current item from PO lines
+  // Outstanding = ordered packs - shipped packs, calculated per-line using requestedPackSize
+  const poOutstandingPacks = useMemo(() => {
+    if (!purchaseOrderId || !item?.id || !poQuery.data) return null;
+    let totalOutstandingPacks = 0;
+    for (const line of poQuery.data.lines.nodes) {
+      if (line.item.id === item.id) {
+        const orderedUnits =
+          line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
+        const shippedUnits = line.shippedNumberOfUnits ?? 0;
+        const packSize = line.requestedPackSize || 1;
+        const orderedPacks = Math.ceil(orderedUnits / packSize);
+        const shippedPacks = Math.ceil(shippedUnits / packSize);
+        totalOutstandingPacks += orderedPacks - shippedPacks;
+      }
+    }
+    return totalOutstandingPacks;
+  }, [purchaseOrderId, item?.id, poQuery.data]);
+
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
@@ -121,8 +140,7 @@ export const InboundLineEditCards = ({
         header: t('label.batch'),
         size: 100,
         columnGroup: 'general',
-        cardSummary: row =>
-          `${t('label.batch')} ${row.batch || ''}`,
+        cardSummary: row => `${t('label.batch')} ${row.batch || ''}`,
         Cell: ({ row, cell }) => (
           <TextInputCell
             cell={cell}
@@ -241,6 +259,18 @@ export const InboundLineEditCards = ({
         includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
       },
       {
+        id: 'outstandingPacks',
+        header: t('label.outstanding-packs'),
+        size: 120,
+        columnGroup: 'quantities',
+        includeColumn: poOutstandingPacks != null,
+        accessorFn: () => poOutstandingPacks ?? 0,
+        Cell: ({ cell }) => (
+          <NumberInputCell cell={cell} updateFn={() => {}} disabled />
+        ),
+        defaultHideOnMobile: true,
+      },
+      {
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
         size: 120,
@@ -316,8 +346,7 @@ export const InboundLineEditCards = ({
         header: t('label.packs-received'),
         size: 100,
         columnGroup: 'quantities',
-        cardSummary: row =>
-          `${row.numberOfPacks} ${t('label.packs-received')}`,
+        cardSummary: row => `${row.numberOfPacks} ${t('label.packs-received')}`,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -363,7 +392,9 @@ export const InboundLineEditCards = ({
                 } else {
                   setPackRoundingMessage?.(
                     t('messages.under-allocated', {
-                      receivedQuantity: formatRef.current(NumUtils.round(value, 2)),
+                      receivedQuantity: formatRef.current(
+                        NumUtils.round(value, 2)
+                      ),
                       quantity: formatRef.current(actualUnits),
                     })
                   );
@@ -421,9 +452,7 @@ export const InboundLineEditCards = ({
             poLinePrices.size > 0 &&
             !poLinePrices.has(costPrice);
           const poPrice = differsFromPo
-            ? [...poLinePrices!]
-                .map(p => formatCurrency(p).format())
-                .join(', ')
+            ? [...poLinePrices!].map(p => formatCurrency(p).format()).join(', ')
             : '';
           return (
             <Box>
@@ -625,6 +654,7 @@ export const InboundLineEditCards = ({
     item?.isVaccine,
     pluralisedUnitName,
     poLinePrices,
+    poOutstandingPacks,
     removeDraftLine,
     restrictedToLocationTypeId,
     setPackRoundingMessage,
