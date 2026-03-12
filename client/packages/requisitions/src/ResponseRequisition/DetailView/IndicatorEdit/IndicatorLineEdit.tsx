@@ -7,6 +7,7 @@ import {
   IndicatorValueTypeNode,
   InputWithLabelRow,
   NumericTextInput,
+  Typography,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -35,9 +36,17 @@ interface InputWithLabelProps {
   autoFocus: boolean;
   data: IndicatorColumnNode;
   disabled: boolean;
+  isColumnInactive?: boolean;
+  isLineInactive?: boolean;
 }
 
-const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
+const InputWithLabel = ({
+  autoFocus,
+  data,
+  disabled,
+  isColumnInactive,
+  isLineInactive,
+}: InputWithLabelProps) => {
   const t = useTranslation();
   const { error } = useNotification();
 
@@ -94,13 +103,21 @@ const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
       />
     );
 
+  const isInactive = isColumnInactive || isLineInactive;
+
   return (
-    <InputWithLabelRow
-      Input={inputComponent}
-      labelWidth={LABEL_WIDTH}
-      label={indicatorColumnNameToLocal(data.name, t)}
-      sx={{ marginBottom: 1 }}
-    />
+    <Box sx={{ marginBottom: 1 }}>
+      <InputWithLabelRow
+        Input={inputComponent}
+        labelWidth={LABEL_WIDTH}
+        label={indicatorColumnNameToLocal(data.name, t)}
+      />
+      {isInactive && (
+        <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+          {t('label.indicator-no-longer-active')}
+        </Typography>
+      )}
+    </Box>
   );
 };
 
@@ -118,6 +135,8 @@ export const IndicatorLineEdit = ({
     .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
     .sort((a, b) => a.columnNumber - b.columnNumber);
 
+  const isIndicatorInactive = !currentLine?.line.isActive;
+
   return (
     <>
       <Box display="flex" flexDirection="column">
@@ -126,8 +145,10 @@ export const IndicatorLineEdit = ({
             <InputWithLabel
               key={column.value?.id}
               data={column}
-              disabled={disabled}
+              disabled={disabled || !column.isActive || isIndicatorInactive}
               autoFocus={i === 0}
+              isColumnInactive={!column.isActive}
+              isLineInactive={isIndicatorInactive}
             />
           );
         })}

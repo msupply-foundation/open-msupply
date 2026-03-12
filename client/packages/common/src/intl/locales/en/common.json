@@ -1134,6 +1134,7 @@
   "label.increase": "Increase",
   "label.indicative-price": "Indicative price",
   "label.indicative-price-per-unit": "Indicative price per unit",
+  "label.indicator-no-longer-active": "This indicator has been disabled by your administrator",
   "label.indicators": "Indicators",
   "label.initial-stock-on-hand": "Initial SOH",
   "label.initialise-store-properties-gaps": "Initialise store properties for GAPS",

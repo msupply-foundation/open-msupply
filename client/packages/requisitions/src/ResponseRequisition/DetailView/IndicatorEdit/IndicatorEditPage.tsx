@@ -40,9 +40,10 @@ export const IndicatorEditPage = () => {
     l => l.line.id == programIndicatorLineId
   );
   // Should only include indicators if they have at least one column with a value
+  // For inactive indicators/columns, only show if they already have a value
   // Filtering for !value done on FE because values are queried via loader
   const populatedLines = linesAndColumns.filter(l =>
-    l.columns.find(c => c.value)
+    l.columns.find(c => c.value || (c.isActive && l.line.isActive))
   );
   const lines = populatedLines.map(l => l.line);
   const currentLine = lines.find(l => l.id === programIndicatorLineId);
@@ -60,7 +61,7 @@ export const IndicatorEditPage = () => {
         2: t('label.indicators'),
         4: `${currentLine?.code} - ${currentLine?.name}`,
       },
-      [1, 2, 3]
+      [2, 3]
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLine?.name, currentLine?.code, response?.requisitionNumber]);
