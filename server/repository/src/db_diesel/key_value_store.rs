@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use diesel::prelude::*;
 use std::sync::RwLock;
@@ -79,12 +80,30 @@ pub struct KeyValueStoreRow {
 static KEY_VALUE_STORE_CACHE: RwLock<Option<HashMap<KeyType, KeyValueStoreRow>>> =
     RwLock::new(None);
 
+/// When true, the cache is bypassed entirely. Set by test setup code because
+/// tests run many independent databases in a single process and the global
+/// cache would return stale values from a different test's database.
+static CACHE_DISABLED: AtomicBool = AtomicBool::new(false);
+
+/// Permanently disable the in-process key-value cache.
+/// Called from test DB setup so that parallel tests with separate databases
+/// never read stale cached values from each other.
+pub fn disable_cache() {
+    CACHE_DISABLED.store(true, Ordering::Relaxed);
+}
+
 fn get_cached_row(key: &KeyType) -> Option<KeyValueStoreRow> {
+    if CACHE_DISABLED.load(Ordering::Relaxed) {
+        return None;
+    }
     let cache = KEY_VALUE_STORE_CACHE.read().unwrap();
     cache.as_ref()?.get(key).cloned()
 }
 
 fn set_cached_row(row: KeyValueStoreRow) {
+    if CACHE_DISABLED.load(Ordering::Relaxed) {
+        return;
+    }
     let mut cache = KEY_VALUE_STORE_CACHE.write().unwrap();
     if cache.is_none() {
         *cache = Some(HashMap::new());

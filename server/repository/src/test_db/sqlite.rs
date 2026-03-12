@@ -70,6 +70,10 @@ pub(crate) async fn setup_with_version(
     version: Option<Version>,
     inserts: MockDataInserts,
 ) -> (StorageConnectionManager, MockDataCollection) {
+    // Disable the global key-value store cache so stale values from previous
+    // test databases don't leak across tests in the same process.
+    crate::db_diesel::key_value_store::disable_cache();
+
     let db_path = db_settings.connection_string();
     if env_msupply_no_test_db_template() {
         return setup_with_version_no_template(db_settings, version, inserts).await;
@@ -165,6 +169,11 @@ fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManage
 }
 
 fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> StorageConnectionManager {
+    // Disable the global key-value store cache so that stale values from
+    // previous test databases (e.g. DATABASE_VERSION) don't leak across tests
+    // running in the same process (cargo test shares a single process).
+    crate::db_diesel::key_value_store::disable_cache();
+
     let db_path = db_settings.connection_string();
 
     // remove existing db file
