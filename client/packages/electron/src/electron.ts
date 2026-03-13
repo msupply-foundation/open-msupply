@@ -5,6 +5,7 @@ import {
   ipcMain,
   Menu,
   MenuItemConstructorOptions,
+  session,
   shell,
   webContents,
 } from 'electron';
@@ -346,6 +347,13 @@ app.on('ready', start);
 
 app.on('window-all-closed', () => {
   app.quit();
+});
+
+app.on('will-quit', event => {
+  event.preventDefault();
+  session.defaultSession
+    .clearStorageData({ storages: ['cookies'] })
+    .finally(() => app.exit());
 });
 
 process.on('uncaughtException', error => {
