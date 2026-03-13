@@ -2,6 +2,7 @@ import {
   FnUtils,
   UpsertVaccineCourseItemInput,
   UpsertVaccineCourseDoseInput,
+  UpsertVaccineCourseStoreWastageInput,
   VaccineCourseSortFieldInput,
   isEmpty,
   useMutation,
@@ -11,7 +12,11 @@ import {
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
-import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
+import {
+  DraftVaccineCourse,
+  DraftVaccineCourseItem,
+  DraftVaccineCourseStoreWastage,
+} from './types';
 import { VaccineCourseDoseFragment } from '../operations.generated';
 
 enum UpdateVaccineCourseError {
@@ -33,6 +38,7 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   useInGapsCalculations: true,
   canSkipDose: false,
   vaccineCourseItems: [],
+  storeWastageRates: [],
 };
 
 const vaccineCourseParsers = {
@@ -52,6 +58,15 @@ const vaccineCourseParsers = {
     return {
       id: item.id,
       itemId: item.itemId,
+    };
+  },
+  toStoreWastageInput: (
+    wastage: DraftVaccineCourseStoreWastage
+  ): UpsertVaccineCourseStoreWastageInput => {
+    return {
+      id: wastage.id,
+      storeId: wastage.storeId,
+      wastageRate: wastage.wastageRate,
     };
   },
 };
@@ -149,6 +164,10 @@ const useCreate = () => {
           input.vaccineCourseDoses?.map(dose =>
             vaccineCourseParsers.toDoseInput(dose)
           ) ?? [],
+        storeWastageRates:
+          input.storeWastageRates?.map(wastage =>
+            vaccineCourseParsers.toStoreWastageInput(wastage)
+          ) ?? [],
       },
     });
 
@@ -200,6 +219,10 @@ const useUpdate = () => {
         doses:
           input.vaccineCourseDoses?.map(dose =>
             vaccineCourseParsers.toDoseInput(dose)
+          ) ?? [],
+        storeWastageRates:
+          input.storeWastageRates?.map(wastage =>
+            vaccineCourseParsers.toStoreWastageInput(wastage)
           ) ?? [],
       },
       storeId,

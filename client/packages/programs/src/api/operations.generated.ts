@@ -1405,6 +1405,14 @@ export type ImmunisationProgramsQuery = {
   };
 };
 
+export type VaccineCourseStoreWastageFragment = {
+  __typename: 'VaccineCourseStoreWastageNode';
+  id: string;
+  vaccineCourseId: string;
+  storeId: string;
+  wastageRate?: number | null;
+};
+
 export type VaccineCourseFragment = {
   __typename: 'VaccineCourseNode';
   id: string;
@@ -1434,6 +1442,13 @@ export type VaccineCourseFragment = {
     maxAgeMonths: number;
     minIntervalDays: number;
     customAgeLabel?: string | null;
+  }> | null;
+  storeWastageRates?: Array<{
+    __typename: 'VaccineCourseStoreWastageNode';
+    id: string;
+    vaccineCourseId: string;
+    storeId: string;
+    wastageRate?: number | null;
   }> | null;
 };
 
@@ -1479,6 +1494,13 @@ export type VaccineCoursesQuery = {
         maxAgeMonths: number;
         minIntervalDays: number;
         customAgeLabel?: string | null;
+      }> | null;
+      storeWastageRates?: Array<{
+        __typename: 'VaccineCourseStoreWastageNode';
+        id: string;
+        vaccineCourseId: string;
+        storeId: string;
+        wastageRate?: number | null;
       }> | null;
     }>;
   };
@@ -1535,6 +1557,13 @@ export type InsertVaccineCourseMutation = {
               minIntervalDays: number;
               customAgeLabel?: string | null;
             }> | null;
+            storeWastageRates?: Array<{
+              __typename: 'VaccineCourseStoreWastageNode';
+              id: string;
+              vaccineCourseId: string;
+              storeId: string;
+              wastageRate?: number | null;
+            }> | null;
           };
     };
   };
@@ -1590,6 +1619,13 @@ export type UpdateVaccineCourseMutation = {
               maxAgeMonths: number;
               minIntervalDays: number;
               customAgeLabel?: string | null;
+            }> | null;
+            storeWastageRates?: Array<{
+              __typename: 'VaccineCourseStoreWastageNode';
+              id: string;
+              vaccineCourseId: string;
+              storeId: string;
+              wastageRate?: number | null;
             }> | null;
           };
     };
@@ -1894,6 +1930,14 @@ export const VaccineCourseDoseFragmentDoc = gql`
     customAgeLabel
   }
 `;
+export const VaccineCourseStoreWastageFragmentDoc = gql`
+  fragment VaccineCourseStoreWastage on VaccineCourseStoreWastageNode {
+    id
+    vaccineCourseId
+    storeId
+    wastageRate
+  }
+`;
 export const VaccineCourseFragmentDoc = gql`
   fragment VaccineCourse on VaccineCourseNode {
     id
@@ -1914,9 +1958,13 @@ export const VaccineCourseFragmentDoc = gql`
     vaccineCourseDoses {
       ...VaccineCourseDose
     }
+    storeWastageRates {
+      ...VaccineCourseStoreWastage
+    }
   }
   ${VaccineCourseItemFragmentDoc}
   ${VaccineCourseDoseFragmentDoc}
+  ${VaccineCourseStoreWastageFragmentDoc}
 `;
 export const ProgramsDocument = gql`
   query programs(
