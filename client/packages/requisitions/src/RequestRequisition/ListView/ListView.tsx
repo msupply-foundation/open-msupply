@@ -76,6 +76,22 @@ export const ListView = () => {
         ),
       },
       {
+        id: 'status',
+        header: t('label.status'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        accessorFn: row => getRequisitionTranslator(t)(row.status),
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { label: t('label.draft'), value: RequisitionNodeStatus.Draft },
+          { label: t('label.sent'), value: RequisitionNodeStatus.Sent },
+          {
+            label: t('label.finalised'),
+            value: RequisitionNodeStatus.Finalised,
+          },
+        ],
+      },
+      {
         accessorKey: 'requisitionNumber',
         header: t('label.number'),
         enableSorting: true,
@@ -119,22 +135,7 @@ export const ListView = () => {
         defaultHideOnMobile: true,
         includeColumn: hasProgramSettings,
       },
-      {
-        id: 'status',
-        header: t('label.status'),
-        enableSorting: true,
-        enableColumnFilter: true,
-        accessorFn: row => getRequisitionTranslator(t)(row.status),
-        filterVariant: 'select',
-        filterSelectOptions: [
-          { label: t('label.draft'), value: RequisitionNodeStatus.Draft },
-          { label: t('label.sent'), value: RequisitionNodeStatus.Sent },
-          {
-            label: t('label.finalised'),
-            value: RequisitionNodeStatus.Finalised,
-          },
-        ],
-      },
+
       {
         accessorKey: 'comment',
         header: t('label.comment'),
