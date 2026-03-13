@@ -79,9 +79,21 @@ export const StoreWastagePanel = ({
     }
   };
 
-  const handleClose = () => {
+  const snapshotRef = useRef<DraftVaccineCourseStoreWastage[]>([]);
+
+  const handleOpen = () => {
+    snapshotRef.current = storeWastageRates;
+    setOpen(true);
+  };
+
+  const refreshStates = () => {
     setOpen(false);
     setSearchText('');
+  };
+
+  const handleBack = () => {
+    updatePatch({ storeWastageRates: snapshotRef.current });
+    refreshStates();
   };
 
   return (
@@ -89,16 +101,16 @@ export const StoreWastagePanel = ({
       <ButtonWithIcon
         Icon={<HomeIcon />}
         label={t('button.configure-per-store')}
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         shouldShrink={false}
         sx={{ whiteSpace: 'nowrap' }}
       />
       <SlidePanel
         open={open}
-        onClose={handleClose}
+        onClose={handleBack}
         title={t('heading.wastage-rate-per-store')}
-        cancelButton={<DialogButton variant="back" onClick={handleClose} />}
-        okButton={<DialogButton variant="ok" onClick={handleClose} />}
+        cancelButton={<DialogButton variant="back" onClick={handleBack} />}
+        okButton={<DialogButton variant="ok" onClick={refreshStates} />}
       >
         <Box px={3}>
           <BasicTextInput
