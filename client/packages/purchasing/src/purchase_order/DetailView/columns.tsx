@@ -1,17 +1,22 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
+  Box,
   ColumnDef,
   ColumnType,
   getLinesFromRow,
   TextWithTooltipCell,
+  useFormatCurrency,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment } from '../api';
 import { usePurchaseOrderLineErrorContext } from '../context';
+import { getPurchaseOrderLineStatusTranslator } from '../../utils';
 
 export const usePurchaseOrderColumns = () => {
   const t = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const { getError } = usePurchaseOrderLineErrorContext();
+  const lineStatusTranslator = getPurchaseOrderLineStatusTranslator(t);
 
   return useMemo((): ColumnDef<PurchaseOrderLineFragment>[] => {
     return [
@@ -20,6 +25,13 @@ export const usePurchaseOrderColumns = () => {
         header: t('label.line-number'),
         columnType: ColumnType.Number,
         size: 60,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'status',
+        header: t('label.status'),
+        size: 100,
+        accessorFn: row => lineStatusTranslator(row.status),
         enableSorting: true,
       },
       {
@@ -32,6 +44,7 @@ export const usePurchaseOrderColumns = () => {
           ),
         enableColumnFilter: true,
         enableSorting: true,
+        Footer: t('label.total'),
       },
       {
         accessorKey: 'item.name',
@@ -61,7 +74,7 @@ export const usePurchaseOrderColumns = () => {
       },
       {
         accessorKey: 'requestedNumberOfUnits',
-        header: t('label.requested-quantity'),
+        header: t('label.requested-units'),
         columnType: ColumnType.Number,
       },
       {
@@ -96,6 +109,28 @@ export const usePurchaseOrderColumns = () => {
           const packSize = row.requestedPackSize || 1;
           return (row.pricePerPackAfterDiscount ?? 0) * (units / packSize);
         },
+        Footer: ({ table }) => {
+          const total = table
+            .getFilteredRowModel()
+            .rows.reduce((sum, row) => {
+              const { original } = row;
+              const units =
+                original.adjustedNumberOfUnits ??
+                original.requestedNumberOfUnits ??
+                0;
+              const packSize = original.requestedPackSize || 1;
+              return (
+                sum +
+                (original.pricePerPackAfterDiscount ?? 0) *
+                  (units / packSize)
+              );
+            }, 0);
+          return (
+            <Box sx={{ textAlign: 'right', width: '100%' }}>
+              {formatCurrency(total)}
+            </Box>
+          );
+        },
       },
       {
         accessorKey: 'requestedDeliveryDate',
@@ -109,5 +144,5 @@ export const usePurchaseOrderColumns = () => {
       },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getError]);
+  }, [getError, lineStatusTranslator]);
 };

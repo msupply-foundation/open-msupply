@@ -4580,6 +4580,12 @@ export type ItemCannotBeOrdered = PurchaseOrderLineError & {
   line: PurchaseOrderLineNode;
 };
 
+export type ItemCategoryNode = {
+  __typename: 'ItemCategoryNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type ItemChartNode = {
   __typename: 'ItemChartNode';
   calculationDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -4687,6 +4693,7 @@ export type ItemNode = {
   atcCategory: Scalars['String']['output'];
   availableBatches: StockLineConnector;
   availableStockOnHand: Scalars['Int']['output'];
+  categories: Array<ItemCategoryNode>;
   code: Scalars['String']['output'];
   ddd: Scalars['String']['output'];
   defaultPackSize: Scalars['Float']['output'];
@@ -4794,6 +4801,7 @@ export type ItemStatsNode = {
 
 export type ItemStorePropertiesNode = {
   __typename: 'ItemStorePropertiesNode';
+  defaultLocation?: Maybe<LocationNode>;
   defaultSellPricePerPack: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   ignoreForOrders: Scalars['Boolean']['output'];
