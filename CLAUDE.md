@@ -1,8 +1,10 @@
 # CLAUDE.md
 
+See AGENT.md for general development commands and conventions.
+
 ## Running Tests
 
-Always use `cargo nextest run` to run tests. Do not use `cargo test`.
+Always use `cargo nextest run` to run server tests. Do not use `cargo test`.
 
 ```bash
 # Run all tests (sqlite, the default)
