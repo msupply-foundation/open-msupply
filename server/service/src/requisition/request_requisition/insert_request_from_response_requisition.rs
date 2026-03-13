@@ -22,6 +22,12 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum InsertFromResponseStatus {
+    Draft,
+    Sent,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum InsertFromResponseRequisitionError {
     RequisitionAlreadyExists,
@@ -44,9 +50,10 @@ pub struct InsertFromResponseRequisition {
     pub response_requisition_id: String,
     pub other_party_id: String,
     pub comment: Option<String>,
+    pub status: Option<InsertFromResponseStatus>,
 }
 
-pub fn insert_from_response_requisition(
+pub fn insert_request_from_response_requisition(
     ctx: &ServiceContext,
     input: InsertFromResponseRequisition,
 ) -> Result<Requisition, OutError> {
@@ -128,6 +135,7 @@ fn generate(
         response_requisition_id,
         other_party_id,
         comment,
+        status,
     }: &InsertFromResponseRequisition,
 ) -> Result<GenerateResult, InsertFromResponseRequisitionError> {
     let connection = &ctx.connection;
@@ -148,7 +156,11 @@ fn generate(
         name_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
-        status: RequisitionStatus::Draft,
+        status: match status {
+            Some(InsertFromResponseStatus::Draft) => RequisitionStatus::Draft,
+            Some(InsertFromResponseStatus::Sent) => RequisitionStatus::Sent,
+            None => RequisitionStatus::Draft,
+        },
         created_datetime: Utc::now().naive_utc(),
         comment: comment.clone(),
         max_months_of_stock: response_requisition.max_months_of_stock,
@@ -265,7 +277,7 @@ impl From<RepositoryError> for InsertFromResponseRequisitionError {
 }
 
 #[cfg(test)]
-mod test_insert_from_response_requisition {
+mod test_insert_request_from_response_requisition {
     use crate::{
         requisition::request_requisition::InsertFromResponseRequisition,
         service_provider::ServiceProvider,
@@ -281,9 +293,9 @@ mod test_insert_from_response_requisition {
     use util::uuid::uuid;
 
     #[actix_rt::test]
-    async fn insert_from_response_requisition_success() {
+    async fn insert_request_from_response_requisition_success() {
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "insert_from_response_requisition_success",
+            "insert_request_from_response_requisition_success",
             MockDataInserts::all(),
             MockData::default(),
         )
@@ -299,13 +311,14 @@ mod test_insert_from_response_requisition {
         let new_requisition_id = uuid();
 
         let result = service
-            .insert_from_response_requisition(
+            .insert_request_from_response_requisition(
                 &context,
                 InsertFromResponseRequisition {
                     id: new_requisition_id.clone(),
                     response_requisition_id: response_requisition.requisition.id.clone(),
                     other_party_id: mock_name_store_c().id,
                     comment: Some("Test comment".to_string()),
+                    status: None,
                 },
             )
             .unwrap();

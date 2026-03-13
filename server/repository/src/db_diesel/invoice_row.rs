@@ -1,7 +1,7 @@
 use super::{
     clinician_link_row::clinician_link, currency_row::currency, item_link_row::item_link,
-    name_row::name, shipping_method_row::shipping_method, store_row::store,
-    user_row::user_account, StorageConnection,
+    name_row::name, shipping_method_row::shipping_method, store_row::store, user_row::user_account,
+    StorageConnection,
 };
 use crate::{
     diesel_macros::define_linked_tables, repository_error::RepositoryError, ChangeLogInsertRow,
@@ -24,7 +24,7 @@ define_linked_tables! {
         store_id -> Text,
         user_id -> Nullable<Text>,
         invoice_number -> BigInt,
-        #[sql_name = "type"] 
+        #[sql_name = "type"]
         type_ -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
         status -> crate::db_diesel::invoice_row::InvoiceStatusMapping,
         on_hold -> Bool,
@@ -171,7 +171,6 @@ impl<'a> InvoiceRowRepository<'a> {
         self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
-
 
     fn insert_changelog(
         &self,
