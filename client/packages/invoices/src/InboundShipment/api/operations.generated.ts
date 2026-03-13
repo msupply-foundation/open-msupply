@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type InboundLineFragment = {
@@ -29,6 +30,16 @@ export type InboundLineFragment = {
   volumePerPack: number;
   status?: Types.InvoiceLineStatusType | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   item: {
@@ -64,7 +75,6 @@ export type InboundLineFragment = {
     batch?: string | null;
     costPricePerPack: number;
     expiryDate?: string | null;
-  manufactureDate?: string | null;
     id: string;
     itemId: string;
     packSize: number;
@@ -143,7 +153,7 @@ export type InboundFragment = {
       costPricePerPack: number;
       sellPricePerPack: number;
       expiryDate?: string | null;
-  manufactureDate?: string | null;
+      manufactureDate?: string | null;
       numberOfPacks: number;
       shippedNumberOfPacks?: number | null;
       shippedPackSize?: number | null;
@@ -160,6 +170,16 @@ export type InboundFragment = {
       volumePerPack: number;
       status?: Types.InvoiceLineStatusType | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -199,7 +219,6 @@ export type InboundFragment = {
         batch?: string | null;
         costPricePerPack: number;
         expiryDate?: string | null;
-  manufactureDate?: string | null;
         id: string;
         itemId: string;
         packSize: number;
@@ -429,7 +448,7 @@ export type InvoiceQuery = {
             costPricePerPack: number;
             sellPricePerPack: number;
             expiryDate?: string | null;
-  manufactureDate?: string | null;
+            manufactureDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
             shippedPackSize?: number | null;
@@ -446,6 +465,20 @@ export type InvoiceQuery = {
             volumePerPack: number;
             status?: Types.InvoiceLineStatusType | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
+            } | null;
             program?: {
               __typename: 'ProgramNode';
               id: string;
@@ -489,7 +522,6 @@ export type InvoiceQuery = {
               batch?: string | null;
               costPricePerPack: number;
               expiryDate?: string | null;
-  manufactureDate?: string | null;
               id: string;
               itemId: string;
               packSize: number;
@@ -642,7 +674,7 @@ export type InboundByNumberQuery = {
             costPricePerPack: number;
             sellPricePerPack: number;
             expiryDate?: string | null;
-  manufactureDate?: string | null;
+            manufactureDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
             shippedPackSize?: number | null;
@@ -659,6 +691,20 @@ export type InboundByNumberQuery = {
             volumePerPack: number;
             status?: Types.InvoiceLineStatusType | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
+            } | null;
             program?: {
               __typename: 'ProgramNode';
               id: string;
@@ -702,7 +748,6 @@ export type InboundByNumberQuery = {
               batch?: string | null;
               costPricePerPack: number;
               expiryDate?: string | null;
-  manufactureDate?: string | null;
               id: string;
               itemId: string;
               packSize: number;
@@ -1287,6 +1332,9 @@ export const InboundLineFragmentDoc = gql`
       id
       name
     }
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
     program {
       id
       name
@@ -1354,6 +1402,7 @@ export const InboundLineFragmentDoc = gql`
       }
     }
   }
+  ${NameRowFragmentDoc}
 `;
 export const InboundFragmentDoc = gql`
   fragment Inbound on InvoiceNode {
@@ -2173,13 +2222,16 @@ export function getSdk(
   return {
     invoices(
       variables: InvoicesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InvoicesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InvoicesQuery>(InvoicesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<InvoicesQuery>({
+            document: InvoicesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'invoices',
         'query',
@@ -2188,13 +2240,16 @@ export function getSdk(
     },
     invoice(
       variables: InvoiceQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InvoiceQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InvoiceQuery>(InvoiceDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<InvoiceQuery>({
+            document: InvoiceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'invoice',
         'query',
@@ -2203,15 +2258,17 @@ export function getSdk(
     },
     inboundByNumber(
       variables: InboundByNumberQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InboundByNumberQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InboundByNumberQuery>(
-            InboundByNumberDocument,
+          client.request<InboundByNumberQuery>({
+            document: InboundByNumberDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'inboundByNumber',
         'query',
         variables
@@ -2219,15 +2276,17 @@ export function getSdk(
     },
     updateInboundShipment(
       variables: UpdateInboundShipmentMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateInboundShipmentMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateInboundShipmentMutation>(
-            UpdateInboundShipmentDocument,
+          client.request<UpdateInboundShipmentMutation>({
+            document: UpdateInboundShipmentDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateInboundShipment',
         'mutation',
         variables
@@ -2235,15 +2294,17 @@ export function getSdk(
     },
     deleteInboundShipments(
       variables: DeleteInboundShipmentsMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteInboundShipmentsMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteInboundShipmentsMutation>(
-            DeleteInboundShipmentsDocument,
+          client.request<DeleteInboundShipmentsMutation>({
+            document: DeleteInboundShipmentsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteInboundShipments',
         'mutation',
         variables
@@ -2251,15 +2312,17 @@ export function getSdk(
     },
     insertInboundShipment(
       variables: InsertInboundShipmentMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertInboundShipmentMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertInboundShipmentMutation>(
-            InsertInboundShipmentDocument,
+          client.request<InsertInboundShipmentMutation>({
+            document: InsertInboundShipmentDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertInboundShipment',
         'mutation',
         variables
@@ -2267,15 +2330,17 @@ export function getSdk(
     },
     deleteInboundShipmentLines(
       variables: DeleteInboundShipmentLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteInboundShipmentLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteInboundShipmentLinesMutation>(
-            DeleteInboundShipmentLinesDocument,
+          client.request<DeleteInboundShipmentLinesMutation>({
+            document: DeleteInboundShipmentLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteInboundShipmentLines',
         'mutation',
         variables
@@ -2283,15 +2348,17 @@ export function getSdk(
     },
     upsertInboundShipment(
       variables: UpsertInboundShipmentMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpsertInboundShipmentMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertInboundShipmentMutation>(
-            UpsertInboundShipmentDocument,
+          client.request<UpsertInboundShipmentMutation>({
+            document: UpsertInboundShipmentDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'upsertInboundShipment',
         'mutation',
         variables
@@ -2299,15 +2366,17 @@ export function getSdk(
     },
     addToInboundShipmentFromMasterList(
       variables: AddToInboundShipmentFromMasterListMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AddToInboundShipmentFromMasterListMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AddToInboundShipmentFromMasterListMutation>(
-            AddToInboundShipmentFromMasterListDocument,
+          client.request<AddToInboundShipmentFromMasterListMutation>({
+            document: AddToInboundShipmentFromMasterListDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'addToInboundShipmentFromMasterList',
         'mutation',
         variables
@@ -2315,13 +2384,16 @@ export function getSdk(
     },
     requests(
       variables: RequestsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RequestsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RequestsQuery>(RequestsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<RequestsQuery>({
+            document: RequestsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'requests',
         'query',
@@ -2330,13 +2402,16 @@ export function getSdk(
     },
     request(
       variables: RequestQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RequestQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RequestQuery>(RequestDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<RequestQuery>({
+            document: RequestDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'request',
         'query',
@@ -2345,15 +2420,17 @@ export function getSdk(
     },
     insertLinesFromInternalOrder(
       variables: InsertLinesFromInternalOrderMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertLinesFromInternalOrderMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertLinesFromInternalOrderMutation>(
-            InsertLinesFromInternalOrderDocument,
+          client.request<InsertLinesFromInternalOrderMutation>({
+            document: InsertLinesFromInternalOrderDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertLinesFromInternalOrder',
         'mutation',
         variables

@@ -9,18 +9,18 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
-        ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
-        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
-        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, ProgramsByItemIdLoader,
-        ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        ItemCategoryLoader, ItemDirectionsByItemIdLoader, ItemStatsLoaderInput,
+        ItemStoreJoinLoader, ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader,
+        ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
+        LocationTypeLoader, MasterListByItemIdLoader, MasterListByItemIdLoaderInput,
+        ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{Item, ItemRow};
+use repository::{category_row::CategoryRow, Item, ItemRow};
 use serde_json::json;
 use service::ListResult;
 
@@ -194,6 +194,16 @@ impl ItemNode {
         Ok(WarningNode::from_vec(result))
     }
 
+    pub async fn categories(&self, ctx: &Context<'_>) -> Result<Vec<ItemCategoryNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemCategoryLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(result.into_iter().map(ItemCategoryNode::from_domain).collect())
+    }
+
     #[graphql(deprecation = "Since 2.16.0. Use universalCode instead")]
     pub async fn msupply_universal_code(&self) -> String {
         self.row().universal_code.clone().unwrap_or_default()
@@ -324,6 +334,28 @@ pub enum VenCategoryType {
     E,
     N,
     NotAssigned,
+}
+
+#[derive(PartialEq, Debug)]
+pub struct ItemCategoryNode {
+    category_row: CategoryRow,
+}
+
+#[Object]
+impl ItemCategoryNode {
+    pub async fn id(&self) -> &str {
+        &self.category_row.id
+    }
+
+    pub async fn name(&self) -> &str {
+        &self.category_row.name
+    }
+}
+
+impl ItemCategoryNode {
+    pub fn from_domain(category_row: CategoryRow) -> Self {
+        ItemCategoryNode { category_row }
+    }
 }
 
 #[derive(Union)]

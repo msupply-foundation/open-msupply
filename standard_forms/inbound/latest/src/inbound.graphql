@@ -36,6 +36,9 @@ query InvoiceQuery(
         address1
         address2
       }
+      purchaseOrder {
+        number
+      }
       user {
         username
       }

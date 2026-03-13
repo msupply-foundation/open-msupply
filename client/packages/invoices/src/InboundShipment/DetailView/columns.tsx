@@ -214,6 +214,12 @@ export const useInboundShipmentColumns = (
         accessorFn: row => (row.donor ? row.donor.name : ''),
       },
       {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        defaultHideOnMobile: true,
+        accessorFn: row => row.manufacturer?.name ?? '',
+      },
+      {
         id: 'campaign',
         header: t('label.campaign'),
         defaultHideOnMobile: true,

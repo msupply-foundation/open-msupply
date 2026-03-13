@@ -19,6 +19,7 @@ pub fn generate(
         note,
         item_variant_id,
         donor_id,
+        manufacturer_id,
         reason_option_id,
         vvm_status_id,
         volume_per_pack,
@@ -60,6 +61,9 @@ pub fn generate(
         donor_id: donor_id
             .map(|d| d.value)
             .unwrap_or(existing_line.donor_id),
+        manufacturer_id: manufacturer_id
+            .map(|m| m.value)
+            .unwrap_or(existing_line.manufacturer_id),
         reason_option_id: reason_option_id.or(existing_line.reason_option_id),
         vvm_status_id: vvm_status_id.or(existing_line.vvm_status_id),
         volume_per_pack: volume_per_pack.unwrap_or(existing_line.volume_per_pack),

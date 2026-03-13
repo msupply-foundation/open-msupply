@@ -32,6 +32,7 @@ import {
   ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
+  ManufacturerSearchInput,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
@@ -157,6 +158,7 @@ export const BatchTable = ({
                 id,
                 itemVariantId: itemVariant?.id || null,
                 itemVariant,
+                manufacturer: itemVariant?.manufacturer ?? null,
                 volumePerPack: getVolumePerPackFromVariant({
                   packSize,
                   itemVariant,
@@ -436,6 +438,26 @@ export const LocationTable = ({
             row={row.original}
             disabled={disabled || !row.original.countThisLine}
             updateFn={patch => update({ id: row.original.id, ...patch })}
+          />
+        ),
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        Cell: ({ row: { original: row } }) => (
+          <ManufacturerSearchInput
+            value={row.manufacturer ?? null}
+            disabled={disabled || !row.countThisLine}
+            onChange={manufacturer => {
+              update({
+                id: row.id,
+                manufacturer: manufacturer ?? undefined,
+                ...(row.itemVariant
+                  ? { itemVariantId: null, itemVariant: null }
+                  : {}),
+              });
+            }}
+            width={200}
           />
         ),
       },
