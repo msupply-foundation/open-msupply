@@ -80,11 +80,19 @@ static KEY_VALUE_STORE_CACHE: RwLock<Option<HashMap<KeyType, KeyValueStoreRow>>>
     RwLock::new(None);
 
 fn get_cached_row(key: &KeyType) -> Option<KeyValueStoreRow> {
+    // Disable cache in tests: each test has its own database but shares this
+    // process-global static, causing cross-test contamination.
+    if cfg!(test) {
+        return None;
+    }
     let cache = KEY_VALUE_STORE_CACHE.read().unwrap();
     cache.as_ref()?.get(key).cloned()
 }
 
 fn set_cached_row(row: KeyValueStoreRow) {
+    if cfg!(test) {
+        return;
+    }
     let mut cache = KEY_VALUE_STORE_CACHE.write().unwrap();
     if cache.is_none() {
         *cache = Some(HashMap::new());
