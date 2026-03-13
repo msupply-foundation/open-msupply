@@ -112,14 +112,19 @@ export const ValueInfoRow = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
-  const valueInRepresentation =
-    representation === Representation.DOSES
+  let valueInRepresentation;
+  if (representation === Representation.DOSES) {
+    // Only convert to doses if the row is a stock value
+    valueInRepresentation = isDosesEnabled
       ? QuantityUtils.calculateValueInDoses(dosesPerUnit, value)
-      : QuantityUtils.calculateValueInUnitsOrPacks(
-          representation,
-          defaultPackSize,
-          value
-        );
+      : (value ?? 0);
+  } else {
+    valueInRepresentation = QuantityUtils.calculateValueInUnitsOrPacks(
+      representation,
+      defaultPackSize,
+      value
+    );
+  }
 
   const endAdornment = DisplayUtils.useEndAdornment(
     t,
