@@ -1,10 +1,12 @@
 import React from 'react';
 import {
   useTranslation,
+  useIntlUtils,
   Typography,
   SxProps,
   Theme,
   QuantityUtils,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 
 interface DosesOrUnitsCaptionProps {
@@ -24,14 +26,17 @@ export const DosesOrUnitsCaption = ({
   sx,
 }: DosesOrUnitsCaptionProps) => {
   const t = useTranslation();
+  const { getPlural } = useIntlUtils();
+  const { round } = useFormatNumber();
 
   const displayValue = dosesSelected
     ? value
     : QuantityUtils.calculateValueInDoses(dosesPerUnit, value);
 
+  const count = displayValue === 1 ? 1 : 2;
   const label = dosesSelected
-    ? (unitsLabel ?? t('label.unit')).toLowerCase()
-    : t('label.doses').toLowerCase();
+    ? getPlural((unitsLabel ?? t('label.unit')).toLowerCase(), count)
+    : getPlural(t('label.dose').toLowerCase(), count);
 
   return (
     <Typography
@@ -45,7 +50,7 @@ export const DosesOrUnitsCaption = ({
         ...sx,
       }}
     >
-      {displayValue} {label}
+      {round(displayValue)} {label}
     </Typography>
   );
 };

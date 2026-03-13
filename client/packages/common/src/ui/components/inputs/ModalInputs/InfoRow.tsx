@@ -5,6 +5,7 @@ import {
   NumericTextDisplay,
   QuantityUtils,
   DisplayUtils,
+  Representation,
   RepresentationValue,
   SxProps,
   Theme,
@@ -91,7 +92,6 @@ export type ValueInfo = {
   value?: number | null;
   sx?: SxProps<Theme>;
   isDosesEnabled?: boolean;
-  dosesPerUnit?: number;
   roundUp?: boolean;
 };
 
@@ -112,30 +112,35 @@ export const ValueInfoRow = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
-  const valueInUnitsOrPacks = QuantityUtils.useValueInUnitsOrPacks(
-    representation,
-    defaultPackSize,
-    value
-  );
+  const valueInRepresentation =
+    representation === Representation.DOSES
+      ? QuantityUtils.calculateValueInDoses(dosesPerUnit, value)
+      : QuantityUtils.calculateValueInUnitsOrPacks(
+          representation,
+          defaultPackSize,
+          value
+        );
 
   const endAdornment = DisplayUtils.useEndAdornment(
     t,
     getPlural,
     unitName,
     representation,
-    valueInUnitsOrPacks,
+    valueInRepresentation,
     endAdornmentOverride
   );
 
   const treatAsNull = value === null && nullDisplay;
 
-  const displayValue = treatAsNull ? nullDisplay : valueInUnitsOrPacks;
+  const displayValue = treatAsNull ? nullDisplay : valueInRepresentation;
 
   const caption =
     isDosesEnabled && !!value ? (
       <DosesOrUnitsCaption
         value={value}
         dosesPerUnit={dosesPerUnit}
+        dosesSelected={representation === Representation.DOSES}
+        unitsLabel={unitName}
         sx={{ pr: 0 }}
       />
     ) : null;
