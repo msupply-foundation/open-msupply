@@ -3,6 +3,7 @@
 import {
   VaccineCourseFragment,
   VaccineCourseItemFragment,
+  VaccineCourseStoreWastageFragment,
 } from '../operations.generated';
 
 export type DraftVaccineCourseItem = Omit<
@@ -10,9 +11,15 @@ export type DraftVaccineCourseItem = Omit<
   '__typename'
 >;
 
+export type DraftVaccineCourseStoreWastage = Omit<
+  VaccineCourseStoreWastageFragment,
+  '__typename'
+>;
+
 export type DraftVaccineCourse = Omit<
   VaccineCourseFragment,
-  '__typename' | 'vaccineCourseItems' | 'doses'
+  '__typename' | 'vaccineCourseItems' | 'doses' | 'storeWastageRates'
 > & {
   vaccineCourseItems: DraftVaccineCourseItem[] | null;
+  storeWastageRates: DraftVaccineCourseStoreWastage[] | null;
 };
