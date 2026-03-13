@@ -7,7 +7,6 @@ use util::lock_file;
 
 use crate::{
     database_settings::DatabaseSettings,
-    db_diesel::key_value_store::clear_key_value_store_cache,
     get_storage_connection_manager,
     migrations::{migrate, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
@@ -54,7 +53,6 @@ fn create_template_db(
     // migrate the DB:
     let connection_manager = get_storage_connection_manager(&db_settings);
     let connection = connection_manager.connection().unwrap();
-    clear_key_value_store_cache();
     migrate(&connection, version).unwrap();
 
     connection_manager
@@ -108,7 +106,6 @@ async fn setup_with_version_no_template(
 
     let connection_manager = get_storage_connection_manager(&db_settings);
     let connection = connection_manager.connection().unwrap();
-    clear_key_value_store_cache();
     migrate(&connection, version).unwrap();
 
     let collection = insert_all_mock_data(&connection, inserts).await;
