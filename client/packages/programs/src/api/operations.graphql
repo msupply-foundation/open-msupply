@@ -686,6 +686,13 @@ query immunisationPrograms(
   }
 }
 
+fragment VaccineCourseStoreWastage on VaccineCourseStoreWastageNode {
+  id
+  vaccineCourseId
+  storeId
+  wastageRate
+}
+
 fragment VaccineCourse on VaccineCourseNode {
   id
   name
@@ -704,6 +711,9 @@ fragment VaccineCourse on VaccineCourseNode {
   }
   vaccineCourseDoses {
     ...VaccineCourseDose
+  }
+  storeWastageRates {
+    ...VaccineCourseStoreWastage
   }
 }
 
