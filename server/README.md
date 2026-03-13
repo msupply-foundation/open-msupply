@@ -280,11 +280,15 @@ Devs should run both postgres and sqlite tests before publishing a PR. The CI us
 
 More info: https://nexte.st/
 
+- Install cargo-nextest (exact version 0.9.121):
+
+```bash
+cargo install cargo-nextest --locked --version 0.9.121
+```
+
 - To run all tests:
 
 ```bash
-# Install nextest runner
-cargo install cargo-nextest --locked
 # Use sqlite (sqlite is default feature)
 cargo nextest run
 # Use postgres
