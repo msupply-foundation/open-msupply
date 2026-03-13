@@ -14,27 +14,30 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ExportSelector } from '@openmsupply-client/system';
-import { AssetCatalogueItemFragment } from '../api';
+import { useAssetCatalogueListAll } from '../api';
 import { assetCatalogueItemsListToCsv } from '../utils';
 
 export const AppBarButtonsComponent = ({
   importModalController,
-  assets,
 }: {
   importModalController: ToggleState;
-  assets: AssetCatalogueItemFragment[];
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const navigate = useNavigate();
+  const { fetchAsync, isLoading } = useAssetCatalogueListAll();
 
   const path = RouteBuilder.create(AppRoute.Catalogue)
     .addPart(AppRoute.Assets)
     .addPart(AppRoute.LogReasons)
     .build();
 
-  const getCsvData = () =>
-    assets?.length ? assetCatalogueItemsListToCsv(assets, t) : null;
+  const getCsvData = async () => {
+    const result = await fetchAsync();
+    return result?.nodes?.length
+      ? assetCatalogueItemsListToCsv(result.nodes, t)
+      : null;
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -49,6 +52,7 @@ export const AppBarButtonsComponent = ({
         <ExportSelector
           getCsvData={getCsvData}
           filename={t('filename.asset-categories')}
+          isLoading={isLoading}
         />
         {isCentralServer && (
           <BaseButton

@@ -101,13 +101,16 @@ export function getSdk(
   return {
     activityLogs(
       variables?: ActivityLogsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ActivityLogsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ActivityLogsQuery>(ActivityLogsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ActivityLogsQuery>({
+            document: ActivityLogsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'activityLogs',
         'query',

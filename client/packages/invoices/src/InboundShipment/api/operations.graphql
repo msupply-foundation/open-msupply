@@ -6,6 +6,7 @@ fragment InboundLine on InvoiceLineNode {
   costPricePerPack
   sellPricePerPack
   expiryDate
+  manufactureDate
   numberOfPacks
   shippedNumberOfPacks
   shippedPackSize
@@ -26,6 +27,10 @@ fragment InboundLine on InvoiceLineNode {
   donor(storeId: $storeId) {
     id
     name
+  }
+
+  manufacturer(storeId: $storeId) {
+    ...NameRow
   }
 
   program {
