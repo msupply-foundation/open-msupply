@@ -4,6 +4,7 @@ use super::{
 };
 
 use crate::{
+    diesel_extensions::double_coalesce,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
         apply_string_filter,
@@ -188,7 +189,11 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             query = query.filter(
                 purchase_order_line_stats::shipped_number_of_units
                     .nullable()
-                    .lt(purchase_order_line::adjusted_number_of_units),
+                    .lt(double_coalesce::coalesce(
+                        purchase_order_line::adjusted_number_of_units,
+                        purchase_order_line::requested_number_of_units,
+                    )
+                    .nullable()),
             );
         }
 
