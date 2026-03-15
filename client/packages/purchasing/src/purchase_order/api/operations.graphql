@@ -17,6 +17,10 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
     totalCount
   }
   comment
+  orderTotalAfterDiscount
+  currency {
+    code
+  }
 }
 
 fragment PurchaseOrder on PurchaseOrderNode {

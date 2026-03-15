@@ -76,11 +76,7 @@ pub trait LogServiceTrait: Send + Sync {
         Ok(level)
     }
 
-    fn update_log_level(
-        &self,
-        ctx: &ServiceContext,
-        log_level: Level,
-    ) -> Result<(), RepositoryError> {
+    fn update_log_level(&self, ctx: &ServiceContext, log_level: Level) {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         let log_level = match log_level {
@@ -91,10 +87,12 @@ pub trait LogServiceTrait: Send + Sync {
             Level::Trace => "trace",
         };
 
-        key_value_store.set_string(KeyType::LogLevel, Some(log_level.to_string()))?;
+        if let Err(e) = key_value_store.set_string(KeyType::LogLevel, Some(log_level.to_string())) {
+            log::warn!(
+                "Failed to persist log level setting — storing in-memory — will be persisted on next run: {e:?}"
+            );
+        }
         simple_log::update_log_level(log_level).expect("Couldn't update log level");
-
-        Ok(())
     }
 
     fn get_log_directory(&self, ctx: &ServiceContext) -> Result<String, RepositoryError> {
@@ -105,16 +103,14 @@ pub trait LogServiceTrait: Send + Sync {
         Ok(log_directory.unwrap_or(Default::default()))
     }
 
-    fn set_log_directory(
-        &self,
-        ctx: &ServiceContext,
-        log_directory: Option<String>,
-    ) -> Result<(), RepositoryError> {
+    fn set_log_directory(&self, ctx: &ServiceContext, log_directory: Option<String>) {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        key_value_store.set_string(KeyType::LogDirectory, log_directory)?;
-
-        Ok(())
+        if let Err(e) = key_value_store.set_string(KeyType::LogDirectory, log_directory) {
+            log::warn!(
+                "Failed to persist log directory setting — storing in-memory — will be persisted on next run: {e:?}"
+            );
+        }
     }
 
     fn get_log_file_name(&self, ctx: &ServiceContext) -> Result<String, RepositoryError> {
@@ -125,16 +121,14 @@ pub trait LogServiceTrait: Send + Sync {
         Ok(log_file_name.unwrap_or(Default::default()))
     }
 
-    fn set_log_file_name(
-        &self,
-        ctx: &ServiceContext,
-        log_file_name: Option<String>,
-    ) -> Result<(), RepositoryError> {
+    fn set_log_file_name(&self, ctx: &ServiceContext, log_file_name: Option<String>) {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        key_value_store.set_string(KeyType::LogFileName, log_file_name)?;
-
-        Ok(())
+        if let Err(e) = key_value_store.set_string(KeyType::LogFileName, log_file_name) {
+            log::warn!(
+                "Failed to persist log file name setting — storing in-memory — will be persisted on next run: {e:?}"
+            );
+        }
     }
 }
 

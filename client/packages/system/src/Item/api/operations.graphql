@@ -2,6 +2,7 @@ fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
   expiryDate
+  manufactureDate
   id
   itemId
   location {

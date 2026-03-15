@@ -17,6 +17,8 @@ export type PurchaseOrderRowFragment = {
   targetMonths?: number | null;
   reference?: string | null;
   comment?: string | null;
+  orderTotalAfterDiscount: number;
+  currency?: { __typename: 'CurrencyNode'; code: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
 };
@@ -222,6 +224,8 @@ export type PurchaseOrdersQuery = {
       targetMonths?: number | null;
       reference?: string | null;
       comment?: string | null;
+      orderTotalAfterDiscount: number;
+      currency?: { __typename: 'CurrencyNode'; code: string } | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
     }>;
@@ -714,6 +718,10 @@ export const PurchaseOrderRowFragmentDoc = gql`
       totalCount
     }
     comment
+    orderTotalAfterDiscount
+    currency {
+      code
+    }
   }
 `;
 export const PurchaseOrderLineFragmentDoc = gql`
