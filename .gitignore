@@ -19,5 +19,7 @@ client/dist
 ## Claude
 # `claude -w "feature-name"` will create "/.claude/worktrees/feature-name" for your worktree. Back at root though, git picks up this whole directory copy of the repo!
 worktrees
-backup/
 **/.claude/*.local.json
+
+# Default path for backups
+backup/
