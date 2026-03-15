@@ -4,7 +4,7 @@ use crate::{
 use repository::{
     EqualFilter, PaginationOption, PurchaseOrderFilter, PurchaseOrderLine,
     PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineSort,
-    PurchaseOrderLineStatus, PurchaseOrderStatus, RepositoryError,
+    PurchaseOrderLineStatus, PurchaseOrderStatus, RepositoryError, StorageConnection,
 };
 
 pub const MAX_LIMIT: u32 = 1000;
@@ -47,25 +47,40 @@ pub fn get_units_ordered_in_other_purchase_orders(
     item_id: &str,
     exclude_purchase_order_id: &str,
 ) -> Result<f64, RepositoryError> {
-    let repository = PurchaseOrderLineRepository::new(&ctx.connection);
+    calculate_units_in_other_purchase_orders(
+        &ctx.connection,
+        item_id,
+        exclude_purchase_order_id,
+        Some(store_id),
+    )
+}
 
-    let lines = repository.query_by_filter(
-        PurchaseOrderLineFilter::new()
-            .item_id(EqualFilter::equal_to(item_id.to_string()))
-            .store_id(EqualFilter::equal_to(store_id.to_string()))
-            .purchase_order(
-                PurchaseOrderFilter::new()
-                    .id(EqualFilter::not_equal_to(
-                        exclude_purchase_order_id.to_string(),
-                    ))
-                    .status(EqualFilter::equal_any(vec![
-                        PurchaseOrderStatus::RequestApproval,
-                        PurchaseOrderStatus::Confirmed,
-                        PurchaseOrderStatus::Sent,
-                    ])),
-            )
-            .status(EqualFilter::not_equal_to(PurchaseOrderLineStatus::Closed)),
-    )?;
+pub fn calculate_units_in_other_purchase_orders(
+    connection: &StorageConnection,
+    item_id: &str,
+    exclude_purchase_order_id: &str,
+    store_id: Option<&str>,
+) -> Result<f64, RepositoryError> {
+    let repository = PurchaseOrderLineRepository::new(connection);
+
+    let mut filter = PurchaseOrderLineFilter::new()
+        .item_id(EqualFilter::equal_to(item_id.to_string()))
+        .purchase_order(
+            PurchaseOrderFilter::new()
+                .id(EqualFilter::not_equal_to(
+                    exclude_purchase_order_id.to_string(),
+                ))
+                .status(EqualFilter::equal_any(vec![
+                    PurchaseOrderStatus::RequestApproval,
+                    PurchaseOrderStatus::Confirmed,
+                    PurchaseOrderStatus::Sent,
+                ])),
+        )
+        .status(EqualFilter::not_equal_to(PurchaseOrderLineStatus::Closed));
+
+    filter.store_id = store_id.map(|id| EqualFilter::equal_to(id.to_string()));
+
+    let lines = repository.query_by_filter(filter)?;
 
     // TODO: Reduce any other units received in GRs
     let total: f64 = lines
