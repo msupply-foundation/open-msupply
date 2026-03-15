@@ -65,6 +65,7 @@ export const InboundLineEdit = ({
   const {
     draftLines,
     addDraftLine,
+    duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
     isLoading,
@@ -103,6 +104,7 @@ export const InboundLineEdit = ({
     <InboundLineEditCards
       lines={draftLines}
       updateDraftLine={updateDraftLine}
+      duplicateDraftLine={duplicateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
       currency={currency}

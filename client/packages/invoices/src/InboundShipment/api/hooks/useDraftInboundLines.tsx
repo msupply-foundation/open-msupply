@@ -94,6 +94,28 @@ export const useDraftInboundLines = (
     }
   };
 
+  const duplicateDraftLine = useCallback(
+    (lineId: string) => {
+      if (!item) return;
+      const sourceLine = draftLines.find(line => line.id === lineId);
+      if (!sourceLine) return;
+
+      const { id: _id, ...seedWithoutId } = sourceLine;
+      const newLine = CreateDraft.stockInLine({
+        item,
+        invoiceId: id,
+        seed: seedWithoutId as typeof sourceLine,
+      });
+      // Mark as new so it gets inserted rather than updated
+      newLine.isCreated = true;
+      newLine.isUpdated = false;
+
+      setIsDirty(true);
+      setDraftLines(draftLines => [...draftLines, newLine]);
+    },
+    [draftLines, item, id, setIsDirty]
+  );
+
   const updateDraftLine = useCallback(
     (patch: PatchDraftLineInput) => {
       setDraftLines(draftLines => {
@@ -175,6 +197,7 @@ export const useDraftInboundLines = (
   return {
     draftLines: draftLines.filter(line => !line.isDeleted),
     addDraftLine,
+    duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
     isLoading,

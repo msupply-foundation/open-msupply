@@ -136,18 +136,31 @@ export const CardListItem = <T extends MRT_RowData>({
               pt: isLandscape ? 1 : 1.5,
             }}
           >
+            {summaryCells.length > 0 && (
+              <Typography
+                key={summaryCells[0]!.id}
+                variant="subtitle2"
+                fontWeight={700}
+                noWrap
+              >
+                {getSummaryContent(summaryCells[0]!)}
+              </Typography>
+            )}
+            <Box flex={1} />
+            {summaryCells.slice(1).map(cell => (
+              <Typography
+                key={cell.id}
+                variant="subtitle2"
+                fontWeight={700}
+                noWrap
+              >
+                {getSummaryContent(cell)}
+              </Typography>
+            ))}
             {actionCells.map(cell => (
               <Box key={cell.id} flexShrink={0}>
                 {getCellContent(cell)}
               </Box>
-            ))}
-            {summaryCells.map((cell, index) => (
-              <React.Fragment key={cell.id}>
-                {index === 1 && <Box flex={1} />}
-                <Typography variant="subtitle2" fontWeight={700} noWrap>
-                  {getSummaryContent(cell)}
-                </Typography>
-              </React.Fragment>
             ))}
           </Box>
         )}

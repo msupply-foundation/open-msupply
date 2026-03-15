@@ -21,6 +21,7 @@ import {
   NumberInputCell,
   CurrencyInputCell,
   CardList,
+  CopyIcon,
   StockIcon,
   InvoiceIcon,
   SlidersIcon,
@@ -57,6 +58,7 @@ interface CardProps {
 }
 
 interface InboundLineEditCardsProps extends CardProps {
+  duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
   lastCardRef?: React.RefObject<HTMLDivElement>;
   simplified?: boolean;
@@ -65,6 +67,7 @@ interface InboundLineEditCardsProps extends CardProps {
 export const InboundLineEditCards = ({
   lines,
   updateDraftLine,
+  duplicateDraftLine,
   removeDraftLine,
   isDisabled = false,
   currency,
@@ -626,7 +629,21 @@ export const InboundLineEditCards = ({
           />
         ),
       },
-      // --- Delete column (no group) ---
+      // --- Action columns (no group) ---
+      {
+        id: 'duplicate',
+        header: '',
+        size: 50,
+        pin: 'right',
+        Cell: ({ row }) => (
+          <IconButton
+            disabled={isDisabled}
+            label={t('label.duplicate-batch')}
+            onClick={() => duplicateDraftLine(row.original.id)}
+            icon={<CopyIcon fontSize="small" />}
+          />
+        ),
+      },
       {
         id: 'delete',
         header: '',
@@ -647,6 +664,7 @@ export const InboundLineEditCards = ({
     allowTrackingOfStockByDonor,
     currency,
     displayInDoses,
+    duplicateDraftLine,
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
     isDisabled,
