@@ -60,15 +60,10 @@ export const PurchaseOrderLineEditModal = ({
   } = usePurchaseOrderLine(lineId);
   const unit = draft?.unit || t('label.unit', { count: 2 });
 
-  // In create mode, fetch units on order via a separate query since the line
-  // doesn't exist yet and the backend loader won't be called.
-  // In update mode, use the value from the backend loader on the line.
-  const { data: unitsOnOrder } = useUnitsOnOrderForItem(
+  const { data: unitsOrderedInOthers = 0 } = useUnitsOnOrderForItem(
     draft.item.id,
-    purchaseOrder.id,
-    !isUpdateMode
+    purchaseOrder.id
   );
-  const unitsOrderedInOthers = unitsOnOrder ?? draft.unitsOrderedInOthers;
 
   const onChangeItem = (item: ItemStockOnHandFragment) => {
     const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
