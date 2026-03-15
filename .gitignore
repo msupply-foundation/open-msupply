@@ -17,3 +17,4 @@ client/dist
 
 # IDEs
 .idea/
+/mobile/src-tauri/target

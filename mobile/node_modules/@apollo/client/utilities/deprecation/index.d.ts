@@ -1,0 +1,91 @@
+type WithValueArgs<TResult, TArgs extends any[], TThis> = [
+    callback: (this: TThis, ...args: TArgs) => TResult,
+    args?: TArgs | undefined,
+    thisArg?: TThis | undefined
+];
+export type PossibleDeprecations = {
+    "cache.readQuery": ["canonizeResults"];
+    "cache.readFragment": ["canonizeResults"];
+    "cache.updateQuery": ["canonizeResults"];
+    "cache.updateFragment": ["canonizeResults"];
+    InMemoryCache: ["addTypename", "canonizeResults"];
+    "cache.read": ["canonizeResults"];
+    "cache.diff": ["canonizeResults"];
+    "cache.gc": ["resetResultIdentities"];
+    ApolloClient: [
+        "connectToDevTools",
+        "uri",
+        "credentials",
+        "headers",
+        "name",
+        "version",
+        "typeDefs"
+    ];
+    "client.watchQuery": ["canonizeResults", "partialRefetch"];
+    "client.query": ["canonizeResults", "notifyOnNetworkStatusChange"];
+    setOptions: ["canonizeResults"];
+    useBackgroundQuery: ["canonizeResults"];
+    useFragment: ["canonizeResults"];
+    useLazyQuery: [
+        "canonizeResults",
+        "variables",
+        "context",
+        "onCompleted",
+        "onError",
+        "defaultOptions",
+        "initialFetchPolicy",
+        "partialRefetch"
+    ];
+    "useLazyQuery.execute": [
+        "initialFetchPolicy",
+        "onCompleted",
+        "onError",
+        "defaultOptions",
+        "partialRefetch",
+        "canonizeResults",
+        "query",
+        "ssr",
+        "client",
+        "fetchPolicy",
+        "nextFetchPolicy",
+        "refetchWritePolicy",
+        "errorPolicy",
+        "pollInterval",
+        "notifyOnNetworkStatusChange",
+        "returnPartialData",
+        "skipPollAttempt"
+    ];
+    useLoadableQuery: ["canonizeResults"];
+    useMutation: ["ignoreResults"];
+    useQuery: [
+        "canonizeResults",
+        "partialRefetch",
+        "defaultOptions",
+        "onCompleted",
+        "onError"
+    ];
+    useSuspenseQuery: ["canonizeResults"];
+    preloadQuery: ["canonizeResults"];
+    MockedProvider: ["connectToDevTools", "addTypename"];
+    ObservableQuery: [
+        "observableQuery.result",
+        "getLastResult",
+        "getLastError",
+        "resetLastResults",
+        "setOptions"
+    ];
+    HOC: [
+        "graphql" | "withQuery" | "withMutation" | "withSubscription",
+        "parser"
+    ];
+    RenderProps: ["<Query />" | "<Mutation />" | "<Subscription />"];
+};
+export type DeprecationName = keyof PossibleDeprecations | NonNullable<PossibleDeprecations[keyof PossibleDeprecations]>[number];
+export declare function muteDeprecations<TResult, TArgs extends any[], TThis = any>(name: DeprecationName | DeprecationName[], ...args: WithValueArgs<TResult, TArgs, TThis>): TResult;
+export declare function warnRemovedOption<TOptions extends Record<string, any>, CallSite extends keyof PossibleDeprecations>(options: TOptions, name: keyof TOptions & PossibleDeprecations[CallSite][number], callSite: CallSite, recommendation?: string): void;
+export declare function warnDeprecated(name: DeprecationName, cb: () => void): void;
+export declare function withDisabledDeprecations(): {
+    [Symbol.dispose](): void;
+};
+export {};
+//# sourceMappingURL=index.d.ts.map

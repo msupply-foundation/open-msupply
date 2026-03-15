@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "client",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["start-local"],
+      "port": 3003
+    },
+    {
+      "name": "server",
+      "runtimeExecutable": "cargo",
+      "runtimeArgs": ["run", "--bin", "remote_server"],
+      "port": 8000
+    },
+    {
+      "name": "mobile-vite",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 1420
+    },
+    {
+      "name": "storybook",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["storybook"],
+      "port": 6006
+    }
+  ]
+}

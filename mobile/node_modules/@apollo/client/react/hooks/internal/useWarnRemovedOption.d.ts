@@ -1,0 +1,2 @@
+export declare function useWarnRemovedOption<TOptions extends Record<string, any>>(options: TOptions, name: keyof TOptions, callSite: string, recommendation?: string): void;
+//# sourceMappingURL=useWarnRemovedOption.d.ts.map

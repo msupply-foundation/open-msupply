@@ -1,0 +1,29 @@
+[package]
+name = "msupply-mobile"
+version = "0.1.0"
+description = "mSupply Mobile - Lightweight stock management"
+edition = "2021"
+
+[lib]
+name = "msupply_mobile_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-barcode-scanner = "2"
+tauri-plugin-store = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+mdns-sd = "0.11"
+tokio = { version = "1", features = ["sync"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+log = "0.4"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-shell = "2"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
