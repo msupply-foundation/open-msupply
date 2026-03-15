@@ -140,10 +140,12 @@ pub fn generate(
             note,
             item_variant_id,
             donor_id: donor_link_id,
+            manufacturer_id: None,
             vvm_status_id,
             campaign_id,
             program_id,
             volume_per_pack: Some(volume_per_pack),
+            manufacture_date: None,
             // Default
             barcode: None,
             total_before_tax: None,
@@ -174,6 +176,7 @@ pub fn generate(
             sell_price_per_pack: None,
             item_variant_id: None,
             donor_id: None,
+            manufacturer_id: None,
         }),
     };
 

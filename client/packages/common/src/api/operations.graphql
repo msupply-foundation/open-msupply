@@ -4,3 +4,10 @@ query initialisationStatus {
     siteName
   }
 }
+
+query migrationStatus {
+  migrationStatus {
+    inProgress
+    version
+  }
+}

@@ -7,6 +7,5 @@
   "queries": {},
   "arguments": {},
   "header": "header.html",
-  "footer": "footer.html",
   "query_default": "stocktake"
 }

@@ -31,6 +31,7 @@ define_linked_tables! {
         item_name -> Text,
         batch -> Nullable<Text>,
         expiry_date -> Nullable<Date>,
+        manufacture_date -> Nullable<Date>,
         pack_size -> Nullable<Double>,
         cost_price_per_pack -> Nullable<Double>,
         sell_price_per_pack -> Nullable<Double>,
@@ -46,6 +47,7 @@ define_linked_tables! {
     },
     optional_links: {
         donor_link_id -> donor_id,
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
@@ -76,6 +78,7 @@ pub struct StocktakeLineRow {
     pub item_name: String,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
+    pub manufacture_date: Option<NaiveDate>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
@@ -88,6 +91,7 @@ pub struct StocktakeLineRow {
     pub program_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
 }
 
 pub struct StocktakeLineRowRepository<'a> {
