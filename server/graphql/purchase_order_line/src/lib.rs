@@ -35,9 +35,6 @@ impl PurchaseOrderLineQueries {
         get_purchase_order_lines(ctx, &store_id, page, filter, sort)
     }
 
-    /// Returns the total units ordered for an item across other purchase orders
-    /// (excluding the specified purchase order). Only considers open PO statuses
-    /// (RequestApproval, Confirmed, Sent) and non-Closed line statuses.
     pub async fn units_ordered_in_other_purchase_orders(
         &self,
         ctx: &Context<'_>,

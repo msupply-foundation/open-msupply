@@ -1,9 +1,10 @@
 use async_graphql::dataloader::*;
 use async_graphql::*;
 use repository::{
-    EqualFilter, PurchaseOrderFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository,
-    PurchaseOrderLineStatus, PurchaseOrderStatus, RepositoryError, StorageConnectionManager,
+    EqualFilter, PurchaseOrderLineFilter, PurchaseOrderLineRepository, RepositoryError,
+    StorageConnectionManager,
 };
+use service::purchase_order_line::query::calculate_units_in_other_purchase_orders;
 use std::collections::HashMap;
 
 pub struct UnitsInOtherPurchaseOrdersLoader {
@@ -28,38 +29,14 @@ impl Loader<String> for UnitsInOtherPurchaseOrdersLoader {
             let line_row = &line.purchase_order_line_row;
             let item_row = &line.item_row;
 
-            let other_open_order_lines = repo.query_by_filter(
-                PurchaseOrderLineFilter::new()
-                    .item_id(EqualFilter::equal_to(item_row.id.to_string()))
-                    .purchase_order(
-                        PurchaseOrderFilter::new()
-                            .id(EqualFilter::not_equal_to(
-                                line_row.purchase_order_id.to_string(),
-                            ))
-                            .status(EqualFilter::equal_any(vec![
-                                PurchaseOrderStatus::RequestApproval,
-                                PurchaseOrderStatus::Confirmed,
-                                PurchaseOrderStatus::Sent,
-                            ])),
-                    )
-                    .status(EqualFilter::not_equal_to(
-                        PurchaseOrderLineStatus::Closed,
-                    )),
+            let units = calculate_units_in_other_purchase_orders(
+                &connection,
+                &item_row.id,
+                &line_row.purchase_order_id,
+                None,
             )?;
 
-            // TODO: Reduce any other units received in GRs
-            let units_in_other_orders: f64 = other_open_order_lines
-                .iter()
-                .map(|l| {
-                    l.purchase_order_line_row
-                        .adjusted_number_of_units
-                        .unwrap_or(l.purchase_order_line_row.requested_number_of_units)
-                })
-                .sum();
-
-            // Prevent -0.0 from being returned
-            let units_in_other_orders = units_in_other_orders + 0.0;
-            result.insert(line_row.id.clone(), units_in_other_orders);
+            result.insert(line_row.id.clone(), units);
         }
 
         Ok(result)
