@@ -2,8 +2,9 @@ use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 use repository::{
-    EqualFilter, PaginationOption, PurchaseOrderLine, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository, PurchaseOrderLineSort, RepositoryError,
+    EqualFilter, PaginationOption, PurchaseOrderFilter, PurchaseOrderLine,
+    PurchaseOrderLineFilter, PurchaseOrderLineRepository, PurchaseOrderLineSort,
+    PurchaseOrderLineStatus, PurchaseOrderStatus, RepositoryError,
 };
 
 pub const MAX_LIMIT: u32 = 1000;
@@ -38,6 +39,46 @@ pub fn get_purchase_order_line(
     filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
 
     Ok(repository.query_by_filter(filter)?.pop())
+}
+
+pub fn get_units_ordered_in_other_purchase_orders(
+    ctx: &ServiceContext,
+    store_id: &str,
+    item_id: &str,
+    exclude_purchase_order_id: &str,
+) -> Result<f64, RepositoryError> {
+    let repository = PurchaseOrderLineRepository::new(&ctx.connection);
+
+    let lines = repository.query_by_filter(
+        PurchaseOrderLineFilter::new()
+            .item_id(EqualFilter::equal_to(item_id.to_string()))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
+            .purchase_order(
+                PurchaseOrderFilter::new()
+                    .id(EqualFilter::not_equal_to(
+                        exclude_purchase_order_id.to_string(),
+                    ))
+                    .status(EqualFilter::equal_any(vec![
+                        PurchaseOrderStatus::RequestApproval,
+                        PurchaseOrderStatus::Confirmed,
+                        PurchaseOrderStatus::Sent,
+                    ])),
+            )
+            .status(EqualFilter::not_equal_to(PurchaseOrderLineStatus::Closed)),
+    )?;
+
+    // TODO: Reduce any other units received in GRs
+    let total: f64 = lines
+        .iter()
+        .map(|l| {
+            l.purchase_order_line_row
+                .adjusted_number_of_units
+                .unwrap_or(l.purchase_order_line_row.requested_number_of_units)
+        })
+        .sum();
+
+    // Prevent -0.0 from being returned
+    Ok(total + 0.0)
 }
 
 #[cfg(test)]

@@ -281,30 +281,16 @@ query purchaseOrderLine($id: String!, $storeId: String!) {
   }
 }
 
-query unitsOnOrderForItem(
+query unitsOrderedInOtherPurchaseOrders(
   $storeId: String!
-  $itemId: EqualFilterStringInput
-  $purchaseOrderId: EqualFilterStringInput
-  $lineStatus: EqualFilterPurchaseOrderLineStatusInput
-  $purchaseOrderStatus: EqualFilterPurchaseOrderStatusInput
+  $itemId: String!
+  $excludePurchaseOrderId: String!
 ) {
-  purchaseOrderLines(
+  unitsOrderedInOtherPurchaseOrders(
     storeId: $storeId
-    filter: {
-      itemId: $itemId
-      purchaseOrderId: $purchaseOrderId
-      status: $lineStatus
-      purchaseOrderStatus: $purchaseOrderStatus
-    }
-  ) {
-    ... on PurchaseOrderLineConnector {
-      __typename
-      nodes {
-        adjustedNumberOfUnits
-        requestedNumberOfUnits
-      }
-    }
-  }
+    itemId: $itemId
+    excludePurchaseOrderId: $excludePurchaseOrderId
+  )
 }
 
 query purchaseOrderLinesCount(

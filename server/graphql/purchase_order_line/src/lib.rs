@@ -34,6 +34,24 @@ impl PurchaseOrderLineQueries {
     ) -> Result<PurchaseOrderLinesResponse, async_graphql::Error> {
         get_purchase_order_lines(ctx, &store_id, page, filter, sort)
     }
+
+    /// Returns the total units ordered for an item across other purchase orders
+    /// (excluding the specified purchase order). Only considers open PO statuses
+    /// (RequestApproval, Confirmed, Sent) and non-Closed line statuses.
+    pub async fn units_ordered_in_other_purchase_orders(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        item_id: String,
+        exclude_purchase_order_id: String,
+    ) -> Result<f64, async_graphql::Error> {
+        get_units_ordered_in_other_purchase_orders(
+            ctx,
+            &store_id,
+            &item_id,
+            &exclude_purchase_order_id,
+        )
+    }
 }
 
 #[derive(Default, Clone)]

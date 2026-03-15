@@ -6,7 +6,6 @@ import {
   useTranslation,
   setNullableInput,
   PurchaseOrderLineStatusNode,
-  PurchaseOrderNodeStatus,
   InsertPurchaseOrderLineInput,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
@@ -380,29 +379,13 @@ export const useUnitsOnOrderForItem = (
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
   const queryFn = async () => {
-    const result = await purchaseOrderApi.unitsOnOrderForItem({
+    const result = await purchaseOrderApi.unitsOrderedInOtherPurchaseOrders({
       storeId,
-      itemId: { equalTo: itemId },
-      purchaseOrderId: { notEqualTo: excludePurchaseOrderId },
-      lineStatus: { notEqualTo: PurchaseOrderLineStatusNode.Closed },
-      purchaseOrderStatus: {
-        equalAny: [
-          PurchaseOrderNodeStatus.RequestApproval,
-          PurchaseOrderNodeStatus.Confirmed,
-          PurchaseOrderNodeStatus.Sent,
-        ],
-      },
+      itemId,
+      excludePurchaseOrderId,
     });
 
-    if (result.purchaseOrderLines.__typename === 'PurchaseOrderLineConnector') {
-      return result.purchaseOrderLines.nodes.reduce(
-        (sum, line) =>
-          sum + (line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits),
-        0
-      );
-    }
-
-    return 0;
+    return result.unitsOrderedInOtherPurchaseOrders;
   };
 
   return useQuery({

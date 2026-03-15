@@ -575,24 +575,15 @@ export type PurchaseOrderLineQuery = {
   };
 };
 
-export type UnitsOnOrderForItemQueryVariables = Types.Exact<{
+export type UnitsOrderedInOtherPurchaseOrdersQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  itemId?: Types.InputMaybe<Types.EqualFilterStringInput>;
-  purchaseOrderId?: Types.InputMaybe<Types.EqualFilterStringInput>;
-  lineStatus?: Types.InputMaybe<Types.EqualFilterPurchaseOrderLineStatusInput>;
-  purchaseOrderStatus?: Types.InputMaybe<Types.EqualFilterPurchaseOrderStatusInput>;
+  itemId: Types.Scalars['String']['input'];
+  excludePurchaseOrderId: Types.Scalars['String']['input'];
 }>;
 
-export type UnitsOnOrderForItemQuery = {
+export type UnitsOrderedInOtherPurchaseOrdersQuery = {
   __typename: 'Queries';
-  purchaseOrderLines: {
-    __typename: 'PurchaseOrderLineConnector';
-    nodes: Array<{
-      __typename: 'PurchaseOrderLineNode';
-      adjustedNumberOfUnits?: number | null;
-      requestedNumberOfUnits: number;
-    }>;
-  };
+  unitsOrderedInOtherPurchaseOrders: number;
 };
 
 export type PurchaseOrderLinesCountQueryVariables = Types.Exact<{
@@ -1007,31 +998,17 @@ export const PurchaseOrderLineDocument = gql`
   }
   ${PurchaseOrderLineFragmentDoc}
 `;
-export const UnitsOnOrderForItemDocument = gql`
-  query unitsOnOrderForItem(
+export const UnitsOrderedInOtherPurchaseOrdersDocument = gql`
+  query unitsOrderedInOtherPurchaseOrders(
     $storeId: String!
-    $itemId: EqualFilterStringInput
-    $purchaseOrderId: EqualFilterStringInput
-    $lineStatus: EqualFilterPurchaseOrderLineStatusInput
-    $purchaseOrderStatus: EqualFilterPurchaseOrderStatusInput
+    $itemId: String!
+    $excludePurchaseOrderId: String!
   ) {
-    purchaseOrderLines(
+    unitsOrderedInOtherPurchaseOrders(
       storeId: $storeId
-      filter: {
-        itemId: $itemId
-        purchaseOrderId: $purchaseOrderId
-        status: $lineStatus
-        purchaseOrderStatus: $purchaseOrderStatus
-      }
-    ) {
-      ... on PurchaseOrderLineConnector {
-        __typename
-        nodes {
-          adjustedNumberOfUnits
-          requestedNumberOfUnits
-        }
-      }
-    }
+      itemId: $itemId
+      excludePurchaseOrderId: $excludePurchaseOrderId
+    )
   }
 `;
 export const PurchaseOrderLinesCountDocument = gql`
@@ -1328,20 +1305,20 @@ export function getSdk(
         variables
       );
     },
-    unitsOnOrderForItem(
-      variables: UnitsOnOrderForItemQueryVariables,
+    unitsOrderedInOtherPurchaseOrders(
+      variables: UnitsOrderedInOtherPurchaseOrdersQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<UnitsOnOrderForItemQuery> {
+    ): Promise<UnitsOrderedInOtherPurchaseOrdersQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UnitsOnOrderForItemQuery>({
-            document: UnitsOnOrderForItemDocument,
+          client.request<UnitsOrderedInOtherPurchaseOrdersQuery>({
+            document: UnitsOrderedInOtherPurchaseOrdersDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'unitsOnOrderForItem',
+        'unitsOrderedInOtherPurchaseOrders',
         'query',
         variables
       );
