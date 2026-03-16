@@ -45,7 +45,8 @@ For each vaccine course, the system calculates the following values:
   - `Wastage Rate`: From vaccine course configuration (expected proportion of
     stock to be discarded), with store level overrides taking priority. Store wastage rates are managed on the central server and synced out to remote sites. They are configured per vaccine course per store.
 
-- **Coverage Rate**: From vaccine course (expected proportion of target population to be vaccinated)
+- **Coverage Rate**: From vaccine course (expected proportion of target
+  population to be vaccinated). This is also configurable at the store level, with overrides taking priority.
 
 - **Number of Doses**: From vaccine course schedule
 
