@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   NumericTextInput,
   useDebounceCallback,
@@ -10,8 +10,9 @@ import { MRT_Cell, MRT_RowData } from 'material-react-table';
 interface NumberInputCellProps<T extends MRT_RowData>
   extends NumericTextInputProps {
   cell: MRT_Cell<T>;
-  updateFn: (value: number) => void;
+  updateFn: (value: number) => number | void;
   debounceTime?: number; // ms
+  updateOnBlur?: boolean;
 }
 
 export const NumberInputCell = <T extends MRT_RowData>({
@@ -21,6 +22,7 @@ export const NumberInputCell = <T extends MRT_RowData>({
   // read/update logic, but leaving the functionality here for compatibility
   // with existing implementations (e.g. allocation login in Outbound Shipments)
   debounceTime = 0,
+  updateOnBlur = false,
   ...numericTextProps
 }: NumberInputCellProps<T>) => {
   const { getValue, column, row } = cell;
@@ -31,6 +33,11 @@ export const NumberInputCell = <T extends MRT_RowData>({
     : getValue<number>();
 
   const [buffer, setBuffer] = useBufferState(value);
+
+  // Ref to track buffer synchronously for the onBlur handler, since
+  // React state updates are batched and may not be flushed before
+  // the blur event fires in the same cycle.
+  const bufferRef = useRef(value);
 
   const debouncedUpdate = useDebounceCallback(
     (input: number) => {
@@ -47,13 +54,23 @@ export const NumberInputCell = <T extends MRT_RowData>({
       // force an update here.
       if (resetValue !== undefined) {
         setBuffer(resetValue);
+        bufferRef.current = resetValue;
       }
     },
     [updateFn],
     debounceTime
   );
 
-  return (
+  const handleBlur = () => {
+    if (bufferRef.current === value) return;
+    const resetValue = updateFn(bufferRef.current);
+    if (resetValue !== undefined) {
+      setBuffer(resetValue);
+      bufferRef.current = resetValue;
+    }
+  };
+
+  const input = (
     <NumericTextInput
       decimalLimit={2}
       min={0}
@@ -62,13 +79,26 @@ export const NumberInputCell = <T extends MRT_RowData>({
         const newValue = num === undefined ? 0 : num;
         if (newValue === value) return;
         setBuffer(newValue);
-        debouncedUpdate(newValue);
+        bufferRef.current = newValue;
+        if (!updateOnBlur) {
+          debouncedUpdate(newValue);
+        }
       }}
       onKeyDown={stopPropagationForArrowKeys}
       fullWidth
       {...numericTextProps}
     />
   );
+
+  if (updateOnBlur) {
+    return (
+      <span style={{ display: 'contents' }} onBlur={handleBlur}>
+        {input}
+      </span>
+    );
+  }
+
+  return input;
 };
 
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
