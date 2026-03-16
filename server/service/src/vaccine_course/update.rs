@@ -14,8 +14,8 @@ use repository::{
         vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
-        vaccine_course_store_wastage_row::{
-            VaccineCourseStoreWastageRow, VaccineCourseStoreWastageRowRepository,
+        vaccine_course_store_config_row::{
+            VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
         },
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
@@ -75,19 +75,21 @@ impl VaccineCourseDoseInput {
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
-pub struct VaccineCourseStoreWastageInput {
+pub struct VaccineCourseStoreConfigInput {
     pub id: String,
     pub store_id: String,
     pub wastage_rate: Option<f64>,
+    pub coverage_rate: Option<f64>,
 }
 
-impl VaccineCourseStoreWastageInput {
-    pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseStoreWastageRow {
-        VaccineCourseStoreWastageRow {
+impl VaccineCourseStoreConfigInput {
+    pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseStoreConfigRow {
+        VaccineCourseStoreConfigRow {
             id: self.id,
             vaccine_course_id,
             store_id: self.store_id,
             wastage_rate: self.wastage_rate,
+            coverage_rate: self.coverage_rate,
         }
     }
 }
@@ -98,7 +100,7 @@ pub struct UpdateVaccineCourse {
     pub name: Option<String>,
     pub vaccine_items: Vec<VaccineCourseItemInput>,
     pub doses: Vec<VaccineCourseDoseInput>,
-    pub store_wastage_rates: Vec<VaccineCourseStoreWastageInput>,
+    pub store_configs: Vec<VaccineCourseStoreConfigInput>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
@@ -148,9 +150,9 @@ pub fn update_vaccine_course(
                 dose_repo.upsert_one(&dose.to_domain(input.clone().id))?;
             }
 
-            let store_wastage_repo = VaccineCourseStoreWastageRowRepository::new(connection);
-            for wastage in input.clone().store_wastage_rates {
-                store_wastage_repo.upsert_one(&wastage.to_domain(input.clone().id))?;
+            let store_config_repo = VaccineCourseStoreConfigRowRepository::new(connection);
+            for config in input.clone().store_configs {
+                store_config_repo.upsert_one(&config.to_domain(input.clone().id))?;
             }
 
             activity_log_entry(
@@ -229,7 +231,7 @@ fn generate(
         name,
         vaccine_items,
         doses: _,
-        store_wastage_rates: _,
+        store_configs: _,
         demographic_id,
         coverage_rate,
         use_in_gaps_calculations,
