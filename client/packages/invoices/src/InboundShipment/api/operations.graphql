@@ -227,6 +227,12 @@ fragment Inbound on InvoiceNode {
     id
     number
     reference
+    agentCommission
+    documentCharge
+    communicationsCharge
+    insuranceCharge
+    freightCharge
+    orderTotalAfterDiscount
     currency {
       id
       code
