@@ -295,8 +295,9 @@ export const PurchaseOrderLineEdit = ({
               label={t('label.total-cost')}
               value={
                 draft
-                  ? (draft.pricePerPackAfterDiscount ?? 0) *
-                      (draft.numberOfPacks ?? 0) || 0
+                  ? ((draft.pricePerPackAfterDiscount ?? 0) *
+                      (draft.numberOfPacks ?? 0)) ||
+                    0
                   : 0
               }
               decimalLimit={4}
