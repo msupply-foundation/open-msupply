@@ -1,5 +1,11 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, useMediaQuery } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
 import {
   flexRender,
   MRT_Cell,
@@ -22,6 +28,7 @@ interface CardListItemProps<T extends MRT_RowData> {
   cardRef?: React.Ref<HTMLDivElement>;
   groupIcons?: Record<string, React.ReactNode>;
   onClick?: React.MouseEventHandler<HTMLDivElement>;
+  stickyTopOffset?: number;
 }
 
 const isActionCell = <T extends MRT_RowData>(
@@ -51,10 +58,34 @@ export const CardListItem = <T extends MRT_RowData>({
   cardRef,
   groupIcons,
   onClick,
+  stickyTopOffset = 0,
 }: CardListItemProps<T>) => {
   const isLandscape = useMediaQuery(
     '(orientation: landscape) and (max-height: 800px)'
   );
+  const [isStuck, setIsStuck] = React.useState(false);
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    // Find the nearest scrolling ancestor to use as the observer root
+    let root: Element | null = el.parentElement;
+    while (root) {
+      const { overflow, overflowY } = getComputedStyle(root);
+      if (/auto|scroll/.test(overflow + overflowY)) break;
+      root = root.parentElement;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => entry && setIsStuck(!entry.isIntersecting),
+      { root, threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const cells = row.getVisibleCells();
 
   const actionCells: MRT_Cell<T, unknown>[] = [];
@@ -114,6 +145,8 @@ export const CardListItem = <T extends MRT_RowData>({
           '&:last-child': { pb: isLandscape ? 0.5 : 1.5 },
         }}
       >
+        {/* Sentinel to detect when the heading becomes stuck */}
+        <Box ref={sentinelRef} sx={{ height: '1px', mt: '-1px' }} />
         {/* Heading row: summary values + action buttons */}
         {(summaryCells.length > 0 || actionCells.length > 0) && (
           <Box
@@ -124,12 +157,11 @@ export const CardListItem = <T extends MRT_RowData>({
             py={0.5}
             sx={{
               position: 'sticky',
-              top: 0,
+              top: stickyTopOffset,
               zIndex: 1,
               backgroundColor: 'background.paper',
-              borderTop: '1px solid',
+              borderTop: isStuck ? '1px solid' : 'none',
               borderColor: 'divider',
-              borderRadius: '4px 4px 0 0',
               mx: isLandscape ? -1.5 : -2.5,
               px: isLandscape ? 1.5 : 2.5,
               mt: isLandscape ? -0.5 : -1.5,
@@ -162,10 +194,7 @@ export const CardListItem = <T extends MRT_RowData>({
                 alignItems="flex-start"
               >
                 <Typography color="text.secondary">
-                  {flexRender(
-                    cell.column.columnDef.header,
-                    cell.getContext()
-                  )}
+                  {flexRender(cell.column.columnDef.header, cell.getContext())}
                 </Typography>
                 <Box
                   sx={{

@@ -79,6 +79,18 @@ export const InboundLineEdit = ({
   const simplifiedTabletView = useSimplifiedTabletUI();
   const [packRoundingMessage, setPackRoundingMessage] = useState('');
   const lastCardRef = useRef<HTMLDivElement>(null);
+  const formWrapperRef = useRef<HTMLDivElement>(null);
+  const [formHeight, setFormHeight] = useState(0);
+
+  useEffect(() => {
+    const el = formWrapperRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(([entry]) => {
+      if (entry) setFormHeight(entry.borderBoxSize[0]?.blockSize ?? 0);
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     setCurrentItem(item);
@@ -99,6 +111,7 @@ export const InboundLineEdit = ({
       restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
       simplified={simplifiedTabletView}
+      stickyTopOffset={formHeight}
       actions={
         <ButtonWithIcon
           disabled={isDisabled}
@@ -129,6 +142,7 @@ export const InboundLineEdit = ({
         <TableContainer
           sx={{
             marginTop: 2,
+            overflow: 'visible',
           }}
         >
           <Box width="100%">
@@ -183,18 +197,33 @@ export const InboundLineEdit = ({
       }
       height={700}
       width={1200}
+      contentProps={{ sx: { overflow: 'visible' } }}
       enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
     >
       {isLoading ? (
         <BasicSpinner messageKey="saving" />
       ) : (
         <>
-          <InboundLineEditForm
-            disabled={mode === ModalMode.Update}
-            item={currentItem}
-            onChangeItem={setCurrentItem}
-          />
-          <Divider margin={5} />
+          <Box
+            ref={formWrapperRef}
+            sx={{
+              position: 'sticky',
+              top: '-20px',
+              zIndex: 3,
+              backgroundColor: 'background.paper',
+              mx: '-24px',
+              px: '24px',
+              mt: '-20px',
+              pt: '20px',
+            }}
+          >
+            <InboundLineEditForm
+              disabled={mode === ModalMode.Update}
+              item={currentItem}
+              onChangeItem={setCurrentItem}
+            />
+            <Divider margin={5} />
+          </Box>
           {content}
         </>
       )}
