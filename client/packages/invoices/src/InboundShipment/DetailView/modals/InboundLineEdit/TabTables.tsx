@@ -430,6 +430,7 @@ export const PricingTableComponent = ({
           <CurrencyInputCell
             cell={cell}
             disabled={isDisabled}
+            decimalsLimit={4}
             updateFn={value =>
               updateDraftLine({ id: row.original.id, costPricePerPack: value })
             }
@@ -459,6 +460,7 @@ export const PricingTableComponent = ({
           <CurrencyInputCell
             cell={cell}
             disabled={isDisabled}
+            decimalsLimit={4}
             updateFn={value =>
               updateDraftLine({ id: row.original.id, sellPricePerPack: value })
             }

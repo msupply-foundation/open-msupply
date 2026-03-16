@@ -42,16 +42,19 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   value,
   disabled,
   width,
+  decimalsLimit: decimalsLimitProp,
   ...restOfProps
 }) => {
   const val = value !== undefined ? value : defaultValue;
   const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
   const { options } = useCurrency();
 
+  const precision = decimalsLimitProp ?? options.precision;
+
   const { format } = useFormatNumber();
 
   const [buffer, setBuffer] = useBufferState<string | number | undefined>(
-    NumUtils.round(valueAsNumber, options.precision)
+    NumUtils.round(valueAsNumber, precision)
   );
 
   const isSymbolLast = options.pattern.endsWith('!');
@@ -88,7 +91,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
         const finalValue = buffer ? Number(buffer) : 0;
         setBuffer(
           format(finalValue, {
-            minimumFractionDigits: options.precision,
+            minimumFractionDigits: precision,
             // Need to disable grouping because RCInput doesn't handle commas in
             // the value and displays NaN. But RCInput internally formats with
             // grouping anyway, so we're good.
@@ -102,9 +105,9 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       suffix={suffix}
       decimalSeparator={options.decimal}
       groupSeparator={options.separator}
-      decimalsLimit={options.precision}
+      decimalsLimit={precision}
       allowDecimals={allowDecimals}
-      decimalScale={allowDecimals ? options.precision : undefined}
+      decimalScale={allowDecimals ? precision : undefined}
       disabled={disabled}
       {...restOfProps}
     />
