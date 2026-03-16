@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   useTranslation,
-  RequisitionNodeStatus,
   NothingHere,
   useToggle,
   useUrlQueryParams,
@@ -79,17 +78,7 @@ export const ListView = () => {
         id: 'status',
         header: t('label.status'),
         enableSorting: true,
-        enableColumnFilter: true,
         accessorFn: row => getRequisitionTranslator(t)(row.status),
-        filterVariant: 'select',
-        filterSelectOptions: [
-          { label: t('label.draft'), value: RequisitionNodeStatus.Draft },
-          { label: t('label.sent'), value: RequisitionNodeStatus.Sent },
-          {
-            label: t('label.finalised'),
-            value: RequisitionNodeStatus.Finalised,
-          },
-        ],
       },
       {
         accessorKey: 'requisitionNumber',
