@@ -19,6 +19,7 @@ table! {
     Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Deserialize, Serialize,
 )]
 #[diesel(table_name = vaccine_course_store_wastage)]
+#[diesel(treat_none_as_null = true)]
 pub struct VaccineCourseStoreWastageRow {
     pub id: String,
     pub vaccine_course_id: String,
