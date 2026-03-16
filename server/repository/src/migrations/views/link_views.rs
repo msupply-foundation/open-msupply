@@ -145,13 +145,16 @@ impl ViewMigrationFragment for ViewMigration {
                 SELECT
                     stock_line.*,
                     supplier_link.name_id as supplier_id,
-                    donor_link.name_id as donor_id
+                    donor_link.name_id as donor_id,
+                    manufacturer_link.name_id as manufacturer_id
                 FROM
                     stock_line
                 LEFT JOIN
                     name_link AS supplier_link ON stock_line.supplier_link_id = supplier_link.id
                 LEFT JOIN
-                    name_link AS donor_link ON stock_line.donor_link_id = donor_link.id;
+                    name_link AS donor_link ON stock_line.donor_link_id = donor_link.id
+                LEFT JOIN
+                    name_link AS manufacturer_link ON stock_line.manufacturer_link_id = manufacturer_link.id;
 
                 CREATE VIEW purchase_order_view AS
                 SELECT
@@ -168,11 +171,14 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW invoice_line_view AS
                 SELECT
                     invoice_line.*,
-                    donor_link.name_id as donor_id
+                    donor_link.name_id as donor_id,
+                    manufacturer_link.name_id as manufacturer_id
                 FROM
                     invoice_line
                 LEFT JOIN
-                    name_link AS donor_link ON invoice_line.donor_link_id = donor_link.id;
+                    name_link AS donor_link ON invoice_line.donor_link_id = donor_link.id
+                LEFT JOIN
+                    name_link AS manufacturer_link ON invoice_line.manufacturer_link_id = manufacturer_link.id;
 
                 CREATE VIEW purchase_order_line_view AS
                 SELECT
@@ -186,11 +192,14 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW stocktake_line_view AS
                 SELECT
                     stocktake_line.*,
-                    donor_link.name_id as donor_id
+                    donor_link.name_id as donor_id,
+                    manufacturer_link.name_id as manufacturer_id
                 FROM
                     stocktake_line
                 LEFT JOIN
-                    name_link AS donor_link ON stocktake_line.donor_link_id = donor_link.id;
+                    name_link AS donor_link ON stocktake_line.donor_link_id = donor_link.id
+                LEFT JOIN
+                    name_link AS manufacturer_link ON stocktake_line.manufacturer_link_id = manufacturer_link.id;
 
                 CREATE VIEW encounter_view AS
                 SELECT

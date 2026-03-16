@@ -80,25 +80,10 @@ export const InboundLineEdit = ({
   const simplifiedTabletView = useSimplifiedTabletUI();
   const [packRoundingMessage, setPackRoundingMessage] = useState('');
   const lastCardRef = useRef<HTMLDivElement>(null);
-  const prevLineCount = useRef(draftLines.length);
 
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
-
-  // Auto-scroll to the newly added card
-  useEffect(() => {
-    if (
-      draftLines.length > prevLineCount.current &&
-      lastCardRef.current
-    ) {
-      lastCardRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      });
-    }
-    prevLineCount.current = draftLines.length;
-  }, [draftLines.length]);
 
   const cards = (
     <InboundLineEditCards
@@ -116,19 +101,7 @@ export const InboundLineEdit = ({
       restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
       simplified={simplifiedTabletView}
-    />
-  );
-
-  const content = (
-    <>
-      <Box
-        flex={1}
-        display="flex"
-        justifyContent={simplifiedTabletView ? 'flex-start' : 'flex-end'}
-        alignItems="center"
-        gap={1}
-        margin={simplifiedTabletView ? 3 : 0}
-      >
+      actions={
         <ButtonWithIcon
           disabled={isDisabled}
           color="primary"
@@ -136,20 +109,28 @@ export const InboundLineEdit = ({
           onClick={() => {
             addDraftLine();
             setPackRoundingMessage('');
+            setTimeout(() => {
+              lastCardRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+              });
+            }, 0);
           }}
           label={`${t('label.add-batch')} (+)`}
           Icon={<PlusCircleIcon />}
         />
-      </Box>
+      }
+    />
+  );
+
+  const content = (
+    <>
       {simplifiedTabletView ? (
         cards
       ) : (
         <TableContainer
           sx={{
             marginTop: 2,
-            height: 'calc(100vh - 300px)',
-            minHeight: 150,
-            overflow: 'auto',
           }}
         >
           <Box width="100%">

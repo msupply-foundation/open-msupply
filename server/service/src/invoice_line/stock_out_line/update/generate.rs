@@ -139,6 +139,7 @@ fn generate_line(
         program_id,
         shipped_number_of_packs,
         shipped_pack_size,
+        manufacturer_id,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -190,6 +191,7 @@ fn generate_line(
         item_variant_id,
         vvm_status_id: input.vvm_status_id.or(vvm_status_id),
         donor_id: donor_link_id,
+        manufacturer_id,
         campaign_id,
         program_id,
         shipped_number_of_packs,

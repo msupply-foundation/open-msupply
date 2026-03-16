@@ -16,7 +16,7 @@ export const CardListField = ({ label, children, span }: CardListFieldProps) => 
   >
     <Typography
       color="text.secondary"
-      fontSize="0.7em"
+      fontSize="0.75em"
       lineHeight={1.4}
       whiteSpace="nowrap"
     >

@@ -227,7 +227,7 @@ const InboundShipments: React.FC<{
     <>
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <CardList table={table} />
+        <CardList table={table} tableId="inbound-shipment-list-view" />
       ) : (
         <>
           <Toolbar filter={filter} />

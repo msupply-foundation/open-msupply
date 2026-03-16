@@ -38,6 +38,7 @@ import {
   ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
+  ManufacturerSearchInput,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
@@ -62,6 +63,7 @@ interface InboundLineEditCardsProps extends CardProps {
   removeDraftLine: (id: string) => void;
   lastCardRef?: React.RefObject<HTMLDivElement>;
   simplified?: boolean;
+  actions?: React.ReactNode;
 }
 
 export const InboundLineEditCards = ({
@@ -79,6 +81,7 @@ export const InboundLineEditCards = ({
   restrictedToLocationTypeId,
   lastCardRef,
   simplified,
+  actions,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -222,6 +225,7 @@ export const InboundLineEditCards = ({
                 id,
                 itemVariantId: itemVariant?.id,
                 itemVariant,
+                manufacturer: itemVariant?.manufacturer ?? null,
                 volumePerPack: getVolumePerPackFromVariant({
                   packSize,
                   itemVariant,
@@ -577,23 +581,6 @@ export const InboundLineEditCards = ({
       },
       // --- Other columns ---
       {
-        accessorKey: 'note',
-        header: t('label.stocktake-comment'),
-        size: 200,
-        columnGroup: 'other',
-        cardSpan: 2,
-        Cell: ({ cell, row }) => (
-          <TextInputCell
-            cell={cell}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, note: value })
-            }
-            disabled={isDisabled}
-          />
-        ),
-        defaultHideOnMobile: true,
-      },
-      {
         id: 'donor',
         header: t('label.donor'),
         columnGroup: 'other',
@@ -628,6 +615,45 @@ export const InboundLineEditCards = ({
             }
           />
         ),
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        columnGroup: 'other',
+        defaultHideOnMobile: true,
+        Cell: ({ row: { original: row } }) => (
+          <ManufacturerSearchInput
+            value={row.manufacturer ?? null}
+            disabled={isDisabled}
+            onChange={manufacturer => {
+              updateDraftLine({
+                id: row.id,
+                manufacturer: manufacturer ?? undefined,
+                ...(row.itemVariant
+                  ? { itemVariantId: null, itemVariant: null }
+                  : {}),
+              });
+            }}
+            fullWidth
+          />
+        ),
+      },
+      {
+        accessorKey: 'note',
+        header: t('label.stocktake-comment'),
+        size: 200,
+        columnGroup: 'other',
+        cardSpan: 2,
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value =>
+              updateDraftLine({ id: row.original.id, note: value })
+            }
+            disabled={isDisabled}
+          />
+        ),
+        defaultHideOnMobile: true,
       },
       // --- Action columns (no group) ---
       {
@@ -705,8 +731,10 @@ export const InboundLineEditCards = ({
       </Box>
       <CardList
         table={table}
+        tableId="inbound-line-edit"
         lastItemRef={lastCardRef}
         groupIcons={groupIcons}
+        actions={actions}
       />
     </>
   );

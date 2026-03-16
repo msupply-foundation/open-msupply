@@ -219,7 +219,7 @@ const DetailViewInner = () => {
   const tabs = [
     {
       Component: isExtraSmallScreen ? (
-        <CardList table={table} />
+        <CardList table={table} tableId="inbound-shipment-detail-view" />
       ) : (
         <MaterialTable table={table} />
       ),
