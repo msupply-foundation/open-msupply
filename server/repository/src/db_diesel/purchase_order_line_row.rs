@@ -1,7 +1,5 @@
 use crate::{
-    db_diesel::{
-        item_link_row::item_link, item_row::item, purchase_order_row::purchase_order,
-    },
+    db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
     diesel_macros::define_linked_tables,
     Delete, PurchaseOrderRowRepository, Upsert,
 };
@@ -18,6 +16,8 @@ table! {
     purchase_order_line_stats (purchase_order_line_id) {
         purchase_order_line_id -> Text,
         shipped_number_of_units -> Double,
+        in_transit_number_of_units -> Double,
+        received_number_of_units -> Double,
     }
 }
 
@@ -26,6 +26,8 @@ table! {
 pub struct PurchaseOrderLineStatsRow {
     pub purchase_order_line_id: String,
     pub shipped_number_of_units: f64,
+    pub in_transit_number_of_units: f64,
+    pub received_number_of_units: f64,
 }
 
 define_linked_tables! {
