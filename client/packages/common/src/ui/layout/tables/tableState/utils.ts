@@ -20,7 +20,9 @@ export interface ManagedTableState {
   viewMode?: ViewMode;
 }
 
-export const getSavedState = (tableId: string): ManagedTableState | undefined => {
+export const getSavedState = (
+  tableId: string
+): ManagedTableState | undefined => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
   );
