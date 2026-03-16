@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React from 'react';
 import { Box, Stack, useMediaQuery } from '@mui/material';
 import {
   MRT_Row,
@@ -66,19 +66,6 @@ export const CardList = <T extends MRT_RowData>({
     table.setDensity(initial?.density ?? 'comfortable');
   };
 
-  const toolbarRef = useRef<HTMLDivElement>(null);
-  const [toolbarHeight, setToolbarHeight] = useState(0);
-
-  useEffect(() => {
-    const el = toolbarRef.current;
-    if (!el) return;
-    const obs = new ResizeObserver(([entry]) => {
-      if (entry) setToolbarHeight(entry.borderBoxSize[0]?.blockSize ?? 0);
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
   return (
     <Stack
       spacing={isLandscape ? 1 : 1.5}
@@ -88,7 +75,6 @@ export const CardList = <T extends MRT_RowData>({
       }}
     >
       <Box
-        ref={toolbarRef}
         display="flex"
         justifyContent="flex-end"
         alignItems="center"
@@ -115,7 +101,6 @@ export const CardList = <T extends MRT_RowData>({
           cardRef={index === rows.length - 1 ? lastItemRef : undefined}
           groupIcons={groupIcons}
           onClick={getRowOnClick(table, row)}
-          stickyTopOffset={stickyTopOffset + toolbarHeight}
         />
       ))}
     </Stack>
