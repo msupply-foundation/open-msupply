@@ -42,10 +42,12 @@ pub fn program_indicators(
             .filter(|line| line.is_active)
             .collect();
 
-        indicator_column_rows = indicator_column_rows
-            .into_iter()
-            .filter(|column| column.is_active)
-            .collect();
+        // In previous versions of OG, all column rows were marked with is_active = false (default value)
+        // Until mSupply has UI to fix this, we need to include all columns regardless of the is_active status. Once the column rows are updated to have correct is_active values, we can uncomment the following code to filter out inactive columns as well.
+        // indicator_column_rows = indicator_column_rows
+        //     .into_iter()
+        //     .filter(|column| column.is_active)
+        //     .collect();
     }
 
     let mut result_indicators = Vec::new();
@@ -144,8 +146,11 @@ mod query {
 
     #[actix_rt::test]
     async fn program_indicator_query_exclude_inactive() {
-        let (_, connection, connection_manager, _) =
-            setup_all("test_program_indicator_query_exclude_inactive", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "test_program_indicator_query_exclude_inactive",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let service = service_provider.program_indicator_service;

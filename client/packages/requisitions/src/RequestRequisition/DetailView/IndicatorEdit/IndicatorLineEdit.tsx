@@ -47,8 +47,7 @@ const InputWithLabel = ({
   autoFocus,
   data,
   disabled,
-  isColumnInactive,
-  isLineInactive,
+  isColumnInactive: _, // Inactive columns are not implemented in OG yet. Because old code defaults to false, we have to ignore the disabled status for columns.
 }: InputWithLabelProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -106,8 +105,6 @@ const InputWithLabel = ({
       />
     );
 
-  const isInactive = isColumnInactive || isLineInactive;
-
   return (
     <Box sx={{ marginBottom: 1 }}>
       <InputWithLabelRow
@@ -115,11 +112,6 @@ const InputWithLabel = ({
         labelWidth={LABEL_WIDTH}
         label={indicatorColumnNameToLocal(data.name, t)}
       />
-      {isInactive && (
-        <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
-          {t('label.indicator-no-longer-active')}
-        </Typography>
-      )}
     </Box>
   );
 };
@@ -144,6 +136,7 @@ export const IndicatorLineEdit = ({
     store?.preferences?.extraFieldsInRequisition &&
     !!currentLine?.customerIndicatorInfo;
   const { width } = useWindowDimensions();
+  const t = useTranslation();
 
   const isIndicatorInactive = !currentLine?.line.isActive;
 
@@ -156,12 +149,16 @@ export const IndicatorLineEdit = ({
               <InputWithLabel
                 key={column.value?.id}
                 data={column}
-                disabled={disabled || !column.isActive || isIndicatorInactive}
+                disabled={disabled || isIndicatorInactive}
                 autoFocus={i === 0}
                 isColumnInactive={!column.isActive}
-                isLineInactive={isIndicatorInactive}
               />
             )
+        )}
+        {isIndicatorInactive && (
+          <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+            {t('label.indicator-no-longer-active')}
+          </Typography>
         )}
       </Box>
       {showInfo && (
