@@ -79,25 +79,10 @@ export const InboundLineEdit = ({
   const simplifiedTabletView = useSimplifiedTabletUI();
   const [packRoundingMessage, setPackRoundingMessage] = useState('');
   const lastCardRef = useRef<HTMLDivElement>(null);
-  const prevLineCount = useRef(draftLines.length);
 
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
-
-  // Auto-scroll to the newly added card
-  useEffect(() => {
-    if (
-      draftLines.length > prevLineCount.current &&
-      lastCardRef.current
-    ) {
-      lastCardRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      });
-    }
-    prevLineCount.current = draftLines.length;
-  }, [draftLines.length]);
 
   const cards = (
     <InboundLineEditCards
@@ -122,6 +107,12 @@ export const InboundLineEdit = ({
           onClick={() => {
             addDraftLine();
             setPackRoundingMessage('');
+            setTimeout(() => {
+              lastCardRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+              });
+            }, 0);
           }}
           label={`${t('label.add-batch')} (+)`}
           Icon={<PlusCircleIcon />}
@@ -138,9 +129,6 @@ export const InboundLineEdit = ({
         <TableContainer
           sx={{
             marginTop: 2,
-            height: 'calc(100vh - 300px)',
-            minHeight: 150,
-            overflow: 'auto',
           }}
         >
           <Box width="100%">
