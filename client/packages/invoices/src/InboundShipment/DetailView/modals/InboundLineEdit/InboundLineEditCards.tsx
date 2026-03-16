@@ -59,7 +59,6 @@ interface InboundLineEditCardsProps extends CardProps {
   lastCardRef?: React.RefObject<HTMLDivElement>;
   simplified?: boolean;
   actions?: React.ReactNode;
-  stickyTopOffset?: number;
 }
 
 export const InboundLineEditCards = ({
@@ -77,7 +76,6 @@ export const InboundLineEditCards = ({
   lastCardRef,
   simplified,
   actions,
-  stickyTopOffset,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -637,7 +635,6 @@ export const InboundLineEditCards = ({
         lastItemRef={lastCardRef}
         groupIcons={groupIcons}
         actions={actions}
-        stickyTopOffset={stickyTopOffset}
       />
     </>
   );

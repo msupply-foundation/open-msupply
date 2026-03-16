@@ -79,18 +79,6 @@ export const InboundLineEdit = ({
   const simplifiedTabletView = useSimplifiedTabletUI();
   const [packRoundingMessage, setPackRoundingMessage] = useState('');
   const lastCardRef = useRef<HTMLDivElement>(null);
-  const formWrapperRef = useRef<HTMLDivElement>(null);
-  const [formHeight, setFormHeight] = useState(0);
-
-  useEffect(() => {
-    const el = formWrapperRef.current;
-    if (!el) return;
-    const obs = new ResizeObserver(([entry]) => {
-      if (entry) setFormHeight(entry.borderBoxSize[0]?.blockSize ?? 0);
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
 
   useEffect(() => {
     setCurrentItem(item);
@@ -111,7 +99,6 @@ export const InboundLineEdit = ({
       restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
       simplified={simplifiedTabletView}
-      stickyTopOffset={formHeight}
       actions={
         <ButtonWithIcon
           disabled={isDisabled}
@@ -205,7 +192,6 @@ export const InboundLineEdit = ({
       ) : (
         <>
           <Box
-            ref={formWrapperRef}
             sx={{
               position: 'sticky',
               top: '-20px',
