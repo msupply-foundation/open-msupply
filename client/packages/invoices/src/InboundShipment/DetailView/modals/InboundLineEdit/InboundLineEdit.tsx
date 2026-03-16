@@ -208,7 +208,8 @@ export const InboundLineEdit = ({
               item={currentItem}
               onChangeItem={setCurrentItem}
             />
-            <Divider margin={5} />
+            <Box sx={{ height: '5px' }} />
+            <Divider />
           </Box>
           {content}
         </>
