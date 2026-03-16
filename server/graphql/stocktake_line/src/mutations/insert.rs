@@ -39,6 +39,7 @@ pub struct InsertInput {
     pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
@@ -135,6 +136,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::StocktakeIsLocked
         | ServiceError::CampaignDoesNotExist
         | ServiceError::ProgramDoesNotExist
+        | ServiceError::ManufacturerDoesNotExist
+        | ServiceError::ManufacturerNotVisible
+        | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
 
@@ -169,6 +173,7 @@ impl InsertInput {
             inventory_adjustment_reason_id,
             item_variant_id,
             donor_id,
+            manufacturer_id,
             reason_option_id,
             vvm_status_id,
             volume_per_pack,
@@ -195,6 +200,7 @@ impl InsertInput {
             note,
             item_variant_id,
             donor_id,
+            manufacturer_id,
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
             vvm_status_id,
             volume_per_pack,
