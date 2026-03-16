@@ -37,15 +37,13 @@ interface InputWithLabelProps {
   data: IndicatorColumnNode;
   disabled: boolean;
   isColumnInactive?: boolean;
-  isLineInactive?: boolean;
 }
 
 const InputWithLabel = ({
   autoFocus,
   data,
   disabled,
-  isColumnInactive,
-  isLineInactive,
+  isColumnInactive: _, // Inactive columns are not implemented in OG yet. Because old code defaults to false, we have to ignore the disabled status for columns.
 }: InputWithLabelProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -60,9 +58,9 @@ const InputWithLabel = ({
 
   const errorHandler = useCallback(
     (res: any) => {
-      // probably shouldn't be any, but UpdateIndicatorValueResponse doesn't have res.error.__typename
+      // probably shouldn't be any, but UpdateIndicatorValue doesn't have res.error.__typename
       if (res.__typename === 'UpdateIndicatorValueError') {
-        if (res.error.__typename === 'RecordNotFound') {
+        if (res.error?.__typename === 'RecordNotFound') {
           error(t('messages.record-not-found'))();
         } else {
           error(t('error.value-type-not-correct'))();
@@ -103,20 +101,14 @@ const InputWithLabel = ({
       />
     );
 
-  const isInactive = isColumnInactive || isLineInactive;
-
   return (
     <Box sx={{ marginBottom: 1 }}>
       <InputWithLabelRow
         Input={inputComponent}
         labelWidth={LABEL_WIDTH}
         label={indicatorColumnNameToLocal(data.name, t)}
+        sx={{ marginBottom: 1 }}
       />
-      {isInactive && (
-        <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
-          {t('label.indicator-no-longer-active')}
-        </Typography>
-      )}
     </Box>
   );
 };
@@ -131,27 +123,34 @@ export const IndicatorLineEdit = ({
   disabled,
   scrollIntoView,
 }: IndicatorLineEditProps) => {
-  const columns = currentLine?.columns
-    .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
-    .sort((a, b) => a.columnNumber - b.columnNumber);
+  const columns =
+    currentLine?.columns
+      .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
+      .sort((a, b) => a.columnNumber - b.columnNumber) || [];
+  const t = useTranslation();
 
   const isIndicatorInactive = !currentLine?.line.isActive;
 
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map((column, i) => {
-          return (
-            <InputWithLabel
-              key={column.value?.id}
-              data={column}
-              disabled={disabled || !column.isActive || isIndicatorInactive}
-              autoFocus={i === 0}
-              isColumnInactive={!column.isActive}
-              isLineInactive={isIndicatorInactive}
-            />
-          );
-        })}
+        {columns.map(
+          (column, i) =>
+            column.value != null && (
+              <InputWithLabel
+                key={column.value?.id}
+                data={column}
+                disabled={disabled || isIndicatorInactive}
+                autoFocus={i === 0}
+                isColumnInactive={!column.isActive}
+              />
+            )
+        )}
+        {isIndicatorInactive && (
+          <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+            {t('label.indicator-no-longer-active')}
+          </Typography>
+        )}
       </Box>
       <Box>
         <Footer
