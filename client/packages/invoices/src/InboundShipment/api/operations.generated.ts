@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type InboundLineFragment = {
@@ -29,6 +30,16 @@ export type InboundLineFragment = {
   volumePerPack: number;
   status?: Types.InvoiceLineStatusType | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   item: {
@@ -159,6 +170,16 @@ export type InboundFragment = {
       volumePerPack: number;
       status?: Types.InvoiceLineStatusType | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -444,6 +465,20 @@ export type InvoiceQuery = {
             volumePerPack: number;
             status?: Types.InvoiceLineStatusType | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
+            } | null;
             program?: {
               __typename: 'ProgramNode';
               id: string;
@@ -656,6 +691,20 @@ export type InboundByNumberQuery = {
             volumePerPack: number;
             status?: Types.InvoiceLineStatusType | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
+            } | null;
             program?: {
               __typename: 'ProgramNode';
               id: string;
@@ -1283,6 +1332,9 @@ export const InboundLineFragmentDoc = gql`
       id
       name
     }
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
     program {
       id
       name
@@ -1350,6 +1402,7 @@ export const InboundLineFragmentDoc = gql`
       }
     }
   }
+  ${NameRowFragmentDoc}
 `;
 export const InboundFragmentDoc = gql`
   fragment Inbound on InvoiceNode {

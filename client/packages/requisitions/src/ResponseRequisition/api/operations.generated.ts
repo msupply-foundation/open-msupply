@@ -1162,7 +1162,7 @@ export type InsertRequestFromResponseRequisitionMutationVariables =
 
 export type InsertRequestFromResponseRequisitionMutation = {
   __typename: 'Mutations';
-  insertFromResponseRequisition:
+  insertRequestFromResponseRequisition:
     | {
         __typename: 'InsertFromResponseRequisitionError';
         error:
@@ -1901,7 +1901,7 @@ export const InsertRequestFromResponseRequisitionDocument = gql`
     $storeId: String!
     $input: InsertFromResponseRequisitionInput!
   ) {
-    insertFromResponseRequisition(input: $input, storeId: $storeId) {
+    insertRequestFromResponseRequisition(input: $input, storeId: $storeId) {
       ... on RequisitionNode {
         __typename
         id

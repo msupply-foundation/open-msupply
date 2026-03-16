@@ -62,6 +62,7 @@ fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
             note: None,
             item_variant_id: None,
             donor_id: Some("donor_a".to_string()),
+            manufacturer_id: None,
             reason_option_id: None,
             vvm_status_id: Some("VVM_STATUS_1".to_string()),
             volume_per_pack: 10.0,
@@ -96,6 +97,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
             donor_id: Some("donor_a".to_string()),
             vvm_status_id: Some("VVM_STATUS_1".to_string()),
             volume_per_pack: 10.0,
+            manufacturer_id: None,
             oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 program_id: Some("program_test".to_string()),
                 campaign_id: None,
@@ -160,6 +162,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
             note: Some("om note".to_string()),
             item_variant_id: None,
             donor_id: None,
+            manufacturer_id: None,
             reason_option_id: None,
             vvm_status_id: None,
             volume_per_pack: 0.0,
@@ -194,6 +197,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
             donor_id: None,
             vvm_status_id: None,
             volume_per_pack: 0.0,
+            manufacturer_id: None,
             oms_fields: Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id: Some("campaign_a".to_string()),
                 program_id: None,

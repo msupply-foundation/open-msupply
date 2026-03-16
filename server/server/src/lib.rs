@@ -58,6 +58,7 @@ pub mod cors;
 pub mod environment;
 mod logging;
 pub mod middleware;
+mod schedule_plugin;
 mod scheduled_tasks;
 mod serve_frontend;
 pub mod static_files;
@@ -423,6 +424,7 @@ pub async fn start_server(
     ); // Upsert standard reports
 
     // Scheduled tasks
+    let schedule_plugin_task = schedule_plugin::spawn();
     let scheduled_task_handle = spawn_scheduled_task_runner(
         service_provider.clone().into_inner(),
         settings.mail.clone().map(|m| m.interval).unwrap_or(60),
@@ -440,6 +442,7 @@ pub async fn start_server(
         _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
+        result = schedule_plugin_task => unreachable!("Schedule plugin runner terminated ({:?})", result),
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
     };
 

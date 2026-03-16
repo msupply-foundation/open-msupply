@@ -106,12 +106,15 @@ export const Footer = ({
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
     },
-    {
+  ];
+
+  if (status !== PurchaseOrderNodeStatus.Finalised) {
+    actions.push({
       label: t('label.update-expected-delivery-date'),
       icon: <EditIcon />,
       onClick: toggleOn,
-    },
-  ];
+    });
+  }
 
   const confirmAndClose = async () => {
     try {
