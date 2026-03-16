@@ -6,10 +6,7 @@ strip = true
 # Warning don't add anything above this lines as auto patch is applied during docker build
 async-graphql = { version = "7.0.17", features = ["dataloader", "chrono"] }
 async-graphql-actix-web = "7.0.17"
-actix-web = { version = "4.11.0", default-features = false, features = [
-  "macros",
-  "rustls",
-] }
+actix-web = { version = "4.11.0", default-features = false, features = ["macros", "rustls"] }
 actix-multipart = "0.7.2"
 anymap = "0.12.1"
 async-trait = "0.1.88"
@@ -64,6 +61,7 @@ enum_variant_names = "allow"
 too_many_arguments = "allow"
 
 [workspace]
+resolver = "2"
 members = [
   "android",
   "report_builder",
