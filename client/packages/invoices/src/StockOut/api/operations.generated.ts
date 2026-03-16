@@ -347,15 +347,17 @@ export function getSdk(
   return {
     getOutboundEditLines(
       variables: GetOutboundEditLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<GetOutboundEditLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GetOutboundEditLinesQuery>(
-            GetOutboundEditLinesDocument,
+          client.request<GetOutboundEditLinesQuery>({
+            document: GetOutboundEditLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'getOutboundEditLines',
         'query',
         variables

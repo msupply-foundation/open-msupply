@@ -36,6 +36,7 @@ import {
   ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
+  ManufacturerSearchInput,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
@@ -178,6 +179,7 @@ export const InboundLineEditCards = ({
                 id,
                 itemVariantId: itemVariant?.id,
                 itemVariant,
+                manufacturer: itemVariant?.manufacturer ?? null,
                 volumePerPack: getVolumePerPackFromVariant({
                   packSize,
                   itemVariant,
@@ -494,23 +496,6 @@ export const InboundLineEditCards = ({
       },
       // --- Other columns ---
       {
-        accessorKey: 'note',
-        header: t('label.stocktake-comment'),
-        size: 200,
-        columnGroup: 'other',
-        cardSpan: 2,
-        Cell: ({ cell, row }) => (
-          <TextInputCell
-            cell={cell}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, note: value })
-            }
-            disabled={isDisabled}
-          />
-        ),
-        defaultHideOnMobile: true,
-      },
-      {
         id: 'donor',
         header: t('label.donor'),
         columnGroup: 'other',
@@ -545,6 +530,45 @@ export const InboundLineEditCards = ({
             }
           />
         ),
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        columnGroup: 'other',
+        defaultHideOnMobile: true,
+        Cell: ({ row: { original: row } }) => (
+          <ManufacturerSearchInput
+            value={row.manufacturer ?? null}
+            disabled={isDisabled}
+            onChange={manufacturer => {
+              updateDraftLine({
+                id: row.id,
+                manufacturer: manufacturer ?? undefined,
+                ...(row.itemVariant
+                  ? { itemVariantId: null, itemVariant: null }
+                  : {}),
+              });
+            }}
+            width={200}
+          />
+        ),
+      },
+      {
+        accessorKey: 'note',
+        header: t('label.stocktake-comment'),
+        size: 200,
+        columnGroup: 'other',
+        cardSpan: 2,
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value =>
+              updateDraftLine({ id: row.original.id, note: value })
+            }
+            disabled={isDisabled}
+          />
+        ),
+        defaultHideOnMobile: true,
       },
       // --- Delete column (no group) ---
       {

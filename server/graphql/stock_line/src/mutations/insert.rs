@@ -38,6 +38,7 @@ pub struct InsertInput {
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub volume_per_pack: Option<f64>,
+    pub manufacturer_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -112,6 +113,7 @@ impl InsertInput {
             campaign_id,
             program_id,
             volume_per_pack,
+            manufacturer_id,
         } = self;
 
         AddNewStockLine {
@@ -136,6 +138,7 @@ impl InsertInput {
             campaign_id,
             program_id,
             volume_per_pack,
+            manufacturer_id,
         }
     }
 }

@@ -13,6 +13,13 @@ use service::{
     },
 };
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[graphql(remote = "service::requisition::request_requisition::InsertFromResponseStatus")]
+pub enum InsertFromResponseStatusInput {
+    Draft,
+    Sent,
+}
+
 #[derive(InputObject)]
 #[graphql(name = "InsertFromResponseRequisitionInput")]
 pub struct InsertFromResponseRequisitionInput {
@@ -20,6 +27,7 @@ pub struct InsertFromResponseRequisitionInput {
     pub response_requisition_id: String,
     pub other_party_id: String,
     pub comment: Option<String>,
+    pub status: Option<InsertFromResponseStatusInput>,
 }
 
 #[derive(Interface)]
@@ -43,7 +51,7 @@ pub enum InsertFromResponse {
     Response(RequisitionNode),
 }
 
-pub fn insert_from_response_requisition(
+pub fn insert_request_from_response_requisition(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertFromResponseRequisitionInput,
@@ -62,7 +70,7 @@ pub fn insert_from_response_requisition(
     map_response(
         service_provider
             .requisition_service
-            .insert_from_response_requisition(&service_context, input.to_domain()),
+            .insert_request_from_response_requisition(&service_context, input.to_domain()),
     )
 }
 
@@ -112,6 +120,7 @@ impl InsertFromResponseRequisitionInput {
             response_requisition_id,
             other_party_id,
             comment,
+            status,
         } = self;
 
         InsertFromResponseRequisition {
@@ -119,6 +128,7 @@ impl InsertFromResponseRequisitionInput {
             response_requisition_id,
             other_party_id,
             comment,
+            status: status.map(Into::into),
         }
     }
 }
@@ -151,7 +161,7 @@ mod test {
     pub struct TestService(pub Box<InsertLineMethod>);
 
     impl RequisitionServiceTrait for TestService {
-        fn insert_from_response_requisition(
+        fn insert_request_from_response_requisition(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -181,18 +191,18 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_insert_from_response_requisition_errors() {
+    async fn test_graphql_insert_request_from_response_requisition_errors() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
-            "test_graphql_insert_from_response_requisition_structured_errors",
+            "test_graphql_insert_request_from_response_requisition_structured_errors",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
         mutation ($input: InsertFromResponseRequisitionInput!, $storeId: String) {
-            insertFromResponseRequisition(storeId: $storeId, input: $input) {
+            insertRequestFromResponseRequisition(storeId: $storeId, input: $input) {
               ... on InsertFromResponseRequisitionError {
                 error {
                   __typename
@@ -206,7 +216,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotASupplier)));
 
         let expected = json!({
-            "insertFromResponseRequisition": {
+            "insertRequestFromResponseRequisition": {
               "error": {
                 "__typename": "OtherPartyNotASupplier"
               }
@@ -274,18 +284,18 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_insert_from_response_requisition_success() {
+    async fn test_graphql_insert_request_from_response_requisition_success() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
-            "test_graphql_insert_from_response_requisition_success",
+            "test_graphql_insert_request_from_response_requisition_success",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
         mutation ($storeId: String, $input: InsertFromResponseRequisitionInput!) {
-            insertFromResponseRequisition(storeId: $storeId, input: $input) {
+            insertRequestFromResponseRequisition(storeId: $storeId, input: $input) {
                 ... on RequisitionNode {
                     id
                 }
@@ -302,6 +312,7 @@ mod test {
                     response_requisition_id: "req1".to_string(),
                     other_party_id: "other party input".to_string(),
                     comment: Some("comment input".to_string()),
+                    status: None,
                 }
             );
             Ok(Requisition {
@@ -321,7 +332,7 @@ mod test {
         });
 
         let expected = json!({
-            "insertFromResponseRequisition": {
+            "insertRequestFromResponseRequisition": {
                 "id": mock_request_draft_requisition().id
             }
           }
