@@ -42,10 +42,10 @@ export const InboundLineEditForm = ({
   const filter = {
     id: {
       notEqualAll: existingItemIds,
-      ...purchaseOrder && {
-        equalAny: query.data?.lines.nodes.map(line => line.item.id) || []
-      },
-    }
+      ...(purchaseOrder && {
+        equalAny: query.data?.lines.nodes.map(line => line.item.id) || [],
+      }),
+    },
   };
 
   return (

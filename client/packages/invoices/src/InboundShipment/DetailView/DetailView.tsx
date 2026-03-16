@@ -143,7 +143,8 @@ const DetailViewInner = () => {
   }, [toggleUploadModal, urlQuery, updateQuery]);
 
   const external = data?.purchaseOrder !== null;
-  const showLineStatus = data?.lines.nodes.some(line => line.status != null) ?? false;
+  const showLineStatus =
+    data?.lines.nodes.some(line => line.status != null) ?? false;
   const columns = useInboundShipmentColumns(external, showLineStatus);
 
   const { table, selectedRows } =
