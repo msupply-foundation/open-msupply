@@ -551,7 +551,7 @@ export const InboundLineEditCards = ({
                   : {}),
               });
             }}
-            width={200}
+            fullWidth
           />
         ),
       },
