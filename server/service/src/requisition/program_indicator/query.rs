@@ -186,18 +186,14 @@ mod query {
         // Only active lines: line_a, line_b (not line_d_inactive)
         assert_eq!(lines_a.len(), 2);
 
-        // Only active columns: column_a, column_b (not column_c_inactive)
-        // 2 lines x 2 columns = 4
+        // Columns are NOT filtered by is_active (all columns are always included).
+        // This is intentional: mSupply historically defaults column is_active to false,
+        // so filtering would break existing data. Only lines are filtered when include_inactive = false.
+        // 2 active lines x 3 columns (column_a, column_b, column_c_inactive) = 6
         let columns_a_count = lines_a.iter().flat_map(|line| line.columns.iter()).count();
-        assert_eq!(columns_a_count, 4);
+        assert_eq!(columns_a_count, 6);
 
         // Verify no inactive lines are present
         assert!(lines_a.iter().all(|line| line.line.is_active));
-
-        // Verify no inactive columns are present
-        assert!(lines_a
-            .iter()
-            .flat_map(|line| line.columns.iter())
-            .all(|col| col.is_active));
     }
 }
