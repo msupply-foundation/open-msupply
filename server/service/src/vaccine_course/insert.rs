@@ -1,6 +1,6 @@
 use super::{
     query::get_vaccine_course,
-    update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreWastageInput},
+    update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
     validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
 };
 use crate::{
@@ -14,7 +14,7 @@ use repository::{
         vaccine_course_dose_row::VaccineCourseDoseRowRepository,
         vaccine_course_item_row::VaccineCourseItemRowRepository,
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
-        vaccine_course_store_wastage_row::VaccineCourseStoreWastageRowRepository,
+        vaccine_course_store_config_row::VaccineCourseStoreConfigRowRepository,
     },
     ActivityLogType, RepositoryError, StorageConnection,
 };
@@ -37,7 +37,7 @@ pub struct InsertVaccineCourse {
     pub program_id: String,
     pub vaccine_items: Vec<VaccineCourseItemInput>,
     pub doses: Vec<VaccineCourseDoseInput>,
-    pub store_wastage_rates: Vec<VaccineCourseStoreWastageInput>,
+    pub store_configs: Vec<VaccineCourseStoreConfigInput>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
@@ -68,9 +68,9 @@ pub fn insert_vaccine_course(
                 dose_repo.upsert_one(&dose.to_domain(input.clone().id))?;
             }
 
-            let store_wastage_repo = VaccineCourseStoreWastageRowRepository::new(connection);
-            for wastage in input.clone().store_wastage_rates {
-                store_wastage_repo.upsert_one(&wastage.to_domain(input.clone().id))?;
+            let store_config_repo = VaccineCourseStoreConfigRowRepository::new(connection);
+            for config in input.clone().store_configs {
+                store_config_repo.upsert_one(&config.to_domain(input.clone().id))?;
             }
 
             activity_log_entry(
@@ -121,9 +121,9 @@ pub fn generate(
         id,
         name,
         program_id,
-        vaccine_items: _,       // Updated in main function
-        doses: _,               // Updated in main function
-        store_wastage_rates: _, // Updated in main function
+        vaccine_items: _, // Updated in main function
+        doses: _,         // Updated in main function
+        store_configs: _, // Updated in main function
         demographic_id,
         coverage_rate,
         use_in_gaps_calculations,

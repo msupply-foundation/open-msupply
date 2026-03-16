@@ -56,7 +56,7 @@ mod delete {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
-            store_wastage_rates: vec![],
+            store_configs: vec![],
         };
 
         let _result = service
