@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   NumericTextInput,
   useDebounceCallback,
   useBufferState,
   NumericTextInputProps,
+  SubmitRegistry,
 } from '@openmsupply-client/common';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
@@ -13,6 +14,7 @@ interface NumberInputCellProps<T extends MRT_RowData>
   updateFn: (value: number) => number | void;
   debounceTime?: number; // ms
   updateOnBlur?: boolean;
+  submitRegistry?: SubmitRegistry;
 }
 
 export const NumberInputCell = <T extends MRT_RowData>({
@@ -23,6 +25,7 @@ export const NumberInputCell = <T extends MRT_RowData>({
   // with existing implementations (e.g. allocation login in Outbound Shipments)
   debounceTime = 0,
   updateOnBlur = false,
+  submitRegistry,
   ...numericTextProps
 }: NumberInputCellProps<T>) => {
   const { getValue, column, row } = cell;
@@ -70,6 +73,13 @@ export const NumberInputCell = <T extends MRT_RowData>({
     }
   };
 
+  useEffect(() => {
+    if (!updateOnBlur || !submitRegistry) return;
+    const id = `${row.id}:${column.id}`;
+    submitRegistry.register(id, handleBlur);
+    return () => submitRegistry.unregister(id);
+  });
+
   const input = (
     <NumericTextInput
       decimalLimit={2}
@@ -92,7 +102,9 @@ export const NumberInputCell = <T extends MRT_RowData>({
 
   if (updateOnBlur) {
     return (
-      <span style={{ display: 'contents' }} onBlur={handleBlur}>
+      // Using onBlurCapture to ensure we catch the blur event during the
+      // capture phase, before any child component can stop propagation.
+      <span onBlurCapture={handleBlur}>
         {input}
       </span>
     );

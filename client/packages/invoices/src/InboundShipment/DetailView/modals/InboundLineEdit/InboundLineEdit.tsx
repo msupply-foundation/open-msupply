@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import {
   Alert,
   Divider,
@@ -13,6 +14,7 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   TableContainer,
+  useSubmitRegistry,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
@@ -77,7 +79,14 @@ export const InboundLineEdit = ({
     l => !l.linkedInvoiceId && isInboundPlaceholderRow(l)
   );
   const simplifiedTabletView = useSimplifiedTabletUI();
+  const submitRegistry = useSubmitRegistry();
   const [packRoundingMessage, setPackRoundingMessage] = useState('');
+  const packRoundingMessageRef = useRef(packRoundingMessage);
+  packRoundingMessageRef.current = packRoundingMessage;
+  // Ref so that onClick handlers read the latest saveLines after flushSync
+  // triggers a synchronous re-render (the closure would otherwise be stale).
+  const saveLinesRef = useRef(saveLines);
+  saveLinesRef.current = saveLines;
   const lastCardRef = useRef<HTMLDivElement>(null);
   const prevLineCount = useRef(draftLines.length);
 
@@ -114,6 +123,7 @@ export const InboundLineEdit = ({
       restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
       simplified={simplifiedTabletView}
+      submitRegistry={submitRegistry}
     />
   );
 
@@ -176,7 +186,9 @@ export const InboundLineEdit = ({
           variant="next-and-ok"
           disabled={okNextDisabled || manualLinesWithZeroNumberOfPacks}
           onClick={async () => {
-            await saveLines();
+            flushSync(() => submitRegistry.submitAll());
+            if (packRoundingMessageRef.current) return;
+            await saveLinesRef.current();
             if (mode === ModalMode.Update && nextItem) {
               setCurrentItem(nextItem);
             } else if (mode === ModalMode.Create) setCurrentItem(null);
@@ -192,7 +204,9 @@ export const InboundLineEdit = ({
           disabled={!currentItem || manualLinesWithZeroNumberOfPacks}
           onClick={async () => {
             try {
-              await saveLines();
+              flushSync(() => submitRegistry.submitAll());
+              if (packRoundingMessageRef.current) return;
+              await saveLinesRef.current();
               onClose();
             } catch (e) {
               error((e as Error).message)();

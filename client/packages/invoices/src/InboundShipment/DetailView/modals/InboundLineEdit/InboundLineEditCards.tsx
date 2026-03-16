@@ -25,6 +25,7 @@ import {
   InvoiceIcon,
   SlidersIcon,
   EditIcon,
+  SubmitRegistry,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -52,6 +53,7 @@ interface CardProps {
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
   restrictedToLocationTypeId?: string | null;
+  submitRegistry?: SubmitRegistry;
 }
 
 interface InboundLineEditCardsProps extends CardProps {
@@ -74,6 +76,7 @@ export const InboundLineEditCards = ({
   restrictedToLocationTypeId,
   lastCardRef,
   simplified,
+  submitRegistry,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -232,6 +235,7 @@ export const InboundLineEditCards = ({
             disabled={isDisabled}
             min={1}
             updateOnBlur
+            submitRegistry={submitRegistry}
           />
         ),
         defaultHideOnMobile: true,
@@ -253,6 +257,7 @@ export const InboundLineEditCards = ({
             disabled={isDisabled}
             min={0}
             updateOnBlur
+            submitRegistry={submitRegistry}
           />
         ),
       },
@@ -288,6 +293,7 @@ export const InboundLineEditCards = ({
             disabled={isDisabled}
             min={1}
             updateOnBlur
+            submitRegistry={submitRegistry}
           />
         ),
         defaultHideOnMobile: true,
@@ -316,6 +322,7 @@ export const InboundLineEditCards = ({
             disabled={isDisabled}
             min={0}
             updateOnBlur
+            submitRegistry={submitRegistry}
           />
         ),
       },
@@ -362,6 +369,7 @@ export const InboundLineEditCards = ({
             disabled={isDisabled}
             min={0}
             updateOnBlur
+            submitRegistry={submitRegistry}
           />
         ),
       },
@@ -390,6 +398,7 @@ export const InboundLineEditCards = ({
             disabled={isDisabled}
             decimalLimit={10}
             updateOnBlur
+            submitRegistry={submitRegistry}
           />
         ),
       },
