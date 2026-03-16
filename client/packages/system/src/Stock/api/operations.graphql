@@ -51,6 +51,9 @@ fragment StockLineRow on StockLineNode {
   donor(storeId: $storeId) {
     id
   }
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
   program {
     id
     name
