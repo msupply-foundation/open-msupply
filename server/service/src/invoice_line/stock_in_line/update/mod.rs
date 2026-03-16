@@ -27,6 +27,7 @@ pub struct UpdateStockInLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdate<NaiveDate>>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<ShipmentTaxUpdate>,
@@ -34,6 +35,7 @@ pub struct UpdateStockInLine {
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdate<String>>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
     pub campaign_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
     pub shipped_number_of_packs: Option<f64>,
@@ -106,6 +108,9 @@ pub enum UpdateStockInLineError {
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
+    ManufacturerDoesNotExist,
+    ManufacturerNotVisible,
+    ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
     ProgramNotVisible,
     IncorrectLocationType,
@@ -350,6 +355,21 @@ mod test {
                 },
             ),
             Err(ServiceError::ProgramNotVisible)
+        );
+
+        // ManufacturerDoesNotExist
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    manufacturer_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ManufacturerDoesNotExist)
         );
 
         // NotThisStoreInvoice

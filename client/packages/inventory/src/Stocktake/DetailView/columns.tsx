@@ -61,6 +61,17 @@ export const useStocktakeColumns = () => {
         enableSorting: true,
       },
       {
+        id: 'manufactureDate',
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        header: t('label.manufacture-date'),
+        size: 110,
+        columnType: ColumnType.Date,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
         id: 'locationCode',
         accessorFn: row => row.location?.code ?? '',
         header: t('label.location'),
@@ -130,6 +141,12 @@ export const useStocktakeColumns = () => {
         enableSorting: true,
         accessorFn: row => row.donorName,
         includeColumn: allowTrackingOfStockByDonor,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        accessorFn: row => row.manufacturer?.name ?? '',
         defaultHideOnMobile: true,
       },
       {
