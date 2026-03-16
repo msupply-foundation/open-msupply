@@ -314,6 +314,12 @@ export type InboundFragment = {
     id: string;
     number: number;
     reference?: string | null;
+    agentCommission?: number | null;
+    documentCharge?: number | null;
+    communicationsCharge?: number | null;
+    insuranceCharge?: number | null;
+    freightCharge?: number | null;
+    orderTotalAfterDiscount: number;
     currency?: {
       __typename: 'CurrencyNode';
       id: string;
@@ -633,6 +639,12 @@ export type InvoiceQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          agentCommission?: number | null;
+          documentCharge?: number | null;
+          communicationsCharge?: number | null;
+          insuranceCharge?: number | null;
+          freightCharge?: number | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -875,6 +887,12 @@ export type InboundByNumberQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          agentCommission?: number | null;
+          documentCharge?: number | null;
+          communicationsCharge?: number | null;
+          insuranceCharge?: number | null;
+          freightCharge?: number | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -1569,6 +1587,12 @@ export const InboundFragmentDoc = gql`
       id
       number
       reference
+      agentCommission
+      documentCharge
+      communicationsCharge
+      insuranceCharge
+      freightCharge
+      orderTotalAfterDiscount
       currency {
         id
         code
