@@ -13,3 +13,9 @@ client/dist
 
 # IDEs
 .idea/
+
+## Claude
+# `claude -w "feature-name"` will create "/.claude/worktrees/feature-name" for your worktree. Back at root though, git picks up this whole directory copy of the repo!
+worktrees
+.claude/*.local.json
+backup/
