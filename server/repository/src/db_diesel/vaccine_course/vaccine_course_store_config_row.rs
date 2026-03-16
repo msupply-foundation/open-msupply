@@ -1,4 +1,4 @@
-use super::vaccine_course_store_wastage_row::vaccine_course_store_wastage::dsl::*;
+use super::vaccine_course_store_config_row::vaccine_course_store_config::dsl::*;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
@@ -7,37 +7,39 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 table! {
-    vaccine_course_store_wastage (id) {
+    vaccine_course_store_config (id) {
         id -> Text,
         vaccine_course_id -> Text,
         store_id -> Text,
         wastage_rate -> Nullable<Double>,
+        coverage_rate -> Nullable<Double>,
     }
 }
 
 #[derive(
     Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Deserialize, Serialize,
 )]
-#[diesel(table_name = vaccine_course_store_wastage)]
+#[diesel(table_name = vaccine_course_store_config)]
 #[diesel(treat_none_as_null = true)]
-pub struct VaccineCourseStoreWastageRow {
+pub struct VaccineCourseStoreConfigRow {
     pub id: String,
     pub vaccine_course_id: String,
     pub store_id: String,
     pub wastage_rate: Option<f64>,
+    pub coverage_rate: Option<f64>,
 }
 
-pub struct VaccineCourseStoreWastageRowRepository<'a> {
+pub struct VaccineCourseStoreConfigRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> VaccineCourseStoreWastageRowRepository<'a> {
+impl<'a> VaccineCourseStoreConfigRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        VaccineCourseStoreWastageRowRepository { connection }
+        VaccineCourseStoreConfigRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &VaccineCourseStoreWastageRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(vaccine_course_store_wastage)
+    pub fn upsert_one(&self, row: &VaccineCourseStoreConfigRow) -> Result<i64, RepositoryError> {
+        diesel::insert_into(vaccine_course_store_config)
             .values(row)
             .on_conflict(id)
             .do_update()
@@ -58,7 +60,7 @@ impl<'a> VaccineCourseStoreWastageRowRepository<'a> {
         changelog_store_id: String,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::VaccineCourseStoreWastage,
+            table_name: ChangelogTableName::VaccineCourseStoreConfig,
             record_id: row_id,
             row_action: action,
             store_id: Some(changelog_store_id),
@@ -70,8 +72,8 @@ impl<'a> VaccineCourseStoreWastageRowRepository<'a> {
     pub fn find_one_by_id(
         &self,
         row_id: &str,
-    ) -> Result<Option<VaccineCourseStoreWastageRow>, RepositoryError> {
-        let result = vaccine_course_store_wastage
+    ) -> Result<Option<VaccineCourseStoreConfigRow>, RepositoryError> {
+        let result = vaccine_course_store_config
             .filter(id.eq(row_id))
             .first(self.connection.lock().connection())
             .optional()?;
@@ -79,16 +81,16 @@ impl<'a> VaccineCourseStoreWastageRowRepository<'a> {
     }
 }
 
-impl Upsert for VaccineCourseStoreWastageRow {
+impl Upsert for VaccineCourseStoreConfigRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = VaccineCourseStoreWastageRowRepository::new(con).upsert_one(self)?;
+        let cursor_id = VaccineCourseStoreConfigRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            VaccineCourseStoreWastageRowRepository::new(con).find_one_by_id(&self.id),
+            VaccineCourseStoreConfigRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
