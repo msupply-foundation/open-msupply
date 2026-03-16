@@ -1413,6 +1413,27 @@ export type VaccineCourseStoreWastageFragment = {
   wastageRate?: number | null;
 };
 
+export type VaccineCourseRowFragment = {
+  __typename: 'VaccineCourseNode';
+  id: string;
+  name: string;
+  programId: string;
+  demographic?: {
+    __typename: 'DemographicNode';
+    name: string;
+    id: string;
+  } | null;
+  vaccineCourseDoses?: Array<{
+    __typename: 'VaccineCourseDoseNode';
+    id: string;
+    label: string;
+    minAgeMonths: number;
+    maxAgeMonths: number;
+    minIntervalDays: number;
+    customAgeLabel?: string | null;
+  }> | null;
+};
+
 export type VaccineCourseFragment = {
   __typename: 'VaccineCourseNode';
   id: string;
@@ -1450,6 +1471,42 @@ export type VaccineCourseFragment = {
     storeId: string;
     wastageRate?: number | null;
   }> | null;
+};
+
+export type VaccineCourseListQueryVariables = Types.Exact<{
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.VaccineCourseSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.VaccineCourseFilterInput>;
+}>;
+
+export type VaccineCourseListQuery = {
+  __typename: 'Queries';
+  vaccineCourses: {
+    __typename: 'VaccineCourseConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'VaccineCourseNode';
+      id: string;
+      name: string;
+      programId: string;
+      demographic?: {
+        __typename: 'DemographicNode';
+        name: string;
+        id: string;
+      } | null;
+      vaccineCourseDoses?: Array<{
+        __typename: 'VaccineCourseDoseNode';
+        id: string;
+        label: string;
+        minAgeMonths: number;
+        maxAgeMonths: number;
+        minIntervalDays: number;
+        customAgeLabel?: string | null;
+      }> | null;
+    }>;
+  };
 };
 
 export type VaccineCoursesQueryVariables = Types.Exact<{
@@ -1913,13 +1970,6 @@ export const ImmunisationProgramFragmentDoc = gql`
     }
   }
 `;
-export const VaccineCourseItemFragmentDoc = gql`
-  fragment VaccineCourseItem on VaccineCourseItemNode {
-    id
-    itemId
-    name
-  }
-`;
 export const VaccineCourseDoseFragmentDoc = gql`
   fragment VaccineCourseDose on VaccineCourseDoseNode {
     id
@@ -1928,6 +1978,28 @@ export const VaccineCourseDoseFragmentDoc = gql`
     maxAgeMonths
     minIntervalDays
     customAgeLabel
+  }
+`;
+export const VaccineCourseRowFragmentDoc = gql`
+  fragment VaccineCourseRow on VaccineCourseNode {
+    id
+    name
+    programId
+    demographic {
+      name
+      id
+    }
+    vaccineCourseDoses {
+      ...VaccineCourseDose
+    }
+  }
+  ${VaccineCourseDoseFragmentDoc}
+`;
+export const VaccineCourseItemFragmentDoc = gql`
+  fragment VaccineCourseItem on VaccineCourseItemNode {
+    id
+    itemId
+    name
   }
 `;
 export const VaccineCourseStoreWastageFragmentDoc = gql`
@@ -2447,6 +2519,30 @@ export const ImmunisationProgramsDocument = gql`
     }
   }
   ${ImmunisationProgramFragmentDoc}
+`;
+export const VaccineCourseListDocument = gql`
+  query vaccineCourseList(
+    $first: Int
+    $offset: Int
+    $key: VaccineCourseSortFieldInput!
+    $desc: Boolean
+    $filter: VaccineCourseFilterInput
+  ) {
+    vaccineCourses(
+      page: { first: $first, offset: $offset }
+      sort: { key: $key, desc: $desc }
+      filter: $filter
+    ) {
+      ... on VaccineCourseConnector {
+        __typename
+        nodes {
+          ...VaccineCourseRow
+        }
+        totalCount
+      }
+    }
+  }
+  ${VaccineCourseRowFragmentDoc}
 `;
 export const VaccineCoursesDocument = gql`
   query vaccineCourses(
@@ -3027,6 +3123,24 @@ export function getSdk(
             signal,
           }),
         'immunisationPrograms',
+        'query',
+        variables
+      );
+    },
+    vaccineCourseList(
+      variables: VaccineCourseListQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<VaccineCourseListQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<VaccineCourseListQuery>({
+            document: VaccineCourseListDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'vaccineCourseList',
         'query',
         variables
       );
