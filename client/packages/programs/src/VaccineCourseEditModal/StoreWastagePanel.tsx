@@ -58,6 +58,10 @@ export const StoreWastagePanel = ({
     const storeId = store.id;
     const existing = storeWastageRates.find(r => r.storeId === storeId);
 
+    if (!existing && value == null) {
+      // Avoid creating new record if no value
+      return;
+    }
     if (existing) {
       updatePatch({
         storeWastageRates: storeWastageRates.map(r =>
