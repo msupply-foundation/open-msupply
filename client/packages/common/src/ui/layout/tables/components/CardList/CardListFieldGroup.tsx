@@ -35,14 +35,14 @@ export const CardListFieldGroup = ({
     <Box
       display="flex"
       gap={2}
-      py={1}
+      py={1.5}
       sx={{
         pl: 1,
       }}
     >
       <Box
         display="flex"
-        alignItems="center"
+        alignItems="flex-start"
         color="text.secondary"
         sx={ICON_SX}
       >
