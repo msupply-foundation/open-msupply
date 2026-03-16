@@ -17,20 +17,20 @@ import {
   StoreRowFragment,
   usePaginatedStores,
 } from '@openmsupply-client/system';
-import { DraftVaccineCourse, DraftVaccineCourseStoreWastage } from '../api';
+import { DraftVaccineCourse, DraftVaccineCourseStoreConfig } from '../api';
 
 const DEBOUNCE_TIMEOUT = 300;
 const RECORDS_PER_PAGE = 100;
 
-interface StoreWastageProps {
-  storeWastageRates: DraftVaccineCourseStoreWastage[];
+interface StoreConfigProps {
+  storeConfigs: DraftVaccineCourseStoreConfig[];
   updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
 }
 
 export const StoreWastagePanel = ({
-  storeWastageRates,
+  storeConfigs,
   updatePatch,
-}: StoreWastageProps) => {
+}: StoreConfigProps) => {
   const t = useTranslation();
   const [open, setOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -54,39 +54,43 @@ export const StoreWastagePanel = ({
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const updateRate = (store: StoreRowFragment, value: number | null) => {
+  const updateConfig = (
+    store: StoreRowFragment,
+    field: 'wastageRate' | 'coverageRate',
+    value: number | null
+  ) => {
     const storeId = store.id;
-    const existing = storeWastageRates.find(r => r.storeId === storeId);
+    const existing = storeConfigs.find(r => r.storeId === storeId);
 
     if (!existing && value == null) {
-      // Avoid creating new record if no value
       return;
     }
     if (existing) {
       updatePatch({
-        storeWastageRates: storeWastageRates.map(r =>
-          r.storeId === storeId ? { ...r, wastageRate: value } : r
+        storeConfigs: storeConfigs.map(r =>
+          r.storeId === storeId ? { ...r, [field]: value } : r
         ),
       });
     } else {
       updatePatch({
-        storeWastageRates: [
-          ...storeWastageRates,
+        storeConfigs: [
+          ...storeConfigs,
           {
             id: FnUtils.generateUUID(),
             vaccineCourseId: '', // Set in backend when course is saved
             storeId,
-            wastageRate: value,
+            wastageRate: field === 'wastageRate' ? value : null,
+            coverageRate: field === 'coverageRate' ? value : null,
           },
         ],
       });
     }
   };
 
-  const snapshotRef = useRef<DraftVaccineCourseStoreWastage[]>([]);
+  const snapshotRef = useRef<DraftVaccineCourseStoreConfig[]>([]);
 
   const handleOpen = () => {
-    snapshotRef.current = storeWastageRates;
+    snapshotRef.current = storeConfigs;
     setOpen(true);
   };
 
@@ -96,8 +100,22 @@ export const StoreWastagePanel = ({
   };
 
   const handleBack = () => {
-    updatePatch({ storeWastageRates: snapshotRef.current });
+    updatePatch({ storeConfigs: snapshotRef.current });
     refreshStates();
+  };
+
+  const headerStyle = {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    width: 100,
+    ml: 1,
+  };
+  const inputProps = {
+    endAdornment: '%',
+    decimalLimit: 2,
+    max: 100,
+    width: 100,
+    sx: { ml: 1 },
   };
 
   return (
@@ -112,7 +130,7 @@ export const StoreWastagePanel = ({
       <SlidePanel
         open={open}
         onClose={handleBack}
-        title={t('heading.wastage-rate-per-store')}
+        title={t('heading.configure-rates-per-store')}
         cancelButton={<DialogButton variant="back" onClick={handleBack} />}
         okButton={<DialogButton variant="ok" onClick={refreshStates} />}
       >
@@ -125,9 +143,21 @@ export const StoreWastagePanel = ({
             sx={{ marginBottom: 1 }}
           />
           <Box
+            display="flex"
+            justifyContent="space-between"
+            padding={0.5}
+            sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
+          >
+            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', flex: 1 }}>
+              {t('label.store')}
+            </Typography>
+            <Typography sx={headerStyle}>{t('label.wastage-rate')}</Typography>
+            <Typography sx={headerStyle}>{t('label.coverage-rate')}</Typography>
+          </Box>
+          <Box
             ref={scrollRef}
             sx={{
-              maxHeight: 'calc(100vh - 300px)',
+              maxHeight: 'calc(100vh - 340px)',
               overflowY: 'auto',
             }}
           >
@@ -145,28 +175,39 @@ export const StoreWastagePanel = ({
               }}
             >
               {store => {
-                const rate = storeWastageRates.find(
-                  r => r.storeId === store.id
-                );
+                const config = storeConfigs.find(r => r.storeId === store.id);
                 return (
                   <Box
                     key={store.id}
                     display="flex"
                     justifyContent="space-between"
+                    alignItems="center"
                     padding={0.5}
                   >
-                    <Typography sx={{ fontSize: '14px' }}>
+                    <Typography sx={{ fontSize: '14px', flex: 1 }}>
                       {store.storeName}
                     </Typography>
                     <NumericTextInput
-                      value={rate?.wastageRate ?? undefined}
+                      value={config?.wastageRate ?? undefined}
                       onChange={value =>
-                        updateRate(store, value === undefined ? null : value)
+                        updateConfig(
+                          store,
+                          'wastageRate',
+                          value === undefined ? null : value
+                        )
                       }
-                      endAdornment="%"
-                      decimalLimit={1}
-                      max={100}
-                      sx={{ width: 100 }}
+                      {...inputProps}
+                    />
+                    <NumericTextInput
+                      value={config?.coverageRate ?? undefined}
+                      onChange={value =>
+                        updateConfig(
+                          store,
+                          'coverageRate',
+                          value === undefined ? null : value
+                        )
+                      }
+                      {...inputProps}
                     />
                   </Box>
                 );
