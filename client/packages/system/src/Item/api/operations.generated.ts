@@ -9,6 +9,7 @@ export type StockLineFragment = {
   availableNumberOfPacks: number;
   batch?: string | null;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   id: string;
   itemId: string;
   note?: string | null;
@@ -1593,6 +1594,7 @@ export const StockLineFragmentDoc = gql`
     availableNumberOfPacks
     batch
     expiryDate
+    manufactureDate
     id
     itemId
     location {
