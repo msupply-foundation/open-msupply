@@ -61,7 +61,10 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
                 return Ok(HashMap::new());
             };
         if loader_inputs.len() > 1 {
-            log::error!("Multiple loader inputs provided to IndicatorValueLoader, but only one combination of period_id, store_id, and customer_name_id is supported. Only the first input will be used.");
+            log::warn!(
+                "IndicatorValueLoader received {} batched inputs but only supports one (period_id, store_id, customer_name_id) combination per batch. Only the first input will be used.",
+                loader_inputs.len()
+            );
         }
 
         let filter = IndicatorValueFilter::new()
