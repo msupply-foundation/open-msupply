@@ -71,6 +71,17 @@ export const useInboundShipmentColumns = (
         enableSorting: true,
       },
       {
+        id: 'manufactureDate',
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        header: t('label.manufacture-date'),
+        columnType: ColumnType.Date,
+        size: 120,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
         id: 'vvmStatus',
         accessorFn: row => row.vvmStatus?.description ?? '',
         header: t('label.vvm-status'),
@@ -181,6 +192,12 @@ export const useInboundShipmentColumns = (
         defaultHideOnMobile: true,
         includeColumn: allowTrackingOfStockByDonor && !external,
         accessorFn: row => (row.donor ? row.donor.name : ''),
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        defaultHideOnMobile: true,
+        accessorFn: row => row.manufacturer?.name ?? '',
       },
       {
         id: 'campaign',

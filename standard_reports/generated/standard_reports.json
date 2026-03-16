@@ -3,6 +3,7 @@
     {
       "id": "expiring-items_2_6_5_false",
       "name": "Expiring Items",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -15,9 +16,12 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}"
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n    page: { first: 5000 }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
           },
           "template.html": {
             "type": "TeraTemplate",
@@ -26,12 +30,9 @@
               "template": "<style>{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.expiring-in-days\", f=\"Expiring in (days)\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"report.expiry-date\", f=\"Expiry date\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.average-monthly-consumption\", f=\"Average monthly consumption\")}}</td>\n        <td>{{t(k=\"report.expected-usage\", f=\"Expected usage\")}}</td>\n        <td>{{t(k=\"report.stock-at-risk\", f=\"Stock at risk\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td class=\"expiry-date\">\n          {% if stockLine.daysUntilExpired %}\n            {% if stockLine.daysUntilExpired <= 0 %}\n              <span class=\"expired\">{{t(k=\"report.expired\", f=\"Expired\")}}</span>\n              {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire *\n                (365.25 / 12.0) %}\n              <span class=\"soon\">{{ stockLine.daysUntilExpired }}</span>\n            {% else %}\n                <span class=\"all-good\">{{ stockLine.daysUntilExpired }}</span>\n            {% endif %}\n          {% else %}\n            <span class=\"na\">N/A</span>\n          {% endif %}\n        </td>\n        <td>{{stockLine.batch | default(value='')}}</td>\n        <td>\n          {% if stockLine.expiryDate %}\n            {{ stockLine.expiryDate | date(format=\"%d/%m/%Y\") }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)\n          }}</td>\n        <td>{{stockLine.averageMonthlyConsumption }}</td>\n        <td>\n          {% if stockLine.expectedUsage %}\n              {{ stockLine.expectedUsage | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>\n          {% if stockLine.stockAtRisk %}\n            {{ stockLine.stockAtRisk | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
             }
           },
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n    page: { first: 5000 }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}"
           }
         }
       },
@@ -208,6 +209,7 @@
     {
       "id": "expiring-items_2_10_3_false",
       "name": "Expiring Items",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -220,6 +222,13 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
           "style.css": {
             "type": "Resource",
             "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}"
@@ -229,13 +238,6 @@
             "data": {
               "output": "Html",
               "template": "<style>{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.expiring-in-days\", f=\"Expiring in (days)\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"report.expiry-date\", f=\"Expiry date\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.average-monthly-consumption\", f=\"Average monthly consumption\")}}</td>\n        <td>{{t(k=\"report.expected-usage\", f=\"Expected usage\")}}</td>\n        <td>{{t(k=\"report.stock-at-risk\", f=\"Stock at risk\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td class=\"expiry-date\">\n          {% if stockLine.daysUntilExpired %}\n            {% if stockLine.daysUntilExpired <= 0 %}\n              <span class=\"expired\">{{t(k=\"report.expired\", f=\"Expired\")}}</span>\n              {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire *\n                (365.25 / 12.0) %}\n              <span class=\"soon\">{{ stockLine.daysUntilExpired }}</span>\n            {% else %}\n                <span class=\"all-good\">{{ stockLine.daysUntilExpired }}</span>\n            {% endif %}\n          {% else %}\n            <span class=\"na\">N/A</span>\n          {% endif %}\n        </td>\n        <td>{{stockLine.batch | default(value='')}}</td>\n        <td>\n          {% if stockLine.expiryDate %}\n            {{ stockLine.expiryDate | date(format=\"%d/%m/%Y\") }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)\n          }}</td>\n        <td>{{stockLine.averageMonthlyConsumption }}</td>\n        <td>\n          {% if stockLine.expectedUsage %}\n              {{ stockLine.expectedUsage | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>\n          {% if stockLine.stockAtRisk %}\n            {{ stockLine.stockAtRisk | round( precision=1) }}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
-            }
-          },
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
             }
           }
         }
@@ -413,6 +415,7 @@
     {
       "id": "inbound-shipments_2_17_0_false",
       "name": "Inbound Shipments",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -439,7 +442,7 @@
           "query.graphql": {
             "type": "GraphGLQuery",
             "data": {
-              "query": "query InboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: INBOUND_SHIPMENT }\n      status: { equalAny: [RECEIVED, VERIFIED]}\n      otherPartyId: { equalTo: $otherPartyId }\n      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "query": "query InboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: INBOUND_SHIPMENT }\n      status: { equalAny: [RECEIVED, VERIFIED] }\n      otherPartyId: { equalTo: $otherPartyId }\n      receivedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
             }
           }
@@ -510,6 +513,7 @@
             {
               "label": "T#label.to-date",
               "options": {
+                "dateAsEndOfDay": true,
                 "dateOnly": true,
                 "disableFuture": true,
                 "min": "#/properties/after"
@@ -524,8 +528,248 @@
       "excel_template_buffer": null
     },
     {
-      "id": "outbound-shipments_2_10_1_false",
+      "id": "item-list_2_17_0_false",
+      "name": "Item List",
+      "description": null,
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "query.graphql"
+          ],
+          "convert_data": "dmFyIHQ9ezUxNzgodCxyLGUpe3ZhciBuPWUoMzE4OCkoZSg3MTgzKSwiRGF0YVZpZXciKTt0LmV4cG9ydHM9bn0sMzYxNSh0LHIsZSl7dmFyIG49ZSg4MzQyKSxvPWUoOTE4NCksYT1lKDc3NDcpLHU9ZSg0Mjg3KSxpPWUoNyk7ZnVuY3Rpb24gcyh0KXt2YXIgcj0tMSxlPW51bGw9PXQ/MDp0Lmxlbmd0aDtmb3IodGhpcy5jbGVhcigpOysrcjxlOyl7dmFyIG49dFtyXTt0aGlzLnNldChuWzBdLG5bMV0pfX1zLnByb3RvdHlwZS5jbGVhcj1uLHMucHJvdG90eXBlLmRlbGV0ZT1vLHMucHJvdG90eXBlLmdldD1hLHMucHJvdG90eXBlLmhhcz11LHMucHJvdG90eXBlLnNldD1pLHQuZXhwb3J0cz1zfSw3ODkodCxyLGUpe3ZhciBuPWUoNzc1Miksbz1lKDcxOCksYT1lKDc4NDkpLHU9ZSgzOTU3KSxpPWUoODQ1KTtmdW5jdGlvbiBzKHQpe3ZhciByPS0xLGU9bnVsbD09dD8wOnQubGVuZ3RoO2Zvcih0aGlzLmNsZWFyKCk7KytyPGU7KXt2YXIgbj10W3JdO3RoaXMuc2V0KG5bMF0sblsxXSl9fXMucHJvdG90eXBlLmNsZWFyPW4scy5wcm90b3R5cGUuZGVsZXRlPW8scy5wcm90b3R5cGUuZ2V0PWEscy5wcm90b3R5cGUuaGFzPXUscy5wcm90b3R5cGUuc2V0PWksdC5leHBvcnRzPXN9LDg1NjEodCxyLGUpe3ZhciBuPWUoMzE4OCkoZSg3MTgzKSwiTWFwIik7dC5leHBvcnRzPW59LDE0NTEodCxyLGUpe3ZhciBuPWUoNTY3NCksbz1lKDEwMzYpLGE9ZSgzMSksdT1lKDE5MDcpLGk9ZSg5NzEpO2Z1bmN0aW9uIHModCl7dmFyIHI9LTEsZT1udWxsPT10PzA6dC5sZW5ndGg7Zm9yKHRoaXMuY2xlYXIoKTsrK3I8ZTspe3ZhciBuPXRbcl07dGhpcy5zZXQoblswXSxuWzFdKX19cy5wcm90b3R5cGUuY2xlYXI9bixzLnByb3RvdHlwZS5kZWxldGU9byxzLnByb3RvdHlwZS5nZXQ9YSxzLnByb3RvdHlwZS5oYXM9dSxzLnByb3RvdHlwZS5zZXQ9aSx0LmV4cG9ydHM9c30sMTQ5MCh0LHIsZSl7dmFyIG49ZSgzMTg4KShlKDcxODMpLCJQcm9taXNlIik7dC5leHBvcnRzPW59LDY3NzUodCxyLGUpe3ZhciBuPWUoMzE4OCkoZSg3MTgzKSwiU2V0Iik7dC5leHBvcnRzPW59LDg4NjkodCxyLGUpe3ZhciBuPWUoMTQ1MSksbz1lKDY4MTApLGE9ZSg1ODEzKTtmdW5jdGlvbiB1KHQpe3ZhciByPS0xLGU9bnVsbD09dD8wOnQubGVuZ3RoO2Zvcih0aGlzLl9fZGF0YV9fPW5ldyBuOysrcjxlOyl0aGlzLmFkZCh0W3JdKX11LnByb3RvdHlwZS5hZGQ9dS5wcm90b3R5cGUucHVzaD1vLHUucHJvdG90eXBlLmhhcz1hLHQuZXhwb3J0cz11fSwyODIzKHQscixlKXt2YXIgbj1lKDc4OSksbz1lKDg5MjYpLGE9ZSgyNjgwKSx1PWUoMzg1MSksaT1lKDg0MjMpLHM9ZSgzOTY3KTtmdW5jdGlvbiBjKHQpe3ZhciByPXRoaXMuX19kYXRhX189bmV3IG4odCk7dGhpcy5zaXplPXIuc2l6ZX1jLnByb3RvdHlwZS5jbGVhcj1vLGMucHJvdG90eXBlLmRlbGV0ZT1hLGMucHJvdG90eXBlLmdldD11LGMucHJvdG90eXBlLmhhcz1pLGMucHJvdG90eXBlLnNldD1zLHQuZXhwb3J0cz1jfSw3MTg3KHQscixlKXt2YXIgbj1lKDcxODMpLlN5bWJvbDt0LmV4cG9ydHM9bn0sNjg0Nih0LHIsZSl7dmFyIG49ZSg3MTgzKS5VaW50OEFycmF5O3QuZXhwb3J0cz1ufSw4OTg1KHQscixlKXt2YXIgbj1lKDMxODgpKGUoNzE4MyksIldlYWtNYXAiKTt0LmV4cG9ydHM9bn0sODM2KHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe2Zvcih2YXIgZT0tMSxuPW51bGw9PXQ/MDp0Lmxlbmd0aCxvPTAsYT1bXTsrK2U8bjspe3ZhciB1PXRbZV07cih1LGUsdCkmJihhW28rK109dSl9cmV0dXJuIGF9fSw2NjEodCxyLGUpe3ZhciBuPWUoMTQyKSxvPWUoNTk2MiksYT1lKDQzODMpLHU9ZSg4MDk4KSxpPWUoNDY4Mykscz1lKDM5MDUpLGM9T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXt2YXIgZT1hKHQpLHA9IWUmJm8odCksZj0hZSYmIXAmJnUodCksdj0hZSYmIXAmJiFmJiZzKHQpLGw9ZXx8cHx8Znx8dixoPWw/bih0Lmxlbmd0aCxTdHJpbmcpOltdLHk9aC5sZW5ndGg7Zm9yKHZhciB4IGluIHQpIXImJiFjLmNhbGwodCx4KXx8bCYmKCJsZW5ndGgiPT14fHxmJiYoIm9mZnNldCI9PXh8fCJwYXJlbnQiPT14KXx8diYmKCJidWZmZXIiPT14fHwiYnl0ZUxlbmd0aCI9PXh8fCJieXRlT2Zmc2V0Ij09eCl8fGkoeCx5KSl8fGgucHVzaCh4KTtyZXR1cm4gaH19LDYxMzgodCl7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7Zm9yKHZhciBlPS0xLG49bnVsbD09dD8wOnQubGVuZ3RoLG89QXJyYXkobik7KytlPG47KW9bZV09cih0W2VdLGUsdCk7cmV0dXJuIG99fSw1ODYyKHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe2Zvcih2YXIgZT0tMSxuPXIubGVuZ3RoLG89dC5sZW5ndGg7KytlPG47KXRbbytlXT1yW2VdO3JldHVybiB0fX0sNzkzOCh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtmb3IodmFyIGU9LTEsbj1udWxsPT10PzA6dC5sZW5ndGg7KytlPG47KWlmKHIodFtlXSxlLHQpKXJldHVybiEwO3JldHVybiExfX0sNDM1KHQscixlKXt2YXIgbj1lKDk4MzApO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe2Zvcih2YXIgZT10Lmxlbmd0aDtlLS07KWlmKG4odFtlXVswXSxyKSlyZXR1cm4gZTtyZXR1cm4tMX19LDQxODModCxyLGUpe3ZhciBuPWUoNjg5NSksbz1lKDk4MzUpKG4pO3QuZXhwb3J0cz1vfSwxMzExKHQscixlKXt2YXIgbj1lKDEyOCkoKTt0LmV4cG9ydHM9bn0sNjg5NSh0LHIsZSl7dmFyIG49ZSgxMzExKSxvPWUoODQyMCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIHQmJm4odCxyLG8pfX0sMjc0OCh0LHIsZSl7dmFyIG49ZSg0Njc5KSxvPWUoNDY3MSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7Zm9yKHZhciBlPTAsYT0ocj1uKHIsdCkpLmxlbmd0aDtudWxsIT10JiZlPGE7KXQ9dFtvKHJbZSsrXSldO3JldHVybiBlJiZlPT1hP3Q6dm9pZCAwfX0sOTE2OSh0LHIsZSl7dmFyIG49ZSg1ODYyKSxvPWUoNDM4Myk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscixlKXt2YXIgYT1yKHQpO3JldHVybiBvKHQpP2E6bihhLGUodCkpfX0sNjk5MCh0LHIsZSl7dmFyIG49ZSg3MTg3KSxvPWUoMTAyOSksYT1lKDg3MDQpLHU9bj9uLnRvU3RyaW5nVGFnOnZvaWQgMDt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG51bGw9PXQ/dm9pZCAwPT09dD8iW29iamVjdCBVbmRlZmluZWRdIjoiW29iamVjdCBOdWxsXSI6dSYmdSBpbiBPYmplY3QodCk/byh0KTphKHQpfX0sMTYwNyh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gbnVsbCE9dCYmciBpbiBPYmplY3QodCl9fSw2MjUyKHQscixlKXt2YXIgbj1lKDY5OTApLG89ZSg2MTg0KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG8odCkmJiJbb2JqZWN0IEFyZ3VtZW50c10iPT1uKHQpfX0sMzAyOCh0LHIsZSl7dmFyIG49ZSg3MTE0KSxvPWUoNjE4NCk7dC5leHBvcnRzPWZ1bmN0aW9uIHQocixlLGEsdSxpKXtyZXR1cm4gcj09PWV8fChudWxsPT1yfHxudWxsPT1lfHwhbyhyKSYmIW8oZSk/ciE9ciYmZSE9ZTpuKHIsZSxhLHUsdCxpKSl9fSw3MTE0KHQscixlKXt2YXIgbj1lKDI4MjMpLG89ZSg1MjM3KSxhPWUoMzcyOCksdT1lKDUzNTUpLGk9ZSg4MzU1KSxzPWUoNDM4MyksYz1lKDgwOTgpLHA9ZSgzOTA1KSxmPSJbb2JqZWN0IEFyZ3VtZW50c10iLHY9IltvYmplY3QgQXJyYXldIixsPSJbb2JqZWN0IE9iamVjdF0iLGg9T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUseSx4LGQpe3ZhciBfPXModCksYj1zKHIpLGc9Xz92OmkodCksaj1iP3Y6aShyKSxPPShnPWc9PWY/bDpnKT09bCx3PShqPWo9PWY/bDpqKT09bCxtPWc9PWo7aWYobSYmYyh0KSl7aWYoIWMocikpcmV0dXJuITE7Xz0hMCxPPSExfWlmKG0mJiFPKXJldHVybiBkfHwoZD1uZXcgbiksX3x8cCh0KT9vKHQscixlLHkseCxkKTphKHQscixnLGUseSx4LGQpO2lmKCEoMSZlKSl7dmFyIEE9TyYmaC5jYWxsKHQsIl9fd3JhcHBlZF9fIiksej13JiZoLmNhbGwociwiX193cmFwcGVkX18iKTtpZihBfHx6KXt2YXIgUz1BP3QudmFsdWUoKTp0LEU9ej9yLnZhbHVlKCk6cjtyZXR1cm4gZHx8KGQ9bmV3IG4pLHgoUyxFLGUseSxkKX19cmV0dXJuISFtJiYoZHx8KGQ9bmV3IG4pLHUodCxyLGUseSx4LGQpKX19LDkxMjEodCxyLGUpe3ZhciBuPWUoMjgyMyksbz1lKDMwMjgpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxhKXt2YXIgdT1lLmxlbmd0aCxpPXUscz0hYTtpZihudWxsPT10KXJldHVybiFpO2Zvcih0PU9iamVjdCh0KTt1LS07KXt2YXIgYz1lW3VdO2lmKHMmJmNbMl0/Y1sxXSE9PXRbY1swXV06IShjWzBdaW4gdCkpcmV0dXJuITF9Zm9yKDsrK3U8aTspe3ZhciBwPShjPWVbdV0pWzBdLGY9dFtwXSx2PWNbMV07aWYocyYmY1syXSl7aWYodm9pZCAwPT09ZiYmIShwIGluIHQpKXJldHVybiExfWVsc2V7dmFyIGw9bmV3IG47aWYoYSl2YXIgaD1hKGYsdixwLHQscixsKTtpZighKHZvaWQgMD09PWg/byh2LGYsMyxhLGwpOmgpKXJldHVybiExfX1yZXR1cm4hMH19LDM4MjkodCxyLGUpe3ZhciBuPWUoNDM2MCksbz1lKDcyMzQpLGE9ZSg2MDE1KSx1PWUoMjc1KSxpPS9eXFtvYmplY3QgLis/Q29uc3RydWN0b3JcXSQvLHM9RnVuY3Rpb24ucHJvdG90eXBlLGM9T2JqZWN0LnByb3RvdHlwZSxwPXMudG9TdHJpbmcsZj1jLmhhc093blByb3BlcnR5LHY9UmVnRXhwKCJeIitwLmNhbGwoZikucmVwbGFjZSgvW1xcXiQuKis/KClbXF17fXxdL2csIlxcJCYiKS5yZXBsYWNlKC9oYXNPd25Qcm9wZXJ0eXwoZnVuY3Rpb24pLio/KD89XFxcKCl8IGZvciAuKz8oPz1cXFxdKS9nLCIkMS4qPyIpKyIkIik7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiEoIWEodCl8fG8odCkpJiYobih0KT92OmkpLnRlc3QodSh0KSl9fSw0MjcxKHQscixlKXt2YXIgbj1lKDY5OTApLG89ZSgxNzg0KSxhPWUoNjE4NCksdT17fTt1WyJbb2JqZWN0IEZsb2F0MzJBcnJheV0iXT11WyJbb2JqZWN0IEZsb2F0NjRBcnJheV0iXT11WyJbb2JqZWN0IEludDhBcnJheV0iXT11WyJbb2JqZWN0IEludDE2QXJyYXldIl09dVsiW29iamVjdCBJbnQzMkFycmF5XSJdPXVbIltvYmplY3QgVWludDhBcnJheV0iXT11WyJbb2JqZWN0IFVpbnQ4Q2xhbXBlZEFycmF5XSJdPXVbIltvYmplY3QgVWludDE2QXJyYXldIl09dVsiW29iamVjdCBVaW50MzJBcnJheV0iXT0hMCx1WyJbb2JqZWN0IEFyZ3VtZW50c10iXT11WyJbb2JqZWN0IEFycmF5XSJdPXVbIltvYmplY3QgQXJyYXlCdWZmZXJdIl09dVsiW29iamVjdCBCb29sZWFuXSJdPXVbIltvYmplY3QgRGF0YVZpZXddIl09dVsiW29iamVjdCBEYXRlXSJdPXVbIltvYmplY3QgRXJyb3JdIl09dVsiW29iamVjdCBGdW5jdGlvbl0iXT11WyJbb2JqZWN0IE1hcF0iXT11WyJbb2JqZWN0IE51bWJlcl0iXT11WyJbb2JqZWN0IE9iamVjdF0iXT11WyJbb2JqZWN0IFJlZ0V4cF0iXT11WyJbb2JqZWN0IFNldF0iXT11WyJbb2JqZWN0IFN0cmluZ10iXT11WyJbb2JqZWN0IFdlYWtNYXBdIl09ITEsdC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBhKHQpJiZvKHQubGVuZ3RoKSYmISF1W24odCldfX0sNDIwNyh0LHIsZSl7dmFyIG49ZSgyODAxKSxvPWUoMjIwOCksYT1lKDkwOTApLHU9ZSg0MzgzKSxpPWUoMzY4MSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiJmdW5jdGlvbiI9PXR5cGVvZiB0P3Q6bnVsbD09dD9hOiJvYmplY3QiPT10eXBlb2YgdD91KHQpP28odFswXSx0WzFdKTpuKHQpOmkodCl9fSw5OTY2KHQscixlKXt2YXIgbj1lKDgwODkpLG89ZSg2MTI4KSxhPU9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe2lmKCFuKHQpKXJldHVybiBvKHQpO3ZhciByPVtdO2Zvcih2YXIgZSBpbiBPYmplY3QodCkpYS5jYWxsKHQsZSkmJiJjb25zdHJ1Y3RvciIhPWUmJnIucHVzaChlKTtyZXR1cm4gcn19LDUyMTgodCxyLGUpe3ZhciBuPWUoNDE4Myksbz1lKDk1OTIpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPS0xLGE9byh0KT9BcnJheSh0Lmxlbmd0aCk6W107cmV0dXJuIG4odCxmdW5jdGlvbih0LG4sbyl7YVsrK2VdPXIodCxuLG8pfSksYX19LDI4MDEodCxyLGUpe3ZhciBuPWUoOTEyMSksbz1lKDk0MDYpLGE9ZSg2NDU5KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9byh0KTtyZXR1cm4gMT09ci5sZW5ndGgmJnJbMF1bMl0/YShyWzBdWzBdLHJbMF1bMV0pOmZ1bmN0aW9uKGUpe3JldHVybiBlPT09dHx8bihlLHQscil9fX0sMjIwOCh0LHIsZSl7dmFyIG49ZSgzMDI4KSxvPWUoOTY1MCksYT1lKDI5OTMpLHU9ZSg5NjY4KSxpPWUoODkzOCkscz1lKDY0NTkpLGM9ZSg0NjcxKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gdSh0KSYmaShyKT9zKGModCkscik6ZnVuY3Rpb24oZSl7dmFyIHU9byhlLHQpO3JldHVybiB2b2lkIDA9PT11JiZ1PT09cj9hKGUsdCk6bihyLHUsMyl9fX0sMjcxNyh0LHIsZSl7dmFyIG49ZSg2MTM4KSxvPWUoMjc0OCksYT1lKDQyMDcpLHU9ZSg1MjE4KSxpPWUoMzExMSkscz1lKDYxNDMpLGM9ZSg2MzIzKSxwPWUoOTA5MCksZj1lKDQzODMpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSl7cj1yLmxlbmd0aD9uKHIsZnVuY3Rpb24odCl7cmV0dXJuIGYodCk/ZnVuY3Rpb24ocil7cmV0dXJuIG8ociwxPT09dC5sZW5ndGg/dFswXTp0KX06dH0pOltwXTt2YXIgdj0tMTtyPW4ocixzKGEpKTt2YXIgbD11KHQsZnVuY3Rpb24odCxlLG8pe3JldHVybntjcml0ZXJpYTpuKHIsZnVuY3Rpb24ocil7cmV0dXJuIHIodCl9KSxpbmRleDorK3YsdmFsdWU6dH19KTtyZXR1cm4gaShsLGZ1bmN0aW9uKHQscil7cmV0dXJuIGModCxyLGUpfSl9fSw1MzUxKHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gZnVuY3Rpb24ocil7cmV0dXJuIG51bGw9PXI/dm9pZCAwOnJbdF19fX0sNDk1Myh0LHIsZSl7dmFyIG49ZSgyNzQ4KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIGZ1bmN0aW9uKHIpe3JldHVybiBuKHIsdCl9fX0sMzExMSh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXt2YXIgZT10Lmxlbmd0aDtmb3IodC5zb3J0KHIpO2UtLTspdFtlXT10W2VdLnZhbHVlO3JldHVybiB0fX0sMTQyKHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe2Zvcih2YXIgZT0tMSxuPUFycmF5KHQpOysrZTx0OyluW2VdPXIoZSk7cmV0dXJuIG59fSw0NzQyKHQscixlKXt2YXIgbj1lKDcxODcpLG89ZSg2MTM4KSxhPWUoNDM4MyksdT1lKDM1MzYpLGk9bj9uLnByb3RvdHlwZTp2b2lkIDAscz1pP2kudG9TdHJpbmc6dm9pZCAwO3QuZXhwb3J0cz1mdW5jdGlvbiB0KHIpe2lmKCJzdHJpbmciPT10eXBlb2YgcilyZXR1cm4gcjtpZihhKHIpKXJldHVybiBvKHIsdCkrIiI7aWYodShyKSlyZXR1cm4gcz9zLmNhbGwocik6IiI7dmFyIGU9cisiIjtyZXR1cm4iMCI9PWUmJjEvcj09LTEvMD8iLTAiOmV9fSw2MTQzKHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gZnVuY3Rpb24ocil7cmV0dXJuIHQocil9fX0sNzc3Myh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gdC5oYXMocil9fSw0Njc5KHQscixlKXt2YXIgbj1lKDQzODMpLG89ZSg5NjY4KSxhPWUoNDEyKSx1PWUoMjgzMik7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIG4odCk/dDpvKHQscik/W3RdOmEodSh0KSl9fSwxMTkyKHQscixlKXt2YXIgbj1lKDM1MzYpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe2lmKHQhPT1yKXt2YXIgZT12b2lkIDAhPT10LG89bnVsbD09PXQsYT10PT10LHU9bih0KSxpPXZvaWQgMCE9PXIscz1udWxsPT09cixjPXI9PXIscD1uKHIpO2lmKCFzJiYhcCYmIXUmJnQ+cnx8dSYmaSYmYyYmIXMmJiFwfHxvJiZpJiZjfHwhZSYmY3x8IWEpcmV0dXJuIDE7aWYoIW8mJiF1JiYhcCYmdDxyfHxwJiZlJiZhJiYhbyYmIXV8fHMmJmUmJmF8fCFpJiZhfHwhYylyZXR1cm4tMX1yZXR1cm4gMH19LDYzMjModCxyLGUpe3ZhciBuPWUoMTE5Mik7dC5leHBvcnRzPWZ1bmN0aW9uKHQscixlKXtmb3IodmFyIG89LTEsYT10LmNyaXRlcmlhLHU9ci5jcml0ZXJpYSxpPWEubGVuZ3RoLHM9ZS5sZW5ndGg7KytvPGk7KXt2YXIgYz1uKGFbb10sdVtvXSk7aWYoYylyZXR1cm4gbz49cz9jOmMqKCJkZXNjIj09ZVtvXT8tMToxKX1yZXR1cm4gdC5pbmRleC1yLmluZGV4fX0sNTE3MSh0LHIsZSl7dmFyIG49ZSg3MTgzKVsiX19jb3JlLWpzX3NoYXJlZF9fIl07dC5leHBvcnRzPW59LDk4MzUodCxyLGUpe3ZhciBuPWUoOTU5Mik7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIGZ1bmN0aW9uKGUsbyl7aWYobnVsbD09ZSlyZXR1cm4gZTtpZighbihlKSlyZXR1cm4gdChlLG8pO2Zvcih2YXIgYT1lLmxlbmd0aCx1PXI/YTotMSxpPU9iamVjdChlKTsocj91LS06Kyt1PGEpJiYhMSE9PW8oaVt1XSx1LGkpOyk7cmV0dXJuIGV9fX0sMTI4KHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gZnVuY3Rpb24ocixlLG4pe2Zvcih2YXIgbz0tMSxhPU9iamVjdChyKSx1PW4ociksaT11Lmxlbmd0aDtpLS07KXt2YXIgcz11W3Q/aTorK29dO2lmKCExPT09ZShhW3NdLHMsYSkpYnJlYWt9cmV0dXJuIHJ9fX0sNTIzNyh0LHIsZSl7dmFyIG49ZSg4ODY5KSxvPWUoNzkzOCksYT1lKDc3NzMpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSx1LGkscyl7dmFyIGM9MSZlLHA9dC5sZW5ndGgsZj1yLmxlbmd0aDtpZihwIT1mJiYhKGMmJmY+cCkpcmV0dXJuITE7dmFyIHY9cy5nZXQodCksbD1zLmdldChyKTtpZih2JiZsKXJldHVybiB2PT1yJiZsPT10O3ZhciBoPS0xLHk9ITAseD0yJmU/bmV3IG46dm9pZCAwO2ZvcihzLnNldCh0LHIpLHMuc2V0KHIsdCk7KytoPHA7KXt2YXIgZD10W2hdLF89cltoXTtpZih1KXZhciBiPWM/dShfLGQsaCxyLHQscyk6dShkLF8saCx0LHIscyk7aWYodm9pZCAwIT09Yil7aWYoYiljb250aW51ZTt5PSExO2JyZWFrfWlmKHgpe2lmKCFvKHIsZnVuY3Rpb24odCxyKXtpZighYSh4LHIpJiYoZD09PXR8fGkoZCx0LGUsdSxzKSkpcmV0dXJuIHgucHVzaChyKX0pKXt5PSExO2JyZWFrfX1lbHNlIGlmKGQhPT1fJiYhaShkLF8sZSx1LHMpKXt5PSExO2JyZWFrfX1yZXR1cm4gcy5kZWxldGUodCkscy5kZWxldGUocikseX19LDM3MjgodCxyLGUpe3ZhciBuPWUoNzE4Nyksbz1lKDY4NDYpLGE9ZSg5ODMwKSx1PWUoNTIzNyksaT1lKDg4ODcpLHM9ZSg4NjI5KSxjPW4/bi5wcm90b3R5cGU6dm9pZCAwLHA9Yz9jLnZhbHVlT2Y6dm9pZCAwO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxuLGMsZix2KXtzd2l0Y2goZSl7Y2FzZSJbb2JqZWN0IERhdGFWaWV3XSI6aWYodC5ieXRlTGVuZ3RoIT1yLmJ5dGVMZW5ndGh8fHQuYnl0ZU9mZnNldCE9ci5ieXRlT2Zmc2V0KXJldHVybiExO3Q9dC5idWZmZXIscj1yLmJ1ZmZlcjtjYXNlIltvYmplY3QgQXJyYXlCdWZmZXJdIjpyZXR1cm4hKHQuYnl0ZUxlbmd0aCE9ci5ieXRlTGVuZ3RofHwhZihuZXcgbyh0KSxuZXcgbyhyKSkpO2Nhc2UiW29iamVjdCBCb29sZWFuXSI6Y2FzZSJbb2JqZWN0IERhdGVdIjpjYXNlIltvYmplY3QgTnVtYmVyXSI6cmV0dXJuIGEoK3QsK3IpO2Nhc2UiW29iamVjdCBFcnJvcl0iOnJldHVybiB0Lm5hbWU9PXIubmFtZSYmdC5tZXNzYWdlPT1yLm1lc3NhZ2U7Y2FzZSJbb2JqZWN0IFJlZ0V4cF0iOmNhc2UiW29iamVjdCBTdHJpbmddIjpyZXR1cm4gdD09cisiIjtjYXNlIltvYmplY3QgTWFwXSI6dmFyIGw9aTtjYXNlIltvYmplY3QgU2V0XSI6dmFyIGg9MSZuO2lmKGx8fChsPXMpLHQuc2l6ZSE9ci5zaXplJiYhaClyZXR1cm4hMTt2YXIgeT12LmdldCh0KTtpZih5KXJldHVybiB5PT1yO258PTIsdi5zZXQodCxyKTt2YXIgeD11KGwodCksbChyKSxuLGMsZix2KTtyZXR1cm4gdi5kZWxldGUodCkseDtjYXNlIltvYmplY3QgU3ltYm9sXSI6aWYocClyZXR1cm4gcC5jYWxsKHQpPT1wLmNhbGwocil9cmV0dXJuITF9fSw1MzU1KHQscixlKXt2YXIgbj1lKDMzMDApLG89T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eTt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyLGUsYSx1LGkpe3ZhciBzPTEmZSxjPW4odCkscD1jLmxlbmd0aDtpZihwIT1uKHIpLmxlbmd0aCYmIXMpcmV0dXJuITE7Zm9yKHZhciBmPXA7Zi0tOyl7dmFyIHY9Y1tmXTtpZighKHM/diBpbiByOm8uY2FsbChyLHYpKSlyZXR1cm4hMX12YXIgbD1pLmdldCh0KSxoPWkuZ2V0KHIpO2lmKGwmJmgpcmV0dXJuIGw9PXImJmg9PXQ7dmFyIHk9ITA7aS5zZXQodCxyKSxpLnNldChyLHQpO2Zvcih2YXIgeD1zOysrZjxwOyl7dmFyIGQ9dFt2PWNbZl1dLF89clt2XTtpZihhKXZhciBiPXM/YShfLGQsdixyLHQsaSk6YShkLF8sdix0LHIsaSk7aWYoISh2b2lkIDA9PT1iP2Q9PT1ffHx1KGQsXyxlLGEsaSk6Yikpe3k9ITE7YnJlYWt9eHx8KHg9ImNvbnN0cnVjdG9yIj09dil9aWYoeSYmIXgpe3ZhciBnPXQuY29uc3RydWN0b3Isaj1yLmNvbnN0cnVjdG9yO2c9PWp8fCEoImNvbnN0cnVjdG9yImluIHQpfHwhKCJjb25zdHJ1Y3RvciJpbiByKXx8ImZ1bmN0aW9uIj09dHlwZW9mIGcmJmcgaW5zdGFuY2VvZiBnJiYiZnVuY3Rpb24iPT10eXBlb2YgaiYmaiBpbnN0YW5jZW9mIGp8fCh5PSExKX1yZXR1cm4gaS5kZWxldGUodCksaS5kZWxldGUocikseX19LDUxOTQodCxyLGUpe3ZhciBuPSJvYmplY3QiPT10eXBlb2YgZS5nJiZlLmcmJmUuZy5PYmplY3Q9PT1PYmplY3QmJmUuZzt0LmV4cG9ydHM9bn0sMzMwMCh0LHIsZSl7dmFyIG49ZSg5MTY5KSxvPWUoOTk0NiksYT1lKDg0MjApO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gbih0LGEsbyl9fSw4MDM3KHQscixlKXt2YXIgbj1lKDU5MTIpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPXQuX19kYXRhX187cmV0dXJuIG4ocik/ZVsic3RyaW5nIj09dHlwZW9mIHI/InN0cmluZyI6Imhhc2giXTplLm1hcH19LDk0MDYodCxyLGUpe3ZhciBuPWUoODkzOCksbz1lKDg0MjApO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtmb3IodmFyIHI9byh0KSxlPXIubGVuZ3RoO2UtLTspe3ZhciBhPXJbZV0sdT10W2FdO3JbZV09W2EsdSxuKHUpXX1yZXR1cm4gcn19LDMxODgodCxyLGUpe3ZhciBuPWUoMzgyOSksbz1lKDE4NzApO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3ZhciBlPW8odCxyKTtyZXR1cm4gbihlKT9lOnZvaWQgMH19LDEwMjkodCxyLGUpe3ZhciBuPWUoNzE4Nyksbz1PYmplY3QucHJvdG90eXBlLGE9by5oYXNPd25Qcm9wZXJ0eSx1PW8udG9TdHJpbmcsaT1uP24udG9TdHJpbmdUYWc6dm9pZCAwO3QuZXhwb3J0cz1mdW5jdGlvbih0KXt2YXIgcj1hLmNhbGwodCxpKSxlPXRbaV07dHJ5e3RbaV09dm9pZCAwO3ZhciBuPSEwfWNhdGNoKHQpe312YXIgbz11LmNhbGwodCk7cmV0dXJuIG4mJihyP3RbaV09ZTpkZWxldGUgdFtpXSksb319LDk5NDYodCxyLGUpe3ZhciBuPWUoODM2KSxvPWUoNjQ5OSksYT1PYmplY3QucHJvdG90eXBlLnByb3BlcnR5SXNFbnVtZXJhYmxlLHU9T2JqZWN0LmdldE93blByb3BlcnR5U3ltYm9scyxpPXU/ZnVuY3Rpb24odCl7cmV0dXJuIG51bGw9PXQ/W106KHQ9T2JqZWN0KHQpLG4odSh0KSxmdW5jdGlvbihyKXtyZXR1cm4gYS5jYWxsKHQscil9KSl9Om87dC5leHBvcnRzPWl9LDgzNTUodCxyLGUpe3ZhciBuPWUoNTE3OCksbz1lKDg1NjEpLGE9ZSgxNDkwKSx1PWUoNjc3NSksaT1lKDg5ODUpLHM9ZSg2OTkwKSxjPWUoMjc1KSxwPSJbb2JqZWN0IE1hcF0iLGY9IltvYmplY3QgUHJvbWlzZV0iLHY9IltvYmplY3QgU2V0XSIsbD0iW29iamVjdCBXZWFrTWFwXSIsaD0iW29iamVjdCBEYXRhVmlld10iLHk9YyhuKSx4PWMobyksZD1jKGEpLF89Yyh1KSxiPWMoaSksZz1zOyhuJiZnKG5ldyBuKG5ldyBBcnJheUJ1ZmZlcigxKSkpIT1ofHxvJiZnKG5ldyBvKSE9cHx8YSYmZyhhLnJlc29sdmUoKSkhPWZ8fHUmJmcobmV3IHUpIT12fHxpJiZnKG5ldyBpKSE9bCkmJihnPWZ1bmN0aW9uKHQpe3ZhciByPXModCksZT0iW29iamVjdCBPYmplY3RdIj09cj90LmNvbnN0cnVjdG9yOnZvaWQgMCxuPWU/YyhlKToiIjtpZihuKXN3aXRjaChuKXtjYXNlIHk6cmV0dXJuIGg7Y2FzZSB4OnJldHVybiBwO2Nhc2UgZDpyZXR1cm4gZjtjYXNlIF86cmV0dXJuIHY7Y2FzZSBiOnJldHVybiBsfXJldHVybiByfSksdC5leHBvcnRzPWd9LDE4NzAodCl7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7cmV0dXJuIG51bGw9PXQ/dm9pZCAwOnRbcl19fSwzODUyKHQscixlKXt2YXIgbj1lKDQ2NzkpLG89ZSg1OTYyKSxhPWUoNDM4MyksdT1lKDQ2ODMpLGk9ZSgxNzg0KSxzPWUoNDY3MSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscixlKXtmb3IodmFyIGM9LTEscD0ocj1uKHIsdCkpLmxlbmd0aCxmPSExOysrYzxwOyl7dmFyIHY9cyhyW2NdKTtpZighKGY9bnVsbCE9dCYmZSh0LHYpKSlicmVhazt0PXRbdl19cmV0dXJuIGZ8fCsrYyE9cD9mOiEhKHA9bnVsbD09dD8wOnQubGVuZ3RoKSYmaShwKSYmdSh2LHApJiYoYSh0KXx8byh0KSl9fSw4MzQyKHQscixlKXt2YXIgbj1lKDE5NjApO3QuZXhwb3J0cz1mdW5jdGlvbigpe3RoaXMuX19kYXRhX189bj9uKG51bGwpOnt9LHRoaXMuc2l6ZT0wfX0sOTE4NCh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dGhpcy5oYXModCkmJmRlbGV0ZSB0aGlzLl9fZGF0YV9fW3RdO3JldHVybiB0aGlzLnNpemUtPXI/MTowLHJ9fSw3NzQ3KHQscixlKXt2YXIgbj1lKDE5NjApLG89T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dGhpcy5fX2RhdGFfXztpZihuKXt2YXIgZT1yW3RdO3JldHVybiJfX2xvZGFzaF9oYXNoX3VuZGVmaW5lZF9fIj09PWU/dm9pZCAwOmV9cmV0dXJuIG8uY2FsbChyLHQpP3JbdF06dm9pZCAwfX0sNDI4Nyh0LHIsZSl7dmFyIG49ZSgxOTYwKSxvPU9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuX19kYXRhX187cmV0dXJuIG4/dm9pZCAwIT09clt0XTpvLmNhbGwocix0KX19LDcodCxyLGUpe3ZhciBuPWUoMTk2MCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9dGhpcy5fX2RhdGFfXztyZXR1cm4gdGhpcy5zaXplKz10aGlzLmhhcyh0KT8wOjEsZVt0XT1uJiZ2b2lkIDA9PT1yPyJfX2xvZGFzaF9oYXNoX3VuZGVmaW5lZF9fIjpyLHRoaXN9fSw0NjgzKHQpe3ZhciByPS9eKD86MHxbMS05XVxkKikkLzt0LmV4cG9ydHM9ZnVuY3Rpb24odCxlKXt2YXIgbj10eXBlb2YgdDtyZXR1cm4hIShlPW51bGw9PWU/OTAwNzE5OTI1NDc0MDk5MTplKSYmKCJudW1iZXIiPT1ufHwic3ltYm9sIiE9biYmci50ZXN0KHQpKSYmdD4tMSYmdCUxPT0wJiZ0PGV9fSw5NjY4KHQscixlKXt2YXIgbj1lKDQzODMpLG89ZSgzNTM2KSxhPS9cLnxcWyg/OlteW1xdXSp8KFsiJ10pKD86KD8hXDEpW15cXF18XFwuKSo/XDEpXF0vLHU9L15cdyokLzt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtpZihuKHQpKXJldHVybiExO3ZhciBlPXR5cGVvZiB0O3JldHVybiEoIm51bWJlciIhPWUmJiJzeW1ib2wiIT1lJiYiYm9vbGVhbiIhPWUmJm51bGwhPXQmJiFvKHQpKXx8dS50ZXN0KHQpfHwhYS50ZXN0KHQpfHxudWxsIT1yJiZ0IGluIE9iamVjdChyKX19LDU5MTIodCl7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXR5cGVvZiB0O3JldHVybiJzdHJpbmciPT1yfHwibnVtYmVyIj09cnx8InN5bWJvbCI9PXJ8fCJib29sZWFuIj09cj8iX19wcm90b19fIiE9PXQ6bnVsbD09PXR9fSw3MjM0KHQscixlKXt2YXIgbixvPWUoNTE3MSksYT0obj0vW14uXSskLy5leGVjKG8mJm8ua2V5cyYmby5rZXlzLklFX1BST1RPfHwiIikpPyJTeW1ib2woc3JjKV8xLiIrbjoiIjt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuISFhJiZhIGluIHR9fSw4MDg5KHQpe3ZhciByPU9iamVjdC5wcm90b3R5cGU7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciBlPXQmJnQuY29uc3RydWN0b3I7cmV0dXJuIHQ9PT0oImZ1bmN0aW9uIj09dHlwZW9mIGUmJmUucHJvdG90eXBlfHxyKX19LDg5MzgodCxyLGUpe3ZhciBuPWUoNjAxNSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiB0PT10JiYhbih0KX19LDc3NTIodCl7dC5leHBvcnRzPWZ1bmN0aW9uKCl7dGhpcy5fX2RhdGFfXz1bXSx0aGlzLnNpemU9MH19LDcxOCh0LHIsZSl7dmFyIG49ZSg0MzUpLG89QXJyYXkucHJvdG90eXBlLnNwbGljZTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dGhpcy5fX2RhdGFfXyxlPW4ocix0KTtyZXR1cm4hKGU8MHx8KGU9PXIubGVuZ3RoLTE/ci5wb3AoKTpvLmNhbGwocixlLDEpLC0tdGhpcy5zaXplLDApKX19LDc4NDkodCxyLGUpe3ZhciBuPWUoNDM1KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dGhpcy5fX2RhdGFfXyxlPW4ocix0KTtyZXR1cm4gZTwwP3ZvaWQgMDpyW2VdWzFdfX0sMzk1Nyh0LHIsZSl7dmFyIG49ZSg0MzUpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gbih0aGlzLl9fZGF0YV9fLHQpPi0xfX0sODQ1KHQscixlKXt2YXIgbj1lKDQzNSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9dGhpcy5fX2RhdGFfXyxvPW4oZSx0KTtyZXR1cm4gbzwwPygrK3RoaXMuc2l6ZSxlLnB1c2goW3Qscl0pKTplW29dWzFdPXIsdGhpc319LDU2NzQodCxyLGUpe3ZhciBuPWUoMzYxNSksbz1lKDc4OSksYT1lKDg1NjEpO3QuZXhwb3J0cz1mdW5jdGlvbigpe3RoaXMuc2l6ZT0wLHRoaXMuX19kYXRhX189e2hhc2g6bmV3IG4sbWFwOm5ldyhhfHxvKSxzdHJpbmc6bmV3IG59fX0sMTAzNih0LHIsZSl7dmFyIG49ZSg4MDM3KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9bih0aGlzLHQpLmRlbGV0ZSh0KTtyZXR1cm4gdGhpcy5zaXplLT1yPzE6MCxyfX0sMzEodCxyLGUpe3ZhciBuPWUoODAzNyk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBuKHRoaXMsdCkuZ2V0KHQpfX0sMTkwNyh0LHIsZSl7dmFyIG49ZSg4MDM3KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG4odGhpcyx0KS5oYXModCl9fSw5NzEodCxyLGUpe3ZhciBuPWUoODAzNyk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9bih0aGlzLHQpLG89ZS5zaXplO3JldHVybiBlLnNldCh0LHIpLHRoaXMuc2l6ZSs9ZS5zaXplPT1vPzA6MSx0aGlzfX0sODg4Nyh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9LTEsZT1BcnJheSh0LnNpemUpO3JldHVybiB0LmZvckVhY2goZnVuY3Rpb24odCxuKXtlWysrcl09W24sdF19KSxlfX0sNjQ1OSh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gZnVuY3Rpb24oZSl7cmV0dXJuIG51bGwhPWUmJmVbdF09PT1yJiYodm9pZCAwIT09cnx8dCBpbiBPYmplY3QoZSkpfX19LDIxMTAodCxyLGUpe3ZhciBuPWUoOTA5OCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPW4odCxmdW5jdGlvbih0KXtyZXR1cm4gNTAwPT09ZS5zaXplJiZlLmNsZWFyKCksdH0pLGU9ci5jYWNoZTtyZXR1cm4gcn19LDE5NjAodCxyLGUpe3ZhciBuPWUoMzE4OCkoT2JqZWN0LCJjcmVhdGUiKTt0LmV4cG9ydHM9bn0sNjEyOCh0LHIsZSl7dmFyIG49ZSgxNDI5KShPYmplY3Qua2V5cyxPYmplY3QpO3QuZXhwb3J0cz1ufSwzMjcxKHQscixlKXt0PWUubm1kKHQpO3ZhciBuPWUoNTE5NCksbz1yJiYhci5ub2RlVHlwZSYmcixhPW8mJnQmJiF0Lm5vZGVUeXBlJiZ0LHU9YSYmYS5leHBvcnRzPT09byYmbi5wcm9jZXNzLGk9ZnVuY3Rpb24oKXt0cnl7cmV0dXJuIGEmJmEucmVxdWlyZSYmYS5yZXF1aXJlKCJ1dGlsIikudHlwZXN8fHUmJnUuYmluZGluZyYmdS5iaW5kaW5nKCJ1dGlsIil9Y2F0Y2godCl7fX0oKTt0LmV4cG9ydHM9aX0sODcwNCh0KXt2YXIgcj1PYmplY3QucHJvdG90eXBlLnRvU3RyaW5nO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gci5jYWxsKHQpfX0sMTQyOSh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gZnVuY3Rpb24oZSl7cmV0dXJuIHQocihlKSl9fX0sNzE4Myh0LHIsZSl7dmFyIG49ZSg1MTk0KSxvPSJvYmplY3QiPT10eXBlb2Ygc2VsZiYmc2VsZiYmc2VsZi5PYmplY3Q9PT1PYmplY3QmJnNlbGYsYT1ufHxvfHxGdW5jdGlvbigicmV0dXJuIHRoaXMiKSgpO3QuZXhwb3J0cz1hfSw2ODEwKHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gdGhpcy5fX2RhdGFfXy5zZXQodCwiX19sb2Rhc2hfaGFzaF91bmRlZmluZWRfXyIpLHRoaXN9fSw1ODEzKHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gdGhpcy5fX2RhdGFfXy5oYXModCl9fSw4NjI5KHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0KXt2YXIgcj0tMSxlPUFycmF5KHQuc2l6ZSk7cmV0dXJuIHQuZm9yRWFjaChmdW5jdGlvbih0KXtlWysrcl09dH0pLGV9fSw4OTI2KHQscixlKXt2YXIgbj1lKDc4OSk7dC5leHBvcnRzPWZ1bmN0aW9uKCl7dGhpcy5fX2RhdGFfXz1uZXcgbix0aGlzLnNpemU9MH19LDI2ODAodCl7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3ZhciByPXRoaXMuX19kYXRhX18sZT1yLmRlbGV0ZSh0KTtyZXR1cm4gdGhpcy5zaXplPXIuc2l6ZSxlfX0sMzg1MSh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIHRoaXMuX19kYXRhX18uZ2V0KHQpfX0sODQyMyh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIHRoaXMuX19kYXRhX18uaGFzKHQpfX0sMzk2Nyh0LHIsZSl7dmFyIG49ZSg3ODkpLG89ZSg4NTYxKSxhPWUoMTQ1MSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQscil7dmFyIGU9dGhpcy5fX2RhdGFfXztpZihlIGluc3RhbmNlb2Ygbil7dmFyIHU9ZS5fX2RhdGFfXztpZighb3x8dS5sZW5ndGg8MTk5KXJldHVybiB1LnB1c2goW3Qscl0pLHRoaXMuc2l6ZT0rK2Uuc2l6ZSx0aGlzO2U9dGhpcy5fX2RhdGFfXz1uZXcgYSh1KX1yZXR1cm4gZS5zZXQodCxyKSx0aGlzLnNpemU9ZS5zaXplLHRoaXN9fSw0MTIodCxyLGUpe3ZhciBuPWUoMjExMCksbz0vW14uW1xdXSt8XFsoPzooLT9cZCsoPzpcLlxkKyk/KXwoWyInXSkoKD86KD8hXDIpW15cXF18XFwuKSo/KVwyKVxdfCg/PSg/OlwufFxbXF0pKD86XC58XFtcXXwkKSkvZyxhPS9cXChcXCk/L2csdT1uKGZ1bmN0aW9uKHQpe3ZhciByPVtdO3JldHVybiA0Nj09PXQuY2hhckNvZGVBdCgwKSYmci5wdXNoKCIiKSx0LnJlcGxhY2UobyxmdW5jdGlvbih0LGUsbixvKXtyLnB1c2gobj9vLnJlcGxhY2UoYSwiJDEiKTplfHx0KX0pLHJ9KTt0LmV4cG9ydHM9dX0sNDY3MSh0LHIsZSl7dmFyIG49ZSgzNTM2KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7aWYoInN0cmluZyI9PXR5cGVvZiB0fHxuKHQpKXJldHVybiB0O3ZhciByPXQrIiI7cmV0dXJuIjAiPT1yJiYxL3Q9PS0xLzA/Ii0wIjpyfX0sMjc1KHQpe3ZhciByPUZ1bmN0aW9uLnByb3RvdHlwZS50b1N0cmluZzt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7aWYobnVsbCE9dCl7dHJ5e3JldHVybiByLmNhbGwodCl9Y2F0Y2godCl7fXRyeXtyZXR1cm4gdCsiIn1jYXRjaCh0KXt9fXJldHVybiIifX0sOTgzMCh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCxyKXtyZXR1cm4gdD09PXJ8fHQhPXQmJnIhPXJ9fSw5NjUwKHQscixlKXt2YXIgbj1lKDI3NDgpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSl7dmFyIG89bnVsbD09dD92b2lkIDA6bih0LHIpO3JldHVybiB2b2lkIDA9PT1vP2U6b319LDI5OTModCxyLGUpe3ZhciBuPWUoMTYwNyksbz1lKDM4NTIpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIpe3JldHVybiBudWxsIT10JiZvKHQscixuKX19LDkwOTAodCl7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiB0fX0sNTk2Mih0LHIsZSl7dmFyIG49ZSg2MjUyKSxvPWUoNjE4NCksYT1PYmplY3QucHJvdG90eXBlLHU9YS5oYXNPd25Qcm9wZXJ0eSxpPWEucHJvcGVydHlJc0VudW1lcmFibGUscz1uKGZ1bmN0aW9uKCl7cmV0dXJuIGFyZ3VtZW50c30oKSk/bjpmdW5jdGlvbih0KXtyZXR1cm4gbyh0KSYmdS5jYWxsKHQsImNhbGxlZSIpJiYhaS5jYWxsKHQsImNhbGxlZSIpfTt0LmV4cG9ydHM9c30sNDM4Myh0KXt2YXIgcj1BcnJheS5pc0FycmF5O3QuZXhwb3J0cz1yfSw5NTkyKHQscixlKXt2YXIgbj1lKDQzNjApLG89ZSgxNzg0KTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG51bGwhPXQmJm8odC5sZW5ndGgpJiYhbih0KX19LDgwOTgodCxyLGUpe3Q9ZS5ubWQodCk7dmFyIG49ZSg3MTgzKSxvPWUoMTMyOSksYT1yJiYhci5ub2RlVHlwZSYmcix1PWEmJnQmJiF0Lm5vZGVUeXBlJiZ0LGk9dSYmdS5leHBvcnRzPT09YT9uLkJ1ZmZlcjp2b2lkIDAscz0oaT9pLmlzQnVmZmVyOnZvaWQgMCl8fG87dC5leHBvcnRzPXN9LDQzNjAodCxyLGUpe3ZhciBuPWUoNjk5MCksbz1lKDYwMTUpO3QuZXhwb3J0cz1mdW5jdGlvbih0KXtpZighbyh0KSlyZXR1cm4hMTt2YXIgcj1uKHQpO3JldHVybiJbb2JqZWN0IEZ1bmN0aW9uXSI9PXJ8fCJbb2JqZWN0IEdlbmVyYXRvckZ1bmN0aW9uXSI9PXJ8fCJbb2JqZWN0IEFzeW5jRnVuY3Rpb25dIj09cnx8IltvYmplY3QgUHJveHldIj09cn19LDE3ODQodCl7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiJudW1iZXIiPT10eXBlb2YgdCYmdD4tMSYmdCUxPT0wJiZ0PD05MDA3MTk5MjU0NzQwOTkxfX0sNjAxNSh0KXt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7dmFyIHI9dHlwZW9mIHQ7cmV0dXJuIG51bGwhPXQmJigib2JqZWN0Ij09cnx8ImZ1bmN0aW9uIj09cil9fSw2MTg0KHQpe3QuZXhwb3J0cz1mdW5jdGlvbih0KXtyZXR1cm4gbnVsbCE9dCYmIm9iamVjdCI9PXR5cGVvZiB0fX0sMzUzNih0LHIsZSl7dmFyIG49ZSg2OTkwKSxvPWUoNjE4NCk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiJzeW1ib2wiPT10eXBlb2YgdHx8byh0KSYmIltvYmplY3QgU3ltYm9sXSI9PW4odCl9fSwzOTA1KHQscixlKXt2YXIgbj1lKDQyNzEpLG89ZSg2MTQzKSxhPWUoMzI3MSksdT1hJiZhLmlzVHlwZWRBcnJheSxpPXU/byh1KTpuO3QuZXhwb3J0cz1pfSw4NDIwKHQscixlKXt2YXIgbj1lKDY2MSksbz1lKDk5NjYpLGE9ZSg5NTkyKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIGEodCk/bih0KTpvKHQpfX0sOTA5OCh0LHIsZSl7dmFyIG49ZSgxNDUxKTtmdW5jdGlvbiBvKHQscil7aWYoImZ1bmN0aW9uIiE9dHlwZW9mIHR8fG51bGwhPXImJiJmdW5jdGlvbiIhPXR5cGVvZiByKXRocm93IG5ldyBUeXBlRXJyb3IoIkV4cGVjdGVkIGEgZnVuY3Rpb24iKTt2YXIgZT1mdW5jdGlvbigpe3ZhciBuPWFyZ3VtZW50cyxvPXI/ci5hcHBseSh0aGlzLG4pOm5bMF0sYT1lLmNhY2hlO2lmKGEuaGFzKG8pKXJldHVybiBhLmdldChvKTt2YXIgdT10LmFwcGx5KHRoaXMsbik7cmV0dXJuIGUuY2FjaGU9YS5zZXQobyx1KXx8YSx1fTtyZXR1cm4gZS5jYWNoZT1uZXcoby5DYWNoZXx8biksZX1vLkNhY2hlPW4sdC5leHBvcnRzPW99LDI5NTkodCxyLGUpe3ZhciBuPWUoMjcxNyksbz1lKDQzODMpO3QuZXhwb3J0cz1mdW5jdGlvbih0LHIsZSxhKXtyZXR1cm4gbnVsbD09dD9bXToobyhyKXx8KHI9bnVsbD09cj9bXTpbcl0pLG8oZT1hP3ZvaWQgMDplKXx8KGU9bnVsbD09ZT9bXTpbZV0pLG4odCxyLGUpKX19LDM2ODEodCxyLGUpe3ZhciBuPWUoNTM1MSksbz1lKDQ5NTMpLGE9ZSg5NjY4KSx1PWUoNDY3MSk7dC5leHBvcnRzPWZ1bmN0aW9uKHQpe3JldHVybiBhKHQpP24odSh0KSk6byh0KX19LDY0OTkodCl7dC5leHBvcnRzPWZ1bmN0aW9uKCl7cmV0dXJuW119fSwxMzI5KHQpe3QuZXhwb3J0cz1mdW5jdGlvbigpe3JldHVybiExfX0sMjgzMih0LHIsZSl7dmFyIG49ZSg0NzQyKTt0LmV4cG9ydHM9ZnVuY3Rpb24odCl7cmV0dXJuIG51bGw9PXQ/IiI6bih0KX19fSxyPXt9O2Z1bmN0aW9uIGUobil7dmFyIG89cltuXTtpZih2b2lkIDAhPT1vKXJldHVybiBvLmV4cG9ydHM7dmFyIGE9cltuXT17aWQ6bixsb2FkZWQ6ITEsZXhwb3J0czp7fX07cmV0dXJuIHRbbl0oYSxhLmV4cG9ydHMsZSksYS5sb2FkZWQ9ITAsYS5leHBvcnRzfWUubj10PT57dmFyIHI9dCYmdC5fX2VzTW9kdWxlPygpPT50LmRlZmF1bHQ6KCk9PnQ7cmV0dXJuIGUuZChyLHthOnJ9KSxyfSxlLmQ9KHQscik9Pntmb3IodmFyIG4gaW4gcillLm8ocixuKSYmIWUubyh0LG4pJiZPYmplY3QuZGVmaW5lUHJvcGVydHkodCxuLHtlbnVtZXJhYmxlOiEwLGdldDpyW25dfSl9LGUuZz1mdW5jdGlvbigpe2lmKCJvYmplY3QiPT10eXBlb2YgZ2xvYmFsVGhpcylyZXR1cm4gZ2xvYmFsVGhpczt0cnl7cmV0dXJuIHRoaXN8fG5ldyBGdW5jdGlvbigicmV0dXJuIHRoaXMiKSgpfWNhdGNoKHQpe2lmKCJvYmplY3QiPT10eXBlb2Ygd2luZG93KXJldHVybiB3aW5kb3d9fSgpLGUubz0odCxyKT0+T2JqZWN0LnByb3RvdHlwZS5oYXNPd25Qcm9wZXJ0eS5jYWxsKHQsciksZS5ubWQ9dD0+KHQucGF0aHM9W10sdC5jaGlsZHJlbnx8KHQuY2hpbGRyZW49W10pLHQpO3ZhciBuPWUoMjk1OSksbz1lLm4obiksYT1lKDk2NTApLHU9ZS5uKGEpO2NvbnN0IGk9KHtkYXRhOnQsYXJndW1lbnRzOntzb3J0OnIsZGlyOmUsb25seU91dE9mU3RvY2s6bix2ZW5DYXRlZ29yeTphfX0pPT57bGV0IGk9dC5pdGVtcy5ub2Rlcy5tYXAodD0+KHtpZDp0LmlkLGNvZGU6dC5jb2RlLG5hbWU6dC5uYW1lLHZlbkNhdGVnb3J5OnQudmVuQ2F0ZWdvcnksU09IOnQuc3RhdHM/LnN0b2NrT25IYW5kPz8wLGxvY2F0aW9uTmFtZTp0Lml0ZW1TdG9yZVByb3BlcnRpZXM/LmRlZmF1bHRMb2NhdGlvbj8uY29kZT8/IiIsY2F0ZWdvcnlOYW1lOnQuY2F0ZWdvcmllcz8ubWFwKHQ9PnQubmFtZSkuam9pbigiLCAiKT8/IiJ9KSk7biYmKGk9aS5maWx0ZXIodD0+MD09PXQuU09IKSksYSYmKGk9aS5maWx0ZXIodD0+e3N3aXRjaChhKXtjYXNlIlYiOnJldHVybiJWIj09PXQudmVuQ2F0ZWdvcnk7Y2FzZSJFIjpyZXR1cm4iRSI9PT10LnZlbkNhdGVnb3J5O2Nhc2UiTiI6cmV0dXJuIk4iPT09dC52ZW5DYXRlZ29yeTtjYXNlIlZfT1JfRSI6cmV0dXJuIlYiPT09dC52ZW5DYXRlZ29yeXx8IkUiPT09dC52ZW5DYXRlZ29yeTtjYXNlIlZfRV9OIjpyZXR1cm4iViI9PT10LnZlbkNhdGVnb3J5fHwiRSI9PT10LnZlbkNhdGVnb3J5fHwiTiI9PT10LnZlbkNhdGVnb3J5O2Nhc2UiTk9ORSI6cmV0dXJuIk5PVF9BU1NJR05FRCI9PT10LnZlbkNhdGVnb3J5fHwiTm90QXNzaWduZWQiPT09dC52ZW5DYXRlZ29yeTtkZWZhdWx0OnJldHVybiEwfX0pKTtjb25zdCBzPSgodCxyLGUpPT5yP28oKSh0LFt0PT57Y29uc3QgZT11KCkodCxyKTtyZXR1cm4ic3RyaW5nIj09dHlwZW9mIGU/ZS50b0xvd2VyQ2FzZSgpOmV9XSxbZXx8ImFzYyJdKTp0KShpLHI/PyJuYW1lIixlPz92b2lkIDApO3JldHVybntkYXRhOntpdGVtczp7bm9kZXM6c319fX07ZXhwb3J0e2kgYXMgY29udmVydF9kYXRhfTs=",
+          "convert_data_type": "BoaJs"
+        },
+        "entries": {
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 portrait;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container > table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Item name\")}}</td>\n        <td>{{t(k=\"report.item-location\", f=\"Item location\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"label.category\", f=\"Category\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td>{{item.locationName}}</td>\n        <td>{{item.SOH | round(precision=1)}}</td>\n        <td>{{item.categoryName}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query ItemList(\n  $storeId: String!\n  $itemCode: String\n  $itemName: String\n  $masterListId: String\n  $isActive: Boolean\n) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: $isActive\n      type: { equalTo: STOCK }\n      masterListId: { equalTo: $masterListId }\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        venCategory\n        stats: stats(storeId: $storeId) {\n          stockOnHand\n        }\n        categories {\n          name\n        }\n        itemStoreProperties: itemStoreProperties(storeId: $storeId) {\n          defaultLocation {\n            code\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": "StockAndItems",
+      "argument_schema_id": "for_report_item-list_2_17_0_false",
+      "comment": null,
+      "is_custom": false,
+      "version": "2.17.0",
+      "code": "item-list",
+      "form_schema": {
+        "id": "for_report_item-list_2_17_0_false",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ItemListFilters"
+            }
+          ],
+          "definitions": {
+            "ItemListFilters": {
+              "properties": {
+                "dir": {
+                  "description": "sort by dir",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "format": "SortToggle",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "isActive": {
+                  "default": true,
+                  "description": "Is Active",
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "itemCode": {
+                  "description": "Item Code",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "itemName": {
+                  "description": "Item Name",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "masterListId": {
+                  "description": "Master List",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "onlyOutOfStock": {
+                  "default": false,
+                  "description": "Only out of stock",
+                  "type": "boolean"
+                },
+                "sort": {
+                  "description": "sort by",
+                  "enum": [
+                    "name",
+                    "code",
+                    "SOH",
+                    "locationName",
+                    "categoryName"
+                  ],
+                  "type": "string"
+                },
+                "venCategory": {
+                  "description": "VEN Category",
+                  "enum": [
+                    "V",
+                    "E",
+                    "N",
+                    "V_OR_E",
+                    "V_E_N",
+                    "NONE"
+                  ],
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "type": "object"
+        },
+        "ui_schema": {
+          "elements": [
+            {
+              "label": "T#report.item-code",
+              "options": {
+                "useDebounce": false
+              },
+              "scope": "#/properties/itemCode",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.item-name",
+              "scope": "#/properties/itemName",
+              "type": "Control"
+            },
+            {
+              "label": "T#label.master-list",
+              "scope": "#/properties/masterListId",
+              "type": "MasterListSearch"
+            },
+            {
+              "label": "T#report.include-inactive-items",
+              "options": {
+                "invert": true
+              },
+              "scope": "#/properties/isActive",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.only-out-of-stock",
+              "scope": "#/properties/onlyOutOfStock",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.ven-category",
+              "options": {
+                "show": [
+                  [
+                    "V",
+                    "T#report.ven-vital"
+                  ],
+                  [
+                    "E",
+                    "T#report.ven-essential"
+                  ],
+                  [
+                    "N",
+                    "T#report.ven-necessary"
+                  ],
+                  [
+                    "V_OR_E",
+                    "T#report.ven-v-or-e"
+                  ],
+                  [
+                    "V_E_N",
+                    "T#report.ven-v-e-n"
+                  ],
+                  [
+                    "NONE",
+                    "T#report.ven-none"
+                  ]
+                ]
+              },
+              "scope": "#/properties/venCategory",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.sort-by",
+              "options": {
+                "show": [
+                  [
+                    "name",
+                    "T#report.item-name"
+                  ],
+                  [
+                    "code",
+                    "T#label.code"
+                  ],
+                  [
+                    "SOH",
+                    "T#report.stock-on-hand"
+                  ],
+                  [
+                    "locationName",
+                    "T#report.item-location"
+                  ],
+                  [
+                    "categoryName",
+                    "T#label.category"
+                  ]
+                ]
+              },
+              "scope": "#/properties/sort",
+              "type": "Control"
+            },
+            {
+              "label": "T#report.sort-direction",
+              "scope": "#/properties/dir",
+              "type": "SortToggle"
+            }
+          ],
+          "type": "VerticalLayout"
+        }
+      },
+      "excel_template_buffer": null
+    },
+    {
+      "id": "outbound-shipments_2_10_2_false",
       "name": "Outbound Shipments",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -545,28 +789,28 @@
               "variables": null
             }
           },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
               "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.customer\", f=\"Customer\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"description.pack-cost\", f=\"Cost price per pack\")}}</td>\n        <td>{{t(k=\"label.total-cost\", f=\"Total cost\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.otherPartyName}}</td>\n        <td>{{line.itemCode}}</td>\n        <td>{{line.itemName}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {%if line.expiryDate %}\n          {{line.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          {% endif %}\n        </td>\n        <td style=\"text-align: right\">{{line.packSize}}</td>\n        <td style=\"text-align: right\">{{line.numberOfPacks}}</td>\n        <td style=\"text-align: right\">{{line.numberOfUnits}}</td>\n        <td style=\"text-align: right\">{{line.costPricePerPack}}</td>\n        <td style=\"text-align: right\">{{line.totalCost}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
             }
-          },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
           }
         }
       },
       "context": "REPORT",
       "sub_context": "Distribution",
-      "argument_schema_id": "for_report_outbound-shipments_2_10_1_false",
+      "argument_schema_id": "for_report_outbound-shipments_2_10_2_false",
       "comment": null,
       "is_custom": false,
-      "version": "2.10.1",
+      "version": "2.10.2",
       "code": "outbound-shipments",
       "form_schema": {
-        "id": "for_report_outbound-shipments_2_10_1_false",
+        "id": "for_report_outbound-shipments_2_10_2_false",
         "type": "reportArgument",
         "json_schema": {
           "$schema": "http://json-schema.org/draft-07/schema#",
@@ -623,6 +867,7 @@
             {
               "label": "T#label.to-date",
               "options": {
+                "dateAsEndOfDay": true,
                 "dateOnly": true,
                 "disableFuture": true,
                 "min": "#/properties/after"
@@ -639,6 +884,7 @@
     {
       "id": "inventory_adjustments_2_14_0_false",
       "name": "Inventory Adjustments",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -651,12 +897,9 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "header.html": {
-            "type": "TeraTemplate",
-            "data": {
-              "output": "Html",
-              "template": "<style>\n\t{% include \"style.css\" %}</style>\n\n<div class=\"header-container\">\n\t<div class=\"header-title\">\n\t\t{{ t(k=\"report.inventory-adjustments\", f=\"Inventory Adjustments Report\") }}\n\t</div>\n\t<div class=\"header-info\">\n\t\t<div class=\"header-info-left\">\n\t\t\t<span class=\"header-label\">{{ t(k=\"label.store\", f=\"Store\") }}:</span>\n\t\t\t<span>{{ data.store.storeName }}</span>\n\t\t</div>\n\t\t<div class=\"header-info-right\">\n\t\t\t<span class=\"header-label\">{{ t(k=\"label.timeframe\", f=\"Timeframe\") }}:</span>\n\t\t\t{% if data.date.from and data.date.to %}\n\t\t\t\t<span>{{ data.date.from | date(format=\"%d/%m/%Y\") }}\n\t\t\t\t\t-\n\t\t\t\t\t{{ data.date.to | date(format=\"%d/%m/%Y\") }}</span>\n\t\t\t{% elif data.date.from %}\n\t\t\t\t<span>{{ t(k=\"label.from\", f=\"From\") }}\n\t\t\t\t\t{{ data.date.from | date(format=\"%d/%m/%Y\") }}</span>\n\t\t\t{% elif data.date.to %}\n\t\t\t\t<span>{{ t(k=\"label.to\", f=\"To\") }}\n\t\t\t\t\t{{ data.date.to | date(format=\"%d/%m/%Y\") }}</span>\n\t\t\t{% else %}\n\t\t\t\t<span>{{ t(k=\"label.all-dates\", f=\"All dates\") }}</span>\n\t\t\t{% endif %}\n\t\t</div>\n\t</div>\n</div>\n"
-            }
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #000;\n}\n\n.container table {\n  width: 100%;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n}\n\n.container table tr.heading td,\n.container table tr.heading th {\n  background: #eee;\n  border-bottom: 1px solid #ddd;\n  font-weight: bold;\n  color: #000;\n}\n\n.container table td.status span {\n  display: inline;\n  padding: 5px 10px;\n  border-radius: 4px;\n}\n\n/* Header styles */\n.header-container {\n  width: 100%;\n  padding: 10px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  font-size: 10pt;\n  color: #000;\n}\n\n.header-title {\n  font-size: 20pt;\n  font-weight: bold;\n  text-align: center;\n  margin-bottom: 10px;\n  color: #000;\n}\n\n.header-info {\n  display: flex;\n  justify-content: space-between;\n  padding: 5px 0;\n  border-bottom: 1px solid #ccc;\n}\n\n.header-info-left {\n  text-align: left;\n}\n\n.header-info-right {\n  text-align: right;\n}\n\n.header-label {\n  font-weight: bold;\n}"
           },
           "template.html": {
             "type": "TeraTemplate",
@@ -665,15 +908,18 @@
               "template": "<style>\n\t{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n\t<table>\n\t\t<thead>\n\t\t\t<tr class=\"heading\">\n\t\t\t\t<th>{{t(k=\"label.code\", f=\"Code\")}}</th>\n\t\t\t\t<th>{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.batch\", f=\"Batch\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.location\", f=\"Location\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.snapshot-num-of-packs\",f=\"Snapshot Packs\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.counted-num-of-packs\",f=\"Counted Packs\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.adjustments\",f=\"Adjustments\")}}</th>\n\t\t\t\t<th>{{t(k=\"label.reason\",f=\"Reason\")}}</th>\n\t\t\t</tr>\n\t\t</thead>\n\t\t<tbody>\n\t\t\t{% for line in data.lines %}\n\t\t\t\t<tr>\n\t\t\t\t\t<td>{{ line.item.code }}</td>\n\t\t\t\t\t<td>{{ line.item.name }}</td>\n\t\t\t\t\t<td>{{ line.batch | default(value='-') }}</td>\n\t\t\t\t\t<td>\n\t\t\t\t\t\t{% if line.expiryDate %}\n\t\t\t\t\t\t\t{{ line.expiryDate | date(format=\"%d/%m/%Y\") }}\n\t\t\t\t\t\t{% else %}\n\t\t\t\t\t\t\t-\n\t\t\t\t\t\t{% endif %}\n\t\t\t\t\t</td>\n\t\t\t\t\t<td>{{ line.location.code | default(value='-') }}</td>\n\t\t\t\t\t<td style=\"text-align: right\">{{ line.snapshotPacks | default(value='-') }}</td>\n\t\t\t\t\t<td style=\"text-align: right\">{{ line.countedPacks | default(value='-') }}</td>\n\t\t\t\t\t<td style=\"text-align: right\">{{ line.adjustmentPacks | round(precision=2) }}</td>\n\t\t\t\t\t<td>{{ line.inventoryAdjustmentReason.reason | default(value='') }}</td>\n\t\t\t\t</tr>\n\t\t\t{% endfor %}\n\t\t</tbody>\n\t</table>\n</div>\n"
             }
           },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #000;\n}\n\n.container table {\n  width: 100%;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n}\n\n.container table tr.heading td,\n.container table tr.heading th {\n  background: #eee;\n  border-bottom: 1px solid #ddd;\n  font-weight: bold;\n  color: #000;\n}\n\n.container table td.status span {\n  display: inline;\n  padding: 5px 10px;\n  border-radius: 4px;\n}\n\n/* Header styles */\n.header-container {\n  width: 100%;\n  padding: 10px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  font-size: 10pt;\n  color: #000;\n}\n\n.header-title {\n  font-size: 20pt;\n  font-weight: bold;\n  text-align: center;\n  margin-bottom: 10px;\n  color: #000;\n}\n\n.header-info {\n  display: flex;\n  justify-content: space-between;\n  padding: 5px 0;\n  border-bottom: 1px solid #ccc;\n}\n\n.header-info-left {\n  text-align: left;\n}\n\n.header-info-right {\n  text-align: right;\n}\n\n.header-label {\n  font-weight: bold;\n}"
-          },
           "query.graphql": {
             "type": "GraphGLQuery",
             "data": {
               "query": "query InventoryAdjustments(\n  $storeId: String!\n  $adjustmentDateFrom: DateTime\n  $adjustmentDateTo: DateTime\n) {\n  # Query inventory adjustment invoices\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalAny: [INVENTORY_ADDITION, INVENTORY_REDUCTION] }\n      verifiedDatetime: {\n        afterOrEqualTo: $adjustmentDateFrom\n        beforeOrEqualTo: $adjustmentDateTo\n      }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        invoiceNumber\n        type\n        verifiedDatetime\n        lines {\n          ... on InvoiceLineConnector {\n            nodes {\n              id\n              itemCode\n              itemName\n              batch\n              expiryDate\n              numberOfPacks\n              packSize\n              location {\n                id\n                code\n                name\n              }\n              stockLine {\n                id\n              }\n              inventoryAdjustmentReason {\n                id\n                reason\n              }\n              item {\n                id\n                code\n                name\n                unitName\n                masterLists(storeId: $storeId) {\n                  id\n                  name\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n  # Query finalised stocktakes that have inventory adjustments\n  stocktakes(\n    storeId: $storeId\n    filter: {\n      status: { equalTo: FINALISED }\n      finalisedDatetime: {\n        afterOrEqualTo: $adjustmentDateFrom\n        beforeOrEqualTo: $adjustmentDateTo\n      }\n    }\n  ) {\n    ... on StocktakeConnector {\n      nodes {\n        id\n        stocktakeNumber\n        finalisedDatetime\n        inventoryAdditionId\n        inventoryReductionId\n        lines {\n          ... on StocktakeLineConnector {\n            nodes {\n              id\n              snapshotNumberOfPacks\n              countedNumberOfPacks\n              stockLine {\n                id\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      id\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        address1\n        address2\n        code\n        email\n        phone\n      }\n    }\n  }\n}\n",
               "variables": null
+            }
+          },
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n\t{% include \"style.css\" %}</style>\n\n<div class=\"header-container\">\n\t<div class=\"header-title\">\n\t\t{{ t(k=\"report.inventory-adjustments\", f=\"Inventory Adjustments Report\") }}\n\t</div>\n\t<div class=\"header-info\">\n\t\t<div class=\"header-info-left\">\n\t\t\t<span class=\"header-label\">{{ t(k=\"label.store\", f=\"Store\") }}:</span>\n\t\t\t<span>{{ data.store.storeName }}</span>\n\t\t</div>\n\t\t<div class=\"header-info-right\">\n\t\t\t<span class=\"header-label\">{{ t(k=\"label.timeframe\", f=\"Timeframe\") }}:</span>\n\t\t\t{% if data.date.from and data.date.to %}\n\t\t\t\t<span>{{ data.date.from | date(format=\"%d/%m/%Y\") }}\n\t\t\t\t\t-\n\t\t\t\t\t{{ data.date.to | date(format=\"%d/%m/%Y\") }}</span>\n\t\t\t{% elif data.date.from %}\n\t\t\t\t<span>{{ t(k=\"label.from\", f=\"From\") }}\n\t\t\t\t\t{{ data.date.from | date(format=\"%d/%m/%Y\") }}</span>\n\t\t\t{% elif data.date.to %}\n\t\t\t\t<span>{{ t(k=\"label.to\", f=\"To\") }}\n\t\t\t\t\t{{ data.date.to | date(format=\"%d/%m/%Y\") }}</span>\n\t\t\t{% else %}\n\t\t\t\t<span>{{ t(k=\"label.all-dates\", f=\"All dates\") }}</span>\n\t\t\t{% endif %}\n\t\t</div>\n\t</div>\n</div>\n"
             }
           }
         }
@@ -916,6 +1162,7 @@
     {
       "id": "stock-status_2_6_5_false",
       "name": "Stock Status",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -928,6 +1175,10 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n\n.container table td.status span::before {\n  content: '';\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  margin-right: 5px;\n}\n\n.container table td.status span.out-of-stock::before {\n  background-color: #f40502;\n}\n\n.container table td.status span.out-of-stock {\n   padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #fbcdcc;\n}\n\n.container table td.status span.overstocked::before {\n  background-color: #0260f7;\n}\n\n.container table td.status span.overstocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #d9d9ff;\n}\n\n.container table td.status span.understocked::before {\n  background-color: #f79a02;\n}\n\n.container table td.status span.understocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #fdebcc;\n}\n\n.container table td.status span.well-stocked::before {\n  background-color: #33a902;\n}\n\n.container table td.status span.well-stocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #d6eecc;\n}\n\n.container table td.status span.no-consumption::before {\n  background-color: #8f90a6;\n}\n\n.container table td.status span.no-consumption {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #e9e9ed;\n}\n"
+          },
           "query.graphql": {
             "type": "GraphGLQuery",
             "data": {
@@ -941,10 +1192,6 @@
               "output": "Html",
               "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.status\", f=\"Status\")}}</td>\n        <td>\n          {{t(k=\"report.consumption\", f=\"Consumption\")}}\n          ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})\n          {{t(k=\"label.months\", f=\"months\")}}\n        </td>\n        <td>{{t(k=\"label.soh\", f=\"SOH\")}}</td>\n        <td>\n          {{t(k=\"label.amc\", f=\"AMC\")}}\n          ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})\n          {{t(k=\"label.months\", f=\"months\")}}\n        </td>\n        <td>{{t(k=\"report.mos\", f=\"MOS\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %} \n      {% set SOH = item.stats.stockOnHand | default(value=0) | round( precision=1) %} \n      {% set AMC =  item.stats.averageMonthlyConsumption | default(value=0) |\n      round(precision=1) %} \n      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}\n\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td class=\"status\">\n          {% if SOH == 0 and AMC > 0 %}\n          <span class=\"out-of-stock\"\n            >{{t(k=\"report.out-of-stock\", f=\"Out of Stock\")}}</span\n          >\n          {% elif AMC == 0 %}\n          <span class=\"no-consumption\"\n            >{{t(k=\"report.no-consumption\", f=\"No consumption\")}}</span\n          >\n          {% elif MOS >= arguments.monthsUnderstock | default(value=0) and MOS\n          <= arguments.monthsOverstock | default(value=0) %}\n          <span class=\"well-stocked\"\n            >{{t(k=\"report.well-stocked\", f=\"Well stocked\")}}</span\n          >\n          {% elif MOS < arguments.monthsUnderstock | default(value=0) %}\n          <span class=\"understocked\">\n            {{t(k=\"report.understocked\", f=\"Understocked\")}}</span\n          >\n          {% elif MOS > arguments.monthsOverstock | default(value=0) %}\n          <span class=\"overstocked\"\n            >{{t(k=\"report.overstocked\", f=\"Overstocked\")}}</span\n          >\n          {% else %} {% endif %}\n        </td>\n        <td>\n          {{item.stats.totalConsumption | default(value=0) | round(\n          precision=1)}}\n        </td>\n        <td>{{SOH}}</td>\n        <td>{{AMC}}</td>\n        <td>\n          {{item.stats.availableMonthsOfStockOnHand | default(value=0) | round(\n          precision=1)}}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
             }
-          },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n\n.container table td.status span::before {\n  content: '';\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  margin-right: 5px;\n}\n\n.container table td.status span.out-of-stock::before {\n  background-color: #f40502;\n}\n\n.container table td.status span.out-of-stock {\n   padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #fbcdcc;\n}\n\n.container table td.status span.overstocked::before {\n  background-color: #0260f7;\n}\n\n.container table td.status span.overstocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #d9d9ff;\n}\n\n.container table td.status span.understocked::before {\n  background-color: #f79a02;\n}\n\n.container table td.status span.understocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #fdebcc;\n}\n\n.container table td.status span.well-stocked::before {\n  background-color: #33a902;\n}\n\n.container table td.status span.well-stocked {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #d6eecc;\n}\n\n.container table td.status span.no-consumption::before {\n  background-color: #8f90a6;\n}\n\n.container table td.status span.no-consumption {\n  padding: 3px 10px;\n  white-space: nowrap;\n  background-color: #e9e9ed;\n}\n"
           }
         }
       },
@@ -1082,6 +1329,7 @@
     {
       "id": "item-usage_2_16_1_false",
       "name": "Item Usage",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -1100,38 +1348,6 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "twoMonthsAgoConsumption": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "twoMonthsAgoConsumption",
-              "query_sqlite": "WITH\n    last_month AS (\n        SELECT date('now', 'start of month', '-1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date('now', 'start of month', '-2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n"
-            }
-          },
-          "stockOnOrder": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "stockOnOrder",
-              "query_sqlite": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1",
-              "query_postgres": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1"
-            }
-          },
-          "expiringInTwelveMonths": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "expiringInTwelveMonths",
-              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    twelve_months AS (\n        SELECT date('now', '+12 months') AS twelve_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, twelve_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < twelve_months AND stock_line.store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    twelve_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '12 months') AS twelve_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN twelve_months ON true\nWHERE s.expiry_date < twelve_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id"
-            }
-          },
-          "thisMonthConsumption": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "thisMonthConsumption",
-              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n"
-            }
-          },
           "lastMonthConsumption": {
             "type": "SQLQuery",
             "data": {
@@ -1154,6 +1370,26 @@
               "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.stock-on-order\", f=\"Stock on order\")}}</td>\n        <td>{{t(k=\"report.amc-12-months\", f=\"AMC (12 months)\")}}</td>\n        <td>{{t(k=\"report.amc-24-months\", f=\"AMC (24 months)\")}}</td>\n        <td>{{t(k=\"report.amc-for-lookback\", f=\"AMC (lookback period)\")}}</td>\n        <td>{{t(k=\"report.months-cover\", f=\"Months cover\")}}</td>\n        <td>\n          {{t(k=\"report.usage-this-month\", f=\"Monthly usage (this month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-last-month\", f=\"Monthly usage (last month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-2-months-prior\", f=\"Monthly usage (2 months\n          ago)\")}}\n        </td>\n        <td>{{t(k=\"report.expiring-6-months\", f=\"Expiring in 6 months\")}}</td>\n        <td>{{t(k=\"report.expiring-12-months\", f=\"Expiring in 12 months\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td>{{item.SOH | round( precision=1)}}</td>\n        <td>{{item.stockOnOrder}}</td>\n        <td>{{item.AMC12 | round( precision=1)}}</td>\n        <td>{{item.AMC24 | round( precision=1)}}</td>\n        <td>{{item.AMC | round( precision=1)}}</td>\n        <td>{{item.MOS | round( precision=1)}}</td>\n        <td>{{item.monthConsumption}}</td>\n        <td>{{item.lastMonthConsumption  | round( precision=1)}}</td>\n        <td>{{item.twoMonthsAgoConsumption | round( precision=1)}}</td>\n        <td>{{item.expiringInSixMonths}}</td>\n        <td>{{item.expiringInTwelveMonths}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
             }
           },
+          "twoMonthsAgoConsumption": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "twoMonthsAgoConsumption",
+              "query_sqlite": "WITH\n    last_month AS (\n        SELECT date('now', 'start of month', '-1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date('now', 'start of month', '-2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container > table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          },
+          "thisMonthConsumption": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "thisMonthConsumption",
+              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
           "expiringInSixMonths": {
             "type": "SQLQuery",
             "data": {
@@ -1162,9 +1398,21 @@
               "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    six_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '6 months') AS six_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN six_months ON true\nWHERE s.expiry_date < six_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id\n"
             }
           },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container > table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          "stockOnOrder": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "stockOnOrder",
+              "query_sqlite": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1",
+              "query_postgres": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1"
+            }
+          },
+          "expiringInTwelveMonths": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "expiringInTwelveMonths",
+              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    twelve_months AS (\n        SELECT date('now', '+12 months') AS twelve_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, twelve_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < twelve_months AND stock_line.store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    twelve_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '12 months') AS twelve_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN twelve_months ON true\nWHERE s.expiry_date < twelve_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id"
+            }
           }
         }
       },
@@ -1327,6 +1575,7 @@
     {
       "id": "item-usage_2_6_4_false",
       "name": "Item Usage",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -1347,6 +1596,13 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.stock-on-order\", f=\"Stock on order\")}}</td>\n        <td>{{t(k=\"report.amc-12-months\", f=\"AMC (12 months)\")}}</td>\n        <td>{{t(k=\"report.amc-24-months\", f=\"AMC (24 months)\")}}</td>\n        <td>{{t(k=\"report.amc-for-lookback\", f=\"AMC (lookback period)\")}}</td>\n        <td>{{t(k=\"report.months-cover\", f=\"Months cover\")}}</td>\n        <td>\n          {{t(k=\"report.usage-this-month\", f=\"Monthly usage (this month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-last-month\", f=\"Monthly usage (last month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-2-months-prior\", f=\"Monthly usage (2 months\n          ago)\")}}\n        </td>\n        <td>{{t(k=\"report.expiring-6-months\", f=\"Expiring in 6 months\")}}</td>\n        <td>{{t(k=\"report.expiring-12-months\", f=\"Expiring in 12 months\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td>{{item.SOH | round( precision=1)}}</td>\n        <td>{{item.stockOnOrder}}</td>\n        <td>{{item.AMC12}}</td>\n        <td>{{item.AMC24}}</td>\n        <td>{{item.AMC | round( precision=1)}}</td>\n        <td>{{item.MOS | round( precision=1)}}</td>\n        <td>{{item.monthConsumption}}</td>\n        <td>{{item.lastMonthConsumption}}</td>\n        <td>{{item.twoMonthsAgoConsumption}}</td>\n        <td>{{item.expiringInSixMonths}}</td>\n        <td>{{item.expiringInTwelveMonths}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          },
           "thisMonthConsumption": {
             "type": "SQLQuery",
             "data": {
@@ -1355,20 +1611,12 @@
               "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n"
             }
           },
-          "expiringInTwelveMonths": {
+          "expiringInSixMonths": {
             "type": "SQLQuery",
             "data": {
-              "name": "expiringInTwelveMonths",
-              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    twelve_months AS (\n        SELECT date('now', '+12 months') AS twelve_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, twelve_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < twelve_months AND stock_line.store_id = $storeId\nGROUP BY item_id\n",
-              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    twelve_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '12 months') AS twelve_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN twelve_months ON true\nWHERE s.expiry_date < twelve_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id"
-            }
-          },
-          "stockOnOrder": {
-            "type": "SQLQuery",
-            "data": {
-              "name": "stockOnOrder",
-              "query_sqlite": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1",
-              "query_postgres": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1"
+              "name": "expiringInSixMonths",
+              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    six_months AS (\n        SELECT date('now', '+6 months') AS six_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, six_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < six_months AND stock_line.store_id = $storeId\nGROUP BY i.item_id\n",
+              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    six_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '6 months') AS six_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN six_months ON true\nWHERE s.expiry_date < six_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id\n"
             }
           },
           "AMCTwentyFour": {
@@ -1387,11 +1635,11 @@
               "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month, last_month\nWHERE date >= last_month AND date < this_month AND store_id = $storeId\nGROUP BY item_id\n"
             }
           },
-          "template.html": {
-            "type": "TeraTemplate",
+          "query.graphql": {
+            "type": "GraphGLQuery",
             "data": {
-              "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.stock-on-hand\", f=\"Stock on hand\")}}</td>\n        <td>{{t(k=\"report.stock-on-order\", f=\"Stock on order\")}}</td>\n        <td>{{t(k=\"report.amc-12-months\", f=\"AMC (12 months)\")}}</td>\n        <td>{{t(k=\"report.amc-24-months\", f=\"AMC (24 months)\")}}</td>\n        <td>{{t(k=\"report.amc-for-lookback\", f=\"AMC (lookback period)\")}}</td>\n        <td>{{t(k=\"report.months-cover\", f=\"Months cover\")}}</td>\n        <td>\n          {{t(k=\"report.usage-this-month\", f=\"Monthly usage (this month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-last-month\", f=\"Monthly usage (last month)\")}}\n        </td>\n        <td>\n          {{t(k=\"report.usage-2-months-prior\", f=\"Monthly usage (2 months\n          ago)\")}}\n        </td>\n        <td>{{t(k=\"report.expiring-6-months\", f=\"Expiring in 6 months\")}}</td>\n        <td>{{t(k=\"report.expiring-12-months\", f=\"Expiring in 12 months\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td>{{item.SOH | round( precision=1)}}</td>\n        <td>{{item.stockOnOrder}}</td>\n        <td>{{item.AMC12}}</td>\n        <td>{{item.AMC24}}</td>\n        <td>{{item.AMC | round( precision=1)}}</td>\n        <td>{{item.MOS | round( precision=1)}}</td>\n        <td>{{item.monthConsumption}}</td>\n        <td>{{item.lastMonthConsumption}}</td>\n        <td>{{item.twoMonthsAgoConsumption}}</td>\n        <td>{{item.expiringInSixMonths}}</td>\n        <td>{{item.expiringInTwelveMonths}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+              "query": "query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
             }
           },
           "AMCTwelve": {
@@ -1402,11 +1650,16 @@
               "query_postgres": "WITH\n    twelve_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '12 months') AS twelve_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 12)::numeric, 1) AS quantity,\n    item_id\nFROM consumption, twelve_months_ago\nWHERE date >= twelve_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n"
             }
           },
-          "query.graphql": {
-            "type": "GraphGLQuery",
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container > table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          },
+          "stockOnOrder": {
+            "type": "SQLQuery",
             "data": {
-              "query": "query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
+              "name": "stockOnOrder",
+              "query_sqlite": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1",
+              "query_postgres": "SELECT \n    item.id as item_id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY 1"
             }
           },
           "twoMonthsAgoConsumption": {
@@ -1417,16 +1670,12 @@
               "query_postgres": "WITH\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n"
             }
           },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container > table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
-          },
-          "expiringInSixMonths": {
+          "expiringInTwelveMonths": {
             "type": "SQLQuery",
             "data": {
-              "name": "expiringInSixMonths",
-              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    six_months AS (\n        SELECT date('now', '+6 months') AS six_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, six_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < six_months AND stock_line.store_id = $storeId\nGROUP BY i.item_id\n",
-              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    six_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '6 months') AS six_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN six_months ON true\nWHERE s.expiry_date < six_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id\n"
+              "name": "expiringInTwelveMonths",
+              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    twelve_months AS (\n        SELECT date('now', '+12 months') AS twelve_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, twelve_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date < twelve_months AND stock_line.store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    twelve_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '12 months') AS twelve_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN twelve_months ON true\nWHERE s.expiry_date < twelve_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id"
             }
           }
         }
@@ -1590,6 +1839,7 @@
     {
       "id": "stock-detail_2_6_5_false",
       "name": "Stock Detail",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -1609,16 +1859,16 @@
               "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.location\", f=\"Location\")}}</td>\n        <td>{{t(k=\"label.unit\", f=\"Unit\")}}</td>\n        <td>{{t(k=\"report.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"report.pack-quantity\", f=\"Pack quantity\")}}</td>\n        <td>{{t(k=\"label.soh\", f=\"SOH\")}}</td>\n        <td>{{t(k=\"label.supplier\", f=\"Supplier\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td>{{stockLine.batch | default(value='')}}</td>\n        <td>\n          {%if stockLine.expiryDate %}\n          {{stockLine.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          \n          {% endif %}\n        </td>\n        <td>{{stockLine.location.code | default(value='')}}</td>\n        <td>{{stockLine.item.unitName | default(value='')}}</td>\n        <td>{{stockLine.packSize }}</td>\n        <td>{{stockLine.totalNumberOfPacks}}</td>\n        <td>{{\n          stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)  \n        }}</td>\n        <td>{{stockLine.supplierName | default(value='')}}</td>    \n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
             }
           },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          },
           "query.graphql": {
             "type": "GraphGLQuery",
             "data": {
               "query": "query StockDetail($storeId: String, $itemCodeOrName: String) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
             }
-          },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
           }
         }
       },
@@ -1738,6 +1988,7 @@
     {
       "id": "pending-encounters_2_9_0_false",
       "name": "Pending Encounters",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -1750,10 +2001,6 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "encounters.css": {
-            "type": "Resource",
-            "data": "@page {\n    margin: 0;\n    size: A4 landscape;\n  }\n  \n  .container {\n    margin: auto;\n    padding: 10px;\n    font-size: 14px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n    color: #555;\n  }\n  \n  .container table {\n    width: 100%;\n    font-size: inherit;\n    font-family: inherit;\n    text-align: left;\n    margin-top: 10;\n    margin-bottom: 15;\n    border-collapse: separate;\n  }\n  \n  .container table td {\n    padding: 10px;\n    vertical-align: top;\n    border-top: 1px solid rgb(164, 163, 163);\n  }\n  \n  .container table tr:last-child td {\n    border-bottom: none;\n  }\n  \n  .container>table>thead {\n    position: -webkit-sticky;\n    position: sticky;\n    top: 0;\n    background-color: #f1f1f1;\n  }\n  \n  .container,\n  body,\n  .container>table {\n    margin-top: 0px;\n    padding-top: 0px;\n  }\n  \n  .container table tr.heading td {\n    font-weight: bold;\n    margin-bottom: 15px;\n  }\n  \n"
-          },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
@@ -1767,6 +2014,10 @@
               "query": "query encountersQuery(\n  $storeId: String!\n  $programId: String!\n  $startDatetime: DatetimeFilterInput\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      programId: { equalTo: $programId }\n      status: { equalTo: \"PENDING\" }\n      startDatetime: $startDatetime\n    }\n    sort: { key: \"startDatetime\", desc: false }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        ... on EncounterNode {\n          id\n          startDatetime\n          type\n          patient {\n            firstName\n            lastName\n            dateOfBirth\n            phone\n            nextOfKinName\n          }\n          programEnrolment {\n            programEnrolmentId\n          }\n          previousEncounter {\n            startDatetime\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
             }
+          },
+          "encounters.css": {
+            "type": "Resource",
+            "data": "@page {\n    margin: 0;\n    size: A4 landscape;\n  }\n  \n  .container {\n    margin: auto;\n    padding: 10px;\n    font-size: 14px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n    color: #555;\n  }\n  \n  .container table {\n    width: 100%;\n    font-size: inherit;\n    font-family: inherit;\n    text-align: left;\n    margin-top: 10;\n    margin-bottom: 15;\n    border-collapse: separate;\n  }\n  \n  .container table td {\n    padding: 10px;\n    vertical-align: top;\n    border-top: 1px solid rgb(164, 163, 163);\n  }\n  \n  .container table tr:last-child td {\n    border-bottom: none;\n  }\n  \n  .container>table>thead {\n    position: -webkit-sticky;\n    position: sticky;\n    top: 0;\n    background-color: #f1f1f1;\n  }\n  \n  .container,\n  body,\n  .container>table {\n    margin-top: 0px;\n    padding-top: 0px;\n  }\n  \n  .container table tr.heading td {\n    font-weight: bold;\n    margin-bottom: 15px;\n  }\n  \n"
           }
         }
       },
@@ -1834,6 +2085,7 @@
     {
       "id": "pending-encounters_2_6_4_false",
       "name": "Pending Encounters",
+      "description": null,
       "template": {
         "index": {
           "template": "template.html",
@@ -1846,13 +2098,6 @@
           "convert_data_type": "BoaJs"
         },
         "entries": {
-          "encountersQuery.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query encountersQuery(\n  $storeId: String!\n  $programId: String!\n  $after: DateTime\n  $before: DateTime\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      programId: { equalTo: $programId }\n      status: { equalTo: \"PENDING\" }\n      startDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n    sort: { key: \"startDatetime\", desc: false }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        ... on EncounterNode {\n          id\n          startDatetime\n          type\n          patient {\n            firstName\n            lastName\n            dateOfBirth\n            phone\n            nextOfKinName\n          }\n          programEnrolment {\n            programEnrolmentId\n          }\n          previousEncounter {\n            startDatetime\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
-          },
           "encounters.css": {
             "type": "Resource",
             "data": "@page {\n    margin: 0;\n    size: A4 landscape;\n  }\n  \n  .container {\n    margin: auto;\n    padding: 10px;\n    font-size: 14px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n    color: #555;\n  }\n  \n  .container table {\n    width: 100%;\n    font-size: inherit;\n    font-family: inherit;\n    text-align: left;\n    margin-top: 10;\n    margin-bottom: 15;\n    border-collapse: separate;\n  }\n  \n  .container table td {\n    padding: 10px;\n    vertical-align: top;\n    border-top: 1px solid rgb(164, 163, 163);\n  }\n  \n  .container table tr:last-child td {\n    border-bottom: none;\n  }\n  \n  .container>table>thead {\n    position: -webkit-sticky;\n    position: sticky;\n    top: 0;\n    background-color: #f1f1f1;\n  }\n  \n  .container,\n  body,\n  .container>table {\n    margin-top: 0px;\n    padding-top: 0px;\n  }\n  \n  .container table tr.heading td {\n    font-weight: bold;\n    margin-bottom: 15px;\n  }\n  \n"
@@ -1862,6 +2107,13 @@
             "data": {
               "output": "Html",
               "template": "{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |\ndate(format=\"%d/%m/%Y\", timezone=arguments.timezone) }}{% endif %} {% endmacro input %}\n\n<style>\n  {% include \"encounters.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"report.program-id\", f=\"Program ID\")}}</td>\n        <td>{{t(k=\"label.first-name\", f=\"First Name\")}}</td>\n        <td>{{t(k=\"label.last-name\", f=\"Last Name\")}}</td>\n        <td>{{t(k=\"label.date-of-birth\", f=\"Date of birth\")}}</td>\n        <td>{{t(k=\"label.next-of-kin\", f=\"Next of kin\")}}</td>\n        <td>{{t(k=\"label.phone\", f=\"Phone\")}}</td>\n        <td>\n          {{t(k=\"report.last-encounter-date\", f=\"Last appointment date\")}}\n        </td>\n        <td>{{t(k=\"report.encounter-date\", f=\"Appointment date\")}}</td>\n        <td>{{t(k=\"report.days-overdue\", f=\"Days overdue\")}}</td>\n        <td>{{t(k=\"label.status\", f=\"Status\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for encounter in data.encounters.nodes %}\n      <tr>\n        <td>{{encounter.programEnrolment.programEnrolmentId}}</td>\n        <td>{{encounter.patient.firstName}}</td>\n        <td>{{encounter.patient.lastName}}</td>\n        <td>{{self::formatDate(datetime=encounter.patient.dateOfBirth)}}</td>\n        <td>{{encounter.patient.nextOfKinName}}</td>\n        <td>{{encounter.patient.phone}}</td>\n        {% if encounter.previousEncounter %}\n        <td>\n          {{self::formatDate(datetime=encounter.previousEncounter.startDatetime)}}\n        </td>\n        {% else %}\n        <td></td>\n        {% endif %}\n        <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>\n        <td>{{encounter.daysLate}}</td>\n\n        {% if encounter.status == \"LTFU\" %}\n        <td>{{t(k=\"report.lost-to-follow-up\", f=\"Lost to follow-up\")}}</td>\n        {% elif encounter.status == \"LATE\" %}\n        <td>{{t(k=\"report.late\", f=\"Late\")}}</td>\n        {% else %}\n        <td>{{t(k=\"report.planned\", f=\"Planned\")}}</td>\n        {% endif %}\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          },
+          "encountersQuery.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query encountersQuery(\n  $storeId: String!\n  $programId: String!\n  $after: DateTime\n  $before: DateTime\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      programId: { equalTo: $programId }\n      status: { equalTo: \"PENDING\" }\n      startDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n    sort: { key: \"startDatetime\", desc: false }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        ... on EncounterNode {\n          id\n          startDatetime\n          type\n          patient {\n            firstName\n            lastName\n            dateOfBirth\n            phone\n            nextOfKinName\n          }\n          programEnrolment {\n            programEnrolmentId\n          }\n          previousEncounter {\n            startDatetime\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
             }
           }
         }

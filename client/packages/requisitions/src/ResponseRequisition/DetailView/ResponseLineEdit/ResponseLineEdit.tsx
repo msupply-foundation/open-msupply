@@ -331,7 +331,7 @@ export const ResponseLineEdit = ({
         {!!requisition.linkedRequisition || showExtraFields ? (
           <>
             <ResponseNumInputRow
-              label={t('label.amc/amd')}
+              label={t('label.customer-amc/amd')}
               value={draft?.averageMonthlyConsumption}
               onChange={value => update({ averageMonthlyConsumption: value })}
               sx={{
@@ -340,7 +340,7 @@ export const ResponseLineEdit = ({
               {...commonProps}
             />
             <ResponseNumInputRow
-              label={t('label.months-of-stock')}
+              label={t('label.customer-months-of-stock')}
               value={mos() ?? 0}
               disabledOverride={true}
               endAdornmentOverride={t('label.months')}

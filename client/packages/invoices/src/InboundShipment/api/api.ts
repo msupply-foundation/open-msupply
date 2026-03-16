@@ -117,6 +117,7 @@ export const inboundParsers = {
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
       expiryDate: line.expiryDate,
+      manufactureDate: line.manufactureDate,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
@@ -124,6 +125,7 @@ export const inboundParsers = {
       itemVariantId: 'itemVariant' in line ? line.itemVariant?.id : undefined,
       vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
       donorId: line.donor?.id,
+      manufacturerId: line.manufacturer?.id,
       campaignId: line.campaign?.id,
       programId: line.program?.id,
       note: line.note,
@@ -149,6 +151,9 @@ export const inboundParsers = {
     expiryDate: {
       value: line.expiryDate || null,
     },
+    manufactureDate: {
+      value: line.manufactureDate || null,
+    },
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
@@ -156,6 +161,9 @@ export const inboundParsers = {
     itemVariantId: setNullableInput('id', line.itemVariant),
     vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
     donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
+    manufacturerId: setNullableInput('manufacturerId', {
+      manufacturerId: line.manufacturer?.id ?? null,
+    }),
     campaignId: setNullableInput('campaignId', {
       campaignId: line.campaign?.id ?? null,
     }),
