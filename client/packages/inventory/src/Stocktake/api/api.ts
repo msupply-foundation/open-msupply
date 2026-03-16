@@ -302,6 +302,7 @@ const getInsertStocktakeLines = (stocktakeId: string, items: Item[]) => {
           batch: stockLine.batch,
           costPricePerPack: stockLine.costPricePerPack,
           expiryDate: stockLine.expiryDate,
+          manufactureDate: stockLine.manufactureDate,
           packSize: stockLine.packSize,
           sellPricePerPack: stockLine.sellPricePerPack,
         });
