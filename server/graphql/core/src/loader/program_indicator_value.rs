@@ -27,7 +27,6 @@ impl IndicatorValueLoaderInput {
         IndicatorValueLoaderInput {
             line_id: line_id.to_string(),
             column_id: column_id.to_string(),
-            // later add store and period and facility ids to this payload
             period_id: period_id.to_string(),
             store_id: store_id.to_string(),
             customer_name_id: customer_name_id.to_string(),
@@ -49,28 +48,17 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
     ) -> Result<HashMap<IndicatorValueLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let (period_id, store_id, customer_name_id) =
-            // TODO replace with logic to not assume only one combination queried at any time.
-            if let Some(loader_input) = loader_inputs.first() {
-                (
-                    loader_input.period_id.clone(),
-                    loader_input.store_id.clone(),
-                    loader_input.customer_name_id.clone(),
-                )
-            } else {
-                return Ok(HashMap::new());
-            };
-        if loader_inputs.len() > 1 {
-            log::warn!(
-                "IndicatorValueLoader received {} batched inputs but only supports one (period_id, store_id, customer_name_id) combination per batch. Only the first input will be used.",
-                loader_inputs.len()
-            );
-        }
+        let period_ids =
+            util::dedup_iter(loader_inputs.iter().map(|input| input.period_id.clone()));
+        let store_ids =
+            util::dedup_iter(loader_inputs.iter().map(|input| input.store_id.clone()));
+        let customer_name_ids =
+            util::dedup_iter(loader_inputs.iter().map(|input| input.customer_name_id.clone()));
 
         let filter = IndicatorValueFilter::new()
-            .store_id(EqualFilter::equal_to(store_id.to_string()))
-            .customer_name_id(EqualFilter::equal_to(customer_name_id.to_string()))
-            .period_id(EqualFilter::equal_to(period_id.to_string()));
+            .store_id(EqualFilter::equal_any(store_ids))
+            .customer_name_id(EqualFilter::equal_any(customer_name_ids))
+            .period_id(EqualFilter::equal_any(period_ids));
 
         let values =
             IndicatorValueRepository::new(&service_context.connection).query_by_filter(filter)?;
@@ -82,9 +70,9 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
                     IndicatorValueLoaderInput::new(
                         &value.indicator_value_row.indicator_line_id,
                         &value.indicator_value_row.indicator_column_id,
-                        &period_id,
-                        &store_id,
-                        &customer_name_id,
+                        &value.indicator_value_row.period_id,
+                        &value.indicator_value_row.store_id,
+                        &value.indicator_value_row.customer_name_id,
                     ),
                     value.indicator_value_row,
                 )
