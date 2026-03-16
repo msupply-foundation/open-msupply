@@ -1,5 +1,5 @@
-use super::vaccine_course_store_wastage_row::{
-    vaccine_course_store_wastage, VaccineCourseStoreWastageRow,
+use super::vaccine_course_store_config_row::{
+    vaccine_course_store_config, VaccineCourseStoreConfigRow,
 };
 
 use diesel::{helper_types::IntoBoxed, prelude::*};
@@ -10,14 +10,14 @@ use crate::{
 };
 
 #[derive(Clone, Default)]
-pub struct VaccineCourseStoreWastageFilter {
+pub struct VaccineCourseStoreConfigFilter {
     pub id: Option<EqualFilter<String>>,
     pub vaccine_course_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
 }
 
-impl VaccineCourseStoreWastageFilter {
-    pub fn new() -> VaccineCourseStoreWastageFilter {
+impl VaccineCourseStoreConfigFilter {
+    pub fn new() -> VaccineCourseStoreConfigFilter {
         Self::default()
     }
 
@@ -37,18 +37,18 @@ impl VaccineCourseStoreWastageFilter {
     }
 }
 
-pub struct VaccineCourseStoreWastageRepository<'a> {
+pub struct VaccineCourseStoreConfigRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> VaccineCourseStoreWastageRepository<'a> {
+impl<'a> VaccineCourseStoreConfigRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        VaccineCourseStoreWastageRepository { connection }
+        VaccineCourseStoreConfigRepository { connection }
     }
 
     pub fn count(
         &self,
-        filter: Option<VaccineCourseStoreWastageFilter>,
+        filter: Option<VaccineCourseStoreConfigFilter>,
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
@@ -59,53 +59,53 @@ impl<'a> VaccineCourseStoreWastageRepository<'a> {
 
     pub fn query_one(
         &self,
-        filter: VaccineCourseStoreWastageFilter,
-    ) -> Result<Option<VaccineCourseStoreWastageRow>, RepositoryError> {
+        filter: VaccineCourseStoreConfigFilter,
+    ) -> Result<Option<VaccineCourseStoreConfigRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
-        filter: VaccineCourseStoreWastageFilter,
-    ) -> Result<Vec<VaccineCourseStoreWastageRow>, RepositoryError> {
+        filter: VaccineCourseStoreConfigFilter,
+    ) -> Result<Vec<VaccineCourseStoreConfigRow>, RepositoryError> {
         self.query(Some(filter))
     }
 
     pub fn query(
         &self,
-        filter: Option<VaccineCourseStoreWastageFilter>,
-    ) -> Result<Vec<VaccineCourseStoreWastageRow>, RepositoryError> {
+        filter: Option<VaccineCourseStoreConfigFilter>,
+    ) -> Result<Vec<VaccineCourseStoreConfigRow>, RepositoryError> {
         let query = create_filtered_query(filter);
 
         let result =
-            query.load::<VaccineCourseStoreWastageRow>(self.connection.lock().connection())?;
+            query.load::<VaccineCourseStoreConfigRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }
 }
 
-type BoxedVaccineCourseStoreWastageQuery =
-    IntoBoxed<'static, vaccine_course_store_wastage::table, DBType>;
+type BoxedVaccineCourseStoreConfigQuery =
+    IntoBoxed<'static, vaccine_course_store_config::table, DBType>;
 
 fn create_filtered_query(
-    filter: Option<VaccineCourseStoreWastageFilter>,
-) -> BoxedVaccineCourseStoreWastageQuery {
-    let mut query = vaccine_course_store_wastage::table.into_boxed();
+    filter: Option<VaccineCourseStoreConfigFilter>,
+) -> BoxedVaccineCourseStoreConfigQuery {
+    let mut query = vaccine_course_store_config::table.into_boxed();
 
     if let Some(f) = filter {
-        let VaccineCourseStoreWastageFilter {
+        let VaccineCourseStoreConfigFilter {
             id,
             vaccine_course_id,
             store_id,
         } = f;
 
-        apply_equal_filter!(query, id, vaccine_course_store_wastage::id);
+        apply_equal_filter!(query, id, vaccine_course_store_config::id);
         apply_equal_filter!(
             query,
             vaccine_course_id,
-            vaccine_course_store_wastage::vaccine_course_id
+            vaccine_course_store_config::vaccine_course_id
         );
-        apply_equal_filter!(query, store_id, vaccine_course_store_wastage::store_id);
+        apply_equal_filter!(query, store_id, vaccine_course_store_config::store_id);
     }
 
     query
