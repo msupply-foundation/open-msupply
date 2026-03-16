@@ -111,6 +111,7 @@ const InputWithLabel = ({
         Input={inputComponent}
         labelWidth={LABEL_WIDTH}
         label={indicatorColumnNameToLocal(data.name, t)}
+        sx={{ marginBottom: 1 }}
       />
     </Box>
   );
