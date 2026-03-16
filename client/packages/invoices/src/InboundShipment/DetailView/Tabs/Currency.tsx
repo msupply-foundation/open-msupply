@@ -30,8 +30,7 @@ export const CurrencyTab = () => {
     (purchaseOrder?.freightCharge ?? 0);
 
   // A converted to local currency
-  const chargesConvertedToLocal =
-    currencyRate !== 0 ? chargesInPoCurrency / currencyRate : 0;
+  const chargesConvertedToLocal = chargesInPoCurrency * currencyRate;
 
   // B = local charges (service charges on the inbound shipment)
   const chargesInLocalCurrency = pricing?.serviceTotalAfterTax ?? 0;
@@ -43,7 +42,7 @@ export const CurrencyTab = () => {
   const totalGoodsPoCurrency =
     currencyRate !== 0 ? totalGoodsLocal / currencyRate : 0;
 
-  // Total charges = (A / rate) + B
+  // Total charges = (A * rate) + B
   const totalCharges = chargesConvertedToLocal + chargesInLocalCurrency;
 
   // % Cost adjustment = totalCharges / totalGoodsLocal * 100
@@ -162,7 +161,7 @@ export const CurrencyTab = () => {
             label={t('label.cost-percentage-adjustment')}
             Input={
               <BasicTextInput
-                value={formatValue(costAdjustmentPercent) + '%'}
+                value={`${formatValue(costAdjustmentPercent)}%`}
                 disabled
                 textAlign="right"
                 sx={{ width: 150 }}
