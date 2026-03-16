@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Box, Stack, useMediaQuery } from '@mui/material';
 import {
   MRT_Row,
@@ -18,6 +18,7 @@ interface CardListProps<T extends MRT_RowData> {
   lastItemRef?: React.RefObject<HTMLDivElement>;
   groupIcons?: Record<string, React.ReactNode>;
   actions?: React.ReactNode;
+  stickyTopOffset?: number;
 }
 
 const getRowOnClick = <T extends MRT_RowData>(
@@ -44,6 +45,7 @@ export const CardList = <T extends MRT_RowData>({
   lastItemRef,
   groupIcons,
   actions,
+  stickyTopOffset = 0,
 }: CardListProps<T>) => {
   const t = useTranslation();
   const rows = table.getRowModel().rows;
@@ -64,6 +66,19 @@ export const CardList = <T extends MRT_RowData>({
     table.setDensity(initial?.density ?? 'comfortable');
   };
 
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [toolbarHeight, setToolbarHeight] = useState(0);
+
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(([entry]) => {
+      if (entry) setToolbarHeight(entry.borderBoxSize[0]?.blockSize ?? 0);
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   return (
     <Stack
       spacing={isLandscape ? 1 : 1.5}
@@ -72,7 +87,19 @@ export const CardList = <T extends MRT_RowData>({
         ...(groupIcons ? {} : { mx: 'auto', maxWidth: 400 }),
       }}
     >
-      <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1}>
+      <Box
+        ref={toolbarRef}
+        display="flex"
+        justifyContent="flex-end"
+        alignItems="center"
+        gap={1}
+        sx={{
+          position: 'sticky',
+          top: stickyTopOffset,
+          zIndex: 2,
+          backgroundColor: 'background.paper',
+        }}
+      >
         <MRT_ShowHideColumnsButton table={table} />
         <IconButton
           icon={<RefreshIcon fontSize="small" />}
@@ -88,6 +115,7 @@ export const CardList = <T extends MRT_RowData>({
           cardRef={index === rows.length - 1 ? lastItemRef : undefined}
           groupIcons={groupIcons}
           onClick={getRowOnClick(table, row)}
+          stickyTopOffset={stickyTopOffset + toolbarHeight}
         />
       ))}
     </Stack>

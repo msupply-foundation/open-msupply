@@ -59,6 +59,7 @@ interface InboundLineEditCardsProps extends CardProps {
   lastCardRef?: React.RefObject<HTMLDivElement>;
   simplified?: boolean;
   actions?: React.ReactNode;
+  stickyTopOffset?: number;
 }
 
 export const InboundLineEditCards = ({
@@ -76,6 +77,7 @@ export const InboundLineEditCards = ({
   lastCardRef,
   simplified,
   actions,
+  stickyTopOffset,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -101,8 +103,7 @@ export const InboundLineEditCards = ({
         header: t('label.batch'),
         size: 100,
         columnGroup: 'general',
-        cardSummary: row =>
-          `${t('label.batch')} ${row.batch || ''}`,
+        cardSummary: row => `${t('label.batch')} ${row.batch || ''}`,
         Cell: ({ row, cell }) => (
           <TextInputCell
             cell={cell}
@@ -297,8 +298,7 @@ export const InboundLineEditCards = ({
         header: t('label.packs-received'),
         size: 100,
         columnGroup: 'quantities',
-        cardSummary: row =>
-          `${row.numberOfPacks} ${t('label.packs-received')}`,
+        cardSummary: row => `${row.numberOfPacks} ${t('label.packs-received')}`,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -344,7 +344,9 @@ export const InboundLineEditCards = ({
                 } else {
                   setPackRoundingMessage?.(
                     t('messages.under-allocated', {
-                      receivedQuantity: formatRef.current(NumUtils.round(value, 2)),
+                      receivedQuantity: formatRef.current(
+                        NumUtils.round(value, 2)
+                      ),
                       quantity: formatRef.current(actualUnits),
                     })
                   );
@@ -635,6 +637,7 @@ export const InboundLineEditCards = ({
         lastItemRef={lastCardRef}
         groupIcons={groupIcons}
         actions={actions}
+        stickyTopOffset={stickyTopOffset}
       />
     </>
   );
