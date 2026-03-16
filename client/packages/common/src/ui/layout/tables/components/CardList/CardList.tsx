@@ -1,5 +1,5 @@
 import React from 'react';
-import { Stack, useMediaQuery } from '@mui/material';
+import { Box, Stack, useMediaQuery } from '@mui/material';
 import {
   MRT_Row,
   MRT_RowData,
@@ -12,6 +12,7 @@ interface CardListProps<T extends MRT_RowData> {
   table: MRT_TableInstance<T>;
   lastItemRef?: React.RefObject<HTMLDivElement>;
   groupIcons?: Record<string, React.ReactNode>;
+  actions?: React.ReactNode;
 }
 
 const getRowOnClick = <T extends MRT_RowData>(
@@ -36,6 +37,7 @@ export const CardList = <T extends MRT_RowData>({
   table,
   lastItemRef,
   groupIcons,
+  actions,
 }: CardListProps<T>) => {
   const rows = table.getRowModel().rows;
   const isLandscape = useMediaQuery(
@@ -47,11 +49,13 @@ export const CardList = <T extends MRT_RowData>({
       spacing={isLandscape ? 1 : 1.5}
       sx={{
         width: '100%',
-        ...(groupIcons
-          ? {}
-          : { mx: 'auto', maxWidth: 400 }),
+        ...(groupIcons ? {} : { mx: 'auto', maxWidth: 400 }),
       }}
     >
+      <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1}>
+        <MRT_ShowHideColumnsButton table={table} />
+        {actions}
+      </Box>
       {rows.map((row, index) => (
         <CardListItem
           key={row.id}
@@ -61,7 +65,6 @@ export const CardList = <T extends MRT_RowData>({
           onClick={getRowOnClick(table, row)}
         />
       ))}
-      <MRT_ShowHideColumnsButton table={table} sx={{ alignSelf: 'center' }} />
     </Stack>
   );
 };

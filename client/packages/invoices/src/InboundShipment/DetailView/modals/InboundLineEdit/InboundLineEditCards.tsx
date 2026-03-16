@@ -58,6 +58,7 @@ interface InboundLineEditCardsProps extends CardProps {
   removeDraftLine: (id: string) => void;
   lastCardRef?: React.RefObject<HTMLDivElement>;
   simplified?: boolean;
+  actions?: React.ReactNode;
 }
 
 export const InboundLineEditCards = ({
@@ -74,6 +75,7 @@ export const InboundLineEditCards = ({
   restrictedToLocationTypeId,
   lastCardRef,
   simplified,
+  actions,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -631,6 +633,7 @@ export const InboundLineEditCards = ({
         table={table}
         lastItemRef={lastCardRef}
         groupIcons={groupIcons}
+        actions={actions}
       />
     </>
   );

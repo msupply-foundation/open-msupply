@@ -114,19 +114,7 @@ export const InboundLineEdit = ({
       restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
       simplified={simplifiedTabletView}
-    />
-  );
-
-  const content = (
-    <>
-      <Box
-        flex={1}
-        display="flex"
-        justifyContent={simplifiedTabletView ? 'flex-start' : 'flex-end'}
-        alignItems="center"
-        gap={1}
-        margin={simplifiedTabletView ? 3 : 0}
-      >
+      actions={
         <ButtonWithIcon
           disabled={isDisabled}
           color="primary"
@@ -138,7 +126,12 @@ export const InboundLineEdit = ({
           label={`${t('label.add-batch')} (+)`}
           Icon={<PlusCircleIcon />}
         />
-      </Box>
+      }
+    />
+  );
+
+  const content = (
+    <>
       {simplifiedTabletView ? (
         cards
       ) : (
