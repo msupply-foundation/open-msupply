@@ -113,7 +113,7 @@ mod test {
             mock_item_a, mock_new_outbound_shipment_no_lines, mock_outbound_shipment_line_a,
             MockDataInserts,
         },
-        InvoiceLine, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -303,6 +303,7 @@ mod test {
                 invoice_line_row: mock_outbound_shipment_line_a(),
                 invoice_row: mock_new_outbound_shipment_no_lines(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: None,
                 stock_line_option: None,
             }])

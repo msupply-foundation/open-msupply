@@ -104,6 +104,16 @@ fragment InboundLine on InvoiceLineNode {
       volumePerUnit
     }
   }
+
+  purchaseOrderLine {
+    __typename
+    adjustedNumberOfUnits
+    shippedNumberOfUnits
+    inTransitNumberOfUnits
+    receivedNumberOfUnits
+    requestedNumberOfUnits
+    pricePerPackAfterDiscount
+  }
 }
 
 fragment Inbound on InvoiceNode {
@@ -217,6 +227,12 @@ fragment Inbound on InvoiceNode {
     id
     number
     reference
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
+    }
   }
 }
 
