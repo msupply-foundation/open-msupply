@@ -33,7 +33,7 @@ import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { StoreWastagePanel } from './StoreWastagePanel';
-import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
+import { DraftVaccineCourse } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
 const getDemographicOptions = (demographics: DemographicNode[]) => {
@@ -74,7 +74,7 @@ const Row = ({
 );
 
 interface VaccineCourseEditModalProps {
-  vaccineCourse: VaccineCourseFragment | null;
+  vaccineCourseId: string | null;
   isOpen: boolean;
   onClose: () => void;
   programId: string | undefined;
@@ -89,7 +89,7 @@ function doseIndex(
 }
 
 export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
-  vaccineCourse,
+  vaccineCourseId,
   isOpen,
   onClose,
   programId,
@@ -105,7 +105,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     query: { isLoading },
     isDirty,
     resetDraft,
-  } = useVaccineCourse(vaccineCourse?.id ?? undefined);
+  } = useVaccineCourse(vaccineCourseId ?? undefined);
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const doses = draft.vaccineCourseDoses ?? [];
 
