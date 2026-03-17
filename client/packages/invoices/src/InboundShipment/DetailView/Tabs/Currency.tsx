@@ -15,6 +15,7 @@ import {
 } from '@openmsupply-client/common';
 import { CurrencyAutocomplete } from '@openmsupply-client/system';
 import { useInboundShipment } from '../../api';
+import { calculateCurrencyValues } from './CurrencyCalculations';
 
 export const CurrencyTab = () => {
   const t = useTranslation();
@@ -39,24 +40,23 @@ export const CurrencyTab = () => {
     (purchaseOrder?.insuranceCharge ?? 0) +
     (purchaseOrder?.freightCharge ?? 0);
 
-  // A converted to local currency
-  const chargesConvertedToLocal = chargesInPoCurrency * currencyRate;
-
   // B = local charges (service charges on the inbound shipment)
   const chargesInLocalCurrency = pricing?.serviceTotalAfterTax ?? 0;
 
   // Total goods in PO currency (from PO, not affected by rate changes)
   const totalGoodsPoCurrency = purchaseOrder?.orderTotalAfterDiscount ?? 0;
 
-  // Total goods in local currency = PO total * rate
-  const totalGoodsLocal = totalGoodsPoCurrency * currencyRate;
-
-  // Total charges = (A * rate) + B
-  const totalCharges = chargesConvertedToLocal + chargesInLocalCurrency;
-
-  // % Cost adjustment = totalCharges / totalGoodsLocal * 100
-  const costAdjustmentPercent =
-    totalGoodsLocal !== 0 ? (totalCharges / totalGoodsLocal) * 100 : 0;
+  const {
+    chargesConvertedToLocal,
+    totalGoodsLocal,
+    totalCharges,
+    costAdjustmentPercent,
+  } = calculateCurrencyValues({
+    currencyRate,
+    chargesInForeignCurrency: chargesInPoCurrency,
+    chargesInLocalCurrency,
+    totalGoodsForeignCurrency: totalGoodsPoCurrency,
+  });
 
   return (
     <DetailContainer>
