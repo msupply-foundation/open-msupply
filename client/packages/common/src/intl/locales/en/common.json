@@ -2012,7 +2012,7 @@
   "messages.create-outbound-from-requisition": "Are you sure you want to create an Outbound Shipment from this Customer Requisition?",
   "messages.created-clinician": "Successfully created clinician",
   "messages.created-new-vaccine-course": "Successfully created vaccine course",
-  "messages.currency-rate-info": "The number of local currency units per one unit of the PO currency. For example, a rate of 2 means 1 PO currency unit equals 2 local currency units.",
+  "messages.currency-rate-info": "The number of foreign (PO) currency units per one local currency unit. For example, if local is NZD and PO is USD, a rate of 0.6 means 1 NZD = 0.6 USD.",
   "messages.customer-requisition-created-on": "Customer requisition created on {{date}}",
   "messages.customer-return-created-verified": "Customer Return successfully created as Verified",
   "messages.default-customer-return-reference": "From outbound shipment #{{invoiceNumber}}",
