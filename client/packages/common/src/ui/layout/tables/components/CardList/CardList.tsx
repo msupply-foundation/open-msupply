@@ -7,7 +7,7 @@ import {
   MRT_TableInstance,
 } from 'material-react-table';
 import { CardListItem } from './CardListItem';
-import { IconButton } from '@common/components';
+import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { RefreshIcon } from '@common/icons';
 import { clearSavedState } from '../../tableState/utils';
@@ -54,7 +54,9 @@ export const CardList = <T extends MRT_RowData>({
 
   // Full reset to match the table view's resetTableState behaviour.
   // Card view only uses visibility and order, but we reset all properties
-  // because the saved state is shared with the table view and to account for future expansion
+  // because the saved state is shared with the table view and to account for future expansion.
+  // Note: doesn't respect global custom table defaults (as set via resetTableState
+  // in useBaseMaterialTable) — will need to be extended when there's UI for that here.
   const resetToDefaults = () => {
     clearSavedState(tableId);
     const initial = table.options.initialState;
@@ -64,6 +66,12 @@ export const CardList = <T extends MRT_RowData>({
     table.resetColumnPinning();
     table.setDensity(initial?.density ?? 'comfortable');
   };
+
+  const getResetConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.reset-card-defaults'),
+    onConfirm: resetToDefaults,
+  });
 
   return (
     <Stack
@@ -88,7 +96,7 @@ export const CardList = <T extends MRT_RowData>({
         <MRT_ShowHideColumnsButton table={table} />
         <IconButton
           icon={<RefreshIcon fontSize="small" />}
-          onClick={resetToDefaults}
+          onClick={() => getResetConfirmation()}
           label={t('label.reset-table-defaults')}
         />
         {actions}
