@@ -26,6 +26,7 @@ import {
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 import { StatusChangeButton } from './StatusChangeButton';
 import { ExpectedDeliveryDateModal } from './ExpectedDeliveryDateModal';
+import { RequestedDeliveryDateModal } from './RequestedDeliveryDateModal';
 
 const createStatusLog = (
   purchaseOrder: PurchaseOrderFragment,
@@ -67,7 +68,16 @@ export const Footer = ({
 }: FooterProps): ReactElement => {
   const t = useTranslation();
   const { success } = useNotification();
-  const { isOn, toggleOn, toggleOff } = useToggle();
+  const {
+    isOn: isExpectedDateOn,
+    toggleOn: toggleExpectedDateOn,
+    toggleOff: toggleExpectedDateOff,
+  } = useToggle();
+  const {
+    isOn: isRequestedDateOn,
+    toggleOn: toggleRequestedDateOn,
+    toggleOff: toggleRequestedDateOff,
+  } = useToggle();
   const { authorisePurchaseOrder = false } = usePreferences();
 
   const {
@@ -112,7 +122,19 @@ export const Footer = ({
     actions.push({
       label: t('label.update-expected-delivery-date'),
       icon: <EditIcon />,
-      onClick: toggleOn,
+      onClick: toggleExpectedDateOn,
+    });
+  }
+
+  if (
+    status !== PurchaseOrderNodeStatus.Confirmed &&
+    status !== PurchaseOrderNodeStatus.Sent &&
+    status !== PurchaseOrderNodeStatus.Finalised
+  ) {
+    actions.push({
+      label: t('label.update-requested-delivery-date'),
+      icon: <EditIcon />,
+      onClick: toggleRequestedDateOn,
     });
   }
 
@@ -184,11 +206,19 @@ export const Footer = ({
               </Box>
             </Box>
           ) : null}
-          {isOn && (
+          {isExpectedDateOn && (
             <ExpectedDeliveryDateModal
               selectedRows={selectedRows}
-              isOpen={isOn}
-              onClose={toggleOff}
+              isOpen={isExpectedDateOn}
+              onClose={toggleExpectedDateOff}
+              resetRowSelection={resetRowSelection}
+            />
+          )}
+          {isRequestedDateOn && (
+            <RequestedDeliveryDateModal
+              selectedRows={selectedRows}
+              isOpen={isRequestedDateOn}
+              onClose={toggleRequestedDateOff}
               resetRowSelection={resetRowSelection}
             />
           )}

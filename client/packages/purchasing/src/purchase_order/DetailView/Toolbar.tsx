@@ -86,7 +86,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     });
   };
 
-  const confirmModal = useConfirmationModal({
+  const confirmExpectedModal = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t(
       'label.update-purchase-order-expected-delivery-date-for-all-lines'
@@ -99,9 +99,37 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     const previousDate = expectedDeliveryDate;
 
     setExpectedDeliveryDate(newDate);
-    confirmModal({
+    confirmExpectedModal({
       onConfirm: () => updateExpectedDeliveryChange(newDate),
       onCancel: () => setExpectedDeliveryDate(previousDate),
+    });
+  };
+
+  const updateRequestedDeliveryChange = async (date: Date | null) => {
+    if (!data) return;
+    const formattedDate = Formatter.naiveDate(date);
+    handleUpdate({ requestedDeliveryDate: formattedDate });
+    await updateLines(data?.lines?.nodes, {
+      requestedDeliveryDate: formattedDate,
+    });
+  };
+
+  const confirmRequestedModal = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t(
+      'label.update-purchase-order-requested-delivery-date-for-all-lines'
+    ),
+    onConfirm: () => {},
+  });
+
+  const handleRequestedDeliveryDateChange = (newDate: Date | null) => {
+    if (!newDate) return;
+    const previousDate = requestedDeliveryDate;
+
+    setRequestedDeliveryDate(newDate);
+    confirmRequestedModal({
+      onConfirm: () => updateRequestedDeliveryChange(newDate),
+      onCancel: () => setRequestedDeliveryDate(previousDate),
     });
   };
 
@@ -180,14 +208,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
               Input={
                 <DateTimePickerInput
                   value={requestedDeliveryDate}
-                  onChange={date => {
-                    if (!date) return;
-                    setRequestedDeliveryDate(date);
-                    const formattedDate = Formatter.naiveDate(date);
-                    handleUpdate({
-                      requestedDeliveryDate: formattedDate,
-                    });
-                  }}
+                  onChange={handleRequestedDeliveryDateChange}
                   width={250}
                   disabled={disabledRequestedDeliveryDate}
                 />
