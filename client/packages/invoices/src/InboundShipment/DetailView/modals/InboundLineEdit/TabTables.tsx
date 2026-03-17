@@ -27,7 +27,6 @@ import {
   DonorSearchInput,
   getVolumePerPackFromVariant,
   ItemRowFragment,
-  ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
@@ -41,7 +40,6 @@ interface TableProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
-  hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
@@ -57,7 +55,6 @@ export const QuantityTable = ({
   updateDraftLine,
   removeDraftLine,
   isDisabled = false,
-  hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
   item,
   setPackRoundingMessage,
@@ -132,37 +129,6 @@ export const QuantityTable = ({
             />
           );
         },
-      },
-      {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        Cell: ({
-          row: {
-            original: { id, packSize, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={isDisabled}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              updateDraftLine({
-                id,
-                itemVariantId: itemVariant?.id,
-                itemVariant,
-                manufacturer: itemVariant?.manufacturer ?? null,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: hasItemVariantsEnabled,
       },
       {
         id: 'itemDoses',
@@ -373,7 +339,6 @@ export const QuantityTable = ({
     unitName,
     pluralisedUnitName,
     displayInDoses,
-    hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
     isDisabled,
     item?.isVaccine,
