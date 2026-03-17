@@ -1,11 +1,16 @@
 import React from 'react';
 import {
-  BasicTextInput,
+  Box,
   BufferedNumericTextInput,
+  Currencies,
+  CurrencyTextDisplay,
   DetailContainer,
+  InfoTooltipIcon,
   InputWithLabelRow,
   NumUtils,
   Stack,
+  Typography,
+  useAuthContext,
   useTranslation,
 } from '@openmsupply-client/common';
 import { CurrencyAutocomplete } from '@openmsupply-client/system';
@@ -20,6 +25,11 @@ export const CurrencyTab = () => {
   const purchaseOrder = data?.purchaseOrder;
   const currencyRate = data?.currencyRate ?? 1;
   const pricing = data?.pricing;
+  const poCurrencyCode = purchaseOrder?.currency?.code as
+    | Currencies
+    | undefined;
+  const { store } = useAuthContext();
+  const isHomeCurrency = store?.homeCurrencyCode === poCurrencyCode;
 
   // A = sum of charges on the PO, in PO currency
   const chargesInPoCurrency =
@@ -35,12 +45,11 @@ export const CurrencyTab = () => {
   // B = local charges (service charges on the inbound shipment)
   const chargesInLocalCurrency = pricing?.serviceTotalAfterTax ?? 0;
 
-  // Total goods in local currency (stock total)
-  const totalGoodsLocal = pricing?.stockTotalAfterTax ?? 0;
+  // Total goods in PO currency (from PO, not affected by rate changes)
+  const totalGoodsPoCurrency = purchaseOrder?.orderTotalAfterDiscount ?? 0;
 
-  // Total goods in PO currency
-  const totalGoodsPoCurrency =
-    currencyRate !== 0 ? totalGoodsLocal / currencyRate : 0;
+  // Total goods in local currency = PO total * rate
+  const totalGoodsLocal = totalGoodsPoCurrency * currencyRate;
 
   // Total charges = (A * rate) + B
   const totalCharges = chargesConvertedToLocal + chargesInLocalCurrency;
@@ -48,9 +57,6 @@ export const CurrencyTab = () => {
   // % Cost adjustment = totalCharges / totalGoodsLocal * 100
   const costAdjustmentPercent =
     totalGoodsLocal !== 0 ? (totalCharges / totalGoodsLocal) * 100 : 0;
-
-  const formatValue = (value: number) =>
-    NumUtils.round(value, 2).toFixed(2);
 
   return (
     <DetailContainer>
@@ -76,45 +82,39 @@ export const CurrencyTab = () => {
           <InputWithLabelRow
             label={t('label.currency-rate')}
             Input={
-              <BufferedNumericTextInput
-                value={currencyRate}
-                onChange={currencyRate => update({ currencyRate })}
-                decimalLimit={4}
-              />
+              <>
+                <BufferedNumericTextInput
+                  value={isHomeCurrency ? 1 : currencyRate}
+                  onChange={currencyRate => update({ currencyRate })}
+                  decimalLimit={4}
+                  disabled={isHomeCurrency}
+                  width={150}
+                />
+                <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+                  <InfoTooltipIcon
+                    iconSx={{ color: 'gray.main' }}
+                    title={t('messages.currency-rate-info')}
+                  />
+                </Box>
+              </>
             }
           />
           <InputWithLabelRow
             label={t('label.charges-in-po-currency')}
             Input={
-              <BasicTextInput
-                value={formatValue(chargesInPoCurrency)}
-                disabled
-                textAlign="right"
-                sx={{ width: 150 }}
+              <CurrencyTextDisplay
+                value={chargesInPoCurrency}
+                currencyCode={poCurrencyCode}
               />
             }
           />
           <InputWithLabelRow
             label={t('label.charges-a-converted-to-local')}
-            Input={
-              <BasicTextInput
-                value={formatValue(chargesConvertedToLocal)}
-                disabled
-                textAlign="right"
-                sx={{ width: 150 }}
-              />
-            }
+            Input={<CurrencyTextDisplay value={chargesConvertedToLocal} />}
           />
           <InputWithLabelRow
             label={t('label.charges-b-in-local-currency')}
-            Input={
-              <BasicTextInput
-                value={formatValue(chargesInLocalCurrency)}
-                disabled
-                textAlign="right"
-                sx={{ width: 150 }}
-              />
-            }
+            Input={<CurrencyTextDisplay value={chargesInLocalCurrency} />}
           />
         </Stack>
         <Stack
@@ -127,45 +127,34 @@ export const CurrencyTab = () => {
           <InputWithLabelRow
             label={t('label.total-goods-po-currency')}
             Input={
-              <BasicTextInput
-                value={formatValue(totalGoodsPoCurrency)}
-                disabled
-                textAlign="right"
-                sx={{ width: 150 }}
+              <CurrencyTextDisplay
+                value={totalGoodsPoCurrency}
+                currencyCode={poCurrencyCode}
               />
             }
           />
           <InputWithLabelRow
             label={t('label.total-goods-local-currency')}
-            Input={
-              <BasicTextInput
-                value={formatValue(totalGoodsLocal)}
-                disabled
-                textAlign="right"
-                sx={{ width: 150 }}
-              />
-            }
+            Input={<CurrencyTextDisplay value={totalGoodsLocal} />}
           />
           <InputWithLabelRow
             label={t('label.total-charges')}
-            Input={
-              <BasicTextInput
-                value={formatValue(totalCharges)}
-                disabled
-                textAlign="right"
-                sx={{ width: 150 }}
-              />
-            }
+            Input={<CurrencyTextDisplay value={totalCharges} />}
           />
           <InputWithLabelRow
             label={t('label.cost-percentage-adjustment')}
             Input={
-              <BasicTextInput
-                value={`${formatValue(costAdjustmentPercent)}%`}
-                disabled
-                textAlign="right"
-                sx={{ width: 150 }}
-              />
+              <Typography
+                sx={{
+                  minWidth: 150,
+                  textAlign: 'right',
+                  fontSize: 'inherit',
+                  paddingX: '8px',
+                  paddingY: '4px',
+                }}
+              >
+                {`${NumUtils.round(costAdjustmentPercent, 2).toFixed(2)}%`}
+              </Typography>
             }
           />
         </Stack>
