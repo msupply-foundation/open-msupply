@@ -6286,6 +6286,21 @@ export type NullableDatetimeUpdate = {
  * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
  * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
  */
+export type NullableFloatUpdate = {
+  value?: InputMaybe<Scalars['Float']['input']>;
+};
+
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
 export type NullableStringUpdate = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
@@ -11041,10 +11056,10 @@ export type UpsertVaccineCourseItemInput = {
 };
 
 export type UpsertVaccineCourseStoreConfigInput = {
-  coverageRate?: InputMaybe<Scalars['Float']['input']>;
+  coverageRate?: InputMaybe<NullableFloatUpdate>;
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
-  wastageRate?: InputMaybe<Scalars['Float']['input']>;
+  wastageRate?: InputMaybe<NullableFloatUpdate>;
 };
 
 export type UseSuggestedQuantityError = {

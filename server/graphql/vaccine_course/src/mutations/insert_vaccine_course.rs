@@ -1,6 +1,5 @@
 use super::{
-    UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput,
-    UpsertVaccineCourseStoreConfigInput,
+    UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput, UpsertVaccineCourseStoreConfigInput,
 };
 use async_graphql::*;
 use graphql_core::{
@@ -15,6 +14,7 @@ use service::{
         insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
         update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
     },
+    NullableUpdate,
 };
 
 pub fn insert_vaccine_course(
@@ -107,8 +107,12 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
                 .map(|config| VaccineCourseStoreConfigInput {
                     id: config.id,
                     store_id: config.store_id,
-                    wastage_rate: config.wastage_rate,
-                    coverage_rate: config.coverage_rate,
+                    wastage_rate: config
+                        .wastage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
+                    coverage_rate: config
+                        .coverage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
                 })
                 .collect(),
             demographic_id,

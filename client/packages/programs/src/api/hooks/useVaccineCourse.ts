@@ -5,10 +5,12 @@ import {
   UpsertVaccineCourseStoreConfigInput,
   VaccineCourseSortFieldInput,
   isEmpty,
+  setNullableInput,
   useMutation,
   useQuery,
   useTranslation,
   usePatchState,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
@@ -66,8 +68,8 @@ const vaccineCourseParsers = {
     return {
       id: config.id,
       storeId: config.storeId,
-      wastageRate: config.wastageRate,
-      coverageRate: config.coverageRate,
+      wastageRate: setNullableInput('wastageRate', config),
+      coverageRate: setNullableInput('coverageRate', config),
     };
   },
 };
