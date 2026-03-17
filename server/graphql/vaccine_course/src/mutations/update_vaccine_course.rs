@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
+    generic_inputs::NullableUpdateInput,
     simple_generic_errors::RecordProgramCombinationAlreadyExists,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -11,6 +12,7 @@ use service::{
         UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseDoseInput,
         VaccineCourseItemInput, VaccineCourseStoreConfigInput,
     },
+    NullableUpdate,
 };
 
 pub fn update_vaccine_course(
@@ -64,8 +66,8 @@ pub struct UpsertVaccineCourseItemInput {
 pub struct UpsertVaccineCourseStoreConfigInput {
     pub id: String,
     pub store_id: String,
-    pub wastage_rate: Option<f64>,
-    pub coverage_rate: Option<f64>,
+    pub wastage_rate: Option<NullableUpdateInput<f64>>,
+    pub coverage_rate: Option<NullableUpdateInput<f64>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -124,8 +126,12 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                 .map(|config| VaccineCourseStoreConfigInput {
                     id: config.id,
                     store_id: config.store_id,
-                    wastage_rate: config.wastage_rate,
-                    coverage_rate: config.coverage_rate,
+                    wastage_rate: config
+                        .wastage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
+                    coverage_rate: config
+                        .coverage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
                 })
                 .collect(),
             demographic_id,
