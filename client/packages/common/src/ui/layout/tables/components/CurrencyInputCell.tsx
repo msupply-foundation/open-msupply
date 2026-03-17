@@ -9,14 +9,12 @@ interface CurrencyInputCellProps<T extends MRT_RowData> {
   cell: MRT_Cell<T>;
   updateFn?: (value: number) => void;
   disabled?: boolean;
-  style?: React.CSSProperties;
 }
 
 export const CurrencyInputCell = <T extends MRT_RowData>({
   cell,
   disabled = false,
   updateFn,
-  style,
 }: CurrencyInputCellProps<T>) => {
   const value = cell.getValue<number>();
 
@@ -33,7 +31,6 @@ export const CurrencyInputCell = <T extends MRT_RowData>({
         }
       }}
       width="100%"
-      style={style}
     />
   );
 };
