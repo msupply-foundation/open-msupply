@@ -1,5 +1,6 @@
 export interface CurrencyCalculationInput {
-  /** Exchange rate: number of foreign currency units per one base (local) currency unit */
+  /** Exchange rate: number of foreign currency units per one base (local) currency unit.
+   *  e.g. if local is NZD and foreign is USD, rate ≈ 0.6 (1 NZD = 0.6 USD) */
   currencyRate: number;
   /** Charges in PO (foreign) currency (A) */
   chargesInForeignCurrency: number;
@@ -28,6 +29,10 @@ export interface CurrencyCalculationResult {
  * the foreign currency is USD, the rate would be ~0.6 (0.6 USD = 1 NZD).
  *
  * To convert foreign to local: foreignAmount / rate
+ * To convert local to foreign: localAmount * rate
+ *
+ * Note: TabTables.tsx uses `localPrice / currency.rate` which assumes the
+ * inverse convention — that may need correcting separately.
  */
 export const calculateCurrencyValues = (
   input: CurrencyCalculationInput
