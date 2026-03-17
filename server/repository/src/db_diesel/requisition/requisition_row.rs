@@ -51,7 +51,7 @@ define_linked_tables! {
         name_link_id -> name_id,
     },
     optional_links: {
-        original_customer_link_id -> original_customer_id,
+        destination_customer_link_id -> original_customer_id,
     }
 
 }
