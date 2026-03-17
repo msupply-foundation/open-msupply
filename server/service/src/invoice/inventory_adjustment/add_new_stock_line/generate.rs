@@ -43,6 +43,7 @@ pub fn generate(
         campaign_id,
         program_id,
         volume_per_pack,
+        manufacturer_id,
     }: AddNewStockLine,
 ) -> Result<GenerateResult, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
@@ -117,6 +118,7 @@ pub fn generate(
         barcode,
         item_variant_id,
         donor_id,
+        manufacturer_id,
         vvm_status_id,
         campaign_id,
         program_id,

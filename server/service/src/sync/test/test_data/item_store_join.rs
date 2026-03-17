@@ -26,6 +26,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             default_sell_price_per_pack: 10.0,
             ignore_for_orders: false,
             margin: 10.0,
+            default_location_id: None,
         },
     )]
 }
