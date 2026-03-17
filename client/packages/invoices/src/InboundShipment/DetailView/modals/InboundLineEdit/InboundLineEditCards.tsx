@@ -400,6 +400,7 @@ export const InboundLineEditCards = ({
             }}
             disabled={isDisabled}
             min={0}
+            debounceTime={500} // workaround for the fact that changing packs updates units, which updates packs, etc. without waiting for debounce to trigger an update
           />
         ),
       },
