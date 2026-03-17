@@ -7,7 +7,6 @@ import {
   RANGE_SPLIT_CHAR,
   RouteBuilder,
   StatsPanel,
-  useAuthContext,
   useCallbackWithPermission,
   useNavigate,
   useNotification,
@@ -49,14 +48,6 @@ export const ReplenishmentWidget = ({
   const inboundInternal = useInboundInternalCounts();
   const inboundExternal = useInboundExternalCounts();
   const internalOrder = useInternalOrderCounts();
-
-  const { userHasPermission } = useAuthContext();
-  const hasInternalPermission = userHasPermission(
-    UserPermission.InboundShipmentQuery
-  );
-  const hasExternalPermission = userHasPermission(
-    UserPermission.InboundShipmentExternalQuery
-  );
 
   const inboundInternalPanelContext = `${widgetContext}-inbound-shipments-internal`;
   const inboundExternalPanelContext = `${widgetContext}-inbound-shipments-external`;
@@ -109,13 +100,9 @@ export const ReplenishmentWidget = ({
   const corePanels = [
     <StatsPanel
       key={inboundInternalPanelContext}
-      error={
-        !hasInternalPermission
-          ? ({ message: 'Forbidden' } as ApiException)
-          : (inboundInternal.error as ApiException)
-      }
-      isError={!hasInternalPermission || inboundInternal.isError}
-      isLoading={hasInternalPermission && inboundInternal.isLoading}
+      error={inboundInternal.error as ApiException}
+      isError={inboundInternal.isError}
+      isLoading={inboundInternal.isLoading}
       title={t('inbound-shipment')}
       panelContext={inboundInternalPanelContext}
       stats={[
@@ -162,13 +149,9 @@ export const ReplenishmentWidget = ({
     />,
     <StatsPanel
       key={inboundExternalPanelContext}
-      error={
-        !hasExternalPermission
-          ? ({ message: 'Forbidden' } as ApiException)
-          : (inboundExternal.error as ApiException)
-      }
-      isError={!hasExternalPermission || inboundExternal.isError}
-      isLoading={hasExternalPermission && inboundExternal.isLoading}
+      error={inboundExternal.error as ApiException}
+      isError={inboundExternal.isError}
+      isLoading={inboundExternal.isLoading}
       title={t('inbound-shipment-external')}
       panelContext={inboundExternalPanelContext}
       stats={[
