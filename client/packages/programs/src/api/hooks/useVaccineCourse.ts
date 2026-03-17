@@ -5,7 +5,6 @@ import {
   UpsertVaccineCourseStoreConfigInput,
   VaccineCourseSortFieldInput,
   isEmpty,
-  setNullableInput,
   useMutation,
   useQuery,
   useTranslation,
