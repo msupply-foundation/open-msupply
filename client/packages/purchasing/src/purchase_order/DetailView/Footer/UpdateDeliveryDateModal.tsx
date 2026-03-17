@@ -10,19 +10,47 @@ import {
 import { PurchaseOrderLineFragment, usePurchaseOrderLine } from '../../api';
 import { DateCalendar } from '@mui/x-date-pickers';
 
-interface ExpectedDeliveryDateModalProps {
+type DateType = 'expected' | 'requested';
+
+const translationKeys: Record<
+  DateType,
+  {
+    title: string;
+    confirmMessage: string;
+    successMessage: string;
+  }
+> = {
+  expected: {
+    title: 'label.update-expected-delivery-date',
+    confirmMessage:
+      'label.update-purchase-order-expected-delivery-date-for-selected-lines',
+    successMessage:
+      'messages.updated-purchase-order-expected-delivery-date',
+  },
+  requested: {
+    title: 'label.update-requested-delivery-date',
+    confirmMessage:
+      'label.update-purchase-order-requested-delivery-date-for-selected-lines',
+    successMessage:
+      'messages.updated-purchase-order-requested-delivery-date',
+  },
+};
+
+interface UpdateDeliveryDateModalProps {
+  dateType: DateType;
   selectedRows: PurchaseOrderLineFragment[];
   isOpen: boolean;
   onClose: () => void;
   resetRowSelection: () => void;
 }
 
-export const ExpectedDeliveryDateModal = ({
+export const UpdateDeliveryDateModal = ({
+  dateType,
   selectedRows,
   isOpen,
   onClose,
   resetRowSelection,
-}: ExpectedDeliveryDateModalProps): ReactElement => {
+}: UpdateDeliveryDateModalProps): ReactElement => {
   const t = useTranslation();
   const { success } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
@@ -30,35 +58,36 @@ export const ExpectedDeliveryDateModal = ({
 
   const { updateLines } = usePurchaseOrderLine();
 
-  const updateExpectedDeliveryDate = async () => {
+  const keys = translationKeys[dateType];
+  const fieldName =
+    dateType === 'expected' ? 'expectedDeliveryDate' : 'requestedDeliveryDate';
+
+  const updateDeliveryDate = async () => {
     if (!selectedDate) return;
 
     try {
       const formattedDate = Formatter.naiveDate(selectedDate);
       await updateLines(selectedRows, {
-        expectedDeliveryDate: formattedDate,
+        [fieldName]: formattedDate,
       });
-      success(t('messages.updated-purchase-order-expected-delivery-date'))();
+      success(t(keys.successMessage))();
       resetRowSelection();
       onClose();
     } catch (e) {
-      console.error('Error updating expected delivery date: ', e);
+      console.error(`Error updating ${dateType} delivery date: `, e);
     }
   };
 
   const handleClick = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t(
-      'label.update-purchase-order-expected-delivery-date-for-selected-lines',
-      { count: selectedRows.length }
-    ),
-    onConfirm: updateExpectedDeliveryDate,
+    message: t(keys.confirmMessage, { count: selectedRows.length }),
+    onConfirm: updateDeliveryDate,
   });
 
   return (
     <Modal
       width={320}
-      title={t('label.update-expected-delivery-date')}
+      title={t(keys.title)}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
