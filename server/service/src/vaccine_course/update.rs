@@ -102,9 +102,9 @@ pub struct UpdateVaccineCourse {
     pub doses: Vec<VaccineCourseDoseInput>,
     pub store_configs: Vec<VaccineCourseStoreConfigInput>,
     pub demographic_id: Option<String>,
-    pub coverage_rate: Option<f64>,
+    pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
-    pub wastage_rate: Option<f64>,
+    pub wastage_rate: f64,
     pub can_skip_dose: Option<bool>,
 }
 
@@ -244,9 +244,9 @@ fn generate(
         name: name.unwrap_or(old_row.name),
         program_id: old_row.program_id,
         demographic_id,
-        coverage_rate: coverage_rate.unwrap_or(old_row.coverage_rate),
+        coverage_rate,
         use_in_gaps_calculations,
-        wastage_rate: wastage_rate.unwrap_or(old_row.wastage_rate),
+        wastage_rate,
         deleted_datetime: None,
         can_skip_dose: can_skip_dose.unwrap_or(old_row.can_skip_dose),
     };

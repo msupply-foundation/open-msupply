@@ -76,9 +76,9 @@ pub struct UpdateVaccineCourseInput {
     pub doses: Vec<UpsertVaccineCourseDoseInput>,
     pub store_configs: Option<Vec<UpsertVaccineCourseStoreConfigInput>>,
     pub demographic_id: Option<String>,
-    pub coverage_rate: Option<f64>,
+    pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
-    pub wastage_rate: Option<f64>,
+    pub wastage_rate: f64,
     pub can_skip_dose: Option<bool>,
 }
 
