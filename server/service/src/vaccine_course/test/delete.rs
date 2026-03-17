@@ -52,9 +52,9 @@ mod delete {
                 custom_age_label: None,
             }],
             demographic_id: None,
-            coverage_rate: 100.0,
+            coverage_rate: Some(100.0),
             use_in_gaps_calculations: true,
-            wastage_rate: 0.1,
+            wastage_rate: Some(0.1),
             can_skip_dose: false,
             store_configs: vec![],
         };
