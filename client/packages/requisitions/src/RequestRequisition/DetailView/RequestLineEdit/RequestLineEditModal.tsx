@@ -50,17 +50,16 @@ export const RequestLineEditModal = ({
   const [currentItem, setCurrentItem] = useState(
     lines?.find(line => line.item.id === itemId)?.item
   );
-  let rep: RepresentationValue;
-  if (orderInPacks) {
-    rep = Representation.PACKS;
-  } else if (manageVaccinesInDoses && currentItem?.isVaccine) {
-    rep = Representation.DOSES;
-  } else {
-    rep = Representation.UNITS;
-  }
+  const getDefaultRepresentation = (
+    item?: { isVaccine?: boolean } | null
+  ): RepresentationValue => {
+    if (orderInPacks) return Representation.PACKS;
+    if (manageVaccinesInDoses && item?.isVaccine) return Representation.DOSES;
+    return Representation.UNITS;
+  };
 
   const [representation, setRepresentation] =
-    useState<RepresentationValue>(rep);
+    useState<RepresentationValue>(getDefaultRepresentation(currentItem));
 
   const { draft, save, update, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
@@ -99,7 +98,7 @@ export const RequestLineEditModal = ({
     if (mode === ModalMode.Create) {
       deletePreviousLine();
     }
-    setRepresentation(rep);
+    setRepresentation(getDefaultRepresentation(item));
     setCurrentItem(item);
   };
 
