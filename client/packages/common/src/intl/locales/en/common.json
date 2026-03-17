@@ -2215,7 +2215,6 @@
   "messages.placeholder-allocated-packs": "Not enough stock is available to allocate all {{ requestedQuantity }} packs of {{ packSize }}. A placeholder has been added for {{placeholderQuantity}} units.",
   "messages.placeholder-allocated-units": "Not enough stock is available to allocate all {{ requestedQuantity }} units. A placeholder has been added for {{placeholderQuantity}} units.",
   "messages.please-select-valid-option": "Please select a valid option",
-  "messages.po-cost-price": "Purchase order price: {{price}}",
   "messages.prescription-created": "Prescription #{{count}} created",
   "messages.prescription-given": "Prescribed {{amount}} {{item}} on {{date}}",
   "messages.prescription-saved": "Prescription saved 🥳",
