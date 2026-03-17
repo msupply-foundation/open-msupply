@@ -37,7 +37,7 @@ export const RequestLineEditModal = ({
   const { error } = useNotification();
   const deleteLine = useRequest.line.deleteLine();
   const isDisabled = isRequestDisabled(requisition);
-  const { orderInPacks } = usePreferences();
+  const { orderInPacks, manageVaccinesInDoses } = usePreferences();
 
   const lines = useMemo(
     () =>
@@ -50,7 +50,14 @@ export const RequestLineEditModal = ({
   const [currentItem, setCurrentItem] = useState(
     lines?.find(line => line.item.id === itemId)?.item
   );
-  const rep = orderInPacks ? Representation.PACKS : Representation.UNITS;
+  let rep: RepresentationValue;
+  if (orderInPacks) {
+    rep = Representation.PACKS;
+  } else if (manageVaccinesInDoses && currentItem?.isVaccine) {
+    rep = Representation.DOSES;
+  } else {
+    rep = Representation.UNITS;
+  }
 
   const [representation, setRepresentation] =
     useState<RepresentationValue>(rep);

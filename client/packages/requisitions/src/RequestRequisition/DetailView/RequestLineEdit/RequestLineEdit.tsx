@@ -284,7 +284,6 @@ export const RequestLineEdit = ({
                       : undefined,
                   },
                 ])}
-              ,
               {showExtraFields &&
                 renderValueInfoRows([
                   {
