@@ -79,7 +79,9 @@ export const ItemVariantSelectPanel = ({
       open={open}
       onClose={onClose}
       title={t('label.select-item-variant')}
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      cancelButton={
+        <DialogButton variant="cancel" onClick={onManual ?? onClose} />
+      }
     >
       <Box display="flex" flexDirection="column" gap={2} padding={2}>
         <VariantCard onClick={onManual ?? onClose}>
