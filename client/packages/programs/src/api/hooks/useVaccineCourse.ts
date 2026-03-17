@@ -5,6 +5,7 @@ import {
   UpsertVaccineCourseStoreConfigInput,
   VaccineCourseSortFieldInput,
   isEmpty,
+  setNullableInput,
   useMutation,
   useQuery,
   useTranslation,
@@ -66,8 +67,8 @@ const vaccineCourseParsers = {
     return {
       id: config.id,
       storeId: config.storeId,
-      wastageRate: config.wastageRate,
-      coverageRate: config.coverageRate,
+      wastageRate: setNullableInput('wastageRate', config),
+      coverageRate: setNullableInput('coverageRate', config),
     };
   },
 };
