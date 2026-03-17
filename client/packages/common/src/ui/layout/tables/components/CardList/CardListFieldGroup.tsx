@@ -1,10 +1,10 @@
 import React from 'react';
-import { Box, useMediaQuery } from '@mui/material';
+import { Box } from '@mui/material';
+import { useIsLandscapeTablet } from '@common/hooks';
 
 const ICON_SX = { '& svg': { fontSize: '1rem' } } as const;
 
 interface CardListFieldGroupProps {
-  groupName?: string;
   groupIcon?: React.ReactNode;
   children: React.ReactNode;
 }
@@ -13,9 +13,7 @@ export const CardListFieldGroup = ({
   groupIcon,
   children,
 }: CardListFieldGroupProps) => {
-  const isLandscape = useMediaQuery(
-    '(orientation: landscape) and (max-height: 800px)'
-  );
+  const isLandscape = useIsLandscapeTablet();
 
   const grid = (
     <Box
@@ -35,14 +33,14 @@ export const CardListFieldGroup = ({
     <Box
       display="flex"
       gap={2}
-      py={1}
+      py={1.5}
       sx={{
         pl: 1,
       }}
     >
       <Box
         display="flex"
-        alignItems="center"
+        alignItems="flex-start"
         color="text.secondary"
         sx={ICON_SX}
       >

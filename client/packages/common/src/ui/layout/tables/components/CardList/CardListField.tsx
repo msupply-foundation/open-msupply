@@ -7,7 +7,11 @@ interface CardListFieldProps {
   span?: number;
 }
 
-export const CardListField = ({ label, children, span }: CardListFieldProps) => (
+export const CardListField = ({
+  label,
+  children,
+  span,
+}: CardListFieldProps) => (
   <Box
     display="flex"
     flexDirection="column"

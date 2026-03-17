@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, useMediaQuery } from '@mui/material';
+import { Box, Card, CardContent, Typography } from '@mui/material';
 import {
   flexRender,
   MRT_Cell,
@@ -9,6 +9,7 @@ import {
 import { ColumnDef } from '../../types';
 import { CardListField } from './CardListField';
 import { CardListFieldGroup } from './CardListFieldGroup';
+import { useIsLandscapeTablet } from '@common/hooks';
 
 /** Access custom ColumnDef fields from an MRT cell.
  *  ColumnDef<T> extends MRT_ColumnDef<T>, but MRT types columnDef as the
@@ -52,9 +53,8 @@ export const CardListItem = <T extends MRT_RowData>({
   groupIcons,
   onClick,
 }: CardListItemProps<T>) => {
-  const isLandscape = useMediaQuery(
-    '(orientation: landscape) and (max-height: 800px)'
-  );
+  const isLandscape = useIsLandscapeTablet();
+
   const cells = row.getVisibleCells();
 
   const actionCells: MRT_Cell<T, unknown>[] = [];
@@ -122,19 +122,6 @@ export const CardListItem = <T extends MRT_RowData>({
             gap={1.5}
             mb={groups.length > 0 ? 1 : 0}
             py={0.5}
-            sx={{
-              position: 'sticky',
-              top: 0,
-              zIndex: 1,
-              backgroundColor: 'background.paper',
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              borderRadius: '4px 4px 0 0',
-              mx: isLandscape ? -1.5 : -2.5,
-              px: isLandscape ? 1.5 : 2.5,
-              mt: isLandscape ? -0.5 : -1.5,
-              pt: isLandscape ? 1 : 1.5,
-            }}
           >
             {summaryCells.length > 0 && (
               <Typography
@@ -175,10 +162,7 @@ export const CardListItem = <T extends MRT_RowData>({
                 alignItems="flex-start"
               >
                 <Typography color="text.secondary">
-                  {flexRender(
-                    cell.column.columnDef.header,
-                    cell.getContext()
-                  )}
+                  {flexRender(cell.column.columnDef.header, cell.getContext())}
                 </Typography>
                 <Box
                   sx={{
@@ -194,7 +178,6 @@ export const CardListItem = <T extends MRT_RowData>({
           : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
               <CardListFieldGroup
                 key={groupName ?? `ungrouped-${groupIndex}`}
-                groupName={groupName}
                 groupIcon={groupName ? groupIcons?.[groupName] : undefined}
               >
                 {groupCells.map(cell => (

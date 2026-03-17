@@ -131,6 +131,7 @@ export const InboundLineEdit = ({
         <TableContainer
           sx={{
             marginTop: 2,
+            overflow: 'visible',
           }}
         >
           <Box width="100%">
@@ -185,18 +186,33 @@ export const InboundLineEdit = ({
       }
       height={700}
       width={1200}
+      contentProps={{ sx: { overflow: 'visible' } }}
       enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
     >
       {isLoading ? (
         <BasicSpinner messageKey="saving" />
       ) : (
         <>
-          <InboundLineEditForm
-            disabled={mode === ModalMode.Update}
-            item={currentItem}
-            onChangeItem={setCurrentItem}
-          />
-          <Divider margin={5} />
+          <Box
+            sx={{
+              position: 'sticky',
+              top: '-20px',
+              zIndex: 3,
+              backgroundColor: 'background.paper',
+              mx: '-24px',
+              px: '24px',
+              mt: '-20px',
+              pt: '20px',
+            }}
+          >
+            <InboundLineEditForm
+              disabled={mode === ModalMode.Update}
+              item={currentItem}
+              onChangeItem={setCurrentItem}
+            />
+            <Box sx={{ height: '5px' }} />
+            <Divider />
+          </Box>
           {content}
         </>
       )}
