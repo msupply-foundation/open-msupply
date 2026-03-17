@@ -4053,7 +4053,7 @@ export type InsertVaccineCourseErrorInterface = {
 
 export type InsertVaccineCourseInput = {
   canSkipDose: Scalars['Boolean']['input'];
-  coverageRate: Scalars['Float']['input'];
+  coverageRate?: InputMaybe<Scalars['Float']['input']>;
   demographicId?: InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
@@ -4062,7 +4062,7 @@ export type InsertVaccineCourseInput = {
   storeConfigs?: InputMaybe<Array<UpsertVaccineCourseStoreConfigInput>>;
   useInGapsCalculations: Scalars['Boolean']['input'];
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
-  wastageRate: Scalars['Float']['input'];
+  wastageRate?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertVaccineCourseResponse =
@@ -10869,7 +10869,7 @@ export type UpdateVaccineCourseErrorInterface = {
 
 export type UpdateVaccineCourseInput = {
   canSkipDose?: InputMaybe<Scalars['Boolean']['input']>;
-  coverageRate: Scalars['Float']['input'];
+  coverageRate?: InputMaybe<Scalars['Float']['input']>;
   demographicId?: InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
@@ -10877,7 +10877,7 @@ export type UpdateVaccineCourseInput = {
   storeConfigs?: InputMaybe<Array<UpsertVaccineCourseStoreConfigInput>>;
   useInGapsCalculations: Scalars['Boolean']['input'];
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
-  wastageRate: Scalars['Float']['input'];
+  wastageRate?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateVaccineCourseResponse =

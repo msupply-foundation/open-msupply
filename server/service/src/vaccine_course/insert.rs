@@ -39,9 +39,9 @@ pub struct InsertVaccineCourse {
     pub doses: Vec<VaccineCourseDoseInput>,
     pub store_configs: Vec<VaccineCourseStoreConfigInput>,
     pub demographic_id: Option<String>,
-    pub coverage_rate: f64,
+    pub coverage_rate: Option<f64>,
     pub use_in_gaps_calculations: bool,
-    pub wastage_rate: f64,
+    pub wastage_rate: Option<f64>,
     pub can_skip_dose: bool,
 }
 
@@ -136,9 +136,9 @@ pub fn generate(
         name,
         program_id,
         demographic_id,
-        coverage_rate,
+        coverage_rate: coverage_rate.unwrap_or(100.0),
         use_in_gaps_calculations,
-        wastage_rate,
+        wastage_rate: wastage_rate.unwrap_or(0.0),
         deleted_datetime: None,
         can_skip_dose,
     }
