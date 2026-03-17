@@ -128,6 +128,7 @@ pub fn generate(
         note: None,
         shipped_number_of_packs: None,
         shipped_pack_size: None,
+        purchase_order_line_id: None,
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {

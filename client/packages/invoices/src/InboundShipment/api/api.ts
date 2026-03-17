@@ -132,6 +132,7 @@ export const inboundParsers = {
       shippedNumberOfPacks: line.shippedNumberOfPacks,
       volumePerPack: line.volumePerPack,
       shippedPackSize: line.shippedPackSize,
+      purchaseOrderLineId: line.purchaseOrderLine?.id,
     };
   },
   toInsertLineFromInternalOrder: (line: {
