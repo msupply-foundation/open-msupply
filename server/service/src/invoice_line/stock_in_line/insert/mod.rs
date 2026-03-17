@@ -451,6 +451,7 @@ mod test {
                     manufacturer_id: Some("invalid".to_string()),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ManufacturerDoesNotExist)
         );
@@ -469,6 +470,7 @@ mod test {
                     manufacturer_id: Some(mock_name_customer_a().id), // Not a manufacturer
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ManufacturerIsNotAManufacturer)
         );
