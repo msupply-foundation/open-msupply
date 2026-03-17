@@ -236,6 +236,12 @@ export const InboundLineEdit = ({
               open={variantAction !== null}
               onClose={() => setVariantAction(null)}
               onSelect={onVariantSelected}
+              onManual={() => {
+                if (variantAction === 'add') {
+                  addDraftLine();
+                }
+                setVariantAction(null);
+              }}
             />
           )}
         </>

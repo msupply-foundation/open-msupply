@@ -14,6 +14,7 @@ interface ItemVariantSelectPanelProps {
   open: boolean;
   onClose: () => void;
   onSelect: (variant: ItemVariantFragment) => void;
+  onManual?: () => void;
 }
 
 const VariantCard = ({
@@ -65,6 +66,7 @@ export const ItemVariantSelectPanel = ({
   open,
   onClose,
   onSelect,
+  onManual,
 }: ItemVariantSelectPanelProps) => {
   const t = useTranslation();
   const { data } = useItemVariants(itemId);
@@ -80,7 +82,7 @@ export const ItemVariantSelectPanel = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <Box display="flex" flexDirection="column" gap={2} padding={2}>
-        <VariantCard onClick={onClose}>
+        <VariantCard onClick={onManual ?? onClose}>
           <Typography variant="body1" fontWeight="bold">
             {t('heading.enter-values-manually')}
           </Typography>
