@@ -123,6 +123,10 @@ pub struct LegacyTransLineRow {
     pub volume_per_pack: f64,
     #[serde(rename = "sent_pack_size")]
     pub shipped_pack_size: Option<f64>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -188,6 +192,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacturer_id,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -320,7 +325,8 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            donor_id: donor_id,
+            donor_id,
+            manufacturer_id,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -391,6 +397,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     item_variant_id,
                     linked_invoice_id,
                     donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     reason_option_id,
                     campaign_id,
@@ -447,6 +454,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacturer_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,

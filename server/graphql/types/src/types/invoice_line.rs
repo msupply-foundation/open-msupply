@@ -1,4 +1,4 @@
-use crate::types::{program_node::ProgramNode, VVMStatusNode};
+use crate::types::{program_node::ProgramNode, PurchaseOrderLineNode, VVMStatusNode};
 
 use super::{
     CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
@@ -10,14 +10,14 @@ use dataloader::DataLoader;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByIdLoader,
-        NameByIdLoaderInput, ProgramByIdLoader, ReasonOptionLoader, StockLineByIdLoader,
-        VVMStatusByIdLoader,
+        NameByIdLoaderInput, ProgramByIdLoader, PurchaseOrderLineByIdLoader, ReasonOptionLoader,
+        StockLineByIdLoader, VVMStatusByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{location::Location, InvoiceLine, InvoiceLineRow, ItemRow};
+use repository::{location::Location, InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, ItemRow};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -242,6 +242,23 @@ impl InvoiceLineNode {
         Ok(result.map(NameNode::from_domain))
     }
 
+    pub async fn manufacturer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let manufacturer_id = match &self.row().manufacturer_id {
+            None => return Ok(None),
+            Some(manufacturer_id) => manufacturer_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
     pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
 
@@ -308,6 +325,23 @@ impl InvoiceLineNode {
             .as_ref()
             .map(|status| InvoiceLineStatusType::from(status.clone()))
     }
+
+    pub async fn purchase_order_line(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<PurchaseOrderLineNode>> {
+        let loader = ctx.get_loader::<DataLoader<PurchaseOrderLineByIdLoader>>();
+
+        let Some(purchase_order_line_id) = &self.stats().purchase_order_line_id else {
+            return Ok(None);
+        };
+
+        let result = loader
+            .load_one(purchase_order_line_id.clone())
+            .await?
+            .map(PurchaseOrderLineNode::from_domain);
+        Ok(result)
+    }
 }
 
 #[derive(Union)]
@@ -363,6 +397,10 @@ impl InvoiceLineNode {
     pub fn item_row(&self) -> &ItemRow {
         &self.invoice_line.item_row
     }
+
+    pub fn stats(&self) -> &InvoiceLineStatsRow {
+        &self.invoice_line.invoice_line_stats_row
+    }
 }
 
 #[cfg(test)]
@@ -372,8 +410,8 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineType, InvoiceRow, ItemRow,
-        LocationRow,
+        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType,
+        InvoiceRow, ItemRow, LocationRow,
     };
     use serde_json::json;
 
@@ -416,6 +454,10 @@ mod test {
                         item_row: ItemRow {
                             id: "line_item_id".to_string(),
                             ..Default::default()
+                        },
+                        invoice_line_stats_row: InvoiceLineStatsRow {
+                            invoice_line_id: "line_id".to_string(),
+                            purchase_order_line_id: None,
                         },
                         location_row_option: Some(LocationRow {
                             name: "line_location_name".to_string(),
