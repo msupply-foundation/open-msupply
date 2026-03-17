@@ -52,6 +52,7 @@ pub struct InsertStockInLine {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
+    pub purchase_order_line_id: Option<String>,
 }
 
 type OutError = InsertStockInLineError;
@@ -119,6 +120,8 @@ pub enum InsertStockInLineError {
     VVMStatusDoesNotExist,
     ProgramNotVisible,
     IncorrectLocationType,
+    PurchaseOrderLineIdRequired,
+    PurchaseOrderLineDoesNotExist,
 }
 
 impl From<RepositoryError> for InsertStockInLineError {
