@@ -40,7 +40,7 @@ export const StoreWastagePanel = ({
     ? { codeOrName: { like: debouncedSearch } }
     : null;
 
-  const { data, fetchNextPage } = usePaginatedStores({
+  const { data, fetchNextPage, isFetchingNextPage } = usePaginatedStores({
     rowsPerPage: RECORDS_PER_PAGE,
     filter,
   });
@@ -167,7 +167,8 @@ export const StoreWastagePanel = ({
               onViewportIndexesChange={([, endIndex]) => {
                 if (
                   endIndex >= stores.length - 5 &&
-                  stores.length < totalCount
+                  stores.length < totalCount &&
+                  !isFetchingNextPage
                 ) {
                   const nextPage = data?.pages?.length ?? 0;
                   fetchNextPage({ pageParam: nextPage });
