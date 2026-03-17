@@ -32,7 +32,6 @@ interface TabLayoutProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   item: ItemRowFragment | null;
-  hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
 }
 
@@ -50,7 +49,6 @@ export const TabLayout = ({
   removeDraftLine,
   currency,
   isExternalSupplier,
-  hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
   item,
 }: TabLayoutProps) => {
@@ -136,7 +134,6 @@ export const TabLayout = ({
               updateDraftLine={updateDraftLine}
               removeDraftLine={removeDraftLine}
               item={item}
-              hasItemVariantsEnabled={hasItemVariantsEnabled}
               hasVvmStatusesEnabled={hasVvmStatusesEnabled}
             />
           </Box>
