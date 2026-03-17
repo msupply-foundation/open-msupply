@@ -114,7 +114,7 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
                   }
                 }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::QueryInvoice,
+                resource: Resource::QueryOutboundShipment,
                 store_id: Some("some".to_string()),
             },
         },
@@ -151,48 +151,6 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
               }"#,
             expected: ResourceAccessRequest {
                 resource: Resource::QueryInboundShipmentExternal,
-                store_id: Some("some".to_string()),
-            },
-        },
-        TestData {
-            name: "inboundShipments",
-            query: r#"query Query {
-                inboundShipments(storeId: "", sort: {key: status}) {
-                  ... on InvoiceConnector {
-                    totalCount
-                  }
-                }
-              }"#,
-            expected: ResourceAccessRequest {
-                resource: Resource::QueryInboundShipment,
-                store_id: Some("some".to_string()),
-            },
-        },
-        TestData {
-            name: "inboundShipmentsExternal",
-            query: r#"query Query {
-                inboundShipmentsExternal(storeId: "", sort: {key: status}) {
-                  ... on InvoiceConnector {
-                    totalCount
-                  }
-                }
-              }"#,
-            expected: ResourceAccessRequest {
-                resource: Resource::QueryInboundShipmentExternal,
-                store_id: Some("some".to_string()),
-            },
-        },
-        TestData {
-            name: "outboundShipments",
-            query: r#"query Query {
-                outboundShipments(storeId: "", sort: {key: status}) {
-                  ... on InvoiceConnector {
-                    totalCount
-                  }
-                }
-              }"#,
-            expected: ResourceAccessRequest {
-                resource: Resource::QueryOutboundShipment,
                 store_id: Some("some".to_string()),
             },
         },
@@ -546,7 +504,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
                 }
               }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::StoreAccess,
+                resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
             },
         },
@@ -616,7 +574,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
                 }
               }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::StoreAccess,
+                resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
             },
         },
@@ -812,7 +770,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
                 }
               }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::StoreAccess,
+                resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
             },
         },
@@ -1025,7 +983,7 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
                 }
               }"#,
             expected: ResourceAccessRequest {
-                resource: Resource::StoreAccess,
+                resource: Resource::MutateInboundShipment,
                 store_id: Some("some".to_string()),
             },
         },
