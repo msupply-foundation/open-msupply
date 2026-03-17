@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Divider,
   useTranslation,
@@ -17,7 +17,11 @@ import { InboundLineFragment, useDraftInboundLines } from '../../../api';
 import { TabLayout } from './TabLayout';
 import {
   CurrencyRowFragment,
+  getVolumePerPackFromVariant,
   ItemRowFragment,
+  ItemVariantFragment,
+  ItemVariantSelectPanel,
+  useItemVariants,
 } from '@openmsupply-client/system';
 import { QuantityTable } from './TabTables';
 import { isInboundPlaceholderRow } from '../../../../utils';
@@ -77,9 +81,67 @@ export const InboundLineEdit = ({
   );
   const simplifiedTabletView = useSimplifiedTabletUI();
 
+  const [variantAction, setVariantAction] = useState<'add' | 'first' | null>(
+    null
+  );
+
+  const { data: variantData } = useItemVariants(currentItem?.id ?? '');
+  const hasVariants =
+    hasItemVariantsEnabled && (variantData?.variants?.length ?? 0) > 0;
+
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
+
+  const [variantShownForItem, setVariantShownForItem] = useState<string | null>( // guard to stop panel re-opening
+    null
+  );
+  useEffect(() => {
+    setVariantShownForItem(null);
+  }, [currentItem?.id]);
+
+  useEffect(() => {
+    if (!hasVariants || draftLines.length === 0) return;
+    if (variantShownForItem === currentItem?.id) return;
+
+    setVariantShownForItem(currentItem?.id ?? null);
+    setVariantAction('first');
+  }, [hasVariants, draftLines.length, currentItem?.id, variantShownForItem]);
+
+  const onVariantSelected = useCallback(
+    (variant: ItemVariantFragment) => {
+      const packSize = draftLines[0]?.packSize ?? 1;
+      const variantPatch = {
+        itemVariantId: variant.id,
+        itemVariant: variant,
+        manufacturer: variant.manufacturer ?? null,
+        volumePerPack:
+          getVolumePerPackFromVariant({
+            packSize,
+            itemVariant: variant,
+          }) ?? 0,
+      };
+
+      if (variantAction === 'first' && draftLines.length > 0) {
+        updateDraftLine({
+          id: draftLines[0]!.id,
+          ...variantPatch,
+        });
+      } else {
+        addDraftLine(variantPatch);
+      }
+      setVariantAction(null);
+    },
+    [addDraftLine, updateDraftLine, draftLines, variantAction]
+  );
+
+  const handleAddBatch = useCallback(() => {
+    if (hasVariants) {
+      setVariantAction('add');
+    } else {
+      addDraftLine();
+    }
+  }, [hasVariants, addDraftLine]);
 
   const tableContent = simplifiedTabletView ? (
     <>
@@ -89,7 +151,6 @@ export const InboundLineEdit = ({
         updateDraftLine={updateDraftLine}
         removeDraftLine={removeDraftLine}
         item={currentItem}
-        hasItemVariantsEnabled={hasItemVariantsEnabled}
         hasVvmStatusesEnabled={hasVvmStatusesEnabled}
       />
       <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
@@ -97,7 +158,7 @@ export const InboundLineEdit = ({
           disabled={isDisabled}
           color="primary"
           variant="outlined"
-          onClick={addDraftLine}
+          onClick={handleAddBatch}
           label={`${t('label.add-batch')} (+)`}
           Icon={<PlusCircleIcon />}
         />
@@ -106,14 +167,13 @@ export const InboundLineEdit = ({
   ) : (
     <TabLayout
       draftLines={draftLines}
-      addDraftLine={addDraftLine}
+      addDraftLine={handleAddBatch}
       updateDraftLine={updateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
       currency={currency}
       isExternalSupplier={isExternalSupplier}
       item={currentItem}
-      hasItemVariantsEnabled={hasItemVariantsEnabled}
       hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
     />
   );
@@ -170,6 +230,14 @@ export const InboundLineEdit = ({
           />
           <Divider margin={5} />
           {tableContent}
+          {currentItem && (
+            <ItemVariantSelectPanel
+              itemId={currentItem.id}
+              open={variantAction !== null}
+              onClose={() => setVariantAction(null)}
+              onSelect={onVariantSelected}
+            />
+          )}
         </>
       )}
     </Modal>
