@@ -84,6 +84,8 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   isDosesEnabled?: boolean;
   dosesPerUnit?: number;
   roundUp?: boolean;
+  /** Display only the saved row value — for non-stock values like days or months */
+  isFixedValue?: boolean;
 }
 
 export type ValueInfo = {
@@ -93,6 +95,7 @@ export type ValueInfo = {
   sx?: SxProps<Theme>;
   isDosesEnabled?: boolean;
   roundUp?: boolean;
+  isFixedValue?: boolean;
 };
 
 export const ValueInfoRow = ({
@@ -108,16 +111,19 @@ export const ValueInfoRow = ({
   nullDisplay,
   decimalLimit,
   roundUp,
+  isFixedValue = false,
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
   let valueInRepresentation;
-  if (representation === Representation.DOSES) {
-    // Only convert to doses if the row is a stock value
-    valueInRepresentation = isDosesEnabled
-      ? QuantityUtils.calculateValueInDoses(dosesPerUnit, value)
-      : (value ?? 0);
+  if (isFixedValue) {
+    valueInRepresentation = value ?? 0;
+  } else if (representation === Representation.DOSES) {
+    valueInRepresentation = QuantityUtils.calculateValueInDoses(
+      dosesPerUnit,
+      value
+    );
   } else {
     valueInRepresentation = QuantityUtils.calculateValueInUnitsOrPacks(
       representation,
@@ -140,7 +146,7 @@ export const ValueInfoRow = ({
   const displayValue = treatAsNull ? nullDisplay : valueInRepresentation;
 
   const caption =
-    isDosesEnabled && !!value ? (
+    isDosesEnabled && !!value && !isFixedValue ? (
       <DosesOrUnitsCaption
         value={value}
         dosesPerUnit={dosesPerUnit}

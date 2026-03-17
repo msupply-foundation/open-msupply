@@ -119,6 +119,7 @@ export const RequestLineEdit = ({
             endAdornmentOverride,
             isDosesEnabled: dosesEnabled,
             roundUp,
+            isFixedValue,
           }) => (
             <ValueInfoRow
               key={label}
@@ -133,6 +134,7 @@ export const RequestLineEdit = ({
               dosesPerUnit={currentItem?.doses}
               decimalLimit={0}
               roundUp={roundUp}
+              isFixedValue={isFixedValue}
             />
           )
         )}
