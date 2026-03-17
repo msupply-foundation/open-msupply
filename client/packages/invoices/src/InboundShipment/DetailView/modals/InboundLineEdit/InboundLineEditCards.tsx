@@ -138,7 +138,6 @@ export const InboundLineEditCards = ({
             updateFn={(batch: string) =>
               updateDraftLine({ id: row.original.id, batch })
             }
-            autoFocus={row.index === 0}
           />
         ),
       },
