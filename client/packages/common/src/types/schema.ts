@@ -6286,7 +6286,7 @@ export type NullableDatetimeUpdate = {
  * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
  * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
  */
-export type NullableF64Update = {
+export type NullableFloatUpdate = {
   value?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -11056,10 +11056,10 @@ export type UpsertVaccineCourseItemInput = {
 };
 
 export type UpsertVaccineCourseStoreConfigInput = {
-  coverageRate?: InputMaybe<NullableF64Update>;
+  coverageRate?: InputMaybe<NullableFloatUpdate>;
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
-  wastageRate?: InputMaybe<NullableF64Update>;
+  wastageRate?: InputMaybe<NullableFloatUpdate>;
 };
 
 export type UseSuggestedQuantityError = {

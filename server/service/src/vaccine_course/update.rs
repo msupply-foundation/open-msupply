@@ -275,8 +275,8 @@ fn generate(
         .collect();
 
     // Generate store config rows, merging with existing rows for nullable fields
-    let existing_store_configs =
-        VaccineCourseStoreConfigRepository::new(connection).query_by_filter(
+    let existing_store_configs = VaccineCourseStoreConfigRepository::new(connection)
+        .query_by_filter(
             VaccineCourseStoreConfigFilter::new()
                 .vaccine_course_id(EqualFilter::equal_to(id.clone())),
         )?;

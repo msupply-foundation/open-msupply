@@ -1,6 +1,5 @@
 use super::{
-    UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput,
-    UpsertVaccineCourseStoreConfigInput,
+    UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput, UpsertVaccineCourseStoreConfigInput,
 };
 use async_graphql::*;
 use graphql_core::{
