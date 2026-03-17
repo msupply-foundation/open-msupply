@@ -623,7 +623,15 @@ export const InboundLineEditCards = ({
           <IconButton
             disabled={isDisabled}
             label={t('label.duplicate-batch')}
-            onClick={() => duplicateDraftLine(row.original.id)}
+            onClick={() => {
+              duplicateDraftLine(row.original.id);
+              setTimeout(() => {
+                lastCardRef?.current?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'nearest',
+                });
+              }, 0);
+            }}
             icon={<CopyIcon fontSize="small" />}
           />
         ),
