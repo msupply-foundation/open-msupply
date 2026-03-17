@@ -54,6 +54,7 @@ pub struct UpdateInput {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum UpdateInboundShipmentStatusInput {
+    Shipped,
     Delivered,
     Received,
     Verified,
@@ -214,7 +215,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
         | ServiceError::CannotPutDeliveredDateAfterReceivedDate
-        | ServiceError::CannotSetDeliveredDateInFuture => BadUserInput(formatted_error),
+        | ServiceError::CannotSetDeliveredDateInFuture
+        | ServiceError::CannotSetShippedStatusOnManualInboundShipment => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -226,6 +230,7 @@ impl UpdateInboundShipmentStatusInput {
     pub fn to_domain(&self) -> UpdateInboundShipmentStatus {
         use UpdateInboundShipmentStatus::*;
         match self {
+            UpdateInboundShipmentStatusInput::Shipped => Shipped,
             UpdateInboundShipmentStatusInput::Delivered => Delivered,
             UpdateInboundShipmentStatusInput::Received => Received,
             UpdateInboundShipmentStatusInput::Verified => Verified,

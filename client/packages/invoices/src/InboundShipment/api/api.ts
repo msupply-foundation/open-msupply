@@ -46,6 +46,8 @@ export const inboundParsers = {
     patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
   ): UpdateInboundShipmentStatusInput | undefined => {
     switch (patch.status) {
+      case InvoiceNodeStatus.Shipped:
+        return UpdateInboundShipmentStatusInput.Shipped;
       case InvoiceNodeStatus.Verified:
         return UpdateInboundShipmentStatusInput.Verified;
       case InvoiceNodeStatus.Delivered:

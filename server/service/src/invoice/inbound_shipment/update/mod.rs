@@ -21,6 +21,7 @@ use super::InboundShipmentType;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateInboundShipmentStatus {
+    Shipped,
     Delivered,
     Received,
     Verified,
@@ -184,6 +185,7 @@ pub enum UpdateInboundShipmentError {
     CannotSetDeliveredDateInFuture,
     CannotPutDeliveredDateAfterReceivedDate,
     CannotReceiveWithPendingLines,
+    CannotSetShippedStatusOnManualInboundShipment,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -214,6 +216,7 @@ where
 impl UpdateInboundShipmentStatus {
     pub fn full_status(&self) -> InvoiceStatus {
         match self {
+            UpdateInboundShipmentStatus::Shipped => InvoiceStatus::Shipped,
             UpdateInboundShipmentStatus::Delivered => InvoiceStatus::Delivered,
             UpdateInboundShipmentStatus::Received => InvoiceStatus::Received,
             UpdateInboundShipmentStatus::Verified => InvoiceStatus::Verified,
@@ -918,7 +921,8 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
-            }, None
+            },
+            None,
         )
         .unwrap();
 
@@ -1142,7 +1146,8 @@ mod test {
                     donor_id: Some(mock_donor_a().id),
                     r#type: StockInType::InboundShipment,
                     ..Default::default()
-                }, None
+                },
+                None,
             )
             .unwrap();
         invoice_line_service
@@ -1157,7 +1162,8 @@ mod test {
                     donor_id: None,
                     r#type: StockInType::InboundShipment,
                     ..Default::default()
-                }, None
+                },
+                None,
             )
             .unwrap();
 

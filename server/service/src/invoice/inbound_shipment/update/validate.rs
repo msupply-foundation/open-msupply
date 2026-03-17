@@ -46,6 +46,14 @@ pub fn validate(
             },
         )?;
 
+        // Shipped isn't valid for manual inbound shipments
+        if matches!(patch.status, Some(Shipped))
+            && invoice.purchase_order_id.is_none()
+            && invoice.linked_invoice_id.is_none()
+        {
+            return Err(CannotSetShippedStatusOnManualInboundShipment);
+        }
+
         // All pending lines must be resolved (accepted or rejected) before the invoice can be
         // received or verified, otherwise stock would be created for lines that haven't been
         // reviewed yet.
