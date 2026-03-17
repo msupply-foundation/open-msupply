@@ -5,7 +5,7 @@ use super::{
 use crate::{
     activity_log::activity_log_entry, demographic::validate::check_demographic_exists,
     service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
-    SingleRecordError,
+    NullableUpdate, SingleRecordError,
 };
 use repository::{
     vaccine_course::{
@@ -78,8 +78,8 @@ impl VaccineCourseDoseInput {
 pub struct VaccineCourseStoreConfigInput {
     pub id: String,
     pub store_id: String,
-    pub wastage_rate: Option<f64>,
-    pub coverage_rate: Option<f64>,
+    pub wastage_rate: Option<NullableUpdate<f64>>,
+    pub coverage_rate: Option<NullableUpdate<f64>>,
 }
 
 impl VaccineCourseStoreConfigInput {
@@ -88,8 +88,8 @@ impl VaccineCourseStoreConfigInput {
             id: self.id,
             vaccine_course_id,
             store_id: self.store_id,
-            wastage_rate: self.wastage_rate,
-            coverage_rate: self.coverage_rate,
+            wastage_rate: self.wastage_rate.and_then(|nu| nu.value),
+            coverage_rate: self.coverage_rate.and_then(|nu| nu.value),
         }
     }
 }
