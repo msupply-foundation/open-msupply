@@ -30,6 +30,7 @@ pub struct UpdateInput {
     pub counted_number_of_packs: Option<f64>,
     pub batch: Option<String>,
     pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdateInput<NaiveDate>>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
@@ -38,6 +39,7 @@ pub struct UpdateInput {
     pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub donor_id: Option<NullableUpdateInput<String>>,
+    pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
@@ -108,6 +110,7 @@ impl UpdateInput {
             counted_number_of_packs,
             batch,
             expiry_date,
+            manufacture_date,
             pack_size,
             cost_price_per_pack,
             sell_price_per_pack,
@@ -115,6 +118,7 @@ impl UpdateInput {
             inventory_adjustment_reason_id,
             item_variant_id,
             donor_id,
+            manufacturer_id,
             reason_option_id,
             vvm_status_id,
             volume_per_pack,
@@ -139,11 +143,17 @@ impl UpdateInput {
             expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
                 value: expiry_date.value,
             }),
+            manufacture_date: manufacture_date.map(|manufacture_date| NullableUpdate {
+                value: manufacture_date.value,
+            }),
             item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
                 value: item_variant_id.value,
             }),
             donor_id: donor_id.map(|donor_id| NullableUpdate {
                 value: donor_id.value,
+            }),
+            manufacturer_id: manufacturer_id.map(|manufacturer_id| NullableUpdate {
+                value: manufacturer_id.value,
             }),
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
             volume_per_pack,
@@ -194,6 +204,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::StockLineDoesNotExist
         | ServiceError::LocationDoesNotExist
         | ServiceError::StocktakeIsLocked
+        | ServiceError::ManufacturerDoesNotExist
+        | ServiceError::ManufacturerNotVisible
+        | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::CampaignDoesNotExist
         | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),

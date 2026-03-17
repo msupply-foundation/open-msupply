@@ -297,14 +297,20 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
 
     let current_datetime = Utc::now().naive_utc();
     match new_status {
+        UpdateInboundShipmentStatus::Shipped => {
+            invoice.shipped_datetime = Some(current_datetime);
+        }
         UpdateInboundShipmentStatus::Delivered => {
+            invoice.shipped_datetime = invoice.shipped_datetime.or(Some(current_datetime));
             invoice.delivered_datetime = Some(current_datetime);
         }
         UpdateInboundShipmentStatus::Received => {
+            invoice.shipped_datetime = invoice.shipped_datetime.or(Some(current_datetime));
             invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
             invoice.received_datetime = Some(current_datetime);
         }
         UpdateInboundShipmentStatus::Verified => {
+            invoice.shipped_datetime = invoice.shipped_datetime.or(Some(current_datetime));
             invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
             invoice.received_datetime = invoice.received_datetime.or(Some(current_datetime));
             invoice.verified_datetime = Some(current_datetime);
@@ -384,6 +390,7 @@ pub fn generate_lines_and_stock_lines(
             location_id,
             batch,
             expiry_date,
+            manufacture_date,
             pack_size,
             donor_id: donor_link_id,
             note,
@@ -392,6 +399,7 @@ pub fn generate_lines_and_stock_lines(
             program_id,
             reason_option_id: _,
             volume_per_pack,
+            manufacturer_id,
             ..
         }: InvoiceLineRow = invoice_line;
 
@@ -411,11 +419,13 @@ pub fn generate_lines_and_stock_lines(
             supplier_id: Some(supplier_id.to_string()),
             item_variant_id,
             donor_id: donor_link_id,
+            manufacturer_id,
             vvm_status_id,
             campaign_id,
             program_id,
             volume_per_pack,
             total_volume: volume_per_pack * number_of_packs,
+            manufacture_date,
             on_hold: false,
             barcode_id: None,
         };
@@ -472,10 +482,9 @@ fn update_donor_on_lines_and_stock(
                 Some(_) => updated_default_donor_id.clone(),
                 None => None,
             },
-            ApplyDonorToInvoiceLines::AssignIfNone => line
-                .donor_id
-                .clone()
-                .or(updated_default_donor_id.clone()),
+            ApplyDonorToInvoiceLines::AssignIfNone => {
+                line.donor_id.clone().or(updated_default_donor_id.clone())
+            }
             ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
         };
 

@@ -1,11 +1,11 @@
 use super::{
     campaign_row::campaign, invoice_line_row::invoice_line::dsl::*, invoice_row::invoice,
-    item_link_row::item_link, location_row::location,
-    reason_option_row::reason_option, stock_line_row::stock_line,
-    vvm_status::vvm_status_row::vvm_status, StorageConnection,
+    item_link_row::item_link, location_row::location, reason_option_row::reason_option,
+    stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
 use crate::diesel_macros::define_linked_tables;
+use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, InvoiceRowRepository,
@@ -54,11 +54,13 @@ define_linked_tables! {
         volume_per_pack -> Double,
         shipped_pack_size -> Nullable<Double>,
         status -> Nullable<crate::db_diesel::invoice_line_row::InvoiceLineStatusMapping>,
+        manufacture_date -> Nullable<Date>,
     },
     links: {
     },
     optional_links: {
         donor_link_id -> donor_id,
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
@@ -72,6 +74,22 @@ joinable!(invoice_line -> campaign (campaign_id));
 
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
+
+table! {
+    invoice_line_stats (invoice_line_id) {
+        invoice_line_id -> Text,
+        purchase_order_line_id -> Nullable<Text>,
+    }
+}
+
+joinable!(invoice_line -> invoice_line_stats (id));
+allow_tables_to_appear_in_same_query!(invoice_line_stats, invoice_line);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, invoice);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, location);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, stock_line);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, reason_option);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, item_link);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, item);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -127,8 +145,17 @@ pub struct InvoiceLineRow {
     pub volume_per_pack: f64,
     pub shipped_pack_size: Option<f64>,
     pub status: Option<InvoiceLineStatus>,
+    pub manufacture_date: Option<NaiveDate>,
     // Resolved from name_link - must be last to match view column order
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
+#[diesel(table_name = invoice_line_stats)]
+pub struct InvoiceLineStatsRow {
+    pub invoice_line_id: String,
+    pub purchase_order_line_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
@@ -203,7 +230,8 @@ impl<'a> InvoiceLineRowRepository<'a> {
         diesel::update(invoice_line_with_links::table)
             .filter(invoice_line_with_links::id.eq(record_id))
             .set(
-                invoice_line_with_links::foreign_currency_price_before_tax.eq(foreign_currency_price_before_tax_calculation),
+                invoice_line_with_links::foreign_currency_price_before_tax
+                    .eq(foreign_currency_price_before_tax_calculation),
             )
             .execute(self.connection.lock().connection())?;
         Ok(())
@@ -232,8 +260,10 @@ impl<'a> InvoiceLineRowRepository<'a> {
             }
         };
 
-        diesel::delete(invoice_line_with_links::table.filter(invoice_line_with_links::id.eq(invoice_line_id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            invoice_line_with_links::table.filter(invoice_line_with_links::id.eq(invoice_line_id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 
