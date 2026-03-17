@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  useMediaQuery,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography } from '@mui/material';
 import {
   flexRender,
   MRT_Cell,
@@ -15,6 +9,7 @@ import {
 import { ColumnDef } from '../../types';
 import { CardListField } from './CardListField';
 import { CardListFieldGroup } from './CardListFieldGroup';
+import { useIsLandscapeTablet } from '@common/hooks';
 
 /** Access custom ColumnDef fields from an MRT cell.
  *  ColumnDef<T> extends MRT_ColumnDef<T>, but MRT types columnDef as the
@@ -58,9 +53,7 @@ export const CardListItem = <T extends MRT_RowData>({
   groupIcons,
   onClick,
 }: CardListItemProps<T>) => {
-  const isLandscape = useMediaQuery(
-    '(orientation: landscape) and (max-height: 800px)'
-  );
+  const isLandscape = useIsLandscapeTablet();
 
   const cells = row.getVisibleCells();
 
@@ -172,7 +165,6 @@ export const CardListItem = <T extends MRT_RowData>({
           : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
               <CardListFieldGroup
                 key={groupName ?? `ungrouped-${groupIndex}`}
-                groupName={groupName}
                 groupIcon={groupName ? groupIcons?.[groupName] : undefined}
               >
                 {groupCells.map(cell => (

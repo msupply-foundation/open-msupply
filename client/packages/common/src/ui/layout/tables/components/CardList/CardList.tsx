@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Stack, useMediaQuery } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import {
   MRT_Row,
   MRT_RowData,
@@ -11,6 +11,7 @@ import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { RefreshIcon } from '@common/icons';
 import { clearSavedState } from '../../tableState/utils';
+import { useIsLandscapeTablet } from '@common/hooks';
 
 interface CardListProps<T extends MRT_RowData> {
   table: MRT_TableInstance<T>;
@@ -49,9 +50,7 @@ export const CardList = <T extends MRT_RowData>({
 }: CardListProps<T>) => {
   const t = useTranslation();
   const rows = table.getRowModel().rows;
-  const isLandscape = useMediaQuery(
-    '(orientation: landscape) and (max-height: 800px)'
-  );
+  const isLandscape = useIsLandscapeTablet();
 
   // Full reset to match the table view's resetTableState behaviour.
   // Card view only uses visibility and order, but we reset all properties
