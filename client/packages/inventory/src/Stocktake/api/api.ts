@@ -68,11 +68,19 @@ const stocktakeParser = {
           ? Formatter.naiveDate(new Date(line.expiryDate))
           : null,
       },
+      manufactureDate: {
+        value: line.manufactureDate
+          ? Formatter.naiveDate(new Date(line.manufactureDate))
+          : null,
+      },
       comment: line.comment ?? '',
       itemVariantId: setNullableInput('itemVariantId', {
         itemVariantId: line.itemVariantId,
       }),
       donorId: setNullableInput('donorId', line),
+      manufacturerId: setNullableInput('manufacturerId', {
+        manufacturerId: line.manufacturer?.id ?? null,
+      }),
       reasonOptionId: line.reasonOption?.id,
       vvmStatusId: line.vvmStatus?.id,
       volumePerPack: line.volumePerPack,
@@ -93,9 +101,13 @@ const stocktakeParser = {
       expiryDate: line.expiryDate
         ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
+      manufactureDate: line.manufactureDate
+        ? Formatter.naiveDate(new Date(line.manufactureDate))
+        : undefined,
       comment: line.comment ?? '',
       itemVariantId: line.itemVariantId,
       donorId: line.donorId,
+      manufacturerId: line.manufacturer?.id,
       reasonOptionId: line.reasonOption?.id,
       vvmStatusId: line.vvmStatus?.id,
       volumePerPack: line.volumePerPack,

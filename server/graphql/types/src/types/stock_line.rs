@@ -77,6 +77,9 @@ impl StockLineNode {
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {
         &self.row().expiry_date
     }
+    pub async fn manufacture_date(&self) -> &Option<NaiveDate> {
+        &self.row().manufacture_date
+    }
     pub async fn on_hold(&self) -> bool {
         self.row().on_hold
     }
@@ -159,6 +162,23 @@ impl StockLineNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
         let result = loader
             .load_one(NameByIdLoaderInput::new(&store_id, donor_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
+    pub async fn manufacturer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let manufacturer_id = match &self.row().manufacturer_id {
+            None => return Ok(None),
+            Some(manufacturer_id) => manufacturer_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_id))
             .await?;
 
         Ok(result.map(NameNode::from_domain))
