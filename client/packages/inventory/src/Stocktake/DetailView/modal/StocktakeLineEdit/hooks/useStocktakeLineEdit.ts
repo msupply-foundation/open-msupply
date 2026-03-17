@@ -13,7 +13,7 @@ import { StocktakeLineFragment } from '../../../../api';
 interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
-  addLine: () => void;
+  addLine: (initialPatch?: Partial<DraftStocktakeLine>) => void;
   save: () => Promise<{ errorMessages?: string[] }>;
   isSaving: boolean;
   nextItem: DraftStocktakeLine['item'] | null;
@@ -47,9 +47,11 @@ export const useStocktakeLineEdit = (
     }
   };
 
-  const addLine = () => {
+  const addLine = (initialPatch?: Partial<DraftStocktakeLine>) => {
     if (item) {
-      setDraftLines(lines => [DraftLine.fromItem(id, item), ...lines]);
+      const newLine = DraftLine.fromItem(id, item);
+      const line = initialPatch ? { ...newLine, ...initialPatch } : newLine;
+      setDraftLines(lines => [line, ...lines]);
     }
   };
 
