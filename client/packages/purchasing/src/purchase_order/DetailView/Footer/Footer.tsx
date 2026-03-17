@@ -25,8 +25,7 @@ import {
 } from '../../api';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 import { StatusChangeButton } from './StatusChangeButton';
-import { ExpectedDeliveryDateModal } from './ExpectedDeliveryDateModal';
-import { RequestedDeliveryDateModal } from './RequestedDeliveryDateModal';
+import { UpdateDeliveryDateModal } from './UpdateDeliveryDateModal';
 
 const createStatusLog = (
   purchaseOrder: PurchaseOrderFragment,
@@ -207,7 +206,8 @@ export const Footer = ({
             </Box>
           ) : null}
           {isExpectedDateOn && (
-            <ExpectedDeliveryDateModal
+            <UpdateDeliveryDateModal
+              dateType="expected"
               selectedRows={selectedRows}
               isOpen={isExpectedDateOn}
               onClose={toggleExpectedDateOff}
@@ -215,7 +215,8 @@ export const Footer = ({
             />
           )}
           {isRequestedDateOn && (
-            <RequestedDeliveryDateModal
+            <UpdateDeliveryDateModal
+              dateType="requested"
               selectedRows={selectedRows}
               isOpen={isRequestedDateOn}
               onClose={toggleRequestedDateOff}
