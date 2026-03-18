@@ -21,7 +21,7 @@ export interface NumInputRowProps extends NumericTextInputProps {
   showExtraFields?: boolean;
   disabledOverride?: boolean;
   value: number | undefined;
-  dosesCaption?: React.ReactNode;
+  caption?: React.ReactNode;
   roundUp?: boolean;
 }
 
@@ -36,7 +36,7 @@ export const NumInputRow = ({
   sx,
   showExtraFields = false,
   disabledOverride,
-  dosesCaption,
+  caption,
   roundUp = false,
   ...rest
 }: NumInputRowProps) => {
@@ -81,7 +81,7 @@ export const NumInputRow = ({
         labelProps={commonLabelProps(showExtraFields)}
         sx={createLabelRowSx(isVerticalScreen)}
       />
-      {dosesCaption}
+      {caption}
     </Box>
   );
 };

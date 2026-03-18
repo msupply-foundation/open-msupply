@@ -4336,6 +4336,7 @@ export type InvoiceLineNode = {
   prescribedQuantity?: Maybe<Scalars['Float']['output']>;
   pricing: PricingNode;
   program?: Maybe<ProgramNode>;
+  purchaseOrderLine?: Maybe<PurchaseOrderLineNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
@@ -7129,6 +7130,7 @@ export type PurchaseOrderLineNode = {
   comment?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  inTransitNumberOfUnits: Scalars['Float']['output'];
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   manufacturer?: Maybe<NameNode>;
@@ -7137,6 +7139,7 @@ export type PurchaseOrderLineNode = {
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId: Scalars['String']['output'];
+  receivedNumberOfUnits: Scalars['Float']['output'];
   requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   requestedNumberOfUnits: Scalars['Float']['output'];
   requestedPackSize: Scalars['Float']['output'];
@@ -9519,6 +9522,7 @@ export type SupplierReturnLineNode = {
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacksToReturn: Scalars['Float']['output'];
+  onHold: Scalars['Boolean']['output'];
   packSize: Scalars['Float']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   reasonOption?: Maybe<ReasonOptionNode>;
@@ -10069,6 +10073,7 @@ export type UpdateInboundShipmentServiceLineResponseWithId = {
 export enum UpdateInboundShipmentStatusInput {
   Delivered = 'DELIVERED',
   Received = 'RECEIVED',
+  Shipped = 'SHIPPED',
   Verified = 'VERIFIED',
 }
 
