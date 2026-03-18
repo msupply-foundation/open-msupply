@@ -51,8 +51,8 @@ export const useInboundList = (queryParams?: ListParams) => {
       type: { equalTo: InvoiceNodeType.InboundShipment },
     };
 
-    const sortKey = (sortFieldMap[sortBy.key as string] ||
-      InvoiceSortFieldInput.InvoiceNumber) as InvoiceSortFieldInput;
+    const sortKey =
+      sortFieldMap[String(sortBy.key)] || InvoiceSortFieldInput.InvoiceNumber;
 
     const query = await inboundApi.invoices({
       storeId,
