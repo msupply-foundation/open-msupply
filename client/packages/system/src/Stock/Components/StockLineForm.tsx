@@ -247,9 +247,7 @@ export const StockLineForm = ({
                             ).toFixed(2)
                           )}
                           onChange={() => {}}
-                          {...getDosesProps(
-                            draft.availableNumberOfPacks * draft.packSize
-                          )}
+                          {...getDosesProps(draft.availableNumberOfPacks)}
                         />
                       }
                     />
@@ -266,9 +264,7 @@ export const StockLineForm = ({
                             )
                           )}
                           onChange={() => {}}
-                          {...getDosesProps(
-                            draft.totalNumberOfPacks * draft.packSize
-                          )}
+                          {...getDosesProps(draft.totalNumberOfPacks)}
                         />
                       }
                     />
