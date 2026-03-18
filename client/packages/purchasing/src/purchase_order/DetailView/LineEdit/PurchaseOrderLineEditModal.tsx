@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Box,
   ModalMode,
@@ -28,7 +28,7 @@ interface PurchaseOrderLineEditModalProps {
   openNext: () => void;
 }
 
-export const PurchaseOrderLineEditModal = ({
+export const PurchaseOrderLineEditModal = React.memo(({
   lineId,
   purchaseOrder,
   mode,
@@ -56,15 +56,18 @@ export const PurchaseOrderLineEditModal = ({
   } = usePurchaseOrderLine(lineId);
   const unit = draft?.unit || t('label.unit', { count: 2 });
 
-  const onChangeItem = (item: ItemStockOnHandFragment) => {
-    const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
-    item &&
-      updatePatch({
-        ...draftLine,
-        requestedPackSize: item.defaultPackSize ?? 1,
-        itemId: item.id,
-      });
-  };
+  const onChangeItem = useCallback(
+    (item: ItemStockOnHandFragment) => {
+      const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
+      item &&
+        updatePatch({
+          ...draftLine,
+          requestedPackSize: item.defaultPackSize ?? 1,
+          itemId: item.id,
+        });
+    },
+    [purchaseOrder.id, updatePatch]
+  );
 
   const handleSave = async (): Promise<boolean> => {
     if (!isDirty) return true;
@@ -160,4 +163,4 @@ export const PurchaseOrderLineEditModal = ({
       )}
     </Modal>
   );
-};
+});
