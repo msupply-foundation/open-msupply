@@ -439,7 +439,7 @@ export const InboundLineEditCards = ({
         Cell: ({ cell, row }) => (
           <CurrencyInputCell
             cell={cell}
-            disabled={isDisabled}
+            disabled={isDisabled || !isExternalSupplier || !!purchaseOrderId}
             updateFn={value =>
               updateDraftLine({ id: row.original.id, costPricePerPack: value })
             }
