@@ -88,10 +88,25 @@ impl<'a> TemperatureLogRowRepository<'a> {
         sensor_id: &str,
         location_id: &str,
     ) -> Result<(), RepositoryError> {
-        diesel::update(temperature_log::table)
+        let rows_updated = diesel::update(temperature_log::table)
             .filter(temperature_log::sensor_id.eq(sensor_id))
+            .filter(temperature_log::location_id.is_null())
             .set(temperature_log::location_id.eq(Some(location_id)))
             .execute(self.connection.lock().connection())?;
+
+        if rows_updated == 0 {
+            return Ok(());
+        }
+
+        let logs = temperature_log::table
+            .filter(temperature_log::sensor_id.eq(sensor_id))
+            .filter(temperature_log::location_id.eq(location_id))
+            .load::<TemperatureLogRow>(self.connection.lock().connection())?;
+
+        for log in &logs {
+            self.insert_changelog(log, RowActionType::Upsert)?;
+        }
+
         Ok(())
     }
 
