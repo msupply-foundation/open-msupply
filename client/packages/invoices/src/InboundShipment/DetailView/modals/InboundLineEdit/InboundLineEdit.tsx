@@ -114,7 +114,7 @@ export const InboundLineEdit = ({
 
   const onVariantSelected = useCallback(
     (variant: ItemVariantFragment) => {
-      const packSize = draftLines[0]?.packSize ?? 1;
+      const packSize = draftLines[0]?.item.defaultPackSize ?? 1;
       const variantPatch = {
         itemVariantId: variant.id,
         itemVariant: variant,
