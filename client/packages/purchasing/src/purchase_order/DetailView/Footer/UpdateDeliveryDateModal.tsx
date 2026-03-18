@@ -2,6 +2,7 @@ import React, { ReactElement, useState } from 'react';
 import {
   DialogButton,
   Formatter,
+  LocaleKey,
   useConfirmationModal,
   useDialog,
   useNotification,
@@ -15,9 +16,9 @@ type DateType = 'expected' | 'requested';
 const translationKeys: Record<
   DateType,
   {
-    title: string;
-    confirmMessage: string;
-    successMessage: string;
+    title: LocaleKey;
+    confirmMessage: LocaleKey;
+    successMessage: LocaleKey;
   }
 > = {
   expected: {
