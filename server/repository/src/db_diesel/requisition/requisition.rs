@@ -18,7 +18,7 @@ use crate::{
 
 use crate::Pagination;
 use diesel::{
-    dsl::{sum, IntoBoxed},
+    dsl::IntoBoxed,
     prelude::*,
 };
 
@@ -248,8 +248,8 @@ fn create_filtered_query(
                 .select(requisition_line::requisition_id)
                 .group_by(requisition_line::requisition_id)
                 .having(
-                    sum(requisition_line::requested_quantity)
-                        .gt(sum(requisition_line::supply_quantity)),
+                    diesel::dsl::sum(requisition_line::requested_quantity)
+                        .gt(diesel::dsl::sum(requisition_line::supply_quantity)),
                 )
                 .into_boxed();
 
