@@ -20,6 +20,7 @@ use self::generate::LineAndStockLine;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateInboundShipmentStatus {
+    Shipped,
     Delivered,
     Received,
     Verified,
@@ -65,7 +66,6 @@ pub fn update_inbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            log::info!("updating inbound shipment with id: {}", patch.id);
             let (invoice, other_party, status_changed) =
                 validate(connection, store_id.unwrap_or(&ctx.store_id), &patch)?;
             let GenerateResult {
@@ -178,6 +178,7 @@ pub enum UpdateInboundShipmentError {
     CannotSetDeliveredDateInFuture,
     CannotPutDeliveredDateAfterReceivedDate,
     CannotReceiveWithPendingLines,
+    CannotSetShippedStatusOnManualInboundShipment,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -208,6 +209,7 @@ where
 impl UpdateInboundShipmentStatus {
     pub fn full_status(&self) -> InvoiceStatus {
         match self {
+            UpdateInboundShipmentStatus::Shipped => InvoiceStatus::Shipped,
             UpdateInboundShipmentStatus::Delivered => InvoiceStatus::Delivered,
             UpdateInboundShipmentStatus::Received => InvoiceStatus::Received,
             UpdateInboundShipmentStatus::Verified => InvoiceStatus::Verified,
