@@ -24,12 +24,16 @@ const VariantCard = ({
   children: React.ReactNode;
 }) => (
   <Box
+    component="button"
     onClick={onClick}
     sx={theme => ({
       border: `1px solid ${theme.palette.divider}`,
       borderRadius: 4,
       padding: 2,
       cursor: 'pointer',
+      background: 'none',
+      textAlign: 'left',
+      width: '100%',
       '&:hover': {
         borderColor: theme.palette.secondary.main,
         backgroundColor: theme.palette.background.toolbar,
