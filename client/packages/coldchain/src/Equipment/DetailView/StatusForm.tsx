@@ -135,8 +135,12 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-        <Row label={t('label.new-functional-status')} isExtraSmallScreen={isExtraSmallScreen}>
+        <Row
+          label={t('label.new-functional-status')}
+          isExtraSmallScreen={isExtraSmallScreen}
+        >
           <Autocomplete
+            required
             isOptionEqualToValue={option => option?.value === draft.status}
             onChange={(_e, selected) =>
               onChange({
@@ -160,7 +164,10 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             value={reasons.find(r => r?.value === draft.reasonId) ?? null}
           />
         </Row>
-        <Row label={t('label.observations')} isExtraSmallScreen={isExtraSmallScreen}>
+        <Row
+          label={t('label.observations')}
+          isExtraSmallScreen={isExtraSmallScreen}
+        >
           <BasicTextInput
             multiline
             rows={4}
