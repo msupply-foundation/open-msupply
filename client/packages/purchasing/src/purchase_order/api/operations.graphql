@@ -222,6 +222,10 @@ mutation updatePurchaseOrder(
         ... on ItemsCannotBeOrdered {
           ...ItemsCannotBeOrdered
         }
+        ... on InboundShipmentsNotVerified {
+          __typename
+          description
+        }
       }
     }
   }
