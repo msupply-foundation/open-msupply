@@ -112,7 +112,7 @@ export const StoreWastagePanel = ({
   };
   const inputProps = {
     endAdornment: '%',
-    decimalLimit: 2,
+    decimalLimit: 1,
     max: 100,
     width: 100,
     sx: { ml: 1 },
