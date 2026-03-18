@@ -20,6 +20,15 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'vaccine_course_store_wastage';
+                "#
+            )?;
+        }
+
         Ok(())
     }
 }

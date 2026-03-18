@@ -32,7 +32,8 @@ import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
-import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
+import { StoreWastagePanel } from './StoreWastagePanel';
+import { DraftVaccineCourse } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
 const getDemographicOptions = (demographics: DemographicNode[]) => {
@@ -73,7 +74,7 @@ const Row = ({
 );
 
 interface VaccineCourseEditModalProps {
-  vaccineCourse: VaccineCourseFragment | null;
+  vaccineCourseId: string | null;
   isOpen: boolean;
   onClose: () => void;
   programId: string | undefined;
@@ -88,7 +89,7 @@ function doseIndex(
 }
 
 export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
-  vaccineCourse,
+  vaccineCourseId,
   isOpen,
   onClose,
   programId,
@@ -104,7 +105,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     query: { isLoading },
     isDirty,
     resetDraft,
-  } = useVaccineCourse(vaccineCourse?.id ?? undefined);
+  } = useVaccineCourse(vaccineCourseId ?? undefined);
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const doses = draft.vaccineCourseDoses ?? [];
 
@@ -209,14 +210,20 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           />
         </Row>
         <Row label={t('label.wastage-rate')}>
-          <NumericTextInput
-            value={draft?.wastageRate}
-            fullWidth
-            onChange={value => updatePatch({ wastageRate: value })}
-            endAdornment="%"
-            decimalLimit={1}
-            max={100}
-          />
+          <Box display="flex" alignItems="center" gap={1} flex={1}>
+            <NumericTextInput
+              value={draft?.wastageRate}
+              fullWidth
+              onChange={value => updatePatch({ wastageRate: value })}
+              endAdornment="%"
+              decimalLimit={1}
+              max={100}
+            />
+            <StoreWastagePanel
+              storeWastageRates={draft.storeWastageRates ?? []}
+              updatePatch={updatePatch}
+            />
+          </Box>
         </Row>
         <Row label={t('label.vaccine-items')}>
           <VaccineItemSelect draft={draft} onChange={updatePatch} />
