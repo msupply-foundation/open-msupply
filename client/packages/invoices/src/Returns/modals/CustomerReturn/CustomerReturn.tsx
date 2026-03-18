@@ -60,6 +60,7 @@ export const CustomerReturnEditModal = ({
   const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
     AlertColor | undefined
   >();
+  const [packSizeAlert, setPackSizeAlert] = useState(false);
 
   const defaultReference =
     isNewReturn && outboundShipment
@@ -122,19 +123,31 @@ export const CustomerReturnEditModal = ({
   };
 
   const handleNextStep = () => {
-    if (lines.some(line => line.numberOfPacksReturned !== 0)) {
+    const hasReturnedLines = lines.some(
+      line => line.numberOfPacksReturned !== 0
+    );
+    const hasInvalidPackSize = lines.some(line => line.packSize < 1);
+
+    setPackSizeAlert(hasInvalidPackSize);
+
+    if (!hasReturnedLines) {
+      switch (modalMode) {
+        case ModalMode.Create: {
+          setZeroQuantityAlert('error');
+          break;
+        }
+        case ModalMode.Update: {
+          setZeroQuantityAlert('warning');
+          break;
+        }
+      }
+    } else {
+      setZeroQuantityAlert(undefined);
+    }
+
+    if (!hasInvalidPackSize && hasReturnedLines) {
       onChangeTab(Tabs.Reason);
       return;
-    }
-    switch (modalMode) {
-      case ModalMode.Create: {
-        setZeroQuantityAlert('error');
-        break;
-      }
-      case ModalMode.Update: {
-        setZeroQuantityAlert('warning');
-        break;
-      }
     }
     alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -194,6 +207,8 @@ export const CustomerReturnEditModal = ({
             update={update}
             zeroQuantityAlert={zeroQuantityAlert}
             setZeroQuantityAlert={setZeroQuantityAlert}
+            packSizeAlert={packSizeAlert}
+            setPackSizeAlert={setPackSizeAlert}
             theirReference={theirReference}
             onTheirReferenceChange={setTheirReference}
             isDisabled={isDisabled}
