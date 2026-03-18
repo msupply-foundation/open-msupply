@@ -101,15 +101,17 @@ export const CardList = <T extends MRT_RowData>({
         />
         {actions}
       </Box>
-      {rows.map((row, index) => (
-        <CardListItem
-          key={row.id}
-          row={row}
-          cardRef={index === rows.length - 1 ? lastItemRef : undefined}
-          groupIcons={groupIcons}
-          onClick={getRowOnClick(table, row)}
-        />
-      ))}
+      {rows.length === 0
+        ? table.options.renderEmptyRowsFallback?.({ table })
+        : rows.map((row, index) => (
+            <CardListItem
+              key={row.id}
+              row={row}
+              cardRef={index === rows.length - 1 ? lastItemRef : undefined}
+              groupIcons={groupIcons}
+              onClick={getRowOnClick(table, row)}
+            />
+          ))}
     </Stack>
   );
 };
