@@ -42,7 +42,7 @@ rand = "0.8.5"
 actix-files = "0.6.6"
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 base64 = "0.22.1"
-ts-rs = { version = "10.1", features = ["chrono-impl", "serde-json-impl"] }
+ts-rs = { version = "12.0.1", features = ["chrono-impl", "serde-json-impl"] }
 ordered-float = "5.1"
 
 # TODO: Remove. async_graphql is using 1.0 but SET_COOKIE was being imported from wrong version.
