@@ -26,12 +26,14 @@ pub struct InsertInput {
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
+    pub manufacture_date: Option<NaiveDate>,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub item_variant_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub note: Option<String>,
@@ -90,6 +92,7 @@ impl InsertInput {
             pack_size,
             batch,
             expiry_date,
+            manufacture_date,
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
@@ -97,6 +100,7 @@ impl InsertInput {
             tax_percentage,
             item_variant_id,
             donor_id,
+            manufacturer_id,
             vvm_status_id,
             campaign_id,
             program_id,
@@ -116,6 +120,7 @@ impl InsertInput {
             pack_size,
             batch,
             expiry_date,
+            manufacture_date,
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
@@ -125,6 +130,7 @@ impl InsertInput {
             item_variant_id,
             vvm_status_id,
             donor_id,
+            manufacturer_id,
             shipped_number_of_packs,
             campaign_id,
             program_id,
@@ -180,6 +186,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::DonorDoesNotExist
         | ServiceError::DonorNotVisible
         | ServiceError::SelectedDonorPartyIsNotADonor
+        | ServiceError::ManufacturerDoesNotExist
+        | ServiceError::ManufacturerNotVisible
+        | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramNotVisible
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
@@ -203,7 +212,7 @@ mod test {
             mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_item_a,
             mock_location_1, MockDataInserts,
         },
-        InvoiceLine, RepositoryError, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -484,6 +493,7 @@ mod test {
                 invoice_line_row: mock_inbound_shipment_c_invoice_lines()[0].clone(),
                 invoice_row: mock_inbound_shipment_c(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })

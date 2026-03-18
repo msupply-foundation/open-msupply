@@ -94,6 +94,31 @@ export const useDraftInboundLines = (
     }
   };
 
+  const duplicateDraftLine = useCallback(
+    (lineId: string) => {
+      if (!item) return;
+
+      setDraftLines(prevLines => {
+        const sourceLine = prevLines.find(line => line.id === lineId);
+        if (!sourceLine) return prevLines;
+
+        const { id: _id, ...seedWithoutId } = sourceLine;
+        const newLine = CreateDraft.stockInLine({
+          item,
+          invoiceId: id,
+          seed: seedWithoutId as typeof sourceLine,
+        });
+        // Mark as new so it gets inserted rather than updated
+        newLine.isCreated = true;
+        newLine.isUpdated = false;
+
+        setIsDirty(true);
+        return [...prevLines, newLine];
+      });
+    },
+    [item, id, setIsDirty]
+  );
+
   const updateDraftLine = useCallback(
     (patch: PatchDraftLineInput) => {
       setDraftLines(draftLines => {
@@ -111,27 +136,27 @@ export const useDraftInboundLines = (
     [setDraftLines, setIsDirty]
   );
 
-  const removeDraftLine = (lineId: string) => {
-    const batch = draftLines.find(line => line.id === lineId);
-    if (!batch) return;
-    if (batch.isCreated) {
+  const removeDraftLine = useCallback(
+    (lineId: string) => {
       setDraftLines(draftLines => {
-        const newLines = draftLines.filter(line => line.id !== lineId);
-        if (newLines.length === 0 && item) {
-          return [CreateDraft.stockInLine({ item, invoiceId: id })];
+        const batch = draftLines.find(line => line.id === lineId);
+        if (!batch) return draftLines;
+        if (batch.isCreated) {
+          const newLines = draftLines.filter(line => line.id !== lineId);
+          if (newLines.length === 0 && item) {
+            return [CreateDraft.stockInLine({ item, invoiceId: id })];
+          }
+          return newLines;
+        } else {
+          setIsDirty(true);
+          return draftLines.map(line =>
+            line.id === lineId ? { ...line, isDeleted: true } : line
+          );
         }
-        return newLines;
       });
-    } else {
-      setDraftLines(draftLines => {
-        const updatedLines = draftLines.map(line =>
-          line.id === lineId ? { ...line, isDeleted: true } : line
-        );
-        setIsDirty(true);
-        return updatedLines;
-      });
-    }
-  };
+    },
+    [item, id, setIsDirty]
+  );
 
   const saveLines = async () => {
     if (isDirty) {
@@ -175,6 +200,7 @@ export const useDraftInboundLines = (
   return {
     draftLines: draftLines.filter(line => !line.isDeleted),
     addDraftLine,
+    duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
     isLoading,

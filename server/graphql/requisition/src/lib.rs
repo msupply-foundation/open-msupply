@@ -135,13 +135,13 @@ impl RequisitionMutations {
         request_requisition::delete::delete(ctx, &store_id, input)
     }
 
-    async fn insert_from_response_requisition(
+    async fn insert_request_from_response_requisition(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: request_requisition::insert_from_response_requisition::InsertFromResponseRequisitionInput,
-    ) -> Result<request_requisition::insert_from_response_requisition::InsertFromResponse> {
-        request_requisition::insert_from_response_requisition::insert_from_response_requisition(
+        input: request_requisition::insert_request_from_response_requisition::InsertFromResponseRequisitionInput,
+    ) -> Result<request_requisition::insert_request_from_response_requisition::InsertFromResponse> {
+        request_requisition::insert_request_from_response_requisition::insert_request_from_response_requisition(
             ctx, &store_id, input,
         )
     }

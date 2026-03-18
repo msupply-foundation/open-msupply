@@ -214,6 +214,7 @@ query preferences($storeId: String!) {
     useSimplifiedMobileUi
     expiredStockPreventIssue
     expiredStockIssueThreshold
+    displayPopulationBasedForecasting
     warnWhenMissingRecentStocktake {
       enabled
       maxAge
