@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::{PullTranslateResult, SyncTranslation};
 use crate::sync::translations::{item::ItemTranslation, store::StoreTranslation};
 use repository::{ItemStoreJoinRow, StorageConnection, SyncBufferRow};
+use util::sync_serde::empty_str_as_option_string;
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -19,6 +20,7 @@ pub struct LegacyItemStoreJoinRow {
     margin: f64,
     #[serde(rename = "default_location_ID")]
     #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     default_location_id: Option<String>,
 }
 
