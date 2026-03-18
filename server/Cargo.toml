@@ -31,8 +31,8 @@ serde_json = "1.0.140"
 serde_yaml = "0.9.34"
 sha2 = "0.10.9"
 simple-log = { version = "=2.3.0" }
-strum = { version = "0.27.1", features = ["derive"] }
-thiserror = "2.0.2"
+strum = { version = "0.28.0", features = ["derive"] }
+thiserror = "2.0.18"
 tokio = { version = "1.50.0", features = ["macros", "process"] }
 # dev dependencies used in graphql crates:
 anyhow = "1.0.102"
