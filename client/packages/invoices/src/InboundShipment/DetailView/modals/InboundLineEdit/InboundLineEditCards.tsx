@@ -691,13 +691,6 @@ export const InboundLineEditCards = ({
 
   return (
     <>
-      {/* MRT_ShowHideColumnsButton (used in CardList) requires the MRT table
-          to be mounted in the DOM so it can read column state from the table
-          instance. We render it hidden so card view gets working column
-          visibility toggles without showing the actual table. */}
-      <Box sx={{ display: 'none' }}>
-        <MaterialTable table={table} />
-      </Box>
       <CardList
         table={table}
         tableId="inbound-line-edit"
