@@ -2,7 +2,7 @@ import React from 'react';
 import { Tooltip } from '@mui/material';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 import { Currencies, useCurrency } from '@common/intl';
-import { NumUtils } from '@common/utils';
+import { NumUtils, UNDEFINED_STRING_VALUE } from '@common/utils';
 
 export const CurrencyValueCell = <T extends MRT_RowData>({
   cell,
@@ -13,7 +13,11 @@ export const CurrencyValueCell = <T extends MRT_RowData>({
 }) => {
   const { c } = useCurrency(currencyCode as Currencies);
 
-  const price = Number(cell.getValue() ?? 0);
+  if (cell.getValue() == null) {
+    return <span>{UNDEFINED_STRING_VALUE}</span>;
+  }
+
+  const price = Number(cell.getValue());
   let displayPrice = c(price, 2).format();
 
   // If the price has more than 2 decimal places, round to 2 DP and add

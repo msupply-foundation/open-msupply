@@ -9,6 +9,7 @@ import {
   PeriodScheduleNode,
   DateTimePickerInput,
   useTranslation,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../common';
 import { ProgramFragment, useProgramList } from '../../api';
@@ -80,19 +81,17 @@ const UIComponent = (props: ControlProps) => {
     handleChange('before', undefined);
   };
 
-  const onPeriodChange = (period: PeriodNode | null) => {
-    const after = period ? new Date(period.startDate) : null;
-    const before = period ? new Date(period.endDate) : null;
-
-    setForm(prev => ({ ...prev, periodId: period?.id ?? null, after, before }));
-    handleChange('periodId', period?.id);
-    handleChange('after', after?.toISOString());
-    handleChange('before', before?.toISOString());
+  const onDateChange = (path: 'after' | 'before', date: Date | null) => {
+    const value = path === 'before' && date ? DateUtils.endOfDay(date) : date;
+    setForm(prev => ({ ...prev, [path]: value }));
+    handleChange(path, value?.toISOString());
   };
 
-  const onDateChange = (path: 'after' | 'before', date: Date | null) => {
-    setForm(prev => ({ ...prev, [path]: date }));
-    handleChange(path, date?.toISOString());
+  const onPeriodChange = (period: PeriodNode | null) => {
+    setForm(prev => ({ ...prev, periodId: period?.id ?? null }));
+    handleChange('periodId', period?.id);
+    onDateChange('after', period ? new Date(period.startDate) : null);
+    onDateChange('before', period ? new Date(period.endDate) : null);
   };
 
   return (
