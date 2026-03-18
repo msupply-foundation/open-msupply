@@ -28,6 +28,8 @@ import {
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
 } from '@openmsupply-client/system';
+
+const TABLE_ID = 'inbound-shipment-detail-view';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -149,7 +151,7 @@ const DetailViewInner = () => {
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<InboundLineFragment>({
-      tableId: 'inbound-shipment-detail-view',
+      tableId: TABLE_ID,
       columns,
       data: lines,
       grouping: { field: 'item.code' },
@@ -220,7 +222,7 @@ const DetailViewInner = () => {
   const tabs = [
     {
       Component: isExtraSmallScreen ? (
-        <CardList table={table} tableId="inbound-shipment-detail-view" />
+        <CardList table={table} tableId={TABLE_ID} />
       ) : (
         <MaterialTable table={table} />
       ),
