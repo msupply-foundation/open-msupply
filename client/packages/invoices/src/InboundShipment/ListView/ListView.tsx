@@ -29,6 +29,7 @@ import { Footer } from './Footer';
 
 export const InboundListView = () => {
   const t = useTranslation();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const internalModalController = useToggle();
   const externalModalController = useToggle();
   const linkRequestModalController = useToggle();
@@ -53,11 +54,13 @@ export const InboundListView = () => {
 
   return (
     <>
-      <AppBarButtons
-        internalModalController={internalModalController}
-        externalModalController={externalModalController}
-        linkRequestModalController={linkRequestModalController}
-      />
+      {!isExtraSmallScreen && (
+        <AppBarButtons
+          internalModalController={internalModalController}
+          externalModalController={externalModalController}
+          linkRequestModalController={linkRequestModalController}
+        />
+      )}
       <DetailTabs tabs={tabs} overwriteQuery={false} restoreTabQuery={false} />
     </>
   );
@@ -216,7 +219,11 @@ const InboundShipments: React.FC<{
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-shipments')}
-          onCreate={internalModalController.toggleOn}
+          onCreate={
+            isExtraSmallScreen
+              ? undefined
+              : internalModalController.toggleOn
+          }
         />
       ),
       isMobile: isExtraSmallScreen,
