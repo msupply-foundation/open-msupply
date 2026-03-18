@@ -90,7 +90,7 @@ mod test {
     };
 
     use chrono::{Days, NaiveTime, Utc};
-    use rand::seq::IndexedMutRandom;
+    use rand::seq::SliceRandom;
 
     use crate::temperature_excursion::temperature_excursions;
 
