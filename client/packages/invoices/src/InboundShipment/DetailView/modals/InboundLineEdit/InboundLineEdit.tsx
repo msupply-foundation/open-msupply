@@ -105,12 +105,19 @@ export const InboundLineEdit = ({
   }, [currentItem?.id]);
 
   useEffect(() => {
+    if (mode !== ModalMode.Create) return;
     if (!hasVariants || draftLines.length === 0) return;
     if (variantShownForItem === currentItem?.id) return;
 
     setVariantShownForItem(currentItem?.id ?? null);
     setVariantAction('first');
-  }, [hasVariants, draftLines.length, currentItem?.id, variantShownForItem]);
+  }, [
+    mode,
+    hasVariants,
+    draftLines.length,
+    currentItem?.id,
+    variantShownForItem,
+  ]);
 
   const onVariantSelected = useCallback(
     (variant: ItemVariantFragment) => {
