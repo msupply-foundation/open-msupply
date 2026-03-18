@@ -1,7 +1,7 @@
 use crate::service_provider::ServiceContext;
 use repository::{
-    vaccine_course::vaccine_course_store_wastage::{
-        VaccineCourseStoreWastageFilter, VaccineCourseStoreWastageRepository,
+    vaccine_course::vaccine_course_store_config::{
+        VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
     },
     EqualFilter, NameFilter, NameRepository, RepositoryError, StorageConnection, StoreFilter,
     VaccinationCourseRepository, VaccinationCourseRow,
@@ -119,17 +119,15 @@ fn calculate_forecast_quantities(
     let vaccination_courses =
         VaccinationCourseRepository::new(connection).query_by_item_ids(item_ids.clone())?;
 
-    let store_wastage_rows = VaccineCourseStoreWastageRepository::new(connection).query_by_filter(
-        VaccineCourseStoreWastageFilter::new()
-            .store_id(EqualFilter::equal_to(store_id.to_string())),
-    )?;
-    let store_wastage_map: HashMap<String, f64> = store_wastage_rows
-        .into_iter()
-        .filter_map(|row| {
-            row.wastage_rate
-                .map(|rate| (row.vaccine_course_id.clone(), rate))
-        })
-        .collect();
+    let store_config_map: HashMap<String, (Option<f64>, Option<f64>)> =
+        VaccineCourseStoreConfigRepository::new(connection)
+            .query_by_filter(
+                VaccineCourseStoreConfigFilter::new()
+                    .store_id(EqualFilter::equal_to(store_id.to_string())),
+            )?
+            .into_iter()
+            .map(|row| (row.vaccine_course_id, (row.wastage_rate, row.coverage_rate)))
+            .collect();
 
     let mut results = HashMap::new();
 
@@ -157,14 +155,18 @@ fn calculate_forecast_quantities(
             );
 
             let group = course_groups.entry(course_key).or_insert_with(|| {
-                let wastage_rate = store_wastage_map
-                    .get(&course.id)
-                    .copied()
+                let store_config = store_config_map.get(&course.id);
+                let wastage_rate = store_config
+                    .and_then(|(w, _)| *w)
                     .unwrap_or(course.wastage_rate);
+                let coverage_rate = store_config
+                    .and_then(|(_, c)| *c)
+                    .unwrap_or(course.coverage_rate);
+
                 CourseGroup {
                     course_name: course.vaccine_course_name.clone(),
                     demographic_name: course.demographic_name.clone(),
-                    coverage_rate: course.coverage_rate,
+                    coverage_rate,
                     wastage_rate,
                     population_percentage: course.population_percentage.unwrap_or(100.0),
                     vaccine_doses: course.vaccine_doses,
@@ -263,40 +265,40 @@ mod tests {
         }
     }
 
-    // Store-specific wastage rate test (50% from mock_vaccine_course_store_wastage_1)
+    // store_a: store-specific wastage (50%) and coverage (60%)
     // Target population: 10000.0 * (25.0 / 100.0) = 2500.0
     // Loss factor: 1 / (1 - 0.5) = 2.0
-    // Annual target doses: 2500.0 * 3 doses * (80.0 / 100.0) * 2.0 = 12000.0
-    // Forecast doses: (12000.0 / 12) * (3 + 2) = 5000.0
-    // Forecast units: 5000.0 / 2 doses per unit = 2500.0
-    fn forecast_result_store_specific_wastage() -> ForecastQuantityData {
+    // Annual target doses: 2500.0 * 3 * (60.0 / 100.0) * 2.0 = 9000.0
+    // Forecast doses: (9000.0 / 12) * (3 + 2) = 3750.0
+    // Forecast units: 3750.0 / 2 = 1875.0
+    fn forecast_result_store_specific_config() -> ForecastQuantityData {
         ForecastQuantityData {
-            forecast_total_units: 2500.0,
-            forecast_total_doses: 5000.0,
+            forecast_total_units: 1875.0,
+            forecast_total_doses: 3750.0,
             vaccine_courses: vec![CourseData {
                 course_title: "Vaccine Course A (demographic_1)".to_string(),
                 number_of_doses: 3,
-                coverage_rate: 80.0,
+                coverage_rate: 60.0,
                 target_population: 2500.0,
                 wastage_rate: 50.0,
                 loss_factor: 2.0,
-                annual_target_doses: 12000.0,
+                annual_target_doses: 9000.0,
                 buffer_stock_months: 2.0,
                 supply_period_months: 3.0,
                 doses_per_unit: 2,
-                forecast_doses: 5000.0,
-                forecast_units: 2500.0,
+                forecast_doses: 3750.0,
+                forecast_units: 1875.0,
             }],
         }
     }
 
-    // Global wastage rate test (10% from course-level wastage_rate)
+    // store_b (no store config): course wastage (10%), course coverage (80%)
     // Target population: 10000.0 * (25.0 / 100.0) = 2500.0
     // Loss factor: 1 / (1 - 0.1) = 1.1111111111111112
-    // Annual target doses: 2500.0 * 3 doses * (80.0 / 100.0) * 1.1111111111111112 = 6666.666666666667
+    // Annual target doses: 2500.0 * 3 * (80.0 / 100.0) * 1.1111111111111112 = 6666.666666666667
     // Forecast doses: (6666.666666666667 / 12) * (3 + 2) = 2777.777777777778
-    // Forecast units: 2777.777777777778 / 2 doses per unit
-    fn forecast_result_global_wastage() -> ForecastQuantityData {
+    // Forecast units: 2777.777777777778 / 2
+    fn forecast_result_global_rates() -> ForecastQuantityData {
         ForecastQuantityData {
             forecast_total_units: 1388.888888888889,
             forecast_total_doses: 2777.777777777778,
@@ -318,9 +320,9 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_success_forecast_calculations() {
+    async fn test_store_specific_config() {
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_success_forecast_calculations",
+            "test_store_specific_config",
             MockDataInserts::all(),
             MockData {
                 vaccine_courses: vec![mock_vaccine_course()],
@@ -340,6 +342,7 @@ mod tests {
 
         let item_ids = vec![mock_vaccine_item_a().id.clone()];
 
+        // store_a has store-specific wastage (50%), coverage rae (60%)
         let result = calculate_forecast_quantities(
             &connection,
             "store_a",
@@ -353,16 +356,16 @@ mod tests {
         let forecast_data = result.get(item_id).unwrap();
 
         if let Some(forecast) = forecast_data {
-            assert_eq!(forecast, &forecast_result_store_specific_wastage());
+            assert_eq!(forecast, &forecast_result_store_specific_config());
         } else {
             panic!("Expected forecast data but got None");
         }
     }
 
     #[actix_rt::test]
-    async fn test_forecast_calculations_global_wastage() {
+    async fn test_global_forecasting_config() {
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_forecast_calculations_global_wastage",
+            "test_global_forecasting_config",
             MockDataInserts::all(),
             MockData {
                 vaccine_courses: vec![mock_vaccine_course()],
@@ -382,7 +385,7 @@ mod tests {
 
         let item_ids = vec![mock_vaccine_item_a().id.clone()];
 
-        let result = calculate_forecast_quantities(
+        let result: HashMap<String, Option<ForecastQuantityData>> = calculate_forecast_quantities(
             &connection,
             "store_b",
             &store_properties,
@@ -395,7 +398,7 @@ mod tests {
         let forecast_data = result.get(item_id).unwrap();
 
         if let Some(forecast) = forecast_data {
-            assert_eq!(forecast, &forecast_result_global_wastage());
+            assert_eq!(forecast, &forecast_result_global_rates());
         } else {
             panic!("Expected forecast data but got None");
         }

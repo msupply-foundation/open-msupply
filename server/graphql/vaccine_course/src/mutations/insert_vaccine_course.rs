@@ -1,6 +1,5 @@
 use super::{
-    UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput,
-    UpsertVaccineCourseStoreWastageInput,
+    UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput, UpsertVaccineCourseStoreConfigInput,
 };
 use async_graphql::*;
 use graphql_core::{
@@ -13,8 +12,9 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::{
         insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
-        update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreWastageInput},
+        update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
     },
+    NullableUpdate,
 };
 
 pub fn insert_vaccine_course(
@@ -55,7 +55,7 @@ pub struct InsertVaccineCourseInput {
     pub program_id: String,
     pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
     pub doses: Vec<UpsertVaccineCourseDoseInput>,
-    pub store_wastage_rates: Option<Vec<UpsertVaccineCourseStoreWastageInput>>,
+    pub store_configs: Option<Vec<UpsertVaccineCourseStoreConfigInput>>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
@@ -71,7 +71,7 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
             program_id,
             vaccine_items,
             doses,
-            store_wastage_rates,
+            store_configs,
             demographic_id,
             coverage_rate,
             use_in_gaps_calculations,
@@ -101,13 +101,18 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
                     min_interval_days: d.min_interval_days,
                 })
                 .collect(),
-            store_wastage_rates: store_wastage_rates
+            store_configs: store_configs
                 .unwrap_or_default()
                 .into_iter()
-                .map(|wastage| VaccineCourseStoreWastageInput {
-                    id: wastage.id,
-                    store_id: wastage.store_id,
-                    wastage_rate: wastage.wastage_rate,
+                .map(|config| VaccineCourseStoreConfigInput {
+                    id: config.id,
+                    store_id: config.store_id,
+                    wastage_rate: config
+                        .wastage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
+                    coverage_rate: config
+                        .coverage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
                 })
                 .collect(),
             demographic_id,

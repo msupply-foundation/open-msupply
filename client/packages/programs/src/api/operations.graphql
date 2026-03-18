@@ -686,11 +686,12 @@ query immunisationPrograms(
   }
 }
 
-fragment VaccineCourseStoreWastage on VaccineCourseStoreWastageNode {
+fragment VaccineCourseStoreConfig on VaccineCourseStoreConfigNode {
   id
   vaccineCourseId
   storeId
   wastageRate
+  coverageRate
 }
 
 fragment VaccineCourseRow on VaccineCourseNode {
@@ -725,8 +726,8 @@ fragment VaccineCourse on VaccineCourseNode {
   vaccineCourseDoses {
     ...VaccineCourseDose
   }
-  storeWastageRates {
-    ...VaccineCourseStoreWastage
+  storeConfigs {
+    ...VaccineCourseStoreConfig
   }
 }
 

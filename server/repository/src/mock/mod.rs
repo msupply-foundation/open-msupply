@@ -159,8 +159,8 @@ use crate::{
     reason_option_row::{ReasonOptionRow, ReasonOptionRowRepository},
     vaccine_course::{
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
-        vaccine_course_store_wastage_row::{
-            VaccineCourseStoreWastageRow, VaccineCourseStoreWastageRowRepository,
+        vaccine_course_store_config_row::{
+            VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
         },
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
@@ -239,7 +239,7 @@ pub struct MockData {
     pub vaccine_courses: Vec<VaccineCourseRow>,
     pub vaccine_course_doses: Vec<VaccineCourseDoseRow>,
     pub vaccine_course_items: Vec<VaccineCourseItemRow>,
-    pub vaccine_course_store_wastages: Vec<VaccineCourseStoreWastageRow>,
+    pub vaccine_course_store_configs: Vec<VaccineCourseStoreConfigRow>,
     pub encounters: Vec<EncounterRow>,
     pub program_enrolments: Vec<ProgramEnrolmentRow>,
     pub program_indicators: Vec<ProgramIndicatorRow>,
@@ -332,7 +332,7 @@ pub struct MockDataInserts {
     pub vaccine_courses: bool,
     pub vaccine_course_doses: bool,
     pub vaccine_course_items: bool,
-    pub vaccine_course_store_wastages: bool,
+    pub vaccine_course_store_configs: bool,
     pub encounters: bool,
     pub program_enrolments: bool,
     pub program_indicators: bool,
@@ -416,7 +416,7 @@ impl MockDataInserts {
             vaccine_courses: true,
             vaccine_course_doses: true,
             vaccine_course_items: true,
-            vaccine_course_store_wastages: true,
+            vaccine_course_store_configs: true,
             encounters: true,
             program_enrolments: true,
             program_indicators: true,
@@ -741,9 +741,9 @@ impl MockDataInserts {
         self.vaccine_course_items = true;
         self
     }
-    pub fn vaccine_course_store_wastages(mut self) -> Self {
+    pub fn vaccine_course_store_configs(mut self) -> Self {
         self.vaccine_courses = true;
-        self.vaccine_course_store_wastages = true;
+        self.vaccine_course_store_configs = true;
         self
     }
 
@@ -917,7 +917,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             vaccine_courses: mock_vaccine_courses(),
             vaccine_course_doses: mock_vaccine_course_doses(),
             vaccine_course_items: mock_vaccine_course_items(),
-            vaccine_course_store_wastages: mock_vaccine_course_store_wastages(),
+            vaccine_course_store_configs: mock_vaccine_course_store_configs(),
             encounters: mock_encounters(),
             program_enrolments: mock_program_enrolments(),
             program_indicators: mock_program_indicators(),
@@ -1395,9 +1395,9 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
-        if inserts.vaccine_course_store_wastages {
-            let repo = VaccineCourseStoreWastageRowRepository::new(connection);
-            for row in &mock_data.vaccine_course_store_wastages {
+        if inserts.vaccine_course_store_configs {
+            let repo = VaccineCourseStoreConfigRowRepository::new(connection);
+            for row in &mock_data.vaccine_course_store_configs {
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1594,7 +1594,7 @@ impl MockData {
             mut vaccine_courses,
             mut vaccine_course_doses,
             mut vaccine_course_items,
-            mut vaccine_course_store_wastages,
+            mut vaccine_course_store_configs,
             mut encounters,
             mut program_enrolments,
             mut program_indicators,
@@ -1675,8 +1675,8 @@ impl MockData {
         self.vaccine_courses.append(&mut vaccine_courses);
         self.vaccine_course_doses.append(&mut vaccine_course_doses);
         self.vaccine_course_items.append(&mut vaccine_course_items);
-        self.vaccine_course_store_wastages
-            .append(&mut vaccine_course_store_wastages);
+        self.vaccine_course_store_configs
+            .append(&mut vaccine_course_store_configs);
         self.encounters.append(&mut encounters);
         self.program_enrolments.append(&mut program_enrolments);
         self.program_indicators.append(&mut program_indicators);

@@ -210,21 +210,21 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           />
         </Row>
         <Row label={t('label.wastage-rate')}>
-          <Box display="flex" alignItems="center" gap={1} flex={1}>
-            <NumericTextInput
-              value={draft?.wastageRate}
-              fullWidth
-              onChange={value => updatePatch({ wastageRate: value })}
-              endAdornment="%"
-              decimalLimit={1}
-              max={100}
-            />
-            <StoreWastagePanel
-              storeWastageRates={draft.storeWastageRates ?? []}
-              updatePatch={updatePatch}
-            />
-          </Box>
+          <NumericTextInput
+            value={draft?.wastageRate}
+            fullWidth
+            onChange={value => updatePatch({ wastageRate: value })}
+            endAdornment="%"
+            decimalLimit={1}
+            max={100}
+          />
         </Row>
+        <Box display="flex" justifyContent="flex-end" paddingTop={1}>
+          <StoreWastagePanel
+            storeConfigs={draft.storeConfigs ?? []}
+            updatePatch={updatePatch}
+          />
+        </Box>
         <Row label={t('label.vaccine-items')}>
           <VaccineItemSelect draft={draft} onChange={updatePatch} />
         </Row>

@@ -1405,12 +1405,13 @@ export type ImmunisationProgramsQuery = {
   };
 };
 
-export type VaccineCourseStoreWastageFragment = {
-  __typename: 'VaccineCourseStoreWastageNode';
+export type VaccineCourseStoreConfigFragment = {
+  __typename: 'VaccineCourseStoreConfigNode';
   id: string;
   vaccineCourseId: string;
   storeId: string;
   wastageRate?: number | null;
+  coverageRate?: number | null;
 };
 
 export type VaccineCourseRowFragment = {
@@ -1464,12 +1465,13 @@ export type VaccineCourseFragment = {
     minIntervalDays: number;
     customAgeLabel?: string | null;
   }> | null;
-  storeWastageRates?: Array<{
-    __typename: 'VaccineCourseStoreWastageNode';
+  storeConfigs?: Array<{
+    __typename: 'VaccineCourseStoreConfigNode';
     id: string;
     vaccineCourseId: string;
     storeId: string;
     wastageRate?: number | null;
+    coverageRate?: number | null;
   }> | null;
 };
 
@@ -1552,12 +1554,13 @@ export type VaccineCoursesQuery = {
         minIntervalDays: number;
         customAgeLabel?: string | null;
       }> | null;
-      storeWastageRates?: Array<{
-        __typename: 'VaccineCourseStoreWastageNode';
+      storeConfigs?: Array<{
+        __typename: 'VaccineCourseStoreConfigNode';
         id: string;
         vaccineCourseId: string;
         storeId: string;
         wastageRate?: number | null;
+        coverageRate?: number | null;
       }> | null;
     }>;
   };
@@ -1614,12 +1617,13 @@ export type InsertVaccineCourseMutation = {
               minIntervalDays: number;
               customAgeLabel?: string | null;
             }> | null;
-            storeWastageRates?: Array<{
-              __typename: 'VaccineCourseStoreWastageNode';
+            storeConfigs?: Array<{
+              __typename: 'VaccineCourseStoreConfigNode';
               id: string;
               vaccineCourseId: string;
               storeId: string;
               wastageRate?: number | null;
+              coverageRate?: number | null;
             }> | null;
           };
     };
@@ -1677,12 +1681,13 @@ export type UpdateVaccineCourseMutation = {
               minIntervalDays: number;
               customAgeLabel?: string | null;
             }> | null;
-            storeWastageRates?: Array<{
-              __typename: 'VaccineCourseStoreWastageNode';
+            storeConfigs?: Array<{
+              __typename: 'VaccineCourseStoreConfigNode';
               id: string;
               vaccineCourseId: string;
               storeId: string;
               wastageRate?: number | null;
+              coverageRate?: number | null;
             }> | null;
           };
     };
@@ -2002,12 +2007,13 @@ export const VaccineCourseItemFragmentDoc = gql`
     name
   }
 `;
-export const VaccineCourseStoreWastageFragmentDoc = gql`
-  fragment VaccineCourseStoreWastage on VaccineCourseStoreWastageNode {
+export const VaccineCourseStoreConfigFragmentDoc = gql`
+  fragment VaccineCourseStoreConfig on VaccineCourseStoreConfigNode {
     id
     vaccineCourseId
     storeId
     wastageRate
+    coverageRate
   }
 `;
 export const VaccineCourseFragmentDoc = gql`
@@ -2030,13 +2036,13 @@ export const VaccineCourseFragmentDoc = gql`
     vaccineCourseDoses {
       ...VaccineCourseDose
     }
-    storeWastageRates {
-      ...VaccineCourseStoreWastage
+    storeConfigs {
+      ...VaccineCourseStoreConfig
     }
   }
   ${VaccineCourseItemFragmentDoc}
   ${VaccineCourseDoseFragmentDoc}
-  ${VaccineCourseStoreWastageFragmentDoc}
+  ${VaccineCourseStoreConfigFragmentDoc}
 `;
 export const ProgramsDocument = gql`
   query programs(

@@ -2,20 +2,21 @@ import {
   FnUtils,
   UpsertVaccineCourseItemInput,
   UpsertVaccineCourseDoseInput,
-  UpsertVaccineCourseStoreWastageInput,
+  UpsertVaccineCourseStoreConfigInput,
   VaccineCourseSortFieldInput,
   isEmpty,
   useMutation,
   useQuery,
   useTranslation,
   usePatchState,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import {
   DraftVaccineCourse,
   DraftVaccineCourseItem,
-  DraftVaccineCourseStoreWastage,
+  DraftVaccineCourseStoreConfig,
 } from './types';
 import { VaccineCourseDoseFragment } from '../operations.generated';
 
@@ -38,7 +39,7 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   useInGapsCalculations: true,
   canSkipDose: false,
   vaccineCourseItems: [],
-  storeWastageRates: [],
+  storeConfigs: [],
 };
 
 const vaccineCourseParsers = {
@@ -60,13 +61,14 @@ const vaccineCourseParsers = {
       itemId: item.itemId,
     };
   },
-  toStoreWastageInput: (
-    wastage: DraftVaccineCourseStoreWastage
-  ): UpsertVaccineCourseStoreWastageInput => {
+  toStoreConfigInput: (
+    config: DraftVaccineCourseStoreConfig
+  ): UpsertVaccineCourseStoreConfigInput => {
     return {
-      id: wastage.id,
-      storeId: wastage.storeId,
-      wastageRate: wastage.wastageRate,
+      id: config.id,
+      storeId: config.storeId,
+      wastageRate: setNullableInput('wastageRate', config),
+      coverageRate: setNullableInput('coverageRate', config),
     };
   },
 };
@@ -164,9 +166,9 @@ const useCreate = () => {
           input.vaccineCourseDoses?.map(dose =>
             vaccineCourseParsers.toDoseInput(dose)
           ) ?? [],
-        storeWastageRates:
-          input.storeWastageRates?.map(wastage =>
-            vaccineCourseParsers.toStoreWastageInput(wastage)
+        storeConfigs:
+          input.storeConfigs?.map(config =>
+            vaccineCourseParsers.toStoreConfigInput(config)
           ) ?? [],
       },
     });
@@ -220,9 +222,9 @@ const useUpdate = () => {
           input.vaccineCourseDoses?.map(dose =>
             vaccineCourseParsers.toDoseInput(dose)
           ) ?? [],
-        storeWastageRates:
-          input.storeWastageRates?.map(wastage =>
-            vaccineCourseParsers.toStoreWastageInput(wastage)
+        storeConfigs:
+          input.storeConfigs?.map(config =>
+            vaccineCourseParsers.toStoreConfigInput(config)
           ) ?? [],
       },
       storeId,

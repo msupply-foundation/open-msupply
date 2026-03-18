@@ -1,6 +1,6 @@
 use repository::{
-    vaccine_course::vaccine_course_store_wastage_row::{
-        VaccineCourseStoreWastageRow, VaccineCourseStoreWastageRowRepository,
+    vaccine_course::vaccine_course_store_config_row::{
+        VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
     },
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
@@ -15,14 +15,14 @@ use super::{
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(VaccineCourseStoreWastageTranslation)
+    Box::new(VaccineCourseStoreConfigTranslation)
 }
 
-pub(crate) struct VaccineCourseStoreWastageTranslation;
+pub(crate) struct VaccineCourseStoreConfigTranslation;
 
-impl SyncTranslation for VaccineCourseStoreWastageTranslation {
+impl SyncTranslation for VaccineCourseStoreConfigTranslation {
     fn table_name(&self) -> &'static str {
-        "vaccine_course_store_wastage"
+        "vaccine_course_store_config"
     }
 
     fn pull_dependencies(&self) -> Vec<&'static str> {
@@ -38,12 +38,12 @@ impl SyncTranslation for VaccineCourseStoreWastageTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            VaccineCourseStoreWastageRow,
+            VaccineCourseStoreConfigRow,
         >(&sync_record.data)?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::VaccineCourseStoreWastage)
+        Some(ChangelogTableName::VaccineCourseStoreConfig)
     }
 
     fn should_translate_to_sync_record(
@@ -56,7 +56,7 @@ impl SyncTranslation for VaccineCourseStoreWastageTranslation {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
             ToSyncRecordTranslationType::PushToOmSupplyCentral => {
-                // We shouldn't ever create VaccineCourseStoreWastage rows
+                // We shouldn't ever create VaccineCourseStoreConfig rows
                 // outside of the central server, so we don't translate this, even when changelog records might exist
                 // This can happen due to migrations that recreate change log
                 // rows
@@ -71,10 +71,10 @@ impl SyncTranslation for VaccineCourseStoreWastageTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = VaccineCourseStoreWastageRowRepository::new(connection)
+        let row = VaccineCourseStoreConfigRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "VaccineCourseStoreWastage row ({}) not found",
+                "VaccineCourseStoreConfig row ({}) not found",
                 changelog.record_id
             )))?;
 
@@ -92,12 +92,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_vaccine_course_store_wastage_translation() {
-        use crate::sync::test::test_data::vaccine_course_store_wastage as test_data;
-        let translator = VaccineCourseStoreWastageTranslation;
+    async fn test_vaccine_course_store_config_translation() {
+        use crate::sync::test::test_data::vaccine_course_store_config as test_data;
+        let translator = VaccineCourseStoreConfigTranslation;
 
         let (_, connection, _, _) = setup_all(
-            "test_vaccine_course_store_wastage_translation",
+            "test_vaccine_course_store_config_translation",
             MockDataInserts::none(),
         )
         .await;
