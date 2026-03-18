@@ -92,7 +92,8 @@ export const RequestLineEdit = ({
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 
   const showContent = !!draft && !!currentItem;
-  const isDosesEnabled = manageVaccinesInDoses && currentItem?.isVaccine;
+  const isDosesEnabled =
+    !!manageVaccinesInDoses && !!currentItem?.isVaccine && !!currentItem?.doses;
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
@@ -134,7 +135,7 @@ export const RequestLineEdit = ({
               dosesPerUnit={currentItem?.doses}
               decimalLimit={0}
               roundUp={roundUp}
-              isFixedValue={isFixedValue}
+              isFixedValue={isFixedValue ?? false}
             />
           )
         )}

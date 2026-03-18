@@ -51,10 +51,11 @@ export const RequestLineEditModal = ({
     lines?.find(line => line.item.id === itemId)?.item
   );
   const getDefaultRepresentation = (
-    item?: { isVaccine?: boolean } | null
+    item?: { isVaccine?: boolean; doses?: number } | null
   ): RepresentationValue => {
     if (orderInPacks) return Representation.PACKS;
-    if (manageVaccinesInDoses && item?.isVaccine) return Representation.DOSES;
+    if (manageVaccinesInDoses && item?.isVaccine && !!item?.doses)
+      return Representation.DOSES;
     return Representation.UNITS;
   };
 
