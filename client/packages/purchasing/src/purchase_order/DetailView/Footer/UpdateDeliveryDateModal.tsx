@@ -68,7 +68,7 @@ export const UpdateDeliveryDateModal = ({
     try {
       const formattedDate = Formatter.naiveDate(selectedDate);
       await updateLines(selectedRows, {
-        [fieldName]: formattedDate,
+        [fieldName]: { value: formattedDate },
       });
       success(t(keys.successMessage))();
       resetRowSelection();

@@ -82,7 +82,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     if (!data) return;
     const formattedDate = Formatter.naiveDate(date);
     await updateLines(data?.lines?.nodes, {
-      expectedDeliveryDate: formattedDate,
+      expectedDeliveryDate: { value: formattedDate },
     });
   };
 
@@ -95,10 +95,9 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   });
 
   const handleExpectedDeliveryDateChange = (newDate: Date | null) => {
-    if (!newDate) return;
     const previousDate = expectedDeliveryDate;
 
-    setExpectedDeliveryDate(newDate);
+    setExpectedDeliveryDate(newDate ?? new Date(''));
     confirmExpectedModal({
       onConfirm: () => updateExpectedDeliveryChange(newDate),
       onCancel: () => setExpectedDeliveryDate(previousDate),
@@ -110,7 +109,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     const formattedDate = Formatter.naiveDate(date);
     handleUpdate({ requestedDeliveryDate: formattedDate });
     await updateLines(data?.lines?.nodes, {
-      requestedDeliveryDate: formattedDate,
+      requestedDeliveryDate: { value: formattedDate },
     });
   };
 
@@ -123,10 +122,9 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   });
 
   const handleRequestedDeliveryDateChange = (newDate: Date | null) => {
-    if (!newDate) return;
     const previousDate = requestedDeliveryDate;
 
-    setRequestedDeliveryDate(newDate);
+    setRequestedDeliveryDate(newDate ?? new Date(''));
     confirmRequestedModal({
       onConfirm: () => updateRequestedDeliveryChange(newDate),
       onCancel: () => setRequestedDeliveryDate(previousDate),
