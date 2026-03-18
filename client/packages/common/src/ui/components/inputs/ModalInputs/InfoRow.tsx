@@ -81,11 +81,11 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   unitName: string;
   nullDisplay?: string;
   endAdornmentOverride?: string;
-  isDosesEnabled?: boolean;
+  isDosesEnabled: boolean;
   dosesPerUnit?: number;
   roundUp?: boolean;
   /** Display only the saved row value — for non-stock values like days or months */
-  isFixedValue?: boolean;
+  isFixedValue: boolean;
 }
 
 export type ValueInfo = {
