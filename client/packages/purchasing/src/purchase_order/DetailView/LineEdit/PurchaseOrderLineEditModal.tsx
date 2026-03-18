@@ -56,8 +56,22 @@ export const PurchaseOrderLineEditModal = ({
   } = usePurchaseOrderLine(lineId);
   const unit = draft?.unit || t('label.unit', { count: 2 });
 
+  const getMostRecentExpectedDate = () => {
+    const dates = lines
+      ?.map(line => line.expectedDeliveryDate)
+      .sort((a, b) => (b || '').localeCompare(a || ''));
+    return dates?.[0] ?? null;
+  };
+
   const onChangeItem = (item: ItemStockOnHandFragment) => {
-    const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
+    const draftLine = createDraftPurchaseOrderLine(
+      item,
+      purchaseOrder.id,
+      {
+        requestedDeliveryDate: purchaseOrder.requestedDeliveryDate,
+        expectedDeliveryDate: getMostRecentExpectedDate(),
+      }
+    );
     item &&
       updatePatch({
         ...draftLine,
