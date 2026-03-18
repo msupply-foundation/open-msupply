@@ -13,7 +13,7 @@ interface DosesOrUnitsCaptionProps {
   /** Input value always in units */
   value: number;
   dosesPerUnit: number;
-  dosesSelected: boolean;
+  dosesSelected?: boolean;
   unitsLabel?: string;
   sx?: SxProps<Theme>;
 }
