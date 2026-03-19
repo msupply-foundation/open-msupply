@@ -20,7 +20,7 @@ import {
   Formatter,
   useAppTheme,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -31,6 +31,8 @@ import {
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
 } from '@openmsupply-client/system';
+
+const TABLE_ID = 'inbound-shipment-detail-view';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -165,12 +167,13 @@ const DetailViewInner = () => {
   }, [toggleUploadModal, urlQuery, updateQuery]);
 
   const external = data?.purchaseOrder !== null;
-  const showLineStatus = data?.lines.nodes.some(line => line.status != null) ?? false;
+  const showLineStatus =
+    data?.lines.nodes.some(line => line.status != null) ?? false;
   const columns = useInboundShipmentColumns(external, showLineStatus);
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<InboundLineFragment>({
-      tableId: 'inbound-shipment-detail-view',
+      tableId: TABLE_ID,
       columns,
       data: lines,
       // REVIEW: could be confusing as there isn't any feedback for what field is being grouped by and we normally only group by item. However grouping by item doesn't really make sense for external IS while grouping by purchase order line number does make sense.
@@ -244,7 +247,7 @@ const DetailViewInner = () => {
   const tabs = [
     {
       Component: isExtraSmallScreen ? (
-        <MobileCardList table={table} />
+        <CardList table={table} tableId={TABLE_ID} />
       ) : (
         <MaterialTable table={table} />
       ),

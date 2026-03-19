@@ -12,6 +12,8 @@ mod item_category_join_add_item_link_id;
 mod item_store_join_add_default_location_id;
 mod remove_goods_received;
 mod remove_goods_received_cleanup;
+mod requisition_add_destination_customer_link_id;
+mod vaccine_course_store_config;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -36,6 +38,8 @@ impl Migration for V2_17_00 {
             Box::new(item_store_join_add_default_location_id::Migrate),
             Box::new(import_goods_received::Migrate),
             Box::new(add_purchase_order_line_id_to_invoice_line::Migrate),
+            Box::new(vaccine_course_store_config::Migrate),
+            Box::new(requisition_add_destination_customer_link_id::Migrate),
         ]
     }
 }
