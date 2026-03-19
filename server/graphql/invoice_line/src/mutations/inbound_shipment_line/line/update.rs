@@ -224,6 +224,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramNotVisible
         | ServiceError::CampaignDoesNotExist
+        | ServiceError::CannotEditCostPrice
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
@@ -245,7 +246,7 @@ mod test {
             mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_item_a,
             mock_location_1, MockDataInserts,
         },
-        InvoiceLine, RepositoryError, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -550,6 +551,7 @@ mod test {
                 invoice_row: mock_inbound_shipment_c(),
                 invoice_line_row: mock_inbound_shipment_c_invoice_lines()[0].clone(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })

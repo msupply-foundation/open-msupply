@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{DateFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
@@ -11,8 +11,8 @@ use graphql_types::types::{
     PurchaseOrderLineConnector, PurchaseOrderLineNode, PurchaseOrderLineStatusNode,
 };
 use repository::{
-    EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
-    PurchaseOrderLineSortField, PurchaseOrderLineStatus,
+    DateFilter, EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
+    PurchaseOrderLineSortField, PurchaseOrderLineStatus, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -40,6 +40,10 @@ pub struct PurchaseOrderLineFilterInput {
     pub purchase_order_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterPurchaseOrderLineStatusInput>,
     pub received_less_than_adjusted: Option<bool>,
+    pub supplier_name: Option<StringFilterInput>,
+    pub purchase_order_number: Option<EqualFilterBigNumberInput>,
+    pub item_name: Option<StringFilterInput>,
+    pub expected_delivery_date: Option<DateFilterInput>,
 }
 
 #[derive(InputObject, Clone)]
@@ -163,12 +167,15 @@ impl PurchaseOrderLineFilterInput {
             status: self
                 .status
                 .map(|s| map_filter!(s, PurchaseOrderLineStatus::from)),
-
             received_less_than_adjusted: self.received_less_than_adjusted,
             store_id: None,
             requested_pack_size: None,
             item_id: None,
             purchase_order: None,
+            supplier_name: self.supplier_name.map(StringFilter::from),
+            purchase_order_number: self.purchase_order_number.map(EqualFilter::from),
+            item_name: self.item_name.map(StringFilter::from),
+            expected_delivery_date: self.expected_delivery_date.map(DateFilter::from),
         }
     }
 }
