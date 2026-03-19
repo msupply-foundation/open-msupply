@@ -2,16 +2,22 @@ import {
   FnUtils,
   UpsertVaccineCourseItemInput,
   UpsertVaccineCourseDoseInput,
+  UpsertVaccineCourseStoreConfigInput,
   VaccineCourseSortFieldInput,
   isEmpty,
   useMutation,
   useQuery,
   useTranslation,
   usePatchState,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
-import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
+import {
+  DraftVaccineCourse,
+  DraftVaccineCourseItem,
+  DraftVaccineCourseStoreConfig,
+} from './types';
 import { VaccineCourseDoseFragment } from '../operations.generated';
 
 enum UpdateVaccineCourseError {
@@ -33,6 +39,7 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   useInGapsCalculations: true,
   canSkipDose: false,
   vaccineCourseItems: [],
+  storeConfigs: [],
 };
 
 const vaccineCourseParsers = {
@@ -52,6 +59,16 @@ const vaccineCourseParsers = {
     return {
       id: item.id,
       itemId: item.itemId,
+    };
+  },
+  toStoreConfigInput: (
+    config: DraftVaccineCourseStoreConfig
+  ): UpsertVaccineCourseStoreConfigInput => {
+    return {
+      id: config.id,
+      storeId: config.storeId,
+      wastageRate: setNullableInput('wastageRate', config),
+      coverageRate: setNullableInput('coverageRate', config),
     };
   },
 };
@@ -149,6 +166,10 @@ const useCreate = () => {
           input.vaccineCourseDoses?.map(dose =>
             vaccineCourseParsers.toDoseInput(dose)
           ) ?? [],
+        storeConfigs:
+          input.storeConfigs?.map(config =>
+            vaccineCourseParsers.toStoreConfigInput(config)
+          ) ?? [],
       },
     });
 
@@ -200,6 +221,10 @@ const useUpdate = () => {
         doses:
           input.vaccineCourseDoses?.map(dose =>
             vaccineCourseParsers.toDoseInput(dose)
+          ) ?? [],
+        storeConfigs:
+          input.storeConfigs?.map(config =>
+            vaccineCourseParsers.toStoreConfigInput(config)
           ) ?? [],
       },
       storeId,

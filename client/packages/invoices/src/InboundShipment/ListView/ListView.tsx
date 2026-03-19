@@ -13,7 +13,7 @@ import {
   NameAndColorSetterCell,
   usePreferences,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
   DetailTabs,
   ToggleState,
   RouteBuilder,
@@ -31,8 +31,11 @@ import { Toolbar } from './Toolbar';
 import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
 
+const TABLE_ID = 'inbound-shipment-list-view';
+
 export const InboundListView = () => {
   const t = useTranslation();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const internalModalController = useToggle();
   const externalModalController = useToggle();
   const linkRequestModalController = useToggle();
@@ -59,11 +62,13 @@ export const InboundListView = () => {
 
   return (
     <>
-      <AppBarButtons
-        internalModalController={internalModalController}
-        externalModalController={externalModalController}
-        linkRequestModalController={linkRequestModalController}
-      />
+      {!isExtraSmallScreen && (
+        <AppBarButtons
+          internalModalController={internalModalController}
+          externalModalController={externalModalController}
+          linkRequestModalController={linkRequestModalController}
+        />
+      )}
       <DetailTabs tabs={tabs} overwriteQuery={false} restoreTabQuery={false} />
     </>
   );
@@ -219,7 +224,7 @@ const InboundShipments: React.FC<{
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
     {
-      tableId: 'inbound-shipment-list-view',
+      tableId: TABLE_ID,
       isLoading: isFetching,
       onRowClick: row =>
         external
@@ -238,7 +243,11 @@ const InboundShipments: React.FC<{
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-shipments')}
-          onCreate={internalModalController.toggleOn}
+          onCreate={
+            isExtraSmallScreen
+              ? undefined
+              : internalModalController.toggleOn
+          }
         />
       ),
       isMobile: isExtraSmallScreen,
@@ -249,7 +258,7 @@ const InboundShipments: React.FC<{
     <>
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <MobileCardList table={table} />
+        <CardList table={table} tableId={TABLE_ID} />
       ) : (
         <>
           <Toolbar filter={filter} />

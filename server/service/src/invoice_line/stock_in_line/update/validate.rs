@@ -134,6 +134,13 @@ pub fn validate(
         }
     }
 
+    // Cost price is read-only for internal suppliers and external suppliers linked to a PO
+    if input.cost_price_per_pack.is_some()
+        && (invoice.name_store_id.is_some() || invoice.purchase_order_id.is_some())
+    {
+        return Err(CannotEditCostPrice);
+    }
+
     if input
         .status
         .as_ref()
