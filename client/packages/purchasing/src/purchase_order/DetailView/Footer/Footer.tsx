@@ -117,7 +117,11 @@ export const Footer = ({
     },
   ];
 
-  if (status !== PurchaseOrderNodeStatus.Finalised) {
+  if (
+    status !== PurchaseOrderNodeStatus.Confirmed &&
+    status !== PurchaseOrderNodeStatus.Sent &&
+    status !== PurchaseOrderNodeStatus.Finalised
+  ) {
     actions.push({
       label: t('label.update-expected-delivery-date'),
       icon: <EditIcon />,
