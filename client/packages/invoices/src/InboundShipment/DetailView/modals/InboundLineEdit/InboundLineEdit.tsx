@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Alert,
   Divider,
@@ -18,7 +18,11 @@ import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useDraftInboundLines } from '../../../api';
 import {
   CurrencyRowFragment,
+  getVolumePerPackFromVariant,
   ItemRowFragment,
+  ItemVariantFragment,
+  ItemVariantSelectPanel,
+  useItemVariants,
 } from '@openmsupply-client/system';
 import { InboundLineEditCards } from './InboundLineEditCards';
 import { isInboundPlaceholderRow } from '../../../../utils';
@@ -81,9 +85,81 @@ export const InboundLineEdit = ({
   const [packRoundingMessage, setPackRoundingMessage] = useState('');
   const lastCardRef = useRef<HTMLDivElement>(null);
 
+  const [variantAction, setVariantAction] = useState<'add' | 'first' | null>(
+    null
+  );
+
+  const { data: variantData } = useItemVariants(currentItem?.id ?? '');
+  const hasVariants =
+    hasItemVariantsEnabled && (variantData?.variants?.length ?? 0) > 0;
+
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
+
+  const [variantShownForItem, setVariantShownForItem] = useState<string | null>( // guard to stop panel re-opening
+    null
+  );
+  useEffect(() => {
+    setVariantShownForItem(null);
+  }, [currentItem?.id]);
+
+  useEffect(() => {
+    if (mode !== ModalMode.Create) return;
+    if (!hasVariants || draftLines.length === 0) return;
+    if (variantShownForItem === currentItem?.id) return;
+
+    setVariantShownForItem(currentItem?.id ?? null);
+    setVariantAction('first');
+  }, [
+    mode,
+    hasVariants,
+    draftLines.length,
+    currentItem?.id,
+    variantShownForItem,
+  ]);
+
+  const onVariantSelected = useCallback(
+    (variant: ItemVariantFragment) => {
+      const packSize = draftLines[0]?.item.defaultPackSize ?? 1;
+      const variantPatch = {
+        itemVariantId: variant.id,
+        itemVariant: variant,
+        manufacturer: variant.manufacturer ?? null,
+        volumePerPack:
+          getVolumePerPackFromVariant({
+            packSize,
+            itemVariant: variant,
+          }) ?? 0,
+      };
+
+      if (variantAction === 'first' && draftLines.length > 0) {
+        updateDraftLine({
+          id: draftLines[0]!.id,
+          ...variantPatch,
+        });
+      } else {
+        addDraftLine(variantPatch);
+      }
+      setVariantAction(null);
+    },
+    [addDraftLine, updateDraftLine, draftLines, variantAction]
+  );
+
+  const handleAddBatch = useCallback(() => {
+    if (hasVariants) {
+      setVariantAction('add');
+    } else {
+      addDraftLine();
+      setPackRoundingMessage('');
+      setTimeout(() => {
+        lastCardRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }, 0);
+    }
+  }, [hasVariants, addDraftLine]);
 
   const cards = (
     <InboundLineEditCards
@@ -106,16 +182,7 @@ export const InboundLineEdit = ({
           disabled={isDisabled}
           color="primary"
           variant="outlined"
-          onClick={() => {
-            addDraftLine();
-            setPackRoundingMessage('');
-            setTimeout(() => {
-              lastCardRef.current?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest',
-              });
-            }, 0);
-          }}
+          onClick={handleAddBatch}
           label={`${t('label.add-batch')} (+)`}
           Icon={<PlusCircleIcon />}
         />
@@ -214,6 +281,27 @@ export const InboundLineEdit = ({
             <Divider />
           </Box>
           {content}
+          {currentItem && (
+            <ItemVariantSelectPanel
+              itemId={currentItem.id}
+              open={variantAction !== null}
+              onClose={() => setVariantAction(null)}
+              onSelect={onVariantSelected}
+              onManual={() => {
+                if (variantAction === 'add') {
+                  addDraftLine();
+                  setPackRoundingMessage('');
+                  setTimeout(() => {
+                    lastCardRef.current?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'nearest',
+                    });
+                  }, 0);
+                }
+                setVariantAction(null);
+              }}
+            />
+          )}
         </>
       )}
     </Modal>
