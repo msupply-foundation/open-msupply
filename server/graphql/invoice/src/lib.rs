@@ -48,7 +48,7 @@ impl InvoiceQueries {
         #[graphql(desc = "Filter option")] filter: Option<InvoiceFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<InvoiceSortInput>>,
-        r#type: Option<InvoiceTypeInput>,
+        r#type: Option<Vec<InvoiceTypeInput>>,
     ) -> Result<InvoicesResponse> {
         get_invoices(ctx, store_id, page, filter, sort, r#type)
     }

@@ -86,7 +86,9 @@ const InvoiceService: FC = () => {
         path={RouteBuilder.create(AppRoute.InboundShipmentExternal).build()}
         element={
           <Navigate
-            to={`${RouteBuilder.create(AppRoute.Replenishment).addPart(AppRoute.InboundShipment).build()}?tab=External`}
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipment)
+              .build()}
             replace
           />
         }

@@ -2992,6 +2992,13 @@ export type InboundInvoiceCounts = {
   notDelivered: Scalars['Int']['output'];
 };
 
+export enum InboundNodeType {
+  FromPurchaseOrder = 'FROM_PURCHASE_ORDER',
+  FromRequisition = 'FROM_REQUISITION',
+  ManualExternal = 'MANUAL_EXTERNAL',
+  ManualInternal = 'MANUAL_INTERNAL',
+}
+
 export type IndicatorColumnNode = {
   __typename: 'IndicatorColumnNode';
   columnNumber: Scalars['Int']['output'];
@@ -4423,6 +4430,7 @@ export type InvoiceNode = {
   documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  inboundType: InboundNodeType;
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   insurancePolicy?: Maybe<InsurancePolicyNode>;
@@ -5305,7 +5313,6 @@ export type Mutations = {
   insertDocumentRegistry: InsertDocumentResponse;
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
-  insertRequestFromResponseRequisition: InsertFromResponseRequisitionResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentExternal: InsertInboundShipmentResponse;
   insertInboundShipmentExternalLine: InsertInboundShipmentLineResponse;
@@ -5339,6 +5346,7 @@ export type Mutations = {
   insertPurchaseOrder: InsertPurchaseOrderResponse;
   insertPurchaseOrderLine: InsertPurchaseOrderLineResponse;
   insertRepack: InsertRepackResponse;
+  insertRequestFromResponseRequisition: InsertFromResponseRequisitionResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertResponseRequisition: InsertResponseRequisitionResponse;
@@ -5674,11 +5682,6 @@ export type MutationsInsertFormSchemaArgs = {
   input: InsertFormSchemaInput;
 };
 
-export type MutationsInsertFromResponseRequisitionArgs = {
-  input: InsertFromResponseRequisitionInput;
-  storeId: Scalars['String']['input'];
-};
-
 export type MutationsInsertInboundShipmentArgs = {
   input: InsertInboundShipmentInput;
   storeId: Scalars['String']['input'];
@@ -5795,6 +5798,11 @@ export type MutationsInsertPurchaseOrderLineArgs = {
 
 export type MutationsInsertRepackArgs = {
   input: InsertRepackInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertRequestFromResponseRequisitionArgs = {
+  input: InsertFromResponseRequisitionInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -7856,7 +7864,7 @@ export type QueriesInvoicesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<InvoiceSortInput>>;
   storeId: Scalars['String']['input'];
-  type?: InputMaybe<InvoiceTypeInput>;
+  type?: InputMaybe<Array<InvoiceTypeInput>>;
 };
 
 export type QueriesItemCountsArgs = {
@@ -11190,6 +11198,7 @@ export enum UserPermission {
   InboundShipmentExternalAuthorise = 'INBOUND_SHIPMENT_EXTERNAL_AUTHORISE',
   InboundShipmentExternalMutate = 'INBOUND_SHIPMENT_EXTERNAL_MUTATE',
   InboundShipmentExternalQuery = 'INBOUND_SHIPMENT_EXTERNAL_QUERY',
+  InboundShipmentExternalVerify = 'INBOUND_SHIPMENT_EXTERNAL_VERIFY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   InboundShipmentVerify = 'INBOUND_SHIPMENT_VERIFY',
