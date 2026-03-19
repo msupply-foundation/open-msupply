@@ -32,7 +32,8 @@ import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
-import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
+import { StoreWastagePanel } from './StorageConfigPanel';
+import { DraftVaccineCourse } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
 const getDemographicOptions = (demographics: DemographicNode[]) => {
@@ -73,7 +74,7 @@ const Row = ({
 );
 
 interface VaccineCourseEditModalProps {
-  vaccineCourse: VaccineCourseFragment | null;
+  vaccineCourseId: string | null;
   isOpen: boolean;
   onClose: () => void;
   programId: string | undefined;
@@ -88,7 +89,7 @@ function doseIndex(
 }
 
 export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
-  vaccineCourse,
+  vaccineCourseId,
   isOpen,
   onClose,
   programId,
@@ -104,7 +105,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     query: { isLoading },
     isDirty,
     resetDraft,
-  } = useVaccineCourse(vaccineCourse?.id ?? undefined);
+  } = useVaccineCourse(vaccineCourseId ?? undefined);
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const doses = draft.vaccineCourseDoses ?? [];
 
@@ -218,6 +219,12 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             max={100}
           />
         </Row>
+        <Box display="flex" justifyContent="flex-end" paddingTop={1}>
+          <StoreWastagePanel
+            storeConfigs={draft.storeConfigs ?? []}
+            updatePatch={updatePatch}
+          />
+        </Box>
         <Row label={t('label.vaccine-items')}>
           <VaccineItemSelect draft={draft} onChange={updatePatch} />
         </Row>

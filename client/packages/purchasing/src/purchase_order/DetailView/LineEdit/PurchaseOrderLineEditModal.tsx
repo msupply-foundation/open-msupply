@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Box,
   ModalMode,
@@ -32,141 +32,148 @@ interface PurchaseOrderLineEditModalProps {
   openNext: () => void;
 }
 
-export const PurchaseOrderLineEditModal = ({
-  lineId,
-  purchaseOrder,
-  mode,
-  isOpen,
-  onClose,
-  isDisabled,
-  hasNext,
-  openNext,
-}: PurchaseOrderLineEditModalProps) => {
-  const t = useTranslation();
-  const { error } = useNotification();
-  const { round } = useFormatNumber();
-  const { getPlural } = useIntlUtils();
-  const { updateQuery } = useUrlQuery();
+export const PurchaseOrderLineEditModal = React.memo(
+  ({
+    lineId,
+    purchaseOrder,
+    mode,
+    isOpen,
+    onClose,
+    isDisabled,
+    hasNext,
+    openNext,
+  }: PurchaseOrderLineEditModalProps) => {
+    const t = useTranslation();
+    const { error } = useNotification();
+    const { round } = useFormatNumber();
+    const { getPlural } = useIntlUtils();
+    const { updateQuery } = useUrlQuery();
 
-  const lines = purchaseOrder.lines.nodes;
-  const isUpdateMode = mode === ModalMode.Update;
+    const lines = purchaseOrder.lines.nodes;
+    const isUpdateMode = mode === ModalMode.Update;
 
-  const {
-    create: { create, isCreating },
-    update: { update, isUpdating },
-    draft,
-    isDirty,
-    updatePatch,
-  } = usePurchaseOrderLine(lineId);
-  const unit = draft?.unit || t('label.unit', { count: 2 });
+    const {
+      create: { create, isCreating },
+      update: { update, isUpdating },
+      draft,
+      isDirty,
+      updatePatch,
+    } = usePurchaseOrderLine(lineId);
+    const unit = draft?.unit || t('label.unit', { count: 2 });
 
-  const { data: unitsOrderedInOthers = 0 } = useUnitsOnOrderForItem(
-    draft.item.id,
-    purchaseOrder.id
-  );
+    const { data: unitsOrderedInOthers = 0 } = useUnitsOnOrderForItem(
+      draft.item.id,
+      purchaseOrder.id
+    );
 
-  const onChangeItem = (item: ItemStockOnHandFragment) => {
-    const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
-    item &&
-      updatePatch({
-        ...draftLine,
-        requestedPackSize: item.defaultPackSize ?? 1,
-        itemId: item.id,
-      });
-  };
+    const onChangeItem = useCallback(
+      (item: ItemStockOnHandFragment) => {
+        const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
+        item &&
+          updatePatch({
+            ...draftLine,
+            requestedPackSize: item.defaultPackSize ?? 1,
+            itemId: item.id,
+          });
+      },
+      [purchaseOrder.id, updatePatch]
+    );
 
-  const handleSave = async (): Promise<boolean> => {
-    if (!isDirty) return true;
-    try {
-      if (mode === ModalMode.Create) {
-        await create();
-        updateQuery({ tab: t('label.general') });
-      } else if (mode === ModalMode.Update) {
-        const res = await update();
-        const { success, error: updateError } = res;
-        if (!success) {
-          if (updateError) {
-            error(updateError)();
+    const handleSave = async (): Promise<boolean> => {
+      if (!isDirty) return true;
+      try {
+        if (mode === ModalMode.Create) {
+          await create();
+          updateQuery({ tab: t('label.general') });
+        } else if (mode === ModalMode.Update) {
+          const res = await update();
+          const { success, error: updateError } = res;
+          if (!success) {
+            if (updateError) {
+              error(updateError)();
+            }
+            return false;
           }
-          return false;
         }
+        return true;
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          error(e.message)();
+        } else {
+          error('unknown error')();
+        }
+        return false;
       }
-      return true;
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        error(e.message)();
-      } else {
-        error('unknown error')();
-      }
-      return false;
-    }
-  };
+    };
 
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
+    const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  return (
-    <Modal
-      title=""
-      contentProps={{ sx: { padding: 0 } }}
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      okButton={
-        <DialogButton
-          variant="ok"
-          disabled={!draft}
-          onClick={async () => {
-            const success = await handleSave();
-            if (success) onClose();
-          }}
-        />
-      }
-      nextButton={
-        isUpdateMode ? (
+    return (
+      <Modal
+        title=""
+        contentProps={{ sx: { padding: 0 } }}
+        cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+        okButton={
           <DialogButton
-            variant="next-and-ok"
-            disabled={!hasNext}
+            variant="ok"
+            disabled={!draft}
             onClick={async () => {
-              await handleSave();
-              openNext();
-              return true;
+              const success = await handleSave();
+              if (success) onClose();
             }}
           />
-        ) : undefined
-      }
-      height={700}
-      width={1200}
-      enableAutocomplete
-    >
-      {isCreating || isUpdating ? (
-        <Box
-          display="flex"
-          flex={1}
-          height={300}
-          justifyContent="center"
-          alignItems="center"
-        >
-          <InlineSpinner />
-        </Box>
-      ) : (
-        <>
-          <PurchaseOrderLineEdit
-            draft={draft}
-            update={updatePatch}
-            status={purchaseOrder.status}
-            isDisabled={isDisabled}
-            lines={lines}
-            isUpdateMode={isUpdateMode}
-            onChangeItem={onChangeItem}
-            lineCount={lines.length}
-          />
-          <Box display="flex" ml={2} pt={1} gap={1}>
-            <Typography width={250}>{t('label.ordered-in-others')}:</Typography>
-            <Typography fontWeight={800}>
-              {round(unitsOrderedInOthers)}{' '}
-              {getPlural(unit, unitsOrderedInOthers)}
-            </Typography>
+        }
+        nextButton={
+          isUpdateMode ? (
+            <DialogButton
+              variant="next-and-ok"
+              disabled={!hasNext}
+              onClick={async () => {
+                await handleSave();
+                openNext();
+                return true;
+              }}
+            />
+          ) : undefined
+        }
+        height={700}
+        width={1200}
+        enableAutocomplete
+      >
+        {isCreating || isUpdating ? (
+          <Box
+            display="flex"
+            flex={1}
+            height={300}
+            justifyContent="center"
+            alignItems="center"
+          >
+            <InlineSpinner />
           </Box>
-        </>
-      )}
-    </Modal>
-  );
-};
+        ) : (
+          <>
+            <PurchaseOrderLineEdit
+              draft={draft}
+              update={updatePatch}
+              status={purchaseOrder.status}
+              isDisabled={isDisabled}
+              lines={lines}
+              isUpdateMode={isUpdateMode}
+              onChangeItem={onChangeItem}
+              lineCount={lines.length}
+            />
+            <Box display="flex" ml={2} pt={1} gap={1}>
+              <Typography width={250}>
+                {t('label.ordered-in-others')}:
+              </Typography>
+              <Typography fontWeight={800}>
+                {round(unitsOrderedInOthers)}{' '}
+                {getPlural(unit, unitsOrderedInOthers)}
+              </Typography>
+            </Box>
+          </>
+        )}
+      </Modal>
+    );
+  }
+);
