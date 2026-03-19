@@ -1809,6 +1809,7 @@
   "messages": "Messages",
   "messages.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.ago": "{{time}} ago",
+  "messages.alert-invalid-pack-size": "Pack size must be 1 or more for returned lines",
   "messages.alert-zero-return-quantity": "Please add some quantities to return before proceeding to the next step",
   "messages.all-changes-must-be-confirmed": "You have some lines with unsaved changes. Mark these lines as confirmed to finalise.",
   "messages.all-packs-repacked": "All stock has been repacked and this stock line will no longer show in the list. Click OK to be taken to the new stock line.",
