@@ -65,7 +65,7 @@ base64 = { workspace = true }
 regex = { workspace = true }
 anymap = { workspace = true }
 # Need this commit to avoid panic when json has undefined fields
-boa_engine = { git = "https://github.com/boa-dev/boa.git", rev = "6f03c21e22b5f775732fd314859082ea3904f3da" }
+boa_engine = "0.21.0"
 lettre = { version = "0.11.19", default-features = false, features = [
     "rustls-tls",
     "smtp-transport",
