@@ -32,7 +32,7 @@ import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
-import { StoreWastagePanel } from './StoreWastagePanel';
+import { StoreWastagePanel } from './StorageConfigPanel';
 import { DraftVaccineCourse } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
