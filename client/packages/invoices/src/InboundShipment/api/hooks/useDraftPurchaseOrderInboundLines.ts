@@ -6,14 +6,14 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DraftInboundLine } from '../../../../types';
-import { useDeleteInboundLines } from '../../../api/hooks/line/useDeleteInboundLines';
-import { mapErrorToMessageAndSetContext } from '../../../api/hooks/mapErrorToMessageAndSetContext';
-import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
-import { useSaveInboundLines } from '../../../api/hooks/utils';
-import { isA } from '../../../../utils';
+import { DraftInboundLine } from '../../../types';
+import { useDeleteInboundLines } from './line/useDeleteInboundLines';
+import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
+import { useInboundShipment } from './document/useInboundShipment';
+import { useSaveInboundLines } from './utils';
+import { isA } from '../../../utils';
 import { PurchaseOrderLineFragment } from '@openmsupply-client/purchasing/src/purchase_order/api/operations.generated';
-import { InboundLineFragment } from '../../../api/operations.generated';
+import { InboundLineFragment } from '../operations.generated';
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
@@ -41,7 +41,31 @@ const makePurchaseOrderLineField = (pol: PurchaseOrderLineFragment) => ({
   pricePerPackAfterDiscount: pol.pricePerPackAfterDiscount,
 });
 
-export const useDraftExternalInboundLines = (
+const createDraftLine = (
+  pol: PurchaseOrderLineFragment,
+  invoiceId: string,
+  overrides?: Partial<DraftInboundLine>
+): DraftInboundLine => ({
+  __typename: 'InvoiceLineNode',
+  id: FnUtils.generateUUID(),
+  invoiceId,
+  type: InvoiceLineNodeType.StockIn,
+  item: toInboundLineItem(pol.item),
+  itemName: pol.item.name,
+  packSize: pol.requestedPackSize,
+  numberOfPacks: 0,
+  costPricePerPack: pol.pricePerPackAfterDiscount,
+  sellPricePerPack: pol.pricePerPackAfterDiscount,
+  totalBeforeTax: 0,
+  totalAfterTax: 0,
+  volumePerPack: 0,
+  shippedPackSize: pol.requestedPackSize,
+  purchaseOrderLine: makePurchaseOrderLineField(pol),
+  isCreated: true,
+  ...overrides,
+});
+
+export const useDraftPurchaseOrderInboundLines = (
   purchaseOrderLine: PurchaseOrderLineFragment | null
 ) => {
   const t = useTranslation();
@@ -93,54 +117,44 @@ export const useDraftExternalInboundLines = (
           ? remainingUnits / pol.requestedPackSize
           : remainingUnits;
 
-      const newLine: DraftInboundLine = {
-        __typename: 'InvoiceLineNode',
-        id: FnUtils.generateUUID(),
-        invoiceId,
-        type: InvoiceLineNodeType.StockIn,
-        item: toInboundLineItem(pol.item),
-        itemName: pol.item.name,
-        packSize: pol.requestedPackSize,
-        numberOfPacks,
-        costPricePerPack: pol.pricePerPackAfterDiscount,
-        sellPricePerPack: pol.pricePerPackAfterDiscount,
-        totalBeforeTax: pol.pricePerPackAfterDiscount * numberOfPacks,
-        totalAfterTax: pol.pricePerPackAfterDiscount * numberOfPacks,
-        volumePerPack: 0,
-        shippedPackSize: pol.requestedPackSize,
-        shippedNumberOfPacks: numberOfPacks,
-        purchaseOrderLine: makePurchaseOrderLineField(pol),
-        isCreated: true,
-      };
-
-      setDraftLines([newLine]);
+      setDraftLines([
+        createDraftLine(purchaseOrderLine, invoiceId, {
+          numberOfPacks,
+          shippedNumberOfPacks: numberOfPacks,
+          totalBeforeTax: pol.pricePerPackAfterDiscount * numberOfPacks,
+          totalAfterTax: pol.pricePerPackAfterDiscount * numberOfPacks,
+        }),
+      ]);
+      setIsDirty(true);
     }
-  }, [existingLines, purchaseOrderLine, invoiceId, isDirty]);
+  }, [existingLines, purchaseOrderLine, invoiceId, isDirty, setIsDirty]);
 
-  const addDraftLine = () => {
+  const addDraftLine = (initialPatch?: Partial<DraftInboundLine>) => {
     if (!purchaseOrderLine) return;
-    const pol = purchaseOrderLine;
-    const newLine: DraftInboundLine = {
-      __typename: 'InvoiceLineNode',
-      id: FnUtils.generateUUID(),
-      invoiceId,
-      type: InvoiceLineNodeType.StockIn,
-      item: toInboundLineItem(pol.item),
-      itemName: pol.item.name,
-      packSize: pol.requestedPackSize,
-      numberOfPacks: 0,
-      costPricePerPack: pol.pricePerPackAfterDiscount,
-      sellPricePerPack: pol.pricePerPackAfterDiscount,
-      totalBeforeTax: 0,
-      totalAfterTax: 0,
-      volumePerPack: 0,
-      shippedPackSize: pol.requestedPackSize,
-      purchaseOrderLine: makePurchaseOrderLineField(pol),
-      isCreated: true,
-    };
+    const newLine = createDraftLine(purchaseOrderLine, invoiceId, initialPatch);
     setIsDirty(true);
     setDraftLines(prev => [...prev, newLine]);
   };
+
+  const duplicateDraftLine = useCallback(
+    (lineId: string) => {
+      setDraftLines(prevLines => {
+        const sourceLine = prevLines.find(line => line.id === lineId);
+        if (!sourceLine) return prevLines;
+
+        const newLine: DraftInboundLine = {
+          ...sourceLine,
+          id: FnUtils.generateUUID(),
+          numberOfPacks: 0,
+          isCreated: true,
+          isUpdated: false,
+        };
+        setIsDirty(true);
+        return [...prevLines, newLine];
+      });
+    },
+    [setIsDirty]
+  );
 
   const updateDraftLine = useCallback(
     (patch: PatchDraftLineInput) => {
@@ -207,6 +221,7 @@ export const useDraftExternalInboundLines = (
   return {
     draftLines: draftLines.filter(line => !line.isDeleted),
     addDraftLine,
+    duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
     isLoading,
