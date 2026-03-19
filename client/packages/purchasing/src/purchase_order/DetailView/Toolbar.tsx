@@ -39,9 +39,9 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   } = usePurchaseOrder();
   const { updateLines } = usePurchaseOrderLine();
 
-  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
-    new Date(data?.requestedDeliveryDate ?? '')
-  );
+  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState<
+    Date | null
+  >(data?.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null);
 
   const getMostRecentExpectedDate = () => {
     const dates = data?.lines?.nodes
@@ -50,9 +50,10 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     return dates?.[0] ? dates[0] : null;
   };
 
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(
-    new Date(getMostRecentExpectedDate() ?? '')
-  );
+  const mostRecentExpectedDate = getMostRecentExpectedDate();
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<
+    Date | null
+  >(mostRecentExpectedDate ? new Date(mostRecentExpectedDate) : null);
 
   const disabledRequestedDeliveryDate = data?.status
     ? isFieldDisabled(data.status, StatusGroup.AfterConfirmed)
@@ -97,7 +98,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const handleExpectedDeliveryDateChange = (newDate: Date | null) => {
     const previousDate = expectedDeliveryDate;
 
-    setExpectedDeliveryDate(newDate ?? new Date(''));
+    setExpectedDeliveryDate(newDate);
     confirmExpectedModal({
       onConfirm: () => updateExpectedDeliveryChange(newDate),
       onCancel: () => setExpectedDeliveryDate(previousDate),
@@ -124,7 +125,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const handleRequestedDeliveryDateChange = (newDate: Date | null) => {
     const previousDate = requestedDeliveryDate;
 
-    setRequestedDeliveryDate(newDate ?? new Date(''));
+    setRequestedDeliveryDate(newDate);
     confirmRequestedModal({
       onConfirm: () => updateRequestedDeliveryChange(newDate),
       onCancel: () => setRequestedDeliveryDate(previousDate),
