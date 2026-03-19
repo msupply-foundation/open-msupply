@@ -106,7 +106,7 @@ export const usePurchaseOrderColumns = () => {
       },
       {
         accessorKey: 'totalCost',
-        header: t('label.total-cost'),
+        header: t('label.line-cost'),
         columnType: ColumnType.Currency,
         accessorFn: row => {
           const units =

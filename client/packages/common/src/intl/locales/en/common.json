@@ -1203,6 +1203,7 @@
   "label.ledger": "Ledger",
   "label.level": "Level",
   "label.line": "Line {{line, number}}",
+  "label.line-cost": "Line cost",
   "label.line-number": "Line",
   "label.line-total": "Line total",
   "label.line-total-local": "Line total (local)",
