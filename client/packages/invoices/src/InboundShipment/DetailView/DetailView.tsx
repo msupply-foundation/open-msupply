@@ -38,7 +38,6 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { InboundLineEdit } from './modals/InboundLineEdit';
-import { ExternalInboundLineEdit } from './modals/ExternalInboundLineEdit';
 import { InboundItem, ScannedBarcode } from '../../types';
 import { InboundLineFragment, useInboundShipment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
@@ -317,20 +316,7 @@ const DetailViewInner = () => {
             shouldOpen={!isOpen}
           />
 
-          {isOpen && !!data.purchaseOrder && (
-            <ExternalInboundLineEdit
-              isDisabled={isDisabled}
-              isOpen={isOpen}
-              onClose={onClose}
-              mode={mode}
-              item={entity as InboundLineItem}
-              purchaseOrderLineId={editPurchaseOrderLineId}
-              currency={data.currency}
-              hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
-              hasItemVariantsEnabled={hasItemVariantsEnabled}
-            />
-          )}
-          {isOpen && !data.purchaseOrder && (
+          {isOpen && (
             <InboundLineEdit
               isDisabled={isDisabled}
               isOpen={isOpen}
@@ -341,9 +327,10 @@ const DetailViewInner = () => {
               // (which is the case when item info is scanned from barcode)
               item={entity as InboundLineItem}
               currency={data.currency}
-              isExternalSupplier={false}
+              isExternalSupplier={!data.otherParty.store}
               hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
+              purchaseOrderLineId={editPurchaseOrderLineId}
               scannedBatchData={{
                 batch: (entity as ScannedBatchData)?.batch,
                 expiryDate: (entity as ScannedBatchData)?.expiryDate,
