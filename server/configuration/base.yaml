@@ -10,6 +10,11 @@ server:
       http://localhost:8000,
     ] # Used to set the allowed Origin in Cross Origin Request Security
   base_dir: "app_data"
+  # Number of HTTP worker threads. Defaults to 4 * num_cpus.
+  # Increase for production servers with many concurrent users and blocking DB queries.
+  # workers: 64
+  # Keep-alive timeout in seconds. Set to 0 to disable. Default: 30
+  # keep_alive_seconds: 30
 database:
   host: "localhost"
   port: 5432

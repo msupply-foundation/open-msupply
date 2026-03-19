@@ -47,6 +47,8 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             base_dir: Some("test_output".to_string()),
             machine_uid: None,
             override_is_central_server: false,
+            workers: None,
+            keep_alive_seconds: None,
         },
         database: db_settings,
         sync: None,

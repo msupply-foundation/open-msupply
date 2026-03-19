@@ -392,6 +392,35 @@ pub async fn start_server(
     })
     .disable_signals();
 
+    // Default workers to 4 * num_cpus for I/O bound workloads with blocking DB calls.
+    // This prevents async runtime thread starvation under concurrent load.
+    let workers = settings.server.workers.unwrap_or_else(|| {
+        let cpus = std::thread::available_parallelism()
+            .map(|p| p.get())
+            .unwrap_or(4);
+        let default_workers = cpus * 4;
+        info!(
+            "No workers configured, defaulting to {} (4 * {} CPUs)",
+            default_workers, cpus
+        );
+        default_workers
+    });
+    http_server = http_server.workers(workers);
+
+    // Configure keep-alive to release idle connections sooner under load.
+    let keep_alive_secs = settings.server.keep_alive_seconds.unwrap_or(30);
+    if keep_alive_secs == 0 {
+        http_server = http_server.keep_alive(actix_web::http::KeepAlive::Disabled);
+    } else {
+        http_server =
+            http_server.keep_alive(std::time::Duration::from_secs(keep_alive_secs));
+    }
+
+    info!(
+        "HTTP server configured with {} workers, keep_alive={}s",
+        workers, keep_alive_secs
+    );
+
     http_server = match certificates.config() {
         Some(config) => http_server
             .bind_rustls_0_23(settings.server.address(), config)

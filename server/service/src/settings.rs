@@ -40,6 +40,11 @@ pub struct ServerSettings {
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+    /// Number of actix-web worker threads. Defaults to 4 * num_cpus to handle
+    /// blocking database operations without starving the async runtime.
+    pub workers: Option<usize>,
+    /// Keep-alive timeout in seconds. Defaults to 30. Set to 0 to disable.
+    pub keep_alive_seconds: Option<u64>,
 }
 
 impl ServerSettings {
