@@ -12,7 +12,7 @@ import {
   NameAndColorSetterCell,
   usePreferences,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
   DetailTabs,
   ToggleState,
 } from '@openmsupply-client/common';
@@ -26,6 +26,8 @@ import {
 import { Toolbar } from './Toolbar';
 import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
+
+const TABLE_ID = 'inbound-shipment-list-view';
 
 export const InboundListView = () => {
   const t = useTranslation();
@@ -208,7 +210,7 @@ const InboundShipments: React.FC<{
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
     {
-      tableId: 'inbound-shipment-list-view',
+      tableId: TABLE_ID,
       isLoading: isFetching,
       onRowClick: row => navigate(row.id),
       columns,
@@ -234,7 +236,7 @@ const InboundShipments: React.FC<{
     <>
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <MobileCardList table={table} />
+        <CardList table={table} tableId={TABLE_ID} />
       ) : (
         <>
           <Toolbar filter={filter} />
