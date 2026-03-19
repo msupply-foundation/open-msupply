@@ -31,7 +31,10 @@ export const useDraftSupplierReturnLines = ({
   const lines = data?.nodes;
 
   useEffect(() => {
-    setDraftLines(lines ?? []);
+    const sorted = [...(lines ?? [])].sort((a, b) =>
+      a.onHold === b.onHold ? 0 : a.onHold ? 1 : -1
+    );
+    setDraftLines(sorted);
   }, [lines]);
 
   const update = (patch: RecordPatch<GenerateSupplierReturnLineFragment>) => {

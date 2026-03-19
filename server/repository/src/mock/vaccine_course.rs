@@ -1,6 +1,7 @@
 use crate::vaccine_course::{
     vaccine_course_dose_row::VaccineCourseDoseRow, vaccine_course_item_row::VaccineCourseItemRow,
     vaccine_course_row::VaccineCourseRow,
+    vaccine_course_store_config_row::VaccineCourseStoreConfigRow,
 };
 
 use super::{mock_immunisation_program_a, mock_vaccine_item_a};
@@ -70,4 +71,18 @@ pub fn mock_vaccine_course_doses() -> Vec<VaccineCourseDoseRow> {
 }
 pub fn mock_vaccine_course_items() -> Vec<VaccineCourseItemRow> {
     vec![mock_vaccine_course_item_1()]
+}
+
+pub fn mock_vaccine_course_store_config_1() -> VaccineCourseStoreConfigRow {
+    VaccineCourseStoreConfigRow {
+        id: "vaccine_course_store_config_1".to_string(),
+        vaccine_course_id: mock_vaccine_course_a().id,
+        store_id: "store_a".to_string(),
+        wastage_rate: Some(50.0),
+        coverage_rate: Some(60.0),
+    }
+}
+
+pub fn mock_vaccine_course_store_configs() -> Vec<VaccineCourseStoreConfigRow> {
+    vec![mock_vaccine_course_store_config_1()]
 }
