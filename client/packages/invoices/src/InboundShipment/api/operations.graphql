@@ -234,6 +234,8 @@ fragment Inbound on InvoiceNode {
       isHomeCurrency
     }
   }
+
+  inboundType
 }
 
 fragment InboundRow on InvoiceNode {
