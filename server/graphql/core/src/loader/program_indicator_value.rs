@@ -60,6 +60,9 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
             } else {
                 return Ok(HashMap::new());
             };
+        if loader_inputs.len() > 1 {
+            log::error!("Multiple loader inputs provided to IndicatorValueLoader, but only one combination of period_id, store_id, and customer_name_id is supported. Only the first input will be used.");
+        }
 
         let filter = IndicatorValueFilter::new()
             .store_id(EqualFilter::equal_to(store_id.to_string()))

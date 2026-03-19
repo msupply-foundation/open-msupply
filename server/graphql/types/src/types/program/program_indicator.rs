@@ -189,6 +189,10 @@ impl IndicatorLineRowNode {
             self.line.value_type.clone().unwrap_or_default(),
         ))
     }
+
+    pub async fn is_active(&self) -> bool {
+        self.line.is_active
+    }
 }
 
 impl IndicatorColumnNode {
@@ -245,6 +249,10 @@ impl IndicatorColumnNode {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn is_active(&self) -> bool {
+        self.column.is_active
     }
 }
 
