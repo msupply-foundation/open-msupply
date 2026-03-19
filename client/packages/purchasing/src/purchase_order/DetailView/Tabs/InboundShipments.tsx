@@ -33,7 +33,7 @@ export const InboundShipments = () => {
       type: { equalTo: 'INBOUND' },
     },
     sortBy: { key: 'number', direction: 'desc' as 'asc' | 'desc' },
-    type: InvoiceTypeInput.InboundShipmentExternal,
+    type: [InvoiceTypeInput.InboundShipmentExternal],
   };
 
   const {

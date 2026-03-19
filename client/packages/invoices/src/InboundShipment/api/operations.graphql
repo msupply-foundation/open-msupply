@@ -256,6 +256,10 @@ fragment InboundRow on InvoiceNode {
     taxPercentage
     foreignCurrencyTotalAfterTax
   }
+  requisition {
+    id
+    requisitionNumber
+  }
   linkedShipment {
     id
   }
@@ -270,6 +274,7 @@ fragment InboundRow on InvoiceNode {
     id
     number
   }
+  inboundType
 }
 
 query invoices(
@@ -279,7 +284,7 @@ query invoices(
   $desc: Boolean
   $filter: InvoiceFilterInput
   $storeId: String!
-  $type: InvoiceTypeInput
+  $type: [InvoiceTypeInput!]
 ) {
   invoices(
     page: { first: $first, offset: $offset }

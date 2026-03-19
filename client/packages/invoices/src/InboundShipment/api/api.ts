@@ -38,7 +38,7 @@ export type ListParams = {
   offset: number;
   sortBy: SortBy<InboundRowFragment>;
   filterBy: FilterBy | null;
-  type?: InvoiceTypeInput;
+  type?: InvoiceTypeInput[];
 };
 
 export const inboundParsers = {
@@ -231,16 +231,11 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       type,
     }: {
       sortBy: SortBy<InboundRowFragment>;
-      type?: InvoiceTypeInput;
+      type?: InvoiceTypeInput[];
     }) => {
-      const filter = {
-        type: { equalTo: InvoiceNodeType.InboundShipment },
-      };
-
       const result = await sdk.invoices({
         key: inboundParsers.toSortField(sortBy),
         desc: !!sortBy.isDesc,
-        filter,
         storeId,
         type,
       });
