@@ -4785,6 +4785,7 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
+ "log",
  "ordered-float 5.1.0",
  "repository",
  "reqwest",
