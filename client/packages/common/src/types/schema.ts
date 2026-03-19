@@ -4608,8 +4608,8 @@ export type ItemCounts = {
 
 export type ItemCountsResponse = {
   __typename: 'ItemCountsResponse';
+  highStock: Scalars['Int']['output'];
   lowStock: Scalars['Int']['output'];
-  moreThanSixMonthsStock: Scalars['Int']['output'];
   noStock: Scalars['Int']['output'];
   outOfStockProducts: Scalars['Int']['output'];
   productsAtRiskOfBeingOutOfStock: Scalars['Int']['output'];
@@ -7102,10 +7102,14 @@ export type PurchaseOrderLineError = {
 };
 
 export type PurchaseOrderLineFilterInput = {
+  expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
+  supplierName?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineNode = {
@@ -7772,6 +7776,7 @@ export type QueriesInvoicesArgs = {
 };
 
 export type QueriesItemCountsArgs = {
+  highStockThreshold?: InputMaybe<Scalars['Int']['input']>;
   lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
   storeId: Scalars['String']['input'];
 };
