@@ -116,6 +116,11 @@ const CUSTOMER_RETURN_AUTO_NEXT: NextStatusMap = {
 };
 
 const INBOUND_INTERNAL_NEXT: NextStatusMap = {
+  [InvoiceNodeStatus.Shipped]: [
+    InvoiceNodeStatus.Delivered,
+    InvoiceNodeStatus.Received,
+    InvoiceNodeStatus.Verified,
+  ],
   [InvoiceNodeStatus.Delivered]: [
     InvoiceNodeStatus.Received,
     InvoiceNodeStatus.Verified,
@@ -124,6 +129,11 @@ const INBOUND_INTERNAL_NEXT: NextStatusMap = {
 };
 
 const INBOUND_EXTERNAL_NEXT: NextStatusMap = {
+  [InvoiceNodeStatus.Shipped]: [
+    InvoiceNodeStatus.Delivered,
+    InvoiceNodeStatus.Received,
+    InvoiceNodeStatus.Verified,
+  ],
   [InvoiceNodeStatus.Delivered]: [
     InvoiceNodeStatus.Received,
     InvoiceNodeStatus.Verified,
