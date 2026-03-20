@@ -107,6 +107,7 @@ fragment InboundLine on InvoiceLineNode {
 
   purchaseOrderLine {
     __typename
+    id
     adjustedNumberOfUnits
     shippedNumberOfUnits
     inTransitNumberOfUnits
@@ -232,6 +233,14 @@ fragment Inbound on InvoiceNode {
       code
       rate
       isHomeCurrency
+    }
+    lines {
+      nodes {
+        id
+        item {
+          id
+        }
+      }
     }
   }
 }

@@ -104,6 +104,7 @@ export type InboundLineFragment = {
   } | null;
   purchaseOrderLine?: {
     __typename: 'PurchaseOrderLineNode';
+    id: string;
     adjustedNumberOfUnits?: number | null;
     shippedNumberOfUnits: number;
     inTransitNumberOfUnits: number;
@@ -257,6 +258,7 @@ export type InboundFragment = {
       } | null;
       purchaseOrderLine?: {
         __typename: 'PurchaseOrderLineNode';
+        id: string;
         adjustedNumberOfUnits?: number | null;
         shippedNumberOfUnits: number;
         inTransitNumberOfUnits: number;
@@ -321,6 +323,14 @@ export type InboundFragment = {
       rate: number;
       isHomeCurrency: boolean;
     } | null;
+    lines: {
+      __typename: 'PurchaseOrderLineConnector';
+      nodes: Array<{
+        __typename: 'PurchaseOrderLineNode';
+        id: string;
+        item: { __typename: 'ItemNode'; id: string };
+      }>;
+    };
   } | null;
 };
 
@@ -576,6 +586,7 @@ export type InvoiceQuery = {
             } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
+              id: string;
               adjustedNumberOfUnits?: number | null;
               shippedNumberOfUnits: number;
               inTransitNumberOfUnits: number;
@@ -640,6 +651,14 @@ export type InvoiceQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -818,6 +837,7 @@ export type InboundByNumberQuery = {
             } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
+              id: string;
               adjustedNumberOfUnits?: number | null;
               shippedNumberOfUnits: number;
               inTransitNumberOfUnits: number;
@@ -882,6 +902,14 @@ export type InboundByNumberQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -1460,6 +1488,7 @@ export const InboundLineFragmentDoc = gql`
     }
     purchaseOrderLine {
       __typename
+      id
       adjustedNumberOfUnits
       shippedNumberOfUnits
       inTransitNumberOfUnits
@@ -1574,6 +1603,14 @@ export const InboundFragmentDoc = gql`
         code
         rate
         isHomeCurrency
+      }
+      lines {
+        nodes {
+          id
+          item {
+            id
+          }
+        }
       }
     }
   }
