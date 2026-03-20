@@ -4,6 +4,7 @@ import {
   useTranslation,
   useNotification,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
@@ -14,47 +15,12 @@ import {
 } from '@openmsupply-client/common';
 import {
   getPreviousStatus,
-  outboundStatuses,
   getButtonLabel,
   getNextStatusOption,
   getStatusTranslator,
 } from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
-
-const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options = [
-    InvoiceNodeStatus.New,
-    InvoiceNodeStatus.Allocated,
-    InvoiceNodeStatus.Picked,
-    InvoiceNodeStatus.Shipped,
-    InvoiceNodeStatus.Delivered,
-    InvoiceNodeStatus.Verified,
-  ].map(status => ({
-    value: status,
-    label: getButtonLabel(status),
-    isDisabled: true,
-  }));
-
-  if (currentStatus === InvoiceNodeStatus.New) {
-    if (options[1]) options[1].isDisabled = false;
-    if (options[2]) options[2].isDisabled = false;
-    if (options[3]) options[3].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Allocated) {
-    if (options[2]) options[2].isDisabled = false;
-    if (options[3]) options[3].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Picked) {
-    if (options[3]) options[3].isDisabled = false;
-  }
-
-  return options;
-};
+import { getStatusOptions, getStatusSequence } from '../../../statuses';
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
@@ -72,7 +38,11 @@ const useStatusChangeButton = () => {
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
   const options = useMemo(() => {
-    let statusOptions = getStatusOptions(status, getButtonLabel(t));
+    let statusOptions = getStatusOptions(
+      InvoiceNodeType.OutboundShipment,
+      status,
+      getButtonLabel(t)
+    );
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
         option => !!option.value && invoiceStatusOptions.includes(option.value)
@@ -85,7 +55,11 @@ const useStatusChangeButton = () => {
   // then use the previous valid status.
   const currentStatus = invoiceStatusOptions?.includes(status)
     ? status
-    : getPreviousStatus(status, invoiceStatusOptions ?? [], outboundStatuses);
+    : getPreviousStatus(
+        status,
+        invoiceStatusOptions ?? [],
+        getStatusSequence(InvoiceNodeType.OutboundShipment)
+      );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>

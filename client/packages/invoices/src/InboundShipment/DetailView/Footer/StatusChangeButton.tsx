@@ -4,6 +4,7 @@ import {
   useTranslation,
   useNotification,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
@@ -16,37 +17,12 @@ import {
   isInboundPlaceholderRow,
   getButtonLabel,
   getNextStatusOption,
-  inboundStatuses,
   getPreviousStatus,
   getStatusTranslator,
-  InboundShipmentType,
   getInboundShipmentType,
-  getInboundStatusesForType,
 } from '../../../utils';
 import { InboundLineFragment, useInboundShipment } from '../../api';
-
-const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string,
-  shipmentType: InboundShipmentType
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const statuses = getInboundStatusesForType(shipmentType);
-
-  const options = statuses.map(status => ({
-    value: status,
-    label: getButtonLabel(status),
-    isDisabled: true,
-  }));
-
-  // Enable options that can be progressed to from the current status
-  const currentIdx = statuses.indexOf(currentStatus);
-  for (let i = currentIdx + 1; i < options.length; i++) {
-    const option = options[i];
-    if (option) option.isDisabled = false;
-  }
-
-  return options;
-};
+import { getStatusOptions, getStatusSequence } from '../../../statuses';
 
 const StatusChangeButtonContent = ({
   data,
@@ -67,9 +43,10 @@ const StatusChangeButtonContent = ({
 
   const options = useMemo(() => {
     let statusOptions = getStatusOptions(
+      InvoiceNodeType.InboundShipment,
       status,
       getButtonLabel(t),
-      shipmentType
+      { inboundShipmentType: shipmentType }
     );
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
@@ -81,7 +58,13 @@ const StatusChangeButtonContent = ({
 
   const currentStatus = invoiceStatusOptions?.includes(status)
     ? status
-    : getPreviousStatus(status, invoiceStatusOptions ?? [], inboundStatuses);
+    : getPreviousStatus(
+        status,
+        invoiceStatusOptions ?? [],
+        getStatusSequence(InvoiceNodeType.InboundShipment, {
+          inboundShipmentType: shipmentType,
+        })
+      );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
