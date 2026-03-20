@@ -106,32 +106,12 @@ pub(crate) mod test {
     };
     use crate::{EqualFilter, StockLineRow};
 
-    async fn test_one(
+    async fn run_dos_test(
         test_name: &str,
-        movement_date: NaiveDateTime,
         calculation_date: NaiveDateTime,
-        movements: Vec<(i64, i64)>,
+        mock_data: MockData,
         expected_dos: Option<f64>,
     ) {
-        let test_stock_line = StockLineRow {
-            id: format!("test_stock_line_{test_name}"),
-            item_link_id: mock_item_a().id.clone(),
-            store_id: mock_store_a().id.clone(),
-            pack_size: 1.0,
-            ..Default::default()
-        };
-
-        let mock_data = MockData {
-            stock_lines: vec![test_stock_line.clone()],
-            ..Default::default()
-        }
-        .join(make_movements_extended(MakeMovements {
-            stock_line: test_stock_line,
-            date_quantity: movements,
-            reference_datetime: movement_date,
-            offset_days: 30,
-        }));
-
         let (_, connection, _, _) = setup_all_with_data(
             &format!("test_dos_{test_name}"),
             MockDataInserts::none().names().stores().units().items(),
@@ -182,6 +162,72 @@ pub(crate) mod test {
             actual, expected_dos,
             "DOS mismatch for test {test_name}, expected {expected_dos}, got {actual}"
         );
+    }
+
+    async fn test_one(
+        test_name: &str,
+        movement_date: NaiveDateTime,
+        calculation_date: NaiveDateTime,
+        movements: Vec<(i64, i64)>,
+        expected_dos: Option<f64>,
+    ) {
+        let test_stock_line = StockLineRow {
+            id: format!("test_stock_line_{test_name}"),
+            item_link_id: mock_item_a().id.clone(),
+            store_id: mock_store_a().id.clone(),
+            pack_size: 1.0,
+            ..Default::default()
+        };
+
+        let mock_data = MockData {
+            stock_lines: vec![test_stock_line.clone()],
+            ..Default::default()
+        }
+        .join(make_movements_extended(MakeMovements {
+            stock_line: test_stock_line,
+            date_quantity: movements,
+            reference_datetime: movement_date,
+            offset_days: 30,
+        }));
+
+        run_dos_test(test_name, calculation_date, mock_data, expected_dos).await;
+    }
+
+    async fn test_multi_stockline(
+        test_name: &str,
+        movement_date: NaiveDateTime,
+        calculation_date: NaiveDateTime,
+        stock_line_movements: Vec<(&str, Vec<(i64, i64)>)>,
+        expected_dos: Option<f64>,
+    ) {
+        let stock_lines: Vec<StockLineRow> = stock_line_movements
+            .iter()
+            .map(|(suffix, _)| StockLineRow {
+                id: format!("sl_{suffix}_{test_name}"),
+                item_link_id: mock_item_a().id.clone(),
+                store_id: mock_store_a().id.clone(),
+                pack_size: 1.0,
+                ..Default::default()
+            })
+            .collect();
+
+        let mut mock_data = MockData {
+            stock_lines: stock_lines.clone(),
+            ..Default::default()
+        };
+
+        for (stock_line, (_, movements)) in
+            stock_lines.into_iter().zip(stock_line_movements.into_iter())
+        {
+            mock_data = mock_data.join(make_movements_extended(MakeMovements {
+                stock_line,
+                date_quantity: movements,
+                reference_datetime: movement_date,
+                offset_days: 30,
+            }));
+        }
+
+        run_dos_test(test_name, calculation_date, mock_data, expected_dos).await;
     }
 
     #[actix_rt::test]
@@ -346,5 +392,37 @@ pub(crate) mod test {
         .await;
 
         std::env::set_var("TZ", "");
+    }
+
+    #[actix_rt::test]
+    async fn test_dos_multi_stockline_same_datetime() {
+        std::env::set_var("TZ", "Pacific/Auckland");
+
+        let movement_date = get_local_date_as_utc(
+            NaiveDate::from_ymd_opt(2025, 12, 30)
+                .unwrap()
+                .and_hms_opt(3, 3, 3)
+                .unwrap(),
+        );
+
+        // Multiple stocklines with an outbound and inbound at the same datetime.
+        // daily_stock must use the final balance for that datetime, not an intermediate one.
+        //
+        // Looking back 10 days from 30th, including 20th in calculation
+        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+        // |                        | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+        // | end of day balance     | 8  | 8  | 8  | 8  | 8  | 8  | 5  | 5  | 5  | 5  | 5  | 5  |
+        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+        // | full day without stock | no | no | no | no | no | no | no | no | no | no | no | no |
+        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+        test_multi_stockline(
+            "multi_stockline_same_datetime",
+            movement_date,
+            movement_date,
+            vec![("a", vec![(5, 8), (25, -8)]), ("b", vec![(25, 5)])],
+            None,
+        )
+        .await;
     }
 }
