@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -39,6 +39,16 @@ export const SlidePanel = ({
   width = '100%',
   preventClickAway = true,
 }: SlidePanelProps) => {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
   const panel = (
     <Box
       sx={{
@@ -53,6 +63,7 @@ export const SlidePanel = ({
       <Slide direction="right" in={open} mountOnEnter unmountOnExit>
         <Paper
           elevation={4}
+          onKeyDown={handleKeyDown}
           sx={{
             display: 'flex',
             flexDirection: 'column',
