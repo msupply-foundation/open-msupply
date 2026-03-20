@@ -114,8 +114,8 @@ export const CardListItem = <T extends MRT_RowData>({
           '&:last-child': { pb: isLandscape ? 0.5 : 1.5 },
         }}
       >
-        {/* Heading row: summary values + action buttons */}
-        {(summaryCells.length > 0 || actionCells.length > 0) && (
+        {/* Heading row: summary values */}
+        {summaryCells.length > 0 && (
           <Box
             display="flex"
             alignItems="center"
@@ -123,16 +123,14 @@ export const CardListItem = <T extends MRT_RowData>({
             mb={groups.length > 0 ? 1 : 0}
             py={0.5}
           >
-            {summaryCells.length > 0 && (
-              <Typography
-                key={summaryCells[0]!.id}
-                variant="subtitle2"
-                fontWeight={700}
-                noWrap
-              >
-                {getSummaryContent(summaryCells[0]!)}
-              </Typography>
-            )}
+            <Typography
+              key={summaryCells[0]!.id}
+              variant="subtitle2"
+              fontWeight={700}
+              noWrap
+            >
+              {getSummaryContent(summaryCells[0]!)}
+            </Typography>
             <Box flex={1} />
             {summaryCells.slice(1).map(cell => (
               <Typography
@@ -143,11 +141,6 @@ export const CardListItem = <T extends MRT_RowData>({
               >
                 {getSummaryContent(cell)}
               </Typography>
-            ))}
-            {actionCells.map(cell => (
-              <Box key={cell.id} flexShrink={0}>
-                {getCellContent(cell)}
-              </Box>
             ))}
           </Box>
         )}
@@ -194,6 +187,16 @@ export const CardListItem = <T extends MRT_RowData>({
                 ))}
               </CardListFieldGroup>
             ))}
+        {/* Action buttons at bottom-right */}
+        {actionCells.length > 0 && (
+          <Box display="flex" justifyContent="flex-end" gap={1} mt={1}>
+            {actionCells.map(cell => (
+              <Box key={cell.id} flexShrink={0}>
+                {getCellContent(cell)}
+              </Box>
+            ))}
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

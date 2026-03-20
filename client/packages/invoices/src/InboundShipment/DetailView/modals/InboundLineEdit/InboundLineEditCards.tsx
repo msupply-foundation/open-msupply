@@ -24,6 +24,7 @@ import {
   InvoiceIcon,
   SlidersIcon,
   EditIcon,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -59,7 +60,6 @@ interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
   lastCardRef?: React.RefObject<HTMLDivElement>;
-  simplified?: boolean;
   actions?: React.ReactNode;
 }
 
@@ -77,10 +77,10 @@ export const InboundLineEditCards = ({
   setPackRoundingMessage,
   restrictedToLocationTypeId,
   lastCardRef,
-  simplified,
   actions,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
+  const simplified = useSimplifiedTabletUI();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   // Ref avoids format in useMemo deps (unstable reference)
@@ -628,6 +628,7 @@ export const InboundLineEditCards = ({
           <IconButton
             disabled={isDisabled}
             label={t('label.duplicate-batch')}
+            showLabel={!simplified}
             onClick={() => {
               duplicateDraftLine(row.original.id);
               setTimeout(() => {
@@ -648,7 +649,9 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            label={t('button.delete')}
+            label={t('label.delete-batch')}
+            showLabel={!simplified}
+            color="error"
             onClick={() => removeDraftLine(row.original.id)}
             icon={<DeleteIcon fontSize="small" />}
           />
@@ -672,6 +675,7 @@ export const InboundLineEditCards = ({
     removeDraftLine,
     restrictedToLocationTypeId,
     setPackRoundingMessage,
+    simplified,
     store?.preferences.issueInForeignCurrency,
     unitName,
     updateDraftLine,
