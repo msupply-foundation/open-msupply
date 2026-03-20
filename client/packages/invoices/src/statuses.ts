@@ -207,12 +207,10 @@ export function getStatusSequence(
       return STATUS_SEQUENCES[key] ?? [];
     }
     case InvoiceNodeType.CustomerReturn: {
-      if (opts?.isManuallyCreated) {
-        return (
-          STATUS_SEQUENCES[`${InvoiceNodeType.CustomerReturn}:Manual`] ?? []
-        );
-      }
-      return STATUS_SEQUENCES[InvoiceNodeType.CustomerReturn] ?? [];
+      const suffix = opts?.isManuallyCreated ? 'Manual' : 'Auto';
+      return (
+        STATUS_SEQUENCES[`${InvoiceNodeType.CustomerReturn}:${suffix}`] ?? []
+      );
     }
     default:
       return STATUS_SEQUENCES[invoiceType] ?? [];
