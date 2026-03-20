@@ -37,6 +37,7 @@ pub struct StockLine {
 
 pub enum StockLineSortField {
     ExpiryDate,
+    ManufactureDate,
     NumberOfPacks,
     ItemCode,
     ItemName,
@@ -125,6 +126,9 @@ impl<'a> StockLineRepository<'a> {
                 StockLineSortField::ExpiryDate => {
                     // TODO: would prefer to have extra parameter on Sort.nulls_last
                     apply_sort_asc_nulls_last!(query, sort, stock_line::expiry_date);
+                }
+                StockLineSortField::ManufactureDate => {
+                    apply_sort_asc_nulls_last!(query, sort, stock_line::manufacture_date);
                 }
                 StockLineSortField::ItemCode => {
                     apply_sort_no_case!(query, sort, item::code);
