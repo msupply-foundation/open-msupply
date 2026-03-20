@@ -85,14 +85,6 @@ export const DeliveryTab = ({
         columnType: ColumnType.Number,
       },
       {
-        id: 'poQuantity',
-        accessorFn: row =>
-          row.purchaseOrderLine?.adjustedNumberOfUnits ??
-          row.purchaseOrderLine?.requestedNumberOfUnits,
-        header: t('label.po-quantity'),
-        columnType: ColumnType.Number,
-      },
-      {
         id: 'remainingToDeliver',
         accessorFn: row => {
           const poQuantity =
@@ -106,6 +98,14 @@ export const DeliveryTab = ({
         },
         header: t('label.remaining'),
         description: t('description.remaining-to-deliver'),
+        columnType: ColumnType.Number,
+      },
+      {
+        id: 'poQuantity',
+        accessorFn: row =>
+          row.purchaseOrderLine?.adjustedNumberOfUnits ??
+          row.purchaseOrderLine?.requestedNumberOfUnits,
+        header: t('label.po-quantity'),
         columnType: ColumnType.Number,
       },
     ],
