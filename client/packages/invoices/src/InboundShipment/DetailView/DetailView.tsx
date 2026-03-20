@@ -246,26 +246,28 @@ const DetailViewInner = () => {
   const tabs = [
     {
       Component: isExtraSmallScreen ? (
-        <CardList table={table} tableId={TABLE_ID} />
+        <CardList table={table} />
       ) : (
         <MaterialTable table={table} />
       ),
       value: InboundShipmentDetailTabs.Details,
     },
-    ...external ? [
-      {
-        Component: <FinancialTab />,
-        value: InboundShipmentDetailTabs.Financial,
-      },
-      {
-        Component: <CurrencyTab />,
-        value: InboundShipmentDetailTabs.Currency,
-      },
-      {
-        Component: <DeliveryTab showLineStatus={showLineStatus} />,
-        value: InboundShipmentDetailTabs.Delivery,
-      },
-    ] : [],
+    ...(external
+      ? [
+          {
+            Component: <FinancialTab />,
+            value: InboundShipmentDetailTabs.Financial,
+          },
+          {
+            Component: <CurrencyTab />,
+            value: InboundShipmentDetailTabs.Currency,
+          },
+          {
+            Component: <DeliveryTab showLineStatus={showLineStatus} />,
+            value: InboundShipmentDetailTabs.Delivery,
+          },
+        ]
+      : []),
     {
       Component: (
         <DocumentsTable
@@ -379,20 +381,23 @@ const DetailViewInner = () => {
 
 export const useInvoiceLineStatusMap = () => {
   const theme = useAppTheme();
-  return useMemo(() => ({
-    [InvoiceLineStatusType.Passed]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Passed),
-      colour: theme.palette.invoiceLineStatus.passed,
-    },
-    [InvoiceLineStatusType.Pending]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Pending),
-      colour: theme.palette.invoiceLineStatus.pending,
-    },
-    [InvoiceLineStatusType.Rejected]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
-      colour: theme.palette.invoiceLineStatus.rejected,
-    },
-  }), [theme]);
+  return useMemo(
+    () => ({
+      [InvoiceLineStatusType.Passed]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
+        colour: theme.palette.invoiceLineStatus.passed,
+      },
+      [InvoiceLineStatusType.Pending]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
+        colour: theme.palette.invoiceLineStatus.pending,
+      },
+      [InvoiceLineStatusType.Rejected]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
+        colour: theme.palette.invoiceLineStatus.rejected,
+      },
+    }),
+    [theme]
+  );
 };
 
 export const DetailView = () => {
