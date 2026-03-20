@@ -11,8 +11,8 @@ export const useZeroInboundLinesQuantity = (
   resetRowSelection: () => void
 ): (() => void) => {
   const t = useTranslation();
-  const { mutateAsync } = useSaveInboundLines();
-  const { isDisabled } = useInboundShipment();
+  const { isDisabled, isExternal } = useInboundShipment();
+  const { mutateAsync } = useSaveInboundLines(isExternal);
 
   const onZeroQuantities = async () => {
     const linesToUpdate = rowsToZero.map(line => ({
