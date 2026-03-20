@@ -89,7 +89,6 @@ const shouldSaveRequestTime = (documentNode?: DocumentNode) =>
 class GQLClient extends GraphQLClient {
   private emptyData: object;
   private skipRequest: SkipRequest;
-  private lastRequestTime: Date;
 
   constructor(
     url: string,
@@ -99,7 +98,6 @@ class GQLClient extends GraphQLClient {
     super(url, options);
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
-    this.lastRequestTime = new Date();
   }
 
   public request<T, V extends Variables | undefined>(
@@ -118,7 +116,8 @@ class GQLClient extends GraphQLClient {
       return new Promise(() => this.emptyData);
     }
 
-    if (shouldSaveRequestTime(document)) this.lastRequestTime = new Date();
+    if (shouldSaveRequestTime(document))
+      localStorage.setItem('lastRequestTime', new Date().toISOString());
 
     super.setHeader('Authorization', `Bearer ${getAuthCookie().token}`);
     const response = options.document
@@ -146,7 +145,10 @@ class GQLClient extends GraphQLClient {
 
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
-  public getLastRequestTime = () => this.lastRequestTime;
+  public getLastRequestTime = () =>
+    new Date(
+      localStorage.getItem('lastRequestTime') ?? new Date().toISOString()
+    );
 }
 
 interface GqlControl {
