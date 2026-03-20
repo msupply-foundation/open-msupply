@@ -176,7 +176,6 @@ export const InboundLineEdit = ({
       setPackRoundingMessage={setPackRoundingMessage}
       restrictedToLocationTypeId={currentItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
-      simplified={simplifiedTabletView}
       actions={
         <ButtonWithIcon
           disabled={isDisabled}
