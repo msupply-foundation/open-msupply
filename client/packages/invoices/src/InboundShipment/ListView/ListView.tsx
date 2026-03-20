@@ -222,9 +222,7 @@ const InboundShipments: React.FC<{
         <NothingHere
           body={t('error.no-inbound-shipments')}
           onCreate={
-            isExtraSmallScreen
-              ? undefined
-              : internalModalController.toggleOn
+            isExtraSmallScreen ? undefined : internalModalController.toggleOn
           }
         />
       ),
@@ -236,7 +234,7 @@ const InboundShipments: React.FC<{
     <>
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <CardList table={table} tableId={TABLE_ID} />
+        <CardList table={table} />
       ) : (
         <>
           <Toolbar filter={filter} />
