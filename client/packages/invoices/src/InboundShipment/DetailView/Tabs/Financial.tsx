@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import {
+  Box,
   ColumnDef,
   ColumnType,
   MaterialTable,
+  useFormatCurrency,
   useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -10,15 +12,19 @@ import { InboundLineFragment, useInboundShipment } from '../../api';
 
 export const FinancialTab = () => {
   const t = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const {
     query: { data, loading: isLoading },
   } = useInboundShipment();
+
+  const lines = data?.lines.nodes;
 
   const columns = useMemo(
     (): ColumnDef<InboundLineFragment>[] => [
       {
         accessorKey: 'item.name',
         header: t('label.name'),
+        Footer: t('label.total'),
       },
       {
         accessorKey: 'numberOfPacks',
@@ -48,6 +54,19 @@ export const FinancialTab = () => {
         accessorKey: 'totalAfterTax',
         header: t('label.line-total'),
         columnType: ColumnType.Currency,
+        Footer: ({ table }) => {
+          const total = table
+            .getFilteredRowModel()
+            .rows.reduce(
+              (sum, row) => sum + (row.original.totalAfterTax ?? 0),
+              0
+            );
+          return (
+            <Box sx={{ textAlign: 'right', width: '100%' }}>
+              {formatCurrency(total)}
+            </Box>
+          );
+        },
       },
       // TODO: calculate these
       // {
@@ -66,12 +85,12 @@ export const FinancialTab = () => {
       //   columnType: ColumnType.Currency,
       // },
     ],
-    []
+    [formatCurrency]
   );
 
   const { table } = useNonPaginatedMaterialTable<InboundLineFragment>({
     tableId: 'inbound-shipment-financial-tab-table',
-    data: data?.lines.nodes,
+    data: lines,
     columns,
     isLoading,
     grouping: { field: 'item.code' },
