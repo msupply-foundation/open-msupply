@@ -122,7 +122,7 @@ impl ItemNode {
                 .extend(),
             )?;
 
-        Ok(ItemStatsNode::from_domain(result))
+        Ok(ItemStatsNode::from_domain(result, store_id))
     }
 
     async fn available_batches(

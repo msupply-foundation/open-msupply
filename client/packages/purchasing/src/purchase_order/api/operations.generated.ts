@@ -80,14 +80,17 @@ export type PurchaseOrderFragment = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
-      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
-        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+        stats: {
+          __typename: 'ItemStatsNode';
+          stockOnHand: number;
+          unitsOnOrder: number;
+        };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -160,14 +163,17 @@ export type PurchaseOrderLineFragment = {
   comment?: string | null;
   supplierItemCode?: string | null;
   status: Types.PurchaseOrderLineStatusNode;
-  unitsOrderedInOthers: number;
   item: {
     __typename: 'ItemNode';
     id: string;
     code: string;
     name: string;
     unitName?: string | null;
-    stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+    stats: {
+      __typename: 'ItemStatsNode';
+      stockOnHand: number;
+      unitsOnOrder: number;
+    };
   };
   manufacturer?: {
     __typename: 'NameNode';
@@ -297,14 +303,17 @@ export type PurchaseOrderByIdQuery = {
             comment?: string | null;
             supplierItemCode?: string | null;
             status: Types.PurchaseOrderLineStatusNode;
-            unitsOrderedInOthers: number;
             item: {
               __typename: 'ItemNode';
               id: string;
               code: string;
               name: string;
               unitName?: string | null;
-              stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+              stats: {
+                __typename: 'ItemStatsNode';
+                stockOnHand: number;
+                unitsOnOrder: number;
+              };
             };
             manufacturer?: {
               __typename: 'NameNode';
@@ -463,14 +472,17 @@ export type PurchaseOrderLinesQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
-      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
-        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+        stats: {
+          __typename: 'ItemStatsNode';
+          stockOnHand: number;
+          unitsOnOrder: number;
+        };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -535,14 +547,17 @@ export type PurchaseOrderLineQuery = {
       comment?: string | null;
       supplierItemCode?: string | null;
       status: Types.PurchaseOrderLineStatusNode;
-      unitsOrderedInOthers: number;
       item: {
         __typename: 'ItemNode';
         id: string;
         code: string;
         name: string;
         unitName?: string | null;
-        stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+        stats: {
+          __typename: 'ItemStatsNode';
+          stockOnHand: number;
+          unitsOnOrder: number;
+        };
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -577,17 +592,6 @@ export type PurchaseOrderLineQuery = {
       } | null;
     }>;
   };
-};
-
-export type UnitsOrderedInOtherPurchaseOrdersQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  itemId: Types.Scalars['String']['input'];
-  excludePurchaseOrderId: Types.Scalars['String']['input'];
-}>;
-
-export type UnitsOrderedInOtherPurchaseOrdersQuery = {
-  __typename: 'Queries';
-  unitsOrderedInOtherPurchaseOrders: number;
 };
 
 export type PurchaseOrderLinesCountQueryVariables = Types.Exact<{
@@ -738,6 +742,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
       unitName
       stats(storeId: $storeId) {
         stockOnHand
+        unitsOnOrder
       }
     }
     requestedPackSize
@@ -775,7 +780,6 @@ export const PurchaseOrderLineFragmentDoc = gql`
         isHomeCurrency
       }
     }
-    unitsOrderedInOthers
   }
   ${NameRowFragmentDoc}
 `;
@@ -1005,19 +1009,6 @@ export const PurchaseOrderLineDocument = gql`
     }
   }
   ${PurchaseOrderLineFragmentDoc}
-`;
-export const UnitsOrderedInOtherPurchaseOrdersDocument = gql`
-  query unitsOrderedInOtherPurchaseOrders(
-    $storeId: String!
-    $itemId: String!
-    $excludePurchaseOrderId: String!
-  ) {
-    unitsOrderedInOtherPurchaseOrders(
-      storeId: $storeId
-      itemId: $itemId
-      excludePurchaseOrderId: $excludePurchaseOrderId
-    )
-  }
 `;
 export const PurchaseOrderLinesCountDocument = gql`
   query purchaseOrderLinesCount(
@@ -1309,24 +1300,6 @@ export function getSdk(
             signal,
           }),
         'purchaseOrderLine',
-        'query',
-        variables
-      );
-    },
-    unitsOrderedInOtherPurchaseOrders(
-      variables: UnitsOrderedInOtherPurchaseOrdersQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<UnitsOrderedInOtherPurchaseOrdersQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<UnitsOrderedInOtherPurchaseOrdersQuery>({
-            document: UnitsOrderedInOtherPurchaseOrdersDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'unitsOrderedInOtherPurchaseOrders',
         'query',
         variables
       );

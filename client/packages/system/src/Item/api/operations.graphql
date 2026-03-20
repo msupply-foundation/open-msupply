@@ -108,6 +108,7 @@ fragment ItemStockOnHand on ItemNode {
   }
   stats(storeId: $storeId) {
     stockOnHand
+    unitsOnOrder
   }
 }
 fragment ItemRowWithStats on ItemNode {

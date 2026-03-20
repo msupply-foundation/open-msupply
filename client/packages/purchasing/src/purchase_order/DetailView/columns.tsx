@@ -4,16 +4,49 @@ import {
   ColumnDef,
   ColumnType,
   PurchaseOrderLineStatusNode,
+  PurchaseOrderNodeStatus,
   getLinesFromRow,
   TextWithTooltipCell,
   useFormatCurrency,
   useTranslation,
 } from '@openmsupply-client/common';
-import { PurchaseOrderLineFragment } from '../api';
+import { PurchaseOrderFragment, PurchaseOrderLineFragment } from '../api';
 import { usePurchaseOrderLineErrorContext } from '../context';
 import { getPurchaseOrderLineStatusTranslator } from '../../utils';
 
-export const usePurchaseOrderColumns = () => {
+const PO_STATUSES_INCLUDED_IN_ON_ORDER = [
+  PurchaseOrderNodeStatus.RequestApproval,
+  PurchaseOrderNodeStatus.Confirmed,
+  PurchaseOrderNodeStatus.Sent,
+];
+
+export const getUnitsOnOrderInOtherPOs = (
+  row: { item: { id: string; stats: { unitsOnOrder?: number | null } } },
+  purchaseOrder: PurchaseOrderFragment | undefined
+) => {
+  const totalUnitsOnOrder = row.item.stats.unitsOnOrder ?? 0;
+  if (
+    !purchaseOrder ||
+    !PO_STATUSES_INCLUDED_IN_ON_ORDER.includes(purchaseOrder.status)
+  ) {
+    return totalUnitsOnOrder;
+  }
+
+  // Subtract all lines for this item in the current PO
+  const currentPoUnitsForItem = purchaseOrder.lines.nodes
+    .filter(line => line.item.id === row.item.id)
+    .reduce(
+      (sum, line) =>
+        sum + (line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits ?? 0),
+      0
+    );
+
+  return Math.max(totalUnitsOnOrder - currentPoUnitsForItem, 0);
+};
+
+export const usePurchaseOrderColumns = (
+  purchaseOrder?: PurchaseOrderFragment
+) => {
   const t = useTranslation();
   const formatCurrency = useFormatCurrency();
   const { getError } = usePurchaseOrderLineErrorContext();
@@ -100,9 +133,10 @@ export const usePurchaseOrderColumns = () => {
         accessorFn: row => row.item.stats.stockOnHand ?? 0,
       },
       {
-        accessorKey: 'unitsOrderedInOthers',
+        accessorKey: 'unitsOnOrder',
         header: t('label.on-order'),
         columnType: ColumnType.Number,
+        accessorFn: row => getUnitsOnOrderInOtherPOs(row, purchaseOrder),
       },
       {
         accessorKey: 'totalCost',
@@ -146,5 +180,5 @@ export const usePurchaseOrderColumns = () => {
       },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getError, lineStatusTranslator]);
+  }, [getError, lineStatusTranslator, purchaseOrder]);
 };

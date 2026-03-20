@@ -32,13 +32,13 @@ export const createDraftPurchaseOrderLine = (
       stats: {
         __typename: 'ItemStatsNode',
         stockOnHand: item.stats?.stockOnHand || 0,
+        unitsOnOrder: item.stats?.unitsOnOrder || 0,
       },
     },
     // This value not actually saved to DB
     discountPercentage: 0,
     numberOfPacks: 0,
     status: PurchaseOrderLineStatusNode.New,
-    unitsOrderedInOthers: 0,
   };
 };
 

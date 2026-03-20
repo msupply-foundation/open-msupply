@@ -160,6 +160,7 @@ impl RequisitionLineNode {
         if self.requisition_row().r#type == RequisitionType::Request {
             return Ok(ItemStatsNode {
                 item_stats: ItemStats::from_requisition_line(&self.requisition_line),
+                store_id: self.requisition_row().store_id.clone(),
             });
         }
 
@@ -181,7 +182,7 @@ impl RequisitionLineNode {
                 .extend(),
             )?;
 
-        Ok(ItemStatsNode::from_domain(result))
+        Ok(ItemStatsNode::from_domain(result, self.requisition_row().store_id.clone()))
     }
 
     /// Quantity remaining to supply

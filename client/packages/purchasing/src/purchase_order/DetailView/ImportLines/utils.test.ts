@@ -24,7 +24,7 @@ describe('testCombinationHelperFunctions', () => {
         errorMessage: '',
         warningMessage: '',
         receivedNumberOfUnits: 0,
-        unitsOrderedInOthers: 0,
+
       },
       {
         id: '2',
@@ -45,7 +45,7 @@ describe('testCombinationHelperFunctions', () => {
         errorMessage: '',
         warningMessage: '',
         receivedNumberOfUnits: 0,
-        unitsOrderedInOthers: 0,
+
       },
     ];
 

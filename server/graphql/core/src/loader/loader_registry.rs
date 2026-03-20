@@ -558,13 +558,6 @@ pub async fn get_loaders(
     ));
 
     loaders.insert(DataLoader::new(
-        UnitsInOtherPurchaseOrdersLoader {
-            connection_manager: connection_manager.clone(),
-        },
-        tokio::spawn,
-    ));
-
-    loaders.insert(DataLoader::new(
         CurrencyByIdLoader {
             connection_manager: connection_manager.clone(),
         },

@@ -84,7 +84,7 @@ const DetailViewInner = () => {
 
   const disableNewLines = !data || !canAddNewLines(data);
   const isDisabled = !data || isPurchaseOrderDisabled(data);
-  const columns = usePurchaseOrderColumns();
+  const columns = usePurchaseOrderColumns(data);
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<PurchaseOrderLineFragment>({

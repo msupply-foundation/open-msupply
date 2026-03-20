@@ -2,10 +2,7 @@ use crate::types::{ItemNode, NameNode, PurchaseOrderNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{
-        ItemLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader,
-        UnitsInOtherPurchaseOrdersLoader,
-    },
+    loader::{ItemLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -137,20 +134,6 @@ impl PurchaseOrderLineNode {
             .map(PurchaseOrderNode::from_domain);
 
         Ok(purchase_order)
-    }
-
-    pub async fn units_ordered_in_others(&self, ctx: &Context<'_>) -> Result<f64> {
-        let loader = ctx.get_loader::<DataLoader<UnitsInOtherPurchaseOrdersLoader>>();
-
-        let result = loader.load_one(self.row().id.clone()).await?.ok_or(
-            StandardGraphqlError::InternalError(format!(
-                "Cannot find units in other confirmed purchase orders for purchase order line ({})",
-                &self.row().id
-            ))
-            .extend(),
-        )?;
-
-        Ok(result)
     }
 }
 

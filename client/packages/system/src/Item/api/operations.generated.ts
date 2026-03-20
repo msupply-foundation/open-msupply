@@ -145,7 +145,11 @@ export type ItemStockOnHandFragment = {
     defaultSellPricePerPack: number;
     ignoreForOrders: boolean;
   } | null;
-  stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+  stats: {
+    __typename: 'ItemStatsNode';
+    stockOnHand: number;
+    unitsOnOrder: number;
+  };
 };
 
 export type ItemRowWithStatsFragment = {
@@ -167,6 +171,7 @@ export type ItemRowWithStatsFragment = {
     monthsOfStockOnHand?: number | null;
     totalConsumption: number;
     stockOnHand: number;
+    unitsOnOrder: number;
   };
   itemStoreProperties?: {
     __typename: 'ItemStorePropertiesNode';
@@ -785,7 +790,11 @@ export type ItemStockOnHandQuery = {
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
       } | null;
-      stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+      stats: {
+        __typename: 'ItemStatsNode';
+        stockOnHand: number;
+        unitsOnOrder: number;
+      };
     }>;
   };
 };
@@ -1556,6 +1565,7 @@ export const ItemStockOnHandFragmentDoc = gql`
     }
     stats(storeId: $storeId) {
       stockOnHand
+      unitsOnOrder
     }
   }
   ${ItemWithPackSizeFragmentDoc}

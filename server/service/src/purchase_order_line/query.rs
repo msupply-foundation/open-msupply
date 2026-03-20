@@ -41,24 +41,9 @@ pub fn get_purchase_order_line(
     Ok(repository.query_by_filter(filter)?.pop())
 }
 
-pub fn get_units_ordered_in_other_purchase_orders(
-    ctx: &ServiceContext,
-    store_id: &str,
-    item_id: &str,
-    exclude_purchase_order_id: &str,
-) -> Result<f64, RepositoryError> {
-    calculate_units_in_other_purchase_orders(
-        &ctx.connection,
-        item_id,
-        exclude_purchase_order_id,
-        Some(store_id),
-    )
-}
-
-pub fn calculate_units_in_other_purchase_orders(
+pub fn calculate_total_units_on_order(
     connection: &StorageConnection,
     item_id: &str,
-    exclude_purchase_order_id: &str,
     store_id: Option<&str>,
 ) -> Result<f64, RepositoryError> {
     let repository = PurchaseOrderLineRepository::new(connection);
@@ -66,15 +51,11 @@ pub fn calculate_units_in_other_purchase_orders(
     let mut filter = PurchaseOrderLineFilter::new()
         .item_id(EqualFilter::equal_to(item_id.to_string()))
         .purchase_order(
-            PurchaseOrderFilter::new()
-                .id(EqualFilter::not_equal_to(
-                    exclude_purchase_order_id.to_string(),
-                ))
-                .status(EqualFilter::equal_any(vec![
-                    PurchaseOrderStatus::RequestApproval,
-                    PurchaseOrderStatus::Confirmed,
-                    PurchaseOrderStatus::Sent,
-                ])),
+            PurchaseOrderFilter::new().status(EqualFilter::equal_any(vec![
+                PurchaseOrderStatus::RequestApproval,
+                PurchaseOrderStatus::Confirmed,
+                PurchaseOrderStatus::Sent,
+            ])),
         )
         .status(EqualFilter::not_equal_to(PurchaseOrderLineStatus::Closed));
 

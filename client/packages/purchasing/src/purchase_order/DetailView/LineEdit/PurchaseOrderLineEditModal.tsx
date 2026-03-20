@@ -13,11 +13,8 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { ItemStockOnHandFragment } from '@openmsupply-client/system';
-import {
-  PurchaseOrderFragment,
-  usePurchaseOrderLine,
-  useUnitsOnOrderForItem,
-} from '../../api';
+import { PurchaseOrderFragment, usePurchaseOrderLine } from '../../api';
+import { getUnitsOnOrderInOtherPOs } from '../columns';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { createDraftPurchaseOrderLine } from './utils';
 
@@ -61,9 +58,9 @@ export const PurchaseOrderLineEditModal = React.memo(
     } = usePurchaseOrderLine(lineId);
     const unit = draft?.unit || t('label.unit', { count: 2 });
 
-    const { data: unitsOrderedInOthers = 0 } = useUnitsOnOrderForItem(
-      draft.item.id,
-      purchaseOrder.id
+    const unitsOrderedInOthers = getUnitsOnOrderInOtherPOs(
+      draft,
+      purchaseOrder
     );
 
     const onChangeItem = useCallback(

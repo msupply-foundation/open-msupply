@@ -4799,6 +4799,7 @@ export type ItemStatsNode = {
   monthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
   stockOnHand: Scalars['Float']['output'];
   totalConsumption: Scalars['Float']['output'];
+  unitsOnOrder: Scalars['Float']['output'];
 };
 
 export type ItemStorePropertiesNode = {
@@ -7118,10 +7119,14 @@ export type PurchaseOrderLineError = {
 };
 
 export type PurchaseOrderLineFilterInput = {
+  expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
+  supplierName?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineNode = {
@@ -7148,7 +7153,6 @@ export type PurchaseOrderLineNode = {
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
-  unitsOrderedInOthers: Scalars['Float']['output'];
 };
 
 export type PurchaseOrderLineNodeManufacturerArgs = {
@@ -7451,7 +7455,6 @@ export type Queries = {
   temperatureLogs: TemperatureLogsResponse;
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
-  unitsOrderedInOtherPurchaseOrders: Scalars['Float']['output'];
   vaccination?: Maybe<VaccinationNode>;
   vaccinationCard: VaccinationCardResponse;
   vaccineCourse: VaccineCourseResponse;
@@ -8138,12 +8141,6 @@ export type QueriesTemperatureLogsArgs = {
 
 export type QueriesTemperatureNotificationsArgs = {
   page?: InputMaybe<PaginationInput>;
-  storeId: Scalars['String']['input'];
-};
-
-export type QueriesUnitsOrderedInOtherPurchaseOrdersArgs = {
-  excludePurchaseOrderId: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 

@@ -104,6 +104,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     unitName
     stats(storeId: $storeId) {
       stockOnHand
+      unitsOnOrder
     }
   }
   requestedPackSize
@@ -141,7 +142,6 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
       isHomeCurrency
     }
   }
-  unitsOrderedInOthers
 }
 
 query purchaseOrders(
@@ -283,18 +283,6 @@ query purchaseOrderLine($id: String!, $storeId: String!) {
       totalCount
     }
   }
-}
-
-query unitsOrderedInOtherPurchaseOrders(
-  $storeId: String!
-  $itemId: String!
-  $excludePurchaseOrderId: String!
-) {
-  unitsOrderedInOtherPurchaseOrders(
-    storeId: $storeId
-    itemId: $itemId
-    excludePurchaseOrderId: $excludePurchaseOrderId
-  )
 }
 
 query purchaseOrderLinesCount(
