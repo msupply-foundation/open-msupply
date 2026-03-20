@@ -296,7 +296,10 @@ impl<'a> ItemRepository<'a> {
                 // has been merged, we only need to find by the category of the
                 // kept item, not the one that was "deleted"
                 let item_ids_for_category_id = item_category_join::table
-                    .select(item_category_join::item_id)
+                    .inner_join(
+                        item_link::table.on(item_link::id.eq(item_category_join::item_link_id)),
+                    )
+                    .select(item_link::item_id)
                     .filter(item_category_join::category_id.eq(category_id.clone()))
                     .into_boxed();
 
@@ -305,10 +308,13 @@ impl<'a> ItemRepository<'a> {
 
             if let Some(category_name) = category_name {
                 let item_ids_for_category_name = item_category_join::table
-                    .select(item_category_join::item_id)
+                    .inner_join(
+                        item_link::table.on(item_link::id.eq(item_category_join::item_link_id)),
+                    )
                     .inner_join(
                         category::table.on(category::id.eq(item_category_join::category_id)),
                     )
+                    .select(item_link::item_id)
                     .filter(category::name.eq(category_name.clone()))
                     .into_boxed();
 
@@ -328,8 +334,8 @@ impl<'a> ItemRepository<'a> {
                         .on(master_list_name_join::master_list_id.eq(master_list::id)),
                 )
                 .inner_join(
-                    store::table.on(store::name_link_id
-                        .eq(master_list_name_join::name_link_id)
+                    store::table.on(store::name_id
+                        .eq(master_list_name_join::name_id)
                         .and(store::id.eq(store_id.clone()))),
                 )
                 .filter(store::id.eq(store_id.clone()));
@@ -805,13 +811,13 @@ mod tests {
 
         let store_row = StoreRow {
             id: "name1_store".to_string(),
-            name_link_id: "name1".to_string(),
+            name_id: "name1".to_string(),
             ..Default::default()
         };
 
         let master_list_name_join_1 = MasterListNameJoinRow {
             id: "id1".to_string(),
-            name_link_id: "name1".to_string(),
+            name_id: "name1".to_string(),
             master_list_id: "master_list1".to_string(),
         };
 

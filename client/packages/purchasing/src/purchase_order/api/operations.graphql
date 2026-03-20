@@ -17,6 +17,10 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
     totalCount
   }
   comment
+  orderTotalAfterDiscount
+  currency {
+    code
+  }
 }
 
 fragment PurchaseOrder on PurchaseOrderNode {
@@ -105,7 +109,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedPackSize
   requestedDeliveryDate
   requestedNumberOfUnits
-  receivedNumberOfUnits
+  shippedNumberOfUnits
   adjustedNumberOfUnits
   pricePerPackAfterDiscount
   pricePerPackBeforeDiscount

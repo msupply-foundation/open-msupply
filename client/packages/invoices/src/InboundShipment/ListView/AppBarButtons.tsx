@@ -1,32 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
   PlusCircleIcon,
   AppBarButtonsPortal,
-  ButtonWithIcon,
   Grid,
   useTranslation,
   ToggleState,
   useNavigate,
   RouteBuilder,
   useAuthContext,
+  useUrlQuery,
+  SplitButtonOption,
+  SplitButton,
 } from '@openmsupply-client/common';
 import { ExportSelector } from '@openmsupply-client/system';
 import {
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
-import { useInbound } from '../api';
+import {
+  InboundShipmentPurchaseOrderLineFragment,
+  useInboundList,
+  useInboundShipment,
+} from '../api';
+import { useListInternalOrders } from '../api/hooks/utils';
 import { inboundsToCsv } from '../../utils';
+import { LinkPurchaseOrderModal } from './LinkPurchaseOrderModal';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 
 export const AppBarButtons = ({
-  invoiceModalController,
+  internalModalController,
+  externalModalController,
   linkRequestModalController,
   simplifiedTabletView,
 }: {
-  invoiceModalController: ToggleState;
+  internalModalController: ToggleState;
+  externalModalController: ToggleState;
   linkRequestModalController: ToggleState;
   simplifiedTabletView?: boolean;
 }) => {
@@ -34,23 +44,38 @@ export const AppBarButtons = ({
   const navigate = useNavigate();
   const { store } = useAuthContext();
   const [name, setName] = useState<NameRowFragment | null>(null);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
+    null
+  );
 
-  const { mutateAsync: onCreate } = useInbound.document.insert();
-  const { isLoading, fetchAsync } = useInbound.document.listAll({
-    key: 'createdDateTime',
-    direction: 'desc',
-    isDesc: true,
+  const {
+    create: { create: onCreate },
+  } = useInboundShipment();
+  const {
+    query: { isFetching, refetch },
+  } = useInboundList({
+    sortBy: { key: 'createdDateTime', direction: 'desc' },
+    filterBy: null,
   });
-  const { mutateAsync: fetchInternalOrders } =
-    useInbound.document.listInternalOrdersPromise();
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
 
-  const createInvoice = async (nameId: string, requisitionId?: string) => {
+  const { refetch: refetchInternalOrders } = useListInternalOrders(
+    selectedSupplierId || ''
+  );
+
+  const createInvoice = async (
+    nameId: string,
+    requisitionId?: string,
+    purchaseOrderId?: string,
+    insertLinesFromPurchaseOrder?: boolean
+  ) => {
     const invoiceId = await onCreate({
       id: FnUtils.generateUUID(),
       otherPartyId: nameId,
       requisitionId,
+      purchaseOrderId,
+      insertLinesFromPurchaseOrder,
     });
 
     navigate(
@@ -64,15 +89,16 @@ export const AppBarButtons = ({
   const handleSupplierSelected = async (
     row: NameRowFragment
   ): Promise<void> => {
-    invoiceModalController.toggleOff();
+    internalModalController.toggleOff();
     if (!manuallyLinkInternalOrder) {
       createInvoice(row.id);
       return;
     }
 
-    const data = await fetchInternalOrders(row.id);
+    setSelectedSupplierId(row.id);
+    const { data } = await refetchInternalOrders();
 
-    if (data?.internalOrders.totalCount === 0) {
+    if (data?.totalCount === 0) {
       createInvoice(row.id);
     } else {
       setName(row);
@@ -80,24 +106,37 @@ export const AppBarButtons = ({
     }
   };
 
+  const handlePurchaseOrderSelected = async (
+    purchaseOrder: InboundShipmentPurchaseOrderLineFragment,
+    addLinesFromPurchaseOrder: boolean
+  ) => {
+    externalModalController.toggleOff();
+
+    createInvoice(
+      purchaseOrder.supplier?.id as string,
+      undefined,
+      purchaseOrder.id,
+      addLinesFromPurchaseOrder
+    );
+  };
+
   const getCsvData = async () => {
-    const data = await fetchAsync();
+    const { data } = await refetch();
     return data?.nodes?.length ? inboundsToCsv(data.nodes, t) : null;
   };
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('button.new-shipment')}
-          onClick={invoiceModalController.toggleOn}
+        <AddButton
+          onNewShipment={internalModalController.toggleOn}
+          onNewShipmentExternal={externalModalController.toggleOn}
         />
         {!simplifiedTabletView && (
           <ExportSelector
             getCsvData={getCsvData}
             filename={t('filename.inbounds')}
-            isLoading={isLoading}
+            isLoading={isFetching}
           />
         )}
       </Grid>
@@ -116,10 +155,79 @@ export const AppBarButtons = ({
         name={name}
       />
       <SupplierSearchModal
-        open={invoiceModalController.isOn}
-        onClose={invoiceModalController.toggleOff}
+        open={internalModalController.isOn}
+        onClose={internalModalController.toggleOff}
         onChange={handleSupplierSelected}
       />
+      <LinkPurchaseOrderModal
+        isOpen={externalModalController.isOn}
+        onClose={externalModalController.toggleOff}
+        handlePurchaseOrderSelected={handlePurchaseOrderSelected}
+      />
     </AppBarButtonsPortal>
+  );
+};
+
+export const AddButton = ({
+  onNewShipment,
+  onNewShipmentExternal,
+}: {
+  onNewShipment: () => void;
+  onNewShipmentExternal: () => void;
+}) => {
+  const t = useTranslation();
+  const currentTab = useUrlQuery().urlQuery['tab'];
+
+  const options: [SplitButtonOption<string>, SplitButtonOption<string>] = [
+    {
+      value: 'new-shipment',
+      label: t('button.new-shipment'),
+    },
+    {
+      value: 'new-external-shipment',
+      label: t('button.new-external-shipment'),
+    },
+  ];
+
+  const [selectedOption, setSelectedOption] = useState<
+    SplitButtonOption<string>
+  >(options[0]);
+
+  useEffect(() => {
+    if (currentTab === t('label.external')) {
+      setSelectedOption(options[1]);
+    } else {
+      setSelectedOption(options[0]);
+    }
+  }, [currentTab]);
+
+  const handleOptionSelection = (option: SplitButtonOption<string>) => {
+    switch (option.value) {
+      case 'new-shipment':
+        onNewShipment();
+        break;
+      case 'new-external-shipment':
+        onNewShipmentExternal();
+        break;
+    }
+  };
+
+  const onSelectOption = (option: SplitButtonOption<string>) => {
+    setSelectedOption(option);
+    handleOptionSelection(option);
+  };
+
+  return (
+    <>
+      <SplitButton
+        color="primary"
+        options={options}
+        selectedOption={selectedOption}
+        onSelectOption={onSelectOption}
+        onClick={handleOptionSelection}
+        openFrom="bottom"
+        Icon={<PlusCircleIcon />}
+      />
+    </>
   );
 };

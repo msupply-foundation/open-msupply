@@ -6,6 +6,7 @@ fragment InboundLine on InvoiceLineNode {
   costPricePerPack
   sellPricePerPack
   expiryDate
+  manufactureDate
   numberOfPacks
   shippedNumberOfPacks
   shippedPackSize
@@ -21,10 +22,15 @@ fragment InboundLine on InvoiceLineNode {
   itemVariantId
   linkedInvoiceId
   volumePerPack
+  status
 
   donor(storeId: $storeId) {
     id
     name
+  }
+
+  manufacturer(storeId: $storeId) {
+    ...NameRow
   }
 
   program {
@@ -97,6 +103,16 @@ fragment InboundLine on InvoiceLineNode {
       packSize
       volumePerUnit
     }
+  }
+
+  purchaseOrderLine {
+    __typename
+    adjustedNumberOfUnits
+    shippedNumberOfUnits
+    inTransitNumberOfUnits
+    receivedNumberOfUnits
+    requestedNumberOfUnits
+    pricePerPackAfterDiscount
   }
 }
 
@@ -206,6 +222,18 @@ fragment Inbound on InvoiceNode {
     id
     method
   }
+
+  purchaseOrder {
+    id
+    number
+    reference
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
+    }
+  }
 }
 
 fragment InboundRow on InvoiceNode {
@@ -237,8 +265,11 @@ fragment InboundRow on InvoiceNode {
     rate
     isHomeCurrency
   }
-
   currencyRate
+  purchaseOrder {
+    id
+    number
+  }
 }
 
 query invoices(
@@ -334,6 +365,10 @@ mutation updateInboundShipment(
           __typename
           description
         }
+        ... on CannotReceiveWithPendingLines {
+          __typename
+          description
+        }
         ... on CannotEditInvoice {
           __typename
           description
@@ -388,6 +423,8 @@ mutation insertInboundShipment(
   $otherPartyId: String!
   $requisitionId: String
   $storeId: String!
+  $purchaseOrderId: String
+  $insertLinesFromPurchaseOrder: Boolean
 ) {
   insertInboundShipment(
     storeId: $storeId
@@ -395,6 +432,8 @@ mutation insertInboundShipment(
       id: $id
       otherPartyId: $otherPartyId
       requisitionId: $requisitionId
+      purchaseOrderId: $purchaseOrderId
+      insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
     }
   ) {
     ... on InsertInboundShipmentError {
@@ -481,6 +520,10 @@ mutation upsertInboundShipment(
               description
             }
             ... on CannotChangeStatusOfInvoiceOnHold {
+              __typename
+              description
+            }
+            ... on CannotReceiveWithPendingLines {
               __typename
               description
             }
@@ -831,6 +874,31 @@ mutation insertLinesFromInternalOrder(
           __typename
           id
         }
+      }
+    }
+  }
+}
+
+fragment InboundShipmentPurchaseOrderLine on PurchaseOrderNode {
+  comment
+  id
+  number
+  reference
+  supplier {
+    id
+    name
+  }
+}
+
+query purchaseOrders(
+  $storeId: String!
+  $filter: PurchaseOrderFilterInput
+) {
+  purchaseOrders(storeId: $storeId, filter: $filter) {
+    ... on PurchaseOrderConnector {
+      totalCount
+      nodes {
+        ...InboundShipmentPurchaseOrderLine
       }
     }
   }

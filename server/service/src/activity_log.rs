@@ -159,12 +159,7 @@ pub fn system_log_entry(
 
     let message = match message {
         SystemLogMessage::Error(error, context) => {
-            format!(
-                "{} - {} - {}",
-                context,
-                log_type,
-                format_error(&error)
-            )
+            format!("{} - {} - {}", context, log_type, format_error(&error))
         }
         SystemLogMessage::Message(msg) => msg.to_string(),
     };
@@ -299,7 +294,7 @@ mod test {
             MockData {
                 invoices: vec![InvoiceRow {
                     id: "test".to_string(),
-                    name_link_id: mock_name_a().id,
+                    name_id: mock_name_a().id,
                     store_id: mock_store_a().id,
                     r#type: InvoiceType::OutboundShipment,
                     status: InvoiceStatus::Allocated,

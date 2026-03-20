@@ -133,6 +133,7 @@ export const useOutboundLineEditColumns = ({
             onChange={vvmStatus => setVvmStatus(row.original.id, vvmStatus)}
             selected={row.original.vvmStatus ?? null}
             disabled={getIsDisabled(row.original)}
+            clearable
           />
         ),
       },
@@ -232,6 +233,7 @@ export const useOutboundLineEditColumns = ({
           <NumberInputCell
             id={getStockOutQuantityCellId(row.original.batch)} // Used by when adding by barcode scanner
             cell={cell}
+            debounceTime={500}
             updateFn={value =>
               allocate(row.original.id, value, {
                 preventPartialPacks: true,

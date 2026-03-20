@@ -158,7 +158,7 @@ fn derive_file_paths(config_file: Option<PathBuf>) -> Result<ConfigFilePaths, Se
         None => ConfigFilePaths {
             base: get_configuration_base_file()?,
             app: get_configuration_app_file()?,
-        }
+        },
     };
 
     Ok(file_paths)
@@ -205,18 +205,37 @@ impl From<VarError> for SettingsError {
 pub fn get_or_create_token_secret(connection: &StorageConnection) -> String {
     //Get Token Secret from DB if available
     let kv_repo = KeyValueStoreRepository::new(connection);
-    let token_secret_option = kv_repo.get_string(KeyType::SettingsTokenSecret).unwrap();
-    if let Some(token_secret) = token_secret_option {
+    let token_secret_option = kv_repo.get_string(KeyType::SettingsTokenSecret);
+    if let Ok(Some(token_secret)) = token_secret_option {
         log::debug!("Using token_secret from DB");
         return token_secret;
     }
     log::debug!("Generating new token_secret");
     let token_secret = uuid();
-    if let Err(err) = kv_repo.set_string(KeyType::SettingsTokenSecret, Some(token_secret.clone())) {
-        log::error!(
-            "Unable to save token secret to key value store, it will not be persisted across restarts : {err}"
-        )
+    if let Err(err) =
+        kv_repo.set_string(KeyType::SettingsTokenSecret, Some(token_secret.clone()))
+    {
+        log::warn!(
+            "Unable to save token secret to database (table may not exist yet) — will retry after migrations: {err}"
+        );
     }
 
     token_secret
+}
+
+/// Ensures the token secret is persisted to the database.
+/// Should be called after migrations have completed, in case the initial save failed
+/// (e.g. on a fresh database where the key_value_store table didn't exist yet).
+pub fn save_token_secret(connection: &StorageConnection, token_secret: &str) {
+    let kv_repo = KeyValueStoreRepository::new(connection);
+    if let Err(err) = kv_repo.set_string(
+        KeyType::SettingsTokenSecret,
+        Some(token_secret.to_string()),
+    ) {
+        log::error!(
+            "Failed to persist token secret after migrations — it will not survive restarts: {err}"
+        );
+    } else {
+        log::info!("Token secret persisted to database");
+    }
 }

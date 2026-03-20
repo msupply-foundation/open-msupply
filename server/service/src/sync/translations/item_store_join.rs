@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::{PullTranslateResult, SyncTranslation};
 use crate::sync::translations::{item::ItemTranslation, store::StoreTranslation};
 use repository::{ItemStoreJoinRow, StorageConnection, SyncBufferRow};
+use util::sync_serde::empty_str_as_option_string;
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -17,6 +18,10 @@ pub struct LegacyItemStoreJoinRow {
     default_sell_price_per_pack: f64,
     ignore_for_orders: bool,
     margin: f64,
+    #[serde(rename = "default_location_ID")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    default_location_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -49,6 +54,7 @@ impl SyncTranslation for ItemStoreJoinTranslation {
             default_sell_price_per_pack: data.default_sell_price_per_pack,
             ignore_for_orders: data.ignore_for_orders,
             margin: data.margin,
+            default_location_id: data.default_location_id,
         };
         Ok(PullTranslateResult::upsert(result))
     }

@@ -25,7 +25,7 @@ pub fn mock_test_service_item() -> MockData {
 pub fn mock_draft_outbound_with_service_lines() -> InvoiceRow {
     InvoiceRow {
         id: "mock_draft_outbound_with_service_lines".to_string(),
-        name_link_id: mock_name_a().id,
+        name_id: mock_name_a().id,
         store_id: "store_a".to_string(),
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
@@ -45,7 +45,7 @@ pub fn mock_draft_outbound_service_line() -> InvoiceLineRow {
 pub fn mock_draft_outbound_shipped_with_service_lines() -> InvoiceRow {
     InvoiceRow {
         id: "mock_draft_outbound_shipped_with_service_lines".to_string(),
-        name_link_id: mock_name_a().id,
+        name_id: mock_name_a().id,
         store_id: "store_a".to_string(),
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Shipped,
@@ -67,7 +67,7 @@ pub fn mock_draft_outbound_shipped_service_line() -> InvoiceLineRow {
 pub fn mock_draft_inbound_shipment_with_service_lines() -> InvoiceRow {
     InvoiceRow {
         id: "mock_draft_inbound_shipment_with_service_lines".to_string(),
-        name_link_id: mock_name_a().id,
+        name_id: mock_name_a().id,
         store_id: "store_a".to_string(),
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::New,
@@ -87,7 +87,7 @@ pub fn mock_draft_inbound_service_line() -> InvoiceLineRow {
 pub fn mock_draft_inbound_shipment_no_lines() -> InvoiceRow {
     InvoiceRow {
         id: "mock_draft_inbound_shipment_no_lines".to_string(),
-        name_link_id: mock_name_a().id,
+        name_id: mock_name_a().id,
         store_id: "store_a".to_string(),
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::New,
@@ -98,7 +98,7 @@ pub fn mock_draft_inbound_shipment_no_lines() -> InvoiceRow {
 pub fn mock_draft_inbound_verified_with_service_lines() -> InvoiceRow {
     InvoiceRow {
         id: "mock_draft_inbound_shipped_with_service_lines".to_string(),
-        name_link_id: mock_name_a().id,
+        name_id: mock_name_a().id,
         store_id: "store_a".to_string(),
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::Verified,

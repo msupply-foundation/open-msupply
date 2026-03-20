@@ -9,7 +9,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{PurchaseOrderLine, PurchaseOrderLineRow};
+use repository::{PurchaseOrderLine, PurchaseOrderLineRow, PurchaseOrderLineStatsRow};
 use service::{usize_to_u32, ListResult};
 
 #[derive(PartialEq, Debug)]
@@ -83,8 +83,14 @@ impl PurchaseOrderLineNode {
     pub async fn adjusted_number_of_units(&self) -> &Option<f64> {
         &self.row().adjusted_number_of_units
     }
+    pub async fn shipped_number_of_units(&self) -> f64 {
+        self.stats().shipped_number_of_units
+    }
+    pub async fn in_transit_number_of_units(&self) -> f64 {
+        self.stats().in_transit_number_of_units
+    }
     pub async fn received_number_of_units(&self) -> f64 {
-        self.row().received_number_of_units
+        self.stats().received_number_of_units
     }
     pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().requested_delivery_date
@@ -100,7 +106,7 @@ impl PurchaseOrderLineNode {
     ) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
-        let Some(manufacturer_id) = &self.row().manufacturer_link_id else {
+        let Some(manufacturer_id) = &self.row().manufacturer_id else {
             return Ok(None);
         };
 
@@ -171,6 +177,10 @@ impl PurchaseOrderLineConnector {
 impl PurchaseOrderLineNode {
     pub fn row(&self) -> &PurchaseOrderLineRow {
         &self.purchase_order_line.purchase_order_line_row
+    }
+
+    pub fn stats(&self) -> &PurchaseOrderLineStatsRow {
+        &self.purchase_order_line.purchase_order_line_stats_row
     }
 }
 

@@ -21,7 +21,11 @@ interface CustomerReturnEditModalProps {
   onClose: () => void;
   modalMode: ModalMode | null;
   returnId?: string;
-  outboundShipmentId?: string;
+  outboundShipment?: {
+    id: string;
+    invoiceNumber: number;
+    otherPartyName: string;
+  };
   initialItemId?: string | null;
   loadNextItem?: () => void;
   hasNextItem?: boolean;
@@ -37,7 +41,7 @@ export const CustomerReturnEditModal = ({
   modalMode,
   returnId,
   initialItemId,
-  outboundShipmentId,
+  outboundShipment,
   loadNextItem,
   hasNextItem = false,
   isNewReturn = false,
@@ -45,7 +49,7 @@ export const CustomerReturnEditModal = ({
 }: CustomerReturnEditModalProps) => {
   const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
-  const { success } = useNotification();
+  const { success, error } = useNotification();
 
   const [itemId, setItemId] = useState<string | undefined>(
     initialItemId ?? undefined
@@ -56,6 +60,23 @@ export const CustomerReturnEditModal = ({
   const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
     AlertColor | undefined
   >();
+
+  const defaultReference =
+    isNewReturn && outboundShipment
+      ? t('messages.default-customer-return-reference', {
+          invoiceNumber: outboundShipment.invoiceNumber,
+        })
+      : '';
+  const [theirReference, setTheirReference] = useState(defaultReference);
+
+  // For existing returns, initialise theirReference from the return data once
+  // loaded
+  const { data: returnData } = useReturns.document.customerReturn();
+  useEffect(() => {
+    if (!isNewReturn && returnData?.theirReference !== undefined) {
+      setTheirReference(returnData.theirReference ?? '');
+    }
+  }, [returnData?.theirReference, isNewReturn]);
 
   // The customerIsDisabled hook returns true when there is no data, so in the
   // case of a new return, we want to make sure it is *not* disabled
@@ -68,7 +89,7 @@ export const CustomerReturnEditModal = ({
     customerId,
     returnId,
     itemId,
-    outboundShipmentId,
+    outboundShipmentId: outboundShipment?.id,
   });
 
   useEffect(() => {
@@ -78,15 +99,17 @@ export const CustomerReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      const customerReturn = !isDisabled && (await save());
+      const customerReturn = !isDisabled && (await save(theirReference));
       onCreate?.();
       !!customerReturn &&
         customerReturn?.originalShipment?.id &&
         isNewReturn &&
         success(t('messages.customer-return-created-verified'))();
       onClose();
-    } catch {
-      // TODO: handle error display...
+    } catch (e) {
+      const errorMessage =
+        (e as Error)?.message ?? t('error.failed-to-save-return');
+      error(errorMessage)();
     }
   };
 
@@ -95,8 +118,10 @@ export const CustomerReturnEditModal = ({
       !isDisabled && (await save());
       loadNextItem && loadNextItem();
       onChangeTab(Tabs.Quantity);
-    } catch {
-      // TODO: handle error display...
+    } catch (e) {
+      const errorMessage =
+        (e as Error)?.message ?? t('error.failed-to-save-return');
+      error(errorMessage)();
     }
   };
 
@@ -173,6 +198,10 @@ export const CustomerReturnEditModal = ({
             update={update}
             zeroQuantityAlert={zeroQuantityAlert}
             setZeroQuantityAlert={setZeroQuantityAlert}
+            theirReference={theirReference}
+            onTheirReferenceChange={setTheirReference}
+            isDisabled={isDisabled}
+            returnToStoreName={outboundShipment?.otherPartyName}
             // We only allow adding draft lines when we are adding by item
             addDraftLine={itemId ? addDraftLine : undefined}
           />

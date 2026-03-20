@@ -2,6 +2,7 @@ pub mod amc;
 pub mod get_consumption;
 pub mod graphql_query;
 pub mod processor;
+pub mod schedule;
 pub mod transform_request_requisition_lines;
 
 pub mod generate_typescript_types {
@@ -37,6 +38,7 @@ pub mod generate_typescript_types {
         get_consumption: Function<get_consumption::Input, get_consumption::Output>,
         graphql_query: Function<graphql_query::Input, graphql_query::Output>,
         processor: Function<processor::Input, processor::Output>,
+        schedule: Function<schedule::Input, schedule::Output>,
         // Extra types to expose, not directly related to plugin interface
         // like for input or output of global methods
         get_store_preferences: StorePreferenceRow,

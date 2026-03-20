@@ -12,7 +12,9 @@ import {
   NameAndColorSetterCell,
   usePreferences,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
+  DetailTabs,
+  ToggleState,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -21,17 +23,62 @@ import {
   isInboundDisabled,
   isInboundListItemDisabled,
 } from '../../utils';
-import { useInbound, InboundRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
+import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
+
+const TABLE_ID = 'inbound-shipment-list-view';
 
 export const InboundListView = () => {
   const t = useTranslation();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const internalModalController = useToggle();
+  const externalModalController = useToggle();
+  const linkRequestModalController = useToggle();
+
+  const tabs = [
+    {
+      Component: (
+        <InboundShipments internalModalController={internalModalController} />
+      ),
+      value: t('label.internal'),
+    },
+    {
+      Component: (
+        <InboundShipments
+          internalModalController={internalModalController}
+          external
+        />
+      ),
+      value: t('label.external'),
+    },
+  ];
+
+  return (
+    <>
+      {!isExtraSmallScreen && (
+        <AppBarButtons
+          internalModalController={internalModalController}
+          externalModalController={externalModalController}
+          linkRequestModalController={linkRequestModalController}
+        />
+      )}
+      <DetailTabs tabs={tabs} overwriteQuery={false} restoreTabQuery={false} />
+    </>
+  );
+};
+
+const InboundShipments: React.FC<{
+  internalModalController: ToggleState;
+  external?: boolean;
+}> = ({ internalModalController, external = false }) => {
+  const {
+    update: { update },
+  } = useInboundShipment();
+
+  const t = useTranslation();
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
-  const invoiceModalController = useToggle();
-  const linkRequestModalController = useToggle();
-  const { mutate: onUpdate } = useInbound.document.update();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -50,7 +97,12 @@ export const InboundListView = () => {
         key: 'createdDatetime',
         condition: 'between',
       },
+      {
+        key: 'deliveredDatetime',
+        condition: 'between',
+      },
       { key: 'status', condition: 'equalAny' },
+      { key: 'theirReference' },
     ],
   });
 
@@ -58,10 +110,17 @@ export const InboundListView = () => {
     sortBy,
     first,
     offset,
-    filterBy,
+    filterBy: {
+      ...filterBy,
+      purchaseOrderId: external
+        ? { notEqualTo: '' } // Removes results where purchaseOrderId is null
+        : { equalAnyOrNull: '' }, // Only gives results where purchaseOrderId is null
+    },
   };
 
-  const { data, isFetching } = useInbound.document.list(listParams);
+  const {
+    query: { data, isFetching },
+  } = useInboundList(listParams);
   const statuses = inboundStatuses.filter(status =>
     invoiceStatusOptions?.includes(status)
   );
@@ -75,7 +134,7 @@ export const InboundListView = () => {
         enableColumnFilter: true,
         Cell: ({ row }) => (
           <NameAndColorSetterCell
-            onColorChange={onUpdate}
+            onColorChange={update}
             getIsDisabled={isInboundDisabled}
             row={row.original}
           />
@@ -104,6 +163,12 @@ export const InboundListView = () => {
         enableSorting: true,
       },
       {
+        header: t('label.purchase-order-number'),
+        accessorKey: 'purchaseOrder.number',
+        columnType: ColumnType.Number,
+        includeColumn: external,
+      },
+      {
         header: t('label.created'),
         accessorKey: 'createdDatetime',
         columnType: ColumnType.Date,
@@ -130,6 +195,7 @@ export const InboundListView = () => {
         accessorKey: 'theirReference',
         size: 225,
         defaultHideOnMobile: true,
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -144,18 +210,22 @@ export const InboundListView = () => {
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
     {
-      tableId: 'inbound-shipment-list-view',
+      tableId: TABLE_ID,
       isLoading: isFetching,
       onRowClick: row => navigate(row.id),
       columns,
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
-      getIsRestrictedRow: isInboundListItemDisabled,
+      getIsRestrictedRow: row => isInboundListItemDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-shipments')}
-          onCreate={invoiceModalController.toggleOn}
+          onCreate={
+            isExtraSmallScreen
+              ? undefined
+              : internalModalController.toggleOn
+          }
         />
       ),
       isMobile: isExtraSmallScreen,
@@ -166,14 +236,10 @@ export const InboundListView = () => {
     <>
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <MobileCardList table={table} />
+        <CardList table={table} tableId={TABLE_ID} />
       ) : (
         <>
           <Toolbar filter={filter} />
-          <AppBarButtons
-            invoiceModalController={invoiceModalController}
-            linkRequestModalController={linkRequestModalController}
-          />
           <MaterialTable table={table} />
         </>
       )}

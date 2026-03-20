@@ -7,6 +7,7 @@ import {
   TextWithLabelRow,
   CurrencyInput,
   ExpiryDateInput,
+  DateTimePickerInput,
   useTranslation,
   Box,
   IconButton,
@@ -32,6 +33,7 @@ import { LocationSearchInput } from '../../Location/Components/LocationSearchInp
 import {
   checkInvalidLocationLines,
   DonorSearchInput,
+  ManufacturerSearchInput,
   ReasonOptionsSearchInput,
   VVMStatusSearchInput,
 } from '../..';
@@ -251,9 +253,7 @@ export const StockLineForm = ({
                             ).toFixed(2)
                           )}
                           onChange={() => {}}
-                          {...getDosesProps(
-                            draft.availableNumberOfPacks * draft.packSize
-                          )}
+                          {...getDosesProps(draft.availableNumberOfPacks)}
                         />
                       }
                     />
@@ -270,9 +270,7 @@ export const StockLineForm = ({
                             )
                           )}
                           onChange={() => {}}
-                          {...getDosesProps(
-                            draft.totalNumberOfPacks * draft.packSize
-                          )}
+                          {...getDosesProps(draft.totalNumberOfPacks)}
                         />
                       }
                     />
@@ -313,7 +311,13 @@ export const StockLineForm = ({
                 <StyledInputRow
                   label={t('label.barcode')}
                   Input={
-                    <Box style={{ width: 162 }}>
+                    <Box
+                      display="flex"
+                      flexDirection="row"
+                      alignItems="center"
+                      gap={1}
+                      style={{ width: 162 }}
+                    >
                       <BufferedTextInput
                         value={draft.barcode ?? ''}
                         onChange={e => onUpdate({ barcode: e.target.value })}
@@ -355,6 +359,22 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacture-date')}
+                  Input={
+                    <DateTimePickerInput
+                      value={DateUtils.getNaiveDate(draft.manufactureDate)}
+                      onChange={date =>
+                        onUpdate({
+                          manufactureDate: date
+                            ? Formatter.naiveDate(date)
+                            : null,
+                        })
+                      }
+                      width={160}
+                    />
+                  }
+                />
                 {plugins.stockLine?.editViewField.map((Plugin, index) => (
                   <Plugin key={index} stockLine={draft} events={pluginEvents} />
                 ))}
@@ -442,6 +462,7 @@ export const StockLineForm = ({
 
                           onUpdate({
                             itemVariant: variant,
+                            manufacturer: variant?.manufacturer ?? null,
                             volumePerPack: newVolume ?? 0,
                           });
                         }}
@@ -476,6 +497,22 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacturer')}
+                  Input={
+                    <ManufacturerSearchInput
+                      value={draft.manufacturer ?? null}
+                      width={160}
+                      onChange={manufacturer => {
+                        const patch: Partial<DraftStockLine> = { manufacturer };
+                        if (draft.itemVariant) {
+                          patch.itemVariant = null;
+                        }
+                        onUpdate(patch);
+                      }}
+                    />
+                  }
+                />
                 <TextWithLabelRow
                   label={t('label.supplier')}
                   text={String(supplierName)}

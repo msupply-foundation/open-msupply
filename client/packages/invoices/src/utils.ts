@@ -37,6 +37,22 @@ export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
+export enum InboundShipmentType {
+  Manual = 'Manual',
+  Internal = 'Internal',
+  External = 'External',
+}
+
+export const getInboundShipmentType = (inbound: {
+  linkedShipment?: { id: string } | null;
+  purchaseOrder?: { id: string } | null;
+}): InboundShipmentType => {
+  if (inbound.purchaseOrder?.id) return InboundShipmentType.External;
+  if (inbound.linkedShipment?.id) return InboundShipmentType.Internal;
+  return InboundShipmentType.Manual;
+};
+
+/** Internal inbound shipments include Picked and Shipped (set by the sending store) */
 export const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
@@ -46,12 +62,35 @@ export const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
+/** Manual inbound shipments skip Picked and Shipped */
 export const manualInboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Delivered,
   InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
+
+/** External inbound shipments skip Picked but include Shipped */
+export const externalInboundStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
+  InvoiceNodeStatus.Verified,
+];
+
+export const getInboundStatusesForType = (
+  type: InboundShipmentType
+): InvoiceNodeStatus[] => {
+  switch (type) {
+    case InboundShipmentType.Manual:
+      return manualInboundStatuses;
+    case InboundShipmentType.External:
+      return externalInboundStatuses;
+    case InboundShipmentType.Internal:
+      return inboundStatuses;
+  }
+};
 
 export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -155,7 +194,8 @@ export const isOutboundDisabled = (
 };
 
 /** Returns true if the inbound shipment cannot be edited */
-export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
+export const isInboundDisabled = (inbound?: InboundRowFragment): boolean => {
+  if (!inbound) return true;
   const isManuallyCreated = !inbound.linkedShipment?.id;
   if (isManuallyCreated) {
     return inbound.status === InvoiceNodeStatus.Verified;
@@ -178,8 +218,8 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
 };
 
 /** Returns true if the inbound shipment can be put on hold */
-export const isInboundHoldable = (inbound: InboundRowFragment): boolean =>
-  inbound.status !== InvoiceNodeStatus.Verified;
+export const isInboundHoldable = (inbound?: InboundRowFragment): boolean =>
+  inbound ? inbound.status !== InvoiceNodeStatus.Verified : true;
 
 export const isCustomerReturnDisabled = (
   customerReturn: CustomerReturnRowFragment
@@ -219,9 +259,20 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.numberOfPacks === 0 &&
   !row.shippedNumberOfPacks;
 
+export const getInboundStockLines = (
+  lines: InboundLineFragment[]
+): InboundLineFragment[] =>
+  lines.filter(
+    line =>
+      isA.stockInLine(line) ||
+      isInboundPlaceholderRow(line) ||
+      isA.placeholderLine(line) // for rejected lines
+  );
+
 export const isInboundStatusChangeDisabled = (
-  inbound: InboundFragment | CustomerReturnFragment
+  inbound?: InboundFragment | CustomerReturnFragment
 ): boolean => {
+  if (!inbound) return true;
   if (inbound.onHold) return true;
 
   const isManuallyCreated = !inbound.linkedShipment?.id;
@@ -281,6 +332,9 @@ export const canDeletePrescription = (
 ): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Picked;
+
+export const canDeleteInbound = (inbound: InboundRowFragment): boolean =>
+  inbound.status === InvoiceNodeStatus.New;
 
 export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Delivered ||

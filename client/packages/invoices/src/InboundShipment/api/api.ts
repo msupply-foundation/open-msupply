@@ -20,6 +20,7 @@ import {
   InsertInboundShipmentLineFromInternalOrderLineInput,
   RequisitionNodeStatus,
   UpdateDonorInput,
+  PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA, isInboundPlaceholderRow } from '../../utils';
@@ -38,11 +39,13 @@ export type ListParams = {
   filterBy: FilterBy | null;
 };
 
-const inboundParsers = {
+export const inboundParsers = {
   toStatus: (
     patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
   ): UpdateInboundShipmentStatusInput | undefined => {
     switch (patch.status) {
+      case InvoiceNodeStatus.Shipped:
+        return UpdateInboundShipmentStatusInput.Shipped;
       case InvoiceNodeStatus.Verified:
         return UpdateInboundShipmentStatusInput.Verified;
       case InvoiceNodeStatus.Delivered:
@@ -89,6 +92,8 @@ const inboundParsers = {
       id: patch.id,
       colour: 'colour' in patch ? patch.colour : undefined,
       comment: 'comment' in patch ? patch.comment : undefined,
+      deliveredDatetime:
+        'deliveredDatetime' in patch ? patch.deliveredDatetime : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
@@ -112,6 +117,7 @@ const inboundParsers = {
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
       expiryDate: line.expiryDate,
+      manufactureDate: line.manufactureDate,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
@@ -119,6 +125,7 @@ const inboundParsers = {
       itemVariantId: 'itemVariant' in line ? line.itemVariant?.id : undefined,
       vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
       donorId: line.donor?.id,
+      manufacturerId: line.manufacturer?.id,
       campaignId: line.campaign?.id,
       programId: line.program?.id,
       note: line.note,
@@ -144,6 +151,9 @@ const inboundParsers = {
     expiryDate: {
       value: line.expiryDate || null,
     },
+    manufactureDate: {
+      value: line.manufactureDate || null,
+    },
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
@@ -151,6 +161,9 @@ const inboundParsers = {
     itemVariantId: setNullableInput('id', line.itemVariant),
     vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
     donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
+    manufacturerId: setNullableInput('manufacturerId', {
+      manufacturerId: line.manufacturer?.id ?? null,
+    }),
     campaignId: setNullableInput('campaignId', {
       campaignId: line.campaign?.id ?? null,
     }),
@@ -161,6 +174,7 @@ const inboundParsers = {
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
     volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,
+    status: line.status ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
@@ -272,6 +286,17 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         return result.requisition;
       }
     },
+    listSentPurchaseOrders: async (filterBy: FilterBy | null) => {
+      const filter = {
+        ...filterBy,
+        status: { equalTo: PurchaseOrderNodeStatus.Sent },
+      };
+      const result = await sdk.purchaseOrders({
+        storeId,
+        filter,
+      });
+      return result?.purchaseOrders;
+    },
   },
   delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
     const result =
@@ -297,6 +322,8 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         otherPartyId: patch.otherPartyId,
         storeId,
         requisitionId: patch.requisitionId,
+        purchaseOrderId: patch.purchaseOrderId,
+        insertLinesFromPurchaseOrder: patch.insertLinesFromPurchaseOrder,
       })) || {};
 
     const { insertInboundShipment } = result;

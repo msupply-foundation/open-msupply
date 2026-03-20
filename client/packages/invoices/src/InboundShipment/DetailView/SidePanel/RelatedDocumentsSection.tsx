@@ -13,12 +13,16 @@ import {
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { useInbound } from '../../api';
+import { useInboundShipment } from '../../api';
 
 export const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation();
   const { localisedDate: d } = useFormatDateTime();
-  const { requisition } = useInbound.document.fields('requisition');
+  const {
+    query: { data },
+  } = useInboundShipment();
+  const requisition = data?.requisition;
+  const purchaseOrder = data?.purchaseOrder;
 
   const orderedFromDifferentStore = !!requisition?.createdFromRequisitionId;
   let tooltip = '';
@@ -31,26 +35,42 @@ export const RelatedDocumentsSectionComponent = () => {
       username: user?.username ?? UNDEFINED_STRING_VALUE,
     })}`;
   }
+  const showRequisition = requisition && !orderedFromDifferentStore;
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
       <Grid flexDirection="column" gap={0.5}>
-        {!requisition || orderedFromDifferentStore ? (
+        {!showRequisition ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
           <Tooltip title={tooltip}>
             <Grid>
-              <PanelRow>
-                <PanelLabel>{t('label.requisition')}</PanelLabel>
-                <PanelField>
-                  <Link
-                    to={RouteBuilder.create(AppRoute.Replenishment)
-                      .addPart(AppRoute.InternalOrder)
-                      .addPart(requisition?.id ?? '')
-                      .build()}
-                  >{`#${requisition?.requisitionNumber}`}</Link>
-                </PanelField>
-              </PanelRow>
+              {showRequisition &&
+                <PanelRow>
+                  <PanelLabel>{t('label.requisition')}</PanelLabel>
+                  <PanelField>
+                    <Link
+                      to={RouteBuilder.create(AppRoute.Replenishment)
+                        .addPart(AppRoute.InternalOrder)
+                        .addPart(requisition?.id ?? '')
+                        .build()}
+                    >{`#${requisition?.requisitionNumber}`}</Link>
+                  </PanelField>
+                </PanelRow>
+              }
+              {purchaseOrder &&
+                <PanelRow>
+                  <PanelLabel>{t('label.purchase-order')}</PanelLabel>
+                  <PanelField>
+                    <Link
+                      to={RouteBuilder.create(AppRoute.Replenishment)
+                        .addPart(AppRoute.PurchaseOrder)
+                        .addPart(purchaseOrder?.id ?? '')
+                        .build()}
+                    >{`#${purchaseOrder?.number}`}</Link>
+                  </PanelField>
+                </PanelRow>
+              }
             </Grid>
           </Tooltip>
         )}

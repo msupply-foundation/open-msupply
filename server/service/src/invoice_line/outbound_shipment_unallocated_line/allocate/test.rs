@@ -54,7 +54,7 @@ mod test {
             InvoiceRow {
                 id: "invoice".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
             }
@@ -157,7 +157,7 @@ mod test {
             InvoiceRow {
                 id: "invoice".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
             }
@@ -280,7 +280,7 @@ mod test {
             InvoiceRow {
                 id: "invoice".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
             }
@@ -440,7 +440,7 @@ mod test {
             InvoiceRow {
                 id: "invoice".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
             }
@@ -567,7 +567,7 @@ mod test {
             InvoiceRow {
                 id: "invoice".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
             }
@@ -646,7 +646,7 @@ mod test {
             InvoiceRow {
                 id: "invoice".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
             }
