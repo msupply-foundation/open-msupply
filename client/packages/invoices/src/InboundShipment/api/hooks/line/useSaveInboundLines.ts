@@ -7,10 +7,9 @@ import {
 } from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
 import { DraftInboundLine } from '../../../../types';
-import { InboundFragment } from '../../operations.generated';
 import { INBOUND, INBOUND_LINE } from '../document/keys';
 
-export const useSaveInboundLines = () => {
+export const useSaveInboundLines = (isExternal: boolean) => {
   const t = useTranslation();
   const queryClient = useQueryClient();
   const { invoiceId = '' } = useParams();
@@ -18,12 +17,6 @@ export const useSaveInboundLines = () => {
 
   return useMutation(
     async (lines: DraftInboundLine[]): Promise<{ errorMessage?: string }> => {
-      const invoice = queryClient.getQueryData<InboundFragment>([
-        INBOUND,
-        INBOUND_LINE,
-        invoiceId,
-      ]);
-      const isExternal = !!invoice?.purchaseOrder;
       const result = await api.updateLines(lines, isExternal);
 
       const allResults = [
