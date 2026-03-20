@@ -76,3 +76,57 @@ mutation insertContactForm($input: InsertContactFormInput!, $storeId: String!) {
     }
   }
 }
+
+query reportBuilderRecords($storeId: String!, $invoiceType: InvoiceNodeType) {
+  invoices(storeId: $storeId, filter: { type: { equalTo: $invoiceType } }) {
+    ... on InvoiceConnector {
+      nodes {
+        id
+        invoiceNumber
+        otherPartyName
+        createdDatetime
+      }
+    }
+  }
+}
+
+query reportBuilderRequisitions($storeId: String!) {
+  requisitions(storeId: $storeId) {
+    ... on RequisitionConnector {
+      nodes {
+        id
+        requisitionNumber
+        otherPartyName
+        createdDatetime
+      }
+    }
+  }
+}
+
+query reportBuilderStocktakes($storeId: String!) {
+  stocktakes(storeId: $storeId) {
+    ... on StocktakeConnector {
+      nodes {
+        id
+        stocktakeNumber
+        description
+        createdDatetime
+      }
+    }
+  }
+}
+
+query reportBuilderPurchaseOrders($storeId: String!) {
+  purchaseOrders(storeId: $storeId) {
+    ... on PurchaseOrderConnector {
+      nodes {
+        id
+        number
+        supplier {
+          name
+        }
+        createdDatetime
+      }
+    }
+  }
+}

@@ -55,6 +55,7 @@ export enum AppRoute {
   Messages = 'messages',
 
   Settings = 'settings',
+  ReportBuilder = 'report-builder',
 
   Help = 'help',
 

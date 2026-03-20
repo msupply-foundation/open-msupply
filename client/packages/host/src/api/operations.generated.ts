@@ -194,6 +194,64 @@ export const InsertContactFormDocument = gql`
   }
 `;
 
+export type GenerateReportDefinitionQueryVariables = {
+  storeId: string;
+  name?: string | null;
+  report: unknown;
+  dataId?: string | null;
+  arguments?: unknown | null;
+  format?: string | null;
+};
+
+export type GenerateReportDefinitionQuery = {
+  generateReportDefinition:
+    | { __typename: 'PrintReportNode'; fileId: string }
+    | {
+        __typename: 'PrintReportError';
+        error: {
+          __typename: 'FailedToFetchReportData';
+          description: string;
+          errors: unknown;
+        };
+      };
+};
+
+export const GenerateReportDefinitionDocument = gql`
+  query generateReportDefinition(
+    $storeId: String!
+    $name: String
+    $report: JSON!
+    $dataId: String
+    $arguments: JSON
+    $format: PrintFormat = HTML
+  ) {
+    generateReportDefinition(
+      dataId: $dataId
+      name: $name
+      report: $report
+      storeId: $storeId
+      arguments: $arguments
+      format: $format
+    ) {
+      ... on PrintReportNode {
+        __typename
+        fileId
+      }
+      ... on PrintReportError {
+        __typename
+        error {
+          description
+          ... on FailedToFetchReportData {
+            __typename
+            description
+            errors
+          }
+        }
+      }
+    }
+  }
+`;
+
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
   operationName: string,
@@ -339,6 +397,235 @@ export function getSdk(
         variables
       );
     },
+    generateReportDefinition(
+      variables: GenerateReportDefinitionQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<GenerateReportDefinitionQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<GenerateReportDefinitionQuery>({
+            document: GenerateReportDefinitionDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'generateReportDefinition',
+        'query',
+        variables
+      );
+    },
+    reportBuilderRecords(
+      variables: ReportBuilderRecordsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ReportBuilderRecordsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ReportBuilderRecordsQuery>({
+            document: ReportBuilderRecordsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'reportBuilderRecords',
+        'query',
+        variables
+      );
+    },
+    reportBuilderRequisitions(
+      variables: ReportBuilderRequisitionsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ReportBuilderRequisitionsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ReportBuilderRequisitionsQuery>({
+            document: ReportBuilderRequisitionsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'reportBuilderRequisitions',
+        'query',
+        variables
+      );
+    },
+    reportBuilderStocktakes(
+      variables: ReportBuilderStocktakesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ReportBuilderStocktakesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ReportBuilderStocktakesQuery>({
+            document: ReportBuilderStocktakesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'reportBuilderStocktakes',
+        'query',
+        variables
+      );
+    },
+    reportBuilderPurchaseOrders(
+      variables: ReportBuilderPurchaseOrdersQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ReportBuilderPurchaseOrdersQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ReportBuilderPurchaseOrdersQuery>({
+            document: ReportBuilderPurchaseOrdersDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'reportBuilderPurchaseOrders',
+        'query',
+        variables
+      );
+    },
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
+
+// ============================================================
+// Report Builder record picker queries
+// ============================================================
+
+export type ReportBuilderRecordsQueryVariables = {
+  storeId: string;
+  invoiceType?: string | null;
+};
+
+export type ReportBuilderRecordsQuery = {
+  invoices:
+    | {
+        __typename: 'InvoiceConnector';
+        nodes: Array<{
+          id: string;
+          invoiceNumber: number;
+          otherPartyName: string;
+          createdDatetime: string;
+        }>;
+      }
+    | { __typename: 'ConnectorError' };
+};
+
+export type ReportBuilderRequisitionsQueryVariables = {
+  storeId: string;
+};
+
+export type ReportBuilderRequisitionsQuery = {
+  requisitions:
+    | {
+        __typename: 'RequisitionConnector';
+        nodes: Array<{
+          id: string;
+          requisitionNumber: number;
+          otherPartyName: string;
+          createdDatetime: string;
+        }>;
+      }
+    | { __typename: 'ConnectorError' };
+};
+
+export type ReportBuilderStocktakesQueryVariables = {
+  storeId: string;
+};
+
+export type ReportBuilderStocktakesQuery = {
+  stocktakes:
+    | {
+        __typename: 'StocktakeConnector';
+        nodes: Array<{
+          id: string;
+          stocktakeNumber: number;
+          description?: string | null;
+          createdDatetime: string;
+        }>;
+      }
+    | { __typename: 'ConnectorError' };
+};
+
+export type ReportBuilderPurchaseOrdersQueryVariables = {
+  storeId: string;
+};
+
+export type ReportBuilderPurchaseOrdersQuery = {
+  purchaseOrders:
+    | {
+        __typename: 'PurchaseOrderConnector';
+        nodes: Array<{
+          id: string;
+          number: number;
+          supplier?: { name: string } | null;
+          createdDatetime: string;
+        }>;
+      }
+    | { __typename: 'ConnectorError' };
+};
+
+export const ReportBuilderRecordsDocument = gql`
+  query reportBuilderRecords($storeId: String!, $invoiceType: InvoiceNodeType) {
+    invoices(storeId: $storeId, filter: { type: { equalTo: $invoiceType } }) {
+      ... on InvoiceConnector {
+        nodes {
+          id
+          invoiceNumber
+          otherPartyName
+          createdDatetime
+        }
+      }
+    }
+  }
+`;
+
+export const ReportBuilderRequisitionsDocument = gql`
+  query reportBuilderRequisitions($storeId: String!) {
+    requisitions(storeId: $storeId) {
+      ... on RequisitionConnector {
+        nodes {
+          id
+          requisitionNumber
+          otherPartyName
+          createdDatetime
+        }
+      }
+    }
+  }
+`;
+
+export const ReportBuilderStocktakesDocument = gql`
+  query reportBuilderStocktakes($storeId: String!) {
+    stocktakes(storeId: $storeId) {
+      ... on StocktakeConnector {
+        nodes {
+          id
+          stocktakeNumber
+          description
+          createdDatetime
+        }
+      }
+    }
+  }
+`;
+
+export const ReportBuilderPurchaseOrdersDocument = gql`
+  query reportBuilderPurchaseOrders($storeId: String!) {
+    purchaseOrders(storeId: $storeId) {
+      ... on PurchaseOrderConnector {
+        nodes {
+          id
+          number
+          supplier {
+            name
+          }
+          createdDatetime
+        }
+      }
+    }
+  }
+`;

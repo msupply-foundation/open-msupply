@@ -28,6 +28,7 @@ import {
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
+import { ReportBuilder } from './ReportBuilder/ReportBuilder';
 import {
   DashboardRouter,
   CatalogueRouter,
@@ -204,6 +205,12 @@ export const Site: FC = () => {
                           .addWildCard()
                           .build()}
                         element={<SettingsRouter />}
+                      />
+                      <Route
+                        path={RouteBuilder.create(AppRoute.ReportBuilder)
+                          .addWildCard()
+                          .build()}
+                        element={<ReportBuilder />}
                       />
                       <Route
                         path={RouteBuilder.create(AppRoute.Help)

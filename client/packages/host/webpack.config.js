@@ -30,6 +30,9 @@ module.exports = env => {
 
   return {
     entry: './src/index',
+    experiments: {
+      asyncWebAssembly: true,
+    },
     mode: isProduction ? 'production' : 'development',
     devtool: isProduction ? undefined : 'source-map',
     devServer: {

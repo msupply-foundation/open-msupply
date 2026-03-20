@@ -3,7 +3,10 @@ mod mutations;
 use crate::export::csv_to_excel;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use mutations::install::install_uploaded_reports;
-use print::{generate_report, generate_report_definition, PrintReportResponse};
+use print::{
+    generate_report, generate_report_data, generate_report_definition, PrintReportResponse,
+    ReportDataResponse,
+};
 use reports::{
     all_report_versions, report, reports, ReportFilterInput, ReportResponse, ReportSortInput,
     ReportsResponse,
@@ -129,6 +132,19 @@ impl ReportQueries {
         )
         .await
     }
+
+    // Can be used when developing reports, e.g. to generate a report that is not already in the
+    // system. This returns the data that would go into a report
+    pub async fn generate_report_data(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Name of the report")] name: Option<String>,
+        #[graphql(desc = "The report definition to be generated")] report: serde_json::Value,
+        data_id: Option<String>,
+        arguments: Option<serde_json::Value>,
+    ) -> Result<ReportDataResponse> {
+        generate_report_data(ctx, store_id, name, report, data_id, arguments).await}
 
     pub async fn csv_to_excel(
         &self,
