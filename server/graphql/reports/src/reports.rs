@@ -162,6 +162,11 @@ impl ReportNode {
     pub async fn version(&self) -> &str {
         &self.row.report_row.version
     }
+
+    /// The raw report definition JSON (template field from the database)
+    pub async fn template(&self) -> &str {
+        &self.row.report_row.template
+    }
 }
 
 impl ReportNode {

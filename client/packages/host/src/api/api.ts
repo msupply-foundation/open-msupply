@@ -7,6 +7,8 @@ import {
 
 import {
   GenerateReportDefinitionQueryVariables,
+  UpsertReportDefinitionMutationVariables,
+  ReportBuilderListQueryVariables,
   Sdk,
 } from './operations.generated';
 
@@ -44,6 +46,19 @@ reportBuilderPurchaseOrders: async (storeId: string) => {
   const purchaseOrders = result?.purchaseOrders as any;
   return purchaseOrders?.nodes ?? [];
 },
+reportBuilderList: async (
+  storeId: string,
+  userLanguage: string,
+  filter?: ReportBuilderListQueryVariables['filter']
+) => {
+  const result = await sdk.reportBuilderList({
+    storeId,
+    userLanguage,
+    filter,
+  });
+  const reports = result?.reports as any;
+  return reports?.nodes ?? [];
+},
   },
 
   updateDisplaySettings: async (displaySettings: DisplaySettingsInput) => {
@@ -69,5 +84,12 @@ reportBuilderPurchaseOrders: async (storeId: string) => {
   ) => {
     const result = await sdk.generateReportDefinition(input);
     return result?.generateReportDefinition;
+  },
+
+  upsertReportDefinition: async (
+    input: UpsertReportDefinitionMutationVariables
+  ) => {
+    const result = await sdk.upsertReportDefinition(input);
+    return result?.upsertReportDefinition;
   },
 });

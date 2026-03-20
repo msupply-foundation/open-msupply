@@ -3,6 +3,9 @@ mod mutations;
 use crate::export::csv_to_excel;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use mutations::install::install_uploaded_reports;
+use mutations::upsert_report_definition::{
+    upsert_report_definition, UpsertReportDefinitionInput, UpsertReportDefinitionResponse,
+};
 use print::{
     generate_report, generate_report_data, generate_report_definition, PrintReportResponse,
     ReportDataResponse,
@@ -179,5 +182,22 @@ impl CentralReportMutations {
     ) -> Result<Vec<String>> {
         let ids = install_uploaded_reports(ctx, file_id)?;
         Ok(ids)
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct ReportMutations;
+
+#[Object]
+impl ReportMutations {
+    /// Save or update a report definition created in the Report Builder.
+    /// Uses the ReportDev permission.
+    pub async fn upsert_report_definition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpsertReportDefinitionInput,
+    ) -> Result<UpsertReportDefinitionResponse> {
+        upsert_report_definition(ctx, store_id, input)
     }
 }

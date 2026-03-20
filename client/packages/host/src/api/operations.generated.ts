@@ -487,6 +487,42 @@ export function getSdk(
         variables
       );
     },
+    upsertReportDefinition(
+      variables: UpsertReportDefinitionMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpsertReportDefinitionMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpsertReportDefinitionMutation>({
+            document: UpsertReportDefinitionDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'upsertReportDefinition',
+        'mutation',
+        variables
+      );
+    },
+    reportBuilderList(
+      variables: ReportBuilderListQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ReportBuilderListQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ReportBuilderListQuery>({
+            document: ReportBuilderListDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'reportBuilderList',
+        'query',
+        variables
+      );
+    },
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
@@ -624,6 +660,93 @@ export const ReportBuilderPurchaseOrdersDocument = gql`
             name
           }
           createdDatetime
+        }
+      }
+    }
+  }
+`;
+
+// ============================================================
+// Report Builder: save / load report definitions
+// ============================================================
+
+export type UpsertReportDefinitionMutationVariables = {
+  storeId: string;
+  input: {
+    id?: string | null;
+    name: string;
+    template: unknown;
+    context: string;
+    comment?: string | null;
+    code?: string | null;
+  };
+};
+
+export type UpsertReportDefinitionMutation = {
+  __typename: 'Mutations';
+  upsertReportDefinition: {
+    __typename: 'UpsertReportDefinitionResponse';
+    id: string;
+  };
+};
+
+export const UpsertReportDefinitionDocument = gql`
+  mutation upsertReportDefinition(
+    $storeId: String!
+    $input: UpsertReportDefinitionInput!
+  ) {
+    upsertReportDefinition(storeId: $storeId, input: $input) {
+      id
+    }
+  }
+`;
+
+export type ReportBuilderListQueryVariables = {
+  storeId: string;
+  userLanguage: string;
+  filter?: {
+    name?: { like?: string | null } | null;
+    isActive?: boolean | null;
+  } | null;
+};
+
+export type ReportBuilderListQuery = {
+  reports:
+    | {
+        __typename: 'ReportConnector';
+        totalCount: number;
+        nodes: Array<{
+          id: string;
+          name: string;
+          code: string;
+          context: string;
+          isCustom: boolean;
+          template: string;
+        }>;
+      }
+    | { __typename: 'QueryReportsError' };
+};
+
+export const ReportBuilderListDocument = gql`
+  query reportBuilderList(
+    $storeId: String!
+    $userLanguage: String!
+    $filter: ReportFilterInput
+  ) {
+    reports(
+      storeId: $storeId
+      userLanguage: $userLanguage
+      filter: $filter
+    ) {
+      ... on ReportConnector {
+        totalCount
+        nodes {
+          id
+          name
+          code
+          context
+          isCustom
+          template
         }
       }
     }
