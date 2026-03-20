@@ -14,8 +14,10 @@ import {
   ActionsFooter,
   PrinterIcon,
   AlertModal,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
-import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
+import { getStatusTranslator } from '../../../utils';
+import { getStatusSequence } from '../../../statuses';
 import { StatusChangeButton } from './StatusChangeButton';
 import {
   PrescriptionLineFragment,
@@ -25,8 +27,10 @@ import {
 } from '../../api';
 import { usePrintLabels } from '../hooks/usePrinter';
 
+const prescriptionSequence = getStatusSequence(InvoiceNodeType.Prescription);
+
 const createStatusLog = (invoice: PrescriptionRowFragment) => {
-  const statusIdx = prescriptionStatuses.findIndex(s => invoice.status === s);
+  const statusIdx = prescriptionSequence.findIndex(s => invoice.status === s);
 
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
@@ -121,7 +125,7 @@ export const FooterComponent = ({
   ];
 
   // Don't show "Cancelled" status unless this prescription is already cancelled
-  const statusList = prescriptionStatuses.filter(status =>
+  const statusList = prescriptionSequence.filter(status =>
     prescription?.status === InvoiceNodeStatus.Cancelled
       ? true
       : status !== InvoiceNodeStatus.Cancelled

@@ -15,14 +15,15 @@ import {
   CardList,
   DetailTabs,
   ToggleState,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
   getStatusTranslator,
-  inboundStatuses,
   isInboundDisabled,
   isInboundListItemDisabled,
 } from '../../utils';
+import { getStatusSequence } from '../../statuses';
 import { Toolbar } from './Toolbar';
 import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
@@ -121,8 +122,8 @@ const InboundShipments: React.FC<{
   const {
     query: { data, isFetching },
   } = useInboundList(listParams);
-  const statuses = inboundStatuses.filter(status =>
-    invoiceStatusOptions?.includes(status)
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
   );
 
   const columns = useMemo(
@@ -222,9 +223,7 @@ const InboundShipments: React.FC<{
         <NothingHere
           body={t('error.no-inbound-shipments')}
           onCreate={
-            isExtraSmallScreen
-              ? undefined
-              : internalModalController.toggleOn
+            isExtraSmallScreen ? undefined : internalModalController.toggleOn
           }
         />
       ),

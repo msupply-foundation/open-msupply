@@ -12,19 +12,24 @@ import {
   DeleteIcon,
   ActionsFooter,
   usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
+import { getStatusTranslator } from '../../../utils';
+import { getStatusSequence } from '../../../statuses';
 import {
-  getStatusTranslator,
-  manualCustomerReturnStatuses,
-  inboundStatuses,
-  customerReturnStatuses,
-} from '../../../utils';
-import { CustomerReturnFragment, CustomerReturnLineFragment, useReturns } from '../../api';
+  CustomerReturnFragment,
+  CustomerReturnLineFragment,
+  useReturns,
+} from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
+const customerReturnSequence = getStatusSequence(
+  InvoiceNodeType.CustomerReturn
+);
+
 const createStatusLog = (invoice: CustomerReturnFragment) => {
-  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
+  const statusIdx = customerReturnSequence.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
@@ -84,13 +89,9 @@ export const FooterComponent = ({
     },
   ];
 
-  const statuses = isManuallyCreated
-    ? manualCustomerReturnStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      )
-    : customerReturnStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      );
+  const statuses = getStatusSequence(InvoiceNodeType.CustomerReturn, {
+    isManuallyCreated,
+  }).filter(status => invoiceStatusOptions?.includes(status));
 
   return (
     <AppFooterPortal

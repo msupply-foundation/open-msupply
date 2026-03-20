@@ -12,18 +12,24 @@ import {
   DeleteIcon,
   ActionsFooter,
   usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
+import { getStatusTranslator } from '../../../utils';
+import { getStatusSequence } from '../../../statuses';
 import {
-  getStatusTranslator,
-  supplierReturnStatuses,
-  outboundStatuses,
-} from '../../../utils';
-import { SupplierReturnLineFragment, SupplierReturnRowFragment, useReturns } from '../../api';
+  SupplierReturnLineFragment,
+  SupplierReturnRowFragment,
+  useReturns,
+} from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
+const supplierReturnSequence = getStatusSequence(
+  InvoiceNodeType.SupplierReturn
+);
+
 const createStatusLog = (invoice: SupplierReturnRowFragment) => {
-  const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
+  const statusIdx = supplierReturnSequence.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
@@ -68,12 +74,11 @@ export const FooterComponent = ({
   const { invoiceStatusOptions } = usePreferences();
   const { data } = useReturns.document.supplierReturn();
   const { id } = data ?? { id: '' };
-  const { confirmAndDelete } =
-    useReturns.lines.deleteSelectedSupplierLines({
-      returnId: id,
-      selectedRows,
-      resetRowSelection,
-    });
+  const { confirmAndDelete } = useReturns.lines.deleteSelectedSupplierLines({
+    returnId: id,
+    selectedRows,
+    resetRowSelection,
+  });
 
   const actions: Action[] = [
     {
@@ -83,7 +88,7 @@ export const FooterComponent = ({
     },
   ];
 
-  const statuses = supplierReturnStatuses.filter(status =>
+  const statuses = supplierReturnSequence.filter(status =>
     invoiceStatusOptions?.includes(status)
   );
 

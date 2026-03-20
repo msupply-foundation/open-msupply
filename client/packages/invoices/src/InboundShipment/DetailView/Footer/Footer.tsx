@@ -20,14 +20,11 @@ import {
   useIsExtraSmallScreen,
   CheckIcon,
   CloseIcon,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
-import {
-  getStatusTranslator,
-  inboundStatuses,
-  getInboundShipmentType,
-  getInboundStatusesForType,
-} from '../../../utils';
+import { getStatusTranslator, getInboundShipmentType } from '../../../utils';
+import { getStatusSequence } from '../../../statuses';
 import {
   InboundFragment,
   InboundLineFragment,
@@ -42,8 +39,10 @@ import {
 import { OnHoldButton } from './OnHoldButton';
 import { StatusChangeButton } from './StatusChangeButton';
 
+const inboundSequence = getStatusSequence(InvoiceNodeType.InboundShipment);
+
 const createStatusLog = (invoice: InboundFragment) => {
-  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
+  const statusIdx = inboundSequence.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
@@ -181,11 +180,9 @@ export const FooterComponent = ({
       },
     ]);
   }
-  const statuses = (
-    shipmentType
-      ? getInboundStatusesForType(shipmentType)
-      : inboundStatuses
-  ).filter(status => invoiceStatusOptions?.includes(status));
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment, {
+    inboundShipmentType: shipmentType,
+  }).filter(status => invoiceStatusOptions?.includes(status));
 
   return (
     <AppFooterPortal

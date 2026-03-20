@@ -15,16 +15,20 @@ import {
   useBreadcrumbs,
   useConfirmationModal,
   InvoiceLineNodeType,
+  InvoiceNodeType,
   usePreferences,
 } from '@openmsupply-client/common';
-import { getStatusTranslator, outboundStatuses } from '../../../utils';
+import { getStatusTranslator } from '../../../utils';
+import { getStatusSequence } from '../../../statuses';
 import { useOutbound, OutboundFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
+const outboundSequence = getStatusSequence(InvoiceNodeType.OutboundShipment);
+
 const createStatusLog = (invoice: OutboundFragment) => {
-  const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
+  const statusIdx = outboundSequence.findIndex(s => invoice.status === s);
 
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
@@ -132,7 +136,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     },
   ];
 
-  const statuses = outboundStatuses.filter(status =>
+  const statuses = outboundSequence.filter(status =>
     invoiceStatusOptions?.includes(status)
   );
 
