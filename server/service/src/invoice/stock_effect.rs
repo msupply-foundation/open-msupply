@@ -16,7 +16,7 @@ pub fn stock_effects(
 ) -> StockEffect {
     let reduce_stock = to_status.index() >= InvoiceStatus::Picked.index()
         && from_status.index() < InvoiceStatus::Picked.index();
-    let increase_stock = to_status.index() >= InvoiceStatus::Received.index()
+    let create_stock = to_status.index() >= InvoiceStatus::Received.index()
         && from_status.index() < InvoiceStatus::Received.index();
 
     match invoice_type {
@@ -49,7 +49,7 @@ pub fn stock_effects(
         }
 
         InvoiceType::InboundShipment => {
-            if increase_stock {
+            if create_stock {
                 StockEffect::CreateStock
             } else {
                 StockEffect::None
@@ -57,7 +57,7 @@ pub fn stock_effects(
         }
 
         InvoiceType::CustomerReturn => {
-            if increase_stock {
+            if create_stock {
                 StockEffect::CreateStock
             } else {
                 StockEffect::None
