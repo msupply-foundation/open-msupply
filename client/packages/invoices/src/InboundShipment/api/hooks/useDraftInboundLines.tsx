@@ -83,14 +83,15 @@ export const useDraftInboundLines = (
     }
   }, [lines, item, id, isDirty]);
 
-  const addDraftLine = () => {
+  const addDraftLine = (initialPatch?: Partial<DraftInboundLine>) => {
     if (item) {
       const newLine = CreateDraft.stockInLine({
         item,
         invoiceId: id,
       });
+      const line = { ...newLine, ...initialPatch };
       setIsDirty(true);
-      setDraftLines(draftLines => [...draftLines, newLine]);
+      setDraftLines(draftLines => [...draftLines, line]);
     }
   };
 

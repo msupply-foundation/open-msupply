@@ -7,8 +7,10 @@ use graphql_core::{
 use service::auth::{Resource, ResourceAccessRequest};
 
 const DEFAULT_LOW_STOCK_THRESHOLD: i32 = 3;
+const DEFAULT_HIGH_STOCK_THRESHOLD: i32 = 6;
 pub struct ItemCounts {
     low_stock_threshold: Option<i32>,
+    high_stock_threshold: Option<i32>,
     store_id: String,
 }
 
@@ -17,7 +19,7 @@ pub struct ItemCountsResponse {
     total: i64,
     no_stock: i64,
     low_stock: i64,
-    more_than_six_months_stock: i64,
+    high_stock: i64,
     out_of_stock_products: i64,
     products_at_risk_of_being_out_of_stock: i64,
     products_overstocked: i64,
@@ -32,13 +34,21 @@ impl ItemCounts {
         let low_stock_threshold_in_months = self
             .low_stock_threshold
             .unwrap_or(DEFAULT_LOW_STOCK_THRESHOLD);
+        let high_stock_threshold_in_months = self
+            .high_stock_threshold
+            .unwrap_or(DEFAULT_HIGH_STOCK_THRESHOLD);
 
-        match service.get_item_counts(&service_ctx, &self.store_id, low_stock_threshold_in_months) {
+        match service.get_item_counts(
+            &service_ctx,
+            &self.store_id,
+            low_stock_threshold_in_months,
+            high_stock_threshold_in_months,
+        ) {
             Ok(item_counts) => Ok(ItemCountsResponse {
                 total: item_counts.total,
                 no_stock: item_counts.no_stock,
                 low_stock: item_counts.low_stock,
-                more_than_six_months_stock: item_counts.more_than_six_months_stock,
+                high_stock: item_counts.high_stock,
                 out_of_stock_products: item_counts.out_of_stock_products,
                 products_at_risk_of_being_out_of_stock: item_counts
                     .products_at_risk_of_being_out_of_stock,
@@ -53,6 +63,7 @@ pub fn item_counts(
     ctx: &Context<'_>,
     store_id: String,
     low_stock_threshold: Option<i32>,
+    high_stock_threshold: Option<i32>,
 ) -> Result<ItemCounts> {
     validate_auth(
         ctx,
@@ -64,6 +75,7 @@ pub fn item_counts(
 
     Ok(ItemCounts {
         low_stock_threshold,
+        high_stock_threshold,
         store_id,
     })
 }
