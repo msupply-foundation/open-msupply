@@ -98,6 +98,9 @@ export const ITEM_BY_ID = gql`
           id
           name
           code
+          stats(storeId: $storeId) {
+            availableStockOnHand
+          }
         }
       }
     }
@@ -116,6 +119,9 @@ export const ITEMS_SEARCH = gql`
           id
           name
           code
+          stats(storeId: $storeId) {
+            availableStockOnHand
+          }
         }
       }
     }

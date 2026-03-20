@@ -16,17 +16,16 @@ import {
 } from "../../api/graphql/operations";
 import { extractGtin } from "../../utils/gs1";
 
-interface LineAllocation {
-  lineId: string;
-  stockLineId: string;
-  numberOfPacks: number;
-}
-
 interface PrescriptionItem {
   itemId: string;
   itemName: string;
   quantity: number;
-  allocations: LineAllocation[];
+  availableStock: number;
+}
+
+interface LocationState {
+  existingItems?: PrescriptionItem[];
+  selectedItem?: { id: string; name: string; availableStock: number };
 }
 
 export default function IssueScreen() {
@@ -36,9 +35,13 @@ export default function IssueScreen() {
   const prefs = useAppPreferences();
   const { scan, scanning } = useBarcodeScanner();
 
-  const [prescriptionId, setPrescriptionId] = useState(() => uuid());
-  const [items, setItems] = useState<PrescriptionItem[]>([]);
+  // Restore items from navigation round-trip (survives search screen navigation)
+  const locState = location.state as LocationState | null;
+  const [items, setItems] = useState<PrescriptionItem[]>(
+    () => locState?.existingItems ?? []
+  );
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
@@ -53,11 +56,6 @@ export default function IssueScreen() {
 
   const [patientId, setPatientId] = useState<string | null>(null);
 
-  // Refs for async-safe access to latest state
-  const prescriptionCreatedRef = useRef(false);
-  const itemsRef = useRef<PrescriptionItem[]>([]);
-  itemsRef.current = items;
-
   // Load patient ID — only once on mount
   const patientLoadedRef = useRef(false);
   useEffect(() => {
@@ -66,190 +64,61 @@ export default function IssueScreen() {
     prefs.get<string>(PREF_KEYS.NAME_ID).then(setPatientId);
   }, [prefs]);
 
-  // ── Create the prescription on first item add ───────────────────────────
-  const ensurePrescriptionCreated = useCallback(async () => {
-    if (prescriptionCreatedRef.current || !storeId || !patientId) return;
-
-    await insertPrescription({
-      variables: { storeId, id: prescriptionId, patientId },
-    });
-
-    prescriptionCreatedRef.current = true;
-  }, [storeId, patientId, prescriptionId, insertPrescription]);
-
-  // ── Allocate stock for an item using FEFO ───────────────────────────────
-  const allocateStock = useCallback(
-    async (itemId: string, requestedQty: number): Promise<LineAllocation[]> => {
-      if (!storeId) return [];
-
-      const { data } = await stockLinesQuery({
-        variables: { storeId, itemId },
-        fetchPolicy: "network-only",
-      });
-
-      const stockNodes = data?.stockLines?.nodes ?? [];
-      if (stockNodes.length === 0) return [];
-
-      // Check if we already have line IDs for this item's stock lines
-      const existing = itemsRef.current.find((i) => i.itemId === itemId);
-      const existingLineMap = new Map<string, string>();
-      if (existing) {
-        for (const a of existing.allocations) {
-          existingLineMap.set(a.stockLineId, a.lineId);
-        }
-      }
-
-      const allocations: LineAllocation[] = [];
-      let remaining = requestedQty;
-
-      for (const sl of stockNodes) {
-        if (remaining <= 0) break;
-        const available = sl.availableNumberOfPacks ?? 0;
-        if (available <= 0) continue;
-
-        const take = Math.min(remaining, available);
-        allocations.push({
-          // Reuse existing line ID for same stock line, or generate new
-          lineId: existingLineMap.get(sl.id) ?? uuid(),
-          stockLineId: sl.id,
-          numberOfPacks: take,
-        });
-        remaining -= take;
-      }
-
-      return allocations;
-    },
-    [storeId, stockLinesQuery]
-  );
-
-  // ── Save allocations to the server ──────────────────────────────────────
-  const saveItemLines = useCallback(
-    async (itemId: string, allocations: LineAllocation[]) => {
-      if (!storeId || allocations.length === 0) return;
-
-      await savePrescriptionLines({
-        variables: {
-          storeId,
-          input: {
-            invoiceId: prescriptionId,
-            itemId,
-            lines: allocations.map((a) => ({
-              id: a.lineId,
-              stockLineId: a.stockLineId,
-              numberOfPacks: a.numberOfPacks,
-            })),
-          },
-        },
-      });
-    },
-    [storeId, prescriptionId, savePrescriptionLines]
-  );
-
-  // ── Add or increment an item ────────────────────────────────────────────
+  // ── Add item to local list (no server calls) ─────────────────────────────
   const addItem = useCallback(
-    async (itemId: string, itemName: string) => {
-      if (!storeId) return;
-
-      setAdding(true);
+    (itemId: string, itemName: string, availableStock: number) => {
       setError(null);
+      setSuccessMsg(null);
 
-      try {
-        await ensurePrescriptionCreated();
-
-        const currentItems = itemsRef.current;
-        const existingIdx = currentItems.findIndex((i) => i.itemId === itemId);
-        const newQty =
-          existingIdx >= 0 ? currentItems[existingIdx].quantity + 1 : 1;
-
-        const allocations = await allocateStock(itemId, newQty);
-
-        if (allocations.length === 0) {
-          setError(`No available stock for ${itemName}`);
-          return;
-        }
-
-        await saveItemLines(itemId, allocations);
-
+      setItems((prev) => {
+        const existingIdx = prev.findIndex((i) => i.itemId === itemId);
         if (existingIdx >= 0) {
-          setItems((prev) =>
-            prev.map((item, idx) =>
-              idx === existingIdx
-                ? { ...item, quantity: newQty, allocations }
-                : item
-            )
+          return prev.map((item, idx) =>
+            idx === existingIdx
+              ? {
+                  ...item,
+                  quantity: Math.min(item.quantity + 1, item.availableStock),
+                }
+              : item
           );
-        } else {
-          setItems((prev) => [
-            ...prev,
-            { itemId, itemName, quantity: newQty, allocations },
-          ]);
         }
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to add item"
-        );
-      } finally {
-        setAdding(false);
-      }
+        return [
+          ...prev,
+          { itemId, itemName, quantity: Math.min(1, availableStock), availableStock },
+        ];
+      });
     },
-    [storeId, ensurePrescriptionCreated, allocateStock, saveItemLines]
+    []
   );
 
-  // ── Handle item selected from search screen ─────────────────────────────
-  // Use a ref + timestamp to avoid dependency on addItem (which changes
-  // with items state), preventing re-triggering loops.
-  const pendingSelectionRef = useRef<{
-    id: string;
-    name: string;
-    ts: number;
-  } | null>(null);
-
+  // ── Handle selectedItem from search on mount ──────────────────────────────
+  const initRef = useRef(false);
   useEffect(() => {
-    const selected = (
-      location.state as { selectedItem?: { id: string; name: string } }
-    )?.selectedItem;
+    if (initRef.current) return;
+    initRef.current = true;
 
+    const selected = locState?.selectedItem;
     if (selected) {
-      pendingSelectionRef.current = {
-        id: selected.id,
-        name: selected.name,
-        ts: Date.now(),
-      };
-      // Clear the location state immediately
-      navigate("/issue", { replace: true, state: {} });
+      addItem(selected.id, selected.name, selected.availableStock);
     }
-  }, [location.state, navigate]);
 
-  // Process the pending selection separately, so addItem dependency
-  // changes don't re-trigger the location state effect
-  useEffect(() => {
-    const pending = pendingSelectionRef.current;
-    if (!pending) return;
-
-    // Only process once
-    const ts = pending.ts;
-    pendingSelectionRef.current = null;
-
-    addItem(pending.id, pending.name);
-
-    // Cleanup: if this effect re-runs, don't re-process
-    return () => {
-      if (
-        pendingSelectionRef.current &&
-        pendingSelectionRef.current.ts === ts
-      ) {
-        pendingSelectionRef.current = null;
-      }
-    };
-  }, [addItem]);
+    // Clear location state so refreshes don't re-add
+    navigate("/issue", { replace: true, state: {} });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Barcode scan handler ────────────────────────────────────────────────
   const handleScan = async () => {
     if (!storeId) return;
 
     setError(null);
+    setSuccessMsg(null);
+    setAdding(true);
+
     const rawBarcode = await scan();
-    if (!rawBarcode) return;
+    if (!rawBarcode) {
+      setAdding(false);
+      return;
+    }
 
     const gtin = extractGtin(rawBarcode);
 
@@ -265,30 +134,111 @@ export default function IssueScreen() {
         });
         const itemNode = itemData?.items?.nodes?.[0];
         const itemName = itemNode?.name ?? barcodeNode.itemId;
-        await addItem(barcodeNode.itemId, itemName);
+        const availableStock = itemNode?.stats?.availableStockOnHand ?? 0;
+        addItem(barcodeNode.itemId, itemName, availableStock);
       } else {
         navigate("/issue/search", {
-          state: { returnTo: "/issue", barcode: gtin },
+          state: { returnTo: "/issue", existingItems: items, barcode: gtin },
         });
       }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Barcode lookup failed"
       );
+    } finally {
+      setAdding(false);
     }
   };
 
-  // ── Finish: set status to PICKED ────────────────────────────────────────
-  const handleFinish = async () => {
-    if (!storeId || !prescriptionCreatedRef.current) {
-      resetState();
+  // ── Remove item from list ───────────────────────────────────────────────
+  const handleRemoveItem = (idx: number) => {
+    setItems((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // ── Edit quantity (local only, capped to available stock) ───────────────
+  const handleQuantityEdit = (idx: number) => {
+    const newQty = parseInt(editQty, 10);
+    const item = items[idx];
+    if (isNaN(newQty) || newQty < 1) {
+      setEditingIdx(null);
       return;
     }
 
+    const capped = Math.min(newQty, item.availableStock);
+    setItems((prev) =>
+      prev.map((it, i) => (i === idx ? { ...it, quantity: capped } : it))
+    );
+    setEditingIdx(null);
+  };
+
+  // ── Finish: batch create prescription on server ─────────────────────────
+  const handleFinish = async () => {
+    if (!storeId || !patientId || items.length === 0) return;
+
     setFinishing(true);
     setError(null);
+    setSuccessMsg(null);
 
     try {
+      const prescriptionId = uuid();
+
+      // 1. Create the prescription
+      await insertPrescription({
+        variables: { storeId, id: prescriptionId, patientId },
+      });
+
+      // 2. For each item: query stock lines, FEFO allocate, save lines
+      for (const item of items) {
+        const { data } = await stockLinesQuery({
+          variables: { storeId, itemId: item.itemId },
+          fetchPolicy: "network-only",
+        });
+
+        const stockNodes = data?.stockLines?.nodes ?? [];
+        if (stockNodes.length === 0) {
+          setError(
+            `No available stock for "${item.itemName}". Prescription was created but may be incomplete.`
+          );
+          continue;
+        }
+
+        // FEFO allocation
+        const lines: {
+          id: string;
+          stockLineId: string;
+          numberOfPacks: number;
+        }[] = [];
+        let remaining = item.quantity;
+
+        for (const sl of stockNodes) {
+          if (remaining <= 0) break;
+          const available = sl.availableNumberOfPacks ?? 0;
+          if (available <= 0) continue;
+
+          const take = Math.min(remaining, available);
+          lines.push({
+            id: uuid(),
+            stockLineId: sl.id,
+            numberOfPacks: take,
+          });
+          remaining -= take;
+        }
+
+        if (lines.length > 0) {
+          await savePrescriptionLines({
+            variables: {
+              storeId,
+              input: {
+                invoiceId: prescriptionId,
+                itemId: item.itemId,
+                lines,
+              },
+            },
+          });
+        }
+      }
+
+      // 3. Set status to PICKED
       await updatePrescription({
         variables: {
           storeId,
@@ -296,57 +246,19 @@ export default function IssueScreen() {
         },
       });
 
-      resetState();
+      // Success — reset for next prescription
+      setItems([]);
+      setSuccessMsg("Prescription created and picked successfully");
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to finalise prescription"
+          : "Failed to create prescription"
       );
     } finally {
       setFinishing(false);
     }
-  };
-
-  const resetState = () => {
-    setPrescriptionId(uuid());
-    prescriptionCreatedRef.current = false;
-    setItems([]);
-    setError(null);
-  };
-
-  // ── Edit quantity ───────────────────────────────────────────────────────
-  const handleQuantityEdit = async (idx: number) => {
-    if (!storeId) return;
-
-    const newQty = parseInt(editQty, 10);
-    if (isNaN(newQty) || newQty < 1) {
-      setEditingIdx(null);
-      return;
-    }
-
-    const item = items[idx];
-    try {
-      const allocations = await allocateStock(item.itemId, newQty);
-
-      if (allocations.length === 0) {
-        setError(`No available stock for ${item.itemName}`);
-        setEditingIdx(null);
-        return;
-      }
-
-      await saveItemLines(item.itemId, allocations);
-
-      setItems((prev) =>
-        prev.map((it, i) =>
-          i === idx ? { ...it, quantity: newQty, allocations } : it
-        )
-      );
-    } catch {
-      // Keep old value on error
-    }
-
-    setEditingIdx(null);
   };
 
   return (
@@ -371,7 +283,7 @@ export default function IssueScreen() {
             className="btn-secondary"
             onClick={() =>
               navigate("/issue/search", {
-                state: { returnTo: "/issue" },
+                state: { returnTo: "/issue", existingItems: items },
               })
             }
             disabled={!patientId || finishing || adding}
@@ -392,6 +304,12 @@ export default function IssueScreen() {
           </div>
         )}
 
+        {successMsg && (
+          <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+            {successMsg}
+          </div>
+        )}
+
         {/* Item list */}
         {items.length > 0 && (
           <div className="flex-1 overflow-y-auto">
@@ -403,8 +321,11 @@ export default function IssueScreen() {
                 >
                   <div className="flex-1 min-w-0">
                     <p className="truncate font-medium">{item.itemName}</p>
+                    <p className="text-xs text-gray-400">
+                      {item.availableStock} available
+                    </p>
                   </div>
-                  <div className="ml-3 flex items-center">
+                  <div className="ml-3 flex items-center gap-2">
                     {editingIdx === idx ? (
                       <input
                         className="w-16 rounded border border-primary-300 px-2 py-1 text-center text-sm"
@@ -429,6 +350,25 @@ export default function IssueScreen() {
                         x{item.quantity}
                       </button>
                     )}
+                    <button
+                      className="rounded-lg p-1 text-red-400 active:bg-red-50"
+                      onClick={() => handleRemoveItem(idx)}
+                      aria-label="Remove item"
+                    >
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -436,7 +376,7 @@ export default function IssueScreen() {
           </div>
         )}
 
-        {items.length === 0 && patientId && (
+        {items.length === 0 && patientId && !successMsg && (
           <div className="flex flex-1 items-center justify-center">
             <p className="text-sm text-gray-400">
               Scan a barcode or search to start adding items
@@ -452,7 +392,7 @@ export default function IssueScreen() {
               onClick={handleFinish}
               disabled={finishing}
             >
-              {finishing ? "Finalising..." : "Finish & Pick"}
+              {finishing ? "Creating prescription..." : "Finished & Next"}
             </button>
           </div>
         )}

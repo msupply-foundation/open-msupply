@@ -9,6 +9,9 @@ interface ItemResult {
   id: string;
   name: string;
   code: string;
+  stats?: {
+    availableStockOnHand: number;
+  };
 }
 
 export default function ItemSearchScreen() {
@@ -23,7 +26,12 @@ export default function ItemSearchScreen() {
 
   const [searchItems] = useLazyQuery(ITEMS_SEARCH);
 
-  const barcode = (location.state as { barcode?: string })?.barcode;
+  const locState = location.state as {
+    barcode?: string;
+    existingItems?: unknown[];
+  } | null;
+  const barcode = locState?.barcode;
+  const existingItems = locState?.existingItems;
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -55,9 +63,17 @@ export default function ItemSearchScreen() {
   }, [query, storeId, searchItems]);
 
   const handleSelect = (item: ItemResult) => {
-    // Navigate back to issue screen with selected item
+    const availableStock = item.stats?.availableStockOnHand ?? 0;
+    // Navigate back to issue screen, preserving existing items
     navigate("/issue", {
-      state: { selectedItem: { id: item.id, name: item.name } },
+      state: {
+        selectedItem: {
+          id: item.id,
+          name: item.name,
+          availableStock,
+        },
+        existingItems,
+      },
     });
   };
 
@@ -98,16 +114,30 @@ export default function ItemSearchScreen() {
         )}
 
         <div className="space-y-1">
-          {results.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleSelect(item)}
-              className="w-full rounded-lg px-3 py-3 text-left active:bg-gray-100"
-            >
-              <p className="font-medium">{item.name}</p>
-              <p className="text-sm text-gray-500">{item.code}</p>
-            </button>
-          ))}
+          {results.map((item) => {
+            const stock = item.stats?.availableStockOnHand ?? 0;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleSelect(item)}
+                className="w-full rounded-lg px-3 py-3 text-left active:bg-gray-100"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-gray-500">{item.code}</p>
+                  </div>
+                  <span
+                    className={`ml-2 text-sm font-medium ${
+                      stock > 0 ? "text-green-600" : "text-red-500"
+                    }`}
+                  >
+                    {stock} avail
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
