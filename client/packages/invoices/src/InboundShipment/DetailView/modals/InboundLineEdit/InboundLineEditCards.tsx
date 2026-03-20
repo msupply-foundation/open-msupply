@@ -691,7 +691,6 @@ export const InboundLineEditCards = ({
     <>
       <CardList
         table={table}
-        tableId="inbound-line-edit"
         lastItemRef={lastCardRef}
         groupIcons={groupIcons}
         actions={actions}
