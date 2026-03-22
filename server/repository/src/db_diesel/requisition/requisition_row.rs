@@ -11,7 +11,6 @@ use crate::repository_error::RepositoryError;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -193,7 +192,7 @@ impl<'a> RequisitionRowRepository<'a> {
                     .eq(r#type)
                     .and(requisition::store_id.eq(store_id)),
             )
-            .select(max(requisition::requisition_number))
+            .select(diesel::dsl::max(requisition::requisition_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }
