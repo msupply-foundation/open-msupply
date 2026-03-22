@@ -7458,6 +7458,7 @@ export type Queries = {
   temperatureLogs: TemperatureLogsResponse;
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
+  unitsOrderedInOtherPurchaseOrders: Scalars['Float']['output'];
   vaccination?: Maybe<VaccinationNode>;
   vaccinationCard: VaccinationCardResponse;
   vaccineCourse: VaccineCourseResponse;
@@ -8145,6 +8146,12 @@ export type QueriesTemperatureLogsArgs = {
 
 export type QueriesTemperatureNotificationsArgs = {
   page?: InputMaybe<PaginationInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesUnitsOrderedInOtherPurchaseOrdersArgs = {
+  excludePurchaseOrderId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
