@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLazyQuery } from "@apollo/client";
+import { useNavigate } from "react-router-dom";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import BackButton from "../components/BackButton";
@@ -29,6 +30,7 @@ function buildServerUrl(host: string, port: string): string {
 }
 
 export default function SettingsScreen() {
+  const navigate = useNavigate();
   const { serverUrl, storeId, storeName, setServerUrlAndSave } = useAuth();
   const prefs = useAppPreferences();
   const { scan } = useBarcodeScanner();
@@ -319,6 +321,34 @@ export default function SettingsScreen() {
               Log in first to validate the name code
             </p>
           )}
+        </section>
+
+        {/* Data Collection */}
+        <section className="card">
+          <button
+            className="flex w-full items-center justify-between"
+            onClick={() => navigate("/settings/data-collection")}
+          >
+            <div>
+              <h2 className="text-base font-semibold">Data Collection</h2>
+              <p className="text-sm text-gray-500">
+                Configure demographics and other data screens
+              </p>
+            </div>
+            <svg
+              className="h-5 w-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
         </section>
       </div>
     </div>

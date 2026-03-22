@@ -6,6 +6,8 @@ import SettingsScreen from "../screens/SettingsScreen";
 import IssueScreen from "../screens/issue/IssueScreen";
 import ItemSearchScreen from "../screens/issue/ItemSearchScreen";
 import DemographicsScreen from "../screens/issue/DemographicsScreen";
+import DataCollectionListScreen from "../screens/settings/DataCollectionListScreen";
+import ScreenFieldsScreen from "../screens/settings/ScreenFieldsScreen";
 import ReceiveListScreen from "../screens/receive/ReceiveListScreen";
 import ReceiveDetailScreen from "../screens/receive/ReceiveDetailScreen";
 import StocktakeScreen from "../screens/stocktake/StocktakeScreen";
@@ -31,6 +33,8 @@ export default function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/settings" element={<SettingsScreen />} />
+        <Route path="/settings/data-collection" element={<DataCollectionListScreen />} />
+        <Route path="/settings/data-collection/:screenId" element={<ScreenFieldsScreen />} />
         <Route
           path="/login"
           element={
