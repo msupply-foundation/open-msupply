@@ -2996,6 +2996,7 @@ export type IndicatorColumnNode = {
   __typename: 'IndicatorColumnNode';
   columnNumber: Scalars['Int']['output'];
   id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   value?: Maybe<IndicatorValueNode>;
   valueType?: Maybe<IndicatorValueTypeNode>;
@@ -3023,6 +3024,7 @@ export type IndicatorLineRowNode = {
   __typename: 'IndicatorLineRowNode';
   code: Scalars['String']['output'];
   id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
   lineNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   valueType?: Maybe<IndicatorValueTypeNode>;
@@ -4610,8 +4612,8 @@ export type ItemCounts = {
 
 export type ItemCountsResponse = {
   __typename: 'ItemCountsResponse';
+  highStock: Scalars['Int']['output'];
   lowStock: Scalars['Int']['output'];
-  moreThanSixMonthsStock: Scalars['Int']['output'];
   noStock: Scalars['Int']['output'];
   outOfStockProducts: Scalars['Int']['output'];
   productsAtRiskOfBeingOutOfStock: Scalars['Int']['output'];
@@ -7119,10 +7121,14 @@ export type PurchaseOrderLineError = {
 };
 
 export type PurchaseOrderLineFilterInput = {
+  expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
+  supplierName?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineNode = {
@@ -7789,6 +7795,7 @@ export type QueriesInvoicesArgs = {
 };
 
 export type QueriesItemCountsArgs = {
+  highStockThreshold?: InputMaybe<Scalars['Int']['input']>;
   lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
   storeId: Scalars['String']['input'];
 };
@@ -9188,6 +9195,7 @@ export enum StockLineSortFieldInput {
   ItemCode = 'itemCode',
   ItemName = 'itemName',
   LocationCode = 'locationCode',
+  ManufactureDate = 'manufactureDate',
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
   SupplierName = 'supplierName',
