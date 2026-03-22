@@ -17,6 +17,7 @@
       "name": "mobile-vite",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
+      "cwd": "mobile",
       "port": 1420
     },
     {

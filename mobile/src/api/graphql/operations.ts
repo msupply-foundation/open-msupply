@@ -157,6 +157,7 @@ export const UPDATE_PRESCRIPTION = gql`
       ... on InvoiceNode {
         id
         status
+        comment
       }
     }
   }

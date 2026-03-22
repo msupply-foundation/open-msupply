@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
 
-export default function BackButton({ to }: { to?: string }) {
+export default function BackButton({ to, onClick }: { to?: string; onClick?: () => void }) {
   const navigate = useNavigate();
   return (
     <button
-      onClick={() => (to ? navigate(to) : navigate(-1))}
+      onClick={() => onClick ? onClick() : (to ? navigate(to) : navigate(-1))}
       className="mr-2 rounded-lg p-2 text-gray-600 active:bg-gray-100"
       aria-label="Go back"
     >

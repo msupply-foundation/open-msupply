@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useMutation, useLazyQuery } from "@apollo/client";
+import { useLazyQuery } from "@apollo/client";
 import { v4 as uuid } from "uuid";
 import BackButton from "../../components/BackButton";
 import { useAuth } from "../../hooks/useAuth";
@@ -9,14 +9,10 @@ import { useBarcodeScanner } from "../../hooks/useBarcodeScanner";
 import {
   BARCODE_BY_GTIN,
   ITEM_BY_ID,
-  INSERT_PRESCRIPTION,
-  UPDATE_PRESCRIPTION,
-  SAVE_PRESCRIPTION_ITEM_LINES,
-  STOCK_LINES_FOR_ITEM,
 } from "../../api/graphql/operations";
 import { extractGtin } from "../../utils/gs1";
 
-interface PrescriptionItem {
+export interface PrescriptionItem {
   itemId: string;
   itemName: string;
   quantity: number;
@@ -35,24 +31,18 @@ export default function IssueScreen() {
   const prefs = useAppPreferences();
   const { scan, scanning } = useBarcodeScanner();
 
-  // Restore items from navigation round-trip (survives search screen navigation)
+  // Restore items from navigation round-trip (survives search / demographics navigation)
   const locState = location.state as LocationState | null;
   const [items, setItems] = useState<PrescriptionItem[]>(
     () => locState?.existingItems ?? []
   );
   const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [finishing, setFinishing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editQty, setEditQty] = useState("");
 
   const [barcodeQuery] = useLazyQuery(BARCODE_BY_GTIN);
   const [itemQuery] = useLazyQuery(ITEM_BY_ID);
-  const [stockLinesQuery] = useLazyQuery(STOCK_LINES_FOR_ITEM);
-  const [insertPrescription] = useMutation(INSERT_PRESCRIPTION);
-  const [updatePrescription] = useMutation(UPDATE_PRESCRIPTION);
-  const [savePrescriptionLines] = useMutation(SAVE_PRESCRIPTION_ITEM_LINES);
 
   const [patientId, setPatientId] = useState<string | null>(null);
 
@@ -68,7 +58,6 @@ export default function IssueScreen() {
   const addItem = useCallback(
     (itemId: string, itemName: string, availableStock: number) => {
       setError(null);
-      setSuccessMsg(null);
 
       setItems((prev) => {
         const existingIdx = prev.findIndex((i) => i.itemId === itemId);
@@ -111,7 +100,6 @@ export default function IssueScreen() {
     if (!storeId) return;
 
     setError(null);
-    setSuccessMsg(null);
     setAdding(true);
 
     const rawBarcode = await scan();
@@ -142,9 +130,7 @@ export default function IssueScreen() {
         });
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Barcode lookup failed"
-      );
+      setError(err instanceof Error ? err.message : "Barcode lookup failed");
     } finally {
       setAdding(false);
     }
@@ -171,94 +157,16 @@ export default function IssueScreen() {
     setEditingIdx(null);
   };
 
-  // ── Finish: batch create prescription on server ─────────────────────────
-  const handleFinish = async () => {
-    if (!storeId || !patientId || items.length === 0) return;
-
-    setFinishing(true);
-    setError(null);
-    setSuccessMsg(null);
-
-    try {
-      const prescriptionId = uuid();
-
-      // 1. Create the prescription
-      await insertPrescription({
-        variables: { storeId, id: prescriptionId, patientId },
-      });
-
-      // 2. For each item: query stock lines, FEFO allocate, save lines
-      for (const item of items) {
-        const { data } = await stockLinesQuery({
-          variables: { storeId, itemId: item.itemId },
-          fetchPolicy: "network-only",
-        });
-
-        const stockNodes = data?.stockLines?.nodes ?? [];
-        if (stockNodes.length === 0) {
-          setError(
-            `No available stock for "${item.itemName}". Prescription was created but may be incomplete.`
-          );
-          continue;
-        }
-
-        // FEFO allocation
-        const lines: {
-          id: string;
-          stockLineId: string;
-          numberOfPacks: number;
-        }[] = [];
-        let remaining = item.quantity;
-
-        for (const sl of stockNodes) {
-          if (remaining <= 0) break;
-          const available = sl.availableNumberOfPacks ?? 0;
-          if (available <= 0) continue;
-
-          const take = Math.min(remaining, available);
-          lines.push({
-            id: uuid(),
-            stockLineId: sl.id,
-            numberOfPacks: take,
-          });
-          remaining -= take;
-        }
-
-        if (lines.length > 0) {
-          await savePrescriptionLines({
-            variables: {
-              storeId,
-              input: {
-                invoiceId: prescriptionId,
-                itemId: item.itemId,
-                lines,
-              },
-            },
-          });
-        }
-      }
-
-      // 3. Set status to PICKED
-      await updatePrescription({
-        variables: {
-          storeId,
-          input: { id: prescriptionId, status: "PICKED" },
-        },
-      });
-
-      // Success — reset for next prescription
-      setItems([]);
-      setSuccessMsg("Prescription created and picked successfully");
-      setTimeout(() => setSuccessMsg(null), 4000);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to create prescription"
-      );
-    } finally {
-      setFinishing(false);
-    }
+  // ── Continue: navigate to demographics screen ───────────────────────────
+  const handleContinue = () => {
+    if (items.length === 0) return;
+    navigate("/issue/demographics", {
+      state: {
+        prescriptionId: uuid(),
+        items,
+        existingItems: items,
+      },
+    });
   };
 
   return (
@@ -275,7 +183,7 @@ export default function IssueScreen() {
           <button
             className="btn-primary"
             onClick={handleScan}
-            disabled={scanning || !patientId || finishing || adding}
+            disabled={scanning || !patientId || adding}
           >
             {scanning ? "Scanning..." : adding ? "Adding..." : "Scan Barcode"}
           </button>
@@ -286,7 +194,7 @@ export default function IssueScreen() {
                 state: { returnTo: "/issue", existingItems: items },
               })
             }
-            disabled={!patientId || finishing || adding}
+            disabled={!patientId || adding}
           >
             Search by Name
           </button>
@@ -301,12 +209,6 @@ export default function IssueScreen() {
         {error && (
           <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-            {successMsg}
           </div>
         )}
 
@@ -376,7 +278,7 @@ export default function IssueScreen() {
           </div>
         )}
 
-        {items.length === 0 && patientId && !successMsg && (
+        {items.length === 0 && patientId && (
           <div className="flex flex-1 items-center justify-center">
             <p className="text-sm text-gray-400">
               Scan a barcode or search to start adding items
@@ -384,15 +286,11 @@ export default function IssueScreen() {
           </div>
         )}
 
-        {/* Finish button — only when items exist */}
+        {/* Continue button — only when items exist */}
         {items.length > 0 && (
           <div className="mt-4 pb-2">
-            <button
-              className="btn-primary"
-              onClick={handleFinish}
-              disabled={finishing}
-            >
-              {finishing ? "Creating prescription..." : "Finished & Next"}
+            <button className="btn-primary" onClick={handleContinue}>
+              Continue to Demographics
             </button>
           </div>
         )}

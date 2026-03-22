@@ -5,6 +5,7 @@ import HomeScreen from "../screens/HomeScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import IssueScreen from "../screens/issue/IssueScreen";
 import ItemSearchScreen from "../screens/issue/ItemSearchScreen";
+import DemographicsScreen from "../screens/issue/DemographicsScreen";
 import ReceiveListScreen from "../screens/receive/ReceiveListScreen";
 import ReceiveDetailScreen from "../screens/receive/ReceiveDetailScreen";
 import StocktakeScreen from "../screens/stocktake/StocktakeScreen";
@@ -61,6 +62,14 @@ export default function AppRouter() {
           element={
             <RequireAuth>
               <ItemSearchScreen />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/issue/demographics"
+          element={
+            <RequireAuth>
+              <DemographicsScreen />
             </RequireAuth>
           }
         />
