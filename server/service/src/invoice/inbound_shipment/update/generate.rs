@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
@@ -80,8 +80,8 @@ pub(crate) fn generate(
     update_invoice.currency_rate = patch.currency_rate.unwrap_or(update_invoice.currency_rate);
 
     // Already validated in validate
-    if let Some(delivered_datetime) = patch.delivered_datetime {
-        update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
+    if let Some(reporting_date) = patch.reporting_date {
+        update_invoice.reporting_date = Some(reporting_date);
     }
 
     let batches_to_update = if should_create_batches {

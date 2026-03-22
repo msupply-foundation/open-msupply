@@ -57,6 +57,7 @@ define_linked_tables! {
         expected_delivery_date -> Nullable<Date>,
         purchase_order_id -> Nullable<Text>,
         shipping_method_id -> Nullable<Text>,
+        reporting_date -> Nullable<Date>,
     },
     links:{
          name_link_id -> name_id,
@@ -153,6 +154,7 @@ pub struct InvoiceRow {
     pub expected_delivery_date: Option<NaiveDate>,
     pub purchase_order_id: Option<String>,
     pub shipping_method_id: Option<String>,
+    pub reporting_date: Option<NaiveDate>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
     pub default_donor_id: Option<String>,

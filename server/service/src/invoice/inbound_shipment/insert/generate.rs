@@ -43,6 +43,11 @@ pub fn generate(
         invoice_number: next_number(connection, &NumberRowType::InboundShipment, store_id)?,
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
+        reporting_date: if purchase_order_id.is_some() {
+            Some(current_datetime.date())
+        } else {
+            None
+        },
         status: InvoiceStatus::New,
         on_hold: on_hold.unwrap_or(false),
         colour,

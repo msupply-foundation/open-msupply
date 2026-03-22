@@ -120,6 +120,7 @@ export type InboundFragment = {
   createdDatetime: string;
   allocatedDatetime?: string | null;
   deliveredDatetime?: string | null;
+  reportingDate?: string | null;
   receivedDatetime?: string | null;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
@@ -329,6 +330,7 @@ export type InboundRowFragment = {
   comment?: string | null;
   createdDatetime: string;
   deliveredDatetime?: string | null;
+  reportingDate?: string | null;
   receivedDatetime?: string | null;
   id: string;
   invoiceNumber: number;
@@ -379,6 +381,7 @@ export type InvoicesQuery = {
       comment?: string | null;
       createdDatetime: string;
       deliveredDatetime?: string | null;
+      reportingDate?: string | null;
       receivedDatetime?: string | null;
       id: string;
       invoiceNumber: number;
@@ -427,6 +430,7 @@ export type InvoiceQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        reportingDate?: string | null;
         receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
@@ -669,6 +673,7 @@ export type InboundByNumberQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        reportingDate?: string | null;
         receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
@@ -1478,6 +1483,7 @@ export const InboundFragmentDoc = gql`
     createdDatetime
     allocatedDatetime
     deliveredDatetime
+    reportingDate
     receivedDatetime
     pickedDatetime
     shippedDatetime
@@ -1586,6 +1592,7 @@ export const InboundRowFragmentDoc = gql`
     comment
     createdDatetime
     deliveredDatetime
+    reportingDate
     receivedDatetime
     id
     invoiceNumber

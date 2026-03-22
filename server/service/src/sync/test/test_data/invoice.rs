@@ -158,6 +158,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         default_donor_id: Some("donor_a".to_string()),
         purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
+        reporting_date: None,
     }
 }
 
@@ -232,6 +233,7 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         goods_received_ID: None,
         purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
+        oms_fields: None,
     }
 }
 
@@ -373,6 +375,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            reporting_date: None,
         },
     )
 }
@@ -435,6 +438,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: None,
         }),
     }
 }
@@ -608,6 +612,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            reporting_date: None,
         },
     )
 }
@@ -699,6 +704,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: None,
         }),
     }
 }
@@ -847,6 +853,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            reporting_date: None,
         },
     )
 }
@@ -915,6 +922,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: None,
         }),
     }
 }
@@ -1063,6 +1071,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            reporting_date: None,
         },
     )
 }
@@ -1130,6 +1139,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: None,
         }),
     }
 }
@@ -1275,6 +1285,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            reporting_date: None,
         },
     )
 }
@@ -1342,6 +1353,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: None,
         }),
     }
 }
@@ -1493,6 +1505,7 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            reporting_date: None,
         },
     )
 }
@@ -1565,6 +1578,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: None,
         }),
     }
 }

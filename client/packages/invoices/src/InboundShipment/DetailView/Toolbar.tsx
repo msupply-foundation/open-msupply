@@ -49,7 +49,7 @@ export const Toolbar = () => {
     update: { update },
   } = useInboundShipment();
 
-  const { deliveredDatetime, otherParty, theirReference, purchaseOrder } =
+  const { reportingDate, otherParty, theirReference, purchaseOrder } =
     shipment || {};
 
   const isTransfer = !!shipment?.linkedShipment?.id;
@@ -134,23 +134,17 @@ export const Toolbar = () => {
             </Grid>
             <Grid>
               <InputWithLabelRow
-                label={t('label.delivered-date')}
+                label={t('label.reporting-date')}
                 Input={
                   <DateTimePickerInput
-                    value={DateUtils.getDateOrNull(deliveredDatetime)}
+                    value={DateUtils.getDateOrNull(reportingDate)}
                     onChange={date =>
                       update({
-                        deliveredDatetime:
+                        reportingDate:
                           Formatter.naiveDate(date) ?? undefined,
                       })
                     }
-                    // Max now or received date, whichever is earlier
-                    maxDate={
-                      shipment?.receivedDatetime
-                        ? (DateUtils.getDateOrNull(shipment.receivedDatetime) ??
-                          new Date())
-                        : new Date()
-                    }
+                    maxDate={new Date()}
                   />
                 }
               />

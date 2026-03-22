@@ -49,7 +49,7 @@ pub struct UpdateInput {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
-    pub delivered_datetime: Option<NaiveDate>,
+    pub reporting_date: Option<NaiveDate>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -120,7 +120,7 @@ impl UpdateInput {
             currency_id,
             currency_rate,
             default_donor,
-            delivered_datetime,
+            reporting_date,
         } = self;
 
         ServiceInput {
@@ -140,7 +140,7 @@ impl UpdateInput {
                 donor_id: donor.donor_id,
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
-            delivered_datetime,
+            reporting_date,
         }
     }
 }
@@ -208,8 +208,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::NotAnInboundShipment
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
-        | ServiceError::CannotPutDeliveredDateAfterReceivedDate
-        | ServiceError::CannotSetDeliveredDateInFuture
+        | ServiceError::CannotSetReportingDateInFuture
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment => {
             BadUserInput(formatted_error)
         }
@@ -553,7 +552,7 @@ mod test {
                     currency_id: None,
                     currency_rate: None,
                     default_donor: None,
-                    delivered_datetime: None,
+                    reporting_date: None,
                 }
             );
             Ok(Invoice {

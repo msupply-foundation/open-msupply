@@ -677,6 +677,7 @@ pub fn generate(
         default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
+        reporting_date: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

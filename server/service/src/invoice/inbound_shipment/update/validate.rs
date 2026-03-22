@@ -4,7 +4,7 @@ use crate::invoice::{
     inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 use repository::{
     InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceType, Name, StorageConnection,
 };
@@ -58,23 +58,15 @@ pub fn validate(
         }
     }
 
-    // Delivered datetime is only editable for external inbound shipments (those created from a
-    // purchase order). It must not be in the future and must not be after the received datetime,
-    // as the goods can't have been delivered after they were received.
-    if let Some(delivered_datetime) = patch.delivered_datetime {
+    // Reporting date is only editable for external inbound shipments (those created from a
+    // purchase order). It must not be in the future.
+    if let Some(reporting_date) = patch.reporting_date {
         if invoice.purchase_order_id.is_none() {
             return Err(CanOnlyChangeDateOfExternalInboundShipments);
         }
 
-        let delivered_datetime = NaiveDateTime::from(delivered_datetime);
-        if delivered_datetime > Utc::now().naive_utc() {
-            return Err(CannotSetDeliveredDateInFuture);
-        }
-
-        if let Some(received_datetime) = invoice.received_datetime {
-            if delivered_datetime > received_datetime {
-                return Err(CannotPutDeliveredDateAfterReceivedDate);
-            }
+        if reporting_date > Utc::now().naive_utc().date() {
+            return Err(CannotSetReportingDateInFuture);
         }
     }
 
