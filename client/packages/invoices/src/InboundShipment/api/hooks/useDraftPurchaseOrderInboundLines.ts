@@ -129,12 +129,19 @@ export const useDraftPurchaseOrderInboundLines = (
     }
   }, [existingLines, purchaseOrderLine, invoiceId, isDirty, setIsDirty]);
 
-  const addDraftLine = (initialPatch?: Partial<DraftInboundLine>) => {
-    if (!purchaseOrderLine) return;
-    const newLine = createDraftLine(purchaseOrderLine, invoiceId, initialPatch);
-    setIsDirty(true);
-    setDraftLines(prev => [...prev, newLine]);
-  };
+  const addDraftLine = useCallback(
+    (initialPatch?: Partial<DraftInboundLine>) => {
+      if (!purchaseOrderLine) return;
+      const newLine = createDraftLine(
+        purchaseOrderLine,
+        invoiceId,
+        initialPatch
+      );
+      setIsDirty(true);
+      setDraftLines(prev => [...prev, newLine]);
+    },
+    [purchaseOrderLine, invoiceId, setIsDirty]
+  );
 
   const duplicateDraftLine = useCallback(
     (lineId: string) => {
@@ -172,20 +179,22 @@ export const useDraftPurchaseOrderInboundLines = (
     [setDraftLines, setIsDirty]
   );
 
-  const removeDraftLine = (lineId: string) => {
-    const batch = draftLines.find(line => line.id === lineId);
-    if (!batch) return;
-    if (batch.isCreated) {
-      setDraftLines(prev => prev.filter(line => line.id !== lineId));
-    } else {
-      setDraftLines(prev =>
-        prev.map(line =>
+  const removeDraftLine = useCallback(
+    (lineId: string) => {
+      setDraftLines(prev => {
+        const batch = prev.find(line => line.id === lineId);
+        if (!batch) return prev;
+        if (batch.isCreated) {
+          return prev.filter(line => line.id !== lineId);
+        }
+        setIsDirty(true);
+        return prev.map(line =>
           line.id === lineId ? { ...line, isDeleted: true } : line
-        )
-      );
-      setIsDirty(true);
-    }
-  };
+        );
+      });
+    },
+    [setIsDirty]
+  );
 
   const saveLines = async () => {
     if (isDirty) {
