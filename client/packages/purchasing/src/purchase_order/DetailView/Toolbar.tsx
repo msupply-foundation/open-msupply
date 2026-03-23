@@ -55,7 +55,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   );
 
   const disabledRequestedDeliveryDate = data?.status
-    ? isFieldDisabled(data.status, StatusGroup.AfterConfirmed)
+    ? isFieldDisabled(data.status, StatusGroup.AfterSent)
     : false;
   const disabledExpectedDeliveryDate = data?.status
     ? isFieldDisabled(data.status, StatusGroup.AfterSent)
@@ -187,6 +187,19 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                     handleUpdate({
                       requestedDeliveryDate: formattedDate,
                     });
+                    // Auto-fill expected delivery date for lines that have none
+                    const linesWithoutExpected =
+                      data?.lines?.nodes?.filter(
+                        line => !line.expectedDeliveryDate
+                      ) ?? [];
+                    if (linesWithoutExpected.length > 0) {
+                      updateLines(linesWithoutExpected, {
+                        expectedDeliveryDate: formattedDate,
+                      });
+                      if (!getMostRecentExpectedDate()) {
+                        setExpectedDeliveryDate(date);
+                      }
+                    }
                   }}
                   width={250}
                   disabled={disabledRequestedDeliveryDate}
