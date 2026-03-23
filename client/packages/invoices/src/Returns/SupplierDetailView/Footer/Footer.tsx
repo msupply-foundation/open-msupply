@@ -89,7 +89,7 @@ export const FooterComponent = ({
   ];
 
   const statuses = supplierReturnSequence.filter(status =>
-    invoiceStatusOptions?.includes(status)
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
   );
 
   return (

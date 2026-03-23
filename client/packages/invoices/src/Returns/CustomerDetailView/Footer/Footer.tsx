@@ -91,7 +91,9 @@ export const FooterComponent = ({
 
   const statuses = getStatusSequence(InvoiceNodeType.CustomerReturn, {
     isManuallyCreated,
-  }).filter(status => invoiceStatusOptions?.includes(status));
+  }).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
 
   return (
     <AppFooterPortal

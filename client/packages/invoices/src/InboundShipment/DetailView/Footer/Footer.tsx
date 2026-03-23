@@ -182,7 +182,9 @@ export const FooterComponent = ({
   }
   const statuses = getStatusSequence(InvoiceNodeType.InboundShipment, {
     inboundShipmentType: shipmentType,
-  }).filter(status => invoiceStatusOptions?.includes(status));
+  }).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
 
   return (
     <AppFooterPortal

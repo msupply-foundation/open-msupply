@@ -118,7 +118,7 @@ export const QuantityReturnedTableComponent = ({
           <NumberInputCell
             cell={cell}
             disabled={isDisabled}
-            defaultValue={0}
+            defaultValue={1}
             updateFn={packSize =>
               updateLine({
                 ...row,

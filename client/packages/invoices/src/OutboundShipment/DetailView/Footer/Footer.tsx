@@ -137,7 +137,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   ];
 
   const statuses = outboundSequence.filter(status =>
-    invoiceStatusOptions?.includes(status)
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
   );
 
   return (
