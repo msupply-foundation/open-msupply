@@ -523,6 +523,7 @@ fragment ItemLedger on ItemLedgerNode {
   sellPricePerPack
   totalBeforeTax
   numberOfPacks
+  username
 }
 
 query itemLedger(

@@ -103,6 +103,10 @@ impl ItemLedgerNode {
     pub async fn number_of_packs(&self) -> &f64 {
         &self.item_ledger.number_of_packs
     }
+
+    pub async fn username(&self) -> &Option<String> {
+        &self.item_ledger.username
+    }
 }
 
 #[derive(SimpleObject)]
