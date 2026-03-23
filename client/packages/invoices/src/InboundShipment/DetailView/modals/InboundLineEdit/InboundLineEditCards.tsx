@@ -480,23 +480,6 @@ export const InboundLineEditCards = ({
         ),
       },
       {
-        id: 'foreignCurrencySellPricePerPack',
-        header: t('label.fc-sell-price'),
-        size: 100,
-        columnGroup: 'pricing',
-        accessorFn: row => {
-          if (foreignCurrency) {
-            return row.sellPricePerPack / foreignCurrency.rate;
-          }
-          return undefined;
-        },
-        Cell: ({ cell }) => (
-          <CurrencyInputCell cell={cell} disabled currencyCode={foreignCurrency?.code} />
-        ),
-        includeColumn:
-          isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
-      },
-      {
         accessorKey: 'lineTotal',
         header: t('label.line-total'),
         size: 100,
