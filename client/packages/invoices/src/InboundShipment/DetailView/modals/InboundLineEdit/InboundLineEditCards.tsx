@@ -46,7 +46,7 @@ interface CardProps {
   lines: DraftInboundLine[];
   updateDraftLine: (patch: PatchDraftLineInput) => void;
   isDisabled?: boolean;
-  currency?: CurrencyRowFragment | null;
+  foreignCurrency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
@@ -69,7 +69,7 @@ export const InboundLineEditCards = ({
   duplicateDraftLine,
   removeDraftLine,
   isDisabled = false,
-  currency,
+  foreignCurrency,
   isExternalSupplier,
   hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
@@ -448,17 +448,19 @@ export const InboundLineEditCards = ({
       {
         id: 'foreignCurrencyCostPricePerPack',
         header: t('label.fc-cost-price', {
-          currency: currency?.code,
+          currency: foreignCurrency?.code,
         }),
         size: 100,
         columnGroup: 'pricing',
         accessorFn: row => {
-          if (currency) {
-            return row.costPricePerPack / currency.rate;
+          if (foreignCurrency) {
+            return row.costPricePerPack / foreignCurrency.rate;
           }
           return undefined;
         },
-        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
+        Cell: ({ cell }) => (
+          <CurrencyInputCell cell={cell} disabled currencyCode={foreignCurrency?.code} />
+        ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
@@ -483,12 +485,14 @@ export const InboundLineEditCards = ({
         size: 100,
         columnGroup: 'pricing',
         accessorFn: row => {
-          if (currency) {
-            return row.sellPricePerPack / currency.rate;
+          if (foreignCurrency) {
+            return row.sellPricePerPack / foreignCurrency.rate;
           }
           return undefined;
         },
-        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
+        Cell: ({ cell }) => (
+          <CurrencyInputCell cell={cell} disabled currencyCode={foreignCurrency?.code} />
+        ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
@@ -507,12 +511,14 @@ export const InboundLineEditCards = ({
         size: 100,
         columnGroup: 'pricing',
         accessorFn: row => {
-          if (currency) {
-            return (row.costPricePerPack * row.numberOfPacks) / currency.rate;
+          if (foreignCurrency) {
+            return (row.costPricePerPack * row.numberOfPacks) / foreignCurrency.rate;
           }
           return undefined;
         },
-        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
+        Cell: ({ cell }) => (
+          <CurrencyInputCell cell={cell} disabled currencyCode={foreignCurrency?.code} />
+        ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
@@ -653,7 +659,7 @@ export const InboundLineEditCards = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     allowTrackingOfStockByDonor,
-    currency,
+    foreignCurrency,
     displayInDoses,
     duplicateDraftLine,
     hasItemVariantsEnabled,

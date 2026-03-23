@@ -326,7 +326,7 @@ const DetailViewInner = () => {
               // populating the item will the full details if they are missing
               // (which is the case when item info is scanned from barcode)
               item={entity as InboundLineItem}
-              currency={data.currency}
+              foreignCurrency={data.purchaseOrder?.currency ?? data.currency}
               isExternalSupplier={!data.otherParty.store}
               hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
               hasItemVariantsEnabled={hasItemVariantsEnabled}

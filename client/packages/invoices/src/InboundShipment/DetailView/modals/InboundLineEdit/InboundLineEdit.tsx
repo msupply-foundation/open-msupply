@@ -44,7 +44,7 @@ interface InboundLineEditProps {
   isOpen: boolean;
   onClose: () => void;
   isDisabled?: boolean;
-  currency?: CurrencyRowFragment | null;
+  foreignCurrency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   hasVvmStatusesEnabled?: boolean;
   hasItemVariantsEnabled?: boolean;
@@ -60,7 +60,7 @@ export const InboundLineEdit = ({
   isOpen,
   onClose,
   isDisabled = false,
-  currency,
+  foreignCurrency,
   isExternalSupplier,
   hasVvmStatusesEnabled = false,
   hasItemVariantsEnabled = false,
@@ -253,7 +253,7 @@ export const InboundLineEdit = ({
       duplicateDraftLine={duplicateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
-      currency={currency}
+      foreignCurrency={foreignCurrency}
       isExternalSupplier={isExternalSupplier}
       item={effectiveItem}
       hasItemVariantsEnabled={hasItemVariantsEnabled}
