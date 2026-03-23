@@ -144,7 +144,6 @@ export const CardListItem = <T extends MRT_RowData>({
               <Typography
                 key={cell.id}
                 variant="subtitle2"
-                fontWeight={700}
                 noWrap
               >
                 {getSummaryContent(cell)}
