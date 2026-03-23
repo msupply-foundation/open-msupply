@@ -81,46 +81,8 @@ impl InvoiceTypeInput {
         }
     }
 
-    pub fn apply_filter(&self, mut filter: InvoiceFilter) -> InvoiceFilter {
+    fn invoice_type(&self) -> InvoiceType {
         match self {
-            InvoiceTypeInput::OutboundShipment => {
-                filter.r#type = Some(InvoiceType::OutboundShipment.equal_to());
-            }
-            InvoiceTypeInput::InboundShipment => {
-                filter.r#type = Some(InvoiceType::InboundShipment.equal_to());
-                filter.purchase_order_id = Some(repository::EqualFilter::is_null(true));
-            }
-            InvoiceTypeInput::InboundShipmentExternal => {
-                filter.r#type = Some(InvoiceType::InboundShipment.equal_to());
-                filter.purchase_order_id = Some(repository::EqualFilter::is_null(false));
-            }
-            InvoiceTypeInput::Prescription => {
-                filter.r#type = Some(InvoiceType::Prescription.equal_to());
-            }
-            InvoiceTypeInput::SupplierReturn => {
-                filter.r#type = Some(InvoiceType::SupplierReturn.equal_to());
-            }
-            InvoiceTypeInput::CustomerReturn => {
-                filter.r#type = Some(InvoiceType::CustomerReturn.equal_to());
-            }
-        }
-        filter
-    }
-}
-
-fn apply_type_filters(filter: &mut InvoiceFilter, types: &[InvoiceTypeInput]) {
-    if types.len() == 1 {
-        *filter = types[0].apply_filter(std::mem::take(filter));
-        return;
-    }
-
-    let has_inbound = types.contains(&InvoiceTypeInput::InboundShipment);
-    let has_external = types.contains(&InvoiceTypeInput::InboundShipmentExternal);
-
-    // Collect the underlying InvoiceType values (deduplicating InboundShipment/External)
-    let mut invoice_types: Vec<InvoiceType> = Vec::new();
-    for t in types {
-        let invoice_type = match t {
             InvoiceTypeInput::OutboundShipment => InvoiceType::OutboundShipment,
             InvoiceTypeInput::InboundShipment | InvoiceTypeInput::InboundShipmentExternal => {
                 InvoiceType::InboundShipment
@@ -128,19 +90,40 @@ fn apply_type_filters(filter: &mut InvoiceFilter, types: &[InvoiceTypeInput]) {
             InvoiceTypeInput::Prescription => InvoiceType::Prescription,
             InvoiceTypeInput::SupplierReturn => InvoiceType::SupplierReturn,
             InvoiceTypeInput::CustomerReturn => InvoiceType::CustomerReturn,
-        };
+        }
+    }
+}
+
+fn apply_type_filters(filter: &mut InvoiceFilter, types: &[InvoiceTypeInput]) {
+    // Collect the underlying InvoiceType values (deduplicating InboundShipment/External)
+    let mut invoice_types: Vec<InvoiceType> = Vec::new();
+    for t in types {
+        let invoice_type = t.invoice_type();
         if !invoice_types.contains(&invoice_type) {
             invoice_types.push(invoice_type);
         }
     }
 
-    filter.r#type = Some(EqualFilter::equal_any(invoice_types));
+    if invoice_types.len() == 1 {
+        filter.r#type = Some(invoice_types.remove(0).equal_to());
+    } else {
+        filter.r#type = Some(EqualFilter::equal_any(invoice_types));
+    }
+
+    let has_inbound = types.contains(&InvoiceTypeInput::InboundShipment);
+    let has_external = types.contains(&InvoiceTypeInput::InboundShipmentExternal);
 
     // Only apply purchase_order_id filter if exactly one of inbound/external is requested
     if has_inbound && !has_external {
-        filter.purchase_order_id = Some(repository::EqualFilter::is_null(true));
+        filter
+            .purchase_order_id
+            .get_or_insert_with(Default::default)
+            .is_null = Some(true);
     } else if has_external && !has_inbound {
-        filter.purchase_order_id = Some(repository::EqualFilter::is_null(false));
+        filter
+            .purchase_order_id
+            .get_or_insert_with(Default::default)
+            .is_null = Some(false);
     }
     // If both are requested, no purchase_order_id filter needed
 }
@@ -200,7 +183,11 @@ pub fn get_invoice(
         service_provider.context(store_id.clone().unwrap_or("".to_string()), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
-    let type_filter = r#type.map(|s| s.apply_filter(InvoiceFilter::default()));
+    let type_filter = r#type.map(|s| {
+        let mut f = InvoiceFilter::default();
+        apply_type_filters(&mut f, &[s]);
+        f
+    });
     let invoice_option =
         invoice_service.get_invoice(&service_context, store_id.as_deref(), id, type_filter)?;
 
@@ -285,7 +272,8 @@ pub fn get_invoice_by_number(
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let invoice_service = &service_provider.invoice_service;
 
-    let type_filter = r#type.apply_filter(InvoiceFilter::default());
+    let mut type_filter = InvoiceFilter::default();
+    apply_type_filters(&mut type_filter, &[r#type]);
     let invoice_option = invoice_service.get_invoice_by_number(
         &service_context,
         &store_id,

@@ -30,7 +30,6 @@ export const InboundShipments = () => {
     offset: 0,
     filterBy: {
       purchaseOrderId: { equalTo: purchaseOrderId || '' },
-      type: { equalTo: 'INBOUND' },
     },
     sortBy: { key: 'number', direction: 'desc' as 'asc' | 'desc' },
     type: [InvoiceTypeInput.InboundShipmentExternal],
