@@ -328,7 +328,7 @@ export const PurchaseOrderLineEdit = ({
                   requestedDeliveryDate: value,
                 };
                 if (!draft?.expectedDeliveryDate && value) {
-                  patch.expectedDeliveryDate = value;
+                  patch['expectedDeliveryDate'] = value;
                 }
                 update(patch);
               }}
