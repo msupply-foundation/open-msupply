@@ -154,6 +154,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
         </Row>
         <Row label={t('label.reason')} isExtraSmallScreen={isExtraSmallScreen}>
           <Autocomplete
+            required={draft.status === AssetLogStatusNodeType.NotFunctioning}
             disabled={reasons.length === 0}
             options={reasons}
             width="100%"
