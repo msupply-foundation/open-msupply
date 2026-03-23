@@ -3,9 +3,7 @@ use serde::Serialize;
 use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
-use repository::{
-    ChangelogRow, ChangelogTableName, EncounterRowRepository, StorageConnection,
-};
+use repository::{ChangelogRow, ChangelogTableName, EncounterRowRepository, StorageConnection};
 
 /*
     This translator is only used to push Encounter rows to the legacy mSupply server.

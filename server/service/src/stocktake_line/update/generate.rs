@@ -58,9 +58,7 @@ pub fn generate(
         item_variant_id: item_variant_id
             .map(|v| v.value)
             .unwrap_or(existing_line.item_variant_id),
-        donor_id: donor_id
-            .map(|d| d.value)
-            .unwrap_or(existing_line.donor_id),
+        donor_id: donor_id.map(|d| d.value).unwrap_or(existing_line.donor_id),
         manufacturer_id: manufacturer_id
             .map(|m| m.value)
             .unwrap_or(existing_line.manufacturer_id),

@@ -4,8 +4,8 @@ use crate::{
 };
 
 use super::{
-    contact_form_row::contact_form::dsl::*, name_row::name,
-    store_row::store, user_row::user_account,
+    contact_form_row::contact_form::dsl::*, name_row::name, store_row::store,
+    user_row::user_account,
 };
 
 use chrono::NaiveDateTime;

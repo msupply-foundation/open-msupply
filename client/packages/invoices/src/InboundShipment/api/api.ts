@@ -105,6 +105,14 @@ export const inboundParsers = {
           : undefined,
       currencyId: 'currency' in patch ? patch.currency?.id : undefined,
       currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
+      chargesLocalCurrency:
+        'chargesLocalCurrency' in patch
+          ? patch.chargesLocalCurrency
+          : undefined,
+      chargesForeignCurrency:
+        'chargesForeignCurrency' in patch
+          ? patch.chargesForeignCurrency
+          : undefined,
       defaultDonor:
         'defaultDonorUpdate' in patch ? patch.defaultDonorUpdate : undefined,
     };

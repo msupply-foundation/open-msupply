@@ -144,9 +144,7 @@ fn to_domain(
     }
 }
 
-fn create_filtered_query(
-    filter: Option<ItemVariantFilter>,
-) -> BoxedItemVariantQuery {
+fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQuery {
     let mut query = query().into_boxed();
     // Exclude any deleted items
     query = query.filter(item_variant::deleted_datetime.is_null());

@@ -237,6 +237,22 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
+    pub fn update_cost_price(
+        &self,
+        record_id: &str,
+        new_cost_price_per_pack: f64,
+        new_sell_price_per_pack: f64,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
+            .set((
+                invoice_line_with_links::cost_price_per_pack.eq(new_cost_price_per_pack),
+                invoice_line_with_links::sell_price_per_pack.eq(new_sell_price_per_pack),
+            ))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn update_note_by_invoice_and_item_id(
         &self,
         invoice: &str,

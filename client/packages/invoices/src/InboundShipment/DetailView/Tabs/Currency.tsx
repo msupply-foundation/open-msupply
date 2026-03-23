@@ -3,6 +3,7 @@ import {
   Box,
   BufferedNumericTextInput,
   Currencies,
+  CurrencyInput,
   CurrencyTextDisplay,
   DetailContainer,
   InfoTooltipIcon,
@@ -25,25 +26,19 @@ export const CurrencyTab = () => {
   } = useInboundShipment();
   const purchaseOrder = data?.purchaseOrder;
   const currencyRate = data?.currencyRate ?? 1;
-  const pricing = data?.pricing;
   const poCurrencyCode = purchaseOrder?.currency?.code as
     | Currencies
     | undefined;
   const { store } = useAuthContext();
   const isHomeCurrency = store?.homeCurrencyCode === poCurrencyCode;
 
-  // A = sum of charges on the PO, in PO currency
-  const chargesInPoCurrency =
-    (purchaseOrder?.agentCommission ?? 0) +
-    (purchaseOrder?.documentCharge ?? 0) +
-    (purchaseOrder?.communicationsCharge ?? 0) +
-    (purchaseOrder?.insuranceCharge ?? 0) +
-    (purchaseOrder?.freightCharge ?? 0);
+  // A = charges in foreign (PO) currency, stored on the invoice
+  const chargesInForeignCurrency = data?.chargesForeignCurrency ?? 0;
 
-  // B = local charges (service charges on the inbound shipment)
-  const chargesInLocalCurrency = pricing?.serviceTotalAfterTax ?? 0;
+  // B = charges in local currency, stored on the invoice
+  const chargesInLocalCurrency = data?.chargesLocalCurrency ?? 0;
 
-  // Total goods in PO currency (from PO, not affected by rate changes)
+  // Total goods in PO currency (from PO)
   const totalGoodsPoCurrency = purchaseOrder?.orderTotalAfterDiscount ?? 0;
 
   const {
@@ -53,7 +48,7 @@ export const CurrencyTab = () => {
     costAdjustmentPercent,
   } = calculateCurrencyValues({
     currencyRate,
-    chargesInForeignCurrency: chargesInPoCurrency,
+    chargesInForeignCurrency,
     chargesInLocalCurrency,
     totalGoodsForeignCurrency: totalGoodsPoCurrency,
   });
@@ -102,9 +97,12 @@ export const CurrencyTab = () => {
           <InputWithLabelRow
             label={t('label.charges-in-po-currency')}
             Input={
-              <CurrencyTextDisplay
-                value={chargesInPoCurrency}
-                currencyCode={poCurrencyCode}
+              <CurrencyInput
+                value={chargesInForeignCurrency}
+                onChangeNumber={chargesForeignCurrency =>
+                  update({ chargesForeignCurrency })
+                }
+                width={150}
               />
             }
           />
@@ -114,7 +112,15 @@ export const CurrencyTab = () => {
           />
           <InputWithLabelRow
             label={t('label.charges-b-in-local-currency')}
-            Input={<CurrencyTextDisplay value={chargesInLocalCurrency} />}
+            Input={
+              <CurrencyInput
+                value={chargesInLocalCurrency}
+                onChangeNumber={chargesLocalCurrency =>
+                  update({ chargesLocalCurrency })
+                }
+                width={150}
+              />
+            }
           />
         </Stack>
         <Stack

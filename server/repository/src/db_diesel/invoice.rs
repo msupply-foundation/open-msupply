@@ -15,10 +15,7 @@ use crate::{
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 
-use diesel::{
-    dsl::IntoBoxed,
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Invoice {

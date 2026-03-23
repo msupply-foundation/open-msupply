@@ -457,6 +457,8 @@ impl SyncTranslation for InvoiceTranslation {
             expected_delivery_date: data.expected_delivery_date,
             purchase_order_id: data.purchase_order_id,
             shipping_method_id: data.shipping_method_id,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         };
 
         // HACK...
@@ -547,6 +549,8 @@ impl SyncTranslation for InvoiceTranslation {
                     default_donor_id,
                     purchase_order_id,
                     shipping_method_id,
+                    charges_local_currency: _,
+                    charges_foreign_currency: _,
                 },
             name_row,
             clinician_row,

@@ -81,12 +81,8 @@ fn validate(
         return Err(OutError::NotAnOutboundShipment);
     }
 
-    check_master_list_for_name_id(
-        connection,
-        &invoice_row.name_id,
-        &input.master_list_id,
-    )?
-    .ok_or(OutError::MasterListNotFoundForThisName)?;
+    check_master_list_for_name_id(connection, &invoice_row.name_id, &input.master_list_id)?
+        .ok_or(OutError::MasterListNotFoundForThisName)?;
 
     Ok(invoice_row)
 }

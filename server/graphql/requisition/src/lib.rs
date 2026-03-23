@@ -140,7 +140,8 @@ impl RequisitionMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: request_requisition::insert_request_from_response_requisition::InsertFromResponseRequisitionInput,
-    ) -> Result<request_requisition::insert_request_from_response_requisition::InsertFromResponse> {
+    ) -> Result<request_requisition::insert_request_from_response_requisition::InsertFromResponse>
+    {
         request_requisition::insert_request_from_response_requisition::insert_request_from_response_requisition(
             ctx, &store_id, input,
         )

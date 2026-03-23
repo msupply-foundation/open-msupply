@@ -1,10 +1,9 @@
 use super::{
-    name_row::name, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogTableName, RowActionType, StorageConnection,
+    name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    StorageConnection,
 };
 use crate::{
-    diesel_macros::define_linked_tables,
-    repository_error::RepositoryError, Delete, Upsert
+    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
 };
 use diesel::prelude::*;
 
@@ -66,8 +65,10 @@ impl<'a> IndicatorValueRowRepository<'a> {
             }
         };
 
-        diesel::delete(indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 
