@@ -3,6 +3,8 @@ import {
   Box,
   ColumnDef,
   ColumnType,
+  CurrencyValueCell,
+  Currencies,
   PurchaseOrderLineStatusNode,
   getLinesFromRow,
   TextWithTooltipCell,
@@ -13,9 +15,9 @@ import { PurchaseOrderLineFragment } from '../api';
 import { usePurchaseOrderLineErrorContext } from '../context';
 import { getPurchaseOrderLineStatusTranslator } from '../../utils';
 
-export const usePurchaseOrderColumns = () => {
+export const usePurchaseOrderColumns = (currencyCode?: string) => {
   const t = useTranslation();
-  const formatCurrency = useFormatCurrency();
+  const formatCurrency = useFormatCurrency(currencyCode as Currencies);
   const { getError } = usePurchaseOrderLineErrorContext();
   const lineStatusTranslator = useCallback(
     (status: PurchaseOrderLineStatusNode) =>
@@ -108,6 +110,9 @@ export const usePurchaseOrderColumns = () => {
         accessorKey: 'totalCost',
         header: t('label.total-cost'),
         columnType: ColumnType.Currency,
+        Cell: props => (
+          <CurrencyValueCell {...props} currencyCode={currencyCode} />
+        ),
         accessorFn: row => {
           const units =
             row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits ?? 0;
@@ -146,5 +151,5 @@ export const usePurchaseOrderColumns = () => {
       },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getError, lineStatusTranslator]);
+  }, [getError, lineStatusTranslator, currencyCode, formatCurrency]);
 };
