@@ -16,7 +16,7 @@ default-target = "x86_64-pc-windows-msvc"
 
 [target.'cfg(windows)'.dependencies]
 windows-service = "0.8.0"
-eventlog = "0.3.0"
+eventlog = "0.4.0"
 
 [dependencies]
 actix-web = { workspace = true }

@@ -56,15 +56,16 @@ const StatusChangeButtonContent = ({
     return statusOptions;
   }, [status, shipmentType, invoiceStatusOptions, t]);
 
-  const currentStatus = invoiceStatusOptions?.includes(status)
-    ? status
-    : getPreviousStatus(
-        status,
-        invoiceStatusOptions ?? [],
-        getStatusSequence(InvoiceNodeType.InboundShipment, {
-          inboundShipmentType: shipmentType,
-        })
-      );
+  const currentStatus =
+    !invoiceStatusOptions || invoiceStatusOptions.includes(status)
+      ? status
+      : getPreviousStatus(
+          status,
+          invoiceStatusOptions,
+          getStatusSequence(InvoiceNodeType.InboundShipment, {
+            inboundShipmentType: shipmentType,
+          })
+        );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>

@@ -15,7 +15,7 @@ pub struct ItemCounts {
     pub total: i64,
     pub no_stock: i64,
     pub low_stock: i64,
-    pub more_than_six_months_stock: i64,
+    pub high_stock: i64,
     pub out_of_stock_products: i64,
     pub products_at_risk_of_being_out_of_stock: i64,
     pub products_overstocked: i64,
@@ -24,14 +24,21 @@ pub struct ItemCounts {
 pub trait ItemCountServiceTrait: Send + Sync {
     /// # Arguments
     ///
-    /// * i32 threshold number of months below which is considered low stock
+    /// * low_stock_threshold: i32 threshold number of months below which is considered low stock
+    /// * high_stock_threshold: i32 threshold number of months above which is considered overstock
     fn get_item_counts(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
         low_stock_threshold: i32,
+        high_stock_threshold: i32,
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
-        ItemServiceCount {}.get_item_counts(ctx, store_id, low_stock_threshold)
+        ItemServiceCount {}.get_item_counts(
+            ctx,
+            store_id,
+            low_stock_threshold,
+            high_stock_threshold,
+        )
     }
 
     fn get_no_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
@@ -50,12 +57,12 @@ pub trait ItemCountServiceTrait: Send + Sync {
             .count() as i64
     }
 
-    fn get_more_than_six_months_stock_count(&self, item_stats: &Vec<ItemStats>) -> i64 {
+    fn get_high_stock_count(&self, item_stats: &Vec<ItemStats>, high_stock_threshold: i32) -> i64 {
         item_stats
             .iter()
             .filter(|&i| i.average_monthly_consumption > 0.0) // exclude items with 0 amc from count, because we assume that means there's no consumption data so we cannot tell how many months of stock there might be.
             .map(|i| i.total_stock_on_hand / i.average_monthly_consumption)
-            .filter(|months_of_stock| *months_of_stock > 6.0)
+            .filter(|months_of_stock| *months_of_stock > high_stock_threshold as f64)
             .count() as i64
     }
 
@@ -114,6 +121,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
         ctx: &ServiceContext,
         store_id: &str,
         low_stock_threshold: i32,
+        high_stock_threshold: i32,
     ) -> Result<ItemCounts, PluginOrRepositoryError> {
         let item_filter = ItemFilter::new().is_active(true).visible_or_on_hand(true);
         let visible_or_on_hand_items = ItemRepository::new(&ctx.connection)
@@ -132,8 +140,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let low_stock = Self::get_low_stock_count(self, &item_stats, low_stock_threshold);
 
-        let more_than_six_months_stock =
-            Self::get_more_than_six_months_stock_count(self, &item_stats);
+        let high_stock = Self::get_high_stock_count(self, &item_stats, high_stock_threshold);
 
         let out_of_stock_products = self.get_out_of_stock_products_count(
             ctx,
@@ -169,7 +176,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
             total: total_count,
             no_stock,
             low_stock,
-            more_than_six_months_stock,
+            high_stock,
             out_of_stock_products,
             products_at_risk_of_being_out_of_stock,
             products_overstocked,
@@ -280,7 +287,7 @@ mod item_count_service_test {
 
         let service = ItemServiceCount {};
         let counts = service
-            .get_item_counts(&service_context, "store_b", 0)
+            .get_item_counts(&service_context, "store_b", 0, 6)
             .unwrap();
 
         // Count of total items which are visible to store b or on hand in store b
@@ -344,7 +351,8 @@ mod item_count_service_test {
     }
 
     #[actix_rt::test]
-    async fn test_more_than_six_mos_count() {
+    async fn test_high_stock_count() {
+        let high_stock_threshold = 6;
         let item_stats: Vec<ItemStats> = vec![
             // An item with less than 6 mos (should not be included in result)
             ItemStats {
@@ -372,7 +380,7 @@ mod item_count_service_test {
             },
         ];
 
-        let result = ItemServiceCount {}.get_more_than_six_months_stock_count(&item_stats);
+        let result = ItemServiceCount {}.get_high_stock_count(&item_stats, high_stock_threshold);
 
         assert_eq!(result, 1);
     }

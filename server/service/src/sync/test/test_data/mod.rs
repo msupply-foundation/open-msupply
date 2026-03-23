@@ -84,6 +84,7 @@ pub(crate) mod user_permission;
 pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
+pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
@@ -138,6 +139,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut demographic::test_pull_upsert_records());
     test_records.append(&mut vaccine_course::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_dose::test_pull_upsert_records());
+    test_records.append(&mut vaccine_course_store_config::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_item::test_pull_upsert_records());
     test_records.append(&mut vvm_status::test_pull_upsert_records());
     test_records.append(&mut program_indicator::test_pull_upsert_records());
@@ -265,6 +267,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut asset_type::test_v6_central_push_records());
     test_records.append(&mut asset_catalogue_item::test_v6_central_push_records());
     test_records.append(&mut vaccine_course::test_v6_records());
+    test_records.append(&mut vaccine_course_store_config::test_v6_records());
     test_records.append(&mut vaccine_course_item::test_v6_records());
     test_records.append(&mut name_oms_fields::test_v6_central_push_records());
     test_records.append(&mut item_variant::test_v6_central_push_records());

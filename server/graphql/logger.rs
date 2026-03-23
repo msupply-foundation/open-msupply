@@ -6,7 +6,7 @@ use async_graphql::{
     Response, ServerError, ServerResult, ValidationResult, Variables,
 };
 use chrono::{DateTime, Utc};
-use rand::Rng;
+use rand::RngExt;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -42,10 +42,10 @@ pub struct QueryLogInfo {
 }
 impl QueryLogInfo {
     pub fn new() -> QueryLogInfo {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         QueryLogInfo {
             inner: Arc::new(Mutex::new(QueryInfoInner {
-                id: rng.gen_range(100_000_000..=999_999_999),
+                id: rng.random_range(100_000_000..=999_999_999),
                 start_time: Utc::now(),
             })),
         }

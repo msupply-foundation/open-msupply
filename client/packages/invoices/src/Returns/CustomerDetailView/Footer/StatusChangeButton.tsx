@@ -54,15 +54,16 @@ const useStatusChangeButton = () => {
     return statusOptions;
   }, [status, isManuallyCreated, invoiceStatusOptions]);
 
-  const currentStatus = invoiceStatusOptions?.includes(status)
-    ? status
-    : getPreviousStatus(
-        status,
-        invoiceStatusOptions ?? [],
-        getStatusSequence(InvoiceNodeType.CustomerReturn, {
-          isManuallyCreated,
-        })
-      );
+  const currentStatus =
+    !invoiceStatusOptions || invoiceStatusOptions.includes(status)
+      ? status
+      : getPreviousStatus(
+          status,
+          invoiceStatusOptions,
+          getStatusSequence(InvoiceNodeType.CustomerReturn, {
+            isManuallyCreated,
+          })
+        );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>

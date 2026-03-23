@@ -115,6 +115,7 @@ pub enum UpdateStockInLineError {
     ProgramNotVisible,
     IncorrectLocationType,
     CampaignDoesNotExist,
+    CannotEditCostPrice,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {

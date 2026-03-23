@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { checkInvalidLocationLines } from '@openmsupply-client/system';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  checkInvalidLocationLines,
+  getVolumePerPackFromVariant,
+  ItemVariantFragment,
+  ItemVariantSelectPanel,
+  useIsItemVariantsEnabled,
+  useItemVariants,
+} from '@openmsupply-client/system';
 import {
   BasicSpinner,
   Breakpoints,
@@ -65,12 +72,43 @@ export const StocktakeLineEdit = ({
   const reversedDraftLines = [...draftLines].reverse();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
+  const [variantPanelOpen, setVariantPanelOpen] = useState(false);
+  const itemVariantsEnabled = useIsItemVariantsEnabled();
+  const { data: variantData } = useItemVariants(currentItem?.id ?? '');
+  const hasVariants =
+    itemVariantsEnabled && (variantData?.variants?.length ?? 0) > 0;
+
   const restrictedLocationTypeId =
     currentItem?.restrictedLocationTypeId ?? null;
 
   const hasInvalidLocationLines = !!currentItem
     ? checkInvalidLocationLines(restrictedLocationTypeId, draftLines)
     : null;
+
+  const applyVariantToNewLine = useCallback(
+    (variant: ItemVariantFragment) => {
+      addLine({
+        itemVariantId: variant.id,
+        itemVariant: variant,
+        manufacturer: variant.manufacturer ?? null,
+        volumePerPack:
+          getVolumePerPackFromVariant({
+            packSize: currentItem?.defaultPackSize,
+            itemVariant: variant,
+          }) ?? 0,
+      });
+      setVariantPanelOpen(false);
+    },
+    [addLine, currentItem?.defaultPackSize]
+  );
+
+  const handleAddLine = useCallback(() => {
+    if (hasVariants) {
+      setVariantPanelOpen(true);
+    } else {
+      addLine();
+    }
+  }, [hasVariants, addLine]);
 
   const onNext = async () => {
     if (isSaving) return;
@@ -142,7 +180,7 @@ export const StocktakeLineEdit = ({
           disabled={isDisabled}
           color="primary"
           variant="outlined"
-          onClick={addLine}
+          onClick={handleAddLine}
           label={`${t('label.add-batch')} (+)`}
           Icon={<PlusCircleIcon />}
         />
@@ -150,7 +188,7 @@ export const StocktakeLineEdit = ({
     </>
   ) : (
     <>
-      <StocktakeLineEditTabs isDisabled={isDisabled} onAddLine={addLine}>
+      <StocktakeLineEditTabs isDisabled={isDisabled} onAddLine={handleAddLine}>
         <StyledTabPanel value={Tabs.Batch}>
           <StyledTabContainer>
             <BatchTable
@@ -224,6 +262,16 @@ export const StocktakeLineEdit = ({
               <>
                 <Divider margin={5} />
                 {tableContent}
+                <ItemVariantSelectPanel
+                  itemId={currentItem.id}
+                  open={variantPanelOpen}
+                  onClose={() => setVariantPanelOpen(false)}
+                  onSelect={applyVariantToNewLine}
+                  onManual={() => {
+                    addLine();
+                    setVariantPanelOpen(false);
+                  }}
+                />
               </>
             ) : null}
           </>

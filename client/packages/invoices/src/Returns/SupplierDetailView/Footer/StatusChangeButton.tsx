@@ -48,13 +48,14 @@ const useStatusChangeButton = () => {
     return statusOptions;
   }, [status, invoiceStatusOptions]);
 
-  const currentStatus = invoiceStatusOptions?.includes(status)
-    ? status
-    : getPreviousStatus(
-        status,
-        invoiceStatusOptions ?? [],
-        getStatusSequence(InvoiceNodeType.SupplierReturn)
-      );
+  const currentStatus =
+    !invoiceStatusOptions || invoiceStatusOptions.includes(status)
+      ? status
+      : getPreviousStatus(
+          status,
+          invoiceStatusOptions,
+          getStatusSequence(InvoiceNodeType.SupplierReturn)
+        );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
