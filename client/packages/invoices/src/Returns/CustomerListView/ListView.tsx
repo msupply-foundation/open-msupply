@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   useNavigate,
   useTranslation,
-  InvoiceNodeStatus,
   NothingHere,
   useToggle,
   useUrlQueryParams,
@@ -90,18 +89,6 @@ export const CustomerReturnListView = () => {
         accessorFn: row => getStatusTranslator(t)(row.status),
         enableSorting: true,
         enableColumnFilter: true,
-        filterVariant: 'select',
-        filterSelectOptions: [
-          { label: t('label.new'), value: InvoiceNodeStatus.New },
-          {
-            label: t('label.delivered'),
-            value: InvoiceNodeStatus.Delivered,
-          },
-          {
-            label: t('label.verified'),
-            value: InvoiceNodeStatus.Verified,
-          },
-        ],
       },
       {
         accessorKey: 'invoiceNumber',
