@@ -254,6 +254,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramNotVisible
         | ServiceError::CampaignDoesNotExist
+        | ServiceError::CannotEditCostPrice
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),

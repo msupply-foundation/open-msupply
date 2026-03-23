@@ -122,6 +122,7 @@ pub enum UpdateStockInLineError {
     IncorrectLocationType,
     CampaignDoesNotExist,
     WrongInboundShipmentType,
+    CannotEditCostPrice,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {

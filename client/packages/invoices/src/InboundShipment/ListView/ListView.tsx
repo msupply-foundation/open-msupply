@@ -14,7 +14,7 @@ import {
   MaterialTable,
   usePreferences,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -29,8 +29,11 @@ import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
 import { SupplierCell } from './SupplierCell';
 
+const TABLE_ID = 'inbound-shipment-list-view';
+
 export const InboundListView = () => {
   const t = useTranslation();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const internalModalController = useToggle();
   const externalModalController = useToggle();
   const linkRequestModalController = useToggle();
@@ -42,8 +45,6 @@ export const InboundListView = () => {
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
   const { userHasPermission } = useAuthContext();
-
-  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const {
     filter,
@@ -178,7 +179,7 @@ export const InboundListView = () => {
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
     {
-      tableId: 'inbound-shipment-list-view',
+      tableId: TABLE_ID,
       isLoading,
       isError,
       onRowClick: row =>
@@ -198,7 +199,9 @@ export const InboundListView = () => {
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-shipments')}
-          onCreate={internalModalController.toggleOn}
+          onCreate={
+            isExtraSmallScreen ? undefined : internalModalController.toggleOn
+          }
         />
       ),
       isMobile: isExtraSmallScreen,
@@ -207,16 +210,16 @@ export const InboundListView = () => {
 
   return (
     <>
-      <AppBarButtons
-        internalModalController={internalModalController}
-        externalModalController={externalModalController}
-        linkRequestModalController={linkRequestModalController}
-      />
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <MobileCardList table={table} />
+        <CardList table={table} tableId={TABLE_ID} />
       ) : (
         <>
+          <AppBarButtons
+            internalModalController={internalModalController}
+            externalModalController={externalModalController}
+            linkRequestModalController={linkRequestModalController}
+          />
           <Toolbar filter={filter} />
           <MaterialTable table={table} />
         </>

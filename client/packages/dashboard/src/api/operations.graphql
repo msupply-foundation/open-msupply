@@ -1,9 +1,17 @@
-query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
-  itemCounts(lowStockThreshold: $lowStockThreshold, storeId: $storeId) {
+query itemCounts(
+  $storeId: String!
+  $lowStockThreshold: Int!
+  $highStockThreshold: Int!
+) {
+  itemCounts(
+    lowStockThreshold: $lowStockThreshold
+    highStockThreshold: $highStockThreshold
+    storeId: $storeId
+  ) {
     itemCounts {
       lowStock
       noStock
-      moreThanSixMonthsStock
+      highStock
       total
       outOfStockProducts
       productsAtRiskOfBeingOutOfStock

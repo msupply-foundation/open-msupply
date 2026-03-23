@@ -6,6 +6,7 @@ type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ItemCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   lowStockThreshold: Types.Scalars['Int']['input'];
+  highStockThreshold: Types.Scalars['Int']['input'];
 }>;
 
 export type ItemCountsQuery = {
@@ -16,7 +17,7 @@ export type ItemCountsQuery = {
       __typename: 'ItemCountsResponse';
       lowStock: number;
       noStock: number;
-      moreThanSixMonthsStock: number;
+      highStock: number;
       total: number;
       outOfStockProducts: number;
       productsAtRiskOfBeingOutOfStock: number;
@@ -116,12 +117,20 @@ export type StockCountsQuery = {
 };
 
 export const ItemCountsDocument = gql`
-  query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
-    itemCounts(lowStockThreshold: $lowStockThreshold, storeId: $storeId) {
+  query itemCounts(
+    $storeId: String!
+    $lowStockThreshold: Int!
+    $highStockThreshold: Int!
+  ) {
+    itemCounts(
+      lowStockThreshold: $lowStockThreshold
+      highStockThreshold: $highStockThreshold
+      storeId: $storeId
+    ) {
       itemCounts {
         lowStock
         noStock
-        moreThanSixMonthsStock
+        highStock
         total
         outOfStockProducts
         productsAtRiskOfBeingOutOfStock
