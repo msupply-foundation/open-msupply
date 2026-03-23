@@ -66,6 +66,11 @@ export const InboundListView = () => {
       },
       { key: 'status', condition: 'equalAny' },
       { key: 'theirReference' },
+      {
+        key: 'purchaseOrderNumber',
+        condition: 'equalTo',
+        isNumber: true,
+      },
     ],
   });
 
@@ -127,7 +132,9 @@ export const InboundListView = () => {
       {
         header: t('label.purchase-order-number'),
         accessorKey: 'purchaseOrder.number',
+        id: 'purchaseOrderNumber',
         columnType: ColumnType.Number,
+        enableColumnFilter: true,
       },
       {
         header: t('label.created'),
