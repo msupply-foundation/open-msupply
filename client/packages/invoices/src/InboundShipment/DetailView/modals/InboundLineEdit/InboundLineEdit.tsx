@@ -261,16 +261,6 @@ export const InboundLineEdit = ({
       setPackRoundingMessage={setPackRoundingMessage}
       restrictedToLocationTypeId={effectiveItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
-      actions={
-        <ButtonWithIcon
-          disabled={isDisabled}
-          color="primary"
-          variant="outlined"
-          onClick={handleAddBatch}
-          label={`${t('label.add-batch')} (+)`}
-          Icon={<PlusCircleIcon />}
-        />
-      }
     />
   );
 
@@ -304,6 +294,16 @@ export const InboundLineEdit = ({
         mode === ModalMode.Create
           ? t('heading.add-item')
           : t('heading.edit-item')
+      }
+      headerActions={
+        <ButtonWithIcon
+          disabled={isDisabled}
+          color="primary"
+          variant="outlined"
+          onClick={handleAddBatch}
+          label={t('label.add-batch')}
+          Icon={<PlusCircleIcon />}
+        />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
