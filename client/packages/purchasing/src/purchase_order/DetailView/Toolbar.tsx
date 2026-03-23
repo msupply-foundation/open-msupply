@@ -180,7 +180,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
               Input={
                 <DateTimePickerInput
                   value={requestedDeliveryDate}
-                  onChange={date => {
+                  onChange={async date => {
                     if (!date) return;
                     setRequestedDeliveryDate(date);
                     const formattedDate = Formatter.naiveDate(date);
@@ -193,11 +193,15 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                         line => !line.expectedDeliveryDate
                       ) ?? [];
                     if (linesWithoutExpected.length > 0) {
-                      updateLines(linesWithoutExpected, {
-                        expectedDeliveryDate: formattedDate,
-                      });
-                      if (!getMostRecentExpectedDate()) {
-                        setExpectedDeliveryDate(date);
+                      try {
+                        await updateLines(linesWithoutExpected, {
+                          expectedDeliveryDate: formattedDate,
+                        });
+                        if (!getMostRecentExpectedDate()) {
+                          setExpectedDeliveryDate(date);
+                        }
+                      } catch (e) {
+                        error(t('messages.error-saving-purchase-order'))();
                       }
                     }
                   }}
