@@ -7,6 +7,7 @@ import {
   styled,
   ClickAwayListener,
 } from '@mui/material';
+import { FocusTrap } from '@mui/base';
 
 const Backdrop = styled(Box)({
   position: 'fixed',
@@ -72,27 +73,37 @@ export const SlidePanel = ({
             zIndex: 1399,
           }}
         >
-          {title && (
-            <Typography
-              sx={theme => ({
-                padding: 2,
-                color: theme.typography.body1.color,
-                fontSize: theme.typography.body1.fontSize,
-                fontWeight: 'bold',
-              })}
-            >
-              {title}
-            </Typography>
-          )}
-          <Box overflow="auto" flex={1}>
-            {children}
-          </Box>
-          {(okButton || cancelButton) && (
-            <Box display="flex" justifyContent="center" pb={5} gap={1} pt={1.5}>
-              {cancelButton}
-              {okButton}
+          <FocusTrap open={open}>
+            <Box style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              {title && (
+                <Typography
+                  sx={theme => ({
+                    padding: 2,
+                    color: theme.typography.body1.color,
+                    fontSize: theme.typography.body1.fontSize,
+                    fontWeight: 'bold',
+                  })}
+                >
+                  {title}
+                </Typography>
+              )}
+              <Box overflow="auto" flex={1}>
+                {children}
+              </Box>
+              {(okButton || cancelButton) && (
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  pb={5}
+                  gap={1}
+                  pt={1.5}
+                >
+                  {cancelButton}
+                  {okButton}
+                </Box>
+              )}
             </Box>
-          )}
+          </FocusTrap>
         </Paper>
       </Slide>
     </Box>
