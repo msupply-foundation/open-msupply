@@ -149,10 +149,9 @@ pub fn sign_plugin(
     out_file.write_all(manifest.as_bytes())?;
 
     // Sign
-    let mut rng = rand::thread_rng();
     let signing_key = SigningKey::<Sha256>::new(private_key);
 
-    let signature = signing_key.sign_with_rng(&mut rng, manifest.as_bytes());
+    let signature = signing_key.sign_with_rng(&mut rsa::rand_core::OsRng, manifest.as_bytes());
     // Write signature
     let signature_pem = pem::encode(&Pem::new(SIGNATURE_TAG, signature.to_bytes()));
     let out_path = PathBuf::from(plugin_path).join(MANIFEST_SIGNATURE_FILE);

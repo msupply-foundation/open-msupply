@@ -6,13 +6,13 @@ import {
 } from '@openmsupply-client/common';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { VACCINE, LIST } from './keys';
-import { VaccineCourseFragment } from '../operations.generated';
+import { VaccineCourseRowFragment } from '../operations.generated';
 
 export const useDeleteSelectedVaccineCourses = ({
   selectedRows,
   resetRowSelection,
 }: {
-  selectedRows: VaccineCourseFragment[];
+  selectedRows: VaccineCourseRowFragment[];
   resetRowSelection: () => void;
 }) => {
   const t = useTranslation();

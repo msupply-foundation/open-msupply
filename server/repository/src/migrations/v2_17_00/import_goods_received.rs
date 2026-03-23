@@ -46,6 +46,8 @@ table! {
     purchase_order (id) {
         id -> Text,
         supplier_name_link_id -> Text,
+        currency_id -> Nullable<Text>,
+        foreign_exchange_rate -> Double,
     }
 }
 
@@ -203,6 +205,7 @@ struct NewInvoiceRow {
     created_datetime: NaiveDateTime,
     received_datetime: Option<NaiveDateTime>,
     linked_invoice_id: Option<String>,
+    currency_id: Option<String>,
     currency_rate: f64,
     is_cancellation: bool,
     purchase_order_id: Option<String>,
@@ -274,26 +277,28 @@ fn import_invoices(connection: &StorageConnection) -> anyhow::Result<()> {
                     .filter(sync_buffer::record_id.eq(&record_id))
                     .set(sync_buffer::integration_error.eq(e.to_string()))
                     .execute(connection.lock().connection())?;
-                log::warn!(
-                    "Could not parse goods_received sync buffer row {record_id}: {e}"
-                );
+                log::warn!("Could not parse goods_received sync buffer row {record_id}: {e}");
                 continue;
             }
         };
 
-        let name_link_id = match &legacy_row.purchase_order_ID {
+        let (name_link_id, currency_id, currency_rate) = match &legacy_row.purchase_order_ID {
             None => {
                 log::warn!("goods_received {record_id} has no purchase_order_ID, skipping");
                 continue;
             }
             Some(po_id) => {
                 match purchase_order::table
-                    .select(purchase_order::supplier_name_link_id)
+                    .select((
+                        purchase_order::supplier_name_link_id,
+                        purchase_order::currency_id,
+                        purchase_order::foreign_exchange_rate,
+                    ))
                     .filter(purchase_order::id.eq(po_id))
-                    .first::<String>(connection.lock().connection())
+                    .first::<(String, Option<String>, f64)>(connection.lock().connection())
                     .optional()?
                 {
-                    Some(id) => id,
+                    Some(result) => result,
                     None => {
                         log::warn!(
                             "purchase_order {po_id} not found for goods_received {record_id}, skipping"
@@ -308,9 +313,7 @@ fn import_invoices(connection: &StorageConnection) -> anyhow::Result<()> {
             .entry_date
             .and_then(|d| d.and_hms_opt(0, 0, 0))
             .unwrap_or_else(|| {
-                log::warn!(
-                    "missing entry_date for goods_received {record_id}, using current time"
-                );
+                log::warn!("missing entry_date for goods_received {record_id}, using current time");
                 chrono::Utc::now().naive_utc()
             });
 
@@ -330,7 +333,8 @@ fn import_invoices(connection: &StorageConnection) -> anyhow::Result<()> {
                 .received_date
                 .and_then(|d| d.and_hms_opt(0, 0, 0)),
             linked_invoice_id: legacy_row.linked_transaction_ID,
-            currency_rate: 1.0,
+            currency_id,
+            currency_rate,
             is_cancellation: false,
             purchase_order_id: legacy_row.purchase_order_ID,
             default_donor_link_id: legacy_row.donor_id,
@@ -362,9 +366,7 @@ fn import_invoice_lines(connection: &StorageConnection) -> anyhow::Result<()> {
                     .filter(sync_buffer::record_id.eq(&record_id))
                     .set(sync_buffer::integration_error.eq(e.to_string()))
                     .execute(connection.lock().connection())?;
-                log::warn!(
-                    "Could not parse goods_received_line sync buffer row {record_id}: {e}"
-                );
+                log::warn!("Could not parse goods_received_line sync buffer row {record_id}: {e}");
                 continue;
             }
         };
@@ -399,9 +401,9 @@ fn import_invoice_lines(connection: &StorageConnection) -> anyhow::Result<()> {
             expiry_date: legacy_row.expiry_date,
             pack_size: legacy_row.pack_received,
             cost_price_per_pack: legacy_row.cost_price,
-            sell_price_per_pack: 0.0,
-            total_before_tax: 0.0,
-            total_after_tax: 0.0,
+            sell_price_per_pack: legacy_row.cost_price, // We don't have sell price data, so just copy cost price
+            total_before_tax: legacy_row.cost_price * legacy_row.quantity_received,
+            total_after_tax: legacy_row.cost_price * legacy_row.quantity_received, // Assuming no tax data, so total after tax is same as before tax
             type_: InvoiceLineType::StockIn,
             number_of_packs: legacy_row.quantity_received,
             note: legacy_row.comment,

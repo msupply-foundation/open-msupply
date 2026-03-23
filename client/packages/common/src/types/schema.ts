@@ -4061,6 +4061,7 @@ export type InsertVaccineCourseInput = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
   programId: Scalars['String']['input'];
+  storeConfigs?: InputMaybe<Array<UpsertVaccineCourseStoreConfigInput>>;
   useInGapsCalculations: Scalars['Boolean']['input'];
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
@@ -4610,8 +4611,8 @@ export type ItemCounts = {
 
 export type ItemCountsResponse = {
   __typename: 'ItemCountsResponse';
+  highStock: Scalars['Int']['output'];
   lowStock: Scalars['Int']['output'];
-  moreThanSixMonthsStock: Scalars['Int']['output'];
   noStock: Scalars['Int']['output'];
   outOfStockProducts: Scalars['Int']['output'];
   productsAtRiskOfBeingOutOfStock: Scalars['Int']['output'];
@@ -6288,6 +6289,21 @@ export type NullableDatetimeUpdate = {
  * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
  * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
  */
+export type NullableFloatUpdate = {
+  value?: InputMaybe<Scalars['Float']['input']>;
+};
+
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
 export type NullableStringUpdate = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
@@ -7104,10 +7120,14 @@ export type PurchaseOrderLineError = {
 };
 
 export type PurchaseOrderLineFilterInput = {
+  expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
+  supplierName?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineNode = {
@@ -7774,6 +7794,7 @@ export type QueriesInvoicesArgs = {
 };
 
 export type QueriesItemCountsArgs = {
+  highStockThreshold?: InputMaybe<Scalars['Int']['input']>;
   lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
   storeId: Scalars['String']['input'];
 };
@@ -9173,6 +9194,7 @@ export enum StockLineSortFieldInput {
   ItemCode = 'itemCode',
   ItemName = 'itemName',
   LocationCode = 'locationCode',
+  ManufactureDate = 'manufactureDate',
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
   SupplierName = 'supplierName',
@@ -10880,6 +10902,7 @@ export type UpdateVaccineCourseInput = {
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
+  storeConfigs?: InputMaybe<Array<UpsertVaccineCourseStoreConfigInput>>;
   useInGapsCalculations: Scalars['Boolean']['input'];
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
@@ -11043,6 +11066,13 @@ export type UpsertVaccineCourseDoseInput = {
 export type UpsertVaccineCourseItemInput = {
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+};
+
+export type UpsertVaccineCourseStoreConfigInput = {
+  coverageRate?: InputMaybe<NullableFloatUpdate>;
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+  wastageRate?: InputMaybe<NullableFloatUpdate>;
 };
 
 export type UseSuggestedQuantityError = {
@@ -11306,6 +11336,7 @@ export type VaccineCourseNode = {
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   programId: Scalars['String']['output'];
+  storeConfigs?: Maybe<Array<VaccineCourseStoreConfigNode>>;
   useInGapsCalculations: Scalars['Boolean']['output'];
   vaccineCourseDoses?: Maybe<Array<VaccineCourseDoseNode>>;
   vaccineCourseItems?: Maybe<Array<VaccineCourseItemNode>>;
@@ -11321,6 +11352,15 @@ export enum VaccineCourseSortFieldInput {
 export type VaccineCourseSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   key: VaccineCourseSortFieldInput;
+};
+
+export type VaccineCourseStoreConfigNode = {
+  __typename: 'VaccineCourseStoreConfigNode';
+  coverageRate?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['String']['output'];
+  storeId: Scalars['String']['output'];
+  vaccineCourseId: Scalars['String']['output'];
+  wastageRate?: Maybe<Scalars['Float']['output']>;
 };
 
 export type VaccineCoursesResponse = VaccineCourseConnector;

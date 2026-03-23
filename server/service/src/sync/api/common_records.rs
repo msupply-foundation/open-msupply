@@ -37,14 +37,11 @@ pub(crate) struct RemoteSyncBatchV5 {
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub(crate) enum SyncAction {
-    #[serde(alias = "insert")]
     Insert,
-    #[serde(alias = "update")]
     Update,
-    #[serde(alias = "delete")]
     Delete,
-    #[serde(alias = "merge")]
     Merge,
 }
 
