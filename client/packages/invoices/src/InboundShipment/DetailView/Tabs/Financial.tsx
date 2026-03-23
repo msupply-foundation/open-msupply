@@ -3,7 +3,10 @@ import {
   Box,
   ColumnDef,
   ColumnType,
+  Currencies,
+  CurrencyValueCell,
   MaterialTable,
+  useAuthContext,
   useFormatCurrency,
   useNonPaginatedMaterialTable,
   useTranslation,
@@ -12,10 +15,17 @@ import { InboundLineFragment, useInboundShipment } from '../../api';
 
 export const FinancialTab = () => {
   const t = useTranslation();
-  const formatCurrency = useFormatCurrency();
+  const { store } = useAuthContext();
   const {
     query: { data, loading: isLoading },
   } = useInboundShipment();
+
+  const poCurrencyCode = data?.purchaseOrder?.currency?.code;
+  const storeCurrencyCode = store?.homeCurrencyCode ?? undefined;
+  const formatPoCurrency = useFormatCurrency(poCurrencyCode as Currencies);
+  const formatStoreCurrency = useFormatCurrency(
+    storeCurrencyCode as Currencies
+  );
 
   const lines = data?.lines.nodes;
 
@@ -42,18 +52,49 @@ export const FinancialTab = () => {
       },
       {
         accessorKey: 'purchaseOrderLine.pricePerPackAfterDiscount',
-        header: t('label.po-price-per-pack'),
+        header: `${t('label.po-price-per-pack')} (${poCurrencyCode ?? ''})`,
         columnType: ColumnType.Currency,
+        Cell: ({ cell }) => (
+          <CurrencyValueCell cell={cell} currencyCode={poCurrencyCode} />
+        ),
       },
       {
         accessorKey: 'costPricePerPack',
-        header: t('label.pack-cost-price'),
+        header: `${t('label.pack-cost-price')} (${storeCurrencyCode ?? ''})`,
         columnType: ColumnType.Currency,
+        Cell: ({ cell }) => (
+          <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
+        ),
+      },
+      {
+        accessorKey: 'foreignCurrencyPriceBeforeTax',
+        header: `${t('label.line-total')} (${poCurrencyCode ?? ''})`,
+        columnType: ColumnType.Currency,
+        Cell: ({ cell }) => (
+          <CurrencyValueCell cell={cell} currencyCode={poCurrencyCode} />
+        ),
+        Footer: ({ table }) => {
+          const total = table
+            .getFilteredRowModel()
+            .rows.reduce(
+              (sum, row) =>
+                sum + (row.original.foreignCurrencyPriceBeforeTax ?? 0),
+              0
+            );
+          return (
+            <Box sx={{ textAlign: 'right', width: '100%' }}>
+              {formatPoCurrency(total)}
+            </Box>
+          );
+        },
       },
       {
         accessorKey: 'totalAfterTax',
-        header: t('label.line-total'),
+        header: `${t('label.line-total')} (${storeCurrencyCode ?? ''})`,
         columnType: ColumnType.Currency,
+        Cell: ({ cell }) => (
+          <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
+        ),
         Footer: ({ table }) => {
           const total = table
             .getFilteredRowModel()
@@ -63,19 +104,13 @@ export const FinancialTab = () => {
             );
           return (
             <Box sx={{ textAlign: 'right', width: '100%' }}>
-              {formatCurrency(total)}
+              {formatStoreCurrency(total)}
             </Box>
           );
         },
       },
       // TODO: calculate these
-      // {
-      //   accessorKey: 'lineTotalLocal',
-      //   header: t('label.line-total-local'),
-      //   columnType: ColumnType.Currency,
-      // },
-      // {
-      //   accessorKey: 'adjustedTotalLocal',
+      //  accessorKey: 'adjustedTotalLocal',
       //   header: t('label.adjusted-total-local'),
       //   columnType: ColumnType.Currency,
       // },
@@ -85,7 +120,7 @@ export const FinancialTab = () => {
       //   columnType: ColumnType.Currency,
       // },
     ],
-    [formatCurrency]
+    [formatPoCurrency, formatStoreCurrency, poCurrencyCode, storeCurrencyCode]
   );
 
   const { table } = useNonPaginatedMaterialTable<InboundLineFragment>({

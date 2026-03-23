@@ -2,7 +2,7 @@ use crate::invoice::inbound_shipment::InsertInboundShipmentError;
 use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
     EqualFilter, InvoiceLineStatus, InvoiceLineType, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository,
+    PurchaseOrderLineRepository, PurchaseOrderRowRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
 use util::uuid::uuid;
@@ -15,6 +15,12 @@ pub fn add_from_purchase_order(
 ) -> Result<(), InsertInboundShipmentError> {
     let purchase_order_id = purchase_order_id
         .ok_or(InsertInboundShipmentError::AddLinesFromPurchaseOrderWithoutPurchaseOrder)?;
+
+    // Get the PO's exchange rate to convert prices from PO currency to store currency
+    let exchange_rate = PurchaseOrderRowRepository::new(connection)
+        .find_one_by_id(&purchase_order_id)?
+        .map(|po| po.foreign_exchange_rate)
+        .unwrap_or(1.0);
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
@@ -60,16 +66,22 @@ pub fn add_from_purchase_order(
             expiry_date: None,
             manufacture_date: None,
             pack_size: pack_size,
-            cost_price_per_pack: purchase_order_line.price_per_pack_after_discount,
-            sell_price_per_pack: purchase_order_line.price_per_pack_after_discount,
-            total_before_tax: purchase_order_line.price_per_pack_after_discount * number_of_packs,
-            total_after_tax: purchase_order_line.price_per_pack_after_discount * number_of_packs,
+            cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
+            sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
+            total_before_tax: purchase_order_line.price_per_pack_after_discount
+                * exchange_rate
+                * number_of_packs,
+            total_after_tax: purchase_order_line.price_per_pack_after_discount
+                * exchange_rate
+                * number_of_packs,
             tax_percentage: None,
             r#type: InvoiceLineType::StockIn,
             number_of_packs,
             prescribed_quantity: None,
             note: None,
-            foreign_currency_price_before_tax: None,
+            foreign_currency_price_before_tax: Some(
+                purchase_order_line.price_per_pack_after_discount * number_of_packs,
+            ),
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
