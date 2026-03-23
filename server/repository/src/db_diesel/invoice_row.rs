@@ -1,7 +1,7 @@
 use super::{
     clinician_link_row::clinician_link, currency_row::currency, item_link_row::item_link,
-    name_row::name, shipping_method_row::shipping_method, store_row::store, user_row::user_account,
-    StorageConnection,
+    name_row::name, purchase_order_row::purchase_order, shipping_method_row::shipping_method,
+    store_row::store, user_row::user_account, StorageConnection,
 };
 use crate::{
     diesel_macros::define_linked_tables, repository_error::RepositoryError, ChangeLogInsertRow,
@@ -73,6 +73,7 @@ joinable!(invoice -> currency (currency_id));
 joinable!(invoice -> clinician_link (clinician_link_id));
 joinable!(invoice -> shipping_method (shipping_method_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
+allow_tables_to_appear_in_same_query!(invoice, purchase_order);
 
 #[derive(
     DbEnum, Debug, Display, Clone, PartialEq, Eq, Serialize, Deserialize, Default, PartialOrd, Ord,
