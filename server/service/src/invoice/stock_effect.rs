@@ -64,7 +64,7 @@ pub fn stock_effects(
             }
         }
 
-        // Inventory adjustments and repacks don't change adjust stock based on status changes, so we can ignore them here
+        // Inventory adjustments and repacks don't adjust stock based on status changes, so we can ignore them here
         InvoiceType::InventoryAddition | InvoiceType::InventoryReduction | InvoiceType::Repack => {
             StockEffect::None
         }
