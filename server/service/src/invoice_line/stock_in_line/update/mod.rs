@@ -5,9 +5,7 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
-    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository,
+    InvoiceLine, InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, RepositoryError, StockLineRowRepository, vvm_status::vvm_status_log_row::VVMStatusLogRowRepository
 };
 
 mod generate;

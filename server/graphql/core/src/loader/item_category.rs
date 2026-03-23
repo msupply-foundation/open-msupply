@@ -16,7 +16,10 @@ impl Loader<String> for ItemCategoryLoader {
     type Value = Vec<CategoryRow>;
     type Error = RepositoryError;
 
-    async fn load(&self, item_ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(
+        &self,
+        item_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
         let category_repo = CategoryRowRepository::new(&connection);
         let item_category_repo = ItemCategoryRepository::new(&connection);
@@ -30,9 +33,7 @@ impl Loader<String> for ItemCategoryLoader {
 
             let mut categories = Vec::new();
             for ic in &item_categories {
-                if let Some(row) =
-                    category_repo.find_one_by_id(&ic.item_category_join_row.category_id)?
-                {
+                if let Some(row) = category_repo.find_one_by_id(&ic.item_category_join_row.category_id)? {
                     if row.deleted_datetime.is_none() {
                         categories.push(row);
                     }

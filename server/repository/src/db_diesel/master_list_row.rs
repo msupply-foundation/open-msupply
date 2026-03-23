@@ -1,4 +1,7 @@
-use super::{item_link_row::item_link, master_list_row::master_list::dsl::*, StorageConnection};
+use super::{
+    item_link_row::item_link, master_list_row::master_list::dsl::*,
+    StorageConnection,
+};
 
 use crate::{
     repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,

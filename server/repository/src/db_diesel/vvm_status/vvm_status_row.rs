@@ -1,8 +1,8 @@
 use super::vvm_status_row::vvm_status::dsl::*;
 use crate::db_diesel::{
     barcode_row::barcode, item_link_row::item_link, item_row::item,
-    item_variant::item_variant_row::item_variant, location_row::location, name_row::name,
-    stock_line_row::stock_line,
+    item_variant::item_variant_row::item_variant, location_row::location,
+    name_row::name, stock_line_row::stock_line,
 };
 use crate::Delete;
 use crate::RepositoryError;

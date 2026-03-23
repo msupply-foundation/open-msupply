@@ -651,7 +651,10 @@ mod test {
             )
             .unwrap();
         let stock_line = stocktake_line[0].stock_line.clone().unwrap();
-        assert_eq!(stock_line.supplier_id, mock_stock_line_b().supplier_id);
+        assert_eq!(
+            stock_line.supplier_id,
+            mock_stock_line_b().supplier_id
+        );
 
         // success - prunes uncounted lines
         let result = service

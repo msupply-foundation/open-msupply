@@ -371,7 +371,10 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.r#type, RequisitionType::Response);
         assert_eq!(response_requisition.status, RequisitionStatus::New);
         assert_eq!(response_requisition.store_id, self.response_store.id);
-        assert_eq!(response_requisition.name_id, self.request_store.name_id);
+        assert_eq!(
+            response_requisition.name_id,
+            self.request_store.name_id
+        );
         assert_eq!(
             response_requisition.their_reference,
             Some("From internal order 3 (some reference)".to_string())

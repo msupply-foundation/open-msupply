@@ -1,13 +1,14 @@
 use super::{
-    name_row::name, program_enrolment_row::program_enrolment, program_row::program,
-    StorageConnection,
+    name_row::name, program_enrolment_row::program_enrolment,
+    program_row::program, StorageConnection,
 };
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     document_registry_row::document_registry,
     DBType, DatetimeFilter, DocumentRegistryFilter, DocumentRegistryRepository, EqualFilter,
-    NameRow, Pagination, ProgramEnrolmentRow, ProgramRow, RepositoryError, Sort, StringFilter,
+    NameRow, Pagination, ProgramEnrolmentRow, ProgramRow, RepositoryError, Sort,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
