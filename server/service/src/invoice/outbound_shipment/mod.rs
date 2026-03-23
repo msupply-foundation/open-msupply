@@ -1,7 +1,6 @@
 pub mod generate;
 pub use self::generate::*;
 
-pub mod delete;
 pub mod insert;
 pub mod update;
 

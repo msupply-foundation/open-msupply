@@ -2,6 +2,7 @@ use crate::{to_standard_error, VecOrNone};
 use async_graphql::*;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
+use graphql_invoice::mutations::delete as invoice_delete;
 use graphql_invoice::mutations::outbound_shipment;
 use graphql_invoice_line::mutations::outbound_shipment_line;
 use service::auth::Resource;
@@ -18,8 +19,8 @@ use service::invoice::outbound_shipment::*;
     params(outbound_shipment::update::UpdateResponse)
 ))]
 #[graphql(concrete(
-    name = "DeleteOutboundShipmentResponseWithId",
-    params(outbound_shipment::delete::DeleteResponse)
+    name = "DeleteInvoiceResponseWithId",
+    params(invoice_delete::DeleteInvoiceLineResponse)
 ))]
 #[graphql(concrete(
     name = "InsertOutboundShipmentLineResponseWithId",
@@ -95,7 +96,7 @@ type AllocateLinesResponse = Option<
 type UpdateShipmentsResponse =
     Option<Vec<MutationWithId<outbound_shipment::update::UpdateResponse>>>;
 type DeleteShipmentsResponse =
-    Option<Vec<MutationWithId<outbound_shipment::delete::DeleteResponse>>>;
+    Option<Vec<MutationWithId<invoice_delete::DeleteInvoiceLineResponse>>>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchOutboundShipmentResponse")]
@@ -290,7 +291,7 @@ fn map_update_shipments(responses: UpdateShipmentsResult) -> Result<UpdateShipme
 fn map_delete_shipments(responses: DeleteShipmentsResult) -> Result<DeleteShipmentsResponse> {
     let mut result = Vec::new();
     for response in responses {
-        let mapped_response = match outbound_shipment::delete::map_response(response.result) {
+        let mapped_response = match invoice_delete::map_batch_response(response.result) {
             Ok(response) => response,
             Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
         };

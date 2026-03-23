@@ -1,6 +1,7 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
+use graphql_invoice::mutations::delete as invoice_delete;
 use graphql_invoice::mutations::prescription;
 use graphql_invoice_line::mutations::prescription_line;
 use service::auth::Resource;
@@ -20,7 +21,7 @@ use crate::{to_standard_error, VecOrNone};
 ))]
 #[graphql(concrete(
     name = "DeletePrescriptionResponseWithId",
-    params(prescription::delete::DeleteResponse)
+    params(invoice_delete::DeleteInvoiceLineResponse)
 ))]
 #[graphql(concrete(
     name = "InsertPrescriptionLineResponseWithId",
@@ -55,7 +56,7 @@ type DeleteLinesResponse = Option<Vec<MutationWithId<prescription_line::delete::
 type UpdatePrescriptionsResponse =
     Option<Vec<MutationWithId<prescription::update::UpdateResponse>>>;
 type DeletePrescriptionsResponse =
-    Option<Vec<MutationWithId<prescription::delete::DeleteResponse>>>;
+    Option<Vec<MutationWithId<invoice_delete::DeleteInvoiceLineResponse>>>;
 type SetPrescribedQuantityResponse = Option<
     Vec<MutationWithId<prescription_line::set_prescribed_quantity::SetPrescribedQuantityResponse>>,
 >;
@@ -204,7 +205,7 @@ fn map_delete_prescriptions(
 ) -> Result<DeletePrescriptionsResponse> {
     let mut result = Vec::new();
     for response in responses {
-        let mapped_response = match prescription::delete::map_response(response.result) {
+        let mapped_response = match invoice_delete::map_batch_response(response.result) {
             Ok(response) => response,
             Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
         };

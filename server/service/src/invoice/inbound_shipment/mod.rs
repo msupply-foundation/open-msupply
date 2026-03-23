@@ -24,8 +24,11 @@ pub use self::insert::*;
 pub mod update;
 pub use self::update::*;
 
-pub mod delete;
-pub use self::delete::*;
+/// Input for deleting an inbound shipment (used by batch mutations).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct DeleteInboundShipment {
+    pub id: String,
+}
 
 pub mod batch;
 pub use self::batch::*;

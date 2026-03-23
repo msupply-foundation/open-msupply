@@ -27,7 +27,6 @@ use self::outbound_shipment::BatchOutboundShipmentResult;
 use self::outbound_shipment::UpdateOutboundShipmentName;
 use self::outbound_shipment::UpdateOutboundShipmentNameError;
 use self::query::*;
-use self::supplier_return::delete::*;
 use self::supplier_return::generate_supplier_return_lines::*;
 use self::supplier_return::insert::*;
 use self::supplier_return::update::*;
@@ -40,7 +39,7 @@ pub mod customer_return;
 use self::customer_return::*;
 
 pub mod outbound_shipment;
-use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
+use self::outbound_shipment::{insert::*, update::*, update_outbound_shipment_name};
 pub mod inbound_shipment;
 use self::inbound_shipment::*;
 
@@ -106,15 +105,6 @@ pub trait InvoiceServiceTrait: Sync + Send {
         update_inbound_shipment(ctx, input, None, expected_type)
     }
 
-    fn delete_inbound_shipment(
-        &self,
-        ctx: &ServiceContext,
-        input: DeleteInboundShipment,
-        expected_type: InboundShipmentType,
-    ) -> Result<String, DeleteInboundShipmentError> {
-        delete_inbound_shipment(ctx, input, expected_type)
-    }
-
     fn insert_outbound_shipment(
         &self,
         ctx: &ServiceContext,
@@ -137,14 +127,6 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: UpdateOutboundShipmentName,
     ) -> Result<Invoice, UpdateOutboundShipmentNameError> {
         update_outbound_shipment_name(ctx, input)
-    }
-
-    fn delete_outbound_shipment(
-        &self,
-        ctx: &ServiceContext,
-        id: String,
-    ) -> Result<String, DeleteOutboundShipmentError> {
-        delete_outbound_shipment(ctx, id)
     }
 
     fn batch_inbound_shipment(
@@ -193,14 +175,6 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: UpdatePrescription,
     ) -> Result<Invoice, UpdatePrescriptionError> {
         update_prescription(ctx, input)
-    }
-
-    fn delete_prescription(
-        &self,
-        ctx: &ServiceContext,
-        id: String,
-    ) -> Result<String, DeletePrescriptionError> {
-        delete_prescription(ctx, id)
     }
 
     fn batch_prescription(
@@ -252,14 +226,6 @@ pub trait InvoiceServiceTrait: Sync + Send {
         update_supplier_return_lines(ctx, input)
     }
 
-    fn delete_supplier_return(
-        &self,
-        ctx: &ServiceContext,
-        id: String,
-    ) -> Result<String, DeleteSupplierReturnError> {
-        delete_supplier_return(ctx, id)
-    }
-
     fn generate_customer_return_lines(
         &self,
         ctx: &ServiceContext,
@@ -291,14 +257,6 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: UpdateCustomerReturnLines,
     ) -> Result<Invoice, UpdateCustomerReturnLinesError> {
         update_customer_return_lines(ctx, input)
-    }
-
-    fn delete_customer_return(
-        &self,
-        ctx: &ServiceContext,
-        id: String,
-    ) -> Result<String, DeleteCustomerReturnError> {
-        delete_customer_return(ctx, id)
     }
 
     fn delete_invoice(

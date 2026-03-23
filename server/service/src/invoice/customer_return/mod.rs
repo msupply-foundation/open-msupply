@@ -1,12 +1,10 @@
 use chrono::NaiveDate;
 
-pub mod delete;
 pub mod generate_lines;
 pub mod insert;
 pub mod update;
 pub mod update_lines;
 
-pub use self::delete::*;
 pub use self::generate_lines::*;
 pub use self::update::*;
 pub use self::update_lines::*;

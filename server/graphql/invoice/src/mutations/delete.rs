@@ -118,6 +118,11 @@ pub fn delete_invoices(
     })
 }
 
+/// Maps a delete result for use in batch mutation responses.
+pub fn map_batch_response(from: Result<String, ServiceError>) -> Result<DeleteInvoiceLineResponse> {
+    Ok(map_response(from))
+}
+
 fn map_response(from: Result<String, ServiceError>) -> DeleteInvoiceLineResponse {
     match from {
         Ok(id) => DeleteInvoiceLineResponse::Response(GenericDeleteResponse(id)),

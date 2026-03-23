@@ -86,16 +86,6 @@ impl InvoiceMutations {
         outbound_shipment::update_name::update_name(ctx, &store_id, input)
     }
 
-    #[graphql(deprecation = "Use deleteInvoices instead")]
-    async fn delete_outbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        id: String,
-    ) -> Result<outbound_shipment::delete::DeleteResponse> {
-        outbound_shipment::delete::delete(ctx, &store_id, id)
-    }
-
     async fn insert_inbound_shipment(
         &self,
         ctx: &Context<'_>,
@@ -152,36 +142,6 @@ impl InvoiceMutations {
         )
     }
 
-    #[graphql(deprecation = "Use deleteInvoices instead")]
-    async fn delete_inbound_shipment(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: inbound_shipment::delete::DeleteInput,
-    ) -> Result<inbound_shipment::delete::DeleteResponse> {
-        inbound_shipment::delete::delete(
-            ctx,
-            &store_id,
-            input,
-            InboundShipmentType::InboundShipment,
-        )
-    }
-
-    #[graphql(deprecation = "Use deleteInvoices instead")]
-    async fn delete_inbound_shipment_external(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: inbound_shipment::delete::DeleteInput,
-    ) -> Result<inbound_shipment::delete::DeleteResponse> {
-        inbound_shipment::delete::delete(
-            ctx,
-            &store_id,
-            input,
-            InboundShipmentType::InboundShipmentExternal,
-        )
-    }
-
     /// Add invoice lines from master item master list
     async fn add_to_outbound_shipment_from_master_list(
         &self,
@@ -217,16 +177,6 @@ impl InvoiceMutations {
         input: prescription::update::UpdateInput,
     ) -> Result<prescription::update::UpdateResponse> {
         prescription::update::update(ctx, &store_id, input)
-    }
-
-    #[graphql(deprecation = "Use deleteInvoices instead")]
-    async fn delete_prescription(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        id: String,
-    ) -> Result<prescription::delete::DeleteResponse> {
-        prescription::delete::delete(ctx, &store_id, id)
     }
 
     async fn insert_supplier_return(
@@ -265,16 +215,6 @@ impl InvoiceMutations {
         supplier_return::update_lines::update_lines(ctx, &store_id, input)
     }
 
-    #[graphql(deprecation = "Use deleteInvoices instead")]
-    async fn delete_supplier_return(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        id: String,
-    ) -> Result<supplier_return::delete::DeleteResponse> {
-        supplier_return::delete::delete(ctx, &store_id, id)
-    }
-
     async fn insert_customer_return(
         &self,
         ctx: &Context<'_>,
@@ -300,16 +240,6 @@ impl InvoiceMutations {
         input: customer_return::update_lines::UpdateInput,
     ) -> Result<customer_return::update_lines::UpdateResponse> {
         customer_return::update_lines::update_lines(ctx, &store_id, input)
-    }
-
-    #[graphql(deprecation = "Use deleteInvoices instead")]
-    async fn delete_customer_return(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        id: String,
-    ) -> Result<customer_return::delete::DeleteResponse> {
-        customer_return::delete::delete(ctx, &store_id, id)
     }
 
     /// Delete invoices by id, filtered by allowed types

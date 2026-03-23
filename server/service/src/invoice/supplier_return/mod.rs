@@ -1,4 +1,3 @@
-pub mod delete;
 pub mod generate_supplier_return_lines;
 pub mod insert;
 pub mod update;

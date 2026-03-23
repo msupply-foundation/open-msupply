@@ -2,6 +2,7 @@ use async_graphql::*;
 use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
+use graphql_invoice::mutations::delete as invoice_delete;
 use graphql_invoice::mutations::inbound_shipment;
 use graphql_invoice_line::mutations::inbound_shipment_line;
 use service::auth::ResourceAccessRequest;
@@ -24,7 +25,7 @@ type ServiceResult = BatchInboundShipmentResult;
 ))]
 #[graphql(concrete(
     name = "DeleteInboundShipmentResponseWithId",
-    params(inbound_shipment::delete::DeleteResponse)
+    params(invoice_delete::DeleteInvoiceLineResponse)
 ))]
 #[graphql(concrete(
     name = "InsertInboundShipmentLineResponseWithId",
@@ -80,7 +81,7 @@ type DeleteShipmentServiceLinesResponse =
 type UpdateShipmentsResponse =
     Option<Vec<MutationWithId<inbound_shipment::update::UpdateResponse>>>;
 type DeleteShipmentsResponse =
-    Option<Vec<MutationWithId<inbound_shipment::delete::DeleteResponse>>>;
+    Option<Vec<MutationWithId<invoice_delete::DeleteInvoiceLineResponse>>>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchInboundShipmentResponse")]
@@ -257,7 +258,7 @@ fn map_update_shipments(responses: UpdateShipmentsResult) -> Result<UpdateShipme
 fn map_delete_shipments(responses: DeleteShipmentsResult) -> Result<DeleteShipmentsResponse> {
     let mut result = Vec::new();
     for response in responses {
-        let mapped_response = match inbound_shipment::delete::map_response(response.result) {
+        let mapped_response = match invoice_delete::map_batch_response(response.result) {
             Ok(response) => response,
             Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
         };

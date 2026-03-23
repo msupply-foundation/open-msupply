@@ -1,4 +1,3 @@
-pub mod delete;
 pub mod error;
 pub mod insert;
 pub mod update;
