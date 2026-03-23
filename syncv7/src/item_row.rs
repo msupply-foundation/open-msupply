@@ -1,6 +1,6 @@
 use crate::{
     changelog::Changelog,
-    sync_traits::{Error, Record, SyncType, TranslatorTrait, Upsert, add_sync_visitor},
+    sync_traits::{Error, Record, SyncType, add_sync_visitor},
 };
 use ctor::ctor;
 use diesel::prelude::*;
@@ -14,7 +14,7 @@ table! {
 }
 
 #[derive(Debug, Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
-#[table_name = "item"]
+#[diesel(table_name = item)]
 pub struct Row {
     id: String,
     name: String,
@@ -61,12 +61,7 @@ impl Record for Row {
     }
 }
 
-struct Translator;
-
-impl TranslatorTrait for Translator {
-    type Item = Row;
-}
 #[ctor]
-fn register_my_struct() {
-    add_sync_visitor(Box::new(Translator));
+fn register() {
+    add_sync_visitor::<Row>();
 }

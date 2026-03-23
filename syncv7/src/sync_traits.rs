@@ -1,5 +1,6 @@
 use diesel::prelude::*;
 use serde::{Serialize, de::DeserializeOwned};
+use std::marker::PhantomData;
 use std::sync::RwLock;
 use strum::IntoEnumIterator;
 
@@ -9,10 +10,10 @@ use super::changelog::Changelog;
 
 static SYNC_SITE: RwLock<i64> = RwLock::new(0);
 
-static SYNC_VISITORS: RwLock<Vec<Box<dyn SyncRecord>>> = RwLock::new(Vec::new());
-pub fn add_sync_visitor(visitor: Box<dyn SyncRecord>) {
+static SYNC_VISITORS: RwLock<Vec<Box<dyn Syncable>>> = RwLock::new(Vec::new());
+pub fn add_sync_visitor<T: Record + Sync + Send + 'static>() {
     let mut visitors = SYNC_VISITORS.write().unwrap();
-    visitors.push(visitor);
+    visitors.push(Box::new(SyncAdapter::<T>::new()));
 }
 pub fn set_sync_site(site_id: i64) {
     let mut sync_site = SYNC_SITE.write().unwrap();
@@ -49,9 +50,7 @@ where
     ) -> Result<Option<ChangeLogInsertRow>, Error> {
         Ok(None)
     }
-}
 
-impl<T: Record + Sync + Send> Upsert for T {
     fn upsert(&self, connection: &mut SqliteConnection) -> Result<Option<i64>, Error> {
         self.upsert_internal(connection)?;
 
@@ -71,6 +70,19 @@ impl<T: Record + Sync + Send> Upsert for T {
             .insert(connection)?,
         ))
     }
+}
+
+// Object-safe subset of the Record trait for dynamic dispatch (auto-implemented for all Record types)
+pub trait DynRecord: Send + Sync {
+    fn upsert(&self, connection: &mut SqliteConnection) -> Result<Option<i64>, Error>;
+    fn sync_type(&self) -> &'static SyncType;
+    fn get_store_id(&self) -> String;
+}
+
+impl<T: Record + Sync + Send> DynRecord for T {
+    fn upsert(&self, connection: &mut SqliteConnection) -> Result<Option<i64>, Error> {
+        Record::upsert(self, connection)
+    }
 
     fn sync_type(&self) -> &'static SyncType {
         Self::sync_type()
@@ -81,20 +93,7 @@ impl<T: Record + Sync + Send> Upsert for T {
     }
 }
 
-pub trait Upsert: Send + Sync {
-    fn upsert(&self, connection: &mut SqliteConnection) -> Result<Option<i64>, Error>;
-    fn sync_type(&self) -> &'static SyncType;
-    fn get_store_id(&self) -> String;
-
-    fn boxed(self) -> Box<dyn Upsert>
-    where
-        Self: Sized + 'static,
-    {
-        Box::new(self)
-    }
-}
-
-pub trait SyncRecord: Send + Sync {
+trait Syncable: Send + Sync {
     fn serialize(
         &self,
         connection: &mut SqliteConnection,
@@ -106,28 +105,33 @@ pub trait SyncRecord: Send + Sync {
         &self,
         table_name: &str,
         value: serde_json::Value,
-    ) -> Result<Option<Box<dyn Upsert>>, Error>;
+    ) -> Result<Option<Box<dyn DynRecord>>, Error>;
 
     fn sync_type(&self) -> &'static SyncType;
     fn changelog(&self) -> Changelog;
 }
 
-pub trait TranslatorTrait {
-    type Item: Record + Upsert + 'static;
+// We need phantom data to have an unused generic type parameter
+struct SyncAdapter<T: Record>(PhantomData<T>);
+
+impl<T: Record + Sync + Send + 'static> SyncAdapter<T> {
+    fn new() -> Self {
+        SyncAdapter(PhantomData)
+    }
 }
 
-impl<T: TranslatorTrait + Sync + Send> SyncRecord for T {
+impl<T: Record + Sync + Send + 'static> Syncable for SyncAdapter<T> {
     fn serialize(
         &self,
         connection: &mut SqliteConnection,
         changelog: &Changelog,
         id: &str,
     ) -> Result<Option<serde_json::Value>, Error> {
-        if T::Item::changelog() != changelog {
+        if T::changelog() != changelog {
             return Ok(None);
         };
 
-        if let Some(record) = T::Item::find_by_id(connection, id).map_err(|_| Error)? {
+        if let Some(record) = T::find_by_id(connection, id).map_err(|_| Error)? {
             serde_json::to_value(&record).map_err(|_| Error).map(Some)
         } else {
             Err(Error)
@@ -138,22 +142,22 @@ impl<T: TranslatorTrait + Sync + Send> SyncRecord for T {
         &self,
         table_name: &str,
         value: serde_json::Value,
-    ) -> Result<Option<Box<dyn Upsert>>, Error> {
-        if T::Item::changelog().sync_table_name() != table_name {
+    ) -> Result<Option<Box<dyn DynRecord>>, Error> {
+        if T::changelog().sync_table_name() != table_name {
             return Ok(None);
         };
 
-        let record: T::Item = serde_json::from_value(value).map_err(|_| Error)?;
+        let record: T = serde_json::from_value(value).map_err(|_| Error)?;
 
-        Ok(Some(record.boxed()))
+        Ok(Some(Box::new(record)))
     }
 
     fn sync_type(&self) -> &'static SyncType {
-        <T::Item as Record>::sync_type()
+        T::sync_type()
     }
 
     fn changelog(&self) -> Changelog {
-        T::Item::changelog().to_owned()
+        T::changelog().to_owned()
     }
 }
 
@@ -177,7 +181,7 @@ pub fn serialize(
 pub fn deserialize(
     table_name: &str,
     value: serde_json::Value,
-) -> Result<Option<Box<dyn Upsert>>, Error> {
+) -> Result<Option<Box<dyn DynRecord>>, Error> {
     let visitors = SYNC_VISITORS.read().unwrap();
     for visitor in visitors.iter() {
         if let Some(upsert) = visitor.deserialize(table_name, value.clone())? {
@@ -197,9 +201,9 @@ pub fn get_table_names_for_sync_type(sync_type: &SyncType) -> Vec<Changelog> {
 }
 
 fn operations_by_sync_type(
-    operations: &mut Vec<Box<dyn Upsert>>,
+    operations: &mut Vec<Box<dyn DynRecord>>,
     sync_type: &SyncType,
-) -> Vec<Box<dyn Upsert>> {
+) -> Vec<Box<dyn DynRecord>> {
     let original = std::mem::take(operations);
     let (matching, remaining) = original
         .into_iter()
@@ -209,9 +213,9 @@ fn operations_by_sync_type(
     matching
 }
 
-pub fn validate_remote(mut operations: Vec<Box<dyn Upsert>>, is_initialising: bool) {
-    let mut accept: Vec<Box<dyn Upsert>> = Vec::new();
-    let mut reject: Vec<Box<dyn Upsert>> = Vec::new();
+pub fn validate_remote(mut operations: Vec<Box<dyn DynRecord>>, is_initialising: bool) {
+    let mut accept: Vec<Box<dyn DynRecord>> = Vec::new();
+    let mut reject: Vec<Box<dyn DynRecord>> = Vec::new();
 
     SyncType::iter().for_each(|sync_type| match sync_type {
         SyncType::Central => {
