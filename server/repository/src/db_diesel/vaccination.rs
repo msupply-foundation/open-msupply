@@ -1,7 +1,7 @@
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, item_link, item_row::item,
-    name_row::name, vaccination_row::vaccination, DBType, ItemLinkRow, ItemRow, RepositoryError,
-    StorageConnection, VaccinationRow,
+    name_row::name, vaccination_row::vaccination, DBType, ItemLinkRow,
+    ItemRow, RepositoryError, StorageConnection, VaccinationRow,
 };
 
 use crate::{
@@ -107,13 +107,7 @@ impl<'a> VaccinationRepository<'a> {
 }
 
 fn to_domain(
-    (
-        vaccination_row,
-        clinician_link_join,
-        item_link_join,
-        vaccine_course_dose_row,
-        facility_name_row,
-    ): VaccinationJoin,
+    (vaccination_row, clinician_link_join, item_link_join, vaccine_course_dose_row, facility_name_row): VaccinationJoin,
 ) -> Vaccination {
     Vaccination {
         vaccination_row,

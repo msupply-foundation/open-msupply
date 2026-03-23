@@ -79,11 +79,13 @@ impl<'a> ContactFormRepository<'a> {
         let result = final_query
             .load::<ContactFormJoin>(self.connection.lock().connection())?
             .into_iter()
-            .map(|(contact_form_row, (store_row, name_row))| ContactForm {
-                contact_form_row,
-                store_row,
-                name_row,
-            })
+            .map(
+                |(contact_form_row, (store_row, name_row))| ContactForm {
+                    contact_form_row,
+                    store_row,
+                    name_row,
+                },
+            )
             .collect();
 
         Ok(result)
@@ -92,7 +94,10 @@ impl<'a> ContactFormRepository<'a> {
 
 type BoxedContactFormQuery = IntoBoxed<
     'static,
-    InnerJoin<contact_form::table, InnerJoin<store::table, name::table>>,
+    InnerJoin<
+        contact_form::table,
+        InnerJoin<store::table, name::table>,
+    >,
     DBType,
 >;
 

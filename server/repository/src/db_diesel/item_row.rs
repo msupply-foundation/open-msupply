@@ -2,8 +2,8 @@ use crate::{Delete, Upsert};
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    location_type_row::location_type, unit_row::unit, ItemLinkRow, ItemLinkRowRepository,
-    RepositoryError, StorageConnection,
+    location_type_row::location_type, unit_row::unit, ItemLinkRow,
+    ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;

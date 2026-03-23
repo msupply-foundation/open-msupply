@@ -124,16 +124,8 @@ macro_rules! apply_program_event_filters_with_links {
                 program_event_with_links::active_end_datetime
             );
             apply_equal_filter!($query, f.context_id, program_event_with_links::context_id);
-            apply_equal_filter!(
-                $query,
-                f.document_type,
-                program_event_with_links::document_type
-            );
-            apply_equal_filter!(
-                $query,
-                f.document_name,
-                program_event_with_links::document_name
-            );
+            apply_equal_filter!($query, f.document_type, program_event_with_links::document_type);
+            apply_equal_filter!($query, f.document_name, program_event_with_links::document_name);
             apply_equal_filter!($query, f.r#type, program_event_with_links::type_);
             apply_string_filter!($query, f.data, program_event_with_links::data);
         }
@@ -166,7 +158,9 @@ fn query() -> _ {
 
 type BoxedProgramEventQuery = IntoBoxed<'static, query, DBType>;
 
-fn create_filtered_query(filter: Option<ProgramEventFilter>) -> BoxedProgramEventQuery {
+fn create_filtered_query(
+    filter: Option<ProgramEventFilter>,
+) -> BoxedProgramEventQuery {
     let mut query = query().into_boxed();
     query = apply_program_event_filters!(query, filter.clone());
     apply_patient_id_filters!(query, filter)
@@ -247,8 +241,7 @@ impl<'a> ProgramEventRepository<'a> {
             let mut sub_query = name_link::table.into_boxed();
             apply_equal_filter!(sub_query, Some(patient_id.clone()), name_link::name_id);
             query = query.filter(
-                program_event_with_links::patient_link_id
-                    .eq_any(sub_query.select(name_link::id).nullable()),
+                program_event_with_links::patient_link_id.eq_any(sub_query.select(name_link::id).nullable()),
             );
         }
         query = apply_program_event_filters_with_links!(query, Some(filter));

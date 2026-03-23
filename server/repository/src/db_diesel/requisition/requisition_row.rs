@@ -166,10 +166,8 @@ impl<'a> RequisitionRowRepository<'a> {
 
         let change_log_id = self.insert_changelog(&requisition, RowActionType::Delete)?;
 
-        diesel::delete(
-            requisition_with_links::table.filter(requisition_with_links::id.eq(requisition_id)),
-        )
-        .execute(self.connection.lock().connection())?;
+        diesel::delete(requisition_with_links::table.filter(requisition_with_links::id.eq(requisition_id)))
+            .execute(self.connection.lock().connection())?;
 
         Ok(Some(change_log_id))
     }

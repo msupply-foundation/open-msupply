@@ -1,6 +1,6 @@
 use super::{
-    requisition_row::requisition, RequisitionFilter, RequisitionRow, RequisitionSort,
-    RequisitionSortField,
+    requisition_row::requisition,
+    RequisitionFilter, RequisitionRow, RequisitionSort, RequisitionSortField,
 };
 
 use crate::{

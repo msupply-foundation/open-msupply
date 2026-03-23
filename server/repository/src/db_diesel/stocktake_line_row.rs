@@ -1,7 +1,7 @@
 use super::{
     item_link_row::item_link, location_row::location, name_row::name,
-    reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
-    StorageConnection,
+    reason_option_row::reason_option, stock_line_row::stock_line,
+    stocktake_row::stocktake, StorageConnection,
 };
 
 use crate::diesel_macros::define_linked_tables;
@@ -140,10 +140,8 @@ impl<'a> StocktakeLineRowRepository<'a> {
             }
         };
 
-        diesel::delete(
-            stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(id)),
-        )
-        .execute(self.connection.lock().connection())?;
+        diesel::delete(stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 

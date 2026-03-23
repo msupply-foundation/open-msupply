@@ -1,6 +1,6 @@
 use super::{
-    name_row::name, name_store_join::name_store_join, program_row::program, store_row::store,
-    RepositoryError, StorageConnection,
+    name_row::name, name_store_join::name_store_join,
+    program_row::program, store_row::store, RepositoryError, StorageConnection,
 };
 
 use crate::diesel_macros::define_linked_tables;

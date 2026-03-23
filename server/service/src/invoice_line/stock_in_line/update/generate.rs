@@ -191,7 +191,9 @@ fn generate_line(
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
 
-    update_line.donor_id = donor_id.map(|d| d.value).unwrap_or(update_line.donor_id);
+    update_line.donor_id = donor_id
+        .map(|d| d.value)
+        .unwrap_or(update_line.donor_id);
 
     update_line.manufacturer_id = manufacturer_id
         .map(|m| m.value)

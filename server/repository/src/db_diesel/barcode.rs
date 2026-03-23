@@ -1,4 +1,6 @@
-use super::{barcode_row::barcode, name_row::name, BarcodeRow, DBType, NameRow, StorageConnection};
+use super::{
+    barcode_row::barcode, name_row::name, BarcodeRow, DBType, NameRow, StorageConnection,
+};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
@@ -87,7 +89,9 @@ impl<'a> BarcodeRepository<'a> {
     }
 }
 
-fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedBarcodeQuery {
+fn create_filtered_query(
+    filter: Option<BarcodeFilter>,
+) -> BoxedBarcodeQuery {
     let mut query = query().into_boxed();
 
     if let Some(filter) = filter {

@@ -1,8 +1,8 @@
 use super::period_row::period::dsl::*;
 
 use crate::{
-    period_schedule_row::period_schedule, repository_error::RepositoryError, StorageConnection,
-    Upsert,
+    period_schedule_row::period_schedule,
+    repository_error::RepositoryError, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDate;

@@ -1,14 +1,9 @@
 #[cfg(test)]
 mod update {
     use repository::{
-        mock::{
-            mock_item_a, mock_item_b, mock_item_d, mock_purchase_order_a, mock_store_a,
-            MockDataInserts,
-        },
-        test_db::setup_all,
-        ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
-        InvoiceRow, InvoiceRowRepository, InvoiceStatus, PurchaseOrderLineRow,
-        PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
+        ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, mock::{
+            MockDataInserts, mock_item_a, mock_item_b, mock_item_d, mock_purchase_order_a, mock_store_a
+        }, test_db::setup_all
     };
 
     use crate::{
