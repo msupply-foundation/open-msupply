@@ -11,9 +11,11 @@ use crate::{
     BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
+use crate::invoice::delete::{delete_invoice, DeleteInvoiceError, DeleteInvoiceType};
+
 use super::{
-    delete_prescription, insert_prescription, update_prescription, DeletePrescriptionError,
-    InsertPrescription, InsertPrescriptionError, UpdatePrescription, UpdatePrescriptionError,
+    insert_prescription, update_prescription, InsertPrescription, InsertPrescriptionError,
+    UpdatePrescription, UpdatePrescriptionError,
 };
 
 #[derive(Debug, Clone)]
@@ -39,7 +41,7 @@ pub type DeleteLinesResult =
 pub type UpdatePrescriptionsResult =
     Vec<InputWithResult<UpdatePrescription, Result<Invoice, UpdatePrescriptionError>>>;
 pub type DeletePrescriptionsResult =
-    Vec<InputWithResult<String, Result<String, DeletePrescriptionError>>>;
+    Vec<InputWithResult<String, Result<String, DeleteInvoiceError>>>;
 pub type SetPrescribedQuantityResult =
     Vec<InputWithResult<SetPrescribedQuantity, Result<InvoiceLine, SetPrescribedQuantityError>>>;
 
@@ -111,8 +113,12 @@ pub fn batch_prescription(
                 return Err(WithDBError::err(results));
             }
 
-            let (has_errors, result) =
-                mutations_processor.do_mutations(input.delete_prescription, delete_prescription);
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.delete_prescription,
+                |ctx: &ServiceContext, id: String| {
+                    delete_invoice(ctx, id, &[DeleteInvoiceType::Prescription])
+                },
+            );
             results.delete_prescription = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -140,7 +146,7 @@ mod test {
     };
 
     use crate::{
-        invoice::{BatchPrescription, DeletePrescriptionError, InsertPrescription},
+        invoice::{delete::DeleteInvoiceError, BatchPrescription, InsertPrescription},
         invoice_line::stock_out_line::{InsertStockOutLine, StockOutType},
         service_provider::ServiceProvider,
         InputWithResult,
@@ -188,7 +194,7 @@ mod test {
             result.delete_prescription,
             vec![InputWithResult {
                 input: delete_shipment_input,
-                result: Err(DeletePrescriptionError::NotAPrescriptionInvoice {})
+                result: Err(DeleteInvoiceError::InvoiceTypeNotSupported)
             }]
         );
 

@@ -453,15 +453,6 @@ mutation insertCustomerReturn($storeId: String!, $input: CustomerReturnInput!) {
   }
 }
 
-mutation deleteSupplierReturn($storeId: String!, $id: String!) {
-  deleteSupplierReturn(storeId: $storeId, id: $id) {
-    __typename
-    ... on DeleteResponse {
-      id
-    }
-  }
-}
-
 mutation updateCustomerReturn(
   $storeId: String!
   $input: UpdateCustomerReturnInput!
@@ -489,11 +480,37 @@ mutation updateCustomerReturnLines(
   }
 }
 
-mutation deleteCustomerReturn($storeId: String!, $id: String!) {
-  deleteCustomerReturn(storeId: $storeId, id: $id) {
-    __typename
-    ... on DeleteResponse {
+mutation deleteInvoices(
+  $storeId: String!
+  $ids: [DeleteInvoiceInput!]!
+  $type: [InvoiceTypeInput!]!
+) {
+  deleteInvoices(storeId: $storeId, ids: $ids, type: $type) {
+    deleteInvoices {
       id
+      response {
+        ... on DeleteInvoiceError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteInvoiceWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
     }
   }
 }

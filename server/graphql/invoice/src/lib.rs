@@ -8,7 +8,7 @@ use self::invoice_queries::*;
 
 pub mod mutations;
 use self::mutations::{
-    customer_return, inbound_shipment, outbound_shipment, prescription, supplier_return,
+    customer_return, delete, inbound_shipment, outbound_shipment, prescription, supplier_return,
 };
 
 #[cfg(test)]
@@ -86,6 +86,7 @@ impl InvoiceMutations {
         outbound_shipment::update_name::update_name(ctx, &store_id, input)
     }
 
+    #[graphql(deprecation = "Use deleteInvoices instead")]
     async fn delete_outbound_shipment(
         &self,
         ctx: &Context<'_>,
@@ -151,6 +152,7 @@ impl InvoiceMutations {
         )
     }
 
+    #[graphql(deprecation = "Use deleteInvoices instead")]
     async fn delete_inbound_shipment(
         &self,
         ctx: &Context<'_>,
@@ -165,6 +167,7 @@ impl InvoiceMutations {
         )
     }
 
+    #[graphql(deprecation = "Use deleteInvoices instead")]
     async fn delete_inbound_shipment_external(
         &self,
         ctx: &Context<'_>,
@@ -216,6 +219,7 @@ impl InvoiceMutations {
         prescription::update::update(ctx, &store_id, input)
     }
 
+    #[graphql(deprecation = "Use deleteInvoices instead")]
     async fn delete_prescription(
         &self,
         ctx: &Context<'_>,
@@ -261,6 +265,7 @@ impl InvoiceMutations {
         supplier_return::update_lines::update_lines(ctx, &store_id, input)
     }
 
+    #[graphql(deprecation = "Use deleteInvoices instead")]
     async fn delete_supplier_return(
         &self,
         ctx: &Context<'_>,
@@ -297,6 +302,7 @@ impl InvoiceMutations {
         customer_return::update_lines::update_lines(ctx, &store_id, input)
     }
 
+    #[graphql(deprecation = "Use deleteInvoices instead")]
     async fn delete_customer_return(
         &self,
         ctx: &Context<'_>,
@@ -304,5 +310,18 @@ impl InvoiceMutations {
         id: String,
     ) -> Result<customer_return::delete::DeleteResponse> {
         customer_return::delete::delete(ctx, &store_id, id)
+    }
+
+    /// Delete invoices by id, filtered by allowed types
+    async fn delete_invoices(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "List of invoice ids to delete")]
+        ids: Vec<delete::DeleteInvoiceInput>,
+        #[graphql(desc = "Allowed invoice types for deletion")]
+        r#type: Vec<InvoiceTypeInput>,
+    ) -> Result<delete::DeleteInvoicesResponse> {
+        delete::delete_invoices(ctx, &store_id, ids, r#type)
     }
 }

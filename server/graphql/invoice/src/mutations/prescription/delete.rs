@@ -9,7 +9,7 @@ use graphql_types::{
 
 use async_graphql::*;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::prescription::DeletePrescriptionError as ServiceError;
+use service::invoice::{DeleteInvoiceError as ServiceError, DeleteInvoiceType};
 
 #[derive(SimpleObject)]
 #[graphql(name = "DeletePrescriptionError")]
@@ -36,11 +36,11 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_service
-            .delete_prescription(&service_context, id),
-    )
+    map_response(service_provider.invoice_service.delete_invoice(
+        &service_context,
+        id,
+        &[DeleteInvoiceType::Prescription],
+    ))
 }
 
 pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
@@ -79,7 +79,7 @@ fn map_error(error: ServiceError) -> Result<DeletePrescriptionErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice | ServiceError::NotAPrescriptionInvoice => {
+        ServiceError::NotThisStoreInvoice | ServiceError::InvoiceTypeNotSupported => {
             BadUserInput(formatted_error)
         }
         ServiceError::DatabaseError(_) | ServiceError::LineDeleteError { .. } => {
@@ -152,7 +152,7 @@ mod graphql {
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        // NotAPrescriptionInvoice
+        // NotAPrescriptionInvoice (now InvoiceTypeNotSupported)
         let variables = Some(json!({
           "id": "inbound_shipment_c"
         }));

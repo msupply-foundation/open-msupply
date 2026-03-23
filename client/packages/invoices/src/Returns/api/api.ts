@@ -12,6 +12,7 @@ import {
   UpdateSupplierReturnInput,
   UpdateSupplierReturnLinesInput,
   UpdateSupplierReturnStatusInput,
+  InvoiceTypeInput,
 } from '@common/types';
 import {
   CustomerReturnRowFragment,
@@ -344,18 +345,17 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
   },
 
   deleteSupplier: async (id: string): Promise<string> => {
-    const result = await sdk.deleteSupplierReturn({
+    const result = await sdk.deleteInvoices({
       storeId,
-      id,
+      ids: [{ id }],
+      type: [InvoiceTypeInput.SupplierReturn],
     });
 
-    const { deleteSupplierReturn } = result;
-
-    if (deleteSupplierReturn.__typename === 'DeleteResponse') {
-      return deleteSupplierReturn.id;
+    const deletedIds = result?.deleteInvoices?.deleteInvoices;
+    if (deletedIds?.[0]) {
+      return deletedIds[0].id;
     }
 
-    // TODO: handle error response...
     throw new Error('Could not delete supplier return');
   },
 
@@ -412,18 +412,17 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
   },
 
   deleteCustomer: async (id: string): Promise<string> => {
-    const result = await sdk.deleteCustomerReturn({
+    const result = await sdk.deleteInvoices({
       storeId,
-      id,
+      ids: [{ id }],
+      type: [InvoiceTypeInput.CustomerReturn],
     });
 
-    const { deleteCustomerReturn } = result;
-
-    if (deleteCustomerReturn.__typename === 'DeleteResponse') {
-      return deleteCustomerReturn.id;
+    const deletedIds = result?.deleteInvoices?.deleteInvoices;
+    if (deletedIds?.[0]) {
+      return deletedIds[0].id;
     }
 
-    // TODO: handle error response...
     throw new Error('Could not delete customer return');
   },
 });

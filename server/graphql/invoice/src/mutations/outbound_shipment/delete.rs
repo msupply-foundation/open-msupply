@@ -9,7 +9,7 @@ use graphql_types::{
 
 use async_graphql::*;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::outbound_shipment::delete::DeleteOutboundShipmentError as ServiceError;
+use service::invoice::{DeleteInvoiceError as ServiceError, DeleteInvoiceType};
 
 #[derive(SimpleObject)]
 #[graphql(name = "DeleteOutboundShipmentError")]
@@ -36,11 +36,11 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_service
-            .delete_outbound_shipment(&service_context, id),
-    )
+    map_response(service_provider.invoice_service.delete_invoice(
+        &service_context,
+        id,
+        &[DeleteInvoiceType::OutboundShipment],
+    ))
 }
 
 pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
@@ -77,7 +77,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
+        ServiceError::InvoiceTypeNotSupported => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::LineDeleteError { .. } => InternalError(formatted_error),

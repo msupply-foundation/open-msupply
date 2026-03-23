@@ -387,19 +387,16 @@ mutation updateOutboundShipmentName(
   }
 }
 
-mutation deleteOutboundShipments(
+mutation deleteInvoices(
   $storeId: String!
-  $deleteOutboundShipments: [String!]!
+  $ids: [DeleteInvoiceInput!]!
+  $type: [InvoiceTypeInput!]!
 ) {
-  batchOutboundShipment(
-    storeId: $storeId
-    input: { deleteOutboundShipments: $deleteOutboundShipments }
-  ) {
-    __typename
-    deleteOutboundShipments {
+  deleteInvoices(storeId: $storeId, ids: $ids, type: $type) {
+    deleteInvoices {
       id
       response {
-        ... on DeleteOutboundShipmentError {
+        ... on DeleteInvoiceError {
           __typename
           error {
             description

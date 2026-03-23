@@ -8,7 +8,7 @@ use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
-use service::invoice::customer_return::delete::DeleteCustomerReturnError as ServiceError;
+use service::invoice::{DeleteInvoiceError as ServiceError, DeleteInvoiceType};
 
 #[derive(SimpleObject)]
 #[graphql(name = "DeleteCustomerReturnError")]
@@ -35,11 +35,11 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_service
-            .delete_customer_return(&service_context, id),
-    )
+    map_response(service_provider.invoice_service.delete_invoice(
+        &service_context,
+        id,
+        &[DeleteInvoiceType::CustomerReturn],
+    ))
 }
 
 pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
@@ -70,7 +70,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
         | ServiceError::CannotEditFinalised
-        | ServiceError::NotACustomerReturn
+        | ServiceError::InvoiceTypeNotSupported
         | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
 
         ServiceError::DatabaseError(_) | ServiceError::LineDeleteError { .. } => {

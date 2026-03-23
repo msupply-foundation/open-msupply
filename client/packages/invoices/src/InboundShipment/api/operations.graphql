@@ -443,53 +443,34 @@ mutation updateInboundShipmentExternal(
   }
 }
 
-mutation deleteInboundShipments(
+mutation deleteInvoices(
   $storeId: String!
-  $deleteInboundShipments: [DeleteInboundShipmentInput!]!
+  $ids: [DeleteInvoiceInput!]!
+  $type: [InvoiceTypeInput!]!
 ) {
-  batchInboundShipment(
-    storeId: $storeId
-    input: { deleteInboundShipments: $deleteInboundShipments }
-  ) {
-    __typename
-    deleteInboundShipments {
+  deleteInvoices(storeId: $storeId, ids: $ids, type: $type) {
+    deleteInvoices {
       id
       response {
-        ... on DeleteInboundShipmentError {
+        ... on DeleteInvoiceError {
           __typename
           error {
             description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteInvoiceWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
           }
         }
         ... on DeleteResponse {
-          __typename
-          id
-        }
-      }
-    }
-  }
-}
-
-mutation deleteInboundShipmentsExternal(
-  $storeId: String!
-  $deleteInboundShipments: [DeleteInboundShipmentInput!]!
-) {
-  batchInboundShipmentExternal(
-    storeId: $storeId
-    input: { deleteInboundShipments: $deleteInboundShipments }
-  ) {
-    __typename
-    deleteInboundShipments {
-      id
-      response {
-        ... on DeleteInboundShipmentError {
-          __typename
-          error {
-            description
-          }
-        }
-        ... on DeleteResponse {
-          __typename
           id
         }
       }

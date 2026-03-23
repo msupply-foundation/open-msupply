@@ -1102,6 +1102,7 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
 export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
   DeleteInboundShipmentErrorInterface &
+  DeleteInvoiceErrorInterface &
   DeletePrescriptionErrorInterface &
   DeleteSupplierReturnErrorInterface & {
     __typename: 'CannotDeleteInvoiceWithLines';
@@ -1139,6 +1140,7 @@ export type CannotEditInvoice =
     DeleteInboundShipmentErrorInterface &
     DeleteInboundShipmentLineErrorInterface &
     DeleteInboundShipmentServiceLineErrorInterface &
+    DeleteInvoiceErrorInterface &
     DeleteOutboundShipmentLineErrorInterface &
     DeleteOutboundShipmentServiceLineErrorInterface &
     DeletePrescriptionErrorInterface &
@@ -1863,6 +1865,26 @@ export type DeleteInboundShipmentServiceLineResponseWithId = {
   __typename: 'DeleteInboundShipmentServiceLineResponseWithId';
   id: Scalars['String']['output'];
   response: DeleteInboundShipmentServiceLineResponse;
+};
+
+export type DeleteInvoiceError = {
+  __typename: 'DeleteInvoiceError';
+  error: DeleteInvoiceErrorInterface;
+};
+
+export type DeleteInvoiceErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteInvoiceInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteInvoiceLineResponse = DeleteInvoiceError | DeleteResponse;
+
+export type DeleteInvoicesResponse = {
+  __typename: 'DeleteInvoicesResponse';
+  deleteInvoices: Array<MutationWithIdResponse>;
 };
 
 export type DeleteItemVariantInput = {
@@ -5254,6 +5276,12 @@ export type MissingCredentials = UpdateUserErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type MutationWithIdResponse = {
+  __typename: 'MutationWithIdResponse';
+  id: Scalars['String']['output'];
+  response: DeleteInvoiceLineResponse;
+};
+
 export type Mutations = {
   __typename: 'Mutations';
   /** Add requisition lines from master item master list */
@@ -5281,18 +5309,25 @@ export type Mutations = {
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
   deleteAsset: DeleteAssetResponse;
+  /** @deprecated Use deleteInvoices instead */
   deleteCustomerReturn: DeleteCustomerReturnResponse;
+  /** @deprecated Use deleteInvoices instead */
   deleteInboundShipment: DeleteInboundShipmentResponse;
+  /** @deprecated Use deleteInvoices instead */
   deleteInboundShipmentExternal: DeleteInboundShipmentResponse;
   deleteInboundShipmentExternalLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentExternalServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
+  /** Delete invoices by id, filtered by allowed types */
+  deleteInvoices: DeleteInvoicesResponse;
   deleteLocation: DeleteLocationResponse;
+  /** @deprecated Use deleteInvoices instead */
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
+  /** @deprecated Use deleteInvoices instead */
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deletePurchaseOrder: DeletePurchaseOrderResponse;
@@ -5304,6 +5339,7 @@ export type Mutations = {
   deleteRnrForm: DeleteRnRFormResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
+  /** @deprecated Use deleteInvoices instead */
   deleteSupplierReturn: DeleteSupplierReturnResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
   initialiseSite: InitialiseSiteResponse;
@@ -5542,6 +5578,12 @@ export type MutationsDeleteInboundShipmentLineArgs = {
 export type MutationsDeleteInboundShipmentServiceLineArgs = {
   input: DeleteInboundShipmentServiceLineInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteInvoicesArgs = {
+  ids: Array<DeleteInvoiceInput>;
+  storeId: Scalars['String']['input'];
+  type: Array<InvoiceTypeInput>;
 };
 
 export type MutationsDeleteLocationArgs = {
@@ -8383,6 +8425,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteInboundShipmentErrorInterface &
   DeleteInboundShipmentLineErrorInterface &
   DeleteInboundShipmentServiceLineErrorInterface &
+  DeleteInvoiceErrorInterface &
   DeleteLocationErrorInterface &
   DeleteOutboundShipmentLineErrorInterface &
   DeleteOutboundShipmentServiceLineErrorInterface &

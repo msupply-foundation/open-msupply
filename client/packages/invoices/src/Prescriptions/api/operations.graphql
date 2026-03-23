@@ -484,19 +484,16 @@ mutation upsertPrescription(
   }
 }
 
-mutation deletePrescriptions(
+mutation deleteInvoices(
   $storeId: String!
-  $deletePrescriptions: [String!]!
+  $ids: [DeleteInvoiceInput!]!
+  $type: [InvoiceTypeInput!]!
 ) {
-  batchPrescription(
-    storeId: $storeId
-    input: { deletePrescriptions: $deletePrescriptions }
-  ) {
-    __typename
-    deletePrescriptions {
+  deleteInvoices(storeId: $storeId, ids: $ids, type: $type) {
+    deleteInvoices {
       id
       response {
-        ... on DeletePrescriptionError {
+        ... on DeleteInvoiceError {
           __typename
           error {
             description

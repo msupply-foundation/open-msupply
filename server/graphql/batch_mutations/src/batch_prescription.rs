@@ -300,11 +300,10 @@ mod test {
     use service::{
         invoice::{
             prescription::{
-                BatchPrescription, BatchPrescriptionResult, DeletePrescriptionError,
-                InsertPrescription, InsertPrescriptionError, UpdatePrescription,
-                UpdatePrescriptionError,
+                BatchPrescription, BatchPrescriptionResult, InsertPrescription,
+                InsertPrescriptionError, UpdatePrescription, UpdatePrescriptionError,
             },
-            InvoiceServiceTrait,
+            DeleteInvoiceError, InvoiceServiceTrait,
         },
         invoice_line::stock_out_line::{
             DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
@@ -514,7 +513,7 @@ mod test {
                 }],
                 delete_prescription: vec![InputWithResult {
                     input: "id13".to_string(),
-                    result: Err(DeletePrescriptionError::InvoiceDoesNotExist {}),
+                    result: Err(DeleteInvoiceError::InvoiceDoesNotExist {}),
                 }],
                 set_prescribed_quantity: vec![InputWithResult {
                     input: SetPrescribedQuantity {
@@ -561,7 +560,7 @@ mod test {
                 update_prescription: vec![],
                 delete_prescription: vec![InputWithResult {
                     input: "id12".to_string(),
-                    result: Err(DeletePrescriptionError::NotAPrescriptionInvoice {}),
+                    result: Err(DeleteInvoiceError::InvoiceTypeNotSupported {}),
                 }],
                 set_prescribed_quantity: vec![],
             })

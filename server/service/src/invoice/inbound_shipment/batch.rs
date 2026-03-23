@@ -24,10 +24,12 @@ use crate::{
     BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
+use crate::invoice::delete::{delete_invoice, DeleteInvoiceError, DeleteInvoiceType};
+
 use super::{
-    delete_inbound_shipment, insert_inbound_shipment, update_inbound_shipment,
-    DeleteInboundShipment, DeleteInboundShipmentError, InboundShipmentType, InsertInboundShipment,
-    InsertInboundShipmentError, UpdateInboundShipment, UpdateInboundShipmentError,
+    insert_inbound_shipment, update_inbound_shipment, DeleteInboundShipment, InboundShipmentType,
+    InsertInboundShipment, InsertInboundShipmentError, UpdateInboundShipment,
+    UpdateInboundShipmentError,
 };
 
 #[derive(Clone)]
@@ -77,7 +79,7 @@ pub type DeleteServiceLinesResult =
 pub type UpdateShipmentsResult =
     Vec<InputWithResult<UpdateInboundShipment, Result<Invoice, UpdateInboundShipmentError>>>;
 pub type DeleteShipmentsResult =
-    Vec<InputWithResult<DeleteInboundShipment, Result<String, DeleteInboundShipmentError>>>;
+    Vec<InputWithResult<DeleteInboundShipment, Result<String, DeleteInvoiceError>>>;
 
 #[derive(Debug, Default)]
 pub struct BatchInboundShipmentResult {
@@ -255,11 +257,16 @@ pub fn batch_inbound_shipment(
                 return Err(WithDBError::err(results));
             }
 
+            let delete_invoice_type = match r#type {
+                InboundShipmentType::InboundShipment => DeleteInvoiceType::InboundShipment,
+                InboundShipmentType::InboundShipmentExternal => {
+                    DeleteInvoiceType::InboundShipmentExternal
+                }
+            };
             let (has_errors, result) = mutations_processor.do_mutations(
                 input.delete_shipment,
                 |ctx, input: DeleteInboundShipment| {
-                    // type checked in validate function so don't need to check here
-                    delete_inbound_shipment(ctx, input, r#type)
+                    delete_invoice(ctx, input.id, &[delete_invoice_type])
                 },
             );
             results.delete_shipment = result;
@@ -288,9 +295,12 @@ mod test {
     };
 
     use crate::{
-        invoice::inbound_shipment::{
-            BatchInboundShipment, DeleteInboundShipment, DeleteInboundShipmentError,
-            InboundShipmentType, InsertInboundShipment,
+        invoice::{
+            delete::DeleteInvoiceError,
+            inbound_shipment::{
+                BatchInboundShipment, DeleteInboundShipment, InboundShipmentType,
+                InsertInboundShipment,
+            },
         },
         invoice_line::stock_in_line::{InsertStockInLine, StockInType},
         service_provider::ServiceProvider,
@@ -349,7 +359,7 @@ mod test {
             result.delete_shipment,
             vec![InputWithResult {
                 input: delete_shipment_input,
-                result: Err(DeleteInboundShipmentError::NotAnInboundShipment {})
+                result: Err(DeleteInvoiceError::InvoiceTypeNotSupported)
             }]
         );
 

@@ -428,10 +428,10 @@ mod test {
         invoice::{
             inbound_shipment::{
                 BatchInboundShipment, BatchInboundShipmentResult, DeleteInboundShipment,
-                DeleteInboundShipmentError, InsertInboundShipment, InsertInboundShipmentError,
-                UpdateInboundShipment, UpdateInboundShipmentError,
+                InsertInboundShipment, InsertInboundShipmentError, UpdateInboundShipment,
+                UpdateInboundShipmentError,
             },
-            InvoiceServiceTrait,
+            DeleteInvoiceError, InvoiceServiceTrait,
         },
         invoice_line::stock_in_line::{
             DeleteStockInLine, DeleteStockInLineError, InsertStockInLine, InsertStockInLineError,
@@ -667,7 +667,7 @@ mod test {
                         id: "id6".to_string(),
                         ..Default::default()
                     },
-                    result: Err(DeleteInboundShipmentError::InvoiceDoesNotExist {}),
+                    result: Err(DeleteInvoiceError::InvoiceDoesNotExist {}),
                 }],
                 insert_service_line: vec![],
                 update_service_line: vec![],
@@ -709,7 +709,7 @@ mod test {
                         id: "id6".to_string(),
                         ..Default::default()
                     },
-                    result: Err(DeleteInboundShipmentError::NotAnInboundShipment {}),
+                    result: Err(DeleteInvoiceError::InvoiceTypeNotSupported {}),
                 }],
                 insert_service_line: vec![],
                 update_service_line: vec![],

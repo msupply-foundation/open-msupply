@@ -1,7 +1,6 @@
 import {
   InvoiceLineNodeType,
   RecordPatch,
-  InvoiceNodeType,
   InvoiceTypeInput,
   InvoiceSortFieldInput,
   FilterBy,
@@ -29,7 +28,6 @@ import {
   Sdk,
   InboundFragment,
   InboundRowFragment,
-  InsertInboundShipmentMutationVariables,
   InboundLineFragment,
 } from './operations.generated';
 
@@ -209,63 +207,6 @@ export const inboundParsers = {
 
 export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({ first, offset, sortBy, filterBy, type }: ListParams) => {
-      const filter = {
-        ...filterBy,
-        type: { equalTo: InvoiceNodeType.InboundShipment },
-      };
-
-      const result = await sdk.invoices({
-        first,
-        offset,
-        key: inboundParsers.toSortField(sortBy),
-        desc: !!sortBy.isDesc,
-        filter,
-        storeId,
-        type,
-      });
-      return result?.invoices;
-    },
-    listAll: async ({
-      sortBy,
-      type,
-    }: {
-      sortBy: SortBy<InboundRowFragment>;
-      type?: InvoiceTypeInput[];
-    }) => {
-      const result = await sdk.invoices({
-        key: inboundParsers.toSortField(sortBy),
-        desc: !!sortBy.isDesc,
-        storeId,
-        type,
-      });
-      return result?.invoices;
-    },
-    byId: async (id: string) => {
-      const result = await sdk.invoice({ id, storeId });
-
-      const invoice = result?.invoice;
-
-      if (invoice?.__typename === 'InvoiceNode') {
-        return invoice;
-      }
-
-      throw new Error(result?.invoice?.__typename || 'Could not find invoice!');
-    },
-    byNumber: async (invoiceNumber: string) => {
-      const result = await sdk.inboundByNumber({
-        invoiceNumber: Number(invoiceNumber),
-        storeId,
-      });
-
-      const invoice = result?.invoiceByNumber;
-
-      if (invoice?.__typename === 'InvoiceNode') {
-        return invoice;
-      }
-
-      throw new Error('Could not find invoice!');
-    },
     listInternalOrders: async (otherPartyId: string) => {
       const filter = {
         type: { equalTo: RequisitionNodeType.Request },
@@ -303,67 +244,22 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       return result?.purchaseOrders;
     },
   },
-  delete: async (
-    invoices: InboundRowFragment[],
-    isExternal = false
-  ): Promise<string[]> => {
-    const variables = {
+  delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
+    const result = await sdk.deleteInvoices({
       storeId,
-      deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
-    };
+      ids: invoices.map(invoice => ({ id: invoice.id })),
+      type: [
+        InvoiceTypeInput.InboundShipment,
+        InvoiceTypeInput.InboundShipmentExternal,
+      ],
+    });
 
-    const batchInboundShipment = isExternal
-      ? (await sdk.deleteInboundShipmentsExternal(variables))
-          ?.batchInboundShipmentExternal
-      : (await sdk.deleteInboundShipments(variables))?.batchInboundShipment;
-
-    if (batchInboundShipment?.deleteInboundShipments) {
-      return batchInboundShipment.deleteInboundShipments.map(({ id }) => id);
+    const deletedIds = result?.deleteInvoices?.deleteInvoices;
+    if (deletedIds) {
+      return deletedIds.map(({ id }) => id);
     }
 
     throw new Error('Could not delete invoices');
-  },
-  insert: async (
-    patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>,
-    isExternal = false
-  ): Promise<string> => {
-    const variables = {
-      id: patch.id,
-      otherPartyId: patch.otherPartyId,
-      storeId,
-      requisitionId: patch.requisitionId,
-      purchaseOrderId: patch.purchaseOrderId,
-      insertLinesFromPurchaseOrder: patch.insertLinesFromPurchaseOrder,
-    };
-
-    const insertResult = isExternal
-      ? (await sdk.insertInboundShipmentExternal(variables))
-          ?.insertInboundShipmentExternal
-      : (await sdk.insertInboundShipment(variables))?.insertInboundShipment;
-
-    if (insertResult?.__typename === 'InvoiceNode') {
-      return insertResult.id;
-    }
-
-    throw new Error(
-      (insertResult as any)?.error?.description ?? 'Could not create invoice'
-    );
-  },
-  update: async (
-    patch:
-      | RecordPatch<InboundFragment>
-      | RecordPatch<InboundRowFragment>
-      | { id: string; defaultDonorUpdate: UpdateDonorInput },
-    isExternal = false
-  ) => {
-    const variables = {
-      input: inboundParsers.toUpdate(patch),
-      storeId,
-    };
-    if (isExternal) {
-      return sdk.updateInboundShipmentExternal(variables);
-    }
-    return sdk.updateInboundShipment(variables);
   },
   insertLinesFromInternalOrder: async (
     lines: { invoiceId: string; requisitionLineId: string }[],

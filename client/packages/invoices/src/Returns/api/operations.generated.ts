@@ -752,18 +752,6 @@ export type InsertCustomerReturnMutation = {
       };
 };
 
-export type DeleteSupplierReturnMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  id: Types.Scalars['String']['input'];
-}>;
-
-export type DeleteSupplierReturnMutation = {
-  __typename: 'Mutations';
-  deleteSupplierReturn:
-    | { __typename: 'DeleteResponse'; id: string }
-    | { __typename: 'DeleteSupplierReturnError' };
-};
-
 export type UpdateCustomerReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateCustomerReturnInput;
@@ -790,16 +778,33 @@ export type UpdateCustomerReturnLinesMutation = {
   };
 };
 
-export type DeleteCustomerReturnMutationVariables = Types.Exact<{
+export type DeleteInvoicesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  id: Types.Scalars['String']['input'];
+  ids: Array<Types.DeleteInvoiceInput> | Types.DeleteInvoiceInput;
+  type: Array<Types.InvoiceTypeInput> | Types.InvoiceTypeInput;
 }>;
 
-export type DeleteCustomerReturnMutation = {
+export type DeleteInvoicesMutation = {
   __typename: 'Mutations';
-  deleteCustomerReturn:
-    | { __typename: 'DeleteCustomerReturnError' }
-    | { __typename: 'DeleteResponse'; id: string };
+  deleteInvoices: {
+    __typename: 'DeleteInvoicesResponse';
+    deleteInvoices: Array<{
+      __typename: 'MutationWithIdResponse';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInvoiceError';
+            error:
+              | {
+                  __typename: 'CannotDeleteInvoiceWithLines';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }>;
+  };
 };
 
 export type UpdateSupplierReturnOtherPartyMutationVariables = Types.Exact<{
@@ -1302,16 +1307,6 @@ export const InsertCustomerReturnDocument = gql`
     }
   }
 `;
-export const DeleteSupplierReturnDocument = gql`
-  mutation deleteSupplierReturn($storeId: String!, $id: String!) {
-    deleteSupplierReturn(storeId: $storeId, id: $id) {
-      __typename
-      ... on DeleteResponse {
-        id
-      }
-    }
-  }
-`;
 export const UpdateCustomerReturnDocument = gql`
   mutation updateCustomerReturn(
     $storeId: String!
@@ -1341,12 +1336,38 @@ export const UpdateCustomerReturnLinesDocument = gql`
     }
   }
 `;
-export const DeleteCustomerReturnDocument = gql`
-  mutation deleteCustomerReturn($storeId: String!, $id: String!) {
-    deleteCustomerReturn(storeId: $storeId, id: $id) {
-      __typename
-      ... on DeleteResponse {
+export const DeleteInvoicesDocument = gql`
+  mutation deleteInvoices(
+    $storeId: String!
+    $ids: [DeleteInvoiceInput!]!
+    $type: [InvoiceTypeInput!]!
+  ) {
+    deleteInvoices(storeId: $storeId, ids: $ids, type: $type) {
+      deleteInvoices {
         id
+        response {
+          ... on DeleteInvoiceError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotDeleteInvoiceWithLines {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+            }
+          }
+          ... on DeleteResponse {
+            id
+          }
+        }
       }
     }
   }
@@ -1622,24 +1643,6 @@ export function getSdk(
         variables
       );
     },
-    deleteSupplierReturn(
-      variables: DeleteSupplierReturnMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<DeleteSupplierReturnMutation> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<DeleteSupplierReturnMutation>({
-            document: DeleteSupplierReturnDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'deleteSupplierReturn',
-        'mutation',
-        variables
-      );
-    },
     updateCustomerReturn(
       variables: UpdateCustomerReturnMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -1676,20 +1679,20 @@ export function getSdk(
         variables
       );
     },
-    deleteCustomerReturn(
-      variables: DeleteCustomerReturnMutationVariables,
+    deleteInvoices(
+      variables: DeleteInvoicesMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<DeleteCustomerReturnMutation> {
+    ): Promise<DeleteInvoicesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteCustomerReturnMutation>({
-            document: DeleteCustomerReturnDocument,
+          client.request<DeleteInvoicesMutation>({
+            document: DeleteInvoicesDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'deleteCustomerReturn',
+        'deleteInvoices',
         'mutation',
         variables
       );

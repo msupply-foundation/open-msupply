@@ -1,20 +1,13 @@
 import { useMutation, useQueryClient } from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
-import { InboundRowFragment } from '../../operations.generated';
 
 export const useInboundDelete = () => {
   const queryClient = useQueryClient();
   const api = useInboundApi();
 
-  return useMutation(
-    (invoices: InboundRowFragment[]) => {
-      const isExternal = invoices.some(inv => !!inv.purchaseOrder);
-      return api.delete(invoices, isExternal);
+  return useMutation(api.delete, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(api.keys.base());
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(api.keys.base());
-      },
-    }
-  );
+  });
 };

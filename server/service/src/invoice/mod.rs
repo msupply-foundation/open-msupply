@@ -6,6 +6,8 @@ use repository::PaginationOption;
 use repository::RepositoryError;
 use repository::StockLine;
 
+pub use self::delete::{delete_invoice, DeleteInvoiceError, DeleteInvoiceType, LineDeleteError};
+
 use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
@@ -51,6 +53,7 @@ pub mod prescription;
 pub use self::prescription::*;
 
 pub mod common;
+pub mod delete;
 pub mod update_picked_date;
 
 pub trait InvoiceServiceTrait: Sync + Send {
@@ -296,6 +299,15 @@ pub trait InvoiceServiceTrait: Sync + Send {
         id: String,
     ) -> Result<String, DeleteCustomerReturnError> {
         delete_customer_return(ctx, id)
+    }
+
+    fn delete_invoice(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+        allowed_types: &[DeleteInvoiceType],
+    ) -> Result<String, DeleteInvoiceError> {
+        delete_invoice(ctx, id, allowed_types)
     }
 
     fn insert_inventory_adjustment(

@@ -520,12 +520,11 @@ mod test {
     use service::{
         invoice::{
             outbound_shipment::{
-                delete::DeleteOutboundShipmentError,
                 insert::{InsertOutboundShipment, InsertOutboundShipmentError},
                 update::{UpdateOutboundShipment, UpdateOutboundShipmentError},
                 BatchOutboundShipment, BatchOutboundShipmentResult,
             },
-            InvoiceServiceTrait,
+            DeleteInvoiceError, InvoiceServiceTrait,
         },
         invoice_line::{
             outbound_shipment_service_line::{
@@ -970,7 +969,7 @@ mod test {
                 }],
                 delete_shipment: vec![InputWithResult {
                     input: "id13".to_string(),
-                    result: Err(DeleteOutboundShipmentError::InvoiceDoesNotExist {}),
+                    result: Err(DeleteInvoiceError::InvoiceDoesNotExist {}),
                 }],
             })
         }));
@@ -1005,7 +1004,7 @@ mod test {
                 update_shipment: vec![],
                 delete_shipment: vec![InputWithResult {
                     input: "id12".to_string(),
-                    result: Err(DeleteOutboundShipmentError::NotAnOutboundShipment {}),
+                    result: Err(DeleteInvoiceError::InvoiceTypeNotSupported {}),
                 }],
                 insert_service_line: vec![],
                 update_service_line: vec![],

@@ -17,6 +17,7 @@ import {
   InsertOutboundShipmentServiceLineInput,
   UpdateOutboundShipmentServiceLineInput,
   DeleteOutboundShipmentServiceLineInput,
+  InvoiceTypeInput,
   setNullableInput,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
@@ -272,15 +273,15 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     },
   },
   delete: async (invoices: OutboundRowFragment[]): Promise<string[]> => {
-    const result =
-      (await sdk.deleteOutboundShipments({
-        storeId,
-        deleteOutboundShipments: invoices.map(invoice => invoice.id),
-      })) || {};
+    const result = await sdk.deleteInvoices({
+      storeId,
+      ids: invoices.map(invoice => ({ id: invoice.id })),
+      type: [InvoiceTypeInput.OutboundShipment],
+    });
 
-    const { batchOutboundShipment } = result;
-    if (batchOutboundShipment?.deleteOutboundShipments) {
-      return batchOutboundShipment.deleteOutboundShipments.map(({ id }) => id);
+    const deletedIds = result?.deleteInvoices?.deleteInvoices;
+    if (deletedIds) {
+      return deletedIds.map(({ id }) => id);
     }
 
     throw new Error('Could not delete invoices');

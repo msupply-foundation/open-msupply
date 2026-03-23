@@ -26,8 +26,9 @@ use crate::{
     BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
+use crate::invoice::delete::{delete_invoice, DeleteInvoiceError, DeleteInvoiceType};
+
 use super::{
-    delete::{delete_outbound_shipment, DeleteOutboundShipmentError},
     insert::{insert_outbound_shipment, InsertOutboundShipment, InsertOutboundShipmentError},
     update::{update_outbound_shipment, UpdateOutboundShipment, UpdateOutboundShipmentError},
 };
@@ -100,7 +101,7 @@ pub type AllocateLinesResult = Vec<
 pub type UpdateShipmentsResult =
     Vec<InputWithResult<UpdateOutboundShipment, Result<Invoice, UpdateOutboundShipmentError>>>;
 pub type DeleteShipmentsResult =
-    Vec<InputWithResult<String, Result<String, DeleteOutboundShipmentError>>>;
+    Vec<InputWithResult<String, Result<String, DeleteInvoiceError>>>;
 
 #[derive(Debug, Default)]
 pub struct BatchOutboundShipmentResult {
@@ -238,8 +239,12 @@ pub fn batch_outbound_shipment(
                 return Err(WithDBError::err(results));
             }
 
-            let (has_errors, result) =
-                mutations_processor.do_mutations(input.delete_shipment, delete_outbound_shipment);
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.delete_shipment,
+                |ctx: &ServiceContext, id: String| {
+                    delete_invoice(ctx, id, &[DeleteInvoiceType::OutboundShipment])
+                },
+            );
             results.delete_shipment = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -269,9 +274,9 @@ mod test {
     };
 
     use crate::{
-        invoice::outbound_shipment::{
-            delete::DeleteOutboundShipmentError, insert::InsertOutboundShipment,
-            BatchOutboundShipment,
+        invoice::{
+            delete::DeleteInvoiceError,
+            outbound_shipment::{insert::InsertOutboundShipment, BatchOutboundShipment},
         },
         invoice_line::stock_out_line::{InsertStockOutLine, StockOutType},
         service_provider::ServiceProvider,
@@ -328,7 +333,7 @@ mod test {
             result.delete_shipment,
             vec![InputWithResult {
                 input: delete_shipment_input,
-                result: Err(DeleteOutboundShipmentError::NotAnOutboundShipment {})
+                result: Err(DeleteInvoiceError::InvoiceTypeNotSupported)
             }]
         );
 

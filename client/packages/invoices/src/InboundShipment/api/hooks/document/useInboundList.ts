@@ -4,9 +4,9 @@ import {
   InvoiceTypeInput,
   SortBy,
   useQuery,
-  useMutation,
 } from '@openmsupply-client/common';
 import { useInboundGraphQL } from '../../useInboundGraphQL';
+import { useInboundDelete } from './useInboundDelete';
 import { LIST, INBOUND } from './keys';
 import { InboundRowFragment } from '../../operations.generated';
 
@@ -88,7 +88,7 @@ export const useInboundList = (queryParams?: ListParams) => {
     mutateAsync: deleteMutation,
     isLoading: isDeleting,
     error: deleteError,
-  } = useDelete();
+  } = useInboundDelete();
 
   const deleteInbounds = async (selectedRows: InboundRowFragment[]) => {
     await deleteMutation(selectedRows);
@@ -98,32 +98,4 @@ export const useInboundList = (queryParams?: ListParams) => {
     query: { data, isLoading, isFetching, isError, refetch },
     delete: { deleteInbounds, isDeleting, deleteError },
   };
-};
-
-const useDelete = () => {
-  const { inboundApi, storeId, queryClient } = useInboundGraphQL();
-
-  const mutationFn = async (
-    invoices: InboundRowFragment[]
-  ): Promise<string[]> => {
-    const result =
-      (await inboundApi.deleteInboundShipments({
-        storeId,
-        deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
-      })) || {};
-
-    const { batchInboundShipment } = result;
-    if (batchInboundShipment?.deleteInboundShipments) {
-      return batchInboundShipment.deleteInboundShipments.map(
-        ({ id }: { id: string }) => id
-      );
-    }
-
-    throw new Error('Could not delete invoices');
-  };
-
-  return useMutation({
-    mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([LIST]),
-  });
 };

@@ -687,23 +687,22 @@ export type UpdateOutboundShipmentNameMutation = {
       };
 };
 
-export type DeleteOutboundShipmentsMutationVariables = Types.Exact<{
+export type DeleteInvoicesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  deleteOutboundShipments:
-    | Array<Types.Scalars['String']['input']>
-    | Types.Scalars['String']['input'];
+  ids: Array<Types.DeleteInvoiceInput> | Types.DeleteInvoiceInput;
+  type: Array<Types.InvoiceTypeInput> | Types.InvoiceTypeInput;
 }>;
 
-export type DeleteOutboundShipmentsMutation = {
+export type DeleteInvoicesMutation = {
   __typename: 'Mutations';
-  batchOutboundShipment: {
-    __typename: 'BatchOutboundShipmentResponse';
-    deleteOutboundShipments?: Array<{
-      __typename: 'DeleteOutboundShipmentResponseWithId';
+  deleteInvoices: {
+    __typename: 'DeleteInvoicesResponse';
+    deleteInvoices: Array<{
+      __typename: 'MutationWithIdResponse';
       id: string;
       response:
         | {
-            __typename: 'DeleteOutboundShipmentError';
+            __typename: 'DeleteInvoiceError';
             error:
               | {
                   __typename: 'CannotDeleteInvoiceWithLines';
@@ -713,7 +712,7 @@ export type DeleteOutboundShipmentsMutation = {
               | { __typename: 'RecordNotFound'; description: string };
           }
         | { __typename: 'DeleteResponse'; id: string };
-    }> | null;
+    }>;
   };
 };
 
@@ -1481,20 +1480,17 @@ export const UpdateOutboundShipmentNameDocument = gql`
     }
   }
 `;
-export const DeleteOutboundShipmentsDocument = gql`
-  mutation deleteOutboundShipments(
+export const DeleteInvoicesDocument = gql`
+  mutation deleteInvoices(
     $storeId: String!
-    $deleteOutboundShipments: [String!]!
+    $ids: [DeleteInvoiceInput!]!
+    $type: [InvoiceTypeInput!]!
   ) {
-    batchOutboundShipment(
-      storeId: $storeId
-      input: { deleteOutboundShipments: $deleteOutboundShipments }
-    ) {
-      __typename
-      deleteOutboundShipments {
+    deleteInvoices(storeId: $storeId, ids: $ids, type: $type) {
+      deleteInvoices {
         id
         response {
-          ... on DeleteOutboundShipmentError {
+          ... on DeleteInvoiceError {
             __typename
             error {
               description
@@ -2106,20 +2102,20 @@ export function getSdk(
         variables
       );
     },
-    deleteOutboundShipments(
-      variables: DeleteOutboundShipmentsMutationVariables,
+    deleteInvoices(
+      variables: DeleteInvoicesMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<DeleteOutboundShipmentsMutation> {
+    ): Promise<DeleteInvoicesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteOutboundShipmentsMutation>({
-            document: DeleteOutboundShipmentsDocument,
+          client.request<DeleteInvoicesMutation>({
+            document: DeleteInvoicesDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'deleteOutboundShipments',
+        'deleteInvoices',
         'mutation',
         variables
       );

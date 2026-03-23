@@ -8,14 +8,18 @@ use graphql_core::ContextExt;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::auth::ResourceAccessRequest;
-use service::invoice::inbound_shipment::{
-    DeleteInboundShipment as ServiceInput, DeleteInboundShipmentError as ServiceError,
-};
+use service::invoice::{DeleteInvoiceError as ServiceError, DeleteInvoiceType};
 
 #[derive(InputObject)]
 #[graphql(name = "DeleteInboundShipmentInput")]
 pub struct DeleteInput {
     pub id: String,
+}
+
+impl DeleteInput {
+    pub fn to_domain(self) -> service::invoice::inbound_shipment::DeleteInboundShipment {
+        service::invoice::inbound_shipment::DeleteInboundShipment { id: self.id }
+    }
 }
 
 #[derive(SimpleObject)]
@@ -48,10 +52,15 @@ pub fn delete(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(service_provider.invoice_service.delete_inbound_shipment(
+    let delete_type = match r#type {
+        InboundShipmentType::InboundShipment => DeleteInvoiceType::InboundShipment,
+        InboundShipmentType::InboundShipmentExternal => DeleteInvoiceType::InboundShipmentExternal,
+    };
+
+    map_response(service_provider.invoice_service.delete_invoice(
         &service_context,
-        input.to_domain(),
-        r#type.to_domain(),
+        input.id,
+        &[delete_type],
     ))
 }
 
@@ -62,13 +71,6 @@ pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditInvoice(CannotEditInvoice),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
-}
-
-impl DeleteInput {
-    pub fn to_domain(self) -> ServiceInput {
-        let DeleteInput { id } = self;
-        ServiceInput { id }
-    }
 }
 
 pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
@@ -97,8 +99,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
-        ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
+        ServiceError::InvoiceTypeNotSupported => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::LineDeleteError { .. } => InternalError(formatted_error),
@@ -118,30 +119,26 @@ mod test {
     };
     use serde_json::json;
     use service::{
-        invoice::{
-            inbound_shipment::{
-                DeleteInboundShipment as ServiceInput, DeleteInboundShipmentError as ServiceError,
-            },
-            InvoiceServiceTrait,
-        },
+        invoice::{DeleteInvoiceError as ServiceError, DeleteInvoiceType, InvoiceServiceTrait},
         invoice_line::stock_in_line::DeleteStockInLineError,
         service_provider::{ServiceContext, ServiceProvider},
     };
 
     use crate::InvoiceMutations;
 
-    type DeleteMethod = dyn Fn(ServiceInput) -> Result<String, ServiceError> + Sync + Send;
+    type DeleteMethod =
+        dyn Fn(String, &[DeleteInvoiceType]) -> Result<String, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DeleteMethod>);
 
     impl InvoiceServiceTrait for TestService {
-        fn delete_inbound_shipment(
+        fn delete_invoice(
             &self,
             _: &ServiceContext,
-            input: ServiceInput,
-            _expected_type: service::invoice::inbound_shipment::InboundShipmentType,
+            id: String,
+            allowed_types: &[DeleteInvoiceType],
         ) -> Result<String, ServiceError> {
-            self.0(input)
+            self.0(id, allowed_types)
         }
     }
 
@@ -186,7 +183,7 @@ mod test {
         "#;
 
         // InvoiceDoesNotExist
-        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
             "deleteInboundShipment": {
@@ -206,7 +203,7 @@ mod test {
         );
 
         //CannotEditInvoice
-        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditFinalised)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::CannotEditFinalised)));
 
         let expected = json!({
             "deleteInboundShipment": {
@@ -225,8 +222,9 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NotAnInboundShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
+        //InvoiceTypeNotSupported
+        let test_service =
+            TestService(Box::new(|_, _| Err(ServiceError::InvoiceTypeNotSupported)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -238,7 +236,7 @@ mod test {
         );
 
         //NotThisStoreInvoice
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreInvoice)));
+        let test_service = TestService(Box::new(|_, _| Err(ServiceError::NotThisStoreInvoice)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -250,7 +248,7 @@ mod test {
         );
 
         //DatabaseError
-        let test_service = TestService(Box::new(|_| {
+        let test_service = TestService(Box::new(|_, _| {
             Err(ServiceError::DatabaseError(RepositoryError::NotFound))
         }));
         let expected_message = "Internal error";
@@ -264,10 +262,12 @@ mod test {
         );
 
         //LineDeleteError
-        let test_service = TestService(Box::new(|_| {
+        let test_service = TestService(Box::new(|_, _| {
             Err(ServiceError::LineDeleteError {
                 line_id: "n/a".to_string(),
-                error: DeleteStockInLineError::LineDoesNotExist,
+                error: service::invoice::LineDeleteError::StockInLineError(
+                    DeleteStockInLineError::LineDoesNotExist,
+                ),
             })
         }));
         let expected_message = "Internal error";
@@ -302,15 +302,7 @@ mod test {
         "#;
 
         // Success
-        let test_service = TestService(Box::new(|input| {
-            assert_eq!(
-                input,
-                ServiceInput {
-                    id: "id input".to_string(),
-                }
-            );
-            Ok("deleted id".to_string())
-        }));
+        let test_service = TestService(Box::new(|id, _| Ok(id)));
 
         let variables = json!({
           "input": {
@@ -321,7 +313,7 @@ mod test {
 
         let expected = json!({
             "deleteInboundShipment": {
-                "id": "deleted id"
+                "id": "id input"
             }
           }
         );

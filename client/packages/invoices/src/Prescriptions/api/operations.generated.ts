@@ -1076,23 +1076,22 @@ export type UpsertPrescriptionMutation = {
   };
 };
 
-export type DeletePrescriptionsMutationVariables = Types.Exact<{
+export type DeleteInvoicesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  deletePrescriptions:
-    | Array<Types.Scalars['String']['input']>
-    | Types.Scalars['String']['input'];
+  ids: Array<Types.DeleteInvoiceInput> | Types.DeleteInvoiceInput;
+  type: Array<Types.InvoiceTypeInput> | Types.InvoiceTypeInput;
 }>;
 
-export type DeletePrescriptionsMutation = {
+export type DeleteInvoicesMutation = {
   __typename: 'Mutations';
-  batchPrescription: {
-    __typename: 'BatchPrescriptionResponse';
-    deletePrescriptions?: Array<{
-      __typename: 'DeletePrescriptionResponseWithId';
+  deleteInvoices: {
+    __typename: 'DeleteInvoicesResponse';
+    deleteInvoices: Array<{
+      __typename: 'MutationWithIdResponse';
       id: string;
       response:
         | {
-            __typename: 'DeletePrescriptionError';
+            __typename: 'DeleteInvoiceError';
             error:
               | {
                   __typename: 'CannotDeleteInvoiceWithLines';
@@ -1102,7 +1101,7 @@ export type DeletePrescriptionsMutation = {
               | { __typename: 'RecordNotFound'; description: string };
           }
         | { __typename: 'DeleteResponse'; id: string };
-    }> | null;
+    }>;
   };
 };
 
@@ -1747,20 +1746,17 @@ export const UpsertPrescriptionDocument = gql`
     }
   }
 `;
-export const DeletePrescriptionsDocument = gql`
-  mutation deletePrescriptions(
+export const DeleteInvoicesDocument = gql`
+  mutation deleteInvoices(
     $storeId: String!
-    $deletePrescriptions: [String!]!
+    $ids: [DeleteInvoiceInput!]!
+    $type: [InvoiceTypeInput!]!
   ) {
-    batchPrescription(
-      storeId: $storeId
-      input: { deletePrescriptions: $deletePrescriptions }
-    ) {
-      __typename
-      deletePrescriptions {
+    deleteInvoices(storeId: $storeId, ids: $ids, type: $type) {
+      deleteInvoices {
         id
         response {
-          ... on DeletePrescriptionError {
+          ... on DeleteInvoiceError {
             __typename
             error {
               description
@@ -1977,20 +1973,20 @@ export function getSdk(
         variables
       );
     },
-    deletePrescriptions(
-      variables: DeletePrescriptionsMutationVariables,
+    deleteInvoices(
+      variables: DeleteInvoicesMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<DeletePrescriptionsMutation> {
+    ): Promise<DeleteInvoicesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeletePrescriptionsMutation>({
-            document: DeletePrescriptionsDocument,
+          client.request<DeleteInvoicesMutation>({
+            document: DeleteInvoicesDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'deletePrescriptions',
+        'deleteInvoices',
         'mutation',
         variables
       );
