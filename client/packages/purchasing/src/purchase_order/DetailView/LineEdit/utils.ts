@@ -8,15 +8,19 @@ import {
 
 export const createDraftPurchaseOrderLine = (
   item: ItemStockOnHandFragment,
-  purchaseOrderId: string
+  purchaseOrderId: string,
+  headerDates?: {
+    requestedDeliveryDate?: string | null;
+    expectedDeliveryDate?: string | null;
+  }
 ): DraftPurchaseOrderLine => {
   return {
     id: FnUtils.generateUUID(),
     purchaseOrderId,
     itemId: item.id,
     requestedPackSize: 0,
-    requestedDeliveryDate: null,
-    expectedDeliveryDate: null,
+    requestedDeliveryDate: headerDates?.requestedDeliveryDate ?? null,
+    expectedDeliveryDate: headerDates?.expectedDeliveryDate ?? null,
     requestedNumberOfUnits: 0,
     lineNumber: 0,
     adjustedNumberOfUnits: null,

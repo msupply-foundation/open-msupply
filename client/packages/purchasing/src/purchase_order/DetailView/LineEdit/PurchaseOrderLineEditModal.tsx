@@ -66,9 +66,19 @@ export const PurchaseOrderLineEditModal = React.memo(
       purchaseOrder.id
     );
 
+    const getMostRecentExpectedDate = () => {
+      const dates = lines
+        ?.map(line => line.expectedDeliveryDate)
+        .sort((a, b) => (b || '').localeCompare(a || ''));
+      return dates?.[0] ?? null;
+    };
+
     const onChangeItem = useCallback(
       (item: ItemStockOnHandFragment) => {
-        const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id);
+        const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id, {
+          requestedDeliveryDate: purchaseOrder.requestedDeliveryDate,
+          expectedDeliveryDate: getMostRecentExpectedDate(),
+        });
         item &&
           updatePatch({
             ...draftLine,
@@ -157,6 +167,7 @@ export const PurchaseOrderLineEditModal = React.memo(
               update={updatePatch}
               status={purchaseOrder.status}
               isDisabled={isDisabled}
+              lines={lines}
               isUpdateMode={isUpdateMode}
               onChangeItem={onChangeItem}
               lineCount={lines.length}
