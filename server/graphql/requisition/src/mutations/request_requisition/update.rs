@@ -34,7 +34,7 @@ pub struct UpdateInput {
     pub status: Option<UpdateRequestRequisitionStatusInput>,
     pub other_party_id: Option<String>,
     pub expected_delivery_date: Option<NaiveDate>,
-    pub original_customer_id: Option<NullableUpdateInput<String>>,
+    pub destination_customer_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -120,7 +120,7 @@ impl UpdateInput {
             status,
             other_party_id,
             expected_delivery_date,
-            original_customer_id,
+            destination_customer_id,
         } = self;
 
         ServiceInput {
@@ -133,7 +133,7 @@ impl UpdateInput {
             status: status.map(|status| status.to_domain()),
             other_party_id,
             expected_delivery_date,
-            original_customer_id: original_customer_id.map(|c| NullableUpdate { value: c.value }),
+            destination_customer_id: destination_customer_id.map(|c| NullableUpdate { value: c.value }),
         }
     }
 }
@@ -171,12 +171,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 RequisitionReasonsNotProvided(lines),
             ))
         }
-        ServiceError::OriginalCustomerNotACustomer => {
+        ServiceError::DestinationCustomerNotACustomer => {
             return Ok(UpdateErrorInterface::OtherPartyNotACustomer(
                 OtherPartyNotACustomer,
             ))
         }
-        ServiceError::OriginalCustomerNotVisible => {
+        ServiceError::DestinationCustomerNotVisible => {
             return Ok(UpdateErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
             ))
@@ -187,8 +187,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::OtherPartyIsNotAStore
         | ServiceError::CannotEditProgramRequisitionInformation
-        | ServiceError::OriginalCustomerDoesNotExist
-        | ServiceError::OriginalCustomerIsNotAStore => BadUserInput(formatted_error),
+        | ServiceError::DestinationCustomerDoesNotExist
+        | ServiceError::DestinationCustomerIsNotAStore => BadUserInput(formatted_error),
         ServiceError::UpdatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::PluginError(_) => {
             InternalError(formatted_error)
@@ -443,7 +443,7 @@ mod test {
                     other_party_id: Some("other_party_id".to_string()),
                     status: Some(UpdateRequestRequisitionStatus::Sent),
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
-                    original_customer_id: None,
+                    destination_customer_id: None,
                 }
             );
             Ok(Requisition {
