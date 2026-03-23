@@ -212,7 +212,10 @@ export const InboundLineEditCards = ({
         header: t('label.packs-received'),
         size: 100,
         columnGroup: 'quantity',
-        cardSummary: row => `${row.numberOfPacks} ${t('label.packs-received')}`,
+        cardSummary: row => {
+          const units = row.numberOfPacks * row.packSize;
+          return `${t('label.received')} ${formatRef.current(row.numberOfPacks)} ${getPlural(t('label.pack'), row.numberOfPacks)} (${formatRef.current(units)} ${pluralisedUnitName.toLowerCase()})`;
+        },
         cardSummaryOrder: 1,
         Cell: ({ row, cell }) => (
           <NumberInputCell
