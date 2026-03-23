@@ -30,6 +30,8 @@ pub struct LegacyStocktakeLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -78,6 +80,10 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: f64,
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<LegacyStocktakeLineRowOmsFields>,
@@ -138,6 +144,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id,
             oms_fields,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
@@ -163,9 +170,9 @@ impl SyncTranslation for StocktakeLineTranslation {
             );
         }
 
-        let (campaign_id, program_id) = oms_fields
-            .map(|fields| (fields.campaign_id, fields.program_id))
-            .unwrap_or((None, None));
+        let (campaign_id, program_id, manufacture_date) = oms_fields
+            .map(|fields| (fields.campaign_id, fields.program_id, fields.manufacture_date))
+            .unwrap_or((None, None, None));
 
         let location_id = clear_invalid_location_id(connection, location_id)?;
         let result = StocktakeLineRow {
@@ -183,12 +190,14 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_name,
             batch: Batch,
             expiry_date: expiry,
+            manufacture_date,
             pack_size: Some(snapshot_packsize),
             cost_price_per_pack: Some(cost_price),
             sell_price_per_pack: Some(sell_price),
             note,
             item_variant_id,
-            donor_link_id: donor_id,
+            donor_id,
+            manufacturer_id,
             reason_option_id,
             vvm_status_id,
             volume_per_pack,
@@ -229,12 +238,14 @@ impl SyncTranslation for StocktakeLineTranslation {
                     item_name,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     pack_size,
                     cost_price_per_pack,
                     sell_price_per_pack,
                     note,
                     item_variant_id,
-                    donor_link_id: donor_id,
+                    donor_id,
+                    manufacturer_id,
                     reason_option_id,
                     vvm_status_id,
                     volume_per_pack,
@@ -246,11 +257,12 @@ impl SyncTranslation for StocktakeLineTranslation {
             ..
         } = stocktake_line;
 
-        let oms_fields = match (&campaign_id, &program_id) {
-            (None, None) => None,
+        let oms_fields = match (&campaign_id, &program_id, &manufacture_date) {
+            (None, None, None) => None,
             _ => Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id,
                 program_id,
+                manufacture_date,
             }),
         };
 
@@ -277,6 +289,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id,
             oms_fields,
         };
 

@@ -34,6 +34,7 @@ pub struct InsertStockInLine {
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
+    pub manufacture_date: Option<NaiveDate>,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
@@ -45,6 +46,7 @@ pub struct InsertStockInLine {
     pub item_variant_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
     pub program_id: Option<String>,
     pub campaign_id: Option<String>,
     pub shipped_number_of_packs: Option<f64>,
@@ -111,6 +113,9 @@ pub enum InsertStockInLineError {
     PackSizeBelowOne,
     NumberOfPacksBelowZero,
     NewlyCreatedLineDoesNotExist,
+    ManufacturerDoesNotExist,
+    ManufacturerNotVisible,
+    ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
     ProgramNotVisible,
     IncorrectLocationType,
@@ -173,7 +178,7 @@ mod test {
                 id: "verified_customer_return".to_string(),
                 status: InvoiceStatus::Verified,
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 r#type: InvoiceType::CustomerReturn,
                 ..Default::default()
             }
@@ -416,6 +421,42 @@ mod test {
             Err(ServiceError::SelectedDonorPartyIsNotADonor)
         );
 
+        // ManufacturerDoesNotExist
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_a().id,
+                    invoice_id: mock_inbound_shipment_e().id,
+                    r#type: StockInType::InboundShipment,
+                    manufacturer_id: Some("invalid".to_string()),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ManufacturerDoesNotExist)
+        );
+
+        // ManufacturerIsNotAManufacturer
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_a().id,
+                    invoice_id: mock_inbound_shipment_e().id,
+                    r#type: StockInType::InboundShipment,
+                    manufacturer_id: Some(mock_name_customer_a().id), // Not a manufacturer
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ManufacturerIsNotAManufacturer)
+        );
+
         // ProgramNotVisible
         assert_eq!(
             insert_stock_in_line(
@@ -558,7 +599,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_id_with_donor".to_string();
-            expected.donor_link_id = Some("donor_a".to_string());
+            expected.donor_id = Some("donor_a".to_string());
             expected
         });
 
@@ -585,7 +626,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_id_with_no_donor".to_string();
-            expected.donor_link_id = None;
+            expected.donor_id = None;
             expected
         });
 

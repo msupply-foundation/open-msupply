@@ -1,0 +1,18 @@
+[package]
+name = "test_connection"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "test_connection"
+path = "src/main.rs"
+
+[dependencies]
+slint = "=1.15.1"
+tokio = { version = "1.50.0", features = ["rt", "macros"] }
+cli = { path = "../cli" }
+smol_str = "=0.3.6"
+typed-index-collections = "=3.5.0"
+
+[build-dependencies]
+slint-build = "=1.15.1"

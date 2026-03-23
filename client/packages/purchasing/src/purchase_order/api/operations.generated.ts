@@ -17,8 +17,10 @@ export type PurchaseOrderRowFragment = {
   targetMonths?: number | null;
   reference?: string | null;
   comment?: string | null;
+  orderTotalAfterDiscount: number;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+  currency?: { __typename: 'CurrencyNode'; code: string } | null;
 };
 
 export type PurchaseOrderFragment = {
@@ -34,7 +36,7 @@ export type PurchaseOrderFragment = {
   createdDatetime: string;
   currencyId?: string | null;
   documentCharge?: number | null;
-  foreignExchangeRate?: number | null;
+  foreignExchangeRate: number;
   freightCharge?: number | null;
   freightConditions?: string | null;
   headingMessage?: string | null;
@@ -69,7 +71,7 @@ export type PurchaseOrderFragment = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      receivedNumberOfUnits: number;
+      shippedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -149,7 +151,7 @@ export type PurchaseOrderLineFragment = {
   requestedPackSize: number;
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
-  receivedNumberOfUnits: number;
+  shippedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
   pricePerPackAfterDiscount: number;
   pricePerPackBeforeDiscount: number;
@@ -222,8 +224,10 @@ export type PurchaseOrdersQuery = {
       targetMonths?: number | null;
       reference?: string | null;
       comment?: string | null;
+      orderTotalAfterDiscount: number;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+      currency?: { __typename: 'CurrencyNode'; code: string } | null;
     }>;
   };
 };
@@ -249,7 +253,7 @@ export type PurchaseOrderByIdQuery = {
         createdDatetime: string;
         currencyId?: string | null;
         documentCharge?: number | null;
-        foreignExchangeRate?: number | null;
+        foreignExchangeRate: number;
         freightCharge?: number | null;
         freightConditions?: string | null;
         headingMessage?: string | null;
@@ -284,7 +288,7 @@ export type PurchaseOrderByIdQuery = {
             requestedPackSize: number;
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
-            receivedNumberOfUnits: number;
+            shippedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
             pricePerPackAfterDiscount: number;
             pricePerPackBeforeDiscount: number;
@@ -450,7 +454,7 @@ export type PurchaseOrderLinesQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      receivedNumberOfUnits: number;
+      shippedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -522,7 +526,7 @@ export type PurchaseOrderLineQuery = {
       requestedPackSize: number;
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
-      receivedNumberOfUnits: number;
+      shippedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -703,6 +707,10 @@ export const PurchaseOrderRowFragmentDoc = gql`
       totalCount
     }
     comment
+    orderTotalAfterDiscount
+    currency {
+      code
+    }
   }
 `;
 export const PurchaseOrderLineFragmentDoc = gql`
@@ -724,7 +732,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedPackSize
     requestedDeliveryDate
     requestedNumberOfUnits
-    receivedNumberOfUnits
+    shippedNumberOfUnits
     adjustedNumberOfUnits
     pricePerPackAfterDiscount
     pricePerPackBeforeDiscount

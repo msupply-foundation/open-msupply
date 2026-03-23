@@ -18,12 +18,15 @@ import {
   useNotification,
   usePreferences,
   useIsExtraSmallScreen,
+  CheckIcon,
+  CloseIcon,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
   getStatusTranslator,
   inboundStatuses,
-  manualInboundStatuses,
+  getInboundShipmentType,
+  getInboundStatusesForType,
 } from '../../../utils';
 import {
   InboundFragment,
@@ -34,6 +37,7 @@ import {
   useInboundDeleteSelectedLines,
   useZeroInboundLinesQuantity,
   useSaveInboundLines,
+  useChangeStatusOfInboundLines,
 } from '../../api/hooks/utils';
 import { OnHoldButton } from './OnHoldButton';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -78,12 +82,14 @@ interface FooterComponentProps {
   onReturnLines: () => void;
   selectedRows: InboundLineFragment[];
   resetRowSelection: () => void;
+  showLineStatus: boolean;
 }
 
 export const FooterComponent = ({
   onReturnLines,
   selectedRows,
   resetRowSelection,
+  showLineStatus,
 }: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
@@ -105,7 +111,11 @@ export const FooterComponent = ({
     resetRowSelection
   );
   const { mutateAsync } = useSaveInboundLines();
-  const isManuallyCreated = !data?.linkedShipment?.id;
+  const onChangeLineStatus = useChangeStatusOfInboundLines(
+    selectedRows,
+    resetRowSelection
+  );
+  const shipmentType = data ? getInboundShipmentType(data) : undefined;
 
   const handleCampaignClick = () => {
     if (isDisabled) {
@@ -117,7 +127,22 @@ export const FooterComponent = ({
     }
   };
 
-  const actions: Action[] = [
+  const changeLineStatus = (approve: 'approve' | 'reject') => {
+    if (!selectedRows.length) {
+      const selectLinesSnack = info(t(`messages.select-rows-to-${approve}`));
+      selectLinesSnack();
+      return;
+    }
+
+    if (data?.status === InvoiceNodeStatus.Received || isDisabled) {
+      info(t('messages.cant-change-line-status-on-received-invoice'))();
+      return;
+    }
+
+    onChangeLineStatus(approve);
+  };
+
+  let actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
@@ -142,11 +167,27 @@ export const FooterComponent = ({
       shouldShrink: false,
     },
   ];
-  const statuses = isManuallyCreated
-    ? manualInboundStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      )
-    : inboundStatuses.filter(status => invoiceStatusOptions?.includes(status));
+  if (showLineStatus) {
+    actions = actions.concat([
+      {
+        label: t('button.approve'),
+        icon: <CheckIcon />,
+        onClick: () => changeLineStatus('approve'),
+      },
+      {
+        label: t('button.reject'),
+        icon: <CloseIcon />,
+        onClick: () => changeLineStatus('reject'),
+      },
+    ]);
+  }
+  const statuses = (
+    shipmentType
+      ? getInboundStatusesForType(shipmentType)
+      : inboundStatuses
+  ).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
 
   return (
     <AppFooterPortal

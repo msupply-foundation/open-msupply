@@ -7,6 +7,7 @@ import {
   useIntlUtils,
   useTranslation,
   useNotification,
+  isEnumValue,
 } from '@openmsupply-client/common';
 import { ReportRowFragment } from '../operations.generated';
 import { useReportGraphQL } from '../useReportGraphQL';
@@ -51,7 +52,9 @@ export const useReportList = ({
           ...(subContext ? { subContext: { equalTo: subContext } } : null),
           isActive: true,
         },
-        key: sortBy.key as ReportSortFieldInput,
+        key: isEnumValue(ReportSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : ReportSortFieldInput.Name,
         desc: sortBy.isDesc,
         storeId,
         userLanguage: language,

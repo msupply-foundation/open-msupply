@@ -14,6 +14,7 @@ import {
   ColumnType,
   DefaultCellProps,
   ExpiryDateInput,
+  DateTimePickerInput,
   DateUtils,
   Formatter,
   RequiredNumberInputCell,
@@ -28,12 +29,11 @@ import {
   CampaignOrProgramCell,
   DonorSearchInput,
   getVolumePerPackFromVariant,
-  ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
+  ManufacturerSearchInput,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
-  useIsItemVariantsEnabled,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import {
@@ -58,7 +58,6 @@ export const BatchTable = ({
   isInitialStocktake: boolean;
 }) => {
   const t = useTranslation();
-  const itemVariantsEnabled = useIsItemVariantsEnabled();
   const { manageVvmStatusForStock } = usePreferences();
   const { errors } = useStocktakeLineErrorContext();
 
@@ -116,34 +115,25 @@ export const BatchTable = ({
         },
       },
       {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        Cell: ({
-          row: {
-            original: { id, packSize, countThisLine, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={disabled || !countThisLine}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              update({
-                id,
-                itemVariantId: itemVariant?.id || null,
-                itemVariant,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: itemVariantsEnabled,
+        id: 'manufactureDate',
+        header: t('label.manufacture-date'),
+        size: 160,
+        accessorFn: row => DateUtils.getDateOrNull(row.manufactureDate),
+        Cell: ({ cell, row }) => {
+          const value = cell.getValue<Date | null>();
+          return (
+            <DateTimePickerInput
+              value={value}
+              disabled={disabled || !row.original.countThisLine}
+              onChange={date =>
+                update({
+                  id: row.original.id,
+                  manufactureDate: date ? Formatter.naiveDate(date) : null,
+                })
+              }
+            />
+          );
+        },
       },
       {
         id: 'vvmStatus',
@@ -234,7 +224,7 @@ export const BatchTable = ({
         ),
       },
     ],
-    [showVVMStatusColumn, itemVariantsEnabled, errors]
+    [showVVMStatusColumn, errors]
   );
 
   const table = useSimpleMaterialTable({
@@ -414,6 +404,26 @@ export const LocationTable = ({
             row={row.original}
             disabled={disabled || !row.original.countThisLine}
             updateFn={patch => update({ id: row.original.id, ...patch })}
+          />
+        ),
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        Cell: ({ row: { original: row } }) => (
+          <ManufacturerSearchInput
+            value={row.manufacturer ?? null}
+            disabled={disabled || !row.countThisLine}
+            onChange={manufacturer => {
+              update({
+                id: row.id,
+                manufacturer: manufacturer ?? undefined,
+                ...(row.itemVariant
+                  ? { itemVariantId: null, itemVariant: null }
+                  : {}),
+              });
+            }}
+            width={200}
           />
         ),
       },

@@ -39,7 +39,7 @@ async fn invoice_transfers() {
 
     let outbound_store = StoreRow {
         id: uuid(),
-        name_link_id: outbound_store_name.id.clone(),
+        name_id: outbound_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -52,7 +52,7 @@ async fn invoice_transfers() {
 
     let inbound_store = StoreRow {
         id: uuid(),
-        name_link_id: inbound_store_name.id.clone(),
+        name_id: inbound_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -92,6 +92,7 @@ async fn invoice_transfers() {
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
         margin: 10.0,
+        default_location_id: None,
     };
 
     // No default price - will use cost price + margin for pricing
@@ -102,6 +103,7 @@ async fn invoice_transfers() {
         default_sell_price_per_pack: 0.0,
         ignore_for_orders: false,
         margin: 10.0,
+        default_location_id: None,
     };
 
     let ServiceTestContext {
@@ -295,7 +297,7 @@ async fn invoice_transfers() {
     };
 }
 
-/// Checking behavior when a request requisition name_link_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
+/// Checking behavior when a request requisition name_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn invoice_transfers_with_merged_name() {
     let site_id = 25;
@@ -308,7 +310,7 @@ async fn invoice_transfers_with_merged_name() {
 
     let outbound_store = StoreRow {
         id: uuid(),
-        name_link_id: outbound_store_name.id.clone(),
+        name_id: outbound_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -321,7 +323,7 @@ async fn invoice_transfers_with_merged_name() {
 
     let inbound_store = StoreRow {
         id: uuid(),
-        name_link_id: inbound_store_name.id.clone(),
+        name_id: inbound_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -373,6 +375,7 @@ async fn invoice_transfers_with_merged_name() {
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
         margin: 0.0,
+        default_location_id: None,
     };
 
     let item3_store_properties = ItemStoreJoinRow {
@@ -382,6 +385,7 @@ async fn invoice_transfers_with_merged_name() {
         default_sell_price_per_pack: 15.0,
         ignore_for_orders: false,
         margin: 10.0,
+        default_location_id: None,
     };
 
     let ServiceTestContext {
@@ -611,7 +615,7 @@ impl InvoiceTransferTester {
     ) -> InvoiceTransferTester {
         let request_requisition = RequisitionRow {
             id: uuid(),
-            name_link_id: outbound_store.name_link_id.clone(),
+            name_id: outbound_store.name_id.clone(),
             store_id: inbound_store.id.clone(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
@@ -620,7 +624,7 @@ impl InvoiceTransferTester {
 
         let outbound_shipment = InvoiceRow {
             id: uuid(),
-            name_link_id: inbound_name.map_or(inbound_store.name_link_id.clone(), |n| n.id.clone()),
+            name_id: inbound_name.map_or(inbound_store.name_id.clone(), |n| n.id.clone()),
             store_id: outbound_store.id.clone(),
             invoice_number: 20,
             r#type: InvoiceType::OutboundShipment,
@@ -763,8 +767,8 @@ impl InvoiceTransferTester {
 
         let supplier_return = InvoiceRow {
             id: uuid(),
-            name_link_id: outbound_name
-                .map_or(outbound_store.name_link_id.clone(), |n| n.id.clone()),
+            name_id: outbound_name
+                .map_or(outbound_store.name_id.clone(), |n| n.id.clone()),
             store_id: inbound_store.id.clone(),
             invoice_number: 5,
             r#type: InvoiceType::SupplierReturn,
@@ -931,8 +935,8 @@ impl InvoiceTransferTester {
         assert_eq!(inbound_shipment.r#type, InvoiceType::InboundShipment);
         assert_eq!(inbound_shipment.store_id, self.inbound_store.id);
         assert_eq!(
-            inbound_shipment.name_link_id,
-            self.outbound_store.name_link_id
+            inbound_shipment.name_id,
+            self.outbound_store.name_id
         );
         assert_eq!(
             inbound_shipment.name_store_id,
@@ -1272,8 +1276,8 @@ impl InvoiceTransferTester {
         assert_eq!(customer_return.r#type, InvoiceType::CustomerReturn);
         assert_eq!(customer_return.store_id, self.outbound_store.id);
         assert_eq!(
-            customer_return.name_link_id,
-            self.inbound_store.name_link_id
+            customer_return.name_id,
+            self.inbound_store.name_id
         );
         assert_eq!(
             customer_return.name_store_id,

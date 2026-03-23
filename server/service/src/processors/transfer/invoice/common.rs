@@ -59,13 +59,16 @@ pub(crate) fn generate_inbound_lines(
                     tax_percentage,
                     foreign_currency_price_before_tax,
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     campaign_id,
                     program_id,
                     shipped_number_of_packs,
                     volume_per_pack,
                     shipped_pack_size,
+                    status,
+                    manufacture_date,
                 },
                 ItemRow {
                     id: item_id,
@@ -77,7 +80,7 @@ pub(crate) fn generate_inbound_lines(
                     .find_one_by_item_and_store_id(&item_id, inbound_store_id)
                     .unwrap_or(None);
 
-                let supplier_id = &source_invoice.store_row.name_link_id;
+                let supplier_id = &source_invoice.store_row.name_id;
 
                 let trans_cost_price = sell_price_per_pack;
 
@@ -113,6 +116,7 @@ pub(crate) fn generate_inbound_lines(
                     item_code,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
@@ -132,7 +136,8 @@ pub(crate) fn generate_inbound_lines(
                     item_variant_id,
                     linked_invoice_id: Some(invoice_row.id.to_string()),
                     vvm_status_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     campaign_id,
                     program_id,
                     shipped_number_of_packs,
@@ -146,6 +151,7 @@ pub(crate) fn generate_inbound_lines(
                     // Default
                     stock_line_id: None,
                     location_id: None,
+                    status,
                 }
             },
         )
@@ -310,7 +316,7 @@ mod test {
         let cost_price_per_pack = 5.0;
 
         let outbound_store = mock_store_b();
-        let supplier_id = outbound_store.name_link_id;
+        let supplier_id = outbound_store.name_id;
         let item_properties = mock_item_a_join_store_a();
 
         // Set preference to true -> item margin has priority
@@ -360,7 +366,7 @@ mod test {
         );
 
         let store_c = mock_store_c();
-        let supplier_no_margin_id = store_c.name_link_id;
+        let supplier_no_margin_id = store_c.name_id;
 
         // No supplier margin, fallback to item margin
         assert_eq!(

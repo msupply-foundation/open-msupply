@@ -37,6 +37,22 @@ export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
+export enum InboundShipmentType {
+  Manual = 'Manual',
+  Internal = 'Internal',
+  External = 'External',
+}
+
+export const getInboundShipmentType = (inbound: {
+  linkedShipment?: { id: string } | null;
+  purchaseOrder?: { id: string } | null;
+}): InboundShipmentType => {
+  if (inbound.purchaseOrder?.id) return InboundShipmentType.External;
+  if (inbound.linkedShipment?.id) return InboundShipmentType.Internal;
+  return InboundShipmentType.Manual;
+};
+
+/** Internal inbound shipments include Picked and Shipped (set by the sending store) */
 export const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
@@ -46,12 +62,35 @@ export const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
+/** Manual inbound shipments skip Picked and Shipped */
 export const manualInboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Delivered,
   InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
+
+/** External inbound shipments skip Picked but include Shipped */
+export const externalInboundStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
+  InvoiceNodeStatus.Verified,
+];
+
+export const getInboundStatusesForType = (
+  type: InboundShipmentType
+): InvoiceNodeStatus[] => {
+  switch (type) {
+    case InboundShipmentType.Manual:
+      return manualInboundStatuses;
+    case InboundShipmentType.External:
+      return externalInboundStatuses;
+    case InboundShipmentType.Internal:
+      return inboundStatuses;
+  }
+};
 
 export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -223,7 +262,12 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
 export const getInboundStockLines = (
   lines: InboundLineFragment[]
 ): InboundLineFragment[] =>
-  lines.filter(line => isA.stockInLine(line) || isInboundPlaceholderRow(line));
+  lines.filter(
+    line =>
+      isA.stockInLine(line) ||
+      isInboundPlaceholderRow(line) ||
+      isA.placeholderLine(line) // for rejected lines
+  );
 
 export const isInboundStatusChangeDisabled = (
   inbound?: InboundFragment | CustomerReturnFragment

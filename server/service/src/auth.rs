@@ -162,10 +162,10 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
-    // Goods Received
-    MutateGoodsReceived,
-    QueryGoodsReceived,
-    AuthoriseGoodsReceived,
+    // Inbound Shipment External
+    MutateInboundShipmentExternal,
+    QueryInboundShipmentExternal,
+    AuthoriseInboundShipmentExternal,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -764,28 +764,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
-        ]),
-    );
-
-    map.insert(
-        Resource::QueryGoodsReceived,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::GoodsReceivedQuery),
-        ]),
-    );
-    map.insert(
-        Resource::MutateGoodsReceived,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::GoodsReceivedMutate),
-        ]),
-    );
-    map.insert(
-        Resource::AuthoriseGoodsReceived,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
         ]),
     );
 
@@ -1545,7 +1523,7 @@ mod permission_validation_test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 code: "n/a".to_string(),
                 ..Default::default()
             }

@@ -10,6 +10,7 @@ use crate::{
             check_number_of_packs,
         },
     },
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
 use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
@@ -92,11 +93,59 @@ pub fn validate(
     }
 
     if let Some(NullableUpdate {
+        value: Some(manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => {
+                    return Err(ManufacturerDoesNotExist)
+                }
+                OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
+                OtherPartyErrors::TypeMismatched => {
+                    return Err(ManufacturerIsNotAManufacturer)
+                }
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
+
+    if let Some(NullableUpdate {
         value: Some(campaign_id),
     }) = &input.campaign_id
     {
         if !check_campaign_exists(connection, campaign_id)? {
             return Err(CampaignDoesNotExist);
+        }
+    }
+
+    // Cost price is read-only for internal suppliers and external suppliers linked to a PO
+    if let Some(new_cost_price) = input.cost_price_per_pack {
+        if (invoice.name_store_id.is_some() || invoice.purchase_order_id.is_some())
+            && new_cost_price != line_row.cost_price_per_pack
+        {
+            return Err(CannotEditCostPrice);
+        }
+    }
+
+    if input
+        .status
+        .as_ref()
+        .is_some_and(|s| s.value != line_row.status)
+    {
+        use repository::InvoiceStatus::*;
+        // Verified is already excluded by check_invoice_is_editable (invoice is no longer editable once verified).
+        // Can't change line status once invoice is received as stock lines may have already been allocated so rejecting a line at that point could cause issues with stock management.
+        if invoice.status == Received {
+            return Err(CannotChangeLineStatusOfReceivedInvoice);
         }
     }
 

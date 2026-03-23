@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type InboundLineFragment = {
@@ -12,6 +13,7 @@ export type InboundLineFragment = {
   costPricePerPack: number;
   sellPricePerPack: number;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   numberOfPacks: number;
   shippedNumberOfPacks?: number | null;
   shippedPackSize?: number | null;
@@ -26,7 +28,18 @@ export type InboundLineFragment = {
   itemVariantId?: string | null;
   linkedInvoiceId?: string | null;
   volumePerPack: number;
+  status?: Types.InvoiceLineStatusType | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   item: {
@@ -89,6 +102,15 @@ export type InboundLineFragment = {
       volumePerUnit?: number | null;
     }>;
   } | null;
+  purchaseOrderLine?: {
+    __typename: 'PurchaseOrderLineNode';
+    adjustedNumberOfUnits?: number | null;
+    shippedNumberOfUnits: number;
+    inTransitNumberOfUnits: number;
+    receivedNumberOfUnits: number;
+    requestedNumberOfUnits: number;
+    pricePerPackAfterDiscount: number;
+  } | null;
 };
 
 export type InboundFragment = {
@@ -140,6 +162,7 @@ export type InboundFragment = {
       costPricePerPack: number;
       sellPricePerPack: number;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       numberOfPacks: number;
       shippedNumberOfPacks?: number | null;
       shippedPackSize?: number | null;
@@ -154,7 +177,18 @@ export type InboundFragment = {
       itemVariantId?: string | null;
       linkedInvoiceId?: string | null;
       volumePerPack: number;
+      status?: Types.InvoiceLineStatusType | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -221,6 +255,15 @@ export type InboundFragment = {
           volumePerUnit?: number | null;
         }>;
       } | null;
+      purchaseOrderLine?: {
+        __typename: 'PurchaseOrderLineNode';
+        adjustedNumberOfUnits?: number | null;
+        shippedNumberOfUnits: number;
+        inTransitNumberOfUnits: number;
+        receivedNumberOfUnits: number;
+        requestedNumberOfUnits: number;
+        pricePerPackAfterDiscount: number;
+      } | null;
     }>;
   };
   otherParty: {
@@ -266,6 +309,19 @@ export type InboundFragment = {
     id: string;
     method: string;
   } | null;
+  purchaseOrder?: {
+    __typename: 'PurchaseOrderNode';
+    id: string;
+    number: number;
+    reference?: string | null;
+    currency?: {
+      __typename: 'CurrencyNode';
+      id: string;
+      code: string;
+      rate: number;
+      isHomeCurrency: boolean;
+    } | null;
+  } | null;
 };
 
 export type InboundRowFragment = {
@@ -296,6 +352,11 @@ export type InboundRowFragment = {
     code: string;
     rate: number;
     isHomeCurrency: boolean;
+  } | null;
+  purchaseOrder?: {
+    __typename: 'PurchaseOrderNode';
+    id: string;
+    number: number;
   } | null;
 };
 
@@ -341,6 +402,11 @@ export type InvoicesQuery = {
         code: string;
         rate: number;
         isHomeCurrency: boolean;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
       } | null;
     }>;
   };
@@ -407,6 +473,7 @@ export type InvoiceQuery = {
             costPricePerPack: number;
             sellPricePerPack: number;
             expiryDate?: string | null;
+            manufactureDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
             shippedPackSize?: number | null;
@@ -421,7 +488,22 @@ export type InvoiceQuery = {
             itemVariantId?: string | null;
             linkedInvoiceId?: string | null;
             volumePerPack: number;
+            status?: Types.InvoiceLineStatusType | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
+            } | null;
             program?: {
               __typename: 'ProgramNode';
               id: string;
@@ -492,6 +574,15 @@ export type InvoiceQuery = {
                 volumePerUnit?: number | null;
               }>;
             } | null;
+            purchaseOrderLine?: {
+              __typename: 'PurchaseOrderLineNode';
+              adjustedNumberOfUnits?: number | null;
+              shippedNumberOfUnits: number;
+              inTransitNumberOfUnits: number;
+              receivedNumberOfUnits: number;
+              requestedNumberOfUnits: number;
+              pricePerPackAfterDiscount: number;
+            } | null;
           }>;
         };
         otherParty: {
@@ -536,6 +627,19 @@ export type InvoiceQuery = {
           __typename: 'ShippingMethodNode';
           id: string;
           method: string;
+        } | null;
+        purchaseOrder?: {
+          __typename: 'PurchaseOrderNode';
+          id: string;
+          number: number;
+          reference?: string | null;
+          currency?: {
+            __typename: 'CurrencyNode';
+            id: string;
+            code: string;
+            rate: number;
+            isHomeCurrency: boolean;
+          } | null;
         } | null;
       }
     | {
@@ -611,6 +715,7 @@ export type InboundByNumberQuery = {
             costPricePerPack: number;
             sellPricePerPack: number;
             expiryDate?: string | null;
+            manufactureDate?: string | null;
             numberOfPacks: number;
             shippedNumberOfPacks?: number | null;
             shippedPackSize?: number | null;
@@ -625,7 +730,22 @@ export type InboundByNumberQuery = {
             itemVariantId?: string | null;
             linkedInvoiceId?: string | null;
             volumePerPack: number;
+            status?: Types.InvoiceLineStatusType | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+              } | null;
+            } | null;
             program?: {
               __typename: 'ProgramNode';
               id: string;
@@ -696,6 +816,15 @@ export type InboundByNumberQuery = {
                 volumePerUnit?: number | null;
               }>;
             } | null;
+            purchaseOrderLine?: {
+              __typename: 'PurchaseOrderLineNode';
+              adjustedNumberOfUnits?: number | null;
+              shippedNumberOfUnits: number;
+              inTransitNumberOfUnits: number;
+              receivedNumberOfUnits: number;
+              requestedNumberOfUnits: number;
+              pricePerPackAfterDiscount: number;
+            } | null;
           }>;
         };
         otherParty: {
@@ -741,6 +870,19 @@ export type InboundByNumberQuery = {
           id: string;
           method: string;
         } | null;
+        purchaseOrder?: {
+          __typename: 'PurchaseOrderNode';
+          id: string;
+          number: number;
+          reference?: string | null;
+          currency?: {
+            __typename: 'CurrencyNode';
+            id: string;
+            code: string;
+            rate: number;
+            isHomeCurrency: boolean;
+          } | null;
+        } | null;
       }
     | {
         __typename: 'NodeError';
@@ -772,6 +914,7 @@ export type UpdateInboundShipmentMutation = {
             }
           | { __typename: 'CannotEditInvoice'; description: string }
           | { __typename: 'CannotIssueInForeignCurrency'; description: string }
+          | { __typename: 'CannotReceiveWithPendingLines'; description: string }
           | { __typename: 'CannotReverseInvoiceStatus'; description: string }
           | { __typename: 'OtherPartyNotASupplier'; description: string }
           | { __typename: 'OtherPartyNotVisible'; description: string }
@@ -814,6 +957,10 @@ export type InsertInboundShipmentMutationVariables = Types.Exact<{
   otherPartyId: Types.Scalars['String']['input'];
   requisitionId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
+  purchaseOrderId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  insertLinesFromPurchaseOrder?: Types.InputMaybe<
+    Types.Scalars['Boolean']['input']
+  >;
 }>;
 
 export type InsertInboundShipmentMutation = {
@@ -891,6 +1038,10 @@ export type UpsertInboundShipmentMutation = {
               | { __typename: 'CannotEditInvoice'; description: string }
               | {
                   __typename: 'CannotIssueInForeignCurrency';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotReceiveWithPendingLines';
                   description: string;
                 }
               | {
@@ -1178,6 +1329,36 @@ export type InsertLinesFromInternalOrderMutation = {
   };
 };
 
+export type InboundShipmentPurchaseOrderLineFragment = {
+  __typename: 'PurchaseOrderNode';
+  comment?: string | null;
+  id: string;
+  number: number;
+  reference?: string | null;
+  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+};
+
+export type PurchaseOrdersQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.PurchaseOrderFilterInput>;
+}>;
+
+export type PurchaseOrdersQuery = {
+  __typename: 'Queries';
+  purchaseOrders: {
+    __typename: 'PurchaseOrderConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PurchaseOrderNode';
+      comment?: string | null;
+      id: string;
+      number: number;
+      reference?: string | null;
+      supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+    }>;
+  };
+};
+
 export const InboundLineFragmentDoc = gql`
   fragment InboundLine on InvoiceLineNode {
     __typename
@@ -1187,6 +1368,7 @@ export const InboundLineFragmentDoc = gql`
     costPricePerPack
     sellPricePerPack
     expiryDate
+    manufactureDate
     numberOfPacks
     shippedNumberOfPacks
     shippedPackSize
@@ -1202,9 +1384,13 @@ export const InboundLineFragmentDoc = gql`
     itemVariantId
     linkedInvoiceId
     volumePerPack
+    status
     donor(storeId: $storeId) {
       id
       name
+    }
+    manufacturer(storeId: $storeId) {
+      ...NameRow
     }
     program {
       id
@@ -1272,7 +1458,17 @@ export const InboundLineFragmentDoc = gql`
         volumePerUnit
       }
     }
+    purchaseOrderLine {
+      __typename
+      adjustedNumberOfUnits
+      shippedNumberOfUnits
+      inTransitNumberOfUnits
+      receivedNumberOfUnits
+      requestedNumberOfUnits
+      pricePerPackAfterDiscount
+    }
   }
+  ${NameRowFragmentDoc}
 `;
 export const InboundFragmentDoc = gql`
   fragment Inbound on InvoiceNode {
@@ -1369,6 +1565,17 @@ export const InboundFragmentDoc = gql`
       id
       method
     }
+    purchaseOrder {
+      id
+      number
+      reference
+      currency {
+        id
+        code
+        rate
+        isHomeCurrency
+      }
+    }
   }
   ${InboundLineFragmentDoc}
   ${SyncFileReferenceFragmentDoc}
@@ -1404,6 +1611,10 @@ export const InboundRowFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    purchaseOrder {
+      id
+      number
+    }
   }
 `;
 export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`
@@ -1451,6 +1662,18 @@ export const LinkedRequestWithLinesFragmentDoc = gql`
   }
   ${LinkedRequestRowFragmentDoc}
   ${LinkedRequestLineFragmentDoc}
+`;
+export const InboundShipmentPurchaseOrderLineFragmentDoc = gql`
+  fragment InboundShipmentPurchaseOrderLine on PurchaseOrderNode {
+    comment
+    id
+    number
+    reference
+    supplier {
+      id
+      name
+    }
+  }
 `;
 export const InvoicesDocument = gql`
   query invoices(
@@ -1550,6 +1773,10 @@ export const UpdateInboundShipmentDocument = gql`
             __typename
             description
           }
+          ... on CannotReceiveWithPendingLines {
+            __typename
+            description
+          }
           ... on CannotEditInvoice {
             __typename
             description
@@ -1606,6 +1833,8 @@ export const InsertInboundShipmentDocument = gql`
     $otherPartyId: String!
     $requisitionId: String
     $storeId: String!
+    $purchaseOrderId: String
+    $insertLinesFromPurchaseOrder: Boolean
   ) {
     insertInboundShipment(
       storeId: $storeId
@@ -1613,6 +1842,8 @@ export const InsertInboundShipmentDocument = gql`
         id: $id
         otherPartyId: $otherPartyId
         requisitionId: $requisitionId
+        purchaseOrderId: $purchaseOrderId
+        insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
       }
     ) {
       ... on InsertInboundShipmentError {
@@ -1697,6 +1928,10 @@ export const UpsertInboundShipmentDocument = gql`
                 description
               }
               ... on CannotChangeStatusOfInvoiceOnHold {
+                __typename
+                description
+              }
+              ... on CannotReceiveWithPendingLines {
                 __typename
                 description
               }
@@ -2024,6 +2259,19 @@ export const InsertLinesFromInternalOrderDocument = gql`
     }
   }
 `;
+export const PurchaseOrdersDocument = gql`
+  query purchaseOrders($storeId: String!, $filter: PurchaseOrderFilterInput) {
+    purchaseOrders(storeId: $storeId, filter: $filter) {
+      ... on PurchaseOrderConnector {
+        totalCount
+        nodes {
+          ...InboundShipmentPurchaseOrderLine
+        }
+      }
+    }
+  }
+  ${InboundShipmentPurchaseOrderLineFragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2257,6 +2505,24 @@ export function getSdk(
           }),
         'insertLinesFromInternalOrder',
         'mutation',
+        variables
+      );
+    },
+    purchaseOrders(
+      variables: PurchaseOrdersQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PurchaseOrdersQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PurchaseOrdersQuery>({
+            document: PurchaseOrdersDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'purchaseOrders',
+        'query',
         variables
       );
     },

@@ -1,5 +1,4 @@
 use crate::sync::{
-    sync_utils::{map_name_link_id_to_name_id, map_optional_name_link_id_to_name_id},
     translations::{
         name::NameTranslation, store::StoreTranslation, PullTranslateResult, PushTranslateResult,
         SyncTranslation,
@@ -274,17 +273,17 @@ impl SyncTranslation for PurchaseOrderTranslation {
             created_by,
             purchase_order_number,
             store_id,
-            supplier_name_link_id: name_id,
+            supplier_name_id: name_id,
             status,
             created_datetime,
             confirmed_datetime,
             target_months,
             comment,
             supplier_discount_percentage,
-            donor_link_id: donor_id,
+            donor_id: donor_id,
             reference,
             currency_id,
-            foreign_exchange_rate: curr_rate,
+            foreign_exchange_rate: curr_rate.unwrap_or(1.0),
             shipping_method: delivery_method,
             sent_datetime,
             contract_signed_date,
@@ -335,7 +334,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             id,
             store_id,
             created_by,
-            supplier_name_link_id,
+            supplier_name_id,
             purchase_order_number,
             status,
             created_datetime,
@@ -343,7 +342,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             target_months,
             comment,
             supplier_discount_percentage,
-            donor_link_id,
+            donor_id,
             reference,
             currency_id,
             foreign_exchange_rate,
@@ -384,9 +383,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             status: status.clone(),
         };
 
-        let donor_id = map_optional_name_link_id_to_name_id(connection, donor_link_id)?;
-        let supplier_id = map_name_link_id_to_name_id(connection, supplier_name_link_id)?;
-
         let legacy_row = LegacyPurchaseOrderRow {
             id,
             purchase_order_number,
@@ -419,10 +415,10 @@ impl SyncTranslation for PurchaseOrderTranslation {
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
-            name_id: supplier_id,
+            name_id: supplier_name_id,
             creation_date: created_datetime.date(),
             confirm_date: confirmed_datetime.map(|d| d.date()),
-            curr_rate: foreign_exchange_rate,
+            curr_rate: Some(foreign_exchange_rate),
             order_total_before_discount,
             order_total_after_discount,
             donor_id,

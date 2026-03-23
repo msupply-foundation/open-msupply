@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import {
-  ModalRow,
   ModalLabel,
   Grid,
+  Box,
   useTranslation,
   BasicTextInput,
 } from '@openmsupply-client/common';
@@ -13,6 +13,7 @@ import {
 } from '@openmsupply-client/system';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
 import { isA } from '../../../../utils';
+import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
 
 interface InboundLineEditProps {
   item: ItemRowFragment | null;
@@ -29,6 +30,7 @@ export const InboundLineEditForm = ({
   const {
     query: { data },
   } = useInboundShipment();
+  const purchaseOrder = data?.purchaseOrder;
 
   const existingItemIds = useMemo(() => {
     if (!data) return [];
@@ -36,9 +38,19 @@ export const InboundLineEditForm = ({
     return [...new Set(stockLines.map(line => line.item.id))];
   }, [data]);
 
+  const { query } = usePurchaseOrder(purchaseOrder?.id);
+  const filter = {
+    id: {
+      notEqualAll: existingItemIds,
+      ...(purchaseOrder && {
+        equalAny: query.data?.lines.nodes.map(line => line.item.id) || [],
+      }),
+    },
+  };
+
   return (
-    <>
-      <ModalRow>
+    <Box display="flex" flexWrap="wrap" alignItems="center" gap={1}>
+      <Box display="flex" alignItems="center" flex={1} minWidth={300} gap={1}>
         <ModalLabel
           label={t('label.item', { count: 1 })}
           justifyContent="flex-end"
@@ -50,24 +62,24 @@ export const InboundLineEditForm = ({
             disabled={disabled}
             currentItemId={item?.id}
             onChange={newItem => onChangeItem(newItem)}
-            filter={{ id: { notEqualAll: existingItemIds } }}
+            filter={filter}
             // A scanned-in item will only have an ID, not a full item object,
             // so this flag makes the StockItemSearchInput component update the
             // current item on initial load from the API
             initialUpdate={!item?.name}
           />
         </Grid>
-      </ModalRow>
+      </Box>
       {item && (
-        <ModalRow margin={3}>
+        <Box display="flex" alignItems="center" gap={1}>
           <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
           <BasicTextInput
             disabled
             sx={{ width: 150 }}
             value={item.unitName ?? ''}
           />
-        </ModalRow>
+        </Box>
       )}
-    </>
+    </Box>
   );
 };

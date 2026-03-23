@@ -19,30 +19,18 @@ import {
   inboundStatuses,
   getPreviousStatus,
   getStatusTranslator,
+  InboundShipmentType,
+  getInboundShipmentType,
+  getInboundStatusesForType,
 } from '../../../utils';
 import { InboundLineFragment, useInboundShipment } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
   getButtonLabel: (status: InvoiceNodeStatus) => string,
-  isManuallyCreated: boolean
+  shipmentType: InboundShipmentType
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
-  // Manual workflows skip Picked and Shipped statuses
-  const statuses = isManuallyCreated
-    ? [
-        InvoiceNodeStatus.New,
-        InvoiceNodeStatus.Delivered,
-        InvoiceNodeStatus.Received,
-        InvoiceNodeStatus.Verified,
-      ]
-    : [
-        InvoiceNodeStatus.New,
-        InvoiceNodeStatus.Picked,
-        InvoiceNodeStatus.Shipped,
-        InvoiceNodeStatus.Delivered,
-        InvoiceNodeStatus.Received,
-        InvoiceNodeStatus.Verified,
-      ];
+  const statuses = getInboundStatusesForType(shipmentType);
 
   const options = statuses.map(status => ({
     value: status,
@@ -50,32 +38,11 @@ const getStatusOptions = (
     isDisabled: true,
   }));
 
-  if (isManuallyCreated) {
-    if (currentStatus === InvoiceNodeStatus.New) {
-      if (options[1]) options[1].isDisabled = false;
-      if (options[2]) options[2].isDisabled = false;
-      if (options[3]) options[3].isDisabled = false;
-    }
-    if (currentStatus === InvoiceNodeStatus.Delivered) {
-      if (options[2]) options[2].isDisabled = false;
-      if (options[3]) options[3].isDisabled = false;
-    }
-    if (currentStatus === InvoiceNodeStatus.Received) {
-      if (options[3]) options[3].isDisabled = false;
-    }
-  } else {
-    if (currentStatus === InvoiceNodeStatus.Shipped) {
-      if (options[3]) options[3].isDisabled = false;
-      if (options[4]) options[4].isDisabled = false;
-      if (options[5]) options[5].isDisabled = false;
-    }
-    if (currentStatus === InvoiceNodeStatus.Delivered) {
-      if (options[4]) options[4].isDisabled = false;
-      if (options[5]) options[5].isDisabled = false;
-    }
-    if (currentStatus === InvoiceNodeStatus.Received) {
-      if (options[5]) options[5].isDisabled = false;
-    }
+  // Enable options that can be progressed to from the current status
+  const currentIdx = statuses.indexOf(currentStatus);
+  for (let i = currentIdx + 1; i < options.length; i++) {
+    const option = options[i];
+    if (option) option.isDisabled = false;
   }
 
   return options;
@@ -95,14 +62,14 @@ const StatusChangeButtonContent = ({
   const { success, error } = useNotification();
   const { userHasPermission } = useAuthContext();
 
-  const { status, onHold, linkedShipment, lines } = data;
-  const isManuallyCreated = !linkedShipment?.id;
+  const { status, onHold, lines } = data;
+  const shipmentType = getInboundShipmentType(data);
 
   const options = useMemo(() => {
     let statusOptions = getStatusOptions(
       status,
       getButtonLabel(t),
-      isManuallyCreated
+      shipmentType
     );
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
@@ -110,11 +77,12 @@ const StatusChangeButtonContent = ({
       );
     }
     return statusOptions;
-  }, [status, isManuallyCreated, invoiceStatusOptions, t]);
+  }, [status, shipmentType, invoiceStatusOptions, t]);
 
-  const currentStatus = invoiceStatusOptions?.includes(status)
-    ? status
-    : getPreviousStatus(status, invoiceStatusOptions ?? [], inboundStatuses);
+  const currentStatus =
+    !invoiceStatusOptions || invoiceStatusOptions.includes(status)
+      ? status
+      : getPreviousStatus(status, invoiceStatusOptions, inboundStatuses);
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
@@ -154,11 +122,15 @@ const StatusChangeButtonContent = ({
   );
 
   const onHoldNotification = useDisabledNotificationToast(
-    t('messages.on-hold')
+    t('messages.on-hold-inbound')
   );
 
   const permissionDeniedNotification = useDisabledNotificationToast(
     t('auth.permission-denied')
+  );
+
+  const pendingLinesNotification = useDisabledNotificationToast(
+    t('messages.pending-lines')
   );
 
   const onVerify = () => {
@@ -175,6 +147,14 @@ const StatusChangeButtonContent = ({
   const onStatusClick = () => {
     if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
+    if (
+      selectedOption?.value === InvoiceNodeStatus.Received ||
+      selectedOption?.value === InvoiceNodeStatus.Verified
+    ) {
+      if (!validateNoPendingLines(lines)) {
+        return pendingLinesNotification();
+      }
+    }
     if (selectedOption?.value === InvoiceNodeStatus.Verified) return onVerify();
     return getConfirmation();
   };
@@ -188,6 +168,15 @@ const StatusChangeButtonContent = ({
       onClick={onStatusClick}
     />
   );
+};
+
+const validateNoPendingLines = (lines: {
+  totalCount: number;
+  nodes: InboundLineFragment[];
+}): boolean => {
+  // Should only proceed if there are no pending lines
+  if (lines.nodes.some(line => line.status === 'PENDING')) return false;
+  return true;
 };
 
 export const validateEmptyInvoice = (lines: {
