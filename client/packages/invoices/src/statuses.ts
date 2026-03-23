@@ -217,6 +217,48 @@ export function getStatusSequence(
   }
 }
 
+interface InvoiceDatetimes {
+  createdDatetime: string;
+  allocatedDatetime?: string | null;
+  pickedDatetime?: string | null;
+  shippedDatetime?: string | null;
+  deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
+  verifiedDatetime?: string | null;
+  cancelledDatetime?: string | null;
+}
+
+const STATUS_DATETIME_MAP: Partial<
+  Record<InvoiceNodeStatus, keyof InvoiceDatetimes>
+> = {
+  [InvoiceNodeStatus.New]: 'createdDatetime',
+  [InvoiceNodeStatus.Allocated]: 'allocatedDatetime',
+  [InvoiceNodeStatus.Picked]: 'pickedDatetime',
+  [InvoiceNodeStatus.Shipped]: 'shippedDatetime',
+  [InvoiceNodeStatus.Delivered]: 'deliveredDatetime',
+  [InvoiceNodeStatus.Received]: 'receivedDatetime',
+  [InvoiceNodeStatus.Verified]: 'verifiedDatetime',
+};
+
+export function createStatusLog(
+  invoice: InvoiceDatetimes & { status: InvoiceNodeStatus },
+  sequence: InvoiceNodeStatus[]
+): Record<InvoiceNodeStatus, null | undefined | string> {
+  const currentIdx = sequence.indexOf(invoice.status);
+  const statusLog = Object.fromEntries(
+    Object.values(InvoiceNodeStatus).map(s => [s, null])
+  ) as Record<InvoiceNodeStatus, null | undefined | string>;
+
+  for (const [idx, status] of sequence.entries()) {
+    if (currentIdx >= idx) {
+      const key = STATUS_DATETIME_MAP[status];
+      statusLog[status] = key ? (invoice[key] ?? null) : null;
+    }
+  }
+
+  return statusLog;
+}
+
 export function getStatusOptions(
   invoiceType: InvoiceNodeType,
   currentStatus: InvoiceNodeStatus,
