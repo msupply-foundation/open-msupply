@@ -22,8 +22,8 @@ import {
   CopyIcon,
   StockIcon,
   InvoiceIcon,
-  SlidersIcon,
   EditIcon,
+  BookIcon,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
@@ -123,136 +123,13 @@ export const InboundLineEditCards = ({
 
   const columns = useMemo(() => {
     const cols: ColumnDef<DraftInboundLine>[] = [
-      // --- General columns ---
-      {
-        accessorKey: 'batch',
-        header: t('label.batch'),
-        size: 100,
-        columnGroup: 'general',
-        cardSummary: row => `${t('label.batch')} ${row.batch || ''}`,
-        Cell: ({ row, cell }) => (
-          <TextInputCell
-            cell={cell}
-            updateFn={(batch: string) =>
-              updateDraftLine({ id: row.original.id, batch })
-            }
-          />
-        ),
-      },
-      {
-        accessorKey: 'expiryDate',
-        header: t('label.expiry-date'),
-        size: 150,
-        columnType: ColumnType.Date,
-        columnGroup: 'general',
-        accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
-        Cell: ({ cell, row }) => {
-          const value = cell.getValue<Date | null>();
-          return (
-            <ExpiryDateInput
-              value={value}
-              disabled={isDisabled}
-              onChange={date =>
-                updateDraftLine({
-                  id: row.original.id,
-                  expiryDate: Formatter.naiveDate(date),
-                })
-              }
-            />
-          );
-        },
-      },
-      {
-        id: 'manufactureDate',
-        header: t('label.manufacture-date'),
-        size: 150,
-        columnType: ColumnType.Date,
-        columnGroup: 'general',
-        accessorFn: row => DateUtils.getDateOrNull(row.manufactureDate),
-        Cell: ({ cell, row }) => {
-          const value = cell.getValue<Date | null>();
-          return (
-            <DateTimePickerInput
-              value={value}
-              disabled={isDisabled}
-              onChange={date =>
-                updateDraftLine({
-                  id: row.original.id,
-                  manufactureDate: date ? Formatter.naiveDate(date) : null,
-                })
-              }
-            />
-          );
-        },
-      },
-      // --- Quantities columns ---
-      {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        columnGroup: 'quantities',
-        Cell: ({
-          row: {
-            original: { id, packSize, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={isDisabled}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              updateDraftLine({
-                id,
-                itemVariantId: itemVariant?.id,
-                itemVariant,
-                manufacturer: itemVariant?.manufacturer ?? null,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: hasItemVariantsEnabled,
-      },
-      {
-        id: 'itemDoses',
-        header: t('label.doses-per-unit'),
-        columnType: ColumnType.Number,
-        defaultHideOnMobile: true,
-        columnGroup: 'quantities',
-        includeColumn: displayInDoses,
-        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
-      },
-      {
-        id: 'vvmStatus',
-        header: t('label.vvm-status'),
-        size: 150,
-        columnGroup: 'quantities',
-        accessorFn: row => row.vvmStatus || '',
-        Cell: ({
-          row: {
-            original: { id, vvmStatus, stockLine },
-          },
-        }) => (
-          <VVMStatusSearchInput
-            disabled={isDisabled}
-            selected={vvmStatus ?? null}
-            onChange={vvmStatus => updateDraftLine({ id, vvmStatus })}
-            useDefault={!stockLine}
-          />
-        ),
-        includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
-      },
+      // --- Quantity fields ---
       {
         id: 'outstandingPacks',
         header: t('label.outstanding-packs'),
         size: 120,
-        columnGroup: 'quantities',
-        includeColumn: poOutstandingPacks != null,
+        columnGroup: 'quantity',
+        includeColumn: !!purchaseOrderId,
         accessorFn: () => poOutstandingPacks ?? 0,
         Cell: ({ cell }) => (
           <NumberInputCell cell={cell} updateFn={() => {}} disabled />
@@ -263,7 +140,7 @@ export const InboundLineEditCards = ({
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
         size: 120,
-        columnGroup: 'quantities',
+        columnGroup: 'quantity',
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -280,7 +157,7 @@ export const InboundLineEditCards = ({
         accessorKey: 'shippedNumberOfPacks',
         header: t('label.shipped-number-of-packs'),
         size: 100,
-        columnGroup: 'quantities',
+        columnGroup: 'quantity',
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -299,7 +176,7 @@ export const InboundLineEditCards = ({
         accessorKey: 'packSize',
         header: t('label.received-pack-size'),
         size: 120,
-        columnGroup: 'quantities',
+        columnGroup: 'quantity',
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -334,8 +211,9 @@ export const InboundLineEditCards = ({
         accessorKey: 'numberOfPacks',
         header: t('label.packs-received'),
         size: 100,
-        columnGroup: 'quantities',
+        columnGroup: 'quantity',
         cardSummary: row => `${row.numberOfPacks} ${t('label.packs-received')}`,
+        cardSummaryOrder: 1,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -363,7 +241,7 @@ export const InboundLineEditCards = ({
         }),
         size: 120,
         defaultHideOnMobile: true,
-        columnGroup: 'quantities',
+        columnGroup: 'quantity',
         accessorFn: row => {
           return row.numberOfPacks * row.packSize;
         },
@@ -406,30 +284,14 @@ export const InboundLineEditCards = ({
         accessorKey: 'doseQuantity',
         header: t('label.doses-received'),
         size: 100,
-        columnGroup: 'quantities',
+        columnGroup: 'quantity',
         includeColumn: displayInDoses,
         accessorFn: row => {
           const total = row.numberOfPacks * row.packSize;
           return formatRef.current(total * row.item.doses);
         },
       },
-      {
-        accessorKey: 'volumePerPack',
-        header: t('label.volume-per-pack'),
-        size: 140,
-        columnGroup: 'quantities',
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              updateDraftLine({ volumePerPack: value, id: row.original.id });
-            }}
-            disabled={isDisabled}
-            decimalLimit={10}
-          />
-        ),
-      },
-      // --- Pricing columns ---
+      // --- Pricing fields ---
       {
         accessorKey: 'costPricePerPack',
         header: t('label.pack-cost-price'),
@@ -459,7 +321,11 @@ export const InboundLineEditCards = ({
           return undefined;
         },
         Cell: ({ cell }) => (
-          <CurrencyInputCell cell={cell} disabled currencyCode={foreignCurrency?.code} />
+          <CurrencyInputCell
+            cell={cell}
+            disabled
+            currencyCode={foreignCurrency?.code}
+          />
         ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
@@ -495,20 +361,66 @@ export const InboundLineEditCards = ({
         columnGroup: 'pricing',
         accessorFn: row => {
           if (foreignCurrency) {
-            return (row.costPricePerPack * row.numberOfPacks) / foreignCurrency.rate;
+            return (
+              (row.costPricePerPack * row.numberOfPacks) / foreignCurrency.rate
+            );
           }
           return undefined;
         },
         Cell: ({ cell }) => (
-          <CurrencyInputCell cell={cell} disabled currencyCode={foreignCurrency?.code} />
+          <CurrencyInputCell
+            cell={cell}
+            disabled
+            currencyCode={foreignCurrency?.code}
+          />
         ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
+      // --- Stock line details fields ---
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 100,
+        columnGroup: 'stockLineDetails',
+        cardSummary: row => `${t('label.batch')} ${row.batch || ''}`,
+        cardSummaryOrder: 0,
+        Cell: ({ row, cell }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={(batch: string) =>
+              updateDraftLine({ id: row.original.id, batch })
+            }
+          />
+        ),
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry-date'),
+        size: 150,
+        columnType: ColumnType.Date,
+        columnGroup: 'stockLineDetails',
+        accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
+        Cell: ({ cell, row }) => {
+          const value = cell.getValue<Date | null>();
+          return (
+            <ExpiryDateInput
+              value={value}
+              disabled={isDisabled}
+              onChange={date =>
+                updateDraftLine({
+                  id: row.original.id,
+                  expiryDate: Formatter.naiveDate(date),
+                })
+              }
+            />
+          );
+        },
+      },
       {
         id: 'location',
         header: t('label.location'),
-        columnGroup: 'general',
+        columnGroup: 'stockLineDetails',
         defaultHideOnMobile: true,
         Cell: ({ row: { original: row } }) => {
           return (
@@ -525,11 +437,80 @@ export const InboundLineEditCards = ({
           );
         },
       },
-      // --- Other columns ---
+      {
+        id: 'vvmStatus',
+        header: t('label.vvm-status'),
+        size: 150,
+        columnGroup: 'stockLineDetails',
+        accessorFn: row => row.vvmStatus || '',
+        Cell: ({
+          row: {
+            original: { id, vvmStatus, stockLine },
+          },
+        }) => (
+          <VVMStatusSearchInput
+            disabled={isDisabled}
+            selected={vvmStatus ?? null}
+            onChange={vvmStatus => updateDraftLine({ id, vvmStatus })}
+            useDefault={!stockLine}
+          />
+        ),
+        includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
+      },
+      {
+        accessorKey: 'note',
+        header: t('label.stocktake-comment'),
+        size: 200,
+        columnGroup: 'stockLineDetails',
+        cardSpan: 2,
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value =>
+              updateDraftLine({ id: row.original.id, note: value })
+            }
+            disabled={isDisabled}
+          />
+        ),
+        defaultHideOnMobile: true,
+      },
+      // --- Item details fields ---
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        columnGroup: 'itemDetails',
+        includeColumn: displayInDoses,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
+      },
+      {
+        id: 'manufactureDate',
+        header: t('label.manufacture-date'),
+        size: 150,
+        columnType: ColumnType.Date,
+        columnGroup: 'itemDetails',
+        accessorFn: row => DateUtils.getDateOrNull(row.manufactureDate),
+        Cell: ({ cell, row }) => {
+          const value = cell.getValue<Date | null>();
+          return (
+            <DateTimePickerInput
+              value={value}
+              disabled={isDisabled}
+              onChange={date =>
+                updateDraftLine({
+                  id: row.original.id,
+                  manufactureDate: date ? Formatter.naiveDate(date) : null,
+                })
+              }
+            />
+          );
+        },
+      },
       {
         id: 'donor',
         header: t('label.donor'),
-        columnGroup: 'other',
+        columnGroup: 'itemDetails',
         defaultHideOnMobile: true,
         Cell: ({ row: { original: row } }) => (
           <DonorSearchInput
@@ -550,7 +531,7 @@ export const InboundLineEditCards = ({
       {
         id: 'campaignOrProgram',
         header: t('label.campaign'),
-        columnGroup: 'other',
+        columnGroup: 'itemDetails',
         defaultHideOnMobile: true,
         Cell: ({ row }) => (
           <CampaignOrProgramCell
@@ -565,7 +546,7 @@ export const InboundLineEditCards = ({
       {
         id: 'manufacturer',
         header: t('label.manufacturer'),
-        columnGroup: 'other',
+        columnGroup: 'itemDetails',
         defaultHideOnMobile: true,
         Cell: ({ row: { original: row } }) => (
           <ManufacturerSearchInput
@@ -585,23 +566,54 @@ export const InboundLineEditCards = ({
         ),
       },
       {
-        accessorKey: 'note',
-        header: t('label.stocktake-comment'),
-        size: 200,
-        columnGroup: 'other',
-        cardSpan: 2,
-        Cell: ({ cell, row }) => (
-          <TextInputCell
+        accessorKey: 'volumePerPack',
+        header: t('label.volume-per-pack'),
+        size: 140,
+        columnGroup: 'itemDetails',
+        Cell: ({ row, cell }) => (
+          <NumberInputCell
             cell={cell}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, note: value })
-            }
+            updateFn={(value: number) => {
+              updateDraftLine({ volumePerPack: value, id: row.original.id });
+            }}
             disabled={isDisabled}
+            decimalLimit={10}
           />
         ),
-        defaultHideOnMobile: true,
       },
-      // --- Action columns (no group) ---
+      {
+        id: 'itemVariant',
+        header: t('label.item-variant'),
+        accessorFn: row => row.itemVariant?.id || '',
+        size: 150,
+        columnGroup: 'itemDetails',
+        Cell: ({
+          row: {
+            original: { id, packSize, itemVariant, item },
+          },
+        }) => (
+          <ItemVariantInput
+            disabled={isDisabled}
+            selectedId={itemVariant?.id}
+            itemId={item.id}
+            width="100%"
+            onChange={itemVariant =>
+              updateDraftLine({
+                id,
+                itemVariantId: itemVariant?.id,
+                itemVariant,
+                manufacturer: itemVariant?.manufacturer ?? null,
+                volumePerPack: getVolumePerPackFromVariant({
+                  packSize,
+                  itemVariant,
+                }),
+              })
+            }
+          />
+        ),
+        includeColumn: hasItemVariantsEnabled,
+      },
+      // --- Actions (no group) ---
       {
         id: 'duplicate',
         header: '',
@@ -665,7 +677,7 @@ export const InboundLineEditCards = ({
   ]);
 
   const table = useSimpleMaterialTable<DraftInboundLine>({
-    tableId: 'inbound-line-edit',
+    tableId: 'inbound-line-edit-v2',
     columns,
     data: lines,
     getIsRestrictedRow: isDisabled ? () => true : undefined,
@@ -674,10 +686,10 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-        general: <EditIcon />,
-        quantities: <StockIcon />,
+        quantity: <StockIcon />,
         pricing: <InvoiceIcon />,
-        other: <SlidersIcon />,
+        stockLineDetails: <EditIcon />,
+        itemDetails: <BookIcon />,
       };
 
   return (
