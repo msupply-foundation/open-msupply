@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_forecasting_fields_to_requisition_line;
+mod add_inbound_shipment_external_verify_permission;
 mod add_manufacture_date_to_stock_and_invoice_lines;
 mod add_manufacturer_link_id_to_lines;
 mod add_purchase_order_id_to_invoice;
@@ -11,8 +12,8 @@ mod item_category_join_add_item_link_id;
 mod item_store_join_add_default_location_id;
 mod remove_goods_received;
 mod remove_goods_received_cleanup;
-mod vaccine_course_store_config;
 mod requisition_add_destination_customer_link_id;
+mod vaccine_course_store_config;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -36,6 +37,7 @@ impl Migration for V2_17_00 {
             Box::new(add_manufacture_date_to_stock_and_invoice_lines::Migrate),
             Box::new(item_store_join_add_default_location_id::Migrate),
             Box::new(import_goods_received::Migrate),
+            Box::new(add_inbound_shipment_external_verify_permission::Migrate),
             Box::new(vaccine_course_store_config::Migrate),
             Box::new(requisition_add_destination_customer_link_id::Migrate),
         ]

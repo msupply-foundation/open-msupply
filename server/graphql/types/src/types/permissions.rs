@@ -50,6 +50,7 @@ pub enum UserPermission {
     InboundShipmentExternalQuery,
     InboundShipmentExternalMutate,
     InboundShipmentExternalAuthorise,
+    InboundShipmentExternalVerify,
     Report,
     LogQuery,
     StockLineMutate,
