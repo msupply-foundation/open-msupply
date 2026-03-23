@@ -324,7 +324,7 @@ export const PurchaseOrderLineEdit = ({
                 disabled || isFieldDisabled(status, StatusGroup.AfterSent)
               }
               onChange={(value: string | null) => {
-                const patch: Record<string, string | null> = {
+                const patch: Partial<DraftPurchaseOrderLine> = {
                   requestedDeliveryDate: value,
                 };
                 if (!draft?.expectedDeliveryDate && value) {
