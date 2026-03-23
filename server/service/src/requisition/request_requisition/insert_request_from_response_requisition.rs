@@ -178,7 +178,7 @@ fn generate(
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
-        original_customer_id: None,
+        destination_customer_id: None,
     };
 
     // Response requisition that still need to be supplied (supply < requested)
