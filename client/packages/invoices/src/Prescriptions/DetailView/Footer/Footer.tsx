@@ -17,48 +17,16 @@ import {
   InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator } from '../../../utils';
-import { getStatusSequence } from '../../../statuses';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
 import { StatusChangeButton } from './StatusChangeButton';
 import {
   PrescriptionLineFragment,
-  PrescriptionRowFragment,
   usePrescription,
   usePrescriptionLines,
 } from '../../api';
 import { usePrintLabels } from '../hooks/usePrinter';
 
 const prescriptionSequence = getStatusSequence(InvoiceNodeType.Prescription);
-
-const createStatusLog = (invoice: PrescriptionRowFragment) => {
-  const statusIdx = prescriptionSequence.findIndex(s => invoice.status === s);
-
-  const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
-    // Not used in prescriptions
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Received]: null,
-  };
-
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-  if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Cancelled] = invoice.cancelledDatetime;
-  }
-
-  return statusLog;
-};
 
 export const FooterComponent = ({
   selectedRows,
@@ -160,7 +128,7 @@ export const FooterComponent = ({
             >
               <StatusCrumbs
                 statuses={statusList}
-                statusLog={createStatusLog(prescription)}
+                statusLog={createStatusLog(prescription, statusList)}
                 statusFormatter={getStatusTranslator(t)}
               />
 

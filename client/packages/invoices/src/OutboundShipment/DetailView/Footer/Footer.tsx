@@ -11,7 +11,6 @@ import {
   ZapIcon,
   useTranslation,
   AppFooterPortal,
-  InvoiceNodeStatus,
   useBreadcrumbs,
   useConfirmationModal,
   InvoiceLineNodeType,
@@ -19,53 +18,13 @@ import {
   usePreferences,
 } from '@openmsupply-client/common';
 import { getStatusTranslator } from '../../../utils';
-import { getStatusSequence } from '../../../statuses';
-import { useOutbound, OutboundFragment } from '../../api';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
+import { useOutbound } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 const outboundSequence = getStatusSequence(InvoiceNodeType.OutboundShipment);
-
-const createStatusLog = (invoice: OutboundFragment) => {
-  const statusIdx = outboundSequence.findIndex(s => invoice.status === s);
-
-  const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    // Not used in outbound shipments
-    [InvoiceNodeStatus.Cancelled]: null,
-    [InvoiceNodeStatus.Received]: null,
-  };
-
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Allocated] = invoice.allocatedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
-  }
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
-  }
-  if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
-  }
-  if (statusIdx >= 6) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-
-  return statusLog;
-};
 
 interface FooterComponentProps {
   onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
@@ -163,7 +122,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
 
               <StatusCrumbs
                 statuses={statuses}
-                statusLog={createStatusLog(data)}
+                statusLog={createStatusLog(data, outboundSequence)}
                 statusFormatter={getStatusTranslator(t)}
               />
 

@@ -24,9 +24,8 @@ import {
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import { getStatusTranslator, getInboundShipmentType } from '../../../utils';
-import { getStatusSequence } from '../../../statuses';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
 import {
-  InboundFragment,
   InboundLineFragment,
   useInboundShipment,
 } from '../../api';
@@ -38,44 +37,6 @@ import {
 } from '../../api/hooks/utils';
 import { OnHoldButton } from './OnHoldButton';
 import { StatusChangeButton } from './StatusChangeButton';
-
-const inboundSequence = getStatusSequence(InvoiceNodeType.InboundShipment);
-
-const createStatusLog = (invoice: InboundFragment) => {
-  const statusIdx = inboundSequence.findIndex(s => invoice.status === s);
-  const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Received]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    // Placeholder for typescript, not used in inbounds
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
-  };
-
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
-  }
-  if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
-  }
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
-  }
-  if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-
-  return statusLog;
-};
 
 interface FooterComponentProps {
   onReturnLines: () => void;
@@ -208,7 +169,7 @@ export const FooterComponent = ({
               {!isExtraSmallScreen && <OnHoldButton />}
               <StatusCrumbs
                 statuses={statuses}
-                statusLog={createStatusLog(data)}
+                statusLog={createStatusLog(data, statuses)}
                 statusFormatter={getStatusTranslator(t)}
               />
 
