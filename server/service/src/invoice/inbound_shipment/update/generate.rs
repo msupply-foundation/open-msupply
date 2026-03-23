@@ -351,7 +351,8 @@ fn generate_cost_price_update_for_lines(
         row.cost_price_per_pack = new_cost;
 
         // If sell price matches old cost price, update sell price too
-        if (row.sell_price_per_pack - old_cost).abs() < f64::EPSILON {
+        // Use currency-appropriate tolerance for floating point comparison
+        if (row.sell_price_per_pack - old_cost).abs() < 0.0001 {
             row.sell_price_per_pack = new_cost;
         }
 
