@@ -80,6 +80,14 @@ export const CardListItem = <T extends MRT_RowData>({
     }
   }
 
+  // Sort summary cells by cardSummaryOrder (lower first); columns without
+  // an explicit order keep their original position after ordered ones.
+  summaryCells.sort((a, b) => {
+    const oa = colDef(a).cardSummaryOrder ?? Infinity;
+    const ob = colDef(b).cardSummaryOrder ?? Infinity;
+    return oa - ob;
+  });
+
   // Group data cells by columnGroup, preserving definition order
   const groups: { groupName: string | undefined; cells: typeof dataCells }[] =
     [];
