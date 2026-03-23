@@ -136,6 +136,8 @@ export type InboundFragment = {
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
   currencyRate: number;
+  chargesLocalCurrency: number;
+  chargesForeignCurrency: number;
   defaultDonor?: { __typename: 'NameNode'; id: string; name: string } | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
@@ -449,6 +451,8 @@ export type InvoiceQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
@@ -697,6 +701,8 @@ export type InboundByNumberQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
@@ -1573,6 +1579,8 @@ export const InboundFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    chargesLocalCurrency
+    chargesForeignCurrency
     documents {
       __typename
       nodes {

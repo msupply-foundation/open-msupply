@@ -767,8 +767,7 @@ impl InvoiceTransferTester {
 
         let supplier_return = InvoiceRow {
             id: uuid(),
-            name_id: outbound_name
-                .map_or(outbound_store.name_id.clone(), |n| n.id.clone()),
+            name_id: outbound_name.map_or(outbound_store.name_id.clone(), |n| n.id.clone()),
             store_id: inbound_store.id.clone(),
             invoice_number: 5,
             r#type: InvoiceType::SupplierReturn,
@@ -934,10 +933,7 @@ impl InvoiceTransferTester {
 
         assert_eq!(inbound_shipment.r#type, InvoiceType::InboundShipment);
         assert_eq!(inbound_shipment.store_id, self.inbound_store.id);
-        assert_eq!(
-            inbound_shipment.name_id,
-            self.outbound_store.name_id
-        );
+        assert_eq!(inbound_shipment.name_id, self.outbound_store.name_id);
         assert_eq!(
             inbound_shipment.name_store_id,
             Some(self.outbound_store.id.clone())
@@ -1275,10 +1271,7 @@ impl InvoiceTransferTester {
 
         assert_eq!(customer_return.r#type, InvoiceType::CustomerReturn);
         assert_eq!(customer_return.store_id, self.outbound_store.id);
-        assert_eq!(
-            customer_return.name_id,
-            self.inbound_store.name_id
-        );
+        assert_eq!(customer_return.name_id, self.inbound_store.name_id);
         assert_eq!(
             customer_return.name_store_id,
             Some(self.inbound_store.id.clone())

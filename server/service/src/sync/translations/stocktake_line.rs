@@ -171,7 +171,13 @@ impl SyncTranslation for StocktakeLineTranslation {
         }
 
         let (campaign_id, program_id, manufacture_date) = oms_fields
-            .map(|fields| (fields.campaign_id, fields.program_id, fields.manufacture_date))
+            .map(|fields| {
+                (
+                    fields.campaign_id,
+                    fields.program_id,
+                    fields.manufacture_date,
+                )
+            })
             .unwrap_or((None, None, None));
 
         let location_id = clear_invalid_location_id(connection, location_id)?;

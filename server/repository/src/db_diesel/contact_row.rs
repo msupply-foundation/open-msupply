@@ -1,7 +1,6 @@
 use crate::db_diesel::name_row::name;
 use crate::{
-    diesel_macros::define_linked_tables,
-    Delete, RepositoryError, StorageConnection, Upsert,
+    diesel_macros::define_linked_tables, Delete, RepositoryError, StorageConnection, Upsert,
 };
 use diesel::prelude::*;
 

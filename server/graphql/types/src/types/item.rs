@@ -201,7 +201,10 @@ impl ItemNode {
             .await?
             .unwrap_or_default();
 
-        Ok(result.into_iter().map(ItemCategoryNode::from_domain).collect())
+        Ok(result
+            .into_iter()
+            .map(ItemCategoryNode::from_domain)
+            .collect())
     }
 
     #[graphql(deprecation = "Since 2.16.0. Use universalCode instead")]

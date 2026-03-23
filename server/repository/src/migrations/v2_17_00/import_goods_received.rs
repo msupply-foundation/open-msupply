@@ -274,9 +274,7 @@ fn import_invoices(connection: &StorageConnection) -> anyhow::Result<()> {
                     .filter(sync_buffer::record_id.eq(&record_id))
                     .set(sync_buffer::integration_error.eq(e.to_string()))
                     .execute(connection.lock().connection())?;
-                log::warn!(
-                    "Could not parse goods_received sync buffer row {record_id}: {e}"
-                );
+                log::warn!("Could not parse goods_received sync buffer row {record_id}: {e}");
                 continue;
             }
         };
@@ -308,9 +306,7 @@ fn import_invoices(connection: &StorageConnection) -> anyhow::Result<()> {
             .entry_date
             .and_then(|d| d.and_hms_opt(0, 0, 0))
             .unwrap_or_else(|| {
-                log::warn!(
-                    "missing entry_date for goods_received {record_id}, using current time"
-                );
+                log::warn!("missing entry_date for goods_received {record_id}, using current time");
                 chrono::Utc::now().naive_utc()
             });
 
@@ -362,9 +358,7 @@ fn import_invoice_lines(connection: &StorageConnection) -> anyhow::Result<()> {
                     .filter(sync_buffer::record_id.eq(&record_id))
                     .set(sync_buffer::integration_error.eq(e.to_string()))
                     .execute(connection.lock().connection())?;
-                log::warn!(
-                    "Could not parse goods_received_line sync buffer row {record_id}: {e}"
-                );
+                log::warn!("Could not parse goods_received_line sync buffer row {record_id}: {e}");
                 continue;
             }
         };

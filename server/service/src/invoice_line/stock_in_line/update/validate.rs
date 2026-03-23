@@ -104,13 +104,9 @@ pub fn validate(
         ) {
             Ok(_) => {}
             Err(e) => match e {
-                OtherPartyErrors::OtherPartyDoesNotExist => {
-                    return Err(ManufacturerDoesNotExist)
-                }
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
                 OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
-                OtherPartyErrors::TypeMismatched => {
-                    return Err(ManufacturerIsNotAManufacturer)
-                }
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
                     return Err(DatabaseError(repository_error))
                 }

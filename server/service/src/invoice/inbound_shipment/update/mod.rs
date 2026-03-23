@@ -52,6 +52,8 @@ pub struct UpdateInboundShipment {
     pub tax: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub charges_local_currency: Option<f64>,
+    pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
     pub delivered_datetime: Option<NaiveDate>,
 }
@@ -75,6 +77,7 @@ pub fn update_inbound_shipment(
                 location_movements,
                 update_tax_for_lines,
                 update_currency_for_lines,
+                update_cost_price_for_lines,
                 vvm_status_logs_to_update,
                 update_donor,
             } = generate(ctx, invoice, other_party, patch.clone())?;
@@ -139,6 +142,16 @@ pub fn update_inbound_shipment(
                 for line in update_currency {
                     invoice_line_repository
                         .update_currency(&line.id, line.foreign_currency_price_before_tax)?;
+                }
+            }
+
+            if let Some(update_cost_price) = update_cost_price_for_lines {
+                for line in update_cost_price {
+                    invoice_line_repository.update_cost_price(
+                        &line.id,
+                        line.cost_price_per_pack,
+                        line.sell_price_per_pack,
+                    )?;
                 }
             }
 

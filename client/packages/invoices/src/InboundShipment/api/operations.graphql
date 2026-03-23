@@ -210,6 +210,8 @@ fragment Inbound on InvoiceNode {
   }
 
   currencyRate
+  chargesLocalCurrency
+  chargesForeignCurrency
 
   documents {
     __typename

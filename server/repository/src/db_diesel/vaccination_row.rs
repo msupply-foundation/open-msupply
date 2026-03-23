@@ -1,13 +1,12 @@
+use crate::diesel_macros::define_linked_tables;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
 };
-use crate::diesel_macros::define_linked_tables;
 
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
-    item_row::item, name_row::name, name_store_join::name_store_join,
-    store_row::store,
+    item_row::item, name_row::name, name_store_join::name_store_join, store_row::store,
     vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
 };
 
@@ -62,9 +61,7 @@ allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_dose);
 allow_tables_to_appear_in_same_query!(vaccination, name_store_join);
 allow_tables_to_appear_in_same_query!(vaccination, store);
 
-#[derive(
-    Clone, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize, Default,
-)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[diesel(table_name = vaccination)]
 pub struct VaccinationRow {
     pub id: String,
@@ -148,8 +145,10 @@ impl<'a> VaccinationRowRepository<'a> {
     }
 
     pub fn delete(&self, vaccination_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(vaccination_with_links::table.filter(vaccination_with_links::id.eq(vaccination_id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            vaccination_with_links::table.filter(vaccination_with_links::id.eq(vaccination_id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

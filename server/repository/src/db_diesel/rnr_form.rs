@@ -42,13 +42,7 @@ pub struct RnRFormRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-type RnRFormJoin = (
-    RnRFormRow,
-    NameRow,
-    StoreRow,
-    PeriodRow,
-    ProgramRow,
-);
+type RnRFormJoin = (RnRFormRow, NameRow, StoreRow, PeriodRow, ProgramRow);
 
 impl<'a> RnRFormRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -110,9 +104,7 @@ impl<'a> RnRFormRepository<'a> {
     }
 }
 
-fn to_domain(
-    (rnr_form_row, name_row, store_row, period_row, program_row): RnRFormJoin,
-) -> RnRForm {
+fn to_domain((rnr_form_row, name_row, store_row, period_row, program_row): RnRFormJoin) -> RnRForm {
     RnRForm {
         rnr_form_row,
         name_row,

@@ -113,9 +113,11 @@ impl<'a> ItemVariantRowRepository<'a> {
     }
 
     pub fn mark_deleted(&self, item_variant_id: &str) -> Result<i64, RepositoryError> {
-        diesel::update(item_variant_with_links::table.filter(item_variant_with_links::id.eq(item_variant_id)))
-            .set(item_variant_with_links::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(self.connection.lock().connection())?;
+        diesel::update(
+            item_variant_with_links::table.filter(item_variant_with_links::id.eq(item_variant_id)),
+        )
+        .set(item_variant_with_links::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+        .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
         self.insert_changelog(item_variant_id.to_string(), RowActionType::Upsert)
