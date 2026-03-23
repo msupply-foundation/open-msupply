@@ -2,6 +2,7 @@ use crate::sync::{
     test::TestSyncIncomingRecord,
     translations::invoice::{
         LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
+        TransactRowOmsFields,
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
@@ -233,7 +234,9 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         goods_received_ID: None,
         purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
-        oms_fields: None,
+        oms_fields: Some(TransactRowOmsFields {
+            reporting_date: None,
+        }),
     }
 }
 
@@ -438,7 +441,9 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
-            oms_fields: None,
+            oms_fields: Some(TransactRowOmsFields {
+                reporting_date: None,
+            }),
         }),
     }
 }
@@ -704,7 +709,9 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
-            oms_fields: None,
+            oms_fields: Some(TransactRowOmsFields {
+                reporting_date: None,
+            }),
         }),
     }
 }
@@ -922,7 +929,9 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
-            oms_fields: None,
+            oms_fields: Some(TransactRowOmsFields {
+                reporting_date: None,
+            }),
         }),
     }
 }
@@ -1139,7 +1148,9 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
-            oms_fields: None,
+            oms_fields: Some(TransactRowOmsFields {
+                reporting_date: None,
+            }),
         }),
     }
 }
@@ -1353,7 +1364,9 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
-            oms_fields: None,
+            oms_fields: Some(TransactRowOmsFields {
+                reporting_date: None,
+            }),
         }),
     }
 }
@@ -1578,7 +1591,9 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
-            oms_fields: None,
+            oms_fields: Some(TransactRowOmsFields {
+                reporting_date: None,
+            }),
         }),
     }
 }
