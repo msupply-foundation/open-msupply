@@ -54,7 +54,7 @@ pub struct UpdateInboundShipment {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
-    pub delivered_datetime: Option<NaiveDate>,
+    pub reporting_date: Option<NaiveDate>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -182,8 +182,7 @@ pub enum UpdateInboundShipmentError {
     CannotIssueForeignCurrencyForInternalSuppliers,
     CannotUpdateStatusAndDonorAtTheSameTime,
     CanOnlyChangeDateOfExternalInboundShipments,
-    CannotSetDeliveredDateInFuture,
-    CannotPutDeliveredDateAfterReceivedDate,
+    CannotSetReportingDateInFuture,
     CannotReceiveWithPendingLines,
     CannotSetShippedStatusOnManualInboundShipment,
     // Name validation

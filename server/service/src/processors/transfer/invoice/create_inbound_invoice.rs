@@ -304,6 +304,7 @@ fn generate_inbound_invoice(
         is_cancellation: false,
         default_donor_id: None,
         purchase_order_id: None,
+        reporting_date: None,
     };
 
     Ok(result)

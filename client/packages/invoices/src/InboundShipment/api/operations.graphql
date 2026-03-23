@@ -123,6 +123,7 @@ fragment Inbound on InvoiceNode {
   createdDatetime
   allocatedDatetime
   deliveredDatetime
+  reportingDate
   receivedDatetime
   pickedDatetime
   shippedDatetime
@@ -241,6 +242,7 @@ fragment InboundRow on InvoiceNode {
   comment
   createdDatetime
   deliveredDatetime
+  reportingDate
   receivedDatetime
   id
   invoiceNumber

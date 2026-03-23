@@ -4451,6 +4451,7 @@ export type InvoiceNode = {
   programId?: Maybe<Scalars['String']['output']>;
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  reportingDate?: Maybe<Scalars['NaiveDate']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -10086,10 +10087,10 @@ export type UpdateInboundShipmentInput = {
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
   defaultDonor?: InputMaybe<UpdateDonorInput>;
-  deliveredDatetime?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
+  reportingDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
   tax?: InputMaybe<TaxInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;

@@ -6,6 +6,7 @@ mod add_inbound_shipment_external_verify_permission;
 mod add_manufacture_date_to_stock_and_invoice_lines;
 mod add_manufacturer_link_id_to_lines;
 mod add_purchase_order_id_to_invoice;
+mod add_reporting_date_to_invoice;
 mod import_goods_received;
 mod invoice_line_add_status;
 mod item_category_join_add_item_link_id;
@@ -40,6 +41,7 @@ impl Migration for V2_17_00 {
             Box::new(add_inbound_shipment_external_verify_permission::Migrate),
             Box::new(vaccine_course_store_config::Migrate),
             Box::new(requisition_add_destination_customer_link_id::Migrate),
+            Box::new(add_reporting_date_to_invoice::Migrate),
         ]
     }
 }

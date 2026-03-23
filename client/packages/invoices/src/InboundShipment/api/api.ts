@@ -94,8 +94,8 @@ export const inboundParsers = {
       id: patch.id,
       colour: 'colour' in patch ? patch.colour : undefined,
       comment: 'comment' in patch ? patch.comment : undefined,
-      deliveredDatetime:
-        'deliveredDatetime' in patch ? patch.deliveredDatetime : undefined,
+      reportingDate:
+        'reportingDate' in patch ? patch.reportingDate : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
