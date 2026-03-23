@@ -67,7 +67,7 @@ export const useInboundShipment = (id?: string) => {
     mutateAsync: updateMutation,
     isLoading: isUpdating,
     error: updateError,
-  } = useUpdate();
+  } = useUpdate(isExternal);
 
   const update = async (
     newData?:
@@ -120,6 +120,7 @@ export const useInboundShipment = (id?: string) => {
 
   return {
     query: { data, loading, error },
+    isExternal,
     isDisabled,
     hasMutatePermission,
     isHoldable,
@@ -171,9 +172,8 @@ const useGetById = (
   return query;
 };
 
-const useUpdate = () => {
+const useUpdate = (isExternal: boolean) => {
   const { inboundApi, storeId, queryClient } = useInboundGraphQL();
-  const { invoiceId = '' } = useParams();
 
   const mutationFn = async (
     patch:
@@ -184,17 +184,8 @@ const useUpdate = () => {
           defaultDonorUpdate: UpdateInboundShipmentInput['defaultDonor'];
         }
   ) => {
-    // The parser handles all types including specialized fields like defaultDonorUpdate
     const input: UpdateInboundShipmentInput = inboundParsers.toUpdate(patch);
     const variables = { input, storeId };
-
-    // Check if this is an external shipment from cached data
-    const invoice = queryClient.getQueryData<InboundFragment>([
-      INBOUND,
-      INBOUND_LINE,
-      invoiceId,
-    ]);
-    const isExternal = !!invoice?.purchaseOrder;
 
     const result = isExternal
       ? await inboundApi.updateInboundShipmentExternal(variables)

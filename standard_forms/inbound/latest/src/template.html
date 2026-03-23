@@ -48,13 +48,13 @@
             <td class="pack" style="width: 50px;">{{ line.packSize * line.numberOfPacks }}</td>
             <td class="batch batch-wrap" style="width: 50px;">{{ line.batch }}</td>
             <td class="expiry" style="width: 80px;">{{ self::dateOrNA(datetime=line.expiryDate) }}</td>
-            <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack }}</td>
+            <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack | round(precision=2) }}</td>
             {% if line.costPricePerPack and line.packSize %}
             <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack / line.packSize | round(precision=2) }}</td>
             {% else %} 
             <td class="cost_price" style="width: 80px;">0</td>
             {% endif %}
-            <td class="total_extension" style="width: 50px;">{{ line.numberOfPacks * line.costPricePerPack }}</td>
+            <td class="total_extension" style="width: 50px;">{{ line.numberOfPacks * line.costPricePerPack | round(precision=2) }}</td>
         </tr>
         {%- endfor %}
     </table>
@@ -65,9 +65,9 @@
         <th class="header_section_field_right">{{t(k="heading.sub-total",f="Sub total")}}: {{ data.invoice.pricing.totalBeforeTax | round(precision=2) }}</th>
     </tr>
       <tr class="body_total_column_label">
-        <th class="header_section_field_right">{{t(k="heading.tax",f="Tax")}}: {{ data.invoice.pricing.taxPercentage }}</th>
+        <th class="header_section_field_right">{{t(k="heading.tax",f="Tax")}}: {{ data.invoice.pricing.taxPercentage | round(precision=2) }}</th>
     </tr>
     <tr class="body_total_column_label">
-        <th class="header_section_field_right">{{t(k="heading.total",f="Total")}}: {{ data.invoice.pricing.totalAfterTax }}</th>
+        <th class="header_section_field_right">{{t(k="heading.total",f="Total")}}: {{ data.invoice.pricing.totalAfterTax | round(precision=2) }}</th>
     </tr>
 </table>

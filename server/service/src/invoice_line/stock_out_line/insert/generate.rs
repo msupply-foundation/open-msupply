@@ -205,6 +205,7 @@ fn generate_line(
         tax_percentage,
         currency_id,
         currency_rate,
+        program_id: invoice_program_id,
         ..
     }: InvoiceRow,
     default_pricing: ItemPrice,
@@ -250,7 +251,7 @@ fn generate_line(
         vvm_status_id,
         item_variant_id,
         campaign_id,
-        program_id,
+        program_id: program_id.or(invoice_program_id),
         volume_per_pack,
         shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
             .then_some(number_of_packs),

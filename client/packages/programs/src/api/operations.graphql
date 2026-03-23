@@ -686,6 +686,27 @@ query immunisationPrograms(
   }
 }
 
+fragment VaccineCourseStoreConfig on VaccineCourseStoreConfigNode {
+  id
+  vaccineCourseId
+  storeId
+  wastageRate
+  coverageRate
+}
+
+fragment VaccineCourseRow on VaccineCourseNode {
+  id
+  name
+  programId
+  demographic {
+    name
+    id
+  }
+  vaccineCourseDoses {
+    ...VaccineCourseDose
+  }
+}
+
 fragment VaccineCourse on VaccineCourseNode {
   id
   name
@@ -704,6 +725,31 @@ fragment VaccineCourse on VaccineCourseNode {
   }
   vaccineCourseDoses {
     ...VaccineCourseDose
+  }
+  storeConfigs {
+    ...VaccineCourseStoreConfig
+  }
+}
+
+query vaccineCourseList(
+  $first: Int
+  $offset: Int
+  $key: VaccineCourseSortFieldInput!
+  $desc: Boolean
+  $filter: VaccineCourseFilterInput
+) {
+  vaccineCourses(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on VaccineCourseConnector {
+      __typename
+      nodes {
+        ...VaccineCourseRow
+      }
+      totalCount
+    }
   }
 }
 

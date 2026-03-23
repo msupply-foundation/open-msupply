@@ -235,6 +235,7 @@ export type GenerateSupplierReturnLineFragment = {
   expiryDate?: string | null;
   id: string;
   numberOfPacksToReturn: number;
+  onHold: boolean;
   packSize: number;
   stockLineId: string;
   note?: string | null;
@@ -267,6 +268,7 @@ export type GenerateSupplierReturnLinesQuery = {
       expiryDate?: string | null;
       id: string;
       numberOfPacksToReturn: number;
+      onHold: boolean;
       packSize: number;
       stockLineId: string;
       note?: string | null;
@@ -1005,6 +1007,7 @@ export const GenerateSupplierReturnLineFragmentDoc = gql`
     expiryDate
     id
     numberOfPacksToReturn
+    onHold
     packSize
     stockLineId
     note

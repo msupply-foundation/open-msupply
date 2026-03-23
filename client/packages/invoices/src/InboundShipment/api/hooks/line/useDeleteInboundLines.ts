@@ -7,7 +7,7 @@ import { useInboundApi } from '../utils/useInboundApi';
 import { InboundFragment } from '../../operations.generated';
 import { INBOUND, INBOUND_LINE } from '../document/keys';
 
-export const useDeleteInboundLines = () => {
+export const useDeleteInboundLines = (isExternal: boolean) => {
   const { invoiceId: inboundId = '' } = useParams();
   const queryClient = useQueryClient();
   const api = useInboundApi();
@@ -15,8 +15,6 @@ export const useDeleteInboundLines = () => {
 
   return useMutation(
     (lines: { id: string }[]) => {
-      const invoice = queryClient.getQueryData<InboundFragment>(queryKey);
-      const isExternal = !!invoice?.purchaseOrder;
       return api.deleteLines(lines, isExternal);
     },
     {
