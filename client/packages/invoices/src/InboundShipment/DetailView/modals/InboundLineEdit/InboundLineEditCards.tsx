@@ -19,6 +19,8 @@ import {
   NumberInputCell,
   CurrencyInputCell,
   CardList,
+  Box,
+  Typography,
   CopyIcon,
   StockIcon,
   InvoiceIcon,
@@ -94,6 +96,8 @@ export const InboundLineEditCards = ({
     query: { data: inboundData },
   } = useInboundShipment();
   const purchaseOrderId = inboundData?.purchaseOrder?.id;
+  const isManualShipment =
+    !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
   const { query: poQuery } = usePurchaseOrder(purchaseOrderId);
 
   // Calculate outstanding packs for the current item from PO lines
@@ -141,6 +145,7 @@ export const InboundLineEditCards = ({
         header: t('label.shipped-pack-size'),
         size: 120,
         columnGroup: 'quantity',
+        includeColumn: isManualShipment,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -158,6 +163,7 @@ export const InboundLineEditCards = ({
         header: t('label.shipped-number-of-packs'),
         size: 100,
         columnGroup: 'quantity',
+        includeColumn: isManualShipment,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -177,34 +183,50 @@ export const InboundLineEditCards = ({
         header: t('label.received-pack-size'),
         size: 120,
         columnGroup: 'quantity',
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              const line = row.original;
-              const item = row.original.item;
-              const shouldClearSellPrice =
-                item?.defaultPackSize !== line.packSize &&
-                item?.itemStoreProperties?.defaultSellPricePerPack ===
-                  line.sellPricePerPack;
+        Cell: ({ row, cell }) => {
+          const line = row.original;
+          const shippedPackSize = line.shippedPackSize;
+          const showWarning =
+            shippedPackSize != null && line.packSize !== shippedPackSize;
+          return (
+            <Box>
+              <NumberInputCell
+                cell={cell}
+                updateFn={(value: number) => {
+                  const item = row.original.item;
+                  const shouldClearSellPrice =
+                    item?.defaultPackSize !== line.packSize &&
+                    item?.itemStoreProperties?.defaultSellPricePerPack ===
+                      line.sellPricePerPack;
 
-              updateDraftLine({
-                volumePerPack:
-                  getVolumePerPackFromVariant({
-                    itemVariant: line.itemVariant,
+                  updateDraftLine({
+                    volumePerPack:
+                      getVolumePerPackFromVariant({
+                        itemVariant: line.itemVariant,
+                        packSize: value,
+                      }) ?? 0,
+                    sellPricePerPack: shouldClearSellPrice
+                      ? 0
+                      : line.sellPricePerPack,
                     packSize: value,
-                  }) ?? 0,
-                sellPricePerPack: shouldClearSellPrice
-                  ? 0
-                  : line.sellPricePerPack,
-                packSize: value,
-                id: row.original.id,
-              });
-            }}
-            disabled={isDisabled}
-            min={1}
-          />
-        ),
+                    id: row.original.id,
+                  });
+                }}
+                disabled={isDisabled}
+                min={1}
+              />
+              {showWarning && (
+                <Typography
+                  variant="caption"
+                  color="warning.main"
+                  sx={{ mt: 0.5, display: 'block' }}
+                >
+                  {`${t('label.shipped-pack-size')}: ${shippedPackSize}`}
+                </Typography>
+              )}
+            </Box>
+          );
+        },
         defaultHideOnMobile: true,
       },
       {
@@ -217,25 +239,42 @@ export const InboundLineEditCards = ({
           return `${t('label.received')} ${formatRef.current(row.numberOfPacks)} ${getPlural(t('label.pack'), row.numberOfPacks)} (${formatRef.current(units)} ${pluralisedUnitName.toLowerCase()})`;
         },
         cardSummaryOrder: 1,
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              const { packSize } = row.original;
-              if (packSize !== undefined) {
-                const packToUnits = packSize * value;
-                setPackRoundingMessage?.('');
-                updateDraftLine({
-                  receivedNumberOfUnits: packToUnits,
-                  id: row.original.id,
-                  numberOfPacks: value,
-                });
-              }
-            }}
-            disabled={isDisabled}
-            min={0}
-          />
-        ),
+        Cell: ({ row, cell }) => {
+          const line = row.original;
+          const shippedPacks = line.shippedNumberOfPacks;
+          const showWarning =
+            shippedPacks != null && line.numberOfPacks !== shippedPacks;
+          return (
+            <Box>
+              <NumberInputCell
+                cell={cell}
+                updateFn={(value: number) => {
+                  const { packSize } = row.original;
+                  if (packSize !== undefined) {
+                    const packToUnits = packSize * value;
+                    setPackRoundingMessage?.('');
+                    updateDraftLine({
+                      receivedNumberOfUnits: packToUnits,
+                      id: row.original.id,
+                      numberOfPacks: value,
+                    });
+                  }
+                }}
+                disabled={isDisabled}
+                min={0}
+              />
+              {showWarning && (
+                <Typography
+                  variant="caption"
+                  color="warning.main"
+                  sx={{ mt: 0.5, display: 'block' }}
+                >
+                  {`${t('label.shipped-number-of-packs')}: ${shippedPacks}`}
+                </Typography>
+              )}
+            </Box>
+          );
+        },
       },
       {
         accessorKey: 'receivedNumberOfUnits',
@@ -667,6 +706,7 @@ export const InboundLineEditCards = ({
     hasVvmStatusesEnabled,
     isDisabled,
     isExternalSupplier,
+    isManualShipment,
     item?.isVaccine,
     pluralisedUnitName,
     poOutstandingPacks,
