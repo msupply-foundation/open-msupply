@@ -35,6 +35,8 @@ pub struct UpdateInput {
     pub other_party_id: Option<String>,
     pub expected_delivery_date: Option<NaiveDate>,
     pub destination_customer_id: Option<NullableUpdateInput<String>>,
+    #[graphql(deprecation = "Since 2.17.0. Use destination_customer_id")]
+    pub original_customer_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -121,6 +123,7 @@ impl UpdateInput {
             other_party_id,
             expected_delivery_date,
             destination_customer_id,
+            original_customer_id,
         } = self;
 
         ServiceInput {
@@ -133,7 +136,9 @@ impl UpdateInput {
             status: status.map(|status| status.to_domain()),
             other_party_id,
             expected_delivery_date,
-            destination_customer_id: destination_customer_id.map(|c| NullableUpdate { value: c.value }),
+            destination_customer_id: destination_customer_id
+                .or(original_customer_id)
+                .map(|c| NullableUpdate { value: c.value }),
         }
     }
 }
