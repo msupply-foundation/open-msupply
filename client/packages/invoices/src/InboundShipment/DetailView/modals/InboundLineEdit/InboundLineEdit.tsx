@@ -267,7 +267,7 @@ export const InboundLineEdit = ({
   const content = (
     <>
       {simplifiedTabletView ? (
-        cards
+        <Box sx={{ marginTop: 2 }}>{cards}</Box>
       ) : (
         <TableContainer
           sx={{

@@ -22,6 +22,7 @@ interface CardListItemProps<T extends MRT_RowData> {
   row: MRT_Row<T>;
   cardRef?: React.Ref<HTMLDivElement>;
   groupIcons?: Record<string, React.ReactNode>;
+  labelsAbove?: boolean;
   onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
@@ -51,6 +52,7 @@ export const CardListItem = <T extends MRT_RowData>({
   row,
   cardRef,
   groupIcons,
+  labelsAbove,
   onClick,
 }: CardListItemProps<T>) => {
   const isLandscape = useIsLandscapeTablet();
@@ -154,28 +156,43 @@ export const CardListItem = <T extends MRT_RowData>({
         )}
         {/* Data fields */}
         {!groupIcons
-          ? dataCells.map(cell => (
-              <Box
-                key={cell.id}
-                display="flex"
-                justifyContent="space-between"
-                gap={1}
-                alignItems="flex-start"
-              >
-                <Typography color="text.secondary">
-                  {flexRender(cell.column.columnDef.header, cell.getContext())}
-                </Typography>
+          ? labelsAbove
+            ? <CardListFieldGroup>
+                {dataCells.map(cell => (
+                  <CardListField
+                    key={cell.id}
+                    label={flexRender(
+                      cell.column.columnDef.header,
+                      cell.getContext()
+                    )}
+                    span={colDef(cell).cardSpan}
+                  >
+                    {getCellContent(cell)}
+                  </CardListField>
+                ))}
+              </CardListFieldGroup>
+            : dataCells.map(cell => (
                 <Box
-                  sx={{
-                    textAlign: 'end',
-                    maxWidth: '65%',
-                    wordBreak: 'break-word',
-                  }}
+                  key={cell.id}
+                  display="flex"
+                  justifyContent="space-between"
+                  gap={1}
+                  alignItems="flex-start"
                 >
-                  {getCellContent(cell)}
+                  <Typography color="text.secondary">
+                    {flexRender(cell.column.columnDef.header, cell.getContext())}
+                  </Typography>
+                  <Box
+                    sx={{
+                      textAlign: 'end',
+                      maxWidth: '65%',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {getCellContent(cell)}
+                  </Box>
                 </Box>
-              </Box>
-            ))
+              ))
           : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
               <React.Fragment key={groupName ?? `ungrouped-${groupIndex}`}>
                 {groupIndex > 0 && <Divider />}
