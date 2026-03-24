@@ -123,6 +123,24 @@ export const InboundLineEditCards = ({
   );
   const pluralisedUnitName = getPlural(unitName, 2);
 
+  // Track which line to auto-focus packs received on:
+  // - initial mount / item change → first line
+  // - line added / duplicated → the new line
+  const prevLineIdsRef = useRef<Set<string> | null>(null);
+  const autoFocusLineIdRef = useRef<string | null>(null);
+  const currentLineIds = new Set(lines.map(l => l.id));
+  if (prevLineIdsRef.current === null) {
+    // Initial mount: focus first line
+    autoFocusLineIdRef.current = lines[0]?.id ?? null;
+  } else {
+    for (const id of currentLineIds) {
+      if (!prevLineIdsRef.current.has(id)) {
+        autoFocusLineIdRef.current = id;
+      }
+    }
+  }
+  prevLineIdsRef.current = currentLineIds;
+
   const columns = useMemo(() => {
     const cols: ColumnDef<DraftInboundLine>[] = [
       // --- Stock line details fields ---
@@ -148,6 +166,7 @@ export const InboundLineEditCards = ({
             <Box onBlur={() => setHasBlurred(true)}>
               <NumberInputCell
                 cell={cell}
+                autoFocus={row.original.id === autoFocusLineIdRef.current}
                 updateFn={(value: number) => {
                   const { packSize } = row.original;
                   if (packSize !== undefined) {
