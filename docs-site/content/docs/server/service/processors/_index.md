@@ -13,7 +13,7 @@ Diagram below describes a single processor. The concept of single processor is e
 
 From [TMF internal google doc](https://app.diagrams.net/#G1KHIEK-PinYwflsAH4WP9fNvKL8U2POzX):
 
-![omSupply transfer workflow](./doc/omSupply_processor.png)
+![omSupply transfer workflow](./images/omSupply_processor.png)
 
 ## Motivation
 

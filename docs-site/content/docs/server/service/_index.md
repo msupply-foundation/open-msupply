@@ -7,4 +7,4 @@ template = "docs/section.html"
 
 # Open mSupply Business Logic Layer
 
-[Stock movements](./doc/stock_movement.md)
+[Stock movements](./images/stock_movement.md)

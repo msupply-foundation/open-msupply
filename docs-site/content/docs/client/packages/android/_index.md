@@ -29,7 +29,7 @@ Download and install Android studio (Ladybug at time of writing 15/11/24) (Instr
 
 Install NDK (26.1.10909125 at the time of writing on the 8/4/24) (Instructions [here](https://developer.android.com/studio/projects/install-ndk#specific-version))
 
-![omSupply Android NDK](./doc/omSupply_android_ndk.png)
+![omSupply Android NDK](./images/omSupply_android_ndk.png)
 
 ### 3. Add the required build targets to Rust
 
@@ -84,7 +84,7 @@ You should see a dropdown to select 'Default Gradle JDK'.
 That dropdown should have an option to use a JDK called '21.0.9-temurin' - select that one.
 Here's a screenshot of what that should look like (the sidebar shows you what you should click on to get to this part of the settings):
 
-![choosing OMS Android Gradle JDK](./doc/choosing_OMS_Android_Gradle_JDK.png)
+![choosing OMS Android Gradle JDK](./images/choosing_OMS_Android_Gradle_JDK.png)
 
 You may also see prompts in Android Studio to sync - keep an eye out for these and run the sync as needed.
 

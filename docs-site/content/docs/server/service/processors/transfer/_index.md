@@ -19,7 +19,7 @@ The origin of the term `transfer` arises from the need to `transfer` these recor
 
 From [TMF internal google doc](https://docs.google.com/presentation/d/1eEe0uBGvkXbYnKc2oLO2U0qRwFv4l0ws4QwFZa6e74s/edit#slide=id.p):
 
-![omSupply transfer workflow](./doc/omSupply_transfer_workflow.png)
+![omSupply transfer workflow](./images/omSupply_transfer_workflow.png)
 
 The big difference between mSupply transfer requirements and omSupply:
 * The inbound shipment part of the transfer is generated before the outbound shipment is shipped (before the inbound shipment is editable)
@@ -58,7 +58,7 @@ Having referential constraints in the database means that at access time we don'
 
 From [TMF internal docs](https://app.diagrams.net/#G1o_xRQAhjVsnqhxhJEu9dY6AZ_lJfG9co)
 
-![omSupply transfer processors](./doc/omSupply_transfer_processors.png)
+![omSupply transfer processors](./images/omSupply_transfer_processors.png)
 
 ## Integration tests
 

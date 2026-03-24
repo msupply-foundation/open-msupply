@@ -143,7 +143,7 @@ AND
 
 ## Diagrams
 
-![omSupply Remote Site Sync](./doc/omSupply_sync_remote.drawio.svg)
+![omSupply Remote Site Sync](./images/omSupply_sync_remote.drawio.svg)
 
 ## Central Sync API
 

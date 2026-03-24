@@ -49,7 +49,7 @@ When barcode is created from input sequence, we only keep inputs starting with D
 
 In more complex barcodes, as per image below, special character separates lot and [serial number](https://www.databar-barcode.info/application-identifiers/), for Zebra this special character seems to be `Numpad0` + 'alt' + 'iskeypad' and for ZKTeco it was 'F8', this is replaced with charcode `29` (when scanned with USB serial mode this appears as charcode 29):
 
-![complex barcode](./docs/complex_barcode.png)
+![complex barcode](./images/complex_barcode.png)
 
 It is possible for actual keyboard input to be perceived as scanner input or for processor and capture functionality to cause glitches, this is minimised by:
 

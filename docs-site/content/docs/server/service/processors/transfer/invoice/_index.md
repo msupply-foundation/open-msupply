@@ -11,11 +11,11 @@ As per general description in [transfer processors](../README.md) and these diag
 
 From [TMF internal google doc](https://docs.google.com/presentation/d/1eEe0uBGvkXbYnKc2oLO2U0qRwFv4l0ws4QwFZa6e74s/edit#slide=id.p):
 
-![omSupply invoice transfer processors](./doc/omSupply_shipment_transfer_workflow.png)
+![omSupply invoice transfer processors](./images/omSupply_shipment_transfer_workflow.png)
 
 From [TMF internal docs](https://app.diagrams.net/#G1o_xRQAhjVsnqhxhJEu9dY6AZ_lJfG9co)
 
-![omSupply invoice transfer processors](./doc/omSupply_shipment_transfer_processors.png)
+![omSupply invoice transfer processors](./images/omSupply_shipment_transfer_processors.png)
 
 Note that only Open mSupply -> Open mSupply transfers have a `linked_invoice_id` on the Outbound invoice. When transferring to/from an mSupply Desktop site, the Inbound invoice will have a `linked_invoice_id` (referring to the Outbound half), but the Outbound won't be linked back with its Inbound invoice.
 
@@ -35,7 +35,7 @@ You may want to refer to [requisition transfer docs](../requisition/README.md#sa
 
 Returns are invoices, with outbounds and inbounds, just the same as shipments. As such, they are transferred by the same processor. The flow is shown below:
 
-![omSupply return transfer workflow](./doc/omSupply_return_transfer.drawio.png)
+![omSupply return transfer workflow](./images/omSupply_return_transfer.drawio.png)
 
 ### Related documents
 
