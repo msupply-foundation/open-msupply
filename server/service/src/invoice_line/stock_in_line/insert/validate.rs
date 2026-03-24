@@ -10,7 +10,7 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
-use repository::{InvoiceRow, ItemRow, StorageConnection};
+use repository::{InvoiceRow, ItemRow, PurchaseOrderLineRowRepository, StorageConnection};
 
 use super::{InsertStockInLine, InsertStockInLineError};
 
@@ -101,13 +101,9 @@ pub fn validate(
         ) {
             Ok(_) => {}
             Err(e) => match e {
-                OtherPartyErrors::OtherPartyDoesNotExist => {
-                    return Err(ManufacturerDoesNotExist)
-                }
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
                 OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
-                OtherPartyErrors::TypeMismatched => {
-                    return Err(ManufacturerIsNotAManufacturer)
-                }
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
                     return Err(DatabaseError(repository_error))
                 }
@@ -117,6 +113,20 @@ pub fn validate(
 
     if !check_program_visible_to_store(connection, store_id, &input.program_id)? {
         return Err(ProgramNotVisible);
+    }
+
+    // External inbound shipments (with purchase_order_id) require a purchase_order_line_id
+    if invoice.purchase_order_id.is_some() {
+        match &input.purchase_order_line_id {
+            None => return Err(PurchaseOrderLineIdRequired),
+            Some(pol_id) => {
+                // REVIEW: is it ok to do a repository call in the validation step?
+                let pol = PurchaseOrderLineRowRepository::new(connection).find_one_by_id(pol_id)?;
+                if pol.is_none() {
+                    return Err(PurchaseOrderLineDoesNotExist);
+                }
+            }
+        }
     }
 
     // TODO: LocationDoesNotBelongToCurrentStore

@@ -41,6 +41,7 @@ pub struct InsertInput {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
+    pub purchase_order_line_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -114,6 +115,7 @@ impl InsertInput {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            purchase_order_line_id,
         } = self;
 
         ServiceInput {
@@ -143,6 +145,7 @@ impl InsertInput {
             volume_per_pack,
             shipped_pack_size,
             note,
+            purchase_order_line_id,
             // Default
             stock_line_id: None,
             barcode: None,
@@ -196,6 +199,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramNotVisible
+        | ServiceError::PurchaseOrderLineIdRequired
+        | ServiceError::PurchaseOrderLineDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)

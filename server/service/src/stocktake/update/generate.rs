@@ -217,6 +217,7 @@ fn generate_stock_in_out_or_update(
             tax_percentage: None,
             shipped_number_of_packs: None,
             shipped_pack_size: None,
+            purchase_order_line_id: None,
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
@@ -420,6 +421,7 @@ fn generate_new_stock_line(
         tax_percentage: None,
         shipped_number_of_packs: None,
         shipped_pack_size: None,
+        purchase_order_line_id: None,
     });
 
     // If new stock line has a location, create location movement

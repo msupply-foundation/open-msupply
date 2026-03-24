@@ -1420,6 +1420,8 @@
   "label.purchase-order-confirmed": "PO confirmed",
   "label.purchase-order-does-not-exist": "Purchase order does not exist",
   "label.purchase-order-line-not-found": "Purchase order line not found",
+  "label.purchase-order-line": "Purchase Order Line",
+  "label.purchase-order-line-number": "PO Line #",
   "label.purchase-order-lines": "Purchase Order Lines",
   "label.purchase-order-number": "PO Number",
   "label.purchase-order-reference": "PO reference",
