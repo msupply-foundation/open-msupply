@@ -127,54 +127,60 @@ export const InboundLineEditCards = ({
     const cols: ColumnDef<DraftInboundLine>[] = [
       // --- Stock line details fields ---
       {
-        id: 'outstandingPacks',
-        header: t('label.outstanding-packs'),
-        size: 120,
-        columnGroup: 'stockLineDetails',
-        includeColumn: !!purchaseOrderId,
-        accessorFn: () => poOutstandingPacks ?? 0,
-        Cell: ({ cell }) => (
-          <NumberInputCell cell={cell} updateFn={() => {}} disabled />
-        ),
-        defaultHideOnMobile: true,
-      },
-      {
-        accessorKey: 'shippedPackSize',
-        header: t('label.shipped-pack-size'),
-        size: 120,
-        columnGroup: 'stockLineDetails',
-        includeColumn: isManualShipment,
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              updateDraftLine({ shippedPackSize: value, id: row.original.id });
-            }}
-            disabled={isDisabled}
-            min={1}
-          />
-        ),
-        defaultHideOnMobile: true,
-      },
-      {
-        accessorKey: 'shippedNumberOfPacks',
-        header: t('label.shipped-number-of-packs'),
+        accessorKey: 'numberOfPacks',
+        header: t('label.packs-received'),
         size: 100,
         columnGroup: 'stockLineDetails',
-        includeColumn: isManualShipment,
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              updateDraftLine({
-                shippedNumberOfPacks: value,
-                id: row.original.id,
-              });
-            }}
-            disabled={isDisabled}
-            min={0}
-          />
-        ),
+        cardSummary: row => {
+          const units = row.numberOfPacks * row.packSize;
+          return `${t('label.received')} ${formatRef.current(row.numberOfPacks)} ${getPlural(t('label.pack'), row.numberOfPacks)} (${formatRef.current(units)} ${pluralisedUnitName.toLowerCase()})`;
+        },
+        cardSummaryOrder: 1,
+        Cell: ({ row, cell }) => {
+          const line = row.original;
+          const shippedPacks = line.shippedNumberOfPacks;
+          const showWarning =
+            shippedPacks != null && line.numberOfPacks !== shippedPacks;
+          return (
+            <Box>
+              <NumberInputCell
+                cell={cell}
+                updateFn={(value: number) => {
+                  const { packSize } = row.original;
+                  if (packSize !== undefined) {
+                    const packToUnits = packSize * value;
+                    setPackRoundingMessage?.('');
+                    updateDraftLine({
+                      receivedNumberOfUnits: packToUnits,
+                      id: row.original.id,
+                      numberOfPacks: value,
+                    });
+                  }
+                }}
+                disabled={isDisabled}
+                min={0}
+              />
+              {showWarning && (
+                <Typography
+                  variant="caption"
+                  color="warning.main"
+                  sx={{ mt: 0.5, display: 'block' }}
+                >
+                  {`${t('label.shipped-number-of-packs')}: ${shippedPacks}`}
+                </Typography>
+              )}
+              {!!purchaseOrderId && poOutstandingPacks != null && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 0.5, display: 'block' }}
+                >
+                  {`${t('label.outstanding-packs')}: ${poOutstandingPacks}`}
+                </Typography>
+              )}
+            </Box>
+          );
+        },
       },
       {
         accessorKey: 'packSize',
@@ -228,51 +234,42 @@ export const InboundLineEditCards = ({
         defaultHideOnMobile: true,
       },
       {
-        accessorKey: 'numberOfPacks',
-        header: t('label.packs-received'),
+        accessorKey: 'shippedNumberOfPacks',
+        header: t('label.shipped-number-of-packs'),
         size: 100,
         columnGroup: 'stockLineDetails',
-        cardSummary: row => {
-          const units = row.numberOfPacks * row.packSize;
-          return `${t('label.received')} ${formatRef.current(row.numberOfPacks)} ${getPlural(t('label.pack'), row.numberOfPacks)} (${formatRef.current(units)} ${pluralisedUnitName.toLowerCase()})`;
-        },
-        cardSummaryOrder: 1,
-        Cell: ({ row, cell }) => {
-          const line = row.original;
-          const shippedPacks = line.shippedNumberOfPacks;
-          const showWarning =
-            shippedPacks != null && line.numberOfPacks !== shippedPacks;
-          return (
-            <Box>
-              <NumberInputCell
-                cell={cell}
-                updateFn={(value: number) => {
-                  const { packSize } = row.original;
-                  if (packSize !== undefined) {
-                    const packToUnits = packSize * value;
-                    setPackRoundingMessage?.('');
-                    updateDraftLine({
-                      receivedNumberOfUnits: packToUnits,
-                      id: row.original.id,
-                      numberOfPacks: value,
-                    });
-                  }
-                }}
-                disabled={isDisabled}
-                min={0}
-              />
-              {showWarning && (
-                <Typography
-                  variant="caption"
-                  color="warning.main"
-                  sx={{ mt: 0.5, display: 'block' }}
-                >
-                  {`${t('label.shipped-number-of-packs')}: ${shippedPacks}`}
-                </Typography>
-              )}
-            </Box>
-          );
-        },
+        includeColumn: isManualShipment,
+        Cell: ({ row, cell }) => (
+          <NumberInputCell
+            cell={cell}
+            updateFn={(value: number) => {
+              updateDraftLine({
+                shippedNumberOfPacks: value,
+                id: row.original.id,
+              });
+            }}
+            disabled={isDisabled}
+            min={0}
+          />
+        ),
+      },
+      {
+        accessorKey: 'shippedPackSize',
+        header: t('label.shipped-pack-size'),
+        size: 120,
+        columnGroup: 'stockLineDetails',
+        includeColumn: isManualShipment,
+        Cell: ({ row, cell }) => (
+          <NumberInputCell
+            cell={cell}
+            updateFn={(value: number) => {
+              updateDraftLine({ shippedPackSize: value, id: row.original.id });
+            }}
+            disabled={isDisabled}
+            min={1}
+          />
+        ),
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'receivedNumberOfUnits',
