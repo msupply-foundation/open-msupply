@@ -1,17 +1,4 @@
-## Cold chain
+# Cold chain
 
-### Overview
-
-Cold chain Domain
-
-### Intentions
-
-The intention is that this package is responsible for cold chain domain features:
-
-- Temperature logs
-- Monitoring
-- CCE
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://docs.openmsupply.foundation/docs/client/packages/coldchain/
+- **Source**: [docs-site/content/docs/client/packages/coldchain/_index.md](/docs-site/content/docs/client/packages/coldchain/_index.md)

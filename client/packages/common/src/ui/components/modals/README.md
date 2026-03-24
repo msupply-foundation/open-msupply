@@ -1,13 +1,4 @@
-## common/ui/components/modals
+# common/ui/components/modals
 
-### Overview
-
-Modal components.
-
-### Intentions
-
-Containing modal components which act as containers for more specific components as children. Components manage rendering children
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://docs.openmsupply.foundation/docs/client/packages/common/ui/components/modals/
+- **Source**: [docs-site/content/docs/client/packages/common/ui/components/modals/_index.md](/docs-site/content/docs/client/packages/common/ui/components/modals/_index.md)

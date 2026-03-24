@@ -1,8 +1,4 @@
-## programs
+# programs
 
-### Intentions
-
-The intention is that this package is responsible for shared system domain features:
-
-- JSONForm controls (common + programs)
-- Programs related views
+- **Docs site**: https://docs.openmsupply.foundation/docs/client/packages/programs/
+- **Source**: [docs-site/content/docs/client/packages/programs/_index.md](/docs-site/content/docs/client/packages/programs/_index.md)

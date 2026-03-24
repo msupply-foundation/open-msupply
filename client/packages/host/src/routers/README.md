@@ -1,13 +1,4 @@
-## host/routes
+# host/routes
 
-### Overview
-
-Routers.
-
-### Intentions
-
-Each top level navigation element has it's own router, lazily loading required pages from the required packages.
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://docs.openmsupply.foundation/docs/client/packages/host/routers/
+- **Source**: [docs-site/content/docs/client/packages/host/routers/_index.md](/docs-site/content/docs/client/packages/host/routers/_index.md)

@@ -1,17 +1,4 @@
-## inventory
+# inventory
 
-### Overview
-
-Invoices Domain
-
-### Intentions
-
-The intention is that this package is responsible for invoice domain features:
-
-- Inbound shipments
-- Outbound shipments
-- Prescriptions
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://docs.openmsupply.foundation/docs/client/packages/invoices/
+- **Source**: [docs-site/content/docs/client/packages/invoices/_index.md](/docs-site/content/docs/client/packages/invoices/_index.md)

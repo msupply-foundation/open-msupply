@@ -1,13 +1,4 @@
-## Reports
+# Reports
 
-### Overview
-
-Reports Domain
-
-### Intentions
-
-The intention is that this package is responsible for report domain features:
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://docs.openmsupply.foundation/docs/client/packages/reports/
+- **Source**: [docs-site/content/docs/client/packages/reports/_index.md](/docs-site/content/docs/client/packages/reports/_index.md)
