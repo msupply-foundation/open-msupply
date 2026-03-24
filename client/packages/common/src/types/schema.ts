@@ -7884,8 +7884,8 @@ export type QueriesInvoicesArgs = {
 };
 
 export type QueriesItemCountsArgs = {
-  highStockThreshold?: InputMaybe<Scalars['Int']['input']>;
-  lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
+  highStockThreshold?: InputMaybe<Scalars['Float']['input']>;
+  lowStockThreshold?: InputMaybe<Scalars['Float']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -11231,6 +11231,7 @@ export enum UserPermission {
   InboundShipmentExternalAuthorise = 'INBOUND_SHIPMENT_EXTERNAL_AUTHORISE',
   InboundShipmentExternalMutate = 'INBOUND_SHIPMENT_EXTERNAL_MUTATE',
   InboundShipmentExternalQuery = 'INBOUND_SHIPMENT_EXTERNAL_QUERY',
+  InboundShipmentExternalVerify = 'INBOUND_SHIPMENT_EXTERNAL_VERIFY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   InboundShipmentVerify = 'INBOUND_SHIPMENT_VERIFY',
