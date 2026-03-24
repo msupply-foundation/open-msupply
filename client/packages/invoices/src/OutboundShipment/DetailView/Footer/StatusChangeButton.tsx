@@ -74,14 +74,18 @@ const useStatusChangeButton = () => {
         id: data?.id ?? '',
         status: selectedOption.value,
       });
-      const hasEstimatedDeliveryError = responses?.some(
-        res =>
-          res?.__typename === 'UpdateOutboundShipmentError' &&
-          res.error.__typename ===
-            'CannotHaveEstimatedDeliveryDateBeforeShippedDate'
+      const updateError = responses?.find(
+        res => res?.__typename === 'UpdateOutboundShipmentError'
       );
-      if (hasEstimatedDeliveryError) {
-        info(t('error.estimated-delivery-before-shipped-date'))();
+      if (updateError?.__typename === 'UpdateOutboundShipmentError') {
+        switch (updateError.error.__typename) {
+          case 'CannotHaveEstimatedDeliveryDateBeforeShippedDate':
+            info(t('error.estimated-delivery-before-shipped-date'))();
+            break;
+          default:
+            error(t('messages.error-saving-shipment'))();
+            break;
+        }
       } else {
         success(t('messages.shipment-saved'))();
       }
