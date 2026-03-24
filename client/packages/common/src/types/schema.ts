@@ -3378,6 +3378,7 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
+  purchaseOrderLineId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -4234,7 +4235,10 @@ export type InvoiceConnector = {
 
 export type InvoiceCounts = {
   __typename: 'InvoiceCounts';
+  /** Internal inbound shipments only (no purchase order) */
   inbound: InboundInvoiceCounts;
+  /** External inbound shipments only (linked to a purchase order) */
+  inboundExternal: InboundInvoiceCounts;
   outbound: OutboundInvoiceCounts;
 };
 
@@ -4575,6 +4579,15 @@ export type InvoiceStatusOptionsInput = {
   storeId: Scalars['String']['input'];
   value: Array<InvoiceNodeStatus>;
 };
+
+export enum InvoiceTypeInput {
+  CustomerReturn = 'CUSTOMER_RETURN',
+  InboundShipment = 'INBOUND_SHIPMENT',
+  InboundShipmentExternal = 'INBOUND_SHIPMENT_EXTERNAL',
+  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Prescription = 'PRESCRIPTION',
+  SupplierReturn = 'SUPPLIER_RETURN',
+}
 
 export type InvoicesResponse = InvoiceConnector;
 
@@ -5244,6 +5257,7 @@ export type Mutations = {
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
   allocateProgramNumber: AllocateProgramNumberResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
+  batchInboundShipmentExternal: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
   batchPrescription: BatchPrescriptionResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
@@ -5261,6 +5275,9 @@ export type Mutations = {
   deleteAsset: DeleteAssetResponse;
   deleteCustomerReturn: DeleteCustomerReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
+  deleteInboundShipmentExternal: DeleteInboundShipmentResponse;
+  deleteInboundShipmentExternalLine: DeleteInboundShipmentLineResponse;
+  deleteInboundShipmentExternalServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteLocation: DeleteLocationResponse;
@@ -5293,6 +5310,9 @@ export type Mutations = {
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
+  insertInboundShipmentExternal: InsertInboundShipmentResponse;
+  insertInboundShipmentExternalLine: InsertInboundShipmentLineResponse;
+  insertInboundShipmentExternalServiceLine: InsertInboundShipmentServiceLineResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
   insertInsurance: InsertInsuranceResponse;
@@ -5349,6 +5369,9 @@ export type Mutations = {
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateEncounter: UpdateEncounterResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
+  updateInboundShipmentExternal: UpdateInboundShipmentResponse;
+  updateInboundShipmentExternalLine: UpdateInboundShipmentLineResponse;
+  updateInboundShipmentExternalServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateIndicatorValue: UpdateIndicatorValueResponse;
@@ -5433,6 +5456,11 @@ export type MutationsBatchInboundShipmentArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsBatchInboundShipmentExternalArgs = {
+  input: BatchInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsBatchOutboundShipmentArgs = {
   input: BatchOutboundShipmentInput;
   storeId: Scalars['String']['input'];
@@ -5480,6 +5508,21 @@ export type MutationsDeleteCustomerReturnArgs = {
 
 export type MutationsDeleteInboundShipmentArgs = {
   input: DeleteInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteInboundShipmentExternalArgs = {
+  input: DeleteInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteInboundShipmentExternalLineArgs = {
+  input: DeleteInboundShipmentLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteInboundShipmentExternalServiceLineArgs = {
+  input: DeleteInboundShipmentServiceLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5637,6 +5680,21 @@ export type MutationsInsertFormSchemaArgs = {
 
 export type MutationsInsertInboundShipmentArgs = {
   input: InsertInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertInboundShipmentExternalArgs = {
+  input: InsertInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertInboundShipmentExternalLineArgs = {
+  input: InsertInboundShipmentLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertInboundShipmentExternalServiceLineArgs = {
+  input: InsertInboundShipmentServiceLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5859,6 +5917,21 @@ export type MutationsUpdateEncounterArgs = {
 
 export type MutationsUpdateInboundShipmentArgs = {
   input: UpdateInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateInboundShipmentExternalArgs = {
+  input: UpdateInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateInboundShipmentExternalLineArgs = {
+  input: UpdateInboundShipmentLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateInboundShipmentExternalServiceLineArgs = {
+  input: UpdateInboundShipmentServiceLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -7353,6 +7426,8 @@ export type Queries = {
   hasCustomerProgramRequisitionSettings: Scalars['Boolean']['output'];
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
+  inboundShipmentCounts: InboundInvoiceCounts;
+  inboundShipmentExternalCounts: InboundInvoiceCounts;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insurancePolicies: InsurancesResponse;
@@ -7362,6 +7437,7 @@ export type Queries = {
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
+  /** @deprecated Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead */
   invoiceCounts: InvoiceCounts;
   invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
@@ -7394,6 +7470,7 @@ export type Queries = {
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
+  outboundShipmentCounts: OutboundInvoiceCounts;
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
@@ -7457,6 +7534,7 @@ export type Queries = {
   temperatureLogs: TemperatureLogsResponse;
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
+  unitsOrderedInOtherPurchaseOrders: Scalars['Float']['output'];
   vaccination?: Maybe<VaccinationNode>;
   vaccinationCard: VaccinationCardResponse;
   vaccineCourse: VaccineCourseResponse;
@@ -7741,6 +7819,16 @@ export type QueriesHistoricalStockLinesArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesInboundShipmentCountsArgs = {
+  storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type QueriesInboundShipmentExternalCountsArgs = {
+  storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type QueriesInsurancePoliciesArgs = {
   nameId: Scalars['String']['input'];
   sort?: InputMaybe<Array<InsuranceSortInput>>;
@@ -7765,12 +7853,13 @@ export type QueriesInventoryAdjustmentReasonsArgs = {
 export type QueriesInvoiceArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+  type?: InputMaybe<InvoiceTypeInput>;
 };
 
 export type QueriesInvoiceByNumberArgs = {
   invoiceNumber: Scalars['Int']['input'];
   storeId: Scalars['String']['input'];
-  type: InvoiceNodeType;
+  type: InvoiceTypeInput;
 };
 
 export type QueriesInvoiceCountsArgs = {
@@ -7791,6 +7880,7 @@ export type QueriesInvoicesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<InvoiceSortInput>>;
   storeId: Scalars['String']['input'];
+  type?: InputMaybe<InvoiceTypeInput>;
 };
 
 export type QueriesItemCountsArgs = {
@@ -7865,6 +7955,11 @@ export type QueriesNamesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<NameSortInput>>;
   storeId: Scalars['String']['input'];
+};
+
+export type QueriesOutboundShipmentCountsArgs = {
+  storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesPatientArgs = {
@@ -8144,6 +8239,12 @@ export type QueriesTemperatureLogsArgs = {
 
 export type QueriesTemperatureNotificationsArgs = {
   page?: InputMaybe<PaginationInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesUnitsOrderedInOtherPurchaseOrdersArgs = {
+  excludePurchaseOrderId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 

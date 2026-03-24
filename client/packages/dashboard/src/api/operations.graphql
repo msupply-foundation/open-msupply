@@ -20,23 +20,29 @@ query itemCounts(
   }
 }
 
-query inboundCounts($storeId: String!) {
-  invoiceCounts(storeId: $storeId) {
-    inbound {
-      created {
-        today
-        thisWeek
-      }
-      notDelivered
+query inboundInternalCounts($storeId: String!) {
+  inboundShipmentCounts(storeId: $storeId) {
+    created {
+      today
+      thisWeek
     }
+    notDelivered
+  }
+}
+
+query inboundExternalCounts($storeId: String!) {
+  inboundShipmentExternalCounts(storeId: $storeId) {
+    created {
+      today
+      thisWeek
+    }
+    notDelivered
   }
 }
 
 query outboundCounts($storeId: String!) {
-  invoiceCounts(storeId: $storeId) {
-    outbound {
-      notShipped
-    }
+  outboundShipmentCounts(storeId: $storeId) {
+    notShipped
   }
 }
 
