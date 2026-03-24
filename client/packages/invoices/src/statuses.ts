@@ -238,6 +238,7 @@ const STATUS_DATETIME_MAP: Partial<
   [InvoiceNodeStatus.Delivered]: 'deliveredDatetime',
   [InvoiceNodeStatus.Received]: 'receivedDatetime',
   [InvoiceNodeStatus.Verified]: 'verifiedDatetime',
+  [InvoiceNodeStatus.Cancelled]: 'cancelledDatetime',
 };
 
 export function createStatusLog(
