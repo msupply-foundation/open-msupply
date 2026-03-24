@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Divider, Typography } from '@mui/material';
 import {
   flexRender,
   MRT_Cell,
@@ -113,6 +113,7 @@ export const CardListItem = <T extends MRT_RowData>({
         overflow: 'visible',
         position: 'relative',
         cursor: onClick ? 'pointer' : undefined,
+        borderRadius: 4,
       }}
     >
       <CardContent
@@ -176,23 +177,25 @@ export const CardListItem = <T extends MRT_RowData>({
               </Box>
             ))
           : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
-              <CardListFieldGroup
-                key={groupName ?? `ungrouped-${groupIndex}`}
-                groupIcon={groupName ? groupIcons?.[groupName] : undefined}
-              >
-                {groupCells.map(cell => (
-                  <CardListField
-                    key={cell.id}
-                    label={flexRender(
-                      cell.column.columnDef.header,
-                      cell.getContext()
-                    )}
-                    span={colDef(cell).cardSpan}
-                  >
-                    {getCellContent(cell)}
-                  </CardListField>
-                ))}
-              </CardListFieldGroup>
+              <React.Fragment key={groupName ?? `ungrouped-${groupIndex}`}>
+                {groupIndex > 0 && <Divider />}
+                <CardListFieldGroup
+                  groupIcon={groupName ? groupIcons?.[groupName] : undefined}
+                >
+                  {groupCells.map(cell => (
+                    <CardListField
+                      key={cell.id}
+                      label={flexRender(
+                        cell.column.columnDef.header,
+                        cell.getContext()
+                      )}
+                      span={colDef(cell).cardSpan}
+                    >
+                      {getCellContent(cell)}
+                    </CardListField>
+                  ))}
+                </CardListFieldGroup>
+              </React.Fragment>
             ))}
         {/* Action buttons at bottom-right */}
         {actionCells.length > 0 && (
