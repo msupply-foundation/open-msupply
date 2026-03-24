@@ -332,7 +332,7 @@ impl InvoiceLineNode {
     ) -> Result<Option<PurchaseOrderLineNode>> {
         let loader = ctx.get_loader::<DataLoader<PurchaseOrderLineByIdLoader>>();
 
-        let Some(purchase_order_line_id) = &self.stats().purchase_order_line_id else {
+        let Some(purchase_order_line_id) = &self.row().purchase_order_line_id else {
             return Ok(None);
         };
 
@@ -455,10 +455,7 @@ mod test {
                             id: "line_item_id".to_string(),
                             ..Default::default()
                         },
-                        invoice_line_stats_row: InvoiceLineStatsRow {
-                            invoice_line_id: "line_id".to_string(),
-                            purchase_order_line_id: None,
-                        },
+                        invoice_line_stats_row: InvoiceLineStatsRow::default(),
                         location_row_option: Some(LocationRow {
                             name: "line_location_name".to_string(),
                             ..Default::default()

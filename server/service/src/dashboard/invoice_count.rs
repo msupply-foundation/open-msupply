@@ -60,6 +60,43 @@ pub trait InvoiceCountServiceTrait: Send + Sync {
     ) -> Result<i64, RepositoryError> {
         InvoiceCountService {}.inbound_invoices_not_delivered_count(ctx, store_id)
     }
+
+    /// Like invoices_count but filters by purchase_order_id to separate internal/external
+    fn invoices_count_by_external(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        invoice_type: &InvoiceType,
+        invoice_status: &InvoiceStatus,
+        range: &CountTimeRange,
+        now: &DateTime<Utc>,
+        timezone_offset: &FixedOffset,
+        is_external: bool,
+    ) -> Result<i64, InvoiceCountError> {
+        InvoiceCountService {}.invoices_count_by_external(
+            ctx,
+            store_id,
+            invoice_type,
+            invoice_status,
+            range,
+            now,
+            timezone_offset,
+            is_external,
+        )
+    }
+
+    fn inbound_invoices_not_delivered_count_by_external(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        is_external: bool,
+    ) -> Result<i64, RepositoryError> {
+        InvoiceCountService {}.inbound_invoices_not_delivered_count_by_external(
+            ctx,
+            store_id,
+            is_external,
+        )
+    }
 }
 
 impl From<RepositoryError> for InvoiceCountError {
@@ -102,6 +139,26 @@ fn invoices_count(
     earliest: Option<NaiveDateTime>,
     store_id: &str,
 ) -> Result<i64, RepositoryError> {
+    invoices_count_filtered(
+        repo,
+        invoice_type,
+        invoice_status,
+        oldest,
+        earliest,
+        store_id,
+        None,
+    )
+}
+
+fn invoices_count_filtered(
+    repo: &InvoiceRepository,
+    invoice_type: &InvoiceType,
+    invoice_status: &InvoiceStatus,
+    oldest: NaiveDateTime,
+    earliest: Option<NaiveDateTime>,
+    store_id: &str,
+    purchase_order_id_filter: Option<EqualFilter<String>>,
+) -> Result<i64, RepositoryError> {
     let mut datetime_filter = DatetimeFilter::after_or_equal_to(oldest);
 
     if let Some(earliest) = earliest {
@@ -110,6 +167,11 @@ fn invoices_count(
     let mut invoice_filter = InvoiceFilter::new()
         .r#type(invoice_type.equal_to())
         .store_id(EqualFilter::equal_to(store_id.to_string()));
+
+    if let Some(po_filter) = purchase_order_id_filter {
+        invoice_filter = invoice_filter.purchase_order_id(po_filter);
+    }
+
     match invoice_status {
         InvoiceStatus::New => invoice_filter = invoice_filter.created_datetime(datetime_filter),
         InvoiceStatus::Allocated => {
@@ -134,6 +196,16 @@ fn invoices_count(
         }
     }
     repo.count(Some(invoice_filter))
+}
+
+fn po_filter_for_external(is_external: bool) -> EqualFilter<String> {
+    if is_external {
+        // External: has a purchase_order_id (not null)
+        EqualFilter::is_null(false)
+    } else {
+        // Internal: no purchase_order_id (null)
+        EqualFilter::is_null(true)
+    }
 }
 
 impl InvoiceCountServiceTrait for InvoiceCountService {
@@ -196,6 +268,53 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
                 .r#type(InvoiceType::InboundShipment.equal_to())
                 .status(InvoiceStatus::Shipped.equal_to()),
         ))
+    }
+
+    fn invoices_count_by_external(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        invoice_type: &InvoiceType,
+        invoice_status: &InvoiceStatus,
+        range: &CountTimeRange,
+        now: &DateTime<Utc>,
+        timezone_offset: &FixedOffset,
+        is_external: bool,
+    ) -> Result<i64, InvoiceCountError> {
+        let repo = InvoiceRepository::new(&ctx.connection);
+        let now = to_local(now, timezone_offset);
+        let oldest = match range {
+            CountTimeRange::Today => to_utc(&start_of_day(&now), timezone_offset)
+                .ok_or(InvoiceCountError::BadTimezoneOffset)?,
+            CountTimeRange::ThisWeek => to_utc(&start_of_week(&now), timezone_offset)
+                .ok_or(InvoiceCountError::BadTimezoneOffset)?,
+        };
+        let po_filter = po_filter_for_external(is_external);
+        let count = invoices_count_filtered(
+            &repo,
+            invoice_type,
+            invoice_status,
+            oldest.naive_utc(),
+            None,
+            store_id,
+            Some(po_filter),
+        )?;
+        Ok(count)
+    }
+
+    fn inbound_invoices_not_delivered_count_by_external(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        is_external: bool,
+    ) -> Result<i64, RepositoryError> {
+        let repo = InvoiceRepository::new(&ctx.connection);
+        let mut filter = InvoiceFilter::new()
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
+            .r#type(InvoiceType::InboundShipment.equal_to())
+            .status(InvoiceStatus::Shipped.equal_to());
+        filter = filter.purchase_order_id(po_filter_for_external(is_external));
+        repo.count(Some(filter))
     }
 }
 

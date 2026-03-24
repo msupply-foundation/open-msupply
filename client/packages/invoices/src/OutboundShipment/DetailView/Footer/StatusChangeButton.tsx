@@ -83,9 +83,10 @@ const useStatusChangeButton = () => {
 
   // If the status has already been set, but is not included in the preferences,
   // then use the previous valid status.
-  const currentStatus = invoiceStatusOptions?.includes(status)
-    ? status
-    : getPreviousStatus(status, invoiceStatusOptions ?? [], outboundStatuses);
+  const currentStatus =
+    !invoiceStatusOptions || invoiceStatusOptions.includes(status)
+      ? status
+      : getPreviousStatus(status, invoiceStatusOptions, outboundStatuses);
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>

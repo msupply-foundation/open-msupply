@@ -215,6 +215,7 @@ mod update {
             item_link_id: mock_item_b().id,
             number_of_packs: 8.0,
             pack_size: 2.0,
+            purchase_order_line_id: Some("purchase_order_line_received".to_string()),
             ..Default::default()
         };
 

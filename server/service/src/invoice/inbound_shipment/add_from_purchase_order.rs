@@ -2,7 +2,7 @@ use crate::invoice::inbound_shipment::InsertInboundShipmentError;
 use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
     EqualFilter, InvoiceLineStatus, InvoiceLineType, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository, PurchaseOrderRowRepository,
+    PurchaseOrderLineRepository, PurchaseOrderLineStatus, PurchaseOrderRowRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
 use util::uuid::uuid;
@@ -24,7 +24,8 @@ pub fn add_from_purchase_order(
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
-            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.clone())),
+            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.clone()))
+            .status(EqualFilter::equal_to(PurchaseOrderLineStatus::Sent)), // skip closed lines
     )?;
 
     let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
@@ -65,6 +66,7 @@ pub fn add_from_purchase_order(
             batch: None,
             expiry_date: None,
             manufacture_date: None,
+            purchase_order_line_id: Some(purchase_order_line.id.clone()),
             pack_size: pack_size,
             cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
             sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
