@@ -6,6 +6,7 @@ import {
   Box,
   usePreferences,
   InvoiceNodeType,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { getStatusSequence } from '../../statuses';
 import { getStatusTranslator } from '../../utils';
@@ -14,7 +15,9 @@ export const Toolbar = () => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
   const statuses = getStatusSequence(InvoiceNodeType.Prescription).filter(
-    status => invoiceStatusOptions?.includes(status)
+    status =>
+      status === InvoiceNodeStatus.Cancelled ||
+      invoiceStatusOptions?.includes(status)
   );
 
   return (

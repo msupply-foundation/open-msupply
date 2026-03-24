@@ -60,9 +60,9 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 name: t('label.status'),
                 urlParameter: 'status',
                 options: statuses.map(status => ({
-                value: status,
-                label: getStatusTranslator(t)(status),
-              })),
+                  value: status,
+                  label: getStatusTranslator(t)(status),
+                })),
               },
               {
                 type: 'text',
