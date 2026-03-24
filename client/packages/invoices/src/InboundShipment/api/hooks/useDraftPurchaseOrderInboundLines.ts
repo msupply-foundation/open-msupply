@@ -75,6 +75,7 @@ export const useDraftPurchaseOrderInboundLines = (
 
   const {
     query: { data },
+    isExternal,
   } = useInboundShipment();
   const invoiceId = data?.id ?? '';
 
@@ -87,9 +88,8 @@ export const useDraftPurchaseOrderInboundLines = (
         line.purchaseOrderLine?.id === purchaseOrderLine.id
     );
   }, [data, purchaseOrderLine]);
-
-  const { mutateAsync, isLoading } = useSaveInboundLines();
-  const { mutateAsync: deleteMutation } = useDeleteInboundLines();
+  const { mutateAsync, isLoading } = useSaveInboundLines(isExternal);
+  const { mutateAsync: deleteMutation } = useDeleteInboundLines(isExternal);
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
     'external-inbound-line-edit'
