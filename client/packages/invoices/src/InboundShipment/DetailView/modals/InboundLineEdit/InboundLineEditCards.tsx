@@ -738,7 +738,7 @@ export const InboundLineEditCards = ({
   ]);
 
   const table = useSimpleMaterialTable<DraftInboundLine>({
-    tableId: 'inbound-line-edit-v2',
+    tableId: 'inbound-line-edit',
     columns,
     data: lines,
     getIsRestrictedRow: isDisabled ? () => true : undefined,
