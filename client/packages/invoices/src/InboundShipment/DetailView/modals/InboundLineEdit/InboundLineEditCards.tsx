@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   useAuthContext,
   useTranslation,
@@ -137,12 +137,15 @@ export const InboundLineEditCards = ({
         },
         cardSummaryOrder: 1,
         Cell: ({ row, cell }) => {
+          const [hasBlurred, setHasBlurred] = useState(false);
           const line = row.original;
           const shippedPacks = line.shippedNumberOfPacks;
           const showWarning =
-            shippedPacks != null && line.numberOfPacks !== shippedPacks;
+            hasBlurred &&
+            shippedPacks != null &&
+            line.numberOfPacks !== shippedPacks;
           return (
-            <Box>
+            <Box onBlur={() => setHasBlurred(true)}>
               <NumberInputCell
                 cell={cell}
                 updateFn={(value: number) => {
@@ -188,12 +191,15 @@ export const InboundLineEditCards = ({
         size: 120,
         columnGroup: 'stockLineDetails',
         Cell: ({ row, cell }) => {
+          const [hasBlurred, setHasBlurred] = useState(false);
           const line = row.original;
           const shippedPackSize = line.shippedPackSize;
           const showWarning =
-            shippedPackSize != null && line.packSize !== shippedPackSize;
+            hasBlurred &&
+            shippedPackSize != null &&
+            line.packSize !== shippedPackSize;
           return (
-            <Box>
+            <Box onBlur={() => setHasBlurred(true)}>
               <NumberInputCell
                 cell={cell}
                 updateFn={(value: number) => {
