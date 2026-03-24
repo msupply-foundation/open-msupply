@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# migrate-readmes.sh --check
+# check-docs-structure.sh
 #
 # CI check: ensures every tracked README has a corresponding _index.md
-# in docs-site/content/docs/, and no orphaned _index.md files exist.
+# in docs/content/, and no orphaned _index.md files exist.
 #
 # Exits with code 1 if any issues are found.
 #
@@ -14,7 +14,7 @@
 set -eo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.."; pwd)"
-DOCS_CONTENT="$REPO_ROOT/docs-site/content/docs"
+DOCS_CONTENT="$REPO_ROOT/docs/content"
 
 # ── Skip list ─────────────────────────────────────────────────────────
 should_skip() {
