@@ -539,7 +539,7 @@ mod test {
               deleteInboundShipments {
                 id
                 response {
-                  ... on DeleteInboundShipmentError {
+                  ... on DeleteInvoiceError {
                     error {
                       __typename
                     }

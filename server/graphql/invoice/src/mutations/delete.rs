@@ -118,27 +118,32 @@ pub fn delete_invoices(
     })
 }
 
-/// Maps a delete result for use in batch mutation responses.
-pub fn map_batch_response(from: Result<String, ServiceError>) -> Result<DeleteInvoiceLineResponse> {
-    Ok(map_response(from))
-}
-
+/// Maps a delete result to a structured response (for the deleteInvoices mutation).
+/// All errors become structured DeleteInvoiceError variants.
 fn map_response(from: Result<String, ServiceError>) -> DeleteInvoiceLineResponse {
     match from {
         Ok(id) => DeleteInvoiceLineResponse::Response(GenericDeleteResponse(id)),
         Err(error) => match map_error(error) {
-            Ok(error_interface) => {
-                DeleteInvoiceLineResponse::Error(DeleteInvoiceError {
-                    error: error_interface,
-                })
-            }
-            Err(_) => {
-                // For errors that map to standard GraphQL errors, we still wrap them
-                // as structured errors for the batch response
-                DeleteInvoiceLineResponse::Error(DeleteInvoiceError {
-                    error: DeleteInvoiceErrorInterface::RecordNotFound(RecordNotFound {}),
-                })
-            }
+            Ok(error_interface) => DeleteInvoiceLineResponse::Error(DeleteInvoiceError {
+                error: error_interface,
+            }),
+            Err(_) => DeleteInvoiceLineResponse::Error(DeleteInvoiceError {
+                error: DeleteInvoiceErrorInterface::RecordNotFound(RecordNotFound {}),
+            }),
+        },
+    }
+}
+
+/// Maps a delete result for use in batch mutation responses.
+/// Standard GraphQL errors (e.g. InvoiceTypeNotSupported) propagate as Err.
+pub fn map_batch_response(from: Result<String, ServiceError>) -> Result<DeleteInvoiceLineResponse> {
+    match from {
+        Ok(id) => Ok(DeleteInvoiceLineResponse::Response(GenericDeleteResponse(id))),
+        Err(error) => match map_error(error) {
+            Ok(error_interface) => Ok(DeleteInvoiceLineResponse::Error(DeleteInvoiceError {
+                error: error_interface,
+            })),
+            Err(standard_error) => Err(standard_error),
         },
     }
 }

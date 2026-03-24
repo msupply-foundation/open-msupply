@@ -1045,12 +1045,17 @@ impl InvoiceTransferTester {
 
     // This to be skipped on second attempt
     pub(crate) fn delete_outbound_shipment(&self, service_provider: &ServiceProvider) {
+        use crate::invoice::DeleteInvoiceType;
         let ctx = service_provider
             .context(self.outbound_store.id.clone(), "".to_string())
             .unwrap();
         service_provider
             .invoice_service
-            .delete_outbound_shipment(&ctx, self.outbound_shipment.id.clone())
+            .delete_invoice(
+                &ctx,
+                self.outbound_shipment.id.clone(),
+                &[DeleteInvoiceType::OutboundShipment],
+            )
             .unwrap();
     }
     // This to be skipped on second attempt
@@ -1338,12 +1343,17 @@ impl InvoiceTransferTester {
     }
 
     pub(crate) fn delete_supplier_return(&self, service_provider: &ServiceProvider) {
+        use crate::invoice::DeleteInvoiceType;
         let ctx = service_provider
             .context(self.inbound_store.id.clone(), "".to_string())
             .unwrap();
         service_provider
             .invoice_service
-            .delete_supplier_return(&ctx, self.supplier_return.id.clone())
+            .delete_invoice(
+                &ctx,
+                self.supplier_return.id.clone(),
+                &[DeleteInvoiceType::SupplierReturn],
+            )
             .unwrap();
     }
 

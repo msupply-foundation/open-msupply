@@ -565,10 +565,10 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             },
         },
         TestData {
-            name: "deleteInboundShipment",
+            name: "deleteInvoices (InboundShipment)",
             query: r#"mutation Mutation {
-                deleteInboundShipment(input: {id: ""}, storeId: "") {
-                  ... on DeleteResponse {
+                deleteInvoices(ids: [{id: ""}], storeId: "", type: [INBOUND_SHIPMENT]) {
+                  deleteInvoices {
                     id
                   }
                 }
@@ -649,10 +649,10 @@ fn resource_mapping_mutation_test_data() -> Vec<TestData> {
             },
         },
         TestData {
-            name: "deleteOutboundShipment",
+            name: "deleteInvoices (OutboundShipment)",
             query: r#"mutation Mutation {
-                deleteOutboundShipment(id: "", storeId: "") {
-                  ... on DeleteResponse {
+                deleteInvoices(ids: [{id: ""}], storeId: "", type: [OUTBOUND_SHIPMENT]) {
+                  deleteInvoices {
                     id
                   }
                 }

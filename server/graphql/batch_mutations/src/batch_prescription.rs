@@ -405,7 +405,7 @@ mod test {
               deletePrescriptions {
                 id
                 response {
-                  ... on DeletePrescriptionError {
+                  ... on DeleteInvoiceError {
                     error {
                       __typename
                     }

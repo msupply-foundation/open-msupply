@@ -35,9 +35,7 @@ pub enum DeleteInvoiceType {
 impl DeleteInvoiceType {
     fn matches_invoice(&self, invoice: &InvoiceRow) -> bool {
         match self {
-            DeleteInvoiceType::OutboundShipment => {
-                invoice.r#type == InvoiceType::OutboundShipment
-            }
+            DeleteInvoiceType::OutboundShipment => invoice.r#type == InvoiceType::OutboundShipment,
             DeleteInvoiceType::InboundShipment => {
                 invoice.r#type == InvoiceType::InboundShipment
                     && invoice.purchase_order_id.is_none()
@@ -98,14 +96,14 @@ fn validate(
     use DeleteInvoiceError::*;
 
     let invoice = check_invoice_exists(id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    if !allowed_types.iter().any(|t| t.matches_invoice(&invoice)) {
+        return Err(InvoiceTypeNotSupported);
+    }
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
-    }
-    if !allowed_types.iter().any(|t| t.matches_invoice(&invoice)) {
-        return Err(InvoiceTypeNotSupported);
     }
 
     Ok(invoice)
