@@ -39,6 +39,18 @@ export const AppBarButtonsComponent = ({
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
+  const allPurchaseOrderItemsAdded = useMemo(() => {
+    const poLines = data?.purchaseOrder?.lines?.nodes;
+    if (!poLines || poLines.length === 0) return false;
+
+    const shipmentPoLineIds = new Set(
+      data?.lines.nodes
+        .map(line => line.purchaseOrderLine?.id)
+        .filter(Boolean)
+    );
+    return poLines.every(poLine => shipmentPoLineIds.has(poLine.id));
+  }, [data?.purchaseOrder?.lines?.nodes, data?.lines.nodes]);
+
   if (isExtraSmallScreen) {
     // On mobile, we don't have mobile ui for line by line editing or reports
     // We just want to show the scan button for mobile users to use the scanner approach.
@@ -53,18 +65,6 @@ export const AppBarButtonsComponent = ({
     !store?.preferences.manuallyLinkInternalOrderToInboundShipment ||
     !!data?.linkedShipment ||
     !data?.requisition;
-
-  const allPurchaseOrderItemsAdded = useMemo(() => {
-    const poLines = data?.purchaseOrder?.lines?.nodes;
-    if (!poLines || poLines.length === 0) return false;
-
-    const shipmentPoLineIds = new Set(
-      data?.lines.nodes
-        .map(line => line.purchaseOrderLine?.id)
-        .filter(Boolean)
-    );
-    return poLines.every(poLine => shipmentPoLineIds.has(poLine.id));
-  }, [data?.purchaseOrder?.lines?.nodes, data?.lines.nodes]);
 
   return (
     <AppBarButtonsPortal>
