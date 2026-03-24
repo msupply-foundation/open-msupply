@@ -11,7 +11,6 @@ export interface ReportDefinition {
   category: ReportCategory;
   hasArguments: boolean;
   subContext: string;
-  requiresProgramModule?: boolean;
 }
 
 export const STANDARD_REPORTS: ReportDefinition[] = [
@@ -77,6 +76,5 @@ export const STANDARD_REPORTS: ReportDefinition[] = [
     category: 'Programs',
     hasArguments: true,
     subContext: 'Encounters',
-    requiresProgramModule: true,
   },
 ];

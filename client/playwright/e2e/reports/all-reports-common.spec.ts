@@ -4,14 +4,6 @@ import { getFilterStrategy } from '../../data/filter-strategies';
 
 for (const report of STANDARD_REPORTS) {
   test.describe(`Report: ${report.displayName}`, () => {
-    // Skip program reports unless explicitly enabled
-    if (report.requiresProgramModule) {
-      test.skip(
-        () => !process.env['TEST_PROGRAM_MODULE'],
-        'Requires TEST_PROGRAM_MODULE=true'
-      );
-    }
-
     test('appears in reports list under correct category', async ({
       reportsListPage,
     }) => {

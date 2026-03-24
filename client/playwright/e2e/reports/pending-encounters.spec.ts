@@ -1,10 +1,5 @@
 import { test } from '../../fixtures/report-test.fixture';
 
-test.skip(
-  () => !process.env['TEST_PROGRAM_MODULE'],
-  'Requires TEST_PROGRAM_MODULE=true'
-);
-
 test.describe('Pending Encounters — report-specific filters', () => {
   test.beforeEach(async ({ reportsListPage }) => {
     await reportsListPage.goto();
