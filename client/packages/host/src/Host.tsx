@@ -33,6 +33,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
+import { MigrationInfoProvider } from './components/Migration';
 import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
@@ -172,16 +173,18 @@ const Host = () => (
                   url={Environment.GRAPHQL_URL}
                   skipRequest={skipRequest}
                 >
-                  <AuthProvider>
-                    <PreInit>
-                      <Init />
-                    </PreInit>
-                    <ConfirmationModalProvider>
-                      <AlertModalProvider>
-                        <RouterProvider router={router} />
-                      </AlertModalProvider>
-                    </ConfirmationModalProvider>
-                  </AuthProvider>
+                  <MigrationInfoProvider>
+                    <AuthProvider>
+                      <PreInit>
+                        <Init />
+                      </PreInit>
+                      <ConfirmationModalProvider>
+                        <AlertModalProvider>
+                          <RouterProvider router={router} />
+                        </AlertModalProvider>
+                      </ConfirmationModalProvider>
+                    </AuthProvider>
+                  </MigrationInfoProvider>
                   {/* <ReactQueryDevtools initialIsOpen /> */}
                 </GqlProvider>
               </QueryClientProvider>

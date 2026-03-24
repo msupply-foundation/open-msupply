@@ -29,12 +29,14 @@ pub struct UpdateInput {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdateInput<NaiveDate>>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdateInput<String>>,
+    pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
     pub note: Option<NullableUpdateInput<String>>,
@@ -102,6 +104,7 @@ impl UpdateInput {
             pack_size,
             batch,
             expiry_date,
+            manufacture_date,
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
@@ -110,6 +113,7 @@ impl UpdateInput {
             item_variant_id,
             vvm_status_id,
             donor_id,
+            manufacturer_id,
             campaign_id,
             program_id,
             note,
@@ -130,6 +134,9 @@ impl UpdateInput {
             expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
                 value: expiry_date.value,
             }),
+            manufacture_date: manufacture_date.map(|manufacture_date| NullableUpdate {
+                value: manufacture_date.value,
+            }),
             sell_price_per_pack,
             cost_price_per_pack,
             number_of_packs,
@@ -145,6 +152,9 @@ impl UpdateInput {
             note: note.map(|note| NullableUpdate { value: note.value }),
             donor_id: donor_id.map(|donor_id| NullableUpdate {
                 value: donor_id.value,
+            }),
+            manufacturer_id: manufacturer_id.map(|manufacturer_id| NullableUpdate {
+                value: manufacturer_id.value,
             }),
             campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
                 value: campaign_id.value,
@@ -209,8 +219,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
         | ServiceError::VVMStatusDoesNotExist
+        | ServiceError::ManufacturerDoesNotExist
+        | ServiceError::ManufacturerNotVisible
+        | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramNotVisible
         | ServiceError::CampaignDoesNotExist
+        | ServiceError::CannotEditCostPrice
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
@@ -232,7 +246,7 @@ mod test {
             mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_item_a,
             mock_location_1, MockDataInserts,
         },
-        InvoiceLine, RepositoryError, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -537,6 +551,7 @@ mod test {
                 invoice_row: mock_inbound_shipment_c(),
                 invoice_line_row: mock_inbound_shipment_c_invoice_lines()[0].clone(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })

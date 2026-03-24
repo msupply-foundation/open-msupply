@@ -13,6 +13,8 @@ import {
   reasonOptionSearchTester,
   ItemSearch,
   itemSearchTester,
+  ScheduleForm,
+  scheduleFormTester,
 } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
@@ -86,6 +88,7 @@ export const ReportArgumentsModal = ({
           { tester: nameSearchTester, renderer: NameSearch },
           { tester: masterListSearchTester, renderer: MasterListSearch },
           { tester: locationSearchTester, renderer: LocationSearch },
+          { tester: scheduleFormTester, renderer: ScheduleForm },
           { tester: reasonOptionSearchTester, renderer: ReasonOptionSearch },
           { tester: itemSearchTester, renderer: ItemSearch },
         ];

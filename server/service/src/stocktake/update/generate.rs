@@ -121,8 +121,10 @@ fn generate_stock_in_out_or_update(
     let item_variant_id = stocktake_line_row.item_variant_id.clone();
     let campaign_id = stocktake_line_row.campaign_id.clone();
     let donor_link_id = stocktake_line_row.donor_id.clone();
+    let manufacturer_id = stocktake_line_row.manufacturer_id.clone();
     let program_id = stocktake_line_row.program_id.clone();
     let expiry_date = stocktake_line_row.expiry_date;
+    let manufacture_date = stocktake_line_row.manufacture_date;
 
     log_stock_changes(ctx, stock_line_row.clone(), stocktake_line_row.clone())?;
 
@@ -135,11 +137,13 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            manufacture_date,
             item_variant_id,
             vvm_status_id: vvm_status_id.clone(),
             volume_per_pack: stocktake_line_row.volume_per_pack,
             campaign_id,
             donor_id: donor_link_id,
+            manufacturer_id,
             program_id,
             ..stock_line_row
         }
@@ -197,10 +201,12 @@ fn generate_stock_in_out_or_update(
             volume_per_pack: Some(stocktake_line_row.volume_per_pack),
             campaign_id,
             donor_id: donor_link_id,
+            manufacturer_id,
             vvm_status_id,
             program_id,
             note: stocktake_line_row.note,
             item_variant_id,
+            manufacture_date,
             // From existing stock line
             stock_line_id: Some(stock_line_row.id),
             item_id: item.id.clone(),
@@ -239,6 +245,9 @@ fn generate_stock_in_out_or_update(
             }),
             donor_id: Some(NullableUpdate {
                 value: donor_link_id,
+            }),
+            manufacturer_id: Some(NullableUpdate {
+                value: manufacturer_id,
             }),
             campaign_id: Some(NullableUpdate { value: campaign_id }),
             program_id: Some(NullableUpdate { value: program_id }),
@@ -393,11 +402,13 @@ fn generate_new_stock_line(
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date: stocktake_line_row.expiry_date,
+        manufacture_date: stocktake_line_row.manufacture_date,
         stock_line_id: Some(stock_line_id.clone()),
         item_id,
         note: stocktake_line_row.note,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
         donor_id: stocktake_line.line.donor_id.clone(),
+        manufacturer_id: stocktake_line.line.manufacturer_id.clone(),
         vvm_status_id: stocktake_line.line.vvm_status_id.clone(),
         volume_per_pack: Some(stocktake_line.line.volume_per_pack),
         program_id: stocktake_line_row.program_id.clone(),

@@ -1,14 +1,14 @@
 use super::{
     clinician_link_row::clinician_link, currency_row::currency, item_link_row::item_link,
-    name_row::name, shipping_method_row::shipping_method, store_row::store,
-    user_row::user_account, StorageConnection,
+    name_row::name, shipping_method_row::shipping_method, store_row::store, user_row::user_account,
+    StorageConnection,
 };
 use crate::{
     diesel_macros::define_linked_tables, repository_error::RepositoryError, ChangeLogInsertRow,
     ChangelogRepository, ChangelogTableName, Delete, RowActionType, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -24,7 +24,7 @@ define_linked_tables! {
         store_id -> Text,
         user_id -> Nullable<Text>,
         invoice_number -> BigInt,
-        #[sql_name = "type"] 
+        #[sql_name = "type"]
         type_ -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
         status -> crate::db_diesel::invoice_row::InvoiceStatusMapping,
         on_hold -> Bool,
@@ -172,7 +172,6 @@ impl<'a> InvoiceRowRepository<'a> {
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
-
     fn insert_changelog(
         &self,
         row: &InvoiceRow,
@@ -225,7 +224,7 @@ impl<'a> InvoiceRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = invoice::table
             .filter(invoice::type_.eq(r#type).and(invoice::store_id.eq(store)))
-            .select(max(invoice::invoice_number))
+            .select(diesel::dsl::max(invoice::invoice_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

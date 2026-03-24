@@ -4,52 +4,50 @@ strip = true
 [workspace.dependencies]
 # dependencies used in graphql crates:
 # Warning don't add anything above this lines as auto patch is applied during docker build
-async-graphql = { version = "7.0.17", features = ["dataloader", "chrono"] }
-async-graphql-actix-web = "7.0.17"
-actix-web = { version = "4.11.0", default-features = false, features = [
-  "macros",
-  "rustls",
-] }
+async-graphql = { version = "7.2.1", features = ["dataloader", "chrono"] }
+async-graphql-actix-web = "7.2.1"
+actix-web = { version = "4.13.0", default-features = false, features = ["macros", "rustls"] }
 actix-multipart = "0.7.2"
 anymap = "0.12.1"
 async-trait = "0.1.88"
-chrono = { version = "0.4.41", features = ["serde"] }
-clap = { version = "4.5.41", features = ["derive"] }
-futures = "0.3.31"
-futures-util = "0.3.31"
-httpmock = "0.7"
-log = "0.4.27"
+chrono = { version = "0.4.44", features = ["serde"] }
+clap = { version = "4.6.0", features = ["derive"] }
+futures = "0.3.32"
+futures-util = "0.3.32"
+httpmock = "0.8.3"
+log = "0.4.29"
 pretty_assertions = "1.4.1"
-rcgen = "0.14.2"
-regex = "1.11.1"
-reqwest = { version = "0.12.22", features = [
+rcgen = "0.14.7"
+regex = "1.12.3"
+reqwest = { version = "0.13.2", features = [
   "gzip",
   "json",
-  "rustls-tls",
+  "query",
+  "rustls",
   "multipart",
   "blocking",
 ], default-features = false }
 serde = { version = "^1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.149"
 serde_yaml = "0.9.34"
 sha2 = "0.10.9"
-simple-log = { version = "=2.3.0" }
-strum = { version = "0.27.1", features = ["derive"] }
-thiserror = "2.0.2"
-tokio = { version = "1.46.1", features = ["macros", "process"] }
+simple-log = { version = "=2.4.0" }
+strum = { version = "0.28.0", features = ["derive"] }
+thiserror = "2.0.18"
+tokio = { version = "1.50.0", features = ["macros", "process"] }
 # dev dependencies used in graphql crates:
-anyhow = "1.0.98"
+anyhow = "1.0.102"
 actix-rt = "2.10.0"
 assert-json-diff = "2.0.2"
-rand = "0.8.5"
-actix-files = "0.6.6"
+rand = "0.10.0"
+actix-files = "0.6.10"
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 base64 = "0.22.1"
-ts-rs = { version = "10.1", features = ["chrono-impl", "serde-json-impl"] }
+ts-rs = { version = "12.0.1", features = ["chrono-impl", "serde-json-impl"] }
 ordered-float = "5.1"
 
 # TODO: Remove. async_graphql is using 1.0 but SET_COOKIE was being imported from wrong version.
-http2 = { package = "http", version = "1.0.0" }
+http2 = { package = "http", version = "1.4.0" }
 
 [workspace.lints.clippy]
 wrong_self_convention = "allow"
@@ -64,6 +62,7 @@ enum_variant_names = "allow"
 too_many_arguments = "allow"
 
 [workspace]
+resolver = "2"
 members = [
   "android",
   "report_builder",

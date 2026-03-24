@@ -3,7 +3,6 @@ import {
   UpdatePatientInput,
   DocumentRegistryCategoryNode,
   InsertPatientInput,
-  useNotification,
   useQueryClient,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
@@ -72,7 +71,6 @@ export const useUpsertPatient = (
   patientId: string,
   confirmOnLeaving?: boolean
 ) => {
-  const { error } = useNotification();
   const queryClient = useQueryClient();
 
   const {

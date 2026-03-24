@@ -236,6 +236,7 @@ fn generate(
                 ProgramIndicatorFilter::new()
                     .program_id(EqualFilter::equal_to(program.id.to_string())),
             ),
+            false,
         )?
     } else {
         vec![]
@@ -322,6 +323,9 @@ fn generate_lines(
                 option_id: None,
                 available_volume: None,
                 location_type_id: None,
+                forecast_total_units: None,
+                forecast_total_doses: None,
+                vaccine_courses: None,
             }
         })
         .collect();

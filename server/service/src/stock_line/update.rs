@@ -24,6 +24,7 @@ pub struct UpdateStockLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdate<NaiveDate>>,
     pub on_hold: Option<bool>,
     pub batch: Option<String>,
     pub barcode: Option<String>,
@@ -33,6 +34,7 @@ pub struct UpdateStockLine {
     pub campaign_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
     pub volume_per_pack: Option<f64>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -45,6 +47,9 @@ pub enum UpdateStockLineError {
     DonorDoesNotExist,
     DonorNotVisible,
     DonorIsNotADonor,
+    ManufacturerDoesNotExist,
+    ManufacturerNotVisible,
+    ManufacturerIsNotAManufacturer,
     UpdatedStockNotFound,
     StockMovementNotFound,
     VVMStatusDoesNotExist,
@@ -145,6 +150,24 @@ fn validate(
         )?;
     };
 
+    if let Some(NullableUpdate {
+        value: Some(manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        )
+        .map_err(|e| match e {
+            OtherPartyErrors::OtherPartyDoesNotExist => ManufacturerDoesNotExist,
+            OtherPartyErrors::OtherPartyNotVisible => ManufacturerNotVisible,
+            OtherPartyErrors::TypeMismatched => ManufacturerIsNotAManufacturer,
+            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+        })?;
+    };
+
     Ok(stock_line)
 }
 
@@ -164,6 +187,7 @@ fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date,
+        manufacture_date,
         batch,
         on_hold,
         barcode,
@@ -173,6 +197,7 @@ fn generate(
         campaign_id,
         program_id,
         volume_per_pack,
+        manufacturer_id,
     }: UpdateStockLine,
 ) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
@@ -219,6 +244,9 @@ fn generate(
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
 
     existing.expiry_date = expiry_date.map(|v| v.value).unwrap_or(existing.expiry_date);
+    existing.manufacture_date = manufacture_date
+        .map(|v| v.value)
+        .unwrap_or(existing.manufacture_date);
 
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing.barcode_id = barcode_id;
@@ -228,6 +256,9 @@ fn generate(
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
     existing.donor_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_id);
+    existing.manufacturer_id = manufacturer_id
+        .map(|v| v.value)
+        .unwrap_or(existing.manufacturer_id);
     existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
     existing.program_id = program_id.map(|v| v.value).unwrap_or(existing.program_id);
 

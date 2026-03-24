@@ -5,13 +5,13 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use rand::{thread_rng, Rng};
+use rand::RngExt;
 use repository::*;
 use serde_json::json;
 use util::uuid::uuid;
 
 fn gen_f64() -> f64 {
-    format!("{:.6}", thread_rng().gen::<f64>()).parse().unwrap()
+    format!("{:.6}", rand::rng().random::<f64>()).parse().unwrap()
 }
 pub(crate) struct StocktakeRecordTester;
 impl SyncRecordTester for StocktakeRecordTester {
