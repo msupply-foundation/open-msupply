@@ -41,6 +41,7 @@ import {
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
+import { isInboundPlaceholderRow } from '../../../../utils';
 import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
 
 interface CardProps {
@@ -162,6 +163,8 @@ export const InboundLineEditCards = ({
             hasBlurred &&
             shippedPacks != null &&
             line.numberOfPacks !== shippedPacks;
+          const isPlaceholder =
+            !line.linkedInvoiceId && isInboundPlaceholderRow(line);
           return (
             <Box onBlur={() => setHasBlurred(true)}>
               <NumberInputCell
@@ -181,6 +184,14 @@ export const InboundLineEditCards = ({
                 }}
                 disabled={isDisabled}
                 min={0}
+                error={isPlaceholder}
+                helperText={
+                  isPlaceholder
+                    ? t('error.field-must-be-specified', {
+                        field: t('label.packs-received'),
+                      })
+                    : undefined
+                }
               />
               {showWarning && (
                 <Typography
