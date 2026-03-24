@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Box,
   ColumnDef,
   ColumnType,
+  PurchaseOrderLineStatusNode,
   getLinesFromRow,
   TextWithTooltipCell,
   useFormatCurrency,
@@ -16,7 +17,11 @@ export const usePurchaseOrderColumns = () => {
   const t = useTranslation();
   const formatCurrency = useFormatCurrency();
   const { getError } = usePurchaseOrderLineErrorContext();
-  const lineStatusTranslator = getPurchaseOrderLineStatusTranslator(t);
+  const lineStatusTranslator = useCallback(
+    (status: PurchaseOrderLineStatusNode) =>
+      getPurchaseOrderLineStatusTranslator(t)(status),
+    [t]
+  );
 
   return useMemo((): ColumnDef<PurchaseOrderLineFragment>[] => {
     return [
@@ -101,7 +106,7 @@ export const usePurchaseOrderColumns = () => {
       },
       {
         accessorKey: 'totalCost',
-        header: t('label.total-cost'),
+        header: t('label.line-cost'),
         columnType: ColumnType.Currency,
         accessorFn: row => {
           const units =
@@ -110,21 +115,18 @@ export const usePurchaseOrderColumns = () => {
           return (row.pricePerPackAfterDiscount ?? 0) * (units / packSize);
         },
         Footer: ({ table }) => {
-          const total = table
-            .getFilteredRowModel()
-            .rows.reduce((sum, row) => {
-              const { original } = row;
-              const units =
-                original.adjustedNumberOfUnits ??
-                original.requestedNumberOfUnits ??
-                0;
-              const packSize = original.requestedPackSize || 1;
-              return (
-                sum +
-                (original.pricePerPackAfterDiscount ?? 0) *
-                  (units / packSize)
-              );
-            }, 0);
+          const total = table.getFilteredRowModel().rows.reduce((sum, row) => {
+            const { original } = row;
+            const units =
+              original.adjustedNumberOfUnits ??
+              original.requestedNumberOfUnits ??
+              0;
+            const packSize = original.requestedPackSize || 1;
+            return (
+              sum +
+              (original.pricePerPackAfterDiscount ?? 0) * (units / packSize)
+            );
+          }, 0);
           return (
             <Box sx={{ textAlign: 'right', width: '100%' }}>
               {formatCurrency(total)}

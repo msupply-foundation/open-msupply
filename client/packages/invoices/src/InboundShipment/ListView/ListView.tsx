@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import {
+  InvoiceTypeInput,
   useNavigate,
   useTranslation,
   NothingHere,
@@ -12,10 +13,13 @@ import {
   NameAndColorSetterCell,
   usePreferences,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
   DetailTabs,
   ToggleState,
+  RouteBuilder,
+  useUrlQuery,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButtons';
 import {
   getStatusTranslator,
@@ -27,8 +31,11 @@ import { Toolbar } from './Toolbar';
 import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
 
+const TABLE_ID = 'inbound-shipment-list-view';
+
 export const InboundListView = () => {
   const t = useTranslation();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const internalModalController = useToggle();
   const externalModalController = useToggle();
   const linkRequestModalController = useToggle();
@@ -36,7 +43,9 @@ export const InboundListView = () => {
   const tabs = [
     {
       Component: (
-        <InboundShipments internalModalController={internalModalController} />
+        <InboundShipments
+          internalModalController={internalModalController}
+        />
       ),
       value: t('label.internal'),
     },
@@ -53,11 +62,13 @@ export const InboundListView = () => {
 
   return (
     <>
-      <AppBarButtons
-        internalModalController={internalModalController}
-        externalModalController={externalModalController}
-        linkRequestModalController={linkRequestModalController}
-      />
+      {!isExtraSmallScreen && (
+        <AppBarButtons
+          internalModalController={internalModalController}
+          externalModalController={externalModalController}
+          linkRequestModalController={linkRequestModalController}
+        />
+      )}
       <DetailTabs tabs={tabs} overwriteQuery={false} restoreTabQuery={false} />
     </>
   );
@@ -73,6 +84,11 @@ const InboundShipments: React.FC<{
 
   const t = useTranslation();
   const navigate = useNavigate();
+  const { urlQuery } = useUrlQuery();
+  const currentTab = urlQuery['tab'] as string | undefined;
+  const isActiveTab = external
+    ? currentTab === t('label.external')
+    : !currentTab || currentTab === t('label.internal');
   const { invoiceStatusOptions } = usePreferences();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
@@ -111,11 +127,14 @@ const InboundShipments: React.FC<{
         ? { notEqualTo: '' } // Removes results where purchaseOrderId is null
         : { equalAnyOrNull: '' }, // Only gives results where purchaseOrderId is null
     },
+    type: external
+      ? InvoiceTypeInput.InboundShipmentExternal
+      : InvoiceTypeInput.InboundShipment,
   };
 
   const {
     query: { data, isFetching },
-  } = useInboundList(listParams);
+  } = useInboundList(isActiveTab ? listParams : undefined);
   const statuses = inboundStatuses.filter(status =>
     invoiceStatusOptions?.includes(status)
   );
@@ -205,9 +224,17 @@ const InboundShipments: React.FC<{
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
     {
-      tableId: 'inbound-shipment-list-view',
+      tableId: TABLE_ID,
       isLoading: isFetching,
-      onRowClick: row => navigate(row.id),
+      onRowClick: row =>
+        external
+          ? navigate(
+              RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InboundShipmentExternal)
+                .addPart(row.id)
+                .build()
+            )
+          : navigate(row.id),
       columns,
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
@@ -216,7 +243,11 @@ const InboundShipments: React.FC<{
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-shipments')}
-          onCreate={internalModalController.toggleOn}
+          onCreate={
+            isExtraSmallScreen
+              ? undefined
+              : internalModalController.toggleOn
+          }
         />
       ),
       isMobile: isExtraSmallScreen,
@@ -227,7 +258,7 @@ const InboundShipments: React.FC<{
     <>
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <MobileCardList table={table} />
+        <CardList table={table} tableId={TABLE_ID} />
       ) : (
         <>
           <Toolbar filter={filter} />

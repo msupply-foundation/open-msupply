@@ -806,6 +806,7 @@ export type ProgramIndicatorFragment = {
       columnNumber: number;
       name: string;
       valueType?: Types.IndicatorValueTypeNode | null;
+      isActive: boolean;
       value?: {
         __typename: 'IndicatorValueNode';
         id: string;
@@ -819,6 +820,7 @@ export type ProgramIndicatorFragment = {
       lineNumber: number;
       name: string;
       valueType?: Types.IndicatorValueTypeNode | null;
+      isActive: boolean;
     };
     customerIndicatorInfo: Array<{
       __typename: 'CustomerIndicatorInformationNode';
@@ -841,6 +843,7 @@ export type IndicatorLineRowFragment = {
   lineNumber: number;
   name: string;
   valueType?: Types.IndicatorValueTypeNode | null;
+  isActive: boolean;
 };
 
 export type IndicatorColumnFragment = {
@@ -849,6 +852,7 @@ export type IndicatorColumnFragment = {
   columnNumber: number;
   name: string;
   valueType?: Types.IndicatorValueTypeNode | null;
+  isActive: boolean;
   value?: {
     __typename: 'IndicatorValueNode';
     id: string;
@@ -888,6 +892,7 @@ export type IndicatorLineWithColumnsFragment = {
     columnNumber: number;
     name: string;
     valueType?: Types.IndicatorValueTypeNode | null;
+    isActive: boolean;
     value?: {
       __typename: 'IndicatorValueNode';
       id: string;
@@ -901,6 +906,7 @@ export type IndicatorLineWithColumnsFragment = {
     lineNumber: number;
     name: string;
     valueType?: Types.IndicatorValueTypeNode | null;
+    isActive: boolean;
   };
   customerIndicatorInfo: Array<{
     __typename: 'CustomerIndicatorInformationNode';
@@ -939,6 +945,7 @@ export type ProgramIndicatorsQuery = {
           columnNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
           value?: {
             __typename: 'IndicatorValueNode';
             id: string;
@@ -952,6 +959,7 @@ export type ProgramIndicatorsQuery = {
           lineNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
         };
         customerIndicatorInfo: Array<{
           __typename: 'CustomerIndicatorInformationNode';
@@ -1112,6 +1120,7 @@ export const IndicatorColumnFragmentDoc = gql`
     columnNumber
     name
     valueType
+    isActive
     value(
       periodId: $periodId
       customerNameId: $customerNameId
@@ -1129,6 +1138,7 @@ export const IndicatorLineRowFragmentDoc = gql`
     lineNumber
     name
     valueType
+    isActive
   }
 `;
 export const CustomerIndicatorInfoFragmentDoc = gql`

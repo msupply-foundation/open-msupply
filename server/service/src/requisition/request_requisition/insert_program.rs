@@ -261,6 +261,7 @@ fn generate(
         Some(
             ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(program.id.to_string())),
         ),
+        false,
     )?;
 
     let customer_name_id = StoreRepository::new(connection)

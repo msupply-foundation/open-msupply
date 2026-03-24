@@ -101,6 +101,7 @@ export const FooterComponent = ({
   const {
     query: { data },
     isDisabled,
+    isExternal,
   } = useInboundShipment();
   const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
@@ -110,7 +111,7 @@ export const FooterComponent = ({
     selectedRows,
     resetRowSelection
   );
-  const { mutateAsync } = useSaveInboundLines();
+  const { mutateAsync } = useSaveInboundLines(isExternal);
   const onChangeLineStatus = useChangeStatusOfInboundLines(
     selectedRows,
     resetRowSelection
@@ -185,7 +186,9 @@ export const FooterComponent = ({
     shipmentType
       ? getInboundStatusesForType(shipmentType)
       : inboundStatuses
-  ).filter(status => invoiceStatusOptions?.includes(status));
+  ).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
 
   return (
     <AppFooterPortal

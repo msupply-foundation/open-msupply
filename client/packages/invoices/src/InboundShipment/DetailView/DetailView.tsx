@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -20,7 +20,7 @@ import {
   Formatter,
   useAppTheme,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -31,6 +31,8 @@ import {
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
 } from '@openmsupply-client/system';
+
+const TABLE_ID = 'inbound-shipment-detail-view';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -107,10 +109,24 @@ const DetailViewInner = () => {
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
+  const [editPurchaseOrderLineId, setEditPurchaseOrderLineId] = useState<
+    string | null
+  >(null);
+
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
-      const item = 'lines' in line ? line.lines[0]?.item : line.item;
-      onOpen(item);
+      if ('lines' in line) {
+        const firstLine = line.lines[0];
+        onOpen(firstLine?.item);
+        setEditPurchaseOrderLineId(
+          firstLine?.purchaseOrderLine?.id ?? null
+        );
+      } else {
+        onOpen(line.item);
+        setEditPurchaseOrderLineId(
+          line.purchaseOrderLine?.id ?? null
+        );
+      }
     },
     [onOpen]
   );
@@ -126,6 +142,7 @@ const DetailViewInner = () => {
       ) {
         onOpen();
         setMode(ModalMode.Create);
+        setEditPurchaseOrderLineId(null);
         return;
       }
 
@@ -149,15 +166,19 @@ const DetailViewInner = () => {
   }, [toggleUploadModal, urlQuery, updateQuery]);
 
   const external = data?.purchaseOrder !== null;
-  const showLineStatus = data?.lines.nodes.some(line => line.status != null) ?? false;
+  const showLineStatus =
+    data?.lines.nodes.some(line => line.status != null) ?? false;
   const columns = useInboundShipmentColumns(external, showLineStatus);
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<InboundLineFragment>({
-      tableId: 'inbound-shipment-detail-view',
+      tableId: TABLE_ID,
       columns,
       data: lines,
-      grouping: { field: 'item.code' },
+      // REVIEW: could be confusing as there isn't any feedback for what field is being grouped by and we normally only group by item. However grouping by item doesn't really make sense for external IS while grouping by purchase order line number does make sense.
+      grouping: external
+        ? { field: 'purchaseOrderLine.lineNumber' }
+        : { field: 'item.code' },
       isLoading: false,
       initialSort: { key: 'itemName', dir: 'asc' },
       onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
@@ -225,7 +246,7 @@ const DetailViewInner = () => {
   const tabs = [
     {
       Component: isExtraSmallScreen ? (
-        <MobileCardList table={table} />
+        <CardList table={table} tableId={TABLE_ID} />
       ) : (
         <MaterialTable table={table} />
       ),
@@ -309,6 +330,7 @@ const DetailViewInner = () => {
               isExternalSupplier={!data.otherParty.store}
               hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
+              purchaseOrderLineId={editPurchaseOrderLineId}
               scannedBatchData={{
                 batch: (entity as ScannedBatchData)?.batch,
                 expiryDate: (entity as ScannedBatchData)?.expiryDate,

@@ -66,7 +66,7 @@ pub fn update_outbound_shipment_name(
                 ActivityLogRowRepository::new(connection).insert_one(&new_activity)?;
             }
 
-            get_invoice(ctx, None, &new_invoice.id)
+            get_invoice(ctx, None, &new_invoice.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })

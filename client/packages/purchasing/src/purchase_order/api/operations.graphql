@@ -289,6 +289,18 @@ query purchaseOrderLine($id: String!, $storeId: String!) {
   }
 }
 
+query unitsOrderedInOtherPurchaseOrders(
+  $storeId: String!
+  $itemId: String!
+  $excludePurchaseOrderId: String!
+) {
+  unitsOrderedInOtherPurchaseOrders(
+    storeId: $storeId
+    itemId: $itemId
+    excludePurchaseOrderId: $excludePurchaseOrderId
+  )
+}
+
 query purchaseOrderLinesCount(
   $filter: PurchaseOrderLineFilterInput
   $storeId: String!
