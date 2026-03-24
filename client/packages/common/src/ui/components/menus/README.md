@@ -1,16 +1,4 @@
-## common/ui/components/menus
+# common/ui/components/menus
 
-### Overview
-
-Menus / Dropdowns
-
-### Intentions
-
-Various menus / drop downs - not combo boxes or autocompletes (inputs)
-
-### Tips & Things to keep in mind
-
-- Disabled states
-- RTL Support
-
-### Future considerations
+- **Docs site**: https://docs.openmsupply.foundation/docs/client/packages/common/ui/components/menus/
+- **Source**: [docs-site/content/docs/client/packages/common/ui/components/menus/_index.md](/docs-site/content/docs/client/packages/common/ui/components/menus/_index.md)

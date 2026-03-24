@@ -1,3 +1,4 @@
 # Open mSupply Business Logic Layer
 
-[Stock movements](./doc/stock_movement.md)
+- **Docs site**: https://docs.openmsupply.foundation/docs/server/service/
+- **Source**: [docs-site/content/docs/server/service/_index.md](/docs-site/content/docs/server/service/_index.md)
