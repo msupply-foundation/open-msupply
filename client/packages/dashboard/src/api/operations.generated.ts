@@ -5,8 +5,8 @@ import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ItemCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  lowStockThreshold: Types.Scalars['Int']['input'];
-  highStockThreshold: Types.Scalars['Int']['input'];
+  lowStockThreshold: Types.Scalars['Float']['input'];
+  highStockThreshold: Types.Scalars['Float']['input'];
 }>;
 
 export type ItemCountsQuery = {
@@ -105,8 +105,8 @@ export type StockCountsQuery = {
 export const ItemCountsDocument = gql`
   query itemCounts(
     $storeId: String!
-    $lowStockThreshold: Int!
-    $highStockThreshold: Int!
+    $lowStockThreshold: Float!
+    $highStockThreshold: Float!
   ) {
     itemCounts(
       lowStockThreshold: $lowStockThreshold
