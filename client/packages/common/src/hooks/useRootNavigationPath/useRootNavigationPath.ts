@@ -7,7 +7,7 @@ import { useIsCentralServerApi } from '../../authentication/api/hooks/useIsCentr
 /**
  * Returns the appropriate root navigation path based on device type and configuration.
  * 
- * - Desktop: Dashboard
+ * - Desktop: Replenishment -> Inbound Shipment
  * - Mobile GAPS (central server): Manage -> Equipment  
  * - Mobile GAPS (store): Coldchain -> Equipment
  * - Mobile default: Replenishment -> Inbound Shipment
@@ -17,9 +17,11 @@ export const useRootNavigationPath = (): string => {
     const { isGaps } = usePreferences();
     const isCentralServer = useIsCentralServerApi();
 
-    // Desktop: always Dashboard
+    // Desktop: Inbound Shipment (avoids heavy dashboard queries on login)
     if (!isExtraSmallScreen) {
-        return RouteBuilder.create(AppRoute.Dashboard).build();
+        return RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InboundShipment)
+            .build();
     }
 
     // GAPS deployments on mobile: Equipment page (manage or coldchain depending on server type)
