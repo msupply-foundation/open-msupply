@@ -4,6 +4,7 @@ import {
   DocumentRegistryCategoryNode,
   InsertPatientInput,
   useQueryClient,
+  useNotification,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import {
@@ -72,6 +73,7 @@ export const useUpsertPatient = (
   confirmOnLeaving?: boolean
 ) => {
   const queryClient = useQueryClient();
+  const { error } = useNotification();
 
   const {
     documentName,
