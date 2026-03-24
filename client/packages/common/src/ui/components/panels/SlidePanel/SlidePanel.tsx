@@ -59,6 +59,8 @@ export const SlidePanel = ({
         bottom: 0,
         width,
         zIndex: 1399,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Slide direction="right" in={open} mountOnEnter unmountOnExit>
@@ -68,7 +70,7 @@ export const SlidePanel = ({
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            height: '100%',
+            flex: 1,
             width,
             zIndex: 1399,
           }}
