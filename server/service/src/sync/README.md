@@ -1,4 +1,4 @@
 # Sync - Synchronisation
 
-- **Docs site**: https://dev-docs.msupply.foundation/docs/server/service/sync/
-- **Source**: [docs-site/content/docs/server/service/sync/_index.md](/docs-site/content/docs/server/service/sync/_index.md)
+- **Docs site**: https://dev-docs.msupply.foundation/server/service/sync/
+- **Source**: [docs/content/server/service/sync/_index.md](/docs/content/server/service/sync/_index.md)

@@ -1,4 +1,4 @@
 # Reports
 
-- **Docs site**: https://dev-docs.msupply.foundation/docs/standard_reports/
-- **Source**: [docs-site/content/docs/standard_reports/_index.md](/docs-site/content/docs/standard_reports/_index.md)
+- **Docs site**: https://dev-docs.msupply.foundation/standard_reports/
+- **Source**: [docs/content/standard_reports/_index.md](/docs/content/standard_reports/_index.md)

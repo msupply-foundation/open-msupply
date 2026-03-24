@@ -1,4 +1,4 @@
 # Open mSupply Client
 
-- **Docs site**: https://dev-docs.msupply.foundation/docs/client/
-- **Source**: [docs-site/content/docs/client/\_index.md](/docs-site/content/docs/client/_index.md)
+- **Docs site**: https://dev-docs.msupply.foundation/client/
+- **Source**: [docs/content/client/\_index.md](/docs/content/client/_index.md)

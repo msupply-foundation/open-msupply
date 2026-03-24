@@ -1,4 +1,4 @@
 # Front end plugin framework
 
-- **Docs site**: https://dev-docs.msupply.foundation/docs/client/packages/plugins/
-- **Source**: [docs-site/content/docs/client/packages/plugins/_index.md](/docs-site/content/docs/client/packages/plugins/_index.md)
+- **Docs site**: https://dev-docs.msupply.foundation/client/packages/plugins/
+- **Source**: [docs/content/client/packages/plugins/_index.md](/docs/content/client/packages/plugins/_index.md)
