@@ -68,24 +68,23 @@ const useStatusChangeButton = () => {
     );
 
   const onConfirmStatusChange = async () => {
-    if (!selectedOption) return null;
+    if (!selectedOption) return;
     try {
-      await update({
+      const responses = await update({
         id: data?.id ?? '',
         status: selectedOption.value,
-      }).then(res => {
-        res?.forEach(res => {
-          if (
-            res.__typename === 'UpdateOutboundShipmentError' &&
-            res.error.__typename ===
-              'CannotHaveEstimatedDeliveryDateBeforeShippedDate'
-          ) {
-            info(t('error.estimated-delivery-before-shipped-date'))();
-          } else {
-            success(t('messages.shipment-saved'))();
-          }
-        });
       });
+      const hasEstimatedDeliveryError = responses?.some(
+        res =>
+          res?.__typename === 'UpdateOutboundShipmentError' &&
+          res.error.__typename ===
+            'CannotHaveEstimatedDeliveryDateBeforeShippedDate'
+      );
+      if (hasEstimatedDeliveryError) {
+        info(t('error.estimated-delivery-before-shipped-date'))();
+      } else {
+        success(t('messages.shipment-saved'))();
+      }
     } catch (e) {
       error(t('messages.error-saving-shipment'))();
     }
