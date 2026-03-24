@@ -23,9 +23,7 @@ import {
   Typography,
   CopyIcon,
   StockIcon,
-  InvoiceIcon,
-  EditIcon,
-  BookIcon,
+  InfoIcon,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
@@ -127,12 +125,12 @@ export const InboundLineEditCards = ({
 
   const columns = useMemo(() => {
     const cols: ColumnDef<DraftInboundLine>[] = [
-      // --- Quantity fields ---
+      // --- Stock line details fields ---
       {
         id: 'outstandingPacks',
         header: t('label.outstanding-packs'),
         size: 120,
-        columnGroup: 'quantity',
+        columnGroup: 'stockLineDetails',
         includeColumn: !!purchaseOrderId,
         accessorFn: () => poOutstandingPacks ?? 0,
         Cell: ({ cell }) => (
@@ -144,7 +142,7 @@ export const InboundLineEditCards = ({
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
         size: 120,
-        columnGroup: 'quantity',
+        columnGroup: 'stockLineDetails',
         includeColumn: isManualShipment,
         Cell: ({ row, cell }) => (
           <NumberInputCell
@@ -162,7 +160,7 @@ export const InboundLineEditCards = ({
         accessorKey: 'shippedNumberOfPacks',
         header: t('label.shipped-number-of-packs'),
         size: 100,
-        columnGroup: 'quantity',
+        columnGroup: 'stockLineDetails',
         includeColumn: isManualShipment,
         Cell: ({ row, cell }) => (
           <NumberInputCell
@@ -182,7 +180,7 @@ export const InboundLineEditCards = ({
         accessorKey: 'packSize',
         header: t('label.received-pack-size'),
         size: 120,
-        columnGroup: 'quantity',
+        columnGroup: 'stockLineDetails',
         Cell: ({ row, cell }) => {
           const line = row.original;
           const shippedPackSize = line.shippedPackSize;
@@ -233,7 +231,7 @@ export const InboundLineEditCards = ({
         accessorKey: 'numberOfPacks',
         header: t('label.packs-received'),
         size: 100,
-        columnGroup: 'quantity',
+        columnGroup: 'stockLineDetails',
         cardSummary: row => {
           const units = row.numberOfPacks * row.packSize;
           return `${t('label.received')} ${formatRef.current(row.numberOfPacks)} ${getPlural(t('label.pack'), row.numberOfPacks)} (${formatRef.current(units)} ${pluralisedUnitName.toLowerCase()})`;
@@ -283,7 +281,7 @@ export const InboundLineEditCards = ({
         }),
         size: 120,
         defaultHideOnMobile: true,
-        columnGroup: 'quantity',
+        columnGroup: 'stockLineDetails',
         accessorFn: row => {
           return row.numberOfPacks * row.packSize;
         },
@@ -326,18 +324,18 @@ export const InboundLineEditCards = ({
         accessorKey: 'doseQuantity',
         header: t('label.doses-received'),
         size: 100,
-        columnGroup: 'quantity',
+        columnGroup: 'stockLineDetails',
         includeColumn: displayInDoses,
         accessorFn: row => {
           const total = row.numberOfPacks * row.packSize;
           return formatRef.current(total * row.item.doses);
         },
       },
-      // --- Pricing fields ---
+      // --- More info fields ---
       {
         accessorKey: 'costPricePerPack',
         header: t('label.pack-cost-price'),
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ cell, row }) => (
           <CurrencyInputCell
@@ -355,7 +353,7 @@ export const InboundLineEditCards = ({
           currency: foreignCurrency?.code,
         }),
         size: 100,
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         accessorFn: row => {
           if (foreignCurrency) {
             return row.costPricePerPack / foreignCurrency.rate;
@@ -375,7 +373,7 @@ export const InboundLineEditCards = ({
       {
         accessorKey: 'sellPricePerPack',
         header: t('label.pack-sell-price'),
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ cell, row }) => (
           <CurrencyInputCell
@@ -391,7 +389,7 @@ export const InboundLineEditCards = ({
         accessorKey: 'lineTotal',
         header: t('label.line-total'),
         size: 100,
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         accessorFn: row => row.costPricePerPack * row.numberOfPacks,
         Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
@@ -400,7 +398,7 @@ export const InboundLineEditCards = ({
         id: 'foreignCurrencyLineTotal',
         header: t('label.fc-line-total'),
         size: 100,
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         accessorFn: row => {
           if (foreignCurrency) {
             return (
@@ -419,7 +417,6 @@ export const InboundLineEditCards = ({
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
-      // --- Stock line details fields ---
       {
         accessorKey: 'batch',
         header: t('label.batch'),
@@ -516,13 +513,12 @@ export const InboundLineEditCards = ({
         ),
         defaultHideOnMobile: true,
       },
-      // --- Item details fields ---
       {
         id: 'itemDoses',
         header: t('label.doses-per-unit'),
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
-        columnGroup: 'itemDetails',
+        columnGroup: 'moreInfo',
         includeColumn: displayInDoses,
         accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
       },
@@ -531,7 +527,7 @@ export const InboundLineEditCards = ({
         header: t('label.manufacture-date'),
         size: 150,
         columnType: ColumnType.Date,
-        columnGroup: 'itemDetails',
+        columnGroup: 'moreInfo',
         accessorFn: row => DateUtils.getDateOrNull(row.manufactureDate),
         Cell: ({ cell, row }) => {
           const value = cell.getValue<Date | null>();
@@ -552,7 +548,7 @@ export const InboundLineEditCards = ({
       {
         id: 'donor',
         header: t('label.donor'),
-        columnGroup: 'itemDetails',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ row: { original: row } }) => (
           <DonorSearchInput
@@ -573,7 +569,7 @@ export const InboundLineEditCards = ({
       {
         id: 'campaignOrProgram',
         header: t('label.campaign'),
-        columnGroup: 'itemDetails',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ row }) => (
           <CampaignOrProgramCell
@@ -588,7 +584,7 @@ export const InboundLineEditCards = ({
       {
         id: 'manufacturer',
         header: t('label.manufacturer'),
-        columnGroup: 'itemDetails',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ row: { original: row } }) => (
           <ManufacturerSearchInput
@@ -611,7 +607,7 @@ export const InboundLineEditCards = ({
         accessorKey: 'volumePerPack',
         header: t('label.volume-per-pack'),
         size: 140,
-        columnGroup: 'itemDetails',
+        columnGroup: 'moreInfo',
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -628,7 +624,7 @@ export const InboundLineEditCards = ({
         header: t('label.item-variant'),
         accessorFn: row => row.itemVariant?.id || '',
         size: 150,
-        columnGroup: 'itemDetails',
+        columnGroup: 'moreInfo',
         Cell: ({
           row: {
             original: { id, packSize, itemVariant, item },
@@ -729,10 +725,8 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-        quantity: <StockIcon />,
-        pricing: <InvoiceIcon />,
-        stockLineDetails: <EditIcon />,
-        itemDetails: <BookIcon />,
+        stockLineDetails: <StockIcon />,
+        moreInfo: <InfoIcon />,
       };
 
   return (
