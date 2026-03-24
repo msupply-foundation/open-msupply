@@ -201,11 +201,6 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       label={customLabel ?? t(labelKey)}
       tabIndex={variant === 'cancel' ? 1 : 0}
       type={type}
-      onKeyDown={e => {
-        if (e.key === 'Enter') {
-          onClick(e);
-        }
-      }}
       sx={
         disabled
           ? {
