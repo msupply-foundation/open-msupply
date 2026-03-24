@@ -160,8 +160,6 @@ const locales = [
 
 const rtlLocales = ['ar', 'prs', 'ps'];
 
-const pluralExceptions = ['each'];
-
 export type SupportedLocales = (typeof locales)[number];
 export const isRtlLocale = (locale: string) => rtlLocales.includes(locale);
 
@@ -215,13 +213,9 @@ export const useIntlUtils = () => {
     [language]
   );
 
+  // pluralize only works for English words. Any other language strings are returned unchanged
   const getPlural = (word: string, count: number) => {
-    // pluralize only works for English words. Any other language strings are returned unchanged
     if (language !== 'en') return word;
-
-    // pick up any known failures in the pluralization library and return the original word in that case
-    if (pluralExceptions.includes(word.toLowerCase())) return word;
-
     return pluralize(word, count);
   };
 

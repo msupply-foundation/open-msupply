@@ -162,7 +162,6 @@ export const RequestedSelection = ({
               )}
               dosesPerUnit={dosesPerUnit}
               dosesSelected={representation === Representation.DOSES}
-              unitsLabel={unitName}
             />
           )}
         </Box>
