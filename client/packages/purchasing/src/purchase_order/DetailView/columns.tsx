@@ -108,7 +108,7 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
       },
       {
         accessorKey: 'totalCost',
-        header: t('label.total-cost'),
+        header: t('label.line-cost'),
         columnType: ColumnType.Currency,
         Cell: props => (
           <CurrencyValueCell {...props} currencyCode={currencyCode} />

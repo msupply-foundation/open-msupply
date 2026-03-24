@@ -1,5 +1,5 @@
 use crate::activity_log::activity_log_entry;
-use crate::invoice::inbound_shipment::add_from_purchase_order;
+use crate::invoice::inbound_shipment::{add_from_purchase_order, InboundShipmentType};
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 use crate::WithDBError;
@@ -30,11 +30,12 @@ type OutError = InsertInboundShipmentError;
 pub fn insert_inbound_shipment(
     ctx: &ServiceContext,
     input: InsertInboundShipment,
+    r#type: InboundShipmentType,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let other_party = validate(connection, &ctx.store_id, &input)?;
+            let other_party = validate(connection, &ctx.store_id, &input, r#type)?;
             let new_invoice = generate(
                 connection,
                 &ctx.store_id,
@@ -61,7 +62,7 @@ pub fn insert_inbound_shipment(
                 None,
             )?;
 
-            get_invoice(ctx, None, &new_invoice.id)
+            get_invoice(ctx, None, &new_invoice.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
@@ -73,6 +74,8 @@ pub fn insert_inbound_shipment(
 #[derive(Debug, PartialEq)]
 pub enum InsertInboundShipmentError {
     InvoiceAlreadyExists,
+    WrongInboundShipmentType,
+    PurchaseOrderDoesNotExist,
     AddLinesFromPurchaseOrderWithoutPurchaseOrder,
     // Name validation
     OtherPartyDoesNotExist,
@@ -118,7 +121,8 @@ mod test {
     };
 
     use crate::{
-        invoice::inbound_shipment::InsertInboundShipment, service_provider::ServiceProvider,
+        invoice::inbound_shipment::{InboundShipmentType, InsertInboundShipment},
+        service_provider::ServiceProvider,
     };
 
     use super::InsertInboundShipmentError;
@@ -177,6 +181,7 @@ mod test {
                     other_party_id: mock_name_a().id.clone(),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::InvoiceAlreadyExists)
         );
@@ -189,6 +194,7 @@ mod test {
                     other_party_id: "invalid".to_string(),
                     ..Default::default()
                 },
+            InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -201,6 +207,7 @@ mod test {
                     other_party_id: not_visible().id,
                     ..Default::default()
                 },
+            InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -213,6 +220,7 @@ mod test {
                     other_party_id: not_a_supplier().id,
                     ..Default::default()
                 },
+            InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -265,6 +273,7 @@ mod test {
                     other_party_id: supplier().id,
                     ..Default::default()
                 },
+            InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -293,6 +302,7 @@ mod test {
                     on_hold: Some(true),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -319,6 +329,7 @@ mod test {
                     other_party_id: mock_name_linked_to_store_join().name_id.clone(),
                     ..Default::default()
                 },
+                    InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -344,6 +355,7 @@ mod test {
                     other_party_id: mock_name_not_linked_to_store().id.clone(),
                     ..Default::default()
                 },
+                    InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
