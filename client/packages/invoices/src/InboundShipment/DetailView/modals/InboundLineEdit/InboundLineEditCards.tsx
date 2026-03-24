@@ -701,6 +701,7 @@ export const InboundLineEditCards = ({
         table={table}
         lastItemRef={lastCardRef}
         groupIcons={groupIcons}
+        labelsAbove={simplified}
         actions={actions}
       />
     </>
