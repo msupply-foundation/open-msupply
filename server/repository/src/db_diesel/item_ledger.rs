@@ -42,7 +42,7 @@ table! {
         total_before_tax -> Nullable<Double>,
         number_of_packs -> Double,
         type_precedence -> Integer,
-        username -> Nullable<Text>,
+        user_id -> Nullable<Text>,
         running_balance -> Double,
     }
 }
@@ -68,7 +68,7 @@ pub struct ItemLedgerRow {
     pub total_before_tax: Option<f64>,
     pub number_of_packs: f64,
     pub type_precedence: i32,
-    pub username: Option<String>,
+    pub user_id: Option<String>,
     pub running_balance: f64,
 }
 

@@ -57,7 +57,7 @@ impl ViewMigrationFragment for ViewMigration {
           WHEN invoice.type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
           ELSE 3
         END AS type_precedence,
-        user_account.username AS username
+        invoice.user_id AS user_id
     FROM
         invoice_line_stock_movement
         LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
@@ -65,7 +65,6 @@ impl ViewMigrationFragment for ViewMigration {
         JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
         JOIN name_link ON invoice.name_link_id = name_link.id
         JOIN name ON name_link.name_id = name.id
-        LEFT JOIN user_account ON invoice.user_id = user_account.id
     )
     SELECT *,
       SUM(movement_in_units) OVER (

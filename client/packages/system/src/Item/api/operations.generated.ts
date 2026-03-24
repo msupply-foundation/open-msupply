@@ -1470,7 +1470,7 @@ export type ItemLedgerFragment = {
   sellPricePerPack: number;
   totalBeforeTax?: number | null;
   numberOfPacks: number;
-  username?: string | null;
+  user?: { __typename: 'UserNode'; username: string } | null;
 };
 
 export type ItemLedgerQueryVariables = Types.Exact<{
@@ -1504,7 +1504,7 @@ export type ItemLedgerQuery = {
       sellPricePerPack: number;
       totalBeforeTax?: number | null;
       numberOfPacks: number;
-      username?: string | null;
+      user?: { __typename: 'UserNode'; username: string } | null;
     }>;
   };
 };
@@ -1827,7 +1827,9 @@ export const ItemLedgerFragmentDoc = gql`
     sellPricePerPack
     totalBeforeTax
     numberOfPacks
-    username
+    user {
+      username
+    }
   }
 `;
 export const ItemsWithStockLinesDocument = gql`
