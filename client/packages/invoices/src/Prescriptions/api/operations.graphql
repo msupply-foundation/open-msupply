@@ -353,7 +353,7 @@ mutation upsertPrescription(
         ... on DeleteResponse {
           id
         }
-        ... on DeletePrescriptionError {
+        ... on DeleteInvoiceError {
           __typename
           error {
             description

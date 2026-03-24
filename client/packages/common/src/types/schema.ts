@@ -874,7 +874,7 @@ export type BatchOutboundShipmentResponse = {
   deleteOutboundShipmentUnallocatedLines?: Maybe<
     Array<DeleteOutboundShipmentUnallocatedLineResponseWithId>
   >;
-  deleteOutboundShipments?: Maybe<Array<DeleteOutboundShipmentResponseWithId>>;
+  deleteOutboundShipments?: Maybe<Array<DeleteInvoiceResponseWithId>>;
   insertOutboundShipmentLines?: Maybe<
     Array<InsertOutboundShipmentLineResponseWithId>
   >;
@@ -1099,16 +1099,11 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
-export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
-  DeleteErrorInterface &
-  DeleteInboundShipmentErrorInterface &
-  DeleteInvoiceErrorInterface &
-  DeletePrescriptionErrorInterface &
-  DeleteSupplierReturnErrorInterface & {
-    __typename: 'CannotDeleteInvoiceWithLines';
-    description: Scalars['String']['output'];
-    lines: InvoiceLineConnector;
-  };
+export type CannotDeleteInvoiceWithLines = DeleteInvoiceErrorInterface & {
+  __typename: 'CannotDeleteInvoiceWithLines';
+  description: Scalars['String']['output'];
+  lines: InvoiceLineConnector;
+};
 
 export type CannotDeleteLineLinkedToShipment =
   DeleteResponseRequisitionLineErrorInterface & {
@@ -1135,17 +1130,12 @@ export type CannotEditAdjustedQuantity = PurchaseOrderLineError & {
 export type CannotEditInvoice =
   AddToInboundShipmentFromMasterListErrorInterface &
     AddToOutboundShipmentFromMasterListErrorInterface &
-    DeleteCustomerReturnErrorInterface &
-    DeleteErrorInterface &
-    DeleteInboundShipmentErrorInterface &
     DeleteInboundShipmentLineErrorInterface &
     DeleteInboundShipmentServiceLineErrorInterface &
     DeleteInvoiceErrorInterface &
     DeleteOutboundShipmentLineErrorInterface &
     DeleteOutboundShipmentServiceLineErrorInterface &
-    DeletePrescriptionErrorInterface &
     DeletePrescriptionLineErrorInterface &
-    DeleteSupplierReturnErrorInterface &
     InsertInboundShipmentLineErrorInterface &
     InsertInboundShipmentServiceLineErrorInterface &
     InsertOutboundShipmentLineErrorInterface &
@@ -1781,32 +1771,6 @@ export type DeleteCampaignSuccess = {
   id: Scalars['String']['output'];
 };
 
-export type DeleteCustomerReturnError = {
-  __typename: 'DeleteCustomerReturnError';
-  error: DeleteCustomerReturnErrorInterface;
-};
-
-export type DeleteCustomerReturnErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type DeleteCustomerReturnResponse =
-  | DeleteCustomerReturnError
-  | DeleteResponse;
-
-export type DeleteErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type DeleteInboundShipmentError = {
-  __typename: 'DeleteInboundShipmentError';
-  error: DeleteInboundShipmentErrorInterface;
-};
-
-export type DeleteInboundShipmentErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type DeleteInboundShipmentInput = {
   id: Scalars['String']['input'];
 };
@@ -1834,14 +1798,10 @@ export type DeleteInboundShipmentLineResponseWithId = {
   response: DeleteInboundShipmentLineResponse;
 };
 
-export type DeleteInboundShipmentResponse =
-  | DeleteInboundShipmentError
-  | DeleteResponse;
-
 export type DeleteInboundShipmentResponseWithId = {
   __typename: 'DeleteInboundShipmentResponseWithId';
   id: Scalars['String']['output'];
-  response: DeleteInboundShipmentResponse;
+  response: DeleteInvoiceLineResponse;
 };
 
 export type DeleteInboundShipmentServiceLineError = {
@@ -1882,6 +1842,12 @@ export type DeleteInvoiceInput = {
 
 export type DeleteInvoiceLineResponse = DeleteInvoiceError | DeleteResponse;
 
+export type DeleteInvoiceResponseWithId = {
+  __typename: 'DeleteInvoiceResponseWithId';
+  id: Scalars['String']['output'];
+  response: DeleteInvoiceLineResponse;
+};
+
 export type DeleteInvoicesResponse = {
   __typename: 'DeleteInvoicesResponse';
   deleteInvoices: Array<MutationWithIdResponse>;
@@ -1908,11 +1874,6 @@ export type DeleteLocationInput = {
 
 export type DeleteLocationResponse = DeleteLocationError | DeleteResponse;
 
-export type DeleteOutboundShipmentError = {
-  __typename: 'DeleteOutboundShipmentError';
-  error: DeleteErrorInterface;
-};
-
 export type DeleteOutboundShipmentLineError = {
   __typename: 'DeleteOutboundShipmentLineError';
   error: DeleteOutboundShipmentLineErrorInterface;
@@ -1934,16 +1895,6 @@ export type DeleteOutboundShipmentLineResponseWithId = {
   __typename: 'DeleteOutboundShipmentLineResponseWithId';
   id: Scalars['String']['output'];
   response: DeleteOutboundShipmentLineResponse;
-};
-
-export type DeleteOutboundShipmentResponse =
-  | DeleteOutboundShipmentError
-  | DeleteResponse;
-
-export type DeleteOutboundShipmentResponseWithId = {
-  __typename: 'DeleteOutboundShipmentResponseWithId';
-  id: Scalars['String']['output'];
-  response: DeleteOutboundShipmentResponse;
 };
 
 export type DeleteOutboundShipmentServiceLineError = {
@@ -1992,15 +1943,6 @@ export type DeleteOutboundShipmentUnallocatedLineResponseWithId = {
   response: DeleteOutboundShipmentUnallocatedLineResponse;
 };
 
-export type DeletePrescriptionError = {
-  __typename: 'DeletePrescriptionError';
-  error: DeletePrescriptionErrorInterface;
-};
-
-export type DeletePrescriptionErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type DeletePrescriptionLineError = {
   __typename: 'DeletePrescriptionLineError';
   error: DeletePrescriptionLineErrorInterface;
@@ -2024,14 +1966,10 @@ export type DeletePrescriptionLineResponseWithId = {
   response: DeletePrescriptionLineResponse;
 };
 
-export type DeletePrescriptionResponse =
-  | DeletePrescriptionError
-  | DeleteResponse;
-
 export type DeletePrescriptionResponseWithId = {
   __typename: 'DeletePrescriptionResponseWithId';
   id: Scalars['String']['output'];
-  response: DeletePrescriptionResponse;
+  response: DeleteInvoiceLineResponse;
 };
 
 export type DeletePurchaseOrderError = {
@@ -2212,19 +2150,6 @@ export type DeleteStocktakeResponseWithId = {
   id: Scalars['String']['output'];
   response: DeleteStocktakeResponse;
 };
-
-export type DeleteSupplierReturnError = {
-  __typename: 'DeleteSupplierReturnError';
-  error: DeleteSupplierReturnErrorInterface;
-};
-
-export type DeleteSupplierReturnErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type DeleteSupplierReturnResponse =
-  | DeleteResponse
-  | DeleteSupplierReturnError;
 
 export type DeleteVaccineCourseError = {
   __typename: 'DeleteVaccineCourseError';
@@ -5309,12 +5234,6 @@ export type Mutations = {
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
   deleteAsset: DeleteAssetResponse;
-  /** @deprecated Use deleteInvoices instead */
-  deleteCustomerReturn: DeleteCustomerReturnResponse;
-  /** @deprecated Use deleteInvoices instead */
-  deleteInboundShipment: DeleteInboundShipmentResponse;
-  /** @deprecated Use deleteInvoices instead */
-  deleteInboundShipmentExternal: DeleteInboundShipmentResponse;
   deleteInboundShipmentExternalLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentExternalServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
@@ -5322,13 +5241,9 @@ export type Mutations = {
   /** Delete invoices by id, filtered by allowed types */
   deleteInvoices: DeleteInvoicesResponse;
   deleteLocation: DeleteLocationResponse;
-  /** @deprecated Use deleteInvoices instead */
-  deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
-  /** @deprecated Use deleteInvoices instead */
-  deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deletePurchaseOrder: DeletePurchaseOrderResponse;
   deletePurchaseOrderLines: Array<DeletePurchaseOrderLineResponseWithId>;
@@ -5339,8 +5254,6 @@ export type Mutations = {
   deleteRnrForm: DeleteRnRFormResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
-  /** @deprecated Use deleteInvoices instead */
-  deleteSupplierReturn: DeleteSupplierReturnResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
@@ -5545,21 +5458,6 @@ export type MutationsDeleteAssetArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type MutationsDeleteCustomerReturnArgs = {
-  id: Scalars['String']['input'];
-  storeId: Scalars['String']['input'];
-};
-
-export type MutationsDeleteInboundShipmentArgs = {
-  input: DeleteInboundShipmentInput;
-  storeId: Scalars['String']['input'];
-};
-
-export type MutationsDeleteInboundShipmentExternalArgs = {
-  input: DeleteInboundShipmentInput;
-  storeId: Scalars['String']['input'];
-};
-
 export type MutationsDeleteInboundShipmentExternalLineArgs = {
   input: DeleteInboundShipmentLineInput;
   storeId: Scalars['String']['input'];
@@ -5591,11 +5489,6 @@ export type MutationsDeleteLocationArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type MutationsDeleteOutboundShipmentArgs = {
-  id: Scalars['String']['input'];
-  storeId: Scalars['String']['input'];
-};
-
 export type MutationsDeleteOutboundShipmentLineArgs = {
   input: DeleteOutboundShipmentLineInput;
   storeId: Scalars['String']['input'];
@@ -5608,11 +5501,6 @@ export type MutationsDeleteOutboundShipmentServiceLineArgs = {
 
 export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
   input: DeleteOutboundShipmentUnallocatedLineInput;
-  storeId: Scalars['String']['input'];
-};
-
-export type MutationsDeletePrescriptionArgs = {
-  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -5663,11 +5551,6 @@ export type MutationsDeleteStocktakeArgs = {
 
 export type MutationsDeleteStocktakeLineArgs = {
   input: DeleteStocktakeLineInput;
-  storeId: Scalars['String']['input'];
-};
-
-export type MutationsDeleteSupplierReturnArgs = {
-  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -8420,9 +8303,6 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteAssetErrorInterface &
   DeleteAssetLogReasonErrorInterface &
   DeleteCampaignErrorInterface &
-  DeleteCustomerReturnErrorInterface &
-  DeleteErrorInterface &
-  DeleteInboundShipmentErrorInterface &
   DeleteInboundShipmentLineErrorInterface &
   DeleteInboundShipmentServiceLineErrorInterface &
   DeleteInvoiceErrorInterface &
@@ -8430,7 +8310,6 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteOutboundShipmentLineErrorInterface &
   DeleteOutboundShipmentServiceLineErrorInterface &
   DeleteOutboundShipmentUnallocatedLineErrorInterface &
-  DeletePrescriptionErrorInterface &
   DeletePrescriptionLineErrorInterface &
   DeletePurchaseOrderErrorInterface &
   DeletePurchaseOrderLineInterface &
@@ -8438,7 +8317,6 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteRequestRequisitionLineErrorInterface &
   DeleteResponseRequisitionErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
-  DeleteSupplierReturnErrorInterface &
   NodeErrorInterface &
   RequisitionLineChartErrorInterface &
   RequisitionLineStatsErrorInterface &

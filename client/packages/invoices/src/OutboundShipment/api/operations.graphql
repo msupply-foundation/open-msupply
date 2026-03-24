@@ -520,7 +520,7 @@ mutation upsertOutboundShipment(
         ... on DeleteResponse {
           id
         }
-        ... on DeleteOutboundShipmentError {
+        ... on DeleteInvoiceError {
           __typename
           error {
             description

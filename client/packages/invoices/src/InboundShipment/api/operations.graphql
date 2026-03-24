@@ -710,7 +710,7 @@ mutation upsertInboundShipment(
     deleteInboundShipments {
       id
       response {
-        ... on DeleteInboundShipmentError {
+        ... on DeleteInvoiceError {
           __typename
           error {
             description
@@ -978,7 +978,7 @@ mutation upsertInboundShipmentExternal(
     deleteInboundShipments {
       id
       response {
-        ... on DeleteInboundShipmentError {
+        ... on DeleteInvoiceError {
           __typename
           error {
             description

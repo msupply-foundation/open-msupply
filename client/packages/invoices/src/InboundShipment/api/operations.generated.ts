@@ -1171,7 +1171,7 @@ export type UpsertInboundShipmentMutation = {
       id: string;
       response:
         | {
-            __typename: 'DeleteInboundShipmentError';
+            __typename: 'DeleteInvoiceError';
             error:
               | {
                   __typename: 'CannotDeleteInvoiceWithLines';
@@ -1348,7 +1348,7 @@ export type UpsertInboundShipmentExternalMutation = {
       id: string;
       response:
         | {
-            __typename: 'DeleteInboundShipmentError';
+            __typename: 'DeleteInvoiceError';
             error:
               | {
                   __typename: 'CannotDeleteInvoiceWithLines';
@@ -2417,7 +2417,7 @@ export const UpsertInboundShipmentDocument = gql`
       deleteInboundShipments {
         id
         response {
-          ... on DeleteInboundShipmentError {
+          ... on DeleteInvoiceError {
             __typename
             error {
               description
@@ -2686,7 +2686,7 @@ export const UpsertInboundShipmentExternalDocument = gql`
       deleteInboundShipments {
         id
         response {
-          ... on DeleteInboundShipmentError {
+          ... on DeleteInvoiceError {
             __typename
             error {
               description

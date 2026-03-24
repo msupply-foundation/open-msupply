@@ -951,7 +951,7 @@ export type UpsertPrescriptionMutation = {
       id: string;
       response:
         | {
-            __typename: 'DeletePrescriptionError';
+            __typename: 'DeleteInvoiceError';
             error:
               | {
                   __typename: 'CannotDeleteInvoiceWithLines';
@@ -1615,7 +1615,7 @@ export const UpsertPrescriptionDocument = gql`
           ... on DeleteResponse {
             id
           }
-          ... on DeletePrescriptionError {
+          ... on DeleteInvoiceError {
             __typename
             error {
               description
