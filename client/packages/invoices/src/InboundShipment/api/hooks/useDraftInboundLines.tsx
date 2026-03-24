@@ -38,7 +38,7 @@ export const useDraftInboundLines = (
       : getInboundStockLines(data.lines.nodes);
   }, [data, itemId]);
 
-  const { mutateAsync, isLoading } = useSaveInboundLines();
+  const { mutateAsync, isPending: isLoading } = useSaveInboundLines();
   const { mutateAsync: deleteMutation } = useDeleteInboundLines();
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
@@ -83,7 +83,7 @@ export const useDraftInboundLines = (
     }
   }, [lines, item, id, isDirty]);
 
-  const addDraftLine = (initialPatch?: Partial<DraftInboundLine>) => {
+  const addDraftLine = useCallback((initialPatch?: Partial<DraftInboundLine>) => {
     if (item) {
       const newLine = CreateDraft.stockInLine({
         item,
@@ -93,7 +93,7 @@ export const useDraftInboundLines = (
       setIsDirty(true);
       setDraftLines(draftLines => [...draftLines, line]);
     }
-  };
+  }, [item, id, setIsDirty]);
 
   const duplicateDraftLine = useCallback(
     (lineId: string) => {
@@ -204,7 +204,7 @@ export const useDraftInboundLines = (
     duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
-    isLoading,
+    isPending: isLoading,
     saveLines,
     saveSingleLine,
   };

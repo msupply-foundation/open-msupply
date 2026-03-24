@@ -5,16 +5,16 @@ import { useApi } from './useApi';
 export const useInboundCounts = () => {
   const { storeId, api } = useApi();
 
-  const { data, ...rest } = useQuery(
-    [DASHBOARD, INBOUND, storeId],
-    () =>
+  const { data, ...rest } = useQuery({
+    queryKey: [DASHBOARD, INBOUND, storeId],
+
+    queryFn: () =>
       api.inboundCounts({
         storeId,
       }),
-    {
-      retry: false,
-    }
-  );
+
+    retry: false
+  });
 
   if (!data?.invoiceCounts?.inbound) {
     return { stats: undefined, ...rest };

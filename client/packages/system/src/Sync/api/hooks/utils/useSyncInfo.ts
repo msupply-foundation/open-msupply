@@ -13,14 +13,12 @@ export const useSyncInfo = (
   // even though the auth cookie existed with a valid token
   // the query is only enabled if there's a token -
   // no need to check the sync status if there's no token
-  const { data, ...rest } = useQuery(
-    api.keys.syncInfo(),
-    () => api.get.syncInfo(token),
-    {
-      refetchInterval,
-      enabled: !!token && enabled,
-    }
-  );
+  const { data, ...rest } = useQuery({
+    queryKey: api.keys.syncInfo(),
+    queryFn: () => api.get.syncInfo(token),
+    refetchInterval,
+    enabled: !!token && enabled
+  });
 
   return {
     ...rest,

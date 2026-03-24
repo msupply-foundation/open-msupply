@@ -6,7 +6,10 @@ export const useManufacturers = () => {
   const queryParams = useQueryParamsStore();
   const params = queryParams?.paramList ? queryParams.paramList() : {};
 
-  return useQuery(api.keys.paramList(params), () =>
-    api.get.manufacturers(params)
-  );
+  return useQuery({
+    queryKey: api.keys.paramList(params),
+
+    queryFn: () =>
+      api.get.manufacturers(params)
+  });
 };

@@ -4,7 +4,11 @@ import { useContactTraceApi } from '../utils/useContactTraceApi';
 export const useUpdateContactTrace = () => {
   const queryClient = useQueryClient();
   const api = useContactTraceApi();
-  return useMutation(api.update, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+  return useMutation({
+    mutationFn: api.update,
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: api.keys.base()
+    })
   });
 };

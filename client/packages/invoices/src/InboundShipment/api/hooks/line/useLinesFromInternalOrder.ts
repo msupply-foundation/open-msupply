@@ -10,8 +10,12 @@ export const useLinesFromInternalOrder = () => {
   const queryClient = useQueryClient();
   const api = useInboundApi();
   const { invoiceId = '' } = useParams();
-  return useMutation(api.insertLinesFromInternalOrder, {
+  return useMutation({
+    mutationFn: api.insertLinesFromInternalOrder,
+
     onSettled: () =>
-      queryClient.invalidateQueries([INBOUND, INBOUND_LINE, invoiceId]),
+      queryClient.invalidateQueries({
+        queryKey: [INBOUND, INBOUND_LINE, invoiceId]
+      })
   });
 };

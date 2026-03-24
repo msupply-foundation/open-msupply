@@ -4,9 +4,13 @@ import { useRequestApi } from '../utils/useRequestApi';
 export const useInsertRequest = () => {
   const queryClient = useQueryClient();
   const api = useRequestApi();
-  return useMutation(api.insert, {
+  return useMutation({
+    mutationFn: api.insert,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 };

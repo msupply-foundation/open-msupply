@@ -28,7 +28,7 @@ export const useStocktakeLineEdit = (
   const filteredItems = items.filter(item => item.item?.id === item?.id);
   const nextItem = useNextItem(filteredItems, item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item, lines);
-  const { saveAndMapStructuredErrors: upsertLines, isLoading: isSaving } =
+  const { saveAndMapStructuredErrors: upsertLines, isPending: isSaving } =
     useStocktakeOld.line.save();
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) =>

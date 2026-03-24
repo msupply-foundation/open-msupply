@@ -5,9 +5,13 @@ export const useInboundDelete = () => {
   const queryClient = useQueryClient();
   const api = useInboundApi();
 
-  return useMutation(api.delete, {
+  return useMutation({
+    mutationFn: api.delete,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 };

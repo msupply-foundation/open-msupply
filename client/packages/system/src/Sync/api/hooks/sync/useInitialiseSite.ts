@@ -3,5 +3,7 @@ import { useSyncApi } from '../utils/useSyncApi';
 
 export const useInitialiseSite = () => {
   const api = useSyncApi();
-  return useMutation(api.initialise);
+  return useMutation({
+    mutationFn: api.initialise
+  });
 };
