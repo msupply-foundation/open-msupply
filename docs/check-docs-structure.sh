@@ -21,6 +21,7 @@ should_skip() {
   case "$1" in
     "README.md") return 0 ;;                           # root README
     ".github/workflows/ACTIONS_README.md") return 0 ;; # not developer docs
+    docs/themes/*) return 0 ;;                         # theme vendored files
     *) return 1 ;;
   esac
 }
@@ -89,6 +90,30 @@ fi
 
 echo ""
 echo "Summary: $checked checked, $skipped skipped, $errors errors"
+
+# ── Broken internal links ──────────────────────────────────────────
+if command -v zola &>/dev/null; then
+  echo ""
+  echo "Checking internal links..."
+  build_output=$(cd "$REPO_ROOT/docs" && zola build 2>&1) || true
+  broken_links=$(echo "$build_output" | grep -c "does not exist\." || true)
+  if [ "$broken_links" -gt 0 ]; then
+    echo "$build_output" | grep "does not exist\."
+    echo ""
+    echo "Found $broken_links broken internal link(s)."
+    errors=$((errors + broken_links))
+  else
+    echo "OK: no broken internal links."
+  fi
+  # clean up build output
+  rm -rf "$REPO_ROOT/docs/public"
+else
+  echo ""
+  echo "SKIPPED: zola not found — skipping internal link check."
+fi
+
+echo ""
+echo "Total: $errors errors"
 
 if [ "$errors" -gt 0 ]; then
   echo ""
