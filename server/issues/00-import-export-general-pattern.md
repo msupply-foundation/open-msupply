@@ -118,6 +118,7 @@ Tables must be imported in dependency order:
 - **CSV files**: Simpler but no multi-sheet support; Excel allows bundling related tables in one workbook; Excel allows for cell formating to avoid issues with leading zeros, date formats, when csv if opened in Excel
 - **JSON import via API**: More precise but not user-friendly for non-technical administrators
 - **Sync protocol**: Already exists but is designed for system-to-system communication, not human editing
+- **Single column for code-or-ID**: Instead of separate code and ID columns per FK, use a single column that accepts either a code or a UUID. Rejected because exports wouldn't know which to populate, breaking round-trip compatibility. The chosen approach (separate code and ID columns, both populated on export, conflict-checked on import) keeps exports unambiguous and round-trippable while still catching user errors.
 
 ### Additional context
 
