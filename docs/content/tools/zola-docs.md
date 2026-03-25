@@ -1,10 +1,10 @@
 +++
-title = "Docs Guide"
-weight = 1
-template = "docs/section.html"
+title = "Zola Docs"
+weight = 10
+template = "docs/page.html"
 +++
 
-# Docs Guide
+# Docs Site
 
 ## Overview
 
@@ -18,7 +18,8 @@ This directory contains developer documentation for Open mSupply, served as a st
 docs/
 ├── check-docs-structure.sh      # CI check script
 └── content/                     # all site content lives here
-    ├── docs-guide.md            # this file
+    ├── tools/
+    │   └── docs-site.md         # this file
     ├── build/
     │   └── mac/
     │       └── _index.md
