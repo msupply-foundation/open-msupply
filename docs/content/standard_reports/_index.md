@@ -8,9 +8,9 @@ source = "code"
 
 # Reports
 
-The first part of this readme explains [basic tools](#basic-tools-and-uploading) for building and installing including [CLI tools](#cli-tools), and how to add reports to remote sites via the [ui interface](#uploading-reports).
+The first part of this readme explains [basic tools](#basic-tools-and-uploading) for building and installing including [CLI tools](#using-the-cli-tools), and how to add reports to remote sites via the [ui interface](#uploading-reports).
 
-The second part contains more detailed [development information](#report-development) such as information on [source file structuring](#report-source-files), information on [development](#development) processes, and [maintenance](#maintenance-support-info) of OMS reports.
+The second part contains more detailed [development information](#development) such as information on [source file structuring](#report-source-files), information on [development](#development) processes, and [maintenance](#maintenance-support-info) of OMS reports.
 
 ## Overview of Reports
 
@@ -197,8 +197,8 @@ Source files for each report are located in their own directory and have the fol
 
 1. [report-manifest.json](#report-manifest)
 2. [src dir](#src-dir)
-3. (optional) [convert_data_js dir](#convert_data_js-dir)
-4. (optional) [argument_schemas dir](#argument_schemas-dir)
+3. (optional) [convert_data_js dir](#convert-data-js-dir)
+4. (optional) [argument_schemas dir](#argument-schemas-dir)
 5. (optional) [excel template](#excel)
 
 A full tree diagram of the report source file structure can be viewed [here](#source-file-structure-diagram)
@@ -404,8 +404,7 @@ Other functionality, and processes used in report development are:
 [Translating of reports](#translating-reports)
 [Standard vs custom reports]
 [Report versioning](#report-versioning)
-[Wasm functions](#wasm-functions)
-[Development processes](#development-processes)
+[Development processes](#development)
 [File Structure](#file-structure-1)
 
 ### Tera templating language
@@ -574,7 +573,7 @@ Custom reports, which can contain client specific data, are located in the priva
 Standard reports are upserted into the database on startup.
 The committed json file `standard-reports.json` includes all standard reports, and all versions of each report.
 
-Otherwise the `open-msupply` standard reports, and `open-msupply-reports` custom reports function in the same way. They can both be built and upserted as a json array using OMS [CLI tools](#cli-tools).
+Otherwise the `open-msupply` standard reports, and `open-msupply-reports` custom reports function in the same way. They can both be built and upserted as a json array using OMS [CLI tools](#using-the-cli-tools).
 
 ### Report versioning
 
