@@ -319,7 +319,13 @@ const CustomTranslationsUploadModal = ({
         gap={2}
       >
         <Alert
-          severity={importMode === 'replace' ? 'warning' : 'info'}
+          severity={
+            importMode === 'replace'
+              ? 'error'
+              : importMode === 'overwrite'
+              ? 'warning'
+              : 'info'
+          }
           sx={{ width: '100%' }}
         >
           {t(IMPORT_MODE_WARNING[importMode])}
