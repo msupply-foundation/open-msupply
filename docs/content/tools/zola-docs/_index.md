@@ -1,15 +1,9 @@
 +++
-<<<<<<<< Updated upstream:docs/content/docs-guide.md
-title = "Docs Guide"
-weight = 1
-template = "docs/section.html"
-========
 title = "Zola Docs"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
 source = "docs"
->>>>>>>> Stashed changes:docs/content/tools/zola-docs/_index.md
 +++
 
 # Docs Guide
@@ -26,14 +20,10 @@ This directory contains developer documentation for Open mSupply, served as a st
 docs/
 ├── check-docs-structure.sh      # CI check script
 └── content/                     # all site content lives here
-<<<<<<<< Updated upstream:docs/content/docs-guide.md
-    ├── docs-guide.md            # this file
-========
     ├── tools/
     │   ├── _index.md            # source = "docs" (standalone)
     │   └── zola-docs/
     │       └── _index.md        # this file (source = "docs")
->>>>>>>> Stashed changes:docs/content/tools/zola-docs/_index.md
     ├── build/
     │   └── mac/
     │       └── _index.md        # source = "code"
