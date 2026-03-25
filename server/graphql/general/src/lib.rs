@@ -333,8 +333,8 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "Low stock threshold in months")] low_stock_threshold: Option<i32>,
-        #[graphql(desc = "High stock threshold in months")] high_stock_threshold: Option<i32>,
+        #[graphql(desc = "Low stock threshold in months")] low_stock_threshold: Option<f64>,
+        #[graphql(desc = "High stock threshold in months")] high_stock_threshold: Option<f64>,
     ) -> Result<ItemCounts> {
         item_counts(ctx, store_id, low_stock_threshold, high_stock_threshold)
     }
