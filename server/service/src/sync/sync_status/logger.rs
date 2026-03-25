@@ -3,6 +3,7 @@ use repository::{
     RepositoryError, StorageConnection, SyncApiErrorCode, SyncLogRow, SyncLogRowRepository,
 };
 use thiserror::Error;
+use tokio::sync::broadcast;
 use util::format_error;
 
 use crate::sync::{
@@ -49,6 +50,7 @@ enum SyncApiErrorVariant<'a> {
 pub struct SyncLogger<'a> {
     sync_log_repo: SyncLogRowRepository<'a>,
     row: SyncLogRow,
+    sync_status_notify: Option<broadcast::Sender<()>>,
 }
 
 #[derive(Error, Debug)]
@@ -80,7 +82,27 @@ impl<'a> SyncLogger<'a> {
 
         let sync_log_repo = SyncLogRowRepository::new(connection);
         sync_log_repo.upsert_one(&row)?;
-        Ok(SyncLogger { sync_log_repo, row })
+        let logger = SyncLogger {
+            sync_log_repo,
+            row,
+            sync_status_notify: None,
+        };
+        logger.notify();
+        Ok(logger)
+    }
+
+    /// Attach a broadcast sender for sync status change notifications
+    pub fn with_notify(mut self, sender: broadcast::Sender<()>) -> Self {
+        self.sync_status_notify = Some(sender);
+        self.notify();
+        self
+    }
+
+    /// Notify subscribers that sync status has changed
+    fn notify(&self) {
+        if let Some(sender) = &self.sync_status_notify {
+            let _ = sender.send(());
+        }
     }
 
     pub fn done(&mut self) -> Result<(), SyncLoggerError> {
@@ -92,6 +114,7 @@ impl<'a> SyncLogger<'a> {
         };
 
         self.sync_log_repo.upsert_one(&self.row)?;
+        self.notify();
         info!("Sync finished");
         Ok(())
     }
@@ -132,6 +155,7 @@ impl<'a> SyncLogger<'a> {
             (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.sync_log_repo.upsert_one(&self.row)?;
+        self.notify();
         Ok(())
     }
 
@@ -199,6 +223,7 @@ impl<'a> SyncLogger<'a> {
             (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.sync_log_repo.upsert_one(&self.row)?;
+        self.notify();
         Ok(())
     }
 
@@ -216,6 +241,7 @@ impl<'a> SyncLogger<'a> {
         };
 
         self.sync_log_repo.upsert_one(&self.row)?;
+        self.notify();
         Ok(())
     }
 
@@ -309,6 +335,7 @@ impl<'a> SyncLogger<'a> {
             (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.sync_log_repo.upsert_one(&self.row)?;
+        self.notify();
         Ok(())
     }
 }

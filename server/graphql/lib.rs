@@ -37,7 +37,7 @@ use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
-    InitialisationMutations, InitialisationQueries, MigrationQueries,
+    InitialisationMutations, InitialisationQueries, MigrationQueries, SyncStatusSubscriptions,
 };
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
@@ -307,7 +307,7 @@ impl BaseSubscriptions {
 }
 
 #[derive(MergedSubscription, Default, Clone)]
-pub struct Subscriptions(pub BaseSubscriptions);
+pub struct Subscriptions(pub BaseSubscriptions, pub SyncStatusSubscriptions);
 
 /// We need to swap schema between initialisation and operational modes
 /// this is done to avoid validations check in operational mode where
