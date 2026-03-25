@@ -27,6 +27,7 @@ import {
 import { Toolbar } from './Toolbar';
 import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
+import { LinkedCell } from './LinkedCell';
 import { SupplierCell } from './SupplierCell';
 
 const TABLE_ID = 'inbound-shipment-list-view';
@@ -131,11 +132,12 @@ export const InboundListView = () => {
         enableSorting: true,
       },
       {
-        header: t('label.purchase-order-number'),
-        accessorKey: 'purchaseOrder.number',
+        header: t('label.linked-po-requisition'),
         id: 'purchaseOrderNumber',
-        columnType: ColumnType.Number,
+        size: 180,
+        align: 'right',
         enableColumnFilter: true,
+        Cell: ({ row }) => <LinkedCell row={row.original} />,
       },
       {
         header: t('label.created'),
