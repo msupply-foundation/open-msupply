@@ -3,6 +3,7 @@ title = "Asset Catalogue"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+source = "code"
 +++
 
 This folder contains setup functions and helper scripts for GAPS functionality.

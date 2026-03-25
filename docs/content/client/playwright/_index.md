@@ -3,6 +3,7 @@ title = "Playwright E2E Tests"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+source = "code"
 +++
 
 # Playwright E2E Tests

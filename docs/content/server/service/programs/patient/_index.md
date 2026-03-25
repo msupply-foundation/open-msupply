@@ -3,6 +3,7 @@ title = "Patients and Sync"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+source = "code"
 +++
 
 > Context: [Patient and program transfers KDD](/decisions/2022-12-12_patient_and_program_transfer.md)
