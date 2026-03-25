@@ -3,6 +3,7 @@ title = "common/api/hooks/useQuerySelector"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+source = "code"
 +++
 
 ## common/api/hooks/useQuerySelector
