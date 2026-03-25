@@ -135,3 +135,5 @@ Each table will have its own issue with specific field mappings and lookup resol
 - [ ] Exported files are round-trippable (can be re-imported without modification)
 
 ### Moneyworks Jobcode
+
+OMS:DFGEN

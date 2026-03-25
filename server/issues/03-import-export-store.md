@@ -67,3 +67,5 @@ No way to bulk import/export store records.
 
 ### Moneyworks Jobcode
 
+OMS:DFGEN
+

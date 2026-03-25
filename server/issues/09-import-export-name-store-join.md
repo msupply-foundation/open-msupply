@@ -59,3 +59,5 @@ No way to bulk assign names (facilities/suppliers/customers) to stores.
 
 ### Moneyworks Jobcode
 
+OMS:DFGEN
+
