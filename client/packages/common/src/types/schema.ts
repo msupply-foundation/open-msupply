@@ -2999,6 +2999,11 @@ export enum InboundNodeType {
   ManualInternal = 'MANUAL_INTERNAL',
 }
 
+export type InboundShipmentsNotVerified = UpdatePurchaseOrderErrorInterface & {
+  __typename: 'InboundShipmentsNotVerified';
+  description: Scalars['String']['output'];
+};
+
 export type IndicatorColumnNode = {
   __typename: 'IndicatorColumnNode';
   columnNumber: Scalars['Int']['output'];
@@ -3385,6 +3390,7 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
+  purchaseOrderLineId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -7892,8 +7898,8 @@ export type QueriesInvoicesArgs = {
 };
 
 export type QueriesItemCountsArgs = {
-  highStockThreshold?: InputMaybe<Scalars['Int']['input']>;
-  lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
+  highStockThreshold?: InputMaybe<Scalars['Float']['input']>;
+  lowStockThreshold?: InputMaybe<Scalars['Float']['input']>;
   storeId: Scalars['String']['input'];
 };
 
