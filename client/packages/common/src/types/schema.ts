@@ -2992,6 +2992,11 @@ export type InboundInvoiceCounts = {
   notDelivered: Scalars['Int']['output'];
 };
 
+export type InboundShipmentsNotVerified = UpdatePurchaseOrderErrorInterface & {
+  __typename: 'InboundShipmentsNotVerified';
+  description: Scalars['String']['output'];
+};
+
 export type IndicatorColumnNode = {
   __typename: 'IndicatorColumnNode';
   columnNumber: Scalars['Int']['output'];
