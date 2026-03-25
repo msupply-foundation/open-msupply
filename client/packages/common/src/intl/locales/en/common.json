@@ -1768,6 +1768,7 @@
   "log.stock-batch-change": "Batch changed",
   "log.stock-cost-price-change": "Cost price changed",
   "log.stock-expiry-date-change": "Expiry date changed",
+  "log.stock-line-edit": "Stock line edited",
   "log.stock-location-change": "Location changed",
   "log.stock-off-hold": "Stock off hold",
   "log.stock-on-hold": "Stock on hold",
