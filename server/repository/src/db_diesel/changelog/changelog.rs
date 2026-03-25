@@ -1,16 +1,22 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link,
-    name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
-    LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
+    db_diesel::store_row::store,
+    diesel_macros::{apply_equal_filter, diesel_string_enum},
+    dynamic_query::create_condition,
+    name_link,
+    name_store_join::name_store_join,
+    syncv7::{translators, SyncType},
+    vaccination_row::vaccination,
+    DBConnection, DBType, EqualFilter, KeyType, KeyValueStoreRepository, LockedConnection,
+    NameLinkRow, RepositoryError, StorageConnection, SyncBufferV7Row,
 };
 use diesel::{
-    dsl::InnerJoin,
+    dsl::{InnerJoin, LeftJoinQuerySource},
     helper_types::{IntoBoxed, LeftJoin},
     prelude::*,
+    query_builder::{AstPass, Query, QueryFragment},
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
-use strum::EnumIter;
 use strum::IntoEnumIterator;
 use ts_rs::TS;
 
@@ -19,7 +25,7 @@ use diesel_derive_enum::DbEnum;
 table! {
     changelog (cursor) {
         cursor -> BigInt,
-        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
+        table_name -> Text,
         record_id -> Text,
         row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
         name_link_id -> Nullable<Text>,
@@ -32,7 +38,7 @@ table! {
 table! {
     changelog_deduped (cursor) {
         cursor -> BigInt,
-        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
+        table_name ->  Text,
         record_id -> Text,
         row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
         name_link_id -> Nullable<Text>,
@@ -59,84 +65,89 @@ pub enum RowActionType {
     Delete,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter, TS)]
-#[DbValueStyle = "snake_case"]
-pub enum ChangelogTableName {
-    GoodsReceivedLine,
-    BackendPlugin,
-    Number,
-    Location,
-    LocationMovement,
-    StockLine,
-    Invoice,
-    InvoiceLine,
-    Stocktake,
-    StocktakeLine,
-    Requisition,
-    RequisitionLine,
-    ActivityLog,
-    Barcode,
-    Clinician,
-    ClinicianStoreJoin,
-    Name,
-    NameStoreJoin,
-    Document,
-    Sensor,
-    TemperatureBreach,
-    TemperatureBreachConfig,
-    TemperatureLog,
-    PackVariant,
-    Currency,
-    AssetClass,
-    AssetCategory,
-    AssetCatalogueType,
-    AssetCatalogueItem,
-    AssetCatalogueItemProperty,
-    AssetCatalogueProperty,
-    AssetInternalLocation,
-    #[default]
-    SyncFileReference,
-    Asset,
-    AssetLog,
-    AssetLogReason,
-    AssetProperty,
-    Property,
-    NameProperty,
-    NameOmsFields,
-    RnrForm,
-    RnrFormLine,
-    Demographic,
-    VaccineCourse,
-    VaccineCourseItem,
-    VaccineCourseDose,
-    Vaccination,
-    Encounter,
-    ItemVariant,
-    PackagingVariant,
-    IndicatorValue,
-    BundledItem,
-    Item,
-    ContactForm,
-    SystemLog,
-    InsuranceProvider,
-    FrontendPlugin,
-    NameInsuranceJoin,
-    Report,
-    FormSchema,
-    PluginData,
-    Preference,
-    VVMStatusLog,
-    Campaign,
-    SyncMessage,
-    PurchaseOrder,
-    PurchaseOrderLine,
-    GoodsReceived,
-    MasterList,
+diesel_string_enum! {
+    #[derive(Clone, Serialize, Eq, Hash, Deserialize, strum::EnumIter, TS)]
+    pub enum ChangelogTableName {
+        GoodsReceivedLine,
+        BackendPlugin,
+        Number,
+        Location,
+        LocationMovement,
+        StockLine,
+        Invoice,
+        InvoiceLine,
+        Stocktake,
+        StocktakeLine,
+        Requisition,
+        RequisitionLine,
+        ActivityLog,
+        Barcode,
+        Clinician,
+        ClinicianStoreJoin,
+        Name,
+        NameStoreJoin,
+        Document,
+        Sensor,
+        TemperatureBreach,
+        TemperatureBreachConfig,
+        TemperatureLog,
+        PackVariant,
+        Currency,
+        AssetClass,
+        AssetCategory,
+        AssetCatalogueType,
+        AssetCatalogueItem,
+        AssetCatalogueItemProperty,
+        AssetCatalogueProperty,
+        AssetInternalLocation,
+        #[default]
+        SyncFileReference,
+        Asset,
+        AssetLog,
+        AssetLogReason,
+        AssetProperty,
+        Property,
+        NameProperty,
+        NameOmsFields,
+        RnrForm,
+        RnrFormLine,
+        Demographic,
+        VaccineCourse,
+        VaccineCourseItem,
+        VaccineCourseDose,
+        Vaccination,
+        Encounter,
+        ItemVariant,
+        PackagingVariant,
+        IndicatorValue,
+        BundledItem,
+        Item,
+        ContactForm,
+        SystemLog,
+        InsuranceProvider,
+        FrontendPlugin,
+        NameInsuranceJoin,
+        Report,
+        FormSchema,
+        PluginData,
+        Preference,
+        VVMStatusLog,
+        Campaign,
+        SyncMessage,
+        PurchaseOrder,
+        PurchaseOrderLine,
+        GoodsReceived,
+        MasterList,
+        Unit,
+        Store,
+        LocationType,
+    }
 }
 
 pub(crate) enum ChangeLogSyncStyle {
     Legacy,  // Everything that goes to Legacy mSupply server
     Central, // Data created on Open-mSupply central server
+    V7,      // Data created on Open-mSupply central server
     Remote,
     File,
     RemoteAndCentral, // These records will sync like remote record if store_id exist, otherwise they will sync like central records
@@ -170,7 +181,6 @@ impl ChangelogTableName {
             ChangelogTableName::TemperatureBreach => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::TemperatureBreachConfig => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::TemperatureLog => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Currency => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Item => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::PackVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetClass => ChangeLogSyncStyle::Central,
@@ -217,6 +227,10 @@ impl ChangelogTableName {
             ChangelogTableName::GoodsReceived => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::GoodsReceivedLine => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::MasterList => ChangeLogSyncStyle::ProcessorOnly,
+            ChangelogTableName::Unit => ChangeLogSyncStyle::V7,
+            ChangelogTableName::Store => ChangeLogSyncStyle::V7,
+            ChangelogTableName::Currency => ChangeLogSyncStyle::V7,
+            ChangelogTableName::LocationType => ChangeLogSyncStyle::V7,
         }
     }
 }
@@ -224,6 +238,7 @@ impl ChangelogTableName {
 #[derive(Debug, PartialEq, Insertable, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangeLogInsertRow {
+    #[diesel(deserialize_as = String)]
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: RowActionType,
@@ -235,6 +250,7 @@ pub struct ChangeLogInsertRow {
 #[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
+    #[diesel(deserialize_as = String)]
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: RowActionType,
@@ -306,13 +322,11 @@ impl<'a> ChangelogRepository<'a> {
             let query = create_filtered_query(earliest, filter)
                 .order(changelog_deduped::dsl::cursor.asc())
                 .limit(limit.into());
-
             // // Debug diesel query
             // println!(
             //     "{}",
             //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
-
+            // )
             let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
             Ok(result.into_iter().map(ChangelogRow::from_join).collect())
         })?;
@@ -832,4 +846,379 @@ mod test {
             assert_matches!(result, Some(_));
         }
     }
+}
+
+// Should really be in changelogv7
+
+use crate::dynamic_query::*;
+
+table! {
+    changelog_deduped_fast (cursor) {
+        cursor -> BigInt,
+        table_name ->  Text,
+        record_id -> Text,
+        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
+        name_link_id -> Nullable<Text>,
+        store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
+        source_site_id -> Nullable<Integer>,
+    }
+}
+
+diesel::alias!(store as transfer_stores: TransferStores,store as name_join_stores: NameJoinStores);
+
+allow_tables_to_appear_in_same_query!(changelog, store);
+allow_tables_to_appear_in_same_query!(changelog, name_store_join);
+
+// Expand macro, copy, remove ON statements and change joins to LeftJoinQuerySource
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    changelog::table
+        .left_join(store::table.on(store::id.nullable().eq(changelog::store_id)))
+        .left_join(
+            transfer_stores.on(transfer_stores
+                .field(store::name_link_id)
+                .nullable()
+                .eq(changelog::name_link_id)),
+        )
+        .left_join(
+            name_store_join::table.on(name_store_join::name_link_id
+                .nullable()
+                .eq(changelog::name_link_id)),
+        )
+        .left_join(
+            name_join_stores.on(name_join_stores
+                .field(store::id)
+                .eq(name_store_join::store_id)),
+        )
+}
+
+type Source = LeftJoinQuerySource<
+    LeftJoinQuerySource<
+        LeftJoinQuerySource<
+            LeftJoinQuerySource<
+                changelog::table,
+                store::table,
+                diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog::store_id>,
+            >,
+            transfer_stores,
+            diesel::dsl::Eq<
+                diesel::dsl::Nullable<diesel::dsl::Field<transfer_stores, store::name_link_id>>,
+                changelog::name_link_id,
+            >,
+        >,
+        name_store_join::table,
+        diesel::dsl::Eq<
+            diesel::dsl::Nullable<name_store_join::name_link_id>,
+            changelog::name_link_id,
+        >,
+    >,
+    name_join_stores,
+    diesel::dsl::Eq<diesel::dsl::Field<name_join_stores, store::id>, name_store_join::store_id>,
+>;
+
+create_condition!(
+    Source,
+    (site_id, i32, store::site_id),
+    (cursor, number, changelog::cursor),
+    (action, RowActionType, changelog::row_action),
+    (source_site_id, i32, changelog::source_site_id),
+    (table_name, ChangelogTableName, changelog::table_name),
+    (store_id, string, changelog::store_id),
+    (name_link_id, string, changelog::name_link_id),
+    (transfer_site_id, i32, transfer_stores.field(store::site_id)),
+    (transfer_store_id, string, transfer_stores.field(store::id)),
+    (
+        name_join_site_id,
+        i32,
+        name_join_stores.field(store::site_id)
+    ),
+    (
+        name_join_store_id,
+        string,
+        name_join_stores.field(store::id)
+    )
+);
+
+pub struct CursorAndLimit {
+    pub cursor: i64,
+    pub limit: i64,
+}
+
+pub enum Site {
+    SiteId(i32),
+    StoreIds(Vec<String>),
+}
+
+fn central_data() -> Condition::Inner {
+    let table_names = get_table_names_for_sync_types(&[SyncType::Central]);
+
+    Condition::table_name::any(table_names)
+}
+
+enum SyncDirection {
+    RemoteToCentral,
+    CentralToRemote { is_initialising: bool },
+}
+
+impl Site {
+    pub fn current_site(connection: &StorageConnection) -> Result<Self, RepositoryError> {
+        let site = KeyValueStoreRepository::new(connection)
+            .get_i32(KeyType::SettingsSyncSiteId)?
+            .map(Site::SiteId)
+            .unwrap_or(Site::StoreIds(vec![]));
+
+        Ok(site)
+    }
+
+    pub fn remote_data_for_site(&self) -> Condition::Inner {
+        let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
+
+        Condition::And(vec![
+            Condition::table_name::any(table_names),
+            match self {
+                Site::SiteId(site_id) => Condition::site_id::equal(*site_id),
+                Site::StoreIds(ids) => Condition::store_id::any(ids.clone()),
+            },
+        ])
+    }
+
+    pub fn filter_for_sync_type(
+        &self,
+        sync_direction: SyncDirection,
+        sync_type: SyncType,
+    ) -> Condition::Inner {
+        let and = match &sync_type {
+            SyncType::Central => match sync_direction {
+                SyncDirection::RemoteToCentral => Condition::TRUE,
+                SyncDirection::CentralToRemote { .. } => Condition::FALSE,
+            },
+            SyncType::Remote => {
+                let store_data = match self {
+                    Site::SiteId(site_id) => Condition::site_id::equal(*site_id),
+                    Site::StoreIds(ids) => Condition::store_id::any(ids.clone()),
+                };
+                let transfer = match self {
+                    Site::SiteId(site_id) => Condition::transfer_site_id::equal(*site_id),
+                    Site::StoreIds(ids) => Condition::transfer_store_id::any(ids.clone()),
+                };
+                match sync_direction {
+                    SyncDirection::CentralToRemote {
+                        is_initialising: false,
+                    } => transfer,
+                    SyncDirection::CentralToRemote {
+                        is_initialising: true,
+                    } => Condition::Or(vec![store_data, transfer]),
+                    SyncDirection::RemoteToCentral => store_data,
+                }
+            }
+            // If name has name_link_id it's a patient
+            SyncType::Name => {
+                let patient_is_visible = match self {
+                    Site::SiteId(site_id) => Condition::name_join_site_id::equal(*site_id),
+                    Site::StoreIds(ids) => Condition::name_join_store_id::any(ids.clone()),
+                };
+                match sync_direction {
+                    SyncDirection::CentralToRemote { .. } => {
+                        Condition::Or(vec![patient_is_visible, Condition::name_link_id::is_null()])
+                    }
+                    SyncDirection::RemoteToCentral => patient_is_visible,
+                }
+            }
+        };
+
+        let table_names = get_table_names_for_sync_types(&[sync_type]);
+        Condition::And(vec![and, Condition::table_name::any(table_names)])
+    }
+
+    pub fn all_data_for_site(&self, is_initialising: bool) -> Condition::Inner {
+        let mut or_conditions = vec![self.transfer_data_for_site(), central_data()];
+
+        if is_initialising {
+            or_conditions.push(self.remote_data_for_site());
+        }
+
+        let filter = Condition::Or(or_conditions);
+        if is_initialising {
+            Condition::And(vec![
+                filter,
+                Condition::action::not_equal(RowActionType::Delete),
+            ])
+        } else {
+            filter
+        }
+    }
+
+    fn transfer_data_for_site(&self) -> Condition::Inner {
+        let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
+
+        Condition::And(vec![
+            Condition::table_name::any(table_names),
+            match self {
+                Site::SiteId(site_id) => Condition::transfer_site_id::equal(*site_id),
+                Site::StoreIds(ids) => Condition::transfer_store_id::any(ids.clone()),
+            },
+        ])
+    }
+}
+
+pub fn get_table_names_for_sync_types(sync_types: &[SyncType]) -> Vec<ChangelogTableName> {
+    translators()
+        .iter()
+        .filter(|r| sync_types.contains(&r.sync_type()))
+        .map(|visitor| visitor.table_name().to_owned())
+        .collect()
+}
+
+impl ChangelogRow {
+    pub fn to_sync_buffer(self) -> SyncBufferV7Row {
+        let Self {
+            table_name,
+            record_id,
+            row_action,
+            name_id,
+            store_id,
+            source_site_id,
+            ..
+        } = self;
+
+        SyncBufferV7Row {
+            table_name,
+            record_id,
+            action: row_action,
+            name_id,
+            store_id,
+            source_site_id,
+            ..Default::default()
+        }
+    }
+}
+
+pub struct Logs<FH, SQ> {
+    pub filter: FH,
+    pub select_query: SQ,
+    pub is_total: bool,
+}
+
+impl<FH: 'static, SQ: 'static> diesel::query_builder::QueryId for Logs<FH, SQ> {
+    type QueryId = Logs<FH, SQ>;
+    const HAS_STATIC_QUERY_ID: bool = false;
+
+    fn query_id() -> Option<std::any::TypeId> {
+        if Self::HAS_STATIC_QUERY_ID {
+            Some(std::any::TypeId::of::<Self::QueryId>())
+        } else {
+            None
+        }
+    }
+}
+
+impl<FH: QueryFragment<DBType> + 'static, SQ: Query + QueryFragment<DBType> + 'static> Query
+    for Logs<FH, SQ>
+// The SqlType for Dos is manually specified below due to Diesel macro expansion limitations.
+// It is defining the days_out_of_stock table structure.
+{
+    type SqlType = SQ::SqlType;
+}
+
+impl<FH: QueryFragment<DBType> + 'static, SQ: QueryFragment<DBType> + 'static>
+    RunQueryDsl<DBConnection> for Logs<FH, SQ>
+{
+}
+
+impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType> for Logs<FH, SQ> {
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DBType>) -> QueryResult<()> {
+        let changelog_deduped_fast = if self.is_total {
+            r#"
+changelog_partition AS (
+SELECT *,
+    ROW_NUMBER() OVER (
+        PARTITION BY record_id
+        ORDER BY cursor DESC
+    ) AS rn
+FROM changelog where record_id IN (SELECT record_id FROM changelog_filtered)
+),
+changelog_deduped_fast AS (
+SELECT * FROM changelog_partition WHERE rn = 1
+)
+            "#
+        } else {
+            r#"
+max_cursors AS 
+(SELECT record_id, max(cursor) AS cursor FROM changelog_filtered GROUP BY record_id),
+changelog_deduped_fast AS (
+SELECT * FROM changelog WHERE cursor in (SELECT cursor FROM max_cursors)
+)
+            "#
+        };
+
+        out.push_sql("WITH changelog_filtered AS (");
+        self.filter.walk_ast(out.reborrow())?;
+        out.push_sql(&format!(
+            r#"
+),       
+{changelog_deduped_fast}
+SELECT * FROM ("#
+        ));
+
+        self.select_query.walk_ast(out.reborrow())?;
+
+        out.push_sql(
+            r#"
+)
+        "#,
+        );
+
+        Ok(())
+    }
+}
+
+pub fn get_changelogs_fast(
+    connection: &StorageConnection,
+    filter: Condition::Inner,
+    CursorAndLimit { cursor, limit }: CursorAndLimit,
+) -> Result<Vec<ChangelogRow>, RepositoryError> {
+    let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
+
+    let select_query = Logs {
+        is_total: false,
+        filter: query().filter(filter.to_boxed()),
+        select_query: changelog_deduped_fast::table
+            .order_by(changelog_deduped_fast::cursor.asc())
+            .limit(limit),
+    };
+
+    // Debug diesel query
+    println!(
+        "\n{}\n",
+        diesel::debug_query::<DBType, _>(&select_query).to_string()
+    );
+
+    let changelogs = select_query.load(connection.lock().connection())?;
+
+    Ok(changelogs)
+}
+
+pub fn get_total_changelogs_fast(
+    connection: &StorageConnection,
+    filter: Condition::Inner,
+    cursor: i64,
+) -> Result<i64, RepositoryError> {
+    let filter = Condition::And(vec![filter, Condition::cursor::greater_then(cursor)]);
+
+    let total_query = Logs {
+        is_total: true,
+        filter: query().filter(filter.to_boxed()),
+        select_query: changelog_deduped_fast::table.count(),
+    };
+
+    // Debug diesel query
+    // println!(
+    //     "\n{}\n",
+    //     diesel::debug_query::<DBType, _>(&total_query).to_string()
+    // );
+
+    let total: i64 = total_query.get_result(connection.lock().connection())?;
+
+    Ok(total)
 }

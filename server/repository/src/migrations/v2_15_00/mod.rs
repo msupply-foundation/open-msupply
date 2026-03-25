@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod remove_skip_immediate_statuses_in_outbound_pref;
+mod sync_v7;
 
 pub(crate) struct V2_15_00;
 impl Migration for V2_15_00 {
@@ -14,9 +15,10 @@ impl Migration for V2_15_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(
-            remove_skip_immediate_statuses_in_outbound_pref::Migrate,
-        )]
+        vec![
+            Box::new(remove_skip_immediate_statuses_in_outbound_pref::Migrate),
+            Box::new(sync_v7::Migrate),
+        ]
     }
 }
 

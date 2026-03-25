@@ -4,7 +4,7 @@ use crate::{
     cursor_controller::CursorController,
     sync::{
         get_sync_push_changelogs_filter, sync_status::logger::SyncStepProgress,
-        GetActiveStoresOnSiteError, SyncChangelogError,
+        GetCurrentSiteIdError, SyncChangelogError,
     },
 };
 
@@ -60,7 +60,7 @@ pub(crate) enum RemotePushError {
     #[error("Total remaining sent to server is 0 but integration not started")]
     IntegrationNotStarted,
     #[error("Problem getting active stores on site during remote push")]
-    GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
+    GetActiveStoresOnSiteError(#[from] GetCurrentSiteIdError),
     #[error("Problem getting changelog during remote push")]
     SyncChangelogError(#[from] SyncChangelogError),
     #[error(transparent)]

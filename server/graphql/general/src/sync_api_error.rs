@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use repository::SyncApiErrorCode;
+use repository::{syncv7::SyncError, SyncApiErrorCode};
 use service::sync::{
     api::{SyncApiError, SyncApiErrorVariantV5, SyncApiV5CreatingError, SyncErrorCodeV5},
     site_info::RequestAndSetSiteInfoError,
@@ -129,6 +129,35 @@ impl SyncErrorNode {
         };
 
         Self::from_variant(variant, message)
+    }
+
+    pub(crate) fn from_sync_log_error_v7(error: SyncError) -> Self {
+        let full_error = format_error(&error);
+
+        use SyncError as from;
+        use Variant as to;
+
+        let variant = match error {
+            from::DatabaseError(_) => to::Unknown,
+            from::SyncRecordSerializeError(_) => to::Unknown,
+            from::RecordNotFound { .. } => to::Unknown,
+            from::SyncVersionMismatch(_, _, _) => to::ApiVersionIncompatible,
+            from::NotACentralServer => to::Unknown,
+            from::Authentication => to::IncorrectPassword,
+            from::SiteLockError(_) => to::Unknown,
+            from::ConnectionError { .. } => to::ConnectionError,
+            from::ParsingError { .. } => to::Unknown,
+            from::IntegrationTimeoutReached => to::IntegrationTimeoutReached,
+            from::SiteIdNotSet => to::Unknown,
+            from::GetCurrentSiteIdError(_) => to::Unknown,
+            from::SiteIdMismatch { .. } => to::Unknown,
+            from::Other(_) => to::Unknown,
+        };
+
+        SyncErrorNode {
+            variant,
+            full_error,
+        }
     }
 }
 
