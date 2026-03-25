@@ -26,6 +26,10 @@ pub enum RequisitionNodeType {
     Request,
     /// Supplying store requisition in response to request requisition
     Response,
+    /// Imprest requisition where each item has a pre-determined max quantity
+    Imprest,
+    /// Stock history requisition where facility submits stock on hand
+    StockHistory,
 }
 
 /// Approval status is applicable to response requisition only

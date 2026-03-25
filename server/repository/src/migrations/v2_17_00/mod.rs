@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_forecasting_fields_to_requisition_line;
+mod add_imprest_and_stock_history_to_requisition_type;
 mod add_manufacture_date_to_stock_and_invoice_lines;
 mod add_manufacturer_link_id_to_lines;
 mod add_purchase_order_id_to_invoice;
@@ -25,6 +26,7 @@ impl Migration for V2_17_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_forecasting_fields_to_requisition_line::Migrate),
+            Box::new(add_imprest_and_stock_history_to_requisition_type::Migrate),
             Box::new(remove_goods_received::Migrate),
             Box::new(remove_goods_received_cleanup::Migrate),
             Box::new(add_purchase_order_id_to_invoice::Migrate),
