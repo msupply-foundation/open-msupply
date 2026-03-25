@@ -528,41 +528,44 @@ fn program_requisition_request_push_record() -> TestSyncOutgoingRecord {
 const REQUISITION_IMPREST: (&str, &str) = (
     "IM_B3D3761753DB42A7B3286ACF89FBCA1C",
     r#"{
-      "ID": "IM_B3D3761753DB42A7B3286ACF89FBCA1C",
-      "date_stock_take": "2021-03-15",
-      "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
-      "name_ID": "name_store_a",
-      "status": "fn",
-      "date_entered": "2021-03-16",
-      "nsh_custInv_ID": "",
-      "daysToSupply": 30,
-      "store_ID": "store_b",
-      "type": "im",
-      "date_order_received": "0000-00-00",
-      "previous_csh_id": "",
-      "serial_number": 10,
-      "requester_reference": "",
-      "comment": "imprest requisition",
-      "colour": 0,
-      "custom_data": null,
-      "linked_requisition_id": "",
-      "linked_purchase_order_ID": "",
-      "authorisationStatus": "",
-      "thresholdMOS": 0,
-      "orderType": "",
-      "periodID": "",
-      "programID": "",
-      "lastModifiedAt": 1615900000,
-      "is_emergency": false,
-      "isRemoteOrder": false,
-      "om_created_datetime": "",
-      "om_sent_datetime": "",
-      "om_finalised_datetime": "",
-      "om_expected_delivery_date": "0000-00-00",
-      "om_max_months_of_stock": 0,
-      "om_status": "",
-      "om_colour": "",
-      "oms_fields": {}
+        "ID": "IM_B3D3761753DB42A7B3286ACF89FBCA1C",
+        "date_stock_take": "2018-02-20",
+        "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+        "name_ID": "name_store_a",
+        "status": "cn",
+        "date_entered": "2018-02-20",
+        "nsh_custInv_ID": "",
+        "daysToSupply": 30,
+        "store_ID": "store_b",
+        "type": "im",
+        "date_order_received": "2018-02-20",
+        "previous_csh_id": "",
+        "serial_number": 10,
+        "requester_reference": "bing bong",
+        "comment": "imprest requisition",
+        "colour": 0,
+        "custom_data": null,
+        "linked_requisition_id": "",
+        "linked_purchase_order_ID": "",
+        "authorisationStatus": "",
+        "thresholdMOS": 0,
+        "orderType": "",
+        "periodID": "",
+        "programID": "",
+        "lastModifiedAt": 1606132783,
+        "is_emergency": false,
+        "isRemoteOrder": false,
+        "om_created_datetime": null,
+        "om_sent_datetime": null,
+        "om_finalised_datetime": null,
+        "om_expected_delivery_date": null,
+        "om_max_months_of_stock": null,
+        "om_status": null,
+        "om_colour": null,
+        "date_required": "0000-00-00",
+        "requisition_category_ID": "",
+        "donor_ID": "",
+        "oms_fields": {}
     }"#,
 );
 fn requisition_imprest_pull_record() -> TestSyncIncomingRecord {
@@ -576,21 +579,16 @@ fn requisition_imprest_pull_record() -> TestSyncIncomingRecord {
             name_id: "name_store_a".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::Imprest,
-            status: RequisitionStatus::Sent,
-            created_datetime: NaiveDate::from_ymd_opt(2021, 3, 16)
+            status: RequisitionStatus::New,
+            created_datetime: NaiveDate::from_ymd_opt(2018, 2, 20)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
-            sent_datetime: Some(
-                NaiveDate::from_ymd_opt(2021, 3, 16)
-                    .unwrap()
-                    .and_hms_opt(13, 6, 40)
-                    .unwrap(),
-            ),
+            sent_datetime: None,
             finalised_datetime: None,
             colour: None,
             comment: Some("imprest requisition".to_string()),
-            their_reference: None,
+            their_reference: Some("bing bong".to_string()),
             max_months_of_stock: 1.0,
             min_months_of_stock: 0.0,
             linked_requisition_id: None,
@@ -616,29 +614,24 @@ fn requisition_imprest_push_record() -> TestSyncOutgoingRecord {
             name_ID: "name_store_a".to_string(),
             store_ID: "store_b".to_string(),
             r#type: LegacyRequisitionType::Im,
-            status: LegacyRequisitionStatus::Fn,
-            date_entered: NaiveDate::from_ymd_opt(2021, 3, 16).unwrap(),
-            requester_reference: None,
+            status: LegacyRequisitionStatus::Sg,
+            date_entered: NaiveDate::from_ymd_opt(2018, 2, 20).unwrap(),
+            requester_reference: Some("bing bong".to_string()),
             linked_requisition_id: None,
             thresholdMOS: 0.0,
             daysToSupply: 30,
             comment: Some("imprest requisition".to_string()),
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2021, 3, 16)
+                NaiveDate::from_ymd_opt(2018, 2, 20)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
-            last_modified_at: 1615900000,
-            sent_datetime: Some(
-                NaiveDate::from_ymd_opt(2021, 3, 16)
-                    .unwrap()
-                    .and_hms_opt(13, 6, 40)
-                    .unwrap()
-            ),
+            last_modified_at: 0,
+            sent_datetime: None,
             finalised_datetime: None,
             max_months_of_stock: Some(1.0),
-            om_status: Some(RequisitionStatus::Sent),
+            om_status: Some(RequisitionStatus::New),
             om_colour: None,
             expected_delivery_date: None,
             approval_status: None,
@@ -702,7 +695,7 @@ fn requisition_stock_history_pull_record() -> TestSyncIncomingRecord {
             name_id: "name_store_b".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::StockHistory,
-            status: RequisitionStatus::Sent,
+            status: RequisitionStatus::Finalised,
             created_datetime: NaiveDate::from_ymd_opt(2021, 4, 2)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -764,7 +757,7 @@ fn requisition_stock_history_push_record() -> TestSyncOutgoingRecord {
             ),
             finalised_datetime: None,
             max_months_of_stock: Some(3.0),
-            om_status: Some(RequisitionStatus::Sent),
+            om_status: Some(RequisitionStatus::Finalised),
             om_colour: None,
             expected_delivery_date: None,
             approval_status: None,
