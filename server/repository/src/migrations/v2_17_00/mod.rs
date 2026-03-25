@@ -12,8 +12,8 @@ mod item_category_join_add_item_link_id;
 mod item_store_join_add_default_location_id;
 mod remove_goods_received;
 mod remove_goods_received_cleanup;
-mod vaccine_course_store_config;
 mod requisition_add_destination_customer_link_id;
+mod vaccine_course_store_config;
 
 pub(crate) struct V2_17_00;
 impl Migration for V2_17_00 {
@@ -28,7 +28,6 @@ impl Migration for V2_17_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_forecasting_fields_to_requisition_line::Migrate),
-            Box::new(add_imprest_and_stock_history_to_requisition_type::Migrate),
             Box::new(remove_goods_received::Migrate),
             Box::new(remove_goods_received_cleanup::Migrate),
             Box::new(add_purchase_order_id_to_invoice::Migrate),
@@ -40,6 +39,7 @@ impl Migration for V2_17_00 {
             Box::new(import_goods_received::Migrate),
             Box::new(vaccine_course_store_config::Migrate),
             Box::new(requisition_add_destination_customer_link_id::Migrate),
+            Box::new(add_imprest_and_stock_history_to_requisition_type::Migrate),
         ]
     }
 }
