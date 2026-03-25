@@ -3,6 +3,7 @@ title = "Sync Logger and Sync Status"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+source = "code"
 +++
 
 # Sync Logger and Sync Status

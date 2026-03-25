@@ -1,14 +1,16 @@
 +++
 title = "Zola Docs"
 weight = 10
-template = "docs/page.html"
+sort_by = "weight"
+template = "docs/section.html"
+source = "docs"
 +++
 
 # Docs Site
 
 ## Overview
 
-This directory contains developer documentation for Open mSupply, served as a static site using [Zola](https://www.getzola.org/). Content mirrors the repository's README files and can be extended with additional authored content.
+This directory contains developer documentation for Open mSupply, served as a static site using [Zola](https://www.getzola.org/). Content mirrors the repository's README files and can be extended with standalone documentation.
 
 **Site URL**: https://dev-docs.msupply.foundation/
 
@@ -19,12 +21,14 @@ docs/
 ├── check-docs-structure.sh      # CI check script
 └── content/                     # all site content lives here
     ├── tools/
-    │   └── docs-site.md         # this file
+    │   ├── _index.md            # source = "docs" (standalone)
+    │   └── zola-docs/
+    │       └── _index.md        # this file (source = "docs")
     ├── build/
     │   └── mac/
-    │       └── _index.md
+    │       └── _index.md        # source = "code"
     ├── client/
-    │   ├── _index.md
+    │   ├── _index.md            # source = "code"
     │   └── packages/
     │       ├── common/
     │       │   ├── _index.md
@@ -34,7 +38,7 @@ docs/
     │           ├── _index.md
     │           └── images/
     ├── server/
-    │   ├── _index.md
+    │   ├── _index.md            # source = "code"
     │   └── service/
     │       ├── _index.md
     │       └── sync/
@@ -48,25 +52,45 @@ docs/
 
 ## Adding Content
 
+Every documentation file includes a `source` field in its frontmatter:
+
+- `source = "code"` — linked to a README in the codebase. The CI check verifies a matching README exists.
+- `source = "docs"` — standalone content that lives only on the docs site. No README counterpart expected.
+
+Every page is a directory with an `_index.md` file. To add standalone content:
+
+1. Create a directory under `docs/content/` (e.g. `tools/zola-docs/`)
+2. Add an `_index.md` with `source = "docs"` in the frontmatter
+
+Example frontmatter:
+
+```toml
++++
+title = "Tools"
+weight = 90
+sort_by = "weight"
+template = "docs/section.html"
+source = "docs"
++++
+```
+
 ### Code-related documentation
 
 Documentation that describes a specific module, package, or area of the codebase should have a README in the repo next to the code it documents. This README is then mirrored to the docs site as an `_index.md`.
 
-These files:
-
-- Contain Zola TOML frontmatter (`+++` block) followed by the original README content
-- Act as **section pages** in Zola, meaning they can have child pages beneath them
-- Are paired with a **pointer README** in the original location that links back to the docs site
+2. **A pointer README** at the original code location that links to the docs site. Previously, this README contained the documentation content.
+1. **An `_index.md`** in `docs/content/` at the mirrored path and contains the documentation content.
 
 To add a new one:
 
 1. Create a `README.md` in the relevant directory in the repository
 2. Create a matching `_index.md` in `docs/content/` at the mirrored path (stripping `src/`, see below)
-3. Add Zola frontmatter with the title extracted from the README's first heading
-4. Replace the original README with a pointer file
-5. If the README references images, copy them to an `images/` directory next to the `_index.md`
+3. Add Zola frontmatter with `source = "code"` and the title from the first heading
+4. Write your documentation content in the `_index.md` file
+5. Create a pointer README at the code location
+6. If the content references images, store them in an `images/` directory next to the `_index.md`
 
-The CI check script will flag any README that doesn't have a corresponding `_index.md` or vice versa.
+The CI check script will flag any README that doesn't have a corresponding `_index.md`, and any `_index.md` with `source = "code"` that has no matching README.
 
 Example frontmatter:
 
@@ -76,6 +100,7 @@ title = "Sync - Synchronisation"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+source = "code"
 +++
 ```
 
@@ -98,32 +123,13 @@ The `src/` directory segment is a code-only convention and is removed from docs 
 | `server/repository/src/db_diesel/README.md` | `docs/content/server/repository/db_diesel/_index.md` |
 | `client/packages/common/src/ui/README.md`   | `docs/content/client/packages/common/ui/_index.md`   |
 
-### Non-code documentation
+### Standalone documentation
 
-Documentation that isn't tied to a specific part of the codebase — such as guides, tutorials, architecture overviews, or content sourced from wikis or external docs — lives only in `docs/content/` with no corresponding README in the repo.
+Documentation that isn't tied to a specific part of the codebase — such as guides, tutorials, architecture overviews, or tool documentation — lives only in `docs/content/` with no corresponding README in the repo.
 
-1. Create a named `.md` file (e.g. `setup-guide.md`) in the appropriate section directory
-2. Add Zola frontmatter with a title and weight
-3. The file will appear as a child page of that section
-
-These files are not tracked by the CI check script since they have no README counterpart.
-
-Example:
-
-```
-content/standard_reports/
-├── _index.md              # mirrored README (section page)
-├── setup.md               # authored leaf page
-├── creating-reports.md    # authored leaf page
-└── support.md             # authored leaf page
-```
-
-URLs:
-
-- `/standard_reports/` — the section page (mirrored README)
-- `/standard_reports/setup/` — leaf page
-- `/standard_reports/creating-reports/` — leaf page
-- `/standard_reports/support/` — leaf page
+1. Create a directory in the appropriate location (e.g. `tools/jenkins/`)
+2. Add an `_index.md` with `source = "docs"` in the frontmatter
+3. The page will appear as a child of the parent section
 
 ### Nesting content
 
@@ -136,45 +142,33 @@ content/standard_reports/
 └── _index.md            # everything about reports in one page
 ```
 
-Or split into focused pages:
+Or split into child pages:
 
 ```
 content/standard_reports/
-├── _index.md              # overview (section page)
-├── setup.md               # child: /standard_reports/setup/
-├── creating-reports.md    # child: /standard_reports/creating-reports/
-└── support.md             # child: /standard_reports/support/
+├── _index.md              # overview: /standard_reports/
+├── setup/
+│   └── _index.md          # child: /standard_reports/setup/
+├── creating-reports/
+│   └── _index.md          # child: /standard_reports/creating-reports/
+└── support/
+    └── _index.md          # child: /standard_reports/support/
 ```
 
-In Zola, an `_index.md` file is a **section** — it represents a directory and any `.md` files next to it become its **children** (pages listed under it). A named file like `setup.md` is a **leaf** — a standalone page that cannot have its own children.
-
-This means if a subtopic itself needs further breakdown, it must become a directory with its own `_index.md`:
+Nesting can go as deep as needed:
 
 ```
 content/standard_reports/
-├── _index.md              # section page: /standard_reports/
-├── support.md             # leaf: /standard_reports/support/
-└── setup/                 # subsection — because setup has its own children
-    ├── _index.md          # section page: /standard_reports/setup/
-    ├── mac.md             # child: /standard_reports/setup/mac/
-    └── windows.md         # child: /standard_reports/setup/windows/
+├── _index.md              # /standard_reports/
+├── support/
+│   └── _index.md          # /standard_reports/support/
+└── setup/
+    ├── _index.md          # /standard_reports/setup/
+    ├── mac/
+    │   └── _index.md      # /standard_reports/setup/mac/
+    └── windows/
+        └── _index.md      # /standard_reports/setup/windows/
 ```
-
-A named file cannot do this — `setup.md` cannot have `mac.md` and `windows.md` beneath it. If you find a leaf page needs children later, convert it from a named file to a directory with `_index.md`.
-
-### Named file and directory collision
-
-A named file and a directory cannot share the same name at the same level:
-
-```
-# This does NOT work — URL collision at /server/sync/
-content/server/
-├── sync.md        # URL: /server/sync/
-└── sync/          # URL: /server/sync/
-    └── _index.md
-```
-
-Since mirrored content uses directories and authored content uses named files, this only conflicts if a named file matches an existing directory — which should be avoided.
 
 ### Images
 
@@ -182,12 +176,14 @@ Images referenced by a file are stored in an `images/` directory next to the `_i
 
 ## Structure Decisions
 
-### `_index.md` vs named files
+### `source` field
 
-- `_index.md` = mirrored from a repository README
-- Named file = authored content, no repository counterpart
+Every `_index.md` has a `source` field:
 
-This convention makes it clear which docs are synced with the repo and which are docs-site-only.
+- `source = "code"` — code-related, linked to a README in the codebase
+- `source = "docs"` — standalone, no README counterpart
+
+The `source` field makes it clear which docs are code-related and which are standalone. The CI check uses this to decide whether to enforce a matching README.
 
 ### Flat content root
 
@@ -202,7 +198,7 @@ Some directories exist only because a child README is deeper in the tree (e.g. `
 `docs/check-docs-structure.sh` verifies the docs structure stays in sync with the repository:
 
 - **Missing**: flags any tracked README that has no corresponding `_index.md` in `docs/content/`
-- **Orphaned**: flags any `_index.md` in `docs/content/` that has no corresponding README in the repo
+- **Orphaned**: flags any `_index.md` without `source = "docs"` that has no corresponding README in the repo
 
 Run it with:
 
@@ -214,8 +210,10 @@ Example failure output:
 
 ```
 MISSING: some/new/README.md has no corresponding _index.md at docs/content/some/new/_index.md
+ORPHANED: docs/content/some/section/_index.md (no corresponding README — add source = "docs" to frontmatter if this is content not relating to a section of code)
 
-Summary: 68 checked, 2 skipped, 1 errors
+Summary: 68 checked, 2 skipped, 2 errors
+
 
 Check failed.
 ```

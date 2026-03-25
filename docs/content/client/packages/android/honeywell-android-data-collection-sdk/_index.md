@@ -3,6 +3,7 @@ title = "honeywell-android-data-collection-sdk"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+source = "code"
 +++
 
 The honeywell SDK include examples and libs along with these docs.
