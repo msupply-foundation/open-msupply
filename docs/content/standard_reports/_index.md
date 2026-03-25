@@ -500,7 +500,7 @@ Translating functionality should be used in standard reports. Custom reports for
 This can be implemented in the report by adding the following translation function in place of your text:
 
 ```
-{{t(k="label.name", f="Name")}}
+{ {t(k="label.name", f="Name")} }
 ```
 
 Where the letters are short hand for the following:
