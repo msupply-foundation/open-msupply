@@ -57,7 +57,9 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TABLE changelog ALTER COLUMN table_name TYPE TEXT USING table_name::TEXT
+                    ALTER TABLE changelog ALTER COLUMN table_name TYPE TEXT USING table_name::TEXT;
+                    ALTER TYPE key_type ADD VALUE IF NOT EXISTS 'SYNC_PUSH_CURSOR_V7';
+                    ALTER TYPE key_type ADD VALUE IF NOT EXISTS 'SYNC_PULL_CURSOR_V7';
                 "#,
             )?;
         }

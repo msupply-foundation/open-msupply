@@ -85,8 +85,8 @@ export const parseResult = (content?: string): ScanResult => {
 
 // for data matrix codes, the result is split by a group by character
 // only the first group is parsed, and with a \x1d at the start this group is empty
-const sanitiseBarcodeResult = (result: ScanResult) =>
-  result.content?.replace('\x1d', '');
+// const sanitiseBarcodeResult = (result: ScanResult) =>
+//   result.content?.replace('\x1d', '');
 
 export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   children,
@@ -177,10 +177,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
     if (hasNativeBarcodeScanner) {
       setIsScanning(true);
-      const timeout = setTimeout(async () => {
-        await stopScan();
-        if (!hasElectronApi) error(t('error.unable-to-read-barcode'))();
-      }, SCAN_TIMEOUT_IN_MS);
+      // const timeout = setTimeout(async () => {
+      //   await stopScan();
+      //   if (!hasElectronApi) error(t('error.unable-to-read-barcode'))();
+      // }, SCAN_TIMEOUT_IN_MS);
 
       // // Check camera permission
       // await BarcodeScannerPlugin.checkPermission({ force: true });
