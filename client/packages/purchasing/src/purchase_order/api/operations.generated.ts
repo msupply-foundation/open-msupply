@@ -72,6 +72,7 @@ export type PurchaseOrderFragment = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -152,6 +153,7 @@ export type PurchaseOrderLineFragment = {
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
   shippedNumberOfUnits: number;
+  receivedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
   pricePerPackAfterDiscount: number;
   pricePerPackBeforeDiscount: number;
@@ -457,6 +459,7 @@ export type PurchaseOrderLinesQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -529,6 +532,7 @@ export type PurchaseOrderLineQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -746,6 +750,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedDeliveryDate
     requestedNumberOfUnits
     shippedNumberOfUnits
+    receivedNumberOfUnits
     adjustedNumberOfUnits
     pricePerPackAfterDiscount
     pricePerPackBeforeDiscount
