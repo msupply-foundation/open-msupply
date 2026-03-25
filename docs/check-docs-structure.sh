@@ -59,6 +59,12 @@ while IFS= read -r readme; do
 
 done <<< "$readmes"
 
+# ── Helper: check if an _index.md has source = "docs" in frontmatter ─
+is_docs_source() {
+  # Reads the TOML frontmatter (between +++ delimiters) and checks for source = "docs"
+  awk '/^\+\+\+$/{n++; next} n==1' "$1" | grep -q '^source[[:space:]]*=[[:space:]]*"docs"'
+}
+
 # ── Detect orphaned _index.md files ───────────────────────────────────
 expected_files=$(echo "$readmes" | while IFS= read -r readme; do
   should_skip "$readme" && continue
@@ -71,11 +77,12 @@ actual_files=$(find "$DOCS_CONTENT" -name '_index.md' -type f | sort)
 orphans=$(comm -23 <(echo "$actual_files") <(echo "$expected_files"))
 if [ -n "$orphans" ]; then
   echo ""
-  echo "ORPHANED _index.md files (no corresponding README):"
   orphan_count=0
   while IFS= read -r orphan; do
-    echo "  ${orphan#$REPO_ROOT/}"
-    orphan_count=$((orphan_count + 1))
+    if ! is_docs_source "$orphan"; then
+      echo "ORPHANED: ${orphan#$REPO_ROOT/} (no corresponding README — add source = \"docs\" to frontmatter if this is standalone content)"
+      orphan_count=$((orphan_count + 1))
+    fi
   done <<< "$orphans"
   errors=$((errors + orphan_count))
 fi
