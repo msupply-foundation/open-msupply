@@ -487,9 +487,7 @@ fn from_legacy_finalised_datetime(
     status: &LegacyRequisitionStatus,
 ) -> Option<NaiveDateTime> {
     match r#type {
-        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => {
-            None
-        }
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => None,
         RequisitionType::Response => {
             if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
                 Some(
@@ -676,7 +674,7 @@ mod tests {
         let (_, connection, _, _) =
             setup_all("test_requisition_wp_status_errors", MockDataInserts::none()).await;
 
-        // An imprest requisition with "wp" (web progress) status should error
+        // An imprest requisition with "wp" (web in progress) status should error
         // because "wp" deserializes to LegacyRequisitionStatus::Others which is unsupported
         let wp_imprest_json = r#"{
           "ID": "WP_TEST_RECORD_ID",
