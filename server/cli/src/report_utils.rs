@@ -1,8 +1,8 @@
 use base64::{prelude::BASE64_STANDARD, Engine};
-use report_builder::{build::build_report_definition, BuildArgs};
+use report_builder::{build::build_report_definition, BuildArgs, BuildTemplateType};
 use repository::{schema_from_row, ContextType, FormSchemaRow, RepositoryError};
 use service::{
-    report::definition::ConvertDataType,
+    report::definition::{ConvertDataType, TemplateType},
     standard_reports::{ReportData, ReportsData},
 };
 use std::{ffi::OsStr, fs, path::PathBuf, process::Command};
@@ -128,12 +128,18 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
     let query_default = manifest.query_default;
 
+    let (template_name, build_template_type) = match manifest.template_type {
+        TemplateType::Typst => ("template.typ".to_string(), BuildTemplateType::Typst),
+        TemplateType::Tera => ("template.html".to_string(), BuildTemplateType::Tera),
+    };
+
     let args = BuildArgs {
         dir: path.join("src"),
         output: Some(path.join("generated").join("built_report.json")),
-        template: "template.html".to_string(),
+        template: template_name,
         header: manifest.header,
         footer: manifest.footer,
+        template_type: build_template_type,
         query_gql: graphql_query,
         query_default,
         query_sql: sql_queries,
@@ -144,6 +150,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
 
     report_definition.index.convert_data = convert_data;
     report_definition.index.convert_data_type = manifest.convert_data_type;
+    report_definition.index.template_type = manifest.template_type;
 
     let form_schema_json = match (arguments_path, arguments_ui_path) {
         (Some(_), None) | (None, Some(_)) => {
@@ -238,6 +245,8 @@ pub struct Manifest {
     pub convert_data: Option<String>,
     #[serde(default)]
     pub convert_data_type: ConvertDataType,
+    #[serde(default)]
+    pub template_type: TemplateType,
     pub query_default: Option<String>,
     pub excel_template: Option<String>,
 }

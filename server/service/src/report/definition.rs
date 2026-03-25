@@ -57,10 +57,23 @@ pub struct TeraTemplate {
     pub template: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct TypstTemplate {
+    pub template: String,
+}
+
 /// The output format that is produced by a report
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum ReportOutputType {
     Html,
+}
+
+/// The template engine used by a report
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
+pub enum TemplateType {
+    #[default]
+    Tera,
+    Typst,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -68,6 +81,7 @@ pub enum ReportOutputType {
 pub enum ReportDefinitionEntry {
     Manifest(Manifest),
     TeraTemplate(TeraTemplate),
+    TypstTemplate(TypstTemplate),
     /// Custom http query
     GraphGLQuery(GraphQlQuery),
     /// Use default predefined query
@@ -95,6 +109,8 @@ pub struct ReportDefinitionIndex {
     pub convert_data: Option<String>,
     #[serde(default)]
     pub convert_data_type: ConvertDataType,
+    #[serde(default)]
+    pub template_type: TemplateType,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]

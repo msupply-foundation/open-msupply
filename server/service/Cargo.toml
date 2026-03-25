@@ -42,6 +42,9 @@ tokio = { version = "1.50.0", features = [
     "rt-multi-thread",
 ] }
 headless_chrome = "1.0.21"
+typst = "0.14.2"
+typst-assets = { version = "0.14.2", features = ["fonts"] }
+typst-pdf = "0.14.2"
 pretty_assertions = { workspace = true }
 flate2 = "1.1.9"
 simple-log = { workspace = true }

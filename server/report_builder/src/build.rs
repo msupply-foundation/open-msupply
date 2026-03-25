@@ -1,7 +1,7 @@
 use anyhow::Result;
 use service::report::definition::{
     DefaultQuery, GraphQlQuery, Manifest, ReportDefinition, ReportDefinitionEntry,
-    ReportDefinitionIndex, ReportOutputType, SQLQuery, TeraTemplate,
+    ReportDefinitionIndex, ReportOutputType, SQLQuery, TeraTemplate, TypstTemplate,
 };
 use std::{
     collections::HashMap,
@@ -9,7 +9,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::BuildArgs;
+use crate::{BuildArgs, BuildTemplateType};
 
 fn find_project_files(dir: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
     let mut map = HashMap::new();
@@ -109,15 +109,19 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         .ok_or(anyhow::Error::msg("Template file does not exist"))?;
     let data = fs::read_to_string(template_file)
         .map_err(|err| anyhow::Error::msg(format!("Failed to load template file: {err}")))?;
-    entries.insert(
-        args.template.clone(),
-        ReportDefinitionEntry::TeraTemplate(TeraTemplate {
+
+    let template_entry = match args.template_type {
+        BuildTemplateType::Typst => ReportDefinitionEntry::TypstTemplate(TypstTemplate {
+            template: data,
+        }),
+        BuildTemplateType::Tera => ReportDefinitionEntry::TeraTemplate(TeraTemplate {
             output: ReportOutputType::Html,
             template: data,
         }),
-    );
+    };
+    entries.insert(args.template.clone(), template_entry);
 
-    // header
+    // header (Tera only — Typst handles headers within the template)
     if let Some(header) = &args.header {
         let file_path = files
             .remove(header)
@@ -134,7 +138,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         );
     }
 
-    // footer
+    // footer (Tera only — Typst handles footers within the template)
     if let Some(footer) = &args.footer {
         let file_path = files
             .remove(footer)

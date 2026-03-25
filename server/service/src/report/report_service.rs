@@ -27,10 +27,11 @@ use super::{
     default_queries::get_default_gql_query,
     definition::{
         ConvertDataType, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
-        SQLQuery, TeraTemplate,
+        SQLQuery, TeraTemplate, TemplateType, TypstTemplate,
     },
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
+    typst_printing::typst_to_pdf,
     utils::translate_report_arugment_schema,
 };
 
@@ -93,10 +94,13 @@ pub struct ResolvedReportDefinition {
     pub footer: Option<String>,
     /// Map of all found Tera templates in the report definition
     pub templates: HashMap<String, TeraTemplate>,
+    /// Map of all found Typst templates in the report definition
+    pub typst_templates: HashMap<String, TypstTemplate>,
     pub queries: Vec<ResolvedReportQuery>,
     pub resources: HashMap<String, serde_json::Value>,
     pub convert_data: Option<String>,
     pub convert_data_type: ConvertDataType,
+    pub template_type: TemplateType,
     pub excel_template_buffer: Option<Vec<u8>>,
 }
 
@@ -160,7 +164,49 @@ pub trait ReportServiceTrait: Sync + Send {
         resolve_report_definition(ctx, name, report_definition, excel_template_buffer)
     }
 
-    /// Converts a HTML report to a file for the target PrintFormat and returns file id
+    /// Generates a report and converts it to the target PrintFormat, returning a file id
+    fn generate_report_output(
+        &self,
+        base_dir: &str,
+        report: &ResolvedReportDefinition,
+        report_data: serde_json::Value,
+        arguments: Option<serde_json::Value>,
+        format: Option<PrintFormat>,
+        localisations: &Localisations,
+        current_language: Option<String>,
+    ) -> Result<String, ReportError> {
+        match report.template_type {
+            TemplateType::Tera => {
+                let document = generate_tera_report(
+                    report,
+                    report_data,
+                    arguments,
+                    localisations,
+                    current_language,
+                )?;
+
+                match format {
+                    Some(PrintFormat::Html) => {
+                        generate_html_report_to_html(base_dir, document, report.name.clone())
+                    }
+                    Some(PrintFormat::Excel) => export_html_report_to_excel(
+                        base_dir,
+                        document,
+                        report.name.clone(),
+                        &report.excel_template_buffer,
+                    ),
+                    Some(PrintFormat::Pdf) | None => {
+                        generate_html_report_to_pdf(base_dir, document, report.name.clone())
+                    }
+                }
+            }
+            TemplateType::Typst => {
+                generate_typst_report(base_dir, report, report_data, arguments, format)
+            }
+        }
+    }
+
+    /// Kept for backwards compatibility — delegates to generate_report_output
     fn generate_html_report(
         &self,
         base_dir: &str,
@@ -171,28 +217,15 @@ pub trait ReportServiceTrait: Sync + Send {
         localisations: &Localisations,
         current_language: Option<String>,
     ) -> Result<String, ReportError> {
-        let document = generate_report(
+        self.generate_report_output(
+            base_dir,
             report,
             report_data,
             arguments,
+            format,
             localisations,
             current_language,
-        )?;
-
-        match format {
-            Some(PrintFormat::Html) => {
-                generate_html_report_to_html(base_dir, document, report.name.clone())
-            }
-            Some(PrintFormat::Excel) => export_html_report_to_excel(
-                base_dir,
-                document,
-                report.name.clone(),
-                &report.excel_template_buffer,
-            ),
-            Some(PrintFormat::Pdf) | None => {
-                generate_html_report_to_pdf(base_dir, document, report.name.clone())
-            }
-        }
+        )
     }
 
     fn install_uploaded_reports(
@@ -270,6 +303,57 @@ fn generate_html_report_to_html(
             &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
             StaticFileCategory::Temporary,
             format_html_document(document).as_bytes(),
+        )
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+    Ok(file.id)
+}
+
+/// Generates a Typst report to PDF and returns the file id.
+/// Typst always produces PDF regardless of the requested format.
+fn generate_typst_report(
+    base_dir: &str,
+    report: &ResolvedReportDefinition,
+    data: serde_json::Value,
+    arguments: Option<serde_json::Value>,
+    _format: Option<PrintFormat>,
+) -> Result<String, ReportError> {
+    let report_data = ReportData { data, arguments };
+    let report_data = transform_data(
+        report_data,
+        report.convert_data.clone(),
+        &report.convert_data_type,
+    )
+    .map_err(|err| {
+        error!(
+            "Error transforming data for report {}: {}",
+            report.name,
+            format_error(&err)
+        );
+        ReportError::ConvertDataError(err)
+    })?;
+
+    let template = report
+        .typst_templates
+        .get(&report.template)
+        .ok_or(ReportError::InvalidReportDefinition(format!(
+            "Typst template not found: {}",
+            report.template
+        )))?;
+
+    let data_json = serde_json::to_string(&report_data)
+        .map_err(|err| ReportError::DocGenerationError(format!("Failed to serialize data: {err}")))?;
+
+    let pdf_bytes = typst_to_pdf(&template.template, &data_json)
+        .map_err(|err| ReportError::DocGenerationError(format!("Typst PDF generation: {err}")))?;
+
+    let file_service = StaticFileService::new(base_dir)
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+    let now: DateTime<Utc> = SystemTime::now().into();
+    let file = file_service
+        .store_file(
+            &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report.name),
+            StaticFileCategory::Temporary,
+            &pdf_bytes,
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
     Ok(file.id)
@@ -466,9 +550,10 @@ fn resolve_report_definition(
 ) -> Result<ResolvedReportDefinition, ReportError> {
     let repo = ReportRowRepository::new(&ctx.connection);
     let fully_loaded_report = load_template_references(&repo, &ctx.store_id, main)?;
+    let template_type = fully_loaded_report.index.template_type.clone();
 
-    let templates = tera_templates_from_resolved_template(&fully_loaded_report)
-        .ok_or(ReportError::TemplateNotSpecified)?;
+    let templates = tera_templates_from_resolved_template(&fully_loaded_report);
+    let typst_templates = typst_templates_from_resolved_template(&fully_loaded_report);
 
     // validate index entries are present
     let template =
@@ -479,25 +564,39 @@ fn resolve_report_definition(
             .ok_or(ReportError::InvalidReportDefinition(
                 "Template reference missing".to_string(),
             ))?;
-    if !templates.contains_key(&template) {
-        return Err(ReportError::InvalidReportDefinition(format!(
-            "Invalid template reference: {template}"
-        )));
-    }
-    if let Some(header) = fully_loaded_report.index.header.clone() {
-        if !templates.contains_key(&header) {
-            return Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid template header reference: {header}"
-            )));
+
+    // Validate the main template exists in the appropriate template map
+    match template_type {
+        TemplateType::Tera => {
+            if !templates.contains_key(&template) {
+                return Err(ReportError::InvalidReportDefinition(format!(
+                    "Invalid Tera template reference: {template}"
+                )));
+            }
+            if let Some(header) = fully_loaded_report.index.header.clone() {
+                if !templates.contains_key(&header) {
+                    return Err(ReportError::InvalidReportDefinition(format!(
+                        "Invalid template header reference: {header}"
+                    )));
+                }
+            }
+            if let Some(footer) = fully_loaded_report.index.footer.clone() {
+                if !templates.contains_key(&footer) {
+                    return Err(ReportError::InvalidReportDefinition(format!(
+                        "Invalid template footer reference: {footer}"
+                    )));
+                }
+            }
+        }
+        TemplateType::Typst => {
+            if !typst_templates.contains_key(&template) {
+                return Err(ReportError::InvalidReportDefinition(format!(
+                    "Invalid Typst template reference: {template}"
+                )));
+            }
         }
     }
-    if let Some(footer) = fully_loaded_report.index.footer.clone() {
-        if !templates.contains_key(&footer) {
-            return Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid template footer reference: {footer}"
-            )));
-        }
-    }
+
     let query_entry = fully_loaded_report
         .index
         .query
@@ -521,10 +620,12 @@ fn resolve_report_definition(
         header: fully_loaded_report.index.header.clone(),
         footer: fully_loaded_report.index.footer.clone(),
         templates,
+        typst_templates,
         queries,
         resources,
         convert_data: fully_loaded_report.index.convert_data,
         convert_data_type: fully_loaded_report.index.convert_data_type,
+        template_type,
         excel_template_buffer,
     })
 }
@@ -562,7 +663,7 @@ fn transform_data_boajs(data: ReportData, convert_data: String) -> Result<Report
     )
 }
 
-fn generate_report(
+fn generate_tera_report(
     report: &ResolvedReportDefinition,
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,
@@ -666,14 +767,26 @@ fn generate_report(
 
 fn tera_templates_from_resolved_template(
     report: &ReportDefinition,
-) -> Option<HashMap<String, TeraTemplate>> {
+) -> HashMap<String, TeraTemplate> {
     let mut templates = HashMap::new();
     for (name, entry) in &report.entries {
         if let ReportDefinitionEntry::TeraTemplate(template) = entry {
             templates.insert(name.clone(), template.clone());
         }
     }
-    Some(templates)
+    templates
+}
+
+fn typst_templates_from_resolved_template(
+    report: &ReportDefinition,
+) -> HashMap<String, TypstTemplate> {
+    let mut templates = HashMap::new();
+    for (name, entry) in &report.entries {
+        if let ReportDefinitionEntry::TypstTemplate(template) = entry {
+            templates.insert(name.clone(), template.clone());
+        }
+    }
+    templates
 }
 
 fn query_from_resolved_template(
@@ -728,7 +841,8 @@ fn resources_from_resolved_template(
             | ReportDefinitionEntry::GraphGLQuery(_)
             | ReportDefinitionEntry::Ref(_)
             | ReportDefinitionEntry::SQLQuery(_)
-            | ReportDefinitionEntry::TeraTemplate(_) => None,
+            | ReportDefinitionEntry::TeraTemplate(_)
+            | ReportDefinitionEntry::TypstTemplate(_) => None,
         })
         .collect()
 }
@@ -829,7 +943,7 @@ mod report_service_test {
                 DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
                 ReportOutputType, ReportRef, TeraTemplate,
             },
-            report_service::generate_report,
+            report_service::generate_tera_report,
         },
         service_provider::ServiceProvider,
     };
@@ -929,7 +1043,7 @@ mod report_service_test {
             .unwrap();
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
-        let doc = generate_report(
+        let doc = generate_tera_report(
             &resolved_def,
             serde_json::json!({
                 "test": "Hello"
@@ -953,7 +1067,7 @@ mod report_generation_test {
     use crate::{
         report::{
             definition::{ReportOutputType, TeraTemplate},
-            report_service::{generate_report, ResolvedReportDefinition},
+            report_service::{generate_tera_report, ResolvedReportDefinition},
         },
         service_provider::ServiceProvider,
     };
@@ -993,7 +1107,7 @@ mod report_generation_test {
 
         let report_data = json!(null);
 
-        let generated_report = generate_report(
+        let generated_report = generate_tera_report(
             &report,
             report_data.clone(),
             None,
@@ -1007,7 +1121,7 @@ mod report_generation_test {
 
         // // test generation in other languages
 
-        let generated_report = generate_report(
+        let generated_report = generate_tera_report(
             &report,
             report_data,
             None,

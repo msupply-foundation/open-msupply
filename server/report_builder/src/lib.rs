@@ -19,6 +19,13 @@ pub enum Action {
     Print(PrintArgs),
 }
 
+#[derive(ValueEnum, Default, Clone, Serialize)]
+pub enum BuildTemplateType {
+    #[default]
+    Tera,
+    Typst,
+}
+
 #[derive(clap::Args)]
 pub struct BuildArgs {
     /// Project directory name
@@ -34,6 +41,9 @@ pub struct BuildArgs {
     pub header: Option<String>,
     #[clap(long)]
     pub footer: Option<String>,
+    /// Template engine type (tera or typst)
+    #[clap(long, default_value = "tera")]
+    pub template_type: BuildTemplateType,
 
     /// Name of the file containing a graphql query
     #[clap(long)]

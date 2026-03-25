@@ -4,9 +4,9 @@
   "code": "inbound",
   "context": "INBOUND_SHIPMENT",
   "name": "Inbound Shipment",
+  "template_type": "Typst",
   "queries": {
     "gql": "inbound.graphql"
   },
-  "arguments": {},
-  "header": "header.html"
+  "arguments": {}
 }
