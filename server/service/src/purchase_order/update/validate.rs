@@ -1,5 +1,6 @@
 use repository::{
-    EqualFilter, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, PurchaseOrder,
+    EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceStatus, InvoiceType,
+    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, PurchaseOrder,
     PurchaseOrderFilter, PurchaseOrderLine, PurchaseOrderLineFilter, PurchaseOrderLineRepository,
     PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError, StorageConnection,
 };
@@ -71,6 +72,11 @@ pub fn validate(
         )),
     )?;
 
+    // Check for open inbound shipments when finalising
+    if input.status == Some(PurchaseOrderStatus::Finalised) {
+        check_no_open_inbound_shipments(connection, &purchase_order.purchase_order_row.id)?;
+    }
+
     // Only wanna check if status has been updated
     if input.status.is_some() {
         if let Some(non_orderable_items) =
@@ -83,6 +89,27 @@ pub fn validate(
     }
 
     Ok((purchase_order, None))
+}
+
+fn check_no_open_inbound_shipments(
+    connection: &StorageConnection,
+    purchase_order_id: &str,
+) -> Result<(), UpdatePurchaseOrderError> {
+    let invoices = InvoiceRepository::new(connection).query_by_filter(
+        InvoiceFilter::new()
+            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.to_string()))
+            .r#type(EqualFilter::equal_to(InvoiceType::InboundShipment)),
+    )?;
+
+    let has_open_shipments = invoices
+        .iter()
+        .any(|invoice| !matches!(invoice.invoice_row.status, InvoiceStatus::Verified));
+
+    if has_open_shipments {
+        return Err(UpdatePurchaseOrderError::InboundShipmentsNotVerified);
+    }
+
+    Ok(())
 }
 
 fn check_items_orderable(

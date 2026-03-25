@@ -28,6 +28,7 @@ pub enum UpdatePurchaseOrderError {
     UserUnableToAuthorisePurchaseOrder,
     DatabaseError(RepositoryError),
     ItemsCannotBeOrdered(Vec<PurchaseOrderLine>),
+    InboundShipmentsNotVerified,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
