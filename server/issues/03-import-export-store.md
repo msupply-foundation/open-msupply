@@ -22,11 +22,10 @@ No way to bulk import/export store records.
 | `site_id` | Integer | Yes | Remote site ID for sync |
 | `logo` | String | No | Base64-encoded image |
 | `store_mode` | Enum | Yes | `STORE`, `DISPENSARY` |
-| `created_date` | Date | No | `YYYY-MM-DD` |
 | `is_disabled` | Boolean | Yes | |
 | `name_code` | String | Yes | **Lookup: `name.code`** (composite with `name_type`) |
 | `name_type` | Enum | Yes | **Lookup: `name.type`** — used with `name_code` to resolve `name_id` |
-| `name_id` | String | No | Fallback if `name_code` + `name_type` is ambiguous |
+| `name_id` | String | No | Fallback ID. If both code+type and ID are provided, they must agree |
 
 ### ID Resolution
 
@@ -37,7 +36,14 @@ No way to bulk import/export store records.
 
 | Import column(s) | Resolves to | Lookup strategy |
 |---|---|---|
-| `name_code` + `name_type` | `name_id` | Composite lookup on `name` table. Fall back to `name_id` if ambiguous |
+| `name_code` + `name_type` | `name_id` | Composite lookup on `name` table. If `name_id` also provided, both must resolve to the same record |
+
+### Export-only columns (ignored on import)
+
+| Column | Type | Notes |
+|---|---|---|
+| `created_date` | Date | Set automatically on creation |
+| `name_name` | String | Display name from the resolved `name` record — helps identify the facility |
 
 ### Dependencies
 

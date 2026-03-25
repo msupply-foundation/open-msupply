@@ -24,7 +24,7 @@ No way to bulk import/export item visibility and pricing per store.
 | `ignore_for_orders` | Boolean | Yes | Exclude from auto-ordering |
 | `margin` | Decimal | Yes | Default 0.0 |
 | `default_location_code` | String | No | **Lookup: `location.code`** scoped to the resolved store |
-| `default_location_id` | String | No | Fallback |
+| `default_location_id` | String | No | Fallback ID. If both code and ID are provided, they must agree |
 
 ### ID Resolution
 
@@ -37,7 +37,15 @@ No way to bulk import/export item visibility and pricing per store.
 |---|---|---|
 | `item_code` | `item_link_id` | Lookup by `item.code` (unique). Resolve through item_link table |
 | `store_code` | `store_id` | Lookup by `store.code` (unique) |
-| `default_location_code` | `default_location_id` | Lookup by `location.code` **scoped to the resolved `store_id`**. Fall back to `default_location_id` |
+| `default_location_code` | `default_location_id` | Lookup by `location.code` **scoped to the resolved `store_id`**. If `default_location_id` also provided, both must resolve to the same record |
+
+### Export-only columns (ignored on import)
+
+| Column | Type | Notes |
+|---|---|---|
+| `item_name` | String | Display name of the item |
+| `store_name` | String | Display name of the store |
+| `default_location_name` | String | Display name of the default location (if set) |
 
 ### Dependencies
 

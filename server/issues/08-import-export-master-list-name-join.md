@@ -21,7 +21,7 @@ No way to bulk assign names (facilities) to master lists.
 | `master_list_code` | String | Yes | **Lookup: `master_list.code`** (unique) |
 | `name_code` | String | Yes | **Lookup: `name.code`** (composite with `name_type`) |
 | `name_type` | Enum | Yes | **Lookup: `name.type`** — used with `name_code` to resolve `name_id` |
-| `name_id` | String | No | Fallback if `name_code` + `name_type` is ambiguous |
+| `name_id` | String | No | Fallback ID. If both code+type and ID are provided, they must agree |
 
 ### ID Resolution
 
@@ -33,7 +33,14 @@ No way to bulk assign names (facilities) to master lists.
 | Import column(s) | Resolves to | Lookup strategy |
 |---|---|---|
 | `master_list_code` | `master_list_id` | Lookup by `master_list.code` (unique) |
-| `name_code` + `name_type` | `name_id` | Composite lookup on `name` table. Fall back to `name_id` if ambiguous |
+| `name_code` + `name_type` | `name_id` | Composite lookup on `name` table. If `name_id` also provided, both must resolve to the same record |
+
+### Export-only columns (ignored on import)
+
+| Column | Type | Notes |
+|---|---|---|
+| `master_list_name` | String | Display name of the master list |
+| `name_name` | String | Display name of the name/facility record |
 
 ### Dependencies
 

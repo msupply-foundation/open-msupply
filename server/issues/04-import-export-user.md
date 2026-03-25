@@ -37,10 +37,15 @@ No way to bulk import/export user account records.
 - **Password**: On import, accept a plain-text password and hash it before storage. On export, **never include the password or hash** — the column should be omitted or empty.
 - **Update vs Insert**: If a matching `username` exists, update the record (but do NOT overwrite the password unless a new password value is explicitly provided in the row).
 
-### Fields excluded from import/export
+### Export-only columns (ignored on import)
+
+| Column | Type | Notes |
+|---|---|---|
+| `last_successful_sync` | DateTime | System-managed — useful for identifying stale accounts |
+
+### Fields excluded from export
 
 - `hashed_password` — never exported; imported as plain-text `password` field
-- `last_successful_sync` — system-managed
 
 ### Dependencies
 

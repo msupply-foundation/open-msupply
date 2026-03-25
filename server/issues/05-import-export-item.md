@@ -20,7 +20,7 @@ No way to bulk import/export item records.
 | `id` | String | No | UUID. Optional |
 | `code` | String | Yes | **Unique**. Used as lookup key |
 | `name` | String | Yes | Display name |
-| `unit_name` | String | No | **Lookup: `unit.name`**. Fall back to `unit_id` |
+| `unit_name` | String | No | **Lookup: `unit.name`**. If both `unit_name` and `unit_id` are provided, they must agree |
 | `unit_id` | String | No | Fallback if `unit_name` is ambiguous |
 | `strength` | String | No | e.g. "500mg" |
 | `ven_category` | Enum | Yes | `V`, `E`, `N`, `NOT_ASSIGNED` |
@@ -29,7 +29,7 @@ No way to bulk import/export item records.
 | `is_active` | Boolean | Yes | Set to `false` to soft-delete |
 | `is_vaccine` | Boolean | Yes | |
 | `vaccine_doses` | Integer | Yes | Number of doses per vial |
-| `restricted_location_type_code` | String | No | **Lookup: `location_type.code`** (new field). Fall back to `restricted_location_type_id` |
+| `restricted_location_type_code` | String | No | **Lookup: `location_type.code`** (new field). If both code and ID are provided, they must agree |
 | `restricted_location_type_id` | String | No | Fallback |
 | `volume_per_pack` | Decimal | Yes | cm³ per pack |
 | `universal_code` | String | No | Universal product code |
@@ -43,8 +43,8 @@ No way to bulk import/export item records.
 
 | Import column(s) | Resolves to | Lookup strategy |
 |---|---|---|
-| `unit_name` | `unit_id` | Lookup by `unit.name`. Error if ambiguous. Fall back to `unit_id` column |
-| `restricted_location_type_code` | `restricted_location_type_id` | Lookup by `location_type.code` (new field). Fall back to ID column |
+| `unit_name` | `unit_id` | Lookup by `unit.name`. Error if ambiguous. If `unit_id` also provided, both must resolve to the same record |
+| `restricted_location_type_code` | `restricted_location_type_id` | Lookup by `location_type.code` (new field). If ID also provided, both must resolve to the same record |
 
 ### Fields excluded from import
 
@@ -69,8 +69,8 @@ No way to bulk import/export item records.
 - [ ] Can export items to Excel with human-readable unit names and location type codes
 - [ ] Can import new items from Excel
 - [ ] Can update existing items by `code` match
-- [ ] `unit_id` resolved via `unit.name`, with `unit_id` as fallback
-- [ ] `restricted_location_type_id` resolved via `location_type.code`, with ID as fallback
+- [ ] `unit_id` resolved via `unit.name`; if `unit_id` is also provided, both must agree (error on conflict)
+- [ ] `restricted_location_type_id` resolved via `location_type.code`; if ID is also provided, both must agree (error on conflict)
 - [ ] Ambiguous lookups produce clear errors
 - [ ] Round-trip: export then re-import produces no changes
 

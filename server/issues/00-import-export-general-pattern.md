@@ -41,7 +41,7 @@ Build a general-purpose import/export framework using **Excel (.xlsx) files** fo
    | `store` | `code` | Unique |
    | `unit` | `name` | Error if ambiguous |
    | `master_list` | `code` | Enforce uniqueness (add constraint or service-layer validation) |
-   | `name` | `code` + `type` | Code alone is not unique; composite required. Fall back to `id` if still ambiguous |
+   | `name` | `code` + `type` | Code alone is not unique; composite required. `id` can be provided alongside; if both are present they must agree |
    | `location` | `code` (scoped to store) | Unique within a store context |
    | `location_type` | `code` | New field — see prerequisites |
    | `currency` | `code` | ISO codes, effectively unique |
@@ -69,12 +69,23 @@ Build a general-purpose import/export framework using **Excel (.xlsx) files** fo
    - A header row with column names
    - Human-readable reference columns alongside ID columns
    - All editable fields populated
+   - **Export-only columns** for reference (ignored on re-import)
 3. File is downloaded
+
+### Export-only Columns Convention
+
+Some columns are included in exports for the user's reference but are **ignored on import**. These fall into two categories:
+
+1. **System-managed timestamps**: e.g. `created_date`, `created_datetime`, `last_successful_sync`. Useful for the user to see but not editable.
+2. **Denormalized display names for FK references**: When a table references another via code, the export also includes the referenced record's display name so the user can understand what each code refers to without needing to cross-reference. e.g. `item_name` alongside `item_code`, `store_name` alongside `store_code`.
+
+On import, these columns should be silently ignored if present (to support round-tripping exported files).
 
 ### Error Handling
 
 - If a code-based lookup returns **zero matches**: error — "referenced record not found"
 - If a code-based lookup returns **multiple matches**: error — "ambiguous reference, please provide id instead"
+- **If both code and ID are provided for the same FK**: resolve both independently. If they point to the same record, proceed. If they point to different records, error — "code and id conflict: `<code>` resolves to `<resolved_id>` but id column contains `<provided_id>`". This catches copy-paste mistakes where a user updates one column but forgets to update the other.
 - Row-level errors should not abort the entire import; collect all errors and present them to the user
 
 ### Prerequisites

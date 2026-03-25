@@ -21,8 +21,8 @@ No way to bulk import/export user permission records. Permissions must be assign
 | `username` | String | Yes | **Lookup: `user_account.username`** (unique) |
 | `store_code` | String | No | **Lookup: `store.code`** (unique). Null for server-level permissions like `SERVER_ADMIN` |
 | `permission` | Enum | Yes | See permission values in general pattern issue |
-| `context_code` | String | No | **Lookup: `master_list.code`** — for program-scoped permissions. Fall back to `context_id` |
-| `context_id` | String | No | Fallback |
+| `context_code` | String | No | **Lookup: `master_list.code`** — for program-scoped permissions. If both code and `context_id` are provided, they must agree |
+| `context_id` | String | No | Fallback ID |
 
 ### ID Resolution
 
@@ -35,7 +35,14 @@ No way to bulk import/export user permission records. Permissions must be assign
 |---|---|---|
 | `username` | `user_id` | Lookup by `user_account.username` (unique) |
 | `store_code` | `store_id` | Lookup by `store.code` (unique). May be null |
-| `context_code` | `context_id` | Lookup by `master_list.code` (unique). Fall back to `context_id` |
+| `context_code` | `context_id` | Lookup by `master_list.code` (unique). If `context_id` also provided, both must resolve to the same record |
+
+### Export-only columns (ignored on import)
+
+| Column | Type | Notes |
+|---|---|---|
+| `store_name` | String | Display name of the store |
+| `context_name` | String | Display name of the master list (for program-scoped permissions) |
 
 ### Dependencies
 

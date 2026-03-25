@@ -23,7 +23,8 @@ No way to bulk import/export name (facility/patient/supplier) records.
 | `type` | Enum | Yes | `FACILITY`, `PATIENT`, `BUILD`, `INVAD`, `REPACK`, `STORE`, `OTHERS`. Part of composite lookup key |
 | `is_customer` | Boolean | Yes | |
 | `is_supplier` | Boolean | Yes | |
-| `supplying_store_id` | String | No | **Lookup: `store.code`**. Fall back to ID |
+| `supplying_store_code` | String | No | **Lookup: `store.code`**. If both code and `supplying_store_id` are provided, they must agree |
+| `supplying_store_id` | String | No | Fallback ID |
 | `first_name` | String | No | |
 | `last_name` | String | No | |
 | `gender` | Enum | No | `FEMALE`, `MALE`, `TRANSGENDER`, `TRANSGENDER_MALE`, `TRANSGENDER_MALE_HORMONE`, `TRANSGENDER_MALE_SURGICAL`, `TRANSGENDER_FEMALE`, `TRANSGENDER_FEMALE_HORMONE`, `TRANSGENDER_FEMALE_SURGICAL`, `UNKNOWN`, `NON_BINARY` |
@@ -49,7 +50,8 @@ No way to bulk import/export name (facility/patient/supplier) records.
 | `hsh_name` | String | No | |
 | `margin` | Decimal | No | |
 | `freight_factor` | Decimal | No | |
-| `currency_code` | String | No | **Lookup: `currency.code`** (ISO code). Fall back to `currency_id` |
+| `currency_code` | String | No | **Lookup: `currency.code`** (ISO code). If both code and `currency_id` are provided, they must agree |
+| `currency_id` | String | No | Fallback ID |
 
 ### ID Resolution
 
@@ -57,11 +59,16 @@ No way to bulk import/export name (facility/patient/supplier) records.
 - **Fallback**: If `code` + `type` still matches multiple records, the user must provide `id`.
 - **On export**: Include `id`, `code`, and `type`.
 
-### Fields excluded from import
+### Export-only columns (ignored on import)
 
-- `created_datetime` — set automatically on creation
-- `deleted_datetime` — to delete, use a separate mechanism or set via a "delete" action column
-- `custom_data` — included but as raw JSON string; no structured expansion
+| Column | Type | Notes |
+|---|---|---|
+| `created_datetime` | DateTime | Set automatically on creation |
+| `deleted_datetime` | DateTime | Soft-delete flag — included for reference but managed via a separate delete mechanism |
+
+### Notes
+
+- `custom_data` is included in both import and export as a raw JSON string; no structured expansion
 
 ### Dependencies
 

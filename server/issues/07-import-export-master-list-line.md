@@ -34,6 +34,13 @@ No way to bulk import/export master list line records.
 | `item_code` | `item_link_id` | Lookup by `item.code` (unique). Resolve through item_link table |
 | `master_list_code` | `master_list_id` | Lookup by `master_list.code` (unique) |
 
+### Export-only columns (ignored on import)
+
+| Column | Type | Notes |
+|---|---|---|
+| `item_name` | String | Display name of the item — helps identify what the code refers to |
+| `master_list_name` | String | Display name of the master list |
+
 ### Dependencies
 
 - `item` (for `item_code` lookup)
