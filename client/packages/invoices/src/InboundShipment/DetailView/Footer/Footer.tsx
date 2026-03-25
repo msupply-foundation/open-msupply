@@ -25,7 +25,8 @@ import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/sy
 import {
   getStatusTranslator,
   inboundStatuses,
-  manualInboundStatuses,
+  getInboundShipmentType,
+  getInboundStatusesForType,
 } from '../../../utils';
 import {
   InboundFragment,
@@ -100,6 +101,7 @@ export const FooterComponent = ({
   const {
     query: { data },
     isDisabled,
+    isExternal,
   } = useInboundShipment();
   const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
@@ -109,12 +111,12 @@ export const FooterComponent = ({
     selectedRows,
     resetRowSelection
   );
-  const { mutateAsync } = useSaveInboundLines();
+  const { mutateAsync } = useSaveInboundLines(isExternal);
   const onChangeLineStatus = useChangeStatusOfInboundLines(
     selectedRows,
     resetRowSelection
   );
-  const isManuallyCreated = !data?.linkedShipment?.id;
+  const shipmentType = data ? getInboundShipmentType(data) : undefined;
 
   const handleCampaignClick = () => {
     if (isDisabled) {
@@ -180,11 +182,13 @@ export const FooterComponent = ({
       },
     ]);
   }
-  const statuses = isManuallyCreated
-    ? manualInboundStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      )
-    : inboundStatuses.filter(status => invoiceStatusOptions?.includes(status));
+  const statuses = (
+    shipmentType
+      ? getInboundStatusesForType(shipmentType)
+      : inboundStatuses
+  ).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
 
   return (
     <AppFooterPortal

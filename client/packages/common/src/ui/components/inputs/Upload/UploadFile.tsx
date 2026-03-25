@@ -9,6 +9,7 @@ interface UploadFileProps {
   files?: File[];
   color?: 'primary' | 'secondary' | 'gray';
   accept?: Accept;
+  multiple?: boolean;
 }
 
 export const UploadFile = ({
@@ -16,6 +17,7 @@ export const UploadFile = ({
   files,
   color = 'secondary',
   accept,
+  multiple = false,
 }: UploadFileProps) => {
   const isNative = Capacitor.isNativePlatform();
   // Convert Accept type to a string for the native file input
@@ -25,8 +27,18 @@ export const UploadFile = ({
         .join(',')
     : undefined;
   return isNative ? (
-    <UploadButton onUpload={onUpload} files={files} accept={acceptString} />
+    <UploadButton
+      onUpload={onUpload}
+      files={files}
+      accept={acceptString}
+      multiple={multiple}
+    />
   ) : (
-    <UploadDragAndDrop onUpload={onUpload} color={color} accept={accept} />
+    <UploadDragAndDrop
+      onUpload={onUpload}
+      color={color}
+      accept={accept}
+      multiple={multiple}
+    />
   );
 };

@@ -4785,6 +4785,7 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
+ "log",
  "ordered-float 5.1.0",
  "repository",
  "reqwest",
@@ -4857,6 +4858,7 @@ dependencies = [
  "serde",
  "serde_json",
  "service",
+ "tokio",
  "util",
 ]
 
@@ -5011,6 +5013,7 @@ dependencies = [
  "graphql_types",
  "log",
  "repository",
+ "serde_json",
  "service",
  "util",
 ]
@@ -10610,7 +10613,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "test-connection"
+name = "test_connection"
 version = "0.1.0"
 dependencies = [
  "cli",

@@ -8,6 +8,7 @@ import {
 } from 'material-react-table';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { ColumnDef } from '../types';
+import { useGlobalTableDefaults } from './useGlobalTableConfig';
 
 export const useColumnOrder = <T extends MRT_RowData>(
   tableId: string,
@@ -15,6 +16,7 @@ export const useColumnOrder = <T extends MRT_RowData>(
   enableRowSelection: MRT_TableOptions<T>['enableRowSelection'],
   enableExpanding: MRT_TableOptions<T>['enableExpanding']
 ) => {
+  const globalDefaults = useGlobalTableDefaults(tableId);
   const initial = useMemo(() => {
     for (const col of columns) {
       // if column has a custom columnIndex, remove it from its current position
@@ -37,14 +39,17 @@ export const useColumnOrder = <T extends MRT_RowData>(
   }, [columns, enableRowSelection, enableExpanding]);
 
   const [state, setState] = useState<MRT_ColumnOrderState>(
-    getSavedState(tableId)?.columnOrder ?? initial
+    getSavedState(tableId)?.columnOrder ??
+      globalDefaults?.columnOrder ??
+      initial
   );
 
   // If initial state changes (due to plugin column loading, for example) and no
   // custom column order has been saved, update the column order to the new
   // default
   useEffect(() => {
-    if (!getSavedState(tableId)?.columnOrder) setState(initial);
+    if (!getSavedState(tableId)?.columnOrder)
+      setState(globalDefaults?.columnOrder ?? initial);
   }, [initial, enableExpanding]);
 
   const update = useCallback<
@@ -63,7 +68,7 @@ export const useColumnOrder = <T extends MRT_RowData>(
 
         return newColumnOrder;
       }),
-    [initial, state]
+    [initial]
   );
 
   return {

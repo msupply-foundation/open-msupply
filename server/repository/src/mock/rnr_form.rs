@@ -9,7 +9,7 @@ pub fn mock_rnr_form_a() -> RnRFormRow {
     RnRFormRow {
         id: "rnr_form_a".to_string(),
         store_id: mock_store_a().id,
-        name_link_id: String::from("name_store_b"),
+        name_id: String::from("name_store_b"),
         period_id: mock_period_2_b().id,
         program_id: mock_program_b().id,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
@@ -25,7 +25,7 @@ pub fn mock_rnr_form_b() -> RnRFormRow {
     RnRFormRow {
         id: "rnr_form_b".to_string(),
         store_id: mock_store_a().id,
-        name_link_id: String::from("name_store_b"),
+        name_id: String::from("name_store_b"),
         period_id: mock_period_2_c().id,
         program_id: mock_program_b().id,
         created_datetime: NaiveDate::from_ymd_opt(2024, 3, 1)

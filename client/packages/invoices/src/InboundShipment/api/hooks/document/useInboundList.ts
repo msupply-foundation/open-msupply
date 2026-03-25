@@ -2,6 +2,7 @@ import {
   FilterBy,
   InvoiceNodeType,
   InvoiceSortFieldInput,
+  InvoiceTypeInput,
   SortBy,
   useQuery,
   useMutation,
@@ -15,6 +16,7 @@ export type ListParams = {
   offset?: number;
   sortBy?: SortBy<InboundRowFragment>;
   filterBy: FilterBy | null;
+  type?: InvoiceTypeInput;
 };
 
 const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
@@ -38,9 +40,10 @@ export const useInboundList = (queryParams?: ListParams) => {
     first,
     offset,
     filterBy,
+    type,
   } = queryParams ?? {};
 
-  const queryKey = [LIST, INBOUND, storeId, sortBy, first, offset, filterBy];
+  const queryKey = [LIST, INBOUND, storeId, sortBy, first, offset, filterBy, type];
 
   const queryFn = async (): Promise<{
     nodes: InboundRowFragment[];
@@ -51,8 +54,8 @@ export const useInboundList = (queryParams?: ListParams) => {
       type: { equalTo: InvoiceNodeType.InboundShipment },
     };
 
-    const sortKey = (sortFieldMap[sortBy.key as string] ||
-      InvoiceSortFieldInput.InvoiceNumber) as InvoiceSortFieldInput;
+    const sortKey =
+      sortFieldMap[String(sortBy.key)] || InvoiceSortFieldInput.InvoiceNumber;
 
     const query = await inboundApi.invoices({
       storeId,
@@ -61,8 +64,9 @@ export const useInboundList = (queryParams?: ListParams) => {
       key: sortKey,
       desc: sortBy.direction === 'desc',
       filter,
+      type,
     });
-    const { nodes, totalCount } = query?.invoices;
+    const { nodes = [], totalCount = 0 } = query?.invoices ?? {};
     return { nodes, totalCount };
   };
 
@@ -70,6 +74,7 @@ export const useInboundList = (queryParams?: ListParams) => {
     queryKey,
     queryFn,
     keepPreviousData: true,
+    enabled: !!queryParams,
   });
 
   const {

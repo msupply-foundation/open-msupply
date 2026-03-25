@@ -81,7 +81,7 @@ pub fn insert_customer_return(
             InvoiceRowRepository::new(connection).upsert_one(&customer_return)?;
 
             for line in insert_stock_in_lines {
-                insert_stock_in_line(ctx, line.clone()).map_err(|error| {
+                insert_stock_in_line(ctx, line.clone(), None).map_err(|error| {
                     OutError::LineInsertError {
                         line_id: line.id,
                         error,
@@ -121,7 +121,7 @@ pub fn insert_customer_return(
                 None,
             )?;
 
-            get_invoice(ctx, None, &customer_return.id)
+            get_invoice(ctx, None, &customer_return.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
@@ -191,7 +191,7 @@ mod test {
         fn not_a_customer_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_customer_join".to_string(),
-                name_link_id: not_a_customer().id,
+                name_id: not_a_customer().id,
                 store_id: mock_store_a().id,
                 name_is_customer: false,
                 ..Default::default()
@@ -381,7 +381,7 @@ mod test {
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Verified,
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_customer_a().id,
+                name_id: mock_name_customer_a().id,
                 ..Default::default()
             }
         }
@@ -442,7 +442,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: mock_name_customer_a().id,
+                name_id: mock_name_customer_a().id,
                 user_id: Some(mock_user_account_a().id),
                 original_shipment_id: Some(returnable_outbound_shipment().id),
                 status: InvoiceStatus::Verified,
@@ -490,7 +490,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: mock_name_customer_a().id,
+                name_id: mock_name_customer_a().id,
                 user_id: Some(mock_user_account_a().id),
                 status: InvoiceStatus::New,
                 ..invoice.clone()

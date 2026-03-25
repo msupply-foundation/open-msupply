@@ -209,7 +209,7 @@ mod test {
         };
         let second_half_row = InvoiceRow {
             id: "picked_second_half".to_string(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: mock_store_a().id,
             r#type: InvoiceType::InboundShipment,
             ..first_half_row.clone()

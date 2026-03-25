@@ -8,8 +8,13 @@ import {
   ConfirmationModal,
 } from '@common/components';
 import { Box, Select, Typography } from '@openmsupply-client/common';
-
-import { SaveIcon, DownloadIcon, DeleteIcon, EditIcon, UploadIcon } from '@common/icons';
+import {
+  SaveIcon,
+  DownloadIcon,
+  DeleteIcon,
+  EditIcon,
+  UploadIcon,
+} from '@common/icons';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
 import {
@@ -65,7 +70,6 @@ export const CustomTranslationsModal = ({
   onClose: () => void;
 }) => {
   const t = useTranslation();
-  const defaultTranslation = useTranslation('common');
   const { invalidateCustomTranslations } = useIntlUtils();
   const { success, error } = useNotification();
 
@@ -75,7 +79,7 @@ export const CustomTranslationsModal = ({
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [translations, setTranslations] = useState(
-    mapTranslationsToArray(value, defaultTranslation)
+    mapTranslationsToArray(value, t)
   );
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
@@ -105,7 +109,7 @@ export const CustomTranslationsModal = ({
 
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = e => {
       try {
         const content = e.target?.result as string;
         const parsed = JSON.parse(content);

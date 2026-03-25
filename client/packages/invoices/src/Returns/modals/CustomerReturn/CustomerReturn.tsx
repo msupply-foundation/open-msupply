@@ -49,7 +49,7 @@ export const CustomerReturnEditModal = ({
 }: CustomerReturnEditModalProps) => {
   const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
-  const { success } = useNotification();
+  const { success, error } = useNotification();
 
   const [itemId, setItemId] = useState<string | undefined>(
     initialItemId ?? undefined
@@ -60,6 +60,7 @@ export const CustomerReturnEditModal = ({
   const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
     AlertColor | undefined
   >();
+  const [packSizeAlert, setPackSizeAlert] = useState(false);
 
   const defaultReference =
     isNewReturn && outboundShipment
@@ -106,8 +107,10 @@ export const CustomerReturnEditModal = ({
         isNewReturn &&
         success(t('messages.customer-return-created-verified'))();
       onClose();
-    } catch {
-      // TODO: handle error display...
+    } catch (e) {
+      const errorMessage =
+        (e as Error)?.message ?? t('error.failed-to-save-return');
+      error(errorMessage)();
     }
   };
 
@@ -116,25 +119,39 @@ export const CustomerReturnEditModal = ({
       !isDisabled && (await save());
       loadNextItem && loadNextItem();
       onChangeTab(Tabs.Quantity);
-    } catch {
-      // TODO: handle error display...
+    } catch (e) {
+      const errorMessage =
+        (e as Error)?.message ?? t('error.failed-to-save-return');
+      error(errorMessage)();
     }
   };
 
   const handleNextStep = () => {
-    if (lines.some(line => line.numberOfPacksReturned !== 0)) {
+    const hasReturnedLines = lines.some(
+      line => line.numberOfPacksReturned !== 0
+    );
+    const hasInvalidPackSize = lines.some(line => line.packSize < 1);
+
+    setPackSizeAlert(hasInvalidPackSize);
+
+    if (!hasReturnedLines) {
+      switch (modalMode) {
+        case ModalMode.Create: {
+          setZeroQuantityAlert('error');
+          break;
+        }
+        case ModalMode.Update: {
+          setZeroQuantityAlert('warning');
+          break;
+        }
+      }
+    } else {
+      setZeroQuantityAlert(undefined);
+    }
+
+    if (!hasInvalidPackSize && hasReturnedLines) {
       onChangeTab(Tabs.Reason);
       return;
-    }
-    switch (modalMode) {
-      case ModalMode.Create: {
-        setZeroQuantityAlert('error');
-        break;
-      }
-      case ModalMode.Update: {
-        setZeroQuantityAlert('warning');
-        break;
-      }
     }
     alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -194,6 +211,8 @@ export const CustomerReturnEditModal = ({
             update={update}
             zeroQuantityAlert={zeroQuantityAlert}
             setZeroQuantityAlert={setZeroQuantityAlert}
+            packSizeAlert={packSizeAlert}
+            setPackSizeAlert={setPackSizeAlert}
             theirReference={theirReference}
             onTheirReferenceChange={setTheirReference}
             isDisabled={isDisabled}

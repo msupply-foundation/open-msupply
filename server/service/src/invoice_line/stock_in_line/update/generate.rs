@@ -74,7 +74,7 @@ pub fn generate(
             StockLineInput {
                 stock_line_id,
                 store_id: existing_invoice_row.store_id.clone(),
-                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                supplier_id: existing_invoice_row.name_id.clone(),
                 on_hold: false,
                 barcode_id: None,
                 overwrite_stock_levels: true,
@@ -136,6 +136,7 @@ fn generate_line(
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date,
+        manufacture_date,
         number_of_packs,
         note,
         location,
@@ -144,6 +145,7 @@ fn generate_line(
         item_variant_id,
         vvm_status_id,
         donor_id,
+        manufacturer_id,
         campaign_id,
         program_id,
         shipped_number_of_packs,
@@ -168,6 +170,9 @@ fn generate_line(
     update_line.expiry_date = expiry_date
         .map(|expiry_date| expiry_date.value)
         .unwrap_or(update_line.expiry_date);
+    update_line.manufacture_date = manufacture_date
+        .map(|manufacture_date| manufacture_date.value)
+        .unwrap_or(update_line.manufacture_date);
     update_line.sell_price_per_pack =
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);
     update_line.cost_price_per_pack =
@@ -186,9 +191,13 @@ fn generate_line(
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
 
-    update_line.donor_link_id = donor_id
+    update_line.donor_id = donor_id
         .map(|d| d.value)
-        .unwrap_or(update_line.donor_link_id);
+        .unwrap_or(update_line.donor_id);
+
+    update_line.manufacturer_id = manufacturer_id
+        .map(|m| m.value)
+        .unwrap_or(update_line.manufacturer_id);
 
     update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
 

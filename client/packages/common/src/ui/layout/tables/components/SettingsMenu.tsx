@@ -10,7 +10,7 @@ import {
 import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { MRT_DensityState, MRT_TableInstance } from 'material-react-table';
-import { RefreshIcon, SettingsIcon, EyeIcon } from '@common/icons';
+import { RefreshIcon, SaveIcon, SettingsIcon, EyeIcon } from '@common/icons';
 import {
   useColumnDensity,
   useColumnOrder,
@@ -18,6 +18,7 @@ import {
   useColumnSizing,
   useColumnVisibility,
 } from '../tableState';
+import { ManagedTableState } from '../tableState/utils';
 // MRT uses these icons - match the column menu items/table default icons until icon library + table icons are updated
 import PushPinIcon from '@mui/icons-material/PushPin';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -36,6 +37,8 @@ export const SettingsMenu = ({
   columnPinning,
   columnOrder,
   resetTableState,
+  onSaveAsGlobalDefault,
+  globalDefaults,
 }: {
   table: MRT_TableInstance<any>;
   tableId: string;
@@ -45,6 +48,8 @@ export const SettingsMenu = ({
   columnPinning: ReturnType<typeof useColumnPinning>;
   columnOrder: ReturnType<typeof useColumnOrder>;
   resetTableState: () => void;
+  onSaveAsGlobalDefault?: () => void;
+  globalDefaults?: ManagedTableState;
 }) => {
   const t = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -58,7 +63,7 @@ export const SettingsMenu = ({
     !!state?.columnVisibility ||
     !!state?.columnOrder;
 
-  const getConfirmation = useConfirmationModal({
+  const getResetConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.reset-table-defaults'),
     onConfirm: resetTableState,
@@ -114,7 +119,9 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!state?.columnOrder}
             onClick={() => {
-              table.resetColumnOrder();
+              if (globalDefaults?.columnOrder)
+                table.setColumnOrder(globalDefaults.columnOrder);
+              else table.resetColumnOrder();
               columnOrder.update(columnOrder.initial);
               setAnchorEl(null);
             }}
@@ -127,7 +134,9 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!state?.columnVisibility}
             onClick={() => {
-              table.resetColumnVisibility();
+              if (globalDefaults?.columnVisibility)
+                table.setColumnVisibility(globalDefaults.columnVisibility);
+              else table.resetColumnVisibility();
               columnVisibility.update(columnVisibility.initial);
               setAnchorEl(null);
             }}
@@ -140,7 +149,9 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!state?.columnSizing}
             onClick={() => {
-              table.resetColumnSizing();
+              if (globalDefaults?.columnSizing)
+                table.setColumnSizing(globalDefaults.columnSizing);
+              else table.resetColumnSizing();
               columnSizing.update(columnSizing.initial);
               setAnchorEl(null);
             }}
@@ -153,7 +164,9 @@ export const SettingsMenu = ({
           <MenuItem
             disabled={!state?.columnPinning}
             onClick={() => {
-              table.resetColumnPinning();
+              if (globalDefaults?.columnPinning)
+                table.setColumnPinning(globalDefaults.columnPinning);
+              else table.resetColumnPinning();
               columnPinning.update(columnPinning.initial);
               setAnchorEl(null);
             }}
@@ -168,12 +181,29 @@ export const SettingsMenu = ({
             <ListItemIcon>{densityIcon()}</ListItemIcon>
             <ListItemText> {t('label.toggle-density')}</ListItemText>
           </MenuItem>
+          {onSaveAsGlobalDefault && (
+            <>
+              <Divider />
+              <MenuItem
+                onClick={() => {
+                  onSaveAsGlobalDefault();
+                  setAnchorEl(null);
+                }}
+              >
+                <ListItemIcon>
+                  <SaveIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>
+                  {t('label.save-table-config-as-global-default')}
+                </ListItemText>
+              </MenuItem>
+            </>
+          )}
           <Divider />
           <MenuItem
             disabled={!hasAnySavedState}
             onClick={() => {
-              table.resetColumnOrder();
-              getConfirmation();
+              getResetConfirmation();
               setAnchorEl(null);
             }}
           >

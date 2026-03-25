@@ -40,6 +40,7 @@ pub fn add_from_master_list(
     store_id: &str,
     input: AddToShipmentFromMasterListInput,
 ) -> Result<AddFromMasterListResponse> {
+    // Only available for internal inbound shipments, not external
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -104,7 +105,8 @@ mod test {
     };
     use repository::{
         mock::{mock_empty_draft_inbound_shipment, mock_item_a, MockDataInserts},
-        InvoiceLine, InvoiceLineRow, InvoiceLineType, StorageConnectionManager,
+        InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType,
+        StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -300,6 +302,7 @@ mod test {
                 },
                 invoice_row: mock_empty_draft_inbound_shipment(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: None,
                 stock_line_option: None,
             }])
