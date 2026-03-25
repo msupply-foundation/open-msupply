@@ -216,8 +216,9 @@ pub(crate) mod test {
             ..Default::default()
         };
 
-        for (stock_line, (_, movements)) in
-            stock_lines.into_iter().zip(stock_line_movements.into_iter())
+        for (stock_line, (_, movements)) in stock_lines
+            .into_iter()
+            .zip(stock_line_movements.into_iter())
         {
             mock_data = mock_data.join(make_movements_extended(MakeMovements {
                 stock_line,
@@ -231,7 +232,6 @@ pub(crate) mod test {
     }
 
     #[actix_rt::test]
-
     async fn test_dos() {
         std::env::set_var("TZ", "Pacific/Auckland");
 
@@ -375,6 +375,27 @@ pub(crate) mod test {
         )
         .await;
 
+        // Multi-stockline tests
+        // Multiple stocklines with an outbound and inbound at the same datetime.
+        // daily_stock must use the final balance for that datetime, not an intermediate one.
+        //
+        // Looking back 10 days from 30th, including 20th in calculation
+        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+        // |                        | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+        // | end of day balance     | 8  | 8  | 8  | 8  | 8  | 8  | 5  | 5  | 5  | 5  | 5  | 5  |
+        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+        // | full day without stock | no | no | no | no | no | no | no | no | no | no | no | no |
+        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+        test_multi_stockline(
+            "multi_stockline_same_datetime",
+            movement_date,
+            calculation_date,
+            vec![("a", vec![(5, 8), (25, -8)]), ("b", vec![(25, 5)])],
+            None,
+        )
+        .await;
+
         // If reference time is 23:00 UTC and local timezone is 'Pacific/Auckland' then 20th will be 21st
         // making previous data lead to 9 days out of stock instead of 10
         let movement_date = NaiveDate::from_ymd_opt(2025, 12, 30)
@@ -392,37 +413,5 @@ pub(crate) mod test {
         .await;
 
         std::env::set_var("TZ", "");
-    }
-
-    #[actix_rt::test]
-    async fn test_dos_multi_stockline_same_datetime() {
-        std::env::set_var("TZ", "Pacific/Auckland");
-
-        let movement_date = get_local_date_as_utc(
-            NaiveDate::from_ymd_opt(2025, 12, 30)
-                .unwrap()
-                .and_hms_opt(3, 3, 3)
-                .unwrap(),
-        );
-
-        // Multiple stocklines with an outbound and inbound at the same datetime.
-        // daily_stock must use the final balance for that datetime, not an intermediate one.
-        //
-        // Looking back 10 days from 30th, including 20th in calculation
-        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
-        // |                        | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
-        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
-        // | end of day balance     | 8  | 8  | 8  | 8  | 8  | 8  | 5  | 5  | 5  | 5  | 5  | 5  |
-        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
-        // | full day without stock | no | no | no | no | no | no | no | no | no | no | no | no |
-        // +------------------------+----+----+----+----+----+----+----+----+----+----+----+
-        test_multi_stockline(
-            "multi_stockline_same_datetime",
-            movement_date,
-            movement_date,
-            vec![("a", vec![(5, 8), (25, -8)]), ("b", vec![(25, 5)])],
-            None,
-        )
-        .await;
     }
 }
