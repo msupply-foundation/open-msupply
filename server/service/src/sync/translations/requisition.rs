@@ -546,27 +546,22 @@ fn from_legacy_status(
     let status = match r#type {
         LegacyRequisitionType::Request => match status {
             LegacyRequisitionStatus::Sg => RequisitionStatus::Draft,
-            &LegacyRequisitionStatus::Cn => RequisitionStatus::Sent,
-            LegacyRequisitionStatus::Fn => RequisitionStatus::Sent,
-            // Note, nw shouldn't be possible but is seen historical data:
-            LegacyRequisitionStatus::Nw => RequisitionStatus::Draft,
-            LegacyRequisitionStatus::Others => return None,
-        },
-        LegacyRequisitionType::Response => match status {
-            LegacyRequisitionStatus::Sg => RequisitionStatus::New,
-            &LegacyRequisitionStatus::Cn => RequisitionStatus::New,
-            LegacyRequisitionStatus::Fn => RequisitionStatus::Finalised,
-            // Note, nw shouldn't be possible but is seen historical data:
-            LegacyRequisitionStatus::Nw => RequisitionStatus::New,
-            LegacyRequisitionStatus::Others => return None,
-        },
-        LegacyRequisitionType::Im | LegacyRequisitionType::Sh => match status {
-            LegacyRequisitionStatus::Sg => RequisitionStatus::Draft,
             LegacyRequisitionStatus::Cn => RequisitionStatus::Sent,
             LegacyRequisitionStatus::Fn => RequisitionStatus::Sent,
+            // Note, nw shouldn't be possible but is seen historical data:
             LegacyRequisitionStatus::Nw => RequisitionStatus::Draft,
             LegacyRequisitionStatus::Others => return None,
         },
+        LegacyRequisitionType::Response | LegacyRequisitionType::Im | LegacyRequisitionType::Sh => {
+            match status {
+                LegacyRequisitionStatus::Sg => RequisitionStatus::New,
+                LegacyRequisitionStatus::Cn => RequisitionStatus::New,
+                LegacyRequisitionStatus::Fn => RequisitionStatus::Finalised,
+                // Note, nw shouldn't be possible but is seen historical data:
+                LegacyRequisitionStatus::Nw => RequisitionStatus::New,
+                LegacyRequisitionStatus::Others => return None,
+            }
+        }
         _ => return None,
     };
     Some(status)
@@ -578,20 +573,20 @@ fn to_legacy_status(
     has_outbound_shipment: bool,
 ) -> Option<LegacyRequisitionStatus> {
     let status = match r#type {
-        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => {
+        RequisitionType::Request => match status {
+            RequisitionStatus::Draft => LegacyRequisitionStatus::Sg,
+            RequisitionStatus::Sent => LegacyRequisitionStatus::Fn,
+            RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
+            _ => return None,
+        },
+        RequisitionType::Response | RequisitionType::Imprest | RequisitionType::StockHistory => {
             match status {
-                RequisitionStatus::Draft => LegacyRequisitionStatus::Sg,
-                RequisitionStatus::Sent => LegacyRequisitionStatus::Fn,
+                RequisitionStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
+                RequisitionStatus::New => LegacyRequisitionStatus::Sg,
                 RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
                 _ => return None,
             }
         }
-        RequisitionType::Response => match status {
-            RequisitionStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
-            RequisitionStatus::New => LegacyRequisitionStatus::Sg,
-            RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
-            _ => return None,
-        },
     };
     Some(status)
 }
