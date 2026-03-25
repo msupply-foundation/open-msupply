@@ -18,9 +18,9 @@ export type PurchaseOrderRowFragment = {
   reference?: string | null;
   comment?: string | null;
   orderTotalAfterDiscount: number;
-  currency?: { __typename: 'CurrencyNode'; code: string } | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+  currency?: { __typename: 'CurrencyNode'; code: string } | null;
 };
 
 export type PurchaseOrderFragment = {
@@ -225,9 +225,9 @@ export type PurchaseOrdersQuery = {
       reference?: string | null;
       comment?: string | null;
       orderTotalAfterDiscount: number;
-      currency?: { __typename: 'CurrencyNode'; code: string } | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+      currency?: { __typename: 'CurrencyNode'; code: string } | null;
     }>;
   };
 };

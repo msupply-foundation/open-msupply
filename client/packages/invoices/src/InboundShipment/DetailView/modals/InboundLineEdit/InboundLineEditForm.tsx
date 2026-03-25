@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import {
-  ModalRow,
   ModalLabel,
   Grid,
+  Box,
   useTranslation,
   BasicTextInput,
 } from '@openmsupply-client/common';
@@ -42,15 +42,15 @@ export const InboundLineEditForm = ({
   const filter = {
     id: {
       notEqualAll: existingItemIds,
-      ...purchaseOrder && {
-        equalAny: query.data?.lines.nodes.map(line => line.item.id) || []
-      },
-    }
+      ...(purchaseOrder && {
+        equalAny: query.data?.lines.nodes.map(line => line.item.id) || [],
+      }),
+    },
   };
 
   return (
-    <>
-      <ModalRow>
+    <Box display="flex" flexWrap="wrap" alignItems="center" gap={1}>
+      <Box display="flex" alignItems="center" flex={1} minWidth={300} gap={1}>
         <ModalLabel
           label={t('label.item', { count: 1 })}
           justifyContent="flex-end"
@@ -69,17 +69,17 @@ export const InboundLineEditForm = ({
             initialUpdate={!item?.name}
           />
         </Grid>
-      </ModalRow>
+      </Box>
       {item && (
-        <ModalRow margin={3}>
+        <Box display="flex" alignItems="center" gap={1}>
           <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
           <BasicTextInput
             disabled
             sx={{ width: 150 }}
             value={item.unitName ?? ''}
           />
-        </ModalRow>
+        </Box>
       )}
-    </>
+    </Box>
   );
 };

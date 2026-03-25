@@ -15,15 +15,22 @@ import { AppRoute } from '@openmsupply-client/config';
 import { PurchaseOrderLineFragment } from '../../api/operations.generated';
 import { usePurchaseOrderLineList } from '../../api/hooks/usePurchaseOrderLineList';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 
 export const OutstandingLinesListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
 
   const {
-    queryParams: { first, offset, sortBy },
+    queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'purchaseOrderNumber', dir: 'desc' },
+    filters: [
+      { key: 'supplierName' },
+      { key: 'purchaseOrderNumber', condition: 'equalTo', isNumber: true },
+      { key: 'itemName' },
+      { key: 'expectedDeliveryDate', condition: 'between' },
+    ],
   });
 
   const listParams = {
@@ -31,6 +38,7 @@ export const OutstandingLinesListView = () => {
     first,
     offset,
     filterBy: {
+      ...filterBy,
       status: { equalTo: PurchaseOrderLineStatusNode.Sent },
       receivedLessThanAdjusted: true,
     },
@@ -46,6 +54,7 @@ export const OutstandingLinesListView = () => {
         accessorKey: 'purchaseOrderNumber',
         accessorFn: row => row?.purchaseOrder?.number,
         enableSorting: true,
+        enableColumnFilter: true,
         columnType: ColumnType.Number,
       },
       {
@@ -66,12 +75,14 @@ export const OutstandingLinesListView = () => {
         header: t('label.supplier-name'),
         accessorKey: 'supplierName',
         accessorFn: row => row?.purchaseOrder?.supplier?.name,
+        enableColumnFilter: true,
       },
       {
         header: t('label.item-name'),
         accessorKey: 'itemName',
         accessorFn: row => row.item.name,
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         header: t('label.purchase-order-confirmed'),
@@ -80,8 +91,10 @@ export const OutstandingLinesListView = () => {
       },
       {
         header: t('label.expected-delivery-date'),
-        accessorKey: 'purchaseOrder.expectedDeliveryDate',
+        accessorKey: 'expectedDeliveryDate',
         columnType: ColumnType.Date,
+        enableColumnFilter: true,
+        dateFilterFormat: 'date',
       },
       {
         header: t('label.adjusted-units-expected'),
@@ -130,6 +143,7 @@ export const OutstandingLinesListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons data={data?.nodes} isLoading={isLoading} />
       <MaterialTable table={table} />
     </>
