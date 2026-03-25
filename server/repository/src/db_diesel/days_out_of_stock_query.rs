@@ -111,7 +111,6 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
             ""
         };
 
-
         out.push_sql(
            &format!(r#"    
           , starting_stock AS (
@@ -170,7 +169,7 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
               FROM
                 item_ledger
               WHERE
-                datetime >= (SELECT start_datetime FROM variables)
+                datetime > (SELECT start_datetime FROM variables)
                 AND datetime <= (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
             ),
             daily_stock AS (
