@@ -31,7 +31,7 @@ pub(crate) enum SyncStep {
     PushCentralV6,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) enum SyncStepProgress {
     PullCentral,
     PullRemote,
@@ -233,6 +233,8 @@ impl<'a> SyncLogger<'a> {
         step: SyncStepProgress,
         remaining: u64,
     ) -> Result<(), SyncLoggerError> {
+        info!("Progress update for step {step:?}, remaining {remaining}");
+
         let get_progress = |remaining: u64, total: Option<i32>| -> (Option<i32>, Option<i32>) {
             match total {
                 None => {

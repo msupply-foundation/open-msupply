@@ -3,6 +3,7 @@ use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
 use colored::Colorize;
+use diesel::connection::SimpleConnection;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 
@@ -129,6 +130,12 @@ enum Action {
         /// Path to the certificate file matching the private key
         #[clap(short, long)]
         cert: String,
+    },
+    ReintegrateBuffer {
+        #[clap(short, long)]
+        outer_transaction: bool,
+        #[clap(short, long)]
+        inner_transaction: bool,
     },
     /// Helper tool to upsert report to local omSupply instance, helpful when developing reports, especially with argument schema
     UpsertReport {
@@ -449,6 +456,8 @@ async fn main() -> anyhow::Result<()> {
                 &ctx.connection,
                 Some(&mut logger),
                 SyncBufferSource::Central(0),
+                false,
+                false,
             )?;
 
             info!("Initialising users");
@@ -484,6 +493,45 @@ async fn main() -> anyhow::Result<()> {
                 "Initialisation done, available users: {}",
                 fs::read_to_string(users_file)?
             );
+        }
+        Action::ReintegrateBuffer {
+            inner_transaction,
+            outer_transaction,
+        } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
+            let ctx = service_provider.basic_context()?;
+
+            info!("Updating sync buffer to reintegrate");
+            {
+                let connection = connection_manager.connection()?;
+                connection
+                    .lock()
+                    .connection()
+                    .batch_execute(
+                        r#"
+                    update sync_buffer set integration_error = null, integration_datetime = null;
+                    TRUNCATE TABLE unit CASCADE;
+                    TRUNCATE TABLE item CASCADE;
+                    TRUNCATE TABLE name CASCADE;
+                    TRUNCATE TABLE changelog CASCADE;
+                    "#,
+                    )
+                    .unwrap();
+            }
+
+            info!("Starting reintegration");
+
+            let mut logger = SyncLogger::start(&ctx.connection).unwrap();
+            integrate_and_translate_sync_buffer(
+                &ctx.connection,
+                Some(&mut logger),
+                SyncBufferSource::Central(1),
+                inner_transaction,
+                outer_transaction,
+            )?;
+
+            info!("Reintegration complete");
         }
         Action::RefreshDates { enable_sync } => {
             let connection_manager = get_storage_connection_manager(&settings.database);

@@ -69,6 +69,7 @@ impl<'a> TranslationAndIntegration<'a> {
         sync_records: &[SyncBufferRow],
         translators: &Vec<Box<dyn SyncTranslation>>,
         mut logger: Option<&mut SyncLogger>,
+        inner_transaction: bool,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
         let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
@@ -152,7 +153,8 @@ impl<'a> TranslationAndIntegration<'a> {
             }
 
             // Integrate
-            let integration_result = integrate(self.connection, &integration_records);
+            let integration_result =
+                integrate(self.connection, &integration_records, inner_transaction);
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
@@ -219,9 +221,10 @@ impl IntegrationOperation {
 pub(crate) fn integrate(
     connection: &StorageConnection,
     integration_records: &[(Option<i32>, IntegrationOperation)],
+    in_transaction: bool,
 ) -> Result<(), RepositoryError> {
     for (source_site_id, integration_record) in integration_records.iter() {
-        if cfg!(feature = "postgres") {
+        if cfg!(feature = "postgres") && in_transaction {
             // In Postgres the parent transaction fails when there is a DB error in any of the
             // statements executed in the transaction. Thus, integrate every record in a nested
             // transaction to catch potential errors (e.g. foreign key violations).
@@ -305,6 +308,7 @@ mod test {
                             ..Default::default()
                         }),
                     )],
+                    true,
                 );
 
                 assert_eq!(result, Ok(()));
@@ -320,6 +324,7 @@ mod test {
                             ..Default::default()
                         }),
                     )],
+                    true,
                 );
 
                 assert_ne!(result, Ok(()));

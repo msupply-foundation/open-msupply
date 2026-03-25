@@ -322,6 +322,8 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
             &ctx.connection,
             None,
             SyncBufferSource::Remote(site_id),
+            true,
+            true,
         ) {
             Ok(_) => {
                 log::info!("Integration complete for site {site_id}");
