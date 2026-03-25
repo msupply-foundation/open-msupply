@@ -19,6 +19,8 @@ This directory contains developer documentation for Open mSupply, served as a st
 ```
 docs/
 ├── check-docs-structure.sh      # CI check script
+└── themes/
+    └── adidoks/ # AdiDoks theme
 └── content/                     # all site content lives here
     ├── tools/
     │   ├── _index.md            # source = "docs" (standalone)
@@ -199,6 +201,7 @@ Some directories exist only because a child README is deeper in the tree (e.g. `
 
 - **Missing**: flags any tracked README that has no corresponding `_index.md` in `docs/content/`
 - **Orphaned**: flags any `_index.md` without `source = "docs"` that has no corresponding README in the repo
+- **Broken links**: runs `zola build` and flags any broken internal anchor links (requires Zola installed)
 
 Run it with:
 
@@ -214,6 +217,9 @@ ORPHANED: docs/content/some/section/_index.md (no corresponding README — add s
 
 Summary: 68 checked, 2 skipped, 2 errors
 
+Checking internal links...
+
+OK: no broken internal links.
 
 Check failed.
 ```
@@ -222,6 +228,7 @@ Skipped READMEs:
 
 - `README.md` (root) — not developer module docs
 - `.github/workflows/ACTIONS_README.md` — GitHub-specific, not developer docs
+- `docs/themes/*` — theme vendored files
 
 ## How the Migration Was Done
 
