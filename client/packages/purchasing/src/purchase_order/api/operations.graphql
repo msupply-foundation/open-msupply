@@ -110,6 +110,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedDeliveryDate
   requestedNumberOfUnits
   shippedNumberOfUnits
+  receivedNumberOfUnits
   adjustedNumberOfUnits
   pricePerPackAfterDiscount
   pricePerPackBeforeDiscount
