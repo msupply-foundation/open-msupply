@@ -41,7 +41,7 @@ impl MigrationFragment for Migrate {
                     100,
                     0, 0, 0, 0, 0
                 FROM (SELECT 1) AS dummy
-                LEFT JOIN (SELECT * FROM demographic_indicator LIMIT 1) di;
+                LEFT JOIN (SELECT * FROM demographic_indicator LIMIT 1) di on TRUE;
             "#,
         )?;
 
