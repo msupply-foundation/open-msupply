@@ -52,6 +52,8 @@ interface InboundLineEditProps {
   getSortedItems: () => ItemRowFragment[];
   /** For external mode: the PO line ID of the clicked invoice line */
   purchaseOrderLineId?: string | null;
+  /** The specific line ID to scroll into view when the modal opens */
+  scrollToLineId?: string | null;
 }
 
 export const InboundLineEdit = ({
@@ -67,6 +69,7 @@ export const InboundLineEdit = ({
   scannedBatchData,
   getSortedItems,
   purchaseOrderLineId,
+  scrollToLineId,
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -261,6 +264,7 @@ export const InboundLineEdit = ({
       setPackRoundingMessage={setPackRoundingMessage}
       restrictedToLocationTypeId={effectiveItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
+      scrollToLineId={scrollToLineId}
     />
   );
 

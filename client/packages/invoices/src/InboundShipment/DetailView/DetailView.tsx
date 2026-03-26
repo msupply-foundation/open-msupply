@@ -112,6 +112,7 @@ const DetailViewInner = () => {
   const [editPurchaseOrderLineId, setEditPurchaseOrderLineId] = useState<
     string | null
   >(null);
+  const [scrollToLineId, setScrollToLineId] = useState<string | null>(null);
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -121,11 +122,13 @@ const DetailViewInner = () => {
         setEditPurchaseOrderLineId(
           firstLine?.purchaseOrderLine?.id ?? null
         );
+        setScrollToLineId(firstLine?.id ?? null);
       } else {
         onOpen(line.item);
         setEditPurchaseOrderLineId(
           line.purchaseOrderLine?.id ?? null
         );
+        setScrollToLineId(line.id);
       }
     },
     [onOpen]
@@ -143,6 +146,7 @@ const DetailViewInner = () => {
         onOpen();
         setMode(ModalMode.Create);
         setEditPurchaseOrderLineId(null);
+        setScrollToLineId(null);
         return;
       }
 
@@ -333,6 +337,7 @@ const DetailViewInner = () => {
               hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
               purchaseOrderLineId={editPurchaseOrderLineId}
+              scrollToLineId={scrollToLineId}
               scannedBatchData={{
                 batch: (entity as ScannedBatchData)?.batch,
                 expiryDate: (entity as ScannedBatchData)?.expiryDate,

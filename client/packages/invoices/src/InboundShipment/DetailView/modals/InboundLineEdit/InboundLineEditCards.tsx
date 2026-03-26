@@ -63,6 +63,8 @@ interface InboundLineEditCardsProps extends CardProps {
   removeDraftLine: (id: string) => void;
   lastCardRef?: React.RefObject<HTMLDivElement>;
   actions?: React.ReactNode;
+  /** The specific line ID to scroll into view when the modal opens */
+  scrollToLineId?: string | null;
 }
 
 export const InboundLineEditCards = ({
@@ -80,6 +82,7 @@ export const InboundLineEditCards = ({
   restrictedToLocationTypeId,
   lastCardRef,
   actions,
+  scrollToLineId,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
   const simplified = useSimplifiedTabletUI();
@@ -126,14 +129,18 @@ export const InboundLineEditCards = ({
   const pluralisedUnitName = getPlural(unitName, 2);
 
   // Track which line to auto-focus packs received on:
+  // - initial mount with scrollToLineId → that specific line
   // - initial mount / item change → first line
   // - line added / duplicated → the new line
   const prevLineIdsRef = useRef<Set<string> | null>(null);
   const autoFocusLineIdRef = useRef<string | null>(null);
   const currentLineIds = new Set(lines.map(l => l.id));
   if (prevLineIdsRef.current === null) {
-    // Initial mount: focus first line
-    autoFocusLineIdRef.current = lines[0]?.id ?? null;
+    // Initial mount: focus the clicked line if provided, otherwise first line
+    autoFocusLineIdRef.current =
+      (scrollToLineId && currentLineIds.has(scrollToLineId)
+        ? scrollToLineId
+        : lines[0]?.id) ?? null;
   } else {
     for (const id of currentLineIds) {
       if (!prevLineIdsRef.current.has(id)) {
@@ -770,6 +777,7 @@ export const InboundLineEditCards = ({
         lastItemRef={lastCardRef}
         groupIcons={groupIcons}
         actions={actions}
+        scrollToRowId={scrollToLineId}
       />
     </>
   );

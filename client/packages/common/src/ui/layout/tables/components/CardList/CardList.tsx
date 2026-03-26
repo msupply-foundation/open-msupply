@@ -10,6 +10,8 @@ interface CardListProps<T extends MRT_RowData> {
   groupIcons?: Record<string, React.ReactNode>;
   actions?: React.ReactNode;
   stickyTopOffset?: number;
+  /** When set, the card matching this row ID will be scrolled into view on mount */
+  scrollToRowId?: string | null;
 }
 
 const getRowOnClick = <T extends MRT_RowData>(
@@ -36,9 +38,28 @@ export const CardList = <T extends MRT_RowData>({
   groupIcons,
   actions,
   stickyTopOffset = 0,
+  scrollToRowId,
 }: CardListProps<T>) => {
   const rows = table.getRowModel().rows;
   const isLandscape = useIsLandscapeTablet();
+  const scrollToRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (scrollToRowId && scrollToRef.current) {
+      scrollToRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [scrollToRowId]);
+
+  const getCardRef = (row: MRT_Row<T>, index: number) => {
+    if (scrollToRowId && row.original && 'id' in row.original && (row.original as Record<string, unknown>)['id'] === scrollToRowId) {
+      return scrollToRef;
+    }
+    if (index === rows.length - 1) return lastItemRef;
+    return undefined;
+  };
 
   return (
     <Stack
@@ -70,7 +91,7 @@ export const CardList = <T extends MRT_RowData>({
             <CardListItem
               key={row.id}
               row={row}
-              cardRef={index === rows.length - 1 ? lastItemRef : undefined}
+              cardRef={getCardRef(row, index)}
               groupIcons={groupIcons}
               onClick={getRowOnClick(table, row)}
             />
