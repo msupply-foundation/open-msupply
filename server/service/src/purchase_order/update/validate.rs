@@ -25,6 +25,16 @@ pub fn validate(
         .pop()
         .ok_or(UpdatePurchaseOrderError::PurchaseOrderDoesNotExist)?;
 
+    // When PO is Sent or Finalised, only status changes are allowed (no field edits)
+    let current_status = &purchase_order.purchase_order_row.status;
+    if matches!(
+        current_status,
+        PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
+    ) && input.has_non_status_field_changes()
+    {
+        return Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder);
+    }
+
     // Check auth is required before changing to Request Approval
     if input.status == Some(PurchaseOrderStatus::RequestApproval) {
         let requires_auth = check_requires_auth(connection, store_id)?;

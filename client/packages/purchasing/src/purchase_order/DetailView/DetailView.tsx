@@ -115,7 +115,9 @@ const DetailViewInner = () => {
       value: t('label.inbound-shipment'),
     },
     {
-      Component: <Details draft={draft} onChange={handleChange} />,
+      Component: (
+        <Details draft={draft} onChange={handleChange} disabled={isDisabled} />
+      ),
       value: t('label.details'),
     },
     {
