@@ -69,6 +69,14 @@ export const FinancialTab = () => {
         ),
       },
       {
+        accessorKey: 'sellPricePerPack',
+        header: `${t('label.pack-sell-price')} (${storeCurrencyCode ?? ''})`,
+        columnType: ColumnType.Currency,
+        Cell: ({ cell }) => (
+          <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
+        ),
+      },
+      {
         accessorKey: 'foreignCurrencyPriceBeforeTax',
         header: `${t('label.line-total')} (${poCurrencyCode ?? ''})`,
         columnType: ColumnType.Currency,
@@ -114,11 +122,6 @@ export const FinancialTab = () => {
       // TODO: calculate these
       //  accessorKey: 'adjustedTotalLocal',
       //   header: t('label.adjusted-total-local'),
-      //   columnType: ColumnType.Currency,
-      // },
-      // {
-      //   accessorKey: 'sellPricePerPack',
-      //   header: t('label.pack-sell-price'),
       //   columnType: ColumnType.Currency,
       // },
     ],
