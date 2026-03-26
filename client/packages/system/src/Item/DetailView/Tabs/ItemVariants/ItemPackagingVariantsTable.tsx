@@ -77,7 +77,7 @@ export const ItemPackagingVariantsTable = ({
                   updatePackaging({ id: row.id, volumePerUnit: value })
                 }
                 error={cell.getValue() === 0}
-                decimalLimit={3}
+                decimalLimit={4}
               />
             )
           : TextWithTooltipCell,
