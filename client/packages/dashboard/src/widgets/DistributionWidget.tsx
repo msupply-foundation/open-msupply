@@ -44,7 +44,7 @@ export const DistributionWidget = ({
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(
-      `Failed to create invoice! ${message}`
+      t('error.failed-to-create-outbound-shipment', { message })
     );
     errorSnack();
   };

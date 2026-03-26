@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -109,10 +109,24 @@ const DetailViewInner = () => {
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
+  const [editPurchaseOrderLineId, setEditPurchaseOrderLineId] = useState<
+    string | null
+  >(null);
+
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
-      const item = 'lines' in line ? line.lines[0]?.item : line.item;
-      onOpen(item);
+      if ('lines' in line) {
+        const firstLine = line.lines[0];
+        onOpen(firstLine?.item);
+        setEditPurchaseOrderLineId(
+          firstLine?.purchaseOrderLine?.id ?? null
+        );
+      } else {
+        onOpen(line.item);
+        setEditPurchaseOrderLineId(
+          line.purchaseOrderLine?.id ?? null
+        );
+      }
     },
     [onOpen]
   );
@@ -128,6 +142,7 @@ const DetailViewInner = () => {
       ) {
         onOpen();
         setMode(ModalMode.Create);
+        setEditPurchaseOrderLineId(null);
         return;
       }
 
@@ -160,7 +175,10 @@ const DetailViewInner = () => {
       tableId: TABLE_ID,
       columns,
       data: lines,
-      grouping: { field: 'item.code' },
+      // REVIEW: could be confusing as there isn't any feedback for what field is being grouped by and we normally only group by item. However grouping by item doesn't really make sense for external IS while grouping by purchase order line number does make sense.
+      grouping: external
+        ? { field: 'purchaseOrderLine.lineNumber' }
+        : { field: 'item.code' },
       isLoading: false,
       initialSort: { key: 'itemName', dir: 'asc' },
       onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
@@ -312,6 +330,7 @@ const DetailViewInner = () => {
               isExternalSupplier={!data.otherParty.store}
               hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
+              purchaseOrderLineId={editPurchaseOrderLineId}
               scannedBatchData={{
                 batch: (entity as ScannedBatchData)?.batch,
                 expiryDate: (entity as ScannedBatchData)?.expiryDate,

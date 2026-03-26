@@ -13,6 +13,7 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
+use crate::invoice::inbound_shipment::InboundShipmentType;
 use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
 
 use super::{UpdateStockInLine, UpdateStockInLineError};
@@ -21,6 +22,7 @@ pub fn validate(
     input: &UpdateStockInLine,
     store_id: &str,
     connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<(InvoiceLine, Option<ItemRow>, InvoiceRow), UpdateStockInLineError> {
     use UpdateStockInLineError::*;
 
@@ -41,6 +43,11 @@ pub fn validate(
 
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
+    }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);

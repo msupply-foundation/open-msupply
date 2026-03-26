@@ -222,6 +222,10 @@ mutation updatePurchaseOrder(
         ... on ItemsCannotBeOrdered {
           ...ItemsCannotBeOrdered
         }
+        ... on InboundShipmentsNotVerified {
+          __typename
+          description
+        }
       }
     }
   }
@@ -283,6 +287,18 @@ query purchaseOrderLine($id: String!, $storeId: String!) {
       totalCount
     }
   }
+}
+
+query unitsOrderedInOtherPurchaseOrders(
+  $storeId: String!
+  $itemId: String!
+  $excludePurchaseOrderId: String!
+) {
+  unitsOrderedInOtherPurchaseOrders(
+    storeId: $storeId
+    itemId: $itemId
+    excludePurchaseOrderId: $excludePurchaseOrderId
+  )
 }
 
 query purchaseOrderLinesCount(
