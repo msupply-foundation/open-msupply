@@ -95,6 +95,12 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 urlParameter: 'theirReference',
               },
               {
+                type: 'number',
+                name: t('label.purchase-order-number'),
+                urlParameter: 'purchaseOrderNumber',
+                wide: true,
+              },
+              {
                 type: 'group',
                 name: t('label.created-datetime'),
                 elements: [
