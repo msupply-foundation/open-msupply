@@ -136,6 +136,8 @@ export type InboundFragment = {
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
   currencyRate: number;
+  chargesLocalCurrency: number;
+  chargesForeignCurrency: number;
   defaultDonor?: { __typename: 'NameNode'; id: string; name: string } | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
@@ -314,6 +316,12 @@ export type InboundFragment = {
     id: string;
     number: number;
     reference?: string | null;
+    agentCommission?: number | null;
+    documentCharge?: number | null;
+    communicationsCharge?: number | null;
+    insuranceCharge?: number | null;
+    freightCharge?: number | null;
+    orderTotalAfterDiscount: number;
     currency?: {
       __typename: 'CurrencyNode';
       id: string;
@@ -443,6 +451,8 @@ export type InvoiceQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
@@ -633,6 +643,12 @@ export type InvoiceQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          agentCommission?: number | null;
+          documentCharge?: number | null;
+          communicationsCharge?: number | null;
+          insuranceCharge?: number | null;
+          freightCharge?: number | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -685,6 +701,8 @@ export type InboundByNumberQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
@@ -875,6 +893,12 @@ export type InboundByNumberQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          agentCommission?: number | null;
+          documentCharge?: number | null;
+          communicationsCharge?: number | null;
+          insuranceCharge?: number | null;
+          freightCharge?: number | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -1555,6 +1579,8 @@ export const InboundFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    chargesLocalCurrency
+    chargesForeignCurrency
     documents {
       __typename
       nodes {
@@ -1569,6 +1595,12 @@ export const InboundFragmentDoc = gql`
       id
       number
       reference
+      agentCommission
+      documentCharge
+      communicationsCharge
+      insuranceCharge
+      freightCharge
+      orderTotalAfterDiscount
       currency {
         id
         code

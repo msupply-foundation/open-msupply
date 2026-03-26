@@ -48,6 +48,8 @@ pub struct UpdateInput {
     pub tax: Option<TaxInput>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub charges_local_currency: Option<f64>,
+    pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
     pub delivered_datetime: Option<NaiveDate>,
 }
@@ -119,6 +121,8 @@ impl UpdateInput {
             tax,
             currency_id,
             currency_rate,
+            charges_local_currency,
+            charges_foreign_currency,
             default_donor,
             delivered_datetime,
         } = self;
@@ -136,6 +140,8 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
+            charges_local_currency,
+            charges_foreign_currency,
             default_donor: default_donor.map(|donor| UpdateDefaultDonor {
                 donor_id: donor.donor_id,
                 apply_to_lines: donor.apply_to_lines.to_domain(),

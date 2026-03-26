@@ -210,6 +210,8 @@ fragment Inbound on InvoiceNode {
   }
 
   currencyRate
+  chargesLocalCurrency
+  chargesForeignCurrency
 
   documents {
     __typename
@@ -227,6 +229,12 @@ fragment Inbound on InvoiceNode {
     id
     number
     reference
+    agentCommission
+    documentCharge
+    communicationsCharge
+    insuranceCharge
+    freightCharge
+    orderTotalAfterDiscount
     currency {
       id
       code
