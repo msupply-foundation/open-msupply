@@ -17,6 +17,7 @@ import {
   DateTimePickerInput,
   TextInputCell,
   NumberInputCell,
+  Currencies,
   CurrencyInputCell,
   CardList,
   Box,
@@ -397,7 +398,7 @@ export const InboundLineEditCards = ({
           <CurrencyInputCell
             cell={cell}
             disabled
-            currencyCode={foreignCurrency?.code}
+            currencyCode={foreignCurrency?.code as Currencies}
           />
         ),
         includeColumn:
@@ -444,7 +445,7 @@ export const InboundLineEditCards = ({
           <CurrencyInputCell
             cell={cell}
             disabled
-            currencyCode={foreignCurrency?.code}
+            currencyCode={foreignCurrency?.code as Currencies}
           />
         ),
         includeColumn:

@@ -17,7 +17,8 @@ import { getPurchaseOrderLineStatusTranslator } from '../../utils';
 
 export const usePurchaseOrderColumns = (currencyCode?: string) => {
   const t = useTranslation();
-  const formatCurrency = useFormatCurrency(currencyCode as Currencies);
+  const currency = currencyCode as Currencies | undefined;
+  const formatCurrency = useFormatCurrency(currency);
   const { getError } = usePurchaseOrderLineErrorContext();
   const lineStatusTranslator = useCallback(
     (status: PurchaseOrderLineStatusNode) =>
@@ -111,7 +112,7 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
         header: t('label.line-cost'),
         columnType: ColumnType.Currency,
         Cell: props => (
-          <CurrencyValueCell {...props} currencyCode={currencyCode} />
+          <CurrencyValueCell {...props} currencyCode={currency} />
         ),
         accessorFn: row => {
           const units =

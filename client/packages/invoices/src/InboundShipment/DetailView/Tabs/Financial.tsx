@@ -20,12 +20,14 @@ export const FinancialTab = () => {
     query: { data, loading: isLoading },
   } = useInboundShipment();
 
-  const poCurrencyCode = data?.purchaseOrder?.currency?.code;
-  const storeCurrencyCode = store?.homeCurrencyCode ?? undefined;
-  const formatPoCurrency = useFormatCurrency(poCurrencyCode as Currencies);
-  const formatStoreCurrency = useFormatCurrency(
-    storeCurrencyCode as Currencies
-  );
+  const poCurrencyCode = data?.purchaseOrder?.currency?.code as
+    | Currencies
+    | undefined;
+  const storeCurrencyCode = (store?.homeCurrencyCode ?? undefined) as
+    | Currencies
+    | undefined;
+  const formatPoCurrency = useFormatCurrency(poCurrencyCode);
+  const formatStoreCurrency = useFormatCurrency(storeCurrencyCode);
 
   const lines = data?.lines.nodes;
 

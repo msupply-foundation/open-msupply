@@ -1,5 +1,6 @@
 import React from 'react';
 import { CurrencyInput } from '@common/components';
+import { Currencies } from '@common/intl';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
@@ -9,7 +10,7 @@ interface CurrencyInputCellProps<T extends MRT_RowData> {
   cell: MRT_Cell<T>;
   updateFn?: (value: number) => void;
   disabled?: boolean;
-  currencyCode?: string;
+  currencyCode?: Currencies;
 }
 
 export const CurrencyInputCell = <T extends MRT_RowData>({

@@ -10,7 +10,7 @@ import { useBufferState } from '@common/hooks';
 interface CurrencyInputProps extends RCInputProps {
   onChangeNumber: (value: number) => void;
   maxWidth?: number | string;
-  currencyCode?: string;
+  currencyCode?: Currencies;
 }
 
 // TODO: It would be nice if we were to just use the BasicTextInput or
@@ -48,7 +48,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
 }) => {
   const val = value !== undefined ? value : defaultValue;
   const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
-  const { options } = useCurrency(currencyCode as Currencies);
+  const { options } = useCurrency(currencyCode);
 
   const { format } = useFormatNumber();
 
