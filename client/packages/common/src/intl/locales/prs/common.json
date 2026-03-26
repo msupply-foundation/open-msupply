@@ -4,5 +4,6 @@
   "heading.username": "نام کاربری",
   "label.app-version": "نسخه",
   "login.body": "به Open mSupply خوش آمدید. شریک شما برای مدیریت زنجیره های تامین صحت و بهبود موجودیت ادویه.",
-  "login.heading": "ساده.\nقدرتمند.\nفارمسی\nمدیریت."
+  "login.heading": "ساده.\nقدرتمند.\nفارمسی\nمدیریت.",
+  "report-code.stock-delivery-record": "سند تسلیمی موجودی"
 }

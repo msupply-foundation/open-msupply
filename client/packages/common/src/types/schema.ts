@@ -2992,6 +2992,18 @@ export type InboundInvoiceCounts = {
   notDelivered: Scalars['Int']['output'];
 };
 
+export enum InboundNodeType {
+  FromPurchaseOrder = 'FROM_PURCHASE_ORDER',
+  FromRequisition = 'FROM_REQUISITION',
+  ManualExternal = 'MANUAL_EXTERNAL',
+  ManualInternal = 'MANUAL_INTERNAL',
+}
+
+export type InboundShipmentsNotVerified = UpdatePurchaseOrderErrorInterface & {
+  __typename: 'InboundShipmentsNotVerified';
+  description: Scalars['String']['output'];
+};
+
 export type IndicatorColumnNode = {
   __typename: 'IndicatorColumnNode';
   columnNumber: Scalars['Int']['output'];
@@ -4266,6 +4278,7 @@ export type InvoiceFilterInput = {
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -4427,6 +4440,7 @@ export type InvoiceNode = {
   documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  inboundType: InboundNodeType;
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   insurancePolicy?: Maybe<InsurancePolicyNode>;
@@ -7880,12 +7894,12 @@ export type QueriesInvoicesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<InvoiceSortInput>>;
   storeId: Scalars['String']['input'];
-  type?: InputMaybe<InvoiceTypeInput>;
+  type?: InputMaybe<Array<InvoiceTypeInput>>;
 };
 
 export type QueriesItemCountsArgs = {
-  highStockThreshold?: InputMaybe<Scalars['Int']['input']>;
-  lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
+  highStockThreshold?: InputMaybe<Scalars['Float']['input']>;
+  lowStockThreshold?: InputMaybe<Scalars['Float']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -11231,6 +11245,7 @@ export enum UserPermission {
   InboundShipmentExternalAuthorise = 'INBOUND_SHIPMENT_EXTERNAL_AUTHORISE',
   InboundShipmentExternalMutate = 'INBOUND_SHIPMENT_EXTERNAL_MUTATE',
   InboundShipmentExternalQuery = 'INBOUND_SHIPMENT_EXTERNAL_QUERY',
+  InboundShipmentExternalVerify = 'INBOUND_SHIPMENT_EXTERNAL_VERIFY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   InboundShipmentVerify = 'INBOUND_SHIPMENT_VERIFY',
