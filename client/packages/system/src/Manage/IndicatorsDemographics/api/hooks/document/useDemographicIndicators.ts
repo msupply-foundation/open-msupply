@@ -2,10 +2,7 @@ import {
   useUrlQueryParams,
   useQuery,
   useTranslation,
-  uniqBy,
   ArrayUtils,
-  TypedTFunction,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import { useDemographicsApi } from '../utils/useDemographicApi';
 import { useEffect, useState } from 'react';
@@ -15,7 +12,6 @@ import {
   toDemographicIndicatorRow,
 } from '../../../DetailView/utils';
 import { HeaderData, Row } from '../../../types';
-import { DemographicIndicatorFragment } from '../../operations.generated';
 
 export const useDemographicIndicators = (headerData?: HeaderData) => {
   const t = useTranslation();
@@ -33,11 +29,18 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
   useEffect(() => {
     if (!data || !headerData) return;
 
-    const generalRow = getGeneralRow(draft, data?.nodes ?? [], headerData, t);
-    const nodes = [...data?.nodes];
-    const nodesAsRow = nodes.map(toDemographicIndicatorRow);
-    const nodesFiltered = uniqBy([generalRow, ...nodesAsRow], 'id');
-    const draftRows = ArrayUtils.toObject(nodesFiltered);
+    const nodesAsRow = data.nodes.map(node =>
+      toDemographicIndicatorRow({
+        ...node,
+        // Always use the translated name for the general population row since
+        // it wasn't added by the user and is hardcoded in En
+        name:
+          node.id === GENERAL_POPULATION_ID
+            ? t('label.general-population')
+            : node.name,
+      })
+    );
+    const draftRows = ArrayUtils.toObject(nodesAsRow) as Record<string, Row>;
     setDraft(draftRows);
 
     // don't want this changing every time the draft updates
@@ -65,40 +68,4 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
   }, [t, headerData]);
 
   return { draft, setDraft, isLoading, data };
-};
-
-const getGeneralRow = (
-  draft: Record<string, Row>,
-  nodes: DemographicIndicatorFragment[],
-  headerData: HeaderData,
-  t: TypedTFunction<LocaleKey>
-) => {
-  const draftGeneralRow = draft[GENERAL_POPULATION_ID];
-  if (!!draftGeneralRow) return draftGeneralRow;
-
-  // generate index row dynamically from basePopulation and baseYear
-  const generalRow = toDemographicIndicatorRow({
-    __typename: 'DemographicIndicatorNode',
-    id: GENERAL_POPULATION_ID,
-    populationPercentage: 100,
-    name: t('label.general-population'),
-    baseYear: nodes[0]?.baseYear ?? 2024,
-    // calculate basePopulation based on first matching row's base population
-    // later we could save generalPopulationRows in the database which are unique for any given year? Their id could be something
-    // like GENERAL_POPULATION_ID_<year>
-    basePopulation: nodes[0]?.basePopulation ?? 0,
-    year1Projection: nodes[0]?.basePopulation ?? 0,
-    year2Projection: 0,
-    year3Projection: 0,
-    year4Projection: 0,
-    year5Projection: 0,
-  });
-
-  const generalRowCalculated = calculateAcrossRow(
-    generalRow,
-    headerData,
-    generalRow.basePopulation
-  );
-
-  return generalRowCalculated;
 };
