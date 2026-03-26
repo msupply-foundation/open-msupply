@@ -14,60 +14,22 @@ pub fn stock_effects(
     from_status: &InvoiceStatus,
     to_status: &InvoiceStatus,
 ) -> StockEffect {
-    let reduce_stock = to_status.index() >= InvoiceStatus::Picked.index()
-        && from_status.index() < InvoiceStatus::Picked.index();
-    let create_stock = to_status.index() >= InvoiceStatus::Received.index()
-        && from_status.index() < InvoiceStatus::Received.index();
+    use InvoiceStatus::*;
+    use InvoiceType::*;
 
-    match invoice_type {
-        InvoiceType::OutboundShipment => {
-            if reduce_stock {
-                StockEffect::ReduceStock
-            } else {
-                StockEffect::None
-            }
-        }
-
-        InvoiceType::Prescription => {
-            if *to_status == InvoiceStatus::Cancelled && *from_status == InvoiceStatus::Verified {
-                return StockEffect::ReverseStock;
-            }
-
-            if reduce_stock {
-                StockEffect::ReduceStock
-            } else {
-                StockEffect::None
-            }
-        }
-
-        InvoiceType::SupplierReturn => {
-            if reduce_stock {
-                StockEffect::ReduceStock
-            } else {
-                StockEffect::None
-            }
-        }
-
-        InvoiceType::InboundShipment => {
-            if create_stock {
-                StockEffect::CreateStock
-            } else {
-                StockEffect::None
-            }
-        }
-
-        InvoiceType::CustomerReturn => {
-            if create_stock {
-                StockEffect::CreateStock
-            } else {
-                StockEffect::None
-            }
-        }
-
-        // Inventory adjustments and repacks don't adjust stock based on status changes, so we can ignore them here
-        InvoiceType::InventoryAddition | InvoiceType::InventoryReduction | InvoiceType::Repack => {
-            StockEffect::None
-        }
+    match (invoice_type, from_status, to_status) {
+        (Prescription, Verified, Cancelled) => StockEffect::ReverseStock,
+        (
+            OutboundShipment | Prescription | SupplierReturn,
+            New | Allocated,
+            Picked | Shipped | Delivered | Received | Verified | Cancelled,
+        ) => StockEffect::ReduceStock,
+        (
+            InboundShipment | CustomerReturn,
+            New | Allocated | Picked | Shipped | Delivered,
+            Received | Verified | Cancelled,
+        ) => StockEffect::CreateStock,
+        _ => StockEffect::None,
     }
 }
 
