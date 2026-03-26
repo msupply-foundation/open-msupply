@@ -100,6 +100,14 @@ export const useStatusChangeButton = () => {
   const isFinalising =
     selectedOption?.value === PurchaseOrderNodeStatus.Finalised;
 
+  const hasOutstandingLines = useMemo(() => {
+    if (!isFinalising || !lines?.nodes) return false;
+    return lines.nodes.some(line => {
+      const ordered = line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
+      return line.receivedNumberOfUnits < ordered;
+    });
+  }, [isFinalising, lines]);
+
   const getInfoMessage = () => {
     if (selectedOption?.value === PurchaseOrderNodeStatus.Confirmed) {
       return t('messages.purchase-order-ready-to-send');
@@ -110,7 +118,9 @@ export const useStatusChangeButton = () => {
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: isFinalising
-      ? t('messages.purchase-order-finalise-warning')
+      ? hasOutstandingLines
+        ? t('messages.purchase-order-outstanding-lines')
+        : t('messages.purchase-order-finalise-warning')
       : t('messages.confirm-status-as', {
           status: selectedOption?.value
             ? getStatusTranslation(selectedOption?.value)
