@@ -245,7 +245,7 @@ export const InboundLineEditCards = ({
             useDefault={!stockLine}
           />
         ),
-        includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
+        includeColumn: hasVvmStatusesEnabled && !!item?.isVaccine,
       },
       {
         id: 'outstandingPacks',
