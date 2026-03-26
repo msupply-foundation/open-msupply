@@ -1350,7 +1350,7 @@
   "label.outbound-shipment": "Outbound shipment",
   "label.outer-pack-size": "Outer pack size",
   "label.outgoing": "Outgoing",
-  "label.outstanding-packs": "Outstanding number of packs",
+  "label.outstanding-packs": "Outstanding packs",
   "label.outstanding-units": "Outstanding units",
   "label.overstocked-products": "Items with more than {{num}} months of stock",
   "label.pack": "Pack",
