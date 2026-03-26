@@ -100,7 +100,7 @@ impl ViewMigrationFragment for ViewMigration {
                 SELECT
                     requisition.*,
                     name_link.name_id as name_id,
-                    destination_customer_link.name_id as original_customer_id
+                    destination_customer_link.name_id as destination_customer_id
                 FROM
                     requisition
                 JOIN
