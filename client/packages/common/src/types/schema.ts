@@ -184,6 +184,7 @@ export enum ActivityLogNodeType {
   StockBatchChange = 'STOCK_BATCH_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
   StockExpiryDateChange = 'STOCK_EXPIRY_DATE_CHANGE',
+  StockLineEdit = 'STOCK_LINE_EDIT',
   StockLocationChange = 'STOCK_LOCATION_CHANGE',
   StockOffHold = 'STOCK_OFF_HOLD',
   StockOnHold = 'STOCK_ON_HOLD',
@@ -10600,14 +10601,14 @@ export type UpdatePurchaseOrderLineError = {
 export type UpdatePurchaseOrderLineInput = {
   adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<NullableStringUpdate>;
-  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
   manufacturerId?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<NullableStringUpdate>;
   pricePerPackAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
   pricePerPackBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
-  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
   status?: InputMaybe<PurchaseOrderLineStatusNode>;
