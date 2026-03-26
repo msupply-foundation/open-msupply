@@ -8,7 +8,6 @@ interface VVMStatusSearchInputProps {
   width?: number | string;
   useDefault?: boolean;
   placeholder?: string;
-  clearable?: boolean;
 }
 
 export const VVMStatusSearchInput = ({
@@ -18,7 +17,6 @@ export const VVMStatusSearchInput = ({
   disabled,
   useDefault = false,
   placeholder,
-  clearable = false,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useVvmStatusesEnabled();
@@ -48,7 +46,7 @@ export const VVMStatusSearchInput = ({
       getOptionLabel={option => option.description ?? ''}
       noOptionsText={t('messages.no-vvm-statuses')}
       isOptionEqualToValue={(option, value) => option.id === value?.id}
-      clearable={clearable}
+      clearable
       sx={{
         width: width ? `${width}px` : '100%',
       }}
