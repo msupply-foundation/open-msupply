@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Autocomplete, useTranslation } from '@openmsupply-client/common';
 import { useVvmStatusesEnabled, VvmStatusFragment } from '../../api';
+
 interface VVMStatusSearchInputProps {
   selected: VvmStatusFragment | null;
   onChange: (vvmStatus?: VvmStatusFragment | null) => void;
@@ -8,6 +9,7 @@ interface VVMStatusSearchInputProps {
   width?: number | string;
   useDefault?: boolean;
   placeholder?: string;
+  required?: boolean;
 }
 
 export const VVMStatusSearchInput = ({
@@ -17,6 +19,7 @@ export const VVMStatusSearchInput = ({
   disabled,
   useDefault = false,
   placeholder,
+  required = false,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useVvmStatusesEnabled();
@@ -51,6 +54,7 @@ export const VVMStatusSearchInput = ({
         width: width ? `${width}px` : '100%',
       }}
       placeholder={placeholder}
+      required={required}
     />
   );
 };
