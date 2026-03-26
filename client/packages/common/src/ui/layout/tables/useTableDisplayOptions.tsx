@@ -255,12 +255,16 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           : muiTableBodyRowProps;
 
       const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
-        onClick: e => {
-          const isCtrlClick = e.getModifierState(
-            EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
-          );
-          if (onRowClick) onRowClick(row.original, isCtrlClick);
-        },
+        ...(onRowClick
+          ? {
+              onClick: (e: React.MouseEvent<HTMLTableRowElement>) => {
+                const isCtrlClick = e.getModifierState(
+                  EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
+                );
+                onRowClick(row.original, isCtrlClick);
+              },
+            }
+          : {}),
         sx: {
           backgroundColor: 'inherit',
           minHeight: table.getState().density === 'compact' ? '32px' : '40px',
