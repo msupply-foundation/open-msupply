@@ -142,11 +142,7 @@ export const CardListItem = <T extends MRT_RowData>({
             </Typography>
             <Box flex={1} />
             {summaryCells.slice(1).map(cell => (
-              <Typography
-                key={cell.id}
-                variant="subtitle2"
-                noWrap
-              >
+              <Typography key={cell.id} variant="subtitle2" noWrap>
                 {getSummaryContent(cell)}
               </Typography>
             ))}
@@ -155,27 +151,28 @@ export const CardListItem = <T extends MRT_RowData>({
         {/* Data fields */}
         {!groupIcons
           ? dataCells.map(cell => (
+              <Box
+                key={cell.id}
+                display="flex"
+                justifyContent="space-between"
+                gap={1}
+                alignItems="flex-start"
+                py={0.5}
+              >
+                <Typography color="text.secondary">
+                  {flexRender(cell.column.columnDef.header, cell.getContext())}
+                </Typography>
                 <Box
-                  key={cell.id}
-                  display="flex"
-                  justifyContent="space-between"
-                  gap={1}
-                  alignItems="flex-start"
+                  sx={{
+                    textAlign: 'end',
+                    maxWidth: '65%',
+                    wordBreak: 'break-word',
+                  }}
                 >
-                  <Typography color="text.secondary">
-                    {flexRender(cell.column.columnDef.header, cell.getContext())}
-                  </Typography>
-                  <Box
-                    sx={{
-                      textAlign: 'end',
-                      maxWidth: '65%',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {getCellContent(cell)}
-                  </Box>
+                  {getCellContent(cell)}
                 </Box>
-              ))
+              </Box>
+            ))
           : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
               <React.Fragment key={groupName ?? `ungrouped-${groupIndex}`}>
                 {groupIndex > 0 && <Divider />}
