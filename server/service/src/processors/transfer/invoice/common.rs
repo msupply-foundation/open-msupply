@@ -70,6 +70,7 @@ pub(crate) fn generate_inbound_lines(
                     shipped_pack_size,
                     status,
                     manufacture_date,
+                    purchase_order_line_id,
                 },
                 ItemRow {
                     id: item_id,
@@ -118,6 +119,7 @@ pub(crate) fn generate_inbound_lines(
                     batch,
                     expiry_date,
                     manufacture_date,
+                    purchase_order_line_id,
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),

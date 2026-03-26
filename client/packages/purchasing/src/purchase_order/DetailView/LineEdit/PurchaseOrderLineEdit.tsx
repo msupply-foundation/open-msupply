@@ -43,7 +43,6 @@ export interface PurchaseOrderLineEditProps {
   update: (patch: Partial<DraftPurchaseOrderLine>) => void;
   status: PurchaseOrderNodeStatus;
   isDisabled: boolean;
-  lines?: PurchaseOrderLineFragment[];
   onChangeItem: (item: ItemStockOnHandFragment) => void;
   lineCount?: number;
 }
@@ -55,7 +54,6 @@ export const PurchaseOrderLineEdit = ({
   update,
   status,
   isDisabled = false,
-  lines = [],
   lineCount = 0,
 }: PurchaseOrderLineEditProps) => {
   const t = useTranslation();
@@ -83,8 +81,6 @@ export const PurchaseOrderLineEdit = ({
     StatusGroup.BeforeConfirmed
   );
 
-  const existingItemIds = lines.map(line => line.item.id);
-
   return (
     <ModalGridLayout
       showExtraFields={true}
@@ -98,7 +94,6 @@ export const PurchaseOrderLineEdit = ({
             onChange={newItem => newItem && onChangeItem(newItem)}
             filter={{
               ignoreForOrders: false,
-              id: { notEqualAll: existingItemIds },
             }}
             width={825}
           />

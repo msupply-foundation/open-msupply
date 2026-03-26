@@ -402,15 +402,17 @@ export type UpdatePurchaseOrderMutation = {
     | { __typename: 'IdResponse'; id: string }
     | {
         __typename: 'UpdatePurchaseOrderError';
-        error: {
-          __typename: 'ItemsCannotBeOrdered';
-          description: string;
-          lines: Array<{
-            __typename: 'ItemCannotBeOrdered';
-            description: string;
-            line: { __typename: 'PurchaseOrderLineNode'; id: string };
-          }>;
-        };
+        error:
+          | { __typename: 'InboundShipmentsNotVerified'; description: string }
+          | {
+              __typename: 'ItemsCannotBeOrdered';
+              description: string;
+              lines: Array<{
+                __typename: 'ItemCannotBeOrdered';
+                description: string;
+                line: { __typename: 'PurchaseOrderLineNode'; id: string };
+              }>;
+            };
       };
 };
 
@@ -936,6 +938,10 @@ export const UpdatePurchaseOrderDocument = gql`
         error {
           ... on ItemsCannotBeOrdered {
             ...ItemsCannotBeOrdered
+          }
+          ... on InboundShipmentsNotVerified {
+            __typename
+            description
           }
         }
       }

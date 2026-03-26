@@ -476,6 +476,7 @@ mod test {
             foreign_currency_price_before_tax: None,
             item_variant_id: None,
             linked_invoice_id: None,
+            purchase_order_line_id: None,
             donor_id: None,
             manufacturer_id: None,
             vvm_status_id: None,

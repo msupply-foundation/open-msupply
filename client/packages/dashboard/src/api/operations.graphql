@@ -1,7 +1,7 @@
 query itemCounts(
   $storeId: String!
-  $lowStockThreshold: Int!
-  $highStockThreshold: Int!
+  $lowStockThreshold: Float!
+  $highStockThreshold: Float!
 ) {
   itemCounts(
     lowStockThreshold: $lowStockThreshold

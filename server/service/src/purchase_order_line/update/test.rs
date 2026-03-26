@@ -1,13 +1,18 @@
 #[cfg(test)]
 mod update {
     use repository::{
-        ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, mock::{
-            MockDataInserts, mock_item_a, mock_item_b, mock_item_d, mock_purchase_order_a, mock_store_a
-        }, test_db::setup_all
+        mock::{
+            mock_item_a, mock_item_b, mock_item_d, mock_purchase_order_a, mock_store_a,
+            MockDataInserts,
+        },
+        test_db::setup_all,
+        ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
+        InvoiceRow, InvoiceRowRepository, InvoiceStatus, PurchaseOrderLineRow,
+        PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
     };
 
     use crate::{
-        purchase_order::update::UpdatePurchaseOrderInput,
+        purchase_order::update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
         purchase_order_line::{
             insert::{InsertPurchaseOrderLineInput, PackSizeCodeCombination},
             update::{UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError},
@@ -215,6 +220,7 @@ mod update {
             item_link_id: mock_item_b().id,
             number_of_packs: 8.0,
             pack_size: 2.0,
+            purchase_order_line_id: Some("purchase_order_line_received".to_string()),
             ..Default::default()
         };
 
@@ -236,6 +242,29 @@ mod update {
             ),
             Err(UpdatePurchaseOrderLineInputError::CannotEditQuantityBelowReceived)
         );
+
+        // Cannot finalise PO when inbound shipments are not verified
+        assert_eq!(
+            purchase_order_service.update_purchase_order(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderInput {
+                    id: "test_purchase_order_a".to_string(),
+                    status: Some(repository::PurchaseOrderStatus::Finalised),
+                    ..Default::default()
+                },
+                None,
+            ),
+            Err(UpdatePurchaseOrderError::InboundShipmentsNotVerified)
+        );
+
+        // Verify the inbound shipment so the PO can be finalised
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&InvoiceRow {
+                status: InvoiceStatus::Verified,
+                ..invoice.clone()
+            })
+            .unwrap();
 
         // Cannot change adjusted quantity on a finalised purchase order, even if the user has permission
         purchase_order_service

@@ -104,6 +104,8 @@ export type InboundLineFragment = {
   } | null;
   purchaseOrderLine?: {
     __typename: 'PurchaseOrderLineNode';
+    id: string;
+    lineNumber: number;
     adjustedNumberOfUnits?: number | null;
     shippedNumberOfUnits: number;
     inTransitNumberOfUnits: number;
@@ -136,6 +138,7 @@ export type InboundFragment = {
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
   currencyRate: number;
+  inboundType: Types.InboundNodeType;
   defaultDonor?: { __typename: 'NameNode'; id: string; name: string } | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
@@ -257,6 +260,8 @@ export type InboundFragment = {
       } | null;
       purchaseOrderLine?: {
         __typename: 'PurchaseOrderLineNode';
+        id: string;
+        lineNumber: number;
         adjustedNumberOfUnits?: number | null;
         shippedNumberOfUnits: number;
         inTransitNumberOfUnits: number;
@@ -339,12 +344,18 @@ export type InboundRowFragment = {
   taxPercentage?: number | null;
   onHold: boolean;
   currencyRate: number;
+  inboundType: Types.InboundNodeType;
   pricing: {
     __typename: 'PricingNode';
     totalAfterTax: number;
     taxPercentage?: number | null;
     foreignCurrencyTotalAfterTax?: number | null;
   };
+  requisition?: {
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  } | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   currency?: {
     __typename: 'CurrencyNode';
@@ -367,7 +378,9 @@ export type InvoicesQueryVariables = Types.Exact<{
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.InvoiceFilterInput>;
   storeId: Types.Scalars['String']['input'];
-  type?: Types.InputMaybe<Types.InvoiceTypeInput>;
+  type?: Types.InputMaybe<
+    Array<Types.InvoiceTypeInput> | Types.InvoiceTypeInput
+  >;
 }>;
 
 export type InvoicesQuery = {
@@ -390,12 +403,18 @@ export type InvoicesQuery = {
       taxPercentage?: number | null;
       onHold: boolean;
       currencyRate: number;
+      inboundType: Types.InboundNodeType;
       pricing: {
         __typename: 'PricingNode';
         totalAfterTax: number;
         taxPercentage?: number | null;
         foreignCurrencyTotalAfterTax?: number | null;
       };
+      requisition?: {
+        __typename: 'RequisitionNode';
+        id: string;
+        requisitionNumber: number;
+      } | null;
       linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
       currency?: {
         __typename: 'CurrencyNode';
@@ -445,6 +464,7 @@ export type InvoiceQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        inboundType: Types.InboundNodeType;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
@@ -578,6 +598,8 @@ export type InvoiceQuery = {
             } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
+              id: string;
+              lineNumber: number;
               adjustedNumberOfUnits?: number | null;
               shippedNumberOfUnits: number;
               inTransitNumberOfUnits: number;
@@ -687,6 +709,7 @@ export type InboundByNumberQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        inboundType: Types.InboundNodeType;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
@@ -820,6 +843,8 @@ export type InboundByNumberQuery = {
             } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
+              id: string;
+              lineNumber: number;
               adjustedNumberOfUnits?: number | null;
               shippedNumberOfUnits: number;
               inTransitNumberOfUnits: number;
@@ -1770,6 +1795,8 @@ export const InboundLineFragmentDoc = gql`
     }
     purchaseOrderLine {
       __typename
+      id
+      lineNumber
       adjustedNumberOfUnits
       shippedNumberOfUnits
       inTransitNumberOfUnits
@@ -1886,6 +1913,7 @@ export const InboundFragmentDoc = gql`
         isHomeCurrency
       }
     }
+    inboundType
   }
   ${InboundLineFragmentDoc}
   ${SyncFileReferenceFragmentDoc}
@@ -1911,6 +1939,10 @@ export const InboundRowFragmentDoc = gql`
       taxPercentage
       foreignCurrencyTotalAfterTax
     }
+    requisition {
+      id
+      requisitionNumber
+    }
     linkedShipment {
       id
     }
@@ -1925,6 +1957,7 @@ export const InboundRowFragmentDoc = gql`
       id
       number
     }
+    inboundType
   }
 `;
 export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`
@@ -1993,7 +2026,7 @@ export const InvoicesDocument = gql`
     $desc: Boolean
     $filter: InvoiceFilterInput
     $storeId: String!
-    $type: InvoiceTypeInput
+    $type: [InvoiceTypeInput!]
   ) {
     invoices(
       page: { first: $first, offset: $offset }
