@@ -136,6 +136,8 @@ enum Action {
         outer_transaction: bool,
         #[clap(short, long)]
         inner_transaction: bool,
+        #[clap(short, long)]
+        ignore_previous_errors: bool,
     },
     /// Helper tool to upsert report to local omSupply instance, helpful when developing reports, especially with argument schema
     UpsertReport {
@@ -497,10 +499,23 @@ async fn main() -> anyhow::Result<()> {
         Action::ReintegrateBuffer {
             inner_transaction,
             outer_transaction,
+            ignore_previous_errors,
         } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
             let ctx = service_provider.basic_context()?;
+
+            let sync_buffer_upgrade = format!(
+                r#"
+                update sync_buffer set integration_datetime = null
+                {}
+                "#,
+                if ignore_previous_errors {
+                    "where integration_error is null"
+                } else {
+                    ", integration_error = null"
+                }
+            );
 
             info!("Updating sync buffer to reintegrate");
             {
@@ -508,15 +523,15 @@ async fn main() -> anyhow::Result<()> {
                 connection
                     .lock()
                     .connection()
-                    .batch_execute(
+                    .batch_execute(&format!(
                         r#"
-                    update sync_buffer set integration_error = null, integration_datetime = null;
+                    {sync_buffer_upgrade};
                     TRUNCATE TABLE unit CASCADE;
                     TRUNCATE TABLE item CASCADE;
                     TRUNCATE TABLE name CASCADE;
                     TRUNCATE TABLE changelog CASCADE;
-                    "#,
-                    )
+                    "#
+                    ))
                     .unwrap();
             }
 
