@@ -148,10 +148,10 @@ export function usePurchaseOrderLine(id?: string | null) {
   const update = async () => {
     const input: UpdatePurchaseOrderLineInput = {
       id: draft.id,
-      expectedDeliveryDate: draft.expectedDeliveryDate,
+      expectedDeliveryDate: { value: draft.expectedDeliveryDate },
       itemId: draft.itemId,
       requestedPackSize: draft.requestedPackSize,
-      requestedDeliveryDate: draft.requestedDeliveryDate,
+      requestedDeliveryDate: { value: draft.requestedDeliveryDate },
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
       adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
       pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,

@@ -34,8 +34,8 @@ pub struct UpdateInput {
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
     pub adjusted_number_of_units: Option<f64>,
-    pub requested_delivery_date: Option<NaiveDate>,
-    pub expected_delivery_date: Option<NaiveDate>,
+    pub requested_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub expected_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
     pub price_per_pack_before_discount: Option<f64>,
     pub price_per_pack_after_discount: Option<f64>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
@@ -72,8 +72,10 @@ impl UpdateInput {
             requested_pack_size,
             requested_number_of_units,
             adjusted_number_of_units,
-            requested_delivery_date,
-            expected_delivery_date,
+            requested_delivery_date: requested_delivery_date
+                .map(|v| NullableUpdate { value: v.value }),
+            expected_delivery_date: expected_delivery_date
+                .map(|v| NullableUpdate { value: v.value }),
             price_per_pack_before_discount,
             price_per_pack_after_discount,
             manufacturer_id: manufacturer_id.map(|v| NullableUpdate { value: v.value }),

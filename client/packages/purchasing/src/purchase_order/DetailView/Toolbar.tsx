@@ -39,9 +39,9 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   } = usePurchaseOrder();
   const { updateLines } = usePurchaseOrderLine();
 
-  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
-    new Date(data?.requestedDeliveryDate ?? '')
-  );
+  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState<
+    Date | null
+  >(data?.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null);
 
   const getMostRecentExpectedDate = () => {
     const dates = data?.lines?.nodes
@@ -50,9 +50,10 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     return dates?.[0] ? dates[0] : null;
   };
 
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(
-    new Date(getMostRecentExpectedDate() ?? '')
-  );
+  const mostRecentExpectedDate = getMostRecentExpectedDate();
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<
+    Date | null
+  >(mostRecentExpectedDate ? new Date(mostRecentExpectedDate) : null);
 
   const disabledRequestedDeliveryDate = data?.status
     ? isFieldDisabled(data.status, StatusGroup.AfterSent)
@@ -82,11 +83,11 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     if (!data) return;
     const formattedDate = Formatter.naiveDate(date);
     await updateLines(data?.lines?.nodes, {
-      expectedDeliveryDate: formattedDate,
+      expectedDeliveryDate: { value: formattedDate },
     });
   };
 
-  const confirmModal = useConfirmationModal({
+  const confirmExpectedModal = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t(
       'label.update-purchase-order-expected-delivery-date-for-all-lines'
@@ -95,13 +96,54 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   });
 
   const handleExpectedDeliveryDateChange = (newDate: Date | null) => {
-    if (!newDate) return;
     const previousDate = expectedDeliveryDate;
 
     setExpectedDeliveryDate(newDate);
-    confirmModal({
+    confirmExpectedModal({
       onConfirm: () => updateExpectedDeliveryChange(newDate),
       onCancel: () => setExpectedDeliveryDate(previousDate),
+    });
+  };
+
+  const updateRequestedDeliveryChange = async (date: Date | null) => {
+    if (!data) return;
+    const formattedDate = Formatter.naiveDate(date);
+    handleUpdate({ requestedDeliveryDate: formattedDate });
+    await updateLines(data?.lines?.nodes, {
+      requestedDeliveryDate: { value: formattedDate },
+    });
+    // Auto-fill expected delivery date for lines that have none
+    const linesWithoutExpected =
+      data?.lines?.nodes?.filter(line => !line.expectedDeliveryDate) ?? [];
+    if (linesWithoutExpected.length > 0) {
+      try {
+        await updateLines(linesWithoutExpected, {
+          expectedDeliveryDate: { value: formattedDate },
+        });
+        if (!getMostRecentExpectedDate()) {
+          setExpectedDeliveryDate(date);
+        }
+      } catch (e) {
+        error(t('messages.error-saving-purchase-order'))();
+      }
+    }
+  };
+
+  const confirmRequestedModal = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t(
+      'label.update-purchase-order-requested-delivery-date-for-all-lines'
+    ),
+    onConfirm: () => {},
+  });
+
+  const handleRequestedDeliveryDateChange = (newDate: Date | null) => {
+    const previousDate = requestedDeliveryDate;
+
+    setRequestedDeliveryDate(newDate);
+    confirmRequestedModal({
+      onConfirm: () => updateRequestedDeliveryChange(newDate),
+      onCancel: () => setRequestedDeliveryDate(previousDate),
     });
   };
 
@@ -180,31 +222,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
               Input={
                 <DateTimePickerInput
                   value={requestedDeliveryDate}
-                  onChange={async date => {
-                    if (!date) return;
-                    setRequestedDeliveryDate(date);
-                    const formattedDate = Formatter.naiveDate(date);
-                    handleUpdate({
-                      requestedDeliveryDate: formattedDate,
-                    });
-                    // Auto-fill expected delivery date for lines that have none
-                    const linesWithoutExpected =
-                      data?.lines?.nodes?.filter(
-                        line => !line.expectedDeliveryDate
-                      ) ?? [];
-                    if (linesWithoutExpected.length > 0) {
-                      try {
-                        await updateLines(linesWithoutExpected, {
-                          expectedDeliveryDate: formattedDate,
-                        });
-                        if (!getMostRecentExpectedDate()) {
-                          setExpectedDeliveryDate(date);
-                        }
-                      } catch (e) {
-                        error(t('messages.error-saving-purchase-order'))();
-                      }
-                    }
-                  }}
+                  onChange={handleRequestedDeliveryDateChange}
                   width={250}
                   disabled={disabledRequestedDeliveryDate}
                 />
