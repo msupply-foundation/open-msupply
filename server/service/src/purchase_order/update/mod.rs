@@ -26,6 +26,7 @@ pub enum UpdatePurchaseOrderError {
     NotASupplier,
     DonorDoesNotExist,
     UserUnableToAuthorisePurchaseOrder,
+    CannotEditSentPurchaseOrder,
     DatabaseError(RepositoryError),
     ItemsCannotBeOrdered(Vec<PurchaseOrderLine>),
     InboundShipmentsNotVerified,
@@ -61,6 +62,37 @@ pub struct UpdatePurchaseOrderInput {
     pub insurance_charge: Option<f64>,
     pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
+}
+
+impl UpdatePurchaseOrderInput {
+    pub fn has_non_status_field_changes(&self) -> bool {
+        self.supplier_id.is_some()
+            || self.confirmed_datetime.is_some()
+            || self.comment.is_some()
+            || self.supplier_discount_percentage.is_some()
+            || self.supplier_discount_amount.is_some()
+            || self.donor_id.is_some()
+            || self.reference.is_some()
+            || self.currency_id.is_some()
+            || self.foreign_exchange_rate.is_some()
+            || self.shipping_method.is_some()
+            || self.sent_datetime.is_some()
+            || self.contract_signed_date.is_some()
+            || self.advance_paid_date.is_some()
+            || self.received_at_port_date.is_some()
+            || self.requested_delivery_date.is_some()
+            || self.supplier_agent.is_some()
+            || self.authorising_officer_1.is_some()
+            || self.authorising_officer_2.is_some()
+            || self.additional_instructions.is_some()
+            || self.heading_message.is_some()
+            || self.agent_commission.is_some()
+            || self.document_charge.is_some()
+            || self.communications_charge.is_some()
+            || self.insurance_charge.is_some()
+            || self.freight_charge.is_some()
+            || self.freight_conditions.is_some()
+    }
 }
 
 pub fn update_purchase_order(

@@ -44,6 +44,7 @@ export const Documents = ({
             documents={data?.documents?.nodes ?? []}
             tableName="purchase_order"
             invalidateQueries={invalidateQueries}
+            deletableDocumentIds={disable ? new Set<string>() : undefined}
           />
         </Grid>
       </Grid>
