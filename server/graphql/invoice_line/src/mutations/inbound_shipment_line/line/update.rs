@@ -34,7 +34,7 @@ pub struct UpdateInput {
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
-    pub vvm_status_id: Option<String>,
+    pub vvm_status_id: Option<NullableUpdateInput<String>>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
@@ -148,7 +148,9 @@ impl UpdateInput {
                 percentage: tax.percentage,
             }),
             r#type: StockInType::InboundShipment,
-            vvm_status_id,
+            vvm_status_id: vvm_status_id.map(|vvm_status_id| NullableUpdate {
+                value: vvm_status_id.value,
+            }),
             note: note.map(|note| NullableUpdate { value: note.value }),
             donor_id: donor_id.map(|donor_id| NullableUpdate {
                 value: donor_id.value,
