@@ -27,14 +27,10 @@ impl ViewMigrationFragment for ViewMigration {
                     COALESCE(SUM(CASE WHEN i.status in ('RECEIVED', 'VERIFIED') THEN il.number_of_packs * il.pack_size ELSE 0 END), 0) AS received_number_of_units
                 FROM
                     purchase_order_line pol
-                        LEFT JOIN invoice i on pol.purchase_order_id = i.purchase_order_id
-                        JOIN item_link pol_item_link on pol_item_link.id = pol.item_link_id
                         LEFT JOIN (
-                            -- want to join this before the left join so we get a stats row for each pol even if no matching il
                             invoice_line il
-                                JOIN item_link il_item_link on il_item_link.id = il.item_link_id
-                        ) on i.id = il.invoice_id
-                            AND il_item_link.id = pol_item_link.id
+                                JOIN invoice i on i.id = il.invoice_id
+                        ) on il.purchase_order_line_id = pol.id
                             AND il.type = 'STOCK_IN' -- doesn't count any rejected lines as they will have been converted to unallocated stock lines
                             AND i.status in ('SHIPPED', 'DELIVERED', 'RECEIVED', 'VERIFIED') -- count all statuses after shipped
                 GROUP BY
