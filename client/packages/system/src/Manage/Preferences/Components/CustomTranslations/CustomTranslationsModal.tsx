@@ -130,10 +130,7 @@ export const CustomTranslationsModal = ({
         }
 
         const importedData = parsed as Record<string, string>;
-        const importedArray = mapTranslationsToArray(
-          importedData,
-          defaultTranslation
-        );
+        const importedArray = mapTranslationsToArray(importedData, t);
 
         setTranslations(
           mergeTranslations(translations, importedArray, importMode)
@@ -141,7 +138,7 @@ export const CustomTranslationsModal = ({
 
         success(t('messages.translations-loaded'))();
       } catch {
-        error(t('error.invalid-json'))();
+        error(t('error.an-error-occurred'))();
       }
     };
 
@@ -260,11 +257,11 @@ export const CustomTranslationsModal = ({
   );
 };
 
-const IMPORT_MODE_WARNING: Record<ImportMode, string> = {
+const IMPORT_MODE_WARNING = {
   replace: 'messages.import-mode-replace-warning',
   'keep-existing': 'messages.import-mode-keep-existing-warning',
   overwrite: 'messages.import-mode-overwrite-warning',
-};
+} as const satisfies Record<ImportMode, string>;
 
 const CustomTranslationsUploadModal = ({
   onUpload,
@@ -327,19 +324,14 @@ const CustomTranslationsUploadModal = ({
             importMode === 'replace'
               ? 'error'
               : importMode === 'overwrite'
-              ? 'warning'
-              : 'info'
+                ? 'warning'
+                : 'info'
           }
           sx={{ width: '100%' }}
         >
           {t(IMPORT_MODE_WARNING[importMode])}
         </Alert>
-        <Box
-          display="flex"
-          alignItems="center"
-          gap={1}
-          sx={{ width: '100%' }}
-        >
+        <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%' }}>
           <Typography sx={{ whiteSpace: 'nowrap' }}>
             {t('label.import-mode')}:
           </Typography>
