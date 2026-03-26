@@ -2466,6 +2466,7 @@
   "report-code.prescription-receipt": "Prescription Receipt",
   "report-code.repack": "Repack",
   "report-code.requisition": "Requisition",
+  "report-code.stock-delivery-record": "Stock & Delivery Record",
   "report-code.stock-detail": "Stock Detail",
   "report-code.stock-status": "Stock Status",
   "report-code.stock-take-detail-view": "Stocktake",
