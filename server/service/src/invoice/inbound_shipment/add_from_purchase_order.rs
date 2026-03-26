@@ -52,8 +52,8 @@ pub fn add_from_purchase_order(
             .unwrap_or(purchase_order_line.requested_number_of_units);
         let shipped_number_of_units = purchase_order_line_stats.shipped_number_of_units;
         let pack_size = purchase_order_line.requested_pack_size;
-        let number_of_packs =
-            (purchase_order_number_of_units - shipped_number_of_units) / pack_size;
+        let remaining_units = (purchase_order_number_of_units - shipped_number_of_units).max(0.0);
+        let number_of_packs = remaining_units / pack_size;
 
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
