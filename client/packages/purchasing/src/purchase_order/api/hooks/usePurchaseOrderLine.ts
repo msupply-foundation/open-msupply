@@ -58,6 +58,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
     },
   },
   unitsOrderedInOthers: 0,
+  receivedNumberOfUnits: 0,
   status: PurchaseOrderLineStatusNode.New,
   discountPercentage: 0,
   // These values not actually saved to DB
