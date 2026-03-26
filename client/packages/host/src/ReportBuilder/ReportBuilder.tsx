@@ -7,6 +7,7 @@ import {
   TabList,
   Typography,
   useAuthContext,
+  useIsCentralServerApi,
   useNotification,
   useQuery,
   useQueryClient,
@@ -15,7 +16,7 @@ import { Environment } from '@openmsupply-client/config';
 import { useHostApi } from '../api/hooks/utils/useHostApi';
 import { useGenerateOneOffReport } from '../api/hooks/settings/useGenerateOneOffReport';
 import { LoadingButton } from '@common/components';
-import { SaveIcon } from '@common/icons';
+import { CopyIcon, SaveIcon } from '@common/icons';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,6 +52,7 @@ type SavedReportOption = {
   value: string;
   template: string;
   context: string;
+  isCustom: boolean;
 };
 
 // ─── Context detection ────────────────────────────────────────────────────────
@@ -375,6 +377,7 @@ const tabs = [
 
 export const ReportBuilder: React.FC = () => {
   const { storeId } = useAuthContext();
+  const isCentralServer = useIsCentralServerApi();
   const api = useHostApi();
   const queryClient = useQueryClient();
   const { success, error: notifyError } = useNotification();
@@ -412,6 +415,7 @@ export const ReportBuilder: React.FC = () => {
           value: r.id,
           template: r.template,
           context: r.context,
+          isCustom: r.isCustom,
         })
       );
     }
@@ -516,6 +520,60 @@ export const ReportBuilder: React.FC = () => {
     storeId,
   ]);
 
+  // ── Edit / duplicate logic ──
+  // On central server: always editable.
+  // On remote server: editable only if isCustom=true; otherwise must duplicate.
+  const loadedReportIsCustom = selectedSavedReport?.isCustom ?? true;
+  const showDuplicate = !isCentralServer && !!loadedReportId && !loadedReportIsCustom;
+
+  // ── Duplicate the current report ──
+  const handleDuplicate = useCallback(async () => {
+    if (!reportName.trim()) {
+      notifyError('Please enter a report name')();
+      return;
+    }
+    if (!template.trim()) {
+      notifyError('Template cannot be empty')();
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const reportDefinition = buildReport(template, header, style, query);
+      const ctx = detectedContext
+        ? contextToReportContext[detectedContext]
+        : 'OUTBOUND_SHIPMENT';
+
+      // Always save as new (no id) — backend will set isCustom=true
+      const result = await api.upsertReportDefinition({
+        storeId,
+        input: {
+          name: reportName.trim(),
+          template: reportDefinition,
+          context: ctx,
+        },
+      });
+
+      if (result?.id) {
+        setLoadedReportId(result.id);
+        success('Report duplicated successfully')();
+        queryClient.invalidateQueries(['reportBuilder', 'savedReports']);
+      }
+    } catch (e) {
+      notifyError(`Failed to duplicate report: ${e}`)();
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    reportName,
+    template,
+    header,
+    style,
+    query,
+    detectedContext,
+    storeId,
+  ]);
+
   // Map each tab to its value/setter
   const tabContent: Record<EditorTab, { value: string; onChange: (v: string) => void; placeholder: string }> = {
     [EditorTab.Query]: { value: query, onChange: setQuery, placeholder: 'Write your GraphQL query here...' },
@@ -590,15 +648,27 @@ export const ReportBuilder: React.FC = () => {
               boxSizing: 'border-box',
             }}
           />
-          <LoadingButton
-            isLoading={isSaving}
-            label={selectedSavedReport ? 'Update' : 'Save'}
-            onClick={handleSave}
-            startIcon={<SaveIcon />}
-            variant="outlined"
-            color="secondary"
-            sx={{ height: '36px', minWidth: '100px' }}
-          />
+          {showDuplicate ? (
+            <LoadingButton
+              isLoading={isSaving}
+              label="Duplicate"
+              onClick={handleDuplicate}
+              startIcon={<CopyIcon />}
+              variant="outlined"
+              color="secondary"
+              sx={{ height: '36px', minWidth: '100px' }}
+            />
+          ) : (
+            <LoadingButton
+              isLoading={isSaving}
+              label={selectedSavedReport ? 'Update' : 'Save'}
+              onClick={handleSave}
+              startIcon={<SaveIcon />}
+              variant="outlined"
+              color="secondary"
+              sx={{ height: '36px', minWidth: '100px' }}
+            />
+          )}
         </Box>
 
         <TabContext value={currentTab}>
