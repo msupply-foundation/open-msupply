@@ -291,6 +291,7 @@ export type PurchaseOrderByIdQuery = {
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
             shippedNumberOfUnits: number;
+            receivedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
             pricePerPackAfterDiscount: number;
             pricePerPackBeforeDiscount: number;
