@@ -5,8 +5,11 @@
   top: 4rem;
   height: calc(100vh - 4rem);
   overflow-y: auto;
-  padding: 1rem 0.75rem 1.5rem 0.75rem;
+  padding: 1rem 0.75rem 1.5rem 1.75rem;
   border-right: 1px solid $gray-200;
+  width: 320px;
+  min-width: 320px;
+  flex-shrink: 0;
 
   // Invisible scrollbar, visible on hover
   scrollbar-width: thin;
@@ -206,9 +209,127 @@ body.dark {
   }
 }
 
-// Docs content area when sidebar is present
+// Docs layout container — full width
+.docs.list .wrap.container {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+
+  > .content > .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+// Docs content area — takes remaining space
 .docs-content {
-  padding-top: 1.5rem;
-  padding-bottom: 2rem;
+  padding: 1.5rem 5rem 2rem 5rem;
   min-width: 0;
+  flex: 1 1 auto;
+}
+
+// ── Right-hand TOC ("On this page") ──
+
+.docs-toc {
+  position: sticky;
+  top: 4rem;
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  width: 260px;
+  min-width: 260px;
+  flex-shrink: 0;
+
+  // Match sidebar scrollbar style
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+
+  &:hover {
+    scrollbar-color: rgba($gray-500, 0.3) transparent;
+  }
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+  &:hover::-webkit-scrollbar-thumb { background: rgba($gray-500, 0.3); }
+}
+
+.page-links {
+  h3 {
+    font-size: $font-size-sm;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $gray-600;
+    margin: 0 0 0.75rem 0;
+    padding: 0;
+    border: none;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    ul {
+      padding-left: 0.5rem;
+    }
+  }
+
+  li {
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+
+  a {
+    word-break: break-word;
+  }
+}
+
+.toc-link {
+  display: block;
+  padding: 0.2rem 0 0.2rem 0.5rem;
+  font-size: $font-size-sm;
+  line-height: 1.4;
+  color: $gray-600;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: $body-color;
+    text-decoration: none;
+  }
+
+  &.active {
+    color: $primary;
+    border-left-color: $primary;
+    font-weight: 500;
+  }
+}
+
+body.dark {
+  .page-links h3 {
+    color: $gray-500;
+  }
+
+  .toc-link {
+    color: $gray-500;
+
+    &:hover {
+      color: $body-color-dark;
+    }
+
+    &.active {
+      color: $link-color-dark;
+      border-left-color: $link-color-dark;
+    }
+  }
 }

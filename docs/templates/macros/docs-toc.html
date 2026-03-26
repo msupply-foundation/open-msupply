@@ -1,0 +1,73 @@
+{% macro docs_toc(page) %}
+  {% if page.toc %}
+  <nav class="docs-toc d-none d-xl-block" aria-label="Table of contents">
+    <div class="page-links">
+      <h3>On this page</h3>
+      <ul id="toc-list">
+        {% for h2 in page.toc %}
+          <li>
+            <a href="{{ h2.permalink | safe }}" class="toc-link">{{ h2.title }}</a>
+            {% if h2.children %}
+              <ul>
+                {% for h3 in h2.children %}
+                  <li>
+                    <a href="{{ h3.permalink | safe }}" class="toc-link">{{ h3.title }}</a>
+                    {% if h3.children %}
+                      <ul>
+                        {% for h4 in h3.children %}
+                          <li><a href="{{ h4.permalink | safe }}" class="toc-link">{{ h4.title }}</a></li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </nav>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var tocLinks = document.querySelectorAll('#toc-list .toc-link');
+    if (!tocLinks.length) return;
+
+    var headings = [];
+    tocLinks.forEach(function(link) {
+      var id = link.getAttribute('href').split('#').pop();
+      var el = document.getElementById(id);
+      if (el) headings.push({ el: el, link: link });
+    });
+
+    function updateActive() {
+      var scrollY = window.scrollY + 80; // offset for sticky header
+      var active = headings[0];
+
+      for (var i = 0; i < headings.length; i++) {
+        if (headings[i].el.offsetTop <= scrollY) {
+          active = headings[i];
+        }
+      }
+
+      tocLinks.forEach(function(l) { l.classList.remove('active'); });
+      if (active) active.link.classList.add('active');
+    }
+
+    var ticking = false;
+    window.addEventListener('scroll', function() {
+      if (!ticking) {
+        requestAnimationFrame(function() {
+          updateActive();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    updateActive();
+  });
+  </script>
+  {% endif %}
+{% endmacro %}

@@ -16,7 +16,7 @@
 
       {{ macros_sidebar::docs_sidebar(current_section=current_section, current_url=current_url) }}
 
-      <div class="col-lg-11 col-xl-8 docs-content">
+      <div class="docs-content flex-grow-1">
         <article>
           <h1>{{ section.title }}</h1>
           {{ section.content | safe }}
