@@ -8,7 +8,6 @@ interface CardListProps<T extends MRT_RowData> {
   table: MRT_TableInstance<T>;
   lastItemRef?: React.RefObject<HTMLDivElement>;
   groupIcons?: Record<string, React.ReactNode>;
-  labelsAbove?: boolean;
   actions?: React.ReactNode;
   stickyTopOffset?: number;
 }
@@ -35,7 +34,6 @@ export const CardList = <T extends MRT_RowData>({
   table,
   lastItemRef,
   groupIcons,
-  labelsAbove,
   actions,
   stickyTopOffset = 0,
 }: CardListProps<T>) => {
@@ -74,7 +72,6 @@ export const CardList = <T extends MRT_RowData>({
               row={row}
               cardRef={index === rows.length - 1 ? lastItemRef : undefined}
               groupIcons={groupIcons}
-              labelsAbove={labelsAbove}
               onClick={getRowOnClick(table, row)}
             />
           ))}

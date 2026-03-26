@@ -22,7 +22,6 @@ interface CardListItemProps<T extends MRT_RowData> {
   row: MRT_Row<T>;
   cardRef?: React.Ref<HTMLDivElement>;
   groupIcons?: Record<string, React.ReactNode>;
-  labelsAbove?: boolean;
   onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
@@ -52,7 +51,6 @@ export const CardListItem = <T extends MRT_RowData>({
   row,
   cardRef,
   groupIcons,
-  labelsAbove,
   onClick,
 }: CardListItemProps<T>) => {
   const isLandscape = useIsLandscapeTablet();
@@ -156,22 +154,7 @@ export const CardListItem = <T extends MRT_RowData>({
         )}
         {/* Data fields */}
         {!groupIcons
-          ? labelsAbove
-            ? <CardListFieldGroup>
-                {dataCells.map(cell => (
-                  <CardListField
-                    key={cell.id}
-                    label={flexRender(
-                      cell.column.columnDef.header,
-                      cell.getContext()
-                    )}
-                    span={colDef(cell).cardSpan}
-                  >
-                    {getCellContent(cell)}
-                  </CardListField>
-                ))}
-              </CardListFieldGroup>
-            : dataCells.map(cell => (
+          ? dataCells.map(cell => (
                 <Box
                   key={cell.id}
                   display="flex"
