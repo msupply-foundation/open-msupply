@@ -184,6 +184,7 @@ export enum ActivityLogNodeType {
   StockBatchChange = 'STOCK_BATCH_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
   StockExpiryDateChange = 'STOCK_EXPIRY_DATE_CHANGE',
+  StockLineEdit = 'STOCK_LINE_EDIT',
   StockLocationChange = 'STOCK_LOCATION_CHANGE',
   StockOffHold = 'STOCK_OFF_HOLD',
   StockOnHold = 'STOCK_ON_HOLD',
