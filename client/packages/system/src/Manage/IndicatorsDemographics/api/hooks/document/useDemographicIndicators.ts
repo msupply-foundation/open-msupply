@@ -2,7 +2,6 @@ import {
   useUrlQueryParams,
   useQuery,
   useTranslation,
-  ArrayUtils,
 } from '@openmsupply-client/common';
 import { useDemographicsApi } from '../utils/useDemographicApi';
 import { useEffect, useState } from 'react';
@@ -25,7 +24,7 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
     () => api.getIndicators.list(queryParams)
   );
 
-  // initial load which populates from the API
+  // Populate from API data and calculate across rows when data or header changes
   useEffect(() => {
     if (!data || !headerData) return;
 
@@ -40,32 +39,21 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
             : node.name,
       })
     );
-    const draftRows = ArrayUtils.toObject(nodesAsRow) as Record<string, Row>;
-    setDraft(draftRows);
 
-    // don't want this changing every time the draft updates
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, headerData]);
-
-  // recalculate the draft when the header changes
-  useEffect(() => {
-    const generalRow = draft[GENERAL_POPULATION_ID];
-    if (!generalRow || !headerData) return;
+    const generalRow = nodesAsRow.find(n => n.id === GENERAL_POPULATION_ID);
+    const basePopulation = generalRow?.basePopulation ?? 0;
 
     const updatedDraft: Record<string, Row> = {};
-    Object.values(draft).forEach(row => {
-      const updatedRow = calculateAcrossRow(
-        row,
-        headerData,
-        generalRow.basePopulation
-      );
+    nodesAsRow.forEach(row => {
+      const updatedRow = calculateAcrossRow(row, headerData, basePopulation);
       updatedDraft[updatedRow.id] = updatedRow;
     });
 
     setDraft(updatedDraft);
-    // don't want to update on every draft change::recursion!
+
+    // don't want this changing every time the draft updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t, headerData]);
+  }, [data, headerData]);
 
   return { draft, setDraft, isLoading, data };
 };
