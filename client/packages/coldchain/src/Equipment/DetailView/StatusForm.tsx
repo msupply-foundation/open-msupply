@@ -115,6 +115,10 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
       };
     }) ?? [];
 
+  const selectedReason = data?.nodes?.find(
+    reason => reason.id === draft.reasonId
+  );
+
   const removeFile = (name: string) => {
     onChange({ files: draft.files?.filter(file => file.name !== name) });
   };
@@ -170,6 +174,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
           isExtraSmallScreen={isExtraSmallScreen}
         >
           <BasicTextInput
+            required={!!selectedReason?.commentsRequired}
             multiline
             rows={4}
             fullWidth
