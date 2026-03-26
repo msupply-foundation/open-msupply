@@ -30,8 +30,10 @@ impl SyncStatusSubscriptions {
             },
         )?;
 
-        let service_provider: Data<ServiceProvider> =
-            ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+        let service_provider: Data<ServiceProvider> = ctx
+            .data::<Data<ServiceProvider>>()
+            .map_err(|_| Error::new("ServiceProvider not found in context"))?
+            .clone();
         let receiver = service_provider.sync_status_notify.subscribe();
 
         Ok(stream::unfold(
