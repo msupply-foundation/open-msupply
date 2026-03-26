@@ -1,0 +1,214 @@
+// Custom sidebar styles
+
+.docs-sidebar {
+  position: sticky;
+  top: 4rem;
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+  padding: 1rem 0.75rem 1.5rem 0.75rem;
+  border-right: 1px solid $gray-200;
+
+  // Invisible scrollbar, visible on hover
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+
+  &:hover {
+    scrollbar-color: rgba($gray-500, 0.3) transparent;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background: rgba($gray-500, 0.3);
+  }
+}
+
+// Flat tree list
+.sidebar-tree {
+  padding: 0;
+  margin: 0;
+}
+
+// Each row: link + optional chevron
+.sidebar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0.25rem;
+}
+
+// Depth-based indentation via left margin + left border for grouping
+$sidebar-indent: 1rem;
+
+// Depth 0 = top-level sections (bold headings)
+.sidebar-item[data-depth="0"] {
+  margin-top: 1rem;
+  padding-top: 0;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  > .sidebar-row {
+    margin-bottom: 0.125rem;
+  }
+}
+
+// Depth 1+ = children, indented with left border
+@for $i from 1 through 6 {
+  .sidebar-item[data-depth="#{$i}"] {
+    margin-left: $sidebar-indent * $i;
+    border-left: 1px solid $gray-300;
+
+    > .sidebar-row {
+      margin-left: -1px; // overlap the border
+    }
+  }
+}
+
+// Active item's border segment highlighted
+@for $i from 1 through 6 {
+  .sidebar-item[data-depth="#{$i}"].is-active-self {
+    border-left-color: $primary;
+  }
+}
+
+// Links
+.sidebar-link {
+  flex: 1;
+  display: block;
+  padding: 0.2rem 0.5rem 0.2rem 0.75rem;
+  color: $body-color;
+  text-decoration: none;
+  border-radius: 0.25rem;
+  font-size: $font-size-base * 0.9375; // 15px — between sm and base
+  line-height: 1.3;
+
+  &:hover {
+    color: $link-color;
+    background: $gray-100;
+    text-decoration: none;
+  }
+
+  &.active {
+    color: $primary;
+    font-weight: 600;
+    background: rgba($primary, 0.08);
+  }
+}
+
+// Depth 0 links are section headings
+.sidebar-item[data-depth="0"] > .sidebar-row > .sidebar-link {
+  font-weight: 600;
+  font-size: $font-size-base;
+  color: $body-color;
+  padding-left: 0.5rem;
+
+  &.active {
+    color: $primary;
+  }
+}
+
+// Parents (items with chevron) get medium weight to distinguish from leaves
+.sidebar-row:has(.sidebar-chevron-btn) > .sidebar-link {
+  font-weight: 500;
+}
+
+// Active chain: subtly mark ancestor rows
+.sidebar-row.is-active > .sidebar-link {
+  color: $primary;
+}
+
+// Chevron button
+.sidebar-chevron-btn {
+  display: flex;
+  align-items: center;
+  padding: 0.2rem 0.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $gray-500;
+  flex-shrink: 0;
+
+  &:hover {
+    color: $body-color;
+  }
+}
+
+// Chevron rotation
+.sidebar-chevron {
+  transition: transform 0.2s ease;
+}
+
+[data-collapsed="true"] > .sidebar-row .sidebar-chevron {
+  transform: rotate(-90deg);
+}
+
+// Dark mode
+body.dark {
+  .docs-sidebar {
+    border-right-color: $border-dark;
+  }
+
+  .sidebar-link {
+    color: $body-color-dark;
+
+    &:hover {
+      color: $link-color-dark;
+      background: $body-overlay-dark;
+    }
+
+    &.active {
+      color: $link-color-dark;
+      background: rgba($link-color-dark, 0.1);
+    }
+  }
+
+  .sidebar-item[data-depth="0"] > .sidebar-row > .sidebar-link {
+    color: $body-color-dark;
+
+    &.active {
+      color: $link-color-dark;
+    }
+  }
+
+  .sidebar-row.is-active > .sidebar-link {
+    color: $link-color-dark;
+  }
+
+  @for $i from 1 through 6 {
+    .sidebar-item[data-depth="#{$i}"] {
+      border-left-color: $gray-700;
+    }
+
+    .sidebar-item[data-depth="#{$i}"].is-active-self {
+      border-left-color: $link-color-dark;
+    }
+  }
+
+  .sidebar-chevron-btn {
+    color: $gray-600;
+
+    &:hover {
+      color: $body-color-dark;
+    }
+  }
+}
+
+// Docs content area when sidebar is present
+.docs-content {
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+  min-width: 0;
+}
