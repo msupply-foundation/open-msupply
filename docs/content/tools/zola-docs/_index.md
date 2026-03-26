@@ -201,6 +201,10 @@ Some directories exist only because a child README is deeper in the tree (e.g. `
 
 - **Missing**: flags any tracked README that has no corresponding `_index.md` in `docs/content/`
 - **Orphaned**: flags any `_index.md` without `source = "docs"` that has no corresponding README in the repo
+- **Unsafe HTML**: flags security and rendering issues in markdown outside of code blocks:
+  - Bare HTML tags (`<script>`, `<style>`, `<iframe>`, `<img>`, `<svg>`, etc.) — Zola renders these as real HTML, which can break the page DOM and is an XSS risk. Wrap in backticks: `` `<script>` ``
+  - `javascript:` URLs in markdown links — direct XSS vector
+  - HTML event handler attributes (`onclick`, `onerror`, `onload`, etc.) — inline JS execution
 - **Broken links**: runs `zola build` and flags any broken internal anchor links (requires Zola installed)
 
 Run it with:
