@@ -10416,6 +10416,7 @@ dependencies = [
  "ts-rs",
  "typst",
  "typst-assets",
+ "typst-html",
  "typst-pdf",
  "umya-spreadsheet",
  "url",

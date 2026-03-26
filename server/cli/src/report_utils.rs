@@ -148,6 +148,21 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     let mut report_definition =
         build_report_definition(&args).map_err(|e| Error::FailedToBuildReport(path.clone(), e))?;
 
+    // For Typst reports, bundle the shared common.typ library.
+    // Templates import it via `#import "/standard_reports/common.typ": *`
+    // where `/` is the project root (defined by typst.toml).
+    if matches!(manifest.template_type, TemplateType::Typst) {
+        let common_path = PathBuf::from("../standard_reports/common.typ");
+        if let Ok(content) = fs::read_to_string(&common_path) {
+            report_definition.entries.insert(
+                "/standard_reports/common.typ".to_string(),
+                service::report::definition::ReportDefinitionEntry::TypstTemplate(
+                    service::report::definition::TypstTemplate { template: content },
+                ),
+            );
+        }
+    }
+
     report_definition.index.convert_data = convert_data;
     report_definition.index.convert_data_type = manifest.convert_data_type;
     report_definition.index.template_type = manifest.template_type;

@@ -24,6 +24,9 @@
   ),
 )
 
+#import "/standard_reports/common.typ": *
+
+// --- Page setup (PDF only, ignored in HTML) ---
 #set page(
   paper: "a4",
   margin: (top: 2.5cm, bottom: 2cm, left: 1.5cm, right: 1.5cm),
@@ -35,61 +38,45 @@
       #datetime.today().display("[day] [month repr:long] [year]")
     ]
   },
-  footer: [
-    #set text(8pt, fill: rgb("#888"))
-    #h(1fr)
-    Page #context counter(page).display("1 / 1", both: true)
-    #h(1fr)
-  ],
+  footer: page-footer(),
 )
 
-#set text(font: "New Computer Modern", size: 10pt, fill: rgb("#333"))
+#set text(font: "New Computer Modern", size: 9pt, fill: rgb("#333"))
 
-// --- Title block ---
-#v(0.5cm)
-#text(18pt, weight: "bold", fill: rgb("#e95420"))[Item List]
-#v(0.2cm)
-#text(10pt, fill: rgb("#666"))[
-  Report generated #datetime.today().display("[day] [month repr:long] [year]")
-]
-#line(length: 100%, stroke: 0.5pt + rgb("#ddd"))
-#v(0.3cm)
+// --- HTML styling (ignored in PDF mode) ---
+#html-styles()
 
 // --- Data ---
 #let items = report_data.data.items.nodes
 
-#text(9pt, fill: rgb("#888"))[
-  Showing *#items.len()* items
-]
+// --- Title ---
+= Item List
+
+Showing *#items.len()* items
+
 #v(0.3cm)
 
 // --- Table ---
 #set table(
   stroke: none,
-  inset: (x: 8pt, y: 6pt),
+  inset: (x: 4pt, y: 4pt),
   align: left,
 )
 
 #table(
   columns: (auto, 1fr, auto, auto, 1fr),
-  fill: (_, row) => if row == 0 { rgb("#f5f5f5") } else if calc.odd(row) { rgb("#fafafa") } else { white },
+  fill: table-fill,
 
-  // Header row
-  table.cell(colspan: 1)[#text(weight: "bold", size: 9pt)[Code]],
-  table.cell(colspan: 1)[#text(weight: "bold", size: 9pt)[Item name]],
-  table.cell(colspan: 1)[#text(weight: "bold", size: 9pt)[Location]],
-  table.cell(colspan: 1)[#align(right)[#text(weight: "bold", size: 9pt)[SOH]]],
-  table.cell(colspan: 1)[#text(weight: "bold", size: 9pt)[Category]],
-
-  // Header separator
-  table.hline(stroke: 1.5pt + rgb("#e95420")),
+  table.header(
+    [*Code*], [*Item name*], [*Location*], [*SOH*], [*Category*],
+  ),
 
   // Data rows
   ..items.map(item => (
-    text(size: 9pt)[#item.code],
-    text(size: 9pt)[#item.name],
-    text(size: 9pt, fill: rgb("#666"))[#item.locationName],
-    align(right, text(size: 9pt)[#str(calc.round(item.SOH, digits: 1))]),
-    text(size: 9pt, fill: rgb("#666"))[#item.categoryName],
+    [#item.code],
+    [#item.name],
+    [#item.locationName],
+    [#str(calc.round(item.SOH, digits: 1))],
+    [#item.categoryName],
   )).flatten(),
 )

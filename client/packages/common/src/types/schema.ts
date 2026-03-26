@@ -8414,6 +8414,8 @@ export type ReportNode = {
   /** Human readable name of the report */
   name: Scalars['String']['output'];
   subContext?: Maybe<Scalars['String']['output']>;
+  /** The template engine used by this report (Tera or Typst) */
+  templateType: ReportTemplateType;
   version: Scalars['String']['output'];
 };
 
@@ -8435,6 +8437,11 @@ export type ReportSortInput = {
   /** Sort query result by `key` */
   key: ReportSortFieldInput;
 };
+
+export enum ReportTemplateType {
+  Tera = 'TERA',
+  Typst = 'TYPST',
+}
 
 export type ReportsResponse = QueryReportsError | ReportConnector;
 

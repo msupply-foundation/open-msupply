@@ -19,7 +19,7 @@ pub enum Action {
     Print(PrintArgs),
 }
 
-#[derive(ValueEnum, Default, Clone, Serialize)]
+#[derive(ValueEnum, Default, Clone, Serialize, PartialEq)]
 pub enum BuildTemplateType {
     #[default]
     Tera,

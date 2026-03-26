@@ -3,6 +3,7 @@ import {
   Platform,
   PrintFormat,
   PrintReportSortInput,
+  ReportTemplateType,
   useDownloadFile,
   useIntlUtils,
   useMutation,
@@ -20,6 +21,7 @@ export type GenerateReportParams = {
   args?: JsonData;
   sort?: PrintReportSortInput;
   format?: PrintFormat;
+  templateType?: ReportTemplateType;
 };
 
 const setClose = (frame: HTMLIFrameElement) => () => {
@@ -91,19 +93,30 @@ export const usePrintReport = () => {
   const downloadFile = useDownloadFile();
 
   const mutationFn = async (params: GenerateReportParams) => {
-    const {
-      dataId,
-      reportId,
-      args,
-      sort,
-      format = EnvUtils.printFormat,
-    } = params;
+    const { dataId, reportId, args, sort, format, templateType } = params;
+
+    // Determine the server-side format:
+    // - If caller specified a format (e.g. Excel button), use it
+    //   but for Typst + Excel, request HTML instead (for testing)
+    // - Default: Tera→HTML, Typst→PDF
+    let serverFormat = format;
+    if (!serverFormat) {
+      serverFormat =
+        templateType === ReportTemplateType.Typst
+          ? PrintFormat.Pdf
+          : PrintFormat.Html;
+    } else if (
+      serverFormat === PrintFormat.Excel &&
+      templateType === ReportTemplateType.Typst
+    ) {
+      serverFormat = PrintFormat.Html;
+    }
 
     const result = await reportApi.generateReport({
       dataId,
       reportId,
       storeId,
-      format,
+      format: serverFormat,
       arguments: args,
       sort,
       currentLanguage,
@@ -117,16 +130,36 @@ export const usePrintReport = () => {
 
   const { mutate, mutateAsync, isLoading } = useMutation({
     mutationFn,
-    onSuccess: (fileId, { format = EnvUtils.printFormat }) => {
+    onSuccess: (fileId, { format, templateType }) => {
       if (!fileId) throw new Error(t('messages.error-printing-report'));
       const url = `${Environment.FILE_URL}${fileId}`;
-      if (format === PrintFormat.Html) {
-        printPage(url);
-      } else if (format === PrintFormat.Pdf) {
-        printPdf(url);
-      } else {
-        downloadFile(url);
+
+      // Excel button on Typst reports → open HTML in new tab
+      if (
+        format === PrintFormat.Excel &&
+        templateType === ReportTemplateType.Typst
+      ) {
+        window.open(url, '_blank');
+        return;
       }
+
+      // Excel → download
+      if (format === PrintFormat.Excel) {
+        downloadFile(url);
+        return;
+      }
+
+      // PDF / Typst default → open in new tab
+      if (
+        format === PrintFormat.Pdf ||
+        templateType === ReportTemplateType.Typst
+      ) {
+        printPdf(url);
+        return;
+      }
+
+      // Tera HTML → iframe print dialog
+      printPage(url);
     },
     onError: (e: Error) => {
       error(e.message)();

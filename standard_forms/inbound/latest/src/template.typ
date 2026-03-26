@@ -44,50 +44,35 @@
   arguments: (timezone: "UTC"),
 )
 
-// --- Helpers ---
-#let fmt-date(dt) = {
-  if dt == none or dt == "" { "N/A" }
-  else {
-    let d = str(dt)
-    if d.len() >= 10 {
-      d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4)
-    } else { d }
-  }
-}
-
-#let fmt-num(n, digits: 2) = {
-  if n == none or n == 0 { "0" }
-  else { str(calc.round(n, digits: digits)) }
-}
+#import "/standard_reports/common.typ": *
 
 // --- Data ---
 #let store = report_data.data.store
 #let inv = report_data.data.invoice
 #let lines = report_data.data.invoiceLines.nodes
 
-// --- Page setup ---
+// --- Page setup (PDF only, ignored in HTML) ---
 #set page(
   paper: "a4",
   flipped: true,
   margin: (top: 1cm, bottom: 1cm, left: 1.5cm, right: 1.5cm),
-  footer: [
-    #set text(8pt, fill: rgb("#888"))
-    #h(1fr)
-    Page #context counter(page).display("1 / 1", both: true)
-    #h(1fr)
-  ],
+  footer: page-footer(),
 )
 
 #set text(font: "New Computer Modern", size: 9pt, fill: rgb("#333"))
 
+// --- HTML styling (ignored in PDF mode) ---
+#html-styles(max-width: "1100px")
+
 // ============================================================
-// HEADER
+// HEADER — uses tables instead of grid so HTML export works
 // ============================================================
 
-// Store name + title row
-#grid(
+#table(
   columns: (1fr, 1fr),
+  stroke: none,
   align: (left, right),
+  inset: (x: 0pt, y: 2pt),
   [
     #text(12pt, weight: "bold")[#store.storeName]
     // #v(2pt)
@@ -96,29 +81,28 @@
     // #text(7pt)[Telephone: #store.name.phone] \
     // #text(7pt)[Email: #store.name.email]
   ],
-  [
-    #text(22pt, weight: "bold")[Inbound Shipment Form]
-  ],
+  [#text(22pt, weight: "bold")[Inbound Shipment Form]],
 )
 
 #v(0.4cm)
 
 // Supplier info + invoice details
-#grid(
+#table(
   columns: (1fr, 1fr),
+  stroke: none,
   align: (left, right),
+  inset: (x: 0pt, y: 2pt),
   [
-    #text(weight: "bold", size: 8pt)[Received from:] \
-    #text(9pt)[#inv.otherPartyName] \
-    #text(9pt)[#inv.otherParty.code]
+    *Received from:* \
+    #inv.otherPartyName \
+    #inv.otherParty.code
     #{
       if inv.otherParty.address1 != none and inv.otherParty.address1 != "" [
-        \ #text(9pt)[#inv.otherParty.address1]
+        \ #inv.otherParty.address1
       ]
     }
   ],
   [
-    #set text(9pt)
     Number: #str(inv.invoiceNumber) \
     Printed date: #fmt-date(datetime.today().display("[year]-[month]-[day]")) \
     Their ref: #{if inv.theirReference != none and inv.theirReference != "" { inv.theirReference } else { "N/A" }} \
@@ -134,15 +118,17 @@
 #v(0.2cm)
 
 // Entered by / dates row
-#grid(
+#table(
   columns: (1fr, 1fr),
+  stroke: none,
   align: (left, right),
+  inset: (x: 0pt, y: 2pt),
   [
-    #text(9pt)[Entered by: #inv.user.username] \
-    #text(9pt)[Created date: #fmt-date(inv.createdDatetime)]
+    Entered by: #inv.user.username \
+    Created date: #fmt-date(inv.createdDatetime)
   ],
   [
-    #text(9pt)[Shipped date: #fmt-date(inv.shippedDatetime)]
+    Shipped date: #fmt-date(inv.shippedDatetime)
   ],
 )
 
@@ -161,22 +147,14 @@
 
 #table(
   columns: (40pt, 50pt, 1fr, 55pt, 50pt, 50pt, 0.5fr, 50pt, 55pt, 55pt, 45pt),
-  fill: (_, row) => if row == 0 { rgb("#f0f0f0") } else if calc.odd(row) { rgb("#fafafa") } else { white },
+  fill: table-fill,
 
-  // Header
-  table.cell(align: left)[#text(weight: "bold", size: 8pt)[Location]],
-  table.cell(align: left)[#text(weight: "bold", size: 8pt)[Item code]],
-  table.cell(align: left)[#text(weight: "bold", size: 8pt)[Item name]],
-  table.cell(align: right)[#text(weight: "bold", size: 8pt)[Quantity]],
-  table.cell(align: right)[#text(weight: "bold", size: 8pt)[Pack size]],
-  table.cell(align: right)[#text(weight: "bold", size: 8pt)[Unit Qty]],
-  table.cell(align: left)[#text(weight: "bold", size: 8pt)[Batch]],
-  table.cell(align: left)[#text(weight: "bold", size: 8pt)[Expiry]],
-  table.cell(align: right)[#text(weight: "bold", size: 8pt)[Cost price per pack]],
-  table.cell(align: right)[#text(weight: "bold", size: 8pt)[Cost per unit]],
-  table.cell(align: right)[#text(weight: "bold", size: 8pt)[Line total]],
-
-  table.hline(stroke: 1.5pt + rgb("#333")),
+  table.header(
+    [*Location*], [*Item code*], [*Item name*],
+    [*Quantity*], [*Pack size*], [*Unit Qty*],
+    [*Batch*], [*Expiry*],
+    [*Cost price per pack*], [*Cost per unit*], [*Line total*],
+  ),
 
   // Data rows
   ..lines.map(line => {
@@ -189,17 +167,17 @@
     let line-total = qty * cost
 
     (
-      text(size: 8pt)[#loc],
-      text(size: 8pt)[#line.itemCode],
-      text(size: 8pt)[#line.itemName],
-      align(right, text(size: 8pt)[#str(qty)]),
-      align(right, text(size: 8pt)[#str(ps)]),
-      align(right, text(size: 8pt)[#str(unit-qty)]),
-      text(size: 8pt)[#{if line.batch != none { line.batch } else { "" }}],
-      text(size: 8pt)[#fmt-date(line.expiryDate)],
-      align(right, text(size: 8pt)[#fmt-num(cost)]),
-      align(right, text(size: 8pt)[#fmt-num(cost-per-unit)]),
-      align(right, text(size: 8pt)[#fmt-num(line-total)]),
+      [#loc],
+      [#line.itemCode],
+      [#line.itemName],
+      [#str(qty)],
+      [#str(ps)],
+      [#str(unit-qty)],
+      [#{if line.batch != none { line.batch } else { "" }}],
+      [#fmt-date(line.expiryDate)],
+      [#fmt-num(cost)],
+      [#fmt-num(cost-per-unit)],
+      [#fmt-num(line-total)],
     )
   }).flatten(),
 )

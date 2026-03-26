@@ -12,6 +12,7 @@ export type ReportRowFragment = {
   subContext?: string | null;
   isCustom: boolean;
   isActive: boolean;
+  templateType: Types.ReportTemplateType;
   argumentSchema?: {
     __typename: 'FormSchemaNode';
     id: string;
@@ -43,6 +44,7 @@ export type ReportQuery = {
         subContext?: string | null;
         isCustom: boolean;
         isActive: boolean;
+        templateType: Types.ReportTemplateType;
         argumentSchema?: {
           __typename: 'FormSchemaNode';
           id: string;
@@ -80,6 +82,7 @@ export type ReportsQuery = {
           subContext?: string | null;
           isCustom: boolean;
           isActive: boolean;
+          templateType: Types.ReportTemplateType;
           argumentSchema?: {
             __typename: 'FormSchemaNode';
             id: string;
@@ -141,6 +144,7 @@ export const ReportRowFragmentDoc = gql`
     subContext
     isCustom
     isActive
+    templateType
     argumentSchema {
       id
       type

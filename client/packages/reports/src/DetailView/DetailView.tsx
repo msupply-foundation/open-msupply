@@ -5,6 +5,7 @@ import {
   noOtherVariants,
   NothingHere,
   PrintFormat,
+  ReportTemplateType,
   TypedTFunction,
   useBreadcrumbs,
   useDownloadFile,
@@ -154,19 +155,31 @@ const DetailViewInner = ({
       reportId: report.id,
       dataId: '',
       args: reportArgs,
+      templateType: report.templateType,
     });
   }, [reportArgs]);
 
   const exportExcelReport = useCallback(async () => {
     try {
+      // Typst reports: open HTML version in new tab (for testing)
+      const format =
+        report.templateType === ReportTemplateType.Typst
+          ? PrintFormat.Html
+          : PrintFormat.Excel;
+
       const result = await mutateAsync({
         reportId: report.id,
         args: reportArgs,
         dataId: '',
-        format: PrintFormat.Excel,
+        format,
       });
       if (result?.__typename === 'PrintReportNode') {
-        downloadFile(`${Environment.FILE_URL}${result.fileId}`);
+        const url = `${Environment.FILE_URL}${result.fileId}`;
+        if (report.templateType === ReportTemplateType.Typst) {
+          window.open(url, '_blank');
+        } else {
+          downloadFile(url);
+        }
       }
 
       if (result?.__typename === 'PrintReportError') {

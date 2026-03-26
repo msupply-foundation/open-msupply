@@ -70,6 +70,7 @@ export const ReportSelector = ({
         args,
         sort,
         format,
+        templateType: report.templateType,
       });
     } catch (err) {
       // Error is already displayed by global graphql error handler, we just need to catch

@@ -12,9 +12,16 @@ use repository::{
     ContextType, EqualFilter, PaginationOption, Report, ReportFilter, ReportSort, ReportSortField,
     StringFilter,
 };
+use serde_json;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::report_service::{GetReportError, GetReportsError};
 use service::ListResult;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum ReportTemplateType {
+    Tera,
+    Typst,
+}
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -161,6 +168,20 @@ impl ReportNode {
 
     pub async fn version(&self) -> &str {
         &self.row.report_row.version
+    }
+
+    /// The template engine used by this report (Tera or Typst)
+    pub async fn template_type(&self) -> ReportTemplateType {
+        // Parse the template JSON to extract template_type from the index
+        if let Ok(def) = serde_json::from_str::<serde_json::Value>(&self.row.report_row.template) {
+            if let Some(tt) = def.get("index").and_then(|i| i.get("template_type")).and_then(|t| t.as_str()) {
+                return match tt {
+                    "Typst" => ReportTemplateType::Typst,
+                    _ => ReportTemplateType::Tera,
+                };
+            }
+        }
+        ReportTemplateType::Tera
     }
 }
 

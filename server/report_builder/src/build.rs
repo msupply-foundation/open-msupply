@@ -210,7 +210,17 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
                 continue;
             }
         };
-        let (name, value) = if name.ends_with(".ref.json") {
+        let (name, value) = if name.ends_with(".typ")
+            && args.template_type == BuildTemplateType::Typst
+        {
+            // Include extra .typ files as TypstTemplate entries for #import support
+            (
+                name,
+                ReportDefinitionEntry::TypstTemplate(TypstTemplate {
+                    template: data,
+                }),
+            )
+        } else if name.ends_with(".ref.json") {
             // add reference
             let data = serde_json::from_str(&data).map_err(|err| {
                 anyhow::Error::msg(format!("Failed to parse reference {name}: {err}"))

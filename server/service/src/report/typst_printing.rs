@@ -1,23 +1,33 @@
+use std::collections::HashMap;
+
 use typst::{
     diag::{FileError, FileResult},
     foundations::{Bytes, Datetime},
     layout::PagedDocument,
-    syntax::{FileId, Source},
+    syntax::{FileId, Source, VirtualPath},
     text::{Font, FontBook},
     utils::LazyHash,
-    Library, LibraryExt, World,
+    Feature, Library, LibraryBuilder, LibraryExt, World,
 };
+use typst_html::HtmlDocument;
 
-/// A minimal Typst World implementation for rendering reports to PDF.
+/// A minimal Typst World implementation for rendering reports.
+/// Supports multiple source files so templates can #import shared libraries.
 struct ReportWorld {
     library: LazyHash<Library>,
     book: LazyHash<FontBook>,
     fonts: Vec<Font>,
     source: Source,
+    /// Additional source files available for #import, keyed by filename
+    extra_sources: HashMap<FileId, Source>,
 }
 
 impl ReportWorld {
-    fn new(typst_source: &str, data_json: &str) -> Self {
+    fn new(
+        typst_source: &str,
+        data_json: &str,
+        extra_files: &HashMap<String, String>,
+    ) -> Self {
         let fonts: Vec<Font> = typst_assets::fonts()
             .flat_map(|data| {
                 let bytes = Bytes::new(data);
@@ -50,11 +60,28 @@ impl ReportWorld {
             format!("{}\n{}", data_declaration, typst_source)
         };
 
+        // Always enable HTML feature so templates can use target() and html.*
+        // for conditional HTML styling while still working for PDF output
+        let features = vec![Feature::Html].into_iter().collect();
+        let library = LibraryBuilder::from_routines(&typst::ROUTINES)
+            .with_features(features)
+            .build();
+
+        // Build extra source files for #import support
+        let mut extra_sources = HashMap::new();
+
+        for (name, content) in extra_files {
+            let file_id = FileId::new(None, VirtualPath::new(name));
+            let source = Source::new(file_id, content.to_string());
+            extra_sources.insert(file_id, source);
+        }
+
         Self {
-            library: LazyHash::new(Library::default()),
+            library: LazyHash::new(library),
             book: LazyHash::new(book),
             fonts,
             source: Source::detached(&full_source),
+            extra_sources,
         }
     }
 }
@@ -75,6 +102,8 @@ impl World for ReportWorld {
     fn source(&self, id: FileId) -> FileResult<Source> {
         if id == self.source.id() {
             Ok(self.source.clone())
+        } else if let Some(source) = self.extra_sources.get(&id) {
+            Ok(source.clone())
         } else {
             Err(FileError::NotFound(id.vpath().as_rootless_path().into()))
         }
@@ -170,8 +199,12 @@ fn find_let_binding_end(source: &str) -> usize {
 }
 
 /// Compile a Typst template with the given JSON data and produce PDF bytes.
-pub fn typst_to_pdf(typst_source: &str, data_json: &str) -> Result<Vec<u8>, String> {
-    let world = ReportWorld::new(typst_source, data_json);
+pub fn typst_to_pdf(
+    typst_source: &str,
+    data_json: &str,
+    extra_files: &HashMap<String, String>,
+) -> Result<Vec<u8>, String> {
+    let world = ReportWorld::new(typst_source, data_json, extra_files);
     let result = typst::compile::<PagedDocument>(&world);
 
     match result.output {
@@ -182,6 +215,27 @@ pub fn typst_to_pdf(typst_source: &str, data_json: &str) -> Result<Vec<u8>, Stri
                 format!("Typst PDF export errors: {}", msgs.join("; "))
             })
         }
+        Err(errors) => {
+            let msgs: Vec<String> = errors.iter().map(|e| format!("{e:?}")).collect();
+            Err(format!("Typst compilation errors: {}", msgs.join("; ")))
+        }
+    }
+}
+
+/// Compile a Typst template with the given JSON data and produce an HTML string.
+pub fn typst_to_html(
+    typst_source: &str,
+    data_json: &str,
+    extra_files: &HashMap<String, String>,
+) -> Result<String, String> {
+    let world = ReportWorld::new(typst_source, data_json, extra_files);
+    let result = typst::compile::<HtmlDocument>(&world);
+
+    match result.output {
+        Ok(document) => typst_html::html(&document).map_err(|errors| {
+            let msgs: Vec<String> = errors.iter().map(|e| format!("{e:?}")).collect();
+            format!("Typst HTML export errors: {}", msgs.join("; "))
+        }),
         Err(errors) => {
             let msgs: Vec<String> = errors.iter().map(|e| format!("{e:?}")).collect();
             Err(format!("Typst compilation errors: {}", msgs.join("; ")))
@@ -200,7 +254,7 @@ mod tests {
 This is a test document.
 "#;
         let data_json = r#"{"data": {}, "arguments": null}"#;
-        let result = typst_to_pdf(source, data_json);
+        let result = typst_to_pdf(source, data_json, &HashMap::new());
         assert!(result.is_ok(), "Basic Typst compilation should succeed");
         let pdf_bytes = result.unwrap();
         assert!(!pdf_bytes.is_empty(), "PDF output should not be empty");
@@ -218,7 +272,7 @@ This is a test document.
 = Report for #name
 "#;
         let data_json = r#"{"data": {"name": "Test Store"}, "arguments": null}"#;
-        let result = typst_to_pdf(source, data_json);
+        let result = typst_to_pdf(source, data_json, &HashMap::new());
         assert!(
             result.is_ok(),
             "Typst with data access should succeed: {:?}",
@@ -237,10 +291,51 @@ This is a test document.
 = Report for #report_data.data.name
 "#;
         let data_json = r#"{"data": {"name": "Real Store"}}"#;
-        let result = typst_to_pdf(source, data_json);
+        let result = typst_to_pdf(source, data_json, &HashMap::new());
         assert!(
             result.is_ok(),
             "Template with replaced test data should compile: {:?}",
+            result.err()
+        );
+    }
+
+    #[test]
+    fn test_basic_typst_to_html() {
+        let source = r#"
+= Hello, World!
+This is a test document.
+"#;
+        let data_json = r#"{"data": {}, "arguments": null}"#;
+        let result = typst_to_html(source, data_json, &HashMap::new());
+        assert!(
+            result.is_ok(),
+            "Basic Typst HTML compilation should succeed: {:?}",
+            result.err()
+        );
+        let html = result.unwrap();
+        assert!(
+            html.contains("Hello, World!"),
+            "HTML should contain the heading text"
+        );
+    }
+
+    #[test]
+    fn test_import_extra_file() {
+        let lib_source = r#"
+#let greet(name) = "Hello, " + name + "!"
+"#;
+        let source = r#"
+#import "/libs/helpers.typ": greet
+= #greet("World")
+"#;
+        let extra_files =
+            HashMap::from([("/libs/helpers.typ".to_string(), lib_source.to_string())]);
+        let data_json = r#"{"data": {}, "arguments": null}"#;
+
+        let result = typst_to_pdf(source, data_json, &extra_files);
+        assert!(
+            result.is_ok(),
+            "Template with #import should compile: {:?}",
             result.err()
         );
     }

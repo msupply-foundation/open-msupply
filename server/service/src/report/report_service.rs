@@ -27,11 +27,11 @@ use super::{
     default_queries::get_default_gql_query,
     definition::{
         ConvertDataType, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
-        SQLQuery, TeraTemplate, TemplateType, TypstTemplate,
+        SQLQuery, TemplateType, TeraTemplate, TypstTemplate,
     },
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
-    typst_printing::typst_to_pdf,
+    typst_printing::{typst_to_html, typst_to_pdf},
     utils::translate_report_arugment_schema,
 };
 
@@ -308,14 +308,14 @@ fn generate_html_report_to_html(
     Ok(file.id)
 }
 
-/// Generates a Typst report to PDF and returns the file id.
-/// Typst always produces PDF regardless of the requested format.
+/// Generates a Typst report and returns the file id.
+/// Supports PDF (default) and HTML output formats.
 fn generate_typst_report(
     base_dir: &str,
     report: &ResolvedReportDefinition,
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,
-    _format: Option<PrintFormat>,
+    format: Option<PrintFormat>,
 ) -> Result<String, ReportError> {
     let report_data = ReportData { data, arguments };
     let report_data = transform_data(
@@ -332,31 +332,59 @@ fn generate_typst_report(
         ReportError::ConvertDataError(err)
     })?;
 
-    let template = report
-        .typst_templates
-        .get(&report.template)
-        .ok_or(ReportError::InvalidReportDefinition(format!(
+    let template = report.typst_templates.get(&report.template).ok_or(
+        ReportError::InvalidReportDefinition(format!(
             "Typst template not found: {}",
             report.template
-        )))?;
+        )),
+    )?;
 
-    let data_json = serde_json::to_string(&report_data)
-        .map_err(|err| ReportError::DocGenerationError(format!("Failed to serialize data: {err}")))?;
+    let data_json = serde_json::to_string(&report_data).map_err(|err| {
+        ReportError::DocGenerationError(format!("Failed to serialize data: {err}"))
+    })?;
 
-    let pdf_bytes = typst_to_pdf(&template.template, &data_json)
-        .map_err(|err| ReportError::DocGenerationError(format!("Typst PDF generation: {err}")))?;
+    // Collect extra Typst files (excluding the main template) for #import support
+    let extra_files: HashMap<String, String> = report
+        .typst_templates
+        .iter()
+        .filter(|(name, _)| *name != &report.template)
+        .map(|(name, t)| (name.clone(), t.template.clone()))
+        .collect();
 
     let file_service = StaticFileService::new(base_dir)
         .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
     let now: DateTime<Utc> = SystemTime::now().into();
-    let file = file_service
-        .store_file(
-            &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report.name),
-            StaticFileCategory::Temporary,
-            &pdf_bytes,
-        )
-        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
-    Ok(file.id)
+
+    match format {
+        Some(PrintFormat::Html) => {
+            let html =
+                typst_to_html(&template.template, &data_json, &extra_files).map_err(|err| {
+                    ReportError::DocGenerationError(format!("Typst HTML generation: {err}"))
+                })?;
+            let file = file_service
+                .store_file(
+                    &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report.name),
+                    StaticFileCategory::Temporary,
+                    html.as_bytes(),
+                )
+                .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+            Ok(file.id)
+        }
+        _ => {
+            let pdf_bytes =
+                typst_to_pdf(&template.template, &data_json, &extra_files).map_err(|err| {
+                    ReportError::DocGenerationError(format!("Typst PDF generation: {err}"))
+                })?;
+            let file = file_service
+                .store_file(
+                    &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report.name),
+                    StaticFileCategory::Temporary,
+                    &pdf_bytes,
+                )
+                .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+            Ok(file.id)
+        }
+    }
 }
 
 /// Puts the document content, header and footer into a <html> template.
