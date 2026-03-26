@@ -5,6 +5,7 @@
   top: 4rem;
   height: calc(100vh - 4rem);
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1rem 0.75rem 1.5rem 1.75rem;
   border-right: 1px solid $gray-200;
   width: 320px;
@@ -97,6 +98,7 @@ $sidebar-indent: 1rem;
   border-radius: 0.25rem;
   font-size: $font-size-base * 0.9375; // 15px — between sm and base
   line-height: 1.3;
+  word-break: break-word;
 
   &:hover {
     color: $link-color;
@@ -162,6 +164,15 @@ $sidebar-indent: 1rem;
 body.dark {
   .docs-sidebar {
     border-right-color: $border-dark;
+    scrollbar-color: transparent transparent;
+
+    &:hover {
+      scrollbar-color: rgba($gray-500, 0.3) transparent;
+    }
+
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb { background: transparent; }
+    &:hover::-webkit-scrollbar-thumb { background: rgba($gray-500, 0.3); }
   }
 
   .sidebar-link {
@@ -222,6 +233,16 @@ body.dark {
     margin-left: 0;
     margin-right: 0;
   }
+}
+
+// Offset anchored headings below sticky navbar
+.docs-content h1[id],
+.docs-content h2[id],
+.docs-content h3[id],
+.docs-content h4[id],
+.docs-content h5[id],
+.docs-content h6[id] {
+  scroll-margin-top: 5rem;
 }
 
 // Docs content area — takes remaining space
@@ -285,7 +306,7 @@ body.dark {
   li {
     margin: 0;
     padding: 0;
-    border: none;
+    border: none !important;
   }
 
   a {
@@ -331,5 +352,128 @@ body.dark {
       color: $link-color-dark;
       border-left-color: $link-color-dark;
     }
+  }
+}
+
+// ── Breadcrumbs ──
+
+.docs-breadcrumbs {
+  margin-bottom: 0.5rem;
+
+  ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: $font-size-sm;
+    color: $gray-500;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+
+    svg {
+      margin: 0 0.4rem;
+      color: $gray-400;
+    }
+  }
+
+  a {
+    color: $gray-500;
+    text-decoration: none;
+
+    &:hover {
+      color: $link-color;
+      text-decoration: underline;
+    }
+  }
+
+  li[aria-current="page"] {
+    color: $body-color;
+  }
+}
+
+body.dark .docs-breadcrumbs {
+  a {
+    color: $gray-500;
+
+    &:hover {
+      color: $link-color-dark;
+    }
+  }
+
+  li[aria-current="page"] {
+    color: $body-color-dark;
+  }
+}
+
+// ── Prev / Next navigation ──
+
+.docs-nav-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid $gray-200;
+}
+
+.docs-nav-prev,
+.docs-nav-next {
+  max-width: 45%;
+
+  a {
+    display: block;
+    text-decoration: none;
+    padding: 0.75rem 1rem;
+    border: 1px solid $gray-200;
+    border-radius: 0.5rem;
+    transition: border-color 0.15s, background 0.15s;
+
+    &:hover {
+      border-color: $primary;
+      background: rgba($primary, 0.04);
+      text-decoration: none;
+    }
+  }
+}
+
+.docs-nav-next {
+  text-align: right;
+  margin-left: auto;
+}
+
+.docs-nav-label {
+  display: block;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  margin-bottom: 0.15rem;
+}
+
+.docs-nav-title {
+  display: block;
+  font-weight: 500;
+  color: $primary;
+}
+
+body.dark {
+  .docs-nav-footer {
+    border-top-color: $border-dark;
+  }
+
+  .docs-nav-prev a,
+  .docs-nav-next a {
+    border-color: $border-dark;
+
+    &:hover {
+      border-color: $link-color-dark;
+      background: rgba($link-color-dark, 0.06);
+    }
+  }
+
+  .docs-nav-title {
+    color: $link-color-dark;
   }
 }

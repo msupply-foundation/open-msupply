@@ -1,10 +1,17 @@
 {% macro docs_toc(page) %}
   {% if page.toc %}
+  {% set first_entry = page.toc | first %}
+  {# If TOC has a single h1 entry with children, use those children as top-level #}
+  {% if page.toc | length == 1 and first_entry.children %}
+    {% set toc_entries = first_entry.children %}
+  {% else %}
+    {% set toc_entries = page.toc %}
+  {% endif %}
   <nav class="docs-toc d-none d-xl-block" aria-label="Table of contents">
     <div class="page-links">
       <h3>On this page</h3>
       <ul id="toc-list">
-        {% for h2 in page.toc %}
+        {% for h2 in toc_entries %}
           <li>
             <a href="{{ h2.permalink | safe }}" class="toc-link">{{ h2.title }}</a>
             {% if h2.children %}

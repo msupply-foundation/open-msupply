@@ -19,6 +19,7 @@ internal_level = "warn"
 
 [markdown]
 highlight_code = true
+insert_anchor_links = "none"
 
 [search]
 include_title = true

@@ -17,6 +17,7 @@
       {{ macros_sidebar::docs_sidebar(current_section=current_section, current_url=current_url) }}
 
       <div class="docs-content flex-grow-1">
+        {{ macros_breadcrumbs::docs_breadcrumbs(section=section) }}
         <article>
           <h1>{{ section.title }}</h1>
           {{ section.content | safe }}
@@ -37,6 +38,7 @@
             </div>
           {% endif %}
         </article>
+        {{ macros_navigation::docs_navigation(section=section) }}
       </div>
 
       {{ macros_toc::docs_toc(page=section) }}
