@@ -1,17 +1,4 @@
-## inventory
+# inventory
 
-### Overview
-
-Inventory Domain
-
-### Intentions
-
-The intention is that this package is responsible for inventory domain features:
-
-- Stocktakes
-- Stock
-- Locations
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://dev-docs.msupply.foundation/client/packages/inventory/
+- **Source**: [docs/content/client/packages/inventory/_index.md](/docs/content/client/packages/inventory/_index.md)
