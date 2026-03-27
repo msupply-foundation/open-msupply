@@ -627,6 +627,76 @@ body.dark #suggestions b {
   font-size: $font-size-sm;
 }
 
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  border-bottom: 1px solid $gray-200;
+
+  a {
+    color: $primary;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// ── Full search results page ──
+
+.search-result {
+  padding: 1rem 0;
+  border-bottom: 1px solid $gray-200;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.search-result-title {
+  font-size: $font-size-base * 1.15;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.search-result-path {
+  display: block;
+  font-size: $font-size-sm * 0.85;
+  color: $gray-500;
+  margin-top: 0.1rem;
+}
+
+.search-result-teaser {
+  margin-top: 0.35rem;
+  font-size: $font-size-sm;
+  color: $gray-600;
+  line-height: 1.5;
+}
+
+.search-result b,
+.search-result-title b {
+  color: $primary;
+  font-weight: 700;
+}
+
+body.dark .search-result b,
+body.dark .search-result-title b {
+  color: $link-color-dark;
+}
+
+.search-loading {
+  color: $gray-500;
+}
+
 body.dark {
   #suggestions {
     background: $body-bg-dark !important;
@@ -660,6 +730,22 @@ body.dark {
   }
 
   .search-no-results {
+    color: $gray-500;
+  }
+
+  .search-header {
+    border-bottom-color: $border-dark;
+
+    a {
+      color: $link-color-dark;
+    }
+  }
+
+  .search-result {
+    border-bottom-color: $border-dark;
+  }
+
+  .search-result-teaser {
     color: $gray-500;
   }
 }
