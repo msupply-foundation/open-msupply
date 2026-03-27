@@ -1,4 +1,4 @@
-{% macro docs_toc(page) %}
+{% macro docs_toc(page, edit_path="") %}
   {% if page.toc %}
   {% set first_entry = page.toc | first %}
   {# If TOC has a single h1 entry with children, use those children as top-level #}
@@ -33,6 +33,14 @@
           </li>
         {% endfor %}
       </ul>
+      {% if edit_path and config.extra.edit_page %}
+      <div class="docs-edit-page">
+        <a href="{{ config.extra.docs_repo }}/edit/{{ config.extra.repo_branch }}/docs/content/{{ edit_path }}" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit this page
+        </a>
+      </div>
+      {% endif %}
     </div>
   </nav>
 
@@ -76,5 +84,16 @@
     updateActive();
   });
   </script>
+  {% elif edit_path and config.extra.edit_page %}
+  <nav class="docs-toc d-none d-xl-block" aria-label="Page actions">
+    <div class="page-links">
+      <div class="docs-edit-page" style="border: none; margin: 0; padding: 0;">
+        <a href="{{ config.extra.docs_repo }}/edit/{{ config.extra.repo_branch }}/docs/content/{{ edit_path }}" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit this page
+        </a>
+      </div>
+    </div>
+  </nav>
   {% endif %}
 {% endmacro %}

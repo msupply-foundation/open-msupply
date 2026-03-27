@@ -491,6 +491,39 @@ body.dark {
   }
 }
 
+// ── Edit page link ──
+
+.docs-edit-page {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid $gray-200;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: $font-size-sm;
+    color: $gray-500;
+    text-decoration: none;
+
+    &:hover {
+      color: $link-color;
+    }
+  }
+}
+
+body.dark .docs-edit-page {
+  border-top-color: $border-dark;
+
+  a {
+    color: $gray-500;
+
+    &:hover {
+      color: $link-color-dark;
+    }
+  }
+}
+
 // ── Footer ──
 
 .footer {
