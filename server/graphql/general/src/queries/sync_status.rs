@@ -65,89 +65,50 @@ impl SyncStatusWithProgressNode {
 
 #[derive(SimpleObject)]
 pub struct FullSyncStatusNode {
-    pub is_syncing: bool,
-    pub error: Option<SyncErrorNode>,
-    pub summary: SyncStatusNode,
-    pub prepare_initial: Option<SyncStatusNode>,
-    pub integration: Option<SyncStatusWithProgressNode>,
-    pub pull_central: Option<SyncStatusWithProgressNode>,
-    pub pull_v6: Option<SyncStatusWithProgressNode>,
-    pub pull_remote: Option<SyncStatusWithProgressNode>,
-    pub push: Option<SyncStatusWithProgressNode>,
-    pub push_v6: Option<SyncStatusWithProgressNode>,
-    pub last_successful_sync: Option<SyncStatusNode>,
-    pub warning_threshold: i64,
-    pub error_threshold: i64,
+    is_syncing: bool,
+    error: Option<SyncErrorNode>,
+    summary: SyncStatusNode,
+    prepare_initial: Option<SyncStatusNode>,
+    integration: Option<SyncStatusWithProgressNode>,
+    pull_central: Option<SyncStatusWithProgressNode>,
+    pull_v6: Option<SyncStatusWithProgressNode>,
+    pull_remote: Option<SyncStatusWithProgressNode>,
+    push: Option<SyncStatusWithProgressNode>,
+    push_v6: Option<SyncStatusWithProgressNode>,
+    last_successful_sync: Option<SyncStatusNode>,
+    warning_threshold: i64,
+    error_threshold: i64,
 }
 
 impl FullSyncStatusNode {
     pub fn from_sync_status(
-        is_syncing: bool,
-        error: Option<SyncLogError>,
-        summary: SyncStatus,
-        prepare_initial: Option<SyncStatus>,
-        integration: Option<SyncStatusWithProgress>,
-        pull_central: Option<SyncStatusWithProgress>,
-        pull_remote: Option<SyncStatusWithProgress>,
-        push: Option<SyncStatusWithProgress>,
-        pull_v6: Option<SyncStatusWithProgress>,
-        push_v6: Option<SyncStatusWithProgress>,
+        status: FullSyncStatus,
         last_successful_sync: Option<FullSyncStatus>,
     ) -> Self {
+        let to_node = |s: SyncStatus| SyncStatusNode {
+            started: s.started,
+            duration_in_seconds: s.duration_in_seconds,
+            finished: s.finished,
+        };
+        let to_progress_node = |s: SyncStatusWithProgress| SyncStatusWithProgressNode {
+            started: s.started,
+            finished: s.finished,
+            total: s.total,
+            done: s.done,
+        };
+
         FullSyncStatusNode {
-            is_syncing,
-            error: error.map(SyncErrorNode::from_sync_log_error),
-            summary: SyncStatusNode {
-                started: summary.started,
-                duration_in_seconds: summary.duration_in_seconds,
-                finished: summary.finished,
-            },
-            prepare_initial: prepare_initial.map(|s| SyncStatusNode {
-                started: s.started,
-                duration_in_seconds: s.duration_in_seconds,
-                finished: s.finished,
-            }),
-            integration: integration.map(|s| SyncStatusWithProgressNode {
-                started: s.started,
-                finished: s.finished,
-                total: s.total,
-                done: s.done,
-            }),
-            pull_central: pull_central.map(|s| SyncStatusWithProgressNode {
-                started: s.started,
-                finished: s.finished,
-                total: s.total,
-                done: s.done,
-            }),
-            pull_remote: pull_remote.map(|s| SyncStatusWithProgressNode {
-                started: s.started,
-                finished: s.finished,
-                total: s.total,
-                done: s.done,
-            }),
-            push: push.map(|s| SyncStatusWithProgressNode {
-                started: s.started,
-                finished: s.finished,
-                total: s.total,
-                done: s.done,
-            }),
-            pull_v6: pull_v6.map(|s| SyncStatusWithProgressNode {
-                started: s.started,
-                finished: s.finished,
-                total: s.total,
-                done: s.done,
-            }),
-            push_v6: push_v6.map(|s| SyncStatusWithProgressNode {
-                started: s.started,
-                finished: s.finished,
-                total: s.total,
-                done: s.done,
-            }),
-            last_successful_sync: last_successful_sync.map(|status| SyncStatusNode {
-                started: status.summary.started,
-                duration_in_seconds: status.summary.duration_in_seconds,
-                finished: status.summary.finished,
-            }),
+            is_syncing: status.is_syncing,
+            error: status.error.map(SyncErrorNode::from_sync_log_error),
+            summary: to_node(status.summary),
+            prepare_initial: status.prepare_initial.map(to_node),
+            integration: status.integration.map(to_progress_node),
+            pull_central: status.pull_central.map(to_progress_node),
+            pull_remote: status.pull_remote.map(to_progress_node),
+            push: status.push.map(to_progress_node),
+            pull_v6: status.pull_v6.map(to_progress_node),
+            push_v6: status.push_v6.map(to_progress_node),
+            last_successful_sync: last_successful_sync.map(|s| to_node(s.summary)),
             warning_threshold: 1,
             error_threshold: 3,
         }
@@ -176,30 +137,8 @@ pub fn latest_sync_status(
         .get_latest_successful_sync_status(&ctx)
         .unwrap_or(None);
 
-    let FullSyncStatus {
-        is_syncing,
-        error,
-        summary,
-        prepare_initial,
-        integration,
-        pull_central,
-        pull_remote,
-        push,
-        pull_v6,
-        push_v6,
-    } = sync_status;
-
     Ok(Some(FullSyncStatusNode::from_sync_status(
-        is_syncing,
-        error,
-        summary,
-        prepare_initial,
-        integration,
-        pull_central,
-        pull_remote,
-        push,
-        pull_v6,
-        push_v6,
+        sync_status,
         last_successful_sync_status,
     )))
 }

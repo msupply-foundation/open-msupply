@@ -5,7 +5,6 @@ use graphql_core::standard_graphql_error::validate_auth;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     service_provider::ServiceProvider,
-    sync::sync_status::status::FullSyncStatus,
 };
 use tokio::sync::broadcast;
 
@@ -79,30 +78,8 @@ fn query_sync_status(service_provider: &ServiceProvider) -> Option<FullSyncStatu
         .get_latest_successful_sync_status(&ctx)
         .unwrap_or(None);
 
-    let FullSyncStatus {
-        is_syncing,
-        error,
-        summary,
-        prepare_initial,
-        integration,
-        pull_central,
-        pull_remote,
-        push,
-        pull_v6,
-        push_v6,
-    } = sync_status;
-
     Some(FullSyncStatusNode::from_sync_status(
-        is_syncing,
-        error,
-        summary,
-        prepare_initial,
-        integration,
-        pull_central,
-        pull_remote,
-        push,
-        pull_v6,
-        push_v6,
+        sync_status,
         last_successful_sync_status,
     ))
 }
