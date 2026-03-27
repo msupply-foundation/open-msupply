@@ -24,7 +24,11 @@ import {
   InvoiceIcon,
   SlidersIcon,
   EditIcon,
+  StatusChip,
+  InvoiceLineStatusType,
+  useAppTheme,
 } from '@openmsupply-client/common';
+import { Select, MenuItem } from '@mui/material';
 import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,
@@ -87,6 +91,7 @@ export const InboundLineEditCards = ({
   const formatRef = useRef(format);
   formatRef.current = format;
   const { store } = useAuthContext();
+  const theme = useAppTheme();
   const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
     usePreferences();
 
@@ -114,6 +119,26 @@ export const InboundLineEditCards = ({
     }
     return totalOutstandingPacks;
   }, [purchaseOrderId, item?.id, poQuery.data]);
+
+  const showLineStatus = lines.some(line => line.status != null);
+
+  const statusMap = useMemo(
+    () => ({
+      [InvoiceLineStatusType.Passed]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
+        colour: theme.palette.invoiceLineStatus.passed,
+      },
+      [InvoiceLineStatusType.Pending]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
+        colour: theme.palette.invoiceLineStatus.pending,
+      },
+      [InvoiceLineStatusType.Rejected]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
+        colour: theme.palette.invoiceLineStatus.rejected,
+      },
+    }),
+    [theme]
+  );
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -182,6 +207,48 @@ export const InboundLineEditCards = ({
                 })
               }
             />
+          );
+        },
+      },
+      {
+        accessorKey: 'status',
+        header: t('label.auth-status'),
+        columnGroup: 'general',
+        includeColumn: showLineStatus,
+        Cell: ({ row }) => {
+          const status = row.original.status;
+
+          if (isDisabled) {
+            const entry = status ? statusMap[status] : undefined;
+            return entry ? (
+              <StatusChip label={entry.label} colour={entry.colour} />
+            ) : null;
+          }
+
+          return (
+            <Select
+              value={status ?? ''}
+              size="small"
+              fullWidth
+              onChange={e => {
+                updateDraftLine({
+                  id: row.original.id,
+                  status: e.target.value as InvoiceLineStatusType,
+                });
+              }}
+              renderValue={() => {
+                const entry = status ? statusMap[status] : undefined;
+                return entry ? (
+                  <StatusChip label={entry.label} colour={entry.colour} />
+                ) : null;
+              }}
+            >
+              {Object.entries(statusMap).map(([key, { label, colour }]) => (
+                <MenuItem key={key} value={key}>
+                  <StatusChip label={label} colour={colour} />
+                </MenuItem>
+              ))}
+            </Select>
           );
         },
       },
@@ -666,6 +733,8 @@ export const InboundLineEditCards = ({
     removeDraftLine,
     restrictedToLocationTypeId,
     setPackRoundingMessage,
+    showLineStatus,
+    statusMap,
     store?.preferences.issueInForeignCurrency,
     unitName,
     updateDraftLine,
