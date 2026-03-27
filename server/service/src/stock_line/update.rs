@@ -1,6 +1,6 @@
 use super::query::get_stock_line;
 use crate::{
-    activity_log::activity_log_entry,
+    activity_log::activity_log_entry_with_diff,
     barcode::{self, BarcodeInput},
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     common::{check_stock_line_exists, CommonStockLineError},
@@ -321,97 +321,13 @@ fn log_stock_changes(
     existing: StockLineRow,
     new: StockLineRow,
 ) -> Result<(), RepositoryError> {
-    if existing.location_id != new.location_id {
-        let previous_location = if let Some(location_id) = existing.location_id {
-            Some(location_id)
-        } else {
-            Some("-".to_string())
-        };
-
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockLocationChange,
-            Some(new.id.to_string()),
-            previous_location,
-            new.location_id,
-        )?;
-    }
-    if existing.batch != new.batch {
-        let previous_batch = if let Some(batch) = existing.batch {
-            Some(batch)
-        } else {
-            Some("-".to_string())
-        };
-
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockBatchChange,
-            Some(new.id.to_string()),
-            previous_batch,
-            new.batch,
-        )?;
-    }
-    if existing.cost_price_per_pack != new.cost_price_per_pack {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockCostPriceChange,
-            Some(new.id.to_string()),
-            Some(existing.cost_price_per_pack.to_string()),
-            Some(new.cost_price_per_pack.to_string()),
-        )?;
-    }
-    if existing.sell_price_per_pack != new.sell_price_per_pack {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockSellPriceChange,
-            Some(new.id.to_string()),
-            Some(existing.sell_price_per_pack.to_string()),
-            Some(new.sell_price_per_pack.to_string()),
-        )?;
-    }
-    if existing.expiry_date != new.expiry_date {
-        let previous_expiry_date = if let Some(expiry_date) = existing.expiry_date {
-            Some(expiry_date.to_string())
-        } else {
-            Some("-".to_string())
-        };
-
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockExpiryDateChange,
-            Some(new.id.to_string()),
-            previous_expiry_date,
-            new.expiry_date.map(|date| date.to_string()),
-        )?;
-    }
-    if existing.on_hold != new.on_hold && new.on_hold {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockOnHold,
-            Some(new.id.to_string()),
-            None,
-            None,
-        )?;
-    }
-    if existing.on_hold != new.on_hold && !new.on_hold {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockOffHold,
-            Some(new.id.to_string()),
-            None,
-            None,
-        )?;
-    }
-
-    if existing.volume_per_pack != new.volume_per_pack {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::VolumePerPackChanged,
-            Some(new.id),
-            Some(existing.volume_per_pack.to_string()),
-            Some(new.volume_per_pack.to_string()),
-        )?;
-    }
+    activity_log_entry_with_diff(
+        ctx,
+        ActivityLogType::StockLineEdit,
+        Some(new.id.clone()),
+        Some(&existing),
+        &new,
+    )?;
 
     Ok(())
 }

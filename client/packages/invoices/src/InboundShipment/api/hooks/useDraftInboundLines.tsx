@@ -27,6 +27,7 @@ export const useDraftInboundLines = (
 
   const {
     query: { data },
+    isExternal,
   } = useInboundShipment();
   const id = data?.id ?? '';
 
@@ -38,8 +39,8 @@ export const useDraftInboundLines = (
       : getInboundStockLines(data.lines.nodes);
   }, [data, itemId]);
 
-  const { mutateAsync, isLoading } = useSaveInboundLines();
-  const { mutateAsync: deleteMutation } = useDeleteInboundLines();
+  const { mutateAsync, isLoading } = useSaveInboundLines(isExternal);
+  const { mutateAsync: deleteMutation } = useDeleteInboundLines(isExternal);
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
     'inbound-shipment-line-edit'

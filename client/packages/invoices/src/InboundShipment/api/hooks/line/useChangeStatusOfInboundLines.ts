@@ -5,13 +5,15 @@ import {
 } from '@openmsupply-client/common';
 import { useSaveInboundLines } from './useSaveInboundLines';
 import { InboundLineFragment } from '../../operations.generated';
+import { useInboundShipment } from '../useInboundShipment';
 
 export const useChangeStatusOfInboundLines = (
   rowsToChangeStatus: InboundLineFragment[],
   resetRowSelection: () => void,
 ): ((status: 'approve' | 'reject') => void) => {
   const t = useTranslation();
-  const { mutateAsync } = useSaveInboundLines();
+  const { isExternal } = useInboundShipment();
+  const { mutateAsync } = useSaveInboundLines(isExternal);
 
   const onStatusUpdate = async (status: 'approve' | 'reject') => {
     const linesToUpdate = rowsToChangeStatus.map(line => ({

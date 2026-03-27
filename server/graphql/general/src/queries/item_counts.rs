@@ -6,11 +6,11 @@ use graphql_core::{
 
 use service::auth::{Resource, ResourceAccessRequest};
 
-const DEFAULT_LOW_STOCK_THRESHOLD: i32 = 3;
-const DEFAULT_HIGH_STOCK_THRESHOLD: i32 = 6;
+const DEFAULT_LOW_STOCK_THRESHOLD: f64 = 3.0;
+const DEFAULT_HIGH_STOCK_THRESHOLD: f64 = 6.0;
 pub struct ItemCounts {
-    low_stock_threshold: Option<i32>,
-    high_stock_threshold: Option<i32>,
+    low_stock_threshold: Option<f64>,
+    high_stock_threshold: Option<f64>,
     store_id: String,
 }
 
@@ -62,8 +62,8 @@ impl ItemCounts {
 pub fn item_counts(
     ctx: &Context<'_>,
     store_id: String,
-    low_stock_threshold: Option<i32>,
-    high_stock_threshold: Option<i32>,
+    low_stock_threshold: Option<f64>,
+    high_stock_threshold: Option<f64>,
 ) -> Result<ItemCounts> {
     validate_auth(
         ctx,

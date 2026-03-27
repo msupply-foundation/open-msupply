@@ -8,7 +8,8 @@ use util::uuid::uuid;
 
 use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
-    update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentStatus,
+    update_inbound_shipment, InboundShipmentType, UpdateInboundShipment,
+    UpdateInboundShipmentStatus,
 };
 use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
 use crate::service_provider::ServiceContext;
@@ -69,6 +70,7 @@ pub(crate) fn generate_inbound_lines(
                     shipped_pack_size,
                     status,
                     manufacture_date,
+                    purchase_order_line_id,
                 },
                 ItemRow {
                     id: item_id,
@@ -117,6 +119,7 @@ pub(crate) fn generate_inbound_lines(
                     batch,
                     expiry_date,
                     manufacture_date,
+                    purchase_order_line_id,
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
@@ -219,6 +222,7 @@ pub(crate) fn auto_verify_if_store_preference(
                 ..Default::default()
             },
             Some(&inbound_shipment.store_id),
+            InboundShipmentType::InboundShipment,
         )
         .map_err(|e| {
             log::error!("{e:?}");
