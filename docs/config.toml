@@ -31,7 +31,7 @@ theme_color = "#fff"
 language_code = "en-US"
 title_separator = "-"
 
-edit_page = false
+edit_page = true
 docs_repo = "https://github.com/msupply-foundation/open-msupply"
 repo_branch = "develop"
 
