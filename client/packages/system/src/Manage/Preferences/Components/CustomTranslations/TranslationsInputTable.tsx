@@ -11,6 +11,7 @@ import {
   useSimpleMaterialTable,
   TextInputCell,
 } from '@openmsupply-client/common';
+import { useDebounceCallback } from '@common/hooks';
 import { checkInvalidVariables, Translation } from './helpers';
 import {
   TranslationOption,
@@ -39,6 +40,16 @@ export const TranslationsTable = ({
     }));
     setTranslations(translations => [...newLines, ...translations]);
   };
+
+  // Debounce updates to the translations array so that typing in a cell
+  // doesn't trigger a full table re-render on every keystroke.
+  // The TextInputCell's internal useBufferState keeps the input responsive.
+  const debouncedSetTranslations = useDebounceCallback(
+    (updater: (prev: Translation[]) => Translation[]) =>
+      setTranslations(updater),
+    [],
+    300
+  );
 
   const columns = useMemo(
     (): ColumnDef<Translation>[] => [
@@ -69,7 +80,7 @@ export const TranslationsTable = ({
                   ...row.original,
                   custom: value,
                 });
-                setTranslations(translations =>
+                debouncedSetTranslations(translations =>
                   translations.map(tr =>
                     tr.id === row.original.id
                       ? { ...tr, custom: value, isInvalid }
@@ -113,6 +124,13 @@ export const TranslationsTable = ({
     [showValidationErrors]
   );
 
+  // Memoize to avoid creating a new array reference on every render,
+  // which would cause TranslationSearchInput to re-render unnecessarily.
+  const existingKeys = useMemo(
+    () => translations.map(tr => tr.key),
+    [translations]
+  );
+
   const table = useSimpleMaterialTable<Translation>({
     tableId: 'custom-translations-input-table',
     data: translations,
@@ -126,7 +144,7 @@ export const TranslationsTable = ({
       <Box display="flex" justifyContent="flex-start" marginBottom="8px">
         <TranslationSearchInput
           onChange={onAdd}
-          existingKeys={translations.map(t => t.key)}
+          existingKeys={existingKeys}
         />
       </Box>
 

@@ -7,6 +7,7 @@ import {
   IndicatorValueTypeNode,
   InputWithLabelRow,
   NumericTextInput,
+  Typography,
   useAuthContext,
   useNotification,
   useTranslation,
@@ -38,9 +39,16 @@ interface InputWithLabelProps {
   autoFocus: boolean;
   data: IndicatorColumnNode;
   disabled: boolean;
+  isColumnInactive?: boolean;
+  isLineInactive?: boolean;
 }
 
-const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
+const InputWithLabel = ({
+  autoFocus,
+  data,
+  disabled,
+  isColumnInactive: _, // Inactive columns are not implemented in OG yet. Because old code defaults to false, we have to ignore the disabled status for columns.
+}: InputWithLabelProps) => {
   const t = useTranslation();
   const { error } = useNotification();
 
@@ -98,12 +106,14 @@ const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
     );
 
   return (
-    <InputWithLabelRow
-      Input={inputComponent}
-      labelWidth={LABEL_WIDTH}
-      label={indicatorColumnNameToLocal(data.name, t)}
-      sx={{ marginBottom: 1 }}
-    />
+    <Box sx={{ marginBottom: 1 }}>
+      <InputWithLabelRow
+        Input={inputComponent}
+        labelWidth={LABEL_WIDTH}
+        label={indicatorColumnNameToLocal(data.name, t)}
+        sx={{ marginBottom: 1 }}
+      />
+    </Box>
   );
 };
 
@@ -127,6 +137,9 @@ export const IndicatorLineEdit = ({
     store?.preferences?.extraFieldsInRequisition &&
     !!currentLine?.customerIndicatorInfo;
   const { width } = useWindowDimensions();
+  const t = useTranslation();
+
+  const isIndicatorInactive = !currentLine?.line.isActive;
 
   return (
     <>
@@ -137,10 +150,16 @@ export const IndicatorLineEdit = ({
               <InputWithLabel
                 key={column.value?.id}
                 data={column}
-                disabled={disabled}
+                disabled={disabled || isIndicatorInactive}
                 autoFocus={i === 0}
+                isColumnInactive={!column.isActive}
               />
             )
+        )}
+        {isIndicatorInactive && (
+          <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+            {t('label.indicator-no-longer-active')}
+          </Typography>
         )}
       </Box>
       {showInfo && (

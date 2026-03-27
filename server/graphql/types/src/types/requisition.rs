@@ -182,13 +182,14 @@ impl RequisitionNode {
     ) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
-        let original_customer_id = match &self.requisition.requisition_row.original_customer_id {
-            Some(customer) => customer,
-            None => return Ok(None),
-        };
+        let destination_customer_id =
+            match &self.requisition.requisition_row.destination_customer_id {
+                Some(customer) => customer,
+                None => return Ok(None),
+            };
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, original_customer_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, destination_customer_id))
             .await?;
 
         match response_option {

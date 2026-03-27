@@ -74,6 +74,7 @@ pub enum PermissionType {
     // inbound shipment external
     InboundShipmentExternalQuery,
     InboundShipmentExternalMutate,
+    InboundShipmentExternalVerify,
     InboundShipmentExternalAuthorise,
     // reporting
     Report,
