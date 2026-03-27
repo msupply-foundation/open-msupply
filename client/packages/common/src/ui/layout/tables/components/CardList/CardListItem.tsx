@@ -9,7 +9,7 @@ import {
 import { ColumnDef } from '../../types';
 import { CardListField } from './CardListField';
 import { CardListFieldGroup } from './CardListFieldGroup';
-import { useIsLandscapeTablet } from '@common/hooks';
+import { useIsLandscapeTablet, useSimplifiedTabletUI } from '@common/hooks';
 
 /** Access custom ColumnDef fields from an MRT cell.
  *  ColumnDef<T> extends MRT_ColumnDef<T>, but MRT types columnDef as the
@@ -54,6 +54,8 @@ export const CardListItem = <T extends MRT_RowData>({
   onClick,
 }: CardListItemProps<T>) => {
   const isLandscape = useIsLandscapeTablet();
+  const simplified = useSimplifiedTabletUI();
+  const useGridLayout = !!groupIcons || simplified;
 
   const cells = row.getVisibleCells();
 
@@ -149,7 +151,7 @@ export const CardListItem = <T extends MRT_RowData>({
           </Box>
         )}
         {/* Data fields */}
-        {!groupIcons
+        {!useGridLayout
           ? dataCells.map(cell => (
               <Box
                 key={cell.id}
@@ -173,7 +175,23 @@ export const CardListItem = <T extends MRT_RowData>({
                 </Box>
               </Box>
             ))
-          : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
+          : simplified
+            ? // Simplified: single flat grid, no groups or dividers
+              <CardListFieldGroup>
+                {dataCells.map(cell => (
+                  <CardListField
+                    key={cell.id}
+                    label={flexRender(
+                      cell.column.columnDef.header,
+                      cell.getContext()
+                    )}
+                    span={colDef(cell).cardSpan}
+                  >
+                    {getCellContent(cell)}
+                  </CardListField>
+                ))}
+              </CardListFieldGroup>
+            : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
               <React.Fragment key={groupName ?? `ungrouped-${groupIndex}`}>
                 {groupIndex > 0 && <Divider />}
                 <CardListFieldGroup
