@@ -326,6 +326,14 @@ export type InboundFragment = {
       rate: number;
       isHomeCurrency: boolean;
     } | null;
+    lines: {
+      __typename: 'PurchaseOrderLineConnector';
+      nodes: Array<{
+        __typename: 'PurchaseOrderLineNode';
+        id: string;
+        item: { __typename: 'ItemNode'; id: string };
+      }>;
+    };
   } | null;
 };
 
@@ -664,6 +672,14 @@ export type InvoiceQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -909,6 +925,14 @@ export type InboundByNumberQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -1911,6 +1935,14 @@ export const InboundFragmentDoc = gql`
         code
         rate
         isHomeCurrency
+      }
+      lines {
+        nodes {
+          id
+          item {
+            id
+          }
+        }
       }
     }
     inboundType
