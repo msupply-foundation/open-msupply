@@ -118,10 +118,10 @@ Basic usage:
 docker run -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
 ```
 
-To mount an existing SQLite database, place the `.sqlite` file in a folder and mount it to `/database`. The database file must be named `omsupply-database.sqlite` (or override the name with an env variable):
+To mount an existing SQLite database, mount the **folder** containing the `.sqlite` file to `/database`. The database file must be named `omsupply-database.sqlite` (or override the name with `APP_DATABASE__DATABASE_NAME`):
 
 ```bash
-docker run -v "$(pwd)/mydatabase":/database -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
+docker run -v "/path/to/folder":/database -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
 ```
 
 To load reference data (bundled demo/test datasets in `server/data/`, useful for demos and testing — not for production data):
