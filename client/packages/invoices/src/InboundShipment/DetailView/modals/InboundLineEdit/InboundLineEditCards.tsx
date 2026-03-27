@@ -32,7 +32,6 @@ import {
   DonorSearchInput,
   getVolumePerPackFromVariant,
   ItemRowFragment,
-  ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
@@ -186,38 +185,6 @@ export const InboundLineEditCards = ({
         },
       },
       // --- Quantities columns ---
-      {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        columnGroup: 'quantities',
-        Cell: ({
-          row: {
-            original: { id, packSize, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={isDisabled}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              updateDraftLine({
-                id,
-                itemVariantId: itemVariant?.id,
-                itemVariant,
-                manufacturer: itemVariant?.manufacturer ?? null,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: hasItemVariantsEnabled,
-      },
       {
         id: 'itemDoses',
         header: t('label.doses-per-unit'),
