@@ -190,8 +190,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         fontWeight: 600,
         fontSize: table.getState().density !== 'spacious' ? '0.9em' : '1em',
         lineHeight: 1.2,
-        verticalAlign: 'bottom',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         opacity: 1,
         padding: padding(table.getState().density, column.getSize()),
         // needed to get resize handle to show in the right place (idk why it's hard coded in MRT)
@@ -292,6 +291,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
         opacity: 1,
+        alignItems: 'flex-end',
         color: getIsPlaceholderRow(row)
           ? 'secondary.light'
           : getIsRestrictedRow(row)
