@@ -533,6 +533,111 @@ body.dark .docs-edit-page {
   }
 }
 
+// ── Search bar — wider input, more visible ──
+
+.navbar-form {
+  margin-left: 2rem !important;
+  margin-right: 1rem !important;
+}
+
+.form-control.is-search {
+  border: 1px solid $gray-300 !important;
+  background: $white !important;
+
+  &:focus {
+    border-color: $primary !important;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.2) !important;
+  }
+}
+
+body.dark .form-control.is-search {
+  background: $body-overlay-dark !important;
+  border-color: $gray-600 !important;
+  color: $body-color-dark;
+
+  &:focus {
+    border-color: $link-color-dark !important;
+    box-shadow: 0 0 0 0.2rem rgba($link-color-dark, 0.2) !important;
+  }
+}
+
+// ── Search results dropdown ──
+
+#suggestions {
+  width: 44rem;
+  max-width: calc(100vw - 2rem);
+}
+
+#suggestions b {
+  color: $primary;
+  font-weight: 700;
+}
+
+body.dark #suggestions b {
+  color: $link-color-dark;
+}
+
+#suggestions a {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+}
+
+#suggestions .search-title {
+  font-weight: 600;
+  font-size: $font-size-base;
+  color: $body-color;
+  width: 12rem;
+  min-width: 12rem;
+  padding-right: 1rem;
+  border-right: 1px solid $gray-200;
+  text-align: right;
+  word-break: break-word;
+}
+
+#suggestions .search-teaser {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $gray-600;
+  padding-left: 1rem;
+  line-height: 1.4;
+}
+
+.search-no-results {
+  padding: 1rem;
+  color: $gray-500;
+  font-size: $font-size-sm;
+}
+
+body.dark {
+  #suggestions {
+    background: $body-bg-dark !important;
+    border: 1px solid $border-dark;
+  }
+
+  #suggestions div:not(:first-child) {
+    border-top-color: $border-dark;
+  }
+
+  #suggestions a:hover,
+  #suggestions a:focus {
+    background: $body-overlay-dark;
+  }
+
+  #suggestions .search-title {
+    color: $body-color-dark;
+    border-right-color: $border-dark;
+  }
+
+  #suggestions .search-teaser {
+    color: $gray-500;
+  }
+
+  .search-no-results {
+    color: $gray-500;
+  }
+}
+
 // ── Footer ──
 
 .footer {
