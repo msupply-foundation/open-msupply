@@ -17,7 +17,7 @@ impl Migration for V2_18_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(asset_log_reason_not_functioning_comments_required::Migrate),
-            add_base_population_to_demographic_projection::Migrate,
+            Box::new(add_base_population_to_demographic_projection::Migrate),
         ]
     }
 }
