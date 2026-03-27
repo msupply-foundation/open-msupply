@@ -6,16 +6,13 @@ RUN git clone https://github.com/wolfcw/libfaketime.git
 WORKDIR /usr/src/libfaketime/src
 RUN make install
 
-# Runtime stage
+# Common runtime stage (no binaries yet)
 FROM rust:1.94-slim as base
 # Copy only the compiled libfaketime from builder
 COPY --from=faketime-builder /usr/local/lib/faketime/libfaketime.so.1 /usr/local/lib/faketime/
 RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
 
-# Rest of your runtime setup...
 WORKDIR /usr/src/omsupply/server
-COPY --chmod=755 server/target/release/remote_server .
-COPY --chmod=755 server/target/release/remote_server_cli .
 COPY --chmod=755 docker/entry.sh .
 COPY server/data data
 
@@ -31,9 +28,15 @@ WORKDIR /usr/src/omsupply/server
 ENTRYPOINT ["/usr/src/omsupply/server/entry.sh"]
 EXPOSE 8000
 
-FROM base
+# SQLite target (default)
+FROM base as sqlite
+COPY --chmod=755 server/target/release/remote_server .
+COPY --chmod=755 server/target/release/remote_server_cli .
 
+# Postgres target
 FROM base as postgres
+COPY --chmod=755 server/target-postgres/release/remote_server .
+COPY --chmod=755 server/target-postgres/release/remote_server_cli .
 RUN apt-get update && apt-get install -y postgresql-17 libpq5 gosu && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 ENV PATH="/usr/lib/postgresql/17/bin:$PATH"
@@ -42,7 +45,7 @@ COPY --chmod=755 docker/entry-postgres.sh /usr/src/omsupply/server/entry-postgre
 RUN mkdir -p /var/lib/postgresql/data && chown -R postgres:postgres /var/lib/postgresql
 ENTRYPOINT ["/usr/src/omsupply/server/entry-postgres.sh"]
 
-FROM base as dev
+FROM sqlite as dev
 WORKDIR /usr/src/omsupply
 COPY client/.nvmrc .nvmrc
 COPY client client
