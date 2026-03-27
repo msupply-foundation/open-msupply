@@ -64,11 +64,6 @@ impl SyncStatusWithProgressNode {
 }
 
 /// Refactored for the sync_status_subscription resolver:
-/// - Fields made `pub` so the subscription can construct this type
-/// - `from_sync_status` constructor extracted from `latest_sync_status` so both
-///   the query resolver and the subscription stream can share the same
-///   service-type-to-graphql-type mapping logic
-/// - `latest_sync_status` simplified to use the shared constructor
 #[derive(SimpleObject)]
 pub struct FullSyncStatusNode {
     pub is_syncing: bool,
