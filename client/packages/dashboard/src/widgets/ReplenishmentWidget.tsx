@@ -152,7 +152,7 @@ export const ReplenishmentWidget = ({
       error={inboundExternal.error as ApiException}
       isError={inboundExternal.isError}
       isLoading={inboundExternal.isLoading}
-      title={t('inbound-shipment-external')}
+      title={t('dashboard.inbound-shipment-external')}
       panelContext={inboundExternalPanelContext}
       stats={[
         {
