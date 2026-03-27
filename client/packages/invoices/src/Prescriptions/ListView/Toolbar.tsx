@@ -4,11 +4,21 @@ import {
   AppBarContentPortal,
   FilterMenu,
   Box,
+  usePreferences,
+  InvoiceNodeType,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
+import { getStatusSequence } from '../../statuses';
+import { getStatusTranslator } from '../../utils';
 
 export const Toolbar = () => {
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
+  const statuses = getStatusSequence(InvoiceNodeType.Prescription).filter(
+    status =>
+      status === InvoiceNodeStatus.Cancelled ||
+      invoiceStatusOptions?.includes(status)
+  );
 
   return (
     <AppBarContentPortal
@@ -31,18 +41,10 @@ export const Toolbar = () => {
             {
               type: 'enum',
               name: t('label.status'),
-              options: [
-                { label: t('status.new'), value: InvoiceNodeStatus.New },
-                { label: t('label.picked'), value: InvoiceNodeStatus.Picked },
-                {
-                  label: t('label.verified'),
-                  value: InvoiceNodeStatus.Verified,
-                },
-                {
-                  label: t('label.cancelled'),
-                  value: InvoiceNodeStatus.Cancelled,
-                },
-              ],
+              options: statuses.map(status => ({
+                value: status,
+                label: getStatusTranslator(t)(status),
+              })),
               urlParameter: 'status',
               isDefault: false,
             },

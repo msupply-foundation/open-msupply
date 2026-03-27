@@ -15,15 +15,13 @@ import {
   usePreferences,
   useIsExtraSmallScreen,
   CardList,
+  InvoiceNodeType,
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButtons';
-import {
-  getStatusTranslator,
-  inboundStatuses,
-  isInboundListItemDisabled,
-} from '../../utils';
+import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
+import { getStatusSequence } from '../../statuses';
 import { Toolbar } from './Toolbar';
 import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
@@ -94,8 +92,8 @@ export const InboundListView = () => {
   const {
     query: { data, isLoading, isError },
   } = useInboundList(listParams);
-  const statuses = inboundStatuses.filter(status =>
-    invoiceStatusOptions?.includes(status)
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
   );
 
   const columns = useMemo(
