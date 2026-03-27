@@ -1,9 +1,9 @@
 # Developer documentation
 
-- _Date_: 11/12/2025
-- _Deciders_:
-- _Status_: NEW
-- _Outcome_:
+- _Date_: 23/03/2026
+- _Deciders_: Andrei, James, Aimee
+- _Status_: DECIDED
+- _Outcome_: Zola
 - _Related Material_: [Issue](https://github.com/msupply-foundation/open-msupply/issues/7247), [Wiki](https://github.com/msupply-foundation/open-msupply/wiki)
 
 ## Background
@@ -344,3 +344,24 @@ _Cons:_
 | **TOTAL**           | 🟢 74/80  | 🟢 71/80   | 🟢 68/80 | 🟡 66/80 | 🟢 72/80  | 🟡 **55/80** |
 
 ## Decision
+
+Discussed the options and overarching structural considerations. Agreed on having current READMEs moved to a docs/ directory, where the tool would serve them to a site via GitHub Pages.
+
+- Documentation can be browsed in code in the docs/ folder, as well as on the served site.
+- Original READMEs should remain in place with links to the site and new content file.This was in preference to having docs in a separate repository, which was required for the initial option set. All options in the compared set required content to be grouped together.
+
+We looked at an alternate option, Hugo, which we hoped would allow READMEs to remain in place. After trialling the setup, we determined it would not allow this without significant customisation, so Hugo presented similar challenges to the other compared options.
+
+With docs in a directory together, and especially with AI advancements, trialling or changing to a different tool at a later date would take less overhead than it previously would have. The main focus was on getting the documentation site underway.
+
+Discussion points included users and editing:
+
+- The initial meeting with the development team focused heavily on in-place editing and ease of editing. The assessed options don't have in-place editing, as the tools that allowed this required a separate documentation repository. These tools do allow a link to - GitHub where the markdown can be edited and committed or a pull request created.
+- Users are likely to be mainly developers and the product team. GitHub editing should be sufficient for updates — we will assess for pain points when implemented. Again, all options have similar constraints.
+- This documentation shouldn't include specs or project-level information, but should have high-level overviews.
+
+Ultimately decided to use Zola for these main reasons:
+
+- Zola is already used for the user docs — provides familiarity and shared learning across a common tool
+- Easily customisable similar to the user docs
+- Zola is stable and long-term. Some other options were newer and less proven over time
