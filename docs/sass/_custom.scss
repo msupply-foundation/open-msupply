@@ -581,18 +581,36 @@ body.dark #suggestions b {
   display: flex;
   flex-direction: row;
   align-items: baseline;
+
+  &.is-selected,
+  &.is-selected:hover {
+    background: rgba($primary, 0.08);
+    border-left: 2px solid $primary;
+  }
 }
 
 #suggestions .search-title {
-  font-weight: 600;
-  font-size: $font-size-base;
-  color: $body-color;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   width: 12rem;
   min-width: 12rem;
   padding-right: 1rem;
   border-right: 1px solid $gray-200;
   text-align: right;
   word-break: break-word;
+}
+
+#suggestions .search-title-text {
+  font-weight: 600;
+  font-size: $font-size-base;
+  color: $body-color;
+}
+
+#suggestions .search-path {
+  font-size: $font-size-sm * 0.85;
+  color: $gray-500;
+  font-weight: 400;
 }
 
 #suggestions .search-teaser {
@@ -620,13 +638,21 @@ body.dark {
   }
 
   #suggestions a:hover,
-  #suggestions a:focus {
-    background: $body-overlay-dark;
+  #suggestions a:focus,
+  #suggestions a.is-selected {
+    background: rgba($link-color-dark, 0.1);
+  }
+
+  #suggestions a.is-selected {
+    border-left: 2px solid $link-color-dark;
   }
 
   #suggestions .search-title {
-    color: $body-color-dark;
     border-right-color: $border-dark;
+  }
+
+  #suggestions .search-title-text {
+    color: $body-color-dark;
   }
 
   #suggestions .search-teaser {
