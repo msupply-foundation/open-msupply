@@ -21,6 +21,8 @@ import {
   useAppTheme,
   useIsExtraSmallScreen,
   CardList,
+  InboundNodeType,
+  Box,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -54,6 +56,7 @@ import { CurrencyTab } from './Tabs/Currency';
 import { DeliveryTab } from './Tabs/DeliveryStatus';
 import { ScanInputModal } from './ScanInputModal';
 import { MobileToolbar } from './MobileToolbar';
+import { getInboundColorAndIcon } from '../ListView/SupplierCell';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -68,6 +71,14 @@ export type ScannedItem = {
 // This is the data that is passed to the "CreateDraftInboundLine" function when
 // creating the new line
 export type ScannedBatchData = { batch?: string; expiryDate?: string };
+
+const ShipmentIcon = ({ inboundType }: { inboundType?: InboundNodeType }) => {
+  if (!inboundType) return null;
+
+  const { icon: KindIcon, color: iconColor } =
+    getInboundColorAndIcon(inboundType);
+  return <KindIcon sx={{ fontSize: 16, color: iconColor }} />;
+};
 
 const DetailViewInner = () => {
   const t = useTranslation();
@@ -118,14 +129,10 @@ const DetailViewInner = () => {
       if ('lines' in line) {
         const firstLine = line.lines[0];
         onOpen(firstLine?.item);
-        setEditPurchaseOrderLineId(
-          firstLine?.purchaseOrderLine?.id ?? null
-        );
+        setEditPurchaseOrderLineId(firstLine?.purchaseOrderLine?.id ?? null);
       } else {
         onOpen(line.item);
-        setEditPurchaseOrderLineId(
-          line.purchaseOrderLine?.id ?? null
-        );
+        setEditPurchaseOrderLineId(line.purchaseOrderLine?.id ?? null);
       }
     },
     [onOpen]
@@ -223,8 +230,15 @@ const DetailViewInner = () => {
   }, [data, selectedRows, info, onOpenReturns, setMode]);
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
+    setCustomBreadcrumbs({
+      1: (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ShipmentIcon inboundType={data?.inboundType} />
+          {data?.invoiceNumber ?? ''}
+        </Box>
+      ),
+    });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber, data?.inboundType]);
 
   const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
 
@@ -252,20 +266,22 @@ const DetailViewInner = () => {
       ),
       value: InboundShipmentDetailTabs.Details,
     },
-    ...external ? [
-      {
-        Component: <FinancialTab />,
-        value: InboundShipmentDetailTabs.Financial,
-      },
-      {
-        Component: <CurrencyTab />,
-        value: InboundShipmentDetailTabs.Currency,
-      },
-      {
-        Component: <DeliveryTab showLineStatus={showLineStatus} />,
-        value: InboundShipmentDetailTabs.Delivery,
-      },
-    ] : [],
+    ...(external
+      ? [
+          {
+            Component: <FinancialTab />,
+            value: InboundShipmentDetailTabs.Financial,
+          },
+          {
+            Component: <CurrencyTab />,
+            value: InboundShipmentDetailTabs.Currency,
+          },
+          {
+            Component: <DeliveryTab showLineStatus={showLineStatus} />,
+            value: InboundShipmentDetailTabs.Delivery,
+          },
+        ]
+      : []),
     {
       Component: (
         <DocumentsTable
@@ -379,20 +395,23 @@ const DetailViewInner = () => {
 
 export const useInvoiceLineStatusMap = () => {
   const theme = useAppTheme();
-  return useMemo(() => ({
-    [InvoiceLineStatusType.Passed]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Passed),
-      colour: theme.palette.invoiceLineStatus.passed,
-    },
-    [InvoiceLineStatusType.Pending]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Pending),
-      colour: theme.palette.invoiceLineStatus.pending,
-    },
-    [InvoiceLineStatusType.Rejected]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
-      colour: theme.palette.invoiceLineStatus.rejected,
-    },
-  }), [theme]);
+  return useMemo(
+    () => ({
+      [InvoiceLineStatusType.Passed]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
+        colour: theme.palette.invoiceLineStatus.passed,
+      },
+      [InvoiceLineStatusType.Pending]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
+        colour: theme.palette.invoiceLineStatus.pending,
+      },
+      [InvoiceLineStatusType.Rejected]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
+        colour: theme.palette.invoiceLineStatus.rejected,
+      },
+    }),
+    [theme]
+  );
 };
 
 export const DetailView = () => {
