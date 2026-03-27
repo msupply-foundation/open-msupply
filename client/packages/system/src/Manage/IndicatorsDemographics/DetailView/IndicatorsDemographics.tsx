@@ -143,12 +143,9 @@ export const IndicatorsDemographics = () => {
     }
   };
 
-  // save rows excluding generalRow
   const save = async () => {
     setIsDirty(false);
-    const rows = Object.values(draft).filter(
-      row => row.id !== GENERAL_POPULATION_ID
-    );
+    const rows = Object.values(draft);
 
     await Promise.all(
       rows.map(async indicator => {
