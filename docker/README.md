@@ -108,17 +108,58 @@ docker push msupplyfoundation/omsupply:v2.7.3-arm64-postgres && \
 docker push msupplyfoundation/omsupply:v2.7.3-arm64-postgres-dev
 ```
 
-The postgres image runs its own PostgreSQL server inside the container. To import an existing database dump on launch, mount the dump file to `/database/import.dump`:
+## Running the images
+
+### SQLite
+
+Basic usage:
 
 ```bash
-docker run -v "<path-to-dump>.dump":/database/import.dump -p 9000:8000 \
-  msupplyfoundation/omsupply:v2.7.3-arm64-postgres
+docker run -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
+```
+
+To mount an existing SQLite database, place the `.sqlite` file in a folder and mount it to `/database`. The database file must be named `omsupply-database.sqlite` (or override the name with an env variable):
+
+```bash
+docker run -v "$(pwd)/mydatabase":/database -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
+```
+
+To load reference data (bundled demo/test datasets in `server/data/`, useful for demos and testing — not for production data):
+
+```bash
+docker run -e LOAD_REFERENCE_FILE=reference1 -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
+```
+
+### Postgres
+
+The postgres image runs its own PostgreSQL server inside the container. Basic usage (starts with an empty database):
+
+```bash
+docker run -p 9000:8000 msupplyfoundation/omsupply:v2.7.3-postgres
+```
+
+To import an existing database dump (`pg_dump --format custom`) on launch, mount the dump file to `/database/import.dump`:
+
+```bash
+docker run -v /path/to/my_dump.dump:/database/import.dump -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3-postgres
 ```
 
 The database name can be overridden via environment variable:
 
 ```bash
-docker run -v "<path-to-dump>.dump":/database/import.dump -p 9000:8000 \
+docker run -v /path/to/my_dump.dump:/database/import.dump -p 9000:8000 \
   -e APP_DATABASE__DATABASE_NAME="my-database" \
-  msupplyfoundation/omsupply:v2.7.3-arm64-postgres
+  msupplyfoundation/omsupply:v2.7.3-postgres
+```
+
+### Configuration overrides
+
+All configuration values can be overridden via environment variables using the `APP_` prefix with `__` for nesting. See [example.yaml](../server/configuration/example.yaml) for all available options.
+
+```bash
+docker run -p 9000:8000 \
+  -e APP_DATABASE__DATABASE_NAME="custom-name" \
+  -e APP_DATABASE__HOST="custom-host" \
+  msupplyfoundation/omsupply:v2.7.3
 ```
