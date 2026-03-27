@@ -19,9 +19,10 @@ pub fn stock_effects(
 
     match (invoice_type, from_status, to_status) {
         (Prescription, Verified, Cancelled) => StockEffect::ReverseStock,
-        (OutboundShipment | Prescription | SupplierReturn, New | Allocated, Picked | Shipped) => {
+        (OutboundShipment | SupplierReturn, New | Allocated, Picked | Shipped) => {
             StockEffect::ReduceStock
         }
+        (Prescription, New | Allocated, Picked | Verified) => StockEffect::ReduceStock,
         (InboundShipment | CustomerReturn, New | Shipped | Delivered, Received | Verified) => {
             StockEffect::CreateStock
         }
