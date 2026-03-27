@@ -4,21 +4,41 @@ Dockerise github action is made to fire when a new tag is created, this tag need
 
 Dockerfile has two pre-requisites:
 
-`remote_server` and `remote_server_cli` built in release mode, they should be built inside the rust:1.94-slim docker image (after building client).
+`remote_server` and `remote_server_cli` built in release mode (after building client).
 
-For SQLite (default):
+If building on a non-Linux host (e.g. macOS), use a Docker container to cross-compile a Linux binary. The `-v` flag mounts your source code into the container and the compiled binary is written back to your host filesystem.
+
+If building natively on Linux, you can use `cargo build` directly.
+
+### SQLite (default)
+
+Via Docker (for macOS or other non-Linux hosts):
 
 ```bash
 docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
 ```
 
-For Postgres:
+Native Linux:
+
+```bash
+cd server && cargo build --release --bin remote_server --bin remote_server_cli
+```
+
+### Postgres
+
+Via Docker (for macOS or other non-Linux hosts — uses `rust:1.94` non-slim because it includes `libpq-dev`):
 
 ```bash
 docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
 ```
 
-**Important:** The rust image version used for compilation must match the version in the Dockerfile to avoid glibc version mismatches. The postgres build uses `rust:1.94` (non-slim) because it needs `libpq-dev` which is not included in the slim variant.
+Native Linux (requires `libpq-dev` installed, e.g. `apt-get install libpq-dev`):
+
+```bash
+cd server && cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
+```
+
+**Important:** When using Docker, the rust image version must match the version in the Dockerfile (`rust:1.94-slim`) to avoid glibc version mismatches.
 
 [docker-hub.md](./docker-hub.md) explains the feature set of the docker image.
 
@@ -64,7 +84,7 @@ cd client && yarn && yarn build
 # Build server
 cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
 # Dockerise with tag
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64 --target sqlite && \
+docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64 && \
 docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-dev --target dev
 # "docker hub" in bitwarden
 docker login
