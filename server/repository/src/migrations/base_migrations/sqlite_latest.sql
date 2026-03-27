@@ -1946,7 +1946,8 @@ CREATE VIEW item_ledger AS
           WHEN invoice.type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
           WHEN invoice.type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
           ELSE 3
-        END AS type_precedence
+        END AS type_precedence,
+        invoice.user_id AS user_id
     FROM
         invoice_line_stock_movement
         LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id

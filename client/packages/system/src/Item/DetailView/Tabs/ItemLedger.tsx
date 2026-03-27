@@ -141,6 +141,11 @@ const ItemLedgerTable = ({
         accessorKey: 'reason',
         header: t('label.reason'),
       },
+      {
+        id: 'user',
+        header: t('label.user'),
+        accessorFn: row => row.user?.username ?? '',
+      },
     ],
     [localisedTime, t]
   );

@@ -2,6 +2,7 @@ use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    loader::UserLoader,
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -10,6 +11,7 @@ use graphql_core::{
 
 use graphql_types::types::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceNodeStatus, InvoiceNodeType,
+    UserNode,
 };
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceStatus, InvoiceType, ItemLedgerFilter, ItemLedgerRow,
@@ -102,6 +104,22 @@ impl ItemLedgerNode {
 
     pub async fn number_of_packs(&self) -> &f64 {
         &self.item_ledger.number_of_packs
+    }
+
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<dataloader::DataLoader<UserLoader>>();
+
+        let user_id = match &self.item_ledger.user_id {
+            Some(user_id) => user_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(user_id.clone())
+            .await?
+            .map(UserNode::from_domain);
+
+        Ok(result)
     }
 }
 
