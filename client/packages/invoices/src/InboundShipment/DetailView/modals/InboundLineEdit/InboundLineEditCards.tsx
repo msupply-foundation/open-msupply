@@ -32,7 +32,6 @@ import {
   DonorSearchInput,
   getVolumePerPackFromVariant,
   ItemRowFragment,
-  ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
@@ -223,7 +222,7 @@ export const InboundLineEditCards = ({
         includeColumn: poOutstandingPacks != null,
         accessorFn: () => poOutstandingPacks ?? 0,
         Cell: ({ cell }) => (
-          <NumberInputCell cell={cell} updateFn={() => { }} disabled />
+          <NumberInputCell cell={cell} updateFn={() => {}} disabled />
         ),
         defaultHideOnMobile: true,
       },
@@ -277,7 +276,7 @@ export const InboundLineEditCards = ({
               const shouldClearSellPrice =
                 item?.defaultPackSize !== line.packSize &&
                 item?.itemStoreProperties?.defaultSellPricePerPack ===
-                line.sellPricePerPack;
+                  line.sellPricePerPack;
 
               updateDraftLine({
                 volumePerPack:
@@ -649,11 +648,11 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-      general: <EditIcon />,
-      quantities: <StockIcon />,
-      pricing: <InvoiceIcon />,
-      other: <SlidersIcon />,
-    };
+        general: <EditIcon />,
+        quantities: <StockIcon />,
+        pricing: <InvoiceIcon />,
+        other: <SlidersIcon />,
+      };
 
   return (
     <>
