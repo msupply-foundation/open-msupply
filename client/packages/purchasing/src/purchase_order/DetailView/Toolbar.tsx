@@ -56,7 +56,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   >(mostRecentExpectedDate ? new Date(mostRecentExpectedDate) : null);
 
   const disabledRequestedDeliveryDate = data?.status
-    ? isFieldDisabled(data.status, StatusGroup.AfterConfirmed)
+    ? isFieldDisabled(data.status, StatusGroup.AfterSent)
     : false;
   const disabledExpectedDeliveryDate = data?.status
     ? isFieldDisabled(data.status, StatusGroup.AfterSent)
@@ -112,6 +112,21 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     await updateLines(data?.lines?.nodes, {
       requestedDeliveryDate: { value: formattedDate },
     });
+    // Auto-fill expected delivery date for lines that have none
+    const linesWithoutExpected =
+      data?.lines?.nodes?.filter(line => !line.expectedDeliveryDate) ?? [];
+    if (linesWithoutExpected.length > 0) {
+      try {
+        await updateLines(linesWithoutExpected, {
+          expectedDeliveryDate: { value: formattedDate },
+        });
+        if (!getMostRecentExpectedDate()) {
+          setExpectedDeliveryDate(date);
+        }
+      } catch (e) {
+        error(t('messages.error-saving-purchase-order'))();
+      }
+    }
   };
 
   const confirmRequestedModal = useConfirmationModal({
