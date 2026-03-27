@@ -15,7 +15,7 @@ docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr
 For Postgres:
 
 ```bash
-docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres
+docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
 ```
 
 **Important:** The rust image version used for compilation must match the version in the Dockerfile to avoid glibc version mismatches. The postgres build uses `rust:1.94` (non-slim) because it needs `libpq-dev` which is not included in the slim variant.
@@ -32,11 +32,11 @@ Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DO
 
 ## Docker targets
 
-| Target | Database | Description |
-|--------|----------|-------------|
-| `base` | SQLite | Default runtime image |
-| `dev` | SQLite | Includes client with Node/Yarn for frontend development |
-| `postgres` | Postgres | Runtime image with embedded PostgreSQL server |
+| Target         | Database | Description                                                            |
+| -------------- | -------- | ---------------------------------------------------------------------- |
+| `sqlite`       | SQLite   | Default runtime image                                                  |
+| `dev`          | SQLite   | Includes client with Node/Yarn for frontend development                |
+| `postgres`     | Postgres | Runtime image with embedded PostgreSQL server                          |
 | `postgres-dev` | Postgres | Embedded PostgreSQL with client and Node/Yarn for frontend development |
 
 ## Build steps (as per dockerise.yaml github action workflow)
@@ -64,7 +64,7 @@ cd client && yarn && yarn build
 # Build server
 cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
 # Dockerise with tag
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64 --target base && \
+docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64 --target sqlite && \
 docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-dev --target dev
 # "docker hub" in bitwarden
 docker login
@@ -78,7 +78,7 @@ docker push msupplyfoundation/omsupply:v2.7.3-arm64-dev
 # Build client
 cd client && yarn && yarn build
 # Build server with postgres feature
-cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres
+cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
 # Dockerise with tag
 docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-postgres --target postgres && \
 docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-postgres-dev --target postgres-dev
@@ -91,14 +91,14 @@ docker push msupplyfoundation/omsupply:v2.7.3-arm64-postgres-dev
 The postgres image runs its own PostgreSQL server inside the container. To import an existing database dump on launch, mount the dump file to `/database/import.dump`:
 
 ```bash
-docker run -v "$(pwd)/my_dump.dump":/database/import.dump -p 9000:8000 \
+docker run -v "<path-to-dump>.dump":/database/import.dump -p 9000:8000 \
   msupplyfoundation/omsupply:v2.7.3-arm64-postgres
 ```
 
 The database name can be overridden via environment variable:
 
 ```bash
-docker run -v "$(pwd)/my_dump.dump":/database/import.dump -p 9000:8000 \
+docker run -v "<path-to-dump>.dump":/database/import.dump -p 9000:8000 \
   -e APP_DATABASE__DATABASE_NAME="my-database" \
   msupplyfoundation/omsupply:v2.7.3-arm64-postgres
 ```
