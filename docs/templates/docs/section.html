@@ -19,7 +19,6 @@
       <div class="docs-content flex-grow-1">
         {{ macros_breadcrumbs::docs_breadcrumbs(section=section) }}
         <article>
-          <h1>{{ section.title }}</h1>
           {{ section.content | safe }}
 
           {# Card list for child sections #}
