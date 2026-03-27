@@ -47,7 +47,7 @@ export type SupplierReturnFragment = {
   createdDatetime: string;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   otherPartyName: string;
   otherPartyId: string;
@@ -399,7 +399,7 @@ export type SupplierReturnByNumberQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -473,7 +473,7 @@ export type SupplierReturnByIdQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -871,7 +871,7 @@ export const SupplierReturnFragmentDoc = gql`
     createdDatetime
     pickedDatetime
     shippedDatetime
-    deliveredDatetime
+    receivedDatetime
     verifiedDatetime
     otherPartyName
     otherPartyId

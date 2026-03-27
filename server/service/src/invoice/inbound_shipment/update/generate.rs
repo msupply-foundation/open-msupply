@@ -6,14 +6,17 @@ use repository::{
     LocationMovementRow, Name, RepositoryError,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
     StorageConnection,
 };
 use util::uuid::uuid;
 
-use crate::invoice::common::{
-    calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
-    GenerateVVMStatusLogInput,
+use crate::invoice::{
+    common::{
+        calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
+        GenerateVVMStatusLogInput,
+    },
+    stock_effect::{stock_effects, StockEffect},
 };
 use crate::service_provider::ServiceContext;
 
@@ -46,7 +49,14 @@ pub(crate) fn generate(
     patch: UpdateInboundShipment,
 ) -> Result<GenerateResult, UpdateInboundShipmentError> {
     let connection = &ctx.connection;
-    let should_create_batches = should_create_batches(&existing_invoice, &patch);
+    let should_create_batches = match &patch.status {
+        Some(new_status) => {
+            let to = new_status.full_status();
+            stock_effects(&InvoiceType::InboundShipment, &existing_invoice.status, &to)
+                == StockEffect::CreateStock
+        }
+        None => false,
+    };
     let mut update_invoice = existing_invoice.clone();
 
     set_new_status_datetime(&mut update_invoice, &patch);
@@ -173,26 +183,6 @@ pub(crate) fn generate(
         vvm_status_logs_to_update,
         update_donor,
     })
-}
-
-pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
-    let existing_status = &invoice.status;
-    let new_status = match changed_status(patch.status.to_owned(), existing_status) {
-        Some(status) => status,
-        None => return false, // Status has not been updated
-    };
-
-    match (existing_status, new_status) {
-        (
-            // From New/Picked/Shipped/Delivered to Received/Verified
-            InvoiceStatus::New
-            | InvoiceStatus::Picked
-            | InvoiceStatus::Shipped
-            | InvoiceStatus::Delivered,
-            UpdateInboundShipmentStatus::Received | UpdateInboundShipmentStatus::Verified,
-        ) => true,
-        _ => false,
-    }
 }
 
 fn generate_tax_update_for_lines(
