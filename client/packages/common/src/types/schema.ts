@@ -9468,6 +9468,17 @@ export type StringStorePrefInput = {
   value: Scalars['String']['input'];
 };
 
+export type Subscriptions = {
+  __typename: 'Subscriptions';
+  /** Simple subscription to verify WebSocket connectivity */
+  ping: Scalars['String']['output'];
+  /**
+   * Subscribe to real-time sync status updates.
+   * Emits a new value whenever the sync status changes (phase start/complete, progress, error).
+   */
+  syncStatusUpdated?: Maybe<FullSyncStatusNode>;
+};
+
 export type Success = {
   __typename: 'Success';
   success: Scalars['Boolean']['output'];

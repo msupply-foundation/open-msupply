@@ -319,6 +319,85 @@ export type ManualSyncMutation = {
   manualSync: string;
 };
 
+export type SyncStatusUpdatedSubscriptionVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type SyncStatusUpdatedSubscription = {
+  __typename: 'Subscriptions';
+  syncStatusUpdated?: {
+    __typename: 'FullSyncStatusNode';
+    isSyncing: boolean;
+    errorThreshold: number;
+    warningThreshold: number;
+    error?: {
+      __typename: 'SyncErrorNode';
+      variant: Types.SyncErrorVariant;
+      fullError: string;
+    } | null;
+    integration?: {
+      __typename: 'SyncStatusWithProgressNode';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    prepareInitial?: {
+      __typename: 'SyncStatusNode';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    } | null;
+    pullCentral?: {
+      __typename: 'SyncStatusWithProgressNode';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    pullRemote?: {
+      __typename: 'SyncStatusWithProgressNode';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    push?: {
+      __typename: 'SyncStatusWithProgressNode';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    pullV6?: {
+      __typename: 'SyncStatusWithProgressNode';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    pushV6?: {
+      __typename: 'SyncStatusWithProgressNode';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    summary: {
+      __typename: 'SyncStatusNode';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    };
+    lastSuccessfulSync?: {
+      __typename: 'SyncStatusNode';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    } | null;
+  } | null;
+};
+
 export const SyncSettingsFragmentDoc = gql`
   fragment SyncSettings on SyncSettingsNode {
     __typename
@@ -452,6 +531,14 @@ export const ManualSyncDocument = gql`
     manualSync(fetchPatientId: $fetchPatientId)
   }
 `;
+export const SyncStatusUpdatedDocument = gql`
+  subscription syncStatusUpdated {
+    syncStatusUpdated {
+      ...FullSyncStatus
+    }
+  }
+  ${FullSyncStatusFragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -577,6 +664,24 @@ export function getSdk(
           }),
         'manualSync',
         'mutation',
+        variables
+      );
+    },
+    syncStatusUpdated(
+      variables?: SyncStatusUpdatedSubscriptionVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<SyncStatusUpdatedSubscription> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SyncStatusUpdatedSubscription>({
+            document: SyncStatusUpdatedDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'syncStatusUpdated',
+        'subscription',
         variables
       );
     },

@@ -7,6 +7,7 @@ pub mod types;
 use std::collections::HashMap;
 
 pub use self::queries::sync_status::*;
+pub use self::queries::sync_status_subscription::SyncStatusSubscriptions;
 use self::queries::*;
 
 use abbreviation::abbreviations;

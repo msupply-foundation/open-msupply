@@ -86,6 +86,7 @@ use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
     StoreFilter, StoreSort,
 };
+use tokio::sync::broadcast;
 use util::constants::SYSTEM_USER_ID;
 
 pub struct ServiceProvider {
@@ -200,6 +201,8 @@ pub struct ServiceProvider {
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
+    // Broadcast channel for sync status change notifications (subscriptions)
+    pub sync_status_notify: broadcast::Sender<()>,
 }
 
 pub struct ServiceContext {
@@ -311,6 +314,7 @@ impl ServiceProvider {
             contact_service: Box::new(ContactService {}),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
+            sync_status_notify: broadcast::channel(16).0,
         }
     }
 
