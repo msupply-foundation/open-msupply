@@ -28,6 +28,7 @@ import {
   useColumnSizing,
   useColumnVisibility,
 } from './tableState';
+import { useTableKeyboardNavigation } from './useTableKeyboardNavigation';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
   tableId,
@@ -70,6 +71,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+  const { focusedRowIndex, containerRef, handleKeyDown } =
+    useTableKeyboardNavigation<T>(onRowClick);
 
   // shared between the table body and head to ensure consistent padding
   const padding = (
@@ -164,13 +167,17 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         boxShadow: 'none',
       },
     },
-    muiTableContainerProps: {
+    muiTableContainerProps: ({ table }) => ({
+      ref: containerRef,
+      tabIndex: 0,
+      onKeyDown: (e: React.KeyboardEvent) => handleKeyDown(e, table),
       sx: {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
+        outline: 'none',
       },
-    },
+    }),
     muiTableProps: ({ table }) => ({
       // Need to apply this here so that relative sizes (ems, %) within table
       // are correct
@@ -248,11 +255,14 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           },
 
     muiTableBodyRowProps: params => {
-      const { row, table } = params;
+      const { row, table, staticRowIndex } = params;
       const customProps =
         typeof muiTableBodyRowProps === 'function'
           ? muiTableBodyRowProps(params)
           : muiTableBodyRowProps;
+
+      const isFocused =
+        focusedRowIndex !== null && staticRowIndex === focusedRowIndex;
 
       const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
         onClick: e => {
@@ -275,6 +285,11 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           },
           fontStyle: row.getCanExpand() ? 'italic' : 'normal',
           cursor: onRowClick ? 'pointer' : 'default',
+          ...(isFocused
+            ? {
+                backgroundColor: 'rgba(178, 178, 178, 0.3) !important',
+              }
+            : {}),
         },
       };
       return {
