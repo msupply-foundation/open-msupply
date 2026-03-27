@@ -29,7 +29,7 @@ export const useRefreshToken = (onTimeout: () => void) => {
       getLastRequestTime()
     );
 
-    const expiresSoon = expiresIn === 1 || expiresIn === 2;
+    const expiresSoon = expiresIn > 0 && expiresIn <= 5;
 
     if (minutesSinceLastRequest >= INACTIVITY_TIMEOUT_MINUTES) {
       onTimeout();
@@ -37,11 +37,23 @@ export const useRefreshToken = (onTimeout: () => void) => {
     }
 
     if (expiresSoon && minutesSinceLastRequest < INACTIVITY_TIMEOUT_MINUTES) {
-      mutateAsync().then(data => {
-        const token = data?.token ?? '';
-        const newCookie = { ...authCookie, token };
-        setAuthCookie(newCookie);
-      });
+      mutateAsync()
+        .then(data => {
+          const token = data?.token ?? '';
+          // Only update the cookie if the server returned a valid token.
+          // A failed refresh (e.g. expired refresh token) returns an empty
+          // string which would cause the next interval check to log the user
+          // out immediately.
+          if (token) {
+            const newCookie = { ...authCookie, token };
+            setAuthCookie(newCookie);
+          }
+        })
+        .catch(() => {
+          // Silently ignore network errors during refresh. The next interval
+          // tick will retry. If the cookie expires before a successful refresh,
+          // the normal expiry/inactivity logic in AuthContext will handle logout.
+        });
     }
   };
   return { refreshToken };
