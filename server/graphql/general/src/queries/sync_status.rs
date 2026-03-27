@@ -63,7 +63,6 @@ impl SyncStatusWithProgressNode {
     }
 }
 
-/// Refactored for the sync_status_subscription resolver:
 #[derive(SimpleObject)]
 pub struct FullSyncStatusNode {
     pub is_syncing: bool,
