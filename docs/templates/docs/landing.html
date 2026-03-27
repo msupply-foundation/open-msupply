@@ -35,27 +35,11 @@
                   {% set l3 = get_section(path=l3_path) %}
                   <li>
                     <strong><a href="{{ l3.permalink }}">{{ l3.title }}</a></strong>
-                    {% if l3.pages or l3.subsections %}
+                    {% if l3.subsections %}
                       <ul class="list-unstyled ms-3">
-                        {% for page in l3.pages %}
-                          <li><a href="{{ page.permalink }}">{{ page.title }}</a></li>
-                        {% endfor %}
                         {% for l4_path in l3.subsections %}
                           {% set l4 = get_section(path=l4_path) %}
-                          <li>
-                            <strong><a href="{{ l4.permalink }}">{{ l4.title }}</a></strong>
-                            {% if l4.pages or l4.subsections %}
-                              <ul class="list-unstyled ms-3">
-                                {% for page in l4.pages %}
-                                  <li><a href="{{ page.permalink }}">{{ page.title }}</a></li>
-                                {% endfor %}
-                                {% for l5_path in l4.subsections %}
-                                  {% set l5 = get_section(path=l5_path) %}
-                                  <li><a href="{{ l5.permalink }}">{{ l5.title }}</a></li>
-                                {% endfor %}
-                              </ul>
-                            {% endif %}
-                          </li>
+                          <li><a href="{{ l4.permalink }}">{{ l4.title }}</a></li>
                         {% endfor %}
                       </ul>
                     {% endif %}
