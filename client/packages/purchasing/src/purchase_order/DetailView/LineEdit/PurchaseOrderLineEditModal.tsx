@@ -13,7 +13,10 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { ItemStockOnHandFragment } from '@openmsupply-client/system';
-import { PurchaseOrderFragment, usePurchaseOrderLine } from '../../api';
+import {
+  PurchaseOrderFragment,
+  usePurchaseOrderLine,
+} from '../../api';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { createDraftPurchaseOrderLine } from './utils';
 
@@ -158,7 +161,6 @@ export const PurchaseOrderLineEditModal = React.memo(
               update={updatePatch}
               status={purchaseOrder.status}
               isDisabled={isDisabled}
-              lines={lines}
               isUpdateMode={isUpdateMode}
               onChangeItem={onChangeItem}
               lineCount={lines.length}

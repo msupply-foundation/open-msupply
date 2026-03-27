@@ -55,6 +55,14 @@ export const useInboundShipmentColumns = (
         enableSorting: true,
       },
       {
+        id: 'purchaseOrderLine.lineNumber',
+        accessorFn: row => row.purchaseOrderLine?.lineNumber ?? '',
+        header: t('label.purchase-order-line-number'),
+        size: 90,
+        includeColumn: external,
+        enableSorting: true,
+      },
+      {
         accessorKey: 'batch',
         header: t('label.batch'),
         enableSorting: true,
