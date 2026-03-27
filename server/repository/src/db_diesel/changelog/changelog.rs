@@ -659,8 +659,17 @@ fn create_filtered_outgoing_patient_sync_query(
 /// we might update the latest changelog cursor to 5 and the changelog with cursor = 2 will be left
 /// unhandled when continuing from the latest cursor position.
 ///
-/// Locking the changelog table will wait for ongoing writers and will prevent new writers while
-/// reading the changelog.
+/// We use EXCLUSIVE mode (not ACCESS EXCLUSIVE) because:
+///
+/// EXCLUSIVE is safe here because it conflicts with ROW EXCLUSIVE (the implicit lock held by
+/// any in-flight INSERT/UPDATE/DELETE). This means `LOCK TABLE ... IN EXCLUSIVE MODE` will
+/// wait for all uncommitted writes to commit before proceeding, so we are guaranteed to see
+/// all changelog entries up to the point we read — no cursor gaps.
+///
+/// The key difference from ACCESS EXCLUSIVE: EXCLUSIVE allows concurrent SELECTs (which only
+/// hold ACCESS SHARE locks). Since reads cannot create cursor gaps, there is no reason to
+/// block them. ACCESS EXCLUSIVE blocks reads too, which under load causes all GraphQL list
+/// queries to queue behind changelog processing.
 fn with_locked_changelog_table<T, F>(
     connection: &StorageConnection,
     f: F,
@@ -675,7 +684,7 @@ where
                 let mut locked_con = con.lock();
                 locked_con
                     .connection()
-                    .batch_execute("LOCK TABLE ONLY changelog IN ACCESS EXCLUSIVE MODE")?;
+                    .batch_execute("LOCK TABLE ONLY changelog IN EXCLUSIVE MODE")?;
 
                 f(&mut locked_con)
             },
