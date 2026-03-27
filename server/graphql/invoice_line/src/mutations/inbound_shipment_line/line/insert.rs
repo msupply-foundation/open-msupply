@@ -7,8 +7,9 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceLineNode;
 
+use graphql_core::generic_inputs::InboundShipmentType;
 use repository::InvoiceLine;
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::ResourceAccessRequest;
 use service::invoice_line::stock_in_line::{
     InsertStockInLine as ServiceInput, InsertStockInLineError as ServiceError, StockInType,
 };
@@ -40,6 +41,7 @@ pub struct InsertInput {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
+    pub purchase_order_line_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -55,11 +57,16 @@ pub enum InsertResponse {
     Response(InvoiceLineNode),
 }
 
-pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+pub fn insert(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: InsertInput,
+    r#type: InboundShipmentType,
+) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -70,7 +77,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(
         service_provider
             .invoice_line_service
-            .insert_stock_in_line(&service_context, input.to_domain()),
+            .insert_stock_in_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
     )
 }
 
@@ -108,6 +115,7 @@ impl InsertInput {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            purchase_order_line_id,
         } = self;
 
         ServiceInput {
@@ -137,6 +145,7 @@ impl InsertInput {
             volume_per_pack,
             shipped_pack_size,
             note,
+            purchase_order_line_id,
             // Default
             stock_line_id: None,
             barcode: None,
@@ -190,11 +199,14 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramNotVisible
+        | ServiceError::PurchaseOrderLineIdRequired
+        | ServiceError::PurchaseOrderLineDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)
         }
         ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
+        ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -238,6 +250,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: ServiceInput,
+            _: Option<service::invoice::inbound_shipment::InboundShipmentType>,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)
         }

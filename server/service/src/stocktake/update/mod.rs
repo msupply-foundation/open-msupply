@@ -96,7 +96,7 @@ pub fn update_stocktake(
             // write inventory adjustment lines (and update/introduce stock)
             for line in result.inventory_addition_lines {
                 let line_id = line.id.clone();
-                insert_stock_in_line(ctx, line).map_err(|error| {
+                insert_stock_in_line(ctx, line, None).map_err(|error| {
                     UpdateStocktakeError::InsertStockInLineError { line_id, error }
                 })?;
             }

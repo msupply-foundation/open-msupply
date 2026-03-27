@@ -132,6 +132,33 @@ pub fn get_purchase_order_lines(
     ))
 }
 
+pub fn get_units_ordered_in_other_purchase_orders(
+    ctx: &Context<'_>,
+    store_id: &str,
+    item_id: &str,
+    exclude_purchase_order_id: &str,
+) -> Result<f64> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryPurchaseOrder,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    service_provider
+        .purchase_order_line_service
+        .get_units_ordered_in_other_purchase_orders(
+            &service_context,
+            store_id,
+            item_id,
+            exclude_purchase_order_id,
+        )
+        .map_err(StandardGraphqlError::from_repository_error)
+}
+
 impl PurchaseOrderLineFilterInput {
     pub fn to_domain(self) -> PurchaseOrderLineFilter {
         PurchaseOrderLineFilter {
