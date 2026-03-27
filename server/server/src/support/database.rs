@@ -35,7 +35,11 @@ pub async fn get_database(
         .set_content_disposition(ContentDisposition {
             disposition: DispositionType::Inline,
             parameters: vec![DispositionParam::Filename(
-                settings.database.database_name.clone(),
+                Path::new(&settings.database.connection_string())
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string(),
             )],
         })
         .into_response(&request);
