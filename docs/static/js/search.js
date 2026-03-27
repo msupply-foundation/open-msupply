@@ -65,8 +65,13 @@ function handleSearchKeys(e) {
   } else if (e.key === 'Enter') {
     e.preventDefault();
     e.stopPropagation();
-    var target = selectedIndex >= 0 ? items[selectedIndex] : items[0];
-    if (target) window.location.href = target.href;
+    if (selectedIndex >= 0 && items[selectedIndex]) {
+      window.location.href = items[selectedIndex].href;
+    } else {
+      // No selection — go to full search page
+      var q = userinput.value.trim();
+      if (q) window.location.href = '/search/?q=' + encodeURIComponent(q);
+    }
   }
 }
 
@@ -144,8 +149,8 @@ userinput.addEventListener('input', function() {
       merged.push(r);
     }
 
-    // Substring fallback — only scan if elasticlunr gave few results
-    if (merged.length < MAX_RESULTS && queryTerms.length > 0) {
+    // Substring fallback — find additional matches elasticlunr missed
+    if (queryTerms.length > 0) {
       var substringMatches = [];
       for (var i = 0; i < allDocs.length; i++) {
         var doc = allDocs[i];
@@ -155,7 +160,6 @@ userinput.addEventListener('input', function() {
         var bodyLower = (doc.doc.body || '').toLowerCase();
         var titleMatch = false;
 
-        // All query terms must appear somewhere (AND for substring)
         var allMatch = true;
         for (var j = 0; j < queryTerms.length; j++) {
           var inTitle = titleLower.indexOf(queryTerms[j]) !== -1;
@@ -168,19 +172,18 @@ userinput.addEventListener('input', function() {
         }
 
         if (allMatch) {
-          // Score: title matches ranked higher
           var score = titleMatch ? 0.5 : 0.1;
           substringMatches.push({ ref: doc.ref, doc: doc.doc, score: score });
         }
       }
 
-      // Sort substring matches: title matches first
       substringMatches.sort(function(a, b) { return b.score - a.score; });
-
-      for (var i = 0; i < substringMatches.length && merged.length < MAX_RESULTS; i++) {
+      for (var i = 0; i < substringMatches.length; i++) {
         merged.push(substringMatches[i]);
       }
     }
+
+    var totalCount = merged.length;
 
     var items = value.split(/\s+/);
     suggestions.classList.remove('d-none');
@@ -197,6 +200,14 @@ userinput.addEventListener('input', function() {
       suggestions.appendChild(noResult);
       return;
     }
+
+    // "All results" link at top
+    var searchPageUrl = '/search/?q=' + encodeURIComponent(value);
+    var header = document.createElement('div');
+    header.className = 'search-header';
+    header.innerHTML = '<span>' + totalCount + ' result' + (totalCount !== 1 ? 's' : '') + '</span>'
+      + '<a href="' + searchPageUrl + '">All results &rarr;</a>';
+    suggestions.appendChild(header);
 
     var count = Math.min(merged.length, MAX_RESULTS);
     for (var i = 0; i < count; i++) {
@@ -271,9 +282,10 @@ userinput.addEventListener('input', function() {
   // Build a breadcrumb path from a URL like /server/service/sync/ → "server / service"
   // Shows parent segments only (the title already shows the page name)
   function buildPath(ref) {
-    var segments = ref.replace(/^\/|\/$/g, '').split('/');
+    // Strip base URL (http://host:port or https://host) to get the path
+    var path = ref.replace(/^https?:\/\/[^\/]+/, '');
+    var segments = path.replace(/^\/|\/$/g, '').split('/');
     if (segments.length <= 1) return '';
-    // Drop the last segment (that's the page itself, shown as title)
     segments.pop();
     return segments.join(' / ');
   }
