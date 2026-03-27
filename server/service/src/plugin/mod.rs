@@ -93,7 +93,54 @@ pub enum FrontendPluginFileRequestError {
 }
 
 // TODO should really pass through StaticFileService
+/// A unified view of an installed plugin (backend or frontend)
+#[derive(Clone, Debug)]
+pub struct InstalledPlugin {
+    pub id: String,
+    pub code: String,
+    pub version: String,
+    pub kind: InstalledPluginKind,
+    pub types: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum InstalledPluginKind {
+    Backend,
+    Frontend,
+}
+
 pub trait PluginServiceTrait: Sync + Send {
+    fn installed_plugins(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<Vec<InstalledPlugin>, RepositoryError> {
+        let mut plugins = Vec::new();
+
+        let backend_repo = BackendPluginRowRepository::new(&ctx.connection);
+        for row in backend_repo.all()? {
+            plugins.push(InstalledPlugin {
+                id: row.id,
+                code: row.code,
+                version: row.version,
+                kind: InstalledPluginKind::Backend,
+                types: row.types.0.iter().map(|t| format!("{:?}", t)).collect(),
+            });
+        }
+
+        let frontend_repo = FrontendPluginRowRepository::new(&ctx.connection);
+        for row in frontend_repo.all()? {
+            plugins.push(InstalledPlugin {
+                id: row.id,
+                code: row.code,
+                version: row.version,
+                kind: InstalledPluginKind::Frontend,
+                types: row.types.0,
+            });
+        }
+
+        Ok(plugins)
+    }
+
     fn get_uploaded_plugin_info(
         &self,
         settings: &Settings,

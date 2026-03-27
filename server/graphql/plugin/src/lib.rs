@@ -46,6 +46,13 @@ impl CentralPluginQueries {
     ) -> Result<queries::uploaded_info::UploadedPluginInfoResponse> {
         queries::uploaded_info::uploaded_plugin_info(ctx, file_id)
     }
+
+    async fn installed_plugins(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<queries::installed_plugins::InstalledPluginConnector> {
+        queries::installed_plugins::installed_plugins(ctx)
+    }
 }
 
 #[derive(Default, Clone)]
