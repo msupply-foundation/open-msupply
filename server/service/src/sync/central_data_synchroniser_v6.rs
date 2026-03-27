@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::time::{Duration, SystemTime};
 
 use crate::{
@@ -142,6 +143,10 @@ impl SynchroniserV6 {
         let changelog_repo = ChangelogRepository::new(connection);
         let change_log_filter = get_sync_push_changelogs_filter(connection)?;
         let cursor_controller = CursorController::new(KeyType::SyncPushCursorV6);
+
+        // First deduplicate changelog table so we don't try to push deleted records or duplicates.
+        let starting_cursor: i64 = cursor_controller.get(connection)?.try_into().unwrap_or(0);
+        changelog_repo.dedup_from_cursor(starting_cursor)?;
 
         loop {
             // TODO inside transaction
