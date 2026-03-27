@@ -187,38 +187,6 @@ export const InboundLineEditCards = ({
       },
       // --- Quantities columns ---
       {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        columnGroup: 'quantities',
-        Cell: ({
-          row: {
-            original: { id, packSize, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={isDisabled}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              updateDraftLine({
-                id,
-                itemVariantId: itemVariant?.id,
-                itemVariant,
-                manufacturer: itemVariant?.manufacturer ?? null,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: hasItemVariantsEnabled,
-      },
-      {
         id: 'itemDoses',
         header: t('label.doses-per-unit'),
         columnType: ColumnType.Number,
@@ -255,7 +223,7 @@ export const InboundLineEditCards = ({
         includeColumn: poOutstandingPacks != null,
         accessorFn: () => poOutstandingPacks ?? 0,
         Cell: ({ cell }) => (
-          <NumberInputCell cell={cell} updateFn={() => {}} disabled />
+          <NumberInputCell cell={cell} updateFn={() => { }} disabled />
         ),
         defaultHideOnMobile: true,
       },
@@ -309,7 +277,7 @@ export const InboundLineEditCards = ({
               const shouldClearSellPrice =
                 item?.defaultPackSize !== line.packSize &&
                 item?.itemStoreProperties?.defaultSellPricePerPack ===
-                  line.sellPricePerPack;
+                line.sellPricePerPack;
 
               updateDraftLine({
                 volumePerPack:
@@ -681,11 +649,11 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-        general: <EditIcon />,
-        quantities: <StockIcon />,
-        pricing: <InvoiceIcon />,
-        other: <SlidersIcon />,
-      };
+      general: <EditIcon />,
+      quantities: <StockIcon />,
+      pricing: <InvoiceIcon />,
+      other: <SlidersIcon />,
+    };
 
   return (
     <>
