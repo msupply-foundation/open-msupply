@@ -12,8 +12,15 @@ function inputFocus(e) {
   }
 
   if (e.keyCode === 27) {
-    userinput.blur();
-    suggestions.classList.add('d-none');
+    if (userinput.value !== '') {
+      userinput.value = '';
+      suggestions.classList.add('d-none');
+      while (suggestions.firstChild) suggestions.removeChild(suggestions.firstChild);
+      selectedIndex = -1;
+    } else {
+      userinput.blur();
+      suggestions.classList.add('d-none');
+    }
   }
 }
 
@@ -24,42 +31,56 @@ document.addEventListener('click', function(event) {
   }
 });
 
-document.addEventListener('keydown', suggestionFocus);
+// Prevent form submission — Enter is handled via keyboard nav below
+userinput.closest('form').addEventListener('submit', function(e) {
+  e.preventDefault();
+});
 
-function suggestionFocus(e) {
-  const focusableSuggestions = suggestions.querySelectorAll('a');
-  if (suggestions.classList.contains('d-none')
-      || focusableSuggestions.length === 0) {
-    return;
-  }
-  const focusable = [...focusableSuggestions];
-  const index = focusable.indexOf(document.activeElement);
+var selectedIndex = -1;
 
-  let nextIndex = 0;
-
-  if (e.keyCode === 38) {
-    e.preventDefault();
-    nextIndex = index > 0 ? index - 1 : 0;
-    focusableSuggestions[nextIndex].focus();
-  } else if (e.keyCode === 40) {
-    e.preventDefault();
-    nextIndex = index + 1 < focusable.length ? index + 1 : index;
-    focusableSuggestions[nextIndex].focus();
-  }
-
-  // Enter navigates to focused or first result
-  if (e.keyCode === 13) {
-    var active = document.activeElement;
-    if (active && active.tagName === 'A' && suggestions.contains(active)) {
-      return; // browser follows the link
-    }
-    var first = suggestions.querySelector('a');
-    if (first) {
-      e.preventDefault();
-      window.location.href = first.href;
-    }
+function updateSelection() {
+  var items = suggestions.querySelectorAll('a');
+  for (var i = 0; i < items.length; i++) {
+    items[i].classList.toggle('is-selected', i === selectedIndex);
   }
 }
+
+function handleSearchKeys(e) {
+  var items = suggestions.querySelectorAll('a');
+  if (suggestions.classList.contains('d-none') || items.length === 0) {
+    return;
+  }
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    e.stopPropagation();
+    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+    updateSelection();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    e.stopPropagation();
+    selectedIndex--;
+    if (selectedIndex < 0) selectedIndex = -1;
+    updateSelection();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    e.stopPropagation();
+    var target = selectedIndex >= 0 ? items[selectedIndex] : items[0];
+    if (target) window.location.href = target.href;
+  }
+}
+
+// Listen on the input directly so arrow keys are caught before scrolling
+userinput.addEventListener('keydown', handleSearchKeys);
+
+// Also handle keys when a suggestion link has focus
+suggestions.addEventListener('keydown', handleSearchKeys);
+
+// Reset selection when input changes
+userinput.addEventListener('input', function() {
+  selectedIndex = -1;
+  updateSelection();
+});
 
 (function() {
   var index = elasticlunr.Index.load(window.searchIndex);
@@ -181,13 +202,15 @@ function suggestionFocus(e) {
     for (var i = 0; i < count; i++) {
       var page = merged[i];
       var entry = document.createElement('div');
-      entry.innerHTML = '<a href><span class="search-title"></span><span class="search-teaser"></span></a>';
+      entry.innerHTML = '<a href><span class="search-title"><span class="search-title-text"></span><span class="search-path"></span></span><span class="search-teaser"></span></a>';
 
       var a = entry.querySelector('a'),
-          t = entry.querySelector('.search-title'),
+          t = entry.querySelector('.search-title-text'),
+          p = entry.querySelector('.search-path'),
           d = entry.querySelector('.search-teaser');
       a.href = page.ref;
       t.innerHTML = highlightTerms(page.doc.title || '', items);
+      p.textContent = buildPath(page.ref);
       d.innerHTML = (page.doc.body && page.doc.body !== '')
         ? makeTeaser(page.doc.body, items)
         : '';
@@ -243,6 +266,16 @@ function suggestionFocus(e) {
 
   function escapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Build a breadcrumb path from a URL like /server/service/sync/ → "server / service"
+  // Shows parent segments only (the title already shows the page name)
+  function buildPath(ref) {
+    var segments = ref.replace(/^\/|\/$/g, '').split('/');
+    if (segments.length <= 1) return '';
+    // Drop the last segment (that's the page itself, shown as title)
+    segments.pop();
+    return segments.join(' / ');
   }
 
   // Taken from mdbook
