@@ -316,11 +316,17 @@ export const PurchaseOrderLineEdit = ({
               label={t('label.requested-delivery-date')}
               value={draft?.requestedDeliveryDate}
               disabled={
-                disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                disabled || isFieldDisabled(status, StatusGroup.AfterSent)
               }
-              onChange={(value: string | null) =>
-                update({ requestedDeliveryDate: value })
-              }
+              onChange={(value: string | null) => {
+                const patch: Partial<DraftPurchaseOrderLine> = {
+                  requestedDeliveryDate: value,
+                };
+                if (!draft?.expectedDeliveryDate && value) {
+                  patch['expectedDeliveryDate'] = value;
+                }
+                update(patch);
+              }}
             />
             <DateInput
               label={t('label.expected-delivery-date')}
