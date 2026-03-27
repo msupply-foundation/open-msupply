@@ -123,10 +123,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Scroll active item into view
+  // Scroll active item into view immediately (before paint)
   var activeItem = tree.querySelector('.sidebar-link.active');
   if (activeItem) {
-    activeItem.scrollIntoView({ block: 'center', behavior: 'instant' });
+    // Use direct scroll instead of scrollIntoView to avoid layout thrash
+    var sidebar = tree.closest('.docs-sidebar');
+    if (sidebar) {
+      var itemTop = activeItem.offsetTop - sidebar.offsetTop;
+      sidebar.scrollTop = itemTop - sidebar.clientHeight / 2;
+    }
   }
 
   tree.addEventListener('click', function(e) {

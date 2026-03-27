@@ -1,9 +1,18 @@
+// Reveal after layout is stable (hidden by inline <style> in base.html)
+.docs-sidebar,
+.docs-content,
+.docs-toc {
+  opacity: 1 !important;
+  transition: opacity 0.1s ease;
+}
+
 // Custom sidebar styles
 
 .docs-sidebar {
-  position: sticky;
-  top: 4rem;
-  height: calc(100vh - 4rem);
+  position: fixed;
+  top: 3.5625rem;
+  left: 0;
+  height: calc(100vh - 3.5625rem);
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1rem 0.75rem 1.5rem 1.75rem;
@@ -11,6 +20,7 @@
   width: 320px;
   min-width: 320px;
   flex-shrink: 0;
+  z-index: 1;
 
   // Invisible scrollbar, visible on hover
   scrollbar-width: thin;
@@ -228,7 +238,6 @@ body.dark {
   padding-right: 0 !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
-
   > .content > .row {
     margin-left: 0;
     margin-right: 0;
@@ -247,17 +256,20 @@ body.dark {
 
 // Docs content area — takes remaining space
 .docs-content {
-  padding: 1.5rem 5rem 2rem 5rem;
+  padding: 1.5rem 5rem 4rem 5rem;
   min-width: 0;
   flex: 1 1 auto;
+  margin-left: 320px;
+  margin-right: 260px;
 }
 
 // ── Right-hand TOC ("On this page") ──
 
 .docs-toc {
-  position: sticky;
-  top: 4rem;
-  height: calc(100vh - 4rem);
+  position: fixed;
+  top: 3.5625rem;
+  right: 0;
+  height: calc(100vh - 3.5625rem);
   overflow-y: auto;
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;
@@ -266,6 +278,7 @@ body.dark {
   width: 260px;
   min-width: 260px;
   flex-shrink: 0;
+  z-index: 1;
 
   // Match sidebar scrollbar style
   scrollbar-width: thin;
@@ -314,9 +327,9 @@ body.dark {
   }
 }
 
-.toc-link {
+.page-links .toc-link {
   display: block;
-  padding: 0.2rem 0 0.2rem 0.5rem;
+  padding: 0.2rem 0 0.2rem 0.75rem !important;
   font-size: $font-size-sm;
   line-height: 1.4;
   color: $gray-600;
@@ -341,7 +354,7 @@ body.dark {
     color: $gray-500;
   }
 
-  .toc-link {
+  .page-links .toc-link {
     color: $gray-500;
 
     &:hover {
@@ -476,4 +489,13 @@ body.dark {
   .docs-nav-title {
     color: $link-color-dark;
   }
+}
+
+// ── Footer ──
+
+.footer {
+  margin-left: 320px;
+  margin-right: 260px;
+  font-size: $font-size-sm;
+  padding: 1.5rem 5rem;
 }

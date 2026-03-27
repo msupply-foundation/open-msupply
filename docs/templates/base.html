@@ -29,9 +29,19 @@
 
 {{ macros_head::favicons() }}
 {% block math %}{{ macros_math::math() }}{% endblock math %}
+<style>
+  /* Prevent layout flash on page load */
+  .docs-sidebar, .docs-content, .docs-toc { opacity: 0; }
+</style>
 </head>
 {% block body %}{% set page_class="home" %}{% endblock body %}
 <body class="{{ page_class }}">
+  <script>
+    // Apply dark mode immediately to prevent white flash
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.body.classList.add('dark');
+    }
+  </script>
   {% block header %}
     {{ macros_header::header(current_section="/") }}
   {% endblock header %}
