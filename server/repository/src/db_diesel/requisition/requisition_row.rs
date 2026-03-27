@@ -50,7 +50,7 @@ define_linked_tables! {
         name_link_id -> name_id,
     },
     optional_links: {
-        destination_customer_link_id -> original_customer_id,
+        destination_customer_link_id -> destination_customer_id,
     }
 
 }
@@ -123,7 +123,7 @@ pub struct RequisitionRow {
     pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
-    pub original_customer_id: Option<String>,
+    pub destination_customer_id: Option<String>,
 }
 
 pub struct RequisitionRowRepository<'a> {
