@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_base_population_to_demographic_projection;
 mod asset_log_reason_not_functioning_comments_required;
 
 pub(crate) struct V2_18_00;
@@ -16,6 +17,7 @@ impl Migration for V2_18_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(asset_log_reason_not_functioning_comments_required::Migrate),
+            add_base_population_to_demographic_projection::Migrate,
         ]
     }
 }
