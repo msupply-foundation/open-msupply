@@ -220,7 +220,16 @@ body.dark {
   }
 }
 
-// Docs layout container — full width
+// Docs layout container — full width, centered
+.docs.landing .wrap.container {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
 .docs.list .wrap.container {
   max-width: 100% !important;
   width: 100% !important;
@@ -475,5 +484,45 @@ body.dark {
 
   .docs-nav-title {
     color: $link-color-dark;
+  }
+}
+
+// ── Landing page ──
+
+.docs.landing .wrap.container > .content {
+  width: 100%;
+}
+
+.landing-page {
+  padding: 1.5rem 3rem 2rem;
+}
+
+.landing-columns {
+  column-count: 3;
+  column-gap: 3rem;
+  column-fill: balance;
+  width: 100%;
+}
+
+.landing-block {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  h4 {
+    margin-bottom: 0.25rem;
+    margin-top: 0.75rem;
+  }
+
+  ul {
+    margin-bottom: 0;
   }
 }
