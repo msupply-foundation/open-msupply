@@ -2,7 +2,6 @@ use repository::Invoice;
 use repository::InvoiceFilter;
 use repository::InvoiceLine;
 use repository::InvoiceSort;
-use repository::InvoiceType;
 use repository::PaginationOption;
 use repository::RepositoryError;
 use repository::StockLine;
@@ -72,9 +71,9 @@ pub trait InvoiceServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         invoice_number: u32,
-        r#type: InvoiceType,
+        filter: InvoiceFilter,
     ) -> Result<Option<Invoice>, RepositoryError> {
-        get_invoice_by_number(ctx, store_id, invoice_number, r#type)
+        get_invoice_by_number(ctx, store_id, invoice_number, filter)
     }
 
     fn get_invoice(
@@ -82,34 +81,36 @@ pub trait InvoiceServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id_option: Option<&str>,
         id: &str,
+        filter: Option<InvoiceFilter>,
     ) -> Result<Option<Invoice>, RepositoryError> {
-        get_invoice(ctx, store_id_option, id)
+        get_invoice(ctx, store_id_option, id, filter)
     }
 
     fn insert_inbound_shipment(
         &self,
         ctx: &ServiceContext,
-
         input: InsertInboundShipment,
+        r#type: InboundShipmentType,
     ) -> Result<Invoice, InsertInboundShipmentError> {
-        insert_inbound_shipment(ctx, input)
+        insert_inbound_shipment(ctx, input, r#type)
     }
 
     fn update_inbound_shipment(
         &self,
         ctx: &ServiceContext,
         input: UpdateInboundShipment,
+        expected_type: InboundShipmentType,
     ) -> Result<Invoice, UpdateInboundShipmentError> {
-        update_inbound_shipment(ctx, input, None)
+        update_inbound_shipment(ctx, input, None, expected_type)
     }
 
     fn delete_inbound_shipment(
         &self,
         ctx: &ServiceContext,
-
         input: DeleteInboundShipment,
+        expected_type: InboundShipmentType,
     ) -> Result<String, DeleteInboundShipmentError> {
-        delete_inbound_shipment(ctx, input)
+        delete_inbound_shipment(ctx, input, expected_type)
     }
 
     fn insert_outbound_shipment(
