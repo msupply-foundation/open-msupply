@@ -36,8 +36,8 @@ jobs:
           path: client/packages/host/dist
           retention-days: 1
 
-  build-server:
-    name: Build server
+  build-server-sqlite:
+    name: Build server (SQLite)
     needs: build-client
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -54,22 +54,53 @@ jobs:
       - name: Apply async-dataloader patch
         run: |
           git apply docker/async-dataloader.patch
-          
+
       - name: Build server
-        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.88-slim cargo build --release --bin remote_server --bin remote_server_cli
+        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
 
       - name: Save server executable artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: server-executables
-          path: | 
+          name: server-executables-sqlite
+          path: |
             server/target/release/remote_server
             server/target/release/remote_server_cli
           retention-days: 1
 
+  build-server-postgres:
+    name: Build server (Postgres)
+    needs: build-client
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load client artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: client-dist
+          path: client/packages/host/dist
+
+      - name: Apply async-dataloader patch
+        run: |
+          git apply docker/async-dataloader.patch
+
+      - name: Build server
+        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
+
+      - name: Save server executable artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-executables-postgres
+          path: |
+            server/target-postgres/release/remote_server
+            server/target-postgres/release/remote_server_cli
+          retention-days: 1
+
   dockerise:
     name: Dockerise
-    needs: build-server
+    needs: [build-server-sqlite, build-server-postgres]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
@@ -78,11 +109,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load server artifacts
+      - name: Load SQLite server artifacts
         uses: actions/download-artifact@v4
         with:
-          name: server-executables
+          name: server-executables-sqlite
           path: server/target/release/
+
+      - name: Load Postgres server artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: server-executables-postgres
+          path: server/target-postgres/release/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -101,7 +138,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          target: base
+          target: sqlite
           push: true
           tags: |
             msupplyfoundation/omsupply:${{ env.VERSION }}
@@ -114,6 +151,24 @@ jobs:
           push: true
           tags: |
             msupplyfoundation/omsupply:${{ env.VERSION }}-dev
+
+      - name: Build and Push Docker Image Postgres
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: postgres
+          push: true
+          tags: |
+            msupplyfoundation/omsupply:${{ env.VERSION }}-postgres
+
+      - name: Build and Push Docker Image Postgres Dev
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: postgres-dev
+          push: true
+          tags: |
+            msupplyfoundation/omsupply:${{ env.VERSION }}-postgres-dev
 
   trigger-plugin-tests:
     name: Trigger Plugin Tests

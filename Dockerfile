@@ -86,3 +86,6 @@ RUN echo 'export NODE_OPTIONS="--max-old-space-size=8192"' >> ~/.bashrc
 
 WORKDIR /usr/src/omsupply/server
 EXPOSE 3003
+
+# Default target (SQLite, no --target needed)
+FROM sqlite
