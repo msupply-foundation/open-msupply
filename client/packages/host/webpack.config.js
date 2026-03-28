@@ -52,7 +52,9 @@ module.exports = env => {
     resolve: {
       extensions: ['.js', '.css', '.ts', '.tsx'],
       plugins: [new TsconfigPathsPlugin()],
-      // Require condition needed for mui date pickers v8, until mui upgraded to v7
+      // @mui/x-date-pickers v8 ESM build has broken internal imports (can't resolve
+      // @mui/material/styles from its esm/ dir). Force CJS for all packages until
+      // MUI fixes this upstream.
       conditionNames: ['require', '...'],
     },
     output: {

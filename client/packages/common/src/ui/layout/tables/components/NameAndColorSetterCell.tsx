@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { ColorSelectButton } from '@common/components';
-import { MRT_RowData } from 'material-react-table';
+import type { MRT_RowData } from 'material-react-table';
 
 export const NameAndColorSetterCell = <
   T extends MRT_RowData & {

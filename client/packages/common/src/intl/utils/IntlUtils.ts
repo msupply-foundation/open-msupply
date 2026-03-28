@@ -8,15 +8,6 @@ import {
   IntlContext,
   CUSTOM_TRANSLATIONS_NAMESPACE,
 } from '@common/intl';
-import {
-  frFR,
-  ptPT,
-  esES,
-  ruRU,
-  enUS as muiEnUS,
-  faIR,
-} from '@mui/x-date-pickers/locales';
-
 // Material React Table translations
 import { MRT_Localization_AR } from 'material-react-table/locales/ar';
 import { MRT_Localization_ES } from 'material-react-table/locales/es';
@@ -61,39 +52,6 @@ export const getLocale = (language: SupportedLocales) => {
       return fa;
     default:
       return getLocaleObj[language];
-  }
-};
-
-const getLocalisations = (locale: typeof frFR) =>
-  locale.components.MuiLocalizationProvider.defaultProps.localeText;
-
-const getDateLocalisations = (language: SupportedLocales) => {
-  switch (language) {
-    case 'fr':
-    case 'fr-DJ':
-      return getLocalisations(frFR);
-
-    case 'es':
-      return getLocalisations(esES);
-
-    case 'ru':
-      return getLocalisations(ruRU);
-
-    case 'pt':
-      return getLocalisations(ptPT);
-
-    // Not every language is supported by MUI, and some dialects may want
-    // overrides. If/when needed - pass in t() here and overwrite needed fields,
-    // or define full localeText object for the required language
-    case 'en':
-    case 'ar':
-    case 'tet':
-      return getLocalisations(muiEnUS);
-    case 'prs':
-    case 'ps':
-      return getLocalisations(faIR);
-    default:
-      noOtherVariants(language);
   }
 };
 
@@ -264,7 +222,6 @@ export const useIntlUtils = () => {
     changeLanguage,
     getLocaleCode,
     getLocale: () => getLocale(currentLanguage),
-    getDateLocalisations: () => getDateLocalisations(currentLanguage),
     getTableLocalisations: () => getTableLocalisations(currentLanguage),
     getUserLocale,
     setUserLocale,

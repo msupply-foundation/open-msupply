@@ -1,5 +1,5 @@
 import React from 'react';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import { StatusChip } from '@openmsupply-client/common';
 
 export const StatusCell = <T extends MRT_RowData>({

@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo } from 'react';
-import {
+import type {
   MRT_Column,
   MRT_RowData,
   MRT_Cell,

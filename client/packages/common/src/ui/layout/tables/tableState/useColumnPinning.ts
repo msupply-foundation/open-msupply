@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import {
+import type {
   MRT_ColumnPinningState,
   MRT_RowData,
   MRT_TableOptions,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MRT_ColumnDef, MRT_RowData } from 'material-react-table';
+import type { MRT_ColumnDef, MRT_RowData } from 'material-react-table';
 import { ColumnType } from './useGetColumnDefDefaults';
 
 export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {

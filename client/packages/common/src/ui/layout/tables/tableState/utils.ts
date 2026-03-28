@@ -1,6 +1,6 @@
 import { isEqual } from '@common/utils';
 import { pickBy } from 'lodash';
-import {
+import type {
   MRT_ColumnOrderState,
   MRT_ColumnPinningState,
   MRT_ColumnSizingState,

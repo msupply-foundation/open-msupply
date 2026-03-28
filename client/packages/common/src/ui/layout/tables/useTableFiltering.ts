@@ -4,7 +4,7 @@
  * current URL query into the filter state required by MRT.
  */
 import { useMemo, useState } from 'react';
-import {
+import type {
   MRT_ColumnFiltersState,
   MRT_RowData,
   MRT_Updater,

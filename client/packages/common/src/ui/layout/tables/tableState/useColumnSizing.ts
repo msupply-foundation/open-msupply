@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import {
+import type {
   MRT_ColumnSizingState,
   MRT_RowData,
   MRT_TableOptions,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from '@mui/material';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import { Currencies, useCurrency } from '@common/intl';
 import { NumUtils, UNDEFINED_STRING_VALUE } from '@common/utils';
 

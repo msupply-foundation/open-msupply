@@ -1,4 +1,4 @@
-import { MRT_RowData } from 'material-react-table';
+import type { MRT_RowData } from 'material-react-table';
 import { Row } from '@tanstack/table-core';
 
 export const multipleKeys = '[multiple]';

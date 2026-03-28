@@ -1,6 +1,6 @@
 import React from 'react';
 import { BasicTextInput } from '@common/components';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import { useBufferState } from '@common/hooks';
 import { SxProps, Theme } from '@common/styles';
 

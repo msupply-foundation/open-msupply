@@ -4,7 +4,7 @@ import {
   useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import { stopPropagationForArrowKeys } from './NumberInputCell';
 
 export const AgeInputCell = <T extends MRT_RowData>({

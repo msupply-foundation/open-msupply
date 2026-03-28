@@ -1,12 +1,10 @@
 import React from 'react';
 import {
-  MRT_Row,
-  MRT_RowData,
   MRT_ShowHideColumnsButton,
-  MRT_TableOptions,
   MRT_ToggleFiltersButton,
   MRT_ToggleFullScreenButton,
 } from 'material-react-table';
+import type { MRT_Row, MRT_RowData, MRT_TableOptions } from 'material-react-table';
 import {
   CheckboxCheckedIcon,
   CheckboxEmptyIcon,

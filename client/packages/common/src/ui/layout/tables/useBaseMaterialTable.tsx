@@ -1,10 +1,6 @@
 import React from 'react';
-import {
-  MRT_Row,
-  MRT_RowData,
-  MRT_TableOptions,
-  useMaterialReactTable,
-} from 'material-react-table';
+import { useMaterialReactTable } from 'material-react-table';
+import type { MRT_Row, MRT_RowData, MRT_TableOptions } from 'material-react-table';
 import { Row } from '@tanstack/table-core';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';

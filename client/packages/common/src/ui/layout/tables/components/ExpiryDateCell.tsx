@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { DateUtils, useFormatDateTime } from '@common/intl';
 
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 interface ExpiryDateCellProps<T extends MRT_RowData> {
   cell: MRT_Cell<T>;

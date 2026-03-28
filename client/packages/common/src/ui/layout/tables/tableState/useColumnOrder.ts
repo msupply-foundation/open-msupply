@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  getDefaultColumnOrderIds,
+import { getDefaultColumnOrderIds } from 'material-react-table';
+import type {
   MRT_ColumnOrderState,
   MRT_RowData,
   MRT_StatefulTableOptions,

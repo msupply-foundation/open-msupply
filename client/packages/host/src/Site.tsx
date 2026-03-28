@@ -2,6 +2,14 @@ import React, { FC, useEffect } from 'react';
 import { SnackbarProvider } from 'notistack';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import {
+  frFR,
+  ptPT,
+  esES,
+  ruRU,
+  enUS as muiEnUS,
+  faIR,
+} from '@mui/x-date-pickers/locales';
 
 import {
   AppFooterPortal,
@@ -90,7 +98,33 @@ export const Site: FC = () => {
   const isCentralServer = useIsCentralServerApi();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
-  const { getLocale, getDateLocalisations } = useIntlUtils();
+  const { getLocale, currentLanguage } = useIntlUtils();
+
+  const getLocalisations = (locale: typeof frFR) =>
+    locale.components.MuiLocalizationProvider.defaultProps.localeText;
+
+  const getDateLocalisations = () => {
+    switch (currentLanguage) {
+      case 'fr':
+      case 'fr-DJ':
+        return getLocalisations(frFR);
+      case 'es':
+        return getLocalisations(esES);
+      case 'ru':
+        return getLocalisations(ruRU);
+      case 'pt':
+        return getLocalisations(ptPT);
+      case 'en':
+      case 'ar':
+      case 'tet':
+        return getLocalisations(muiEnUS);
+      case 'prs':
+      case 'ps':
+        return getLocalisations(faIR);
+      default:
+        return undefined;
+    }
+  };
 
   useEffect(() => {
     setPageTitle(pageTitle);

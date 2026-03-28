@@ -1,11 +1,7 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography } from '@mui/material';
-import {
-  flexRender,
-  MRT_Cell,
-  MRT_Row,
-  MRT_RowData,
-} from 'material-react-table';
+import { flexRender } from 'material-react-table';
+import type { MRT_Cell, MRT_Row, MRT_RowData } from 'material-react-table';
 import { ColumnDef } from '../../types';
 import { CardListField } from './CardListField';
 import { CardListFieldGroup } from './CardListFieldGroup';

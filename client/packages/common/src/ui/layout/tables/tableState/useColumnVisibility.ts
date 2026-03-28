@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
+import type {
   MRT_VisibilityState,
   MRT_RowData,
   MRT_TableOptions,

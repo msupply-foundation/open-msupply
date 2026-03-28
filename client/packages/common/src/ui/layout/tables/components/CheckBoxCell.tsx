@@ -1,5 +1,5 @@
 import React from 'react';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import { Checkbox } from '@common/components';
 
 export const CheckBoxCell = <T extends MRT_RowData>({

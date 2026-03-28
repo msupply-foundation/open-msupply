@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
-import { MRT_DensityState, MRT_TableInstance } from 'material-react-table';
+import type { MRT_DensityState, MRT_TableInstance } from 'material-react-table';
 import { RefreshIcon, SaveIcon, SettingsIcon, EyeIcon } from '@common/icons';
 import {
   useColumnDensity,

@@ -5,7 +5,7 @@ import {
   useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import {
+import type {
   MRT_RowData,
   MRT_RowSelectionState,
   MRT_Updater,

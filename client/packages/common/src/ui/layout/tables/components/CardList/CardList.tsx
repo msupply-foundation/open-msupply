@@ -1,11 +1,7 @@
 import React from 'react';
 import { Box, Stack } from '@mui/material';
-import {
-  MRT_Row,
-  MRT_RowData,
-  MRT_ShowHideColumnsButton,
-  MRT_TableInstance,
-} from 'material-react-table';
+import { MRT_ShowHideColumnsButton } from 'material-react-table';
+import type { MRT_Row, MRT_RowData, MRT_TableInstance } from 'material-react-table';
 import { CardListItem } from './CardListItem';
 import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';

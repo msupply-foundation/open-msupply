@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from '@openmsupply-client/common';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 export const TextWithTooltipCell = <T extends MRT_RowData>({
   cell,

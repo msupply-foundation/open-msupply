@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import {
+import type {
   MRT_DensityState,
   MRT_RowData,
   MRT_TableOptions,

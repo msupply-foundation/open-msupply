@@ -1,4 +1,4 @@
-import { MRT_RowData } from 'material-react-table';
+import type { MRT_RowData } from 'material-react-table';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 import { useMemo } from 'react';
 

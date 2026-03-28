@@ -1,5 +1,6 @@
 import React from 'react';
-import { MRT_RowData, MRT_ShowHideColumnsButton } from 'material-react-table';
+import { MRT_ShowHideColumnsButton } from 'material-react-table';
+import type { MRT_RowData } from 'material-react-table';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 import { Box } from '@mui/material';
 

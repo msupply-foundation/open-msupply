@@ -8,7 +8,7 @@ import {
   UNDEFINED_STRING_VALUE,
   AlertIcon,
 } from '@openmsupply-client/common';
-import { MRT_Cell, MRT_Row, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_Row, MRT_RowData } from 'material-react-table';
 
 interface ItemData {
   doses?: number;

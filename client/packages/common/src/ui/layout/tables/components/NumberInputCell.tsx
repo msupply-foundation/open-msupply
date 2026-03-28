@@ -5,7 +5,7 @@ import {
   useBufferState,
   NumericTextInputProps,
 } from '@openmsupply-client/common';
-import { MRT_Cell, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 interface NumberInputCellProps<T extends MRT_RowData>
   extends NumericTextInputProps {
