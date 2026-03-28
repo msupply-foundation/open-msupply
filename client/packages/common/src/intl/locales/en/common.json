@@ -740,6 +740,7 @@
   "inventory-management": "Inventory Management",
   "inventory-reduction": "Inventory Reduction",
   "items": "Items",
+  "json-forms-error.dependencies": "This field is required when a related field is provided",
   "json-forms-error.minLength": "Must have {{parentSchema.minLength}} or more characters",
   "json-forms-error.required": "This field is required",
   "json-forms-error.type": "Invalid input",
