@@ -6,11 +6,8 @@ import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
 import { RTLProvider } from './RTLProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { PropsWithChildrenOnly } from '@common/types';
 import { createRegisteredContext } from 'react-singleton-context';
-import { useIntlUtils } from '@common/intl';
 
 /**
  * Need a cache with the rtl plugin for when we are using rtl.
@@ -46,20 +43,13 @@ export const ThemeProviderProxy = ({ children }: PropsWithChildrenOnly) => {
 
 const ThemeProvider = ({ children }: PropsWithChildrenOnly) => {
   const appTheme = useAppTheme();
-  const { getLocale, getDateLocalisations } = useIntlUtils();
 
   return (
     <CacheProvider value={appTheme.direction === 'rtl' ? cacheRtl : cacheLtr}>
       <RTLProvider>
-        <LocalizationProvider
-          dateAdapter={AdapterDateFns}
-          adapterLocale={getLocale()}
-          localeText={getDateLocalisations()}
-        >
-          <ThemeContext.Provider value={{ theme: appTheme }}>
-            <ThemeProviderProxy>{children}</ThemeProviderProxy>
-          </ThemeContext.Provider>
-        </LocalizationProvider>
+        <ThemeContext.Provider value={{ theme: appTheme }}>
+          <ThemeProviderProxy>{children}</ThemeProviderProxy>
+        </ThemeContext.Provider>
       </RTLProvider>
     </CacheProvider>
   );

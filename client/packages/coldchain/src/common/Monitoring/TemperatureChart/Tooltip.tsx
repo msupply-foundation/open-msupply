@@ -1,7 +1,7 @@
 import { useTheme } from '@common/styles';
+import { TooltipProps } from 'recharts';
 import {
   Box,
-  TooltipProps,
   Typography,
   UNDEFINED_STRING_VALUE,
   useFormatDateTime,

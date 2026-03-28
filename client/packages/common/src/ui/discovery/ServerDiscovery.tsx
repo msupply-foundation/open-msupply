@@ -1,4 +1,5 @@
 import React from 'react';
+import { SnackbarProvider } from 'notistack';
 import {
   Box,
   Typography,
@@ -7,7 +8,6 @@ import {
   useNativeClient,
   ErrorWithDetails,
   frontEndHostDisplay,
-  SnackbarProvider,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
 import { LanguageButton } from '@openmsupply-client/host/src/components/LanguageButton';

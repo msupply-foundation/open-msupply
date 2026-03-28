@@ -1,3 +1,4 @@
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import {
   DialogButton,
   InputWithLabelRow,
@@ -5,7 +6,6 @@ import {
   useTranslation,
   BasicTextInput,
   NumericTextInput,
-  DatePicker,
   Alert,
   useDialog,
   Box,

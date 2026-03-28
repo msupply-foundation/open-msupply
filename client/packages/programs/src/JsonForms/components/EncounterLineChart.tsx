@@ -4,20 +4,20 @@ import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import {
   Line,
   LineChart,
-  useFormatDateTime,
   XAxis,
   YAxis,
-  Box,
-  FormLabel,
-} from '@openmsupply-client/common';
-import { useZodOptionsValidation } from '../common';
-import {
   CartesianGrid,
   Tooltip,
   TooltipProps,
   Label,
   ReferenceLine,
 } from 'recharts';
+import {
+  useFormatDateTime,
+  Box,
+  FormLabel,
+} from '@openmsupply-client/common';
+import { useZodOptionsValidation } from '../common';
 import { useEncounter } from '../../api';
 import { z } from 'zod';
 import { UNDEFINED_STRING_VALUE, extractProperty } from '@common/utils';

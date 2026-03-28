@@ -23,12 +23,6 @@ import StepLabel from '@mui/material/StepLabel';
 import Step from '@mui/material/Step';
 import Stepper from '@mui/material/Stepper';
 import Card from '@mui/material/Card';
-import {
-  DatePicker,
-  DatePickerProps,
-  DateTimePicker,
-  DateTimePickerProps,
-} from '@mui/x-date-pickers';
 import FormLabel from '@mui/material/FormLabel';
 import Button from '@mui/material/Button';
 import Hidden from '@mui/material/Hidden';
@@ -81,10 +75,6 @@ export {
   StepLabel,
   Step,
   Stepper,
-  DatePicker,
-  DatePickerProps,
-  DateTimePicker,
-  DateTimePickerProps,
   FormLabel,
   Card,
   MuiPopover,

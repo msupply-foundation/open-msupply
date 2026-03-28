@@ -1,8 +1,8 @@
 import React from 'react';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import {
   AlertIcon,
   BasicTextInput,
-  DatePicker,
   Formatter,
   LowStockStatus,
   NumericTextInput,

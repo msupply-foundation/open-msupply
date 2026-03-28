@@ -1,14 +1,14 @@
-import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
-import {
+import type { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
+import type {
   ItemFragment,
   MasterListRowFragment,
   RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
 } from '@openmsupply-client/system';
-import { InboundFragment } from '@openmsupply-client/invoices';
-import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
-import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
+import type { InboundFragment } from '@openmsupply-client/invoices';
+import type { PrescriptionPaymentComponentProps } from './prescriptionTypes';
+import type { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];

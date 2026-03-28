@@ -148,24 +148,23 @@ module.exports = env => {
           {
             '@openmsupply-client/common': {
               singleton: true,
-              eager: true,
-              // Version here needs to be specified to avoid webpack warnings, since this is the host it would
-              // share the current state of @openmsupply-client/common
+              // eager: true removed — the async boundary in index.ts (import('./bootstrap'))
+              // handles MF singleton resolution without forcing the entire common barrel
+              // into the synchronous entry chunk.
               requiredVersion: require('../common/package.json').version,
             },
             react: {
               singleton: true,
-              eager: true,
+              eager: true, // kept eager — small (~130KB) and avoids a sequential round trip
               requiredVersion: dependencies.react,
             },
             'react-dom': {
               singleton: true,
-              eager: true,
+              eager: true, // kept eager — small and avoids a sequential round trip
               requiredVersion: dependencies['react-dom'],
             },
             'react-singleton-context': {
               singleton: true,
-              eager: true,
               requiredVersion: require('../common/package.json').dependencies[
                 'react-singleton-context'
               ],

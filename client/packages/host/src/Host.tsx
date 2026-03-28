@@ -1,5 +1,4 @@
-import React from 'react';
-import Bugsnag from '@bugsnag/js';
+import React, { useEffect } from 'react';
 import {
   Routes,
   Route,
@@ -14,9 +13,7 @@ import {
   GqlProvider,
   IntlProvider,
   RandomLoader,
-  ConfirmationModalProvider,
   AuthProvider,
-  AlertModalProvider,
   EnvUtils,
   LocalStorage,
   AuthError,
@@ -24,23 +21,30 @@ import {
   createRoutesFromElements,
   RouterProvider,
   initialiseI18n,
-  KBarProvider,
-  usePreferences,
-  useIsCentralServerApi,
   useInitialisationStatus,
   InitialisationStatusType,
   useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import { Initialise, Login, Viewport } from './components';
+import { Viewport } from './components/Viewport';
 import { MigrationInfoProvider } from './components/Migration';
-import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
-import { Discovery } from './components/Discovery';
-import { Android } from './components/Android';
 import { BackButtonHandler } from './BackButtonHandler';
-import { useInitPlugins } from './useInitPlugins';
-import { ScreenOrientation } from '@capacitor/screen-orientation';
+
+const Login = React.lazy(() =>
+  import('./components/Login').then(m => ({ default: m.Login }))
+);
+const Initialise = React.lazy(() =>
+  import('./components/Initialise').then(m => ({ default: m.Initialise }))
+);
+const Discovery = React.lazy(() =>
+  import('./components/Discovery').then(m => ({ default: m.Discovery }))
+);
+const Android = React.lazy(() =>
+  import('./components/Android').then(m => ({ default: m.Android }))
+);
+
+const Site = React.lazy(() => import('./Site'));
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -61,69 +65,22 @@ const queryClient = new QueryClient({
   },
 });
 
-Bugsnag.start({
-  apiKey: 'a09ce9e95c27ac1b70ecf3c311e684ab',
-  appVersion: appVersion,
-  enabledBreadcrumbTypes: ['error'],
-});
-
 const skipRequest = () =>
   LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
-const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
+const PreInit: React.FC = () => {
   const { logout } = useAuthContext();
   const data = useInitialisationStatus(false, true);
 
   // Technically this should not fire before query is loaded because we are doing suspense
-  if (data?.data?.status == InitialisationStatusType.Initialised)
-    return children;
-
-  // Clear token
-  logout();
+  if (data?.data?.status !== InitialisationStatusType.Initialised) {
+    // Clear token
+    logout();
+  }
 
   return null;
 };
 
-/**
- * Empty component which can be used to call startup hooks.
- * For example, this component is called when auth information such as user or store id changed.
- */
-const Init = () => {
-  useInitPlugins();
-  usePreferences(); // Ensure preferences are loaded on startup - they'll be cached indefinitely
-  useIsCentralServerApi();
-  return <></>;
-};
-
-/**
- * If app is being used on an Android phone, we lock the screen to "Portrait"
- * mode, as the UI will be restricted to GAPS functionality only, which is
- * optimised for mobile portrait mode.
- *
- * We can't use the existing screen size hooks, as they only consider screen
- * width, but we need to check both width and height (as we don't know what
- * orientation the device is in on launch)
- *
- * The 600px here corresponds to the "sm" breakpoint in the theme, which is used
- * to determine if the device is a phone or not.
- *
- * Including here, outside the component functions, as this is a one-time check
- * at startup.
- *
- * TO-DO: Once we have a proper "is Gaps Store" check, we can consolidate this
- * functionality and decide exactly what should be visible where, and under what
- * conditions.
- */
-EnvUtils.deviceInfo.then(info => {
-  if (
-    info.platform === 'android' &&
-    (info.screen.width < 600 || info.screen.height < 600)
-  ) {
-    ScreenOrientation.lock({
-      orientation: 'portrait',
-    });
-  }
-});
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -139,21 +96,44 @@ const router = createBrowserRouter(
               <Routes>
                 <Route
                   path={RouteBuilder.create(AppRoute.Initialise).build()}
-                  element={<Initialise />}
+                  element={
+                    <React.Suspense fallback={<RandomLoader />}>
+                      <Initialise />
+                    </React.Suspense>
+                  }
                 />
                 <Route
                   path={RouteBuilder.create(AppRoute.Login).build()}
-                  element={<Login />}
+                  element={
+                    <React.Suspense fallback={<RandomLoader />}>
+                      <Login />
+                    </React.Suspense>
+                  }
                 />
                 <Route
                   path={RouteBuilder.create(AppRoute.Discovery).build()}
-                  element={<Discovery />}
+                  element={
+                    <React.Suspense fallback={<RandomLoader />}>
+                      <Discovery />
+                    </React.Suspense>
+                  }
                 />
                 <Route
                   path={RouteBuilder.create(AppRoute.Android).build()}
-                  element={<Android />}
+                  element={
+                    <React.Suspense fallback={<RandomLoader />}>
+                      <Android />
+                    </React.Suspense>
+                  }
                 />
-                <Route path="*" element={<Site />} />
+                <Route
+                  path="*"
+                  element={
+                    <React.Suspense fallback={<RandomLoader />}>
+                      <Site />
+                    </React.Suspense>
+                  }
+                />
               </Routes>
             </Box>
           </Viewport>
@@ -165,11 +145,49 @@ const router = createBrowserRouter(
 
 initialiseI18n();
 
-const Host = () => (
+const Host = () => {
+  useEffect(() => {
+    // Defer Bugsnag init so it doesn't start a download during initial parse
+    import('@bugsnag/js').then(({ default: Bugsnag }) => {
+      Bugsnag.start({
+        apiKey: 'a09ce9e95c27ac1b70ecf3c311e684ab',
+        appVersion: appVersion,
+        enabledBreadcrumbTypes: ['error'],
+      });
+    });
+
+    /**
+     * If app is being used on an Android phone, we lock the screen to "Portrait"
+     * mode, as the UI will be restricted to GAPS functionality only, which is
+     * optimised for mobile portrait mode.
+     *
+     * We can't use the existing screen size hooks, as they only consider screen
+     * width, but we need to check both width and height (as we don't know what
+     * orientation the device is in on launch)
+     *
+     * The 600px here corresponds to the "sm" breakpoint in the theme, which is used
+     * to determine if the device is a phone or not.
+     *
+     * TO-DO: Once we have a proper "is Gaps Store" check, we can consolidate this
+     * functionality and decide exactly what should be visible where, and under what
+     * conditions.
+     */
+    EnvUtils.deviceInfo.then(info => {
+      if (
+        info.platform === 'android' &&
+        (info.screen.width < 600 || info.screen.height < 600)
+      ) {
+        import('@capacitor/screen-orientation').then(({ ScreenOrientation }) => {
+          ScreenOrientation.lock({ orientation: 'portrait' });
+        });
+      }
+    });
+  }, []);
+
+  return (
   <React.Suspense fallback={<div />}>
-    <KBarProvider actions={[]}>
-      <IntlProvider>
-        <AppThemeProvider>
+    <IntlProvider>
+      <AppThemeProvider>
           <React.Suspense fallback={<RandomLoader />}>
             <ErrorBoundary Fallback={GenericErrorFallback}>
               <QueryClientProvider client={queryClient}>
@@ -179,14 +197,8 @@ const Host = () => (
                 >
                   <MigrationInfoProvider>
                     <AuthProvider>
-                      <PreInit>
-                        <Init />
-                      </PreInit>
-                      <ConfirmationModalProvider>
-                        <AlertModalProvider>
-                          <RouterProvider router={router} />
-                        </AlertModalProvider>
-                      </ConfirmationModalProvider>
+                      <PreInit />
+                      <RouterProvider router={router} />
                     </AuthProvider>
                   </MigrationInfoProvider>
                   {/* <ReactQueryDevtools initialIsOpen /> */}
@@ -194,10 +206,10 @@ const Host = () => (
               </QueryClientProvider>
             </ErrorBoundary>
           </React.Suspense>
-        </AppThemeProvider>
-      </IntlProvider>
-    </KBarProvider>
+      </AppThemeProvider>
+    </IntlProvider>
   </React.Suspense>
-);
+  );
+};
 
 export default Host;

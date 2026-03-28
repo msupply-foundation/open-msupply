@@ -1,4 +1,7 @@
 import React, { FC, useEffect } from 'react';
+import { SnackbarProvider } from 'notistack';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 import {
   AppFooterPortal,
@@ -15,7 +18,8 @@ import {
   useAuthContext,
   useNotification,
   useTranslation,
-  SnackbarProvider,
+  ConfirmationModalProvider,
+  AlertModalProvider,
   BarcodeScannerProvider,
   DetailLoadingSkeleton,
   useIsExtraSmallScreen,
@@ -24,8 +28,11 @@ import {
   usePreferences,
   useIsCentralServerApi,
   useRootNavigationPath,
+  useIntlUtils,
+  KBarProvider,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
+import { useInitPlugins } from './useInitPlugins';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -73,6 +80,7 @@ const Blocker = () => {
 };
 
 export const Site: FC = () => {
+  useInitPlugins();
   const location = useLocation();
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
@@ -82,6 +90,7 @@ export const Site: FC = () => {
   const isCentralServer = useIsCentralServerApi();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
+  const { getLocale, getDateLocalisations } = useIntlUtils();
 
   useEffect(() => {
     setPageTitle(pageTitle);
@@ -111,11 +120,19 @@ export const Site: FC = () => {
   }
 
   return (
+    <LocalizationProvider
+      dateAdapter={AdapterDateFns}
+      adapterLocale={getLocale()}
+      localeText={getDateLocalisations()}
+    >
     <RequireAuthentication>
       <Blocker />
+      <ConfirmationModalProvider>
+      <AlertModalProvider>
       <EasterEggModalProvider>
         <SyncModalProvider>
-          <CommandK>
+          <KBarProvider actions={[]}>
+            <CommandK>
             <SnackbarProvider maxSnack={3}>
               <BarcodeScannerProvider>
                 {!isExtraSmallScreen && <AppDrawer />}
@@ -263,9 +280,15 @@ export const Site: FC = () => {
                 <QueryErrorHandler />
               </BarcodeScannerProvider>
             </SnackbarProvider>
-          </CommandK>
+            </CommandK>
+          </KBarProvider>
         </SyncModalProvider>
       </EasterEggModalProvider>
+      </AlertModalProvider>
+      </ConfirmationModalProvider>
     </RequireAuthentication>
+    </LocalizationProvider>
   );
 };
+
+export default Site;

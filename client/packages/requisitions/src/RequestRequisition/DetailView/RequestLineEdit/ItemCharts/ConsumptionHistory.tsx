@@ -3,15 +3,14 @@ import {
   Bar,
   CartesianGrid,
   Cell,
-  ChartTooltip,
-  CircularProgress,
+  Tooltip as ChartTooltip,
   ComposedChart,
   Legend,
   Line,
-  Typography,
   XAxis,
   YAxis,
-} from '@common/components';
+} from 'recharts';
+import { CircularProgress, Typography } from '@common/components';
 import {
   Box,
   LocaleKey,

@@ -7,14 +7,6 @@ export * from './number';
 export * from './currency';
 export * from './context';
 
-/* 
-Removing this unused method breaks things. Some components in
-Host start to become undefined and aren't resolved.
-Something with the imports and circular dependencies, probably.
-If you can fix it, you will be rewarded.
-*/
-import { useAuthContext } from '../authentication';
-export const useUserName = (): string => {
-  const { user } = useAuthContext();
-  return user?.name ?? '';
-};
+// useUserName implementation lives in authentication to break the intl↔auth circular dep.
+// Re-exported here so existing consumers using the @common/intl alias continue to work.
+export { useUserName } from '../authentication/hooks/useUserName';

@@ -1,3 +1,4 @@
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import {
   Alert,
   BasicSpinner,
@@ -5,7 +6,6 @@ import {
   Box,
   ChevronDownIcon,
   Container,
-  DatePicker,
   DialogButton,
   Grid,
   InputWithLabelRow,
