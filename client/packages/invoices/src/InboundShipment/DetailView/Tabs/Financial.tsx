@@ -12,6 +12,7 @@ export const FinancialTab = () => {
   const t = useTranslation();
   const {
     query: { data, loading: isLoading },
+    isExternal,
   } = useInboundShipment();
 
   const columns = useMemo(
@@ -19,6 +20,12 @@ export const FinancialTab = () => {
       {
         accessorKey: 'item.name',
         header: t('label.name'),
+      },
+      {
+        accessorKey: 'purchaseOrderLine.lineNumber',
+        header: t('label.purchase-order-line-number'),
+        columnType: ColumnType.Number,
+        size: 70,
       },
       {
         accessorKey: 'numberOfPacks',
@@ -74,7 +81,9 @@ export const FinancialTab = () => {
     data: data?.lines.nodes,
     columns,
     isLoading,
-    grouping: { field: 'item.code' },
+    grouping: isExternal
+      ? { field: 'purchaseOrderLine.lineNumber', label: t('label.group-by-po-line') }
+      : { field: 'item.code' },
     enableRowSelection: false,
   });
 
