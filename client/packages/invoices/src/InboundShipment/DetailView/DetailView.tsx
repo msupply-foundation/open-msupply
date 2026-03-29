@@ -33,6 +33,7 @@ import {
 } from '@openmsupply-client/system';
 
 const TABLE_ID = 'inbound-shipment-detail-view';
+const EXTERNAL_TABLE_ID = 'inbound-shipment-detail-view-external';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -95,6 +96,7 @@ const DetailViewInner = () => {
 
   const {
     query: { data, loading },
+    isExternal,
     isDisabled,
     invalidateQuery,
   } = useInboundShipment();
@@ -169,19 +171,17 @@ const DetailViewInner = () => {
       updateQuery({ tab: InboundShipmentDetailTabs.Documents });
   }, [toggleUploadModal, urlQuery, updateQuery]);
 
-  const external = data?.purchaseOrder !== null;
   const showLineStatus =
     data?.lines.nodes.some(line => line.status != null) ?? false;
-  const columns = useInboundShipmentColumns(external, showLineStatus);
+  const columns = useInboundShipmentColumns(isExternal, showLineStatus);
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<InboundLineFragment>({
-      tableId: TABLE_ID,
+      tableId: isExternal ? EXTERNAL_TABLE_ID : TABLE_ID,
       columns,
       data: lines,
-      // REVIEW: could be confusing as there isn't any feedback for what field is being grouped by and we normally only group by item. However grouping by item doesn't really make sense for external IS while grouping by purchase order line number does make sense.
-      grouping: external
-        ? { field: 'purchaseOrderLine.lineNumber' }
+      grouping: isExternal
+        ? { field: 'purchaseOrderLine.lineNumber', label: t('label.group-by-po-line') }
         : { field: 'item.code' },
       isLoading: false,
       initialSort: { key: 'itemName', dir: 'asc' },
@@ -256,7 +256,7 @@ const DetailViewInner = () => {
       ),
       value: InboundShipmentDetailTabs.Details,
     },
-    ...(external
+    ...(isExternal
       ? [
           {
             Component: <FinancialTab />,
