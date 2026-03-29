@@ -34,9 +34,13 @@ const VariantCard = ({
       background: 'none',
       textAlign: 'left',
       width: '100%',
-      '&:hover': {
+      '&:hover, &:focus-visible': {
         borderColor: theme.palette.secondary.main,
         backgroundColor: theme.palette.background.toolbar,
+      },
+      '&:focus-visible': {
+        outline: `${theme.palette.secondary.main}`,
+        outlineOffset: -2,
       },
     })}
   >

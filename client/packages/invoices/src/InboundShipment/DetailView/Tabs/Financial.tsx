@@ -18,6 +18,7 @@ export const FinancialTab = () => {
   const { store } = useAuthContext();
   const {
     query: { data, loading: isLoading },
+    isExternal,
   } = useInboundShipment();
 
   const poCurrencyCode = data?.purchaseOrder?.currency?.code as
@@ -37,6 +38,12 @@ export const FinancialTab = () => {
         accessorKey: 'item.name',
         header: t('label.name'),
         Footer: t('label.total'),
+      },
+      {
+        accessorKey: 'purchaseOrderLine.lineNumber',
+        header: t('label.purchase-order-line-number'),
+        columnType: ColumnType.Number,
+        size: 70,
       },
       {
         accessorKey: 'numberOfPacks',
@@ -133,7 +140,9 @@ export const FinancialTab = () => {
     data: lines,
     columns,
     isLoading,
-    grouping: { field: 'item.code' },
+    grouping: isExternal
+      ? { field: 'purchaseOrderLine.lineNumber', label: t('label.group-by-po-line') }
+      : { field: 'item.code' },
     enableRowSelection: false,
   });
 

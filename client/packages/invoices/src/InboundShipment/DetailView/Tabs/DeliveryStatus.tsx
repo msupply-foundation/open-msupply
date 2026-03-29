@@ -19,6 +19,7 @@ export const DeliveryTab = ({
   const t = useTranslation();
   const {
     query: { data, loading: isLoading },
+    isExternal,
   } = useInboundShipment();
   const statusMap = useInvoiceLineStatusMap();
 
@@ -47,6 +48,12 @@ export const DeliveryTab = ({
         filterVariant: 'select',
         includeColumn: showLineStatus,
         Cell: ({ cell }) => <StatusCell cell={cell} statusMap={statusMap} />,
+      },
+      {
+        accessorKey: 'purchaseOrderLine.lineNumber',
+        header: t('label.purchase-order-line-number'),
+        columnType: ColumnType.Number,
+        size: 70,
       },
       {
         accessorKey: 'item.code',
@@ -117,7 +124,9 @@ export const DeliveryTab = ({
     data: data?.lines.nodes,
     columns,
     isLoading,
-    grouping: { field: 'item.code' },
+    grouping: isExternal
+      ? { field: 'purchaseOrderLine.lineNumber', label: t('label.group-by-po-line') }
+      : { field: 'item.code' },
     enableRowSelection: false,
   });
 

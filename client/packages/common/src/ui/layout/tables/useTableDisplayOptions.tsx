@@ -41,6 +41,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   isGrouped,
   toggleGrouped,
   hasColumnFilters,
+  groupByLabel,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
@@ -59,6 +60,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   isGrouped: boolean;
   hasColumnFilters: boolean;
   toggleGrouped?: () => void;
+  groupByLabel?: string;
   getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
   getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
   isMobile?: boolean;
@@ -124,7 +126,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           <IconButton
             icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
             onClick={toggleGrouped}
-            label={t('label.group-by-item')}
+            label={groupByLabel ?? t('label.group-by-item')}
             sx={iconButtonProps}
           />
         )}
