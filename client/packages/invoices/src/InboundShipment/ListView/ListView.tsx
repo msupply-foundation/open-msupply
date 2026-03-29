@@ -1,5 +1,8 @@
 import React, { useMemo } from 'react';
 import {
+  InvoiceTypeInput,
+  UserPermission,
+  useAuthContext,
   useNavigate,
   useTranslation,
   NothingHere,
@@ -9,31 +12,47 @@ import {
   ColumnDef,
   usePaginatedMaterialTable,
   MaterialTable,
-  NameAndColorSetterCell,
   usePreferences,
+  useIsExtraSmallScreen,
+  CardList,
+  InvoiceNodeType,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButtons';
-import {
-  getStatusTranslator,
-  inboundStatuses,
-  isInboundDisabled,
-  isInboundListItemDisabled,
-} from '../../utils';
-import { useInbound, InboundRowFragment } from '../api';
+import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
+import { getStatusSequence } from '../../statuses';
+import { Toolbar } from './Toolbar';
+import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
+import { LinkedCell } from './LinkedCell';
+import { SupplierCell } from './SupplierCell';
+
+const TABLE_ID = 'inbound-shipment-list-view';
 
 export const InboundListView = () => {
   const t = useTranslation();
-  const navigate = useNavigate();
-  const { invoiceStatusOptions } = usePreferences();
-  const invoiceModalController = useToggle();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const internalModalController = useToggle();
+  const externalModalController = useToggle();
   const linkRequestModalController = useToggle();
-  const { mutate: onUpdate } = useInbound.document.update();
 
   const {
+    update: { update },
+  } = useInboundShipment();
+
+  const navigate = useNavigate();
+  const { invoiceStatusOptions } = usePreferences();
+  const { userHasPermission } = useAuthContext();
+
+  const {
+    filter,
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
+    ...(isExtraSmallScreen && {
+      initialFilter: [{ id: 'status', value: 'NEW,DELIVERED' }],
+    }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       { key: 'otherPartyName' },
@@ -41,20 +60,40 @@ export const InboundListView = () => {
         key: 'createdDatetime',
         condition: 'between',
       },
-      { key: 'status', condition: 'equalTo' },
+      {
+        key: 'deliveredDatetime',
+        condition: 'between',
+      },
+      { key: 'status', condition: 'equalAny' },
+      { key: 'theirReference' },
+      {
+        key: 'purchaseOrderNumber',
+        condition: 'equalTo',
+        isNumber: true,
+      },
     ],
   });
+
+  // Only include invoice types the user has permissions to view
+  const invoiceTypes: InvoiceTypeInput[] = [];
+  if (userHasPermission(UserPermission.InboundShipmentQuery))
+    invoiceTypes.push(InvoiceTypeInput.InboundShipment);
+  if (userHasPermission(UserPermission.InboundShipmentExternalQuery))
+    invoiceTypes.push(InvoiceTypeInput.InboundShipmentExternal);
 
   const listParams = {
     sortBy,
     first,
     offset,
     filterBy,
+    type: invoiceTypes,
   };
 
-  const { data, isFetching } = useInbound.document.list(listParams);
-  const statuses = inboundStatuses.filter(status =>
-    invoiceStatusOptions?.includes(status)
+  const {
+    query: { data, isLoading, isError },
+  } = useInboundList(listParams);
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
   );
 
   const columns = useMemo(
@@ -62,14 +101,24 @@ export const InboundListView = () => {
       {
         header: t('label.supplier'),
         accessorKey: 'otherPartyName',
+        size: 400,
         enableColumnFilter: true,
         Cell: ({ row }) => (
-          <NameAndColorSetterCell
-            onColorChange={onUpdate}
-            getIsDisabled={isInboundDisabled}
-            row={row.original}
-          />
+          <SupplierCell row={row.original} onColorChange={update} />
         ),
+        enableSorting: true,
+      },
+      {
+        header: t('label.status'),
+        accessorFn: row => getStatusTranslator(t)(row.status),
+        id: 'status',
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -79,6 +128,14 @@ export const InboundListView = () => {
         size: 90,
         enableColumnFilter: true,
         enableSorting: true,
+      },
+      {
+        header: t('label.linked-po-requisition'),
+        id: 'purchaseOrderNumber',
+        size: 180,
+        align: 'right',
+        enableColumnFilter: true,
+        Cell: ({ row }) => <LinkedCell row={row.original} />,
       },
       {
         header: t('label.created'),
@@ -98,23 +155,16 @@ export const InboundListView = () => {
         size: 100,
       },
       {
-        header: t('label.status'),
-        accessorFn: row => getStatusTranslator(t)(row.status),
-        id: 'status',
-        size: 140,
-        filterVariant: 'select',
-        filterSelectOptions: statuses.map(status => ({
-          value: status,
-          label: getStatusTranslator(t)(status),
-        })),
-        enableColumnFilter: true,
-        enableSorting: true,
+        header: t('label.comment'),
+        accessorKey: 'comment',
+        columnType: ColumnType.Comment,
       },
       {
         header: t('label.reference'),
         accessorKey: 'theirReference',
         size: 225,
         defaultHideOnMobile: true,
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -123,41 +173,57 @@ export const InboundListView = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
-      {
-        header: t('label.comment'),
-        accessorKey: 'comment',
-        columnType: ColumnType.Comment,
-      },
     ],
-    []
+    [t]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
     {
-      tableId: 'inbound-shipment-list-view',
-      isLoading: isFetching,
-      onRowClick: row => navigate(row.id),
+      tableId: TABLE_ID,
+      isLoading,
+      isError,
+      onRowClick: row =>
+        row.purchaseOrder
+          ? navigate(
+              RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InboundShipmentExternal)
+                .addPart(row.id)
+                .build()
+            )
+          : navigate(row.id),
       columns,
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
-      getIsRestrictedRow: isInboundListItemDisabled,
+      getIsRestrictedRow: row => isInboundListItemDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-shipments')}
-          onCreate={invoiceModalController.toggleOn}
+          onCreate={
+            isExtraSmallScreen ? undefined : internalModalController.toggleOn
+          }
         />
       ),
+      isMobile: isExtraSmallScreen,
     }
   );
 
   return (
     <>
-      <AppBarButtons
-        invoiceModalController={invoiceModalController}
-        linkRequestModalController={linkRequestModalController}
-      />
-      <MaterialTable table={table} />
+      {isExtraSmallScreen ? (
+        // We don't want to show any app bar button on mobile list view
+        <CardList table={table} tableId={TABLE_ID} />
+      ) : (
+        <>
+          <AppBarButtons
+            internalModalController={internalModalController}
+            externalModalController={externalModalController}
+            linkRequestModalController={linkRequestModalController}
+          />
+          <Toolbar filter={filter} />
+          <MaterialTable table={table} />
+        </>
+      )}
       <Footer
         selectedRows={selectedRows}
         resetRowSelection={table.resetRowSelection}

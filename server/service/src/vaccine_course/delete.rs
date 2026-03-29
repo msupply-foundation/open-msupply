@@ -6,7 +6,7 @@ use repository::{
         vaccine_course_dose_row::VaccineCourseDoseRowRepository,
         vaccine_course_row::VaccineCourseRowRepository,
     },
-    EqualFilter, RepositoryError, StorageConnection,
+    EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -16,6 +16,7 @@ use super::validate::check_vaccine_course_exists;
 #[derive(PartialEq, Debug)]
 pub enum DeleteVaccineCourseError {
     VaccineCourseDoesNotExist,
+    VaccineCourseInUse,
     DatabaseError(RepositoryError),
 }
 
@@ -61,5 +62,20 @@ fn validate(
         VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(id.to_string())),
     )?;
 
+    if !check_vaccine_course_not_in_use(connection, id)? {
+        return Err(DeleteVaccineCourseError::VaccineCourseInUse);
+    }
+
     Ok(doses)
+}
+
+fn check_vaccine_course_not_in_use(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<bool, RepositoryError> {
+    let vaccination = VaccinationRepository::new(connection).query_by_filter(
+        repository::VaccinationFilter::default()
+            .vaccine_course_id(EqualFilter::equal_to(id.to_string())),
+    )?;
+    Ok(vaccination.is_empty())
 }

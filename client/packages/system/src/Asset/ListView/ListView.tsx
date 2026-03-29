@@ -135,10 +135,7 @@ export const AssetListView: FC = () => {
         isOpen={importModalController.isOn}
         onClose={importModalController.toggleOff}
       />
-      <AppBarButtons
-        importModalController={importModalController}
-        assets={data?.nodes ?? []}
-      />
+      <AppBarButtons importModalController={importModalController} />
 
       <MaterialTable table={table} />
 

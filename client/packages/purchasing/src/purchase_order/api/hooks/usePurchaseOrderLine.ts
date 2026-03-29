@@ -14,7 +14,7 @@ import { PurchaseOrderLineFragment } from '../operations.generated';
 
 export type DraftPurchaseOrderLine = Omit<
   PurchaseOrderLineFragment,
-  '__typename'
+  '__typename' | 'shippedNumberOfUnits'
 > & {
   purchaseOrderId: string;
   itemId: string;
@@ -63,7 +63,6 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
   // These values not actually saved to DB
   numberOfPacks: 0,
   requestedNumberOfPacks: 0,
-  receivedNumberOfUnits: 0,
 };
 
 export function usePurchaseOrderLine(id?: string | null) {
@@ -149,10 +148,10 @@ export function usePurchaseOrderLine(id?: string | null) {
   const update = async () => {
     const input: UpdatePurchaseOrderLineInput = {
       id: draft.id,
-      expectedDeliveryDate: draft.expectedDeliveryDate,
+      expectedDeliveryDate: { value: draft.expectedDeliveryDate },
       itemId: draft.itemId,
       requestedPackSize: draft.requestedPackSize,
-      requestedDeliveryDate: draft.requestedDeliveryDate,
+      requestedDeliveryDate: { value: draft.requestedDeliveryDate },
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
       adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
       pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,
@@ -367,5 +366,31 @@ const useDeleteLines = () => {
     onSuccess: () => {
       queryClient.invalidateQueries([PURCHASE_ORDER]);
     },
+  });
+};
+
+const UNITS_ON_ORDER = 'units_on_order';
+
+export const useUnitsOnOrderForItem = (
+  itemId: string,
+  excludePurchaseOrderId: string,
+  enabled = true
+) => {
+  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
+
+  const queryFn = async () => {
+    const result = await purchaseOrderApi.unitsOrderedInOtherPurchaseOrders({
+      storeId,
+      itemId,
+      excludePurchaseOrderId,
+    });
+
+    return result.unitsOrderedInOtherPurchaseOrders;
+  };
+
+  return useQuery({
+    queryKey: [UNITS_ON_ORDER, itemId, excludePurchaseOrderId],
+    queryFn,
+    enabled: enabled && itemId !== '',
   });
 };

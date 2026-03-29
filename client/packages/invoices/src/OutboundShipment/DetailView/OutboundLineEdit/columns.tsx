@@ -11,7 +11,7 @@ import {
   ColumnDef,
   ColumnType,
   CheckCell,
-  Typography,
+  Box,
   Tooltip,
   TextWithTooltipCell,
   CurrencyValueCell,
@@ -133,6 +133,7 @@ export const useOutboundLineEditColumns = ({
             onChange={vvmStatus => setVvmStatus(row.original.id, vvmStatus)}
             selected={row.original.vvmStatus ?? null}
             disabled={getIsDisabled(row.original)}
+            clearable
           />
         ),
       },
@@ -232,6 +233,7 @@ export const useOutboundLineEditColumns = ({
           <NumberInputCell
             id={getStockOutQuantityCellId(row.original.batch)} // Used by when adding by barcode scanner
             cell={cell}
+            debounceTime={500}
             updateFn={value =>
               allocate(row.original.id, value, {
                 preventPartialPacks: true,
@@ -292,14 +294,14 @@ export const useOutboundLineEditColumns = ({
 const LocationCell = ({ row }: { row: MRT_Row<DraftStockOutLineFragment> }) => {
   const t = useTranslation();
 
-  const { code = '', onHold = false } = row.original.location || {};
+  const { code = UNDEFINED_STRING_VALUE, onHold = false } =
+    row.original.location || {};
 
   const onHoldText = onHold ? ` (${t('label.on-hold')})` : '';
 
   return (
     <Tooltip title={code} placement="bottom-start">
-      <Typography
-        component="div"
+      <Box
         sx={{
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -307,7 +309,7 @@ const LocationCell = ({ row }: { row: MRT_Row<DraftStockOutLineFragment> }) => {
         }}
       >
         {code + onHoldText}
-      </Typography>
+      </Box>
     </Tooltip>
   );
 };

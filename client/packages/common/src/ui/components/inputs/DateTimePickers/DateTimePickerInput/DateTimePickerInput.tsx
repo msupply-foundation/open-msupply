@@ -163,6 +163,7 @@ export const DateTimePickerInput = ({
         minDate={minDate}
         maxDate={maxDate}
         disableFuture={disableFuture}
+        closeOnSelect={true}
         onOpen={() => setIsOpen?.(true)}
         onClose={() => setIsOpen?.(false)}
         {...props}

@@ -144,7 +144,7 @@ impl FileSyncDriver {
         let synchroniser = match synchroniser {
             Ok(synchroniser) => synchroniser,
             Err(error) => {
-                log::error!("Problem creating file synchroniser {:#?}", error);
+                log::error!("Problem creating file synchroniser {error:#?}");
                 return 0;
             }
         };
@@ -160,7 +160,7 @@ impl FileSyncDriver {
         };
 
         if files_to_upload > 0 {
-            log::info!("Found {} files to upload", files_to_upload);
+            log::info!("Found {files_to_upload} files to upload");
         }
 
         files_to_upload
@@ -170,25 +170,25 @@ impl FileSyncDriver {
 impl FileSyncTrigger {
     pub fn start(&self) {
         if let Err(error) = self.sender.try_send(FileSyncMessage::Start) {
-            log::error!("Problem starting file sync {:#?}", error)
+            log::error!("Problem starting file sync {error:#?}")
         }
     }
 
     pub fn stop(&self) {
         if let Err(error) = self.sender.try_send(FileSyncMessage::Stop) {
-            log::error!("Problem stopping file sync {:#?}", error)
+            log::error!("Problem stopping file sync {error:#?}")
         }
     }
 
     pub fn pause(&self) {
         if let Err(error) = self.sender.try_send(FileSyncMessage::Pause) {
-            log::error!("Problem pausing file sync {:#?}", error)
+            log::error!("Problem pausing file sync {error:#?}")
         }
     }
 
     pub fn unpause(&self) {
         if let Err(error) = self.sender.try_send(FileSyncMessage::UnPause) {
-            log::error!("Problem unpausing file sync {:#?}", error)
+            log::error!("Problem unpausing file sync {error:#?}")
         }
     }
 }

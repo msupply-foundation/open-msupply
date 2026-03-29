@@ -20,6 +20,7 @@ pub fn generate(
         id: invoice_id,
         other_party_id,
         outbound_shipment_id,
+        their_reference,
         customer_return_lines,
         is_patient_return: _,
     }: InsertCustomerReturn,
@@ -41,7 +42,7 @@ pub fn generate(
     let customer_return = InvoiceRow {
         id: invoice_id.clone(),
         user_id: Some(user_id.to_string()),
-        name_link_id: other_party_id,
+        name_id: other_party_id,
         r#type: InvoiceType::CustomerReturn,
         invoice_number: next_number(connection, &NumberRowType::CustomerReturn, store_id)?,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
@@ -55,7 +56,7 @@ pub fn generate(
         on_hold: false,
         colour: None,
         comment: None,
-        their_reference: None,
+        their_reference,
         tax_percentage: None,
         transport_reference: None,
         allocated_datetime: None,
@@ -76,8 +77,8 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
-        goods_received_id: None,
+        default_donor_id: None,
+        purchase_order_id: None,
         shipping_method_id: None,
     };
 
@@ -133,10 +134,13 @@ pub fn generate(
                 barcode: None,
                 stock_on_hold: false,
                 donor_id: None,
+                manufacturer_id: None,
                 campaign_id: None,
                 program_id: None,
+                manufacture_date: None,
                 shipped_number_of_packs: None,
                 shipped_pack_size: None,
+                purchase_order_line_id: None,
             },
         )
         .collect();

@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'client/**'
+  merge_group:
+    branches:
+      - develop
   workflow_dispatch:
 
 concurrency:
@@ -22,11 +25,11 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Read .nvmrc
-        run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+        run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 

@@ -46,7 +46,7 @@ fragment SupplierReturn on InvoiceNode {
   createdDatetime
   pickedDatetime
   shippedDatetime
-  deliveredDatetime
+  receivedDatetime
   verifiedDatetime
 
   otherPartyName
@@ -171,6 +171,7 @@ fragment CustomerReturnLine on InvoiceLineNode {
   expiryDate
   numberOfPacks
   packSize
+  sellPricePerPack
   item {
     __typename
     id
@@ -235,6 +236,7 @@ fragment GenerateSupplierReturnLine on SupplierReturnLineNode {
   expiryDate
   id
   numberOfPacksToReturn
+  onHold
   packSize
   stockLineId
   note

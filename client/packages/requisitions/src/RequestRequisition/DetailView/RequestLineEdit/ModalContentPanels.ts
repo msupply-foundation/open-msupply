@@ -7,8 +7,7 @@ import { DraftRequestLine } from '.';
 
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,
-  draft?: DraftRequestLine | null,
-  showExtraFields: boolean = false
+  draft?: DraftRequestLine | null
 ): ValueInfo[] => {
   const base: ValueInfo[] = [
     {
@@ -19,22 +18,9 @@ export const getLeftPanel = (
       label: t('label.amc/amd'),
       value: draft?.itemStats.averageMonthlyConsumption,
     },
-    {
-      label: t('label.months-of-stock'),
-      value: draft?.itemStats.availableMonthsOfStockOnHand,
-      endAdornmentOverride: t('label.months'),
-      displayVaccinesInDoses: false,
-    },
   ];
 
-  const extraPanel: ValueInfo[] = [
-    {
-      label: t('label.short-expiry'),
-      value: draft?.expiringUnits,
-    },
-  ];
-
-  return showExtraFields ? [...base, ...extraPanel] : base;
+  return base;
 };
 
 export const getExtraMiddlePanels = (
@@ -50,6 +36,7 @@ export const getExtraMiddlePanels = (
         pt: 0.5,
         pb: 0.5,
       },
+      roundUp: true,
     },
     {
       label: t('label.incoming-stock'),
@@ -71,7 +58,7 @@ export const getExtraMiddlePanels = (
       label: t('label.days-out-of-stock'),
       value: draft?.daysOutOfStock,
       endAdornmentOverride: t('label.days'),
-      displayVaccinesInDoses: false,
+      isFixedValue: true,
     },
   ];
 };
@@ -90,6 +77,7 @@ export const getSuggestedRow = (
         pl: 0,
         pt: 0.5,
       },
+      roundUp: true,
     },
   ];
 };

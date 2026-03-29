@@ -1,4 +1,8 @@
-import { LocaleKey, TypedTFunction } from '@common/intl';
+import {
+  DEFAULT_TRANSLATIONS_NAMESPACE,
+  LocaleKey,
+  TypedTFunction,
+} from '@common/intl';
 import { TranslationOption } from './TranslationSearchInput';
 
 export interface Translation {
@@ -15,11 +19,18 @@ export const mapTranslationsToArray = (
   t: TypedTFunction<LocaleKey>
 ): Translation[] => {
   return Object.entries(translations)
-    .filter(([key]) => t(key as LocaleKey) !== '')
+    .filter(
+      ([key]) =>
+        t(key as LocaleKey, {
+          ns: DEFAULT_TRANSLATIONS_NAMESPACE,
+        }) !== ''
+    )
     .map(([key, custom]) => ({
       id: key,
       key,
-      default: t(key as LocaleKey),
+      default: t(key as LocaleKey, {
+        ns: DEFAULT_TRANSLATIONS_NAMESPACE,
+      }),
       custom,
     }));
 };
@@ -73,6 +84,35 @@ export const extractVariables = (str?: string): string[] => {
   const matches = str.match(validVariable) || [];
   // Filter out empty or whitespace-only variable names
   return matches.map(m => m.slice(2, -2).trim()).filter(v => v.length > 0);
+};
+
+export type ImportMode = 'replace' | 'keep-existing' | 'overwrite';
+
+export const mergeTranslations = (
+  existing: Translation[],
+  imported: Translation[],
+  mode: ImportMode
+): Translation[] => {
+  switch (mode) {
+    case 'replace':
+      return imported;
+    case 'keep-existing': {
+      const existingKeys = new Set(existing.map(tr => tr.key));
+      const newOnly = imported.filter(tr => !existingKeys.has(tr.key));
+      return [...existing, ...newOnly];
+    }
+    case 'overwrite': {
+      const importedByKey = new Map(imported.map(tr => [tr.key, tr]));
+      const merged = existing.map(tr =>
+        importedByKey.has(tr.key)
+          ? { ...tr, custom: importedByKey.get(tr.key)!.custom }
+          : tr
+      );
+      const existingKeys = new Set(existing.map(tr => tr.key));
+      const brandNew = imported.filter(tr => !existingKeys.has(tr.key));
+      return [...merged, ...brandNew];
+    }
+  }
 };
 
 export const checkInvalidVariables = (input: Partial<Translation>): boolean => {

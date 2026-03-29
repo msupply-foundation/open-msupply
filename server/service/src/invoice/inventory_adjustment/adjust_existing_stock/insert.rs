@@ -65,7 +65,7 @@ pub fn insert_inventory_adjustment(
             // Add invoice line (and update stock line)
             match insert_stock_in_or_out_line {
                 InsertStockInOrOutLine::StockIn(stock_in_line) => {
-                    insert_stock_in_line(ctx, stock_in_line).map_err(|error| {
+                    insert_stock_in_line(ctx, stock_in_line, None).map_err(|error| {
                         InsertInventoryAdjustmentError::StockInLineInsertError(error)
                     })?;
                 }
@@ -99,7 +99,7 @@ pub fn insert_inventory_adjustment(
                 None,
             )?;
 
-            get_invoice(ctx, None, &verified_invoice.id)
+            get_invoice(ctx, None, &verified_invoice.id, None)
                 .map_err(InsertInventoryAdjustmentError::DatabaseError)?
                 .ok_or(InsertInventoryAdjustmentError::NewlyCreatedInvoiceDoesNotExist)
         })

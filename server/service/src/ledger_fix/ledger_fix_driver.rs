@@ -102,7 +102,7 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) -> Result<(), Reposi
             Utc::now().naive_utc()
         );
 
-        let result = stock_line_ledger_fix(&ctx.connection, &mut operation_log, &stock_line_id);
+        let result = stock_line_ledger_fix(&ctx.connection, &mut operation_log, stock_line_id);
 
         match result {
             Ok(is_fixed) => {
@@ -169,7 +169,7 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) -> Result<(), Reposi
 impl LedgerFixTrigger {
     pub fn trigger(&self) {
         if let Err(error) = self.sender.try_send(None) {
-            log::error!("Problem triggering ledger fix {:#?}", error)
+            log::error!("Problem triggering ledger fix {error:#?}")
         }
     }
 
@@ -204,7 +204,7 @@ async fn delay(service_provider: Arc<ServiceProvider>, duration: Duration) -> bo
     if (Utc::now().naive_utc() - last_ledger_fix_run) > LEDGER_FIX_INTERVAL {
         return true;
     }
-    return false;
+    false
 }
 
 fn get_last_ledger_fix_run(

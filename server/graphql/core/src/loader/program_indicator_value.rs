@@ -8,23 +8,29 @@ use repository::{
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
-use super::IdPair;
-
-#[derive(Clone)]
-pub struct IndicatorValuePayload {
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct IndicatorValueLoaderInput {
+    pub line_id: String,
+    pub column_id: String,
     pub period_id: String,
     pub store_id: String,
     pub customer_name_id: String,
 }
-
-pub type IndicatorValueLoaderInput = IdPair<IndicatorValuePayload>;
 impl IndicatorValueLoaderInput {
-    pub fn new(line_id: &str, column_id: &str, extra_filter: IndicatorValuePayload) -> Self {
+    pub fn new(
+        line_id: &str,
+        column_id: &str,
+        period_id: &str,
+        store_id: &str,
+        customer_name_id: &str,
+    ) -> Self {
         IndicatorValueLoaderInput {
-            primary_id: line_id.to_string(),
-            secondary_id: column_id.to_string(),
+            line_id: line_id.to_string(),
+            column_id: column_id.to_string(),
             // later add store and period and facility ids to this payload
-            payload: extra_filter,
+            period_id: period_id.to_string(),
+            store_id: store_id.to_string(),
+            customer_name_id: customer_name_id.to_string(),
         }
     }
 }
@@ -47,13 +53,16 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
             // TODO replace with logic to not assume only one combination queried at any time.
             if let Some(loader_input) = loader_inputs.first() {
                 (
-                    loader_input.payload.period_id.clone(),
-                    loader_input.payload.store_id.clone(),
-                    loader_input.payload.customer_name_id.clone(),
+                    loader_input.period_id.clone(),
+                    loader_input.store_id.clone(),
+                    loader_input.customer_name_id.clone(),
                 )
             } else {
                 return Ok(HashMap::new());
             };
+        if loader_inputs.len() > 1 {
+            log::error!("Multiple loader inputs provided to IndicatorValueLoader, but only one combination of period_id, store_id, and customer_name_id is supported. Only the first input will be used.");
+        }
 
         let filter = IndicatorValueFilter::new()
             .store_id(EqualFilter::equal_to(store_id.to_string()))
@@ -63,12 +72,6 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
         let values =
             IndicatorValueRepository::new(&service_context.connection).query_by_filter(filter)?;
 
-        let payload = IndicatorValuePayload {
-            period_id,
-            store_id,
-            customer_name_id,
-        };
-
         Ok(values
             .into_iter()
             .map(|value| {
@@ -76,7 +79,9 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
                     IndicatorValueLoaderInput::new(
                         &value.indicator_value_row.indicator_line_id,
                         &value.indicator_value_row.indicator_column_id,
-                        payload.clone(),
+                        &period_id,
+                        &store_id,
+                        &customer_name_id,
                     ),
                     value.indicator_value_row,
                 )

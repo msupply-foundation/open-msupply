@@ -108,6 +108,21 @@ fragment ResponseLine on RequisitionLineNode {
   reason {
     ...ReasonOptionRow
   }
+
+  availableVolumeAtLocationType {
+    ...AvailableVolumeAtLocationType
+  }
+  forecastTotalUnits
+  forecastTotalDoses
+  vaccineCourses
+}
+
+fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {
+  locationType {
+    name
+  }
+  availableVolume
+  itemVolumePerUnit
 }
 
 fragment Response on RequisitionNode {
@@ -660,7 +675,7 @@ mutation insertRequestFromResponseRequisition(
   $storeId: String!
   $input: InsertFromResponseRequisitionInput!
 ) {
-  insertFromResponseRequisition(input: $input, storeId: $storeId) {
+  insertRequestFromResponseRequisition(input: $input, storeId: $storeId) {
     ... on RequisitionNode {
       __typename
       id

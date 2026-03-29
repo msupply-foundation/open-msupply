@@ -9,6 +9,7 @@ import {
   UserStoreNodeFragment,
   Representation,
   RepresentationValue,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { RequestFragment, useRequest } from '../../api';
@@ -36,7 +37,7 @@ export const RequestLineEditModal = ({
   const { error } = useNotification();
   const deleteLine = useRequest.line.deleteLine();
   const isDisabled = isRequestDisabled(requisition);
-  const { orderInPacks } = usePreferences();
+  const { orderInPacks, manageVaccinesInDoses } = usePreferences();
 
   const lines = useMemo(
     () =>
@@ -49,10 +50,17 @@ export const RequestLineEditModal = ({
   const [currentItem, setCurrentItem] = useState(
     lines?.find(line => line.item.id === itemId)?.item
   );
-  const rep = orderInPacks ? Representation.PACKS : Representation.UNITS;
+  const getDefaultRepresentation = (
+    item?: { isVaccine?: boolean; doses?: number } | null
+  ): RepresentationValue => {
+    if (orderInPacks) return Representation.PACKS;
+    if (manageVaccinesInDoses && item?.isVaccine && !!item?.doses)
+      return Representation.DOSES;
+    return Representation.UNITS;
+  };
 
   const [representation, setRepresentation] =
-    useState<RepresentationValue>(rep);
+    useState<RepresentationValue>(getDefaultRepresentation(currentItem));
 
   const { draft, save, update, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
@@ -91,7 +99,7 @@ export const RequestLineEditModal = ({
     if (mode === ModalMode.Create) {
       deletePreviousLine();
     }
-    setRepresentation(rep);
+    setRepresentation(getDefaultRepresentation(item));
     setCurrentItem(item);
   };
 
@@ -106,8 +114,10 @@ export const RequestLineEditModal = ({
   };
 
   const onNext = async () => {
-    const success = await handleSave();
-    if (!success) return false;
+    if (requisition.status !== RequisitionNodeStatus.Sent) {
+      const success = await handleSave();
+      if (!success) return false;
+    }
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
@@ -140,8 +150,12 @@ export const RequestLineEditModal = ({
           variant="ok"
           disabled={!currentItem || isEditingRequested}
           onClick={async () => {
-            const success = await handleSave();
-            if (success) onClose();
+            if (requisition.status === RequisitionNodeStatus.Sent) {
+              onClose();
+            } else {
+              const success = await handleSave();
+              if (success) onClose();
+            }
           }}
         />
       }

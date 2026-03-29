@@ -1,8 +1,9 @@
-use std::{fs, sync::Mutex};
+use std::fs;
 
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::{PgConnection, RunQueryDsl};
+use util::lock_file;
 
 use crate::{
     database_settings::DatabaseSettings,
@@ -10,7 +11,8 @@ use crate::{
     migrations::{migrate, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     test_db::constants::{
-        env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE, TEST_OUTPUT_DIR,
+        env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_POSTGRES,
+        TEST_OUTPUT_DIR,
     },
     DBConnection, StorageConnectionManager,
 };
@@ -29,8 +31,6 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         connection_retry_seconds: None,
     }
 }
-
-static TEMPLATE_LOCK: Mutex<()> = Mutex::new(());
 
 fn create_template_db(
     root_connection: &mut DBConnection,
@@ -68,6 +68,7 @@ table! {
 
 #[derive(QueryableByName)]
 #[diesel(table_name = pg_database)]
+#[allow(dead_code)]
 struct PgDatabaseRow {
     #[allow(dead_code)]
     oid: i64,
@@ -143,8 +144,15 @@ pub(crate) async fn setup_with_version(
 
     // check if we need to refresh the cache
     let template_settings = get_test_db_settings(&template_name);
+
+    let test_output_dir = find_workspace_root()
+        .join("repository")
+        .join(TEST_OUTPUT_DIR);
+
     {
-        let _guard = TEMPLATE_LOCK.lock().unwrap();
+        // Checking marker files and template creation should be globally locked.
+        let _fs_lock = lock_file(test_output_dir.clone(), "___template.lock".to_string())
+            .expect("Failed to acquire template fs lock");
 
         let existing_templates: Vec<String> = pg_database::table
             .select(pg_database::dsl::datname)
@@ -152,11 +160,9 @@ pub(crate) async fn setup_with_version(
             .load(&mut root_connection)
             .unwrap();
 
-        // only clear the DB once, i.e. use the repository test_output directory as reference
-        let test_output_dir = find_workspace_root()
-            .join("repository")
-            .join(TEST_OUTPUT_DIR);
-        let marker_path = test_output_dir.join(TEMPLATE_MARKER_FILE).to_path_buf();
+        let marker_path = test_output_dir
+            .join(TEMPLATE_MARKER_FILE_POSTGRES)
+            .to_path_buf();
         let marker_exists = marker_path.exists();
 
         // if test_output_dir doesn't exist or if the marker exist, refresh the cache

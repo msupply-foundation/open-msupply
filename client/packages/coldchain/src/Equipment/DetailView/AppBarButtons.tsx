@@ -16,22 +16,19 @@ export const AppBarButtonsComponent = () => {
   const t = useTranslation();
   const { data: settings } = useAssets.utils.labelPrinterSettings();
 
-  const { isPrinting, print, DisabledNotification } = usePrinter(settings);
+  const { isPrinting, print } = usePrinter(settings);
 
-  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const onClick = () => {
     const date = new Date().toLocaleDateString();
 
-    print(
-      {
-        endpoint: Environment.PRINT_LABEL_QR,
-        payload: {
-          code: data?.id,
-          assetNumber: `${data?.assetNumber ?? ''}`,
-          datePrinted: `${date}`,
-        },
+    print({
+      endpoint: Environment.PRINT_LABEL_QR,
+      payload: {
+        code: data?.id,
+        assetNumber: `${data?.assetNumber ?? ''}`,
+        datePrinted: `${date}`,
       },
-      e
-    );
+    });
   };
 
   return (
@@ -46,7 +43,6 @@ export const AppBarButtonsComponent = () => {
           variant="outlined"
         />
       </Grid>
-      <DisabledNotification />
     </AppBarButtonsPortal>
   );
 };

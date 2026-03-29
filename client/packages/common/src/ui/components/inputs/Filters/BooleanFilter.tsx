@@ -1,7 +1,8 @@
 import React, { FC, useState } from 'react';
 import { useUrlQuery } from '@common/hooks';
 import { Switch } from '@common/components';
-import { FilterDefinitionCommon } from './FilterMenu';
+import { Box } from '@mui/material';
+import { FilterDefinitionCommon, FILTER_WIDTH } from './FilterMenu';
 
 export interface BooleanFilterDefinition extends FilterDefinitionCommon {
   type: 'boolean';
@@ -24,17 +25,19 @@ export const BooleanFilter: FC<{
   };
 
   return (
-    <Switch
-      switchSx={{
-        marginTop: 0.2,
-      }}
-      labelSx={{
-        marginTop: 1.5,
-      }}
-      label={name}
-      checked={value}
-      onChange={handleChange}
-      size="medium"
-    />
+    <Box sx={{ minWidth: FILTER_WIDTH }}>
+      <Switch
+        switchSx={{
+          marginTop: 0.2,
+        }}
+        labelSx={{
+          marginTop: 1.5,
+        }}
+        label={name}
+        checked={value}
+        onChange={handleChange}
+        size="medium"
+      />
+    </Box>
   );
 };

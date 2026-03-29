@@ -33,6 +33,13 @@ import {
   getExtraMiddlePanels,
   getSuggestedRow,
 } from './ModalContentPanels';
+import {
+  CONSUMPTION_HISTORY_INFO,
+  FORECAST_QUANTITY_INFO,
+  STOCK_DISTRIBUTION_INFO,
+  STOCK_EVOLUTION_INFO,
+} from '../utils';
+import ForecastCalculationDisplay from '../../../common/ForecastCalculationDisplay';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -69,17 +76,29 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    warningForExcessRequest,
+    displayPopulationBasedForecasting,
+  } = usePreferences();
+
+  const isInfoVisible = useCallback(
+    (infoType: string) =>
+      !plugins.requestRequisitionLine?.hideInfo?.includes(infoType),
+    [plugins.requestRequisitionLine?.hideInfo]
+  );
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 
   const showContent = !!draft && !!currentItem;
-  const displayVaccinesInDoses =
-    manageVaccinesInDoses && currentItem?.isVaccine;
+  const isDosesEnabled =
+    !!manageVaccinesInDoses && !!currentItem?.isVaccine && !!currentItem?.doses;
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
+  const displayForecasting =
+    displayPopulationBasedForecasting && !!draft?.forecastTotalUnits;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -99,7 +118,9 @@ export const RequestLineEdit = ({
             value,
             sx,
             endAdornmentOverride,
-            displayVaccinesInDoses: showDoses,
+            isDosesEnabled: dosesEnabled,
+            roundUp,
+            isFixedValue,
           }) => (
             <ValueInfoRow
               key={label}
@@ -110,9 +131,11 @@ export const RequestLineEdit = ({
               representation={representation}
               unitName={unitName}
               sx={sx}
-              displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
+              isDosesEnabled={dosesEnabled ?? isDosesEnabled}
               dosesPerUnit={currentItem?.doses}
               decimalLimit={0}
+              roundUp={roundUp}
+              isFixedValue={isFixedValue ?? false}
             />
           )
         )}
@@ -122,7 +145,7 @@ export const RequestLineEdit = ({
       defaultPackSize,
       representation,
       unitName,
-      displayVaccinesInDoses,
+      isDosesEnabled,
       currentItem?.doses,
     ]
   );
@@ -153,7 +176,7 @@ export const RequestLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            displayVaccinesInDoses={displayVaccinesInDoses}
+            isDosesEnabled={isDosesEnabled}
             dosesPerUnit={currentItem?.doses}
             setIsEditingRequested={setIsEditingRequested}
           />
@@ -241,13 +264,34 @@ export const RequestLineEdit = ({
                   value={currentItem?.defaultPackSize}
                 />
               )}
-              {displayVaccinesInDoses && currentItem?.doses ? (
+              {isDosesEnabled && currentItem?.doses ? (
                 <InfoRow
                   label={t('label.doses-per-unit')}
                   value={currentItem?.doses}
                 />
               ) : null}
-              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {renderValueInfoRows(getLeftPanel(t, draft))}
+              <InfoRow
+                label={t('label.months-of-stock')}
+                value={draft?.itemStats?.availableMonthsOfStockOnHand}
+                packagingDisplay={t('label.months')}
+              />
+              {displayForecasting &&
+                renderValueInfoRows([
+                  {
+                    label: t('label.target-stock-population'),
+                    value: line?.forecastTotalUnits
+                      ? Math.ceil(line.forecastTotalUnits)
+                      : undefined,
+                  },
+                ])}
+              {showExtraFields &&
+                renderValueInfoRows([
+                  {
+                    label: t('label.short-expiry'),
+                    value: draft?.expiringUnits,
+                  } as ValueInfo,
+                ])}
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (
@@ -282,38 +326,50 @@ export const RequestLineEdit = ({
             gap: 2,
           }}
         >
-          <Box
-            sx={{
-              width: '100%',
-              maxWidth: 900,
-              mx: 'auto',
-              p: '8px 16px',
-            }}
-          >
-            <StockDistribution
-              availableStockOnHand={line.itemStats?.availableStockOnHand}
-              averageMonthlyConsumption={
-                line.itemStats?.averageMonthlyConsumption
-              }
-              suggestedQuantity={line.suggestedQuantity}
-            />
-          </Box>
-          <Box
-            display="flex"
-            justifyContent="center"
-            gap={2}
-            sx={{
-              padding: 2,
-              flexDirection: {
-                xs: 'column',
-                md: 'row',
-              },
-              alignItems: 'center',
-            }}
-          >
-            <ConsumptionHistory id={line.id} />
-            <StockEvolution id={line.id} />
-          </Box>
+          {displayForecasting && isInfoVisible(FORECAST_QUANTITY_INFO) ? (
+            <ForecastCalculationDisplay vaccineCourses={line.vaccineCourses} />
+          ) : (
+            <>
+              {isInfoVisible(STOCK_DISTRIBUTION_INFO) && (
+                <Box
+                  sx={{
+                    width: '100%',
+                    maxWidth: 900,
+                    mx: 'auto',
+                    p: '8px 16px',
+                  }}
+                >
+                  <StockDistribution
+                    availableStockOnHand={line.itemStats?.availableStockOnHand}
+                    averageMonthlyConsumption={
+                      line.itemStats?.averageMonthlyConsumption
+                    }
+                    suggestedQuantity={line.suggestedQuantity}
+                  />
+                </Box>
+              )}
+              <Box
+                display="flex"
+                justifyContent="center"
+                gap={2}
+                sx={{
+                  padding: 2,
+                  flexDirection: {
+                    xs: 'column',
+                    md: 'row',
+                  },
+                  alignItems: 'center',
+                }}
+              >
+                {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
+                  <ConsumptionHistory id={line.id} />
+                )}
+                {isInfoVisible(STOCK_EVOLUTION_INFO) && (
+                  <StockEvolution id={line.id} />
+                )}
+              </Box>
+            </>
+          )}
         </Box>
       )}
     </>

@@ -11,6 +11,7 @@ import {
   useSimpleMaterialTable,
   TextInputCell,
 } from '@openmsupply-client/common';
+import { useDebounceCallback } from '@common/hooks';
 import { checkInvalidVariables, Translation } from './helpers';
 import {
   TranslationOption,
@@ -40,6 +41,16 @@ export const TranslationsTable = ({
     setTranslations(translations => [...newLines, ...translations]);
   };
 
+  // Debounce updates to the translations array so that typing in a cell
+  // doesn't trigger a full table re-render on every keystroke.
+  // The TextInputCell's internal useBufferState keeps the input responsive.
+  const debouncedSetTranslations = useDebounceCallback(
+    (updater: (prev: Translation[]) => Translation[]) =>
+      setTranslations(updater),
+    [],
+    300
+  );
+
   const columns = useMemo(
     (): ColumnDef<Translation>[] => [
       {
@@ -52,33 +63,44 @@ export const TranslationsTable = ({
         accessorKey: 'default',
         header: t('label.default'),
         size: 300,
-        Cell: ({ cell }) => (<Box style={{ whiteSpace: 'normal' }}>{cell.getValue<string>()}</Box>),
+        Cell: ({ cell }) => (
+          <Box style={{ whiteSpace: 'normal' }}>{cell.getValue<string>()}</Box>
+        ),
       },
       {
         accessorKey: 'custom',
         header: t('label.custom'),
         Cell: ({ cell, row }) => {
           const showInvalid = row.original.isInvalid && showValidationErrors;
-          return <TextInputCell
-            cell={cell}
-            updateFn={value => {
-              const isInvalid = checkInvalidVariables({ ...row.original, custom: value });
-              setTranslations(translations =>
-                translations.map(tr =>
-                  tr.id === row.original.id ? { ...tr, custom: value, isInvalid } : tr
-                )
-              );
-            }}
-            multiline
-            sx={{
-              ...(showInvalid ? {
-                borderColor: theme => theme.palette.error.main,
-                borderWidth: '2px',
-                borderStyle: 'solid',
-                borderRadius: '8px',
-              } : undefined),
-            }}
-          />
+          return (
+            <TextInputCell
+              cell={cell}
+              updateFn={value => {
+                const isInvalid = checkInvalidVariables({
+                  ...row.original,
+                  custom: value,
+                });
+                debouncedSetTranslations(translations =>
+                  translations.map(tr =>
+                    tr.id === row.original.id
+                      ? { ...tr, custom: value, isInvalid }
+                      : tr
+                  )
+                );
+              }}
+              multiline
+              sx={{
+                ...(showInvalid
+                  ? {
+                      borderColor: theme => theme.palette.error.main,
+                      borderWidth: '2px',
+                      borderStyle: 'solid',
+                      borderRadius: '8px',
+                    }
+                  : undefined),
+              }}
+            />
+          );
         },
         size: 300,
       },
@@ -102,11 +124,18 @@ export const TranslationsTable = ({
     [showValidationErrors]
   );
 
+  // Memoize to avoid creating a new array reference on every render,
+  // which would cause TranslationSearchInput to re-render unnecessarily.
+  const existingKeys = useMemo(
+    () => translations.map(tr => tr.key),
+    [translations]
+  );
+
   const table = useSimpleMaterialTable<Translation>({
     tableId: 'custom-translations-input-table',
     data: translations,
     columns,
-    getIsPlaceholderRow: row => row.isNew ?? false,
+    getIsPlaceholderRow: row => row.original.isNew ?? false,
     noDataElement: <NothingHere body={t('message.add-a-translation')} />,
   });
 
@@ -115,7 +144,7 @@ export const TranslationsTable = ({
       <Box display="flex" justifyContent="flex-start" marginBottom="8px">
         <TranslationSearchInput
           onChange={onAdd}
-          existingKeys={translations.map(t => t.key)}
+          existingKeys={existingKeys}
         />
       </Box>
 

@@ -1,4 +1,4 @@
-import { sortNodes, getNestedValue } from '../../../../utils';
+import { sortNodes } from '../../../../utils';
 
 const processStockLines = (nodes, sort, dir) => {
   // Filter out empty objects first
@@ -98,6 +98,4 @@ export {
   calculateDaysUntilExpired,
   calculateStockAtRisk,
   roundDaysToInteger,
-  sortNodes,
-  getNestedValue,
 };

@@ -127,7 +127,7 @@ impl SynchroniserDriver {
 impl SyncTrigger {
     pub fn trigger(&self, fetch_patient_id: Option<String>) {
         if let Err(error) = self.sender.try_send(fetch_patient_id) {
-            log::error!("Problem triggering sync {:#?}", error)
+            log::error!("Problem triggering sync {error:#?}")
         }
     }
 
@@ -203,7 +203,7 @@ impl SiteIsInitialisedCallback {
 impl SiteIsInitialisedTrigger {
     pub fn trigger(&self) {
         if let Err(error) = self.sender.try_send(()) {
-            log::error!("Problem triggering site is initialised {:#?}", error)
+            log::error!("Problem triggering site is initialised {error:#?}")
         }
     }
 

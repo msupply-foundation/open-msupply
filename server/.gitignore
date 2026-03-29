@@ -19,6 +19,9 @@ schema.graphql
 # test template DB marker
 ___template_needs_update.marker
 ___template_needs_update_pg.marker
+# test template DB lock files
+___template*.lock
+___db_*.lock
 
 # directories used by the server at runtime
 plugins
@@ -32,6 +35,11 @@ omsupply-database-shm
 
 # local configuration file (generated from example.yaml)
 configuration/local.yaml
+# Other local configuration files
+configuration/*.yaml
+# Keep the example and base configuration files
+!configuration/base.yaml
+!configuration/example.yaml
 app_data/
 
 # operational logfiles

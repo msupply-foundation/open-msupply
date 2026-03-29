@@ -1,0 +1,75 @@
+name: Comment on PR
+on:
+  workflow_run:
+    workflows: ['Bundle size diff - Build']
+    types:
+      - completed
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Read PR number
+        id: pr-data
+        run: |
+          echo "pr_number=$(cat pr_number)" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const result = fs.readFileSync('result.txt', 'utf8');
+
+            const issue_number = Number('${{ steps.pr-data.outputs.pr_number }}');
+            const marker = '<!-- bundle-size-diff-comment -->';
+            const body = `${marker}\n${result}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const existingComment = comments.find((comment) =>
+              comment.body?.includes(marker)
+            );
+
+            const thresholdBytes = 2 * 1024;
+
+            const diffBytes = Number('${{ steps.get-diff.outputs.diff_file_size }}');
+            const exceedsThreshold = diffBytes !== null && Math.abs(diffBytes) > thresholdBytes;
+            const shouldComment = Boolean(existingComment) || exceedsThreshold;
+
+            if (!shouldComment) {
+              core.info(`Skipping PR comment: bundle size change (${diffBytes ?? 'unknown'} bytes) is within ±2KB and no existing comment was found.`);
+              return;
+            }
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }

@@ -89,7 +89,9 @@ Where `[export name]` is name of exported data in `data/` folder
 cargo run --bin remote_server_cli -- initialise-from-export -n reference1
 ```
 
-Above will create sqlite database in root folder with the name specified in `configuration/*.yaml` and will populate it with data. Towards the end of console output of the cli command user:password list is presented (those users can be used to log in vi client/api)
+Above will create a SQLite database file in your current working directory (typically `server/`), using the name from `configuration/*.yaml` (by default `omsupply-database.sqlite`), and populate it with data. Towards the end of the CLI output a `user:password` list is printed (those users can be used to log in via the client/API).
+
+> NOTE: `initialise-from-export` currently emits a large number of warnings (see https://github.com/msupply-foundation/open-msupply/issues/10241). The command should still complete and print a list of username/passwords. Those credentials are also listed in `data/reference1/users.txt`.
 
 ## Start the server
 
@@ -274,15 +276,19 @@ openssl req -x509 -newkey rsa:4096 -nodes -keyout app_data/certs/key.pem -out ap
 
 # Test
 
-Devs should run both postgres and sqlite test before publishing PR
+Devs should run both postgres and sqlite tests before publishing a PR. The CI uses cargo nextest which is an alternative test runner tailored for use with CI. By default it runs crates in parallel which should speed up test execution times.
+
+More info: https://nexte.st/
 
 - To run all tests:
 
 ```bash
+# Install nextest runner
+cargo install cargo-nextest --locked
 # Use sqlite (sqlite is default feature)
-cargo test
+cargo nextest run
 # Use postgres
-cargo test --features postgres
+cargo nextest run --features postgres
 ```
 
 - To run email tests:
@@ -370,15 +376,27 @@ cargo run --bin remote_server_cli -- restore -b D2024_08_22T05_05_16 -s
 
 This tool is mostly intended for support, to confirm everything is configured correctly. It checks things like the database connection, and connecting to central servers for sync.
 
-You can run the `test_connection` tool with:
+You can run the tool in either the cli mode or as a GUI. The postgreSQL and SQLite versions of each are shown below.
+
+## CLI
 
 ```bash
-cargo run --bin test_connection --username [user] --password [pass]
+cargo run --bin remote_server_cli -- test-connection -u username -p password
 ```
 
-or build and run the binary. pass in `--features postgres` to run the postgres version.
+When running the cli command, normal debug level logging to console is suppressed as this can get verbose. If you want to view all the log info, you can specify an `-l` parameter and specify the debug level:
 
-There is a command line output, or a GUI will open if you do not supply a username parameter.
+```bash
+cargo run --bin remote_server_cli -- test-connection -u username -p password -l info
+```
+
+## GUI
+
+```bash
+cargo run --bin test_connection
+```
+
+or build and run the binary. Pass in `--features postgres` to run the postgres version.
 
 # [Backup and Restore](cli/src/backup/README.md)
 

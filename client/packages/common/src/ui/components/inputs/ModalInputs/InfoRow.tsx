@@ -1,10 +1,11 @@
 import React from 'react';
 import {
-  DosesCaption,
+  DosesOrUnitsCaption,
   Grid,
   NumericTextDisplay,
   QuantityUtils,
   DisplayUtils,
+  Representation,
   RepresentationValue,
   SxProps,
   Theme,
@@ -15,11 +16,12 @@ import {
 
 interface InfoRowProps {
   label: string;
-  value?: number | string;
+  value?: number | string | null;
   packagingDisplay?: string;
   sx?: SxProps<Theme>;
   decimalLimit?: number;
-  dosesCaption?: React.ReactNode;
+  caption?: React.ReactNode;
+  roundUp?: boolean;
 }
 
 export const InfoRow = ({
@@ -28,7 +30,8 @@ export const InfoRow = ({
   packagingDisplay,
   sx,
   decimalLimit,
-  dosesCaption,
+  caption,
+  roundUp = false,
 }: InfoRowProps) => {
   return (
     <Grid
@@ -57,8 +60,9 @@ export const InfoRow = ({
               value={value}
               packagingDisplay={packagingDisplay}
               decimalLimit={decimalLimit}
+              roundUp={roundUp}
             />
-            {dosesCaption}
+            {caption}
           </>
         ) : (
           <Typography variant="body1">
@@ -77,8 +81,11 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   unitName: string;
   nullDisplay?: string;
   endAdornmentOverride?: string;
-  displayVaccinesInDoses?: boolean;
+  isDosesEnabled: boolean;
   dosesPerUnit?: number;
+  roundUp?: boolean;
+  /** Display only the saved row value — for non-stock values like days or months */
+  isFixedValue: boolean;
 }
 
 export type ValueInfo = {
@@ -86,8 +93,9 @@ export type ValueInfo = {
   endAdornmentOverride?: string;
   value?: number | null;
   sx?: SxProps<Theme>;
-  displayVaccinesInDoses?: boolean;
-  dosesPerUnit?: number;
+  isDosesEnabled?: boolean;
+  roundUp?: boolean;
+  isFixedValue?: boolean;
 };
 
 export const ValueInfoRow = ({
@@ -98,41 +106,52 @@ export const ValueInfoRow = ({
   unitName,
   sx,
   endAdornmentOverride,
-  displayVaccinesInDoses = false,
+  isDosesEnabled = false,
   dosesPerUnit = 1,
   nullDisplay,
   decimalLimit,
+  roundUp,
+  isFixedValue = false,
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
-  const valueInUnitsOrPacks = QuantityUtils.useValueInUnitsOrPacks(
-    representation,
-    defaultPackSize,
-    value
-  );
+  let valueInRepresentation;
+  if (isFixedValue) {
+    valueInRepresentation = value ?? 0;
+  } else if (representation === Representation.DOSES) {
+    valueInRepresentation = QuantityUtils.calculateValueInDoses(
+      dosesPerUnit,
+      value
+    );
+  } else {
+    valueInRepresentation = QuantityUtils.calculateValueInUnitsOrPacks(
+      representation,
+      defaultPackSize,
+      value
+    );
+  }
 
   const endAdornment = DisplayUtils.useEndAdornment(
     t,
     getPlural,
     unitName,
     representation,
-    valueInUnitsOrPacks,
+    valueInRepresentation,
     endAdornmentOverride
   );
 
   const treatAsNull = value === null && nullDisplay;
 
-  const displayValue = treatAsNull ? nullDisplay : valueInUnitsOrPacks;
+  const displayValue = treatAsNull ? nullDisplay : valueInRepresentation;
 
-  const dosesCaption =
-    displayVaccinesInDoses && !!value ? (
-      <DosesCaption
+  const caption =
+    isDosesEnabled && !!value && !isFixedValue ? (
+      <DosesOrUnitsCaption
         value={value}
-        representation={representation}
         dosesPerUnit={dosesPerUnit}
-        displayVaccinesInDoses={displayVaccinesInDoses}
-        defaultPackSize={defaultPackSize}
+        dosesSelected={representation === Representation.DOSES}
+        unitsLabel={unitName}
         sx={{ pr: 0 }}
       />
     ) : null;
@@ -145,7 +164,8 @@ export const ValueInfoRow = ({
         packagingDisplay={treatAsNull ? '' : endAdornment}
         sx={sx}
         decimalLimit={decimalLimit}
-        dosesCaption={dosesCaption}
+        caption={caption}
+        roundUp={roundUp}
       />
     </>
   );

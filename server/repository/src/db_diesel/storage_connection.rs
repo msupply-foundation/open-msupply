@@ -62,7 +62,7 @@ pub struct StorageConnection {
 }
 
 impl StorageConnection {
-    pub fn lock(&self) -> LockedConnection {
+    pub fn lock(&self) -> LockedConnection<'_> {
         LockedConnection {
             raw_connection: self.raw_connection.lock().unwrap(),
         }
@@ -162,9 +162,9 @@ impl StorageConnection {
                 let mut guard = self.raw_connection.lock().unwrap();
                 let con: &mut DBBackendConnection = &mut guard;
                 AnsiTransactionManager::commit_transaction(con).map_err(|err| {
-                    error!("Failed to end tx: {:?}", err);
+                    error!("Failed to end tx: {err:?}");
                     TransactionError::Transaction {
-                        msg: format!("Failed to end tx: {}", err),
+                        msg: format!("Failed to end tx: {err}"),
                         level: current_level + 1,
                     }
                 })?;
@@ -174,9 +174,9 @@ impl StorageConnection {
                 let mut guard = self.raw_connection.lock().unwrap();
                 let con: &mut DBBackendConnection = &mut guard;
                 AnsiTransactionManager::rollback_transaction(con).map_err(|err| {
-                    error!("Failed to rollback tx: {:?}", err);
+                    error!("Failed to rollback tx: {err:?}");
                     TransactionError::Transaction {
-                        msg: format!("Failed to rollback tx: {}", err),
+                        msg: format!("Failed to rollback tx: {err}"),
                         level: current_level + 1,
                     }
                 })?;
@@ -190,9 +190,9 @@ fn map_begin_transaction_error<T>(
     e: diesel::result::Error,
     current_level: i32,
 ) -> TransactionError<T> {
-    error!("Failed to begin tx: {:?}", e);
+    error!("Failed to begin tx: {e:?}");
     TransactionError::Transaction {
-        msg: format!("Failed to begin tx: {}", e),
+        msg: format!("Failed to begin tx: {e}"),
         level: current_level + 1,
     }
 }

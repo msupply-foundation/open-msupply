@@ -1,9 +1,9 @@
 use async_graphql::*;
+use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
 use graphql_invoice::mutations::inbound_shipment;
 use graphql_invoice_line::mutations::inbound_shipment_line;
-use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::*;
 
@@ -121,11 +121,16 @@ pub struct BatchInput {
     pub continue_on_error: Option<bool>,
 }
 
-pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<BatchResponse> {
+pub fn batch(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: BatchInput,
+    r#type: InboundShipmentType,
+) -> Result<BatchResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -135,13 +140,13 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
 
     let response = service_provider
         .invoice_service
-        .batch_inbound_shipment(&service_context, input.to_domain())?;
+        .batch_inbound_shipment(&service_context, input.to_domain(r#type))?;
 
     BatchResponse::from_domain(response)
 }
 
 impl BatchInput {
-    fn to_domain(self) -> ServiceInput {
+    fn to_domain(self, r#type: InboundShipmentType) -> ServiceInput {
         let BatchInput {
             insert_inbound_shipments,
             insert_inbound_shipment_lines,
@@ -178,6 +183,7 @@ impl BatchInput {
             delete_shipment: delete_inbound_shipments
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             continue_on_error,
+            r#type: r#type.to_domain(),
         }
     }
 }

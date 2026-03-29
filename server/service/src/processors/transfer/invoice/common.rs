@@ -8,7 +8,8 @@ use util::uuid::uuid;
 
 use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
-    update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentStatus,
+    update_inbound_shipment, InboundShipmentType, UpdateInboundShipment,
+    UpdateInboundShipmentStatus,
 };
 use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
 use crate::service_provider::ServiceContext;
@@ -19,11 +20,11 @@ pub(crate) fn generate_inbound_lines(
     inbound_store_id: &str,
     source_invoice: &Invoice,
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
+    let invoice_row = &source_invoice.invoice_row;
+
     let outbound_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(
-                source_invoice.invoice_row.id.to_string(),
-            ))
+            .invoice_id(EqualFilter::equal_to(invoice_row.id.to_string()))
             // In mSupply you can finalise customer invoice with placeholder lines, we should remove them
             // when duplicating lines from outbound invoice to inbound invoice
             .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),
@@ -40,7 +41,7 @@ pub(crate) fn generate_inbound_lines(
                     invoice_id: _,
                     stock_line_id: _,
                     location_id: _,
-                    cost_price_per_pack: _,
+                    cost_price_per_pack,
                     total_after_tax: _,
                     linked_invoice_id: _,
                     reason_option_id,
@@ -59,13 +60,17 @@ pub(crate) fn generate_inbound_lines(
                     tax_percentage,
                     foreign_currency_price_before_tax,
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     campaign_id,
                     program_id,
                     shipped_number_of_packs,
                     volume_per_pack,
                     shipped_pack_size,
+                    status,
+                    manufacture_date,
+                    purchase_order_line_id,
                 },
                 ItemRow {
                     id: item_id,
@@ -77,14 +82,14 @@ pub(crate) fn generate_inbound_lines(
                     .find_one_by_item_and_store_id(&item_id, inbound_store_id)
                     .unwrap_or(None);
 
-                let supplier_id = &source_invoice.store_row.name_link_id;
+                let supplier_id = &source_invoice.store_row.name_id;
 
-                let cost_price_per_pack = sell_price_per_pack;
+                let trans_cost_price = sell_price_per_pack;
 
                 let total_before_tax = match r#type {
                     // Service lines don't work in packs
                     InvoiceLineType::Service => total_before_tax,
-                    _ => cost_price_per_pack * number_of_packs,
+                    _ => trans_cost_price * number_of_packs,
                 };
 
                 let default_price_per_default_pack = item_properties
@@ -101,13 +106,8 @@ pub(crate) fn generate_inbound_lines(
                 let adjusted_sell_price_per_pack = if default_price_for_inbound_pack > 0.0 {
                     default_price_for_inbound_pack
                 } else {
-                    get_cost_plus_margin(
-                        connection,
-                        cost_price_per_pack,
-                        item_properties,
-                        supplier_id,
-                    )
-                    .unwrap_or(cost_price_per_pack)
+                    get_cost_plus_margin(connection, trans_cost_price, item_properties, supplier_id)
+                        .unwrap_or(trans_cost_price)
                 };
 
                 InvoiceLineRow {
@@ -118,10 +118,15 @@ pub(crate) fn generate_inbound_lines(
                     item_code,
                     batch,
                     expiry_date,
+                    manufacture_date,
+                    purchase_order_line_id,
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
-                    cost_price_per_pack: sell_price_per_pack,
+                    cost_price_per_pack: match invoice_row.r#type {
+                        InvoiceType::SupplierReturn => cost_price_per_pack,
+                        _ => sell_price_per_pack,
+                    },
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -132,19 +137,24 @@ pub(crate) fn generate_inbound_lines(
                     tax_percentage,
                     foreign_currency_price_before_tax,
                     item_variant_id,
-                    linked_invoice_id: Some(source_invoice.invoice_row.id.to_string()),
+                    linked_invoice_id: Some(invoice_row.id.to_string()),
                     vvm_status_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     campaign_id,
                     program_id,
                     shipped_number_of_packs,
                     volume_per_pack,
-                    sell_price_per_pack: adjusted_sell_price_per_pack,
+                    sell_price_per_pack: match invoice_row.r#type {
+                        InvoiceType::SupplierReturn => cost_price_per_pack,
+                        _ => adjusted_sell_price_per_pack,
+                    },
                     shipped_pack_size,
                     reason_option_id,
                     // Default
                     stock_line_id: None,
                     location_id: None,
+                    status,
                 }
             },
         )
@@ -212,6 +222,7 @@ pub(crate) fn auto_verify_if_store_preference(
                 ..Default::default()
             },
             Some(&inbound_shipment.store_id),
+            InboundShipmentType::InboundShipment,
         )
         .map_err(|e| {
             log::error!("{e:?}");
@@ -309,7 +320,7 @@ mod test {
         let cost_price_per_pack = 5.0;
 
         let outbound_store = mock_store_b();
-        let supplier_id = outbound_store.name_link_id;
+        let supplier_id = outbound_store.name_id;
         let item_properties = mock_item_a_join_store_a();
 
         // Set preference to true -> item margin has priority
@@ -359,7 +370,7 @@ mod test {
         );
 
         let store_c = mock_store_c();
-        let supplier_no_margin_id = store_c.name_link_id;
+        let supplier_no_margin_id = store_c.name_id;
 
         // No supplier margin, fallback to item margin
         assert_eq!(

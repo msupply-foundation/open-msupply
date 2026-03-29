@@ -110,7 +110,7 @@ pub async fn pull(
         records.len(),
         response.site_id
     );
-    log::debug!("Sending records as central server: {:#?}", records);
+    log::debug!("Sending records as central server: {records:#?}");
 
     let is_last_batch = total_records <= batch_size as u64;
 
@@ -161,7 +161,7 @@ pub async fn push(
         batch.total_records,
         response.site_id
     );
-    log::debug!("Receiving records as central server: {:#?}", batch);
+    log::debug!("Receiving records as central server: {batch:#?}");
 
     let SyncBatchV6 {
         records,
@@ -263,10 +263,7 @@ pub async fn patient_pull(
         records.len(),
         response.site_id
     );
-    log::debug!(
-        "Patient Pull: Sending records as central server: {:#?}",
-        records
-    );
+    log::debug!("Patient Pull: Sending records as central server: {records:#?}");
 
     let is_last_batch = total_records <= batch_size as u64;
 
@@ -314,7 +311,7 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
         let ctx = match service_provider.basic_context() {
             Ok(ctx) => ctx,
             Err(e) => {
-                log::error!("Error getting basic context: {}", e);
+                log::error!("Error getting basic context: {e}");
                 return;
             }
         };
@@ -327,10 +324,10 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
             SyncBufferSource::Remote(site_id),
         ) {
             Ok(_) => {
-                log::info!("Integration complete for site {}", site_id);
+                log::info!("Integration complete for site {site_id}");
             }
             Err(e) => {
-                log::error!("Error integrating records for site {}: {}", site_id, e);
+                log::error!("Error integrating records for site {site_id}: {e}");
             }
         }
 
@@ -357,10 +354,7 @@ pub async fn download_file(
     use SyncParsedErrorV6 as Error;
 
     log::info!(
-        "Downloading file to remote server for table: {}, record: {}, file: {}",
-        table_name,
-        record_id,
-        id
+        "Downloading file to remote server for table: {table_name}, record: {record_id}, file: {id}"
     );
 
     if !CentralServerConfig::is_central_server() {
@@ -407,7 +401,7 @@ pub async fn upload_file(
 ) -> Result<(), SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    log::info!("Receiving a file via sync : {}", file_id);
+    log::info!("Receiving a file via sync : {file_id}");
 
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);

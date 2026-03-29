@@ -268,7 +268,7 @@ fn generate_response_requisition(
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
-        name_link_id: store_name.id,
+        name_id: store_name.id,
         store_id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -284,7 +284,7 @@ fn generate_response_requisition(
         period_id: request_requisition_row.period_id.clone(),
         order_type: request_requisition_row.order_type.clone(),
         is_emergency: request_requisition_row.is_emergency,
-        original_customer_id: request_requisition_row.original_customer_id.clone(),
+        destination_customer_id: request_requisition_row.destination_customer_id.clone(),
         created_from_requisition_id: request_requisition_row.created_from_requisition_id.clone(),
         // Default
         user_id: None,
@@ -303,7 +303,8 @@ fn generate_response_requisition_lines(
     request_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
-    let populate_price_per_unit = get_indicative_price_pref(connection)?;
+    let populate_price_per_unit =
+        get_indicative_price_pref(connection, &response_requisition.store_id)?;
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             connection,
@@ -345,6 +346,11 @@ fn generate_response_requisition_lines(
                 days_out_of_stock,
                 option_id,
                 price_per_unit,
+                available_volume,
+                location_type_id,
+                forecast_total_doses,
+                forecast_total_units,
+                vaccine_courses,
             },
         item_row: ItemRow { id: item_id, .. },
         requisition_row: _,
@@ -384,11 +390,16 @@ fn generate_response_requisition_lines(
             expiring_units,
             days_out_of_stock,
             option_id,
+            available_volume,
+            location_type_id,
+            price_per_unit,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
             // Default
             supply_quantity: 0.0,
             approved_quantity: 0.0,
             approval_comment: None,
-            price_per_unit,
         });
     }
 
@@ -660,7 +671,7 @@ mod test {
             id: "preference_on".to_string(),
             key: PrefKey::ShowIndicativePriceInRequisitions.to_string(),
             value: "true".to_string(),
-            store_id: None,
+            store_id: Some("store_a".to_string()),
         };
 
         let (_, connection, _, _) = setup_all_with_data(

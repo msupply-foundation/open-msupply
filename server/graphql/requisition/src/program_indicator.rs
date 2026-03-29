@@ -34,6 +34,7 @@ pub fn program_indicators(
             Pagination::all(),
             sort.map(ProgramIndicatorSortInput::to_domain),
             filter.map(ProgramIndicatorFilterInput::to_domain),
+            true,
         )?
         .into_iter()
         .map(|program_indicator| ProgramIndicatorNode { program_indicator })

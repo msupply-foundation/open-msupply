@@ -12,8 +12,9 @@ pub mod android {
     use service::settings::{DiscoveryMode, LogMode, LoggingSettings, ServerSettings, Settings};
     use tokio::sync::mpsc;
 
+    use self::jni::errors::LogErrorAndDefault;
     use self::jni::objects::{JClass, JString};
-    use self::jni::JNIEnv;
+    use self::jni::EnvUnowned;
 
     struct ServerBucket {
         off_switch: mpsc::Sender<()>,
@@ -24,7 +25,7 @@ pub mod android {
 
     #[no_mangle]
     pub extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
-        mut env: JNIEnv,
+        mut unowned_env: EnvUnowned,
         _: JClass,
         port: jchar,
         files_dir: JString,
@@ -32,11 +33,16 @@ pub mod android {
         android_id: JString,
     ) {
         let (off_switch, off_switch_receiver) = mpsc::channel(1);
-        let files_dir: String = env.get_string(&files_dir).unwrap().into();
+        let (files_dir, android_id, cache_dir) = unowned_env
+            .with_env(|env| -> Result<_, jni::errors::Error> {
+                let files_dir = files_dir.try_to_string(env)?;
+                let android_id = android_id.try_to_string(env)?;
+                let cache_dir = cache_dir.try_to_string(env)?;
+                Ok((files_dir, android_id, cache_dir))
+            })
+            .resolve::<LogErrorAndDefault>();
         let files_dir = PathBuf::from(&files_dir);
-        let android_id: String = env.get_string(&android_id).unwrap().into();
         let db_path = files_dir.join("omsupply-database");
-        let cache_dir: String = env.get_string(&cache_dir).unwrap().into();
 
         let settings = Settings {
             server: ServerSettings {
@@ -45,7 +51,7 @@ pub mod android {
                 discovery: DiscoveryMode::Disabled,
                 debug_no_access_control: false,
                 cors_origins: vec!["http://localhost".to_string()],
-                base_dir: Some(files_dir.to_str().unwrap().to_string()),
+                base_dir: files_dir.to_str().unwrap().to_string(),
                 machine_uid: Some(android_id),
                 override_is_central_server: false,
             },
@@ -60,7 +66,7 @@ pub mod android {
                 connection_pool_timeout_seconds: None,
                 connection_retry_seconds: None,
                 // See https://github.com/openmsupply/remote-server/issues/1076
-                init_sql: Some(format!("PRAGMA temp_store_directory = '{}';", cache_dir)),
+                init_sql: Some(format!("PRAGMA temp_store_directory = '{cache_dir}';")),
             },
             // sync settings need to be configured at runtime
             sync: None,
@@ -92,7 +98,7 @@ pub mod android {
     }
 
     #[no_mangle]
-    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(_: JNIEnv, _: JClass) {
+    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(_: EnvUnowned, _: JClass) {
         let ServerBucket { off_switch, thread } = SERVER_BUCKET.lock().unwrap().take().unwrap();
         futures::executor::block_on(off_switch.send(())).unwrap();
         thread.join().unwrap();

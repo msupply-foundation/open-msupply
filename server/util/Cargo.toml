@@ -8,17 +8,17 @@ path = "src/lib.rs"
 
 [dependencies]
 sha2 = { workspace = true }
-uuid = { version = "1.8.0", features = ["v7"] }
+uuid = { version = "1.22.0", features = ["v7"] }
 chrono = { workspace = true }
 serde = { workspace = true }
-env_logger = "0.11.3"
+env_logger = "0.11.9"
 serde_json = { workspace = true }
 reqwest = { workspace = true }
 anyhow.workspace = true
 sanitize-filename = "0.6.0"
 log = { workspace = true }
 serde_yaml = { workspace = true }
-
+fs-lock = "=0.1.15"
 
 [dev-dependencies]
 thiserror = { workspace = true }

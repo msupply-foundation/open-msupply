@@ -123,7 +123,7 @@ async fn delete_sync_file(
     match repo.delete(&file_id) {
         Ok(_) => Ok(HttpResponse::Ok().body("file deleted")),
         Err(err) => {
-            log::error!("Error deleting file reference: {}", err);
+            log::error!("Error deleting file reference: {err}");
             Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into())
         }
     }

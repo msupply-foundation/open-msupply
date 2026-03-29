@@ -483,13 +483,12 @@ mod tests {
             // TODO add match record here
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .expect(
-                    format!(
+                .unwrap_or_else(|_| {
+                    panic!(
                         "Error translating from upsert sync record {:?}",
                         record.sync_buffer_row.record_id
                     )
-                    .as_str(),
-                );
+                });
 
             assert_eq!(translation_result, record.translated_record);
         }
@@ -498,13 +497,12 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
-                .expect(
-                    format!(
+                .unwrap_or_else(|_| {
+                    panic!(
                         "Error translating from delete sync record {:?}",
                         record.sync_buffer_row.record_id
                     )
-                    .as_str(),
-                );
+                });
 
             assert_eq!(translation_result, record.translated_record);
         }

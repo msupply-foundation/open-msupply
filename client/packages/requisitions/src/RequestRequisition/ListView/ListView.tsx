@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   useTranslation,
-  RequisitionNodeStatus,
   NothingHere,
   useToggle,
   useUrlQueryParams,
@@ -24,6 +23,7 @@ import {
 } from '../../utils';
 import { Footer } from './Footer';
 import { AppRoute } from '@openmsupply-client/config';
+import { Toolbar } from './Toolbar';
 
 export const ListView = () => {
   const t = useTranslation();
@@ -38,6 +38,11 @@ export const ListView = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
+      {
+        key: 'requisitionNumber',
+        condition: 'equalTo',
+        isNumber: true,
+      },
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
       { key: 'createdDatetime', condition: 'between' },
@@ -68,6 +73,12 @@ export const ListView = () => {
             getIsDisabled={isRequestDisabled}
           />
         ),
+      },
+      {
+        id: 'status',
+        header: t('label.status'),
+        enableSorting: true,
+        accessorFn: row => getRequisitionTranslator(t)(row.status),
       },
       {
         accessorKey: 'requisitionNumber',
@@ -113,22 +124,7 @@ export const ListView = () => {
         defaultHideOnMobile: true,
         includeColumn: hasProgramSettings,
       },
-      {
-        id: 'status',
-        header: t('label.status'),
-        enableSorting: true,
-        enableColumnFilter: true,
-        accessorFn: row => getRequisitionTranslator(t)(row.status),
-        filterVariant: 'select',
-        filterSelectOptions: [
-          { label: t('label.draft'), value: RequisitionNodeStatus.Draft },
-          { label: t('label.sent'), value: RequisitionNodeStatus.Sent },
-          {
-            label: t('label.finalised'),
-            value: RequisitionNodeStatus.Finalised,
-          },
-        ],
-      },
+
       {
         accessorKey: 'comment',
         header: t('label.comment'),
@@ -164,7 +160,7 @@ export const ListView = () => {
     isError,
     isLoading: isFetching,
     onRowClick,
-    getIsRestrictedRow: isRequestDisabled,
+    getIsRestrictedRow: row => isRequestDisabled(row.original),
     noDataElement: (
       <NothingHere
         body={t('error.no-internal-orders')}
@@ -175,6 +171,7 @@ export const ListView = () => {
 
   return (
     <>
+      {simplifiedTabletView ? null : <Toolbar />}
       <AppBarButtons modalController={modalController} />
 
       <MaterialTable table={table} />

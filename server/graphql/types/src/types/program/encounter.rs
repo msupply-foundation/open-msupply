@@ -121,9 +121,7 @@ impl From<EncounterFilterInput> for EncounterFilter {
             program_id: f.program_id.map(EqualFilter::from),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             start_datetime: f.start_datetime.map(DatetimeFilter::from),
-            status: f
-                .status
-                .map(|s| map_filter!(s, |status| EncounterStatus::from(status))),
+            status: f.status.map(|s| map_filter!(s, EncounterStatus::from)),
             end_datetime: f.end_datetime.map(DatetimeFilter::from),
             clinician_id: f.clinician_id.map(EqualFilter::from),
             document_type: f.r#type.map(EqualFilter::from),
@@ -372,10 +370,13 @@ impl EncounterNode {
             .map(|f| f.clone().to_domain())
             .unwrap_or_default()
             .patient_id(EqualFilter::equal_to(self.patient_row().id.to_string()))
-            .document_type(EqualFilter::equal_to(self.encounter_row().document_type.to_owned()));
+            .document_type(EqualFilter::equal_to(
+                self.encounter_row().document_type.to_owned(),
+            ));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
-            program_filter = program_filter
-                .document_name(EqualFilter::equal_to(self.encounter_row().document_name.to_owned()))
+            program_filter = program_filter.document_name(EqualFilter::equal_to(
+                self.encounter_row().document_name.to_owned(),
+            ))
         };
         let list_result = ctx
             .service_provider()
@@ -421,10 +422,13 @@ impl EncounterNode {
             .map(|f| f.clone().to_domain())
             .unwrap_or_default()
             .patient_id(EqualFilter::equal_to(self.patient_row().id.to_string()))
-            .document_type(EqualFilter::equal_to(self.encounter_row().document_type.to_owned()));
+            .document_type(EqualFilter::equal_to(
+                self.encounter_row().document_type.to_owned(),
+            ));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
-            program_filter = program_filter
-                .document_name(EqualFilter::equal_to(self.encounter_row().document_name.to_owned()))
+            program_filter = program_filter.document_name(EqualFilter::equal_to(
+                self.encounter_row().document_name.to_owned(),
+            ))
         };
         let list_result = ctx
             .service_provider()

@@ -11,15 +11,14 @@ import {
   ColumnDef,
   ColumnType,
   NameAndColorSetterCell,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
-import {
-  getStatusTranslator,
-  isPrescriptionDisabled,
-  prescriptionStatuses,
-} from '../../utils';
+import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
+import { getStatusSequence } from '../../statuses';
 import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const PrescriptionListView = () => {
@@ -45,6 +44,7 @@ export const PrescriptionListView = () => {
       },
     ],
   });
+
   const listParams = {
     sortBy,
     first,
@@ -78,7 +78,9 @@ export const PrescriptionListView = () => {
         enableSorting: true,
         enableColumnFilter: true,
         filterVariant: 'select',
-        filterSelectOptions: prescriptionStatuses.map(status => ({
+        filterSelectOptions: getStatusSequence(
+          InvoiceNodeType.Prescription
+        ).map(status => ({
           value: status,
           label: getStatusTranslator(t)(status),
         })),
@@ -137,11 +139,12 @@ export const PrescriptionListView = () => {
         onCreate={modalController.toggleOn}
       />
     ),
-    getIsRestrictedRow: isPrescriptionDisabled,
+    getIsRestrictedRow: row => isPrescriptionDisabled(row.original),
   });
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         modalController={modalController}
         filterBy={filterBy}

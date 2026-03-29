@@ -12,14 +12,15 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-  UnitsAndDosesCell,
   ChipTableCell,
   ExpiryDateCell,
+  UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
+import { Toolbar } from './Toolbar';
 
 export const StockListView = () => {
   const t = useTranslation();
@@ -31,6 +32,7 @@ export const StockListView = () => {
   const {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
+    initialSort: { key: 'name', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },
@@ -103,10 +105,21 @@ export const StockListView = () => {
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         columnType: ColumnType.Date,
         Cell: ExpiryDateCell,
-        size: 120,
+        size: 100,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
         dateFilterFormat: 'date',
+        enableSorting: true,
+      },
+      {
+        id: 'manufactureDate',
+        header: t('label.manufacture-date'),
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        columnType: ColumnType.Date,
+        size: 100,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
         enableSorting: true,
       },
       {
@@ -143,7 +156,7 @@ export const StockListView = () => {
         accessorKey: 'packSize',
         Cell: TextWithTooltipCell,
         align: 'right',
-        size: 125,
+        size: 90,
         defaultHideOnMobile: true,
         enableSorting: true,
       },
@@ -152,7 +165,7 @@ export const StockListView = () => {
         accessorKey: 'totalNumberOfPacks',
         columnType: ColumnType.Number,
         align: 'right',
-        size: 125,
+        size: 100,
         enableSorting: true,
       },
       {
@@ -161,6 +174,7 @@ export const StockListView = () => {
         accessorFn: row => row.totalNumberOfPacks * row.packSize,
         Cell: UnitsAndDosesCell,
         align: 'right',
+        size: 100,
         enableSorting: false,
         defaultHideOnMobile: true,
       },
@@ -171,6 +185,7 @@ export const StockListView = () => {
         accessorFn: row => row.availableNumberOfPacks * row.packSize,
         Cell: UnitsAndDosesCell,
         align: 'right',
+        size: 125,
         enableSorting: false,
         defaultHideOnMobile: true,
       },
@@ -190,7 +205,15 @@ export const StockListView = () => {
         accessorFn: row => row.totalNumberOfPacks * row.costPricePerPack,
         columnType: ColumnType.Currency,
         enableSorting: false,
-        size: 125,
+        size: 100,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        accessorFn: row => row.manufacturer?.name ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
         defaultHideOnMobile: true,
       },
       {
@@ -205,7 +228,7 @@ export const StockListView = () => {
       },
       ...(plugins.stockLine?.tableColumn || []),
     ],
-    [manageVvmStatusForStock, plugins.stockLine?.tableColumn]
+    [manageVvmStatusForStock, plugins.stockLine?.tableColumn, t]
   );
 
   const { table } = usePaginatedMaterialTable<StockLineRowFragment>({
@@ -228,6 +251,7 @@ export const StockListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons exportFilter={filterBy} />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />

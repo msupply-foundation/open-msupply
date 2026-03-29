@@ -3,6 +3,7 @@ fragment StockLineRow on StockLineNode {
   batch
   costPricePerPack
   expiryDate
+  manufactureDate
   id
   itemId
   locationId
@@ -27,7 +28,7 @@ fragment StockLineRow on StockLineNode {
       name
     }
     isVaccine
-    dosesPerUnit: doses
+    doses
     restrictedLocationTypeId
     defaultPackSize
     itemStoreProperties(storeId: $storeId) {
@@ -49,6 +50,9 @@ fragment StockLineRow on StockLineNode {
   }
   donor(storeId: $storeId) {
     id
+  }
+  manufacturer(storeId: $storeId) {
+    ...NameRow
   }
   program {
     id

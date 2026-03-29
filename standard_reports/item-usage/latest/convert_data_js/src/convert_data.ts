@@ -1,8 +1,7 @@
 import { ArrayElement, ConvertData } from '../convertDataType';
 import { Arguments } from './generated-types/arguments';
 import { ItemUsageQuery } from './generated-types/graphql';
-import get from 'lodash/get';
-import orderBy from 'lodash/orderBy';
+import { sortNodes } from '../../../../utils';
 import groupBy from 'lodash/groupBy';
 
 type SqlResult = { item_id: string; quantity: number }[];
@@ -69,14 +68,8 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
     };
     return outputNode;
   });
-  let sortedNodes = orderBy(
-    output,
-    row => {
-      const field = get(row, sort || 'name');
-      return typeof field == 'string' ? field.toLocaleLowerCase() : field;
-    },
-    dir || 'asc'
-  );
+
+  let sortedNodes = sortNodes(output, sort || 'name', dir);
 
   return { data: { items: { nodes: sortedNodes } } };
 };

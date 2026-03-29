@@ -20,6 +20,8 @@ Working on your first Pull Request? You might find http://makeapullrequest.com/ 
 
 If this is something you think you can fix, then [fork Open mSupply] and create a branch with a descriptive name.
 
+Every Pull Request should have a corresponding issue in the upstream repo, and the PR description should reference it (e.g. `Fixes #325`).
+
 A good branch name would be (where issue #325 is the ticket you're working on):
 
 ```sh
@@ -30,7 +32,10 @@ We're using the ticket number to start the branch name, and dropping the `#` bec
 
 ### Get the test suite running
 
-Make sure you're using a recent version of rust and nodejs.
+Toolchains:
+
+- Rust toolchain is pinned via `server/rust-toolchain.toml` (see `server/README.md#dependencies` for system dependencies and setup).
+- Client Node version is pinned via `client/.nvmrc` (`nvm use` from `client/`; see `client/README.md`).
 
 To get started, have a look at the [readme](README.md)
 
@@ -72,6 +77,12 @@ yarn start
 # Option 2: run client against the demo server API (no Rust required)
 cd ./client
 yarn start-remote
+
+# Option 3: run full stack locally without legacy mSupply (initialise from bundled reference data)
+cd ./server
+cargo run --bin remote_server_cli -- initialise-from-export -n reference1
+cd ..
+yarn start
 ```
 
 This will compile the React app and launch a browser on <http://localhost:3003>. We're using mostly chrome and firefox.. but you be you!
@@ -80,6 +91,8 @@ You can log in using:
 
 *User*: developer
 *Password*: password
+
+Note: `initialise-from-export` currently emits a large number of warnings (see #10241), but should still create a usable local database. Login credentials are printed in the CLI output and are also listed in `server/data/reference1/users.txt`.
 
 ### Get the style right
 
@@ -113,6 +126,16 @@ git push --set-upstream origin 325-fix-a-bug
 ```
 
 Finally, go to GitHub and [make a Pull Request][] :D
+
+#### Fork PR notes (issues + CI)
+
+- **Target the upstream repo**: make sure the base repository is `msupply-foundation/open-msupply` and the base branch is `develop`. Referencing `#123` will then link to the upstream issue tracker.
+- **Reference the issue**: include something like `Fixes #123` or `Refs #123` in the PR description.
+- **CI permissions on forks**: GitHub restricts what Actions can do on PRs opened from forks (e.g. limited token permissions, no access to secrets). Some checks (especially ones that try to comment on PRs) may be skipped or show as failing even though build/tests pass.
+  - If this happens, include the commands you ran locally in the PR description (`yarn test`, `cargo test`, etc.).
+  - Maintainers may re-run workflows with the required permissions, or disable untrusted workflows for additional protection.
+- **Disable Actions on your fork** (optional): if you don't want GitHub Actions running on your fork, you can disable it in your fork repo settings.
+- **Use a token in your fork** (optional): if you need a workflow to comment/write during Actions runs on *your fork*, add a personal access token as a secret in your fork repo settings (never commit tokens to the repo).
 
 Github Actions will run our test suite for changes to the server. An action will run to check the bundle size for client changes. 
 We care about quality, so your PR won't be merged until all tests pass.

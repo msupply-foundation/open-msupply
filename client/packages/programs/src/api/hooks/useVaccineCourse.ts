@@ -1,28 +1,33 @@
-import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
   UpsertVaccineCourseItemInput,
   UpsertVaccineCourseDoseInput,
+  UpsertVaccineCourseStoreConfigInput,
   VaccineCourseSortFieldInput,
   isEmpty,
   useMutation,
   useQuery,
   useTranslation,
   usePatchState,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
-import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
+import {
+  DraftVaccineCourse,
+  DraftVaccineCourseItem,
+  DraftVaccineCourseStoreConfig,
+} from './types';
 import { VaccineCourseDoseFragment } from '../operations.generated';
 
 enum UpdateVaccineCourseError {
-  DatabaseError = 'Database Error',
-  RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
+  RecordProgramCombinationAlreadyExists = 'RecordProgramCombinationAlreadyExists',
+  VaccineDosesInUse = 'VaccineDosesInUse',
 }
 
 enum InsertVaccineCourseError {
-  RecordAlreadyExist = 'Record already exists',
-  RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
+  RecordAlreadyExist = 'RecordAlreadyExist',
+  RecordProgramCombinationAlreadyExists = 'RecordProgramCombinationAlreadyExists',
 }
 
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
@@ -34,6 +39,7 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   useInGapsCalculations: true,
   canSkipDose: false,
   vaccineCourseItems: [],
+  storeConfigs: [],
 };
 
 const vaccineCourseParsers = {
@@ -55,10 +61,19 @@ const vaccineCourseParsers = {
       itemId: item.itemId,
     };
   },
+  toStoreConfigInput: (
+    config: DraftVaccineCourseStoreConfig
+  ): UpsertVaccineCourseStoreConfigInput => {
+    return {
+      id: config.id,
+      storeId: config.storeId,
+      wastageRate: setNullableInput('wastageRate', config),
+      coverageRate: setNullableInput('coverageRate', config),
+    };
+  },
 };
 
 export const useVaccineCourse = (id?: string) => {
-  const [errorMessage, setErrorMessage] = useState('');
   const { data, isLoading, error } = useGet(id ?? '');
   const { patch, updatePatch, resetDraft, isDirty } =
     usePatchState<DraftVaccineCourse>(data ?? {});
@@ -66,13 +81,13 @@ export const useVaccineCourse = (id?: string) => {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
-  } = useCreate(setErrorMessage);
+  } = useCreate();
 
   const {
     mutateAsync: updateMutation,
     isLoading: isUpdating,
     error: updateError,
-  } = useUpdate(setErrorMessage);
+  } = useUpdate();
 
   const draft: DraftVaccineCourse = data
     ? { ...defaultDraftVaccineCourse, ...data, ...patch }
@@ -94,7 +109,6 @@ export const useVaccineCourse = (id?: string) => {
     query: { data: data, isLoading, error },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
-    errorMessage,
     draft,
     resetDraft,
     isDirty,
@@ -128,7 +142,7 @@ const useGet = (id: string) => {
   return query;
 };
 
-const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
+const useCreate = () => {
   const { api, storeId, queryClient } = useProgramsGraphQL();
   const t = useTranslation();
 
@@ -152,6 +166,10 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
           input.vaccineCourseDoses?.map(dose =>
             vaccineCourseParsers.toDoseInput(dose)
           ) ?? [],
+        storeConfigs:
+          input.storeConfigs?.map(config =>
+            vaccineCourseParsers.toStoreConfigInput(config)
+          ) ?? [],
       },
     });
 
@@ -163,20 +181,11 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         return result;
       }
 
-      let message: string;
-      switch (result.error.description) {
+      switch (result.error.__typename) {
         case InsertVaccineCourseError.RecordAlreadyExist:
-          message = t('error.database-error');
-          setErrorMessage(message);
-          throw new Error(
-            `${t('error.unable-to-insert-vaccine-course')}: ${message}`
-          );
+          throw new Error(t('error.database-error'));
         case InsertVaccineCourseError.RecordProgramCombinationAlreadyExists:
-          message = t('error.name-program-duplicate');
-          setErrorMessage(message);
-          throw new Error(
-            `${t('error.unable-to-insert-vaccine-course')}: ${message}`
-          );
+          throw new Error(t('error.name-program-duplicate'));
         default:
           throw new Error(t('error.unable-to-insert-vaccine-course'));
       }
@@ -191,7 +200,7 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
   });
 };
 
-const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
+const useUpdate = () => {
   const { api, storeId, queryClient } = useProgramsGraphQL();
   const t = useTranslation();
 
@@ -213,6 +222,10 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
           input.vaccineCourseDoses?.map(dose =>
             vaccineCourseParsers.toDoseInput(dose)
           ) ?? [],
+        storeConfigs:
+          input.storeConfigs?.map(config =>
+            vaccineCourseParsers.toStoreConfigInput(config)
+          ) ?? [],
       },
       storeId,
     });
@@ -225,26 +238,17 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         return result;
       }
 
-      let message: string;
-      switch (result.error.description) {
-        case UpdateVaccineCourseError.DatabaseError:
-          message = t('error.database-error');
-          setErrorMessage(message);
-          throw new Error(
-            `${t('error.unable-to-update-vaccine-course')}: ${message}`
-          );
+      switch (result.error.__typename) {
         case UpdateVaccineCourseError.RecordProgramCombinationAlreadyExists:
-          message = t('error.name-program-duplicate');
-          setErrorMessage(message);
-          throw new Error(
-            `${t('error.unable-to-update-vaccine-course')}: ${message}`
-          );
+          throw new Error(t('error.name-program-duplicate'));
+        case UpdateVaccineCourseError.VaccineDosesInUse:
+          throw new Error(t('error.vaccine-dose-in-use'));
         default:
-          throw new Error(t('error.unable-to-update-vaccine-course'));
+          throw new Error(t('error.failed-to-save-vaccine-course'));
       }
     }
 
-    throw new Error(t('error.unable-to-update-vaccine-course'));
+    throw new Error(t('error.failed-to-save-vaccine-course'));
   };
 
   return useMutation({

@@ -293,9 +293,10 @@ mod test {
               "deleteResponseRequisitionLines": [
                 {
                   "id": "id3",
-                  "response": {}
+                  "response": null
                 }
               ],
+              "deleteResponseRequisitions": null
             }
           }
         );

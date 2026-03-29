@@ -88,6 +88,7 @@ mod query {
                     id: "test_reason_id".to_string(),
                     asset_log_status: AssetLogStatus::NotFunctioning,
                     reason: "unknown error".to_string(),
+                    comments_required: false,
                 },
             )
             .unwrap();
@@ -174,5 +175,85 @@ mod query {
             .unwrap();
 
         assert_eq!(asset_log.id, id2);
+
+        // Check NotFunctioning status without reason fails
+        assert_eq!(
+            service.insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: "test_no_reason".to_string(),
+                    asset_id: mock_asset_a().id,
+                    status: Some(AssetLogStatus::NotFunctioning),
+                    comment: None,
+                    r#type: None,
+                    reason_id: None,
+                },
+            ),
+            Err(InsertAssetLogError::ReasonInvalidForStatus)
+        );
+
+        // Check adding log with comments_required reason but no comment fails
+        let reason_with_comments = service
+            .insert_asset_log_reason(
+                &ctx,
+                InsertAssetLogReason {
+                    id: "test_reason_with_comments".to_string(),
+                    asset_log_status: AssetLogStatus::NotFunctioning,
+                    reason: "requires comment".to_string(),
+                    comments_required: true,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(reason_with_comments.id, "test_reason_with_comments");
+
+        // Should fail without comment
+        assert_eq!(
+            service.insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: "test_id_3".to_string(),
+                    asset_id: mock_asset_a().id,
+                    status: Some(AssetLogStatus::NotFunctioning),
+                    comment: None,
+                    r#type: None,
+                    reason_id: Some("test_reason_with_comments".to_string()),
+                },
+            ),
+            Err(InsertAssetLogError::CommentRequiredForReason)
+        );
+
+        // Should fail with empty comment
+        assert_eq!(
+            service.insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: "test_id_3".to_string(),
+                    asset_id: mock_asset_a().id,
+                    status: Some(AssetLogStatus::NotFunctioning),
+                    comment: Some("   ".to_string()),
+                    r#type: None,
+                    reason_id: Some("test_reason_with_comments".to_string()),
+                },
+            ),
+            Err(InsertAssetLogError::CommentRequiredForReason)
+        );
+
+        // Should succeed with valid comment
+        let asset_log = service
+            .insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: "test_id_3".to_string(),
+                    asset_id: mock_asset_a().id,
+                    status: Some(AssetLogStatus::NotFunctioning),
+                    comment: Some("This is a valid comment".to_string()),
+                    r#type: None,
+                    reason_id: Some("test_reason_with_comments".to_string()),
+                },
+            )
+            .unwrap();
+
+        assert_eq!(asset_log.id, "test_id_3");
     }
 }

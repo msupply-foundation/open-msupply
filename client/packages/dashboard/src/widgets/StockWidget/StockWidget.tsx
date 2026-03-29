@@ -23,8 +23,9 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { ExpiringStockSummary } from './ExpiringStockSummary';
 import { StockLevelsSummary } from './StockLevelsSummary';
+import { useDashboardPanels } from '../../hooks';
 
-export const StockWidget = () => {
+export const StockWidget = ({ widgetContext }: { widgetContext: string }) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const modalControl = useToggle(false);
@@ -96,6 +97,19 @@ export const StockWidget = () => {
     ]
   );
 
+  const corePanels = [
+    <ExpiringStockSummary
+      key={`${widgetContext}-expiring-stock`}
+      panelContext={`${widgetContext}-expiring-stock`}
+    />,
+    <StockLevelsSummary
+      key={`${widgetContext}-'stock-levels'`}
+      panelContext={`${widgetContext}-'stock-levels'`}
+    />,
+  ];
+
+  const panels = useDashboardPanels(corePanels, widgetContext);
+
   return (
     <Widget title={t('inventory-management')}>
       <Grid
@@ -104,10 +118,7 @@ export const StockWidget = () => {
         flex={1}
         flexDirection="column"
       >
-        <Grid>
-          <ExpiringStockSummary />
-          <StockLevelsSummary />
-        </Grid>
+        {panels}
         <Grid
           flex={1}
           container

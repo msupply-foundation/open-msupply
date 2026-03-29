@@ -65,7 +65,7 @@ export const QuantityReturnedTableComponent = ({
             selectedId={row.itemVariantId}
             itemId={row.item.id}
             disabled={isDisabled}
-            width={"100%"}
+            width={'100%'}
             onChange={variant =>
               updateLine({
                 ...row,
@@ -87,18 +87,20 @@ export const QuantityReturnedTableComponent = ({
         size: 130,
         Cell: ({ cell, row: { original: row } }) => {
           const value = cell.getValue<Date | null>();
-          return <ExpiryDateInput
-            value={value}
-            onChange={newValue =>
-              updateLine({
-                ...row,
-                expiryDate: newValue
-                  ? Formatter.naiveDate(new Date(newValue))
-                  : null,
-              })
-            }
-            disabled={isDisabled}
-          />
+          return (
+            <ExpiryDateInput
+              value={value}
+              onChange={newValue =>
+                updateLine({
+                  ...row,
+                  expiryDate: newValue
+                    ? Formatter.naiveDate(new Date(newValue))
+                    : null,
+                })
+              }
+              disabled={isDisabled}
+            />
+          );
         },
       },
       {
@@ -116,15 +118,19 @@ export const QuantityReturnedTableComponent = ({
           <NumberInputCell
             cell={cell}
             disabled={isDisabled}
-            defaultValue={0}
-            updateFn={packSize => updateLine({
-              ...row,
-              packSize,
-              volumePerPack: getVolumePerPackFromVariant({
+            defaultValue={1}
+            updateFn={packSize =>
+              updateLine({
                 ...row,
                 packSize,
-              }) ?? 0,
-            })}
+                volumePerPack:
+                  getVolumePerPackFromVariant({
+                    ...row,
+                    packSize,
+                  }) ?? 0,
+              })
+            }
+            min={1}
           />
         ),
       },
@@ -160,7 +166,7 @@ export const QuantityReturnedTableComponent = ({
             decimalLimit={10}
           />
         ),
-      }
+      },
     ],
     [lines, showItemVariantsColumn]
   );

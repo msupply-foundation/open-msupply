@@ -32,7 +32,8 @@ import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
-import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
+import { StoreWastagePanel } from './StorageConfigPanel';
+import { DraftVaccineCourse } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
 const getDemographicOptions = (demographics: DemographicNode[]) => {
@@ -73,7 +74,7 @@ const Row = ({
 );
 
 interface VaccineCourseEditModalProps {
-  vaccineCourse: VaccineCourseFragment | null;
+  vaccineCourseId: string | null;
   isOpen: boolean;
   onClose: () => void;
   programId: string | undefined;
@@ -88,7 +89,7 @@ function doseIndex(
 }
 
 export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
-  vaccineCourse,
+  vaccineCourseId,
   isOpen,
   onClose,
   programId,
@@ -104,12 +105,11 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     query: { isLoading },
     isDirty,
     resetDraft,
-  } = useVaccineCourse(vaccineCourse?.id ?? undefined);
+  } = useVaccineCourse(vaccineCourseId ?? undefined);
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const doses = draft.vaccineCourseDoses ?? [];
 
   const { data: demographicData } = useDemographicData.demographics.list();
-
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
@@ -157,7 +157,8 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         onClose();
       }
     } catch (e) {
-      error(t('error.failed-to-save-vaccine-course'))();
+      error(String(e))();
+      resetDraft();
       console.error(e);
     }
   };
@@ -165,6 +166,12 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   const isValid =
     draft.name.trim() &&
     !draft.vaccineCourseDoses?.some(dose => !dose.label.trim());
+  const disable =
+    !isDirty ||
+    !programId ||
+    !isValid ||
+    draft.wastageRate === undefined ||
+    draft.coverageRate === undefined;
 
   const modalContent = isLoading ? (
     <BasicSpinner />
@@ -194,22 +201,30 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         </Row>
         <Row label={t('label.coverage-rate')}>
           <NumericTextInput
-            value={draft?.coverageRate ?? 1}
+            value={draft?.coverageRate}
             fullWidth
             onChange={value => updatePatch({ coverageRate: value })}
             endAdornment="%"
             decimalLimit={1}
+            max={100}
           />
         </Row>
         <Row label={t('label.wastage-rate')}>
           <NumericTextInput
-            value={draft?.wastageRate ?? 1}
+            value={draft?.wastageRate}
             fullWidth
             onChange={value => updatePatch({ wastageRate: value })}
             endAdornment="%"
             decimalLimit={1}
+            max={100}
           />
         </Row>
+        <Box display="flex" justifyContent="flex-end" paddingTop={1}>
+          <StoreWastagePanel
+            storeConfigs={draft.storeConfigs ?? []}
+            updatePatch={updatePatch}
+          />
+        </Box>
         <Row label={t('label.vaccine-items')}>
           <VaccineItemSelect draft={draft} onChange={updatePatch} />
         </Row>
@@ -246,13 +261,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           : t('heading.edit-vaccine-course')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      okButton={
-        <DialogButton
-          disabled={!isDirty || !programId || !isValid}
-          variant="ok"
-          onClick={save}
-        />
-      }
+      okButton={<DialogButton disabled={disable} variant="ok" onClick={save} />}
       height={900}
       width={1100}
       slideAnimation={false}
@@ -393,9 +402,7 @@ const VaccineCourseDoseTable = ({
     columns,
     data: doses,
     enableRowSelection: false,
-    noDataElement: (
-      <NothingHere body={t('message.add-a-dose')} />
-    ),
+    noDataElement: <NothingHere body={t('message.add-a-dose')} />,
   });
 
   return (

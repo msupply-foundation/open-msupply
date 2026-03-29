@@ -3,21 +3,30 @@ import {
   ApiException,
   RouteBuilder,
   StatsPanel,
+  useAuthContext,
   useFormatNumber,
   usePreferences,
   useQueryClient,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useDashboard } from '../../api';
 import { AppRoute } from '@openmsupply-client/config';
+import { useItemCounts } from '../../api';
+import { DASHBOARD, ITEMS } from '../../api/hooks/keys';
 
-const LOW_MOS_THRESHOLD = 3;
+const DEFAULT_LOW_MOS_THRESHOLD = 3;
+const DEFAULT_HIGH_MOS_THRESHOLD = 6;
 
-export const StockLevelsSummary = () => {
+interface StockLevelsSummaryProps {
+  panelContext: string;
+}
+
+export const StockLevelsSummary = ({
+  panelContext,
+}: StockLevelsSummaryProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
   const queryClient = useQueryClient();
-  const dashboardApi = useDashboard.utils.api();
+  const { store } = useAuthContext();
   const {
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
       outOfStockProducts,
@@ -25,57 +34,71 @@ export const StockLevelsSummary = () => {
     numberOfMonthsThresholdToShowLowStockAlertsForProducts: lowStockAlert,
   } = usePreferences();
 
-  const {
-    data: itemCountsData,
-    error: itemCountsError,
-    isLoading: isItemStatsLoading,
-    isError: hasItemStatsError,
-  } = useDashboard.statistics.item(LOW_MOS_THRESHOLD);
+  const lowMosThreshold =
+    store?.preferences?.monthsUnderstock ?? DEFAULT_LOW_MOS_THRESHOLD;
+  const highMosThreshold =
+    store?.preferences?.monthsOverstock ?? DEFAULT_HIGH_MOS_THRESHOLD;
+
+  const { stats, error, isLoading, isError } = useItemCounts(
+    lowMosThreshold,
+    highMosThreshold
+  );
 
   useEffect(() => {
-    queryClient.invalidateQueries(dashboardApi.keys.items());
+    queryClient.invalidateQueries([DASHBOARD, ITEMS]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outOfStockProducts, lowStockAlert, overStockAlert]);
+  }, [
+    outOfStockProducts,
+    lowStockAlert,
+    overStockAlert,
+    lowMosThreshold,
+    highMosThreshold,
+  ]);
 
   return (
     <StatsPanel
-      error={itemCountsError as ApiException}
-      isError={hasItemStatsError}
-      isLoading={isItemStatsLoading}
+      error={error as ApiException}
+      isError={isError}
+      isLoading={isLoading}
       title={t('heading.stock-levels')}
+      panelContext={panelContext}
       stats={[
         {
           label: t('label.total-items', {
-            count: Math.round(itemCountsData?.total || 0),
+            count: Math.round(stats?.total || 0),
           }),
-          value: formatNumber.round(itemCountsData?.total || 0),
+          value: formatNumber.round(stats?.total || 0),
           link: RouteBuilder.create(AppRoute.Catalogue)
             .addPart(AppRoute.Items)
             .build(),
+          statContext: `${panelContext}-total-items`,
         },
         {
           label: t('label.items-no-stock', {
-            count: Math.round(itemCountsData?.noStock || 0),
+            count: Math.round(stats?.noStock || 0),
           }),
-          value: formatNumber.round(itemCountsData?.noStock || 0),
+          value: formatNumber.round(stats?.noStock || 0),
           link: RouteBuilder.create(AppRoute.Catalogue)
             .addPart(AppRoute.Items)
             .addQuery({
               stockStatus: 'outOfStock',
             })
             .build(),
+          statContext: `${panelContext}-items-no-stock`,
         },
         {
           label: t('label.low-stock-items', {
-            count: Math.round(itemCountsData?.lowStock || 0),
+            count: Math.round(stats?.lowStock || 0),
+            num: lowMosThreshold,
           }),
-          value: formatNumber.round(itemCountsData?.lowStock || 0),
+          value: formatNumber.round(stats?.lowStock || 0),
           link: RouteBuilder.create(AppRoute.Catalogue)
             .addPart(AppRoute.Items)
             .addQuery({
-              maxMonthsOfStock: 3,
+              maxMonthsOfStock: lowMosThreshold,
             })
             .build(),
+          statContext: `${panelContext}-low-stock-items`,
         },
         ...(overStockAlert
           ? [
@@ -83,47 +106,45 @@ export const StockLevelsSummary = () => {
                 label: t('label.overstocked-products', {
                   num: overStockAlert,
                 }),
-                value: formatNumber.round(
-                  itemCountsData?.productsOverstocked || 0
-                ),
+                value: formatNumber.round(stats?.productsOverstocked || 0),
                 link: RouteBuilder.create(AppRoute.Catalogue)
                   .addPart(AppRoute.Items)
                   .addQuery({
                     minMonthsOfStock: overStockAlert,
                   })
                   .build(),
+                statContext: `${panelContext}-overstocked-products`,
               },
             ]
           : []),
         {
-          label: t('label.more-than-six-months-stock-items', {
-            count: Math.round(itemCountsData?.moreThanSixMonthsStock || 0),
+          label: t('label.high-stock-items', {
+            count: Math.round(stats?.highStock || 0),
+            num: highMosThreshold,
           }),
-          value: formatNumber.round(
-            itemCountsData?.moreThanSixMonthsStock || 0
-          ),
+          value: formatNumber.round(stats?.highStock || 0),
           link: RouteBuilder.create(AppRoute.Catalogue)
             .addPart(AppRoute.Items)
             .addQuery({
-              minMonthsOfStock: 6,
+              minMonthsOfStock: highMosThreshold,
             })
             .build(),
+          statContext: `${panelContext}-over-six-months-stock`,
         },
         ...(outOfStockProducts
           ? [
               {
                 label: t('label.out-of-stock-products', {
-                  count: Math.round(itemCountsData?.outOfStockProducts || 0),
+                  count: Math.round(stats?.outOfStockProducts || 0),
                 }),
-                value: formatNumber.round(
-                  itemCountsData?.outOfStockProducts || 0
-                ),
+                value: formatNumber.round(stats?.outOfStockProducts || 0),
                 link: RouteBuilder.create(AppRoute.Catalogue)
                   .addPart(AppRoute.Items)
                   .addQuery({
                     stockStatus: 'outOfStockWithRecentConsumption',
                   })
                   .build(),
+                statContext: `${panelContext}-out-of-stock-products`,
               },
             ]
           : []),
@@ -132,11 +153,11 @@ export const StockLevelsSummary = () => {
               {
                 label: t('label.products-at-risk-of-being-out-of-stock', {
                   count: Math.round(
-                    itemCountsData?.productsAtRiskOfBeingOutOfStock || 0
+                    stats?.productsAtRiskOfBeingOutOfStock || 0
                   ),
                 }),
                 value: formatNumber.round(
-                  itemCountsData?.productsAtRiskOfBeingOutOfStock || 0
+                  stats?.productsAtRiskOfBeingOutOfStock || 0
                 ),
                 link: RouteBuilder.create(AppRoute.Catalogue)
                   .addPart(AppRoute.Items)
@@ -144,6 +165,7 @@ export const StockLevelsSummary = () => {
                     productsAtRiskOfBeingOutOfStock: true,
                   })
                   .build(),
+                statContext: `${panelContext}-products-at-risk-of-stockout`,
               },
             ]
           : []),

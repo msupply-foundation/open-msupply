@@ -3,12 +3,11 @@ import {
   ArrayUtils,
   Box,
   PropertyInput,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
   useTranslation,
-  AssetPropertyFilterInput,
   InlineSpinner,
 } from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
@@ -83,14 +82,14 @@ const Row = ({
   children,
   tooltip,
   label,
-  isGaps,
+  isExtraSmallScreen,
 }: {
   children: React.ReactNode;
   tooltip?: string;
   label: string;
-  isGaps: boolean;
+  isExtraSmallScreen: boolean;
 }) => {
-  if (!isGaps)
+  if (!isExtraSmallScreen)
     return (
       <Box paddingTop={1.5}>
         <InputWithLabelRow
@@ -139,20 +138,13 @@ const Row = ({
 
 export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation();
-  const isGaps = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
-  const filterBy: AssetPropertyFilterInput = {
-    ...(draft?.assetCategory?.id && {
-      assetCategoryId: { equalAny: [draft.assetCategory.id] },
-    }),
-    ...(draft?.assetClass?.id && {
-      assetClassId: { equalAny: [draft.assetClass.id] },
-    }),
-    ...(draft?.assetType?.id && {
-      assetTypeId: { equalAny: [draft.assetType.id] },
-    }),
-  };
-  const { data: assetProperties, isLoading } = useAssetProperties(filterBy);
+  const { data: assetProperties, isLoading } = useAssetProperties({
+    assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },
+    assetClassId: { equalAnyOrNull: [draft?.assetClass?.id ?? ''] },
+    assetTypeId: { equalAnyOrNull: [draft?.assetType?.id ?? ''] },
+  });
 
   if (!draft) return null;
   if (isLoading)
@@ -192,7 +184,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                           ? t('messages.catalogue-property')
                           : undefined
                       }
-                      isGaps={isGaps}
+                      isExtraSmallScreen={isExtraSmallScreen}
                     >
                       <PropertyInput
                         valueType={property.valueType}
@@ -208,7 +200,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                         }
                         disabled={isCatalogue}
                         textSx={
-                          isGaps
+                          isExtraSmallScreen
                             ? {
                                 backgroundColor: theme =>
                                   isCatalogue
