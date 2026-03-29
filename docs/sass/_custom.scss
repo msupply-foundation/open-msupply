@@ -767,15 +767,6 @@ body.dark {
 
 .landing-page {
   padding: 2rem 3rem 2rem;
-
-  > h1 {
-    font-weight: 700;
-    font-size: $font-size-base * 2;
-    color: $body-color;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 3px solid $primary;
-  }
 }
 
 .landing-columns {
@@ -878,11 +869,6 @@ body.dark {
 
 // Dark mode
 body.dark {
-  .landing-page > h1 {
-    color: $body-color-dark;
-    border-bottom-color: $link-color-dark;
-  }
-
   .landing-block {
     background: rgba(lighten($gray-800, 5%), 0.5);
     border-color: rgba($gray-500, 0.2);
