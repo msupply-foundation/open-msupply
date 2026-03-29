@@ -73,9 +73,6 @@ export const ShrinkableBaseButton = React.forwardRef<
             isRtl={isRtl}
             aria-label={label}
             onClick={onClick}
-            onKeyDown={(event: React.KeyboardEvent<HTMLButtonElement>) => {
-              if (event.code === 'Enter' && !!onClick) onClick({} as any);
-            }}
             startIcon={shrink ? null : startIcon}
             {...props}
           >

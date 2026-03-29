@@ -84,6 +84,7 @@ fn generate_line(
         batch: None,
         expiry_date: None,
         manufacture_date: None,
+        purchase_order_line_id: None,
         item_variant_id: None,
         location_id: None,
         foreign_currency_price_before_tax: None,

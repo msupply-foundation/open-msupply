@@ -463,7 +463,7 @@ fn from_legacy_sent_datetime(
     status: &LegacyRequisitionStatus,
 ) -> Option<NaiveDateTime> {
     match r#type {
-        RequisitionType::Request => {
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => {
             // In OG, a finalised "fn" request requisition is the equivalent of a "sent" request requisition in OMS.
             // There are no date/time fields in OG requisition table for this, there are logs though. Hence using last_modified_at.
             if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
@@ -487,7 +487,7 @@ fn from_legacy_finalised_datetime(
     status: &LegacyRequisitionStatus,
 ) -> Option<NaiveDateTime> {
     match r#type {
-        RequisitionType::Request => None,
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => None,
         RequisitionType::Response => {
             if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
                 Some(
@@ -508,9 +508,11 @@ fn to_legacy_last_modified_at(
     finalised_datetime: Option<NaiveDateTime>,
 ) -> i64 {
     match r#type {
-        RequisitionType::Request => sent_datetime
-            .map(|time| time.and_utc().timestamp())
-            .unwrap_or(0),
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => {
+            sent_datetime
+                .map(|time| time.and_utc().timestamp())
+                .unwrap_or(0)
+        }
         RequisitionType::Response => finalised_datetime
             .map(|time| time.and_utc().timestamp())
             .unwrap_or(0),
@@ -521,6 +523,8 @@ fn from_legacy_type(t: &LegacyRequisitionType) -> Option<RequisitionType> {
     let t = match t {
         LegacyRequisitionType::Response => RequisitionType::Response,
         LegacyRequisitionType::Request => RequisitionType::Request,
+        LegacyRequisitionType::Im => RequisitionType::Imprest,
+        LegacyRequisitionType::Sh => RequisitionType::StockHistory,
         _ => return None,
     };
     Some(t)
@@ -530,6 +534,8 @@ fn to_legacy_type(t: &RequisitionType) -> LegacyRequisitionType {
     match t {
         RequisitionType::Request => LegacyRequisitionType::Request,
         RequisitionType::Response => LegacyRequisitionType::Response,
+        RequisitionType::Imprest => LegacyRequisitionType::Im,
+        RequisitionType::StockHistory => LegacyRequisitionType::Sh,
     }
 }
 
@@ -540,20 +546,22 @@ fn from_legacy_status(
     let status = match r#type {
         LegacyRequisitionType::Request => match status {
             LegacyRequisitionStatus::Sg => RequisitionStatus::Draft,
-            &LegacyRequisitionStatus::Cn => RequisitionStatus::Sent,
+            LegacyRequisitionStatus::Cn => RequisitionStatus::Sent,
             LegacyRequisitionStatus::Fn => RequisitionStatus::Sent,
             // Note, nw shouldn't be possible but is seen historical data:
             LegacyRequisitionStatus::Nw => RequisitionStatus::Draft,
             LegacyRequisitionStatus::Others => return None,
         },
-        LegacyRequisitionType::Response => match status {
-            LegacyRequisitionStatus::Sg => RequisitionStatus::New,
-            &LegacyRequisitionStatus::Cn => RequisitionStatus::New,
-            LegacyRequisitionStatus::Fn => RequisitionStatus::Finalised,
-            // Note, nw shouldn't be possible but is seen historical data:
-            LegacyRequisitionStatus::Nw => RequisitionStatus::New,
-            LegacyRequisitionStatus::Others => return None,
-        },
+        LegacyRequisitionType::Response | LegacyRequisitionType::Im | LegacyRequisitionType::Sh => {
+            match status {
+                LegacyRequisitionStatus::Sg => RequisitionStatus::New,
+                LegacyRequisitionStatus::Cn => RequisitionStatus::New,
+                LegacyRequisitionStatus::Fn => RequisitionStatus::Finalised,
+                // Note, nw shouldn't be possible but is seen historical data:
+                LegacyRequisitionStatus::Nw => RequisitionStatus::New,
+                LegacyRequisitionStatus::Others => return None,
+            }
+        }
         _ => return None,
     };
     Some(status)
@@ -571,12 +579,14 @@ fn to_legacy_status(
             RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
             _ => return None,
         },
-        RequisitionType::Response => match status {
-            RequisitionStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
-            RequisitionStatus::New => LegacyRequisitionStatus::Sg,
-            RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
-            _ => return None,
-        },
+        RequisitionType::Response | RequisitionType::Imprest | RequisitionType::StockHistory => {
+            match status {
+                RequisitionStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
+                RequisitionStatus::New => LegacyRequisitionStatus::Sg,
+                RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
+                _ => return None,
+            }
+        }
     };
     Some(status)
 }
@@ -621,6 +631,7 @@ mod tests {
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        SyncAction, SyncBufferRow,
     };
     use serde_json::json;
     use util::assert_variant;
@@ -650,6 +661,70 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_wp_status_errors() {
+        let translator = RequisitionTranslation {};
+        let (_, connection, _, _) =
+            setup_all("test_requisition_wp_status_errors", MockDataInserts::none()).await;
+
+        // An imprest requisition with "wp" (web in progress) status should error
+        // because "wp" deserializes to LegacyRequisitionStatus::Others which is unsupported
+        let wp_imprest_json = r#"{
+          "ID": "WP_TEST_RECORD_ID",
+          "date_stock_take": "2021-03-15",
+          "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+          "name_ID": "name_store_a",
+          "status": "wp",
+          "date_entered": "2021-03-16",
+          "nsh_custInv_ID": "",
+          "daysToSupply": 30,
+          "store_ID": "store_b",
+          "type": "im",
+          "date_order_received": "0000-00-00",
+          "previous_csh_id": "",
+          "serial_number": 20,
+          "requester_reference": "",
+          "comment": "",
+          "colour": 0,
+          "custom_data": null,
+          "linked_requisition_id": "",
+          "linked_purchase_order_ID": "",
+          "authorisationStatus": "",
+          "thresholdMOS": 0,
+          "orderType": "",
+          "periodID": "",
+          "programID": "",
+          "lastModifiedAt": 1615900000,
+          "is_emergency": false,
+          "isRemoteOrder": false,
+          "om_created_datetime": "",
+          "om_sent_datetime": "",
+          "om_finalised_datetime": "",
+          "om_expected_delivery_date": "0000-00-00",
+          "om_max_months_of_stock": 0,
+          "om_status": "",
+          "om_colour": "",
+          "oms_fields": {}
+        }"#;
+
+        let sync_buffer_row = SyncBufferRow {
+            table_name: "requisition".to_string(),
+            record_id: "WP_TEST_RECORD_ID".to_string(),
+            data: wp_imprest_json.to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        assert!(translator.should_translate_from_sync_record(&sync_buffer_row));
+        let result =
+            translator.try_translate_from_upsert_sync_record(&connection, &sync_buffer_row);
+        assert!(
+            result.is_err(),
+            "Expected error for unsupported 'wp' status on imprest requisition, got: {:?}",
+            result
+        );
     }
 
     #[actix_rt::test]

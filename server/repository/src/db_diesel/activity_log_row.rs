@@ -52,13 +52,13 @@ pub enum ActivityLogType {
     RequisitionStatusSent,
     RequisitionApproved,
     RequisitionStatusFinalised,
-    StockLocationChange,
-    StockCostPriceChange,
-    StockSellPriceChange,
-    StockExpiryDateChange,
-    StockBatchChange,
-    StockOnHold,
-    StockOffHold,
+    StockLocationChange,   // Depreciated
+    StockCostPriceChange,  // Depreciated
+    StockSellPriceChange,  // Depreciated
+    StockExpiryDateChange, // Depreciated
+    StockBatchChange,      // Depreciated
+    StockOnHold,           // Depreciated
+    StockOffHold,          // Depreciated
     Repack,
     PrescriptionCreated,
     PrescriptionDeleted,
@@ -102,6 +102,7 @@ pub enum ActivityLogType {
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
     VolumePerPackChanged,
+    StockLineEdit,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,

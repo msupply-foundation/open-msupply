@@ -124,7 +124,7 @@ mod test {
             mock_item_a, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
             mock_stock_line_a, MockDataInserts,
         },
-        InvoiceLine, StockLine, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, StockLine, StorageConnectionManager,
     };
     use serde_json::json;
 
@@ -249,6 +249,7 @@ mod test {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: None,
                 stock_line_option: None,
             }
