@@ -409,35 +409,6 @@ export const InboundLineEditCards = ({
         includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
       },
       {
-        id: 'outstandingPacks',
-        header: t('label.outstanding-packs'),
-        size: 120,
-        columnGroup: 'quantities',
-        includeColumn: poOutstandingPacks != null,
-        accessorFn: () => poOutstandingPacks ?? 0,
-        Cell: ({ cell }) => (
-          <NumberInputCell cell={cell} updateFn={() => {}} disabled />
-        ),
-        defaultHideOnMobile: true,
-      },
-      {
-        accessorKey: 'shippedPackSize',
-        header: t('label.shipped-pack-size'),
-        size: 120,
-        columnGroup: 'quantities',
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              updateDraftLine({ shippedPackSize: value, id: row.original.id });
-            }}
-            disabled={isDisabled}
-            min={1}
-          />
-        ),
-        defaultHideOnMobile: true,
-      },
-      {
         accessorKey: 'shippedNumberOfPacks',
         header: t('label.shipped-number-of-packs'),
         size: 100,
