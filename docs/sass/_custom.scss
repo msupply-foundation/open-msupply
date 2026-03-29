@@ -15,8 +15,9 @@
   height: calc(100vh - 3.5625rem);
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 1rem 0.75rem 1.5rem 1.75rem;
-  border-right: 1px solid $gray-200;
+  padding: 1rem 1.25rem 1.5rem 1.75rem;
+  border-right: none;
+  background: $gray-100;
   width: 320px;
   min-width: 320px;
   flex-shrink: 0;
@@ -59,6 +60,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.25rem;
   border-radius: 0.25rem;
 }
 
@@ -112,14 +114,14 @@ $sidebar-indent: 1rem;
 
   &:hover {
     color: $link-color;
-    background: $gray-100;
+    background: $white;
     text-decoration: none;
   }
 
   &.active {
     color: $primary;
     font-weight: 600;
-    background: rgba($primary, 0.08);
+    background: $white;
   }
 }
 
@@ -149,20 +151,25 @@ $sidebar-indent: 1rem;
 .sidebar-chevron-btn {
   display: flex;
   align-items: center;
-  padding: 0.2rem 0.4rem;
+  justify-content: center;
+  padding: 0.3rem 0.5rem;
   background: none;
   border: none;
   cursor: pointer;
-  color: $gray-500;
+  color: $gray-400;
   flex-shrink: 0;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
 
   &:hover {
     color: $body-color;
   }
 }
 
-// Chevron rotation
+// Chevron icon
 .sidebar-chevron {
+  width: 18px;
+  height: 18px;
   transition: transform 0.2s ease;
 }
 
@@ -173,7 +180,7 @@ $sidebar-indent: 1rem;
 // Dark mode
 body.dark {
   .docs-sidebar {
-    border-right-color: $border-dark;
+    background: rgba($white, 0.03);
     scrollbar-color: transparent transparent;
 
     &:hover {
@@ -190,12 +197,12 @@ body.dark {
 
     &:hover {
       color: $link-color-dark;
-      background: $body-overlay-dark;
+      background: rgba($white, 0.05);
     }
 
     &.active {
       color: $link-color-dark;
-      background: rgba($link-color-dark, 0.1);
+      background: rgba($white, 0.07);
     }
   }
 
@@ -250,6 +257,26 @@ body.dark {
   > .content > .row {
     margin-left: 0;
     margin-right: 0;
+  }
+}
+
+// Child section cards — background instead of border
+.card-list .card {
+  border: none;
+  background: $gray-100;
+  border-radius: 0.5rem;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba($primary, 0.06);
+  }
+}
+
+body.dark .card-list .card {
+  background: $body-overlay-dark;
+
+  &:hover {
+    background: rgba($link-color-dark, 0.08);
   }
 }
 
@@ -439,7 +466,6 @@ body.dark .docs-breadcrumbs {
   justify-content: space-between;
   margin-top: 3rem;
   padding-top: 1.5rem;
-  border-top: 1px solid $gray-200;
 }
 
 .docs-nav-prev,
@@ -450,13 +476,14 @@ body.dark .docs-breadcrumbs {
     display: block;
     text-decoration: none;
     padding: 0.75rem 1rem;
-    border: 1px solid $gray-200;
+    border: 1px solid transparent;
     border-radius: 0.5rem;
+    background: $gray-100;
     transition: border-color 0.15s, background 0.15s;
 
     &:hover {
       border-color: $primary;
-      background: rgba($primary, 0.04);
+      background: rgba($primary, 0.06);
       text-decoration: none;
     }
   }
@@ -481,17 +508,14 @@ body.dark .docs-breadcrumbs {
 }
 
 body.dark {
-  .docs-nav-footer {
-    border-top-color: $border-dark;
-  }
-
   .docs-nav-prev a,
   .docs-nav-next a {
-    border-color: $border-dark;
+    border-color: transparent;
+    background: $body-overlay-dark;
 
     &:hover {
       border-color: $link-color-dark;
-      background: rgba($link-color-dark, 0.06);
+      background: rgba($link-color-dark, 0.08);
     }
   }
 
@@ -505,7 +529,6 @@ body.dark {
 .docs-edit-page {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid $gray-200;
 
   a {
     display: inline-flex;
@@ -522,8 +545,6 @@ body.dark {
 }
 
 body.dark .docs-edit-page {
-  border-top-color: $border-dark;
-
   a {
     color: $gray-500;
 
@@ -636,6 +657,10 @@ body.dark #suggestions b {
   color: $gray-500;
   border-bottom: 1px solid $gray-200;
 
+  span {
+    color: $gray-500;
+  }
+
   a {
     color: $primary;
     text-decoration: none;
@@ -733,8 +758,12 @@ body.dark {
     color: $gray-500;
   }
 
-  .search-header {
+  #suggestions .search-header {
     border-bottom-color: $border-dark;
+
+    span {
+      color: $body-color-dark !important;
+    }
 
     a {
       color: $link-color-dark;
@@ -753,10 +782,43 @@ body.dark {
 // ── Footer ──
 
 .footer {
-  margin-left: 320px;
-  margin-right: 260px;
   font-size: $font-size-sm;
-  padding: 1.5rem 5rem;
+  border-top: 1px solid $gray-200 !important;
+  color: $gray-400;
+  background-color: $gray-100 !important;
+  text-align: center;
+  padding: 1.25rem 2rem;
+
+  // Override Bootstrap grid — just centre everything
+  .container,
+  .row,
+  [class^="col"] {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    justify-content: center;
+    text-align: center;
+    flex: none;
+  }
+
+  // Hide the empty nav column
+  .order-first {
+    display: none;
+  }
+}
+
+// Docs pages: centre in the visible area right of sidebar
+.docs.list .footer {
+  margin-left: 320px;
+  // Compensate so text is viewport-centred
+  padding-right: 320px;
+}
+
+body.dark .footer {
+  border-top-color: $border-dark !important;
+  background-color: $body-bg-dark !important;
+  color: $gray-600;
 }
 
 // ── Landing page ──
