@@ -35,11 +35,6 @@ edit_page = true
 docs_repo = "https://github.com/msupply-foundation/open-msupply"
 repo_branch = "develop"
 
-[[extra.menu.main]]
-name = "Docs"
-section = ""
-url = "/"
-weight = 10
 
 [extra.footer]
 info = 'Built with <a href="https://www.getzola.org/">Zola</a> and <a href="https://github.com/aaranxu/adidoks">AdiDoks</a>'
