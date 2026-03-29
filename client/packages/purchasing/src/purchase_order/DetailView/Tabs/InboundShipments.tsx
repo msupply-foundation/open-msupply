@@ -10,6 +10,7 @@ import {
   useNonPaginatedMaterialTable,
   MaterialTable,
   InvoiceNodeStatus,
+  InvoiceTypeInput,
   NumUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -29,9 +30,9 @@ export const InboundShipments = () => {
     offset: 0,
     filterBy: {
       purchaseOrderId: { equalTo: purchaseOrderId || '' },
-      type: { equalTo: 'INBOUND' },
     },
     sortBy: { key: 'number', direction: 'desc' as 'asc' | 'desc' },
+    type: [InvoiceTypeInput.InboundShipmentExternal],
   };
 
   const {
@@ -89,7 +90,7 @@ export const InboundShipments = () => {
 
   const handleRowClick = (row: InboundRowFragment) => {
     const path = RouteBuilder.create(AppRoute.Replenishment)
-      .addPart(AppRoute.InboundShipment)
+      .addPart(AppRoute.InboundShipmentExternal)
       .addPart(row.id)
       .build();
     navigate(path);

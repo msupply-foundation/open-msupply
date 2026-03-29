@@ -3407,7 +3407,7 @@ if not hasOmsupplyStandaloneInstalled then
 	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone");
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Path", omSupplyDesktopPath, REG_SZ);
 
-	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 end
 </Script>
 <BookMarks count="0">

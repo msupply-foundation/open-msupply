@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Box,
   ColumnDef,
   ColumnType,
+  CurrencyValueCell,
+  Currencies,
+  PurchaseOrderLineStatusNode,
   getLinesFromRow,
   TextWithTooltipCell,
   useFormatCurrency,
@@ -12,11 +15,16 @@ import { PurchaseOrderLineFragment } from '../api';
 import { usePurchaseOrderLineErrorContext } from '../context';
 import { getPurchaseOrderLineStatusTranslator } from '../../utils';
 
-export const usePurchaseOrderColumns = () => {
+export const usePurchaseOrderColumns = (currencyCode?: string) => {
   const t = useTranslation();
-  const formatCurrency = useFormatCurrency();
+  const currency = currencyCode as Currencies | undefined;
+  const formatCurrency = useFormatCurrency(currency);
   const { getError } = usePurchaseOrderLineErrorContext();
-  const lineStatusTranslator = getPurchaseOrderLineStatusTranslator(t);
+  const lineStatusTranslator = useCallback(
+    (status: PurchaseOrderLineStatusNode) =>
+      getPurchaseOrderLineStatusTranslator(t)(status),
+    [t]
+  );
 
   return useMemo((): ColumnDef<PurchaseOrderLineFragment>[] => {
     return [
@@ -101,8 +109,11 @@ export const usePurchaseOrderColumns = () => {
       },
       {
         accessorKey: 'totalCost',
-        header: t('label.total-cost'),
+        header: t('label.line-cost'),
         columnType: ColumnType.Currency,
+        Cell: props => (
+          <CurrencyValueCell {...props} currencyCode={currency} />
+        ),
         accessorFn: row => {
           const units =
             row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits ?? 0;
@@ -110,21 +121,18 @@ export const usePurchaseOrderColumns = () => {
           return (row.pricePerPackAfterDiscount ?? 0) * (units / packSize);
         },
         Footer: ({ table }) => {
-          const total = table
-            .getFilteredRowModel()
-            .rows.reduce((sum, row) => {
-              const { original } = row;
-              const units =
-                original.adjustedNumberOfUnits ??
-                original.requestedNumberOfUnits ??
-                0;
-              const packSize = original.requestedPackSize || 1;
-              return (
-                sum +
-                (original.pricePerPackAfterDiscount ?? 0) *
-                  (units / packSize)
-              );
-            }, 0);
+          const total = table.getFilteredRowModel().rows.reduce((sum, row) => {
+            const { original } = row;
+            const units =
+              original.adjustedNumberOfUnits ??
+              original.requestedNumberOfUnits ??
+              0;
+            const packSize = original.requestedPackSize || 1;
+            return (
+              sum +
+              (original.pricePerPackAfterDiscount ?? 0) * (units / packSize)
+            );
+          }, 0);
           return (
             <Box sx={{ textAlign: 'right', width: '100%' }}>
               {formatCurrency(total)}
@@ -144,5 +152,5 @@ export const usePurchaseOrderColumns = () => {
       },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getError, lineStatusTranslator]);
+  }, [getError, lineStatusTranslator, currencyCode, formatCurrency]);
 };

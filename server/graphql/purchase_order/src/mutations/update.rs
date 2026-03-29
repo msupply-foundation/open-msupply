@@ -121,6 +121,14 @@ impl UpdateInput {
     }
 }
 
+pub struct InboundShipmentsNotVerified;
+#[Object]
+impl InboundShipmentsNotVerified {
+    pub async fn description(&self) -> &str {
+        "Cannot finalise this purchase order because there are open inbound shipments that have not been delivered."
+    }
+}
+
 pub struct ItemsCannotBeOrdered(pub Vec<PurchaseOrderLine>);
 #[Object]
 impl ItemsCannotBeOrdered {
@@ -142,6 +150,7 @@ impl ItemsCannotBeOrdered {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     ItemsCannotBeOrdered(ItemsCannotBeOrdered),
+    InboundShipmentsNotVerified(InboundShipmentsNotVerified),
 }
 
 #[derive(SimpleObject)]
@@ -212,6 +221,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::ItemsCannotBeOrdered(lines) => {
             return Ok(UpdateErrorInterface::ItemsCannotBeOrdered(
                 ItemsCannotBeOrdered(lines),
+            ))
+        }
+        ServiceError::InboundShipmentsNotVerified => {
+            return Ok(UpdateErrorInterface::InboundShipmentsNotVerified(
+                InboundShipmentsNotVerified,
             ))
         }
 

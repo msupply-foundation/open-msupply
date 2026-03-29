@@ -9,7 +9,7 @@ import { useInboundApi } from '../utils/useInboundApi';
 import { DraftInboundLine } from '../../../../types';
 import { INBOUND, INBOUND_LINE } from '../document/keys';
 
-export const useSaveInboundLines = () => {
+export const useSaveInboundLines = (isExternal: boolean) => {
   const t = useTranslation();
   const queryClient = useQueryClient();
   const { invoiceId = '' } = useParams();
@@ -17,7 +17,7 @@ export const useSaveInboundLines = () => {
 
   return useMutation(
     async (lines: DraftInboundLine[]): Promise<{ errorMessage?: string }> => {
-      const result = await api.updateLines(lines);
+      const result = await api.updateLines(lines, isExternal);
 
       const allResults = [
         ...(result.batchInboundShipment.insertInboundShipmentLines || []),
