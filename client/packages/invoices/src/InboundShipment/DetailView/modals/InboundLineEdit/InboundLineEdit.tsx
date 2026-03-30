@@ -268,10 +268,15 @@ export const InboundLineEdit = ({
         line.status === InvoiceLineStatusType.Rejected
       )
         return true;
-      // Editing an already-approved line also needs authorise
+      // Editing an already-approved line needs authorise, unless
+      // the user is changing it back to pending
       if (!line.isCreated) {
         const original = data?.lines.nodes.find(l => l.id === line.id);
-        if (original?.status === InvoiceLineStatusType.Passed) return true;
+        if (
+          original?.status === InvoiceLineStatusType.Passed &&
+          line.status !== InvoiceLineStatusType.Pending
+        )
+          return true;
       }
       return false;
     });
