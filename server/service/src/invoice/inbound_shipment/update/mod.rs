@@ -1390,7 +1390,7 @@ mod test {
                 id: "status_test_rejected_line".to_string(),
                 invoice_id: delivered_invoice().id,
                 item_link_id: mock_item_a().id,
-                r#type: InvoiceLineType::StockIn,
+                r#type: InvoiceLineType::UnallocatedStock,
                 pack_size: 1.0,
                 number_of_packs: 5.0,
                 status: Some(InvoiceLineStatus::Rejected),
