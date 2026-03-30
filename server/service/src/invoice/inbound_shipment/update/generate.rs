@@ -297,14 +297,20 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
 
     let current_datetime = Utc::now().naive_utc();
     match new_status {
+        UpdateInboundShipmentStatus::Shipped => {
+            invoice.shipped_datetime = Some(current_datetime);
+        }
         UpdateInboundShipmentStatus::Delivered => {
+            invoice.shipped_datetime = invoice.shipped_datetime.or(Some(current_datetime));
             invoice.delivered_datetime = Some(current_datetime);
         }
         UpdateInboundShipmentStatus::Received => {
+            invoice.shipped_datetime = invoice.shipped_datetime.or(Some(current_datetime));
             invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
             invoice.received_datetime = Some(current_datetime);
         }
         UpdateInboundShipmentStatus::Verified => {
+            invoice.shipped_datetime = invoice.shipped_datetime.or(Some(current_datetime));
             invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
             invoice.received_datetime = invoice.received_datetime.or(Some(current_datetime));
             invoice.verified_datetime = Some(current_datetime);

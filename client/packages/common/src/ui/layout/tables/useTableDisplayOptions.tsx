@@ -41,6 +41,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   isGrouped,
   toggleGrouped,
   hasColumnFilters,
+  groupByLabel,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
@@ -59,6 +60,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   isGrouped: boolean;
   hasColumnFilters: boolean;
   toggleGrouped?: () => void;
+  groupByLabel?: string;
   getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
   getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
   isMobile?: boolean;
@@ -124,7 +126,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           <IconButton
             icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
             onClick={toggleGrouped}
-            label={t('label.group-by-item')}
+            label={groupByLabel ?? t('label.group-by-item')}
             sx={iconButtonProps}
           />
         )}
@@ -255,12 +257,16 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           : muiTableBodyRowProps;
 
       const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
-        onClick: e => {
-          const isCtrlClick = e.getModifierState(
-            EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
-          );
-          if (onRowClick) onRowClick(row.original, isCtrlClick);
-        },
+        ...(onRowClick
+          ? {
+              onClick: (e: React.MouseEvent<HTMLTableRowElement>) => {
+                const isCtrlClick = e.getModifierState(
+                  EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
+                );
+                onRowClick(row.original, isCtrlClick);
+              },
+            }
+          : {}),
         sx: {
           backgroundColor: 'inherit',
           minHeight: table.getState().density === 'compact' ? '32px' : '40px',

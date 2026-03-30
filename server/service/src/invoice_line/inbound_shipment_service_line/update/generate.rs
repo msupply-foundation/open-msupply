@@ -102,6 +102,7 @@ mod inbound_shipment_service_line_update_test {
                 .clone(),
             invoice_row: mock_inbound_shipment_a(),
             item_row: item1.clone(),
+            invoice_line_stats_row: Default::default(),
             location_row_option: None,
             stock_line_option: None,
         };
