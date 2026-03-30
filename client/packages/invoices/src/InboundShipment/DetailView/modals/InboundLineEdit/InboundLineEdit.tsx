@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   Alert,
   Divider,
@@ -7,6 +13,8 @@ import {
   DialogButton,
   useDialog,
   useNotification,
+  useDisabledNotificationToast,
+  InvoiceLineStatusType,
   ModalMode,
   useSimplifiedTabletUI,
   Box,
@@ -76,7 +84,12 @@ export const InboundLineEdit = ({
 
   const {
     query: { data },
+    hasVerifyPermission,
+    isExternal,
   } = useInboundShipment();
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
   const purchaseOrder = data?.purchaseOrder;
   const hasPurchaseOrder = !!purchaseOrder;
 
@@ -196,7 +209,13 @@ export const InboundLineEdit = ({
 
     setVariantShownForItem(effectiveItem?.id ?? null);
     setVariantAction('first');
-  }, [mode, hasVariants, draftLines.length, effectiveItem?.id, variantShownForItem]);
+  }, [
+    mode,
+    hasVariants,
+    draftLines.length,
+    effectiveItem?.id,
+    variantShownForItem,
+  ]);
 
   const onVariantSelected = useCallback(
     (variant: ItemVariantFragment) => {
@@ -240,13 +259,33 @@ export const InboundLineEdit = ({
     }
   }, [hasVariants, addDraftLine]);
 
+  // Check if saving these lines requires authorise permission
+  const saveNeedsAuthorise = () => {
+    if (!isExternal) return false;
+    return draftLines.some(line => {
+      if (
+        line.status === InvoiceLineStatusType.Passed ||
+        line.status === InvoiceLineStatusType.Rejected
+      )
+        return true;
+      // Editing an already-approved line also needs authorise
+      if (!line.isCreated) {
+        const original = data?.lines.nodes.find(l => l.id === line.id);
+        if (original?.status === InvoiceLineStatusType.Passed) return true;
+      }
+      return false;
+    });
+  };
+
   // --- Next/OK disabled logic ---
   const okNextDisabled = hasPurchaseOrder
     ? (mode === ModalMode.Update && !nextPOLine) || !selectedPOLine
     : (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   const okDisabled = hasPurchaseOrder
-    ? !selectedPOLine || draftLines.length === 0 || manualLinesWithZeroNumberOfPacks
+    ? !selectedPOLine ||
+      draftLines.length === 0 ||
+      manualLinesWithZeroNumberOfPacks
     : !currentItem || manualLinesWithZeroNumberOfPacks;
 
   const cards = (
@@ -315,6 +354,10 @@ export const InboundLineEdit = ({
           variant="next-and-ok"
           disabled={okNextDisabled || manualLinesWithZeroNumberOfPacks}
           onClick={async () => {
+            if (saveNeedsAuthorise() && !hasVerifyPermission) {
+              permissionDeniedNotification();
+              return;
+            }
             await saveLines();
             if (hasPurchaseOrder) {
               if (mode === ModalMode.Update && nextPOLine) {
@@ -340,6 +383,10 @@ export const InboundLineEdit = ({
           variant="ok"
           disabled={okDisabled}
           onClick={async () => {
+            if (saveNeedsAuthorise() && !hasVerifyPermission) {
+              permissionDeniedNotification();
+              return;
+            }
             try {
               await saveLines();
               onClose();

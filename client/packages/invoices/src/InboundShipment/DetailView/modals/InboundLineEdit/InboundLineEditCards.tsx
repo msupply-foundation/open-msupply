@@ -97,11 +97,16 @@ export const InboundLineEditCards = ({
   formatRef.current = format;
   const { store } = useAuthContext();
   const theme = useAppTheme();
-  const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
-    usePreferences();
+  const {
+    manageVaccinesInDoses,
+    allowTrackingOfStockByDonor,
+    externalInboundShipmentLinesMustBeAuthorised,
+  } = usePreferences();
 
   const {
     query: { data: inboundData },
+    hasVerifyPermission,
+    isExternal,
   } = useInboundShipment();
   const purchaseOrderId = inboundData?.purchaseOrder?.id;
   const isManualShipment =
@@ -127,7 +132,9 @@ export const InboundLineEditCards = ({
     return totalOutstandingPacks;
   }, [purchaseOrderId, item?.id, poQuery.data]);
 
-  const showLineStatus = lines.some(line => line.status != null);
+  const showLineStatus =
+    lines.some(line => line.status != null) ||
+    (isExternal && !!externalInboundShipmentLinesMustBeAuthorised);
 
   const statusMap = useMemo(
     () => ({
@@ -343,11 +350,16 @@ export const InboundLineEditCards = ({
                 ) : null;
               }}
             >
-              {Object.entries(statusMap).map(([key, { label, colour }]) => (
-                <MenuItem key={key} value={key}>
-                  <StatusChip label={label} colour={colour} />
-                </MenuItem>
-              ))}
+              {Object.entries(statusMap)
+                .filter(
+                  ([key]) =>
+                    hasVerifyPermission || key === InvoiceLineStatusType.Pending
+                )
+                .map(([key, { label, colour }]) => (
+                  <MenuItem key={key} value={key}>
+                    <StatusChip label={label} colour={colour} />
+                  </MenuItem>
+                ))}
             </Select>
           );
         },

@@ -4,7 +4,9 @@ use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
 use graphql_invoice::mutations::inbound_shipment;
 use graphql_invoice_line::mutations::inbound_shipment_line;
-use service::auth::ResourceAccessRequest;
+use graphql_types::types::InvoiceLineStatusType;
+use repository::{InvoiceLineRowRepository, InvoiceLineStatus};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::*;
 
 use crate::to_standard_error;
@@ -137,6 +139,38 @@ pub fn batch(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    // Approving/rejecting lines or editing already-approved lines requires authorise permission
+    if let Some(update_lines) = &input.update_inbound_shipment_lines {
+        let any_status_approve_or_reject = update_lines.iter().any(|line| {
+            line.status.as_ref().is_some_and(|s| {
+                matches!(
+                    s,
+                    Some(InvoiceLineStatusType::Passed) | Some(InvoiceLineStatusType::Rejected)
+                )
+            })
+        });
+
+        let needs_authorise = any_status_approve_or_reject || {
+            let repo = InvoiceLineRowRepository::new(&service_context.connection);
+            update_lines.iter().any(|line| {
+                repo.find_one_by_id(&line.id)
+                    .ok()
+                    .flatten()
+                    .map_or(false, |l| l.status == Some(InvoiceLineStatus::Passed))
+            })
+        };
+
+        if needs_authorise {
+            validate_auth(
+                ctx,
+                &ResourceAccessRequest {
+                    resource: Resource::AuthoriseInboundShipmentExternal,
+                    store_id: Some(store_id.to_string()),
+                },
+            )?;
+        }
+    }
 
     let response = service_provider
         .invoice_service

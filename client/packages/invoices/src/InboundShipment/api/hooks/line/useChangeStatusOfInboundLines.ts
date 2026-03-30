@@ -1,6 +1,7 @@
 import {
   useTranslation,
   useConfirmationModal,
+  useNotification,
   InvoiceLineStatusType,
 } from '@openmsupply-client/common';
 import { useSaveInboundLines } from './useSaveInboundLines';
@@ -20,6 +21,7 @@ export const useChangeStatusOfInboundLines = (
   resetRowSelection: () => void
 ): ((status: LineStatusAction) => void) => {
   const t = useTranslation();
+  const { error } = useNotification();
   const { isExternal } = useInboundShipment();
   const { mutateAsync } = useSaveInboundLines(isExternal);
 
@@ -29,11 +31,12 @@ export const useChangeStatusOfInboundLines = (
       status: statusMap[status],
       isUpdated: true,
     }));
-    await mutateAsync(linesToUpdate)
-      .then(() => resetRowSelection())
-      .catch(err => {
-        throw err;
-      });
+    try {
+      await mutateAsync(linesToUpdate);
+      resetRowSelection();
+    } catch (e) {
+      error(t('error.something-wrong'))();
+    }
   };
 
   const confirmAndApprove = useConfirmationModal({

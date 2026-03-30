@@ -16,6 +16,7 @@ import {
   ArrowRightIcon,
   useEditModal,
   useNotification,
+  useDisabledNotificationToast,
   usePreferences,
   useIsExtraSmallScreen,
   CheckIcon,
@@ -103,7 +104,11 @@ export const FooterComponent = ({
     query: { data },
     isDisabled,
     isExternal,
+    hasVerifyPermission,
   } = useInboundShipment();
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
   const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
     resetRowSelection
@@ -139,6 +144,10 @@ export const FooterComponent = ({
     if (data?.status === InvoiceNodeStatus.Received || isDisabled) {
       info(t('messages.cant-change-line-status-on-received-invoice'))();
       return;
+    }
+
+    if ((status === 'approve' || status === 'reject') && !hasVerifyPermission) {
+      return permissionDeniedNotification();
     }
 
     onChangeLineStatus(status);
