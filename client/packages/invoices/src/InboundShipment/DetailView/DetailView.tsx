@@ -281,7 +281,7 @@ const DetailViewInner = () => {
             value: InboundShipmentDetailTabs.Currency,
           },
           {
-            Component: <DeliveryTab showLineStatus={showLineStatus} />,
+            Component: <DeliveryTab />,
             value: InboundShipmentDetailTabs.Delivery,
           },
         ]
