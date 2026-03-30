@@ -17,6 +17,8 @@ import { useHostApi } from '../api/hooks/utils/useHostApi';
 import { useGenerateOneOffReport } from '../api/hooks/settings/useGenerateOneOffReport';
 import { LoadingButton } from '@common/components';
 import { CopyIcon, SaveIcon } from '@common/icons';
+import { ReportList } from './ReportList';
+import { NewReportModal } from './NewReportModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -400,8 +402,26 @@ export const ReportBuilder: React.FC = () => {
   const [selectedSavedReport, setSelectedSavedReport] =
     useState<SavedReportOption | null>(null);
 
+  // ── New report modal ──
+  const [isNewReportModalOpen, setIsNewReportModalOpen] = useState(false);
+  const [manualContext, setManualContext] = useState<DetectedContext>(null);
+
+  const handleNewReport = useCallback((context: DetectedContext) => {
+    setSelectedSavedReport(null);
+    setLoadedReportId(null);
+    setReportName('');
+    setQuery('');
+    setStyle('');
+    setTemplate('');
+    setHeader('');
+    setReportUrl('');
+    setError('');
+    setManualContext(context);
+  }, []);
+
   const detectedContext = useMemo(() => detectContext(query), [query]);
-  const { options, isLoading: loadingRecords } = useRecordOptions(detectedContext, storeId);
+  const effectiveContext = detectedContext ?? manualContext;
+  const { options, isLoading: loadingRecords } = useRecordOptions(effectiveContext, storeId);
   const { mutateAsync: renderReport } = useGenerateOneOffReport();
 
   // ── Fetch saved reports ──
@@ -466,6 +486,7 @@ export const ReportBuilder: React.FC = () => {
       setHeader(parsed.header);
       setReportName(report.label);
       setLoadedReportId(report.value);
+      setManualContext(null);
     },
     []
   );
@@ -586,7 +607,22 @@ export const ReportBuilder: React.FC = () => {
 
   return (
     <Box display="flex" height="100vh" overflow="hidden">
-      {/* ── Left panel: editors ── */}
+      {/* ── Column 1: report list ── */}
+      <ReportList
+        reports={savedReports}
+        isLoading={loadingSavedReports}
+        selectedReportId={selectedSavedReport?.value ?? null}
+        onSelectReport={handleLoadReport}
+        onNewReport={() => setIsNewReportModalOpen(true)}
+      />
+
+      <NewReportModal
+        open={isNewReportModalOpen}
+        onClose={() => setIsNewReportModalOpen(false)}
+        onSelect={handleNewReport}
+      />
+
+      {/* ── Column 2: editors ── */}
       <Box
         width="480px"
         minWidth="480px"
@@ -599,27 +635,6 @@ export const ReportBuilder: React.FC = () => {
         <Typography variant="h5" padding={2} paddingBottom={0}>
           Report Builder
         </Typography>
-
-        {/* ── Load saved report ── */}
-        <Box paddingX={2} paddingTop={1.5}>
-          <Autocomplete
-            loading={loadingSavedReports}
-            options={savedReports}
-            value={selectedSavedReport}
-            isOptionEqualToValue={(option, value) =>
-              option.value === value.value
-            }
-            onChange={(_e, selected) =>
-              handleLoadReport(selected as SavedReportOption | null)
-            }
-            noOptionsText="No saved reports found"
-            width="100%"
-            sx={{ width: '100%' }}
-            inputProps={{
-              placeholder: 'Load a saved report...',
-            }}
-          />
-        </Box>
 
         {/* ── Save controls ── */}
         <Box
@@ -726,7 +741,7 @@ export const ReportBuilder: React.FC = () => {
         }}
       >
         <RecordPicker
-          detectedContext={detectedContext}
+          detectedContext={effectiveContext}
           options={options}
           loadingRecords={loadingRecords}
           selectedRecord={selectedRecord}
