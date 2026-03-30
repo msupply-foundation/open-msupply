@@ -154,6 +154,13 @@ pub fn batch(
         let needs_authorise = any_status_approve_or_reject || {
             let repo = InvoiceLineRowRepository::new(&service_context.connection);
             update_lines.iter().any(|line| {
+                let is_changing_to_pending = line.status.as_ref().is_some_and(|s| {
+                    matches!(s, Some(InvoiceLineStatusType::Pending))
+                });
+                // Changing an approved line to pending is allowed without authorise
+                if is_changing_to_pending {
+                    return false;
+                }
                 repo.find_one_by_id(&line.id)
                     .ok()
                     .flatten()
