@@ -115,6 +115,10 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
       };
     }) ?? [];
 
+  const selectedReason = data?.nodes?.find(
+    reason => reason.id === draft.reasonId
+  );
+
   const removeFile = (name: string) => {
     onChange({ files: draft.files?.filter(file => file.name !== name) });
   };
@@ -135,8 +139,12 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-        <Row label={t('label.new-functional-status')} isExtraSmallScreen={isExtraSmallScreen}>
+        <Row
+          label={t('label.new-functional-status')}
+          isExtraSmallScreen={isExtraSmallScreen}
+        >
           <Autocomplete
+            required
             isOptionEqualToValue={option => option?.value === draft.status}
             onChange={(_e, selected) =>
               onChange({
@@ -150,6 +158,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
         </Row>
         <Row label={t('label.reason')} isExtraSmallScreen={isExtraSmallScreen}>
           <Autocomplete
+            required={draft.status === AssetLogStatusNodeType.NotFunctioning}
             disabled={reasons.length === 0}
             options={reasons}
             width="100%"
@@ -160,8 +169,12 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             value={reasons.find(r => r?.value === draft.reasonId) ?? null}
           />
         </Row>
-        <Row label={t('label.observations')} isExtraSmallScreen={isExtraSmallScreen}>
+        <Row
+          label={t('label.observations')}
+          isExtraSmallScreen={isExtraSmallScreen}
+        >
           <BasicTextInput
+            required={!!selectedReason?.commentsRequired}
             multiline
             rows={4}
             fullWidth
