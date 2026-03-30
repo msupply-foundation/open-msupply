@@ -10,6 +10,7 @@ import {
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
+import { formatErrors } from '../formatErrors';
 
 const Options = z
   .object({
@@ -121,7 +122,7 @@ const UIComponent = (props: ControlProps) => {
           clearable={clearable}
           inputProps={{
             error: !!zErrors || !!errors,
-            helperText: zErrors || errors,
+            helperText: formatErrors(zErrors || errors),
             color: 'secondary',
           }}
           isOptionEqualToValue={(option, value) => {
