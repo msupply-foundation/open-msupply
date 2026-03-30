@@ -204,6 +204,9 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         '& .MuiTableSortLabel-root': {
           display: column.getIsSorted() ? undefined : 'none',
         },
+        '& .Mui-TableHeadCell-Content-Wrapper': {
+          whiteSpace: 'normal',
+        },
         // replace the action button with a full-width invisible button to make
         // the whole header clickable to display the action menu
         '& .Mui-TableHeadCell-Content-Actions > button ': {
@@ -236,15 +239,15 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       // Make the NothingHere component vertically centred when there are no rows
       table.getRowCount() === 0
         ? {
-            sx: { height: '100%' },
-          }
+          sx: { height: '100%' },
+        }
         : {
-            sx: () => ({
-              '& tr:nth-of-type(odd)': {
-                backgroundColor: 'background.row',
-              },
-            }),
-          },
+          sx: () => ({
+            '& tr:nth-of-type(odd)': {
+              backgroundColor: 'background.row',
+            },
+          }),
+        },
 
     muiTableBodyRowProps: params => {
       const { row, table } = params;
@@ -305,25 +308,25 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           !row.getIsGrouped() && table.getState().grouping?.length
             ? '2em'
             : // Little bit of extra padding for first column, unless it's the "Select" checkbox column
-              column.getIndex() === 0 && column.id !== 'mrt-row-select'
+            column.getIndex() === 0 && column.id !== 'mrt-row-select'
               ? '1em'
               : undefined,
         backgroundColor:
           column.getIsPinned() || row.getIsSelected()
             ? // Remove transparency from pinned backgrounds
-              'rgba(252, 252, 252, 1)'
+            'rgba(252, 252, 252, 1)'
             : undefined,
 
         ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
           ? {
-              border: '2px solid',
-              borderColor: 'error.main',
-              borderRadius: '8px',
-            }
+            border: '2px solid',
+            borderColor: 'error.main',
+            borderRadius: '8px',
+          }
           : {
-              borderBottom: '1px solid',
-              borderColor: 'border',
-            }),
+            borderBottom: '1px solid',
+            borderColor: 'border',
+          }),
       },
     }),
 
