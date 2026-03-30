@@ -116,10 +116,13 @@ pub fn query_json(
     sql: &str,
     parameters: &serde_json::Map<String, serde_json::Value>,
 ) -> Result<Vec<serde_json::Value>, RepositoryError> {
-    use rusqlite::{types::Null, Connection as RusqliteConnection};
+    use rusqlite::{types::Null, Connection as RusqliteConnection, OpenFlags};
     use serde_json::Number;
 
-    let conn = RusqliteConnection::open(settings.connection_string())?;
+    let conn = RusqliteConnection::open_with_flags(
+        settings.connection_string(),
+        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )?;
 
     let mut statement = conn.prepare(sql)?;
 
@@ -222,6 +225,26 @@ mod tests {
         parameters: &serde_json::Map<String, serde_json::Value>,
     ) -> Result<Vec<serde_json::Value>, RepositoryError> {
         query_json(settings, sql, parameters)
+    }
+
+    #[actix_rt::test]
+    #[cfg(not(feature = "postgres"))]
+    async fn test_report_query_is_read_only() {
+        let (_, _connection, _, settings) = test_db::setup_all(
+            "test_report_query_is_read_only",
+            MockDataInserts::none().stores(),
+        )
+        .await;
+
+        let result = query_json(
+            &settings,
+            "DELETE FROM store",
+            &serde_json::Map::new(),
+        );
+        assert!(
+            result.is_err(),
+            "report query_json should reject write operations"
+        );
     }
 
     #[actix_rt::test]
