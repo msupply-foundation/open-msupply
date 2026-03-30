@@ -3,6 +3,8 @@ title = "Making Mac Demo Binary"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+
+[extra]
 source = "code"
 +++
 
@@ -12,7 +14,7 @@ source = "code"
 
 ```bash
 # for Intel mac (also works on Arm mac)
-./build/mac/build.sh intel 
+./build/mac/build.sh intel
 # or for Arm mac (with demo data)
 ./build/mac/build.sh arm true
 ```
@@ -29,10 +31,10 @@ Add 'true' as last argument (after intel or mac)
 
 ## Add other data
 
-* Click on open_msupply_server.sh from finder
-* After 3 seconds initialisation screen should open in browser
-* Enter credentials and initialise
-* Log in with all of the users that will need access in the demo data
-* cmd + c out of terminal that was opened when `open_msupply_server.sh` was clicked
+- Click on open_msupply_server.sh from finder
+- After 3 seconds initialisation screen should open in browser
+- Enter credentials and initialise
+- Log in with all of the users that will need access in the demo data
+- cmd + c out of terminal that was opened when `open_msupply_server.sh` was clicked
 
 Now zipping `omSupply_mac_{ARCHITECTURE}_{VERSION}_{COMMIT_DAY_MONTH}_{COMMIT_HOUR_AND_SECOND}` should save the data as well
