@@ -318,7 +318,6 @@ const RecordPicker = ({
   selectedRecord: RecordOption | null;
   setSelectedRecord: (r: RecordOption | null) => void;
   error: string;
-  hasContent: boolean;
 }) => (
   <Box
     padding={2}
@@ -347,13 +346,9 @@ const RecordPicker = ({
           width="100%"
           sx={{ width: '100%' }}
         />
-      ) : hasContent ? (
-        <Typography variant="body2" color="textSecondary">
-          This report doesn't have a specific record type
-        </Typography>
       ) : (
         <Typography variant="body2" color="textSecondary">
-          Fill the tabs at left to see a preview of the report.
+          This report doesn't have a specific record type
         </Typography>
       )}
     </div>
@@ -602,6 +597,7 @@ export const ReportBuilder: React.FC = () => {
   };
 
   const active = tabContent[currentTab];
+  const hasActiveReport = !!loadedReportId || !!manualContext;
 
   return (
     <Box display="flex" height="100vh" overflow="hidden">
@@ -620,6 +616,8 @@ export const ReportBuilder: React.FC = () => {
         onSelect={handleNewReport}
       />
 
+      {hasActiveReport && (
+      <>
       {/* ── Column 2: editors ── */}
       <Box
         width="480px"
@@ -745,7 +743,6 @@ export const ReportBuilder: React.FC = () => {
           selectedRecord={selectedRecord}
           setSelectedRecord={setSelectedRecord}
           error={error}
-          hasContent={!!(template || query)}
         />
 
         <Box
@@ -778,6 +775,8 @@ export const ReportBuilder: React.FC = () => {
           )}
         </Box>
       </Box>
+      </>
+      )}
     </Box>
   );
 };
