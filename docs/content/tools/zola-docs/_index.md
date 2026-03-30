@@ -3,6 +3,8 @@ title = "Zola Docs"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+
+[extra]
 source = "docs"
 +++
 
@@ -52,7 +54,7 @@ docs/
 
 ## Adding Content
 
-Every documentation file includes a `source` field in its frontmatter:
+Every documentation file includes a `source` field in its front matter. This is a custom field, so Zola requires this to go under the `[extra]` table.
 
 - `source = "code"` — linked to a README in the codebase. The CI check verifies a matching README exists.
 - `source = "docs"` — standalone content that lives only on the docs site. No README counterpart expected.
@@ -70,6 +72,8 @@ title = "Tools"
 weight = 90
 sort_by = "weight"
 template = "docs/section.html"
+
+[extra]
 source = "docs"
 +++
 ```
@@ -100,6 +104,8 @@ title = "Sync - Synchronisation"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+
+[extra]
 source = "code"
 +++
 ```
