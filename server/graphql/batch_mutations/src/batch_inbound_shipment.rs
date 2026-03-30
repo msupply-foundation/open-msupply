@@ -1,11 +1,11 @@
 use async_graphql::*;
 use graphql_core::generic_inputs::InboundShipmentType;
-use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_invoice::mutations::inbound_shipment;
 use graphql_invoice_line::mutations::inbound_shipment_line;
 use graphql_types::types::InvoiceLineStatusType;
-use repository::{InvoiceLineRowRepository, InvoiceLineStatus};
+use repository::{InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, InvoiceStatus};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::*;
 
@@ -176,6 +176,42 @@ pub fn batch(
                     store_id: Some(store_id.to_string()),
                 },
             )?;
+        }
+
+        // Line status cannot be changed once the shipment is received or verified.
+        // Compare submitted status against DB to detect actual changes (frontend
+        // always sends the current status value even when unchanged).
+        {
+            let line_repo = InvoiceLineRowRepository::new(&service_context.connection);
+            let has_actual_status_change = update_lines.iter().any(|line| {
+                let submitted = match &line.status {
+                    Some(s) => s.as_ref().map(|s| InvoiceLineStatus::from(*s)),
+                    None => return false,
+                };
+                let existing = line_repo.find_one_by_id(&line.id)
+                    .ok()
+                    .flatten()
+                    .and_then(|row| row.status);
+                submitted != existing
+            });
+
+            if has_actual_status_change {
+                let invoice_repo = InvoiceRowRepository::new(&service_context.connection);
+                let invoice_is_received_or_verified = update_lines
+                    .iter()
+                    .next()
+                    .and_then(|line| line_repo.find_one_by_id(&line.id).ok().flatten())
+                    .and_then(|line_row| invoice_repo.find_one_by_id(&line_row.invoice_id).ok().flatten())
+                    .map_or(false, |invoice| {
+                        matches!(invoice.status, InvoiceStatus::Received | InvoiceStatus::Verified)
+                    });
+
+                if invoice_is_received_or_verified {
+                    return Err(
+                        StandardGraphqlError::BadUserInput("Cannot change line status on a received or verified shipment".to_string()).extend()
+                    );
+                }
+            }
         }
     }
 
