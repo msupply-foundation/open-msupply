@@ -600,7 +600,7 @@ export const ReportBuilder: React.FC = () => {
   const hasActiveReport = !!loadedReportId || !!manualContext;
 
   return (
-    <Box display="flex" height="100vh" overflow="hidden">
+    <Box display="flex" height="100%" overflow="hidden">
       {/* ── Column 1: report list ── */}
       <ReportList
         reports={savedReports}

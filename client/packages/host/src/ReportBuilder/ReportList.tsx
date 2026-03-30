@@ -32,29 +32,32 @@ export const ReportList = ({
     borderRight="1px solid"
     sx={{ borderColor: 'divider', overflow: 'hidden' }}
   >
-    <Typography variant="h6" padding={2} paddingBottom={1}>
+    <Typography variant="h6" padding={2} paddingBottom={1} sx={{ flexShrink: 0 }}>
       Reports
     </Typography>
 
-    <Box flex={1} sx={{ overflowY: 'auto' }}>
-      {/* New report item */}
-      <Box
-        onClick={onNewReport}
-        sx={{
-          px: 2,
-          py: 1.25,
-          cursor: 'pointer',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          color: 'primary.main',
-          fontWeight: 600,
-          fontSize: '0.875rem',
-          '&:hover': { bgcolor: 'action.hover' },
-        }}
-      >
-        + New Report
-      </Box>
+    {/* Pinned: new report button */}
+    <Box
+      onClick={onNewReport}
+      sx={{
+        px: 2,
+        py: 1.25,
+        cursor: 'pointer',
+        borderBottom: '1px solid',
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        color: 'primary.main',
+        fontWeight: 600,
+        fontSize: '0.875rem',
+        flexShrink: 0,
+        '&:hover': { bgcolor: 'action.hover' },
+      }}
+    >
+      + New Report
+    </Box>
 
+    {/* Scrollable report list */}
+    <Box flex={1} sx={{ overflowY: 'auto', minHeight: 0 }}>
       {isLoading ? (
         <Box px={2} py={1.5}>
           <Typography variant="body2" color="textSecondary">
