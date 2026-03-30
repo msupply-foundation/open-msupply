@@ -4,12 +4,15 @@ import {
   useTranslation,
   Box,
   FilterMenu,
-  InvoiceNodeStatus,
   SearchBar,
   FilterRule,
   useSimplifiedTabletUI,
   FilterController,
+  usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
+import { getStatusSequence } from '../../statuses';
+import { getStatusTranslator } from '../../utils';
 
 interface ToolbarProps {
   filter: FilterController;
@@ -18,6 +21,10 @@ interface ToolbarProps {
 export const Toolbar = ({ filter }: ToolbarProps) => {
   const t = useTranslation();
   const simplifiedTabletView = useSimplifiedTabletUI();
+  const { invoiceStatusOptions } = usePreferences();
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
+  );
 
   const filterString =
     ((filter.filterBy?.['invoiceNumber'] as FilterRule)?.equalTo as string) ||
@@ -69,30 +76,21 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 type: 'enum',
                 name: t('label.status'),
                 urlParameter: 'status',
-                options: [
-                  { label: t('label.new'), value: InvoiceNodeStatus.New },
-                  {
-                    label: t('label.shipped'),
-                    value: InvoiceNodeStatus.Shipped,
-                  },
-                  {
-                    label: t('label.delivered'),
-                    value: InvoiceNodeStatus.Delivered,
-                  },
-                  {
-                    label: t('label.received'),
-                    value: InvoiceNodeStatus.Received,
-                  },
-                  {
-                    label: t('label.verified'),
-                    value: InvoiceNodeStatus.Verified,
-                  },
-                ],
+                options: statuses.map(status => ({
+                  value: status,
+                  label: getStatusTranslator(t)(status),
+                })),
               },
               {
                 type: 'text',
                 name: t('label.reference'),
                 urlParameter: 'theirReference',
+              },
+              {
+                type: 'number',
+                name: t('label.purchase-order-number'),
+                urlParameter: 'purchaseOrderNumber',
+                wide: true,
               },
               {
                 type: 'group',

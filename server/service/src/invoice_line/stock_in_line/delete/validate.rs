@@ -8,6 +8,7 @@ use crate::{
         },
     },
 };
+use crate::invoice::inbound_shipment::InboundShipmentType;
 use repository::{InvoiceLineRow, InvoiceRow, StorageConnection};
 
 use super::{DeleteStockInLine, DeleteStockInLineError};
@@ -16,6 +17,7 @@ pub fn validate(
     input: &DeleteStockInLine,
     store_id: &str,
     connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<(InvoiceRow, InvoiceLineRow), DeleteStockInLineError> {
     use DeleteStockInLineError::*;
 
@@ -27,6 +29,11 @@ pub fn validate(
     }
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
+    }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);

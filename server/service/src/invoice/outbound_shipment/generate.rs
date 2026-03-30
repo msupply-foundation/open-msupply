@@ -25,6 +25,7 @@ pub fn generate_unallocated_invoice_lines(
                     batch: None,
                     expiry_date: None,
                     manufacture_date: None,
+                    purchase_order_line_id: None,
                     pack_size: 1.0,
                     cost_price_per_pack: 0.0,
                     sell_price_per_pack: 0.0,

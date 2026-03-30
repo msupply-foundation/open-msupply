@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   useNavigate,
   useTranslation,
-  InvoiceNodeStatus,
   NothingHere,
   useToggle,
   useUrlQueryParams,
@@ -17,12 +16,14 @@ import {
   NameAndColorSetterCell,
   ColumnType,
   TextWithTooltipCell,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { CustomerReturnRowFragment, useReturns } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
+import { getStatusSequence } from '../../statuses';
 
 export const CustomerReturnListView = () => {
   const t = useTranslation();
@@ -40,6 +41,10 @@ export const CustomerReturnListView = () => {
   const modalController = useToggle();
   const { info } = useNotification();
   const { disableManualReturns } = usePreferences();
+    const { invoiceStatusOptions } = usePreferences();
+  const statuses = getStatusSequence(InvoiceNodeType.CustomerReturn).filter(
+    status => invoiceStatusOptions?.includes(status)
+  );
 
   const queryParams = { ...filter, sortBy, first, offset };
 
@@ -91,17 +96,10 @@ export const CustomerReturnListView = () => {
         enableSorting: true,
         enableColumnFilter: true,
         filterVariant: 'select',
-        filterSelectOptions: [
-          { label: t('label.new'), value: InvoiceNodeStatus.New },
-          {
-            label: t('label.delivered'),
-            value: InvoiceNodeStatus.Delivered,
-          },
-          {
-            label: t('label.verified'),
-            value: InvoiceNodeStatus.Verified,
-          },
-        ],
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
       },
       {
         accessorKey: 'invoiceNumber',
