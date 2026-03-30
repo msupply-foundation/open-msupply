@@ -398,6 +398,15 @@ export type SyncStatusUpdatedSubscription = {
   } | null;
 };
 
+export type PushQueueCountUpdatedSubscriptionVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type PushQueueCountUpdatedSubscription = {
+  __typename: 'Subscriptions';
+  pushQueueCountUpdated: number;
+};
+
 export const SyncSettingsFragmentDoc = gql`
   fragment SyncSettings on SyncSettingsNode {
     __typename
@@ -538,6 +547,11 @@ export const SyncStatusUpdatedDocument = gql`
     }
   }
   ${FullSyncStatusFragmentDoc}
+`;
+export const PushQueueCountUpdatedDocument = gql`
+  subscription pushQueueCountUpdated {
+    pushQueueCountUpdated
+  }
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -681,6 +695,24 @@ export function getSdk(
             signal,
           }),
         'syncStatusUpdated',
+        'subscription',
+        variables
+      );
+    },
+    pushQueueCountUpdated(
+      variables?: PushQueueCountUpdatedSubscriptionVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PushQueueCountUpdatedSubscription> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PushQueueCountUpdatedSubscription>({
+            document: PushQueueCountUpdatedDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'pushQueueCountUpdated',
         'subscription',
         variables
       );

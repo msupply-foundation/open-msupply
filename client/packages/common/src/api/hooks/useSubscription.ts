@@ -2,9 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { DocumentNode, print } from 'graphql';
 import { useGql } from '../GqlContext';
-import { getSubscriptionClient } from '../SubscriptionClient';
+import { useAuthContext } from '../../authentication/AuthContext';
+import {
+  disposeSubscriptionClient,
+  getSubscriptionClient,
+} from '../SubscriptionClient';
 
-interface UseSubscriptionOptions<TData> {
+interface UseSubscriptionOptions<TSubscription, TCacheData> {
   /** react-query cache key to update when subscription data arrives */
   queryKey: readonly unknown[];
   /** GraphQL subscription document */
@@ -14,11 +18,11 @@ interface UseSubscriptionOptions<TData> {
   /** Whether the subscription is enabled */
   enabled?: boolean;
   /**
-   * Transform the raw subscription data before writing to cache.
+   * Transform the typed subscription response before writing to cache.
    * Use this to reshape subscription payloads to match query cache shape.
    * e.g. `data => ({ syncStatus: data.syncStatusUpdated })`
    */
-  select?: (data: Record<string, unknown>) => TData;
+  select: (data: TSubscription) => TCacheData;
 }
 
 interface UseSubscriptionResult {
@@ -26,29 +30,45 @@ interface UseSubscriptionResult {
   isSubscribed: boolean;
 }
 
+// Track the last token across all useSubscription instances.
+// When it changes, we dispose the old client once so a fresh
+// connection is made with the new token.
+let lastKnownToken: string | undefined;
+
 /**
  * Hook that subscribes to a GraphQL subscription over WebSocket and
  * writes incoming data into the react-query cache.
  *
- * Components that read from the same query key will automatically
- * re-render when subscription data arrives.
+ * Automatically re-subscribes when the auth token changes (e.g. after
+ * re-authentication), disposing the old WebSocket connection so the
+ * new one picks up the fresh token.
  */
-export const useSubscription = <TData = unknown>({
+export const useSubscription = <TSubscription, TCacheData>({
   queryKey,
   document,
   variables,
   enabled = true,
   select,
-}: UseSubscriptionOptions<TData>): UseSubscriptionResult => {
+}: UseSubscriptionOptions<TSubscription, TCacheData>): UseSubscriptionResult => {
   const queryClient = useQueryClient();
   const { client: gqlClient } = useGql();
+  const { token } = useAuthContext();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !token) {
       setIsSubscribed(false);
       return;
+    }
+
+    // When the token changes, dispose the old WebSocket client once
+    // so a fresh connection is made with the new token.
+    // The module-level lastKnownToken ensures this happens exactly once
+    // across all useSubscription instances.
+    if (token !== lastKnownToken) {
+      lastKnownToken = token;
+      disposeSubscriptionClient();
     }
 
     const httpUrl = gqlClient.getUrl();
@@ -66,9 +86,7 @@ export const useSubscription = <TData = unknown>({
       {
         next: ({ data }) => {
           if (!disposed && data) {
-            const cacheData = select
-              ? select(data as Record<string, unknown>)
-              : data;
+            const cacheData = select(data as TSubscription);
             queryClient.setQueryData(queryKey, cacheData);
             if (!isSubscribed) setIsSubscribed(true);
           }
@@ -92,9 +110,9 @@ export const useSubscription = <TData = unknown>({
         unsubscribeRef.current = null;
       }
     };
-    // Intentionally only re-run when enabled changes or document changes
+    // Re-subscribe when token changes (e.g. after re-authentication)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, document]);
+  }, [enabled, document, token]);
 
   return { isSubscribed };
 };

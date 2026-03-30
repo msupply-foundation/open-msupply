@@ -82,11 +82,13 @@ use crate::{
     vvm::{VVMService, VVMServiceTrait},
     ListError, ListResult,
 };
+use std::sync::atomic::AtomicBool;
+
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
-    StoreFilter, StoreSort,
+    StoreFilter, StoreSort, SyncLogRow,
 };
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, watch};
 use util::constants::SYSTEM_USER_ID;
 
 pub struct ServiceProvider {
@@ -201,8 +203,16 @@ pub struct ServiceProvider {
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
-    // Broadcast channel for sync status change notifications (subscriptions)
-    pub sync_status_notify: broadcast::Sender<()>,
+    // Watch channel for sync status change notifications (subscriptions).
+    // Holds the latest SyncLogRow so subscribers can read it without querying the DB.
+    pub sync_status_watch: watch::Sender<Option<SyncLogRow>>,
+    // Push queue count subscription infrastructure.
+    // push_queue_changed: signal from ProcessorsTrigger when mutations create changelogs.
+    // push_queue_count_watch: shared result — all subscribers read from this.
+    // push_queue_worker_active: ensures only one worker task runs at a time.
+    pub push_queue_changed: broadcast::Sender<()>,
+    pub push_queue_count_watch: watch::Sender<u64>,
+    pub push_queue_worker_active: AtomicBool,
 }
 
 pub struct ServiceContext {
@@ -238,6 +248,7 @@ impl ServiceProvider {
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
     ) -> Self {
+        let push_queue_changed = processors_trigger.push_queue_changed.clone();
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -314,7 +325,10 @@ impl ServiceProvider {
             contact_service: Box::new(ContactService {}),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
-            sync_status_notify: broadcast::channel(16).0,
+            sync_status_watch: watch::channel(None).0,
+            push_queue_changed,
+            push_queue_count_watch: watch::channel(0).0,
+            push_queue_worker_active: AtomicBool::new(false),
         }
     }
 

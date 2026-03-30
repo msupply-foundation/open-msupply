@@ -9472,9 +9472,11 @@ export type Subscriptions = {
   __typename: 'Subscriptions';
   /** Simple subscription to verify WebSocket connectivity */
   ping: Scalars['String']['output'];
+  /** Subscribe to push queue count updates. */
+  pushQueueCountUpdated: Scalars['Int']['output'];
   /**
    * Subscribe to real-time sync status updates.
-   * Emits a new value whenever the sync status changes (phase start/complete, progress, error).
+   * Uses a watch channel so all subscribers share the same row data — no per-subscriber DB queries.
    */
   syncStatusUpdated?: Maybe<FullSyncStatusNode>;
 };

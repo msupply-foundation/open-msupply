@@ -6,10 +6,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync::sync_status::{
-        status::{FullSyncStatus, SyncStatus, SyncStatusWithProgress},
-        SyncLogError,
-    },
+    sync::sync_status::status::{FullSyncStatus, SyncStatus, SyncStatusWithProgress},
 };
 
 use crate::sync_api_error::SyncErrorNode;

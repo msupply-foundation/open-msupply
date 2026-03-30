@@ -441,6 +441,7 @@ impl<'a> ChangelogRepository<'a> {
             .pop()
             .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
 
+        self.connection.notify_changelog_insert();
         Ok(cursor_id)
     }
 
@@ -453,6 +454,7 @@ impl<'a> ChangelogRepository<'a> {
             .execute(self.connection.lock().connection())?;
         let cursor_id = diesel::select(last_insert_rowid())
             .get_result::<i64>(self.connection.lock().connection())?;
+        self.connection.notify_changelog_insert();
         Ok(cursor_id)
     }
 }

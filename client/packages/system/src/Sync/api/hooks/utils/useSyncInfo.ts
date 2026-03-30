@@ -1,42 +1,76 @@
 import {
-  getAuthCookie,
+  useAuthContext,
   useQuery,
   useSubscription,
 } from '@openmsupply-client/common';
+import { useQueryClient } from 'react-query';
 import { useSyncApi } from './useSyncApi';
-import { SyncStatusUpdatedDocument } from '../../subscriptions';
+import {
+  SyncStatusUpdatedDocument,
+  SyncStatusUpdatedSubscription,
+  PushQueueCountUpdatedDocument,
+  PushQueueCountUpdatedSubscription,
+  SyncInfoQuery,
+} from '../../operations.generated';
 
 export const useSyncInfo = (
   refetchInterval: number | false = false,
   enabled: boolean = true
 ) => {
   const api = useSyncApi();
-  const { token } = getAuthCookie();
+  const { token } = useAuthContext();
+  const queryClient = useQueryClient();
+
+  const isEnabled = !!token && enabled;
+  const queryKey = api.keys.syncInfo();
 
   // Subscribe to real-time sync status updates via WebSocket.
-  // The subscription only provides syncStatus, not numberOfRecordsInPushQueue,
-  // so we merge the subscription data with existing cache data.
-  const { isSubscribed } = useSubscription({
-    queryKey: api.keys.syncInfo(),
+  // Merges into existing cache data so we don't clobber numberOfRecordsInPushQueue.
+  const { isSubscribed: isSyncStatusSubscribed } = useSubscription<
+    SyncStatusUpdatedSubscription,
+    SyncInfoQuery
+  >({
+    queryKey,
     document: SyncStatusUpdatedDocument,
-    enabled: !!token && enabled,
-    select: data => ({
-      syncStatus: data['syncStatusUpdated'],
-    }),
+    enabled: isEnabled,
+    select: data => {
+      const existing = queryClient.getQueryData<SyncInfoQuery>(queryKey);
+      return {
+        __typename: 'Queries' as const,
+        numberOfRecordsInPushQueue:
+          existing?.numberOfRecordsInPushQueue ?? 0,
+        syncStatus: data.syncStatusUpdated ?? existing?.syncStatus ?? null,
+      };
+    },
   });
 
-  // manually adding the token and setting the authorization header
-  // there were instances where the token was not included in the request
-  // even though the auth cookie existed with a valid token
-  // the query is only enabled if there's a token -
-  // no need to check the sync status if there's no token
+  // Subscribe to push queue count updates (debounced on the server).
+  // Merges into existing cache data so we don't clobber syncStatus.
+  const { isSubscribed: isPushQueueSubscribed } = useSubscription<
+    PushQueueCountUpdatedSubscription,
+    SyncInfoQuery
+  >({
+    queryKey,
+    document: PushQueueCountUpdatedDocument,
+    enabled: isEnabled,
+    select: data => {
+      const existing = queryClient.getQueryData<SyncInfoQuery>(queryKey);
+      return {
+        __typename: 'Queries' as const,
+        numberOfRecordsInPushQueue: data.pushQueueCountUpdated,
+        syncStatus: existing?.syncStatus ?? null,
+      };
+    },
+  });
+
+  const isSubscribed = isSyncStatusSubscribed || isPushQueueSubscribed;
+
   const { data, ...rest } = useQuery(
-    api.keys.syncInfo(),
+    queryKey,
     () => api.get.syncInfo(token),
     {
-      // Disable polling when subscription is active
       refetchInterval: isSubscribed ? false : refetchInterval,
-      enabled: !!token && enabled,
+      enabled: isEnabled,
     }
   );
 

@@ -115,3 +115,7 @@ subscription syncStatusUpdated {
     ...FullSyncStatus
   }
 }
+
+subscription pushQueueCountUpdated {
+  pushQueueCountUpdated
+}

@@ -45,7 +45,7 @@ pub struct FullSyncStatus {
 }
 
 impl FullSyncStatus {
-    fn from_sync_log_row(sync_log_row: SyncLogRow) -> FullSyncStatus {
+    pub fn from_sync_log_row(sync_log_row: SyncLogRow) -> FullSyncStatus {
         let SyncLogRow {
             started_datetime,
             finished_datetime,
@@ -321,7 +321,7 @@ fn number_of_records_in_push_queue(
 }
 
 impl SyncLogError {
-    fn from_sync_log_row(
+    pub fn from_sync_log_row(
         SyncLogRow {
             error_code,
             error_message,

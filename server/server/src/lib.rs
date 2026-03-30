@@ -116,12 +116,19 @@ pub async fn start_server(
     std::fs::create_dir_all(base_dir)?;
 
     // INITIALISE DATABASE CONNECTION
-    let connection_manager = get_storage_connection_manager(&settings.database);
+    let mut connection_manager = get_storage_connection_manager(&settings.database);
     let connection = connection_manager.connection().unwrap();
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
     let (processors_trigger, processors) = Processors::init();
+
+    // Wire changelog insert notifications to the push_queue_changed broadcast.
+    // Every ChangelogRepository::insert() will fire this callback.
+    let push_queue_changed = processors_trigger.push_queue_changed.clone();
+    connection_manager.set_changelog_callback(std::sync::Arc::new(move || {
+        let _ = push_queue_changed.send(());
+    }));
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();

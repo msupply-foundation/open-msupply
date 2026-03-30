@@ -1,4 +1,4 @@
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use super::{get_connection, DBBackendConnection, DBConnection};
 
@@ -59,12 +59,20 @@ impl<'a> LockedConnection<'a> {
 
 pub struct StorageConnection {
     raw_connection: Mutex<DBConnection>,
+    on_changelog_insert: Option<Arc<dyn Fn() + Send + Sync>>,
 }
 
 impl StorageConnection {
     pub fn lock(&self) -> LockedConnection<'_> {
         LockedConnection {
             raw_connection: self.raw_connection.lock().unwrap(),
+        }
+    }
+
+    /// Called by ChangelogRepository::insert() to notify that changelogs changed
+    pub fn notify_changelog_insert(&self) {
+        if let Some(callback) = &self.on_changelog_insert {
+            callback();
         }
     }
 }
@@ -109,7 +117,16 @@ impl StorageConnection {
     pub fn new(connection: DBConnection) -> StorageConnection {
         StorageConnection {
             raw_connection: Mutex::new(connection),
+            on_changelog_insert: None,
         }
+    }
+
+    pub fn with_changelog_callback(
+        mut self,
+        callback: Arc<dyn Fn() + Send + Sync>,
+    ) -> Self {
+        self.on_changelog_insert = Some(callback);
+        self
     }
 
     /// Executes operations in transaction. A new transaction is only started if not already in a
@@ -200,15 +217,27 @@ fn map_begin_transaction_error<T>(
 #[derive(Clone)]
 pub struct StorageConnectionManager {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
+    on_changelog_insert: Option<Arc<dyn Fn() + Send + Sync>>,
 }
 
 impl StorageConnectionManager {
     pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
-        StorageConnectionManager { pool }
+        StorageConnectionManager {
+            pool,
+            on_changelog_insert: None,
+        }
+    }
+
+    pub fn set_changelog_callback(&mut self, callback: Arc<dyn Fn() + Send + Sync>) {
+        self.on_changelog_insert = Some(callback);
     }
 
     pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
-        Ok(StorageConnection::new(get_connection(&self.pool)?))
+        let conn = StorageConnection::new(get_connection(&self.pool)?);
+        match &self.on_changelog_insert {
+            Some(callback) => Ok(conn.with_changelog_callback(callback.clone())),
+            None => Ok(conn),
+        }
     }
 
     // Note, this method is only needed for an Android workaround to avoid adding a diesel

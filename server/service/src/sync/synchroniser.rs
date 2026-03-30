@@ -137,7 +137,7 @@ impl Synchroniser {
     pub(crate) async fn sync(&self, fetch_patient_id: Option<String>) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
         let mut logger = SyncLogger::start(&ctx.connection)?
-            .with_notify(self.service_provider.sync_status_notify.clone());
+            .with_watch(self.service_provider.sync_status_watch.clone());
 
         let sync_result = self.sync_inner(&mut logger, &ctx, fetch_patient_id).await;
 
