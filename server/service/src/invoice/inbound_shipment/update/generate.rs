@@ -312,7 +312,7 @@ fn generate_cost_price_update_for_lines(
 
     for invoice_line in &invoice_lines {
         let row = &invoice_line.invoice_line_row;
-        let po_line_id = &invoice_line.invoice_line_stats_row.purchase_order_line_id;
+        let po_line_id = &invoice_line.invoice_line_row.purchase_order_line_id;
         let po_price_local = if let Some(ref po_line_id) = po_line_id {
             if let Some(po_line) = po_line_repo.find_one_by_id(po_line_id)? {
                 po_line.price_per_pack_after_discount / safe_rate
