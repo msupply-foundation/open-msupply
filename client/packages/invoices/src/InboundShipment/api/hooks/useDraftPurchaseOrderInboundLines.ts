@@ -84,7 +84,7 @@ export const useDraftPurchaseOrderInboundLines = (
     if (!data || !purchaseOrderLine) return [];
     return data.lines.nodes.filter(
       line =>
-        isA.stockInLine(line) &&
+        (isA.stockInLine(line) || isA.placeholderLine(line)) &&
         line.purchaseOrderLine?.id === purchaseOrderLine.id
     );
   }, [data, purchaseOrderLine]);
