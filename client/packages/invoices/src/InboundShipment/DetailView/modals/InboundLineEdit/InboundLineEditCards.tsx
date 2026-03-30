@@ -307,7 +307,7 @@ export const InboundLineEditCards = ({
       {
         accessorKey: 'status',
         header: t('label.auth-status'),
-        columnGroup: 'general',
+        columnGroup: 'stockLineDetails',
         includeColumn: showLineStatus,
         Cell: ({ row }) => {
           const status = row.original.status;
@@ -322,8 +322,17 @@ export const InboundLineEditCards = ({
           return (
             <Select
               value={status ?? ''}
+              variant="standard"
               size="small"
               fullWidth
+              sx={{
+                backgroundColor: theme => theme.palette.background.input.main,
+                borderRadius: 2,
+                px: 0.5,
+                '& .MuiSelect-select': {
+                  py: 0.5,
+                },
+              }}
               onChange={e => {
                 updateDraftLine({
                   id: row.original.id,
