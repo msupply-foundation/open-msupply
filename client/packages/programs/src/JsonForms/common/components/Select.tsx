@@ -12,6 +12,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
+import { formatErrors } from '../formatErrors';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import parse from 'autosuggest-highlight/parse';
@@ -376,7 +377,7 @@ const UIComponent = (props: ControlProps) => {
           clearable={!props.config?.required}
           inputProps={{
             error: !!zErrors || !!props.errors,
-            helperText: zErrors || props.errors,
+            helperText: formatErrors(zErrors || props.errors),
           }}
           isOptionEqualToValue={option => option.value === data}
         />
