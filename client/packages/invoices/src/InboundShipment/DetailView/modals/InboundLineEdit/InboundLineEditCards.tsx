@@ -66,6 +66,7 @@ interface CardProps {
 interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
+  isReceived?: boolean;
   lastCardRef?: React.RefObject<HTMLDivElement>;
   actions?: React.ReactNode;
   /** The specific line ID to scroll into view when the modal opens */
@@ -78,6 +79,7 @@ export const InboundLineEditCards = ({
   duplicateDraftLine,
   removeDraftLine,
   isDisabled = false,
+  isReceived = false,
   foreignCurrency,
   isExternalSupplier,
   hasItemVariantsEnabled,
@@ -854,7 +856,7 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            disabled={isDisabled}
+            disabled={isDisabled || isReceived}
             label={t('label.duplicate-batch')}
             showLabel={!simplified}
             onClick={() => {
@@ -877,6 +879,7 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
+            disabled={isDisabled || isReceived}
             label={t('label.delete-batch')}
             showLabel={!simplified}
             color="error"
@@ -896,6 +899,7 @@ export const InboundLineEditCards = ({
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
     isDisabled,
+    isReceived,
     isExternalSupplier,
     isManualShipment,
     item?.isVaccine,

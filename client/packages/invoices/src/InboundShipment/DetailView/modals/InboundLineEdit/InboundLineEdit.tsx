@@ -15,6 +15,7 @@ import {
   useNotification,
   useDisabledNotificationToast,
   InvoiceLineStatusType,
+  InvoiceNodeStatus,
   ModalMode,
   useSimplifiedTabletUI,
   Box,
@@ -90,6 +91,9 @@ export const InboundLineEdit = ({
   const permissionDeniedNotification = useDisabledNotificationToast(
     t('auth.permission-denied')
   );
+  const isReceived =
+    data?.status === InvoiceNodeStatus.Received ||
+    data?.status === InvoiceNodeStatus.Verified;
   const purchaseOrder = data?.purchaseOrder;
   const hasPurchaseOrder = !!purchaseOrder;
 
@@ -305,6 +309,7 @@ export const InboundLineEdit = ({
       duplicateDraftLine={duplicateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
+      isReceived={isReceived}
       foreignCurrency={foreignCurrency}
       isExternalSupplier={isExternalSupplier}
       item={effectiveItem}
@@ -350,7 +355,7 @@ export const InboundLineEdit = ({
       }
       headerActions={
         <ButtonWithIcon
-          disabled={isDisabled}
+          disabled={isDisabled || isReceived}
           color="primary"
           variant="outlined"
           onClick={handleAddBatch}
