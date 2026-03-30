@@ -3,10 +3,12 @@ title = "Zola Docs"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+
+[extra]
 source = "docs"
 +++
 
-# Docs Site
+# Docs Guide
 
 ## Overview
 
@@ -19,8 +21,6 @@ This directory contains developer documentation for Open mSupply, served as a st
 ```
 docs/
 ├── check-docs-structure.sh      # CI check script
-└── themes/
-    └── adidoks/ # AdiDoks theme
 └── content/                     # all site content lives here
     ├── tools/
     │   ├── _index.md            # source = "docs" (standalone)
@@ -54,7 +54,7 @@ docs/
 
 ## Adding Content
 
-Every documentation file includes a `source` field in its frontmatter:
+Every documentation file includes a `source` field in its front matter. This is a custom field, so Zola requires this to go under the `[extra]` table.
 
 - `source = "code"` — linked to a README in the codebase. The CI check verifies a matching README exists.
 - `source = "docs"` — standalone content that lives only on the docs site. No README counterpart expected.
@@ -62,9 +62,9 @@ Every documentation file includes a `source` field in its frontmatter:
 Every page is a directory with an `_index.md` file. To add standalone content:
 
 1. Create a directory under `docs/content/` (e.g. `tools/zola-docs/`)
-2. Add an `_index.md` with `source = "docs"` in the frontmatter
+2. Add an `_index.md` with `source = "docs"` in the front matter
 
-Example frontmatter:
+Example front matter:
 
 ```toml
 +++
@@ -72,6 +72,8 @@ title = "Tools"
 weight = 90
 sort_by = "weight"
 template = "docs/section.html"
+
+[extra]
 source = "docs"
 +++
 ```
@@ -80,21 +82,21 @@ source = "docs"
 
 Documentation that describes a specific module, package, or area of the codebase should have a README in the repo next to the code it documents. This README is then mirrored to the docs site as an `_index.md`.
 
-2. **A pointer README** at the original code location that links to the docs site. Previously, this README contained the documentation content.
 1. **An `_index.md`** in `docs/content/` at the mirrored path and contains the documentation content.
+2. **A pointer README** at the original code location that links to the docs site. Previously, this README contained the documentation content.
 
 To add a new one:
 
 1. Create a `README.md` in the relevant directory in the repository
 2. Create a matching `_index.md` in `docs/content/` at the mirrored path (stripping `src/`, see below)
-3. Add Zola frontmatter with `source = "code"` and the title from the first heading
+3. Add Zola front matter with `source = "code"` and the title from the first heading
 4. Write your documentation content in the `_index.md` file
 5. Create a pointer README at the code location
 6. If the content references images, store them in an `images/` directory next to the `_index.md`
 
 The CI check script will flag any README that doesn't have a corresponding `_index.md`, and any `_index.md` with `source = "code"` that has no matching README.
 
-Example frontmatter:
+Example front matter:
 
 ```toml
 +++
@@ -102,6 +104,8 @@ title = "Sync - Synchronisation"
 weight = 10
 sort_by = "weight"
 template = "docs/section.html"
+
+[extra]
 source = "code"
 +++
 ```
@@ -112,8 +116,10 @@ Example pointer README (at the original location in the repo):
 # Sync - Synchronisation
 
 - **Docs site**: https://dev-docs.msupply.foundation/server/service/sync/
-- **Source**: [docs/content/server/service/sync/\_index.md](/docs/content/server/service/sync/_index.md)
+- **Source**: [docs/content/server/service/sync/\_index.md](../../../../docs/content/server/service/sync/_index.md)
 ```
+
+A relative path is used here so the link still works if someone opens a subfolder (e.g. `client/` or `server/`) as their workspace root.
 
 #### `src/` stripped from paths
 
@@ -130,7 +136,7 @@ The `src/` directory segment is a code-only convention and is removed from docs 
 Documentation that isn't tied to a specific part of the codebase — such as guides, tutorials, architecture overviews, or tool documentation — lives only in `docs/content/` with no corresponding README in the repo.
 
 1. Create a directory in the appropriate location (e.g. `tools/jenkins/`)
-2. Add an `_index.md` with `source = "docs"` in the frontmatter
+2. Add an `_index.md` with `source = "docs"` in the front matter
 3. The page will appear as a child of the parent section
 
 ### Nesting content
@@ -178,15 +184,6 @@ Images referenced by a file are stored in an `images/` directory next to the `_i
 
 ## Structure Decisions
 
-### `source` field
-
-Every `_index.md` has a `source` field:
-
-- `source = "code"` — code-related, linked to a README in the codebase
-- `source = "docs"` — standalone, no README counterpart
-
-The `source` field makes it clear which docs are code-related and which are standalone. The CI check uses this to decide whether to enforce a matching README.
-
 ### Flat content root
 
 Content lives directly under `docs/content/`. Zola generates URLs from the directory structure inside `content/`, so `docs/content/server/service/sync/_index.md` becomes `https://dev-docs.msupply.foundation/server/service/sync/`. This keeps URLs clean and avoids redundancy with the domain name. New top-level sections (e.g. `content/guides/`) can be added within the `content/` directory.
@@ -233,14 +230,3 @@ Skipped READMEs:
 - `README.md` (root) — not developer module docs
 - `.github/workflows/ACTIONS_README.md` — GitHub-specific, not developer docs
 - `docs/themes/*` — theme vendored files
-
-## How the Migration Was Done
-
-The initial migration of 67 READMEs was performed by a bash script (see git history for `migrate-readmes.sh`). The script:
-
-- Piped content directly from `git show` to ensure byte-identical copies
-- Extracted titles from each README's first heading
-- Prepended Zola frontmatter
-- Copied co-located images to `images/` directories
-- Replaced original READMEs with pointer files
-- Verified each written file against the original via diff
