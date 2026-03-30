@@ -182,6 +182,14 @@ export const useInboundShipmentColumns = (
         includeColumn: !external,
       },
       {
+        accessorKey: 'costPricePerPack',
+        header: t('label.price-per-pack'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        size: 100,
+        includeColumn: !external,
+      },
+      {
         id: 'total',
         header: t('label.total'),
         columnType: ColumnType.Currency,
