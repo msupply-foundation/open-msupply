@@ -11,9 +11,13 @@ import {
   RouteBuilder,
   useAuthContext,
   useUrlQuery,
+  useCallbackWithPermission,
+  useNotification,
+  UserPermission,
   SplitButtonOption,
   SplitButton,
 } from '@openmsupply-client/common';
+
 import { ExportSelector } from '@openmsupply-client/system';
 import {
   NameRowFragment,
@@ -43,6 +47,7 @@ export const AppBarButtons = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { store } = useAuthContext();
+  const { error: errorNotification } = useNotification();
   const [name, setName] = useState<NameRowFragment | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
     null
@@ -53,10 +58,7 @@ export const AppBarButtons = ({
   } = useInboundShipment();
   const {
     query: { isFetching, refetch },
-  } = useInboundList({
-    sortBy: { key: 'createdDateTime', direction: 'desc' },
-    filterBy: null,
-  });
+  } = useInboundList();
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
 
@@ -70,20 +72,28 @@ export const AppBarButtons = ({
     purchaseOrderId?: string,
     insertLinesFromPurchaseOrder?: boolean
   ) => {
-    const invoiceId = await onCreate({
-      id: FnUtils.generateUUID(),
-      otherPartyId: nameId,
-      requisitionId,
-      purchaseOrderId,
-      insertLinesFromPurchaseOrder,
-    });
+    const isExternal = !!purchaseOrderId;
+    try {
+      const invoiceId = await onCreate({
+        id: FnUtils.generateUUID(),
+        otherPartyId: nameId,
+        requisitionId,
+        purchaseOrderId,
+        insertLinesFromPurchaseOrder,
+      });
 
-    navigate(
-      RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InboundShipment)
-        .addPart(invoiceId)
-        .build()
-    );
+      const route = isExternal
+        ? AppRoute.InboundShipmentExternal
+        : AppRoute.InboundShipment;
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(route)
+          .addPart(invoiceId)
+          .build()
+      );
+    } catch (e) {
+      errorNotification(t('error.failed-to-create-inbound-shipment', { message: (e as Error).message }))();
+    }
   };
 
   const handleSupplierSelected = async (
@@ -178,7 +188,17 @@ export const AddButton = ({
   const t = useTranslation();
   const currentTab = useUrlQuery().urlQuery['tab'];
 
-  const options: [SplitButtonOption<string>, SplitButtonOption<string>] = [
+  const handleNewShipment = useCallbackWithPermission(
+    UserPermission.InboundShipmentMutate,
+    onNewShipment
+  );
+
+  const handleNewShipmentExternal = useCallbackWithPermission(
+    UserPermission.InboundShipmentExternalMutate,
+    onNewShipmentExternal
+  );
+
+  const allOptions: SplitButtonOption<string>[] = [
     {
       value: 'new-shipment',
       label: t('button.new-shipment'),
@@ -191,23 +211,27 @@ export const AddButton = ({
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
-  >(options[0]);
+  >(allOptions[0] ?? { value: '', label: '' });
 
   useEffect(() => {
     if (currentTab === t('label.external')) {
-      setSelectedOption(options[1]);
+      const externalOption = allOptions.find(
+        o => o.value === 'new-external-shipment'
+      );
+      if (externalOption) setSelectedOption(externalOption);
     } else {
-      setSelectedOption(options[0]);
+      const internalOption = allOptions.find(o => o.value === 'new-shipment');
+      if (internalOption) setSelectedOption(internalOption);
     }
   }, [currentTab]);
 
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
       case 'new-shipment':
-        onNewShipment();
+        handleNewShipment();
         break;
       case 'new-external-shipment':
-        onNewShipmentExternal();
+        handleNewShipmentExternal();
         break;
     }
   };
@@ -221,7 +245,7 @@ export const AddButton = ({
     <>
       <SplitButton
         color="primary"
-        options={options}
+        options={allOptions}
         selectedOption={selectedOption}
         onSelectOption={onSelectOption}
         onClick={handleOptionSelection}

@@ -27,16 +27,6 @@ import {
   SupplierReturnRowFragment,
 } from './Returns';
 
-export const outboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Allocated,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
 export enum InboundShipmentType {
   Manual = 'Manual',
   Internal = 'Internal',
@@ -52,73 +42,6 @@ export const getInboundShipmentType = (inbound: {
   return InboundShipmentType.Manual;
 };
 
-/** Internal inbound shipments include Picked and Shipped (set by the sending store) */
-export const inboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
-/** Manual inbound shipments skip Picked and Shipped */
-export const manualInboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
-/** External inbound shipments skip Picked but include Shipped */
-export const externalInboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
-export const getInboundStatusesForType = (
-  type: InboundShipmentType
-): InvoiceNodeStatus[] => {
-  switch (type) {
-    case InboundShipmentType.Manual:
-      return manualInboundStatuses;
-    case InboundShipmentType.External:
-      return externalInboundStatuses;
-    case InboundShipmentType.Internal:
-      return inboundStatuses;
-  }
-};
-
-export const prescriptionStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Verified,
-  InvoiceNodeStatus.Cancelled,
-];
-
-export const supplierReturnStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
-export const customerReturnStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-export const manualCustomerReturnStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
 
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'status.allocated',
