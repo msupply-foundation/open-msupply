@@ -29,6 +29,11 @@ export const FinancialTab = () => {
     | undefined;
   const formatPoCurrency = useFormatCurrency(poCurrencyCode);
   const formatStoreCurrency = useFormatCurrency(storeCurrencyCode);
+  const currencyRate = data?.currencyRate ?? 1;
+  const isForeignCurrency =
+    !!poCurrencyCode &&
+    !!storeCurrencyCode &&
+    poCurrencyCode !== storeCurrencyCode;
 
   const lines = data?.lines.nodes;
 
@@ -68,9 +73,15 @@ export const FinancialTab = () => {
         ),
       },
       {
-        accessorKey: 'costPricePerPack',
+        id: 'costPricePerPackLocal',
         header: `${t('label.pack-cost-price')} (${storeCurrencyCode ?? ''})`,
         columnType: ColumnType.Currency,
+        includeColumn: isForeignCurrency,
+        accessorFn: (row: InboundLineFragment) =>
+          Math.round(
+            ((row.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0) * 100) /
+              currencyRate
+          ) / 100,
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
         ),
@@ -84,9 +95,13 @@ export const FinancialTab = () => {
         ),
       },
       {
-        accessorKey: 'foreignCurrencyPriceBeforeTax',
+        id: 'foreignCurrencyLineTotal',
         header: `${t('label.line-total')} (${poCurrencyCode ?? ''})`,
         columnType: ColumnType.Currency,
+        includeColumn: isForeignCurrency,
+        accessorFn: (row: InboundLineFragment) =>
+          (row.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0) *
+          row.numberOfPacks,
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={poCurrencyCode} />
         ),
@@ -95,7 +110,10 @@ export const FinancialTab = () => {
             .getFilteredRowModel()
             .rows.reduce(
               (sum, row) =>
-                sum + (row.original.foreignCurrencyPriceBeforeTax ?? 0),
+                sum +
+                (row.original.purchaseOrderLine?.pricePerPackAfterDiscount ??
+                  0) *
+                  row.original.numberOfPacks,
               0
             );
           return (
@@ -106,9 +124,15 @@ export const FinancialTab = () => {
         },
       },
       {
-        accessorKey: 'totalAfterTax',
+        id: 'lineTotalLocal',
         header: `${t('label.line-total')} (${storeCurrencyCode ?? ''})`,
         columnType: ColumnType.Currency,
+        accessorFn: (row: InboundLineFragment) =>
+          Math.round(
+            ((row.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0) *
+              row.numberOfPacks * 100) /
+              currencyRate
+          ) / 100,
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
         ),
@@ -116,7 +140,12 @@ export const FinancialTab = () => {
           const total = table
             .getFilteredRowModel()
             .rows.reduce(
-              (sum, row) => sum + (row.original.totalAfterTax ?? 0),
+              (sum, row) =>
+                sum +
+                ((row.original.purchaseOrderLine?.pricePerPackAfterDiscount ??
+                  0) *
+                  row.original.numberOfPacks) /
+                  currencyRate,
               0
             );
           return (
@@ -126,13 +155,41 @@ export const FinancialTab = () => {
           );
         },
       },
-      // TODO: calculate these
-      //  accessorKey: 'adjustedTotalLocal',
-      //   header: t('label.adjusted-total-local'),
-      //   columnType: ColumnType.Currency,
-      // },
+      {
+        id: 'adjustedLineTotal',
+        header: `${t('label.adjusted-line-total')} (${storeCurrencyCode ?? ''})`,
+        columnType: ColumnType.Currency,
+        accessorFn: (row: InboundLineFragment) =>
+          Math.round(row.costPricePerPack * row.numberOfPacks * 100) / 100,
+        Cell: ({ cell }) => (
+          <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
+        ),
+        Footer: ({ table }) => {
+          const total = table
+            .getFilteredRowModel()
+            .rows.reduce(
+              (sum, row) =>
+                sum +
+                row.original.costPricePerPack * row.original.numberOfPacks,
+              0
+            );
+          return (
+            <Box sx={{ textAlign: 'right', width: '100%' }}>
+              {formatStoreCurrency(total)}
+            </Box>
+          );
+        },
+      },
     ],
-    [formatPoCurrency, formatStoreCurrency, poCurrencyCode, storeCurrencyCode]
+    [
+      currencyRate,
+      formatPoCurrency,
+      formatStoreCurrency,
+      isForeignCurrency,
+      poCurrencyCode,
+      storeCurrencyCode,
+      t,
+    ]
   );
 
   const { table } = useNonPaginatedMaterialTable<InboundLineFragment>({
@@ -141,7 +198,10 @@ export const FinancialTab = () => {
     columns,
     isLoading,
     grouping: isExternal
-      ? { field: 'purchaseOrderLine.lineNumber', label: t('label.group-by-po-line') }
+      ? {
+          field: 'purchaseOrderLine.lineNumber',
+          label: t('label.group-by-po-line'),
+        }
       : { field: 'item.code' },
     enableRowSelection: false,
   });
