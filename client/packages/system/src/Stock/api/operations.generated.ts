@@ -215,6 +215,7 @@ export type LedgerRowFragment = {
   stockLineId?: string | null;
   storeId: string;
   runningBalance: number;
+  user?: { __typename: 'UserNode'; username: string } | null;
 };
 
 export type VvmStatusLogRowFragment = {
@@ -528,6 +529,7 @@ export type LedgerQuery = {
       stockLineId?: string | null;
       storeId: string;
       runningBalance: number;
+      user?: { __typename: 'UserNode'; username: string } | null;
     }>;
   };
 };
@@ -1200,6 +1202,9 @@ export const LedgerRowFragmentDoc = gql`
     stockLineId
     storeId
     runningBalance
+    user {
+      username
+    }
   }
 `;
 export const VvmStatusFragmentDoc = gql`
