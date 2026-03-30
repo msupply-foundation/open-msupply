@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   FnUtils,
   InvoiceLineNodeType,
+  InvoiceLineStatusType,
   useConfirmOnLeaving,
   useNotification,
+  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../types';
@@ -73,11 +75,16 @@ export const useDraftPurchaseOrderInboundLines = (
 
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
+  const { externalInboundShipmentLinesMustBeAuthorised } = usePreferences();
   const {
     query: { data },
     isExternal,
   } = useInboundShipment();
   const invoiceId = data?.id ?? '';
+  const defaultStatus =
+    isExternal && externalInboundShipmentLinesMustBeAuthorised
+      ? InvoiceLineStatusType.Pending
+      : undefined;
 
   // Find existing invoice lines for this PO line
   const existingLines = useMemo(() => {
@@ -124,6 +131,7 @@ export const useDraftPurchaseOrderInboundLines = (
           shippedNumberOfPacks: numberOfPacks,
           totalBeforeTax: pol.pricePerPackAfterDiscount * numberOfPacks,
           totalAfterTax: pol.pricePerPackAfterDiscount * numberOfPacks,
+          status: defaultStatus,
         }),
       ]);
       setIsDirty(true);
@@ -133,15 +141,14 @@ export const useDraftPurchaseOrderInboundLines = (
   const addDraftLine = useCallback(
     (initialPatch?: Partial<DraftInboundLine>) => {
       if (!purchaseOrderLine) return;
-      const newLine = createDraftLine(
-        purchaseOrderLine,
-        invoiceId,
-        initialPatch
-      );
+      const newLine = createDraftLine(purchaseOrderLine, invoiceId, {
+        status: defaultStatus,
+        ...initialPatch,
+      });
       setIsDirty(true);
       setDraftLines(prev => [...prev, newLine]);
     },
-    [purchaseOrderLine, invoiceId, setIsDirty]
+    [purchaseOrderLine, invoiceId, setIsDirty, defaultStatus]
   );
 
   const duplicateDraftLine = useCallback(
