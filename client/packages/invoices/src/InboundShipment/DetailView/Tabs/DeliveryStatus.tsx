@@ -21,11 +21,7 @@ interface DeliveryStatusRow {
   requestedNumberOfUnits: number;
 }
 
-export const DeliveryTab = ({
-  showLineStatus: _showLineStatus,
-}: {
-  showLineStatus: boolean;
-}) => {
+export const DeliveryTab = () => {
   const t = useTranslation();
   const {
     query: { data, loading: isLoading },
