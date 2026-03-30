@@ -1,6 +1,6 @@
 +++
 title = "Server"
-weight = 10
+weight = 20
 sort_by = "weight"
 template = "docs/section.html"
 
