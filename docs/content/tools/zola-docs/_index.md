@@ -1,15 +1,11 @@
 +++
 title = "Zola Docs"
 weight = 10
-<<<<<<<< HEAD:docs/content/tools/zola-docs/_index.md
 sort_by = "weight"
 template = "docs/section.html"
 
 [extra]
 source = "docs"
-========
-template = "docs/page.html"
->>>>>>>> d3597506d3 (fix breaking errors):docs/content/tools/zola-docs.md
 +++
 
 # Docs Site
@@ -27,13 +23,9 @@ docs/
 ├── check-docs-structure.sh      # CI check script
 └── content/                     # all site content lives here
     ├── tools/
-<<<<<<<< HEAD:docs/content/tools/zola-docs/_index.md
     │   ├── _index.md            # source = "docs" (standalone)
     │   └── zola-docs/
     │       └── _index.md        # this file (source = "docs")
-========
-    │   └── docs-site.md         # this file
->>>>>>>> d3597506d3 (fix breaking errors):docs/content/tools/zola-docs.md
     ├── build/
     │   └── mac/
     │       └── _index.md        # source = "code"
