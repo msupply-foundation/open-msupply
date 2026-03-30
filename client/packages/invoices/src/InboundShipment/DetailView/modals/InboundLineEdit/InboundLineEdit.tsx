@@ -44,7 +44,7 @@ interface InboundLineEditProps {
   isOpen: boolean;
   onClose: () => void;
   isDisabled?: boolean;
-  currency?: CurrencyRowFragment | null;
+  foreignCurrency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   hasVvmStatusesEnabled?: boolean;
   hasItemVariantsEnabled?: boolean;
@@ -52,6 +52,8 @@ interface InboundLineEditProps {
   getSortedItems: () => ItemRowFragment[];
   /** For external mode: the PO line ID of the clicked invoice line */
   purchaseOrderLineId?: string | null;
+  /** The specific line ID to scroll into view when the modal opens */
+  scrollToLineId?: string | null;
 }
 
 export const InboundLineEdit = ({
@@ -60,13 +62,14 @@ export const InboundLineEdit = ({
   isOpen,
   onClose,
   isDisabled = false,
-  currency,
+  foreignCurrency,
   isExternalSupplier,
   hasVvmStatusesEnabled = false,
   hasItemVariantsEnabled = false,
   scannedBatchData,
   getSortedItems,
   purchaseOrderLineId,
+  scrollToLineId,
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -253,7 +256,7 @@ export const InboundLineEdit = ({
       duplicateDraftLine={duplicateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
-      currency={currency}
+      foreignCurrency={foreignCurrency}
       isExternalSupplier={isExternalSupplier}
       item={effectiveItem}
       hasItemVariantsEnabled={hasItemVariantsEnabled}
@@ -261,24 +264,14 @@ export const InboundLineEdit = ({
       setPackRoundingMessage={setPackRoundingMessage}
       restrictedToLocationTypeId={effectiveItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
-      simplified={simplifiedTabletView}
-      actions={
-        <ButtonWithIcon
-          disabled={isDisabled}
-          color="primary"
-          variant="outlined"
-          onClick={handleAddBatch}
-          label={`${t('label.add-batch')} (+)`}
-          Icon={<PlusCircleIcon />}
-        />
-      }
+      scrollToLineId={scrollToLineId}
     />
   );
 
   const content = (
     <>
       {simplifiedTabletView ? (
-        cards
+        <Box sx={{ marginTop: 2 }}>{cards}</Box>
       ) : (
         <TableContainer
           sx={{
@@ -305,6 +298,16 @@ export const InboundLineEdit = ({
         mode === ModalMode.Create
           ? t('heading.add-item')
           : t('heading.edit-item')
+      }
+      headerActions={
+        <ButtonWithIcon
+          disabled={isDisabled}
+          color="primary"
+          variant="outlined"
+          onClick={handleAddBatch}
+          label={t('label.add-batch')}
+          Icon={<PlusCircleIcon />}
+        />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={

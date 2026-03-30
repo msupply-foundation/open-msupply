@@ -235,6 +235,14 @@ fragment Inbound on InvoiceNode {
       rate
       isHomeCurrency
     }
+    lines {
+      nodes {
+        id
+        item {
+          id
+        }
+      }
+    }
   }
 
   inboundType
