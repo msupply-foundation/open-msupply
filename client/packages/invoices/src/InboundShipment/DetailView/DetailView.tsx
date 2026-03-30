@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -20,7 +20,9 @@ import {
   Formatter,
   useAppTheme,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
+  InboundNodeType,
+  Box,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -31,6 +33,9 @@ import {
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
 } from '@openmsupply-client/system';
+
+const TABLE_ID = 'inbound-shipment-detail-view';
+const EXTERNAL_TABLE_ID = 'inbound-shipment-detail-view-external';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -52,6 +57,7 @@ import { CurrencyTab } from './Tabs/Currency';
 import { DeliveryTab } from './Tabs/DeliveryStatus';
 import { ScanInputModal } from './ScanInputModal';
 import { MobileToolbar } from './MobileToolbar';
+import { getInboundColorAndIcon } from '../ListView/SupplierCell';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -66,6 +72,14 @@ export type ScannedItem = {
 // This is the data that is passed to the "CreateDraftInboundLine" function when
 // creating the new line
 export type ScannedBatchData = { batch?: string; expiryDate?: string };
+
+const ShipmentIcon = ({ inboundType }: { inboundType?: InboundNodeType }) => {
+  if (!inboundType) return null;
+
+  const { icon: KindIcon, color: iconColor } =
+    getInboundColorAndIcon(inboundType);
+  return <KindIcon sx={{ fontSize: 16, color: iconColor }} />;
+};
 
 const DetailViewInner = () => {
   const t = useTranslation();
@@ -93,6 +107,7 @@ const DetailViewInner = () => {
 
   const {
     query: { data, loading },
+    isExternal,
     isDisabled,
     invalidateQuery,
   } = useInboundShipment();
@@ -107,10 +122,23 @@ const DetailViewInner = () => {
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
+  const [editPurchaseOrderLineId, setEditPurchaseOrderLineId] = useState<
+    string | null
+  >(null);
+  const [scrollToLineId, setScrollToLineId] = useState<string | null>(null);
+
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
-      const item = 'lines' in line ? line.lines[0]?.item : line.item;
-      onOpen(item);
+      if ('lines' in line) {
+        const firstLine = line.lines[0];
+        onOpen(firstLine?.item);
+        setEditPurchaseOrderLineId(firstLine?.purchaseOrderLine?.id ?? null);
+        setScrollToLineId(firstLine?.id ?? null);
+      } else {
+        onOpen(line.item);
+        setEditPurchaseOrderLineId(line.purchaseOrderLine?.id ?? null);
+        setScrollToLineId(line.id);
+      }
     },
     [onOpen]
   );
@@ -126,6 +154,8 @@ const DetailViewInner = () => {
       ) {
         onOpen();
         setMode(ModalMode.Create);
+        setEditPurchaseOrderLineId(null);
+        setScrollToLineId(null);
         return;
       }
 
@@ -148,16 +178,18 @@ const DetailViewInner = () => {
       updateQuery({ tab: InboundShipmentDetailTabs.Documents });
   }, [toggleUploadModal, urlQuery, updateQuery]);
 
-  const external = data?.purchaseOrder !== null;
-  const showLineStatus = data?.lines.nodes.some(line => line.status != null) ?? false;
-  const columns = useInboundShipmentColumns(external, showLineStatus);
+  const showLineStatus =
+    data?.lines.nodes.some(line => line.status != null) ?? false;
+  const columns = useInboundShipmentColumns(isExternal, showLineStatus);
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<InboundLineFragment>({
-      tableId: 'inbound-shipment-detail-view',
+      tableId: isExternal ? EXTERNAL_TABLE_ID : TABLE_ID,
       columns,
       data: lines,
-      grouping: { field: 'item.code' },
+      grouping: isExternal
+        ? { field: 'purchaseOrderLine.lineNumber', label: t('label.group-by-po-line') }
+        : { field: 'item.code' },
       isLoading: false,
       initialSort: { key: 'itemName', dir: 'asc' },
       onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
@@ -202,8 +234,15 @@ const DetailViewInner = () => {
   }, [data, selectedRows, info, onOpenReturns, setMode]);
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
+    setCustomBreadcrumbs({
+      1: (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ShipmentIcon inboundType={data?.inboundType} />
+          {data?.invoiceNumber ?? ''}
+        </Box>
+      ),
+    });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber, data?.inboundType]);
 
   const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
 
@@ -225,26 +264,28 @@ const DetailViewInner = () => {
   const tabs = [
     {
       Component: isExtraSmallScreen ? (
-        <MobileCardList table={table} />
+        <CardList table={table} />
       ) : (
         <MaterialTable table={table} />
       ),
       value: InboundShipmentDetailTabs.Details,
     },
-    ...external ? [
-      {
-        Component: <FinancialTab />,
-        value: InboundShipmentDetailTabs.Financial,
-      },
-      {
-        Component: <CurrencyTab />,
-        value: InboundShipmentDetailTabs.Currency,
-      },
-      {
-        Component: <DeliveryTab showLineStatus={showLineStatus} />,
-        value: InboundShipmentDetailTabs.Delivery,
-      },
-    ] : [],
+    ...(isExternal
+      ? [
+          {
+            Component: <FinancialTab />,
+            value: InboundShipmentDetailTabs.Financial,
+          },
+          {
+            Component: <CurrencyTab />,
+            value: InboundShipmentDetailTabs.Currency,
+          },
+          {
+            Component: <DeliveryTab showLineStatus={showLineStatus} />,
+            value: InboundShipmentDetailTabs.Delivery,
+          },
+        ]
+      : []),
     {
       Component: (
         <DocumentsTable
@@ -305,10 +346,12 @@ const DetailViewInner = () => {
               // populating the item will the full details if they are missing
               // (which is the case when item info is scanned from barcode)
               item={entity as InboundLineItem}
-              currency={data.currency}
+              foreignCurrency={data.purchaseOrder?.currency ?? data.currency}
               isExternalSupplier={!data.otherParty.store}
               hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
+              purchaseOrderLineId={editPurchaseOrderLineId}
+              scrollToLineId={scrollToLineId}
               scannedBatchData={{
                 batch: (entity as ScannedBatchData)?.batch,
                 expiryDate: (entity as ScannedBatchData)?.expiryDate,
@@ -357,20 +400,23 @@ const DetailViewInner = () => {
 
 export const useInvoiceLineStatusMap = () => {
   const theme = useAppTheme();
-  return useMemo(() => ({
-    [InvoiceLineStatusType.Passed]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Passed),
-      colour: theme.palette.invoiceLineStatus.passed,
-    },
-    [InvoiceLineStatusType.Pending]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Pending),
-      colour: theme.palette.invoiceLineStatus.pending,
-    },
-    [InvoiceLineStatusType.Rejected]: {
-      label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
-      colour: theme.palette.invoiceLineStatus.rejected,
-    },
-  }), [theme]);
+  return useMemo(
+    () => ({
+      [InvoiceLineStatusType.Passed]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
+        colour: theme.palette.invoiceLineStatus.passed,
+      },
+      [InvoiceLineStatusType.Pending]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
+        colour: theme.palette.invoiceLineStatus.pending,
+      },
+      [InvoiceLineStatusType.Rejected]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
+        colour: theme.palette.invoiceLineStatus.rejected,
+      },
+    }),
+    [theme]
+  );
 };
 
 export const DetailView = () => {

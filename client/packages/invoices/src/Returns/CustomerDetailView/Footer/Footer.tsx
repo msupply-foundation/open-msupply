@@ -86,10 +86,10 @@ export const FooterComponent = ({
 
   const statuses = isManuallyCreated
     ? manualCustomerReturnStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
+        invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
       )
     : customerReturnStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
+        invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
       );
 
   return (

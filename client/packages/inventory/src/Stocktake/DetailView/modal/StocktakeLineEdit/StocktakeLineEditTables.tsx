@@ -29,13 +29,11 @@ import {
   CampaignOrProgramCell,
   DonorSearchInput,
   getVolumePerPackFromVariant,
-  ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
-  useIsItemVariantsEnabled,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import {
@@ -60,7 +58,6 @@ export const BatchTable = ({
   isInitialStocktake: boolean;
 }) => {
   const t = useTranslation();
-  const itemVariantsEnabled = useIsItemVariantsEnabled();
   const { manageVvmStatusForStock } = usePreferences();
   const { errors } = useStocktakeLineErrorContext();
 
@@ -137,37 +134,6 @@ export const BatchTable = ({
             />
           );
         },
-      },
-      {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        Cell: ({
-          row: {
-            original: { id, packSize, countThisLine, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={disabled || !countThisLine}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              update({
-                id,
-                itemVariantId: itemVariant?.id || null,
-                itemVariant,
-                manufacturer: itemVariant?.manufacturer ?? null,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: itemVariantsEnabled,
       },
       {
         id: 'vvmStatus',
@@ -258,7 +224,7 @@ export const BatchTable = ({
         ),
       },
     ],
-    [showVVMStatusColumn, itemVariantsEnabled, errors]
+    [showVVMStatusColumn, errors]
   );
 
   const table = useSimpleMaterialTable({

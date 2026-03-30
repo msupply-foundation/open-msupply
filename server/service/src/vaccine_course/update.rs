@@ -4,8 +4,8 @@ use super::{
 };
 use crate::{
     activity_log::activity_log_entry, demographic::validate::check_demographic_exists,
-    service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
-    SingleRecordError,
+    nullable_update, service_provider::ServiceContext,
+    vaccine_course::validate::check_vaccine_course_exists, NullableUpdate, SingleRecordError,
 };
 use repository::{
     vaccine_course::{
@@ -14,6 +14,12 @@ use repository::{
         vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
+        vaccine_course_store_config::{
+            VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
+        },
+        vaccine_course_store_config_row::{
+            VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
+        },
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
 };
@@ -72,11 +78,20 @@ impl VaccineCourseDoseInput {
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
+pub struct VaccineCourseStoreConfigInput {
+    pub id: String,
+    pub store_id: String,
+    pub wastage_rate: Option<NullableUpdate<f64>>,
+    pub coverage_rate: Option<NullableUpdate<f64>>,
+}
+
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct UpdateVaccineCourse {
     pub id: String,
     pub name: Option<String>,
     pub vaccine_items: Vec<VaccineCourseItemInput>,
     pub doses: Vec<VaccineCourseDoseInput>,
+    pub store_configs: Vec<VaccineCourseStoreConfigInput>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
@@ -96,6 +111,7 @@ pub fn update_vaccine_course(
                 updated_course,
                 vaccine_items_to_delete,
                 vaccine_items_to_add,
+                store_config_rows,
             } = generate(connection, old_row, input.clone())?;
             VaccineCourseRowRepository::new(connection).upsert_one(&updated_course)?;
 
@@ -124,6 +140,11 @@ pub fn update_vaccine_course(
             // Upsert the vaccine course doses
             for dose in input.clone().doses {
                 dose_repo.upsert_one(&dose.to_domain(input.clone().id))?;
+            }
+
+            let store_config_repo = VaccineCourseStoreConfigRowRepository::new(connection);
+            for config_row in store_config_rows {
+                store_config_repo.upsert_one(&config_row)?;
             }
 
             activity_log_entry(
@@ -192,6 +213,7 @@ struct GenerateResult {
     updated_course: VaccineCourseRow,
     vaccine_items_to_delete: Vec<String>,
     vaccine_items_to_add: Vec<VaccineCourseItemInput>,
+    store_config_rows: Vec<VaccineCourseStoreConfigRow>,
 }
 
 fn generate(
@@ -202,6 +224,7 @@ fn generate(
         name,
         vaccine_items,
         doses: _,
+        store_configs,
         demographic_id,
         coverage_rate,
         use_in_gaps_calculations,
@@ -251,10 +274,41 @@ fn generate(
         })
         .collect();
 
+    // Generate store config rows, merging with existing rows for nullable fields
+    let existing_store_configs = VaccineCourseStoreConfigRepository::new(connection)
+        .query_by_filter(
+            VaccineCourseStoreConfigFilter::new()
+                .vaccine_course_id(EqualFilter::equal_to(id.clone())),
+        )?;
+
+    let store_config_rows = store_configs
+        .into_iter()
+        .map(|config| {
+            let existing_config = existing_store_configs
+                .iter()
+                .find(|existing| existing.id == config.id);
+
+            VaccineCourseStoreConfigRow {
+                id: config.id,
+                vaccine_course_id: id.clone(),
+                store_id: config.store_id,
+                wastage_rate: nullable_update(
+                    &config.wastage_rate,
+                    existing_config.and_then(|c| c.wastage_rate),
+                ),
+                coverage_rate: nullable_update(
+                    &config.coverage_rate,
+                    existing_config.and_then(|c| c.coverage_rate),
+                ),
+            }
+        })
+        .collect();
+
     Ok(GenerateResult {
         updated_course,
         vaccine_items_to_delete,
         vaccine_items_to_add,
+        store_config_rows,
     })
 }
 

@@ -66,7 +66,7 @@ pub fn update_supplier_return_other_party(
                 ActivityLogRowRepository::new(connection).insert_one(&new_activity)?;
             }
 
-            get_invoice(ctx, None, &new_invoice.id)
+            get_invoice(ctx, None, &new_invoice.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
