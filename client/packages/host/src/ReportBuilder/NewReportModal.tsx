@@ -14,7 +14,6 @@ type DetectedContext =
   | null;
 
 const contextOptions: { label: string; value: DetectedContext }[] = [
-  { label: 'Generic (no context)', value: null },
   { label: 'Requisition', value: 'REQUISITION' },
   { label: 'Inbound Shipment', value: 'INBOUND_SHIPMENT' },
   { label: 'Outbound Shipment', value: 'OUTBOUND_SHIPMENT' },
