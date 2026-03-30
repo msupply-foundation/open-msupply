@@ -101,7 +101,9 @@ export const PurchaseOrderLineEdit = ({
             label={t('label.status')}
             Input={
               <Select
-                disabled={isFieldDisabled(status, StatusGroup.ExceptSent)}
+                disabled={
+                  disabled || isFieldDisabled(status, StatusGroup.ExceptSent)
+                }
                 sx={{
                   width: 200,
                 }}
@@ -156,10 +158,10 @@ export const PurchaseOrderLineEdit = ({
               <InputWithLabelRow
                 Input={
                   <ManufacturerSearchInput
-                    disabled={isFieldDisabled(
-                      status,
-                      StatusGroup.AfterConfirmed
-                    )}
+                    disabled={
+                      disabled ||
+                      isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                    }
                     value={draft?.manufacturer ?? null}
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
@@ -198,7 +200,7 @@ export const PurchaseOrderLineEdit = ({
               )}
               value={draft?.numberOfPacks ?? 0}
               disabled={
-                isDisabled || (!canEditRequestedQuantity && !userIsAuthorised)
+                disabled || (!canEditRequestedQuantity && !userIsAuthorised)
               }
               onChange={(value: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
