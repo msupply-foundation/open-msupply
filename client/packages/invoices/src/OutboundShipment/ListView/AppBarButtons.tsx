@@ -63,7 +63,7 @@ export const AppBarButtonsComponent: FC<{
               });
             } catch (e) {
               const errorSnack = error(
-                'Failed to create invoice! ' + (e as Error).message
+                t('error.failed-to-create-outbound-shipment', { message: (e as Error).message })
               );
               errorSnack();
             }

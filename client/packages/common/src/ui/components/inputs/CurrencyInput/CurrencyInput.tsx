@@ -3,13 +3,14 @@ import { styled } from '@mui/material/styles';
 import RCInput, {
   CurrencyInputProps as RCInputProps,
 } from 'react-currency-input-field';
-import { useCurrency, useFormatNumber } from '@common/intl';
+import { Currencies, useCurrency, useFormatNumber } from '@common/intl';
 import { NumUtils } from '@common/utils';
 import { useBufferState } from '@common/hooks';
 
 interface CurrencyInputProps extends RCInputProps {
   onChangeNumber: (value: number) => void;
   maxWidth?: number | string;
+  currencyCode?: Currencies;
 }
 
 // TODO: It would be nice if we were to just use the BasicTextInput or
@@ -42,11 +43,12 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   value,
   disabled,
   width,
+  currencyCode,
   ...restOfProps
 }) => {
   const val = value !== undefined ? value : defaultValue;
   const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
-  const { options } = useCurrency();
+  const { options } = useCurrency(currencyCode);
 
   const { format } = useFormatNumber();
 

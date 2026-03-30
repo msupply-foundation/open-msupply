@@ -10,6 +10,8 @@ mod validate;
 
 use validate::validate;
 
+use crate::invoice::inbound_shipment::InboundShipmentType;
+
 use super::{get_existing_vvm_status_log_id, StockInType};
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -23,11 +25,13 @@ type OutError = DeleteStockInLineError;
 pub fn delete_stock_in_line(
     ctx: &ServiceContext,
     input: DeleteStockInLine,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice_row, line) = validate(&input, &ctx.store_id, connection)?;
+            let (invoice_row, line) =
+                validate(&input, &ctx.store_id, connection, inbound_shipment_type)?;
             let delete_batch_id_option = line.stock_line_id.clone();
 
             if let Some(batch_id) = &delete_batch_id_option {
@@ -67,6 +71,7 @@ pub enum DeleteStockInLineError {
     NotThisInvoiceLine(String),
     LineUsedInStocktake,
     LineLinkedToTransferredInvoice,
+    WrongInboundShipmentType,
 }
 
 impl From<RepositoryError> for DeleteStockInLineError {
@@ -156,7 +161,7 @@ mod test {
                 DeleteStockInLine {
                     id: "invalid".to_string(),
                     r#type: StockInType::CustomerReturn,
-                },
+                }, None
             ),
             Err(ServiceError::LineDoesNotExist)
         );
@@ -168,7 +173,7 @@ mod test {
                 DeleteStockInLine {
                     id: mock_supplier_return_b_invoice_line_a().id,
                     r#type: StockInType::CustomerReturn,
-                },
+                }, None
             ),
             Err(ServiceError::NotAStockIn)
         );
@@ -180,7 +185,7 @@ mod test {
                 DeleteStockInLine {
                     id: verified_return_line().id,
                     r#type: StockInType::CustomerReturn,
-                },
+                }, None
             ),
             Err(ServiceError::CannotEditFinalised)
         );
@@ -192,7 +197,7 @@ mod test {
                 DeleteStockInLine {
                     id: mock_customer_return_a_invoice_line_b().id, // line number_of_packs and stock_line available_number_of_packs are different
                     r#type: StockInType::CustomerReturn,
-                },
+                }, None
             ),
             Err(ServiceError::BatchIsReserved)
         );
@@ -204,7 +209,7 @@ mod test {
                 DeleteStockInLine {
                     id: mock_transferred_inbound_shipment_a_line_b().id,
                     r#type: StockInType::InboundShipment,
-                },
+                }, None
             ),
             Err(ServiceError::LineLinkedToTransferredInvoice)
         );
@@ -217,7 +222,7 @@ mod test {
                 DeleteStockInLine {
                     id: mock_customer_return_a_invoice_line_a().id,
                     r#type: StockInType::CustomerReturn,
-                },
+                }, None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -264,7 +269,7 @@ mod test {
             DeleteStockInLine {
                 id: return_line().id,
                 r#type: StockInType::CustomerReturn,
-            },
+            }, None
         )
         .unwrap();
 
@@ -297,7 +302,7 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
-            },
+            }, None
         )
         .unwrap();
 
@@ -321,7 +326,7 @@ mod test {
                 id: "delivered_invoice_line_with_vvm_status".to_string(),
                 r#type: StockInType::InboundShipment,
                 ..Default::default()
-            },
+            }, None
         )
         .unwrap();
 

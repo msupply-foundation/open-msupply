@@ -5,7 +5,7 @@ use crate::mutations::{
 use async_graphql::*;
 
 use chrono::NaiveDate;
-use graphql_core::generic_inputs::TaxInput;
+use graphql_core::generic_inputs::{InboundShipmentType, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
 };
@@ -14,7 +14,7 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::{
     ApplyDonorToInvoiceLines, UpdateDefaultDonor, UpdateInboundShipment as ServiceInput,
     UpdateInboundShipmentError as ServiceError, UpdateInboundShipmentStatus,
@@ -75,11 +75,16 @@ pub enum UpdateResponse {
     Response(InvoiceNode),
 }
 
-pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub fn update(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateInput,
+    r#type: InboundShipmentType,
+) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -87,11 +92,11 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_service
-            .update_inbound_shipment(&service_context, input.to_domain()),
-    )
+    map_response(service_provider.invoice_service.update_inbound_shipment(
+        &service_context,
+        input.to_domain(),
+        r#type.to_domain(),
+    ))
 }
 
 #[derive(Interface)]
@@ -212,6 +217,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::CannotUpdateStatusAndDonorAtTheSameTime
         | ServiceError::NotThisStoreInvoice
         | ServiceError::NotAnInboundShipment
+        | ServiceError::WrongInboundShipmentType
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
         | ServiceError::CannotPutDeliveredDateAfterReceivedDate
@@ -253,14 +259,16 @@ impl ApplyToLinesInput {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
+        assert_graphql_query, assert_standard_graphql_error,
+        test_helpers::{setup_graphql_test, setup_graphql_test_with_data},
     };
     use repository::{
         mock::{
             mock_inbound_shipment_c, mock_name_linked_to_store, mock_name_not_linked_to_store,
-            mock_name_store_a, mock_store_a, mock_store_linked_to_name, MockDataInserts,
+            mock_name_store_a, mock_store_a, mock_store_linked_to_name, MockData, MockDataInserts,
         },
-        Invoice, InvoiceRowRepository, RepositoryError, StorageConnectionManager,
+        Invoice, InvoiceRowRepository, PermissionType, RepositoryError, StorageConnectionManager,
+        UserPermissionRow,
     };
     use serde_json::json;
     use service::{
@@ -285,6 +293,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: ServiceInput,
+            _expected_type: service::invoice::inbound_shipment::InboundShipmentType,
         ) -> Result<Invoice, ServiceError> {
             self.0(input)
         }
@@ -518,11 +527,33 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_inbound_shipment_success() {
-        let (mock_data, connection, connection_manager, settings) = setup_graphql_test(
+        // debug_no_access_control uses "dummy_user" which needs inbound shipment permissions
+        let dummy_user_permissions = vec![
+            UserPermissionRow {
+                id: "dummy_user_inbound_mutate".to_string(),
+                user_id: "dummy_user".to_string(),
+                store_id: Some("store_a".to_string()),
+                permission: PermissionType::InboundShipmentMutate,
+                context_id: None,
+            },
+            UserPermissionRow {
+                id: "dummy_user_inbound_verify".to_string(),
+                user_id: "dummy_user".to_string(),
+                store_id: Some("store_a".to_string()),
+                permission: PermissionType::InboundShipmentVerify,
+                context_id: None,
+            },
+        ];
+
+        let (mock_data, connection, connection_manager, settings) = setup_graphql_test_with_data(
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_update_inbound_shipment_success",
             MockDataInserts::all(),
+            MockData {
+                user_permissions: dummy_user_permissions,
+                ..Default::default()
+            },
         )
         .await;
 

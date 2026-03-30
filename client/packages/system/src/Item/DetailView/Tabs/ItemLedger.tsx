@@ -16,6 +16,10 @@ import {
   InvoiceNodeStatus,
   InvoiceNodeType,
   NothingHere,
+  Box,
+  FilterDefinition,
+  FilterMenu,
+  GroupFilterDefinition,
 } from '@openmsupply-client/common';
 import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices/';
 
@@ -138,7 +142,7 @@ const ItemLedgerTable = ({
         header: t('label.reason'),
       },
     ],
-    [localisedTime]
+    [localisedTime, t]
   );
 
   const { table } = usePaginatedMaterialTable<ItemLedgerFragment>({
@@ -162,6 +166,7 @@ export const ItemLedgerTab = ({
   itemId: string;
   onRowClick: (ledger: ItemLedgerFragment) => void;
 }) => {
+  const t = useTranslation();
   const {
     queryParams: { first, offset, filterBy },
   } = useUrlQueryParams({
@@ -177,11 +182,66 @@ export const ItemLedgerTab = ({
     filterBy,
   });
 
+  const filters: (FilterDefinition | GroupFilterDefinition)[] = React.useMemo(
+    () => [
+      {
+        type: 'group',
+        name: t('label.datetime'),
+        elements: [
+          {
+            type: 'dateTime',
+            name: t('label.from-datetime'),
+            urlParameter: 'datetime',
+            range: 'from',
+            isDefault: true,
+          },
+          {
+            type: 'dateTime',
+            name: t('label.to-datetime'),
+            urlParameter: 'datetime',
+            range: 'to',
+            isDefault: true,
+          },
+        ],
+      },
+      {
+        type: 'enum',
+        name: t('label.type'),
+        urlParameter: 'invoiceType',
+        options: Object.values(InvoiceNodeType).map(type => ({
+          label: t(getInvoiceLocalisationKey(type)),
+          value: type,
+        })),
+      },
+      {
+        type: 'enum',
+        name: t('label.status'),
+        urlParameter: 'invoiceStatus',
+        options: Object.values(InvoiceNodeStatus)
+          .filter(
+            status =>
+              status !== InvoiceNodeStatus.New &&
+              status !== InvoiceNodeStatus.Allocated
+          )
+          .map(status => ({
+            label: getInvoiceStatusTranslator(t)(status),
+            value: status,
+          })),
+      },
+    ],
+    [t]
+  );
+
   return (
-    <ItemLedgerTable
-      itemLedgers={data ?? { ledgers: [], totalCount: 0 }}
-      isLoading={isFetching}
-      onRowClick={onRowClick}
-    />
+    <Box display="flex" flexDirection="column" flex={1}>
+      <Box display="flex" ml={2} mb={1}>
+        <FilterMenu filters={filters} />
+      </Box>
+      <ItemLedgerTable
+        itemLedgers={data ?? { ledgers: [], totalCount: 0 }}
+        isLoading={isFetching}
+        onRowClick={onRowClick}
+      />
+    </Box>
   );
 };
