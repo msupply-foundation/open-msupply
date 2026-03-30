@@ -26,6 +26,7 @@ import {
   StockIcon,
   StatusChip,
   InvoiceLineStatusType,
+  InvoiceNodeStatus,
   useAppTheme,
   InfoIcon,
   useSimplifiedTabletUI,
@@ -315,8 +316,12 @@ export const InboundLineEditCards = ({
         includeColumn: showLineStatus,
         Cell: ({ row }) => {
           const status = row.original.status;
+          const isStatusDisabled =
+            isDisabled ||
+            inboundData?.status === InvoiceNodeStatus.Received ||
+            inboundData?.status === InvoiceNodeStatus.Verified;
 
-          if (isDisabled) {
+          if (isStatusDisabled) {
             const entry = status ? statusMap[status] : undefined;
             return entry ? (
               <StatusChip label={entry.label} colour={entry.colour} />
