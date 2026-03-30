@@ -124,6 +124,7 @@ export const InboundListView = () => {
       {
         header: t('label.number'),
         accessorKey: 'invoiceNumber',
+        description: t('description.invoice-number'),
         columnType: ColumnType.Number,
         size: 90,
         enableColumnFilter: true,
