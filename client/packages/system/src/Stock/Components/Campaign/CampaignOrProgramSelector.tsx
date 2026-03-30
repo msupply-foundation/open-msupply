@@ -113,8 +113,7 @@ export const CampaignOrProgramSelector = ({
       onChange={handleChange}
       noOptionsText={t('messages.no-campaigns')}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
-      width={'160px'}
-      fullWidth={fullWidth}
+      width={fullWidth ? '100%' : '160px'}
       disabled={disabled}
     />
   );

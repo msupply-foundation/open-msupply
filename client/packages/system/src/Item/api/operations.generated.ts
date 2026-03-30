@@ -9,6 +9,7 @@ export type StockLineFragment = {
   availableNumberOfPacks: number;
   batch?: string | null;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   id: string;
   itemId: string;
   note?: string | null;
@@ -336,6 +337,7 @@ export type ItemFragment = {
       availableNumberOfPacks: number;
       batch?: string | null;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       id: string;
       itemId: string;
       note?: string | null;
@@ -553,6 +555,7 @@ export type ItemsWithStockLinesQuery = {
           availableNumberOfPacks: number;
           batch?: string | null;
           expiryDate?: string | null;
+          manufactureDate?: string | null;
           id: string;
           itemId: string;
           note?: string | null;
@@ -894,6 +897,7 @@ export type ItemByIdQuery = {
           availableNumberOfPacks: number;
           batch?: string | null;
           expiryDate?: string | null;
+          manufactureDate?: string | null;
           id: string;
           itemId: string;
           note?: string | null;
@@ -1184,6 +1188,7 @@ export type GetHistoricalStockLinesQuery = {
       availableNumberOfPacks: number;
       batch?: string | null;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       id: string;
       itemId: string;
       note?: string | null;
@@ -1465,6 +1470,7 @@ export type ItemLedgerFragment = {
   sellPricePerPack: number;
   totalBeforeTax?: number | null;
   numberOfPacks: number;
+  user?: { __typename: 'UserNode'; username: string } | null;
 };
 
 export type ItemLedgerQueryVariables = Types.Exact<{
@@ -1498,6 +1504,7 @@ export type ItemLedgerQuery = {
       sellPricePerPack: number;
       totalBeforeTax?: number | null;
       numberOfPacks: number;
+      user?: { __typename: 'UserNode'; username: string } | null;
     }>;
   };
 };
@@ -1593,6 +1600,7 @@ export const StockLineFragmentDoc = gql`
     availableNumberOfPacks
     batch
     expiryDate
+    manufactureDate
     id
     itemId
     location {
@@ -1819,6 +1827,9 @@ export const ItemLedgerFragmentDoc = gql`
     sellPricePerPack
     totalBeforeTax
     numberOfPacks
+    user {
+      username
+    }
   }
 `;
 export const ItemsWithStockLinesDocument = gql`

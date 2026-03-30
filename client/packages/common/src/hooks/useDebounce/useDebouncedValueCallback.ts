@@ -1,4 +1,4 @@
-import { useCallback, DependencyList } from 'react';
+import { useCallback, useEffect, DependencyList } from 'react';
 import { FnUtils } from '@common/utils';
 
 /**
@@ -20,6 +20,14 @@ export const useDebouncedValueCallback = <T extends (...args: any[]) => any>(
     ...depsArray,
     memoizedCallback,
   ]);
+
+  // Cancel any pending debounced call on unmount to prevent stale URL updates
+  // after navigation (e.g. clicking a row while a filter input is still debouncing)
+  useEffect(() => {
+    return () => {
+      memoizedCallback.cancel();
+    };
+  }, [memoizedCallback]);
 
   return debounced;
 };
