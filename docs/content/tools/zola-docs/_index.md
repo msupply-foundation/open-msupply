@@ -8,7 +8,7 @@ template = "docs/section.html"
 source = "docs"
 +++
 
-# Docs Guide
+# Docs Site
 
 ## Overview
 

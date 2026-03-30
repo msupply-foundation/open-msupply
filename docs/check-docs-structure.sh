@@ -22,6 +22,7 @@ should_skip() {
     "README.md") return 0 ;;                           # root README
     ".github/workflows/ACTIONS_README.md") return 0 ;; # not developer docs
     docs/themes/*) return 0 ;;                         # theme vendored files
+    docs/themes/*) return 0 ;;                         # theme vendored files
     *) return 1 ;;
   esac
 }
