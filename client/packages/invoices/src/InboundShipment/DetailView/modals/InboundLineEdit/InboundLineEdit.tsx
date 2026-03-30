@@ -259,25 +259,30 @@ export const InboundLineEdit = ({
     }
   }, [hasVariants, addDraftLine]);
 
-  // Check if saving these lines requires authorise permission
+  // Check if saving these lines requires authorise permission.
+  // Only lines the user actually changed (isUpdated/isCreated) matter.
   const saveNeedsAuthorise = () => {
     if (!isExternal) return false;
     return draftLines.some(line => {
+      // Skip lines the user hasn't touched
+      if (!line.isUpdated && !line.isCreated) return false;
+
+      // Setting status to approved/rejected always needs authorise
       if (
         line.status === InvoiceLineStatusType.Passed ||
         line.status === InvoiceLineStatusType.Rejected
       )
         return true;
+
       // Editing an already-approved line needs authorise, unless
-      // the user is changing it back to pending
+      // the user is changing it to pending
       if (!line.isCreated) {
         const original = data?.lines.nodes.find(l => l.id === line.id);
-        if (
-          original?.status === InvoiceLineStatusType.Passed &&
-          line.status !== InvoiceLineStatusType.Pending
-        )
-          return true;
+        if (original?.status === InvoiceLineStatusType.Passed) {
+          return line.status !== InvoiceLineStatusType.Pending;
+        }
       }
+
       return false;
     });
   };
