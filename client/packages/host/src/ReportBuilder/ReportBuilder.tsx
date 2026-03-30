@@ -68,6 +68,7 @@ type DetectedContext =
   | 'PURCHASE_ORDER'
   | 'CUSTOMER_RETURN'
   | 'SUPPLIER_RETURN'
+  | 'INTERNAL_ORDER'
   | null;
 
 const detectContext = (query: string): DetectedContext => {
@@ -98,6 +99,7 @@ const contextLabel: Record<NonNullable<DetectedContext>, string> = {
   PURCHASE_ORDER: 'Purchase Order',
   CUSTOMER_RETURN: 'Customer Return',
   SUPPLIER_RETURN: 'Supplier Return',
+  INTERNAL_ORDER: 'Internal Order',
 };
 
 /** Maps DetectedContext values to the GraphQL ReportContext enum values */
@@ -110,6 +112,7 @@ const contextToReportContext: Record<NonNullable<DetectedContext>, string> = {
   PURCHASE_ORDER: 'PURCHASE_ORDER',
   CUSTOMER_RETURN: 'CUSTOMER_RETURN',
   SUPPLIER_RETURN: 'SUPPLIER_RETURN',
+  INTERNAL_ORDER: 'INTERNAL_ORDER',
 };
 
 // ─── Build report definition ──────────────────────────────────────────────────
@@ -225,7 +228,7 @@ const useRecordOptions = (
       : null;
 
   const isInvoiceContext = invoiceType !== null;
-  const isRequisition = context === 'REQUISITION';
+  const isRequisition = context === 'REQUISITION' || context === 'INTERNAL_ORDER';
   const isStocktake = context === 'STOCKTAKE';
   const isPurchaseOrder = context === 'PURCHASE_ORDER';
 
@@ -442,18 +445,13 @@ export const ReportBuilder: React.FC = () => {
   );
 
   useEffect(() => {
-    setSelectedRecord(null);
-  }, [detectedContext]);
-
-  useEffect(() => {
-    if (options.length > 0 && !selectedRecord) {
-      setSelectedRecord(options[0]);
-    }
+    setSelectedRecord(options.length > 0 ? options[0] : null);
   }, [options]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
       if (!template) return;
+      if (effectiveContext && !selectedRecord) return;
       const report = buildReport(template, header, style, query);
       renderReport({ report, dataId: selectedRecord?.value ?? '', storeId, arguments: {} })
         .then(result => {
@@ -486,7 +484,7 @@ export const ReportBuilder: React.FC = () => {
       setHeader(parsed.header);
       setReportName(report.label);
       setLoadedReportId(report.value);
-      setManualContext(null);
+      setManualContext((report.context as DetectedContext) ?? null);
     },
     []
   );
