@@ -9586,14 +9586,13 @@ export type StringStorePrefInput = {
 
 export type Subscriptions = {
   __typename: 'Subscriptions';
+  /** Subscribe to initialisation status changes (authenticated). */
+  initialisationStatusUpdated: InitialisationStatusNode;
   /** Simple subscription to verify WebSocket connectivity */
   ping: Scalars['String']['output'];
-  /** Subscribe to push queue count updates. */
+  /** Subscribe to push queue count updates (authenticated). */
   pushQueueCountUpdated: Scalars['Int']['output'];
-  /**
-   * Subscribe to real-time sync status updates.
-   * Uses a watch channel so all subscribers share the same row data — no per-subscriber DB queries.
-   */
+  /** Subscribe to real-time sync status updates (authenticated). */
   syncStatusUpdated?: Maybe<FullSyncStatusNode>;
 };
 
@@ -10652,6 +10651,8 @@ export type UpdateRequestRequisitionInput = {
   id: Scalars['String']['input'];
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
+  /** @deprecated Since 2.17.0. Use destination_customer_id */
+  originalCustomerId?: InputMaybe<NullableStringUpdate>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateRequestRequisitionStatusInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
