@@ -13,7 +13,6 @@ import {
   useAuthContext,
   UserPermission,
   useTranslation,
-  NumUtils,
   NumInputRow,
   TextInput,
   MultilineTextInput,
@@ -67,11 +66,6 @@ export const PurchaseOrderLineEdit = ({
     UserPermission.PurchaseOrderAuthorise
   );
 
-  const getCurrencyValue = (value: number | null | undefined) => {
-    if (value == null) return undefined;
-    return NumUtils.round(value, options.precision);
-  };
-
   // Disable input components. Individual inputs can override this
   const disabled =
     isDisabled || draft?.status === PurchaseOrderLineStatusNode.Closed;
@@ -101,7 +95,9 @@ export const PurchaseOrderLineEdit = ({
             label={t('label.status')}
             Input={
               <Select
-                disabled={isFieldDisabled(status, StatusGroup.ExceptSent)}
+                disabled={
+                  disabled || isFieldDisabled(status, StatusGroup.ExceptSent)
+                }
                 sx={{
                   width: 200,
                 }}
@@ -156,10 +152,10 @@ export const PurchaseOrderLineEdit = ({
               <InputWithLabelRow
                 Input={
                   <ManufacturerSearchInput
-                    disabled={isFieldDisabled(
-                      status,
-                      StatusGroup.AfterConfirmed
-                    )}
+                    disabled={
+                      disabled ||
+                      isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                    }
                     value={draft?.manufacturer ?? null}
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
@@ -198,7 +194,7 @@ export const PurchaseOrderLineEdit = ({
               )}
               value={draft?.numberOfPacks ?? 0}
               disabled={
-                isDisabled || (!canEditRequestedQuantity && !userIsAuthorised)
+                disabled || (!canEditRequestedQuantity && !userIsAuthorised)
               }
               onChange={(value: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
@@ -245,7 +241,7 @@ export const PurchaseOrderLineEdit = ({
 
             <NumInputRow
               label={t('label.price-per-pack-before-discount')}
-              value={getCurrencyValue(draft?.pricePerPackBeforeDiscount)}
+              value={draft?.pricePerPackBeforeDiscount}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -256,7 +252,7 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={options.precision}
+              decimalLimit={5}
               endAdornment={options.symbol}
             />
             <NumInputRow
@@ -278,7 +274,7 @@ export const PurchaseOrderLineEdit = ({
             />
             <NumInputRow
               label={t('label.price-per-pack-after-discount')}
-              value={getCurrencyValue(draft?.pricePerPackAfterDiscount) || 0}
+              value={draft?.pricePerPackAfterDiscount ?? 0}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -289,20 +285,19 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={options.precision}
+              decimalLimit={5}
               endAdornment={options.symbol}
             />
             <NumInputRow
               label={t('label.total-cost')}
               value={
                 draft
-                  ? getCurrencyValue(
-                      (draft.pricePerPackAfterDiscount ?? 0) *
-                        (draft.numberOfPacks ?? 0)
-                    ) || 0
+                  ? ((draft.pricePerPackAfterDiscount ?? 0) *
+                      (draft.numberOfPacks ?? 0)) ||
+                    0
                   : 0
               }
-              decimalLimit={options.precision}
+              decimalLimit={5}
               endAdornment={options.symbol}
               disabled={true}
             />

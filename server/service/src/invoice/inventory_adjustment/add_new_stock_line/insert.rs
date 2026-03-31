@@ -99,6 +99,15 @@ pub fn add_new_stock_line(
                 None,
             )?;
 
+            // Also log against the stock line so it appears in the stock line's Log tab
+            activity_log_entry(
+                ctx,
+                ActivityLogType::InventoryAdjustment,
+                Some(stock_line_id.clone()),
+                None,
+                None,
+            )?;
+
             match get_stock_line(ctx, stock_line_id) {
                 Ok(stock_line) => Ok(stock_line),
                 Err(SingleRecordError::NotFound(_)) => {
