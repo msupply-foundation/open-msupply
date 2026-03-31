@@ -80,8 +80,9 @@ export const FinancialTab = () => {
         includeColumn: isForeignCurrency,
         accessorFn: (row: InboundLineFragment) =>
           Math.round(
-            ((row.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0) * 100) /
-              currencyRate
+            (row.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0) *
+              currencyRate *
+              100
           ) / 100,
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
@@ -132,9 +133,10 @@ export const FinancialTab = () => {
         columnType: ColumnType.Currency,
         accessorFn: (row: InboundLineFragment) =>
           Math.round(
-            ((row.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0) *
-              row.numberOfPacks * 100) /
-              currencyRate
+            (row.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0) *
+              row.numberOfPacks *
+              currencyRate *
+              100
           ) / 100,
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
@@ -145,9 +147,9 @@ export const FinancialTab = () => {
             .rows.reduce(
               (sum, row) =>
                 sum +
-                ((row.original.purchaseOrderLine?.pricePerPackAfterDiscount ??
+                (row.original.purchaseOrderLine?.pricePerPackAfterDiscount ??
                   0) *
-                  row.original.numberOfPacks) /
+                  row.original.numberOfPacks *
                   currencyRate,
               0
             );

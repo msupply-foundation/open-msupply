@@ -1742,8 +1742,9 @@ mod test {
         // Test 3: Currency rate conversion
         // ============================================================
         // Reset charges to 0, set currency rate to 2.0
-        // PO prices are in foreign currency, so local = po_price / rate
-        // Line A: 10 / 2 = 5, Line B: 20 / 2 = 10
+        // Rate convention: home currency units per 1 foreign unit
+        // PO prices are in foreign currency, so local = po_price * rate
+        // Line A: 10 * 2 = 20, Line B: 20 * 2 = 40
         // No charges, so no adjustment
         service
             .update_inbound_shipment(
@@ -1769,23 +1770,23 @@ mod test {
             .unwrap();
 
         assert!(
-            (line_a.cost_price_per_pack - 5.0).abs() < 0.0001,
-            "Line A cost should be 5.0 with rate 2.0, got {}",
+            (line_a.cost_price_per_pack - 20.0).abs() < 0.0001,
+            "Line A cost should be 20.0 with rate 2.0, got {}",
             line_a.cost_price_per_pack
         );
         assert!(
-            (line_b.cost_price_per_pack - 10.0).abs() < 0.0001,
-            "Line B cost should be 10.0 with rate 2.0, got {}",
+            (line_b.cost_price_per_pack - 40.0).abs() < 0.0001,
+            "Line B cost should be 40.0 with rate 2.0, got {}",
             line_b.cost_price_per_pack
         );
 
         // ============================================================
         // Test 4: Foreign currency charges with rate conversion
         // ============================================================
-        // rate = 2.0, charges_foreign = 50 (= 25 local), charges_local = 0
-        // total_goods_local = 5*5 + 10*10 = 25 + 100 = 125
-        // cost_adjustment = 25 / 125 = 0.2
-        // Line A: 5 * 1.2 = 6, Line B: 10 * 1.2 = 12
+        // rate = 2.0, charges_foreign = 50 (= 50 * 2 = 100 local), charges_local = 0
+        // total_goods_local = 20*5 + 40*10 = 100 + 400 = 500
+        // cost_adjustment = 100 / 500 = 0.2
+        // Line A: 20 * 1.2 = 24, Line B: 40 * 1.2 = 48
         service
             .update_inbound_shipment(
                 &context,
@@ -1810,24 +1811,24 @@ mod test {
             .unwrap();
 
         assert!(
-            (line_a.cost_price_per_pack - 6.0).abs() < 0.0001,
-            "Line A cost should be 6.0 with foreign charges, got {}",
+            (line_a.cost_price_per_pack - 24.0).abs() < 0.0001,
+            "Line A cost should be 24.0 with foreign charges, got {}",
             line_a.cost_price_per_pack
         );
         assert!(
-            (line_b.cost_price_per_pack - 12.0).abs() < 0.0001,
-            "Line B cost should be 12.0 with foreign charges, got {}",
+            (line_b.cost_price_per_pack - 48.0).abs() < 0.0001,
+            "Line B cost should be 48.0 with foreign charges, got {}",
             line_b.cost_price_per_pack
         );
 
         // ============================================================
         // Test 5: Combined local and foreign charges
         // ============================================================
-        // rate = 2.0, charges_foreign = 50 (= 25 local), charges_local = 25
-        // total_charges = 25 + 25 = 50
-        // total_goods_local = 25 + 100 = 125
-        // cost_adjustment = 50 / 125 = 0.4
-        // Line A: 5 * 1.4 = 7, Line B: 10 * 1.4 = 14
+        // rate = 2.0, charges_foreign = 50 (= 100 local), charges_local = 25
+        // total_charges = 100 + 25 = 125
+        // total_goods_local = 100 + 400 = 500
+        // cost_adjustment = 125 / 500 = 0.25
+        // Line A: 20 * 1.25 = 25, Line B: 40 * 1.25 = 50
         service
             .update_inbound_shipment(
                 &context,
@@ -1852,13 +1853,13 @@ mod test {
             .unwrap();
 
         assert!(
-            (line_a.cost_price_per_pack - 7.0).abs() < 0.0001,
-            "Line A cost should be 7.0, got {}",
+            (line_a.cost_price_per_pack - 25.0).abs() < 0.0001,
+            "Line A cost should be 25.0, got {}",
             line_a.cost_price_per_pack
         );
         assert!(
-            (line_b.cost_price_per_pack - 14.0).abs() < 0.0001,
-            "Line B cost should be 14.0, got {}",
+            (line_b.cost_price_per_pack - 50.0).abs() < 0.0001,
+            "Line B cost should be 50.0, got {}",
             line_b.cost_price_per_pack
         );
     }

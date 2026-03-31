@@ -277,10 +277,13 @@ fn generate_foreign_currency_before_tax_for_lines(
 /// - PO price per pack (from linked purchase_order_line) converted to local currency
 /// - Plus the % cost adjustment from charges
 ///
-/// new_cost_price = round_to_2dp((po_price / rate) * (1 + cost_adjustment_fraction))
+/// Rate convention: rate = home (local) currency units per 1 foreign currency unit
+/// e.g. rate = 1.33 means 1 EUR = 1.33 AUD (home)
 ///
-/// where cost_adjustment_fraction = (charges_foreign / rate + charges_local) / total_goods_local
-/// and total_goods_local = sum of all (po_price / rate * number_of_packs) across lines
+/// new_cost_price = round_to_2dp((po_price * rate) * (1 + cost_adjustment_fraction))
+///
+/// where cost_adjustment_fraction = (charges_foreign * rate + charges_local) / total_goods_local
+/// and total_goods_local = sum of all (po_price * rate * number_of_packs) across lines
 ///
 /// If sell_price_per_pack == old cost_price_per_pack, sell price is also updated.
 fn generate_cost_price_update_for_lines(
@@ -319,7 +322,7 @@ fn generate_cost_price_update_for_lines(
         let po_line_id = &invoice_line.invoice_line_row.purchase_order_line_id;
         let po_price_local = if let Some(ref po_line_id) = po_line_id {
             if let Some(po_line) = po_line_repo.find_one_by_id(po_line_id)? {
-                po_line.price_per_pack_after_discount / safe_rate
+                po_line.price_per_pack_after_discount * safe_rate
             } else {
                 // No PO line found, keep current cost price
                 row.cost_price_per_pack
@@ -337,7 +340,7 @@ fn generate_cost_price_update_for_lines(
     }
 
     // Calculate cost adjustment fraction
-    let charges_converted = charges_foreign_currency / safe_rate;
+    let charges_converted = charges_foreign_currency * safe_rate;
     let total_charges = charges_converted + charges_local_currency;
     let cost_adjustment_fraction = if total_goods_local != 0.0 {
         total_charges / total_goods_local

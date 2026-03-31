@@ -1,6 +1,6 @@
 export interface CurrencyCalculationInput {
-  /** Exchange rate: number of foreign currency units per one base (local) currency unit.
-   *  e.g. if local is NZD and foreign is USD, rate ≈ 0.6 (1 NZD = 0.6 USD) */
+  /** Exchange rate: number of home (local) currency units per one foreign currency unit.
+   *  e.g. if home is AUD and foreign is EUR, rate ≈ 1.33 (1 EUR = 1.33 AUD) */
   currencyRate: number;
   /** Charges in PO (foreign) currency (A) */
   chargesInForeignCurrency: number;
@@ -24,15 +24,12 @@ export interface CurrencyCalculationResult {
 /**
  * Calculates currency conversion values for the inbound shipment currency tab.
  *
- * The exchange rate represents the number of foreign currency units per one
- * base (local) currency unit. For example, if the base currency is NZD and
- * the foreign currency is USD, the rate would be ~0.6 (0.6 USD = 1 NZD).
+ * The exchange rate represents the number of home (local) currency units per
+ * one foreign currency unit. For example, if the home currency is AUD and
+ * the foreign currency is EUR, the rate would be ~1.33 (1 EUR = 1.33 AUD).
  *
- * To convert foreign to local: foreignAmount / rate
- * To convert local to foreign: localAmount * rate
- *
- * Note: TabTables.tsx uses `localPrice / currency.rate` which assumes the
- * inverse convention — that may need correcting separately.
+ * To convert foreign to local: foreignAmount * rate
+ * To convert local to foreign: localAmount / rate
  */
 export const calculateCurrencyValues = (
   input: CurrencyCalculationInput
@@ -46,9 +43,9 @@ export const calculateCurrencyValues = (
 
   const safeRate = currencyRate !== 0 ? currencyRate : 1;
 
-  // Convert foreign amounts to local by dividing by rate
-  const chargesConvertedToLocal = chargesInForeignCurrency / safeRate;
-  const totalGoodsLocal = totalGoodsForeignCurrency / safeRate;
+  // Convert foreign amounts to local by multiplying by rate
+  const chargesConvertedToLocal = chargesInForeignCurrency * safeRate;
+  const totalGoodsLocal = totalGoodsForeignCurrency * safeRate;
 
   // Total charges = A (converted to local) + B (already local)
   const totalCharges = chargesConvertedToLocal + chargesInLocalCurrency;
