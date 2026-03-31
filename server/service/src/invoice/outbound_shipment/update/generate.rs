@@ -5,14 +5,18 @@ use repository::{
     RepositoryError,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, StockLineRow, StorageConnection,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
+    StorageConnection,
 };
 use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
 use crate::{
-    invoice::common::{
-        calculate_foreign_currency_total, calculate_total_after_tax,
-        generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+    invoice::{
+        common::{
+            calculate_foreign_currency_total, calculate_total_after_tax,
+            generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+        },
+        stock_effect::{stock_effects, StockEffect},
     },
     store_preference::get_store_preferences,
     NullableUpdate,
@@ -48,8 +52,14 @@ pub(crate) fn generate(
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
     let store_preferences = get_store_preferences(connection, store_id)?;
-    let should_update_batches_total_number_of_packs =
-        should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
+    let new_status = UpdateOutboundShipmentStatus::full_status_option(&input_status);
+    let should_update_batches_total_number_of_packs = match &new_status {
+        Some(to) => {
+            stock_effects(&InvoiceType::OutboundShipment, &existing_invoice.status, to)
+                == StockEffect::ReduceStock
+        }
+        None => false,
+    };
     let mut update_invoice = existing_invoice.clone();
 
     set_new_status_datetime(&mut update_invoice, &input_status);
@@ -146,21 +156,6 @@ fn calculate_expected_delivery_date(
             })
         }
         _ => invoice.expected_delivery_date,
-    }
-}
-
-fn should_update_batches_total_number_of_packs(
-    invoice: &InvoiceRow,
-    status: &Option<UpdateOutboundShipmentStatus>,
-) -> bool {
-    if let Some(new_invoice_status) = UpdateOutboundShipmentStatus::full_status_option(status) {
-        let invoice_status_index = invoice.status.index();
-        let new_invoice_status_index = new_invoice_status.index();
-
-        new_invoice_status_index >= InvoiceStatus::Picked.index()
-            && invoice_status_index < InvoiceStatus::Picked.index()
-    } else {
-        false
     }
 }
 

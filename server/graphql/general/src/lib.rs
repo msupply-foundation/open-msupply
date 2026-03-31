@@ -197,6 +197,35 @@ impl GeneralQueries {
         item_ledger(ctx, store_id, page, filter)
     }
 
+    pub async fn outbound_shipment_counts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
+    ) -> Result<OutboundInvoiceCounts> {
+        outbound_shipment_counts(ctx, store_id, timezone_offset)
+    }
+
+    pub async fn inbound_shipment_counts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
+    ) -> Result<InboundInvoiceCounts> {
+        inbound_shipment_counts(ctx, store_id, timezone_offset)
+    }
+
+    pub async fn inbound_shipment_external_counts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
+    ) -> Result<InboundInvoiceCounts> {
+        inbound_shipment_external_counts(ctx, store_id, timezone_offset)
+    }
+
+    #[graphql(deprecation = "Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead")]
+    #[allow(deprecated)]
     pub async fn invoice_counts(
         &self,
         ctx: &Context<'_>,
@@ -305,8 +334,8 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "Low stock threshold in months")] low_stock_threshold: Option<i32>,
-        #[graphql(desc = "High stock threshold in months")] high_stock_threshold: Option<i32>,
+        #[graphql(desc = "Low stock threshold in months")] low_stock_threshold: Option<f64>,
+        #[graphql(desc = "High stock threshold in months")] high_stock_threshold: Option<f64>,
     ) -> Result<ItemCounts> {
         item_counts(ctx, store_id, low_stock_threshold, high_stock_threshold)
     }

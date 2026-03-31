@@ -40,6 +40,7 @@ pub fn add_from_master_list(
     store_id: &str,
     input: AddToShipmentFromMasterListInput,
 ) -> Result<AddFromMasterListResponse> {
+    // Only available for internal inbound shipments, not external
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {

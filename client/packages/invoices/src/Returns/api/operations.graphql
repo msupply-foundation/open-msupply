@@ -46,7 +46,7 @@ fragment SupplierReturn on InvoiceNode {
   createdDatetime
   pickedDatetime
   shippedDatetime
-  deliveredDatetime
+  receivedDatetime
   verifiedDatetime
 
   otherPartyName
