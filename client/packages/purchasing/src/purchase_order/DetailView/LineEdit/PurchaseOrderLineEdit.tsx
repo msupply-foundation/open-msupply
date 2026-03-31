@@ -147,7 +147,10 @@ export const PurchaseOrderLineEdit = ({
                 onChange={(value?: string) =>
                   update({ supplierItemCode: value })
                 }
-                disabled={disabled}
+                disabled={
+                  disabled ||
+                  isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                }
               />
               <InputWithLabelRow
                 Input={
@@ -194,7 +197,9 @@ export const PurchaseOrderLineEdit = ({
               )}
               value={draft?.numberOfPacks ?? 0}
               disabled={
-                disabled || (!canEditRequestedQuantity && !userIsAuthorised)
+                draft?.status === PurchaseOrderLineStatusNode.Closed ||
+                status === PurchaseOrderNodeStatus.Finalised ||
+                (!canEditRequestedQuantity && !userIsAuthorised)
               }
               onChange={(value: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
@@ -292,9 +297,8 @@ export const PurchaseOrderLineEdit = ({
               label={t('label.total-cost')}
               value={
                 draft
-                  ? ((draft.pricePerPackAfterDiscount ?? 0) *
-                      (draft.numberOfPacks ?? 0)) ||
-                    0
+                  ? (draft.pricePerPackAfterDiscount ?? 0) *
+                      (draft.numberOfPacks ?? 0) || 0
                   : 0
               }
               decimalLimit={5}
@@ -336,13 +340,19 @@ export const PurchaseOrderLineEdit = ({
             <MultilineTextInput
               label={t('label.comment')}
               value={draft?.comment || ''}
-              disabled={disabled}
+              disabled={
+                draft?.status === PurchaseOrderLineStatusNode.Closed ||
+                status === PurchaseOrderNodeStatus.Finalised
+              }
               onChange={(value?: string) => update({ comment: value })}
             />
             <MultilineTextInput
               label={t('label.notes')}
               value={draft?.note || ''}
-              disabled={disabled}
+              disabled={
+                draft?.status === PurchaseOrderLineStatusNode.Closed ||
+                status === PurchaseOrderNodeStatus.Finalised
+              }
               onChange={(value?: string) => update({ note: value })}
             />
           </>
