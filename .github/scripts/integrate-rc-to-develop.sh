@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-readonly TODAY=$(date +%m%d)
-readonly DATE_DISPLAY=$(date +%Y-%m-%d)
+readonly YESTERDAY=$(date -d "yesterday" +%m%d 2>/dev/null || date -v-1d +%m%d)
+readonly YESTERDAY_DISPLAY=$(date -d "yesterday" +%Y-%m-%d 2>/dev/null || date -v-1d +%Y-%m-%d)
 
 HAS_UNRESOLVED_CONFLICTS=false
 CONFLICTED_FILE_COUNT=0
@@ -41,7 +41,7 @@ comment_on_pr_if_conflicts() {
 
     if [[ "$HAS_UNRESOLVED_CONFLICTS" == "true" ]]; then
         echo "Adding conflict notification comment to PR #$PR_NUMBER"
-        gh pr comment "$PR_NUMBER" --body "⚠️ **Merge conflicts detected** between \`$RC_BRANCH\` and \`develop\` on $DATE_DISPLAY — $CONFLICTED_FILE_COUNT conflicted file(s).
+        gh pr comment "$PR_NUMBER" --body "⚠️ **Merge conflicts detected** between \`$RC_BRANCH\` and \`develop\` on $YESTERDAY_DISPLAY — $CONFLICTED_FILE_COUNT conflicted file(s).
 
 These conflicts need manual resolution. The merge was aborted so this branch contains only the RC changes without the develop merge."
     fi
@@ -57,9 +57,9 @@ create_new_pull_request() {
     merge_develop_into_branch "$MERGE_BRANCH"
     git push -u origin "$MERGE_BRANCH"
 
-    local pr_title="Merge $RC_BRANCH to develop - fresh commit on $TODAY"
+    local pr_title="Merge $RC_BRANCH to develop - commit on $YESTERDAY_DISPLAY"
     local pr_body="**Details:**
-    - Fresh commit detected on: $DATE_DISPLAY
+    - Fresh commit detected on: $YESTERDAY_DISPLAY
     - Source: This branch is based on $RC_BRANCH
 
 This PR was created automatically by the daily RC integration workflow.
@@ -96,7 +96,7 @@ update_existing_pull_request() {
 }
 
 # Main execution
-echo "Checking RC branches for fresh commits on $DATE_DISPLAY"
+echo "Checking RC branches for fresh commits on $YESTERDAY_DISPLAY"
 
 git fetch origin
 
@@ -112,12 +112,12 @@ for RC_BRANCH in $RC_BRANCHES; do
 
     COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d "origin/$RC_BRANCH" 2>/dev/null || echo "")
     
-    if [[ "$COMMIT_DATE" != "$TODAY" ]]; then
-        echo "No fresh commit found on $RC_BRANCH (commit date: $COMMIT_DATE)"
+    if [[ "$COMMIT_DATE" != "$YESTERDAY" ]]; then
+        echo "No recent commit found on $RC_BRANCH (commit date: $COMMIT_DATE)"
         continue
     fi
 
-    echo "Found fresh commit on $RC_BRANCH"
+    echo "Found recent commit on $RC_BRANCH (commit date: $COMMIT_DATE)"
 
     EXISTING_OPEN_PR_INFO=$(gh pr list --base develop --state open --json headRefName,number --jq ".[] | select(.headRefName | startswith(\"merge-${RC_BRANCH}-to-develop-\"))" 2>/dev/null | head -1 || echo "")
     EXISTING_OPEN_PR=$(echo "$EXISTING_OPEN_PR_INFO" | jq -r '.number // empty' 2>/dev/null || echo "")
@@ -126,7 +126,7 @@ for RC_BRANCH in $RC_BRANCHES; do
     if [[ -n "$EXISTING_OPEN_PR" ]]; then
         update_existing_pull_request "$RC_BRANCH" "$EXISTING_MERGE_BRANCH" "$EXISTING_OPEN_PR"
     else
-        MERGE_BRANCH="merge-${RC_BRANCH}-to-develop-${TODAY}"
+        MERGE_BRANCH="merge-${RC_BRANCH}-to-develop-${YESTERDAY}"
         create_new_pull_request "$RC_BRANCH" "$MERGE_BRANCH"
     fi
 done
