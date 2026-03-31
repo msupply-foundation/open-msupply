@@ -68,7 +68,6 @@ impl UpdatePurchaseOrderInput {
     pub fn has_non_status_field_changes(&self) -> bool {
         self.supplier_id.is_some()
             || self.confirmed_datetime.is_some()
-            || self.comment.is_some()
             || self.supplier_discount_percentage.is_some()
             || self.supplier_discount_amount.is_some()
             || self.donor_id.is_some()

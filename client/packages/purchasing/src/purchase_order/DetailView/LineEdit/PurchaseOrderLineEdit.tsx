@@ -335,13 +335,19 @@ export const PurchaseOrderLineEdit = ({
             <MultilineTextInput
               label={t('label.comment')}
               value={draft?.comment || ''}
-              disabled={disabled}
+              disabled={
+                draft?.status === PurchaseOrderLineStatusNode.Closed ||
+                status === PurchaseOrderNodeStatus.Finalised
+              }
               onChange={(value?: string) => update({ comment: value })}
             />
             <MultilineTextInput
               label={t('label.notes')}
               value={draft?.note || ''}
-              disabled={disabled}
+              disabled={
+                draft?.status === PurchaseOrderLineStatusNode.Closed ||
+                status === PurchaseOrderNodeStatus.Finalised
+              }
               onChange={(value?: string) => update({ note: value })}
             />
           </>
