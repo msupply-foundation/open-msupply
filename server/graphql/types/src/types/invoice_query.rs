@@ -13,15 +13,16 @@ use dataloader::DataLoader;
 use graphql_core::loader::{
     CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader,
     NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader,
-    PurchaseOrderByIdLoader,
-    ShippingMethodByIdLoader, SyncFileReferenceLoader, UserLoader,
+    PurchaseOrderByIdLoader, ShippingMethodByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{ClinicianRow, InvoiceRow, Name, NameRow, PricingRow, Store, StoreRow};
+use repository::{
+    ClinicianRow, InvoiceRow, InvoiceType, Name, NameRow, NameRowType, PricingRow, Store, StoreRow,
+};
 
 use repository::Invoice;
 use serde::Serialize;
@@ -523,6 +524,23 @@ impl InvoiceNode {
             .await?
             .map(PurchaseOrderNode::from_domain))
     }
+
+    pub async fn inbound_type(&self) -> InboundNodeType {
+        match self.row().r#type {
+            InvoiceType::InboundShipment => {
+                if self.row().requisition_id.is_some() {
+                    InboundNodeType::FromRequisition
+                } else if self.row().purchase_order_id.is_some() {
+                    InboundNodeType::FromPurchaseOrder
+                } else if self.name_row().r#type == NameRowType::Store {
+                    InboundNodeType::ManualInternal
+                } else {
+                    InboundNodeType::ManualExternal
+                }
+            }
+            _ => InboundNodeType::ManualExternal, // Default to external for non-inbound shipments
+        }
+    }
 }
 
 impl InvoiceNode {
@@ -609,6 +627,14 @@ impl InvoiceConnector {
             nodes: invoices.into_iter().map(InvoiceNode::from_domain).collect(),
         }
     }
+}
+
+#[derive(Enum, Clone, Copy, PartialEq, Eq, Debug, Serialize)]
+pub enum InboundNodeType {
+    FromRequisition,
+    FromPurchaseOrder,
+    ManualInternal,
+    ManualExternal,
 }
 
 #[cfg(test)]

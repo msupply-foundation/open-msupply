@@ -184,6 +184,7 @@ export enum ActivityLogNodeType {
   StockBatchChange = 'STOCK_BATCH_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
   StockExpiryDateChange = 'STOCK_EXPIRY_DATE_CHANGE',
+  StockLineEdit = 'STOCK_LINE_EDIT',
   StockLocationChange = 'STOCK_LOCATION_CHANGE',
   StockOffHold = 'STOCK_OFF_HOLD',
   StockOnHold = 'STOCK_ON_HOLD',
@@ -2992,6 +2993,13 @@ export type InboundInvoiceCounts = {
   notDelivered: Scalars['Int']['output'];
 };
 
+export enum InboundNodeType {
+  FromPurchaseOrder = 'FROM_PURCHASE_ORDER',
+  FromRequisition = 'FROM_REQUISITION',
+  ManualExternal = 'MANUAL_EXTERNAL',
+  ManualInternal = 'MANUAL_INTERNAL',
+}
+
 export type InboundShipmentsNotVerified = UpdatePurchaseOrderErrorInterface & {
   __typename: 'InboundShipmentsNotVerified';
   description: Scalars['String']['output'];
@@ -4271,6 +4279,7 @@ export type InvoiceFilterInput = {
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -4432,6 +4441,7 @@ export type InvoiceNode = {
   documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  inboundType: InboundNodeType;
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   insurancePolicy?: Maybe<InsurancePolicyNode>;
@@ -4706,6 +4716,7 @@ export type ItemLedgerNode = {
   sellPricePerPack: Scalars['Float']['output'];
   storeId: Scalars['String']['output'];
   totalBeforeTax?: Maybe<Scalars['Float']['output']>;
+  user?: Maybe<UserNode>;
 };
 
 export type ItemLedgerResponse = ItemLedgerConnector;
@@ -4941,6 +4952,7 @@ export type LedgerNode = {
   stockLine?: Maybe<StockLineNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
+  user?: Maybe<UserNode>;
 };
 
 export type LedgerResponse = LedgerConnector;
@@ -7885,7 +7897,7 @@ export type QueriesInvoicesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<InvoiceSortInput>>;
   storeId: Scalars['String']['input'];
-  type?: InputMaybe<InvoiceTypeInput>;
+  type?: InputMaybe<Array<InvoiceTypeInput>>;
 };
 
 export type QueriesItemCountsArgs = {
@@ -8796,10 +8808,14 @@ export enum RequisitionNodeStatus {
 }
 
 export enum RequisitionNodeType {
+  /** Imprest requisition where each item has a pre-determined max/target quantity */
+  Imprest = 'IMPREST',
   /** Requisition created by store that is ordering stock */
   Request = 'REQUEST',
-  /** Supplying store requisition in response to request requisition */
+  /** Supplying store requisition in response to request requisition, or manual requisition for a customer */
   Response = 'RESPONSE',
+  /** Stock history requisition where facility submits stock on hand */
+  StockHistory = 'STOCK_HISTORY',
 }
 
 export type RequisitionReasonNotProvided =
@@ -10591,14 +10607,14 @@ export type UpdatePurchaseOrderLineError = {
 export type UpdatePurchaseOrderLineInput = {
   adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<NullableStringUpdate>;
-  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
   manufacturerId?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<NullableStringUpdate>;
   pricePerPackAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
   pricePerPackBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
-  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
   status?: InputMaybe<PurchaseOrderLineStatusNode>;

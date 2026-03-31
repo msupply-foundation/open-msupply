@@ -58,6 +58,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
     },
   },
   unitsOrderedInOthers: 0,
+  receivedNumberOfUnits: 0,
   status: PurchaseOrderLineStatusNode.New,
   discountPercentage: 0,
   // These values not actually saved to DB
@@ -148,10 +149,10 @@ export function usePurchaseOrderLine(id?: string | null) {
   const update = async () => {
     const input: UpdatePurchaseOrderLineInput = {
       id: draft.id,
-      expectedDeliveryDate: draft.expectedDeliveryDate,
+      expectedDeliveryDate: { value: draft.expectedDeliveryDate },
       itemId: draft.itemId,
       requestedPackSize: draft.requestedPackSize,
-      requestedDeliveryDate: draft.requestedDeliveryDate,
+      requestedDeliveryDate: { value: draft.requestedDeliveryDate },
       requestedNumberOfUnits: draft.requestedNumberOfUnits,
       adjustedNumberOfUnits: draft.adjustedNumberOfUnits,
       pricePerPackBeforeDiscount: draft.pricePerPackBeforeDiscount,
