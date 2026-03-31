@@ -87,6 +87,8 @@ pub fn update(
         },
     )?;
 
+    super::validate_shipment_verify_authorisation(ctx, store_id, &r#type, &input.status)?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
