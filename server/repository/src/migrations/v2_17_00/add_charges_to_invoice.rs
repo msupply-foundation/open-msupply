@@ -11,8 +11,8 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE invoice ADD COLUMN charges_local_currency DOUBLE NOT NULL DEFAULT 0;
-                ALTER TABLE invoice ADD COLUMN charges_foreign_currency DOUBLE NOT NULL DEFAULT 0;
+                ALTER TABLE invoice ADD COLUMN charges_local_currency {DOUBLE} NOT NULL DEFAULT 0;
+                ALTER TABLE invoice ADD COLUMN charges_foreign_currency {DOUBLE} NOT NULL DEFAULT 0;
             "#
         )?;
 
