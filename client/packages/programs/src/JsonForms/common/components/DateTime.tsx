@@ -10,6 +10,7 @@ import {
   extractProperty,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
+import { formatErrors } from '../formatErrors';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { DateOrTimeView, PickersActionBarAction } from '@mui/x-date-pickers';
@@ -78,7 +79,7 @@ const UIComponent = (props: ControlProps) => {
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
-    error: zErrors || error || props.errors,
+    error: formatErrors(zErrors || error || props.errors),
     dateAsEndOfDay: !!props.uischema.options?.['dateAsEndOfDay'],
     disableFuture: !!props.uischema.options?.['disableFuture'],
     ...(options?.monthOnly

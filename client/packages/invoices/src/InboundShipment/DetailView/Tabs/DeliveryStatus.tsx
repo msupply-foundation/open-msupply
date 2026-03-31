@@ -2,92 +2,109 @@ import React, { useMemo } from 'react';
 import {
   ColumnDef,
   ColumnType,
+  InvoiceLineStatusType,
   InvoiceNodeStatus,
   MaterialTable,
-  StatusCell,
   useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
-import { InboundLineFragment, useInboundShipment } from '../../api';
-import { useInvoiceLineStatusMap } from '..';
+import { useInboundShipment } from '../../api';
 
-export const DeliveryTab = ({
-  showLineStatus,
-}: {
-  showLineStatus: boolean;
-}) => {
+interface DeliveryStatusRow {
+  itemCode: string;
+  itemName: string;
+  poLineNumber?: number;
+  thisDeliveryUnits: number;
+  inTransitNumberOfUnits: number;
+  receivedNumberOfUnits: number;
+  adjustedNumberOfUnits?: number | null;
+  requestedNumberOfUnits: number;
+}
+
+export const DeliveryTab = () => {
   const t = useTranslation();
   const {
     query: { data, loading: isLoading },
-    isExternal,
   } = useInboundShipment();
-  const statusMap = useInvoiceLineStatusMap();
 
-  const previousDeliveries = (row: InboundLineFragment) => {
-    const received = row.purchaseOrderLine?.receivedNumberOfUnits ?? 0;
-    return data?.status === InvoiceNodeStatus.Received ||
-      data?.status === InvoiceNodeStatus.Verified
-      ? received - row.numberOfPacks * row.packSize
-      : received;
-  };
+  const rows = useMemo((): DeliveryStatusRow[] => {
+    if (!data?.lines.nodes) return [];
 
-  const inTransit = (row: InboundLineFragment) => {
-    const inTransit = row.purchaseOrderLine?.inTransitNumberOfUnits ?? 0;
-    return data?.status === InvoiceNodeStatus.Delivered ||
-      data?.status === InvoiceNodeStatus.Shipped
-      ? inTransit - row.numberOfPacks * row.packSize
-      : inTransit;
-  };
+    // Aggregate by item
+    const grouped = new Map<string, DeliveryStatusRow>();
+
+    for (const line of data.lines.nodes) {
+      const key = line.item.id;
+      const isRejected = line.status === InvoiceLineStatusType.Rejected;
+
+      const existing = grouped.get(key);
+      const units = isRejected ? 0 : line.numberOfPacks * line.packSize;
+
+      if (existing) {
+        existing.thisDeliveryUnits += units;
+      } else {
+        const pol = line.purchaseOrderLine;
+        grouped.set(key, {
+          itemCode: line.item.code,
+          itemName: line.item.name,
+          poLineNumber: pol?.lineNumber,
+          thisDeliveryUnits: units,
+          inTransitNumberOfUnits: pol?.inTransitNumberOfUnits ?? 0,
+          receivedNumberOfUnits: pol?.receivedNumberOfUnits ?? 0,
+          adjustedNumberOfUnits: pol?.adjustedNumberOfUnits,
+          requestedNumberOfUnits: pol?.requestedNumberOfUnits ?? 0,
+        });
+      }
+    }
+
+    return Array.from(grouped.values());
+  }, [data?.lines.nodes]);
+
+  const isShipped = data?.status === InvoiceNodeStatus.Shipped;
+  const isReceivedOrVerified =
+    data?.status === InvoiceNodeStatus.Received ||
+    data?.status === InvoiceNodeStatus.Verified;
 
   const columns = useMemo(
-    (): ColumnDef<InboundLineFragment>[] => [
+    (): ColumnDef<DeliveryStatusRow>[] => [
       {
-        accessorKey: 'status',
-        header: t('label.auth-status'),
-        enableColumnFilter: true,
-        filterVariant: 'select',
-        includeColumn: showLineStatus,
-        Cell: ({ cell }) => <StatusCell cell={cell} statusMap={statusMap} />,
-      },
-      {
-        accessorKey: 'purchaseOrderLine.lineNumber',
-        header: t('label.purchase-order-line-number'),
-        columnType: ColumnType.Number,
-        size: 70,
-      },
-      {
-        accessorKey: 'item.code',
+        accessorKey: 'itemCode',
         header: t('label.code'),
         size: 120,
       },
       {
-        accessorKey: 'item.name',
+        accessorKey: 'itemName',
         header: t('label.name'),
         size: 200,
       },
       {
         id: 'previousDeliveries',
-        accessorFn: previousDeliveries,
+        accessorFn: row => {
+          const received = row.receivedNumberOfUnits;
+          return isReceivedOrVerified
+            ? received - row.thisDeliveryUnits
+            : received;
+        },
         header: t('label.previous-deliveries'),
         description: t('description.previous-deliveries'),
         columnType: ColumnType.Number,
       },
       {
         id: 'thisDelivery',
-        accessorFn: row => row.numberOfPacks * row.packSize,
+        accessorFn: row => (isShipped ? 0 : row.thisDeliveryUnits),
         header: t('label.this-delivery'),
         columnType: ColumnType.Number,
       },
-      // confusing name and not very useful?
-      // {
-      //   id: 'totalDelivered',
-      //   accessorFn: row => (row.purchaseOrderLine?.receivedNumberOfUnits ?? 0) + (row.numberOfPacks * row.packSize),
-      //   header: t('label.total-delivered'),
-      //   columnType: ColumnType.Number,
-      // },
       {
         id: 'inTransit',
-        accessorFn: inTransit,
+        accessorFn: row => {
+          const inTransit = row.inTransitNumberOfUnits;
+          // When delivered, this shipment is counted in in_transit by the DB
+          // but should show as "this delivery" instead
+          return data?.status === InvoiceNodeStatus.Delivered
+            ? inTransit - row.thisDeliveryUnits
+            : inTransit;
+        },
         header: t('label.in-transit'),
         columnType: ColumnType.Number,
       },
@@ -95,13 +112,16 @@ export const DeliveryTab = ({
         id: 'remainingToDeliver',
         accessorFn: row => {
           const poQuantity =
-            row.purchaseOrderLine?.adjustedNumberOfUnits ??
-            row.purchaseOrderLine?.requestedNumberOfUnits ??
-            0;
-          const totalDelivered =
-            previousDeliveries(row) + row.numberOfPacks * row.packSize;
-          const inTransitQuantity = inTransit(row);
-          return poQuantity - totalDelivered - inTransitQuantity;
+            row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits;
+          const thisDelivery = isShipped ? 0 : row.thisDeliveryUnits;
+          const previousDeliveries = isReceivedOrVerified
+            ? row.receivedNumberOfUnits - row.thisDeliveryUnits
+            : row.receivedNumberOfUnits;
+          const inTransit =
+            data?.status === InvoiceNodeStatus.Delivered
+              ? row.inTransitNumberOfUnits - row.thisDeliveryUnits
+              : row.inTransitNumberOfUnits;
+          return poQuantity - previousDeliveries - thisDelivery - inTransit;
         },
         header: t('label.remaining'),
         description: t('description.remaining-to-deliver'),
@@ -110,23 +130,19 @@ export const DeliveryTab = ({
       {
         id: 'poQuantity',
         accessorFn: row =>
-          row.purchaseOrderLine?.adjustedNumberOfUnits ??
-          row.purchaseOrderLine?.requestedNumberOfUnits,
+          row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits,
         header: t('label.po-quantity'),
         columnType: ColumnType.Number,
       },
     ],
-    [inTransit, previousDeliveries, statusMap, showLineStatus]
+    [data?.status, isShipped, isReceivedOrVerified, t]
   );
 
-  const { table } = useNonPaginatedMaterialTable<InboundLineFragment>({
+  const { table } = useNonPaginatedMaterialTable<DeliveryStatusRow>({
     tableId: 'inbound-shipment-delivery-tab-table',
-    data: data?.lines.nodes,
+    data: rows,
     columns,
     isLoading,
-    grouping: isExternal
-      ? { field: 'purchaseOrderLine.lineNumber', label: t('label.group-by-po-line') }
-      : { field: 'item.code' },
     enableRowSelection: false,
   });
 

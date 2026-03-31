@@ -21,6 +21,8 @@ import {
   useAppTheme,
   useIsExtraSmallScreen,
   CardList,
+  InboundNodeType,
+  Box,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -55,6 +57,7 @@ import { CurrencyTab } from './Tabs/Currency';
 import { DeliveryTab } from './Tabs/DeliveryStatus';
 import { ScanInputModal } from './ScanInputModal';
 import { MobileToolbar } from './MobileToolbar';
+import { getInboundColorAndIcon } from '../ListView/SupplierCell';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -69,6 +72,14 @@ export type ScannedItem = {
 // This is the data that is passed to the "CreateDraftInboundLine" function when
 // creating the new line
 export type ScannedBatchData = { batch?: string; expiryDate?: string };
+
+const ShipmentIcon = ({ inboundType }: { inboundType?: InboundNodeType }) => {
+  if (!inboundType) return null;
+
+  const { icon: KindIcon, color: iconColor } =
+    getInboundColorAndIcon(inboundType);
+  return <KindIcon sx={{ fontSize: 16, color: iconColor }} />;
+};
 
 const DetailViewInner = () => {
   const t = useTranslation();
@@ -121,15 +132,11 @@ const DetailViewInner = () => {
       if ('lines' in line) {
         const firstLine = line.lines[0];
         onOpen(firstLine?.item);
-        setEditPurchaseOrderLineId(
-          firstLine?.purchaseOrderLine?.id ?? null
-        );
+        setEditPurchaseOrderLineId(firstLine?.purchaseOrderLine?.id ?? null);
         setScrollToLineId(firstLine?.id ?? null);
       } else {
         onOpen(line.item);
-        setEditPurchaseOrderLineId(
-          line.purchaseOrderLine?.id ?? null
-        );
+        setEditPurchaseOrderLineId(line.purchaseOrderLine?.id ?? null);
         setScrollToLineId(line.id);
       }
     },
@@ -227,8 +234,15 @@ const DetailViewInner = () => {
   }, [data, selectedRows, info, onOpenReturns, setMode]);
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
+    setCustomBreadcrumbs({
+      1: (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ShipmentIcon inboundType={data?.inboundType} />
+          {data?.invoiceNumber ?? ''}
+        </Box>
+      ),
+    });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber, data?.inboundType]);
 
   const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
 
@@ -267,7 +281,7 @@ const DetailViewInner = () => {
             value: InboundShipmentDetailTabs.Currency,
           },
           {
-            Component: <DeliveryTab showLineStatus={showLineStatus} />,
+            Component: <DeliveryTab />,
             value: InboundShipmentDetailTabs.Delivery,
           },
         ]

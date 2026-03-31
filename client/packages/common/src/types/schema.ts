@@ -4716,6 +4716,7 @@ export type ItemLedgerNode = {
   sellPricePerPack: Scalars['Float']['output'];
   storeId: Scalars['String']['output'];
   totalBeforeTax?: Maybe<Scalars['Float']['output']>;
+  user?: Maybe<UserNode>;
 };
 
 export type ItemLedgerResponse = ItemLedgerConnector;
@@ -4951,6 +4952,7 @@ export type LedgerNode = {
   stockLine?: Maybe<StockLineNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
+  user?: Maybe<UserNode>;
 };
 
 export type LedgerResponse = LedgerConnector;
@@ -8807,10 +8809,14 @@ export enum RequisitionNodeStatus {
 }
 
 export enum RequisitionNodeType {
+  /** Imprest requisition where each item has a pre-determined max/target quantity */
+  Imprest = 'IMPREST',
   /** Requisition created by store that is ordering stock */
   Request = 'REQUEST',
-  /** Supplying store requisition in response to request requisition */
+  /** Supplying store requisition in response to request requisition, or manual requisition for a customer */
   Response = 'RESPONSE',
+  /** Stock history requisition where facility submits stock on hand */
+  StockHistory = 'STOCK_HISTORY',
 }
 
 export type RequisitionReasonNotProvided =

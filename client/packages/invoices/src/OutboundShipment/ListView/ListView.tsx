@@ -86,7 +86,7 @@ export const OutboundShipmentListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
         columnType: ColumnType.Number,
         description: t('description.invoice-number'),
         enableSorting: true,

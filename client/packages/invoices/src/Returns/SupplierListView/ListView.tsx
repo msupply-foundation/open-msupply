@@ -108,7 +108,7 @@ export const SupplierReturnListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
         description: t('description.invoice-number'),
         enableSorting: true,
         columnType: ColumnType.Number,
