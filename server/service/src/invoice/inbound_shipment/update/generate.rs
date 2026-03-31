@@ -160,10 +160,13 @@ pub(crate) fn generate(
         None
     };
 
-    // Recalculate cost prices when currency rate or charges change
-    let should_update_cost_prices = patch.currency_rate.is_some()
-        || patch.charges_local_currency.is_some()
-        || patch.charges_foreign_currency.is_some();
+    // Recalculate cost prices when currency rate or charges change,
+    // but only for invoices linked to a purchase order
+    let has_purchase_order = update_invoice.purchase_order_id.is_some();
+    let should_update_cost_prices = has_purchase_order
+        && (patch.currency_rate.is_some()
+            || patch.charges_local_currency.is_some()
+            || patch.charges_foreign_currency.is_some());
 
     let update_cost_price_for_lines = if should_update_cost_prices {
         Some(generate_cost_price_update_for_lines(
@@ -346,7 +349,8 @@ fn generate_cost_price_update_for_lines(
     for line_info in line_infos {
         let mut row = line_info.invoice_line_row;
         let old_cost = row.cost_price_per_pack;
-        let new_cost = line_info.po_price_local * (1.0 + cost_adjustment_fraction);
+        let new_cost =
+            (line_info.po_price_local * (1.0 + cost_adjustment_fraction) * 100.0).round() / 100.0;
 
         row.cost_price_per_pack = new_cost;
 
