@@ -1496,4 +1496,491 @@ mod test {
             "Rejected line should NOT have a stock line"
         );
     }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_cost_price_with_po() {
+        use repository::{
+            PurchaseOrderLineRow, PurchaseOrderRow, PurchaseOrderStatus,
+        };
+
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "cost_price_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "cost_price_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn purchase_order() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "cost_price_test_po".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: mock_name_a().id,
+                purchase_order_number: 1,
+                status: PurchaseOrderStatus::Sent,
+                created_datetime: chrono::NaiveDateTime::default(),
+                foreign_exchange_rate: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn po_line_a() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "cost_price_test_po_line_a".to_string(),
+                store_id: mock_store_a().id,
+                purchase_order_id: purchase_order().id,
+                line_number: 1,
+                item_link_id: mock_item_a().id,
+                item_name: "Item A".to_string(),
+                price_per_pack_after_discount: 10.0,
+                requested_pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn po_line_b() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "cost_price_test_po_line_b".to_string(),
+                store_id: mock_store_a().id,
+                purchase_order_id: purchase_order().id,
+                line_number: 2,
+                item_link_id: mock_item_a().id,
+                item_name: "Item A".to_string(),
+                price_per_pack_after_discount: 20.0,
+                requested_pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_with_po() -> InvoiceRow {
+            InvoiceRow {
+                id: "cost_price_test_invoice".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                // Set to None for mock insert (invoices inserted before POs).
+                // Updated to Some after setup_all_with_data.
+                purchase_order_id: None,
+                currency_rate: 1.0,
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line_a() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "cost_price_test_line_a".to_string(),
+                invoice_id: invoice_with_po().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                cost_price_per_pack: 10.0,
+                sell_price_per_pack: 10.0, // matches cost, should update together
+                r#type: InvoiceLineType::StockIn,
+                // Set to None for mock insert (invoice lines inserted before PO lines).
+                // Updated to Some after setup_all_with_data.
+                purchase_order_line_id: None,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line_b() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "cost_price_test_line_b".to_string(),
+                invoice_id: invoice_with_po().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 10.0,
+                cost_price_per_pack: 20.0,
+                sell_price_per_pack: 25.0, // different from cost, should NOT update
+                r#type: InvoiceLineType::StockIn,
+                // Set to None for mock insert. Updated after setup_all_with_data.
+                purchase_order_line_id: None,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_cost_price_with_po",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                purchase_order: vec![purchase_order()],
+                purchase_order_line: vec![po_line_a(), po_line_b()],
+                invoices: vec![invoice_with_po()],
+                invoice_lines: vec![invoice_line_a(), invoice_line_b()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Link invoice and lines to PO now that all exist in DB
+        // (invoices/lines are inserted before POs/PO lines in mock setup)
+        let mut invoice_row = invoice_with_po();
+        invoice_row.purchase_order_id = Some(purchase_order().id);
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&invoice_row)
+            .unwrap();
+
+        let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+        let mut line_a = invoice_line_a();
+        line_a.purchase_order_line_id = Some(po_line_a().id);
+        invoice_line_repo.upsert_one(&line_a).unwrap();
+        let mut line_b = invoice_line_b();
+        line_b.purchase_order_line_id = Some(po_line_b().id);
+        invoice_line_repo.upsert_one(&line_b).unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // ============================================================
+        // Test 1: Charges update recalculates cost prices for PO invoice
+        // ============================================================
+        // PO line A: price_per_pack_after_discount = 10, 5 packs -> 50 local
+        // PO line B: price_per_pack_after_discount = 20, 10 packs -> 200 local
+        // total_goods_local = 50 + 200 = 250
+        // charges_local = 25 -> cost_adjustment_fraction = 25 / 250 = 0.1
+        // Line A new_cost = 10 * 1.1 = 11
+        // Line B new_cost = 20 * 1.1 = 22
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    charges_local_currency: Some(25.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a.cost_price_per_pack - 11.0).abs() < 0.0001,
+            "Line A cost should be 11.0, got {}",
+            line_a.cost_price_per_pack
+        );
+        // Line A sell price matched old cost price (10.0), so should be updated
+        assert!(
+            (line_a.sell_price_per_pack - 11.0).abs() < 0.0001,
+            "Line A sell price should update to 11.0 (was equal to old cost), got {}",
+            line_a.sell_price_per_pack
+        );
+
+        assert!(
+            (line_b.cost_price_per_pack - 22.0).abs() < 0.0001,
+            "Line B cost should be 22.0, got {}",
+            line_b.cost_price_per_pack
+        );
+        // Line B sell price did NOT match old cost price (25.0 != 20.0), so should be unchanged
+        assert!(
+            (line_b.sell_price_per_pack - 25.0).abs() < 0.0001,
+            "Line B sell price should remain 25.0 (was different from old cost), got {}",
+            line_b.sell_price_per_pack
+        );
+
+        // ============================================================
+        // Test 2: Idempotency - running again with same charges produces same result
+        // ============================================================
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    charges_local_currency: Some(25.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a_again = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b_again = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a_again.cost_price_per_pack - 11.0).abs() < 0.0001,
+            "Line A cost should still be 11.0 after second run, got {}",
+            line_a_again.cost_price_per_pack
+        );
+        assert!(
+            (line_b_again.cost_price_per_pack - 22.0).abs() < 0.0001,
+            "Line B cost should still be 22.0 after second run, got {}",
+            line_b_again.cost_price_per_pack
+        );
+
+        // ============================================================
+        // Test 3: Currency rate conversion
+        // ============================================================
+        // Reset charges to 0, set currency rate to 2.0
+        // PO prices are in foreign currency, so local = po_price / rate
+        // Line A: 10 / 2 = 5, Line B: 20 / 2 = 10
+        // No charges, so no adjustment
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    currency_rate: Some(2.0),
+                    charges_local_currency: Some(0.0),
+                    charges_foreign_currency: Some(0.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a.cost_price_per_pack - 5.0).abs() < 0.0001,
+            "Line A cost should be 5.0 with rate 2.0, got {}",
+            line_a.cost_price_per_pack
+        );
+        assert!(
+            (line_b.cost_price_per_pack - 10.0).abs() < 0.0001,
+            "Line B cost should be 10.0 with rate 2.0, got {}",
+            line_b.cost_price_per_pack
+        );
+
+        // ============================================================
+        // Test 4: Foreign currency charges with rate conversion
+        // ============================================================
+        // rate = 2.0, charges_foreign = 50 (= 25 local), charges_local = 0
+        // total_goods_local = 5*5 + 10*10 = 25 + 100 = 125
+        // cost_adjustment = 25 / 125 = 0.2
+        // Line A: 5 * 1.2 = 6, Line B: 10 * 1.2 = 12
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    currency_rate: Some(2.0),
+                    charges_foreign_currency: Some(50.0),
+                    charges_local_currency: Some(0.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a.cost_price_per_pack - 6.0).abs() < 0.0001,
+            "Line A cost should be 6.0 with foreign charges, got {}",
+            line_a.cost_price_per_pack
+        );
+        assert!(
+            (line_b.cost_price_per_pack - 12.0).abs() < 0.0001,
+            "Line B cost should be 12.0 with foreign charges, got {}",
+            line_b.cost_price_per_pack
+        );
+
+        // ============================================================
+        // Test 5: Combined local and foreign charges
+        // ============================================================
+        // rate = 2.0, charges_foreign = 50 (= 25 local), charges_local = 25
+        // total_charges = 25 + 25 = 50
+        // total_goods_local = 25 + 100 = 125
+        // cost_adjustment = 50 / 125 = 0.4
+        // Line A: 5 * 1.4 = 7, Line B: 10 * 1.4 = 14
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    currency_rate: Some(2.0),
+                    charges_foreign_currency: Some(50.0),
+                    charges_local_currency: Some(25.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a.cost_price_per_pack - 7.0).abs() < 0.0001,
+            "Line A cost should be 7.0, got {}",
+            line_a.cost_price_per_pack
+        );
+        assert!(
+            (line_b.cost_price_per_pack - 14.0).abs() < 0.0001,
+            "Line B cost should be 14.0, got {}",
+            line_b.cost_price_per_pack
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_cost_price_without_po() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "no_po_cost_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "no_po_cost_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_without_po() -> InvoiceRow {
+            InvoiceRow {
+                id: "no_po_cost_test_invoice".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                purchase_order_id: None, // No PO
+                currency_rate: 1.0,
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "no_po_cost_test_line".to_string(),
+                invoice_id: invoice_without_po().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                cost_price_per_pack: 10.0,
+                sell_price_per_pack: 10.0,
+                r#type: InvoiceLineType::StockIn,
+                purchase_order_line_id: None,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_cost_price_without_po",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                invoices: vec![invoice_without_po()],
+                invoice_lines: vec![invoice_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // Updating charges on a non-PO invoice should NOT change cost prices
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_without_po().id,
+                    charges_local_currency: Some(25.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line.cost_price_per_pack - 10.0).abs() < 0.0001,
+            "Cost price should remain 10.0 for non-PO invoice, got {}",
+            line.cost_price_per_pack
+        );
+        assert!(
+            (line.sell_price_per_pack - 10.0).abs() < 0.0001,
+            "Sell price should remain 10.0 for non-PO invoice, got {}",
+            line.sell_price_per_pack
+        );
+
+        // Also test currency rate change on non-PO invoice
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_without_po().id,
+                    currency_rate: Some(2.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line.cost_price_per_pack - 10.0).abs() < 0.0001,
+            "Cost price should remain 10.0 after currency rate change on non-PO invoice, got {}",
+            line.cost_price_per_pack
+        );
+    }
 }

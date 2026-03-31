@@ -589,6 +589,8 @@ mod test {
                     tax: None,
                     currency_id: None,
                     currency_rate: None,
+                    charges_local_currency: None,
+                    charges_foreign_currency: None,
                     default_donor: None,
                     delivered_datetime: None,
                 }

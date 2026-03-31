@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Box,
   BufferedNumericTextInput,
+  InlineSpinner,
   Currencies,
   CurrencyInput,
   CurrencyTextDisplay,
@@ -21,11 +22,12 @@ import { calculateCurrencyValues } from './CurrencyCalculations';
 export const CurrencyTab = () => {
   const t = useTranslation();
   const {
-    query: { data },
-    update: { update },
+    draft,
+    updatePatch,
+    update: { saveDraft, isUpdating },
   } = useInboundShipment();
-  const purchaseOrder = data?.purchaseOrder;
-  const currencyRate = data?.currencyRate ?? 1;
+  const purchaseOrder = draft?.purchaseOrder;
+  const currencyRate = draft?.currencyRate ?? 1;
   const poCurrencyCode = purchaseOrder?.currency?.code as
     | Currencies
     | undefined;
@@ -33,10 +35,10 @@ export const CurrencyTab = () => {
   const isHomeCurrency = store?.homeCurrencyCode === poCurrencyCode;
 
   // A = charges in foreign (PO) currency, stored on the invoice
-  const chargesInForeignCurrency = data?.chargesForeignCurrency ?? 0;
+  const chargesInForeignCurrency = draft?.chargesForeignCurrency ?? 0;
 
   // B = charges in local currency, stored on the invoice
-  const chargesInLocalCurrency = data?.chargesLocalCurrency ?? 0;
+  const chargesInLocalCurrency = draft?.chargesLocalCurrency ?? 0;
 
   // Total goods in PO currency (from PO)
   const totalGoodsPoCurrency = purchaseOrder?.orderTotalAfterDiscount ?? 0;
@@ -77,10 +79,15 @@ export const CurrencyTab = () => {
           <InputWithLabelRow
             label={t('label.currency-rate')}
             Input={
-              <>
+              <Box
+                onBlur={saveDraft}
+                sx={{ display: 'flex', alignItems: 'center' }}
+              >
                 <BufferedNumericTextInput
                   value={isHomeCurrency ? 1 : currencyRate}
-                  onChange={currencyRate => update({ currencyRate })}
+                  onChange={currencyRate =>
+                    updatePatch({ currencyRate: currencyRate ?? undefined })
+                  }
                   decimalLimit={4}
                   disabled={isHomeCurrency}
                   width={150}
@@ -91,19 +98,21 @@ export const CurrencyTab = () => {
                     title={t('messages.currency-rate-info')}
                   />
                 </Box>
-              </>
+              </Box>
             }
           />
           <InputWithLabelRow
             label={t('label.charges-in-po-currency')}
             Input={
-              <CurrencyInput
-                value={chargesInForeignCurrency}
-                onChangeNumber={chargesForeignCurrency =>
-                  update({ chargesForeignCurrency })
-                }
-                width={150}
-              />
+              <Box onBlur={saveDraft}>
+                <CurrencyInput
+                  value={chargesInForeignCurrency}
+                  onChangeNumber={chargesForeignCurrency =>
+                    updatePatch({ chargesForeignCurrency })
+                  }
+                  width={150}
+                />
+              </Box>
             }
           />
           <InputWithLabelRow
@@ -113,13 +122,15 @@ export const CurrencyTab = () => {
           <InputWithLabelRow
             label={t('label.charges-b-in-local-currency')}
             Input={
-              <CurrencyInput
-                value={chargesInLocalCurrency}
-                onChangeNumber={chargesLocalCurrency =>
-                  update({ chargesLocalCurrency })
-                }
-                width={150}
-              />
+              <Box onBlur={saveDraft}>
+                <CurrencyInput
+                  value={chargesInLocalCurrency}
+                  onChangeNumber={chargesLocalCurrency =>
+                    updatePatch({ chargesLocalCurrency })
+                  }
+                  width={150}
+                />
+              </Box>
             }
           />
         </Stack>
@@ -163,6 +174,7 @@ export const CurrencyTab = () => {
               </Typography>
             }
           />
+          {isUpdating && <InlineSpinner messageKey="saving" />}
         </Stack>
       </Stack>
     </DetailContainer>
