@@ -197,7 +197,9 @@ export const PurchaseOrderLineEdit = ({
               )}
               value={draft?.numberOfPacks ?? 0}
               disabled={
-                disabled || (!canEditRequestedQuantity && !userIsAuthorised)
+                draft?.status === PurchaseOrderLineStatusNode.Closed ||
+                status === PurchaseOrderNodeStatus.Finalised ||
+                (!canEditRequestedQuantity && !userIsAuthorised)
               }
               onChange={(value: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
@@ -295,9 +297,8 @@ export const PurchaseOrderLineEdit = ({
               label={t('label.total-cost')}
               value={
                 draft
-                  ? ((draft.pricePerPackAfterDiscount ?? 0) *
-                      (draft.numberOfPacks ?? 0)) ||
-                    0
+                  ? (draft.pricePerPackAfterDiscount ?? 0) *
+                      (draft.numberOfPacks ?? 0) || 0
                   : 0
               }
               decimalLimit={5}
