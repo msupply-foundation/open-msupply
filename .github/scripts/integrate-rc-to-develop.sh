@@ -4,8 +4,13 @@ set -euo pipefail
 readonly TODAY=$(date +%m%d)
 readonly DATE_DISPLAY=$(date +%Y-%m-%d)
 
+HAS_UNRESOLVED_CONFLICTS=false
+CONFLICTED_FILE_COUNT=0
+
 merge_develop_into_branch() {
     local MERGE_BRANCH=$1
+    HAS_UNRESOLVED_CONFLICTS=false
+    CONFLICTED_FILE_COUNT=0
 
     echo "Merging develop into $MERGE_BRANCH to detect conflicts"
     if git merge origin/develop --no-commit --no-ff; then
@@ -21,11 +26,24 @@ merge_develop_into_branch() {
 
         if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
             echo "There are unresolved conflicts that need manual resolution"
-            echo "Please resolve conflicts in $MERGE_BRANCH and commit manually"
+            CONFLICTED_FILE_COUNT=$(git status --porcelain | grep -cE "^(UU|AA|DD)")
             git merge --abort
+            HAS_UNRESOLVED_CONFLICTS=true
         else
             git commit -m "Merge develop into $MERGE_BRANCH"
         fi
+    fi
+}
+
+comment_on_pr_if_conflicts() {
+    local PR_NUMBER=$1
+    local RC_BRANCH=$2
+
+    if [[ "$HAS_UNRESOLVED_CONFLICTS" == "true" ]]; then
+        echo "Adding conflict notification comment to PR #$PR_NUMBER"
+        gh pr comment "$PR_NUMBER" --body "⚠️ **Merge conflicts detected** between \`$RC_BRANCH\` and \`develop\` on $DATE_DISPLAY — $CONFLICTED_FILE_COUNT conflicted file(s).
+
+These conflicts need manual resolution. The merge was aborted so this branch contains only the RC changes without the develop merge."
     fi
 }
 
@@ -48,12 +66,16 @@ This PR was created automatically by the daily RC integration workflow.
 ⚠️ **Note**: Any merge conflicts will be visible in this PR and need manual resolution."
 
     echo "Creating pull request for $MERGE_BRANCH -> develop"
-    if gh pr create \
+    local pr_url
+    if pr_url=$(gh pr create \
         --title "$pr_title" \
         --body "$pr_body" \
         --base develop \
-        --head "$MERGE_BRANCH"; then
+        --head "$MERGE_BRANCH"); then
         echo "PR created successfully for $MERGE_BRANCH"
+        local pr_number
+        pr_number=$(echo "$pr_url" | grep -oE '[0-9]+$')
+        comment_on_pr_if_conflicts "$pr_number" "$RC_BRANCH"
     else
         echo "ERROR: Failed to create PR for $MERGE_BRANCH"
         return 1
@@ -69,6 +91,7 @@ update_existing_pull_request() {
     git checkout -B "$MERGE_BRANCH" "origin/$RC_BRANCH"
     merge_develop_into_branch "$MERGE_BRANCH"
     git push --force-with-lease origin "$MERGE_BRANCH"
+    comment_on_pr_if_conflicts "$PR_NUMBER" "$RC_BRANCH"
     echo "PR #$PR_NUMBER updated with latest changes from $RC_BRANCH"
 }
 
