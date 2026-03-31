@@ -34,7 +34,6 @@ create_new_pull_request() {
     local MERGE_BRANCH=$2
 
     echo "Creating new merge branch: $MERGE_BRANCH from $RC_BRANCH"
-    git fetch origin
     git checkout "origin/$RC_BRANCH"
     git checkout -b "$MERGE_BRANCH"
     merge_develop_into_branch "$MERGE_BRANCH"
@@ -67,7 +66,6 @@ update_existing_pull_request() {
     local PR_NUMBER=$3
 
     echo "Updating PR #$PR_NUMBER: resetting $MERGE_BRANCH to latest $RC_BRANCH"
-    git fetch origin
     git checkout -B "$MERGE_BRANCH" "origin/$RC_BRANCH"
     merge_develop_into_branch "$MERGE_BRANCH"
     git push --force-with-lease origin "$MERGE_BRANCH"
@@ -76,6 +74,8 @@ update_existing_pull_request() {
 
 # Main execution
 echo "Checking RC branches for fresh commits on $DATE_DISPLAY"
+
+git fetch origin
 
 RC_BRANCHES=$(git branch -r | grep -E 'origin/v[0-9.]+-(R|r)(C|c)' | sed 's|.*origin/||')
 
