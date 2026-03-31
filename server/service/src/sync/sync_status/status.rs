@@ -1,8 +1,15 @@
+use std::sync::RwLock;
+
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
+
+/// Cache the last successful sync status to avoid a DB query per subscription start.
+/// Updated when get_latest_successful_sync_status finds a result, and by the
+/// subscription stream when it detects a successful completion.
+static LATEST_SUCCESSFUL_SYNC: RwLock<Option<FullSyncStatus>> = RwLock::new(None);
 
 use crate::{
     cursor_controller::CursorController,
@@ -268,6 +275,11 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
 fn get_latest_successful_sync_status(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatus>, RepositoryError> {
+    // Return cached value if available
+    if let Some(cached) = LATEST_SUCCESSFUL_SYNC.read().unwrap().clone() {
+        return Ok(Some(cached));
+    }
+
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
@@ -289,9 +301,16 @@ fn get_latest_successful_sync_status(
         None => return Ok(None),
     };
 
-    let result = Some(FullSyncStatus::from_sync_log_row(sync_log.sync_log_row));
+    let result = FullSyncStatus::from_sync_log_row(sync_log.sync_log_row);
+    *LATEST_SUCCESSFUL_SYNC.write().unwrap() = Some(result.clone());
 
-    Ok(result)
+    Ok(Some(result))
+}
+
+/// Update the cached last successful sync status.
+/// Called by the subscription stream when it detects a successful sync completion.
+pub fn cache_successful_sync_status(status: FullSyncStatus) {
+    *LATEST_SUCCESSFUL_SYNC.write().unwrap() = Some(status);
 }
 
 #[derive(Debug)]

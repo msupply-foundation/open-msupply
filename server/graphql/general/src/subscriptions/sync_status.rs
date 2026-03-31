@@ -2,7 +2,7 @@ use actix_web::web::Data;
 use futures::stream::{self, Stream};
 use service::{
     service_provider::ServiceProvider,
-    sync::sync_status::status::FullSyncStatus,
+    sync::sync_status::status::{cache_successful_sync_status, FullSyncStatus},
 };
 use tokio::sync::broadcast;
 
@@ -32,6 +32,7 @@ pub fn sync_status_stream(
             let status = FullSyncStatus::from_sync_log_row(row);
 
             if status.summary.finished.is_some() && status.error.is_none() {
+                cache_successful_sync_status(status.clone());
                 last_successful = Some(status.clone());
             }
 
