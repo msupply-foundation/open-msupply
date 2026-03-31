@@ -34,7 +34,6 @@ import {
   DonorSearchInput,
   getVolumePerPackFromVariant,
   ItemRowFragment,
-  ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
@@ -659,38 +658,6 @@ export const InboundLineEditCards = ({
             decimalLimit={10}
           />
         ),
-      },
-      {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        columnGroup: 'moreInfo',
-        Cell: ({
-          row: {
-            original: { id, packSize, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={isDisabled}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              updateDraftLine({
-                id,
-                itemVariantId: itemVariant?.id,
-                itemVariant,
-                manufacturer: itemVariant?.manufacturer ?? null,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: hasItemVariantsEnabled,
       },
       // --- Actions (no group) ---
       {
