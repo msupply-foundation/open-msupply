@@ -151,7 +151,10 @@ export const PurchaseOrderLineEdit = ({
                 onChange={(value?: string) =>
                   update({ supplierItemCode: value })
                 }
-                disabled={disabled}
+                disabled={
+                  disabled ||
+                  isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                }
               />
               <InputWithLabelRow
                 Input={
