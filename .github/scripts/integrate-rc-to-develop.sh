@@ -4,31 +4,20 @@ set -euo pipefail
 readonly TODAY=$(date +%m%d)
 readonly DATE_DISPLAY=$(date +%Y-%m-%d)
 
-branch_exists() {
-    local branch=$1
-    git show-ref --verify --quiet "refs/remotes/origin/$branch"
-}
-
-create_merge_branch() {
-    local RC_BRANCH=$1
-    local MERGE_BRANCH=$2
-    
-    echo "Creating new merge branch: $MERGE_BRANCH from $RC_BRANCH"
-    git fetch origin
-    git checkout "origin/$RC_BRANCH"
-    git checkout -b "$MERGE_BRANCH"
+merge_develop_into_branch() {
+    local MERGE_BRANCH=$1
 
     echo "Merging develop into $MERGE_BRANCH to detect conflicts"
     if git merge origin/develop --no-commit --no-ff; then
         echo "Clean merge - no conflicts detected"
         git commit -m "Merge develop into $MERGE_BRANCH"
-    else 
+    else
         echo "Merge conflicts detected"
-        if git status --porcelain | grep -q "package.json"; then 
+        if git status --porcelain | grep -q "package.json"; then
             echo "Conflicts in package.json detected, auto-resolving"
             git checkout --theirs package.json
             git add package.json
-        fi 
+        fi
 
         if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
             echo "There are unresolved conflicts that need manual resolution"
@@ -38,15 +27,19 @@ create_merge_branch() {
             git commit -m "Merge develop into $MERGE_BRANCH"
         fi
     fi
-
-    git push -u origin "$MERGE_BRANCH"
-    echo "Created merge branch $MERGE_BRANCH"
 }
 
-create_pull_request() {
+create_new_pull_request() {
     local RC_BRANCH=$1
     local MERGE_BRANCH=$2
-    
+
+    echo "Creating new merge branch: $MERGE_BRANCH from $RC_BRANCH"
+    git fetch origin
+    git checkout "origin/$RC_BRANCH"
+    git checkout -b "$MERGE_BRANCH"
+    merge_develop_into_branch "$MERGE_BRANCH"
+    git push -u origin "$MERGE_BRANCH"
+
     local pr_title="Merge $RC_BRANCH to develop - fresh commit on $TODAY"
     local pr_body="**Details:**
     - Fresh commit detected on: $DATE_DISPLAY
@@ -56,7 +49,6 @@ This PR was created automatically by the daily RC integration workflow.
 ⚠️ **Note**: Any merge conflicts will be visible in this PR and need manual resolution."
 
     echo "Creating pull request for $MERGE_BRANCH -> develop"
-    
     if gh pr create \
         --title "$pr_title" \
         --body "$pr_body" \
@@ -67,6 +59,19 @@ This PR was created automatically by the daily RC integration workflow.
         echo "ERROR: Failed to create PR for $MERGE_BRANCH"
         return 1
     fi
+}
+
+update_existing_pull_request() {
+    local RC_BRANCH=$1
+    local MERGE_BRANCH=$2
+    local PR_NUMBER=$3
+
+    echo "Updating PR #$PR_NUMBER: resetting $MERGE_BRANCH to latest $RC_BRANCH"
+    git fetch origin
+    git checkout -B "$MERGE_BRANCH" "origin/$RC_BRANCH"
+    merge_develop_into_branch "$MERGE_BRANCH"
+    git push --force-with-lease origin "$MERGE_BRANCH"
+    echo "PR #$PR_NUMBER updated with latest changes from $RC_BRANCH"
 }
 
 # Main execution
@@ -91,23 +96,16 @@ for RC_BRANCH in $RC_BRANCHES; do
 
     echo "Found fresh commit on $RC_BRANCH"
 
-    EXISTING_OPEN_PR=$(gh pr list --base develop --state open --json headRefName,number --jq ".[] | select(.headRefName | startswith(\"merge-${RC_BRANCH}-to-develop-\")) | .number" 2>/dev/null | head -1 || echo "")
-    
+    EXISTING_OPEN_PR_INFO=$(gh pr list --base develop --state open --json headRefName,number --jq ".[] | select(.headRefName | startswith(\"merge-${RC_BRANCH}-to-develop-\"))" 2>/dev/null | head -1 || echo "")
+    EXISTING_OPEN_PR=$(echo "$EXISTING_OPEN_PR_INFO" | jq -r '.number // empty' 2>/dev/null || echo "")
+    EXISTING_MERGE_BRANCH=$(echo "$EXISTING_OPEN_PR_INFO" | jq -r '.headRefName // empty' 2>/dev/null || echo "")
+
     if [[ -n "$EXISTING_OPEN_PR" ]]; then
-        echo "Open PR already exists for $RC_BRANCH (PR #$EXISTING_OPEN_PR), skipping"
-        continue
-    fi
-    
-    MERGE_BRANCH="merge-${RC_BRANCH}-to-develop-${TODAY}"
-
-    if branch_exists "$MERGE_BRANCH" && [[ -z "$EXISTING_OPEN_PR" ]]; then 
-        echo "Merge branch $MERGE_BRANCH already exists, but no PR found. Will create PR."
-        git checkout "$MERGE_BRANCH"
+        update_existing_pull_request "$RC_BRANCH" "$EXISTING_MERGE_BRANCH" "$EXISTING_OPEN_PR"
     else
-        create_merge_branch "$RC_BRANCH" "$MERGE_BRANCH"
+        MERGE_BRANCH="merge-${RC_BRANCH}-to-develop-${TODAY}"
+        create_new_pull_request "$RC_BRANCH" "$MERGE_BRANCH"
     fi
-
-    create_pull_request "$RC_BRANCH" "$MERGE_BRANCH"
 done
 
 echo "RC integration check completed"
