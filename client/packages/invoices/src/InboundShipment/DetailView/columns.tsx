@@ -79,17 +79,6 @@ export const useInboundShipmentColumns = (
         enableSorting: true,
       },
       {
-        id: 'manufactureDate',
-        accessorFn: row =>
-          row.manufactureDate ? new Date(row.manufactureDate) : null,
-        header: t('label.manufacture-date'),
-        columnType: ColumnType.Date,
-        size: 120,
-        defaultHideOnMobile: true,
-        enableColumnFilter: true,
-        enableSorting: true,
-      },
-      {
         id: 'vvmStatus',
         accessorFn: row => row.vvmStatus?.description ?? '',
         header: t('label.vvm-status'),
@@ -148,14 +137,6 @@ export const useInboundShipmentColumns = (
         includeColumn: !external,
       },
       {
-        accessorKey: 'status',
-        header: t('label.auth-status'),
-        enableColumnFilter: true,
-        filterVariant: 'select',
-        includeColumn: showLineStatus,
-        Cell: ({ cell }) => <StatusCell cell={cell} statusMap={statusMap} />,
-      },
-      {
         id: 'doseQuantity',
         accessorFn: row => {
           if (!row.item.isVaccine) return null;
@@ -167,6 +148,14 @@ export const useInboundShipmentColumns = (
         defaultHideOnMobile: true,
         includeColumn: manageVaccinesInDoses,
         size: 120,
+      },
+      {
+        accessorKey: 'status',
+        header: t('label.auth-status'),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        includeColumn: showLineStatus,
+        Cell: ({ cell }) => <StatusCell cell={cell} statusMap={statusMap} />,
       },
       {
         id: 'costPricePerUnit',
@@ -206,6 +195,17 @@ export const useInboundShipmentColumns = (
         header: t('label.manufacturer'),
         defaultHideOnMobile: true,
         accessorFn: row => row.manufacturer?.name ?? '',
+      },
+      {
+        id: 'manufactureDate',
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        header: t('label.manufacture-date'),
+        columnType: ColumnType.Date,
+        size: 120,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         id: 'campaign',
