@@ -203,9 +203,10 @@ pub struct ServiceProvider {
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
-    // Watch channel for sync status change notifications (subscriptions).
-    // Holds the latest SyncLogRow so subscribers can read it without querying the DB.
-    pub sync_status_watch: watch::Sender<Option<SyncLogRow>>,
+    // Broadcast channel for sync status updates (subscriptions).
+    // Sends the actual SyncLogRow so subscribers get every intermediate state
+    // (step transitions, progress) without querying the DB.
+    pub sync_status_broadcast: broadcast::Sender<SyncLogRow>,
     // Push queue count subscription infrastructure.
     // push_queue_changed: signal from ProcessorsTrigger when mutations create changelogs.
     // push_queue_count_watch: shared result — all subscribers read from this.
@@ -325,7 +326,7 @@ impl ServiceProvider {
             contact_service: Box::new(ContactService {}),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
-            sync_status_watch: watch::channel(None).0,
+            sync_status_broadcast: broadcast::channel(64).0,
             push_queue_changed,
             push_queue_count_watch: watch::channel(0).0,
             push_queue_worker_active: AtomicBool::new(false),

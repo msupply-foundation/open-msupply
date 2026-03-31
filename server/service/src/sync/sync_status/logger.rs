@@ -3,7 +3,7 @@ use repository::{
     RepositoryError, StorageConnection, SyncApiErrorCode, SyncLogRow, SyncLogRowRepository,
 };
 use thiserror::Error;
-use tokio::sync::watch;
+use tokio::sync::broadcast;
 use util::format_error;
 
 use crate::sync::{
@@ -50,7 +50,7 @@ enum SyncApiErrorVariant<'a> {
 pub struct SyncLogger<'a> {
     sync_log_repo: SyncLogRowRepository<'a>,
     row: SyncLogRow,
-    sync_status_watch: Option<watch::Sender<Option<SyncLogRow>>>,
+    sync_status_broadcast: Option<broadcast::Sender<SyncLogRow>>,
 }
 
 #[derive(Error, Debug)]
@@ -84,23 +84,23 @@ impl<'a> SyncLogger<'a> {
         let logger = SyncLogger {
             sync_log_repo,
             row,
-            sync_status_watch: None,
+            sync_status_broadcast: None,
         };
         logger.update()?;
         Ok(logger)
     }
 
     /// Attach a watch channel for sync status change notifications
-    pub fn with_watch(mut self, sender: watch::Sender<Option<SyncLogRow>>) -> Self {
-        self.sync_status_watch = Some(sender);
+    pub fn with_broadcast(mut self, sender: broadcast::Sender<SyncLogRow>) -> Self {
+        self.sync_status_broadcast = Some(sender);
         self
     }
 
-    /// Persist current row to DB and send latest row to subscribers
+    /// Persist current row to DB and send row to subscribers
     fn update(&self) -> Result<(), SyncLoggerError> {
         self.sync_log_repo.upsert_one(&self.row)?;
-        if let Some(sender) = &self.sync_status_watch {
-            let _ = sender.send(Some(self.row.clone()));
+        if let Some(sender) = &self.sync_status_broadcast {
+            let _ = sender.send(self.row.clone());
         }
         Ok(())
     }

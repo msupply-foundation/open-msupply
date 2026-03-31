@@ -4,19 +4,22 @@ use service::{
     service_provider::ServiceProvider,
     sync::sync_status::status::InitialisationStatus,
 };
+use tokio::sync::broadcast;
 
 use crate::queries::initialisation_status::InitialisationStatusNode;
 
 pub fn initialisation_status_stream(
     service_provider: Data<ServiceProvider>,
 ) -> impl Stream<Item = InitialisationStatusNode> {
-    let receiver = service_provider.sync_status_watch.subscribe();
+    let rx = service_provider.sync_status_broadcast.subscribe();
 
     stream::unfold(
-        (receiver, service_provider),
+        (rx, service_provider),
         |(mut rx, sp)| async move {
-            if rx.changed().await.is_err() {
-                return None;
+            match rx.recv().await {
+                Ok(_) => {}
+                Err(broadcast::error::RecvError::Lagged(_)) => {}
+                Err(broadcast::error::RecvError::Closed) => return None,
             }
 
             let node = match sp.basic_context() {

@@ -4,23 +4,31 @@ use service::{
     service_provider::ServiceProvider,
     sync::sync_status::status::FullSyncStatus,
 };
+use tokio::sync::broadcast;
 
 use crate::queries::sync_status::FullSyncStatusNode;
 
 pub fn sync_status_stream(
     service_provider: Data<ServiceProvider>,
 ) -> impl Stream<Item = Option<FullSyncStatusNode>> {
-    let receiver = service_provider.sync_status_watch.subscribe();
+    let rx = service_provider.sync_status_broadcast.subscribe();
     let last_successful = query_last_successful_sync(&service_provider);
 
     stream::unfold(
-        (receiver, last_successful),
+        (rx, last_successful),
         |(mut rx, mut last_successful)| async move {
-            if rx.changed().await.is_err() {
-                return None;
-            }
+            let row = match rx.recv().await {
+                Ok(row) => row,
+                Err(broadcast::error::RecvError::Lagged(_)) => {
+                    // Missed messages — skip to next
+                    match rx.recv().await {
+                        Ok(row) => row,
+                        Err(_) => return None,
+                    }
+                }
+                Err(broadcast::error::RecvError::Closed) => return None,
+            };
 
-            let row = { rx.borrow_and_update().clone() }?;
             let status = FullSyncStatus::from_sync_log_row(row);
 
             if status.summary.finished.is_some() && status.error.is_none() {
