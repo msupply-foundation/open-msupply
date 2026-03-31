@@ -54,6 +54,7 @@ type SavedReportOption = {
   value: string;
   template: string;
   context: string;
+  subContext: string | null;
   isCustom: boolean;
 };
 
@@ -433,6 +434,7 @@ export const ReportBuilder: React.FC = () => {
           value: r.id,
           template: r.template,
           context: r.context,
+          subContext: r.subContext ?? null,
           isCustom: r.isCustom,
         })
       );
@@ -452,13 +454,12 @@ export const ReportBuilder: React.FC = () => {
         .then(result => {
           if (!result) return;
           if (result.__typename === 'PrintReportError') {
-            setError(result.error.description);
+            setReportUrl('');
             return;
           }
           setReportUrl(`${Environment.FILE_URL}${result.fileId}`);
-          setError('');
         })
-        .catch(e => setError(`${e}`));
+        .catch(() => setReportUrl(''));
     }, 500);
     return () => clearTimeout(handler);
   }, [template, header, style, query, selectedRecord]);
@@ -479,6 +480,22 @@ export const ReportBuilder: React.FC = () => {
       setHeader(parsed.header);
       setReportName(report.label);
       setLoadedReportId(report.value);
+      setManualContext((report.context as DetectedContext) ?? null);
+    },
+    []
+  );
+
+  // ── Duplicate a report from the list (loads content, clears id so Save creates new) ──
+  const handleDuplicateFromList = useCallback(
+    (report: SavedReportOption) => {
+      const parsed = parseReportDefinition(report.template);
+      setQuery(parsed.query);
+      setStyle(parsed.style);
+      setTemplate(parsed.template);
+      setHeader(parsed.header);
+      setReportName(`Copy of ${report.label}`);
+      setLoadedReportId(null);
+      setSelectedSavedReport(null);
       setManualContext((report.context as DetectedContext) ?? null);
     },
     []
@@ -607,7 +624,9 @@ export const ReportBuilder: React.FC = () => {
         isLoading={loadingSavedReports}
         selectedReportId={selectedSavedReport?.value ?? null}
         onSelectReport={handleLoadReport}
+        onDuplicateReport={handleDuplicateFromList}
         onNewReport={() => setIsNewReportModalOpen(true)}
+        isCentralServer={isCentralServer}
       />
 
       <NewReportModal
@@ -759,14 +778,13 @@ export const ReportBuilder: React.FC = () => {
               sx={{
                 width: '100%',
                 height: '100%',
-                overflow: 'auto',
-                display: 'flex',
-                justifyContent: 'center',
+                overflowX: 'auto',
+                overflowY: 'hidden',
               }}
             >
               <iframe
                 src={reportUrl}
-                style={{ border: 'none', width: '1000px', height: '100%' }}
+                style={{ border: 'none', width: '100%', minWidth: '600px', height: '100%', display: 'block' }}
               />
             </Box>
           ) : (

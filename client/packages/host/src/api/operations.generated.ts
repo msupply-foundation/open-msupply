@@ -720,6 +720,7 @@ export type ReportBuilderListQuery = {
           name: string;
           code: string;
           context: string;
+          subContext: string | null;
           isCustom: boolean;
           template: string;
         }>;
@@ -745,6 +746,7 @@ export const ReportBuilderListDocument = gql`
           name
           code
           context
+          subContext
           isCustom
           template
         }
