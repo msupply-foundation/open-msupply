@@ -1,6 +1,9 @@
 use crate::token_bucket::TokenBucket;
 use std::sync::{Arc, RwLock};
 
+pub const TOKEN_LIFETIME_SEC: usize = 60 * 60; // 60 minutes
+pub const REFRESH_TOKEN_LIFETIME_SEC: usize = 2 * 60 * 60; // 120 minutes
+
 #[derive(Debug)]
 pub struct AuthData {
     /// Secret to sign and verify auth (JWT) tokens.
