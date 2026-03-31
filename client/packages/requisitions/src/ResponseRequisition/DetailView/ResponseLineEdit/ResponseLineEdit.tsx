@@ -39,6 +39,7 @@ interface ResponseLineEditProps {
   isUpdateMode?: boolean;
   isReasonsError: boolean;
   setIsEditingSupply: (isEditingSupply: boolean) => void;
+  displayForecasting: boolean;
 }
 
 export const ResponseLineEdit = ({
@@ -55,6 +56,7 @@ export const ResponseLineEdit = ({
   disabled = false,
   isUpdateMode = false,
   setIsEditingSupply,
+  displayForecasting,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
@@ -63,8 +65,7 @@ export const ResponseLineEdit = ({
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
   const isPacksEnabled = !!currentItem?.defaultPackSize;
   const showContent = !!draft && !!currentItem;
-  const displayVaccinesInDoses =
-    manageVaccinesInDoses && currentItem?.isVaccine;
+  const isDosesEnabled = manageVaccinesInDoses && currentItem?.isVaccine;
   const showExtraFields =
     store?.preferences?.extraFieldsInRequisition && !!requisition.program;
   const isDisabled = disabled || !!requisition.linkedRequisition;
@@ -92,7 +93,7 @@ export const ResponseLineEdit = ({
     unitName,
     disabled: isDisabled,
     showExtraFields,
-    displayVaccinesInDoses,
+    isDosesEnabled,
     dosesPerUnit: currentItem?.doses ?? 1,
     showEndAdornment: true,
   };
@@ -108,7 +109,7 @@ export const ResponseLineEdit = ({
             value={currentItem?.defaultPackSize}
           />
         )}
-        {displayVaccinesInDoses && currentItem?.doses ? (
+        {isDosesEnabled && currentItem?.doses ? (
           <InfoRow
             label={t('label.doses-per-unit')}
             value={currentItem?.doses}
@@ -175,7 +176,7 @@ export const ResponseLineEdit = ({
             value={currentItem?.defaultPackSize}
           />
         )}
-        {displayVaccinesInDoses && currentItem?.doses && !showExtraFields ? (
+        {isDosesEnabled && currentItem?.doses && !showExtraFields ? (
           <InfoRow
             label={t('label.doses-per-unit')}
             value={currentItem?.doses}
@@ -301,7 +302,7 @@ export const ResponseLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            displayVaccinesInDoses={displayVaccinesInDoses}
+            isDosesEnabled={isDosesEnabled}
             dosesPerUnit={currentItem?.doses ?? 1}
             setIsEditingSupply={setIsEditingSupply}
           />
@@ -329,7 +330,7 @@ export const ResponseLineEdit = ({
         {!!requisition.linkedRequisition || showExtraFields ? (
           <>
             <ResponseNumInputRow
-              label={t('label.amc/amd')}
+              label={t('label.customer-amc/amd')}
               value={draft?.averageMonthlyConsumption}
               onChange={value => update({ averageMonthlyConsumption: value })}
               sx={{
@@ -338,7 +339,7 @@ export const ResponseLineEdit = ({
               {...commonProps}
             />
             <ResponseNumInputRow
-              label={t('label.months-of-stock')}
+              label={t('label.customer-months-of-stock')}
               value={mos() ?? 0}
               disabledOverride={true}
               endAdornmentOverride={t('label.months')}
@@ -347,6 +348,14 @@ export const ResponseLineEdit = ({
               }}
               {...commonProps}
             />
+            {displayForecasting && (
+              <ResponseNumInputRow
+                label={t('label.target-stock-population')}
+                value={draft?.forecastTotalUnits ?? 0}
+                disabledOverride={true}
+                {...commonProps}
+              />
+            )}
           </>
         ) : null}
 

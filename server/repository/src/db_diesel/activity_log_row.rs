@@ -52,13 +52,13 @@ pub enum ActivityLogType {
     RequisitionStatusSent,
     RequisitionApproved,
     RequisitionStatusFinalised,
-    StockLocationChange,
-    StockCostPriceChange,
-    StockSellPriceChange,
-    StockExpiryDateChange,
-    StockBatchChange,
-    StockOnHold,
-    StockOffHold,
+    StockLocationChange,   // Depreciated
+    StockCostPriceChange,  // Depreciated
+    StockSellPriceChange,  // Depreciated
+    StockExpiryDateChange, // Depreciated
+    StockBatchChange,      // Depreciated
+    StockOnHold,           // Depreciated
+    StockOffHold,          // Depreciated
     Repack,
     PrescriptionCreated,
     PrescriptionDeleted,
@@ -102,6 +102,7 @@ pub enum ActivityLogType {
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
     VolumePerPackChanged,
+    StockLineEdit,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
@@ -161,7 +162,7 @@ impl<'a> ActivityLogRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: row.store_id.clone(),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

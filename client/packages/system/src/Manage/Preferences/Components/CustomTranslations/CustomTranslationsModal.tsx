@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   ButtonWithIcon,
@@ -7,12 +7,22 @@ import {
   UploadFile,
   ConfirmationModal,
 } from '@common/components';
-import { Box, Typography} from '@openmsupply-client/common';
-
-import { SaveIcon, DownloadIcon, DeleteIcon, EditIcon, UploadIcon } from '@common/icons';
+import { Box, Select, Typography } from '@openmsupply-client/common';
+import {
+  SaveIcon,
+  DownloadIcon,
+  DeleteIcon,
+  EditIcon,
+  UploadIcon,
+} from '@common/icons';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
-import { mapTranslationsToArray, mapTranslationsToObject } from './helpers';
+import {
+  mapTranslationsToArray,
+  mapTranslationsToObject,
+  mergeTranslations,
+  ImportMode,
+} from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
 
 export const EditCustomTranslations = ({
@@ -60,7 +70,6 @@ export const CustomTranslationsModal = ({
   onClose: () => void;
 }) => {
   const t = useTranslation();
-  const defaultTranslation = useTranslation('common');
   const { invalidateCustomTranslations } = useIntlUtils();
   const { success, error } = useNotification();
 
@@ -70,7 +79,7 @@ export const CustomTranslationsModal = ({
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [translations, setTranslations] = useState(
-    mapTranslationsToArray(value, defaultTranslation)
+    mapTranslationsToArray(value, t)
   );
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
@@ -88,7 +97,7 @@ export const CustomTranslationsModal = ({
     URL.revokeObjectURL(url);
   };
 
-  const handleUploadTranslations = (files: File[]) => {
+  const handleUploadTranslations = (files: File[], importMode: ImportMode) => {
     if (files.length === 0) return;
 
     const file = files[0]!;
@@ -100,7 +109,7 @@ export const CustomTranslationsModal = ({
 
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = e => {
       try {
         const content = e.target?.result as string;
         const parsed = JSON.parse(content);
@@ -120,15 +129,16 @@ export const CustomTranslationsModal = ({
           return;
         }
 
-        // Map the imported translations
-        const importedArray = mapTranslationsToArray(
-          parsed as Record<string, string>,
-          defaultTranslation
+        const importedData = parsed as Record<string, string>;
+        const importedArray = mapTranslationsToArray(importedData, t);
+
+        setTranslations(
+          mergeTranslations(translations, importedArray, importMode)
         );
-        setTranslations(importedArray);
+
         success(t('messages.translations-loaded'))();
       } catch {
-        error(t('error.invalid-json'))();
+        error(t('error.an-error-occurred'))();
       }
     };
 
@@ -140,7 +150,7 @@ export const CustomTranslationsModal = ({
     setTranslations([]);
   };
 
-  const saveAndClose = async () => {
+  const save = async (shouldClose = false) => {
     const hasInvalidTranslations = translations.some(tr => tr.isInvalid);
     if (hasInvalidTranslations) {
       setShowValidationErrors(true);
@@ -158,7 +168,7 @@ export const CustomTranslationsModal = ({
     if (successfulSave) {
       invalidateCustomTranslations();
       success(t('messages.saved'))();
-      onClose();
+      if (shouldClose) onClose();
     } else {
       error(t('error.failed-to-save-translations'))();
     }
@@ -171,11 +181,21 @@ export const CustomTranslationsModal = ({
         width={1200}
         height={900}
         cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+        saveButton={
+          <LoadingButton
+            isLoading={loading}
+            onClick={() => save(false)}
+            label={t('button.save')}
+            startIcon={<SaveIcon />}
+            variant="outlined"
+            color="secondary"
+          />
+        }
         okButton={
           <LoadingButton
             isLoading={loading}
-            onClick={saveAndClose}
-            label={t('button.save')}
+            onClick={() => save(true)}
+            label={t('button.save-and-close')}
             startIcon={<SaveIcon />}
             variant="contained"
             color="secondary"
@@ -215,8 +235,8 @@ export const CustomTranslationsModal = ({
 
       {showUploadModal && (
         <CustomTranslationsUploadModal
-          onUpload={(files) => {
-            handleUploadTranslations(files);
+          onUpload={(files, importMode) => {
+            handleUploadTranslations(files, importMode);
             setShowUploadModal(false);
           }}
           onClose={() => setShowUploadModal(false)}
@@ -237,32 +257,57 @@ export const CustomTranslationsModal = ({
   );
 };
 
+const IMPORT_MODE_WARNING = {
+  replace: 'messages.import-mode-replace-warning',
+  'keep-existing': 'messages.import-mode-keep-existing-warning',
+  overwrite: 'messages.import-mode-overwrite-warning',
+} as const satisfies Record<ImportMode, string>;
+
 const CustomTranslationsUploadModal = ({
   onUpload,
   onClose,
 }: {
-  onUpload: (files: File[]) => void;
+  onUpload: (files: File[], importMode: ImportMode) => void;
   onClose: () => void;
 }) => {
   const t = useTranslation();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [importMode, setImportMode] = useState<ImportMode>('keep-existing');
   const { Modal } = useDialog({
     isOpen: true,
     onClose,
     disableBackdrop: true,
   });
 
+  const importModeOptions = useMemo(
+    () => [
+      {
+        label: t('label.import-mode-keep-existing'),
+        value: 'keep-existing' as const,
+      },
+      {
+        label: t('label.import-mode-overwrite'),
+        value: 'overwrite' as const,
+      },
+      {
+        label: t('label.import-mode-replace'),
+        value: 'replace' as const,
+      },
+    ],
+    [t]
+  );
+
   return (
     <Modal
       title={t('label.import-translations')}
       width={800}
-      height={500}
+      height={550}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
           variant="ok"
           disabled={selectedFiles.length === 0}
-          onClick={() => onUpload(selectedFiles)}
+          onClick={() => onUpload(selectedFiles, importMode)}
         />
       }
     >
@@ -274,9 +319,29 @@ const CustomTranslationsUploadModal = ({
         height="100%"
         gap={2}
       >
-        <Alert severity="warning" sx={{ width: '100%' }}>
-          {t('messages.import-replaces-warning')}
+        <Alert
+          severity={
+            importMode === 'replace'
+              ? 'error'
+              : importMode === 'overwrite'
+                ? 'warning'
+                : 'info'
+          }
+          sx={{ width: '100%' }}
+        >
+          {t(IMPORT_MODE_WARNING[importMode])}
         </Alert>
+        <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%' }}>
+          <Typography sx={{ whiteSpace: 'nowrap' }}>
+            {t('label.import-mode')}:
+          </Typography>
+          <Select
+            value={importMode}
+            onChange={e => setImportMode(e.target.value as ImportMode)}
+            options={importModeOptions}
+            sx={{ flex: 1 }}
+          />
+        </Box>
         <UploadFile
           onUpload={setSelectedFiles}
           color="secondary"

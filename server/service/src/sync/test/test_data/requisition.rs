@@ -63,7 +63,7 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             id: REQUISITION_REQUEST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 8,
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Sent,
@@ -91,7 +91,7 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             order_type: None,
             is_emergency: false,
             created_from_requisition_id: Some("created_from_id".to_string()),
-            original_customer_id: Some("name1".to_string()),
+            destination_customer_id: Some("name1".to_string()),
         },
     )
 }
@@ -138,7 +138,7 @@ fn requisition_request_push_record() -> TestSyncOutgoingRecord {
             is_emergency: false,
             oms_fields: Some(OmsFields {
                 created_from_requisition_id: Some("created_from_id".to_string()),
-                original_customer_id: Some("name1".to_string())
+                destination_customer_id: Some("name1".to_string())
             }),
         }),
     }
@@ -185,7 +185,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             id: REQUISITION_RESPONSE.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 1,
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::Response,
             status: RequisitionStatus::Finalised,
@@ -213,7 +213,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             order_type: Some("Normal".to_string()),
             is_emergency: true,
             created_from_requisition_id: None,
-            original_customer_id: None,
+            destination_customer_id: None,
         },
     )
 }
@@ -311,7 +311,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             id: REQUISITION_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 1,
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,
@@ -344,7 +344,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             order_type: Some("Normal".to_string()),
             is_emergency: false,
             created_from_requisition_id: None,
-            original_customer_id: None,
+            destination_customer_id: None,
         },
     )
 }
@@ -447,7 +447,7 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             id: PROGRAM_REQUISITION_REQUEST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 8,
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Sent,
@@ -475,7 +475,7 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             order_type: Some("Normal".to_string()),
             is_emergency: false,
             created_from_requisition_id: None,
-            original_customer_id: None,
+            destination_customer_id: None,
         },
     )
 }

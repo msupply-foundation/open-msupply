@@ -9,9 +9,8 @@ import {
   useNavigate,
   useUserDetails,
   BasicTextInput,
-  PersistentPaperPopover,
-  usePopover,
   useRootNavigationPath,
+  PaperPopover,
 } from '@openmsupply-client/common';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
 
@@ -20,7 +19,8 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const { store, setStore, token } = useAuthContext();
   const { data, isLoading } = useUserDetails(token);
-  const popoverControls = usePopover();
+  const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
+
   const rootNavigationPath = useRootNavigationPath();
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
@@ -59,7 +59,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       disabled={s.id === store.id || !!s.isDisabled}
       onClick={async () => {
         await setStore(s);
-        popoverControls.hide();
+        setPopoverAnchor(null);
         navigate(rootNavigationPath);
       }}
       key={s.id}
@@ -68,9 +68,14 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   ));
 
   return (
-    <PersistentPaperPopover
-      popoverControls={popoverControls}
-      placement="top"
+    <PaperPopover
+      mode="click"
+      placement={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      anchorEl={popoverAnchor}
+      onAnchorElChange={setPopoverAnchor}
       width={400}
       Content={
         <PaperPopoverSection label={t('select-store')}>
@@ -110,6 +115,6 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       }
     >
       {children}
-    </PersistentPaperPopover>
+    </PaperPopover>
   );
 };

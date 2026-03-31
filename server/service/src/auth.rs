@@ -49,6 +49,7 @@ pub enum Resource {
     MutateTemperatureBreach,
     // store
     QueryStore,
+    StoreAccess,
     // master list
     QueryMasterList,
     // items
@@ -79,8 +80,13 @@ pub enum Resource {
     UpdateStocktakeLine,
     DeleteStocktakeLine,
     // invoice
-    InvoiceCount,
+    InvoiceCount, // Deprecated: requires all invoice count permissions combined
     QueryInvoice,
+    QueryOutboundShipment,
+    QueryInboundShipment,
+    QueryPrescription,
+    QuerySupplierReturn,
+    QueryCustomerReturn,
     // outbound shipment
     MutateOutboundShipment,
     // inbound shipment
@@ -166,6 +172,7 @@ pub enum Resource {
     MutateInboundShipmentExternal,
     QueryInboundShipmentExternal,
     AuthoriseInboundShipmentExternal,
+    VerifyInboundShipmentExternal,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -247,6 +254,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     // store: No permission needed
     map.insert(Resource::QueryStore, PermissionDSL::NoPermissionRequired);
+    map.insert(Resource::StoreAccess, PermissionDSL::HasStoreAccess);
     // master list
     map.insert(Resource::QueryMasterList, PermissionDSL::HasStoreAccess);
 
@@ -411,17 +419,55 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
             PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
             PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
             PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
             PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
         ]),
     );
     map.insert(
+        Resource::QueryOutboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryInboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryPrescription,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QuerySupplierReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryCustomerReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
+        ]),
+    );
+    // Deprecated: combined invoice count resource requiring all query permissions
+    map.insert(
         Resource::InvoiceCount,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
             PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
         ]),
     );
     // outbound shipment
@@ -445,6 +491,35 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::InboundShipmentVerify),
+        ]),
+    );
+    // inbound shipment external
+    map.insert(
+        Resource::QueryInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalMutate),
+        ]),
+    );
+    map.insert(
+        Resource::VerifyInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalVerify),
+        ]),
+    );
+    map.insert(
+        Resource::AuthoriseInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalAuthorise),
         ]),
     );
     // Supplier return
@@ -1523,7 +1598,7 @@ mod permission_validation_test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 code: "n/a".to_string(),
                 ..Default::default()
             }

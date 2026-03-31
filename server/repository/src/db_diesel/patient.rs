@@ -531,7 +531,7 @@ mod tests {
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
-                patient_link_id: patient_row.id.clone(),
+                patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
@@ -641,7 +641,7 @@ mod tests {
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
-                patient_link_id: patient_row.id.clone(),
+                patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),

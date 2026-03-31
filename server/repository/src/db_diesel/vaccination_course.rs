@@ -89,4 +89,17 @@ impl<'a> VaccinationCourseRepository<'a> {
             .order(vaccination_course::min_age.asc())
             .load::<VaccinationCourseRow>(self.connection.lock().connection())?)
     }
+
+    pub fn query_by_item_ids(
+        &self,
+        item_ids: Vec<String>,
+    ) -> Result<Vec<VaccinationCourseRow>, RepositoryError> {
+        let query = vaccination_course::table
+            .filter(vaccination_course::item_id.eq_any(item_ids.clone()))
+            .select(VaccinationCourseRow::as_select());
+
+        Ok(query
+            .order(vaccination_course::min_age.asc())
+            .load::<VaccinationCourseRow>(self.connection.lock().connection())?)
+    }
 }

@@ -56,7 +56,7 @@ pub fn generate(
     let invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_link_id: inventory_adjustment_name.id,
+        name_id: inventory_adjustment_name.id,
         r#type: match adjustment_type {
             AdjustmentType::Addition => InvoiceType::InventoryAddition,
             AdjustmentType::Reduction => InvoiceType::InventoryReduction,
@@ -94,7 +94,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
+        default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
     };
@@ -109,7 +109,7 @@ pub fn generate(
         note,
         on_hold,
         item_variant_id,
-        donor_link_id,
+        donor_id: donor_link_id,
         vvm_status_id,
         campaign_id,
         program_id,
@@ -140,16 +140,19 @@ pub fn generate(
             note,
             item_variant_id,
             donor_id: donor_link_id,
+            manufacturer_id: None,
             vvm_status_id,
             campaign_id,
             program_id,
             volume_per_pack: Some(volume_per_pack),
+            manufacture_date: None,
             // Default
             barcode: None,
             total_before_tax: None,
             tax_percentage: None,
             shipped_number_of_packs: None,
             shipped_pack_size: None,
+            purchase_order_line_id: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,
@@ -174,6 +177,7 @@ pub fn generate(
             sell_price_per_pack: None,
             item_variant_id: None,
             donor_id: None,
+            manufacturer_id: None,
         }),
     };
 

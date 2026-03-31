@@ -268,7 +268,7 @@ fn generate_response_requisition(
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
-        name_link_id: store_name.id,
+        name_id: store_name.id,
         store_id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -284,7 +284,7 @@ fn generate_response_requisition(
         period_id: request_requisition_row.period_id.clone(),
         order_type: request_requisition_row.order_type.clone(),
         is_emergency: request_requisition_row.is_emergency,
-        original_customer_id: request_requisition_row.original_customer_id.clone(),
+        destination_customer_id: request_requisition_row.destination_customer_id.clone(),
         created_from_requisition_id: request_requisition_row.created_from_requisition_id.clone(),
         // Default
         user_id: None,
@@ -348,6 +348,9 @@ fn generate_response_requisition_lines(
                 price_per_unit,
                 available_volume,
                 location_type_id,
+                forecast_total_doses,
+                forecast_total_units,
+                vaccine_courses,
             },
         item_row: ItemRow { id: item_id, .. },
         requisition_row: _,
@@ -389,11 +392,14 @@ fn generate_response_requisition_lines(
             option_id,
             available_volume,
             location_type_id,
+            price_per_unit,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
             // Default
             supply_quantity: 0.0,
             approved_quantity: 0.0,
             approval_comment: None,
-            price_per_unit,
         });
     }
 

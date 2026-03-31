@@ -86,6 +86,12 @@ impl PurchaseOrderLineNode {
     pub async fn shipped_number_of_units(&self) -> f64 {
         self.stats().shipped_number_of_units
     }
+    pub async fn in_transit_number_of_units(&self) -> f64 {
+        self.stats().in_transit_number_of_units
+    }
+    pub async fn received_number_of_units(&self) -> f64 {
+        self.stats().received_number_of_units
+    }
     pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().requested_delivery_date
     }
@@ -100,7 +106,7 @@ impl PurchaseOrderLineNode {
     ) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
-        let Some(manufacturer_id) = &self.row().manufacturer_link_id else {
+        let Some(manufacturer_id) = &self.row().manufacturer_id else {
             return Ok(None);
         };
 

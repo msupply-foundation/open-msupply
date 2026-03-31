@@ -117,6 +117,7 @@ impl InsertInput {
             volume_per_pack: None,
             item_variant_id: None,
             donor_id: None,
+            manufacturer_id: None,
         }
     }
 }
@@ -196,7 +197,7 @@ mod test {
             mock_item_a, mock_location_1, mock_outbound_shipment_a,
             mock_outbound_shipment_a_invoice_lines, MockDataInserts,
         },
-        InvoiceLine, RepositoryError, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -556,6 +557,7 @@ mod test {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })
