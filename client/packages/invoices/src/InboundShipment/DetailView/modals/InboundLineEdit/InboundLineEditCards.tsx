@@ -27,7 +27,6 @@ import {
   StatusChip,
   InvoiceLineStatusType,
   InvoiceNodeStatus,
-  useAppTheme,
   InfoIcon,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
@@ -47,6 +46,7 @@ import {
 import { PatchDraftLineInput } from '../../../api';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
 import { isInboundPlaceholderRow } from '../../../../utils';
+import { useInvoiceLineStatusMap } from '../../..';
 import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
 
 interface CardProps {
@@ -98,7 +98,6 @@ export const InboundLineEditCards = ({
   const formatRef = useRef(format);
   formatRef.current = format;
   const { store } = useAuthContext();
-  const theme = useAppTheme();
   const {
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
@@ -138,23 +137,7 @@ export const InboundLineEditCards = ({
     lines.some(line => line.status != null) ||
     (isExternal && !!externalInboundShipmentLinesMustBeAuthorised);
 
-  const statusMap = useMemo(
-    () => ({
-      [InvoiceLineStatusType.Passed]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
-        colour: theme.palette.invoiceLineStatus.passed,
-      },
-      [InvoiceLineStatusType.Pending]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
-        colour: theme.palette.invoiceLineStatus.pending,
-      },
-      [InvoiceLineStatusType.Rejected]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
-        colour: theme.palette.invoiceLineStatus.rejected,
-      },
-    }),
-    [theme]
-  );
+  const statusMap = useInvoiceLineStatusMap();
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -359,7 +342,8 @@ export const InboundLineEditCards = ({
               {Object.entries(statusMap)
                 .filter(
                   ([key]) =>
-                    hasAuthorisePermission || key === InvoiceLineStatusType.Pending
+                    hasAuthorisePermission ||
+                    key === InvoiceLineStatusType.Pending
                 )
                 .map(([key, { label, colour }]) => (
                   <MenuItem key={key} value={key}>
