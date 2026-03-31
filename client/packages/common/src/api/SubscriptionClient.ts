@@ -40,13 +40,17 @@ export const getSubscriptionClient = (httpUrl: string): Client => {
   return subscriptionClient;
 };
 
-export const disposeSubscriptionClient = () => {
+/**
+ * Force the WebSocket to reconnect (e.g. after token change).
+ * Closes the current connection; the client automatically reconnects
+ * and all active subscriptions resubscribe with fresh connectionParams.
+ */
+export const reconnectSubscriptionClient = () => {
   if (subscriptionClient) {
-    subscriptionClient.dispose();
-    subscriptionClient = null;
-    currentUrl = null;
+    subscriptionClient.terminate();
   }
 };
+
 
 function httpToWsUrl(httpUrl: string): string {
   // Replace /graphql suffix if present, then convert protocol

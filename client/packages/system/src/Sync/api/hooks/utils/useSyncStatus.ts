@@ -7,18 +7,20 @@ import {
 
 export const useSyncStatus = (
   refetchInterval: number | false = false,
-  enabled?: boolean
+  enabled?: boolean,
+  requireAuth?: boolean
 ) => {
   const api = useSyncApi();
 
   const { isSubscribed } = useSubscription<
     SyncStatusUpdatedSubscription,
-    { syncStatus: SyncStatusUpdatedSubscription['syncStatusUpdated'] }
+    SyncStatusUpdatedSubscription['syncStatusUpdated']
   >({
     queryKey: api.keys.syncStatus(),
     document: SyncStatusUpdatedDocument,
     enabled: enabled !== false,
-    select: data => ({ syncStatus: data.syncStatusUpdated }),
+    requireAuth,
+    select: data => data.syncStatusUpdated,
   });
 
   return useQuery(api.keys.syncStatus(), api.get.syncStatus, {

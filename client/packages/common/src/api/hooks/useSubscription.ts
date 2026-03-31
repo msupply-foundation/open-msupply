@@ -4,8 +4,8 @@ import { DocumentNode, print } from 'graphql';
 import { useGql } from '../GqlContext';
 import { useAuthContext } from '../../authentication/AuthContext';
 import {
-  disposeSubscriptionClient,
   getSubscriptionClient,
+  reconnectSubscriptionClient,
 } from '../SubscriptionClient';
 
 interface UseSubscriptionOptions<TSubscription, TCacheData> {
@@ -17,6 +17,9 @@ interface UseSubscriptionOptions<TSubscription, TCacheData> {
   variables?: Record<string, unknown>;
   /** Whether the subscription is enabled */
   enabled?: boolean;
+  /** Whether an auth token is required to subscribe. Defaults to true.
+   *  Set to false for unauthenticated subscriptions (e.g. during initialisation). */
+  requireAuth?: boolean;
   /**
    * Transform the typed subscription response before writing to cache.
    * Use this to reshape subscription payloads to match query cache shape.
@@ -48,6 +51,7 @@ export const useSubscription = <TSubscription, TCacheData>({
   document,
   variables,
   enabled = true,
+  requireAuth = true,
   select,
 }: UseSubscriptionOptions<TSubscription, TCacheData>): UseSubscriptionResult => {
   const queryClient = useQueryClient();
@@ -57,18 +61,18 @@ export const useSubscription = <TSubscription, TCacheData>({
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    if (!enabled || !token) {
+    if (!enabled || (requireAuth && !token)) {
       setIsSubscribed(false);
       return;
     }
 
-    // When the token changes, dispose the old WebSocket client once
-    // so a fresh connection is made with the new token.
+    // When the token changes (login/re-auth/logout), dispose the old
+    // WebSocket client so a fresh connection is made with the new token.
     // The module-level lastKnownToken ensures this happens exactly once
     // across all useSubscription instances.
     if (token !== lastKnownToken) {
       lastKnownToken = token;
-      disposeSubscriptionClient();
+      reconnectSubscriptionClient();
       // Invalidate stale cache from before the auth interruption
       queryClient.invalidateQueries(queryKey);
     }
