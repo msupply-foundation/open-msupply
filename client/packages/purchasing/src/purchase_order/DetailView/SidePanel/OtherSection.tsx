@@ -5,7 +5,6 @@ import {
   DetailPanelSection,
   PanelRow,
   PanelLabel,
-  PurchaseOrderNodeStatus,
   TextArea,
 } from '@openmsupply-client/common';
 import {
