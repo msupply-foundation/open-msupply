@@ -5,7 +5,6 @@ import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns/addMinutes';
 import { useLogin, useGetUserPermissions, useRefreshToken } from './api/hooks';
-
 import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
 import { PropsWithChildrenOnly, UserPermission } from '@common/types';
@@ -14,8 +13,9 @@ import { matchPath } from 'react-router-dom';
 import { createRegisteredContext } from 'react-singleton-context';
 import { useUpdateUserInfo } from './hooks/useUpdateUserInfo';
 
-// Also determines auth cookie lifetime
-export const INACTIVITY_TIMEOUT_MINUTES = 60;
+// Cookie needs to live long enough so we can attempt a refresh before server
+// expires the session.
+const COOKIE_LIFETIME_MINUTES = 24 * 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
 
 export enum AuthError {
@@ -81,7 +81,7 @@ export const getAuthCookie = (): AuthCookie => {
 };
 
 export const setAuthCookie = (cookie: AuthCookie) => {
-  const expires = addMinutes(new Date(), INACTIVITY_TIMEOUT_MINUTES);
+  const expires = addMinutes(new Date(), COOKIE_LIFETIME_MINUTES);
   const authCookie = { ...cookie, expires };
 
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
@@ -91,13 +91,13 @@ const authControl = {
   isLoggingIn: false,
   login: (_username: string, _password: string) =>
     new Promise<AuthenticationResponse>(() => ({ token: 'token' })),
-  logout: () => {},
+  logout: () => { },
   setStore: (_store: UserStoreNodeFragment) => new Promise<void>(() => ({})),
   storeId: 'store-id',
   token: '',
   userHasPermission: (_permission: UserPermission) => false,
   updateUserIsLoading: false,
-  updateUser: () => new Promise<void>(() => {}),
+  updateUser: () => new Promise<void>(() => { }),
 };
 
 const AuthContext = createRegisteredContext<AuthControl>(
@@ -118,11 +118,13 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     mostRecentCredentials,
   } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
-  const { refreshToken } = useRefreshToken(() => {
-    Cookies.remove('auth');
-    setCookie(undefined);
-    setError(AuthError.Timeout);
-  });
+  const { refreshToken } = useRefreshToken(
+    () => {
+      Cookies.remove('auth');
+      setCookie(undefined);
+      setError(AuthError.Timeout);
+    },
+  );
 
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
 
