@@ -4427,6 +4427,8 @@ export type InvoiceNode = {
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
+  chargesForeignCurrency: Scalars['Float']['output'];
+  chargesLocalCurrency: Scalars['Float']['output'];
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   colour?: Maybe<Scalars['String']['output']>;
@@ -10103,6 +10105,8 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
+  chargesForeignCurrency?: InputMaybe<Scalars['Float']['input']>;
+  chargesLocalCurrency?: InputMaybe<Scalars['Float']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;

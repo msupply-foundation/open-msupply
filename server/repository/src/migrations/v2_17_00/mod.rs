@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_charges_to_invoice;
 mod add_forecasting_fields_to_requisition_line;
 mod add_imprest_and_stock_history_to_requisition_type;
 mod add_inbound_shipment_external_verify_permission;
@@ -46,6 +47,7 @@ impl Migration for V2_17_00 {
             Box::new(requisition_add_destination_customer_link_id::Migrate),
             Box::new(add_stock_line_edit_activity_log_type::Migrate),
             Box::new(add_imprest_and_stock_history_to_requisition_type::Migrate),
+            Box::new(add_charges_to_invoice::Migrate),
         ]
     }
 }
