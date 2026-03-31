@@ -286,6 +286,8 @@ fn generate_inbound_invoice(
         original_shipment_id,
         program_id: outbound_invoice_row.program_id.clone(),
         shipping_method_id: outbound_invoice_row.shipping_method_id.clone(),
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
         // Default
         colour: None,
         user_id: None,
