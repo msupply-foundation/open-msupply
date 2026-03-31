@@ -39,7 +39,7 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
 
   useEffect(() => {
     setValue(getNumberFromUrl(urlValue, range) as number | undefined);
-  }, [urlValue]);
+  }, [urlValue, range]);
 
   const debouncedOnChange = useDebouncedValueCallback(
     val => {
