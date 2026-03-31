@@ -222,7 +222,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
         | ServiceError::CannotPutDeliveredDateAfterReceivedDate
         | ServiceError::CannotSetDeliveredDateInFuture
-        | ServiceError::CannotSetShippedStatusOnManualInboundShipment => {
+        | ServiceError::CannotSetShippedStatusOnManualInboundShipment
+        | ServiceError::CurrencyRateMustBePositive => {
             BadUserInput(formatted_error)
         }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),

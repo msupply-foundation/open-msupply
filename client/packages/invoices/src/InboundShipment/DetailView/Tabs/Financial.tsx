@@ -29,7 +29,7 @@ export const FinancialTab = () => {
     | undefined;
   const formatPoCurrency = useFormatCurrency(poCurrencyCode);
   const formatStoreCurrency = useFormatCurrency(storeCurrencyCode);
-  const currencyRate = data?.currencyRate ?? 1;
+  const currencyRate = data?.currencyRate || 1;
   const isForeignCurrency =
     !!poCurrencyCode &&
     !!storeCurrencyCode &&
@@ -75,6 +75,7 @@ export const FinancialTab = () => {
       {
         id: 'costPricePerPackLocal',
         header: `${t('label.pack-cost-price')} (${storeCurrencyCode ?? ''})`,
+        description: t('description.po-price-converted-to-local'),
         columnType: ColumnType.Currency,
         includeColumn: isForeignCurrency,
         accessorFn: (row: InboundLineFragment) =>
@@ -97,6 +98,7 @@ export const FinancialTab = () => {
       {
         id: 'foreignCurrencyLineTotal',
         header: `${t('label.line-total')} (${poCurrencyCode ?? ''})`,
+        description: t('description.line-total-in-po-currency'),
         columnType: ColumnType.Currency,
         includeColumn: isForeignCurrency,
         accessorFn: (row: InboundLineFragment) =>
@@ -126,6 +128,7 @@ export const FinancialTab = () => {
       {
         id: 'lineTotalLocal',
         header: `${t('label.line-total')} (${storeCurrencyCode ?? ''})`,
+        description: t('description.line-total-in-local-currency'),
         columnType: ColumnType.Currency,
         accessorFn: (row: InboundLineFragment) =>
           Math.round(
@@ -158,6 +161,7 @@ export const FinancialTab = () => {
       {
         id: 'adjustedLineTotal',
         header: `${t('label.adjusted-line-total')} (${storeCurrencyCode ?? ''})`,
+        description: t('description.adjusted-line-total'),
         columnType: ColumnType.Currency,
         accessorFn: (row: InboundLineFragment) =>
           Math.round(row.costPricePerPack * row.numberOfPacks * 100) / 100,
