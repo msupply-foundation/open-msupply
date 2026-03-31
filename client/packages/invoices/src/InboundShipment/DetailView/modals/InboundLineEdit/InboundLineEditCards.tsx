@@ -371,68 +371,6 @@ export const InboundLineEditCards = ({
           );
         },
       },
-      // --- Quantities columns ---
-      {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        columnGroup: 'quantities',
-        Cell: ({
-          row: {
-            original: { id, packSize, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={isDisabled}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              updateDraftLine({
-                id,
-                itemVariantId: itemVariant?.id,
-                itemVariant,
-                manufacturer: itemVariant?.manufacturer ?? null,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: hasItemVariantsEnabled,
-      },
-      {
-        id: 'itemDoses',
-        header: t('label.doses-per-unit'),
-        columnType: ColumnType.Number,
-        defaultHideOnMobile: true,
-        columnGroup: 'quantities',
-        includeColumn: displayInDoses,
-        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
-      },
-      {
-        id: 'vvmStatus',
-        header: t('label.vvm-status'),
-        size: 150,
-        columnGroup: 'quantities',
-        accessorFn: row => row.vvmStatus || '',
-        Cell: ({
-          row: {
-            original: { id, vvmStatus, stockLine },
-          },
-        }) => (
-          <VVMStatusSearchInput
-            disabled={isDisabled}
-            selected={vvmStatus ?? null}
-            onChange={vvmStatus => updateDraftLine({ id, vvmStatus })}
-            useDefault={!stockLine}
-          />
-        ),
-        includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
-      },
       {
         accessorKey: 'shippedNumberOfPacks',
         header: t('label.shipped-number-of-packs'),
