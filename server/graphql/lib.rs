@@ -37,7 +37,8 @@ use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
-    InitialisationMutations, InitialisationQueries, MigrationQueries, SyncStatusSubscriptions,
+    InitialisationMutations, InitialisationQueries, InitialisationSubscriptions, MigrationQueries,
+    SyncStatusSubscriptions,
 };
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
@@ -78,7 +79,7 @@ pub type OperationalSchema = async_graphql::Schema<Queries, Mutations, Subscript
 pub type InitialisationSchema = async_graphql::Schema<
     InitialisationQueries,
     InitialisationMutations,
-    async_graphql::EmptySubscription,
+    InitialisationSubscriptions,
 >;
 pub type MigrationSchema =
     async_graphql::Schema<MigrationQueries, EmptyMutation, async_graphql::EmptySubscription>;
@@ -375,7 +376,7 @@ impl GraphqlSchema {
         let initialisation_builder = InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
-            EmptySubscription,
+            InitialisationSubscriptions::default(),
         )
         .data(service_provider.clone())
         .data(operational_status_ref.clone())
@@ -442,27 +443,46 @@ pub fn attach_graphql_schema(
     }
 }
 
-/// WebSocket endpoint for GraphQL subscriptions
+/// WebSocket endpoint for GraphQL subscriptions.
+/// Routes to the correct schema based on operational status,
+/// mirroring how the HTTP handler routes requests.
 async fn graphql_ws(
     schema: Data<GraphqlSchema>,
     req: HttpRequest,
     payload: web::Payload,
 ) -> Result<HttpResponse, actix_web::Error> {
-    GraphQLSubscription::new(schema.operational.clone())
-        .on_connection_init(|value: serde_json::Value| async move {
-            let mut data = async_graphql::Data::default();
-            // Client sends { "Authorization": "Bearer <token>" } in connectionParams
-            if let Some(token) = value.get("Authorization").and_then(|v| v.as_str()) {
-                let token = token.strip_prefix("Bearer ").unwrap_or(token);
-                data.insert(RequestUserData {
-                    auth_token: Some(token.to_string()),
-                    refresh_token: None,
-                    override_user_id: None,
-                });
-            }
-            Ok(data)
-        })
-        .start(&req, payload)
+    let on_connection_init = |value: serde_json::Value| async move {
+        let mut data = async_graphql::Data::default();
+        // Client sends { "Authorization": "Bearer <token>" } in connectionParams
+        if let Some(token) = value.get("Authorization").and_then(|v| v.as_str()) {
+            let token = token.strip_prefix("Bearer ").unwrap_or(token);
+            data.insert(RequestUserData {
+                auth_token: Some(token.to_string()),
+                refresh_token: None,
+                override_user_id: None,
+            });
+        }
+        Ok(data)
+    };
+
+    match &*schema.operational_status.read().await {
+        OperationalStatus::Operational => {
+            GraphQLSubscription::new(schema.operational.clone())
+                .on_connection_init(on_connection_init)
+                .start(&req, payload)
+        }
+        OperationalStatus::Initialising => {
+            GraphQLSubscription::new(schema.initialisation.clone())
+                .on_connection_init(on_connection_init)
+                .start(&req, payload)
+        }
+        OperationalStatus::MigratingDatabase => {
+            //TODO: add migration status subscription and route to that instead of returning an error here
+            Err(actix_web::error::ErrorServiceUnavailable(
+                "Subscriptions unavailable during database migration",
+            ))
+        }
+    }
 }
 
 /// Entrypoint for graphql

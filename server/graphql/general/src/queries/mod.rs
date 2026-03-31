@@ -41,7 +41,6 @@ pub mod requisition_line_chart;
 pub mod response_requisition_line_stats;
 pub mod sync_settings;
 pub mod sync_status;
-pub mod sync_status_subscription;
 pub use self::response_requisition_line_stats::*;
 
 pub mod item_counts;

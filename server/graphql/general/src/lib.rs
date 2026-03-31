@@ -1,13 +1,14 @@
 pub mod campaign;
 mod mutations;
 mod queries;
+mod subscriptions;
 mod sync_api_error;
 pub mod types;
 
 use std::collections::HashMap;
 
 pub use self::queries::sync_status::*;
-pub use self::queries::sync_status_subscription::SyncStatusSubscriptions;
+pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
 use self::queries::*;
 
 use abbreviation::abbreviations;
