@@ -277,7 +277,7 @@ fn generate_foreign_currency_before_tax_for_lines(
 /// - PO price per pack (from linked purchase_order_line) converted to local currency
 /// - Plus the % cost adjustment from charges
 ///
-/// new_cost_price = (po_price / rate) * (1 + cost_adjustment_fraction)
+/// new_cost_price = round_to_2dp((po_price / rate) * (1 + cost_adjustment_fraction))
 ///
 /// where cost_adjustment_fraction = (charges_foreign / rate + charges_local) / total_goods_local
 /// and total_goods_local = sum of all (po_price / rate * number_of_packs) across lines
@@ -296,6 +296,7 @@ fn generate_cost_price_update_for_lines(
             .r#type(InvoiceLineType::StockIn.equal_to()),
     )?;
 
+    // Fallback to 1.0 if rate is zero (possible via sync data)
     let safe_rate = if *currency_rate != 0.0 {
         *currency_rate
     } else {

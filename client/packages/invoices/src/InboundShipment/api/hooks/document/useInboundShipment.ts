@@ -100,7 +100,14 @@ export const useInboundShipment = (id?: string) => {
     );
     if (!hasChanges) return;
     patchRef.current = {};
-    await updateMutation({ ...changes, id: data.id });
+    try {
+      await updateMutation({ ...changes, id: data.id });
+    } catch (e) {
+      // Restore changes so they aren't silently lost on failure;
+      // spread order ensures edits made during the await take precedence
+      patchRef.current = { ...changes, ...patchRef.current };
+      throw e;
+    }
   }, [data, patchRef, updateMutation]);
 
   const draft = useMemo(

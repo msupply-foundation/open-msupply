@@ -85,9 +85,11 @@ export const CurrencyTab = () => {
               >
                 <BufferedNumericTextInput
                   value={isHomeCurrency ? 1 : currencyRate}
-                  onChange={currencyRate =>
-                    updatePatch({ currencyRate: currencyRate ?? undefined })
-                  }
+                  onChange={currencyRate => {
+                    const value = currencyRate ?? undefined;
+                    if (value !== undefined && value <= 0) return;
+                    updatePatch({ currencyRate: value });
+                  }}
                   decimalLimit={4}
                   disabled={isHomeCurrency}
                   width={150}

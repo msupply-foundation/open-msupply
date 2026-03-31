@@ -199,6 +199,7 @@ pub enum UpdateInboundShipmentError {
     CannotPutDeliveredDateAfterReceivedDate,
     CannotReceiveWithPendingLines,
     CannotSetShippedStatusOnManualInboundShipment,
+    CurrencyRateMustBePositive,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
