@@ -17,7 +17,6 @@ interface ReportListProps {
   selectedReportId: string | null;
   isCentralServer: boolean;
   onSelectReport: (report: SavedReportOption) => void;
-  onDuplicateReport: (report: SavedReportOption) => void;
   onNewReport: () => void;
 }
 
@@ -47,7 +46,6 @@ export const ReportList = ({
   selectedReportId,
   isCentralServer,
   onSelectReport,
-  onDuplicateReport,
   onNewReport,
 }: ReportListProps) => {
   const [expanded, setExpanded] = useState(true);
@@ -163,47 +161,39 @@ export const ReportList = ({
               <Box sx={headerCellSx}>Context</Box>
               <Box sx={headerCellSx}>Sub-type</Box>
               <Box sx={headerCellSx}>Type</Box>
-              <Box sx={headerCellSx}>Action</Box>
+              <Box sx={{ ...headerCellSx, color: 'warning.main' }}>Server [temp]</Box>
             </>}
 
             {/* ── Data rows ── */}
             {reports.map(report => {
-              const canEdit = isCentralServer || report.isCustom;
-              const canDuplicate = !isCentralServer && !report.isCustom;
               const base = dataCellSx(report);
+              const handleClick = () => {
+                onSelectReport(report);
+                setExpanded(false);
+              };
               const rowEvents = {
                 onMouseEnter: () => setHoveredId(report.value),
                 onMouseLeave: () => setHoveredId(null),
-                onClick: () => { if (canEdit) { onSelectReport(report); setExpanded(e => !e); } },
+                onClick: handleClick,
               };
+              const rowSx = { ...base, cursor: 'pointer' };
 
               return (
                 <React.Fragment key={report.value}>
-                  {/* Name */}
-                  <Box
-                    {...rowEvents}
-                    title={report.label}
-                    sx={{
-                      ...base,
-                      cursor: canEdit ? 'pointer' : 'default',
-                    }}
-                  >
+                  <Box {...rowEvents} title={report.label} sx={rowSx}>
                     {report.label}
                   </Box>
 
                   {expanded && <>
-                    {/* Context */}
-                    <Box {...rowEvents} sx={{ ...base, cursor: canEdit ? 'pointer' : 'default', whiteSpace: 'nowrap', color: 'text.secondary' }}>
+                    <Box {...rowEvents} sx={{ ...rowSx, whiteSpace: 'nowrap', color: 'text.secondary' }}>
                       {contextLabel[report.context] ?? report.context}
                     </Box>
 
-                    {/* Sub-type */}
-                    <Box {...rowEvents} sx={{ ...base, cursor: canEdit ? 'pointer' : 'default', whiteSpace: 'nowrap', color: 'text.secondary' }}>
+                    <Box {...rowEvents} sx={{ ...rowSx, whiteSpace: 'nowrap', color: 'text.secondary' }}>
                       {report.subContext ?? '—'}
                     </Box>
 
-                    {/* Type badge */}
-                    <Box {...rowEvents} sx={{ ...base, cursor: canEdit ? 'pointer' : 'default' }}>
+                    <Box {...rowEvents} sx={rowSx}>
                       <Box
                         component="span"
                         sx={{
@@ -222,54 +212,9 @@ export const ReportList = ({
                       </Box>
                     </Box>
 
-                    {/* Action */}
-                    <Box
-                      onMouseEnter={() => setHoveredId(report.value)}
-                      onMouseLeave={() => setHoveredId(null)}
-                      sx={{ ...base }}
-                    >
-                      {canEdit && (
-                        <Box
-                          component="button"
-                          onClick={e => { e.stopPropagation(); onSelectReport(report); }}
-                          sx={{
-                            fontSize: '0.7rem',
-                            px: 1,
-                            py: 0.25,
-                            border: '1px solid',
-                            borderColor: 'primary.main',
-                            borderRadius: 1,
-                            cursor: 'pointer',
-                            color: 'primary.main',
-                            bgcolor: 'transparent',
-                            whiteSpace: 'nowrap',
-                            '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
-                          }}
-                        >
-                          Edit
-                        </Box>
-                      )}
-                      {canDuplicate && (
-                        <Box
-                          component="button"
-                          onClick={e => { e.stopPropagation(); onDuplicateReport(report); }}
-                          sx={{
-                            fontSize: '0.7rem',
-                            px: 1,
-                            py: 0.25,
-                            border: '1px solid',
-                            borderColor: 'secondary.main',
-                            borderRadius: 1,
-                            cursor: 'pointer',
-                            color: 'secondary.main',
-                            bgcolor: 'transparent',
-                            whiteSpace: 'nowrap',
-                            '&:hover': { bgcolor: 'secondary.main', color: 'secondary.contrastText' },
-                          }}
-                        >
-                          Duplicate
-                        </Box>
-                      )}
+                    {/* Temporary: server type indicator */}
+                    <Box {...rowEvents} sx={{ ...rowSx, whiteSpace: 'nowrap', color: 'warning.main', fontSize: '0.7rem' }}>
+                      {isCentralServer ? 'Central' : 'Remote'}
                     </Box>
                   </>}
                 </React.Fragment>

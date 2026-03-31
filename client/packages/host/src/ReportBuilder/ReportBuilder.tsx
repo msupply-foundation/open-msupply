@@ -14,9 +14,8 @@ import {
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { useHostApi } from '../api/hooks/utils/useHostApi';
-import { useGenerateOneOffReport } from '../api/hooks/settings/useGenerateOneOffReport';
 import { LoadingButton } from '@common/components';
-import { CopyIcon, SaveIcon } from '@common/icons';
+import { SaveIcon } from '@common/icons';
 import { ReportList } from './ReportList';
 import { NewReportModal } from './NewReportModal';
 
@@ -421,7 +420,9 @@ export const ReportBuilder: React.FC = () => {
   const detectedContext = useMemo(() => detectContext(query), [query]);
   const effectiveContext = detectedContext ?? manualContext;
   const { options, isLoading: loadingRecords } = useRecordOptions(effectiveContext, storeId);
-  const { mutateAsync: renderReport } = useGenerateOneOffReport();
+  // Note: we call api.generateOneOffReport directly (not via useMutation) so that
+  // preview render errors are handled locally and don't trigger the global mutation
+  // onError notification handler in QueryErrorHandler.
 
   // ── Fetch saved reports ──
   const { data: savedReports = [], isLoading: loadingSavedReports } = useQuery(
@@ -442,15 +443,19 @@ export const ReportBuilder: React.FC = () => {
   );
 
   useEffect(() => {
-    setSelectedRecord(options.length > 0 ? options[0] : null);
-  }, [options]);
+    if (!selectedRecord && options.length > 0) setSelectedRecord(options[0]);
+    else if (!options.length) setSelectedRecord(null);
+  }, [options, selectedRecord]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
       if (!template) return;
       if (effectiveContext && !selectedRecord) return;
+      // Skip if a record is selected but no options exist for this context —
+      // the record is stale from a previous context
+      if (selectedRecord && options.length === 0) return;
       const report = buildReport(template, header, style, query);
-      renderReport({ report, dataId: selectedRecord?.value ?? '', storeId, arguments: {} })
+      api.generateOneOffReport({ report, dataId: selectedRecord?.value ?? '', storeId, arguments: {} })
         .then(result => {
           if (!result) return;
           if (result.__typename === 'PrintReportError') {
@@ -462,12 +467,13 @@ export const ReportBuilder: React.FC = () => {
         .catch(() => setReportUrl(''));
     }, 500);
     return () => clearTimeout(handler);
-  }, [template, header, style, query, selectedRecord]);
+  }, [template, header, style, query, selectedRecord, effectiveContext, options]);
 
   // ── Load a saved report into the editors ──
   const handleLoadReport = useCallback(
     (report: SavedReportOption | null) => {
       setSelectedSavedReport(report);
+      setSelectedRecord(null); // clear stale record so no render fires with wrong data
       if (!report) {
         setLoadedReportId(null);
         return;
@@ -485,23 +491,11 @@ export const ReportBuilder: React.FC = () => {
     []
   );
 
-  // ── Duplicate a report from the list (loads content, clears id so Save creates new) ──
-  const handleDuplicateFromList = useCallback(
-    (report: SavedReportOption) => {
-      const parsed = parseReportDefinition(report.template);
-      setQuery(parsed.query);
-      setStyle(parsed.style);
-      setTemplate(parsed.template);
-      setHeader(parsed.header);
-      setReportName(`Copy of ${report.label}`);
-      setLoadedReportId(null);
-      setSelectedSavedReport(null);
-      setManualContext((report.context as DetectedContext) ?? null);
-    },
-    []
-  );
-
   // ── Save the current report ──
+  // Central server: can update any report (built-in or custom)
+  // Remote server: can only update custom reports; built-in reports must be duplicated (new id)
+  const canUpdate = isCentralServer || (selectedSavedReport?.isCustom ?? false);
+
   const handleSave = useCallback(async () => {
     if (!reportName.trim()) {
       notifyError('Please enter a report name')();
@@ -515,14 +509,19 @@ export const ReportBuilder: React.FC = () => {
     setIsSaving(true);
     try {
       const reportDefinition = buildReport(template, header, style, query);
+      // Use detected context first, then the effective context (manual/loaded), then 'REPORT' as safe default.
+      // Previously defaulted to 'OUTBOUND_SHIPMENT' which caused wrong record pickers when re-loading saved reports.
       const ctx = detectedContext
         ? contextToReportContext[detectedContext]
-        : 'OUTBOUND_SHIPMENT';
+        : (effectiveContext as string) ?? 'REPORT';
+
+      // On remote server with a built-in report loaded, force id=undefined so a new custom report is created
+      const effectiveId = canUpdate ? (loadedReportId ?? undefined) : undefined;
 
       const result = await api.upsertReportDefinition({
         storeId,
         input: {
-          id: loadedReportId ?? undefined,
+          id: effectiveId,
           name: reportName.trim(),
           template: reportDefinition,
           context: ctx,
@@ -547,63 +546,11 @@ export const ReportBuilder: React.FC = () => {
     style,
     query,
     detectedContext,
+    canUpdate,
     loadedReportId,
     storeId,
   ]);
 
-  // ── Edit / duplicate logic ──
-  // On central server: always editable.
-  // On remote server: editable only if isCustom=true; otherwise must duplicate.
-  const loadedReportIsCustom = selectedSavedReport?.isCustom ?? true;
-  const showDuplicate = !isCentralServer && !!loadedReportId && !loadedReportIsCustom;
-
-  // ── Duplicate the current report ──
-  const handleDuplicate = useCallback(async () => {
-    if (!reportName.trim()) {
-      notifyError('Please enter a report name')();
-      return;
-    }
-    if (!template.trim()) {
-      notifyError('Template cannot be empty')();
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const reportDefinition = buildReport(template, header, style, query);
-      const ctx = detectedContext
-        ? contextToReportContext[detectedContext]
-        : 'OUTBOUND_SHIPMENT';
-
-      // Always save as new (no id) — backend will set isCustom=true
-      const result = await api.upsertReportDefinition({
-        storeId,
-        input: {
-          name: reportName.trim(),
-          template: reportDefinition,
-          context: ctx,
-        },
-      });
-
-      if (result?.id) {
-        setLoadedReportId(result.id);
-        success('Report duplicated successfully')();
-        queryClient.invalidateQueries(['reportBuilder', 'savedReports']);
-      }
-    } catch (e) {
-      notifyError(`Failed to duplicate report: ${e}`)();
-    } finally {
-      setIsSaving(false);
-    }
-  }, [
-    reportName,
-    template,
-    header,
-    style,
-    query,
-    detectedContext,
-    storeId,
-  ]);
 
   // Map each tab to its value/setter
   const tabContent: Record<EditorTab, { value: string; onChange: (v: string) => void; placeholder: string }> = {
@@ -617,14 +564,13 @@ export const ReportBuilder: React.FC = () => {
   const hasActiveReport = !!loadedReportId || !!manualContext;
 
   return (
-    <Box display="flex" height="100%" overflow="hidden">
+    <Box display="flex" width="100%" height="100%" overflow="hidden">
       {/* ── Column 1: report list ── */}
       <ReportList
         reports={savedReports}
         isLoading={loadingSavedReports}
         selectedReportId={selectedSavedReport?.value ?? null}
         onSelectReport={handleLoadReport}
-        onDuplicateReport={handleDuplicateFromList}
         onNewReport={() => setIsNewReportModalOpen(true)}
         isCentralServer={isCentralServer}
       />
@@ -678,27 +624,15 @@ export const ReportBuilder: React.FC = () => {
               boxSizing: 'border-box',
             }}
           />
-          {showDuplicate ? (
-            <LoadingButton
-              isLoading={isSaving}
-              label="Duplicate"
-              onClick={handleDuplicate}
-              startIcon={<CopyIcon />}
-              variant="outlined"
-              color="secondary"
-              sx={{ height: '36px', minWidth: '100px' }}
-            />
-          ) : (
-            <LoadingButton
-              isLoading={isSaving}
-              label={selectedSavedReport ? 'Update' : 'Save'}
-              onClick={handleSave}
-              startIcon={<SaveIcon />}
-              variant="outlined"
-              color="secondary"
-              sx={{ height: '36px', minWidth: '100px' }}
-            />
-          )}
+          <LoadingButton
+            isLoading={isSaving}
+            label={selectedSavedReport ? (canUpdate ? 'Update' : 'Duplicate') : 'Save'}
+            onClick={handleSave}
+            startIcon={<SaveIcon />}
+            variant="outlined"
+            color="secondary"
+            sx={{ height: '36px', minWidth: '100px' }}
+          />
         </Box>
 
         <TabContext value={currentTab}>
@@ -764,32 +698,19 @@ export const ReportBuilder: React.FC = () => {
           error={error}
         />
 
-        <Box
-          sx={{
-            flex: 1,
-            position: 'relative',
-            overflow: 'hidden',
-            minHeight: 0,
-            width: '100%',
-          }}
-        >
-          {reportUrl ? (
-            <Box
-              sx={{
+        <Box sx={{ flex: 1, position: 'relative', minHeight: 0 }}>
+          {reportUrl && (
+            <iframe
+              src={reportUrl}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
                 width: '100%',
                 height: '100%',
-                overflowX: 'auto',
-                overflowY: 'hidden',
+                border: 'none',
               }}
-            >
-              <iframe
-                src={reportUrl}
-                style={{ border: 'none', width: '100%', minWidth: '600px', height: '100%', display: 'block' }}
-              />
-            </Box>
-          ) : (
-            <Box display="flex" alignItems="center" justifyContent="center" height="100%">
-            </Box>
+            />
           )}
         </Box>
       </Box>
