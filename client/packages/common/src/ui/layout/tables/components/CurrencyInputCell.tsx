@@ -11,6 +11,7 @@ interface CurrencyInputCellProps<T extends MRT_RowData> {
   updateFn?: (value: number) => void;
   disabled?: boolean;
   currencyCode?: Currencies;
+  decimalsLimit?: number;
 }
 
 export const CurrencyInputCell = <T extends MRT_RowData>({
@@ -18,6 +19,7 @@ export const CurrencyInputCell = <T extends MRT_RowData>({
   disabled = false,
   updateFn,
   currencyCode,
+  decimalsLimit,
 }: CurrencyInputCellProps<T>) => {
   const value = cell.getValue<number>();
 
@@ -27,6 +29,7 @@ export const CurrencyInputCell = <T extends MRT_RowData>({
       value={value}
       currencyCode={currencyCode}
       onChangeNumber={updateFn ?? noop}
+      decimalsLimit={decimalsLimit}
       onKeyDown={e => {
         // Allow using arrow keys to move input cursor without
         // navigating to the next/previous cell

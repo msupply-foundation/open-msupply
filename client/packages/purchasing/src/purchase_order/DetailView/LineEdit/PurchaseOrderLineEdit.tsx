@@ -13,7 +13,6 @@ import {
   useAuthContext,
   UserPermission,
   useTranslation,
-  NumUtils,
   NumInputRow,
   TextInput,
   MultilineTextInput,
@@ -66,11 +65,6 @@ export const PurchaseOrderLineEdit = ({
   const userIsAuthorised = userHasPermission(
     UserPermission.PurchaseOrderAuthorise
   );
-
-  const getCurrencyValue = (value: number | null | undefined) => {
-    if (value == null) return undefined;
-    return NumUtils.round(value, options.precision);
-  };
 
   // Disable input components. Individual inputs can override this
   const disabled =
@@ -245,7 +239,7 @@ export const PurchaseOrderLineEdit = ({
 
             <NumInputRow
               label={t('label.price-per-pack-before-discount')}
-              value={getCurrencyValue(draft?.pricePerPackBeforeDiscount)}
+              value={draft?.pricePerPackBeforeDiscount}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -256,7 +250,7 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={options.precision}
+              decimalLimit={5}
               endAdornment={options.symbol}
             />
             <NumInputRow
@@ -278,7 +272,7 @@ export const PurchaseOrderLineEdit = ({
             />
             <NumInputRow
               label={t('label.price-per-pack-after-discount')}
-              value={getCurrencyValue(draft?.pricePerPackAfterDiscount) || 0}
+              value={draft?.pricePerPackAfterDiscount ?? 0}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -289,20 +283,19 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={options.precision}
+              decimalLimit={5}
               endAdornment={options.symbol}
             />
             <NumInputRow
               label={t('label.total-cost')}
               value={
                 draft
-                  ? getCurrencyValue(
-                      (draft.pricePerPackAfterDiscount ?? 0) *
-                        (draft.numberOfPacks ?? 0)
-                    ) || 0
+                  ? ((draft.pricePerPackAfterDiscount ?? 0) *
+                      (draft.numberOfPacks ?? 0)) ||
+                    0
                   : 0
               }
-              decimalLimit={options.precision}
+              decimalLimit={5}
               endAdornment={options.symbol}
               disabled={true}
             />
