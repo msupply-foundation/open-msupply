@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use super::{get_connection, DBBackendConnection, DBConnection};
@@ -60,6 +61,7 @@ impl<'a> LockedConnection<'a> {
 pub struct StorageConnection {
     raw_connection: Mutex<DBConnection>,
     on_changelog_insert: Option<Arc<dyn Fn() + Send + Sync>>,
+    has_pending_changelog_notification: AtomicBool,
 }
 
 impl StorageConnection {
@@ -69,10 +71,24 @@ impl StorageConnection {
         }
     }
 
-    /// Called by ChangelogRepository::insert() to notify that changelogs changed
+    /// Called by ChangelogRepository::insert() to mark that changelogs changed.
+    /// The actual notification fires after the transaction commits.
     pub fn notify_changelog_insert(&self) {
-        if let Some(callback) = &self.on_changelog_insert {
-            callback();
+        if self.on_changelog_insert.is_some() {
+            self.has_pending_changelog_notification
+                .store(true, Ordering::Relaxed);
+        }
+    }
+
+    /// Fire pending changelog notification if any. Called after transaction commit.
+    fn flush_changelog_notification(&self) {
+        if self
+            .has_pending_changelog_notification
+            .swap(false, Ordering::Relaxed)
+        {
+            if let Some(callback) = &self.on_changelog_insert {
+                callback();
+            }
         }
     }
 }
@@ -118,6 +134,7 @@ impl StorageConnection {
         StorageConnection {
             raw_connection: Mutex::new(connection),
             on_changelog_insert: None,
+            has_pending_changelog_notification: AtomicBool::new(false),
         }
     }
 
@@ -185,6 +202,10 @@ impl StorageConnection {
                         level: current_level + 1,
                     }
                 })?;
+                // Fire pending notifications after outermost transaction commits
+                if current_level == 0 {
+                    self.flush_changelog_notification();
+                }
                 Ok(value)
             }
             Err(e) => {
