@@ -1,6 +1,6 @@
-import { test, expect } from '../../fixtures/report-test.fixture';
-import { STANDARD_REPORTS } from '../../data/report-definitions';
-import { getFilterStrategy } from '../../data/filter-strategies';
+import { test, expect } from '../fixtures/report-test.fixture';
+import { STANDARD_REPORTS } from '../data/report-definitions';
+import { getFilterStrategy } from '../data/filter-strategies';
 
 for (const report of STANDARD_REPORTS) {
   test.describe(`Report: ${report.displayName}`, () => {

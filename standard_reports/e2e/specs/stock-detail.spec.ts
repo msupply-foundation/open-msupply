@@ -1,4 +1,4 @@
-import { test } from '../../fixtures/report-test.fixture';
+import { test } from '../fixtures/report-test.fixture';
 
 test.describe('Stock Detail — report-specific filters', () => {
   test.beforeEach(async ({ reportsListPage }) => {
