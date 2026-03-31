@@ -108,7 +108,7 @@ export const InboundLineEditCards = ({
 
   const {
     query: { data: inboundData },
-    hasVerifyPermission,
+    hasAuthorisePermission,
     isExternal,
   } = useInboundShipment();
   const purchaseOrderId = inboundData?.purchaseOrder?.id;
@@ -360,7 +360,7 @@ export const InboundLineEditCards = ({
               {Object.entries(statusMap)
                 .filter(
                   ([key]) =>
-                    hasVerifyPermission || key === InvoiceLineStatusType.Pending
+                    hasAuthorisePermission || key === InvoiceLineStatusType.Pending
                 )
                 .map(([key, { label, colour }]) => (
                   <MenuItem key={key} value={key}>

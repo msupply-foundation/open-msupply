@@ -85,7 +85,7 @@ export const InboundLineEdit = ({
 
   const {
     query: { data },
-    hasVerifyPermission,
+    hasAuthorisePermission,
     isExternal,
   } = useInboundShipment();
   const permissionDeniedNotification = useDisabledNotificationToast(
@@ -369,7 +369,7 @@ export const InboundLineEdit = ({
           variant="next-and-ok"
           disabled={okNextDisabled || manualLinesWithZeroNumberOfPacks}
           onClick={async () => {
-            if (saveNeedsAuthorise() && !hasVerifyPermission) {
+            if (saveNeedsAuthorise() && !hasAuthorisePermission) {
               permissionDeniedNotification();
               return;
             }
@@ -398,7 +398,7 @@ export const InboundLineEdit = ({
           variant="ok"
           disabled={okDisabled}
           onClick={async () => {
-            if (saveNeedsAuthorise() && !hasVerifyPermission) {
+            if (saveNeedsAuthorise() && !hasAuthorisePermission) {
               permissionDeniedNotification();
               return;
             }
