@@ -104,7 +104,7 @@ export const FooterComponent = ({
     query: { data },
     isDisabled,
     isExternal,
-    hasVerifyPermission,
+    hasAuthorisePermission,
   } = useInboundShipment();
   const permissionDeniedNotification = useDisabledNotificationToast(
     t('auth.permission-denied')
@@ -146,7 +146,7 @@ export const FooterComponent = ({
       return;
     }
 
-    if ((status === 'approve' || status === 'reject') && !hasVerifyPermission) {
+    if ((status === 'approve' || status === 'reject') && !hasAuthorisePermission) {
       return permissionDeniedNotification();
     }
 
