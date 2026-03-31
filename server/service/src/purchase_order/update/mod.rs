@@ -65,32 +65,64 @@ pub struct UpdatePurchaseOrderInput {
 }
 
 impl UpdatePurchaseOrderInput {
-    pub fn has_non_status_field_changes(&self) -> bool {
-        self.supplier_id.is_some()
-            || self.confirmed_datetime.is_some()
-            || self.supplier_discount_percentage.is_some()
-            || self.supplier_discount_amount.is_some()
-            || self.donor_id.is_some()
-            || self.reference.is_some()
-            || self.currency_id.is_some()
-            || self.foreign_exchange_rate.is_some()
-            || self.shipping_method.is_some()
-            || self.sent_datetime.is_some()
-            || self.contract_signed_date.is_some()
-            || self.advance_paid_date.is_some()
-            || self.received_at_port_date.is_some()
-            || self.requested_delivery_date.is_some()
-            || self.supplier_agent.is_some()
-            || self.authorising_officer_1.is_some()
-            || self.authorising_officer_2.is_some()
-            || self.additional_instructions.is_some()
-            || self.heading_message.is_some()
-            || self.agent_commission.is_some()
-            || self.document_charge.is_some()
-            || self.communications_charge.is_some()
-            || self.insurance_charge.is_some()
-            || self.freight_charge.is_some()
-            || self.freight_conditions.is_some()
+    pub fn is_status_only_change(&self) -> bool {
+        let Self {
+            id: _,
+            status: _,
+            // Comment is editable on sent POs, only disabled when finalised
+            comment: _,
+            // All other fields must be None
+            supplier_id,
+            confirmed_datetime,
+            supplier_discount_percentage,
+            supplier_discount_amount,
+            donor_id,
+            reference,
+            currency_id,
+            foreign_exchange_rate,
+            shipping_method,
+            sent_datetime,
+            contract_signed_date,
+            advance_paid_date,
+            received_at_port_date,
+            requested_delivery_date,
+            supplier_agent,
+            authorising_officer_1,
+            authorising_officer_2,
+            additional_instructions,
+            heading_message,
+            agent_commission,
+            document_charge,
+            communications_charge,
+            insurance_charge,
+            freight_charge,
+            freight_conditions,
+        } = self;
+        supplier_id.is_none()
+            && confirmed_datetime.is_none()
+            && supplier_discount_percentage.is_none()
+            && supplier_discount_amount.is_none()
+            && donor_id.is_none()
+            && reference.is_none()
+            && currency_id.is_none()
+            && foreign_exchange_rate.is_none()
+            && shipping_method.is_none()
+            && sent_datetime.is_none()
+            && contract_signed_date.is_none()
+            && advance_paid_date.is_none()
+            && received_at_port_date.is_none()
+            && requested_delivery_date.is_none()
+            && supplier_agent.is_none()
+            && authorising_officer_1.is_none()
+            && authorising_officer_2.is_none()
+            && additional_instructions.is_none()
+            && heading_message.is_none()
+            && agent_commission.is_none()
+            && document_charge.is_none()
+            && communications_charge.is_none()
+            && insurance_charge.is_none()
+            && freight_charge.is_none()
+            && freight_conditions.is_none()
     }
 }
 

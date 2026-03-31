@@ -30,7 +30,7 @@ pub fn validate(
     if matches!(
         current_status,
         PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
-    ) && input.has_non_status_field_changes()
+    ) && !input.is_status_only_change()
     {
         return Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder);
     }
