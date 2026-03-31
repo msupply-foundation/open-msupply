@@ -69,6 +69,8 @@ export const useSubscription = <TSubscription, TCacheData>({
     if (token !== lastKnownToken) {
       lastKnownToken = token;
       disposeSubscriptionClient();
+      // Invalidate stale cache from before the auth interruption
+      queryClient.invalidateQueries(queryKey);
     }
 
     const httpUrl = gqlClient.getUrl();
