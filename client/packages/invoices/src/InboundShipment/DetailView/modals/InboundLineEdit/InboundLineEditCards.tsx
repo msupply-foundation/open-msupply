@@ -381,6 +381,7 @@ export const InboundLineEditCards = ({
           <CurrencyInputCell
             cell={cell}
             disabled={isDisabled || !isManualShipment}
+            decimalsLimit={5}
             updateFn={value =>
               updateDraftLine({ id: row.original.id, costPricePerPack: value })
             }
@@ -419,6 +420,7 @@ export const InboundLineEditCards = ({
           <CurrencyInputCell
             cell={cell}
             disabled={isDisabled}
+            decimalsLimit={5}
             updateFn={value =>
               updateDraftLine({ id: row.original.id, sellPricePerPack: value })
             }
