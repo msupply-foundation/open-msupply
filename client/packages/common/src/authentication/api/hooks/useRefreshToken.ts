@@ -9,9 +9,7 @@ export const TOKEN_REFRESH_BUFFER_MINUTES = 5;
 export type RefreshAction = 'refresh' | 'none';
 
 export const getRefreshAction = (expiresInMinutes: number): RefreshAction =>
-  expiresInMinutes <= TOKEN_REFRESH_BUFFER_MINUTES && expiresInMinutes > 0
-    ? 'refresh'
-    : 'none';
+  expiresInMinutes <= TOKEN_REFRESH_BUFFER_MINUTES ? 'refresh' : 'none';
 
 export const useRefreshToken = (onTimeout: () => void) => {
   const { mutateAsync } = useGetRefreshToken();
