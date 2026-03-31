@@ -5,14 +5,18 @@ import {
   CircleAlertIcon,
   IconButton,
   MessageSquareIcon,
-  PaperHoverPopover,
+  PaperPopover,
   PaperPopoverSection,
   Typography,
   useTheme,
 } from '@openmsupply-client/common';
 import { TemperatureBreachFragment } from '../../api/TemperatureBreach';
 
-export const DurationCell = ({ row: { original } }: { row: { original: TemperatureBreachFragment } }) => {
+export const DurationCell = ({
+  row: { original },
+}: {
+  row: { original: TemperatureBreachFragment };
+}) => {
   const t = useTranslation();
   const { localisedDistance } = useFormatDateTime();
   const duration = !original.endDatetime
@@ -27,9 +31,9 @@ export const DurationCell = ({ row: { original } }: { row: { original: Temperatu
       sx={
         !original.endDatetime
           ? {
-            color: 'error.main',
-            fontStyle: 'italic',
-          }
+              color: 'error.main',
+              fontStyle: 'italic',
+            }
           : {}
       }
     >
@@ -73,7 +77,8 @@ export const IconCell = ({
 
   if (!!rowData?.comment)
     return (
-      <PaperHoverPopover
+      <PaperPopover
+        mode="hover"
         width={400}
         Content={
           <PaperPopoverSection label={t('label.comment')}>
@@ -82,7 +87,7 @@ export const IconCell = ({
         }
       >
         <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
-      </PaperHoverPopover>
+      </PaperPopover>
     );
 
   return null;

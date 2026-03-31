@@ -44,7 +44,7 @@ pub fn generate(
         &ctx.connection,
         ItemPriceLookup {
             item_ids: vec![item_row.id.clone()],
-            customer_name_id: Some(invoice.name_link_id.clone()),
+            customer_name_id: Some(invoice.name_id.clone()),
         },
     )?
     .remove(&item_row.id)
@@ -101,6 +101,7 @@ fn generate_batch_update(
         program_id,
         item_variant_id,
         donor_id,
+        manufacturer_id,
         prescribed_quantity: _,
         note: _,
         id: _,
@@ -143,7 +144,10 @@ fn generate_batch_update(
         item_variant_id: item_variant_id
             .map(|i| i.value)
             .unwrap_or(batch.item_variant_id),
-        donor_link_id: donor_id.map(|d| d.value).unwrap_or(batch.donor_link_id),
+        donor_id: donor_id.map(|d| d.value).unwrap_or(batch.donor_id),
+        manufacturer_id: manufacturer_id
+            .map(|m| m.value)
+            .unwrap_or(batch.manufacturer_id),
         ..batch
     }
 }
@@ -164,6 +168,7 @@ fn generate_line(
         volume_per_pack: _,
         item_variant_id: _,
         donor_id: _,
+        manufacturer_id: _,
         tax_percentage: _,
         location_id: _,
         batch: _,
@@ -187,7 +192,8 @@ fn generate_line(
         expiry_date,
         location_id,
         item_variant_id,
-        donor_link_id,
+        donor_id: donor_link_id,
+        manufacturer_id,
         vvm_status_id,
         volume_per_pack,
         campaign_id,
@@ -199,6 +205,7 @@ fn generate_line(
         tax_percentage,
         currency_id,
         currency_rate,
+        program_id: invoice_program_id,
         ..
     }: InvoiceRow,
     default_pricing: ItemPrice,
@@ -225,6 +232,8 @@ fn generate_line(
         pack_size,
         batch,
         expiry_date,
+        manufacture_date: None,
+        purchase_order_line_id: None,
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineType::StockOut,
@@ -236,13 +245,14 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax_percentage,
-        donor_link_id,
+        donor_id: donor_link_id,
+        manufacturer_id,
         note,
         foreign_currency_price_before_tax,
         vvm_status_id,
         item_variant_id,
         campaign_id,
-        program_id,
+        program_id: program_id.or(invoice_program_id),
         volume_per_pack,
         shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
             .then_some(number_of_packs),

@@ -50,6 +50,7 @@ use queries::{
         InsurancesResponse,
     },
     insurance_providers::{insurance_providers, InsuranceProvidersResponse},
+    migration_status::{migration_status, MigrationStatusNode},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
     shipping_method::{get_shipping_methods, ShippingMethodFilterInput, ShippingMethodsResponse},
     sync_settings::{sync_settings, SyncSettingsNode},
@@ -195,6 +196,35 @@ impl GeneralQueries {
         item_ledger(ctx, store_id, page, filter)
     }
 
+    pub async fn outbound_shipment_counts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
+    ) -> Result<OutboundInvoiceCounts> {
+        outbound_shipment_counts(ctx, store_id, timezone_offset)
+    }
+
+    pub async fn inbound_shipment_counts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
+    ) -> Result<InboundInvoiceCounts> {
+        inbound_shipment_counts(ctx, store_id, timezone_offset)
+    }
+
+    pub async fn inbound_shipment_external_counts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Timezone offset")] timezone_offset: Option<i32>,
+    ) -> Result<InboundInvoiceCounts> {
+        inbound_shipment_external_counts(ctx, store_id, timezone_offset)
+    }
+
+    #[graphql(deprecation = "Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead")]
+    #[allow(deprecated)]
     pub async fn invoice_counts(
         &self,
         ctx: &Context<'_>,
@@ -250,6 +280,11 @@ impl GeneralQueries {
         initialisation_status(ctx)
     }
 
+    /// Available without authorisation in all states (Operational, Initialisation and MigratingDatabase)
+    pub async fn migration_status(&self, ctx: &Context<'_>) -> Result<MigrationStatusNode> {
+        migration_status(ctx).await
+    }
+
     pub async fn latest_sync_status(
         &self,
         ctx: &Context<'_>,
@@ -298,9 +333,10 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "Low stock threshold in months")] low_stock_threshold: Option<i32>,
+        #[graphql(desc = "Low stock threshold in months")] low_stock_threshold: Option<f64>,
+        #[graphql(desc = "High stock threshold in months")] high_stock_threshold: Option<f64>,
     ) -> Result<ItemCounts> {
-        item_counts(ctx, store_id, low_stock_threshold)
+        item_counts(ctx, store_id, low_stock_threshold, high_stock_threshold)
     }
 
     pub async fn store_preferences(
@@ -611,6 +647,11 @@ impl InitialisationQueries {
     ) -> Result<Option<FullSyncStatusNode>> {
         latest_sync_status(ctx, false)
     }
+
+    /// Available without authorisation in all states
+    pub async fn migration_status(&self, ctx: &Context<'_>) -> Result<MigrationStatusNode> {
+        migration_status(ctx).await
+    }
 }
 /// Auth is not checked during initialisation stage
 #[derive(Default, Clone)]
@@ -632,6 +673,17 @@ impl InitialisationMutations {
         _fetch_patient_id: Option<String>,
     ) -> Result<String> {
         manual_sync(ctx, false, None)
+    }
+}
+
+/// Auth is not checked during migration stage
+#[derive(Default, Clone)]
+pub struct MigrationQueries;
+
+#[Object]
+impl MigrationQueries {
+    pub async fn migration_status(&self, ctx: &Context<'_>) -> Result<MigrationStatusNode> {
+        migration_status(ctx).await
     }
 }
 

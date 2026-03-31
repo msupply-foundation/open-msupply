@@ -10,6 +10,7 @@ import { isA } from '../../../../utils';
 export const useDraftServiceLines = () => {
   const {
     query: { data },
+    isExternal,
   } = useInboundShipment();
   const id = data?.id ?? '';
   const lines = useMemo(
@@ -19,7 +20,7 @@ export const useDraftServiceLines = () => {
   const {
     serviceItem: { data: defaultServiceItem, isLoading },
   } = useItem();
-  const { mutateAsync } = useSaveInboundLines();
+  const { mutateAsync } = useSaveInboundLines(isExternal);
 
   const [draftLines, setDraftLines] = React.useState<DraftInboundLine[]>([]);
 

@@ -22,12 +22,14 @@ pub struct InsertStocktakeLine {
     pub item_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
+    pub manufacture_date: Option<NaiveDate>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
@@ -52,6 +54,9 @@ pub enum InsertStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    ManufacturerDoesNotExist,
+    ManufacturerNotVisible,
+    ManufacturerIsNotAManufacturer,
     VvmStatusDoesNotExist,
     CampaignDoesNotExist,
     ProgramDoesNotExist,
@@ -75,11 +80,23 @@ pub fn insert_stocktake_line(
                 generate(stock_line.clone(), item_id, item_name, input.clone());
             StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
-            // Update stock line donor if provided and stock line exists
-            if let (Some(donor_id), Some(existing_stock_line)) = (&input.donor_id, &stock_line) {
+            // Update stock line donor/manufacturer if provided and stock line exists
+            if let Some(existing_stock_line) = &stock_line {
                 let mut stock_line_row = existing_stock_line.stock_line_row.clone();
-                stock_line_row.donor_link_id = Some(donor_id.clone());
-                StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+                let mut updated = false;
+
+                if let Some(donor_id) = &input.donor_id {
+                    stock_line_row.donor_id = Some(donor_id.clone());
+                    updated = true;
+                }
+                if let Some(manufacturer_id) = &input.manufacturer_id {
+                    stock_line_row.manufacturer_id = Some(manufacturer_id.clone());
+                    updated = true;
+                }
+
+                if updated {
+                    StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+                }
             }
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
@@ -223,6 +240,24 @@ mod stocktake_line_test {
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::VvmStatusDoesNotExist);
+
+        // error ManufacturerDoesNotExist
+        let stocktake_a = mock_stocktake_a();
+        let stock_line = mock_new_stock_line_for_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line.id),
+                    manufacturer_id: Some("invalid".to_string()),
+                    counted_number_of_packs: Some(17.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::ManufacturerDoesNotExist);
 
         // error IncorrectLocationType
         let stocktake_a = mock_stocktake_a();
@@ -370,7 +405,7 @@ mod stocktake_line_test {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
-                supplier_link_id: Some(String::from("name_store_b")),
+                supplier_id: Some(String::from("name_store_b")),
                 ..Default::default()
             }
         }
@@ -414,7 +449,7 @@ mod stocktake_line_test {
             .find_one_by_id(&stock_line.id)
             .unwrap()
             .unwrap();
-        assert_eq!(stock_line_row.donor_link_id, Some(donor_id));
+        assert_eq!(stock_line_row.donor_id, Some(donor_id));
     }
 
     #[actix_rt::test]

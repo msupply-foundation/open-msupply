@@ -47,7 +47,7 @@ export type SupplierReturnFragment = {
   createdDatetime: string;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   otherPartyName: string;
   otherPartyId: string;
@@ -235,6 +235,7 @@ export type GenerateSupplierReturnLineFragment = {
   expiryDate?: string | null;
   id: string;
   numberOfPacksToReturn: number;
+  onHold: boolean;
   packSize: number;
   stockLineId: string;
   note?: string | null;
@@ -267,6 +268,7 @@ export type GenerateSupplierReturnLinesQuery = {
       expiryDate?: string | null;
       id: string;
       numberOfPacksToReturn: number;
+      onHold: boolean;
       packSize: number;
       stockLineId: string;
       note?: string | null;
@@ -397,7 +399,7 @@ export type SupplierReturnByNumberQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -471,7 +473,7 @@ export type SupplierReturnByIdQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -869,7 +871,7 @@ export const SupplierReturnFragmentDoc = gql`
     createdDatetime
     pickedDatetime
     shippedDatetime
-    deliveredDatetime
+    receivedDatetime
     verifiedDatetime
     otherPartyName
     otherPartyId
@@ -1005,6 +1007,7 @@ export const GenerateSupplierReturnLineFragmentDoc = gql`
     expiryDate
     id
     numberOfPacksToReturn
+    onHold
     packSize
     stockLineId
     note

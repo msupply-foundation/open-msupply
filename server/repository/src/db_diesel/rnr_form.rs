@@ -1,19 +1,15 @@
 use super::{
-    name_link_row::name_link, name_row::name, period_row::period, program_row::program,
+    name_row::name, period_row::period, program_row::program, rnr_form_row::rnr_form,
     store_row::store, DBType, NameRow, RepositoryError, RnRFormRow, RnRFormStatus,
     StorageConnection, StoreRow,
 };
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
-    rnr_form_row::rnr_form,
-    DatetimeFilter, EqualFilter, NameLinkRow, Pagination, PeriodRow, ProgramRow, Sort,
+    DatetimeFilter, EqualFilter, Pagination, PeriodRow, ProgramRow, Sort,
 };
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct RnRForm {
@@ -48,7 +44,7 @@ pub struct RnRFormRepository<'a> {
 
 type RnRFormJoin = (
     RnRFormRow,
-    (NameLinkRow, NameRow),
+    NameRow,
     StoreRow,
     PeriodRow,
     ProgramRow,
@@ -115,7 +111,7 @@ impl<'a> RnRFormRepository<'a> {
 }
 
 fn to_domain(
-    (rnr_form_row, (_, name_row), store_row, period_row, program_row): RnRFormJoin,
+    (rnr_form_row, name_row, store_row, period_row, program_row): RnRFormJoin,
 ) -> RnRForm {
     RnRForm {
         rnr_form_row,
@@ -126,28 +122,19 @@ fn to_domain(
     }
 }
 
-type BoxedRnRFormQuery = IntoBoxed<
-    'static,
-    InnerJoin<
-        InnerJoin<
-            InnerJoin<
-                InnerJoin<rnr_form::table, InnerJoin<name_link::table, name::table>>,
-                store::table,
-            >,
-            period::table,
-        >,
-        program::table,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<RnRFormFilter>) -> BoxedRnRFormQuery {
-    let mut query = rnr_form::table
-        .inner_join(name_link::table.inner_join(name::table))
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    rnr_form::table
+        .inner_join(name::table)
         .inner_join(store::table)
         .inner_join(period::table)
         .inner_join(program::table)
-        .into_boxed();
+}
+
+type BoxedRnRFormQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<RnRFormFilter>) -> BoxedRnRFormQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let RnRFormFilter {

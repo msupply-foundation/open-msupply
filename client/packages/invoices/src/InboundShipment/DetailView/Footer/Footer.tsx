@@ -20,15 +20,12 @@ import {
   useIsExtraSmallScreen,
   CheckIcon,
   CloseIcon,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
+import { getStatusTranslator, getInboundShipmentType } from '../../../utils';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
 import {
-  getStatusTranslator,
-  inboundStatuses,
-  manualInboundStatuses,
-} from '../../../utils';
-import {
-  InboundFragment,
   InboundLineFragment,
   useInboundShipment,
 } from '../../api';
@@ -40,42 +37,6 @@ import {
 } from '../../api/hooks/utils';
 import { OnHoldButton } from './OnHoldButton';
 import { StatusChangeButton } from './StatusChangeButton';
-
-const createStatusLog = (invoice: InboundFragment) => {
-  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
-  const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Received]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    // Placeholder for typescript, not used in inbounds
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
-  };
-
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
-  }
-  if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
-  }
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
-  }
-  if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-
-  return statusLog;
-};
 
 interface FooterComponentProps {
   onReturnLines: () => void;
@@ -100,6 +61,7 @@ export const FooterComponent = ({
   const {
     query: { data },
     isDisabled,
+    isExternal,
   } = useInboundShipment();
   const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
@@ -109,12 +71,12 @@ export const FooterComponent = ({
     selectedRows,
     resetRowSelection
   );
-  const { mutateAsync } = useSaveInboundLines();
+  const { mutateAsync } = useSaveInboundLines(isExternal);
   const onChangeLineStatus = useChangeStatusOfInboundLines(
     selectedRows,
     resetRowSelection
   );
-  const isManuallyCreated = !data?.linkedShipment?.id;
+  const shipmentType = data ? getInboundShipmentType(data) : undefined;
 
   const handleCampaignClick = () => {
     if (isDisabled) {
@@ -180,11 +142,11 @@ export const FooterComponent = ({
       },
     ]);
   }
-  const statuses = isManuallyCreated
-    ? manualInboundStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      )
-    : inboundStatuses.filter(status => invoiceStatusOptions?.includes(status));
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment, {
+    inboundShipmentType: shipmentType,
+  }).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
 
   return (
     <AppFooterPortal
@@ -208,7 +170,7 @@ export const FooterComponent = ({
               {!isExtraSmallScreen && <OnHoldButton />}
               <StatusCrumbs
                 statuses={statuses}
-                statusLog={createStatusLog(data)}
+                statusLog={createStatusLog(data, statuses)}
                 statusFormatter={getStatusTranslator(t)}
               />
 

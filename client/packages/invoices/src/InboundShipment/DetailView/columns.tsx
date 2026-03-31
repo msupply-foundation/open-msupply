@@ -6,45 +6,25 @@ import {
   ColumnDef,
   ColumnType,
   StatusCell,
-  InvoiceLineStatusType,
-  Formatter,
-  useAppTheme,
   weightedAverageByUnits,
 } from '@openmsupply-client/common';
 import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLineError';
 import { isInboundPlaceholderRow } from '../../utils';
 import { InboundLineFragment } from '../api';
+import { useInvoiceLineStatusMap } from '..';
 
 export const useInboundShipmentColumns = (
   external: boolean,
   showLineStatus: boolean
 ) => {
   const t = useTranslation();
-  const theme = useAppTheme();
   const {
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
     manageVvmStatusForStock,
   } = usePreferences();
   const { getError } = useInboundShipmentLineErrorContext();
-
-  const statusMap = useMemo(
-    () => ({
-      [InvoiceLineStatusType.Passed]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
-        colour: theme.palette.invoiceLineStatus.passed,
-      },
-      [InvoiceLineStatusType.Pending]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
-        colour: theme.palette.invoiceLineStatus.pending,
-      },
-      [InvoiceLineStatusType.Rejected]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
-        colour: theme.palette.invoiceLineStatus.rejected,
-      },
-    }),
-    [theme]
-  );
+  const statusMap = useInvoiceLineStatusMap();
 
   return useMemo((): ColumnDef<InboundLineFragment>[] => {
     return [
@@ -75,6 +55,14 @@ export const useInboundShipmentColumns = (
         enableSorting: true,
       },
       {
+        id: 'purchaseOrderLine.lineNumber',
+        accessorFn: row => row.purchaseOrderLine?.lineNumber ?? '',
+        header: t('label.purchase-order-line-number'),
+        size: 90,
+        includeColumn: external,
+        enableSorting: true,
+      },
+      {
         accessorKey: 'batch',
         header: t('label.batch'),
         enableSorting: true,
@@ -87,6 +75,17 @@ export const useInboundShipmentColumns = (
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
         size: 120,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: 'manufactureDate',
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        header: t('label.manufacture-date'),
+        columnType: ColumnType.Date,
+        size: 120,
+        defaultHideOnMobile: true,
         enableColumnFilter: true,
         enableSorting: true,
       },
@@ -203,6 +202,12 @@ export const useInboundShipmentColumns = (
         accessorFn: row => (row.donor ? row.donor.name : ''),
       },
       {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        defaultHideOnMobile: true,
+        accessorFn: row => row.manufacturer?.name ?? '',
+      },
+      {
         id: 'campaign',
         header: t('label.campaign'),
         defaultHideOnMobile: true,
@@ -218,5 +223,6 @@ export const useInboundShipmentColumns = (
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
     getError,
+    statusMap,
   ]);
 };

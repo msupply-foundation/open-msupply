@@ -15,6 +15,7 @@
         }}
       </th>
       <th>{{ t(k="report.pack-size", f="Pack size") }}</th>
+      <th>{{ t(k="label.adjusted-units", f="Adjusted units") }}</th>
       <th>
         {{ t(k="label.expected-delivery-date", f="Expected delivery date") }}
       </th>
@@ -31,6 +32,7 @@
     <td>{{ line.item.unitName | default(value="") }}</td>
     <td>{{ line.requestedNumberOfPacks | default(value="") }}</td>
     <td>{{ line.requestedPackSize | default(value="") }}</td>
+    <td>{{ line.adjustedUnits | default(value="") }}</td>
     <td>{{ line.expectedDeliveryDate | default(value="") }}</td>
     <td>{{ line.lineCost | default(value="") }}</td>
     <td>{{ line.comment | default(value="") }}</td>
@@ -40,7 +42,7 @@
 
 <table class="right-aligned-table">
   <tr excel-type="total-row">
-    <td>{{ t(k="heading.total", f="Total")}}:</td>
+    <td>{{ t(k="heading.total-cost", f="Total cost")}}:</td>
     <td>{{ data.purchaseOrder.orderTotalAfterDiscount *
     data.purchaseOrder.foreignExchangeRate | default(value="") | round(precision=2) }} {{ data.purchaseOrder.currency.code
     }}</td>

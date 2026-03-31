@@ -25,7 +25,9 @@ pub struct OmsFields {
     #[serde(default)]
     pub created_from_requisition_id: Option<String>,
     #[serde(default)]
-    pub original_customer_id: Option<String>,
+    #[serde(rename = "original_customer_id")]
+    #[serde(alias = "destination_customer_id")]
+    pub destination_customer_id: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -301,7 +303,7 @@ impl SyncTranslation for RequisitionTranslation {
             id: data.ID.to_string(),
             user_id: data.user_id,
             requisition_number: data.serial_number,
-            name_link_id: data.name_ID,
+            name_id: data.name_ID,
             store_id: data.store_ID,
             r#type,
             status,
@@ -324,7 +326,7 @@ impl SyncTranslation for RequisitionTranslation {
                 .oms_fields
                 .clone()
                 .and_then(|f| f.created_from_requisition_id),
-            original_customer_id: data.oms_fields.and_then(|f| f.original_customer_id),
+            destination_customer_id: data.oms_fields.and_then(|f| f.destination_customer_id),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -352,7 +354,7 @@ impl SyncTranslation for RequisitionTranslation {
                     id,
                     user_id,
                     requisition_number,
-                    name_link_id: _,
+                    name_id: _,
                     store_id,
                     r#type,
                     status,
@@ -372,7 +374,7 @@ impl SyncTranslation for RequisitionTranslation {
                     order_type,
                     is_emergency,
                     created_from_requisition_id,
-                    original_customer_id,
+                    destination_customer_id,
                 },
             name_row,
             ..
@@ -389,15 +391,15 @@ impl SyncTranslation for RequisitionTranslation {
             )?
             .is_empty();
 
-        let oms_fields = if created_from_requisition_id.is_some() || original_customer_id.is_some()
-        {
-            Some(OmsFields {
-                created_from_requisition_id,
-                original_customer_id,
-            })
-        } else {
-            None
-        };
+        let oms_fields =
+            if created_from_requisition_id.is_some() || destination_customer_id.is_some() {
+                Some(OmsFields {
+                    created_from_requisition_id,
+                    destination_customer_id,
+                })
+            } else {
+                None
+            };
 
         let legacy_row = LegacyRequisitionRow {
             ID: id.clone(),

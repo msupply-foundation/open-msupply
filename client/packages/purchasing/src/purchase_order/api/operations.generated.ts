@@ -17,8 +17,10 @@ export type PurchaseOrderRowFragment = {
   targetMonths?: number | null;
   reference?: string | null;
   comment?: string | null;
+  orderTotalAfterDiscount: number;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+  currency?: { __typename: 'CurrencyNode'; code: string } | null;
 };
 
 export type PurchaseOrderFragment = {
@@ -34,7 +36,7 @@ export type PurchaseOrderFragment = {
   createdDatetime: string;
   currencyId?: string | null;
   documentCharge?: number | null;
-  foreignExchangeRate?: number | null;
+  foreignExchangeRate: number;
   freightCharge?: number | null;
   freightConditions?: string | null;
   headingMessage?: string | null;
@@ -222,8 +224,10 @@ export type PurchaseOrdersQuery = {
       targetMonths?: number | null;
       reference?: string | null;
       comment?: string | null;
+      orderTotalAfterDiscount: number;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
+      currency?: { __typename: 'CurrencyNode'; code: string } | null;
     }>;
   };
 };
@@ -249,7 +253,7 @@ export type PurchaseOrderByIdQuery = {
         createdDatetime: string;
         currencyId?: string | null;
         documentCharge?: number | null;
-        foreignExchangeRate?: number | null;
+        foreignExchangeRate: number;
         freightCharge?: number | null;
         freightConditions?: string | null;
         headingMessage?: string | null;
@@ -398,15 +402,17 @@ export type UpdatePurchaseOrderMutation = {
     | { __typename: 'IdResponse'; id: string }
     | {
         __typename: 'UpdatePurchaseOrderError';
-        error: {
-          __typename: 'ItemsCannotBeOrdered';
-          description: string;
-          lines: Array<{
-            __typename: 'ItemCannotBeOrdered';
-            description: string;
-            line: { __typename: 'PurchaseOrderLineNode'; id: string };
-          }>;
-        };
+        error:
+          | { __typename: 'InboundShipmentsNotVerified'; description: string }
+          | {
+              __typename: 'ItemsCannotBeOrdered';
+              description: string;
+              lines: Array<{
+                __typename: 'ItemCannotBeOrdered';
+                description: string;
+                line: { __typename: 'PurchaseOrderLineNode'; id: string };
+              }>;
+            };
       };
 };
 
@@ -575,6 +581,17 @@ export type PurchaseOrderLineQuery = {
   };
 };
 
+export type UnitsOrderedInOtherPurchaseOrdersQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+  excludePurchaseOrderId: Types.Scalars['String']['input'];
+}>;
+
+export type UnitsOrderedInOtherPurchaseOrdersQuery = {
+  __typename: 'Queries';
+  unitsOrderedInOtherPurchaseOrders: number;
+};
+
 export type PurchaseOrderLinesCountQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.PurchaseOrderLineFilterInput>;
   storeId: Types.Scalars['String']['input'];
@@ -703,6 +720,10 @@ export const PurchaseOrderRowFragmentDoc = gql`
       totalCount
     }
     comment
+    orderTotalAfterDiscount
+    currency {
+      code
+    }
   }
 `;
 export const PurchaseOrderLineFragmentDoc = gql`
@@ -918,6 +939,10 @@ export const UpdatePurchaseOrderDocument = gql`
           ... on ItemsCannotBeOrdered {
             ...ItemsCannotBeOrdered
           }
+          ... on InboundShipmentsNotVerified {
+            __typename
+            description
+          }
         }
       }
     }
@@ -986,6 +1011,19 @@ export const PurchaseOrderLineDocument = gql`
     }
   }
   ${PurchaseOrderLineFragmentDoc}
+`;
+export const UnitsOrderedInOtherPurchaseOrdersDocument = gql`
+  query unitsOrderedInOtherPurchaseOrders(
+    $storeId: String!
+    $itemId: String!
+    $excludePurchaseOrderId: String!
+  ) {
+    unitsOrderedInOtherPurchaseOrders(
+      storeId: $storeId
+      itemId: $itemId
+      excludePurchaseOrderId: $excludePurchaseOrderId
+    )
+  }
 `;
 export const PurchaseOrderLinesCountDocument = gql`
   query purchaseOrderLinesCount(
@@ -1277,6 +1315,24 @@ export function getSdk(
             signal,
           }),
         'purchaseOrderLine',
+        'query',
+        variables
+      );
+    },
+    unitsOrderedInOtherPurchaseOrders(
+      variables: UnitsOrderedInOtherPurchaseOrdersQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UnitsOrderedInOtherPurchaseOrdersQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UnitsOrderedInOtherPurchaseOrdersQuery>({
+            document: UnitsOrderedInOtherPurchaseOrdersDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'unitsOrderedInOtherPurchaseOrders',
         'query',
         variables
       );

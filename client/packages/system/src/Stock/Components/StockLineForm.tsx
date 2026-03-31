@@ -7,6 +7,7 @@ import {
   TextWithLabelRow,
   CurrencyInput,
   ExpiryDateInput,
+  DateTimePickerInput,
   useTranslation,
   Box,
   IconButton,
@@ -32,15 +33,11 @@ import { LocationSearchInput } from '../../Location/Components/LocationSearchInp
 import {
   checkInvalidLocationLines,
   DonorSearchInput,
+  ManufacturerSearchInput,
   ReasonOptionsSearchInput,
   VVMStatusSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
-import {
-  getVolumePerPackFromVariant,
-  ItemVariantInput,
-  useIsItemVariantsEnabled,
-} from '../../Item';
 import { CampaignOrProgramSelector } from './Campaign';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -69,7 +66,6 @@ export const StockLineForm = ({
 
   const { isConnected, isEnabled, isListening, scan } =
     useBarcodeScannerContext();
-  const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
 
   const showVVMStatus =
@@ -251,9 +247,7 @@ export const StockLineForm = ({
                             ).toFixed(2)
                           )}
                           onChange={() => {}}
-                          {...getDosesProps(
-                            draft.availableNumberOfPacks * draft.packSize
-                          )}
+                          {...getDosesProps(draft.availableNumberOfPacks)}
                         />
                       }
                     />
@@ -270,9 +264,7 @@ export const StockLineForm = ({
                             )
                           )}
                           onChange={() => {}}
-                          {...getDosesProps(
-                            draft.totalNumberOfPacks * draft.packSize
-                          )}
+                          {...getDosesProps(draft.totalNumberOfPacks)}
                         />
                       }
                     />
@@ -361,6 +353,22 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacture-date')}
+                  Input={
+                    <DateTimePickerInput
+                      value={DateUtils.getNaiveDate(draft.manufactureDate)}
+                      onChange={date =>
+                        onUpdate({
+                          manufactureDate: date
+                            ? Formatter.naiveDate(date)
+                            : null,
+                        })
+                      }
+                      width={160}
+                    />
+                  }
+                />
                 {plugins.stockLine?.editViewField.map((Plugin, index) => (
                   <Plugin key={index} stockLine={draft} events={pluginEvents} />
                 ))}
@@ -432,29 +440,6 @@ export const StockLineForm = ({
                     />
                   }
                 />
-                {showItemVariantsInput && (
-                  <StyledInputRow
-                    label={t('label.item-variant')}
-                    Input={
-                      <ItemVariantInput
-                        itemId={draft.itemId}
-                        selectedId={draft?.itemVariant?.id}
-                        width={160}
-                        onChange={variant => {
-                          const newVolume = getVolumePerPackFromVariant({
-                            itemVariant: variant,
-                            packSize: draft.packSize,
-                          });
-
-                          onUpdate({
-                            itemVariant: variant,
-                            volumePerPack: newVolume ?? 0,
-                          });
-                        }}
-                      />
-                    }
-                  />
-                )}
                 <StyledInputRow
                   label={t('label.volume-per-pack')}
                   Input={
@@ -482,6 +467,22 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacturer')}
+                  Input={
+                    <ManufacturerSearchInput
+                      value={draft.manufacturer ?? null}
+                      width={160}
+                      onChange={manufacturer => {
+                        const patch: Partial<DraftStockLine> = { manufacturer };
+                        if (draft.itemVariant) {
+                          patch.itemVariant = null;
+                        }
+                        onUpdate(patch);
+                      }}
+                    />
+                  }
+                />
                 <TextWithLabelRow
                   label={t('label.supplier')}
                   text={String(supplierName)}

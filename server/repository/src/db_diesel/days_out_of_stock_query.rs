@@ -111,13 +111,6 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
             ""
         };
 
-        // Need alias for the subquery in daily_stock for PostgreSQL
-        let ranked_alias = if cfg!(feature = "postgres") {
-            " AS ranked"
-        } else {
-            ""
-        };
-
         out.push_sql(
            &format!(r#"    
           , starting_stock AS (
@@ -150,49 +143,44 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
             ),
             ledger AS (
               SELECT
-                *,
+                item_id,
+                store_id,
+                0 AS movement_in_units,
+                datetime,
                 {date} AS date
               FROM
                 starting_stock
-              UNION
-              SELECT
-                *,
-                {date} AS date
-              FROM
-                ending_stock
-              UNION
+              UNION ALL
               SELECT
                 item_id,
                 store_id,
-                running_balance,
+                0 AS movement_in_units,
+                datetime,
+                {date} AS date
+              FROM
+                ending_stock
+              UNION ALL
+              SELECT
+                item_id,
+                store_id,
+                movement_in_units,
                 datetime,
                 {date} AS date
               FROM
                 item_ledger
               WHERE
-                datetime >= (SELECT start_datetime FROM variables)
+                datetime > (SELECT start_datetime FROM variables)
                 AND datetime <= (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
             ),
             daily_stock AS (
-              SELECT 
-                item_id,
-                store_id,
-                date,
-                running_balance as end_of_day_stock
-                FROM (
-                    SELECT 
-                        item_id,
-                        store_id,
-                        date,
-                        datetime,
-                        running_balance,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY item_id, store_id, date 
-                            ORDER BY datetime DESC
-                        ) as rn
-                    FROM ledger
-                    ){ranked_alias}
-                WHERE rn = 1
+              SELECT l.item_id, l.store_id, l.date,
+                COALESCE(ss.running_balance, 0) + SUM(SUM(l.movement_in_units)) OVER (
+                  PARTITION BY l.item_id, l.store_id ORDER BY l.date
+                  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ) AS end_of_day_stock
+              FROM ledger l
+              LEFT JOIN starting_stock ss ON ss.item_id = l.item_id AND ss.store_id = l.store_id
+              GROUP BY l.item_id, l.store_id, l.date, ss.running_balance
             ),
             days_with_no_stock AS (
               SELECT
