@@ -27,6 +27,7 @@
     "prettier": "prettier --check 'packages/*/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
     "re-compile": "tsc --project packages/host/tsconfig.json --noEmit",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
+    "serve-local": "lerna run --scope @openmsupply-client/* build && lerna run --scope @openmsupply-client/* --parallel serve",
     "start": "yarn start-local",
     "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local",
     "start-remote": "API_HOST=https://demo-open.msupply.org lerna run --scope @openmsupply-client/* --parallel start-remote",
