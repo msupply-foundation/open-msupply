@@ -3,7 +3,7 @@
 ## Project Overview
 
 - **Monorepo**: Contains both client (React/TypeScript) and server (Rust) code, sharing a GraphQL schema.
-- **Client**: Located in `client/`, built with React, TypeScript, Material-UI, and Lerna workspaces. Uses GraphQL for API communication. Storybook is used for UI component demos.
+- **Client**: Located in `client/`, built with React, TypeScript, Material-UI, and Yarn 4 workspaces. Uses GraphQL for API communication. Storybook is used for UI component demos.
 - **Server**: Located in `server/`, built with Rust (actix-web, async-graphql), supports SQLite (dev) and PostgreSQL (prod). Exposes GraphQL and REST APIs.
 - **Shared Code**: `client/packages/common/` contains reusable hooks, UI components, utils, and API helpers. Import shared components from `@openmsupply-client/common`.
 
