@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.ico" />
+    <style>body{margin:0}</style>
   </head>
   <body>
     <div id="content-row">
@@ -13,7 +14,28 @@
         </div>
       </div>
     </div>
-    <script type="text/javascript" src="/BrowserPrint-3.1.250.min.js"></script>
+    <!-- Shown immediately (SVG counts as FCP) while the React bundle parses.
+         Removed by the MutationObserver below once React mounts into #root. -->
+    <div id="_ld" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fff">
+      <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56" aria-label="Loading">
+        <circle cx="28" cy="28" r="22" fill="none" stroke="#f5c8a0" stroke-width="6"/>
+        <path d="M28 6a22 22 0 0 1 22 22" fill="none" stroke="#e95c2d" stroke-width="6" stroke-linecap="round">
+          <animateTransform attributeName="transform" type="rotate" from="0 28 28" to="360 28 28" dur="0.75s" repeatCount="indefinite"/>
+        </path>
+      </svg>
+    </div>
+    <script>
+      // Use rAF so this runs after the SVG paints (guarantees FCP fires first).
+      requestAnimationFrame(function () {
+        var ld = document.getElementById('_ld');
+        var root = document.getElementById('root');
+        if (root.firstChild) { ld.remove(); return; }
+        new MutationObserver(function (_, obs) {
+          if (root.firstChild) { ld.remove(); obs.disconnect(); }
+        }).observe(root, { childList: true });
+      });
+    </script>
+    <script defer src="/BrowserPrint-3.1.250.min.js"></script>
     <script type="module" src="/src/index.ts"></script>
   </body>
 </html>

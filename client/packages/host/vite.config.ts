@@ -7,6 +7,11 @@ import { fileURLToPath } from 'url';
 import type { IncomingMessage, ServerResponse } from 'http';
 import path from 'path';
 import fs from 'fs';
+import zlib from 'zlib';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
+
+const pipe = promisify(pipeline);
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,6 +28,86 @@ const localPlugins: { pluginPath: string; pluginCode: string }[] = (() => {
     return [];
   }
 })();
+
+// Converts Vite's render-blocking <link rel="stylesheet"> tags to async preloads.
+// The CSS file only contains @font-face declarations (font-display:swap), so
+// deferring it does not cause layout shift — fonts simply use the fallback face
+// until the woff2 files arrive, exactly as font-display:swap intends.
+const asyncCssPlugin: Plugin = {
+  name: 'async-css',
+  apply: 'build',
+  transformIndexHtml(html) {
+    return html.replace(
+      /<link rel="stylesheet" crossorigin href="([^"]+)">/g,
+      (_, href) =>
+        `<link rel="preload" as="style" crossorigin href="${href}" onload="this.onload=null;this.rel='stylesheet'">` +
+        `<noscript><link rel="stylesheet" crossorigin href="${href}"></noscript>`
+    );
+  },
+};
+
+// Pre-compresses build output with gzip and serves .gz files from the preview server.
+// In production, a real server (nginx, CDN) would handle this; this makes `vite preview`
+// behave closer to production for Lighthouse testing.
+const gzipPlugin: Plugin = {
+  name: 'gzip',
+  async closeBundle() {
+    const distDir = path.resolve(__dirname, 'dist');
+    const compressible = /\.(js|css|html|json|svg)$/;
+
+    const walk = (dir: string): string[] =>
+      fs.readdirSync(dir).flatMap(f => {
+        const full = path.join(dir, f);
+        return fs.statSync(full).isDirectory() ? walk(full) : [full];
+      });
+
+    await Promise.all(
+      walk(distDir)
+        .filter(f => compressible.test(f))
+        .map(f =>
+          pipe(
+            fs.createReadStream(f),
+            zlib.createGzip({ level: 9 }),
+            fs.createWriteStream(`${f}.gz`)
+          )
+        )
+    );
+  },
+  configurePreviewServer(server) {
+    const mime: Record<string, string> = {
+      '.js': 'application/javascript',
+      '.css': 'text/css',
+      '.html': 'text/html',
+      '.json': 'application/json',
+      '.svg': 'image/svg+xml',
+    };
+    server.middlewares.use(
+      (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+        const ae = (req.headers['accept-encoding'] ?? '') as string;
+        if (!ae.includes('gzip')) return next();
+
+        const urlPath = (req.url ?? '/').split('?')[0];
+        const ext = path.extname(urlPath);
+        if (!mime[ext]) return next();
+
+        const gzPath = path.join(__dirname, 'dist', urlPath + '.gz');
+        try {
+          const stat = fs.statSync(gzPath);
+          if (stat.isFile()) {
+            res.setHeader('Content-Encoding', 'gzip');
+            res.setHeader('Content-Type', mime[ext]);
+            res.setHeader('Content-Length', stat.size);
+            fs.createReadStream(gzPath).pipe(res as NodeJS.WritableStream);
+            return;
+          }
+        } catch {
+          // no .gz file — fall through to default static handler
+        }
+        next();
+      }
+    );
+  },
+};
 
 // Serves locale JSON files from source in dev mode (mirrors CopyPlugin behaviour)
 const serveLocalesPlugin: Plugin = {
@@ -62,6 +147,10 @@ export default defineConfig(({ mode }) => {
       tsconfigPaths(),
       // Serve locale files from source in dev mode
       serveLocalesPlugin,
+      // Load font CSS asynchronously (it's only @font-face, not layout CSS)
+      asyncCssPlugin,
+      // Pre-compress build output; serve .gz files from vite preview
+      gzipPlugin,
       // Copy locale files to dist/locales/ in production builds
       viteStaticCopy({
         targets: [
