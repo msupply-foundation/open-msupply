@@ -9,6 +9,14 @@ server/data
 .gitmodules
 node_modules/
 
+# Yarn 4
+client/.yarn/*
+!client/.yarn/patches
+!client/.yarn/plugins
+!client/.yarn/releases
+!client/.yarn/sdks
+!client/.yarn/versions
+
 standard_reports/test-config.json
 client/dist
 
