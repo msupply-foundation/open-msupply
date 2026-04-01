@@ -39,9 +39,10 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   } = usePurchaseOrder();
   const { updateLines } = usePurchaseOrderLine();
 
-  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState<
-    Date | null
-  >(data?.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null);
+  const [requestedDeliveryDate, setRequestedDeliveryDate] =
+    useState<Date | null>(
+      data?.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null
+    );
 
   const getMostRecentExpectedDate = () => {
     const dates = data?.lines?.nodes
@@ -51,9 +52,9 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   };
 
   const mostRecentExpectedDate = getMostRecentExpectedDate();
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<
-    Date | null
-  >(mostRecentExpectedDate ? new Date(mostRecentExpectedDate) : null);
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date | null>(
+    mostRecentExpectedDate ? new Date(mostRecentExpectedDate) : null
+  );
 
   const disabledRequestedDeliveryDate = data?.status
     ? isFieldDisabled(data.status, StatusGroup.AfterSent)

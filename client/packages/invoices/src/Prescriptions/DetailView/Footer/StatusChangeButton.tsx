@@ -4,6 +4,7 @@ import {
   useTranslation,
   useNotification,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
@@ -22,45 +23,7 @@ import {
 import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { PaymentsModal } from '../Payments';
 import { Draft } from '../../../StockOut';
-
-const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus | undefined,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  if (!currentStatus) return [];
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
-
-  if (currentStatus === InvoiceNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[2].isDisabled = false;
-  }
-
-  return options;
-};
+import { getStatusOptions } from '../../../statuses';
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
@@ -94,7 +57,14 @@ const useStatusChangeButton = () => {
     );
 
   const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
+    () =>
+      status
+        ? getStatusOptions(
+            InvoiceNodeType.Prescription,
+            status,
+            getButtonLabel(t)
+          )
+        : [],
     [status, getButtonLabel]
   );
 

@@ -20,8 +20,8 @@ pub fn generate(
     let other_party = get_other_party(connection, store_id, &requisition.name_row.id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
 
-    let original_customer = match &requisition.requisition_row.original_customer_id {
-        Some(original_customer) => get_other_party(connection, store_id, original_customer)?,
+    let destination_customer = match &requisition.requisition_row.destination_customer_id {
+        Some(destination_customer_id) => get_other_party(connection, store_id, destination_customer_id)?,
         None => None,
     };
 
@@ -36,11 +36,11 @@ pub fn generate(
     let new_invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_id: original_customer
+        name_id: destination_customer
             .as_ref()
             .map(|customer| customer.name_row.id.clone())
             .unwrap_or_else(|| other_party.name_row.id.clone()),
-        name_store_id: original_customer
+        name_store_id: destination_customer
             .as_ref()
             .and_then(|customer| customer.store_id().map(|id| id.to_string()))
             .or_else(|| other_party.store_id().map(|id| id.to_string())),

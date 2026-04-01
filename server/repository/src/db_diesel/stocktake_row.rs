@@ -5,7 +5,7 @@ use crate::{repository_error::RepositoryError, Delete};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 
 table! {
@@ -132,7 +132,7 @@ impl<'a> StocktakeRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = stocktake::table
             .filter(stocktake::store_id.eq(store_id))
-            .select(max(stocktake::stocktake_number))
+            .select(diesel::dsl::max(stocktake::stocktake_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }
