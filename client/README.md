@@ -19,11 +19,7 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 ```sh
 corepack enable   # only needed once, enables Yarn 4 via packageManager field
-yarn install
-
-# If working on reports or forms, also install their dependencies:
-cd ../standard_reports && yarn install
-cd ../standard_forms && yarn install
+yarn install      # run from the repo root — installs client, standard_reports, and standard_forms - also works in the client or even server directory
 ```
 
 - Run on development mode:
