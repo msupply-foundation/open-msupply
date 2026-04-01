@@ -13,10 +13,7 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { ItemStockOnHandFragment } from '@openmsupply-client/system';
-import {
-  PurchaseOrderFragment,
-  usePurchaseOrderLine,
-} from '../../api';
+import { PurchaseOrderFragment, usePurchaseOrderLine } from '../../api';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { createDraftPurchaseOrderLine } from './utils';
 
@@ -59,13 +56,6 @@ export const PurchaseOrderLineEditModal = React.memo(
       updatePatch,
     } = usePurchaseOrderLine(lineId);
     const unit = draft?.unit || t('label.unit', { count: 2 });
-
-    const getMostRecentExpectedDate = () => {
-      const dates = lines
-        ?.map(line => line.expectedDeliveryDate)
-        .sort((a, b) => (b || '').localeCompare(a || ''));
-      return dates?.[0] ?? null;
-    };
 
     const getMostRecentExpectedDate = () => {
       const dates = lines
