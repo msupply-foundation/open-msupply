@@ -110,7 +110,7 @@ fi
 for RC_BRANCH in $RC_BRANCHES; do 
     echo "Checking branch: $RC_BRANCH"
 
-    COMMIT_DATE=$(TZ=UTC git log -1 --format=%cd --date=format:%m%d "origin/$RC_BRANCH" 2>/dev/null || echo "")
+    COMMIT_DATE=$(git log -1 --format=%cd --date=format-local:%m%d "origin/$RC_BRANCH" 2>/dev/null || echo "")
     
     if [[ "$COMMIT_DATE" != "$YESTERDAY" ]]; then
         echo "No recent commit found on $RC_BRANCH (commit date: $COMMIT_DATE UTC)"
