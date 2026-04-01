@@ -142,7 +142,10 @@ const ItemLedgerTable = ({
         header: t('label.reason'),
       },
     ],
-    [localisedTime, t]
+    // localisedTime is excluded from deps as useFormatDateTime creates new
+    // function refs every render; the locale is already covered by `t`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t]
   );
 
   const { table } = usePaginatedMaterialTable<ItemLedgerFragment>({

@@ -379,20 +379,21 @@ const DetailViewInner = () => {
 
 export const useInvoiceLineStatusMap = () => {
   const theme = useAppTheme();
+  const { passed, pending, rejected } = theme.palette.invoiceLineStatus;
   return useMemo(() => ({
     [InvoiceLineStatusType.Passed]: {
       label: Formatter.enumCase(InvoiceLineStatusType.Passed),
-      colour: theme.palette.invoiceLineStatus.passed,
+      colour: passed,
     },
     [InvoiceLineStatusType.Pending]: {
       label: Formatter.enumCase(InvoiceLineStatusType.Pending),
-      colour: theme.palette.invoiceLineStatus.pending,
+      colour: pending,
     },
     [InvoiceLineStatusType.Rejected]: {
       label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
-      colour: theme.palette.invoiceLineStatus.rejected,
+      colour: rejected,
     },
-  }), [theme]);
+  }), [passed, pending, rejected]);
 };
 
 export const DetailView = () => {
