@@ -1,33 +1,26 @@
 use anyhow::Result;
-use std::path::Path;
 use std::process::{Command, Stdio};
 
-/// Build standard reports locally using the CLI.
-pub fn build_reports_local(standard_reports_dir: &Path) -> Result<()> {
-    log::info!("Building standard reports...");
+/// Build standard reports inside the Docker container.
+/// The container has Node.js + yarn (dev image) and standard_reports/ is mounted.
+pub fn build_reports_in_container(container_name: &str) -> Result<()> {
+    log::info!("Building standard reports in container...");
 
-    let server_dir = standard_reports_dir.join("../server");
-    let cli_path = server_dir.join("target/debug/remote_server_cli");
+    let status = Command::new("docker")
+        .args([
+            "exec",
+            "-w",
+            "/usr/src/omsupply/server",
+            container_name,
+            "./remote_server_cli",
+            "build-reports",
+            "--path",
+            "/standard_reports",
+        ])
+        .status()?;
 
-    if cli_path.exists() {
-        let status = Command::new(&cli_path)
-            .arg("build-reports")
-            .current_dir(&server_dir)
-            .status()?;
-
-        if !status.success() {
-            anyhow::bail!("build-reports failed");
-        }
-    } else {
-        log::info!("CLI binary not found at {}, building via cargo run...", cli_path.display());
-        let status = Command::new("cargo")
-            .args(["run", "--bin", "remote_server_cli", "--", "build-reports"])
-            .current_dir(&server_dir)
-            .status()?;
-
-        if !status.success() {
-            anyhow::bail!("cargo run build-reports failed");
-        }
+    if !status.success() {
+        anyhow::bail!("build-reports failed inside container");
     }
 
     log::info!("Standard reports built successfully");
@@ -35,12 +28,9 @@ pub fn build_reports_local(standard_reports_dir: &Path) -> Result<()> {
 }
 
 /// Upsert reports into the running Docker container.
-/// Since standard_reports/ is mounted at /standard_reports/ in the container,
-/// the generated JSON is already accessible. We pass the path explicitly.
 pub fn upsert_reports_in_container(container_name: &str) -> Result<()> {
     log::info!("Upserting reports into container...");
 
-    // Upsert standard reports
     let status = Command::new("docker")
         .args([
             "exec",
@@ -54,34 +44,7 @@ pub fn upsert_reports_in_container(container_name: &str) -> Result<()> {
         .status()?;
 
     if !status.success() {
-        anyhow::bail!("upsert-reports (reports) failed inside container");
-    }
-
-    // Also upsert standard forms if generated file exists
-    let forms_status = Command::new("docker")
-        .args([
-            "exec",
-            container_name,
-            "test",
-            "-f",
-            "/standard_reports/../standard_forms/generated/standard_forms.json",
-        ])
-        .status();
-
-    if let Ok(s) = forms_status {
-        if s.success() {
-            let _ = Command::new("docker")
-                .args([
-                    "exec",
-                    container_name,
-                    "./remote_server_cli",
-                    "upsert-reports",
-                    "--path",
-                    "/standard_reports/../standard_forms/generated/standard_forms.json",
-                    "--overwrite",
-                ])
-                .status();
-        }
+        anyhow::bail!("upsert-reports failed inside container");
     }
 
     log::info!("Reports upserted successfully");

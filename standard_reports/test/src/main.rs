@@ -30,6 +30,10 @@ struct Cli {
     #[arg(long, value_delimiter = ',')]
     skip: Option<Vec<String>>,
 
+    /// Path to seed SQLite database file
+    #[arg(long, default_value = "omsupply-database.sqlite")]
+    database: String,
+
     /// Write a markdown test report to this file
     #[arg(long, default_value = "temp/test-report.md")]
     output: String,
@@ -79,14 +83,19 @@ async fn run_tests(cli: Cli) -> anyhow::Result<()> {
     std::fs::create_dir_all(&temp_db_dir)?;
     std::fs::create_dir_all(&output_dir)?;
 
-    let db_source = current_dir.join("omsupply-database.sqlite");
+    let db_source = std::path::Path::new(&cli.database);
+    let db_source = if db_source.is_absolute() {
+        db_source.to_path_buf()
+    } else {
+        current_dir.join(db_source)
+    };
     let db_dest = temp_db_dir.join("omsupply-database.sqlite");
     if db_source.exists() {
         std::fs::copy(&db_source, &db_dest)?;
-        log::info!("Copied seed database to {}", db_dest.display());
+        log::info!("Copied seed database from {}", db_source.display());
     } else {
         anyhow::bail!(
-            "Seed database not found at {}. Copy a demo database here.",
+            "Seed database not found at {}",
             db_source.display()
         );
     }
@@ -99,12 +108,10 @@ async fn run_tests(cli: Cli) -> anyhow::Result<()> {
     container.run_detached(&[], &[]).await?;
     wait_for_server(&base_url, 60).await?;
 
-    // Build reports locally
+    // Build and upsert reports inside the container
     if !cli.skip_build {
-        build_reports_local(&standard_reports_dir)?;
+        build_reports_in_container(CONTAINER_NAME)?;
     }
-
-    // Upsert reports into the container
     upsert_reports_in_container(CONTAINER_NAME)?;
 
     // Load config
