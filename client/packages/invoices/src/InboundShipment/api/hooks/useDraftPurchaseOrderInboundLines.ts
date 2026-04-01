@@ -25,10 +25,6 @@ const toInboundLineItem = (
   polItem: PurchaseOrderLineFragment['item']
 ): InboundLineFragment['item'] => ({
   ...polItem,
-  defaultPackSize: 1,
-  isVaccine: false,
-  doses: 0,
-  restrictedLocationTypeId: null,
 });
 
 const makePurchaseOrderLineField = (pol: PurchaseOrderLineFragment) => ({

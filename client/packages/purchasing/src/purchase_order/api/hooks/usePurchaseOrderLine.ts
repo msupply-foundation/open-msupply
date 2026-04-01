@@ -52,6 +52,9 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
     id: '',
     code: '',
     name: '',
+    isVaccine: false,
+    doses: 0,
+    restrictedLocationTypeId: null,
     stats: {
       __typename: 'ItemStatsNode',
       stockOnHand: 0,
