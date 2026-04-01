@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "sideEffects": false,
   "private": true,
-  "packageManager": "yarn@4.13.0",
   "scripts": {
     "android:build:debug": "yarn build && yarn workspace @openmsupply-client/android build:debug",
     "android:build:release": "yarn build && yarn workspace @openmsupply-client/android build:release",
@@ -13,11 +12,11 @@
     "build": "yarn workspace @openmsupply-client/host build",
     "build-stats": "yarn workspace @openmsupply-client/host build-stats",
     "build-storybook": "storybook build",
-    "compile-full": "yarn workspaces foreach -A --parallel --exclude openmsupply-client --exclude @openmsupply-client/android run tsc",
+    "compile-full": "yarn workspaces foreach -A --parallel --exclude open-msupply --exclude openmsupply-client --exclude @openmsupply-client/android --exclude standard_reports --exclude standard_forms run tsc",
     "electron:build": "yarn workspace @openmsupply-client/electron make",
     "electron:start": "yarn workspace @openmsupply-client/electron start",
     "electron:start-local": "ELECTRON_HOST=http://localhost:3003 yarn workspace @openmsupply-client/electron start",
-    "eslint": "yarn workspaces foreach -A --parallel --exclude openmsupply-client run eslint",
+    "eslint": "yarn workspaces foreach -A --parallel --exclude open-msupply --exclude openmsupply-client --exclude standard_reports --exclude standard_forms run eslint",
     "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema && cd ../client && yarn gql-codegen",
     "gql-codegen": "graphql-codegen --config codegen.yml",
     "i18n-missing": "i18n-unused display-missed",
@@ -34,11 +33,6 @@
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom --testPathIgnorePatterns codegen.test.ts --testPathIgnorePatterns playwright",
     "test:codegen": "jest --config ./jest.config.js codegen.test.ts",
     "translate": "node translate_locale"
-  },
-  "workspaces": {
-    "packages": [
-      "packages/*"
-    ]
   },
   "devDependencies": {
     "@babel/core": "^7.21.3",
