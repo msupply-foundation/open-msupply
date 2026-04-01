@@ -51,12 +51,6 @@ const queryClient = new QueryClient({
       // annoying to have constantly refetching.
       refetchOnWindowFocus: EnvUtils.isProduction(),
       retry: EnvUtils.isProduction(),
-      // This is the default in v4 which is currently in alpha as it is
-      // what most users think the default is.
-      // This will subscribe components of a query only to the data they
-      // destructure. I.e. if the component does not read the isLoading
-      // field, the component will not re-render when the state changes.
-      notifyOnChangeProps: 'tracked',
     },
   },
 });
