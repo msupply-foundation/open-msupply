@@ -66,7 +66,7 @@ export default defineConfig(({ mode }) => {
       viteStaticCopy({
         targets: [
           {
-            src: `${localesSourceDir}/**/*.json`,
+            src: `${localesSourceDir}/*`,
             dest: 'locales',
           },
         ],

@@ -19,7 +19,7 @@
     "start-local": "node ../../node_modules/vite/bin/vite.js",
     "build": "node ../../node_modules/vite/bin/vite.js build",
     "build-stats": "node ../../node_modules/vite/bin/vite.js build",
-    "serve": "node ../../node_modules/serve/build/main.js dist -p 3003",
+    "serve": "node ../../node_modules/vite/bin/vite.js preview",
     "tsc": "tsc",
     "eslint": "eslint ./src"
   },
