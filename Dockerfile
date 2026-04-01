@@ -48,7 +48,6 @@ ENTRYPOINT ["/usr/src/omsupply/server/entry-postgres.sh"]
 FROM sqlite as dev
 WORKDIR /usr/src/omsupply
 COPY client/.nvmrc .nvmrc
-COPY client client
 
 RUN apt-get update && apt-get install -y curl rsync git && \
     NODE_MAJOR=$(sed 's/^v//' .nvmrc | cut -d. -f1) && \
@@ -56,10 +55,13 @@ RUN apt-get update && apt-get install -y curl rsync git && \
     apt-get install -y nodejs && \
     corepack enable && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-COPY package.json .
 
-WORKDIR /usr/src/omsupply/client
-RUN yarn && yarn cache clean
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY client client
+COPY standard_reports standard_reports
+COPY standard_forms standard_forms
+
+RUN yarn install --immutable && yarn cache clean
 
 RUN echo 'export NODE_OPTIONS="--max-old-space-size=8192"' >> ~/.bashrc
 

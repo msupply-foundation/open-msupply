@@ -198,8 +198,8 @@ fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<S
     // Yarn install, use lock file bit it should be git ignored
     run_command_with_error(
         Command::new(YARN_COMMAND)
-            .args(["install", "--cwd"])
-            .arg(&convert_dir),
+            .arg("install")
+            .current_dir(&convert_dir),
     )
     .map_err(|e| Error::FailedToYarnInstall(convert_dir.clone(), e))?;
 
