@@ -1,2 +1,2 @@
-export { TemperatureNotificationBreachFragment } from './operations.generated';
+export type { TemperatureNotificationBreachFragment } from './operations.generated';
 export * from './hooks';

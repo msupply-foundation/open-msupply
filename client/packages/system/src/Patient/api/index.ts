@@ -1,5 +1,2 @@
-import { PatientRowFragment } from './operations.generated';
-
 export * from './hooks';
-export { PatientRowFragment };
-export { ProgramPatientRowFragment } from './operations.generated';
+export type { PatientRowFragment, ProgramPatientRowFragment } from './operations.generated';

@@ -1,7 +1,5 @@
 export * from './ListView';
 export {
-  AssetCatalogueItemFragment,
-  AssetPropertyFragment,
   useAssetList,
   useInfiniteAssets,
   useAssetLogReasonList,
@@ -9,4 +7,5 @@ export {
   useAssetProperties,
   useAssetTypes,
 } from './api';
+export type { AssetCatalogueItemFragment, AssetPropertyFragment } from './api';
 export { mapIdNameToOptions } from './utils';

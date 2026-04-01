@@ -1,27 +1,25 @@
 {
   "name": "@openmsupply-client/host",
   "version": "0.0.0",
-  "sideEffects": false,
+  "type": "module",
   "main": "./src/index.ts",
   "private": true,
   "devDependencies": {
     "@capacitor-community/keep-awake": "^5.0.0",
-    "copy-webpack-plugin": "^12.0.2",
+    "@vitejs/plugin-react": "^4.3.1",
     "find-up": "^7.0.0",
-    "html-webpack-plugin": "^5.5.0",
-    "react-refresh": "0.14.2",
     "serve": "^14.2.0",
-    "webpack": "^5.88.1",
-    "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^5.0.4"
+    "vite": "^5.4.0",
+    "vite-plugin-static-copy": "^1.0.6",
+    "vite-tsconfig-paths": "^4.3.2"
   },
   "scripts": {
-    "start": "webpack-cli serve",
-    "start-remote": "webpack-cli serve --env API_HOST=https://demo-open.msupply.org",
-    "start-local": "webpack-cli serve",
-    "build": "webpack --env production",
-    "build-stats": "webpack --env stats --env production",
-    "serve": "serve dist -p 3003",
+    "start": "node ../../node_modules/vite/bin/vite.js",
+    "start-remote": "node ../../node_modules/vite/bin/vite.js",
+    "start-local": "node ../../node_modules/vite/bin/vite.js",
+    "build": "node ../../node_modules/vite/bin/vite.js build",
+    "build-stats": "node ../../node_modules/vite/bin/vite.js build",
+    "serve": "node ../../node_modules/serve/build/main.js dist -p 3003",
     "tsc": "tsc",
     "eslint": "eslint ./src"
   },
@@ -37,12 +35,9 @@
     "@openmsupply-client/requisitions": "^0.0.0",
     "@openmsupply-client/system": "^0.0.0",
     "@openmsupply-client/reports": "^0.0.0",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.4",
     "history": "^5.1.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-qr-code": "^2.0.12",
-    "swc-loader": "^0.2.0",
-    "webpack-bundle-analyzer": "^4.9.0"
+    "react-qr-code": "^2.0.12"
   }
 }

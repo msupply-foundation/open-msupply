@@ -27,10 +27,7 @@ export const useInitPlugins = () => {
       // This command must be located in 'host', tried in common and webpack throws an error
       // "Critical dependency: the request of a dependency is an expression"
       const pluginBundle = await import(
-        // Webpack will actually try to load everything in plugins directory
-        // which causes issues
-        /* webpackExclude: /node_modules/ */
-        /* webpackExclude: /operations.graphql/ */
+        /* @vite-ignore */
         `../../plugins/${plugin.pluginPath}/src/plugin.tsx`
       );
       addPluginBundle(pluginBundle.default, plugin.pluginCode);

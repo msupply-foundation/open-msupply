@@ -46,7 +46,8 @@ const Android = React.lazy(() =>
 
 const Site = React.lazy(() => import('./Site'));
 
-const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
+import pkg from '../../../../package.json';
+const appVersion = pkg.version;
 
 const queryClient = new QueryClient({
   defaultOptions: {

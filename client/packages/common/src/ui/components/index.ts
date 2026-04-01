@@ -11,7 +11,8 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Input from '@mui/material/Input';
 import InputLabel from '@mui/material/InputLabel';
-import TextField, { TextFieldProps } from '@mui/material/TextField';
+import type { TextFieldProps } from '@mui/material/TextField';
+import TextField from '@mui/material/TextField';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import InputAdornment from '@mui/material/InputAdornment';
 import Tooltip from '@mui/material/Tooltip';
@@ -68,7 +69,6 @@ export {
   MenuList,
   Typography,
   TextField,
-  TextFieldProps,
   Tooltip,
   Radio,
   RadioGroup,
@@ -79,3 +79,4 @@ export {
   Card,
   MuiPopover,
 };
+export type { TextFieldProps };

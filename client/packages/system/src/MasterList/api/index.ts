@@ -1,2 +1,2 @@
 export * from './hooks';
-export { MasterListRowFragment } from './operations.generated';
+export type { MasterListRowFragment } from './operations.generated';

@@ -12,7 +12,8 @@ import {
 import QRCode from 'react-qr-code';
 
 // Version is shared for client and server and is located in repo root package.json
-const appVersion = require('../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
+import pkg from '../../../../../package.json';
+const appVersion = pkg.version;
 
 const Label: FC<PropsWithChildren> = ({ children }) => (
   <Typography

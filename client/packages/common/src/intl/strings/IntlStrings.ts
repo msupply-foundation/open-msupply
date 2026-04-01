@@ -2,7 +2,7 @@ import { TOptions } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { LocaleKey } from '../locales';
 
-export { UseTranslationResponse } from 'react-i18next';
+export type { UseTranslationResponse } from 'react-i18next';
 
 export interface TypedTFunction<Keys> {
   // basic usage

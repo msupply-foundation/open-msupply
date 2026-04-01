@@ -12,16 +12,14 @@ type AppSxProp = SxProps<ReturnType<typeof useAppTheme>>;
 
 export { themeOptions, Breakpoints } from './theme';
 export {
-  AppSxProp,
   alpha,
   AppThemeProvider,
   CssBaseline,
   RTLProvider,
-  Theme,
-  SxProps,
   styled,
   ThemeProviderProxy,
   useAppTheme,
   useMediaQuery,
   useTheme,
 };
+export type { AppSxProp, Theme, SxProps };

@@ -16,14 +16,13 @@ export {
   useMutation,
   useQueryClient,
   useQuery,
-  UseQueryResult,
   QueryClient,
 } from 'react-query';
+export type { UseQueryResult } from 'react-query';
 
 export {
   matchPath,
   useLocation,
-  Location,
   Link,
   useNavigate,
   useParams,
@@ -36,6 +35,7 @@ export {
   createRoutesFromElements,
   RouterProvider,
 } from 'react-router-dom';
+export type { Location } from 'react-router-dom';
 
 export * from './utils';
 export * from './ui';

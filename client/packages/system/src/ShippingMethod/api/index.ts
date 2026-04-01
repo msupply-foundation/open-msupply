@@ -1,2 +1,2 @@
 export * from './hooks';
-export { ShippingMethodRowFragment } from './operations.generated';
+export type { ShippingMethodRowFragment } from './operations.generated';

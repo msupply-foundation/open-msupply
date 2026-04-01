@@ -1,4 +1,4 @@
-export { StandardTextFieldProps } from '@mui/material/TextField';
+export type { StandardTextFieldProps } from '@mui/material/TextField';
 
 export * from './BasicTextInput';
 export * from './InputWithLabelRow';

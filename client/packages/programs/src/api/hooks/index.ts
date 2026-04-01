@@ -8,7 +8,7 @@ import { EncounterRegistryByProgram } from './document/useEncounterRegistriesByP
 import { useDocumentRegistryApi } from './utils/useDocumentRegistryApi';
 import { useIdFromUrl } from './utils/useIdFromUrl';
 
-export { EncounterRegistryByProgram };
+export type { EncounterRegistryByProgram };
 
 export * from './types';
 export * from './useDeleteSelectedVaccineCourses';
@@ -18,12 +18,8 @@ export * from './useVaccineCourse';
 export * from './useVaccineCourseList';
 export * from './useProgramList';
 
-export {
-  useDocumentRegistryApi,
-  EncounterFragment,
-  EncounterRowFragment,
-  ProgramEnrolmentRowFragment,
-};
+export { useDocumentRegistryApi };
+export type { EncounterFragment, EncounterRowFragment, ProgramEnrolmentRowFragment };
 
 export const useDocument = {
   utils: {

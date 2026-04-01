@@ -1,6 +1,6 @@
 import { GetOutboundEditLinesQuery } from './api/operations.generated';
 
-export {
+export type {
   StockOutLineFragment,
   DraftStockOutLineFragment,
 } from './api/operations.generated';

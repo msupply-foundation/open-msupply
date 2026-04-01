@@ -4,6 +4,6 @@ export {
   useInboundList,
   useInboundShipment,
   useDraftInboundLines,
-  InboundFragment,
 } from './InboundShipment/api';
+export type { InboundFragment } from './InboundShipment/api';
 export { getStatusTranslator as getInvoiceStatusTranslator } from './utils';

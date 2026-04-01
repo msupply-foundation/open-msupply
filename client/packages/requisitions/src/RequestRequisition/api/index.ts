@@ -1,6 +1,6 @@
 export * from './hooks';
 export * from './operations.generated';
-export {
+export type {
   RequestLineFragment,
   ItemWithStatsFragment,
   RequestFragment,

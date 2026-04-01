@@ -1,3 +1,3 @@
 export * from './ListView';
 export * from './DetailView';
-export { InboundLineFragment } from './api';
+export type { InboundLineFragment } from './api';

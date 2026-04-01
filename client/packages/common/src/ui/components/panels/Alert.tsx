@@ -24,4 +24,4 @@ export const Alert = (props: AlertProps) => {
   );
 };
 
-export { AlertColor };
+export type { AlertColor };

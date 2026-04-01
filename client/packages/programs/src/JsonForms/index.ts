@@ -3,4 +3,4 @@ export * from './useJsonFormsHandler';
 export * from './useDocumentFormData';
 export * from './components';
 
-export { JsonFormsReactProps } from '@jsonforms/react';
+export type { JsonFormsReactProps } from '@jsonforms/react';

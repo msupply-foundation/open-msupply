@@ -6,7 +6,8 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 // Version is shared for client and server and is located in repo root package.json
-const appVersion = require('../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
+import pkg from '../../../../../package.json';
+const appVersion = pkg.version;
 
 interface AppVersionProps {
   SiteInfo?: React.ReactNode;

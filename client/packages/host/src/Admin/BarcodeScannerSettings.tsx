@@ -22,8 +22,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { ScanIcon } from '@common/icons';
 import { useNavigate } from 'react-router';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const omsBarcode = require('./omsupply-barcode.gif');
+import omsBarcode from './omsupply-barcode.gif';
 const SCAN_TIMEOUT_IN_MS = 50000;
 
 const Scanner = ({ scanner }: { scanner: BarcodeScanner | null }) => {

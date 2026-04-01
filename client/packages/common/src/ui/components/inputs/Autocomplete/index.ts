@@ -8,4 +8,4 @@ export * from './AutocompleteMultiList';
 export * from './AutocompleteWithPagination';
 export * from './types';
 export * from './utils';
-export { AutocompleteRenderInputParams, FilterOptionsState };
+export type { AutocompleteRenderInputParams, FilterOptionsState };

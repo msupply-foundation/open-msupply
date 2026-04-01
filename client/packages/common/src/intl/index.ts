@@ -1,4 +1,4 @@
-export { LocaleKey } from './locales';
+export type { LocaleKey } from './locales';
 
 export * from './currency';
 export * from './utils';

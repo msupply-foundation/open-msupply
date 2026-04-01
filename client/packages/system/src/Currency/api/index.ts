@@ -1,2 +1,2 @@
 export * from './hooks';
-export { CurrencyRowFragment } from './operations.generated';
+export type { CurrencyRowFragment } from './operations.generated';

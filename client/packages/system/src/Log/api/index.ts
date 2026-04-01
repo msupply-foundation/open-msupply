@@ -1,3 +1,2 @@
-import { LogRowFragment, LogLevelRowFragment } from './operations.generated';
-export { LogLevelRowFragment, LogRowFragment };
+export type { LogLevelRowFragment, LogRowFragment } from './operations.generated';
 export * from './hooks';

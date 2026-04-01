@@ -1,2 +1,2 @@
 export * from './hooks';
-export { ReportRowFragment } from './operations.generated';
+export type { ReportRowFragment } from './operations.generated';

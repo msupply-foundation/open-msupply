@@ -1,2 +1,2 @@
 export * from './hooks';
-export { ReasonOptionRowFragment } from './operations.generated';
+export type { ReasonOptionRowFragment } from './operations.generated';

@@ -13,13 +13,12 @@ export {
   Table,
   TableBody,
   TableCell,
-  TableCellProps,
   TableContainer,
   TableHead,
   TableRow,
   ViewportList,
-  ViewportListRef,
 };
+export type { TableCellProps, ViewportListRef };
 
 export * from './aggregationFns';
 export * from './usePaginatedMaterialTable';
