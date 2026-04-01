@@ -58,7 +58,7 @@ interface CardProps {
 interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
-  lastCardRef?: React.RefObject<HTMLDivElement>;
+  lastCardRef?: React.RefObject<HTMLDivElement | null>;
   simplified?: boolean;
   actions?: React.ReactNode;
 }

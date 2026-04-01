@@ -16,7 +16,7 @@ import { useIsLandscapeTablet } from '@common/hooks';
 interface CardListProps<T extends MRT_RowData> {
   table: MRT_TableInstance<T>;
   tableId: string;
-  lastItemRef?: React.RefObject<HTMLDivElement>;
+  lastItemRef?: React.RefObject<HTMLDivElement | null>;
   groupIcons?: Record<string, React.ReactNode>;
   actions?: React.ReactNode;
   stickyTopOffset?: number;
