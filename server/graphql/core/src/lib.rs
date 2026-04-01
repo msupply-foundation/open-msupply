@@ -104,10 +104,33 @@ pub struct RequestUserData {
     pub override_user_id: Option<String>,
     pub auth_token: Option<String>,
     pub refresh_token: Option<String>,
+    /// Port from the Host header, used to scope cookie names per-port.
+    /// None when the request uses a standard port (80/443) or no port is specified.
+    pub host_port: Option<String>,
+}
+
+/// Extract the port from a Host header value, if present.
+/// Returns None for standard ports or when no port is specified.
+fn port_from_host(host: &str) -> Option<&str> {
+    host.rsplit_once(':').map(|(_, port)| port)
 }
 
 pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
     let headers = http_req.headers();
+
+    // Extract port from Host header for port-scoped cookie names
+    let host_port = headers
+        .get("Host")
+        .and_then(|h| h.to_str().ok())
+        .and_then(port_from_host)
+        .map(|p| p.to_string());
+
+    // Build the expected refresh_token cookie name based on the port
+    let refresh_cookie_name = match &host_port {
+        Some(port) => format!("refresh_token_{}", port),
+        None => "refresh_token".to_string(),
+    };
+
     // retrieve auth token
     let auth_token = headers.get("Authorization").and_then(|header_value| {
         header_value.to_str().ok().and_then(|header| {
@@ -129,7 +152,7 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
                     .into_iter()
                     .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
                     .find(|cookie_option| match &cookie_option {
-                        Some(cookie) => cookie.name() == "refresh_token",
+                        Some(cookie) => cookie.name() == refresh_cookie_name,
                         None => false,
                     })
                     .flatten()
@@ -141,6 +164,7 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
         auth_token,
         refresh_token,
         override_user_id: None,
+        host_port,
     }
 }
 

@@ -505,6 +505,7 @@ impl ExecuteGraphql for PluginExecuteGraphql {
                 override_user_id: Some(override_user_id.to_string()),
                 auth_token: None,
                 refresh_token: None,
+                host_port: None,
             });
         let response = self.0.operational.execute(request).await;
         // Response is either success with data field populated or error with errors field populated

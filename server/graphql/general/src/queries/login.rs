@@ -1,6 +1,6 @@
 use async_graphql::*;
 use chrono::Utc;
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt, RequestUserData};
 
 use http2::header::SET_COOKIE;
 use service::{
@@ -160,11 +160,16 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     };
 
     let now = Utc::now().timestamp() as usize;
+    let host_port = ctx
+        .data_opt::<RequestUserData>()
+        .and_then(|d| d.host_port.as_deref().map(|s| s.to_string()));
+
     set_refresh_token_cookie(
         ctx,
         &pair.refresh,
         pair.refresh_expiry_date - now,
         auth_data.no_ssl,
+        host_port.as_deref(),
     );
 
     Ok(AuthTokenResponse::Response(AuthToken { pair }))
@@ -182,12 +187,17 @@ pub fn set_refresh_token_cookie(
     refresh_token: &str,
     max_age: usize,
     no_ssl: bool,
+    host_port: Option<&str>,
 ) {
     let secure = if no_ssl { "" } else { "; Secure" };
+    let cookie_name = match host_port {
+        Some(port) => format!("refresh_token_{}", port),
+        None => "refresh_token".to_string(),
+    };
     ctx.insert_http_header(
         SET_COOKIE,
         format!(
-            "refresh_token={refresh_token}; Max-Age={max_age}{secure}; HttpOnly; SameSite=Strict"
+            "{cookie_name}={refresh_token}; Max-Age={max_age}{secure}; HttpOnly; SameSite=Strict"
         ),
     );
 }

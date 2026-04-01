@@ -18,6 +18,13 @@ import { useUpdateUserInfo } from './hooks/useUpdateUserInfo';
 export const INACTIVITY_TIMEOUT_MINUTES = 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
 
+// Suffix the cookie name with the port when running on a non-standard port,
+// so that multiple instances on different ports don't overwrite each other's cookies.
+// Standard port deployments (80/443) use the bare 'auth' name — no change for production.
+const AUTH_COOKIE_NAME = window.location.port
+  ? `auth_${window.location.port}`
+  : 'auth';
+
 export enum AuthError {
   NoStoreAssigned = 'NoStoreAssigned',
   PermissionDenied = 'Forbidden',
@@ -67,7 +74,7 @@ interface AuthControl {
 }
 
 export const getAuthCookie = (): AuthCookie => {
-  const authString = Cookies.get('auth');
+  const authString = Cookies.get(AUTH_COOKIE_NAME);
   const emptyCookie = { token: '' };
   if (!!authString) {
     try {
@@ -84,7 +91,7 @@ export const setAuthCookie = (cookie: AuthCookie) => {
   const expires = addMinutes(new Date(), INACTIVITY_TIMEOUT_MINUTES);
   const authCookie = { ...cookie, expires };
 
-  Cookies.set('auth', JSON.stringify(authCookie), { expires });
+  Cookies.set(AUTH_COOKIE_NAME, JSON.stringify(authCookie), { expires });
 };
 
 const authControl = {
@@ -119,7 +126,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
   const { refreshToken } = useRefreshToken(() => {
-    Cookies.remove('auth');
+    Cookies.remove(AUTH_COOKIE_NAME);
     setCookie(undefined);
     setError(AuthError.Timeout);
   });
@@ -152,7 +159,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   } = useUpdateUserInfo(setCookie, cookie, mostRecentCredentials);
 
   const logout = () => {
-    Cookies.remove('auth');
+    Cookies.remove(AUTH_COOKIE_NAME);
     setError(undefined);
     setCookie(undefined);
   };
