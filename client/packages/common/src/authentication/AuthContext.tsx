@@ -12,6 +12,7 @@ import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { createRegisteredContext } from 'react-singleton-context';
 import { useUpdateUserInfo } from './hooks/useUpdateUserInfo';
+import { useUserActivity } from './hooks/useUserActivity';
 
 const AUTH_TOKEN_LIFETIME_MINUTES = 60;
 const COOKIE_LIFETIME_MINUTES = 24 * 60;
@@ -118,6 +119,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     mostRecentCredentials,
   } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
+  const { isActive } = useUserActivity();
   const { refreshToken } = useRefreshToken(
     () => {
       Cookies.remove('auth');
@@ -218,11 +220,12 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
         return;
       }
 
-      refreshToken();
-
+      if (isActive()) {
+        refreshToken();
+      }
     }, TOKEN_CHECK_INTERVAL);
     return () => window.clearInterval(timer);
-  }, [cookie?.token, refreshToken, setError]);
+  }, [cookie?.token, isActive, refreshToken, setError]);
 
   return <Provider value={val}>{children}</Provider>;
 };
