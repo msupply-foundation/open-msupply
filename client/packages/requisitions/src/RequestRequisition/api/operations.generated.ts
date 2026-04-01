@@ -633,7 +633,9 @@ export type InsertProgramRequestMutation = {
   insertProgramRequestRequisition:
     | {
         __typename: 'InsertProgramRequestRequisitionError';
-        error: { __typename: 'MaxOrdersReachedForPeriod'; description: string };
+        error:
+          | { __typename: 'MaxOrdersReachedForPeriod'; description: string }
+          | { __typename: 'SupplierNotValid'; description: string };
       }
     | { __typename: 'RequisitionNode'; id: string };
 };
@@ -1515,6 +1517,10 @@ export const InsertProgramRequestDocument = gql`
         error {
           description
           ... on MaxOrdersReachedForPeriod {
+            __typename
+            description
+          }
+          ... on SupplierNotValid {
             __typename
             description
           }
