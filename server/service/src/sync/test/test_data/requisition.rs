@@ -599,7 +599,7 @@ fn requisition_imprest_pull_record() -> TestSyncIncomingRecord {
             order_type: None,
             is_emergency: false,
             created_from_requisition_id: None,
-            original_customer_id: None,
+            destination_customer_id: None,
         },
     )
 }
@@ -720,7 +720,7 @@ fn requisition_stock_history_pull_record() -> TestSyncIncomingRecord {
             order_type: None,
             is_emergency: false,
             created_from_requisition_id: None,
-            original_customer_id: None,
+            destination_customer_id: None,
         },
     )
 }
