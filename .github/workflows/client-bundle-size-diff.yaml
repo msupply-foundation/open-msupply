@@ -33,7 +33,7 @@ jobs:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Install dependencies
-        run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
+        run: corepack enable && cd ./client && yarn install --immutable
 
       - name: Build
         run: cd ./client && yarn build-stats
@@ -63,7 +63,7 @@ jobs:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Install dependencies
-        run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
+        run: corepack enable && cd ./client && yarn install --immutable
 
       - name: Build
         run: cd ./client && yarn build-stats
