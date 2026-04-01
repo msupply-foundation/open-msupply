@@ -57,12 +57,39 @@ create_new_pull_request() {
     git push -u origin "$MERGE_BRANCH"
 
     local pr_title="Merge $RC_BRANCH to develop"
-    local pr_body="**Details:**
-    - $UNMERGED_COMMITS unmerged commit(s) detected on: $DATE_DISPLAY
-    - Source: This branch is based on $RC_BRANCH
+    local pr_body="# 👩🏻‍💻 What does this PR do?
 
-This PR was created automatically by the daily RC integration workflow.
-⚠️ **Note**: Any merge conflicts will be visible in this PR and need manual resolution."
+Automated merge of \`$RC_BRANCH\` into \`develop\`.
+- $UNMERGED_COMMITS unmerged commit(s) detected on $DATE_DISPLAY
+- Source: This branch is based on \`$RC_BRANCH\`
+
+This PR was created automatically by the RC to develop integration workflow.
+⚠️ **Note**: Any merge conflicts will be visible in this PR and need manual resolution.
+
+## 💌 Any notes for the reviewer?
+
+Please review the merge commit and ensure no conflicts were incorrectly resolved.
+
+# 🧪 Testing
+
+- [ ] CI passes on this branch
+
+# 📃 Documentation
+
+- [x] **No documentation required**: no user facing changes
+
+# 📃 Reviewer Checklist
+
+**Breaking Changes**
+- [ ] No Breaking Changes in the Graphql API
+
+**Issue Review**
+- [ ] All requirements in original issue have been covered
+
+**Tests Pass**
+- [ ] Postgres
+- [ ] SQLite
+- [ ] Frontend"
 
     echo "Creating pull request for $MERGE_BRANCH -> develop"
     local pr_url
