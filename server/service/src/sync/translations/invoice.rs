@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
     date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
-    naive_time, zero_date_as_option, zero_f64_as_none,
+    naive_time, object_fields_as_option, zero_date_as_option, zero_f64_as_none,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -119,6 +119,14 @@ pub enum TransactMode {
     #[serde(other)]
     Others,
 }
+#[derive(Deserialize, Serialize, Default)]
+pub struct TransactRowOmsFields {
+    #[serde(default)]
+    pub charges_local_currency: f64,
+    #[serde(default)]
+    pub charges_foreign_currency: f64,
+}
+
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyTransactRow {
@@ -280,6 +288,10 @@ pub struct LegacyTransactRow {
     #[serde(rename = "ship_method_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub shipping_method_id: Option<String>,
+
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<TransactRowOmsFields>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -408,6 +420,8 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
+        let oms_fields = data.oms_fields.unwrap_or_default();
+
         let status = match data.om_status {
             Some(legacy_om_status) => legacy_om_status.to_invoice_status(),
             None => invoice_status,
@@ -457,6 +471,8 @@ impl SyncTranslation for InvoiceTranslation {
             expected_delivery_date: data.expected_delivery_date,
             purchase_order_id: data.purchase_order_id,
             shipping_method_id: data.shipping_method_id,
+            charges_local_currency: oms_fields.charges_local_currency,
+            charges_foreign_currency: oms_fields.charges_foreign_currency,
         };
 
         // HACK...
@@ -547,6 +563,8 @@ impl SyncTranslation for InvoiceTranslation {
                     default_donor_id,
                     purchase_order_id,
                     shipping_method_id,
+                    charges_local_currency,
+                    charges_foreign_currency,
                 },
             name_row,
             clinician_row,
@@ -623,6 +641,10 @@ impl SyncTranslation for InvoiceTranslation {
             goods_received_ID: None,
             purchase_order_id,
             shipping_method_id,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency,
+                charges_foreign_currency,
+            }),
         };
 
         let json_record = serde_json::to_value(legacy_row)?;

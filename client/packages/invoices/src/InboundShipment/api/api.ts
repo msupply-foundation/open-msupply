@@ -107,6 +107,14 @@ export const inboundParsers = {
           : undefined,
       currencyId: 'currency' in patch ? patch.currency?.id : undefined,
       currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
+      chargesLocalCurrency:
+        'chargesLocalCurrency' in patch
+          ? patch.chargesLocalCurrency
+          : undefined,
+      chargesForeignCurrency:
+        'chargesForeignCurrency' in patch
+          ? patch.chargesForeignCurrency
+          : undefined,
       defaultDonor:
         'defaultDonorUpdate' in patch ? patch.defaultDonorUpdate : undefined,
     };
@@ -380,8 +388,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     };
 
     if (isExternal) {
-      const result =
-        await sdk.insertLinesFromInternalOrderExternal(variables);
+      const result = await sdk.insertLinesFromInternalOrderExternal(variables);
       return {
         batchInboundShipment: result.batchInboundShipmentExternal,
       };
@@ -397,8 +404,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     };
 
     if (isExternal) {
-      const result =
-        await sdk.deleteInboundShipmentLinesExternal(variables);
+      const result = await sdk.deleteInboundShipmentLinesExternal(variables);
       return {
         batchInboundShipment: result.batchInboundShipmentExternal,
       };
@@ -454,7 +460,10 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       updateInboundShipmentLines: draftInboundLine
         .filter(
           ({ type, isCreated, isUpdated }) =>
-            !isCreated && isUpdated && type === InvoiceLineNodeType.StockIn
+            !isCreated &&
+            isUpdated &&
+            (type === InvoiceLineNodeType.StockIn ||
+              type === InvoiceLineNodeType.UnallocatedStock)
         )
         .map(inboundParsers.toUpdateLine),
       insertInboundShipmentServiceLines: draftInboundLine

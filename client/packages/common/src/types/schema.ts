@@ -4427,6 +4427,8 @@ export type InvoiceNode = {
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
+  chargesForeignCurrency: Scalars['Float']['output'];
+  chargesLocalCurrency: Scalars['Float']['output'];
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   colour?: Maybe<Scalars['String']['output']>;
@@ -4716,6 +4718,7 @@ export type ItemLedgerNode = {
   sellPricePerPack: Scalars['Float']['output'];
   storeId: Scalars['String']['output'];
   totalBeforeTax?: Maybe<Scalars['Float']['output']>;
+  user?: Maybe<UserNode>;
 };
 
 export type ItemLedgerResponse = ItemLedgerConnector;
@@ -4951,6 +4954,7 @@ export type LedgerNode = {
   stockLine?: Maybe<StockLineNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
+  user?: Maybe<UserNode>;
 };
 
 export type LedgerResponse = LedgerConnector;
@@ -6815,6 +6819,7 @@ export type PreferencesNode = {
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
   expiredStockPreventIssue: Scalars['Boolean']['output'];
+  externalInboundShipmentLinesMustBeAuthorised: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
   globalTableConfigs: Scalars['JSON']['output'];
@@ -8806,10 +8811,14 @@ export enum RequisitionNodeStatus {
 }
 
 export enum RequisitionNodeType {
+  /** Imprest requisition where each item has a pre-determined max/target quantity */
+  Imprest = 'IMPREST',
   /** Requisition created by store that is ordering stock */
   Request = 'REQUEST',
-  /** Supplying store requisition in response to request requisition */
+  /** Supplying store requisition in response to request requisition, or manual requisition for a customer */
   Response = 'RESPONSE',
+  /** Stock history requisition where facility submits stock on hand */
+  StockHistory = 'STOCK_HISTORY',
 }
 
 export type RequisitionReasonNotProvided =
@@ -10097,6 +10106,8 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
+  chargesForeignCurrency?: InputMaybe<Scalars['Float']['input']>;
+  chargesLocalCurrency?: InputMaybe<Scalars['Float']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
