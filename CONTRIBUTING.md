@@ -36,6 +36,7 @@ Toolchains:
 
 - Rust toolchain is pinned via `server/rust-toolchain.toml` (see `server/README.md#dependencies` for system dependencies and setup).
 - Client Node version is pinned via `client/.nvmrc` (`nvm use` from `client/`; see `client/README.md`).
+- Yarn 4 is managed via corepack: run `corepack enable` once after installing Node.
 
 To get started, have a look at the [readme](README.md)
 
@@ -43,13 +44,24 @@ The repo is split into a client and server application - you'll need to have a l
 For the client app, clone the repo, install packages
 
 ```sh
+corepack enable
 cd ./client
+yarn install
+```
+
+If you're working on reports or forms, install their dependencies too:
+
+```sh
+cd ./standard_reports
+yarn install
+cd ../standard_forms
 yarn install
 ```
 
 and you can then run the client tests:
 
 ```sh
+cd ./client
 yarn test
 ```
 
@@ -162,5 +174,5 @@ git push --force-with-lease origin 325-fix-a-bug
 [git rebasing]: http://git-scm.com/book/en/Git-Branching-Rebasing
 [interactive rebase]: https://help.github.com/en/github/using-git/about-git-rebase
 [shortcut reference links]: https://github.github.com/gfm/#shortcut-reference-link
-[Yarn]: https://yarnpkg.com/en/docs/install
+[Yarn]: https://yarnpkg.com/getting-started/install
 [Node.js]: https://nodejs.org/en/

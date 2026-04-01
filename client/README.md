@@ -7,7 +7,7 @@ This is a multi-lingual, responsive web application making use of the open mSupp
 
 It is built using React, with typescript, and a heavy reliance on hooks. The component framework is material-ui and we're using [storybook](https://storybook.js.org/) to demonstrate the usage and functionality of custom components.
 
-The test framework is jest; functional areas are separated into packages and managed with [lerna](https://lerna.js.org/)
+The test framework is jest; functional areas are separated into packages and managed with [Yarn workspaces](https://yarnpkg.com/features/workspaces)
 
 The API is a GraphQL server and internally we are running a mock server to backfill functionality in the API while that is being developed. The local GraphQL server is running on Apollo and we're making use of a mock service worker to handle specific requests.
 
@@ -15,9 +15,16 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 ## Usage
 
-- Install dependencies (Using node v20+ and using yarn):
+- Install dependencies (Using node v20+ and Yarn 4 via corepack):
 
-`yarn install`
+```sh
+corepack enable   # only needed once, enables Yarn 4 via packageManager field
+yarn install
+
+# If working on reports or forms, also install their dependencies:
+cd ../standard_reports && yarn install
+cd ../standard_forms && yarn install
+```
 
 - Run on development mode:
 
@@ -67,7 +74,6 @@ client
 │  ├─ config
 │  ├─ dashboard
 │  ├─ electron
-│  │  ├─ node_modules
 │  │  ├─ out
 │  │  │  ├─ make
 │  │  │  └─ [platform specific]
