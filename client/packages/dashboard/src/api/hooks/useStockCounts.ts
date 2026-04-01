@@ -5,17 +5,17 @@ import { useApi } from './useApi';
 export const useStockCounts = (daysTillExpired: number) => {
   const { storeId, api } = useApi();
 
-  const { data, ...rest } = useQuery(
-    [DASHBOARD, STOCK, storeId],
-    () =>
+  const { data, ...rest } = useQuery({
+    queryKey: [DASHBOARD, STOCK, storeId],
+
+    queryFn: () =>
       api.stockCounts({
         storeId,
         daysTillExpired,
       }),
-    {
-      retry: false,
-    }
-  );
+
+    retry: false
+  });
 
   if (!data?.stockCounts) {
     return { stats: undefined, ...rest };

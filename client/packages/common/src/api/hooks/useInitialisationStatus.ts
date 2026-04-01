@@ -8,7 +8,7 @@ import {
 
 export const useInitialisationStatus = (
   refetchInterval: number | false = false,
-  shouldSuspend?: boolean
+  _shouldSuspend?: boolean
 ) => {
   const { client } = useGql();
   const sdk = getSdk(client);
@@ -24,18 +24,15 @@ export const useInitialisationStatus = (
   });
 
   // Fallback to polling if subscription fails or is unavailable
-  const { data: queryData, ...rest } = useQuery(
-    queryKey,
-    async () => {
+  const { data: queryData, ...rest } = useQuery({
+    queryKey: [queryKey],
+    queryFn: async () => {
       const result = await sdk.initialisationStatus();
       return result?.initialisationStatus;
     },
-    {
-      cacheTime: 0,
-      suspense: shouldSuspend,
-      refetchInterval: isSubscribed ? false : refetchInterval,
-    }
-  );
+    gcTime: 0,
+    refetchInterval: isSubscribed ? false : refetchInterval,
+  });
 
   return { ...rest, data: subData ?? queryData };
 };

@@ -5,16 +5,16 @@ import { useApi } from './useApi';
 export const useInternalOrderCounts = () => {
   const { storeId, api } = useApi();
 
-  const { data, ...rest } = useQuery(
-    [DASHBOARD, INTERNAL_ORDER, storeId],
-    () =>
+  const { data, ...rest } = useQuery({
+    queryKey: [DASHBOARD, INTERNAL_ORDER, storeId],
+
+    queryFn: () =>
       api.internalOrderCounts({
         storeId,
       }),
-    {
-      retry: false,
-    }
-  );
+
+    retry: false
+  });
 
   if (!data?.requisitionCounts) {
     return { stats: undefined, ...rest };

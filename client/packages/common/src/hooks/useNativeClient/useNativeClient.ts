@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import { uniqWith } from '@common/utils';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { Capacitor } from '@capacitor/core';
@@ -75,7 +75,8 @@ export const useNativeClient = ({
 
   // `connectToServer` will check to see if the server is alive and if so, connect to it
   // using `useMutation` here to handle multiple calls to `connectToServer`, though likely not be possible
-  const { mutate: connectToPrevious } = useMutation(connectToServer, {
+  const { mutate: connectToPrevious } = useMutation({
+    mutationFn: connectToServer,
     onSuccess: handleConnectionResult,
     onError: (e: Error) =>
       handleConnectionResult({ success: false, error: e.message }),

@@ -8,7 +8,10 @@ export const useStoresAll = () => {
     first: NumUtils.MAX_SAFE_API_INTEGER,
   };
 
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.stores(queryParams)
-  );
+  return useQuery({
+    queryKey: api.keys.paramList(queryParams),
+
+    queryFn: () =>
+      api.get.stores(queryParams)
+  });
 };
