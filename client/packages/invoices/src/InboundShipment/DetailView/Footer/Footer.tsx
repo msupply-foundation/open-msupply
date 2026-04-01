@@ -16,10 +16,12 @@ import {
   ArrowRightIcon,
   useEditModal,
   useNotification,
+  useDisabledNotificationToast,
   usePreferences,
   useIsExtraSmallScreen,
   CheckIcon,
   CloseIcon,
+  ClockIcon,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
@@ -102,7 +104,11 @@ export const FooterComponent = ({
     query: { data },
     isDisabled,
     isExternal,
+    hasAuthorisePermission,
   } = useInboundShipment();
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
   const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
     resetRowSelection
@@ -128,9 +134,9 @@ export const FooterComponent = ({
     }
   };
 
-  const changeLineStatus = (approve: 'approve' | 'reject') => {
+  const changeLineStatus = (status: 'approve' | 'reject' | 'pending') => {
     if (!selectedRows.length) {
-      const selectLinesSnack = info(t(`messages.select-rows-to-${approve}`));
+      const selectLinesSnack = info(t(`messages.select-rows-to-${status}`));
       selectLinesSnack();
       return;
     }
@@ -140,7 +146,11 @@ export const FooterComponent = ({
       return;
     }
 
-    onChangeLineStatus(approve);
+    if ((status === 'approve' || status === 'reject') && !hasAuthorisePermission) {
+      return permissionDeniedNotification();
+    }
+
+    onChangeLineStatus(status);
   };
 
   let actions: Action[] = [
@@ -180,12 +190,15 @@ export const FooterComponent = ({
         icon: <CloseIcon />,
         onClick: () => changeLineStatus('reject'),
       },
+      {
+        label: t('button.pending'),
+        icon: <ClockIcon />,
+        onClick: () => changeLineStatus('pending'),
+      },
     ]);
   }
   const statuses = (
-    shipmentType
-      ? getInboundStatusesForType(shipmentType)
-      : inboundStatuses
+    shipmentType ? getInboundStatusesForType(shipmentType) : inboundStatuses
   ).filter(status =>
     invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
   );

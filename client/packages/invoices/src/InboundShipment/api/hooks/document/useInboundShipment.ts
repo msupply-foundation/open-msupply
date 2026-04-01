@@ -48,8 +48,11 @@ export const useInboundShipment = (id?: string) => {
   const hasMutatePermission = isExternal
     ? userHasPermission(UserPermission.InboundShipmentExternalMutate)
     : userHasPermission(UserPermission.InboundShipmentMutate);
-  const hasVerifyPermission = isExternal
+  const hasAuthorisePermission = isExternal
     ? userHasPermission(UserPermission.InboundShipmentExternalAuthorise)
+    : false;
+  const hasVerifyPermission = isExternal
+    ? userHasPermission(UserPermission.InboundShipmentExternalVerify)
     : userHasPermission(UserPermission.InboundShipmentVerify);
   const isDisabled = isInboundDisabled(data) || !hasMutatePermission;
   const isStatusChangeDisabled = isInboundStatusChangeDisabled(data);
@@ -156,6 +159,7 @@ export const useInboundShipment = (id?: string) => {
     hasMutatePermission,
     isHoldable,
     isStatusChangeDisabled,
+    hasAuthorisePermission,
     hasVerifyPermission,
     update: { update, saveDraft, isUpdating, updateError },
     create: { create, isCreating, createError },
