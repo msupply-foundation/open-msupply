@@ -357,6 +357,10 @@ mutation insertProgramRequest(
           __typename
           description
         }
+        ... on SupplierNotValid {
+          __typename
+          description
+        }
       }
     }
   }
