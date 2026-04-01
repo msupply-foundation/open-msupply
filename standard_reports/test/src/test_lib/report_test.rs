@@ -56,13 +56,15 @@ fn write_report_config(
     Ok(config_dir)
 }
 
-/// Run show-report inside the container for a single report,
+/// Run a report CLI command inside the container for a single report,
 /// copy the output file back, and validate it using the report's trait methods.
+/// `cli_command` should be "test-report" or "show-report".
 pub fn run_report_test(
     container_name: &str,
     report: &dyn ReportTest,
     base_config: &TestConfig,
     output_dir: &Path,
+    cli_command: &str,
 ) -> ReportTestResult {
     let code = report.code().to_string();
     log::info!("Testing report: {}", code);
@@ -79,14 +81,13 @@ pub fn run_report_test(
         }
     };
 
-    // Run show-report
     let container_report_path = format!("/standard_reports/{}", report.path());
     let output = Command::new("docker")
         .args([
             "exec",
             container_name,
             "./remote_server_cli",
-            "show-report",
+            cli_command,
             "--path",
             &container_report_path,
             "--config",

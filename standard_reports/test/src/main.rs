@@ -151,12 +151,58 @@ async fn run_tests(cli: Cli) -> anyhow::Result<()> {
         to_run.push(std::sync::Arc::from(report));
     }
 
-    // Run report tests sequentially
-    // show-report internally runs `yarn install` per report — parallel runs corrupt the shared yarn cache
+    // Check if the container supports test-report (parallel-safe, no yarn)
+    let use_test_report = has_test_report_command(CONTAINER_NAME);
+    if use_test_report {
+        log::info!("Container supports test-report — running in parallel");
+    } else {
+        log::info!("Container does not support test-report — falling back to show-report (sequential)");
+    }
+
+    let cli_command = if use_test_report {
+        "test-report"
+    } else {
+        "show-report"
+    };
+
     let mut results = skipped;
-    for report in &to_run {
-        let result = run_report_test(CONTAINER_NAME, report.as_ref(), &config, &output_dir);
-        results.push(result);
+
+    if use_test_report {
+        // Parallel execution — safe because test-report skips yarn
+        let container_name = CONTAINER_NAME.to_string();
+        let config = std::sync::Arc::new(config);
+        let output_dir = std::sync::Arc::new(output_dir);
+        let cli_command = cli_command.to_string();
+
+        let handles: Vec<_> = to_run
+            .into_iter()
+            .map(|report| {
+                let container_name = container_name.clone();
+                let config = config.clone();
+                let output_dir = output_dir.clone();
+                let cli_command = cli_command.clone();
+                tokio::task::spawn_blocking(move || {
+                    run_report_test(
+                        &container_name,
+                        report.as_ref(),
+                        &config,
+                        &output_dir,
+                        &cli_command,
+                    )
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            results.push(handle.await?);
+        }
+    } else {
+        // Sequential execution — show-report runs yarn install which corrupts under parallelism
+        for report in &to_run {
+            let result =
+                run_report_test(CONTAINER_NAME, report.as_ref(), &config, &output_dir, cli_command);
+            results.push(result);
+        }
     }
 
     // Summary

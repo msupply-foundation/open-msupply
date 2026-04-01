@@ -204,6 +204,19 @@ enum Action {
         #[clap(long)]
         format: Option<Format>,
     },
+    /// Like show-report but skips yarn install/build (uses pre-built dist/ files).
+    /// Designed for integration testing where reports are already built.
+    TestReport {
+        /// Path to report source files
+        #[clap(short, long)]
+        path: PathBuf,
+        /// Path to dir containing test-config.json file
+        #[clap(short, long)]
+        config: Option<PathBuf>,
+        /// Output format
+        #[clap(long)]
+        format: Option<Format>,
+    },
     /// Enable or disable a report in the database.
     ToggleReport {
         /// Code of the report to toggle
@@ -673,7 +686,7 @@ async fn main() -> anyhow::Result<()> {
             config,
             format,
         } => {
-            let report_data: ReportData = generate_report_data(&path)?;
+            let report_data: ReportData = generate_report_data(&path, false)?;
 
             let report_json =
                 serde_json::to_value(report_data.template).expect("fail to convert report to json");
@@ -740,6 +753,68 @@ async fn main() -> anyhow::Result<()> {
                 .arg(generated_file_path.clone())
                 .status()
                 .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
+        }
+        Action::TestReport {
+            path,
+            config,
+            format,
+        } => {
+            // Same as ShowReport but with skip_yarn=true and no auto-open
+            let report_data: ReportData = generate_report_data(&path, true)?;
+
+            let report_json =
+                serde_json::to_value(report_data.template).expect("fail to convert report to json");
+
+            let test_config_path = if let Some(config) = config {
+                config
+            } else {
+                Path::new("../standard_reports").to_path_buf()
+            };
+
+            let test_config_file = fs::File::open(test_config_path.join("test-config.json"))
+                .map_err(|e| {
+                    ReportError::CannotOpenTestConfigFile(test_config_path.to_path_buf(), e)
+                })?;
+            let test_config: TestConfig =
+                serde_json::from_reader(test_config_file).map_err(|e| {
+                    ReportError::CannotReadTestConfigFile(test_config_path.clone().to_path_buf(), e)
+                })?;
+
+            let config = Config {
+                url: test_config.url,
+                username: test_config.username,
+                password: test_config.password,
+            };
+
+            let output_name = match &format {
+                Some(Format::Html) | None => {
+                    format!("{}.html", test_config.output_filename.clone())
+                }
+                Some(Format::Excel) => format!("{}.xlsx", test_config.output_filename.clone()),
+                Some(_) => {
+                    return Err(anyhow::Error::msg(
+                        "Format not supported, use html or excel",
+                    ));
+                }
+            };
+
+            let report_generate_data = ReportGenerateData {
+                report: report_json,
+                config,
+                store_id: Some(test_config.store_id),
+                store_name: None,
+                output_filename: Some(output_name.clone()),
+                format: format.unwrap_or(Format::Html),
+                data_id: Some(test_config.data_id),
+                arguments: Some(test_config.arguments),
+                excel_template_buffer: report_data.excel_template_buffer,
+            };
+
+            spawn_blocking(|| generate_report_inner(report_generate_data))
+                .await?
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e))?;
+
+            println!("> Report generated: {}", output_name);
         }
         Action::ToggleReport {
             code,

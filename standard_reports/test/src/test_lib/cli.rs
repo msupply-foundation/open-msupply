@@ -1,6 +1,6 @@
 use anyhow::Result;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 /// Build standard reports locally using the CLI.
 pub fn build_reports_local(standard_reports_dir: &Path) -> Result<()> {
@@ -86,4 +86,21 @@ pub fn upsert_reports_in_container(container_name: &str) -> Result<()> {
 
     log::info!("Reports upserted successfully");
     Ok(())
+}
+
+/// Check if the container's CLI supports the `test-report` command.
+pub fn has_test_report_command(container_name: &str) -> bool {
+    let output = Command::new("docker")
+        .args([
+            "exec",
+            container_name,
+            "./remote_server_cli",
+            "test-report",
+            "--help",
+        ])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+
+    matches!(output, Ok(s) if s.success())
 }
