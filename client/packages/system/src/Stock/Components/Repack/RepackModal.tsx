@@ -64,7 +64,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     repack: { repackData },
     draft,
     onChange,
-    onInsert: { mutateAsync: onInsert, isLoading: isInserting },
+    onInsert: { mutateAsync: onInsert, isPending: isInserting },
   } = useRepack({ stockLineId: stockLine?.id, invoiceId });
 
   const {

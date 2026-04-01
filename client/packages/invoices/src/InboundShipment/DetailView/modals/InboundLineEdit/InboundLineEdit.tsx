@@ -159,7 +159,7 @@ export const InboundLineEdit = ({
     duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
-    isLoading,
+    isPending: isLoading,
     saveLines,
   } = hasPurchaseOrder ? poLineDraft : itemDraft;
 

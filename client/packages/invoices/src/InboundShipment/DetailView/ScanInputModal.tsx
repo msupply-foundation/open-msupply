@@ -82,12 +82,12 @@ export const ScanInputModal = ({
 
   const { success } = useNotification();
 
-  const { saveSingleLine, isLoading: isSavingLine } = useDraftInboundLines(
+  const { saveSingleLine, isPending: isSavingLine } = useDraftInboundLines(
     barcodeData?.itemId
   );
-  const { mutateAsync: getBarcode, isLoading: isFetchingBarcode } =
+  const { mutateAsync: getBarcode, isPending: isFetchingBarcode } =
     useOutbound.utils.barcode();
-  const { mutateAsync: saveBarcode, isLoading: isSavingBarcode } =
+  const { mutateAsync: saveBarcode, isPending: isSavingBarcode } =
     useOutbound.utils.barcodeInsert();
 
   // Helper to update state and pull in expiry/manufacture date from matching line

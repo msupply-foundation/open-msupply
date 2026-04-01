@@ -42,7 +42,7 @@ export const usePreviousNextIndicatorLine = (
 export const useDraftIndicatorValue = (
   indicatorValue: IndicatorValueFragment
 ) => {
-  const { mutateAsync, isLoading } =
+  const { mutateAsync, isPending: isLoading } =
     useResponse.document.updateIndicatorValue();
   const { error } = useNotification();
 

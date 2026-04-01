@@ -27,7 +27,7 @@ export const AppBarButtons = ({
   sortBy,
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
-  const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
+  const { isPending: isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const handleClick = useCallbackWithPermission(
