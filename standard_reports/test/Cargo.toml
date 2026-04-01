@@ -1,0 +1,23 @@
+[package]
+name = "standard-reports-test"
+version = "0.0.0"
+edition = "2021"
+
+[[bin]]
+name = "standard-reports-test"
+path = "src/main.rs"
+
+[features]
+# no-op: rust-analyzer applies the global "sqlite" feature to all linked projects
+sqlite = []
+
+[dependencies]
+anyhow = "1.0.102"
+clap = { version = "4.6.0", features = ["derive", "env"] }
+reqwest = { version = "0.13.2", features = ["blocking", "json"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+tokio = { version = "1.50.0", features = ["macros", "rt-multi-thread", "time"] }
+log = "0.4.29"
+log-panics = "2.1.0"
+simple_logger = "5.2.0"
