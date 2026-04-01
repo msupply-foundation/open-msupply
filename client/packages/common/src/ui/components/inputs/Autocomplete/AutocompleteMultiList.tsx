@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AutocompleteOnChange,
   AutocompleteOptionRenderer,
@@ -59,7 +59,7 @@ export const AutocompleteMultiList = <T extends { id: string }>({
     }
   };
 
-  const ItemInput: FC<AutocompleteRenderInputParams> = props => {
+  const ItemInput = (props: AutocompleteRenderInputParams) => {
     const { InputProps, ...rest } = props;
     const t = useTranslation();
     const filtered = options.filter(option =>
