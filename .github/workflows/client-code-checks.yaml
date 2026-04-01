@@ -34,7 +34,7 @@ jobs:
         run: corepack enable
 
       - name: Install Dependencies
-        run: cd client && yarn install --immutable
+        run: yarn install --immutable
 
       - name: Lint, Format, and Compile
         run: cd client && yarn lint-and-format
