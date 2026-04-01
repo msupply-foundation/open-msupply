@@ -134,10 +134,12 @@ pub fn validate(
         }
     }
 
-    // Cost price is read-only for internal suppliers and external suppliers linked to a PO
+    // Cost price is read-only for internal suppliers and external suppliers linked to a PO.
+    // Use epsilon comparison to allow unchanged values that may have drifted
+    // through floating point serialization (Rust f64 → JSON → JS Number → JSON → f64).
     if let Some(new_cost_price) = input.cost_price_per_pack {
         if (invoice.name_store_id.is_some() || invoice.purchase_order_id.is_some())
-            && new_cost_price != line_row.cost_price_per_pack
+            && (new_cost_price - line_row.cost_price_per_pack).abs() > f64::EPSILON
         {
             return Err(CannotEditCostPrice);
         }
