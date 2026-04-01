@@ -10,7 +10,7 @@
 
 ## Architecture
 - **Monorepo:** Client (React/TypeScript) + Server (Rust) + shared GraphQL schema
-- **Client:** React app with Lerna workspaces, Material-UI, GraphQL client
+- **Client:** React app with Yarn 4 workspaces, Material-UI, GraphQL client
 - **Server:** Rust with actix-web, async-graphql, PostgreSQL/SQLite support
 - **Database:** SQLite (dev) or PostgreSQL (prod), migrations in server/repository
 - **API:** GraphQL endpoint at `/graphql`, schema generated from Rust code
