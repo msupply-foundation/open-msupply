@@ -28,7 +28,7 @@ export const useFeatureFlags = () => {
     queryFn: async () => (await api.featureFlags()).featureFlags,
 
     // Only invalidates on app restart
-    cacheTime: Infinity,
+    gcTime: Infinity,
     staleTime: Infinity,
   });
 

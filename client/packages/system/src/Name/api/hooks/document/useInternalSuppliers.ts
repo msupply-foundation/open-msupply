@@ -4,7 +4,10 @@ import { useNameApi } from '../utils/useNameApi';
 export const useInternalSuppliers = () => {
   const api = useNameApi();
 
-  return useQuery([...api.keys.list(), 'internalSuppliers'], () =>
-    api.get.internalSuppliers()
-  );
+  return useQuery({
+    queryKey: [...api.keys.list(), 'internalSuppliers'],
+
+    queryFn: () =>
+      api.get.internalSuppliers()
+  });
 };

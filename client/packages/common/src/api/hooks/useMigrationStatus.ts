@@ -11,17 +11,14 @@ export const useMigrationStatus = (
 ) => {
   const { client } = useGql();
   const sdk = getSdk(client);
-  const result = useQuery(
-    'migrationStatus',
-    async () => {
+  const result = useQuery({
+    queryKey: ['migrationStatus'],
+    queryFn: async () => {
       const result = await sdk.migrationStatus();
       return result?.migrationStatus;
     },
-    {
-      refetchInterval,
-      suspense: true,
-    }
-  );
+    refetchInterval,
+  });
 
   return result.data?.inProgress ?? true;
 };

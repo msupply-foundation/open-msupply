@@ -14,11 +14,9 @@ export const useDemographicIndicatorById = (
   demographicIndicatorId: string | undefined
 ) => {
   const api = useDemographicsApi();
-  return useQuery(
-    api.keys.detailIndicator(demographicIndicatorId || ''),
-    () => api.getIndicators.byId(demographicIndicatorId || ''),
-    {
-      enabled: !!demographicIndicatorId,
-    }
-  );
+  return useQuery({
+    queryKey: api.keys.detailIndicator(demographicIndicatorId || ''),
+    queryFn: () => api.getIndicators.byId(demographicIndicatorId || ''),
+    enabled: !!demographicIndicatorId
+  });
 };

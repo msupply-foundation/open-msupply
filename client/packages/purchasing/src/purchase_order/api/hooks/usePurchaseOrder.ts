@@ -53,7 +53,7 @@ export const usePurchaseOrder = (id?: string) => {
   // UPDATE
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate();
 
@@ -76,7 +76,7 @@ export const usePurchaseOrder = (id?: string) => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -86,7 +86,7 @@ export const usePurchaseOrder = (id?: string) => {
     return result;
   };
 
-  const { addFromMasterList, isLoading: isAdding } = useAddFromMasterList();
+  const { addFromMasterList, isPending: isAdding } = useAddFromMasterList();
 
   return {
     query: { data, isFetching, isError, isLoading },
@@ -97,7 +97,9 @@ export const usePurchaseOrder = (id?: string) => {
     isDisabled,
     draft,
     handleChange,
-    invalidateQueries: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    invalidateQueries: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   };
 };
 
@@ -136,7 +138,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   });
 };
 
@@ -152,7 +156,9 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   });
 };
 
@@ -166,12 +172,13 @@ const useAddFromMasterList = () => {
     message: t('messages.confirm-add-from-master-list'),
   });
 
-  const mutationState = useMutation(
-    purchaseOrderApi.addToPurchaseOrderFromMasterList,
-    {
-      onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
-    }
-  );
+  const mutationState = useMutation({
+    mutationFn: (vars: Parameters<typeof purchaseOrderApi.addToPurchaseOrderFromMasterList>[0]) => purchaseOrderApi.addToPurchaseOrderFromMasterList(vars),
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    })
+  });
 
   const addFromMasterList = async (
     masterListId: string,

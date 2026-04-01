@@ -18,9 +18,13 @@ export const useAddFromMasterList = () => {
   } = useInboundShipment();
   const shipmentId = data?.id ?? '';
   const api = useInboundApi();
-  const mutationState = useMutation(api.addFromMasterList, {
+  const mutationState = useMutation({
+    mutationFn: api.addFromMasterList,
+
     onSettled: () =>
-      queryClient.invalidateQueries([INBOUND, INBOUND_LINE, shipmentId]),
+      queryClient.invalidateQueries({
+        queryKey: [INBOUND, INBOUND_LINE, shipmentId]
+      })
   });
 
   const t = useTranslation();

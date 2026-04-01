@@ -4,5 +4,8 @@ import { useResponseApi } from './useResponseApi';
 export const useProgramRequisitionSettingsByCustomer = (customerNameId: string) => {
   const api = useResponseApi();
 
-  return useQuery(api.keys.programSettings(), () => api.programRequisitionSettingsByCustomer(customerNameId));
+  return useQuery({
+    queryKey: api.keys.programSettings(),
+    queryFn: () => api.programRequisitionSettingsByCustomer(customerNameId)
+  });
 };

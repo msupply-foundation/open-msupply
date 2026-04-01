@@ -9,13 +9,13 @@ import { useMutation } from '@openmsupply-client/common';
 export const useVvmStatusLog = () => {
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate();
 
@@ -37,7 +37,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([STOCK_LINE]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [STOCK_LINE]
+    }),
   });
 };
 
@@ -53,6 +55,8 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([STOCK_LINE]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [STOCK_LINE]
+    }),
   });
 };
