@@ -33,20 +33,29 @@ export const QueryErrorHandler = () => {
   }, [setErrorMessage, location.pathname]);
 
   useEffect(() => {
+    // Subscribe to query cache errors (replaces onError query default removed in v5)
+    const unsubscribe = client.getQueryCache().subscribe(event => {
+      if (
+        event.type === 'updated' &&
+        event.action.type === 'error' &&
+        event.action.error
+      ) {
+        setErrorMessage(
+          (event.action.error as Error).message || generalError
+        );
+      }
+    });
+
+    // Mutation errors still use the default options callback
     const currentDefaults = client.getDefaultOptions();
     client.setDefaultOptions({
-      queries: {
-        ...currentDefaults.queries,
-        notifyOnChangeProps: 'tracked',
-        onError: e => {
-          setErrorMessage((e as Error).message || generalError);
-        },
-      },
       mutations: {
         ...currentDefaults.mutations,
         onError: e => setErrorMessage((e as Error).message || generalError),
       },
     });
+
+    return unsubscribe;
   }, []);
 
   return <></>;

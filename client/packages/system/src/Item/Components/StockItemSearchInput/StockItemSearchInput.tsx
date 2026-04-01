@@ -156,7 +156,7 @@ export const StockItemSearchInput = ({
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
       paginationDebounce={DEBOUNCE_TIMEOUT}
-      onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+      onPageChange={() => fetchNextPage()}
       mapOptions={items =>
         defaultOptionMapper(items, 'name').sort((a, b) =>
           a.label.localeCompare(b.label)
