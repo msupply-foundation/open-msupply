@@ -96,7 +96,7 @@ update_existing_pull_request() {
 }
 
 # Main execution
-echo "Checking RC branches for fresh commits on $YESTERDAY_DISPLAY"
+echo "Checking RC branches for commits on $YESTERDAY_DISPLAY (UTC)"
 
 git fetch origin
 
@@ -110,14 +110,14 @@ fi
 for RC_BRANCH in $RC_BRANCHES; do 
     echo "Checking branch: $RC_BRANCH"
 
-    COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d "origin/$RC_BRANCH" 2>/dev/null || echo "")
+    COMMIT_DATE=$(TZ=UTC git log -1 --format=%cd --date=format:%m%d "origin/$RC_BRANCH" 2>/dev/null || echo "")
     
     if [[ "$COMMIT_DATE" != "$YESTERDAY" ]]; then
-        echo "No recent commit found on $RC_BRANCH (commit date: $COMMIT_DATE)"
+        echo "No recent commit found on $RC_BRANCH (commit date: $COMMIT_DATE UTC)"
         continue
     fi
 
-    echo "Found recent commit on $RC_BRANCH (commit date: $COMMIT_DATE)"
+    echo "Found recent commit on $RC_BRANCH (commit date: $COMMIT_DATE UTC)"
 
     EXISTING_OPEN_PR_INFO=$(gh pr list --base develop --state open --json headRefName,number --jq ".[] | select(.headRefName | startswith(\"merge-${RC_BRANCH}-to-develop-\"))" 2>/dev/null | head -1 || echo "")
     EXISTING_OPEN_PR=$(echo "$EXISTING_OPEN_PR_INFO" | jq -r '.number // empty' 2>/dev/null || echo "")
