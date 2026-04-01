@@ -22,24 +22,24 @@ export const DeliveryTab = ({
   } = useInboundShipment();
   const statusMap = useInvoiceLineStatusMap();
 
-  const previousDeliveries = (row: InboundLineFragment) => {
-    const received = row.purchaseOrderLine?.receivedNumberOfUnits ?? 0;
-    return data?.status === InvoiceNodeStatus.Received ||
-      data?.status === InvoiceNodeStatus.Verified
-      ? received - row.numberOfPacks * row.packSize
-      : received;
-  };
+  const columns = useMemo(() => {
+    const previousDeliveries = (row: InboundLineFragment) => {
+      const received = row.purchaseOrderLine?.receivedNumberOfUnits ?? 0;
+      return data?.status === InvoiceNodeStatus.Received ||
+        data?.status === InvoiceNodeStatus.Verified
+        ? received - row.numberOfPacks * row.packSize
+        : received;
+    };
 
-  const inTransit = (row: InboundLineFragment) => {
-    const inTransit = row.purchaseOrderLine?.inTransitNumberOfUnits ?? 0;
-    return data?.status === InvoiceNodeStatus.Delivered ||
-      data?.status === InvoiceNodeStatus.Shipped
-      ? inTransit - row.numberOfPacks * row.packSize
-      : inTransit;
-  };
+    const inTransit = (row: InboundLineFragment) => {
+      const inTransitVal = row.purchaseOrderLine?.inTransitNumberOfUnits ?? 0;
+      return data?.status === InvoiceNodeStatus.Delivered ||
+        data?.status === InvoiceNodeStatus.Shipped
+        ? inTransitVal - row.numberOfPacks * row.packSize
+        : inTransitVal;
+    };
 
-  const columns = useMemo(
-    (): ColumnDef<InboundLineFragment>[] => [
+    const cols: ColumnDef<InboundLineFragment>[] = [
       {
         accessorKey: 'status',
         header: t('label.auth-status'),
@@ -71,13 +71,6 @@ export const DeliveryTab = ({
         header: t('label.this-delivery'),
         columnType: ColumnType.Number,
       },
-      // confusing name and not very useful?
-      // {
-      //   id: 'totalDelivered',
-      //   accessorFn: row => (row.purchaseOrderLine?.receivedNumberOfUnits ?? 0) + (row.numberOfPacks * row.packSize),
-      //   header: t('label.total-delivered'),
-      //   columnType: ColumnType.Number,
-      // },
       {
         id: 'inTransit',
         accessorFn: inTransit,
@@ -108,9 +101,9 @@ export const DeliveryTab = ({
         description: t('description.remaining-to-deliver'),
         columnType: ColumnType.Number,
       },
-    ],
-    [inTransit, previousDeliveries, statusMap, showLineStatus]
-  );
+    ];
+    return cols;
+  }, [data?.status, statusMap, showLineStatus]);
 
   const { table } = useNonPaginatedMaterialTable<InboundLineFragment>({
     tableId: 'inbound-shipment-delivery-tab-table',
