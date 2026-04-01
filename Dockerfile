@@ -42,7 +42,7 @@ RUN apt-get update && apt-get install -y curl rsync git && \
     NODE_MAJOR=$(sed 's/^v//' .nvmrc | cut -d. -f1) && \
     curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
     apt-get install -y nodejs && \
-    npm install -g yarn && \
+    corepack enable && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY package.json .
 
