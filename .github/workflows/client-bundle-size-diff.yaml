@@ -33,7 +33,7 @@ jobs:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Install dependencies
-        run: corepack enable && cd ./client && yarn install --immutable
+        run: corepack enable && yarn install --immutable
 
       - name: Build
         run: cd ./client && yarn build-stats
@@ -63,7 +63,7 @@ jobs:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Install dependencies
-        run: corepack enable && cd ./client && yarn install --immutable
+        run: corepack enable && yarn install --immutable
 
       - name: Build
         run: cd ./client && yarn build-stats

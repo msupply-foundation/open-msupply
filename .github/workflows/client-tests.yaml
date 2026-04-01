@@ -36,13 +36,8 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Install client dependencies
-        run: cd ./client && yarn install --immutable
-
-      - name: Install report/form dependencies
-        run: |
-          cd ./standard_reports && yarn install --frozen-lockfile
-          cd ../standard_forms && yarn install --frozen-lockfile
+      - name: Install dependencies
+        run: yarn install --immutable
 
       - name: Run tests
         run: cd ./client && yarn test
