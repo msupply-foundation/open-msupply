@@ -4,5 +4,7 @@ import { useOutboundApi } from './../utils/useOutboundApi';
 export const useBarcodeInsert = () => {
   const api = useOutboundApi();
 
-  return useMutation(api.insert.barcode);
+  return useMutation({
+    mutationFn: api.insert.barcode
+  });
 };

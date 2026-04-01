@@ -5,16 +5,16 @@ import { useApi } from './useApi';
 export const useRequisitionCounts = () => {
   const { storeId, api } = useApi();
 
-  const { data, ...rest } = useQuery(
-    [DASHBOARD, REQUISITION, storeId],
-    () =>
+  const { data, ...rest } = useQuery({
+    queryKey: [DASHBOARD, REQUISITION, storeId],
+
+    queryFn: () =>
       api.requisitionCounts({
         storeId,
       }),
-    {
-      retry: false,
-    }
-  );
+
+    retry: false
+  });
 
   if (!data?.requisitionCounts) {
     return { stats: undefined, ...rest };

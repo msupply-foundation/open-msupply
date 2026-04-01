@@ -4,9 +4,13 @@ import { useReturnsApi } from '../utils/useReturnsApi';
 export const useInsertCustomerReturn = () => {
   const queryClient = useQueryClient();
   const api = useReturnsApi();
-  return useMutation(api.insertCustomerReturn, {
+  return useMutation({
+    mutationFn: api.insertCustomerReturn,
+
     onSuccess: () => {
-      return queryClient.invalidateQueries(api.keys.base());
-    },
+      return queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 };

@@ -4,6 +4,7 @@ import {
   ProgramNode,
   ProgramSortFieldInput,
   useQuery,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { ImmunisationProgramFragment } from '../operations.generated';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
@@ -60,7 +61,7 @@ export const useImmunisationProgramList = (queryParams: ListParams) => {
     return { nodes, totalCount };
   };
 
-  const query = useQuery({ queryKey, queryFn, keepPreviousData: true });
+  const query = useQuery({ queryKey, queryFn, placeholderData: keepPreviousData });
   return query;
 };
 

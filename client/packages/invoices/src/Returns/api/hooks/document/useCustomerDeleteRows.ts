@@ -15,11 +15,15 @@ export const useCustomerDeleteRows = (
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useReturnsApi();
-  const { mutateAsync } = useMutation(api.deleteCustomer);
+  const { mutateAsync } = useMutation({
+    mutationFn: api.deleteCustomer
+  });
 
   const deleteAction = async () => {
     await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .then(() => queryClient.invalidateQueries({
+      queryKey: api.keys.base()
+    }))
       .catch(err => {
         throw err;
       });
