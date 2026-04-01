@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   Alert,
   Divider,
@@ -7,6 +13,9 @@ import {
   DialogButton,
   useDialog,
   useNotification,
+  useDisabledNotificationToast,
+  InvoiceLineStatusType,
+  InvoiceNodeStatus,
   ModalMode,
   useSimplifiedTabletUI,
   Box,
@@ -76,7 +85,15 @@ export const InboundLineEdit = ({
 
   const {
     query: { data },
+    hasAuthorisePermission,
+    isExternal,
   } = useInboundShipment();
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+  const isReceived =
+    data?.status === InvoiceNodeStatus.Received ||
+    data?.status === InvoiceNodeStatus.Verified;
   const purchaseOrder = data?.purchaseOrder;
   const hasPurchaseOrder = !!purchaseOrder;
 
@@ -196,7 +213,13 @@ export const InboundLineEdit = ({
 
     setVariantShownForItem(effectiveItem?.id ?? null);
     setVariantAction('first');
-  }, [mode, hasVariants, draftLines.length, effectiveItem?.id, variantShownForItem]);
+  }, [
+    mode,
+    hasVariants,
+    draftLines.length,
+    effectiveItem?.id,
+    variantShownForItem,
+  ]);
 
   const onVariantSelected = useCallback(
     (variant: ItemVariantFragment) => {
@@ -240,13 +263,43 @@ export const InboundLineEdit = ({
     }
   }, [hasVariants, addDraftLine]);
 
+  // Check if saving these lines requires authorise permission.
+  // Only lines the user actually changed (isUpdated/isCreated) matter.
+  const saveNeedsAuthorise = () => {
+    if (!isExternal) return false;
+    return draftLines.some(line => {
+      // Skip lines the user hasn't touched
+      if (!line.isUpdated && !line.isCreated) return false;
+
+      // Setting status to approved/rejected always needs authorise
+      if (
+        line.status === InvoiceLineStatusType.Passed ||
+        line.status === InvoiceLineStatusType.Rejected
+      )
+        return true;
+
+      // Editing an already-approved line needs authorise, unless
+      // the user is changing it to pending
+      if (!line.isCreated) {
+        const original = data?.lines.nodes.find(l => l.id === line.id);
+        if (original?.status === InvoiceLineStatusType.Passed) {
+          return line.status !== InvoiceLineStatusType.Pending;
+        }
+      }
+
+      return false;
+    });
+  };
+
   // --- Next/OK disabled logic ---
   const okNextDisabled = hasPurchaseOrder
     ? (mode === ModalMode.Update && !nextPOLine) || !selectedPOLine
     : (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   const okDisabled = hasPurchaseOrder
-    ? !selectedPOLine || draftLines.length === 0 || manualLinesWithZeroNumberOfPacks
+    ? !selectedPOLine ||
+      draftLines.length === 0 ||
+      manualLinesWithZeroNumberOfPacks
     : !currentItem || manualLinesWithZeroNumberOfPacks;
 
   const cards = (
@@ -256,6 +309,7 @@ export const InboundLineEdit = ({
       duplicateDraftLine={duplicateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
+      isReceived={isReceived}
       foreignCurrency={foreignCurrency}
       isExternalSupplier={isExternalSupplier}
       item={effectiveItem}
@@ -301,7 +355,7 @@ export const InboundLineEdit = ({
       }
       headerActions={
         <ButtonWithIcon
-          disabled={isDisabled}
+          disabled={isDisabled || isReceived}
           color="primary"
           variant="outlined"
           onClick={handleAddBatch}
@@ -315,6 +369,10 @@ export const InboundLineEdit = ({
           variant="next-and-ok"
           disabled={okNextDisabled || manualLinesWithZeroNumberOfPacks}
           onClick={async () => {
+            if (saveNeedsAuthorise() && !hasAuthorisePermission) {
+              permissionDeniedNotification();
+              return;
+            }
             await saveLines();
             if (hasPurchaseOrder) {
               if (mode === ModalMode.Update && nextPOLine) {
@@ -340,6 +398,10 @@ export const InboundLineEdit = ({
           variant="ok"
           disabled={okDisabled}
           onClick={async () => {
+            if (saveNeedsAuthorise() && !hasAuthorisePermission) {
+              permissionDeniedNotification();
+              return;
+            }
             try {
               await saveLines();
               onClose();

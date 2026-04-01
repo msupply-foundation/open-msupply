@@ -24,9 +24,13 @@ import {
   Typography,
   CopyIcon,
   StockIcon,
+  StatusChip,
+  InvoiceLineStatusType,
+  InvoiceNodeStatus,
   InfoIcon,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
+import { Select, MenuItem } from '@mui/material';
 import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,
@@ -42,6 +46,7 @@ import {
 import { PatchDraftLineInput } from '../../../api';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
 import { isInboundPlaceholderRow } from '../../../../utils';
+import { useInvoiceLineStatusMap } from '../../..';
 import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
 
 interface CardProps {
@@ -60,6 +65,7 @@ interface CardProps {
 interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
+  isReceived?: boolean;
   lastCardRef?: React.RefObject<HTMLDivElement>;
   actions?: React.ReactNode;
   /** The specific line ID to scroll into view when the modal opens */
@@ -72,6 +78,7 @@ export const InboundLineEditCards = ({
   duplicateDraftLine,
   removeDraftLine,
   isDisabled = false,
+  isReceived = false,
   foreignCurrency,
   isExternalSupplier,
   hasItemVariantsEnabled,
@@ -91,11 +98,16 @@ export const InboundLineEditCards = ({
   const formatRef = useRef(format);
   formatRef.current = format;
   const { store } = useAuthContext();
-  const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
-    usePreferences();
+  const {
+    manageVaccinesInDoses,
+    allowTrackingOfStockByDonor,
+    externalInboundShipmentLinesMustBeAuthorised,
+  } = usePreferences();
 
   const {
     query: { data: inboundData },
+    hasAuthorisePermission,
+    isExternal,
   } = useInboundShipment();
   const purchaseOrderId = inboundData?.purchaseOrder?.id;
   const isManualShipment =
@@ -120,6 +132,12 @@ export const InboundLineEditCards = ({
     }
     return totalOutstandingPacks;
   }, [purchaseOrderId, item?.id, poQuery.data]);
+
+  const showLineStatus =
+    lines.some(line => line.status != null) ||
+    (isExternal && !!externalInboundShipmentLinesMustBeAuthorised);
+
+  const statusMap = useInvoiceLineStatusMap();
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -274,7 +292,67 @@ export const InboundLineEditCards = ({
             </Box>
           );
         },
-        defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'status',
+        header: t('label.auth-status'),
+        columnGroup: 'stockLineDetails',
+        includeColumn: showLineStatus,
+        Cell: ({ row }) => {
+          const status = row.original.status;
+          const isStatusDisabled =
+            isDisabled ||
+            inboundData?.status === InvoiceNodeStatus.Received ||
+            inboundData?.status === InvoiceNodeStatus.Verified;
+
+          if (isStatusDisabled) {
+            const entry = status ? statusMap[status] : undefined;
+            return entry ? (
+              <StatusChip label={entry.label} colour={entry.colour} />
+            ) : null;
+          }
+
+          return (
+            <Select
+              value={status ?? ''}
+              variant="standard"
+              size="small"
+              fullWidth
+              sx={{
+                backgroundColor: theme => theme.palette.background.input.main,
+                borderRadius: 2,
+                px: 0.5,
+                '& .MuiSelect-select': {
+                  py: 0.5,
+                },
+              }}
+              onChange={e => {
+                updateDraftLine({
+                  id: row.original.id,
+                  status: e.target.value as InvoiceLineStatusType,
+                });
+              }}
+              renderValue={() => {
+                const entry = status ? statusMap[status] : undefined;
+                return entry ? (
+                  <StatusChip label={entry.label} colour={entry.colour} />
+                ) : null;
+              }}
+            >
+              {Object.entries(statusMap)
+                .filter(
+                  ([key]) =>
+                    hasAuthorisePermission ||
+                    key === InvoiceLineStatusType.Pending
+                )
+                .map(([key, { label, colour }]) => (
+                  <MenuItem key={key} value={key}>
+                    <StatusChip label={label} colour={colour} />
+                  </MenuItem>
+                ))}
+            </Select>
+          );
+        },
       },
       {
         accessorKey: 'shippedNumberOfPacks',
@@ -669,7 +747,7 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            disabled={isDisabled}
+            disabled={isDisabled || isReceived}
             label={t('label.duplicate-batch')}
             showLabel={!simplified}
             onClick={() => {
@@ -692,6 +770,7 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
+            disabled={isDisabled || isReceived}
             label={t('label.delete-batch')}
             showLabel={!simplified}
             color="error"
@@ -711,6 +790,7 @@ export const InboundLineEditCards = ({
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
     isDisabled,
+    isReceived,
     isExternalSupplier,
     isManualShipment,
     item?.isVaccine,
@@ -719,6 +799,8 @@ export const InboundLineEditCards = ({
     removeDraftLine,
     restrictedToLocationTypeId,
     setPackRoundingMessage,
+    showLineStatus,
+    statusMap,
     simplified,
     store?.preferences.issueInForeignCurrency,
     unitName,
