@@ -20,9 +20,12 @@ export const useHistoricalStockLines = ({
     datetime ?? 'NO_DATETIME',
   ];
 
-  const result = useQuery(key, () =>
-    sdk.getHistoricalStockLines({ storeId, itemId, datetime })
-  );
+  const result = useQuery({
+    queryKey: key,
+
+    queryFn: () =>
+      sdk.getHistoricalStockLines({ storeId, itemId, datetime })
+  });
 
   return {
     ...result,

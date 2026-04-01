@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useDebounceCallback } from '@common/hooks';
-import { MutateOptions, useMutation, useQueryClient } from 'react-query';
+import { MutateOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuerySelector } from '../useQuerySelector';
 
 export type FieldUpdateMutation<T> = (
@@ -57,9 +57,10 @@ export const useFieldsSelector = <Entity, KeyOfEntity extends keyof Entity>(
     select
   );
 
-  const { mutate } = useMutation((patch: Partial<Entity>) => mutateFn(patch), {
+  const { mutate } = useMutation({
+    mutationFn: (patch: Partial<Entity>) => mutateFn(patch),
     onMutate: async (patch: Partial<Entity>) => {
-      await queryClient.cancelQueries(queryKey);
+      await queryClient.cancelQueries({ queryKey });
 
       const previous = queryClient.getQueryData<Entity>(queryKey);
 
@@ -72,7 +73,7 @@ export const useFieldsSelector = <Entity, KeyOfEntity extends keyof Entity>(
 
       return { previous, patch };
     },
-    onSettled: () => queryClient.invalidateQueries(queryKey),
+    onSettled: () => queryClient.invalidateQueries({ queryKey }),
     onError: (_, __, context) => {
       queryClient.setQueryData(queryKey, context?.previous);
     },

@@ -65,7 +65,7 @@ export const useInboundShipment = (id?: string) => {
 
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate(isExternal);
 
@@ -88,7 +88,7 @@ export const useInboundShipment = (id?: string) => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -103,7 +103,7 @@ export const useInboundShipment = (id?: string) => {
   // DELETE
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useInboundDelete();
 
@@ -115,7 +115,9 @@ export const useInboundShipment = (id?: string) => {
   };
 
   const invalidateQuery = () => {
-    queryClient.invalidateQueries([INBOUND, INBOUND_LINE, invoiceId]);
+    queryClient.invalidateQueries({
+      queryKey: [INBOUND, INBOUND_LINE, invoiceId]
+    });
   };
 
   return {
@@ -166,7 +168,7 @@ const useGetById = (
     // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
     // is inactive. For example, when navigating away from the page and back again, refetch.
     refetchOnMount: false,
-    cacheTime: 0,
+    gcTime: 0,
   });
 
   return query;
@@ -197,7 +199,9 @@ const useUpdate = (isExternal: boolean) => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([INBOUND]);
+      queryClient.invalidateQueries({
+        queryKey: [INBOUND]
+      });
     },
   });
 };
@@ -228,6 +232,8 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([INBOUND]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [INBOUND]
+    }),
   });
 };

@@ -3,21 +3,20 @@ import { getSdk } from '../operations.generated';
 
 export const useInitialisationStatus = (
   refetchInterval: number | false = false,
-  shouldSuspend?: boolean
+  _shouldSuspend?: boolean
 ) => {
   const { client } = useGql();
   const sdk = getSdk(client);
 
-  return useQuery(
-    'initialisationStatus',
-    async () => {
+  return useQuery({
+    queryKey: ['initialisationStatus'],
+
+    queryFn: async () => {
       const result = await sdk.initialisationStatus();
       return result?.initialisationStatus;
     },
-    {
-      cacheTime: 0,
-      suspense: shouldSuspend,
-      refetchInterval,
-    }
-  );
+
+    gcTime: 0,
+    refetchInterval
+  });
 };

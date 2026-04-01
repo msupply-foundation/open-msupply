@@ -7,14 +7,18 @@ export const useSyncStatus = (
 ) => {
   const api = useSyncApi();
 
-  return useQuery(api.keys.syncStatus(), api.get.syncStatus, {
-    cacheTime: 0,
+  return useQuery({
+    queryKey: api.keys.syncStatus(),
+    queryFn: api.get.syncStatus,
+    gcTime: 0,
     refetchInterval,
-    enabled,
+    enabled
   });
 };
 
 export const useMutateSyncStatus = () => {
   const api = useSyncApi();
-  return useMutation(api.get.syncStatus);
+  return useMutation({
+    mutationFn: api.get.syncStatus
+  });
 };

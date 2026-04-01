@@ -4,7 +4,7 @@ import { LIST, RNR_FORM } from './keys';
 
 export const useDeleteRnRForm = () => {
   const { api, storeId, queryClient } = useRnRGraphQL();
-  const { mutateAsync, isLoading, error } = useMutation({
+  const { mutateAsync, isPending: isLoading, error } = useMutation({
     mutationFn: async (id: string) => {
       const response = await api.deleteRnRForm({
         storeId,
@@ -13,7 +13,9 @@ export const useDeleteRnRForm = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries([RNR_FORM, LIST]);
+      queryClient.invalidateQueries({
+        queryKey: [RNR_FORM, LIST]
+      });
     },
   });
 
