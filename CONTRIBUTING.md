@@ -44,18 +44,8 @@ The repo is split into a client and server application - you'll need to have a l
 For the client app, clone the repo, install packages
 
 ```sh
-corepack enable
-cd ./client
-yarn install
-```
-
-If you're working on reports or forms, install their dependencies too:
-
-```sh
-cd ./standard_reports
-yarn install
-cd ../standard_forms
-yarn install
+corepack enable   # only needed once
+yarn install      # from the repo root — installs all JS dependencies
 ```
 
 and you can then run the client tests:
