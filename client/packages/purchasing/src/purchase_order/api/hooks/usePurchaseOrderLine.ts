@@ -52,6 +52,7 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
     id: '',
     code: '',
     name: '',
+    defaultPackSize: 1,
     isVaccine: false,
     doses: 0,
     restrictedLocationTypeId: null,
