@@ -28,7 +28,7 @@ export const useInsertProgramRequest = () => {
           break;
         }
         case 'SupplierNotValid': {
-          error(t('error.supplier-not-valid-for-program'))();
+          error(t('error.program-not-valid-for-supplier'))();
           break;
         }
         default:
