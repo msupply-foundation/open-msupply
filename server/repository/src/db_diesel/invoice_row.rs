@@ -8,7 +8,7 @@ use crate::{
     ChangelogRepository, ChangelogTableName, Delete, RowActionType, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -229,7 +229,7 @@ impl<'a> InvoiceRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = invoice::table
             .filter(invoice::type_.eq(r#type).and(invoice::store_id.eq(store)))
-            .select(max(invoice::invoice_number))
+            .select(diesel::dsl::max(invoice::invoice_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

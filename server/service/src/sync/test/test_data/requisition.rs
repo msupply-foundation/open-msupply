@@ -91,7 +91,7 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             order_type: None,
             is_emergency: false,
             created_from_requisition_id: Some("created_from_id".to_string()),
-            original_customer_id: Some("name1".to_string()),
+            destination_customer_id: Some("name1".to_string()),
         },
     )
 }
@@ -138,7 +138,7 @@ fn requisition_request_push_record() -> TestSyncOutgoingRecord {
             is_emergency: false,
             oms_fields: Some(OmsFields {
                 created_from_requisition_id: Some("created_from_id".to_string()),
-                original_customer_id: Some("name1".to_string())
+                destination_customer_id: Some("name1".to_string())
             }),
         }),
     }
@@ -213,7 +213,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             order_type: Some("Normal".to_string()),
             is_emergency: true,
             created_from_requisition_id: None,
-            original_customer_id: None,
+            destination_customer_id: None,
         },
     )
 }
@@ -344,7 +344,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             order_type: Some("Normal".to_string()),
             is_emergency: false,
             created_from_requisition_id: None,
-            original_customer_id: None,
+            destination_customer_id: None,
         },
     )
 }
@@ -475,7 +475,7 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             order_type: Some("Normal".to_string()),
             is_emergency: false,
             created_from_requisition_id: None,
-            original_customer_id: None,
+            destination_customer_id: None,
         },
     )
 }

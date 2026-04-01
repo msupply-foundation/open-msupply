@@ -62,7 +62,7 @@ pub struct StorageConnection {
 }
 
 impl StorageConnection {
-    pub fn lock(&self) -> LockedConnection {
+    pub fn lock(&self) -> LockedConnection<'_> {
         LockedConnection {
             raw_connection: self.raw_connection.lock().unwrap(),
         }
