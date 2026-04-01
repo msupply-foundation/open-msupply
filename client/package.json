@@ -34,7 +34,6 @@
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom --testPathIgnorePatterns codegen.test.ts --testPathIgnorePatterns playwright",
     "test:codegen": "jest --config ./jest.config.js codegen.test.ts",
     "e2e": "npx playwright test --config playwright/playwright.config.ts",
-    "e2e:headed": "npx playwright test --config playwright/playwright.config.ts --headed",
     "translate": "node translate_locale"
   },
   "workspaces": {

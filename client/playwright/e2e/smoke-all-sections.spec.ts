@@ -200,6 +200,7 @@ sectionSuite('Replenishment', [
   { label: 'internal-order', url: '/replenishment/internal-order', hasDetail: true },
   { label: 'supplier-return', url: '/replenishment/supplier-return', hasDetail: true },
   { label: 'suppliers', url: '/replenishment/suppliers' },
+  { label: 'r-and-r-forms', url: '/replenishment/r-and-r-forms', hasDetail: true },
 ]);
 
 sectionSuite('Inventory', [
@@ -212,6 +213,30 @@ sectionSuite('Catalogue', [
   { label: 'items', url: '/catalogue/items', hasDetail: true },
   { label: 'master-lists', url: '/catalogue/master-lists', hasDetail: true },
   { label: 'assets', url: '/catalogue/assets' },
+]);
+
+sectionSuite('Dispensary', [
+  { label: 'patients', url: '/dispensary/patients', hasDetail: true },
+  { label: 'prescriptions', url: '/dispensary/prescription', hasDetail: true },
+  { label: 'clinicians', url: '/dispensary/clinicians' },
+]);
+
+sectionSuite('Cold Chain', [
+  { label: 'equipment', url: '/cold-chain/equipment', hasDetail: true },
+  { label: 'monitoring', url: '/cold-chain/monitoring' },
+  { label: 'sensors', url: '/cold-chain/sensors' },
+]);
+
+sectionSuite('Manage (Central Server)', [
+  { label: 'facilities', url: '/manage/facilities' },
+  { label: 'global-preferences', url: '/manage/global-preferences' },
+  { label: 'manage-equipment', url: '/manage/equipment' },
+  { label: 'indicators-demographics', url: '/manage/indicators-demographics' },
+  { label: 'campaigns', url: '/manage/campaigns' },
+]);
+
+sectionSuite('Programs', [
+  { label: 'immunisations', url: '/programs/immunisations' },
 ]);
 
 sectionSuite('Reports & Settings', [
