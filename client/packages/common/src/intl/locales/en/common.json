@@ -500,7 +500,7 @@
   "error.printing-label": "Error printing label.",
   "error.problem-saving": "An error occurred: there was a problem saving the data.",
   "error.program-already-exists": "Immunization program already exists",
-  "error.program-not-valid-for-supplier": "Selected program is not valid for this supplier",
+  "error.program-not-valid-for-supplier": "The selected program is not available for this supplier",
   "error.provide-reason": "A reason must be provided for any rows which have a difference in the counted number of packs.",
   "error.provide-reason-new-stock": "A reason must be provided before adding stock",
   "error.provide-reason-requisition": "A reason must be provided when the suggested quantity differs from the requested quantity.",
