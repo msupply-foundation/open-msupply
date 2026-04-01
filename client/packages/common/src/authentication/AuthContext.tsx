@@ -15,7 +15,6 @@ import { useUpdateUserInfo } from './hooks/useUpdateUserInfo';
 import { useUserActivity } from './hooks/useUserActivity';
 
 const AUTH_TOKEN_LIFETIME_MINUTES = 60;
-const COOKIE_LIFETIME_MINUTES = 24 * 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
 
 export enum AuthError {
@@ -82,7 +81,6 @@ export const getAuthCookie = (): AuthCookie => {
 
 export const setAuthCookie = (cookie: AuthCookie) => {
   const expires = addMinutes(new Date(), AUTH_TOKEN_LIFETIME_MINUTES); // Decide when to refresh
-  const cookieExpiry = addMinutes(new Date(), COOKIE_LIFETIME_MINUTES);
   const authCookie = { ...cookie, expires };
 
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
