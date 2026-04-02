@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   MRT_Row,
   MRT_RowData,
@@ -95,7 +95,20 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     columns,
     noUrlFiltering
   );
-  const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
+  const { sorting: urlSorting, onSortingChange } =
+    useUrlSortManagement(initialSort);
+
+  // The URL sort is shared across all tables on the page (e.g. multiple tabs
+  // in a detail view). Ignore sort entries that reference columns this table
+  // doesn't have, to avoid TanStack Table "Column does not exist" errors.
+  const columnIds = useMemo(
+    () => new Set(columns.map(c => c.id ?? c.accessorKey)),
+    [columns]
+  );
+  const sorting = useMemo(
+    () => urlSorting.filter(s => columnIds.has(s.id)),
+    [urlSorting, columnIds]
+  );
 
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);
