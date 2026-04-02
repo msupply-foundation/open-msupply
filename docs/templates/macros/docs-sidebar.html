@@ -1,0 +1,157 @@
+{% macro docs_sidebar(current_section, current_url) %}
+<div class="docs-sidebar d-none d-lg-block">
+  <nav class="docs-links" aria-label="Main navigation">
+    {% set root = get_section(path="_index.md") %}
+
+    {# Determine which top-level section we're in #}
+    {% set_global active_top = "" %}
+    {% for s in root.subsections %}
+      {% set sec = get_section(path=s) %}
+      {% if current_url is starting_with(sec.permalink) %}
+        {% set_global active_top = sec.permalink %}
+      {% endif %}
+    {% endfor %}
+
+    <ul class="sidebar-tree list-unstyled" id="docs-sidebar-tree">
+    {# ── Depth 0: top-level sections, always visible ── #}
+    {% for s in root.subsections %}
+      {% set L0 = get_section(path=s) %}
+      {% set L0_active = current_url is starting_with(L0.permalink) %}
+      <li class="sidebar-item{% if current_url == L0.permalink %} is-active-self{% endif %}" data-depth="0">
+        <div class="sidebar-row{% if L0_active %} is-active{% endif %}">
+          <a href="{{ L0.permalink | safe }}" class="sidebar-link depth-0{% if current_url == L0.permalink %} active{% endif %}">{{ L0.title | split(pat="/") | last }}</a>
+          {% if L0.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+        </div>
+      </li>
+
+      {# ── Depth 1: always visible and expanded ── #}
+      {% for s1 in L0.subsections %}
+        {% set L1 = get_section(path=s1) %}
+        {% set L1_active = current_url is starting_with(L1.permalink) %}
+        <li class="sidebar-item{% if current_url == L1.permalink %} is-active-self{% endif %}" data-depth="1" data-parent-permalink="{{ L0.permalink }}">
+          <div class="sidebar-row{% if L1_active %} is-active{% endif %}">
+            <a href="{{ L1.permalink | safe }}" class="sidebar-link depth-1{% if current_url == L1.permalink %} active{% endif %}">{{ L1.title | split(pat="/") | last }}</a>
+            {% if L1.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+          </div>
+        </li>
+
+        {# ── Depth 2: always visible, collapsed if has children and not active ── #}
+        {% for s2 in L1.subsections %}
+          {% set L2 = get_section(path=s2) %}
+          {% set L2_active = current_url is starting_with(L2.permalink) %}
+          <li class="sidebar-item{% if current_url == L2.permalink %} is-active-self{% endif %}" data-depth="2" data-parent-permalink="{{ L1.permalink }}"{% if not L2_active and L2.subsections %} data-collapsed="true"{% endif %}>
+            <div class="sidebar-row{% if L2_active %} is-active{% endif %}">
+              <a href="{{ L2.permalink | safe }}" class="sidebar-link depth-2{% if current_url == L2.permalink %} active{% endif %}">{{ L2.title | split(pat="/") | last }}</a>
+              {% if L2.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+            </div>
+          </li>
+
+          {% for s3 in L2.subsections %}
+            {% set L3 = get_section(path=s3) %}
+            {% set L3_active = current_url is starting_with(L3.permalink) %}
+            <li class="sidebar-item{% if current_url == L3.permalink %} is-active-self{% endif %}" data-depth="3" data-parent-permalink="{{ L2.permalink }}"{% if not L3_active and L3.subsections %} data-collapsed="true"{% endif %}{% if not L2_active %} style="display:none"{% endif %}>
+              <div class="sidebar-row{% if L3_active %} is-active{% endif %}">
+                <a href="{{ L3.permalink | safe }}" class="sidebar-link depth-3{% if current_url == L3.permalink %} active{% endif %}">{{ L3.title | split(pat="/") | last }}</a>
+                {% if L3.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+              </div>
+            </li>
+
+            {% for s4 in L3.subsections %}
+              {% set L4 = get_section(path=s4) %}
+              {% set L4_active = current_url is starting_with(L4.permalink) %}
+              <li class="sidebar-item{% if current_url == L4.permalink %} is-active-self{% endif %}" data-depth="4" data-parent-permalink="{{ L3.permalink }}"{% if not L4_active and L4.subsections %} data-collapsed="true"{% endif %}{% if not L3_active %} style="display:none"{% endif %}>
+                <div class="sidebar-row{% if L4_active %} is-active{% endif %}">
+                  <a href="{{ L4.permalink | safe }}" class="sidebar-link depth-4{% if current_url == L4.permalink %} active{% endif %}">{{ L4.title | split(pat="/") | last }}</a>
+                  {% if L4.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+                </div>
+              </li>
+
+              {% for s5 in L4.subsections %}
+                {% set L5 = get_section(path=s5) %}
+                {% set L5_active = current_url is starting_with(L5.permalink) %}
+                <li class="sidebar-item{% if current_url == L5.permalink %} is-active-self{% endif %}" data-depth="5" data-parent-permalink="{{ L4.permalink }}"{% if not L5_active and L5.subsections %} data-collapsed="true"{% endif %}{% if not L4_active %} style="display:none"{% endif %}>
+                  <div class="sidebar-row{% if L5_active %} is-active{% endif %}">
+                    <a href="{{ L5.permalink | safe }}" class="sidebar-link depth-5{% if current_url == L5.permalink %} active{% endif %}">{{ L5.title | split(pat="/") | last }}</a>
+                    {% if L5.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+                  </div>
+                </li>
+
+                {% for s6 in L5.subsections %}
+                  {% set L6 = get_section(path=s6) %}
+                  <li class="sidebar-item{% if current_url == L6.permalink %} is-active-self{% endif %}" data-depth="6" data-parent-permalink="{{ L5.permalink }}"{% if not L5_active %} style="display:none"{% endif %}>
+                    <div class="sidebar-row{% if current_url == L6.permalink %} is-active{% endif %}">
+                      <a href="{{ L6.permalink | safe }}" class="sidebar-link depth-6{% if current_url == L6.permalink %} active{% endif %}">{{ L6.title | split(pat="/") | last }}</a>
+                    </div>
+                  </li>
+                {% endfor %}
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+    </ul>
+  </nav>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var tree = document.getElementById('docs-sidebar-tree');
+  if (!tree) return;
+
+  function getChildren(permalink) {
+    return tree.querySelectorAll('li[data-parent-permalink="' + permalink + '"]');
+  }
+
+  function hideDescendants(permalink) {
+    var children = getChildren(permalink);
+    children.forEach(function(child) {
+      child.style.display = 'none';
+      var link = child.querySelector('.sidebar-link');
+      if (link) hideDescendants(link.href);
+    });
+  }
+
+  function showChildren(permalink) {
+    var children = getChildren(permalink);
+    children.forEach(function(child) {
+      child.style.display = '';
+      if (child.getAttribute('data-collapsed') !== 'true') {
+        var childLink = child.querySelector('.sidebar-link');
+        if (childLink) showChildren(childLink.href);
+      }
+    });
+  }
+
+  // Scroll active item into view immediately (before paint)
+  var activeItem = tree.querySelector('.sidebar-link.active');
+  if (activeItem) {
+    // Use direct scroll instead of scrollIntoView to avoid layout thrash
+    var sidebar = tree.closest('.docs-sidebar');
+    if (sidebar) {
+      var itemTop = activeItem.offsetTop - sidebar.offsetTop;
+      sidebar.scrollTop = itemTop - sidebar.clientHeight / 2;
+    }
+  }
+
+  tree.addEventListener('click', function(e) {
+    var btn = e.target.closest('.sidebar-chevron-btn');
+    if (!btn) return;
+    e.preventDefault();
+
+    var li = btn.closest('.sidebar-item');
+    var link = li.querySelector('.sidebar-link');
+    var permalink = link.href;
+    var isCollapsed = li.getAttribute('data-collapsed') === 'true';
+
+    if (isCollapsed) {
+      li.removeAttribute('data-collapsed');
+      showChildren(permalink);
+    } else {
+      li.setAttribute('data-collapsed', 'true');
+      hideDescendants(permalink);
+    }
+  });
+});
+</script>
+{% endmacro %}
