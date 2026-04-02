@@ -6743,6 +6743,7 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   AdjustForNumberOfDaysOutOfStock = 'adjustForNumberOfDaysOutOfStock',
+  AllowBackdatingOfShipments = 'allowBackdatingOfShipments',
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
@@ -6762,6 +6763,7 @@ export enum PreferenceKey {
   ItemMarginOverridesSupplierMargin = 'itemMarginOverridesSupplierMargin',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
+  MaximumBackdatingDays = 'maximumBackdatingDays',
   NumberOfMonthsThresholdToShowLowStockAlertsForProducts = 'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
   NumberOfMonthsThresholdToShowOverStockAlertsForProducts = 'numberOfMonthsThresholdToShowOverStockAlertsForProducts',
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
@@ -6810,6 +6812,7 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   adjustForNumberOfDaysOutOfStock: Scalars['Boolean']['output'];
+  allowBackdatingOfShipments: Scalars['Boolean']['output'];
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
@@ -6829,6 +6832,7 @@ export type PreferencesNode = {
   itemMarginOverridesSupplierMargin: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
+  maximumBackdatingDays: Scalars['Int']['output'];
   numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Int']['output'];
   numberOfMonthsThresholdToShowOverStockAlertsForProducts: Scalars['Int']['output'];
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
@@ -10650,6 +10654,8 @@ export type UpdateRequestRequisitionInput = {
   id: Scalars['String']['input'];
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
+  /** @deprecated Since 2.17.0. Use destination_customer_id */
+  originalCustomerId?: InputMaybe<NullableStringUpdate>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateRequestRequisitionStatusInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
@@ -11127,6 +11133,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
+  allowBackdatingOfShipments?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
@@ -11150,6 +11157,7 @@ export type UpsertPreferencesInput = {
   itemMarginOverridesSupplierMargin?: InputMaybe<Scalars['Boolean']['input']>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
+  maximumBackdatingDays?: InputMaybe<Scalars['Int']['input']>;
   numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
     Array<IntegerStorePrefInput>
   >;
