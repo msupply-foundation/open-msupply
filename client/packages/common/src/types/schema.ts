@@ -10650,11 +10650,11 @@ export type UpdateRequestRequisitionErrorInterface = {
 export type UpdateRequestRequisitionInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  destinationCustomerId?: InputMaybe<NullableStringUpdate>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
-  originalCustomerId?: InputMaybe<NullableStringUpdate>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateRequestRequisitionStatusInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
