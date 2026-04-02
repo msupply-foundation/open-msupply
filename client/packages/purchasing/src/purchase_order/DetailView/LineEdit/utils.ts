@@ -33,6 +33,10 @@ export const createDraftPurchaseOrderLine = (
       code: item.code,
       name: item.name,
       unitName: item.unitName,
+      defaultPackSize: item.defaultPackSize,
+      isVaccine: item.isVaccine,
+      doses: item.doses,
+      restrictedLocationTypeId: item.restrictedLocationTypeId,
       stats: {
         __typename: 'ItemStatsNode',
         stockOnHand: item.stats?.stockOnHand || 0,
