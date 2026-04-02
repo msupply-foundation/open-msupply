@@ -198,6 +198,11 @@ Some directories exist only because a child README is deeper in the tree (e.g. `
 
 - **Missing**: flags any tracked README that has no corresponding `_index.md` in `docs/content/`
 - **Orphaned**: flags any `_index.md` without `source = "docs"` that has no corresponding README in the repo
+- **Unsafe HTML**: flags security and rendering issues in markdown outside of code blocks:
+  - Bare HTML tags (`<script>`, `<style>`, `<iframe>`, `<img>`, `<svg>`, etc.) — Zola renders these as real HTML, which can break the page DOM and is an XSS risk. Wrap in backticks: `` `<script>` ``
+  - `javascript:` URLs in markdown links — direct XSS vector
+  - HTML event handler attributes (`onclick`, `onerror`, `onload`, etc.) — inline JS execution
+- **Broken links**: runs `zola build` and flags any broken internal anchor links (requires Zola installed)
 
 Run it with:
 
@@ -209,10 +214,13 @@ Example failure output:
 
 ```
 MISSING: some/new/README.md has no corresponding _index.md at docs/content/some/new/_index.md
-ORPHANED: docs/content/some/section/_index.md (no corresponding README — add source = "docs" to front matter if this is content not relating to a section of code)
+ORPHANED: docs/content/some/section/_index.md (no corresponding README — add source = "docs" to frontmatter if this is content not relating to a section of code)
 
 Summary: 68 checked, 2 skipped, 2 errors
 
+Checking internal links...
+
+OK: no broken internal links.
 
 Check failed.
 ```
@@ -221,3 +229,4 @@ Skipped READMEs:
 
 - `README.md` (root) — not developer module docs
 - `.github/workflows/ACTIONS_README.md` — GitHub-specific, not developer docs
+- `docs/themes/*` — theme vendored files

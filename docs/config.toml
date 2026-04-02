@@ -19,6 +19,7 @@ internal_level = "warn"
 
 [markdown]
 highlight_code = true
+insert_anchor_links = "none"
 
 [search]
 include_title = true
@@ -30,15 +31,13 @@ theme_color = "#fff"
 language_code = "en-US"
 title_separator = "-"
 
-edit_page = false
+edit_page = true
 docs_repo = "https://github.com/msupply-foundation/open-msupply"
 repo_branch = "develop"
 
-[[extra.menu.main]]
-name = "Docs"
-section = ""
-url = "/"
-weight = 10
+
+[extra.footer]
+info = 'Built with <a href="https://www.getzola.org/">Zola</a> and <a href="https://github.com/aaranxu/adidoks">AdiDoks</a>'
 
 [[extra.menu.social]]
 name = "GitHub"
