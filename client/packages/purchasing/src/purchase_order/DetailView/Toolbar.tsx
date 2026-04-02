@@ -183,7 +183,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={data?.reference ?? null}
+                  value={data?.reference ?? ''}
                   onChange={e => {
                     handleChange({ reference: e.target.value });
                   }}
