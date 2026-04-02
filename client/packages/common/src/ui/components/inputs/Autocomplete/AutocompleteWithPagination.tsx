@@ -26,8 +26,9 @@ import { useTranslation } from '@common/intl';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
-export interface AutocompleteWithPaginationProps<T extends RecordWithId>
-  extends Omit<AutocompleteProps<T>, 'options'> {
+export interface AutocompleteWithPaginationProps<
+  T extends RecordWithId,
+> extends Omit<AutocompleteProps<T>, 'options'> {
   pageNumber: number;
   rowsPerPage: number;
   totalRows: number;
@@ -167,15 +168,18 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         },
       };
 
-  const CustomPopper = (props: PopperProps) => (
-    <StyledPopper
-      {...props}
-      placement="bottom-start"
-      style={{ minWidth: popperMinWidth, width: 'auto' }}
-    />
-  );
-
-  const popper = popperMinWidth ? CustomPopper : StyledPopper;
+  // Memoize to keep a stable component reference across renders —
+  // a new function type would cause React to remount the Popper and close the dropdown.
+  const popper = useMemo(() => {
+    if (!popperMinWidth) return StyledPopper;
+    return (props: PopperProps) => (
+      <StyledPopper
+        {...props}
+        placement="bottom-start"
+        style={{ minWidth: popperMinWidth, width: 'auto' }}
+      />
+    );
+  }, [popperMinWidth]);
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
