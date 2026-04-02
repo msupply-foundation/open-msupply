@@ -70,7 +70,7 @@ export const CustomTranslationsModal = ({
   onClose: () => void;
 }) => {
   const t = useTranslation();
-  const { invalidateCustomTranslations } = useIntlUtils();
+  const { invalidateCustomTranslations, isRtl } = useIntlUtils();
   const { success, error } = useNotification();
 
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
@@ -202,7 +202,13 @@ export const CustomTranslationsModal = ({
           />
         }
       >
-        <Box display="flex" flexDirection="column" gap={2} height="100%">
+        <Box
+          display="flex"
+          flexDirection="column"
+          gap={2}
+          height="100%"
+          dir={isRtl ? 'rtl' : 'ltr'}
+        >
           <Box display="flex" gap={1}>
             <ButtonWithIcon
               label={t('button.import')}
@@ -271,6 +277,7 @@ const CustomTranslationsUploadModal = ({
   onClose: () => void;
 }) => {
   const t = useTranslation();
+  const { isRtl } = useIntlUtils();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [importMode, setImportMode] = useState<ImportMode>('keep-existing');
   const { Modal } = useDialog({
@@ -318,6 +325,7 @@ const CustomTranslationsUploadModal = ({
         alignItems="center"
         height="100%"
         gap={2}
+        dir={isRtl ? 'rtl' : 'ltr'}
       >
         <Alert
           severity={
