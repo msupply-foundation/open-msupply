@@ -8,28 +8,26 @@
  */
 
 import { isEqual } from '@openmsupply-client/common';
-import { useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 export const usePatchState = <T>(referenceData: Record<string, unknown>) => {
   const [patch, setPatch] = useState<Partial<T>>({});
-  const [isDirty, setIsDirty] = useState(false);
+  const patchRef = useRef<Partial<T>>({});
 
-  const updatePatch = (newData: Partial<T>) => {
-    const newPatch = { ...patch, ...newData };
-    setPatch(newPatch);
+  const updatePatch = useCallback((newData: Partial<T>) => {
+    patchRef.current = { ...patchRef.current, ...newData };
+    setPatch(prev => ({ ...prev, ...newData }));
+  }, []);
 
-    // Ensures that UI doesn't show in "dirty" state if nothing actually
-    // different from the saved data
-    const updatedData = { ...referenceData, ...newPatch };
-    if (isEqual(referenceData, updatedData)) setIsDirty(false);
-    else setIsDirty(true);
-    return;
-  };
-
-  const resetDraft = () => {
+  const resetDraft = useCallback(() => {
+    patchRef.current = {};
     setPatch({});
-    setIsDirty(false);
-  };
+  }, []);
 
-  return { patch, updatePatch, resetDraft, isDirty };
+  const isDirty = useMemo(
+    () => !isEqual(referenceData, { ...referenceData, ...patch }),
+    [referenceData, patch]
+  );
+
+  return { patch, patchRef, updatePatch, resetDraft, isDirty };
 };

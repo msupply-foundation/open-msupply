@@ -7,7 +7,7 @@ import {
   RANGE_SPLIT_CHAR,
   RouteBuilder,
   StatsPanel,
-  useAuthContext,
+  useCallbackWithPermission,
   useNavigate,
   useNotification,
   useToggle,
@@ -25,11 +25,15 @@ import {
   RequisitionNodeStatus,
   UserPermission,
 } from '@common/types';
-import { useInbound } from '@openmsupply-client/invoices';
+import { useInboundShipment } from '@openmsupply-client/invoices';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { useDashboardPanels } from '../hooks';
-import { useInboundCounts, useInternalOrderCounts } from '../api';
+import {
+  useInboundInternalCounts,
+  useInboundExternalCounts,
+  useInternalOrderCounts,
+} from '../api';
 
 export const ReplenishmentWidget = ({
   widgetContext,
@@ -40,12 +44,13 @@ export const ReplenishmentWidget = ({
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
   const formatNumber = useFormatNumber();
-  const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();
-  const inbound = useInboundCounts();
+  const inboundInternal = useInboundInternalCounts();
+  const inboundExternal = useInboundExternalCounts();
   const internalOrder = useInternalOrderCounts();
 
-  const inboundShipmentsPanelContext = `${widgetContext}-inbound-shipments`;
+  const inboundInternalPanelContext = `${widgetContext}-inbound-shipments-internal`;
+  const inboundExternalPanelContext = `${widgetContext}-inbound-shipments-external`;
   const internalOrdersPanelContext = `${widgetContext}-internal-orders`;
 
   const { customDate, urlQueryDateTime } = useFormatDateTime();
@@ -74,7 +79,9 @@ export const ReplenishmentWidget = ({
     )}${RANGE_SPLIT_CHAR}${customDate(endOfWeek, urlQueryDateTime)}`;
   };
 
-  const { mutateAsync: onCreate } = useInbound.document.insert();
+  const {
+    create: { create: onCreate },
+  } = useInboundShipment();
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(
@@ -82,58 +89,112 @@ export const ReplenishmentWidget = ({
     );
     errorSnack();
   };
+  const handleClick = useCallbackWithPermission(
+    UserPermission.InboundShipmentMutate,
+    modalControl.toggleOn
+  );
 
-  const handleClick = () => {
-    if (!userHasPermission(UserPermission.InboundShipmentMutate)) {
-      errorNotification(t('error-no-inbound-shipment-create-permission'))();
-      return;
-    }
-    modalControl.toggleOn();
-  };
+  const internalTab = t('label.internal');
+  const externalTab = t('label.external');
 
   const corePanels = [
     <StatsPanel
-      key={inboundShipmentsPanelContext}
-      error={inbound.error as ApiException}
-      isError={inbound.isError}
-      isLoading={inbound.isLoading}
+      key={inboundInternalPanelContext}
+      error={inboundInternal.error as ApiException}
+      isError={inboundInternal.isError}
+      isLoading={inboundInternal.isLoading}
       title={t('inbound-shipment')}
-      panelContext={inboundShipmentsPanelContext}
+      panelContext={inboundInternalPanelContext}
       stats={[
         {
           label: t('label.today'),
-          value: formatNumber.round(inbound.stats?.today),
+          value: formatNumber.round(inboundInternal.stats?.today),
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InboundShipment)
             .addQuery({
               createdDatetime: getTodayUrlQuery(),
+              tab: internalTab,
             })
             .build(),
-          statContext: `${inboundShipmentsPanelContext}-today`,
+          statContext: `${inboundInternalPanelContext}-today`,
         },
         {
           label: t('label.this-week'),
-          value: formatNumber.round(inbound.stats?.thisWeek),
+          value: formatNumber.round(inboundInternal.stats?.thisWeek),
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InboundShipment)
             .addQuery({
               createdDatetime: getThisWeekUrlQuery(),
+              tab: internalTab,
             })
             .build(),
-          statContext: `${inboundShipmentsPanelContext}-this-week`,
+          statContext: `${inboundInternalPanelContext}-this-week`,
         },
         {
           label: t('label.inbound-not-delivered'),
-          value: formatNumber.round(inbound.stats?.notDelivered),
+          value: formatNumber.round(inboundInternal.stats?.notDelivered),
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InboundShipment)
-            .addQuery({ status: InvoiceNodeStatus.Shipped })
+            .addQuery({
+              status: InvoiceNodeStatus.Shipped,
+              tab: internalTab,
+            })
             .build(),
-          statContext: `${inboundShipmentsPanelContext}-not-delivered`,
+          statContext: `${inboundInternalPanelContext}-not-delivered`,
         },
       ]}
       link={RouteBuilder.create(AppRoute.Replenishment)
         .addPart(AppRoute.InboundShipment)
+        .build()}
+    />,
+    <StatsPanel
+      key={inboundExternalPanelContext}
+      error={inboundExternal.error as ApiException}
+      isError={inboundExternal.isError}
+      isLoading={inboundExternal.isLoading}
+      title={t('dashboard.inbound-shipment-external')}
+      panelContext={inboundExternalPanelContext}
+      stats={[
+        {
+          label: t('label.today'),
+          value: formatNumber.round(inboundExternal.stats?.today),
+          link: RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InboundShipment)
+            .addQuery({
+              createdDatetime: getTodayUrlQuery(),
+              tab: externalTab,
+            })
+            .build(),
+          statContext: `${inboundExternalPanelContext}-today`,
+        },
+        {
+          label: t('label.this-week'),
+          value: formatNumber.round(inboundExternal.stats?.thisWeek),
+          link: RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InboundShipment)
+            .addQuery({
+              createdDatetime: getThisWeekUrlQuery(),
+              tab: externalTab,
+            })
+            .build(),
+          statContext: `${inboundExternalPanelContext}-this-week`,
+        },
+        {
+          label: t('label.inbound-not-delivered'),
+          value: formatNumber.round(inboundExternal.stats?.notDelivered),
+          link: RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InboundShipment)
+            .addQuery({
+              status: InvoiceNodeStatus.Shipped,
+              tab: externalTab,
+            })
+            .build(),
+          statContext: `${inboundExternalPanelContext}-not-delivered`,
+        },
+      ]}
+      link={RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.InboundShipment)
+        .addQuery({ tab: externalTab })
         .build()}
     />,
     <StatsPanel
@@ -170,20 +231,20 @@ export const ReplenishmentWidget = ({
           onClose={modalControl.toggleOff}
           onChange={async ({ id: otherPartyId }) => {
             modalControl.toggleOff();
-            await onCreate(
-              {
+            try {
+              const invoiceId = await onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId,
-              },
-              { onError }
-            ).then(invoiceId => {
+              });
               navigate(
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
                   .addPart(invoiceId)
                   .build()
               );
-            });
+            } catch (e) {
+              onError(e);
+            }
           }}
         />
       ) : null}

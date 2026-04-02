@@ -1,4 +1,4 @@
-pub const INSTALL_PLUGINS: &'static str = r#"
+pub const INSTALL_PLUGINS: &str = r#"
 mutation Query($fileId: String!) {
   root: centralServer {
     __typename

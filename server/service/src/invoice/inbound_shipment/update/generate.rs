@@ -1,9 +1,9 @@
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, LocationMovementRow,
-    Name, RepositoryError,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
+    LocationMovementRow, Name, PurchaseOrderLineRowRepository, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
@@ -35,6 +35,7 @@ pub(crate) struct GenerateResult {
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_currency_for_lines: Option<Vec<InvoiceLineRow>>,
+    pub(crate) update_cost_price_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) vvm_status_logs_to_update: Option<Vec<VVMStatusLogRow>>,
     pub(crate) update_donor: Option<Vec<LineAndStockLine>>,
 }
@@ -53,7 +54,7 @@ pub(crate) fn generate(
 
     let input_donor_id = match patch.default_donor.clone() {
         Some(update) => update.donor_id,
-        None => update_invoice.default_donor_link_id.clone(),
+        None => update_invoice.default_donor_id.clone(),
     };
 
     update_invoice.user_id = Some(ctx.user_id.clone());
@@ -65,7 +66,7 @@ pub(crate) fn generate(
         .tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
-    update_invoice.default_donor_link_id = input_donor_id.clone();
+    update_invoice.default_donor_id = input_donor_id.clone();
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status()
@@ -73,13 +74,22 @@ pub(crate) fn generate(
 
     if let Some(other_party) = other_party_option {
         update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        // Assigning name_row id as name_link is ok, input name_row should always an active name
-        // - only querying needs to go via link table
-        update_invoice.name_link_id = other_party.name_row.id;
+        update_invoice.name_id = other_party.name_row.id;
     }
 
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = patch.currency_rate.unwrap_or(update_invoice.currency_rate);
+    update_invoice.charges_local_currency = patch
+        .charges_local_currency
+        .unwrap_or(update_invoice.charges_local_currency);
+    update_invoice.charges_foreign_currency = patch
+        .charges_foreign_currency
+        .unwrap_or(update_invoice.charges_foreign_currency);
+
+    // Already validated in validate
+    if let Some(delivered_datetime) = patch.delivered_datetime {
+        update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
+    }
 
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
@@ -88,7 +98,7 @@ pub(crate) fn generate(
                 store_id: &update_invoice.store_id,
                 id: &update_invoice.id,
                 tax_percentage: update_invoice.tax_percentage,
-                supplier_id: &update_invoice.name_link_id,
+                supplier_id: &update_invoice.name_id,
                 currency_id: update_invoice.currency_id.clone(),
                 currency_rate: &update_invoice.currency_rate,
             },
@@ -150,6 +160,26 @@ pub(crate) fn generate(
         None
     };
 
+    // Recalculate cost prices when currency rate or charges change,
+    // but only for invoices linked to a purchase order
+    let has_purchase_order = update_invoice.purchase_order_id.is_some();
+    let should_update_cost_prices = has_purchase_order
+        && (patch.currency_rate.is_some()
+            || patch.charges_local_currency.is_some()
+            || patch.charges_foreign_currency.is_some());
+
+    let update_cost_price_for_lines = if should_update_cost_prices {
+        Some(generate_cost_price_update_for_lines(
+            connection,
+            &update_invoice.id,
+            &update_invoice.currency_rate,
+            update_invoice.charges_foreign_currency,
+            update_invoice.charges_local_currency,
+        )?)
+    } else {
+        None
+    };
+
     let update_donor = match patch.default_donor {
         Some(update) => Some(update_donor_on_lines_and_stock(
             connection,
@@ -167,6 +197,7 @@ pub(crate) fn generate(
         location_movements,
         update_tax_for_lines,
         update_currency_for_lines,
+        update_cost_price_for_lines,
         vvm_status_logs_to_update,
         update_donor,
     })
@@ -242,6 +273,103 @@ fn generate_foreign_currency_before_tax_for_lines(
     Ok(result)
 }
 
+/// Recalculates cost_price_per_pack for each invoice line based on:
+/// - PO price per pack (from linked purchase_order_line) converted to local currency
+/// - Plus the % cost adjustment from charges
+///
+/// Rate convention: rate = home (local) currency units per 1 foreign currency unit
+/// e.g. rate = 1.33 means 1 EUR = 1.33 AUD (home)
+///
+/// new_cost_price = round_to_2dp((po_price * rate) * (1 + cost_adjustment_fraction))
+///
+/// where cost_adjustment_fraction = (charges_foreign * rate + charges_local) / total_goods_local
+/// and total_goods_local = sum of all (po_price * rate * number_of_packs) across lines
+///
+/// If sell_price_per_pack == old cost_price_per_pack, sell price is also updated.
+fn generate_cost_price_update_for_lines(
+    connection: &StorageConnection,
+    invoice_id: &str,
+    currency_rate: &f64,
+    charges_foreign_currency: f64,
+    charges_local_currency: f64,
+) -> Result<Vec<InvoiceLineRow>, UpdateInboundShipmentError> {
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
+            .r#type(InvoiceLineType::StockIn.equal_to()),
+    )?;
+
+    // Fallback to 1.0 if rate is zero (possible via sync data)
+    let safe_rate = if *currency_rate != 0.0 {
+        *currency_rate
+    } else {
+        1.0
+    };
+
+    let po_line_repo = PurchaseOrderLineRowRepository::new(connection);
+
+    // First pass: gather PO prices and compute total goods in local currency
+    struct LineInfo {
+        invoice_line_row: InvoiceLineRow,
+        po_price_local: f64,
+    }
+
+    let mut line_infos: Vec<LineInfo> = Vec::new();
+    let mut total_goods_local: f64 = 0.0;
+
+    for invoice_line in &invoice_lines {
+        let row = &invoice_line.invoice_line_row;
+        let po_line_id = &invoice_line.invoice_line_row.purchase_order_line_id;
+        let po_price_local = if let Some(ref po_line_id) = po_line_id {
+            if let Some(po_line) = po_line_repo.find_one_by_id(po_line_id)? {
+                po_line.price_per_pack_after_discount * safe_rate
+            } else {
+                // No PO line found, keep current cost price
+                row.cost_price_per_pack
+            }
+        } else {
+            // No PO line linked, keep current cost price
+            row.cost_price_per_pack
+        };
+
+        total_goods_local += po_price_local * row.number_of_packs;
+        line_infos.push(LineInfo {
+            invoice_line_row: row.clone(),
+            po_price_local,
+        });
+    }
+
+    // Calculate cost adjustment fraction
+    let charges_converted = charges_foreign_currency * safe_rate;
+    let total_charges = charges_converted + charges_local_currency;
+    let cost_adjustment_fraction = if total_goods_local != 0.0 {
+        total_charges / total_goods_local
+    } else {
+        0.0
+    };
+
+    // Second pass: update cost prices
+    let mut result = Vec::new();
+    for line_info in line_infos {
+        let mut row = line_info.invoice_line_row;
+        let old_cost = row.cost_price_per_pack;
+        let new_cost =
+            (line_info.po_price_local * (1.0 + cost_adjustment_fraction) * 100.0).round() / 100.0;
+
+        row.cost_price_per_pack = new_cost;
+
+        // If sell price matches old cost price, update sell price too
+        // Use currency-appropriate tolerance for floating point comparison
+        if (row.sell_price_per_pack - old_cost).abs() < 0.0001 {
+            row.sell_price_per_pack = new_cost;
+        }
+
+        result.push(row);
+    }
+
+    Ok(result)
+}
+
 // If status changed to Delivered and above, remove empty lines
 fn empty_lines_to_trim(
     connection: &StorageConnection,
@@ -294,14 +422,20 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
 
     let current_datetime = Utc::now().naive_utc();
     match new_status {
+        UpdateInboundShipmentStatus::Shipped => {
+            invoice.shipped_datetime = Some(current_datetime);
+        }
         UpdateInboundShipmentStatus::Delivered => {
+            invoice.shipped_datetime = invoice.shipped_datetime.or(Some(current_datetime));
             invoice.delivered_datetime = Some(current_datetime);
         }
         UpdateInboundShipmentStatus::Received => {
+            invoice.shipped_datetime = invoice.shipped_datetime.or(Some(current_datetime));
             invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
             invoice.received_datetime = Some(current_datetime);
         }
         UpdateInboundShipmentStatus::Verified => {
+            invoice.shipped_datetime = invoice.shipped_datetime.or(Some(current_datetime));
             invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
             invoice.received_datetime = invoice.received_datetime.or(Some(current_datetime));
             invoice.verified_datetime = Some(current_datetime);
@@ -313,10 +447,7 @@ fn changed_status(
     status: Option<UpdateInboundShipmentStatus>,
     existing_status: &InvoiceStatus,
 ) -> Option<UpdateInboundShipmentStatus> {
-    let new_status = match status {
-        Some(status) => status,
-        None => return None, // Status is not changing
-    };
+    let new_status = status?;
 
     if &new_status.full_status() == existing_status {
         // The invoice already has this status, there's nothing to do.
@@ -353,6 +484,13 @@ pub fn generate_lines_and_stock_lines(
         if invoice_line.number_of_packs <= 0.0 {
             continue;
         }
+        // Rejected and pending lines should not create stock entries
+        if matches!(
+            invoice_line.status,
+            Some(InvoiceLineStatus::Rejected | InvoiceLineStatus::Pending)
+        ) {
+            continue;
+        }
         let mut line = invoice_line.clone();
         let stock_line_id = line.stock_line_id.unwrap_or(uuid());
 
@@ -377,14 +515,16 @@ pub fn generate_lines_and_stock_lines(
             location_id,
             batch,
             expiry_date,
+            manufacture_date,
             pack_size,
-            donor_link_id,
+            donor_id: donor_link_id,
             note,
             vvm_status_id,
             campaign_id,
             program_id,
             reason_option_id: _,
             volume_per_pack,
+            manufacturer_id,
             ..
         }: InvoiceLineRow = invoice_line;
 
@@ -401,14 +541,16 @@ pub fn generate_lines_and_stock_lines(
             total_number_of_packs: number_of_packs,
             expiry_date,
             note,
-            supplier_link_id: Some(supplier_id.to_string()),
+            supplier_id: Some(supplier_id.to_string()),
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
+            manufacturer_id,
             vvm_status_id,
             campaign_id,
             program_id,
             volume_per_pack,
             total_volume: volume_per_pack * number_of_packs,
+            manufacture_date,
             on_hold: false,
             barcode_id: None,
         };
@@ -460,21 +602,20 @@ fn update_donor_on_lines_and_stock(
         let mut stock_line = invoice_line.stock_line_option;
 
         let new_donor_id = match donor_update_method.clone() {
-            ApplyDonorToInvoiceLines::None => line.donor_link_id.clone(),
-            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_link_id {
+            ApplyDonorToInvoiceLines::None => line.donor_id.clone(),
+            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_id {
                 Some(_) => updated_default_donor_id.clone(),
                 None => None,
             },
-            ApplyDonorToInvoiceLines::AssignIfNone => line
-                .donor_link_id
-                .clone()
-                .or(updated_default_donor_id.clone()),
+            ApplyDonorToInvoiceLines::AssignIfNone => {
+                line.donor_id.clone().or(updated_default_donor_id.clone())
+            }
             ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
         };
 
-        line.donor_link_id = new_donor_id.clone();
+        line.donor_id = new_donor_id.clone();
         if let Some(ref mut stock_line) = stock_line {
-            stock_line.donor_link_id = new_donor_id;
+            stock_line.donor_id = new_donor_id;
         }
 
         result.push(LineAndStockLine { line, stock_line });

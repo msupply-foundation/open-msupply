@@ -41,6 +41,7 @@ table! {
         sell_price_per_pack -> Double,
         total_before_tax -> Nullable<Double>,
         number_of_packs -> Double,
+        user_id -> Nullable<Text>,
         type_precedence -> Integer,
         running_balance -> Double,
     }
@@ -66,6 +67,7 @@ pub struct ItemLedgerRow {
     pub sell_price_per_pack: f64,
     pub total_before_tax: Option<f64>,
     pub number_of_packs: f64,
+    pub user_id: Option<String>,
     pub type_precedence: i32,
     pub running_balance: f64,
 }
@@ -191,7 +193,8 @@ mod tests {
         .await;
 
         let repo = ItemLedgerRepository::new(&storage_connection);
-        let filter = ItemLedgerFilter::new().item_id(EqualFilter::equal_to("ledger_test_item".to_string()));
+        let filter =
+            ItemLedgerFilter::new().item_id(EqualFilter::equal_to("ledger_test_item".to_string()));
 
         let result = repo.query(Pagination::all(), Some(filter.clone())).unwrap();
 

@@ -189,7 +189,6 @@ query preferences($storeId: String!) {
   preferences(storeId: $storeId) {
     adjustForNumberOfDaysOutOfStock
     allowTrackingOfStockByDonor
-    authoriseGoodsReceived
     authorisePurchaseOrder
     canCreateInternalOrderFromARequisition
     customTranslations
@@ -215,15 +214,31 @@ query preferences($storeId: String!) {
     useSimplifiedMobileUi
     expiredStockPreventIssue
     expiredStockIssueThreshold
+    displayPopulationBasedForecasting
     warnWhenMissingRecentStocktake {
       enabled
       maxAge
       minItems
     }
     warningForExcessRequest
+    externalInboundShipmentLinesMustBeAuthorised
     invoiceStatusOptions
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
     isGaps
+    globalTableConfigs
+  }
+}
+
+mutation saveGlobalTableConfigs(
+  $storeId: String!
+  $input: UpsertPreferencesInput!
+) {
+  centralServer {
+    preferences {
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
+      }
+    }
   }
 }

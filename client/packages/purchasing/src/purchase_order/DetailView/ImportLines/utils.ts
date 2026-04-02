@@ -5,7 +5,7 @@ import { PurchaseOrderLineStatusNode } from '@common/types';
 
 export type ImportRow = Omit<
   PurchaseOrderLineFragment,
-  '__typename' | 'item' | 'lineNumber'
+  '__typename' | 'item' | 'lineNumber' | 'shippedNumberOfUnits'
 > & {
   itemCode: string;
   discountPercentage: number;
@@ -49,8 +49,8 @@ export const getImportHelpers = (
     errorMessage: '',
     warningMessage: '',
     discountPercentage: 0,
-    receivedNumberOfUnits: 0,
     unitsOrderedInOthers: 0,
+    receivedNumberOfUnits: 0,
     numberOfPacks: 0,
   };
   const rowErrors: string[] = [];

@@ -95,7 +95,7 @@ impl Processor for RequisitionAutoFinaliseProcessor {
             RequisitionLineFilter::new()
                 .requisition_id(EqualFilter::equal_to(requisition.id.to_string())),
         )?;
-        if requisition_lines.len() == 0 {
+        if requisition_lines.is_empty() {
             return Ok(None);
         }
 
@@ -109,7 +109,7 @@ impl Processor for RequisitionAutoFinaliseProcessor {
                     ..Default::default()
                 }),
         )?;
-        if invoice_lines.len() == 0 {
+        if invoice_lines.is_empty() {
             return Ok(None);
         }
 

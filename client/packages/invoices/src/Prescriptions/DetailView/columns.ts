@@ -4,8 +4,7 @@ import {
   usePreferences,
   ColumnDef,
   ColumnType,
-  Groupable,
-  ArrayUtils,
+  weightedAverageByUnits,
 } from '@openmsupply-client/common';
 import { PrescriptionLineFragment } from '../api/operations.generated';
 import { useMemo } from 'react';
@@ -17,7 +16,7 @@ export const usePrescriptionColumn = () => {
   const { store: { preferences } = {} } = useAuthContext();
   const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 
-  return useMemo((): ColumnDef<Groupable<PrescriptionLineFragment>>[] => {
+  return useMemo((): ColumnDef<PrescriptionLineFragment>[] => {
     return [
       {
         accessorKey: 'note',
@@ -98,12 +97,8 @@ export const usePrescriptionColumn = () => {
         description: t('description.unit-quantity'),
         columnType: ColumnType.Number,
         defaultHideOnMobile: true,
-        accessorFn: row => {
-          if ('subRows' in row)
-            return ArrayUtils.getUnitQuantity(row.subRows ?? []);
-
-          return row.packSize * row.numberOfPacks;
-        },
+        accessorFn: row => row.packSize * row.numberOfPacks,
+        aggregationFn: 'sum',
         size: 120,
       },
       {
@@ -113,14 +108,9 @@ export const usePrescriptionColumn = () => {
         defaultHideOnMobile: true,
         accessorFn: row => {
           if (!row.item.isVaccine) return null;
-          if ('subRows' in row)
-            return (
-              ArrayUtils.getUnitQuantity(row.subRows ?? []) *
-              (row.item.doses ?? 1)
-            );
-
           return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
         },
+        aggregationFn: 'sum',
         size: 120,
         includeColumn: manageVaccinesInDoses,
       },
@@ -138,12 +128,6 @@ export const usePrescriptionColumn = () => {
         columnType: ColumnType.Number,
         enableSorting: true,
         size: 100,
-        accessorFn: row => {
-          if ('subRows' in row)
-            return ArrayUtils.getSum(row.subRows ?? [], 'numberOfPacks');
-
-          return row.numberOfPacks;
-        },
       },
       {
         id: 'sellPricePerUnit',
@@ -151,16 +135,10 @@ export const usePrescriptionColumn = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
         accessorFn: rowData => {
-          if ('subRows' in rowData) {
-            return ArrayUtils.getAveragePrice(
-              rowData.subRows ?? [],
-              'sellPricePerPack'
-            );
-          } else {
-            if (isPrescriptionPlaceholderRow(rowData)) return undefined;
-            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
-          }
+          if (isPrescriptionPlaceholderRow(rowData)) return undefined;
+          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
         },
+        aggregationFn: weightedAverageByUnits(),
         size: 100,
       },
       {
@@ -169,18 +147,10 @@ export const usePrescriptionColumn = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
         accessorFn: rowData => {
-          if ('subRows' in rowData) {
-            return Object.values(rowData.subRows ?? []).reduce(
-              (sum, batch) =>
-                sum + batch.sellPricePerPack * batch.numberOfPacks,
-              0
-            );
-          } else {
-            if (isPrescriptionPlaceholderRow(rowData)) return '';
-
-            return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
-          }
+          if (isPrescriptionPlaceholderRow(rowData)) return null;
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
         },
+        aggregationFn: 'sum',
         size: 120,
       },
       {
@@ -189,18 +159,10 @@ export const usePrescriptionColumn = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
         accessorFn: rowData => {
-          if ('subRows' in rowData) {
-            return Object.values(rowData.subRows ?? []).reduce(
-              (sum, batch) =>
-                sum + batch.costPricePerPack * batch.numberOfPacks,
-              0
-            );
-          } else {
-            if (isPrescriptionPlaceholderRow(rowData)) return '';
-
-            return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
-          }
+          if (isPrescriptionPlaceholderRow(rowData)) return null;
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
         },
+        aggregationFn: 'sum',
         size: 120,
       },
     ];

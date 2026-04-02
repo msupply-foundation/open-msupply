@@ -16,19 +16,33 @@ import {
   ArrowRightIcon,
   useEditModal,
   useNotification,
+  useDisabledNotificationToast,
   usePreferences,
   useIsExtraSmallScreen,
+  CheckIcon,
+  CloseIcon,
+  ClockIcon,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import {
   getStatusTranslator,
   inboundStatuses,
-  manualInboundStatuses,
+  getInboundShipmentType,
+  getInboundStatusesForType,
 } from '../../../utils';
-import { InboundFragment, InboundLineFragment, useInbound } from '../../api';
-import { StatusChangeButton } from './StatusChangeButton';
+import {
+  InboundFragment,
+  InboundLineFragment,
+  useInboundShipment,
+} from '../../api';
+import {
+  useInboundDeleteSelectedLines,
+  useZeroInboundLinesQuantity,
+  useSaveInboundLines,
+  useChangeStatusOfInboundLines,
+} from '../../api/hooks/utils';
 import { OnHoldButton } from './OnHoldButton';
-import { useIsInboundDisabled } from '../../api/hooks/utils/useIsInboundDisabled';
+import { StatusChangeButton } from './StatusChangeButton';
 
 const createStatusLog = (invoice: InboundFragment) => {
   const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
@@ -70,12 +84,14 @@ interface FooterComponentProps {
   onReturnLines: () => void;
   selectedRows: InboundLineFragment[];
   resetRowSelection: () => void;
+  showLineStatus: boolean;
 }
 
 export const FooterComponent = ({
   onReturnLines,
   selectedRows,
   resetRowSelection,
+  showLineStatus,
 }: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
@@ -84,18 +100,29 @@ export const FooterComponent = ({
   const { invoiceStatusOptions } = usePreferences();
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
-  const { data } = useInbound.document.get();
-  const onDelete = useInbound.lines.deleteSelected(
+  const {
+    query: { data },
+    isDisabled,
+    isExternal,
+    hasAuthorisePermission,
+  } = useInboundShipment();
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+  const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
     resetRowSelection
   );
-  const onZeroQuantities = useInbound.lines.zeroQuantities(
+  const onZeroQuantities = useZeroInboundLinesQuantity(
     selectedRows,
     resetRowSelection
   );
-  const { mutateAsync } = useInbound.lines.save();
-  const isDisabled = useIsInboundDisabled();
-  const isManuallyCreated = !data?.linkedShipment?.id;
+  const { mutateAsync } = useSaveInboundLines(isExternal);
+  const onChangeLineStatus = useChangeStatusOfInboundLines(
+    selectedRows,
+    resetRowSelection
+  );
+  const shipmentType = data ? getInboundShipmentType(data) : undefined;
 
   const handleCampaignClick = () => {
     if (isDisabled) {
@@ -107,7 +134,26 @@ export const FooterComponent = ({
     }
   };
 
-  const actions: Action[] = [
+  const changeLineStatus = (status: 'approve' | 'reject' | 'pending') => {
+    if (!selectedRows.length) {
+      const selectLinesSnack = info(t(`messages.select-rows-to-${status}`));
+      selectLinesSnack();
+      return;
+    }
+
+    if (data?.status === InvoiceNodeStatus.Received || isDisabled) {
+      info(t('messages.cant-change-line-status-on-received-invoice'))();
+      return;
+    }
+
+    if ((status === 'approve' || status === 'reject') && !hasAuthorisePermission) {
+      return permissionDeniedNotification();
+    }
+
+    onChangeLineStatus(status);
+  };
+
+  let actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
@@ -132,11 +178,30 @@ export const FooterComponent = ({
       shouldShrink: false,
     },
   ];
-  const statuses = isManuallyCreated
-    ? manualInboundStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      )
-    : inboundStatuses.filter(status => invoiceStatusOptions?.includes(status));
+  if (showLineStatus) {
+    actions = actions.concat([
+      {
+        label: t('button.approve'),
+        icon: <CheckIcon />,
+        onClick: () => changeLineStatus('approve'),
+      },
+      {
+        label: t('button.reject'),
+        icon: <CloseIcon />,
+        onClick: () => changeLineStatus('reject'),
+      },
+      {
+        label: t('button.pending'),
+        icon: <ClockIcon />,
+        onClick: () => changeLineStatus('pending'),
+      },
+    ]);
+  }
+  const statuses = (
+    shipmentType ? getInboundStatusesForType(shipmentType) : inboundStatuses
+  ).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
 
   return (
     <AppFooterPortal

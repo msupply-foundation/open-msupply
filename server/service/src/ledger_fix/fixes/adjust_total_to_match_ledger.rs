@@ -31,8 +31,7 @@ pub(crate) fn fix(
 
     if !should_adjust {
         operation_log.push_str(&format!(
-            "Ledger does not match use case for adjust_total_to_match_ledger {:?}.\n",
-            balance_summary
+            "Ledger does not match use case for adjust_total_to_match_ledger {balance_summary:?}.\n"
         ));
         return Ok(());
     }

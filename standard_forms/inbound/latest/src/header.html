@@ -49,4 +49,7 @@
             {% endif %}</span><br>
         <span>{{t(k="report.confirmed-date", f="Confirmed date")}}:{{
             self::dateOrNA(datetime=data.invoice.deliveredDatetime) }}</span><br>
+        {% if data.invoice.purchaseOrder %}
+        <span>{{t(k="label.purchase-order",f="Purchase Order")}}: {{ data.invoice.purchaseOrder.number }}</span><br>
+        {% endif %}
     </div>

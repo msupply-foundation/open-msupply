@@ -35,7 +35,7 @@ pub struct DraftStockOutLine {
     pub vvm_status_id: Option<String>,
     pub doses_per_unit: i32,
     pub item_variant_id: Option<String>,
-    pub donor_link_id: Option<String>,
+    pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub volume_per_pack: f64,
@@ -54,7 +54,7 @@ pub fn get_draft_stock_out_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
-    let invoice = get_invoice(ctx, Some(store_id), invoice_id)?.ok_or(ListError::DatabaseError(
+    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(ListError::DatabaseError(
         RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
@@ -264,7 +264,7 @@ impl DraftStockOutLine {
             total_number_of_packs,
             on_hold,
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             volume_per_pack,
             ..
         } = line.stock_line_row;
@@ -274,7 +274,7 @@ impl DraftStockOutLine {
             item_id: line.item_row.id,
             stock_line_id: id,
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             batch,
             pack_size,
             expiry_date,
@@ -305,7 +305,7 @@ impl DraftStockOutLine {
             expiry_date,
             location_id,
             sell_price_per_pack,
-            donor_link_id,
+            donor_id: donor_link_id,
             campaign_id,
             program_id,
             ..
@@ -330,7 +330,7 @@ impl DraftStockOutLine {
             id,
             item_id: line.item_row.id,
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             number_of_packs,
             stock_line_id,
             pack_size,
@@ -352,7 +352,7 @@ impl DraftStockOutLine {
             doses_per_unit: line.item_row.vaccine_doses,
             campaign_id,
             program_id,
-            volume_per_pack
+            volume_per_pack,
         })
     }
 }

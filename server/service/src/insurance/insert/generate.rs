@@ -9,7 +9,7 @@ pub struct GenerateInput {
 pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJoinRow {
     let InsertInsurance {
         id,
-        name_link_id,
+        name_id,
         insurance_provider_id,
         policy_number_family,
         policy_number_person,
@@ -27,7 +27,7 @@ pub fn generate(GenerateInput { insert_input }: GenerateInput) -> NameInsuranceJ
 
     NameInsuranceJoinRow {
         id,
-        name_link_id,
+        name_id,
         insurance_provider_id,
         policy_number,
         policy_number_family: Some(policy_number_family),
@@ -46,12 +46,10 @@ pub fn compose_policy_number(
     policy_number_person: Option<String>,
 ) -> String {
     let v = vec![policy_number_family, policy_number_person];
-    let policy_number = v
-        .into_iter()
+
+    v.into_iter()
         .flatten()
         .filter(|n| !n.is_empty())
         .collect::<Vec<_>>()
-        .join("-");
-
-    policy_number
+        .join("-")
 }

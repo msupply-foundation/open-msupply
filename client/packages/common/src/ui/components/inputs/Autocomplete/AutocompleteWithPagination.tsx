@@ -11,7 +11,6 @@ import {
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
   createFilterOptions,
-  PopperProps,
   CircularProgress,
   Box,
 } from '@mui/material';
@@ -26,8 +25,9 @@ import { useTranslation } from '@common/intl';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
-export interface AutocompleteWithPaginationProps<T extends RecordWithId>
-  extends Omit<AutocompleteProps<T>, 'options'> {
+export interface AutocompleteWithPaginationProps<
+  T extends RecordWithId,
+> extends Omit<AutocompleteProps<T>, 'options'> {
   pageNumber: number;
   rowsPerPage: number;
   totalRows: number;
@@ -167,15 +167,6 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         },
       };
 
-  const CustomPopper = (props: PopperProps) => (
-    <StyledPopper
-      {...props}
-      placement="bottom-start"
-      style={{ minWidth: popperMinWidth, width: 'auto' }}
-    />
-  );
-
-  const popper = popperMinWidth ? CustomPopper : StyledPopper;
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
@@ -210,9 +201,12 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         ...sx,
       }}
       slots={{
-        popper: popper,
+        popper: StyledPopper,
       }}
       slotProps={{
+        popper: popperMinWidth
+          ? { placement: 'bottom-start' as const, style: { minWidth: popperMinWidth, width: 'auto' } }
+          : undefined,
         listbox: {
           ...listboxProps,
           sx: {

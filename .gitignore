@@ -2,11 +2,12 @@
 # common location for local config file containing connection credentials
 server/report_builder/config.yaml
 .vscode/*
+!.vscode/extensions.json
 
 # Temp export files
 server/data
 .gitmodules
-
+node_modules/
 
 standard_reports/test-config.json
 client/dist
@@ -18,4 +19,5 @@ client/dist
 # `claude -w "feature-name"` will create "/.claude/worktrees/feature-name" for your worktree. Back at root though, git picks up this whole directory copy of the repo!
 worktrees
 .claude/*.local.json
+# Default path for backups
 backup/

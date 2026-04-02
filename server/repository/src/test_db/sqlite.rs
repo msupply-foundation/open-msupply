@@ -31,7 +31,7 @@ fn get_test_db_settings_etc(db_name: &str, is_template: bool) -> DatabaseSetting
         database_name: if is_template {
             format!("{}/{}.sqlite", template_dir().to_string_lossy(), db_name)
         } else {
-            format!("{}/{}.sqlite", TEST_OUTPUT_DIR, db_name)
+            format!("{TEST_OUTPUT_DIR}/{db_name}.sqlite")
         },
         init_sql: None,
         database_path: None,
@@ -107,7 +107,9 @@ pub(crate) async fn setup_with_version(
 
                 // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
                 // this loop is interrupted by user
-                if file_name == TEMPLATE_MARKER_FILE_SQLITE || file_name == TEMPLATE_MARKER_FILE_POSTGRES {
+                if file_name == TEMPLATE_MARKER_FILE_SQLITE
+                    || file_name == TEMPLATE_MARKER_FILE_POSTGRES
+                {
                     continue;
                 }
 

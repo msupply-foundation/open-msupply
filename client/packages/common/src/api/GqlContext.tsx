@@ -20,7 +20,9 @@ export type SkipRequest = (documentNode: DocumentNode) => boolean;
 const permissionExceptions = [
   'reports',
   'stockCounts',
-  'invoiceCounts',
+  'inboundShipmentCounts',
+  'inboundShipmentExternalCounts',
+  'outboundShipmentCounts',
   'itemCounts',
   'requisitionCounts',
   'temperatureNotifications',

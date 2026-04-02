@@ -90,7 +90,8 @@ export const PrescriptionListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
+        description: t('description.invoice-number'),
         enableSorting: true,
         enableColumnFilter: true,
         size: 110,
@@ -139,7 +140,7 @@ export const PrescriptionListView = () => {
         onCreate={modalController.toggleOn}
       />
     ),
-    getIsRestrictedRow: isPrescriptionDisabled,
+    getIsRestrictedRow: row => isPrescriptionDisabled(row.original),
   });
 
   return (

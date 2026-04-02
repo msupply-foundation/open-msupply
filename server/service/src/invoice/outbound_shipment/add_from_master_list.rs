@@ -1,4 +1,4 @@
-use crate::invoice::common::check_master_list_for_name_link_id;
+use crate::invoice::common::check_master_list_for_name_id;
 use crate::invoice::common::get_lines_for_invoice;
 use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
 use crate::{invoice::check_invoice_exists, service_provider::ServiceContext};
@@ -81,9 +81,9 @@ fn validate(
         return Err(OutError::NotAnOutboundShipment);
     }
 
-    check_master_list_for_name_link_id(
+    check_master_list_for_name_id(
         connection,
-        &invoice_row.name_link_id,
+        &invoice_row.name_id,
         &input.master_list_id,
     )?
     .ok_or(OutError::MasterListNotFoundForThisName)?;
@@ -217,11 +217,11 @@ mod test {
     async fn add_from_master_list_success() {
         fn master_list() -> FullMockMasterList {
             let id = "master_list".to_string();
-            let join1 = format!("{}1", id);
-            let line1 = format!("{}1", id);
-            let line2 = format!("{}2", id);
-            let line3 = format!("{}3", id);
-            let line4 = format!("{}4", id);
+            let join1 = format!("{id}1");
+            let line1 = format!("{id}1");
+            let line2 = format!("{id}2");
+            let line3 = format!("{id}3");
+            let line4 = format!("{id}4");
 
             FullMockMasterList {
                 master_list: MasterListRow {
@@ -235,7 +235,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_link_id: mock_new_outbound_shipment_no_lines().name_link_id,
+                    name_id: mock_new_outbound_shipment_no_lines().name_id,
                 }],
                 lines: vec![
                     MasterListLineRow {

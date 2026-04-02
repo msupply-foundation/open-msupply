@@ -25,6 +25,7 @@ pub struct AddNewStockLine {
     pub batch: Option<String>,
     pub location: Option<NullableUpdate<String>>,
     pub expiry_date: Option<NaiveDate>,
+    pub manufacture_date: Option<NaiveDate>,
     pub reason_option_id: Option<String>,
     pub barcode: Option<String>,
     pub item_variant_id: Option<String>,
@@ -33,6 +34,7 @@ pub struct AddNewStockLine {
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub volume_per_pack: Option<f64>,
+    pub manufacturer_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -68,7 +70,7 @@ pub fn add_new_stock_line(
             invoice_row_repo.upsert_one(&invoice)?;
 
             // Add invoice line (and introduce stock line)
-            insert_stock_in_line(ctx, stock_in_line)
+            insert_stock_in_line(ctx, stock_in_line, None)
                 .map_err(AddNewStockLineError::LineInsertError)?;
 
             // Add inventory adjustment reason to the invoice line
@@ -93,6 +95,15 @@ pub fn add_new_stock_line(
                 ctx,
                 ActivityLogType::InventoryAdjustment,
                 Some(verified_invoice.id.to_string()),
+                None,
+                None,
+            )?;
+
+            // Also log against the stock line so it appears in the stock line's Log tab
+            activity_log_entry(
+                ctx,
+                ActivityLogType::InventoryAdjustment,
+                Some(stock_line_id.clone()),
                 None,
                 None,
             )?;
@@ -272,7 +283,7 @@ mod test {
         assert_eq!(stock_line_row.available_number_of_packs, 2.0);
         assert_eq!(stock_line_row.total_number_of_packs, 2.0);
         assert_eq!(stock_line_row.location_id, Some(mock_location_1().id));
-        assert_eq!(stock_line_row.on_hold, true);
+        assert!(stock_line_row.on_hold);
         let mut invoices = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().stock_line_id(stock_line_row.id))
             .unwrap();
