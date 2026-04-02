@@ -52,6 +52,40 @@ docs/
         └── _index.md
 ```
 
+## Setup
+
+### Install Zola for macOS
+
+Zola v0.17.2 is required (later versions have breaking changes).
+
+**Option 1 - download binary:**
+
+1. Download `zola-v0.17.2-x86_64-apple-darwin.tar.gz` from the [v0.17.2 release](https://github.com/getzola/zola/releases/tag/v0.17.2)
+2. Extract and move the `zola` binary to `/usr/local/bin/`
+3. In a terminal try run zola. macOS will flag it as unverified — approve it in **System Settings → Privacy & Security**
+4. Verify: `zola --version`
+
+**Option 2 — build from source** (requires [Rust](https://www.rust-lang.org/tools/install)):
+
+```bash
+git clone https://github.com/getzola/zola.git
+cd zola
+git checkout v0.17.2
+cargo install --path . --locked
+zola --version
+```
+
+### Serve locally
+
+From the repo root:
+
+```bash
+cd docs
+zola serve
+```
+
+The site will be available at the URL shown in the terminal (usually `http://127.0.0.1:1111`). Changes to content files trigger an automatic reload.
+
 ## Adding Content
 
 Every documentation file includes a `source` field in its front matter. This is a custom field, so Zola requires this to go under the `[extra]` table.
