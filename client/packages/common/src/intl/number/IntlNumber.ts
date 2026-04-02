@@ -76,7 +76,7 @@ export const useFormatNumber = () => {
     parse: (numberString: string, decimalChar: string = decimal) => {
       const negative = numberString.startsWith('-') ? -1 : 1;
 
-      const num = numberString
+      const num = RegexUtils.convertIndoArToArNumerals(numberString)
         // Remove separators
         .replace(new RegExp(`\\${separator}`, 'g'), '')
         // Convert decimal separator to standard decimal point
