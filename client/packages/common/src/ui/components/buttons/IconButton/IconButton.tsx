@@ -1,5 +1,10 @@
 import React from 'react';
-import { IconButton as MuiIconButton, SxProps, Tooltip } from '@mui/material';
+import {
+  Button,
+  IconButton as MuiIconButton,
+  SxProps,
+  Tooltip,
+} from '@mui/material';
 
 interface ButtonProps {
   disabled?: boolean;
@@ -8,9 +13,10 @@ interface ButtonProps {
   label: string;
   width?: string;
   height?: string;
-  color?: 'primary' | 'secondary' | undefined;
+  color?: 'primary' | 'secondary' | 'error' | undefined;
   sx?: SxProps;
   className?: string;
+  showLabel?: boolean;
 }
 
 export const IconButton: React.FC<ButtonProps> = ({
@@ -23,18 +29,33 @@ export const IconButton: React.FC<ButtonProps> = ({
   color,
   sx,
   className,
-}) => (
-  <Tooltip title={disabled ? '' : label}>
-    <MuiIconButton
-      sx={{ width, height, ...sx }}
+  showLabel,
+}) =>
+  showLabel ? (
+    <Button
       disabled={disabled}
       onClick={onClick}
-      aria-label={label}
+      variant="text"
       size="small"
-      color={color}
+      color={color ?? 'inherit'}
+      startIcon={icon}
+      sx={{ textTransform: 'none', ...sx }}
       className={className}
     >
-      {icon}
-    </MuiIconButton>
-  </Tooltip>
-);
+      {label}
+    </Button>
+  ) : (
+    <Tooltip title={disabled ? '' : label}>
+      <MuiIconButton
+        sx={{ width, height, ...sx }}
+        disabled={disabled}
+        onClick={onClick}
+        aria-label={label}
+        size="small"
+        color={color}
+        className={className}
+      >
+        {icon}
+      </MuiIconButton>
+    </Tooltip>
+  );

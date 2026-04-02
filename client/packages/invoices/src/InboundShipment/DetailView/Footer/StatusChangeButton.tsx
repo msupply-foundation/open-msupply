@@ -4,72 +4,49 @@ import {
   useTranslation,
   useNotification,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
   useDisabledNotificationToast,
-  UserPermission,
-  useAuthContext,
   usePreferences,
 } from '@openmsupply-client/common';
 import {
   isInboundPlaceholderRow,
   getButtonLabel,
   getNextStatusOption,
-  inboundStatuses,
   getPreviousStatus,
   getStatusTranslator,
-  InboundShipmentType,
   getInboundShipmentType,
-  getInboundStatusesForType,
 } from '../../../utils';
 import { InboundLineFragment, useInboundShipment } from '../../api';
-
-const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string,
-  shipmentType: InboundShipmentType
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const statuses = getInboundStatusesForType(shipmentType);
-
-  const options = statuses.map(status => ({
-    value: status,
-    label: getButtonLabel(status),
-    isDisabled: true,
-  }));
-
-  // Enable options that can be progressed to from the current status
-  const currentIdx = statuses.indexOf(currentStatus);
-  for (let i = currentIdx + 1; i < options.length; i++) {
-    const option = options[i];
-    if (option) option.isDisabled = false;
-  }
-
-  return options;
-};
+import { getStatusOptions, getStatusSequence } from '../../../statuses';
 
 const StatusChangeButtonContent = ({
   data,
   update,
+  hasMutatePermission,
   isStatusChangeDisabled,
+  hasVerifyPermission,
 }: {
   data: NonNullable<ReturnType<typeof useInboundShipment>['query']['data']>;
   update: ReturnType<typeof useInboundShipment>['update']['update'];
+  hasMutatePermission: boolean;
   isStatusChangeDisabled: boolean;
+  hasVerifyPermission: boolean;
 }) => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
   const { success, error } = useNotification();
-  const { userHasPermission } = useAuthContext();
-
   const { status, onHold, lines } = data;
   const shipmentType = getInboundShipmentType(data);
 
   const options = useMemo(() => {
     let statusOptions = getStatusOptions(
+      InvoiceNodeType.InboundShipment,
       status,
       getButtonLabel(t),
-      shipmentType
+      { inboundShipmentType: shipmentType }
     );
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
@@ -82,7 +59,13 @@ const StatusChangeButtonContent = ({
   const currentStatus =
     !invoiceStatusOptions || invoiceStatusOptions.includes(status)
       ? status
-      : getPreviousStatus(status, invoiceStatusOptions, inboundStatuses);
+      : getPreviousStatus(
+          status,
+          invoiceStatusOptions,
+          getStatusSequence(InvoiceNodeType.InboundShipment, {
+            inboundShipmentType: shipmentType,
+          })
+        );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
@@ -125,26 +108,27 @@ const StatusChangeButtonContent = ({
     t('messages.on-hold-inbound')
   );
 
-  const permissionDeniedNotification = useDisabledNotificationToast(
-    t('auth.permission-denied')
-  );
-
   const pendingLinesNotification = useDisabledNotificationToast(
     t('messages.pending-lines')
   );
 
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+
   const onVerify = () => {
-    if (userHasPermission(UserPermission.InboundShipmentVerify)) {
-      getConfirmation();
-    } else {
+    if (!hasVerifyPermission) {
       permissionDeniedNotification();
+      return;
     }
+    getConfirmation();
   };
 
   if (!selectedOption) return null;
   if (isStatusChangeDisabled) return null;
 
   const onStatusClick = () => {
+    if (!hasMutatePermission) return permissionDeniedNotification();
     if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
     if (
@@ -198,7 +182,9 @@ export const StatusChangeButton = () => {
   const {
     query: { data, loading },
     update: { update },
+    hasMutatePermission,
     isStatusChangeDisabled,
+    hasVerifyPermission,
   } = useInboundShipment();
 
   if (loading || !data) return null;
@@ -207,7 +193,9 @@ export const StatusChangeButton = () => {
     <StatusChangeButtonContent
       data={data}
       update={update}
+      hasMutatePermission={hasMutatePermission}
       isStatusChangeDisabled={isStatusChangeDisabled}
+      hasVerifyPermission={hasVerifyPermission}
     />
   );
 };

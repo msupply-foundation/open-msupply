@@ -54,11 +54,9 @@ pub fn generate(
         update_line = convert_invoice_line_to_single_pack(update_line);
     }
 
-    // Only update stock when the invoice status has reached a status that effect stock and the line
-    // hasn't be rejected. The current logic makes it so lines can't be rejected after being accepted as
-    // in that case the stock could have already been assigned so it mightn't be possible to then
-    // remove the stock line. This does mean that new lines added when received will be stuck in pending
-    // and can't go into stock.
+    // Only update stock when the invoice status has reached a status that affects stock and the
+    // line is passed (not rejected or pending). Line status changes are blocked once the invoice
+    // reaches Received, so at Delivered status no stock lines exist yet and all transitions are safe.
     let (upsert_batch_option, vvm_status_log_option) = if should_update_stock(&existing_invoice_row)
         && matches!(update_line.status, None | Some(InvoiceLineStatus::Passed))
     {

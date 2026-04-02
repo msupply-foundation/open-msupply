@@ -34,7 +34,7 @@ export const LinkPurchaseOrderModal = ({
   const filterBy = {
     status: { equalTo: PurchaseOrderNodeStatus.Sent },
   };
-  const { data, isLoading } = useListSentPurchaseOrders(filterBy);
+  const { data, isLoading, isError } = useListSentPurchaseOrders(filterBy, isOpen);
 
   const columns = useMemo(
     (): ColumnDef<InboundShipmentPurchaseOrderLineFragment>[] => [
@@ -82,6 +82,7 @@ export const LinkPurchaseOrderModal = ({
       }),
       state: { showColumnFilters: true },
       isLoading,
+      isError,
     });
 
   const onClick = (addLines: boolean) => {

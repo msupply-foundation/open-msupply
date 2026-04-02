@@ -13,6 +13,7 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
+use crate::invoice::inbound_shipment::InboundShipmentType;
 use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
 
 use super::{UpdateStockInLine, UpdateStockInLineError};
@@ -21,6 +22,7 @@ pub fn validate(
     input: &UpdateStockInLine,
     store_id: &str,
     connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<(InvoiceLine, Option<ItemRow>, InvoiceRow), UpdateStockInLineError> {
     use UpdateStockInLineError::*;
 
@@ -41,6 +43,11 @@ pub fn validate(
 
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
+    }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
@@ -126,10 +133,12 @@ pub fn validate(
         }
     }
 
-    // Cost price is read-only for internal suppliers and external suppliers linked to a PO
+    // Cost price is read-only for internal suppliers and external suppliers linked to a PO.
+    // Use epsilon comparison to allow unchanged values that may have drifted
+    // through floating point serialization (Rust f64 → JSON → JS Number → JSON → f64).
     if let Some(new_cost_price) = input.cost_price_per_pack {
         if (invoice.name_store_id.is_some() || invoice.purchase_order_id.is_some())
-            && new_cost_price != line_row.cost_price_per_pack
+            && (new_cost_price - line_row.cost_price_per_pack).abs() > f64::EPSILON
         {
             return Err(CannotEditCostPrice);
         }

@@ -41,6 +41,7 @@ export const createDraftPurchaseOrderLine = (
     // This value not actually saved to DB
     discountPercentage: 0,
     numberOfPacks: 0,
+    receivedNumberOfUnits: 0,
     status: PurchaseOrderLineStatusNode.New,
     unitsOrderedInOthers: 0,
   };

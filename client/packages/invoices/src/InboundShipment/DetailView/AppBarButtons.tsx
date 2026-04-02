@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   AppBarButtonsPortal,
   AddFromScannerButton,
@@ -8,7 +8,6 @@ import {
   usePluginProvider,
   useAuthContext,
   ReportContext,
-  useNotification,
   useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { useInboundShipment } from '../api';
@@ -37,9 +36,20 @@ export const AppBarButtonsComponent = ({
     queryParams: { sortBy },
   } = useUrlQueryParams();
   const { plugins } = usePluginProvider();
-  const {} = useNotification();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
+
+  const allPurchaseOrderItemsAdded = useMemo(() => {
+    const poLines = data?.purchaseOrder?.lines?.nodes;
+    if (!poLines || poLines.length === 0) return false;
+
+    const shipmentPoLineIds = new Set(
+      data?.lines.nodes
+        .map(line => line.purchaseOrderLine?.id)
+        .filter(Boolean)
+    );
+    return poLines.every(poLine => shipmentPoLineIds.has(poLine.id));
+  }, [data?.purchaseOrder?.lines?.nodes, data?.lines.nodes]);
 
   if (isExtraSmallScreen) {
     // On mobile, we don't have mobile ui for line by line editing or reports
@@ -67,6 +77,7 @@ export const AppBarButtonsComponent = ({
           disable={isDisabled}
           disableAddFromMasterListButton={!!data?.linkedShipment || !!data?.purchaseOrder}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
+          allPurchaseOrderItemsAdded={allPurchaseOrderItemsAdded}
         />
         <AddFromScannerButton disabled={isDisabled} />
         {data && (

@@ -10,6 +10,7 @@ import {
   DateTimePickerInput,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
+import { formatErrors } from '../formatErrors';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 
@@ -74,7 +75,7 @@ const UIComponent = (props: ControlProps) => {
           openTo={noDay ? 'month' : 'day'}
           format="P"
           disabled={!props.enabled}
-          error={zErrors || props.errors || ''}
+          error={formatErrors(zErrors || props.errors) || ''}
           disableFuture={disableFuture}
           onError={validationError => customErrors.add(path, validationError)}
         />

@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -7,6 +7,7 @@ import {
   styled,
   ClickAwayListener,
 } from '@mui/material';
+import { FocusTrap } from '@mui/base';
 
 const Backdrop = styled(Box)({
   position: 'fixed',
@@ -39,6 +40,16 @@ export const SlidePanel = ({
   width = '100%',
   preventClickAway = true,
 }: SlidePanelProps) => {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
   const panel = (
     <Box
       sx={{
@@ -48,40 +59,53 @@ export const SlidePanel = ({
         bottom: 0,
         width,
         zIndex: 1399,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Slide direction="right" in={open} mountOnEnter unmountOnExit>
         <Paper
           elevation={4}
+          onKeyDown={handleKeyDown}
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            height: '100%',
+            flex: 1,
             width,
             zIndex: 1399,
           }}
         >
-          {title && (
-            <Typography
-              sx={theme => ({
-                padding: 2,
-                color: theme.typography.body1.color,
-                fontSize: theme.typography.body1.fontSize,
-                fontWeight: 'bold',
-              })}
-            >
-              {title}
-            </Typography>
-          )}
-          <Box overflow="auto" flex={1}>
-            {children}
-          </Box>
-          {(okButton || cancelButton) && (
-            <Box display="flex" justifyContent="center" pb={5} gap={1} pt={1.5}>
-              {cancelButton}
-              {okButton}
+          <FocusTrap open={open}>
+            <Box style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              {title && (
+                <Typography
+                  sx={theme => ({
+                    padding: 2,
+                    color: theme.typography.body1.color,
+                    fontSize: theme.typography.body1.fontSize,
+                    fontWeight: 'bold',
+                  })}
+                >
+                  {title}
+                </Typography>
+              )}
+              <Box overflow="auto" flex={1}>
+                {children}
+              </Box>
+              {(okButton || cancelButton) && (
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  pb={5}
+                  gap={1}
+                  pt={1.5}
+                >
+                  {cancelButton}
+                  {okButton}
+                </Box>
+              )}
             </Box>
-          )}
+          </FocusTrap>
         </Paper>
       </Slide>
     </Box>

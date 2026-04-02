@@ -158,7 +158,6 @@ export const PurchaseOrderLineEditModal = React.memo(
               update={updatePatch}
               status={purchaseOrder.status}
               isDisabled={isDisabled}
-              lines={lines}
               isUpdateMode={isUpdateMode}
               onChangeItem={onChangeItem}
               lineCount={lines.length}
