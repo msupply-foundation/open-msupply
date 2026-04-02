@@ -84,12 +84,12 @@ export const ReduceLinesToZeroConfirmationModal = ({
               fallbackType={ReasonOptionNodeType.NegativeInventoryAdjustment}
               value={reason}
               onChange={reason => setReason(reason)}
-              width={160}
+              width={250}
             />
           }
           sx={{
             '.MuiFormControl-root > .MuiInput-root, > input': {
-              width: '160px',
+              width: '250px',
             },
           }}
         />
