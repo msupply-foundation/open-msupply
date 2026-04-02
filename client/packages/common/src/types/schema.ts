@@ -9613,6 +9613,11 @@ export type SuggestedQuantityCalculationNode = {
   suggestedQuantity: Scalars['Int']['output'];
 };
 
+export type SupplierNotValid = InsertProgramRequestRequisitionErrorInterface & {
+  __typename: 'SupplierNotValid';
+  description: Scalars['String']['output'];
+};
+
 export type SupplierProgramRequisitionSettingNode = {
   __typename: 'SupplierProgramRequisitionSettingNode';
   masterList: MasterListNode;
