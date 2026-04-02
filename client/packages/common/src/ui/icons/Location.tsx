@@ -1,9 +1,10 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
-export const LocationIcon = (props: SvgIconProps): JSX.Element => {
-  return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
+export const LocationIcon = React.forwardRef<SVGSVGElement, SvgIconProps>(
+  (props, ref) => {
+    return (
+      <SvgIcon ref={ref} {...props} viewBox="0 0 24 24">
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -28,5 +29,6 @@ export const LocationIcon = (props: SvgIconProps): JSX.Element => {
         />
       </mask>
     </SvgIcon>
-  );
-};
+    );
+  }
+);

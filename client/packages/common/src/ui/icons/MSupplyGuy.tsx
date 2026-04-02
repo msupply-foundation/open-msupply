@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 import { styled } from '@mui/material/styles';
 import { keyframes } from '@mui/styled-engine';
@@ -22,11 +22,12 @@ type MSupplyGuyProps = SvgIconProps & {
   size?: 'large' | 'medium';
 };
 
-const SvgGuy: FC<MSupplyGuyProps> = props => {
-  const { size, ...svgProps } = props;
-  const sizeStyle = size ? sizes[size] : { ...svgProps.style };
-  return (
-    <SvgIcon {...svgProps} viewBox="3 1 206 310" style={sizeStyle}>
+const SvgGuy = React.forwardRef<SVGSVGElement, MSupplyGuyProps>(
+  (props, ref) => {
+    const { size, ...svgProps } = props;
+    const sizeStyle = size ? sizes[size] : { ...svgProps.style };
+    return (
+      <SvgIcon ref={ref} {...svgProps} viewBox="3 1 206 310" style={sizeStyle}>
       <g>
         <linearGradient id="linear-grad" x1="0.5" y1="0" x2="0.5" y2="1">
           <stop offset="0" stopColor="#ff7a0a" />
@@ -58,11 +59,12 @@ const SvgGuy: FC<MSupplyGuyProps> = props => {
         />
       </g>
     </SvgIcon>
-  );
-};
+    );
+  }
+);
 
-export const MSupplyGuy: FC<MSupplyGuyProps> = (svgProps): JSX.Element => (
-  <SvgGuy {...svgProps} />
+export const MSupplyGuy = React.forwardRef<SVGSVGElement, MSupplyGuyProps>(
+  (svgProps, ref) => <SvgGuy ref={ref} {...svgProps} />
 );
 
 export const AnimatedMSupplyGuy = styled(SvgGuy)(({ theme, size }) => {
