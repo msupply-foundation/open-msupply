@@ -94,6 +94,14 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.global_table_configs)
     }
 
+    pub async fn allow_backdating_of_shipments(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.allow_backdating_of_shipments)
+    }
+
+    pub async fn maximum_backdating_days(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.maximum_backdating_days)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -276,6 +284,8 @@ pub enum PreferenceKey {
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
+    AllowBackdatingOfShipments,
+    MaximumBackdatingDays,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
