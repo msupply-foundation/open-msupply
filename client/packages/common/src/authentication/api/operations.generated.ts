@@ -265,8 +265,8 @@ export type PreferencesQuery = {
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
     displayPopulationBasedForecasting: boolean;
-    externalInboundShipmentLinesMustBeAuthorised: boolean;
     warningForExcessRequest: boolean;
+    externalInboundShipmentLinesMustBeAuthorised: boolean;
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
@@ -531,8 +531,8 @@ export const PreferencesDocument = gql`
         maxAge
         minItems
       }
-      externalInboundShipmentLinesMustBeAuthorised
       warningForExcessRequest
+      externalInboundShipmentLinesMustBeAuthorised
       invoiceStatusOptions
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
