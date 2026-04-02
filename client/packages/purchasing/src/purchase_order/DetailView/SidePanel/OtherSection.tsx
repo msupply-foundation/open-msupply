@@ -18,12 +18,14 @@ interface OtherSectionProps {
   draft?: PurchaseOrderFragment;
   onUpdate: (input: Partial<PurchaseOrderFragment>) => void;
   onChange: (input: Partial<PurchaseOrderFragment>) => void;
+  disabled?: boolean;
 }
 
 export const OtherSection = ({
   draft,
   onUpdate,
   onChange,
+  disabled = false,
 }: OtherSectionProps): ReactElement => {
   const t = useTranslation();
   const { data: shippingMethods } = useShippingMethod();
@@ -47,6 +49,7 @@ export const OtherSection = ({
             donorId={draft?.donor?.id ?? null}
             onChange={donor => onUpdate({ donor: donor })}
             clearable
+            disabled={disabled}
           />
         </PanelRow>
         <PanelRow>
@@ -57,6 +60,7 @@ export const OtherSection = ({
               onChange({ shippingMethod: shippingMethod?.method ?? null });
             }}
             width={250}
+            disabled={disabled}
           />
         </PanelRow>
         <PanelLabel>{t('label.comment')}</PanelLabel>

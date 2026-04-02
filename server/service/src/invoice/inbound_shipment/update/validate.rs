@@ -83,6 +83,13 @@ pub fn validate(
         }
     }
 
+    // Currency rate must be positive if provided
+    if let Some(rate) = patch.currency_rate {
+        if rate <= 0.0 {
+            return Err(CurrencyRateMustBePositive);
+        }
+    }
+
     // Other party check
     let other_party_id = match &patch.other_party_id {
         None => return Ok((invoice, None, status_changed)),

@@ -9,15 +9,15 @@ use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
 
 use graphql_core::generic_inputs::InboundShipmentType;
-use repository::{InvoiceLine, InvoiceLineRowRepository, InvoiceLineStatus};
-use service::auth::{Resource, ResourceAccessRequest};
+use repository::{InvoiceLine, InvoiceLineStatus};
+use service::auth::ResourceAccessRequest;
 use service::invoice_line::stock_in_line::{
     StockInType, UpdateStockInLine as ServiceInput, UpdateStockInLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
 use service::NullableUpdate;
 
-use super::BatchIsReserved;
+use super::{validate_line_edit_authorisation, BatchIsReserved};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentLineInput")]
@@ -77,28 +77,13 @@ pub fn update(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    // Approving/rejecting a line or editing an already-approved line requires authorise permission
-    let status_is_approve_or_reject = input.status.as_ref().is_some_and(|s| {
-        matches!(
-            s,
-            Some(InvoiceLineStatusType::Passed) | Some(InvoiceLineStatusType::Rejected)
-        )
-    });
-    let needs_authorise = status_is_approve_or_reject || {
-        // TODO: come up with a better way to handle data based permissions. the graphql/service layer split makes it difficult to set permissions based on data
-        let line =
-            InvoiceLineRowRepository::new(&service_context.connection).find_one_by_id(&input.id)?;
-        line.map_or(false, |l| l.status == Some(InvoiceLineStatus::Passed))
-    };
-    if needs_authorise {
-        validate_auth(
-            ctx,
-            &ResourceAccessRequest {
-                resource: Resource::AuthoriseInboundShipmentExternal,
-                store_id: Some(store_id.to_string()),
-            },
-        )?;
-    }
+    validate_line_edit_authorisation(
+        ctx,
+        store_id,
+        &r#type,
+        &service_context.connection,
+        &[(input.id.clone(), input.status.clone())],
+    )?;
 
     let response = match service_provider.invoice_line_service.update_stock_in_line(
         &service_context,

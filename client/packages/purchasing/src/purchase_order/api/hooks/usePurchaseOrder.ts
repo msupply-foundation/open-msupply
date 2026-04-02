@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   FnUtils,
   InsertPurchaseOrderInput,
@@ -65,13 +65,27 @@ export const usePurchaseOrder = (id?: string) => {
     return updatePurchaseOrder;
   };
 
-  const handleDebounceUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
+  const pendingChanges = useRef<Partial<PurchaseOrderFragment>>({});
 
-  const handleChange = (input: Partial<PurchaseOrderFragment>) => {
-    if (!draft) return;
-    handleDraftChange(input);
-    handleDebounceUpdate(input);
-  };
+  const debouncedFlush = useDebounceCallback(
+    () => {
+      const changes = pendingChanges.current;
+      pendingChanges.current = {};
+      return update(changes);
+    },
+    [],
+    DEBOUNCED_TIME
+  );
+
+  const handleChange = useCallback(
+    (input: Partial<PurchaseOrderFragment>) => {
+      if (!draft) return;
+      handleDraftChange(input);
+      pendingChanges.current = { ...pendingChanges.current, ...input };
+      debouncedFlush();
+    },
+    [draft, handleDraftChange, debouncedFlush]
+  );
 
   // CREATE
   const {
