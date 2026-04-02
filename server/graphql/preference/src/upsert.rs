@@ -88,9 +88,9 @@ pub struct UpsertPreferencesInput {
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<IntegerStorePrefInput>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
-        Option<Vec<IntegerStorePrefInput>>,
+        Option<Vec<FloatStorePrefInput>>,
     pub number_of_months_threshold_to_show_over_stock_alerts_for_products:
-        Option<Vec<IntegerStorePrefInput>>,
+        Option<Vec<FloatStorePrefInput>>,
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
