@@ -236,6 +236,7 @@ fragment GenerateSupplierReturnLine on SupplierReturnLineNode {
   expiryDate
   id
   numberOfPacksToReturn
+  onHold
   packSize
   stockLineId
   note

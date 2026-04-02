@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -14,11 +14,15 @@ import {
   useUrlQuery,
   useToggle,
   useNonPaginatedMaterialTable,
-  Groupable,
   NothingHere,
   MaterialTable,
+  InvoiceLineStatusType,
+  Formatter,
+  useAppTheme,
   useIsExtraSmallScreen,
-  MobileCardList,
+  CardList,
+  InboundNodeType,
+  Box,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -29,21 +33,31 @@ import {
   useIsItemVariantsEnabled,
   useVvmStatusesEnabled,
 } from '@openmsupply-client/system';
+
+const TABLE_ID = 'inbound-shipment-detail-view';
+const EXTERNAL_TABLE_ID = 'inbound-shipment-detail-view-external';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem, ScannedBarcode } from '../../types';
-import { useInbound, InboundLineFragment } from '../api';
+import { InboundLineFragment, useInboundShipment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
-import { canReturnInboundLines, isInboundPlaceholderRow } from '../../utils';
+import {
+  canReturnInboundLines,
+  getInboundStockLines,
+  isInboundPlaceholderRow,
+} from '../../utils';
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
 import { InboundShipmentDetailTabs } from './types';
-import { useInboundLines } from '../api/hooks/line/useInboundLines';
 import { useInboundShipmentColumns } from './columns';
+import { FinancialTab } from './Tabs/Financial';
+import { CurrencyTab } from './Tabs/Currency';
+import { DeliveryTab } from './Tabs/DeliveryStatus';
 import { ScanInputModal } from './ScanInputModal';
 import { MobileToolbar } from './MobileToolbar';
+import { getInboundColorAndIcon } from '../ListView/SupplierCell';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -59,15 +73,26 @@ export type ScannedItem = {
 // creating the new line
 export type ScannedBatchData = { batch?: string; expiryDate?: string };
 
+const ShipmentIcon = ({ inboundType }: { inboundType?: InboundNodeType }) => {
+  if (!inboundType) return null;
+
+  const { icon: KindIcon, color: iconColor } =
+    getInboundColorAndIcon(inboundType);
+  return <KindIcon sx={{ fontSize: 16, color: iconColor }} />;
+};
+
 const DetailViewInner = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { info } = useNotification();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const { data: lines } = useInboundLines();
+  const {
+    toggleOn: toggleUploadModal,
+    isOn: isUploadModalOpen,
+    toggleOff: toggleCloseUploadModal,
+  } = useToggle();
 
-  const uploadDocumentController = useToggle();
   const { onOpen, onClose, mode, entity, isOpen } = useEditModal<
     InboundLineItem | ScannedItem
   >();
@@ -80,70 +105,106 @@ const DetailViewInner = () => {
     setMode,
   } = useEditModal<string[]>();
 
-  const { data, isLoading, invalidateQuery } = useInbound.document.get();
+  const {
+    query: { data, loading },
+    isExternal,
+    isDisabled,
+    invalidateQuery,
+  } = useInboundShipment();
+
+  const lines = React.useMemo(() => {
+    if (!data) return [];
+    return getInboundStockLines(data.lines.nodes);
+  }, [data]);
   const { data: vvmStatuses } = useVvmStatusesEnabled();
-  const isDisabled = useInbound.utils.isDisabled();
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
+  const [editPurchaseOrderLineId, setEditPurchaseOrderLineId] = useState<
+    string | null
+  >(null);
+  const [scrollToLineId, setScrollToLineId] = useState<string | null>(null);
+
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
-      const item = 'lines' in line ? line.lines[0]?.item : line.item;
-      onOpen(item);
+      if ('lines' in line) {
+        const firstLine = line.lines[0];
+        onOpen(firstLine?.item);
+        setEditPurchaseOrderLineId(firstLine?.purchaseOrderLine?.id ?? null);
+        setScrollToLineId(firstLine?.id ?? null);
+      } else {
+        onOpen(line.item);
+        setEditPurchaseOrderLineId(line.purchaseOrderLine?.id ?? null);
+        setScrollToLineId(line.id);
+      }
     },
     [onOpen]
   );
 
-  const onAddItem: (scannedBarcode?: ScannedBarcode) => void = openWith => {
-    // Unless we're acquiring a scanned barcode, just open the modal as normal,
-    // with no pre-filled line data
-    if (
-      (openWith as ScannedBarcode & { __typename: string })?.__typename !==
-        'BarcodeNode' ||
-      !openWith?.itemId
-    ) {
-      onOpen();
-      setMode(ModalMode.Create);
-      return;
-    }
+  const onAddItem = useCallback(
+    (openWith?: ScannedBarcode) => {
+      // Unless we're acquiring a scanned barcode, just open the modal as normal,
+      // with no pre-filled line data
+      if (
+        (openWith as ScannedBarcode & { __typename: string })?.__typename !==
+          'BarcodeNode' ||
+        !openWith?.itemId
+      ) {
+        onOpen();
+        setMode(ModalMode.Create);
+        setEditPurchaseOrderLineId(null);
+        setScrollToLineId(null);
+        return;
+      }
 
-    const { itemId, expiryDate, batch } = openWith;
-    onOpen({
-      id: itemId ?? '',
-      batch,
-      expiryDate,
+      // Mode set to "Update" when using scanned item, which prevents the "Item"
+      // selector from being changed
+      const { itemId, expiryDate, batch } = openWith;
+      onOpen({
+        id: itemId ?? '',
+        batch,
+        expiryDate,
+      });
+      setMode(ModalMode.Update);
+    },
+    [onOpen, setMode]
+  );
+
+  const openUploadModal = useCallback(() => {
+    toggleUploadModal();
+    if (urlQuery['tab'] !== InboundShipmentDetailTabs.Documents)
+      updateQuery({ tab: InboundShipmentDetailTabs.Documents });
+  }, [toggleUploadModal, urlQuery, updateQuery]);
+
+  const showLineStatus =
+    data?.lines.nodes.some(line => line.status != null) ?? false;
+  const columns = useInboundShipmentColumns(isExternal, showLineStatus);
+
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<InboundLineFragment>({
+      tableId: isExternal ? EXTERNAL_TABLE_ID : TABLE_ID,
+      columns,
+      data: lines,
+      grouping: isExternal
+        ? { field: 'purchaseOrderLine.lineNumber', label: t('label.group-by-po-line') }
+        : { field: 'item.code' },
+      isLoading: false,
+      initialSort: { key: 'itemName', dir: 'asc' },
+      onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
+      getIsPlaceholderRow: row => isInboundPlaceholderRow(row.original),
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-inbound-items')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      ),
+      isMobile: isExtraSmallScreen,
     });
-    // Mode set to "Update" when using scanned item, which prevents the "Item"
-    // selector from being changed
-    setMode(ModalMode.Update);
-  };
 
-  const columns = useInboundShipmentColumns();
-
-  const { table, selectedRows } = useNonPaginatedMaterialTable<
-    Groupable<InboundLineFragment>
-  >({
-    tableId: 'inbound-shipment-detail-view',
-    columns,
-    data: lines,
-    grouping: { enabled: true },
-    isLoading: false,
-    initialSort: { key: 'itemName', dir: 'asc' },
-    onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
-    getIsPlaceholderRow: row => !!isInboundPlaceholderRow(row),
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-inbound-items')}
-        onCreate={isDisabled ? undefined : () => onAddItem()}
-        buttonText={t('button.add-item')}
-      />
-    ),
-    isMobile: isExtraSmallScreen,
-  });
-
-  const onReturn = async () => {
+  const onReturn = useCallback(async () => {
     if (!data || !canReturnInboundLines(data)) {
       const cantReturnSnack = info(
         t('messages.cant-return-shipment-replenishment')
@@ -170,11 +231,18 @@ const DetailViewInner = () => {
 
     onOpenReturns(selectedStockLineIds);
     setMode(ModalMode.Create);
-  };
+  }, [data, selectedRows, info, onOpenReturns, setMode]);
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
+    setCustomBreadcrumbs({
+      1: (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ShipmentIcon inboundType={data?.inboundType} />
+          {data?.invoiceNumber ?? ''}
+        </Box>
+      ),
+    });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber, data?.inboundType]);
 
   const tab = urlQuery['tab'] ?? InboundShipmentDetailTabs.Details;
 
@@ -191,24 +259,40 @@ const DetailViewInner = () => {
     []
   );
 
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+  if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
       Component: isExtraSmallScreen ? (
-        <MobileCardList table={table} />
+        <CardList table={table} />
       ) : (
         <MaterialTable table={table} />
       ),
       value: InboundShipmentDetailTabs.Details,
     },
+    ...(isExternal
+      ? [
+          {
+            Component: <FinancialTab />,
+            value: InboundShipmentDetailTabs.Financial,
+          },
+          {
+            Component: <CurrencyTab />,
+            value: InboundShipmentDetailTabs.Currency,
+          },
+          {
+            Component: <DeliveryTab />,
+            value: InboundShipmentDetailTabs.Delivery,
+          },
+        ]
+      : []),
     {
       Component: (
         <DocumentsTable
           documents={data?.documents.nodes ?? []}
           recordId={data?.id ?? ''}
           tableName="invoice"
-          openUploadModal={uploadDocumentController.toggleOn}
+          openUploadModal={toggleUploadModal}
           invalidateQueries={invalidateQuery}
         />
       ),
@@ -229,11 +313,7 @@ const DetailViewInner = () => {
           <AppBarButtons
             onAddItem={onAddItem}
             simplifiedTabletView={simplifiedTabletView}
-            openUploadModal={() => {
-              uploadDocumentController.toggleOn();
-              if (tab !== InboundShipmentDetailTabs.Documents)
-                updateQuery({ tab: InboundShipmentDetailTabs.Documents });
-            }}
+            openUploadModal={openUploadModal}
           />
 
           {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
@@ -245,6 +325,7 @@ const DetailViewInner = () => {
               onReturnLines={onReturn}
               selectedRows={selectedRows}
               resetRowSelection={table.resetRowSelection}
+              showLineStatus={showLineStatus}
             />
           )}
           <SidePanel />
@@ -265,10 +346,12 @@ const DetailViewInner = () => {
               // populating the item will the full details if they are missing
               // (which is the case when item info is scanned from barcode)
               item={entity as InboundLineItem}
-              currency={data.currency}
+              foreignCurrency={data.purchaseOrder?.currency ?? data.currency}
               isExternalSupplier={!data.otherParty.store}
               hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
+              purchaseOrderLineId={editPurchaseOrderLineId}
+              scrollToLineId={scrollToLineId}
               scannedBatchData={{
                 batch: (entity as ScannedBatchData)?.batch,
                 expiryDate: (entity as ScannedBatchData)?.expiryDate,
@@ -290,8 +373,8 @@ const DetailViewInner = () => {
           )}
 
           <UploadDocumentModal
-            isOn={uploadDocumentController.isOn}
-            toggleOff={uploadDocumentController.toggleOff}
+            isOn={isUploadModalOpen}
+            toggleOff={toggleCloseUploadModal}
             recordId={data.id}
             tableName="invoice"
             invalidateQueries={invalidateQuery}
@@ -312,6 +395,27 @@ const DetailViewInner = () => {
         />
       )}
     </React.Suspense>
+  );
+};
+
+export const useInvoiceLineStatusMap = () => {
+  const theme = useAppTheme();
+  return useMemo(
+    () => ({
+      [InvoiceLineStatusType.Passed]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
+        colour: theme.palette.invoiceLineStatus.passed,
+      },
+      [InvoiceLineStatusType.Pending]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
+        colour: theme.palette.invoiceLineStatus.pending,
+      },
+      [InvoiceLineStatusType.Rejected]: {
+        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
+        colour: theme.palette.invoiceLineStatus.rejected,
+      },
+    }),
+    [theme]
   );
 };
 

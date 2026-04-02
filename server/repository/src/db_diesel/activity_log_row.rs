@@ -52,13 +52,13 @@ pub enum ActivityLogType {
     RequisitionStatusSent,
     RequisitionApproved,
     RequisitionStatusFinalised,
-    StockLocationChange,
-    StockCostPriceChange,
-    StockSellPriceChange,
-    StockExpiryDateChange,
-    StockBatchChange,
-    StockOnHold,
-    StockOffHold,
+    StockLocationChange,   // Depreciated
+    StockCostPriceChange,  // Depreciated
+    StockSellPriceChange,  // Depreciated
+    StockExpiryDateChange, // Depreciated
+    StockBatchChange,      // Depreciated
+    StockOnHold,           // Depreciated
+    StockOffHold,          // Depreciated
     Repack,
     PrescriptionCreated,
     PrescriptionDeleted,
@@ -102,9 +102,7 @@ pub enum ActivityLogType {
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
     VolumePerPackChanged,
-    GoodsReceivedCreated,
-    GoodsReceivedDeleted,
-    GoodsReceivedStatusFinalised,
+    StockLineEdit,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
@@ -164,7 +162,7 @@ impl<'a> ActivityLogRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: row.store_id.clone(),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -233,7 +231,7 @@ mod test {
         let repo = ActivityLogRowRepository::new(&connection);
         // Try upsert all variants, confirm that diesel enums match postgres
         for option_type in ActivityLogType::iter() {
-            let id = format!("{:?}", option_type);
+            let id = format!("{option_type:?}");
             let result = repo.insert_one(&ActivityLogRow {
                 id: id.clone(),
                 r#type: option_type,

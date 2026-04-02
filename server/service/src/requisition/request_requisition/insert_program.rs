@@ -205,7 +205,7 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: other_party_id.clone(),
+        name_id: other_party_id.clone(),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -233,7 +233,8 @@ fn generate(
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
             None,
         )?
         .into_iter()
@@ -257,7 +258,10 @@ fn generate(
         connection,
         Pagination::all(),
         None,
-        Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(program.id.to_string()))),
+        Some(
+            ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(program.id.to_string())),
+        ),
+        false,
     )?;
 
     let customer_name_id = StoreRepository::new(connection)
@@ -369,7 +373,7 @@ fn generate_program_indicator_values(
 
                 let indicator_value = IndicatorValueRow {
                     id: uuid(),
-                    customer_name_link_id: customer_name_id.to_string(),
+                    customer_name_id: customer_name_id.to_string(),
                     store_id: store_id.to_string(),
                     period_id: period_id.to_string(),
                     indicator_line_id: line.line.id.to_string(),
@@ -521,7 +525,8 @@ mod test_insert {
             .unwrap();
         let requisition_lines = RequisitionLineRepository::new(&connection)
             .query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(new_row.id.to_string())),
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(new_row.id.to_string())),
             )
             .unwrap();
 

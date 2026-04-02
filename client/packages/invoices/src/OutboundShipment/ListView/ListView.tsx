@@ -86,7 +86,7 @@ export const OutboundShipmentListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
         columnType: ColumnType.Number,
         description: t('description.invoice-number'),
         enableSorting: true,
@@ -131,7 +131,7 @@ export const OutboundShipmentListView = () => {
       data: data?.nodes,
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
-      getIsRestrictedRow: isOutboundDisabled,
+      getIsRestrictedRow: row => isOutboundDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-outbound-shipments')}

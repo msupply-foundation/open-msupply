@@ -66,24 +66,6 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 wide: true,
               },
               {
-                type: 'group',
-                name: t('label.created-datetime'),
-                elements: [
-                  {
-                    type: 'dateTime',
-                    name: t('label.from-created-datetime'),
-                    urlParameter: 'createdDatetime',
-                    range: 'from',
-                  },
-                  {
-                    type: 'dateTime',
-                    name: t('label.to-created-datetime'),
-                    urlParameter: 'createdDatetime',
-                    range: 'to',
-                  },
-                ],
-              },
-              {
                 type: 'enum',
                 name: t('label.status'),
                 urlParameter: 'status',
@@ -104,6 +86,53 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                   {
                     label: t('label.verified'),
                     value: InvoiceNodeStatus.Verified,
+                  },
+                ],
+              },
+              {
+                type: 'text',
+                name: t('label.reference'),
+                urlParameter: 'theirReference',
+              },
+              {
+                type: 'number',
+                name: t('label.purchase-order-number'),
+                urlParameter: 'purchaseOrderNumber',
+                wide: true,
+              },
+              {
+                type: 'group',
+                name: t('label.created-datetime'),
+                elements: [
+                  {
+                    type: 'dateTime',
+                    name: t('label.from-created-datetime'),
+                    urlParameter: 'createdDatetime',
+                    range: 'from',
+                  },
+                  {
+                    type: 'dateTime',
+                    name: t('label.to-created-datetime'),
+                    urlParameter: 'createdDatetime',
+                    range: 'to',
+                  },
+                ],
+              },
+              {
+                type: 'group',
+                name: t('label.delivered-datetime'),
+                elements: [
+                  {
+                    type: 'dateTime',
+                    name: t('label.from-delivered-datetime'),
+                    urlParameter: 'deliveredDatetime',
+                    range: 'from',
+                  },
+                  {
+                    type: 'dateTime',
+                    name: t('label.to-delivered-datetime'),
+                    urlParameter: 'deliveredDatetime',
+                    range: 'to',
                   },
                 ],
               },

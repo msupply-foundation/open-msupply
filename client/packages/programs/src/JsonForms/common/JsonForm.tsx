@@ -194,6 +194,7 @@ const FormComponent = ({
     (error: {
       keyword: string;
       parentSchema?: Record<string, Record<string, string>>;
+      params?: Record<string, string>;
       message?: string;
     }) => {
       const { keyword, message } = error;
@@ -203,6 +204,7 @@ const FormComponent = ({
       return t(localeKey, {
         defaultValue: message,
         parentSchema: error.parentSchema,
+        params: error.params,
       });
     },
     [t]

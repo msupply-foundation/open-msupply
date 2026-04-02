@@ -63,7 +63,7 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             id: REQUISITION_REQUEST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 8,
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Sent,
@@ -185,7 +185,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             id: REQUISITION_RESPONSE.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 1,
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::Response,
             status: RequisitionStatus::Finalised,
@@ -311,7 +311,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             id: REQUISITION_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 1,
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,
@@ -447,7 +447,7 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             id: PROGRAM_REQUISITION_REQUEST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 8,
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             store_id: "store_b".to_string(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Sent,
@@ -525,12 +525,259 @@ fn program_requisition_request_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
+const REQUISITION_IMPREST: (&str, &str) = (
+    "IM_B3D3761753DB42A7B3286ACF89FBCA1C",
+    r#"{
+        "ID": "IM_B3D3761753DB42A7B3286ACF89FBCA1C",
+        "date_stock_take": "2018-02-20",
+        "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+        "name_ID": "name_store_a",
+        "status": "cn",
+        "date_entered": "2018-02-20",
+        "nsh_custInv_ID": "",
+        "daysToSupply": 30,
+        "store_ID": "store_b",
+        "type": "im",
+        "date_order_received": "2018-02-20",
+        "previous_csh_id": "",
+        "serial_number": 10,
+        "requester_reference": "bing bong",
+        "comment": "imprest requisition",
+        "colour": 0,
+        "custom_data": null,
+        "linked_requisition_id": "",
+        "linked_purchase_order_ID": "",
+        "authorisationStatus": "",
+        "thresholdMOS": 0,
+        "orderType": "",
+        "periodID": "",
+        "programID": "",
+        "lastModifiedAt": 1606132783,
+        "is_emergency": false,
+        "isRemoteOrder": false,
+        "om_created_datetime": null,
+        "om_sent_datetime": null,
+        "om_finalised_datetime": null,
+        "om_expected_delivery_date": null,
+        "om_max_months_of_stock": null,
+        "om_status": null,
+        "om_colour": null,
+        "date_required": "0000-00-00",
+        "requisition_category_ID": "",
+        "donor_ID": "",
+        "oms_fields": {}
+    }"#,
+);
+fn requisition_imprest_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        REQUISITION_IMPREST,
+        RequisitionRow {
+            id: REQUISITION_IMPREST.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            requisition_number: 10,
+            name_id: "name_store_a".to_string(),
+            store_id: "store_b".to_string(),
+            r#type: RequisitionType::Imprest,
+            status: RequisitionStatus::New,
+            created_datetime: NaiveDate::from_ymd_opt(2018, 2, 20)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            sent_datetime: None,
+            finalised_datetime: None,
+            colour: None,
+            comment: Some("imprest requisition".to_string()),
+            their_reference: Some("bing bong".to_string()),
+            max_months_of_stock: 1.0,
+            min_months_of_stock: 0.0,
+            linked_requisition_id: None,
+            expected_delivery_date: None,
+            approval_status: None,
+            program_id: None,
+            period_id: None,
+            order_type: None,
+            is_emergency: false,
+            created_from_requisition_id: None,
+            original_customer_id: None,
+        },
+    )
+}
+fn requisition_imprest_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: REQUISITION_IMPREST.0.to_string(),
+        push_data: json!(LegacyRequisitionRow {
+            ID: REQUISITION_IMPREST.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            serial_number: 10,
+            name_ID: "name_store_a".to_string(),
+            store_ID: "store_b".to_string(),
+            r#type: LegacyRequisitionType::Im,
+            status: LegacyRequisitionStatus::Sg,
+            date_entered: NaiveDate::from_ymd_opt(2018, 2, 20).unwrap(),
+            requester_reference: Some("bing bong".to_string()),
+            linked_requisition_id: None,
+            thresholdMOS: 0.0,
+            daysToSupply: 30,
+            comment: Some("imprest requisition".to_string()),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2018, 2, 20)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
+            last_modified_at: 0,
+            sent_datetime: None,
+            finalised_datetime: None,
+            max_months_of_stock: Some(1.0),
+            om_status: Some(RequisitionStatus::New),
+            om_colour: None,
+            expected_delivery_date: None,
+            approval_status: None,
+            orderType: None,
+            periodID: None,
+            programID: None,
+            is_emergency: false,
+            oms_fields: None,
+        }),
+    }
+}
+
+const REQUISITION_STOCK_HISTORY: (&str, &str) = (
+    "SH_AA5AA2238EE14654B11B86D52B435FF1",
+    r#"{
+      "ID": "SH_AA5AA2238EE14654B11B86D52B435FF1",
+      "date_stock_take": "2021-04-01",
+      "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+      "name_ID": "name_store_b",
+      "status": "fn",
+      "date_entered": "2021-04-02",
+      "nsh_custInv_ID": "",
+      "daysToSupply": 90,
+      "store_ID": "store_b",
+      "type": "sh",
+      "date_order_received": "0000-00-00",
+      "previous_csh_id": "",
+      "serial_number": 11,
+      "requester_reference": "",
+      "comment": "stock history requisition",
+      "colour": 0,
+      "custom_data": null,
+      "linked_requisition_id": "",
+      "linked_purchase_order_ID": "",
+      "authorisationStatus": "",
+      "thresholdMOS": 0,
+      "orderType": "",
+      "periodID": "",
+      "programID": "",
+      "lastModifiedAt": 1617300000,
+      "is_emergency": false,
+      "isRemoteOrder": false,
+      "om_created_datetime": "",
+      "om_sent_datetime": "",
+      "om_finalised_datetime": "",
+      "om_expected_delivery_date": "0000-00-00",
+      "om_max_months_of_stock": 0,
+      "om_status": "",
+      "om_colour": "",
+      "oms_fields": {}
+    }"#,
+);
+fn requisition_stock_history_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        REQUISITION_STOCK_HISTORY,
+        RequisitionRow {
+            id: REQUISITION_STOCK_HISTORY.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            requisition_number: 11,
+            name_id: "name_store_b".to_string(),
+            store_id: "store_b".to_string(),
+            r#type: RequisitionType::StockHistory,
+            status: RequisitionStatus::Finalised,
+            created_datetime: NaiveDate::from_ymd_opt(2021, 4, 2)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            sent_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 4, 1)
+                    .unwrap()
+                    .and_hms_opt(18, 0, 0)
+                    .unwrap(),
+            ),
+            finalised_datetime: None,
+            colour: None,
+            comment: Some("stock history requisition".to_string()),
+            their_reference: None,
+            max_months_of_stock: 3.0,
+            min_months_of_stock: 0.0,
+            linked_requisition_id: None,
+            expected_delivery_date: None,
+            approval_status: None,
+            program_id: None,
+            period_id: None,
+            order_type: None,
+            is_emergency: false,
+            created_from_requisition_id: None,
+            original_customer_id: None,
+        },
+    )
+}
+fn requisition_stock_history_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: REQUISITION_STOCK_HISTORY.0.to_string(),
+        push_data: json!(LegacyRequisitionRow {
+            ID: REQUISITION_STOCK_HISTORY.0.to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            serial_number: 11,
+            name_ID: "name_store_b".to_string(),
+            store_ID: "store_b".to_string(),
+            r#type: LegacyRequisitionType::Sh,
+            status: LegacyRequisitionStatus::Fn,
+            date_entered: NaiveDate::from_ymd_opt(2021, 4, 2).unwrap(),
+            requester_reference: None,
+            linked_requisition_id: None,
+            thresholdMOS: 0.0,
+            daysToSupply: 90,
+            comment: Some("stock history requisition".to_string()),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 4, 2)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
+            last_modified_at: 1617300000,
+            sent_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 4, 1)
+                    .unwrap()
+                    .and_hms_opt(18, 0, 0)
+                    .unwrap()
+            ),
+            finalised_datetime: None,
+            max_months_of_stock: Some(3.0),
+            om_status: Some(RequisitionStatus::Finalised),
+            om_colour: None,
+            expected_delivery_date: None,
+            approval_status: None,
+            orderType: None,
+            periodID: None,
+            programID: None,
+            is_emergency: false,
+            oms_fields: None,
+        }),
+    }
+}
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         requisition_request_pull_record(),
         program_requisition_request_pull_record(),
         requisition_response_pull_record(),
         requisition_om_fields_pull_record(),
+        requisition_imprest_pull_record(),
+        requisition_stock_history_pull_record(),
     ]
 }
 
@@ -548,5 +795,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
         program_requisition_request_push_record(),
         requisition_response_push_record(),
         requisition_om_fields_push_record(),
+        requisition_imprest_push_record(),
+        requisition_stock_history_push_record(),
     ]
 }

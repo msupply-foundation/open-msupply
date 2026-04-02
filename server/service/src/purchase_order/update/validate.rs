@@ -1,5 +1,6 @@
 use repository::{
-    EqualFilter, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, PurchaseOrder,
+    EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceStatus, InvoiceType,
+    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, PurchaseOrder,
     PurchaseOrderFilter, PurchaseOrderLine, PurchaseOrderLineFilter, PurchaseOrderLineRepository,
     PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError, StorageConnection,
 };
@@ -18,9 +19,21 @@ pub fn validate(
     user_has_auth_permission: Option<bool>,
 ) -> Result<(PurchaseOrder, Option<PurchaseOrderStatus>), UpdatePurchaseOrderError> {
     let purchase_order = PurchaseOrderRepository::new(connection)
-        .query_by_filter(PurchaseOrderFilter::new().id(EqualFilter::equal_to(input.id.to_string())))?
+        .query_by_filter(
+            PurchaseOrderFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
+        )?
         .pop()
         .ok_or(UpdatePurchaseOrderError::PurchaseOrderDoesNotExist)?;
+
+    // When PO is Sent or Finalised, only status changes are allowed (no field edits)
+    let current_status = &purchase_order.purchase_order_row.status;
+    if matches!(
+        current_status,
+        PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
+    ) && !input.is_status_only_change()
+    {
+        return Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder);
+    }
 
     // Check auth is required before changing to Request Approval
     if input.status == Some(PurchaseOrderStatus::RequestApproval) {
@@ -64,9 +77,15 @@ pub fn validate(
     }
 
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
-        PurchaseOrderLineFilter::new()
-            .purchase_order_id(EqualFilter::equal_to(purchase_order.purchase_order_row.id.to_string())),
+        PurchaseOrderLineFilter::new().purchase_order_id(EqualFilter::equal_to(
+            purchase_order.purchase_order_row.id.to_string(),
+        )),
     )?;
+
+    // Check for open inbound shipments when finalising
+    if input.status == Some(PurchaseOrderStatus::Finalised) {
+        check_no_open_inbound_shipments(connection, &purchase_order.purchase_order_row.id)?;
+    }
 
     // Only wanna check if status has been updated
     if input.status.is_some() {
@@ -80,6 +99,27 @@ pub fn validate(
     }
 
     Ok((purchase_order, None))
+}
+
+fn check_no_open_inbound_shipments(
+    connection: &StorageConnection,
+    purchase_order_id: &str,
+) -> Result<(), UpdatePurchaseOrderError> {
+    let invoices = InvoiceRepository::new(connection).query_by_filter(
+        InvoiceFilter::new()
+            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.to_string()))
+            .r#type(EqualFilter::equal_to(InvoiceType::InboundShipment)),
+    )?;
+
+    let has_open_shipments = invoices
+        .iter()
+        .any(|invoice| !matches!(invoice.invoice_row.status, InvoiceStatus::Verified));
+
+    if has_open_shipments {
+        return Err(UpdatePurchaseOrderError::InboundShipmentsNotVerified);
+    }
+
+    Ok(())
 }
 
 fn check_items_orderable(

@@ -34,14 +34,16 @@ EXPOSE 8000
 FROM base
 
 FROM base as dev
-RUN apt-get update && apt-get install -y curl rsync && \
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+WORKDIR /usr/src/omsupply
+COPY client/.nvmrc .nvmrc
+COPY client client
+
+RUN apt-get update && apt-get install -y curl rsync git && \
+    NODE_MAJOR=$(sed 's/^v//' .nvmrc | cut -d. -f1) && \
+    curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
     apt-get install -y nodejs && \
     npm install -g yarn && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /usr/src/omsupply
-COPY client client
 COPY package.json .
 
 WORKDIR /usr/src/omsupply/client

@@ -4,7 +4,6 @@ use super::{
     item_row::item,
     item_variant::item_variant_row::{item_variant, ItemVariantRow},
     location_row::location,
-    name_link_row::name_link,
     name_row::name,
     stock_line_row::stock_line,
     vvm_status::vvm_status_row::{vvm_status, VVMStatusRow},
@@ -20,13 +19,10 @@ use crate::{
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
     BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow,
-    MasterListLineRepository, NameLinkRow, NameRow, Pagination, Sort, StringFilter,
+    MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
 };
 
-use diesel::{
-    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct StockLine {
@@ -41,6 +37,7 @@ pub struct StockLine {
 
 pub enum StockLineSortField {
     ExpiryDate,
+    ManufactureDate,
     NumberOfPacks,
     ItemCode,
     ItemName,
@@ -79,7 +76,7 @@ type StockLineJoin = (
     (ItemLinkRow, ItemRow),
     Option<ItemVariantRow>,
     Option<LocationRow>,
-    Option<(NameLinkRow, NameRow)>,
+    Option<NameRow>,
     Option<BarcodeRow>,
     Option<VVMStatusRow>,
 );
@@ -129,6 +126,9 @@ impl<'a> StockLineRepository<'a> {
                 StockLineSortField::ExpiryDate => {
                     // TODO: would prefer to have extra parameter on Sort.nulls_last
                     apply_sort_asc_nulls_last!(query, sort, stock_line::expiry_date);
+                }
+                StockLineSortField::ManufactureDate => {
+                    apply_sort_asc_nulls_last!(query, sort, stock_line::manufacture_date);
                 }
                 StockLineSortField::ItemCode => {
                     apply_sort_no_case!(query, sort, item::code);
@@ -187,18 +187,7 @@ impl<'a> StockLineRepository<'a> {
         filter: Option<StockLineFilter>,
         query_store_id: Option<String>,
     ) -> BoxedStockLineQuery {
-        let mut query = stock_line::table
-            .inner_join(item_link::table.inner_join(item::table))
-            .left_join(item_variant::table)
-            .left_join(location::table)
-            .left_join(
-                name_link::table
-                    .on(stock_line::supplier_link_id.eq(name_link::id.nullable()))
-                    .inner_join(name::table),
-            )
-            .left_join(barcode::table)
-            .left_join(vvm_status::table)
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             let StockLineFilter {
@@ -293,27 +282,18 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-type BoxedStockLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<
-            LeftJoinOn<
-                LeftJoin<
-                    LeftJoin<
-                        InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
-                        item_variant::table,
-                    >,
-                    location::table,
-                >,
-                InnerJoin<name_link::table, name::table>,
-                Eq<stock_line::supplier_link_id, Nullable<name_link::id>>,
-            >,
-            barcode::table,
-        >,
-        vvm_status::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    stock_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(item_variant::table)
+        .left_join(location::table)
+        .left_join(name::table)
+        .left_join(barcode::table)
+        .left_join(vvm_status::table)
+}
+
+type BoxedStockLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain(
     (
@@ -321,7 +301,7 @@ fn to_domain(
         (_, item_row),
         item_variant_row,
         location_row,
-        name_link_join,
+        supplier_name_row,
         barcode_row,
         vvm_status_row,
     ): StockLineJoin,
@@ -330,7 +310,7 @@ fn to_domain(
         stock_line_row,
         item_row,
         location_row,
-        supplier_name_row: name_link_join.map(|(_, name_row)| name_row),
+        supplier_name_row,
         barcode_row,
         item_variant_row,
         vvm_status_row,

@@ -13,7 +13,10 @@ export type RequisitionLineRow = {
   snapshot_datetime: string | null;
   approved_quantity: number;
   approval_comment: string | null;
+  price_per_unit: number | null;
   comment: string | null;
+  available_volume: number | null;
+  location_type_id: string | null;
   initial_stock_on_hand_units: number;
   incoming_units: number;
   outgoing_units: number;

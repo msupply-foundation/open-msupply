@@ -19,11 +19,11 @@
       <td>{{ line.item.code }}</td>
       <td>{{ line.item.name }}</td>
       <td>{{ line.item.unitName }}</td>
-      <td>{{ line.itemStats.stockOnHand | default(value=0.00) |
+      <td>{{ line.itemStats.availableStockOnHand | default(value=0.00) |
         round(precision=2) }}</td>
       <td>{{ line.itemStats.averageMonthlyConsumption | default(value=0.00) |
         round(precision=2) }}</td>
-      <td>{{ line.itemStats.monthsOfStockOnHand | default(value=0.00) |
+      <td>{{ line.itemStats.availableMonthsOfStockOnHand | default(value=0.00) |
         round(precision=2) }}</td>
       <td>{{ line.requestedQuantity }}</td>
   </tr>

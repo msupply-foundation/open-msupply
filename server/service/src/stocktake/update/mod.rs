@@ -96,7 +96,7 @@ pub fn update_stocktake(
             // write inventory adjustment lines (and update/introduce stock)
             for line in result.inventory_addition_lines {
                 let line_id = line.id.clone();
-                insert_stock_in_line(ctx, line).map_err(|error| {
+                insert_stock_in_line(ctx, line, None).map_err(|error| {
                     UpdateStocktakeError::InsertStockInLineError { line_id, error }
                 })?;
             }
@@ -191,7 +191,7 @@ mod test {
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineType,
-        StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
+        PreferenceRow, StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
         StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
         StocktakeRow, StocktakeStatus,
     };
@@ -248,7 +248,7 @@ mod test {
                 sell_price_per_pack: 0.0,
                 total_number_of_packs: 20.0,
                 on_hold: false,
-                supplier_link_id: Some("name_store_b".to_string()),
+                supplier_id: Some("name_store_b".to_string()),
                 ..Default::default()
             }
         }
@@ -620,10 +620,10 @@ mod test {
         );
         assert_eq!(stock_line.note, stocktake_line.note);
         assert_eq!(
-            stock_line.supplier_link_id.unwrap(),
+            stock_line.supplier_id.unwrap(),
             INVENTORY_ADJUSTMENT_NAME_CODE.to_string()
         );
-        assert_eq!(stock_line.donor_link_id, stocktake_line.donor_link_id);
+        assert_eq!(stock_line.donor_id, stocktake_line.donor_id);
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)
@@ -652,8 +652,8 @@ mod test {
             .unwrap();
         let stock_line = stocktake_line[0].stock_line.clone().unwrap();
         assert_eq!(
-            stock_line.supplier_link_id,
-            mock_stock_line_b().supplier_link_id
+            stock_line.supplier_id,
+            mock_stock_line_b().supplier_id
         );
 
         // success - prunes uncounted lines
@@ -744,12 +744,87 @@ mod test {
             .pop()
             .unwrap();
         assert_eq!(
-            stocktake_line.stock_line.as_ref().unwrap().donor_link_id,
+            stocktake_line.stock_line.as_ref().unwrap().donor_id,
             Some(mock_donor_b().id.clone())
         );
         assert_eq!(
             stocktake_line.stock_line.as_ref().unwrap().item_variant_id,
             Some(mock_item_a_variant_1().id.clone())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn stocktake_new_line_with_external_authorisation_preference() {
+        // Regression test: when the ExternalInboundShipmentLinesMustBeAuthorised preference
+        // is enabled, finalising a stocktake with a new stock line should still succeed.
+        // Previously, the preference incorrectly blocked stock line creation for inventory
+        // additions (not just external inbound shipments), causing a foreign key violation.
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "stocktake_new_line_with_external_auth_pref",
+            MockDataInserts::all(),
+            MockData {
+                stocktakes: vec![StocktakeRow {
+                    id: "stocktake_ext_auth_test".to_string(),
+                    store_id: "store_a".to_string(),
+                    stocktake_number: 99,
+                    created_datetime: NaiveDate::from_ymd_opt(2021, 12, 14)
+                        .unwrap()
+                        .and_hms_milli_opt(12, 33, 0, 0)
+                        .unwrap(),
+                    status: StocktakeStatus::New,
+                    ..Default::default()
+                }],
+                stocktake_lines: vec![StocktakeLineRow {
+                    id: "stocktake_line_ext_auth_test".to_string(),
+                    stocktake_id: "stocktake_ext_auth_test".to_string(),
+                    counted_number_of_packs: Some(10.0),
+                    item_link_id: mock_item_a().id,
+                    batch: Some("new_batch".to_string()),
+                    pack_size: Some(1.0),
+                    cost_price_per_pack: Some(5.0),
+                    sell_price_per_pack: Some(10.0),
+                    ..Default::default()
+                }],
+                preferences: vec![PreferenceRow {
+                    id: "ext_auth_pref_test".to_string(),
+                    key: "external_inbound_shipment_lines_must_be_authorised".to_string(),
+                    value: "true".to_string(),
+                    store_id: Some("store_a".to_string()),
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.stocktake_service;
+
+        let result = service
+            .update_stocktake(
+                &context,
+                UpdateStocktake {
+                    id: "stocktake_ext_auth_test".to_string(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Verify the stock line was created
+        let shipment_line = InvoiceLineRowRepository::new(&context.connection)
+            .find_many_by_invoice_id(&result.inventory_addition_id.unwrap())
+            .unwrap()
+            .pop()
+            .unwrap();
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&shipment_line.stock_line_id.unwrap())
+            .unwrap();
+        assert!(
+            stock_line.is_some(),
+            "Stock line should be created for new stocktake line even when ExternalInboundShipmentLinesMustBeAuthorised is enabled"
         );
     }
 }

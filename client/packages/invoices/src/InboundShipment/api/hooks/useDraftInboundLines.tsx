@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useInbound } from '.';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   useConfirmOnLeaving,
   useNotification,
@@ -11,6 +10,9 @@ import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
 import { ScannedBatchData } from '../../DetailView';
+import { useInboundShipment } from './document/useInboundShipment';
+import { useSaveInboundLines } from './utils';
+import { getInboundStockLines } from '../../../utils';
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
@@ -23,10 +25,22 @@ export const useDraftInboundLines = (
 
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
-  const { id } = useInbound.document.fields('id');
-  const { data: lines } = useInbound.lines.list(itemId ?? '');
-  const { mutateAsync, isLoading } = useInbound.lines.save();
-  const { mutateAsync: deleteMutation } = useDeleteInboundLines();
+  const {
+    query: { data },
+    isExternal,
+  } = useInboundShipment();
+  const id = data?.id ?? '';
+
+  // Derive lines from the same data source, filtering by itemId if provided
+  const lines = useMemo(() => {
+    if (!data) return undefined;
+    return itemId
+      ? data.lines.nodes.filter(({ item }) => itemId === item.id)
+      : getInboundStockLines(data.lines.nodes);
+  }, [data, itemId]);
+
+  const { mutateAsync, isLoading } = useSaveInboundLines(isExternal);
+  const { mutateAsync: deleteMutation } = useDeleteInboundLines(isExternal);
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
     'inbound-shipment-line-edit'
@@ -70,16 +84,42 @@ export const useDraftInboundLines = (
     }
   }, [lines, item, id, isDirty]);
 
-  const addDraftLine = () => {
+  const addDraftLine = (initialPatch?: Partial<DraftInboundLine>) => {
     if (item) {
       const newLine = CreateDraft.stockInLine({
         item,
         invoiceId: id,
       });
+      const line = { ...newLine, ...initialPatch };
       setIsDirty(true);
-      setDraftLines(draftLines => [...draftLines, newLine]);
+      setDraftLines(draftLines => [...draftLines, line]);
     }
   };
+
+  const duplicateDraftLine = useCallback(
+    (lineId: string) => {
+      if (!item) return;
+
+      setDraftLines(prevLines => {
+        const sourceLine = prevLines.find(line => line.id === lineId);
+        if (!sourceLine) return prevLines;
+
+        const { id: _id, ...seedWithoutId } = sourceLine;
+        const newLine = CreateDraft.stockInLine({
+          item,
+          invoiceId: id,
+          seed: seedWithoutId as typeof sourceLine,
+        });
+        // Mark as new so it gets inserted rather than updated
+        newLine.isCreated = true;
+        newLine.isUpdated = false;
+
+        setIsDirty(true);
+        return [...prevLines, newLine];
+      });
+    },
+    [item, id, setIsDirty]
+  );
 
   const updateDraftLine = useCallback(
     (patch: PatchDraftLineInput) => {
@@ -98,27 +138,27 @@ export const useDraftInboundLines = (
     [setDraftLines, setIsDirty]
   );
 
-  const removeDraftLine = (lineId: string) => {
-    const batch = draftLines.find(line => line.id === lineId);
-    if (!batch) return;
-    if (batch.isCreated) {
+  const removeDraftLine = useCallback(
+    (lineId: string) => {
       setDraftLines(draftLines => {
-        const newLines = draftLines.filter(line => line.id !== lineId);
-        if (newLines.length === 0 && item) {
-          return [CreateDraft.stockInLine({ item, invoiceId: id })];
+        const batch = draftLines.find(line => line.id === lineId);
+        if (!batch) return draftLines;
+        if (batch.isCreated) {
+          const newLines = draftLines.filter(line => line.id !== lineId);
+          if (newLines.length === 0 && item) {
+            return [CreateDraft.stockInLine({ item, invoiceId: id })];
+          }
+          return newLines;
+        } else {
+          setIsDirty(true);
+          return draftLines.map(line =>
+            line.id === lineId ? { ...line, isDeleted: true } : line
+          );
         }
-        return newLines;
       });
-    } else {
-      setDraftLines(draftLines => {
-        const updatedLines = draftLines.map(line =>
-          line.id === lineId ? { ...line, isDeleted: true } : line
-        );
-        setIsDirty(true);
-        return updatedLines;
-      });
-    }
-  };
+    },
+    [item, id, setIsDirty]
+  );
 
   const saveLines = async () => {
     if (isDirty) {
@@ -162,6 +202,7 @@ export const useDraftInboundLines = (
   return {
     draftLines: draftLines.filter(line => !line.isDeleted),
     addDraftLine,
+    duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
     isLoading,

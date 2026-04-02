@@ -157,7 +157,8 @@ export const ServerSettings = () => {
                 }
                 startIcon={<DownloadIcon />}
                 onClick={() => {
-                  open(`${Environment.API_HOST}/support/database`, '_blank');
+                  ((window.location.href = `${Environment.API_HOST}/support/database`),
+                    '_blank');
                 }}
               >
                 {t('button.download')}

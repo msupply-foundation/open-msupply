@@ -66,7 +66,7 @@ impl Migration for V2_15_01 {
 
         for (id, data) in sync_buffer_rows {
             let legacy_row = serde_json::from_str::<LegacyStoreRow>(&data)
-                .with_context(|| format!("Cannot parse sync buffer row data: {}", data))?;
+                .with_context(|| format!("Cannot parse sync buffer row data: {data}"))?;
 
             diesel::update(store::table)
                 .filter(store::id.eq(id))

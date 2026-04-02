@@ -1,0 +1,127 @@
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 0;
+    margin-right: 3mm;
+    margin-bottom: 7mm;
+    padding: 0;
+    counter-increment: page;
+
+    @bottom-right {
+      content: "Page " counter(page);
+      font-size: 8pt;
+      font-family: Tahoma;
+    }
+  }
+}
+
+body > table {
+  width: 100%;
+  padding: 2em;
+}
+
+.logo {
+  display: block;
+  height: 96px;
+}
+
+.header_image_section,
+.header_supplied_section,
+.body_section,
+.body_total_section {
+  width: 100%;
+}
+
+.header_supplied_section {
+  font-family: Tahoma;
+  font-size: 8pt;
+  border-bottom: 0.5px solid black;
+  padding-top: 1pt;
+}
+
+.header_image_section {
+  width: 100%;
+  font-family: Tahoma;
+  font-size: 8pt;
+  border-bottom: 0.5px solid black;
+  padding-top: 8pt;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+}
+
+.header_section_field_right {
+  text-align: right;
+  font-family: Tahoma;
+  font-size: 8pt;
+}
+
+.header_section_field_left {
+  text-align: left;
+  font-family: Tahoma;
+  font-size: 8pt;
+}
+
+.body_section {
+  width: 100%;
+  font-family: Tahoma;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.body_column_label th {
+  border-bottom: 0.5px solid black;
+}
+
+.body_column_label th,
+.body_value td {
+  font-family: Tahoma;
+  font-size: 8pt;
+  padding: 4px;
+}
+
+.line_number, .quantity, .pack, .expiry {
+    text-align: right;
+    font-family: Tahoma;
+    font-size: 8pt;
+}
+
+.location_code, .item_name, .batch, .unit {
+    text-align: left;
+    font-family: Tahoma;
+    font-size: 8pt
+}
+
+.footer {
+    width: 100%;
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.footer-left,
+.footer-right {
+    width: 45%;
+}
+
+.footer p {
+    margin: 20px 0;
+}
+
+.batch-wrap {
+    word-break: break-word;
+}
+
+.blank-line {
+  border-bottom: 1px solid black;
+  width: 100%;
+  margin-top: 8px;
+}
+
+td.blank-line-cell {
+  padding: 4px 4px 4px 0;
+  vertical-align: bottom;
+}
+
+td.blank-line-cell:last-child {
+  padding: 4px 0;
+}

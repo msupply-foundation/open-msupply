@@ -51,7 +51,7 @@ impl MigrationFragment for Migrate {
 
         for (id, data) in sync_buffer_rows {
             let legacy_row = serde_json::from_str::<LegacyClinicianRow>(&data)
-                .with_context(|| format!("Cannot parse sync buffer row data: {}", data))?;
+                .with_context(|| format!("Cannot parse sync buffer row data: {data}"))?;
 
             let Some(fields) = legacy_row.oms_fields else {
                 continue;

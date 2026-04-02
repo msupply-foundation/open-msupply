@@ -105,7 +105,7 @@ export const CustomerReturnListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
         description: t('description.invoice-number'),
         enableSorting: true,
         columnType: ColumnType.Number,
@@ -137,7 +137,7 @@ export const CustomerReturnListView = () => {
     totalCount: data?.totalCount ?? 0,
     isLoading: isFetching,
     isError,
-    getIsRestrictedRow: isInboundListItemDisabled,
+    getIsRestrictedRow: row => isInboundListItemDisabled(row.original),
     onRowClick: r => navigate(r.id),
     noDataElement: (
       <NothingHere

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   FnUtils,
   InsertPurchaseOrderInput,
@@ -45,10 +45,16 @@ export const usePurchaseOrder = (id?: string) => {
     if (data) setDraft(data);
   }, [data]);
 
-  const handleDraftChange = (input: Partial<PurchaseOrderFragment>) => {
-    if (!draft) return;
-    setDraft({ ...draft, ...input });
-  };
+  // Ref avoids draft in useCallback deps (unstable reference on every state change)
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
+  const handleDraftChange = useCallback(
+    (input: Partial<PurchaseOrderFragment>) => {
+      setDraft(prev => (prev ? { ...prev, ...input } : prev));
+    },
+    []
+  );
 
   // UPDATE
   const {
@@ -65,13 +71,27 @@ export const usePurchaseOrder = (id?: string) => {
     return updatePurchaseOrder;
   };
 
-  const handleDebounceUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
+  const pendingChanges = useRef<Partial<PurchaseOrderFragment>>({});
 
-  const handleChange = (input: Partial<PurchaseOrderFragment>) => {
-    if (!draft) return;
-    handleDraftChange(input);
-    handleDebounceUpdate(input);
-  };
+  const debouncedFlush = useDebounceCallback(
+    () => {
+      const changes = pendingChanges.current;
+      pendingChanges.current = {};
+      return update(changes);
+    },
+    [],
+    DEBOUNCED_TIME
+  );
+
+  const handleChange = useCallback(
+    (input: Partial<PurchaseOrderFragment>) => {
+      if (!draftRef.current) return;
+      handleDraftChange(input);
+      pendingChanges.current = { ...pendingChanges.current, ...input };
+      debouncedFlush();
+    },
+    [handleDraftChange, debouncedFlush]
+  );
 
   // CREATE
   const {

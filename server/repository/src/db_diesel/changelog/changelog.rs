@@ -1,13 +1,9 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link,
+    db_diesel::store_row::store, diesel_macros::apply_equal_filter,
     name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
-    LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
+    LockedConnection, RepositoryError, StorageConnection,
 };
-use diesel::{
-    dsl::InnerJoin,
-    helper_types::{IntoBoxed, LeftJoin},
-    prelude::*,
-};
+use diesel::{helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use strum::EnumIter;
@@ -35,15 +31,13 @@ table! {
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
         row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
-        name_link_id -> Nullable<Text>,
+        name_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
     }
 }
 
-joinable!(changelog_deduped -> name_link (name_link_id));
-allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 allow_tables_to_appear_in_same_query!(changelog_deduped, vaccination);
 
 #[cfg(not(feature = "postgres"))]
@@ -62,7 +56,6 @@ pub enum RowActionType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter, TS)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
-    GoodsReceivedLine,
     BackendPlugin,
     Number,
     Location,
@@ -109,6 +102,7 @@ pub enum ChangelogTableName {
     VaccineCourse,
     VaccineCourseItem,
     VaccineCourseDose,
+    VaccineCourseStoreConfig,
     Vaccination,
     Encounter,
     ItemVariant,
@@ -130,7 +124,6 @@ pub enum ChangelogTableName {
     SyncMessage,
     PurchaseOrder,
     PurchaseOrderLine,
-    GoodsReceived,
     MasterList,
 }
 
@@ -194,6 +187,7 @@ impl ChangelogTableName {
             ChangelogTableName::VaccineCourse => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
+            ChangelogTableName::VaccineCourseStoreConfig => ChangeLogSyncStyle::Central,
             ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
             ChangelogTableName::Encounter => ChangeLogSyncStyle::Remote,
             ChangelogTableName::ItemVariant => ChangeLogSyncStyle::Central,
@@ -214,8 +208,6 @@ impl ChangelogTableName {
             ChangelogTableName::SyncMessage => ChangeLogSyncStyle::Remote,
             ChangelogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::GoodsReceived => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::GoodsReceivedLine => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::MasterList => ChangeLogSyncStyle::ProcessorOnly,
         }
     }
@@ -227,7 +219,8 @@ pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: RowActionType,
-    pub name_link_id: Option<String>,
+    #[diesel(column_name = "name_link_id")]
+    pub name_id: Option<String>,
     pub store_id: Option<String>,
 }
 
@@ -267,23 +260,6 @@ pub struct ChangelogRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-type ChangelogJoin = (ChangelogRow, Option<NameLinkRow>);
-
-impl ChangelogRow {
-    pub fn from_join((row, name_link): (ChangelogRow, Option<NameLinkRow>)) -> Self {
-        ChangelogRow {
-            cursor: row.cursor,
-            table_name: row.table_name,
-            record_id: row.record_id,
-            row_action: row.row_action,
-            name_id: name_link.map(|r| r.name_id),
-            store_id: row.store_id,
-            is_sync_update: row.is_sync_update,
-            source_site_id: row.source_site_id,
-        }
-    }
-}
-
 impl<'a> ChangelogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ChangelogRepository { connection }
@@ -313,8 +289,8 @@ impl<'a> ChangelogRepository<'a> {
             //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
             // );
 
-            let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
-            Ok(result.into_iter().map(ChangelogRow::from_join).collect())
+            let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
+            Ok(result)
         })?;
         Ok(result)
     }
@@ -348,8 +324,8 @@ impl<'a> ChangelogRepository<'a> {
             //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
             // );
 
-            let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
-            Ok(result.into_iter().map(ChangelogRow::from_join).collect())
+            let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
+            Ok(result)
         })?;
         Ok(result)
     }
@@ -376,8 +352,8 @@ impl<'a> ChangelogRepository<'a> {
             //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
             // );
 
-            let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
-            Ok(result.into_iter().map(ChangelogRow::from_join).collect())
+            let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
+            Ok(result)
         })?;
         Ok(result)
     }
@@ -481,12 +457,10 @@ impl<'a> ChangelogRepository<'a> {
     }
 }
 
-type BoxedChangelogQuery =
-    IntoBoxed<'static, LeftJoin<changelog_deduped::table, name_link::table>, DBType>;
+type BoxedChangelogQuery = IntoBoxed<'static, changelog_deduped::table, DBType>;
 
 fn create_base_query(earliest: u64) -> BoxedChangelogQuery {
     changelog_deduped::table
-        .left_join(name_link::table)
         .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
         .into_boxed()
 }
@@ -506,7 +480,7 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::table_name);
-        apply_equal_filter!(query, name_id, name_link::name_id);
+        apply_equal_filter!(query, name_id, changelog_deduped::name_id);
         apply_equal_filter!(query, store_id, changelog_deduped::store_id);
         apply_equal_filter!(query, record_id, changelog_deduped::record_id);
         apply_equal_filter!(query, action, changelog_deduped::row_action);
@@ -579,7 +553,7 @@ fn create_filtered_outgoing_sync_query(
         .select(store::id.nullable());
 
     let patient_names_visible_on_site =
-        patient_names_visible_on_site(sync_site_id).select(name_link::name_id);
+        patient_names_visible_on_site(sync_site_id).select(name_store_join::name_id.nullable());
 
     // Filter the query for the matching records for each type
     query = query.filter(
@@ -596,24 +570,21 @@ fn create_filtered_outgoing_sync_query(
             // where patient is visible, regardless of the store_id in the changelog
             .or(changelog_deduped::table_name
                 .eq(ChangelogTableName::Vaccination)
-                .and(name_link::name_id.eq_any(patient_names_visible_on_site))),
+                .and(changelog_deduped::name_id.eq_any(patient_names_visible_on_site))),
         // Any other special cases could be handled here...
     );
 
     query
 }
 
-type BoxedNameStoreJoinQuery =
-    IntoBoxed<'static, InnerJoin<name_store_join::table, name_link::table>, DBType>;
+type BoxedNameStoreJoinQuery = IntoBoxed<'static, name_store_join::table, DBType>;
 
 fn patient_names_visible_on_site(sync_site_id: i32) -> BoxedNameStoreJoinQuery {
     let active_stores_for_site = store::table
         .filter(store::site_id.eq(sync_site_id))
         .select(store::id.nullable());
 
-    let mut query = name_store_join::table
-        .inner_join(name_link::table)
-        .into_boxed();
+    let mut query = name_store_join::table.into_boxed();
 
     query = query.filter(
         name_store_join::store_id
@@ -634,11 +605,11 @@ fn create_filtered_outgoing_patient_sync_query(
     let mut query = create_base_query(earliest);
 
     let patient_names_visible_on_site =
-        patient_names_visible_on_site(sync_site_id).select(name_link::name_id);
+        patient_names_visible_on_site(sync_site_id).select(name_store_join::name_id.nullable());
 
     query = query
-        .filter(name_link::name_id.eq(fetch_patient_id.clone()))
-        .filter(name_link::name_id.eq_any(patient_names_visible_on_site));
+        .filter(changelog_deduped::name_id.eq(fetch_patient_id.clone()))
+        .filter(changelog_deduped::name_id.eq_any(patient_names_visible_on_site));
 
     query
 }

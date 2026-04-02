@@ -41,7 +41,7 @@ pub(crate) fn generate(
 
     if let Some(other_party) = other_party_option {
         updated_return.name_store_id = other_party.store_id().map(|id| id.to_string());
-        updated_return.name_link_id = other_party.name_row.id;
+        updated_return.name_id = other_party.name_row.id;
     }
 
     if let Some(status) = patch.status.clone() {
@@ -55,7 +55,7 @@ pub(crate) fn generate(
             connection,
             &updated_return.store_id,
             &updated_return.id,
-            &updated_return.name_link_id,
+            &updated_return.name_id,
         )?)
     } else {
         None
@@ -71,10 +71,7 @@ fn changed_status(
     status: Option<UpdateCustomerReturnStatus>,
     existing_status: &InvoiceStatus,
 ) -> Option<UpdateCustomerReturnStatus> {
-    let new_status = match status {
-        Some(status) => status,
-        None => return None, // Status is not changing
-    };
+    let new_status = status?;
 
     if &new_status.as_invoice_row_status() == existing_status {
         // The invoice already has this status, there's nothing to do.
@@ -172,9 +169,9 @@ pub fn generate_lines_and_stock_lines(
                 StockLineInput {
                     stock_line_id: return_line.stock_line_id,
                     store_id: store_id.to_string(),
-                    on_hold: existing_stock_line.map_or(false, |stock_line| stock_line.on_hold),
+                    on_hold: existing_stock_line.is_some_and(|stock_line| stock_line.on_hold),
                     barcode_id: None,
-                    supplier_link_id: supplier_id.to_string(),
+                    supplier_id: supplier_id.to_string(),
                     // Update existing stock levels if the stock line already exists
                     overwrite_stock_levels: false,
                 },

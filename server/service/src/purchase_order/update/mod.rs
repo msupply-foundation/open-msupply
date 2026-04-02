@@ -26,8 +26,10 @@ pub enum UpdatePurchaseOrderError {
     NotASupplier,
     DonorDoesNotExist,
     UserUnableToAuthorisePurchaseOrder,
+    CannotEditSentPurchaseOrder,
     DatabaseError(RepositoryError),
     ItemsCannotBeOrdered(Vec<PurchaseOrderLine>),
+    InboundShipmentsNotVerified,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -60,6 +62,68 @@ pub struct UpdatePurchaseOrderInput {
     pub insurance_charge: Option<f64>,
     pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
+}
+
+impl UpdatePurchaseOrderInput {
+    pub fn is_status_only_change(&self) -> bool {
+        let Self {
+            id: _,
+            status: _,
+            // Comment is editable on sent POs, only disabled when finalised
+            comment: _,
+            // All other fields must be None
+            supplier_id,
+            confirmed_datetime,
+            supplier_discount_percentage,
+            supplier_discount_amount,
+            donor_id,
+            reference,
+            currency_id,
+            foreign_exchange_rate,
+            shipping_method,
+            sent_datetime,
+            contract_signed_date,
+            advance_paid_date,
+            received_at_port_date,
+            requested_delivery_date,
+            supplier_agent,
+            authorising_officer_1,
+            authorising_officer_2,
+            additional_instructions,
+            heading_message,
+            agent_commission,
+            document_charge,
+            communications_charge,
+            insurance_charge,
+            freight_charge,
+            freight_conditions,
+        } = self;
+        supplier_id.is_none()
+            && confirmed_datetime.is_none()
+            && supplier_discount_percentage.is_none()
+            && supplier_discount_amount.is_none()
+            && donor_id.is_none()
+            && reference.is_none()
+            && currency_id.is_none()
+            && foreign_exchange_rate.is_none()
+            && shipping_method.is_none()
+            && sent_datetime.is_none()
+            && contract_signed_date.is_none()
+            && advance_paid_date.is_none()
+            && received_at_port_date.is_none()
+            && requested_delivery_date.is_none()
+            && supplier_agent.is_none()
+            && authorising_officer_1.is_none()
+            && authorising_officer_2.is_none()
+            && additional_instructions.is_none()
+            && heading_message.is_none()
+            && agent_commission.is_none()
+            && document_charge.is_none()
+            && communications_charge.is_none()
+            && insurance_charge.is_none()
+            && freight_charge.is_none()
+            && freight_conditions.is_none()
+    }
 }
 
 pub fn update_purchase_order(

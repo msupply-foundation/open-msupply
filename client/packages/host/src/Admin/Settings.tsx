@@ -71,10 +71,12 @@ export const Settings: React.FC = () => {
         titleKey="heading.devices"
         expanded={activeSection === 3}
         onChange={toggleSection(3)}
-        visible={userHasPermission(UserPermission.ServerAdmin)}
+        visible={true}
       >
         <LabelPrinterSettings />
-        <BarcodeScannerSettings />
+        {userHasPermission(UserPermission.ServerAdmin) && (
+          <BarcodeScannerSettings />
+        )}
       </SettingsSection>
 
       {isCentralServer && (

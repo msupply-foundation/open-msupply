@@ -25,7 +25,7 @@ pub fn generate(
     let result = InvoiceRow {
         id: input.id,
         user_id: Some(user_id.to_string()),
-        name_link_id: input.other_party_id,
+        name_id: input.other_party_id,
         r#type: InvoiceType::OutboundShipment,
         comment: input.comment,
         their_reference: input.their_reference,
@@ -60,9 +60,11 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
-        goods_received_id: None,
+        default_donor_id: None,
+        purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     Ok(result)
