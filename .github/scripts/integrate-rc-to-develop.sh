@@ -5,11 +5,13 @@ readonly DATE_DISPLAY=$(date +%Y-%m-%d)
 
 HAS_UNRESOLVED_CONFLICTS=false
 CONFLICTED_FILE_COUNT=0
+CONFLICTED_FILES=""
 
 merge_develop_into_branch() {
     local MERGE_BRANCH=$1
     HAS_UNRESOLVED_CONFLICTS=false
     CONFLICTED_FILE_COUNT=0
+    CONFLICTED_FILES=""
 
     echo "Merging develop into $MERGE_BRANCH to detect conflicts"
     if git merge origin/develop --no-commit --no-ff; then
@@ -26,6 +28,7 @@ merge_develop_into_branch() {
         if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
             echo "There are unresolved conflicts that need manual resolution"
             CONFLICTED_FILE_COUNT=$(git status --porcelain | grep -cE "^(UU|AA|DD)")
+            CONFLICTED_FILES=$(git status --porcelain | grep -E "^(UU|AA|DD)" | awk '{print $2}')
             git merge --abort
             HAS_UNRESOLVED_CONFLICTS=true
         else
@@ -46,25 +49,29 @@ These conflicts need manual resolution. The merge was aborted so this branch con
     fi
 }
 
-create_new_pull_request() {
+generate_pr_body() {
     local RC_BRANCH=$1
-    local MERGE_BRANCH=$2
 
-    echo "Creating new merge branch: $MERGE_BRANCH from $RC_BRANCH"
-    git checkout "origin/$RC_BRANCH"
-    git checkout -b "$MERGE_BRANCH"
-    merge_develop_into_branch "$MERGE_BRANCH"
-    git push -u origin "$MERGE_BRANCH"
+    local conflict_section="✅ No merge conflicts"
+    if [[ "$HAS_UNRESOLVED_CONFLICTS" == "true" ]]; then
+        local file_list=""
+        for f in $CONFLICTED_FILES; do
+            file_list="${file_list}
+- \`$f\`"
+        done
+        conflict_section="⚠️ **$CONFLICTED_FILE_COUNT file(s) with merge conflicts** — manual resolution required
+${file_list}"
+    fi
 
-    local pr_title="Merge $RC_BRANCH to develop"
-    local pr_body="# 👩🏻‍💻 What does this PR do?
+    echo "# 👩🏻‍💻 What does this PR do?
 
 Automated merge of \`$RC_BRANCH\` into \`develop\`.
 - $UNMERGED_COMMITS unmerged commit(s) detected on $DATE_DISPLAY
 - Source: This branch is based on \`$RC_BRANCH\`
 
+$conflict_section
+
 This PR was created automatically by the RC to develop integration workflow.
-⚠️ **Note**: Any merge conflicts will be visible in this PR and need manual resolution.
 
 ## 💌 Any notes for the reviewer?
 
@@ -90,6 +97,21 @@ Please review the merge commit and ensure no conflicts were incorrectly resolved
 - [ ] Postgres
 - [ ] SQLite
 - [ ] Frontend"
+}
+
+create_new_pull_request() {
+    local RC_BRANCH=$1
+    local MERGE_BRANCH=$2
+
+    echo "Creating new merge branch: $MERGE_BRANCH from $RC_BRANCH"
+    git checkout "origin/$RC_BRANCH"
+    git checkout -b "$MERGE_BRANCH"
+    merge_develop_into_branch "$MERGE_BRANCH"
+    git push -u origin "$MERGE_BRANCH"
+
+    local pr_title="Merge $RC_BRANCH to develop"
+    local pr_body
+    pr_body=$(generate_pr_body "$RC_BRANCH")
 
     echo "Creating pull request for $MERGE_BRANCH -> develop"
     local pr_url
@@ -117,6 +139,11 @@ update_existing_pull_request() {
     git checkout -B "$MERGE_BRANCH" "origin/$RC_BRANCH"
     merge_develop_into_branch "$MERGE_BRANCH"
     git push --force-with-lease origin "$MERGE_BRANCH"
+
+    local pr_body
+    pr_body=$(generate_pr_body "$RC_BRANCH")
+    gh pr edit "$PR_NUMBER" --body "$pr_body"
+
     comment_on_pr_if_conflicts "$PR_NUMBER" "$RC_BRANCH"
     echo "PR #$PR_NUMBER updated with latest changes from $RC_BRANCH"
 }
