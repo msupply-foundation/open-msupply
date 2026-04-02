@@ -16,7 +16,6 @@ import { PurchaseOrderFragment } from '../../api';
 
 interface OtherSectionProps {
   draft?: PurchaseOrderFragment;
-  onUpdate: (input: Partial<PurchaseOrderFragment>) => void;
   onChange: (input: Partial<PurchaseOrderFragment>) => void;
   disabled?: boolean;
 }

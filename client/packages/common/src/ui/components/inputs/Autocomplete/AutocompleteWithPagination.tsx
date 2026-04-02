@@ -11,7 +11,6 @@ import {
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
   createFilterOptions,
-  PopperProps,
   CircularProgress,
   Box,
 } from '@mui/material';
@@ -168,18 +167,6 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         },
       };
 
-  // Memoize to keep a stable component reference across renders —
-  // a new function type would cause React to remount the Popper and close the dropdown.
-  const popper = useMemo(() => {
-    if (!popperMinWidth) return StyledPopper;
-    return (props: PopperProps) => (
-      <StyledPopper
-        {...props}
-        placement="bottom-start"
-        style={{ minWidth: popperMinWidth, width: 'auto' }}
-      />
-    );
-  }, [popperMinWidth]);
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
@@ -214,9 +201,12 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         ...sx,
       }}
       slots={{
-        popper: popper,
+        popper: StyledPopper,
       }}
       slotProps={{
+        popper: popperMinWidth
+          ? { placement: 'bottom-start' as const, style: { minWidth: popperMinWidth, width: 'auto' } }
+          : undefined,
         listbox: {
           ...listboxProps,
           sx: {
