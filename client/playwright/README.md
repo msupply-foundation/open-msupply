@@ -12,24 +12,16 @@
 
 For full documentation, see [playwright.dev](https://playwright.dev).
 
-## Overview
-
-In the future this folder will contain various End-to-end tests (testing frontend and backend interactively) for Open mSupply.
-Currently the only test does the  custom translation import/export workflow on the central server and takes screenshots.
-
 ## Prerequisites
 
 - Node.js >= 18
 - Yarn
-- A running Open mSupply instance on `http://localhost:3003` (configured in `playwright.config.ts`)
+- A running Open mSupply instance (defaults to `http://localhost:3003`)
 
 ## Setup
 
 ```bash
-cd client/playwright
-
-# Install dependencies
-yarn install
+cd client
 
 # Install Playwright browsers (first time only)
 npx playwright install chromium
@@ -37,39 +29,66 @@ npx playwright install chromium
 
 ## Running Tests
 
+All commands run from the `client/` directory.
+
 ```bash
 # Run all tests (headless)
-yarn test
+yarn e2e
 
-# Run tests with a visible browser
-yarn test:headed
+# Run only the smoke tests
+yarn e2e smoke
 
-# Run tests in interactive UI mode
-yarn test:ui
+# Run with visible browser, single worker (easier to watch)
+yarn e2e --headed smoke --workers 1
+
+# Run a specific section
+yarn e2e -g "Replenishment"
+
+# Interactive UI mode
+yarn e2e --ui smoke
+
+# Against a different server
+BASE_URL=http://localhost:9000 yarn e2e --headed smoke
 
 # View the HTML report from the last run
-yarn report
+npx playwright show-report playwright/playwright-report
 ```
+
+## Auth
+
+Tests log in once at the start of each run using `admin` / `pass` and share the session across all workers via a stored auth state file (`.auth/state.json`, gitignored). Individual tests don't need to log in.
+
+## Smoke Tests
+
+The smoke test suite (`smoke-all-sections.spec.ts`) covers:
+
+- **Dashboard**
+- **Distribution** — outbound shipments, customer returns, customers
+- **Replenishment** — inbound shipments, purchase orders, internal orders, supplier returns, suppliers, R&R forms
+- **Inventory** — stock, stocktakes, locations
+- **Catalogue** — items, master lists, assets
+- **Dispensary** — patients, prescriptions, clinicians
+- **Cold Chain** — equipment, monitoring, sensors
+- **Manage (Central Server)** — facilities, global preferences, equipment, indicators & demographics, campaigns
+- **Programs** — immunisations
+- **Reports & Settings**
+
+Each section runs in parallel across Playwright workers. Tests within a section run sequentially (list view, then detail view + tabs). Sections that aren't available for the current store (e.g. central-only pages, dispensary mode) will pass without asserting content.
 
 ## Project Structure
 
 ```
 playwright/
-├── e2e/                        # Test specs
+├── e2e/
+│   ├── auth.setup.ts                           # Shared login (runs once per test run)
+│   ├── smoke-all-sections.spec.ts              # Smoke tests for all sections
 │   └── central-server-custom-translations.spec.ts
-├── fixtures/                   # Test data
+├── helpers/
+│   └── login.ts                                # Login helper
+├── fixtures/                                   # Test data
 │   └── sample-translations.json
-├── screenshots/                # Generated screenshots (gitignored)
-├── playwright.config.ts        # Playwright configuration
+├── screenshots/                                # Generated screenshots (gitignored)
+├── .auth/                                      # Stored auth state (gitignored)
+├── playwright.config.ts
 └── package.json
 ```
-
-## Configuration
-
-Tests run against `http://localhost:3003` by default. To change this, edit the `baseURL` in `playwright.config.ts` or set it via the command line:
-
-```bash
-BASE_URL=http://localhost:4000 npx playwright test
-```
-
-The tests log in with `admin` / `pass` — make sure your local instance has this user configured.
