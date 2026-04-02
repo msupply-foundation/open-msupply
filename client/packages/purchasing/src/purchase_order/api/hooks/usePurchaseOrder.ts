@@ -45,10 +45,16 @@ export const usePurchaseOrder = (id?: string) => {
     if (data) setDraft(data);
   }, [data]);
 
-  const handleDraftChange = (input: Partial<PurchaseOrderFragment>) => {
-    if (!draft) return;
-    setDraft({ ...draft, ...input });
-  };
+  // Ref avoids draft in useCallback deps (unstable reference on every state change)
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
+  const handleDraftChange = useCallback(
+    (input: Partial<PurchaseOrderFragment>) => {
+      setDraft(prev => (prev ? { ...prev, ...input } : prev));
+    },
+    []
+  );
 
   // UPDATE
   const {
@@ -79,12 +85,12 @@ export const usePurchaseOrder = (id?: string) => {
 
   const handleChange = useCallback(
     (input: Partial<PurchaseOrderFragment>) => {
-      if (!draft) return;
+      if (!draftRef.current) return;
       handleDraftChange(input);
       pendingChanges.current = { ...pendingChanges.current, ...input };
       debouncedFlush();
     },
-    [draft, handleDraftChange, debouncedFlush]
+    [handleDraftChange, debouncedFlush]
   );
 
   // CREATE
