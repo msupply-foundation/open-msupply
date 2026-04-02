@@ -173,7 +173,8 @@ const platform = getPlatform();
 const os = getOS();
 const deviceInfo = getDeviceInfo();
 
-const isTouchScreen = 'ontouchstart' in document.documentElement;
+const isTouchScreen =
+  typeof document !== 'undefined' && 'ontouchstart' in document.documentElement;
 
 export const EnvUtils = {
   // Using isProduction rather than isDevelopment, as we also use a testing

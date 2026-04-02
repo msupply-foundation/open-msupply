@@ -119,8 +119,12 @@ export const LoginLayout = ({
         >
           {loginForm}
         </Box>
-        <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
-        <LanguageButton />
+        {/* Suspense boundary lets SSR renderToString work even when
+            AppVersion suspends (useIsCentralServerApi has suspense:true). */}
+        <React.Suspense fallback={null}>
+          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+          <LanguageButton />
+        </React.Suspense>
       </Box>
     </Box>
   );

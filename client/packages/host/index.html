@@ -25,15 +25,19 @@
       </svg>
     </div>
     <script>
-      // Use rAF so this runs after the SVG paints (guarantees FCP fires first).
-      requestAnimationFrame(function () {
+      // If root is prerendered, remove the spinner before first paint.
+      // Otherwise use rAF + MutationObserver to remove it once React mounts.
+      (function () {
         var ld = document.getElementById('_ld');
         var root = document.getElementById('root');
         if (root.firstChild) { ld.remove(); return; }
-        new MutationObserver(function (_, obs) {
-          if (root.firstChild) { ld.remove(); obs.disconnect(); }
-        }).observe(root, { childList: true });
-      });
+        requestAnimationFrame(function () {
+          if (root.firstChild) { ld.remove(); return; }
+          new MutationObserver(function (_, obs) {
+            if (root.firstChild) { ld.remove(); obs.disconnect(); }
+          }).observe(root, { childList: true });
+        });
+      })();
     </script>
     <script defer src="/BrowserPrint-3.1.250.min.js"></script>
     <script type="module" src="/src/index.ts"></script>

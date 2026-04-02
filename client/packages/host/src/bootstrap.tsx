@@ -1,5 +1,5 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import App from './App';
 
 async function bootstrap() {
@@ -20,9 +20,17 @@ async function bootstrap() {
     }
   }
 
-  const container = document.getElementById('root');
-  const root = createRoot(container!);
-  root.render(<App />);
+  const container = document.getElementById('root')!;
+
+  // If the container already has children the page was pre-rendered at build
+  // time.  Use hydrateRoot so React reconciles against the existing DOM
+  // instead of wiping and re-mounting it — this preserves the pre-rendered
+  // LCP element so Lighthouse records its paint time at initial load.
+  if (container.firstChild) {
+    hydrateRoot(container, <App />);
+  } else {
+    createRoot(container).render(<App />);
+  }
 }
 
 bootstrap();
