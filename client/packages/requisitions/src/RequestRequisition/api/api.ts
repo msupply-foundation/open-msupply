@@ -83,7 +83,7 @@ const requestParser = {
       status: requestParser.toStatus(requisition),
       minMonthsOfStock: requisition.minMonthsOfStock,
       maxMonthsOfStock: requisition.maxMonthsOfStock,
-      originalCustomerId: setNullableInput(
+      destinationCustomerId: setNullableInput(
         'id',
         requisition.destinationCustomer
       ),

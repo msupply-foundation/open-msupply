@@ -1,8 +1,9 @@
 use chrono::Utc;
-use repository::{InvoiceRow, InvoiceStatus, StockLineRow, StorageConnection};
+use repository::{InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow, StorageConnection};
 
-use crate::invoice::common::{
-    generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+use crate::invoice::{
+    common::{generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine},
+    stock_effect::{stock_effects, StockEffect},
 };
 
 use super::{UpdateSupplierReturn, UpdateSupplierReturnError, UpdateSupplierReturnStatus};
@@ -39,8 +40,14 @@ pub fn generate(
         updated_return.status = status.as_invoice_row_status()
     }
 
-    let should_update_total_number_of_packs =
-        should_update_stock_lines_total_number_of_packs(&existing_return.status, &status);
+    let new_invoice_status = status.as_ref().map(|s| s.as_invoice_row_status());
+    let should_update_total_number_of_packs = match &new_invoice_status {
+        Some(to) => {
+            stock_effects(&InvoiceType::SupplierReturn, &existing_return.status, to)
+                == StockEffect::ReduceStock
+        }
+        None => false,
+    };
 
     let stock_lines_to_update = if should_update_total_number_of_packs {
         Some(
@@ -116,21 +123,3 @@ fn set_new_status_datetime(
     }
 }
 
-fn should_update_stock_lines_total_number_of_packs(
-    existing_status: &InvoiceStatus,
-    status: &Option<UpdateSupplierReturnStatus>,
-) -> bool {
-    let new_status = match changed_status(status, existing_status) {
-        Some(status) => status,
-        None => return false, // Status is not changing
-    };
-
-    match (existing_status, new_status) {
-        (
-            // From New to Picked, or New to Shipped
-            InvoiceStatus::New,
-            UpdateSupplierReturnStatus::Picked | UpdateSupplierReturnStatus::Shipped,
-        ) => true,
-        _ => false,
-    }
-}
