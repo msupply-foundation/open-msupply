@@ -47,7 +47,7 @@ export const OtherSection = ({
           <PanelLabel>{t('label.donor')}</PanelLabel>
           <DonorSearchInput
             donorId={draft?.donor?.id ?? null}
-            onChange={donor => onUpdate({ donor: donor })}
+            onChange={donor => onChange({ donor: donor })}
             clearable
             disabled={disabled}
           />

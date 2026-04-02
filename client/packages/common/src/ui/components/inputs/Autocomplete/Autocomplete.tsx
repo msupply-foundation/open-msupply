@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useMemo } from 'react';
 import {
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
@@ -32,11 +32,10 @@ export interface ClickableOptionConfig {
   [extraField: string]: unknown;
 }
 
-export interface AutocompleteProps<T>
-  extends Omit<
-    MuiAutocompleteProps<T, undefined, boolean, undefined>,
-    'renderInput'
-  > {
+export interface AutocompleteProps<T> extends Omit<
+  MuiAutocompleteProps<T, undefined, boolean, undefined>,
+  'renderInput'
+> {
   defaultValue?: AutocompleteOption<T> | null;
   getOptionDisabled?: (option: T) => boolean;
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
@@ -150,14 +149,18 @@ export function Autocomplete<T>({
     return (option as { label?: string }).label ?? '';
   };
 
-  const CustomPopper = (props: PopperProps) => (
-    <StyledPopper
-      {...props}
-      placement="bottom-start"
-      style={{ minWidth: popperMinWidth, width: 'auto' }}
-    />
-  );
-  const popper = popperMinWidth ? CustomPopper : StyledPopper;
+  // Memoize to keep a stable component reference across renders —
+  // a new function type would cause React to remount the Popper and close the dropdown.
+  const popper = useMemo(() => {
+    if (!popperMinWidth) return StyledPopper;
+    return (props: PopperProps) => (
+      <StyledPopper
+        {...props}
+        placement="bottom-start"
+        style={{ minWidth: popperMinWidth, width: 'auto' }}
+      />
+    );
+  }, [popperMinWidth]);
 
   const clickableOptionRenderer = (clickableOption: ClickableOptionConfig) => (
     <Box
