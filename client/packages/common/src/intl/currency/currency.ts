@@ -243,7 +243,7 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         precision: 2,
         format,
       };
-    }    
+    }
     case 'AFN': {
       return {
         // separator: "," decimal = "."

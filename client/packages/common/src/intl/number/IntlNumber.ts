@@ -4,6 +4,7 @@ import { MAX_FRACTION_DIGITS, SupportedLocales, useIntlUtils } from '../utils';
 
 const localeNumberOverrides: { [locale: string]: /* Override */ string } = {
   tet: 'en-US',
+  ar: 'ar-u-nu-arab',
 };
 
 // This method needs to be used instead of Intl.NumberFormat directly
