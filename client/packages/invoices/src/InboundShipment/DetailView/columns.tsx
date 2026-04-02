@@ -55,6 +55,14 @@ export const useInboundShipmentColumns = (
         enableSorting: true,
       },
       {
+        id: 'purchaseOrderLine.lineNumber',
+        accessorFn: row => row.purchaseOrderLine?.lineNumber ?? '',
+        header: t('label.purchase-order-line-number'),
+        size: 90,
+        includeColumn: external,
+        enableSorting: true,
+      },
+      {
         accessorKey: 'batch',
         header: t('label.batch'),
         enableSorting: true,
@@ -67,17 +75,6 @@ export const useInboundShipmentColumns = (
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
         size: 120,
-        enableColumnFilter: true,
-        enableSorting: true,
-      },
-      {
-        id: 'manufactureDate',
-        accessorFn: row =>
-          row.manufactureDate ? new Date(row.manufactureDate) : null,
-        header: t('label.manufacture-date'),
-        columnType: ColumnType.Date,
-        size: 120,
-        defaultHideOnMobile: true,
         enableColumnFilter: true,
         enableSorting: true,
       },
@@ -140,14 +137,6 @@ export const useInboundShipmentColumns = (
         includeColumn: !external,
       },
       {
-        accessorKey: 'status',
-        header: t('label.auth-status'),
-        enableColumnFilter: true,
-        filterVariant: 'select',
-        includeColumn: showLineStatus,
-        Cell: ({ cell }) => <StatusCell cell={cell} statusMap={statusMap} />,
-      },
-      {
         id: 'doseQuantity',
         accessorFn: row => {
           if (!row.item.isVaccine) return null;
@@ -161,6 +150,14 @@ export const useInboundShipmentColumns = (
         size: 120,
       },
       {
+        accessorKey: 'status',
+        header: t('label.auth-status'),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        includeColumn: showLineStatus,
+        Cell: ({ cell }) => <StatusCell cell={cell} statusMap={statusMap} />,
+      },
+      {
         id: 'costPricePerUnit',
         accessorFn: row => {
           if (isInboundPlaceholderRow(row)) return undefined;
@@ -170,6 +167,14 @@ export const useInboundShipmentColumns = (
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
         aggregationFn: weightedAverageByUnits(),
+        size: 100,
+        includeColumn: !external,
+      },
+      {
+        accessorKey: 'costPricePerPack',
+        header: t('label.price-per-pack'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
         size: 100,
         includeColumn: !external,
       },
@@ -198,6 +203,17 @@ export const useInboundShipmentColumns = (
         header: t('label.manufacturer'),
         defaultHideOnMobile: true,
         accessorFn: row => row.manufacturer?.name ?? '',
+      },
+      {
+        id: 'manufactureDate',
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        header: t('label.manufacture-date'),
+        columnType: ColumnType.Date,
+        size: 120,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
       },
       {
         id: 'campaign',

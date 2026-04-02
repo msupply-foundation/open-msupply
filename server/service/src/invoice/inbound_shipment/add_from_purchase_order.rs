@@ -2,7 +2,7 @@ use crate::invoice::inbound_shipment::InsertInboundShipmentError;
 use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
 use repository::{
     EqualFilter, InvoiceLineStatus, InvoiceLineType, PurchaseOrderLineFilter,
-    PurchaseOrderLineRepository,
+    PurchaseOrderLineRepository, PurchaseOrderLineStatus, PurchaseOrderRowRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
 use util::uuid::uuid;
@@ -16,9 +16,16 @@ pub fn add_from_purchase_order(
     let purchase_order_id = purchase_order_id
         .ok_or(InsertInboundShipmentError::AddLinesFromPurchaseOrderWithoutPurchaseOrder)?;
 
+    // Get the PO's exchange rate to convert prices from PO currency to store currency
+    let exchange_rate = PurchaseOrderRowRepository::new(connection)
+        .find_one_by_id(&purchase_order_id)?
+        .map(|po| po.foreign_exchange_rate)
+        .unwrap_or(1.0);
+
     let purchase_order_lines = PurchaseOrderLineRepository::new(connection).query_by_filter(
         PurchaseOrderLineFilter::new()
-            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.clone())),
+            .purchase_order_id(EqualFilter::equal_to(purchase_order_id.clone()))
+            .status(EqualFilter::equal_to(PurchaseOrderLineStatus::Sent)), // skip closed lines
     )?;
 
     let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
@@ -45,8 +52,8 @@ pub fn add_from_purchase_order(
             .unwrap_or(purchase_order_line.requested_number_of_units);
         let shipped_number_of_units = purchase_order_line_stats.shipped_number_of_units;
         let pack_size = purchase_order_line.requested_pack_size;
-        let number_of_packs =
-            (purchase_order_number_of_units - shipped_number_of_units) / pack_size;
+        let remaining_units = (purchase_order_number_of_units - shipped_number_of_units).max(0.0);
+        let number_of_packs = remaining_units / pack_size;
 
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
@@ -59,17 +66,24 @@ pub fn add_from_purchase_order(
             batch: None,
             expiry_date: None,
             manufacture_date: None,
+            purchase_order_line_id: Some(purchase_order_line.id.clone()),
             pack_size: pack_size,
-            cost_price_per_pack: purchase_order_line.price_per_pack_after_discount,
-            sell_price_per_pack: purchase_order_line.price_per_pack_after_discount,
-            total_before_tax: purchase_order_line.price_per_pack_after_discount * number_of_packs,
-            total_after_tax: purchase_order_line.price_per_pack_after_discount * number_of_packs,
+            cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
+            sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
+            total_before_tax: purchase_order_line.price_per_pack_after_discount
+                * exchange_rate
+                * number_of_packs,
+            total_after_tax: purchase_order_line.price_per_pack_after_discount
+                * exchange_rate
+                * number_of_packs,
             tax_percentage: None,
             r#type: InvoiceLineType::StockIn,
             number_of_packs,
             prescribed_quantity: None,
             note: None,
-            foreign_currency_price_before_tax: None,
+            foreign_currency_price_before_tax: Some(
+                purchase_order_line.price_per_pack_after_discount * number_of_packs,
+            ),
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,

@@ -21,17 +21,9 @@ impl ViewMigrationFragment for ViewMigration {
             r#"
                 CREATE VIEW invoice_line_stats AS
                 SELECT
-                    il.id AS invoice_line_id,
-                    pol.id AS purchase_order_line_id
+                    il.id AS invoice_line_id
                 FROM
                     invoice_line il
-                        JOIN invoice i ON il.invoice_id = i.id
-                        JOIN item_link il_item_link ON il_item_link.id = il.item_link_id
-                        LEFT JOIN (
-                            purchase_order_line pol
-                                JOIN item_link pol_item_link ON pol_item_link.id = pol.item_link_id
-                        ) ON i.purchase_order_id = pol.purchase_order_id
-                            AND il_item_link.item_id = pol_item_link.item_id
             "#
         )?;
 

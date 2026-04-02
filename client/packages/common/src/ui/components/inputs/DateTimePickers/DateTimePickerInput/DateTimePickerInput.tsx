@@ -54,7 +54,7 @@ export const DateTimePickerInput = ({
   slotProps,
   ...props
 }: Omit<DateTimePickerProps<true>, 'onChange'> & {
-  error?: string | undefined;
+  error?: React.ReactNode;
   width?: number | string;
   label?: string;
   onChange: (value: Date | null) => void;
@@ -163,6 +163,7 @@ export const DateTimePickerInput = ({
         minDate={minDate}
         maxDate={maxDate}
         disableFuture={disableFuture}
+        closeOnSelect={true}
         onOpen={() => setIsOpen?.(true)}
         onClose={() => setIsOpen?.(false)}
         {...props}

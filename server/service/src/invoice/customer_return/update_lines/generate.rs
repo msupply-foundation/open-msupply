@@ -83,6 +83,7 @@ pub fn generate(
                 manufacture_date: None,
                 shipped_number_of_packs: None,
                 shipped_pack_size: None,
+                purchase_order_line_id: None,
             },
         )
         .collect();

@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   RangeObject,
   useUrlQuery,
@@ -36,6 +36,10 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
   const [value, setValue] = useState(
     getNumberFromUrl(urlValue, range) as number | undefined
   );
+
+  useEffect(() => {
+    setValue(getNumberFromUrl(urlValue, range) as number | undefined);
+  }, [urlValue, range]);
 
   const debouncedOnChange = useDebouncedValueCallback(
     val => {

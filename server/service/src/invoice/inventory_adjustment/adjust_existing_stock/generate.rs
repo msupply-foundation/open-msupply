@@ -97,6 +97,8 @@ pub fn generate(
         default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     let StockLineRow {
@@ -152,6 +154,7 @@ pub fn generate(
             tax_percentage: None,
             shipped_number_of_packs: None,
             shipped_pack_size: None,
+            purchase_order_line_id: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,
