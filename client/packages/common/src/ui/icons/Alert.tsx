@@ -1,12 +1,14 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
-export const AlertIcon = (
-  props: SvgIconProps & { fill?: string; double?: boolean }
-): JSX.Element => {
+export const AlertIcon = React.forwardRef<
+  SVGSVGElement,
+  SvgIconProps & { fill?: string; double?: boolean }
+>((props, ref) => {
   const { fill = 'none', double, ...rest } = props;
   return (
     <SvgIcon
+      ref={ref}
       {...rest}
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -31,4 +33,4 @@ export const AlertIcon = (
       )}
     </SvgIcon>
   );
-};
+});

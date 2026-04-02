@@ -1,12 +1,14 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
-export const SunIcon = (
-  props: SvgIconProps & { stroke?: string }
-): JSX.Element => {
+export const SunIcon = React.forwardRef<
+  SVGSVGElement,
+  SvgIconProps & { stroke?: string }
+>((props, ref) => {
   const { stroke = 'currentColor', ...rest } = props;
   return (
     <SvgIcon
+      ref={ref}
       {...rest}
       viewBox="0 0 28 28"
       stroke={stroke}
@@ -25,4 +27,4 @@ export const SunIcon = (
       <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
     </SvgIcon>
   );
-};
+});
