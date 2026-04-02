@@ -1,6 +1,6 @@
 +++
 title = "Open omSupply Docker"
-weight = 10
+weight = 40
 sort_by = "weight"
 template = "docs/section.html"
 

@@ -21,6 +21,8 @@ should_skip() {
   case "$1" in
     "README.md") return 0 ;;                           # root README
     ".github/workflows/ACTIONS_README.md") return 0 ;; # not developer docs
+    docs/themes/*) return 0 ;;                         # theme vendored files
+    docs/themes/*) return 0 ;;                         # theme vendored files
     *) return 1 ;;
   esac
 }
@@ -89,6 +91,77 @@ fi
 
 echo ""
 echo "Summary: $checked checked, $skipped skipped, $errors errors"
+
+# ── Bare HTML tags that break rendering ───────────────────────────
+# Tags like <script> or <style> outside of backticks/code blocks are
+# rendered as real HTML by Zola, which breaks the page DOM and is
+# an XSS risk (arbitrary JS execution for site visitors).
+echo ""
+echo "Checking for bare HTML tags in markdown..."
+bare_html_errors=0
+
+while IFS= read -r mdfile; do
+  # Strip fenced code blocks (``` ... ```) and inline code (`...`)
+  stripped=$(sed '/^```/,/^```/d' "$mdfile" | sed 's/`[^`]*`//g')
+
+  # Check 1: dangerous HTML tags rendered as real DOM elements
+  result=$(echo "$stripped" | grep -n '<\(script\|style\|iframe\|object\|embed\|form\|link\|img\|svg\)[^a-zA-Z]' || true)
+  if [ -n "$result" ]; then
+    while IFS= read -r line; do
+      echo "BARE HTML: ${mdfile#$REPO_ROOT/}:$line"
+      bare_html_errors=$((bare_html_errors + 1))
+    done <<< "$result"
+  fi
+
+  # Check 2: javascript: URLs in markdown links — [text](javascript:...)
+  result=$(echo "$stripped" | grep -in '\](javascript:' || true)
+  if [ -n "$result" ]; then
+    while IFS= read -r line; do
+      echo "JS URL: ${mdfile#$REPO_ROOT/}:$line"
+      bare_html_errors=$((bare_html_errors + 1))
+    done <<< "$result"
+  fi
+
+  # Check 3: event handler attributes (onclick, onerror, onload, etc.)
+  result=$(echo "$stripped" | grep -n ' on[a-z]*=' || true)
+  if [ -n "$result" ]; then
+    while IFS= read -r line; do
+      echo "EVENT HANDLER: ${mdfile#$REPO_ROOT/}:$line"
+      bare_html_errors=$((bare_html_errors + 1))
+    done <<< "$result"
+  fi
+done < <(find "$DOCS_CONTENT" -name '*.md' -type f)
+
+if [ "$bare_html_errors" -gt 0 ]; then
+  echo "Found $bare_html_errors unsafe HTML pattern(s) — wrap tags in backticks, remove event handlers, and avoid javascript: URLs."
+  errors=$((errors + bare_html_errors))
+else
+  echo "OK: no bare HTML tags found."
+fi
+
+# ── Broken internal links ──────────────────────────────────────────
+if command -v zola &>/dev/null; then
+  echo ""
+  echo "Checking internal links..."
+  build_output=$(cd "$REPO_ROOT/docs" && zola build 2>&1) || true
+  broken_links=$(echo "$build_output" | grep -c "does not exist\." || true)
+  if [ "$broken_links" -gt 0 ]; then
+    echo "$build_output" | grep "does not exist\."
+    echo ""
+    echo "Found $broken_links broken internal link(s)."
+    errors=$((errors + broken_links))
+  else
+    echo "OK: no broken internal links."
+  fi
+  # clean up build output
+  rm -rf "$REPO_ROOT/docs/public"
+else
+  echo ""
+  echo "SKIPPED: zola not found — skipping internal link check."
+fi
+
+echo ""
+echo "Total: $errors errors"
 
 if [ "$errors" -gt 0 ]; then
   echo ""
