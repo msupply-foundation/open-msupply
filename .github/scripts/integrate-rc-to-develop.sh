@@ -135,8 +135,16 @@ update_existing_pull_request() {
     local MERGE_BRANCH=$2
     local PR_NUMBER=$3
 
-    echo "Updating PR #$PR_NUMBER: resetting $MERGE_BRANCH to latest $RC_BRANCH"
-    git checkout -B "$MERGE_BRANCH" "origin/$RC_BRANCH"
+    echo "Updating PR #$PR_NUMBER: merging latest $RC_BRANCH into $MERGE_BRANCH"
+    git checkout -B "$MERGE_BRANCH" "origin/$MERGE_BRANCH"
+
+    if git merge "origin/$RC_BRANCH" --no-edit; then
+        echo "Merged latest $RC_BRANCH into $MERGE_BRANCH"
+    else
+        echo "Conflicts merging $RC_BRANCH into $MERGE_BRANCH, aborting"
+        git merge --abort
+    fi
+
     merge_develop_into_branch "$MERGE_BRANCH"
     git push --force-with-lease origin "$MERGE_BRANCH"
 
