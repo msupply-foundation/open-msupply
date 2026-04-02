@@ -22,6 +22,12 @@ pub struct IntegerStorePrefInput {
 }
 
 #[derive(InputObject)]
+pub struct FloatStorePrefInput {
+    pub store_id: String,
+    pub value: f64,
+}
+
+#[derive(InputObject)]
 pub struct StringStorePrefInput {
     pub store_id: String,
     pub value: String,
@@ -266,6 +272,15 @@ impl BoolStorePrefInput {
 
 impl IntegerStorePrefInput {
     pub fn to_domain(&self) -> StorePrefUpdate<i32> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value,
+        }
+    }
+}
+
+impl FloatStorePrefInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<f64> {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value,
