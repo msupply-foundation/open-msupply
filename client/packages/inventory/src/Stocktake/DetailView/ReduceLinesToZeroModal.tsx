@@ -39,7 +39,16 @@ export const ReduceLinesToZeroConfirmationModal = ({
     useStocktakeOld.line.zeroQuantities(selectedRows);
 
   const { data: reasonOptions } = useReasonOptions();
-  const reasonIsRequired = reasonOptions?.totalCount !== 0;
+  const vaccineReasons = getReasonOptionTypes({
+    isInventoryReduction: true,
+    isVaccine: allSelectedItemsAreVaccines,
+    isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
+  });
+  const reasonIsRequired = reasonOptions?.nodes.some(
+    reasonOption =>
+      vaccineReasons.includes(reasonOption.type) ||
+      reasonOption.type === ReasonOptionNodeType.NegativeInventoryAdjustment
+  );
 
   return (
     <ConfirmationModalLayout
@@ -71,11 +80,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
           labelWidth="100px"
           Input={
             <ReasonOptionsSearchInput
-              type={getReasonOptionTypes({
-                isInventoryReduction: true,
-                isVaccine: allSelectedItemsAreVaccines,
-                isDispensary: store?.storeMode === StoreModeNodeType.Dispensary,
-              })}
+              type={vaccineReasons}
               fallbackType={ReasonOptionNodeType.NegativeInventoryAdjustment}
               value={reason}
               onChange={reason => setReason(reason)}
