@@ -23,7 +23,6 @@ interface OtherSectionProps {
 
 export const OtherSection = ({
   draft,
-  onUpdate,
   onChange,
   disabled = false,
 }: OtherSectionProps): ReactElement => {
