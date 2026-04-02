@@ -111,6 +111,7 @@ export type PurchaseOrderFragment = {
         reference?: string | null;
         confirmedDatetime?: string | null;
         currencyId?: string | null;
+        foreignExchangeRate: number;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -196,6 +197,7 @@ export type PurchaseOrderLineFragment = {
     reference?: string | null;
     confirmedDatetime?: string | null;
     currencyId?: string | null;
+    foreignExchangeRate: number;
     supplier?: { __typename: 'NameNode'; code: string; name: string } | null;
     user?: { __typename: 'UserNode'; username: string } | null;
     currency?: {
@@ -342,6 +344,7 @@ export type PurchaseOrderByIdQuery = {
               reference?: string | null;
               confirmedDatetime?: string | null;
               currencyId?: string | null;
+              foreignExchangeRate: number;
               supplier?: {
                 __typename: 'NameNode';
                 code: string;
@@ -511,6 +514,7 @@ export type PurchaseOrderLinesQuery = {
         reference?: string | null;
         confirmedDatetime?: string | null;
         currencyId?: string | null;
+        foreignExchangeRate: number;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -588,6 +592,7 @@ export type PurchaseOrderLineQuery = {
         reference?: string | null;
         confirmedDatetime?: string | null;
         currencyId?: string | null;
+        foreignExchangeRate: number;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -800,6 +805,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
         username
       }
       currencyId
+      foreignExchangeRate
       currency {
         id
         code

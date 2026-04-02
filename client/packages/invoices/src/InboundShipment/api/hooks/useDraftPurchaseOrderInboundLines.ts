@@ -43,25 +43,31 @@ const createDraftLine = (
   pol: PurchaseOrderLineFragment,
   invoiceId: string,
   overrides?: Partial<DraftInboundLine>
-): DraftInboundLine => ({
-  __typename: 'InvoiceLineNode',
-  id: FnUtils.generateUUID(),
-  invoiceId,
-  type: InvoiceLineNodeType.StockIn,
-  item: toInboundLineItem(pol.item),
-  itemName: pol.item.name,
-  packSize: pol.requestedPackSize,
-  numberOfPacks: 0,
-  costPricePerPack: pol.pricePerPackAfterDiscount,
-  sellPricePerPack: pol.pricePerPackAfterDiscount,
-  totalBeforeTax: 0,
-  totalAfterTax: 0,
-  volumePerPack: 0,
-  shippedPackSize: pol.requestedPackSize,
-  purchaseOrderLine: makePurchaseOrderLineField(pol),
-  isCreated: true,
-  ...overrides,
-});
+): DraftInboundLine => {
+  const exchangeRate = pol.purchaseOrder?.foreignExchangeRate ?? 1;
+  const costPricePerPack = pol.pricePerPackAfterDiscount * exchangeRate;
+
+  return {
+    __typename: 'InvoiceLineNode',
+    id: FnUtils.generateUUID(),
+    invoiceId,
+    type: InvoiceLineNodeType.StockIn,
+    item: toInboundLineItem(pol.item),
+    itemName: pol.item.name,
+    packSize: pol.requestedPackSize,
+    numberOfPacks: 0,
+    costPricePerPack,
+    sellPricePerPack: costPricePerPack,
+    totalBeforeTax: 0,
+    totalAfterTax: 0,
+    foreignCurrencyPriceBeforeTax: 0,
+    volumePerPack: 0,
+    shippedPackSize: pol.requestedPackSize,
+    purchaseOrderLine: makePurchaseOrderLineField(pol),
+    isCreated: true,
+    ...overrides,
+  };
+};
 
 export const useDraftPurchaseOrderInboundLines = (
   purchaseOrderLine: PurchaseOrderLineFragment | null
@@ -121,12 +127,17 @@ export const useDraftPurchaseOrderInboundLines = (
           ? remainingUnits / pol.requestedPackSize
           : remainingUnits;
 
+      const exchangeRate = pol.purchaseOrder?.foreignExchangeRate ?? 1;
+      const convertedPrice = pol.pricePerPackAfterDiscount * exchangeRate;
+
       setDraftLines([
         createDraftLine(purchaseOrderLine, invoiceId, {
           numberOfPacks,
           shippedNumberOfPacks: numberOfPacks,
-          totalBeforeTax: pol.pricePerPackAfterDiscount * numberOfPacks,
-          totalAfterTax: pol.pricePerPackAfterDiscount * numberOfPacks,
+          totalBeforeTax: convertedPrice * numberOfPacks,
+          totalAfterTax: convertedPrice * numberOfPacks,
+          foreignCurrencyPriceBeforeTax:
+            pol.pricePerPackAfterDiscount * numberOfPacks,
           status: defaultStatus,
         }),
       ]);
