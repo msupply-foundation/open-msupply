@@ -38,11 +38,6 @@ import {
   VVMStatusSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
-import {
-  getVolumePerPackFromVariant,
-  ItemVariantInput,
-  useIsItemVariantsEnabled,
-} from '../../Item';
 import { CampaignOrProgramSelector } from './Campaign';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -71,7 +66,6 @@ export const StockLineForm = ({
 
   const { isConnected, isEnabled, isListening, scan } =
     useBarcodeScannerContext();
-  const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
 
   const showVVMStatus =
@@ -446,30 +440,6 @@ export const StockLineForm = ({
                     />
                   }
                 />
-                {showItemVariantsInput && (
-                  <StyledInputRow
-                    label={t('label.item-variant')}
-                    Input={
-                      <ItemVariantInput
-                        itemId={draft.itemId}
-                        selectedId={draft?.itemVariant?.id}
-                        width={160}
-                        onChange={variant => {
-                          const newVolume = getVolumePerPackFromVariant({
-                            itemVariant: variant,
-                            packSize: draft.packSize,
-                          });
-
-                          onUpdate({
-                            itemVariant: variant,
-                            manufacturer: variant?.manufacturer ?? null,
-                            volumePerPack: newVolume ?? 0,
-                          });
-                        }}
-                      />
-                    }
-                  />
-                )}
                 <StyledInputRow
                   label={t('label.volume-per-pack')}
                   Input={

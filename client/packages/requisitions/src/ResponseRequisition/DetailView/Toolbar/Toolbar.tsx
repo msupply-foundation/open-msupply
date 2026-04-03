@@ -9,7 +9,6 @@ import {
   BufferedTextInput,
   Tooltip,
   BasicTextInput,
-  usePreferences,
   SearchBar,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
@@ -36,7 +35,6 @@ export const Toolbar = () => {
     'programName',
     'destinationCustomer',
   ]);
-  const { selectDestinationStoreForAnInternalOrder } = usePreferences();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
@@ -80,7 +78,7 @@ export const Toolbar = () => {
                   </Tooltip>
                 }
               />
-              {selectDestinationStoreForAnInternalOrder && (
+              {!!destinationCustomer && (
                 <InputWithLabelRow
                   label={t('label.destination-customer')}
                   Input={

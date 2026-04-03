@@ -1,6 +1,6 @@
 use super::{
     query::get_vaccine_course,
-    update::{VaccineCourseDoseInput, VaccineCourseItemInput},
+    update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
     validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
 };
 use crate::{
@@ -14,6 +14,9 @@ use repository::{
         vaccine_course_dose_row::VaccineCourseDoseRowRepository,
         vaccine_course_item_row::VaccineCourseItemRowRepository,
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
+        vaccine_course_store_config_row::{
+            VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
+        },
     },
     ActivityLogType, RepositoryError, StorageConnection,
 };
@@ -36,6 +39,7 @@ pub struct InsertVaccineCourse {
     pub program_id: String,
     pub vaccine_items: Vec<VaccineCourseItemInput>,
     pub doses: Vec<VaccineCourseDoseInput>,
+    pub store_configs: Vec<VaccineCourseStoreConfigInput>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
@@ -51,7 +55,7 @@ pub fn insert_vaccine_course(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let new_vaccine_course = generate(input.clone());
+            let (new_vaccine_course, store_config_rows) = generate(input.clone());
             VaccineCourseRowRepository::new(connection).upsert_one(&new_vaccine_course)?;
 
             // Insert the new vaccine course items
@@ -64,6 +68,11 @@ pub fn insert_vaccine_course(
             let dose_repo = VaccineCourseDoseRowRepository::new(connection);
             for dose in input.clone().doses {
                 dose_repo.upsert_one(&dose.to_domain(input.clone().id))?;
+            }
+
+            let store_config_repo = VaccineCourseStoreConfigRowRepository::new(connection);
+            for config_row in store_config_rows {
+                store_config_repo.upsert_one(&config_row)?;
             }
 
             activity_log_entry(
@@ -116,15 +125,16 @@ pub fn generate(
         program_id,
         vaccine_items: _, // Updated in main function
         doses: _,         // Updated in main function
+        store_configs,
         demographic_id,
         coverage_rate,
         use_in_gaps_calculations,
         wastage_rate,
         can_skip_dose,
     }: InsertVaccineCourse,
-) -> VaccineCourseRow {
-    VaccineCourseRow {
-        id,
+) -> (VaccineCourseRow, Vec<VaccineCourseStoreConfigRow>) {
+    let row = VaccineCourseRow {
+        id: id.clone(),
         name,
         program_id,
         demographic_id,
@@ -133,7 +143,20 @@ pub fn generate(
         wastage_rate,
         deleted_datetime: None,
         can_skip_dose,
-    }
+    };
+
+    let store_config_rows = store_configs
+        .into_iter()
+        .map(|config| VaccineCourseStoreConfigRow {
+            id: config.id,
+            vaccine_course_id: id.clone(),
+            store_id: config.store_id,
+            wastage_rate: config.wastage_rate.and_then(|nu| nu.value),
+            coverage_rate: config.coverage_rate.and_then(|nu| nu.value),
+        })
+        .collect();
+
+    (row, store_config_rows)
 }
 
 impl From<RepositoryError> for InsertVaccineCourseError {
