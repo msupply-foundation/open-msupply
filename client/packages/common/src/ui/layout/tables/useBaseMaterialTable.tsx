@@ -41,6 +41,7 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
   grouping?: {
     field: string;
     groupedByDefault?: boolean;
+    label?: string;
   };
   columns: ColumnDef<T>[];
   noUrlFiltering?: boolean;
@@ -156,6 +157,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     onRowClick,
     isGrouped: !!grouping.state.length,
     toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
+    groupByLabel: groupingInput?.label,
     getIsPlaceholderRow,
     getIsRestrictedRow,
     muiTableBodyRowProps,

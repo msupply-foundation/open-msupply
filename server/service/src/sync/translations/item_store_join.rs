@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, SyncTranslation};
-use crate::sync::translations::{item::ItemTranslation, store::StoreTranslation};
+use super::{utils::clear_invalid_location_id, PullTranslateResult, SyncTranslation};
+use crate::sync::translations::{
+    item::ItemTranslation, location::LocationTranslation, store::StoreTranslation,
+};
 use repository::{ItemStoreJoinRow, StorageConnection, SyncBufferRow};
 use util::sync_serde::empty_str_as_option_string;
 
@@ -37,15 +39,21 @@ impl SyncTranslation for ItemStoreJoinTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![ItemTranslation.table_name(), StoreTranslation.table_name()]
+        vec![
+            ItemTranslation.table_name(),
+            StoreTranslation.table_name(),
+            LocationTranslation.table_name(),
+        ]
     }
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyItemStoreJoinRow>(&sync_record.data)?;
+
+        let default_location_id = clear_invalid_location_id(connection, data.default_location_id)?;
 
         let result = ItemStoreJoinRow {
             id: data.id,
@@ -54,7 +62,7 @@ impl SyncTranslation for ItemStoreJoinTranslation {
             default_sell_price_per_pack: data.default_sell_price_per_pack,
             ignore_for_orders: data.ignore_for_orders,
             margin: data.margin,
-            default_location_id: data.default_location_id,
+            default_location_id,
         };
         Ok(PullTranslateResult::upsert(result))
     }

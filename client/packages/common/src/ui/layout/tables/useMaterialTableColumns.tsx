@@ -135,7 +135,6 @@ const ColumnHeaderWithTooltip = <T extends MRT_RowData>({
   <Tooltip title={column.columnDef.header} placement="top">
     <div
       style={{
-        whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
       }}

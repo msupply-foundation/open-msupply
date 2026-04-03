@@ -8,7 +8,7 @@ use crate::{
     StorageConnection,
 };
 use chrono::NaiveDate;
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
@@ -216,7 +216,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = purchase_order_line::table
             .filter(purchase_order_line::purchase_order_id.eq(purchase_order_id))
-            .select(max(purchase_order_line::line_number))
+            .select(diesel::dsl::max(purchase_order_line::line_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

@@ -184,6 +184,7 @@ export enum ActivityLogNodeType {
   StockBatchChange = 'STOCK_BATCH_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
   StockExpiryDateChange = 'STOCK_EXPIRY_DATE_CHANGE',
+  StockLineEdit = 'STOCK_LINE_EDIT',
   StockLocationChange = 'STOCK_LOCATION_CHANGE',
   StockOffHold = 'STOCK_OFF_HOLD',
   StockOnHold = 'STOCK_ON_HOLD',
@@ -2992,6 +2993,18 @@ export type InboundInvoiceCounts = {
   notDelivered: Scalars['Int']['output'];
 };
 
+export enum InboundNodeType {
+  FromPurchaseOrder = 'FROM_PURCHASE_ORDER',
+  FromRequisition = 'FROM_REQUISITION',
+  ManualExternal = 'MANUAL_EXTERNAL',
+  ManualInternal = 'MANUAL_INTERNAL',
+}
+
+export type InboundShipmentsNotVerified = UpdatePurchaseOrderErrorInterface & {
+  __typename: 'InboundShipmentsNotVerified';
+  description: Scalars['String']['output'];
+};
+
 export type IndicatorColumnNode = {
   __typename: 'IndicatorColumnNode';
   columnNumber: Scalars['Int']['output'];
@@ -3378,6 +3391,7 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
+  purchaseOrderLineId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -4061,6 +4075,7 @@ export type InsertVaccineCourseInput = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
   programId: Scalars['String']['input'];
+  storeConfigs?: InputMaybe<Array<UpsertVaccineCourseStoreConfigInput>>;
   useInGapsCalculations: Scalars['Boolean']['input'];
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
@@ -4233,7 +4248,10 @@ export type InvoiceConnector = {
 
 export type InvoiceCounts = {
   __typename: 'InvoiceCounts';
+  /** Internal inbound shipments only (no purchase order) */
   inbound: InboundInvoiceCounts;
+  /** External inbound shipments only (linked to a purchase order) */
+  inboundExternal: InboundInvoiceCounts;
   outbound: OutboundInvoiceCounts;
 };
 
@@ -4261,6 +4279,7 @@ export type InvoiceFilterInput = {
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -4408,6 +4427,8 @@ export type InvoiceNode = {
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
+  chargesForeignCurrency: Scalars['Float']['output'];
+  chargesLocalCurrency: Scalars['Float']['output'];
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   colour?: Maybe<Scalars['String']['output']>;
@@ -4422,6 +4443,7 @@ export type InvoiceNode = {
   documents: SyncFileReferenceConnector;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  inboundType: InboundNodeType;
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
   insurancePolicy?: Maybe<InsurancePolicyNode>;
@@ -4575,6 +4597,15 @@ export type InvoiceStatusOptionsInput = {
   value: Array<InvoiceNodeStatus>;
 };
 
+export enum InvoiceTypeInput {
+  CustomerReturn = 'CUSTOMER_RETURN',
+  InboundShipment = 'INBOUND_SHIPMENT',
+  InboundShipmentExternal = 'INBOUND_SHIPMENT_EXTERNAL',
+  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Prescription = 'PRESCRIPTION',
+  SupplierReturn = 'SUPPLIER_RETURN',
+}
+
 export type InvoicesResponse = InvoiceConnector;
 
 export type ItemCannotBeOrdered = PurchaseOrderLineError & {
@@ -4610,8 +4641,8 @@ export type ItemCounts = {
 
 export type ItemCountsResponse = {
   __typename: 'ItemCountsResponse';
+  highStock: Scalars['Int']['output'];
   lowStock: Scalars['Int']['output'];
-  moreThanSixMonthsStock: Scalars['Int']['output'];
   noStock: Scalars['Int']['output'];
   outOfStockProducts: Scalars['Int']['output'];
   productsAtRiskOfBeingOutOfStock: Scalars['Int']['output'];
@@ -4687,6 +4718,7 @@ export type ItemLedgerNode = {
   sellPricePerPack: Scalars['Float']['output'];
   storeId: Scalars['String']['output'];
   totalBeforeTax?: Maybe<Scalars['Float']['output']>;
+  user?: Maybe<UserNode>;
 };
 
 export type ItemLedgerResponse = ItemLedgerConnector;
@@ -4922,6 +4954,7 @@ export type LedgerNode = {
   stockLine?: Maybe<StockLineNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
+  user?: Maybe<UserNode>;
 };
 
 export type LedgerResponse = LedgerConnector;
@@ -5243,6 +5276,7 @@ export type Mutations = {
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
   allocateProgramNumber: AllocateProgramNumberResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
+  batchInboundShipmentExternal: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
   batchPrescription: BatchPrescriptionResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
@@ -5260,6 +5294,9 @@ export type Mutations = {
   deleteAsset: DeleteAssetResponse;
   deleteCustomerReturn: DeleteCustomerReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
+  deleteInboundShipmentExternal: DeleteInboundShipmentResponse;
+  deleteInboundShipmentExternalLine: DeleteInboundShipmentLineResponse;
+  deleteInboundShipmentExternalServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteLocation: DeleteLocationResponse;
@@ -5292,6 +5329,9 @@ export type Mutations = {
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
+  insertInboundShipmentExternal: InsertInboundShipmentResponse;
+  insertInboundShipmentExternalLine: InsertInboundShipmentLineResponse;
+  insertInboundShipmentExternalServiceLine: InsertInboundShipmentServiceLineResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
   insertInsurance: InsertInsuranceResponse;
@@ -5348,6 +5388,9 @@ export type Mutations = {
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateEncounter: UpdateEncounterResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
+  updateInboundShipmentExternal: UpdateInboundShipmentResponse;
+  updateInboundShipmentExternalLine: UpdateInboundShipmentLineResponse;
+  updateInboundShipmentExternalServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateIndicatorValue: UpdateIndicatorValueResponse;
@@ -5432,6 +5475,11 @@ export type MutationsBatchInboundShipmentArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsBatchInboundShipmentExternalArgs = {
+  input: BatchInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsBatchOutboundShipmentArgs = {
   input: BatchOutboundShipmentInput;
   storeId: Scalars['String']['input'];
@@ -5479,6 +5527,21 @@ export type MutationsDeleteCustomerReturnArgs = {
 
 export type MutationsDeleteInboundShipmentArgs = {
   input: DeleteInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteInboundShipmentExternalArgs = {
+  input: DeleteInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteInboundShipmentExternalLineArgs = {
+  input: DeleteInboundShipmentLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteInboundShipmentExternalServiceLineArgs = {
+  input: DeleteInboundShipmentServiceLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5636,6 +5699,21 @@ export type MutationsInsertFormSchemaArgs = {
 
 export type MutationsInsertInboundShipmentArgs = {
   input: InsertInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertInboundShipmentExternalArgs = {
+  input: InsertInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertInboundShipmentExternalLineArgs = {
+  input: InsertInboundShipmentLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertInboundShipmentExternalServiceLineArgs = {
+  input: InsertInboundShipmentServiceLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5858,6 +5936,21 @@ export type MutationsUpdateEncounterArgs = {
 
 export type MutationsUpdateInboundShipmentArgs = {
   input: UpdateInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateInboundShipmentExternalArgs = {
+  input: UpdateInboundShipmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateInboundShipmentExternalLineArgs = {
+  input: UpdateInboundShipmentLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateInboundShipmentExternalServiceLineArgs = {
+  input: UpdateInboundShipmentServiceLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6275,6 +6368,21 @@ export type NullableDateUpdate = {
  */
 export type NullableDatetimeUpdate = {
   value?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+};
+
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
+export type NullableFloatUpdate = {
+  value?: InputMaybe<Scalars['Float']['input']>;
 };
 
 /**
@@ -6711,6 +6819,7 @@ export type PreferencesNode = {
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
   expiredStockPreventIssue: Scalars['Boolean']['output'];
+  externalInboundShipmentLinesMustBeAuthorised: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
   globalTableConfigs: Scalars['JSON']['output'];
@@ -7104,10 +7213,14 @@ export type PurchaseOrderLineError = {
 };
 
 export type PurchaseOrderLineFilterInput = {
+  expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   receivedLessThanAdjusted?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<EqualFilterPurchaseOrderLineStatusInput>;
+  supplierName?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineNode = {
@@ -7333,6 +7446,8 @@ export type Queries = {
   hasCustomerProgramRequisitionSettings: Scalars['Boolean']['output'];
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
+  inboundShipmentCounts: InboundInvoiceCounts;
+  inboundShipmentExternalCounts: InboundInvoiceCounts;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insurancePolicies: InsurancesResponse;
@@ -7342,6 +7457,7 @@ export type Queries = {
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
+  /** @deprecated Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead */
   invoiceCounts: InvoiceCounts;
   invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
@@ -7374,6 +7490,7 @@ export type Queries = {
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
+  outboundShipmentCounts: OutboundInvoiceCounts;
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
@@ -7437,6 +7554,7 @@ export type Queries = {
   temperatureLogs: TemperatureLogsResponse;
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
+  unitsOrderedInOtherPurchaseOrders: Scalars['Float']['output'];
   vaccination?: Maybe<VaccinationNode>;
   vaccinationCard: VaccinationCardResponse;
   vaccineCourse: VaccineCourseResponse;
@@ -7721,6 +7839,16 @@ export type QueriesHistoricalStockLinesArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesInboundShipmentCountsArgs = {
+  storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type QueriesInboundShipmentExternalCountsArgs = {
+  storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type QueriesInsurancePoliciesArgs = {
   nameId: Scalars['String']['input'];
   sort?: InputMaybe<Array<InsuranceSortInput>>;
@@ -7745,12 +7873,13 @@ export type QueriesInventoryAdjustmentReasonsArgs = {
 export type QueriesInvoiceArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+  type?: InputMaybe<InvoiceTypeInput>;
 };
 
 export type QueriesInvoiceByNumberArgs = {
   invoiceNumber: Scalars['Int']['input'];
   storeId: Scalars['String']['input'];
-  type: InvoiceNodeType;
+  type: InvoiceTypeInput;
 };
 
 export type QueriesInvoiceCountsArgs = {
@@ -7771,10 +7900,12 @@ export type QueriesInvoicesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<InvoiceSortInput>>;
   storeId: Scalars['String']['input'];
+  type?: InputMaybe<Array<InvoiceTypeInput>>;
 };
 
 export type QueriesItemCountsArgs = {
-  lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
+  highStockThreshold?: InputMaybe<Scalars['Float']['input']>;
+  lowStockThreshold?: InputMaybe<Scalars['Float']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -7844,6 +7975,11 @@ export type QueriesNamesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<NameSortInput>>;
   storeId: Scalars['String']['input'];
+};
+
+export type QueriesOutboundShipmentCountsArgs = {
+  storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesPatientArgs = {
@@ -8123,6 +8259,12 @@ export type QueriesTemperatureLogsArgs = {
 
 export type QueriesTemperatureNotificationsArgs = {
   page?: InputMaybe<PaginationInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesUnitsOrderedInOtherPurchaseOrdersArgs = {
+  excludePurchaseOrderId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -8669,10 +8811,14 @@ export enum RequisitionNodeStatus {
 }
 
 export enum RequisitionNodeType {
+  /** Imprest requisition where each item has a pre-determined max/target quantity */
+  Imprest = 'IMPREST',
   /** Requisition created by store that is ordering stock */
   Request = 'REQUEST',
-  /** Supplying store requisition in response to request requisition */
+  /** Supplying store requisition in response to request requisition, or manual requisition for a customer */
   Response = 'RESPONSE',
+  /** Stock history requisition where facility submits stock on hand */
+  StockHistory = 'STOCK_HISTORY',
 }
 
 export type RequisitionReasonNotProvided =
@@ -9173,6 +9319,7 @@ export enum StockLineSortFieldInput {
   ItemCode = 'itemCode',
   ItemName = 'itemName',
   LocationCode = 'locationCode',
+  ManufactureDate = 'manufactureDate',
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
   SupplierName = 'supplierName',
@@ -9464,6 +9611,11 @@ export type SuggestedQuantityCalculationNode = {
   minimumStockOnHand: Scalars['Int']['output'];
   stockOnHand: Scalars['Int']['output'];
   suggestedQuantity: Scalars['Int']['output'];
+};
+
+export type SupplierNotValid = InsertProgramRequestRequisitionErrorInterface & {
+  __typename: 'SupplierNotValid';
+  description: Scalars['String']['output'];
 };
 
 export type SupplierProgramRequisitionSettingNode = {
@@ -9959,6 +10111,8 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
+  chargesForeignCurrency?: InputMaybe<Scalars['Float']['input']>;
+  chargesLocalCurrency?: InputMaybe<Scalars['Float']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
@@ -10463,14 +10617,14 @@ export type UpdatePurchaseOrderLineError = {
 export type UpdatePurchaseOrderLineInput = {
   adjustedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   comment?: InputMaybe<NullableStringUpdate>;
-  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
   manufacturerId?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<NullableStringUpdate>;
   pricePerPackAfterDiscount?: InputMaybe<Scalars['Float']['input']>;
   pricePerPackBeforeDiscount?: InputMaybe<Scalars['Float']['input']>;
-  requestedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  requestedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   requestedNumberOfUnits?: InputMaybe<Scalars['Float']['input']>;
   requestedPackSize?: InputMaybe<Scalars['Float']['input']>;
   status?: InputMaybe<PurchaseOrderLineStatusNode>;
@@ -10496,11 +10650,11 @@ export type UpdateRequestRequisitionErrorInterface = {
 export type UpdateRequestRequisitionInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  destinationCustomerId?: InputMaybe<NullableStringUpdate>;
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
-  originalCustomerId?: InputMaybe<NullableStringUpdate>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateRequestRequisitionStatusInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
@@ -10880,6 +11034,7 @@ export type UpdateVaccineCourseInput = {
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
+  storeConfigs?: InputMaybe<Array<UpsertVaccineCourseStoreConfigInput>>;
   useInGapsCalculations: Scalars['Boolean']['input'];
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
@@ -11045,6 +11200,13 @@ export type UpsertVaccineCourseItemInput = {
   itemId: Scalars['String']['input'];
 };
 
+export type UpsertVaccineCourseStoreConfigInput = {
+  coverageRate?: InputMaybe<NullableFloatUpdate>;
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+  wastageRate?: InputMaybe<NullableFloatUpdate>;
+};
+
 export type UseSuggestedQuantityError = {
   __typename: 'UseSuggestedQuantityError';
   error: UseSuggestedQuantityErrorInterface;
@@ -11100,6 +11262,7 @@ export enum UserPermission {
   InboundShipmentExternalAuthorise = 'INBOUND_SHIPMENT_EXTERNAL_AUTHORISE',
   InboundShipmentExternalMutate = 'INBOUND_SHIPMENT_EXTERNAL_MUTATE',
   InboundShipmentExternalQuery = 'INBOUND_SHIPMENT_EXTERNAL_QUERY',
+  InboundShipmentExternalVerify = 'INBOUND_SHIPMENT_EXTERNAL_VERIFY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   InboundShipmentVerify = 'INBOUND_SHIPMENT_VERIFY',
@@ -11306,6 +11469,7 @@ export type VaccineCourseNode = {
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   programId: Scalars['String']['output'];
+  storeConfigs?: Maybe<Array<VaccineCourseStoreConfigNode>>;
   useInGapsCalculations: Scalars['Boolean']['output'];
   vaccineCourseDoses?: Maybe<Array<VaccineCourseDoseNode>>;
   vaccineCourseItems?: Maybe<Array<VaccineCourseItemNode>>;
@@ -11321,6 +11485,15 @@ export enum VaccineCourseSortFieldInput {
 export type VaccineCourseSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   key: VaccineCourseSortFieldInput;
+};
+
+export type VaccineCourseStoreConfigNode = {
+  __typename: 'VaccineCourseStoreConfigNode';
+  coverageRate?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['String']['output'];
+  storeId: Scalars['String']['output'];
+  vaccineCourseId: Scalars['String']['output'];
+  wastageRate?: Maybe<Scalars['Float']['output']>;
 };
 
 export type VaccineCoursesResponse = VaccineCourseConnector;

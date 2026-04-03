@@ -1,11 +1,11 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Divider, Typography } from '@mui/material';
 import { flexRender } from 'material-react-table';
 import type { MRT_Cell, MRT_Row, MRT_RowData } from 'material-react-table';
 import { ColumnDef } from '../../types';
 import { CardListField } from './CardListField';
 import { CardListFieldGroup } from './CardListFieldGroup';
-import { useIsLandscapeTablet } from '@common/hooks';
+import { useIsLandscapeTablet, useSimplifiedTabletUI } from '@common/hooks';
 
 /** Access custom ColumnDef fields from an MRT cell.
  *  ColumnDef<T> extends MRT_ColumnDef<T>, but MRT types columnDef as the
@@ -50,6 +50,8 @@ export const CardListItem = <T extends MRT_RowData>({
   onClick,
 }: CardListItemProps<T>) => {
   const isLandscape = useIsLandscapeTablet();
+  const simplified = useSimplifiedTabletUI();
+  const useGridLayout = !!groupIcons || simplified;
 
   const cells = row.getVisibleCells();
 
@@ -76,6 +78,14 @@ export const CardListItem = <T extends MRT_RowData>({
     }
   }
 
+  // Sort summary cells by cardSummaryOrder (lower first); columns without
+  // an explicit order keep their original position after ordered ones.
+  summaryCells.sort((a, b) => {
+    const oa = colDef(a).cardSummaryOrder ?? Infinity;
+    const ob = colDef(b).cardSummaryOrder ?? Infinity;
+    return oa - ob;
+  });
+
   // Group data cells by columnGroup, preserving definition order
   const groups: { groupName: string | undefined; cells: typeof dataCells }[] =
     [];
@@ -101,6 +111,7 @@ export const CardListItem = <T extends MRT_RowData>({
         overflow: 'visible',
         position: 'relative',
         cursor: onClick ? 'pointer' : undefined,
+        borderRadius: 4,
       }}
     >
       <CardContent
@@ -110,8 +121,8 @@ export const CardListItem = <T extends MRT_RowData>({
           '&:last-child': { pb: isLandscape ? 0.5 : 1.5 },
         }}
       >
-        {/* Heading row: summary values + action buttons */}
-        {(summaryCells.length > 0 || actionCells.length > 0) && (
+        {/* Heading row: summary values */}
+        {summaryCells.length > 0 && (
           <Box
             display="flex"
             alignItems="center"
@@ -119,36 +130,24 @@ export const CardListItem = <T extends MRT_RowData>({
             mb={groups.length > 0 ? 1 : 0}
             py={0.5}
           >
-            {summaryCells.length > 0 && (
-              <Typography
-                key={summaryCells[0]!.id}
-                variant="subtitle2"
-                fontWeight={700}
-                noWrap
-              >
-                {getSummaryContent(summaryCells[0]!)}
-              </Typography>
-            )}
+            <Typography
+              key={summaryCells[0]!.id}
+              variant="subtitle2"
+              fontWeight={700}
+              noWrap
+            >
+              {getSummaryContent(summaryCells[0]!)}
+            </Typography>
             <Box flex={1} />
             {summaryCells.slice(1).map(cell => (
-              <Typography
-                key={cell.id}
-                variant="subtitle2"
-                fontWeight={700}
-                noWrap
-              >
+              <Typography key={cell.id} variant="subtitle2" noWrap>
                 {getSummaryContent(cell)}
               </Typography>
-            ))}
-            {actionCells.map(cell => (
-              <Box key={cell.id} flexShrink={0}>
-                {getCellContent(cell)}
-              </Box>
             ))}
           </Box>
         )}
         {/* Data fields */}
-        {!groupIcons
+        {!useGridLayout
           ? dataCells.map(cell => (
               <Box
                 key={cell.id}
@@ -156,6 +155,7 @@ export const CardListItem = <T extends MRT_RowData>({
                 justifyContent="space-between"
                 gap={1}
                 alignItems="flex-start"
+                py={0.5}
               >
                 <Typography color="text.secondary">
                   {flexRender(cell.column.columnDef.header, cell.getContext())}
@@ -171,12 +171,10 @@ export const CardListItem = <T extends MRT_RowData>({
                 </Box>
               </Box>
             ))
-          : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
-              <CardListFieldGroup
-                key={groupName ?? `ungrouped-${groupIndex}`}
-                groupIcon={groupName ? groupIcons?.[groupName] : undefined}
-              >
-                {groupCells.map(cell => (
+          : simplified
+            ? // Simplified: single flat grid, no groups or dividers
+              <CardListFieldGroup>
+                {dataCells.map(cell => (
                   <CardListField
                     key={cell.id}
                     label={flexRender(
@@ -189,7 +187,37 @@ export const CardListItem = <T extends MRT_RowData>({
                   </CardListField>
                 ))}
               </CardListFieldGroup>
+            : groups.map(({ groupName, cells: groupCells }, groupIndex) => (
+              <React.Fragment key={groupName ?? `ungrouped-${groupIndex}`}>
+                {groupIndex > 0 && <Divider />}
+                <CardListFieldGroup
+                  groupIcon={groupName ? groupIcons?.[groupName] : undefined}
+                >
+                  {groupCells.map(cell => (
+                    <CardListField
+                      key={cell.id}
+                      label={flexRender(
+                        cell.column.columnDef.header,
+                        cell.getContext()
+                      )}
+                      span={colDef(cell).cardSpan}
+                    >
+                      {getCellContent(cell)}
+                    </CardListField>
+                  ))}
+                </CardListFieldGroup>
+              </React.Fragment>
             ))}
+        {/* Action buttons at bottom-right */}
+        {actionCells.length > 0 && (
+          <Box display="flex" justifyContent="flex-end" gap={1} mt={1}>
+            {actionCells.map(cell => (
+              <Box key={cell.id} flexShrink={0}>
+                {getCellContent(cell)}
+              </Box>
+            ))}
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

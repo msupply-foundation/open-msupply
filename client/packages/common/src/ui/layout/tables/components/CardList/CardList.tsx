@@ -1,21 +1,17 @@
 import React from 'react';
 import { Box, Stack } from '@mui/material';
-import { MRT_ShowHideColumnsButton } from 'material-react-table';
 import type { MRT_Row, MRT_RowData, MRT_TableInstance } from 'material-react-table';
 import { CardListItem } from './CardListItem';
-import { IconButton, useConfirmationModal } from '@common/components';
-import { useTranslation } from '@common/intl';
-import { RefreshIcon } from '@common/icons';
-import { clearSavedState } from '../../tableState/utils';
 import { useIsLandscapeTablet } from '@common/hooks';
 
 interface CardListProps<T extends MRT_RowData> {
   table: MRT_TableInstance<T>;
-  tableId: string;
   lastItemRef?: React.RefObject<HTMLDivElement>;
   groupIcons?: Record<string, React.ReactNode>;
   actions?: React.ReactNode;
   stickyTopOffset?: number;
+  /** When set, the card matching this row ID will be scrolled into view on mount */
+  scrollToRowId?: string | null;
 }
 
 const getRowOnClick = <T extends MRT_RowData>(
@@ -38,36 +34,32 @@ const getRowOnClick = <T extends MRT_RowData>(
 
 export const CardList = <T extends MRT_RowData>({
   table,
-  tableId,
   lastItemRef,
   groupIcons,
   actions,
   stickyTopOffset = 0,
+  scrollToRowId,
 }: CardListProps<T>) => {
-  const t = useTranslation();
   const rows = table.getRowModel().rows;
   const isLandscape = useIsLandscapeTablet();
+  const scrollToRef = React.useRef<HTMLDivElement>(null);
 
-  // Full reset to match the table view's resetTableState behaviour.
-  // Card view only uses visibility and order, but we reset all properties
-  // because the saved state is shared with the table view and to account for future expansion.
-  // Note: doesn't respect global custom table defaults (as set via resetTableState
-  // in useBaseMaterialTable) — will need to be extended when there's UI for that here.
-  const resetToDefaults = () => {
-    clearSavedState(tableId);
-    const initial = table.options.initialState;
-    table.setColumnVisibility(initial?.columnVisibility ?? {});
-    table.resetColumnOrder();
-    table.resetColumnSizing();
-    table.resetColumnPinning();
-    table.setDensity(initial?.density ?? 'comfortable');
+  React.useEffect(() => {
+    if (scrollToRowId && scrollToRef.current) {
+      scrollToRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [scrollToRowId]);
+
+  const getCardRef = (row: MRT_Row<T>, index: number) => {
+    if (scrollToRowId && row.original && 'id' in row.original && (row.original as Record<string, unknown>)['id'] === scrollToRowId) {
+      return scrollToRef;
+    }
+    if (index === rows.length - 1) return lastItemRef;
+    return undefined;
   };
-
-  const getResetConfirmation = useConfirmationModal({
-    title: t('heading.are-you-sure'),
-    message: t('messages.reset-card-defaults'),
-    onConfirm: resetToDefaults,
-  });
 
   return (
     <Stack
@@ -77,33 +69,29 @@ export const CardList = <T extends MRT_RowData>({
         ...(groupIcons ? {} : { mx: 'auto', maxWidth: 400 }),
       }}
     >
-      <Box
-        display="flex"
-        justifyContent="flex-end"
-        alignItems="center"
-        gap={1}
-        sx={{
-          position: 'sticky',
-          top: stickyTopOffset,
-          zIndex: 2,
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <MRT_ShowHideColumnsButton table={table} />
-        <IconButton
-          icon={<RefreshIcon fontSize="small" />}
-          onClick={() => getResetConfirmation()}
-          label={t('label.reset-table-defaults')}
-        />
-        {actions}
-      </Box>
+      {actions && (
+        <Box
+          display="flex"
+          justifyContent="flex-end"
+          alignItems="center"
+          gap={1}
+          sx={{
+            position: 'sticky',
+            top: stickyTopOffset,
+            zIndex: 2,
+            backgroundColor: 'background.paper',
+          }}
+        >
+          {actions}
+        </Box>
+      )}
       {rows.length === 0
         ? table.options.renderEmptyRowsFallback?.({ table })
         : rows.map((row, index) => (
             <CardListItem
               key={row.id}
               row={row}
-              cardRef={index === rows.length - 1 ? lastItemRef : undefined}
+              cardRef={getCardRef(row, index)}
               groupIcons={groupIcons}
               onClick={getRowOnClick(table, row)}
             />

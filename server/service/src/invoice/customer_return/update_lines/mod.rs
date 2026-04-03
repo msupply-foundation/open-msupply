@@ -70,7 +70,7 @@ pub fn update_customer_return_lines(
             } = generate(connection, input.clone())?;
 
             for line in lines_to_add {
-                insert_stock_in_line(ctx, line.clone()).map_err(|error| {
+                insert_stock_in_line(ctx, line.clone(), None).map_err(|error| {
                     UpdateCustomerReturnLinesError::LineInsertError {
                         line_id: line.id,
                         error,
@@ -79,7 +79,7 @@ pub fn update_customer_return_lines(
             }
 
             for line in lines_to_update {
-                update_stock_in_line(ctx, line.clone()).map_err(|error| {
+                update_stock_in_line(ctx, line.clone(), None).map_err(|error| {
                     UpdateCustomerReturnLinesError::LineUpdateError {
                         line_id: line.id,
                         error,
@@ -88,7 +88,7 @@ pub fn update_customer_return_lines(
             }
 
             for line in lines_to_delete {
-                delete_stock_in_line(ctx, line.clone()).map_err(|error| {
+                delete_stock_in_line(ctx, line.clone(), None).map_err(|error| {
                     UpdateCustomerReturnLinesError::LineDeleteError {
                         line_id: line.id,
                         error,
@@ -105,7 +105,7 @@ pub fn update_customer_return_lines(
                 })?;
             }
 
-            get_invoice(ctx, None, &input.customer_return_id)
+            get_invoice(ctx, None, &input.customer_return_id, None)
                 .map_err(UpdateCustomerReturnLinesError::DatabaseError)?
                 .ok_or(UpdateCustomerReturnLinesError::UpdatedReturnDoesNotExist)
         })
