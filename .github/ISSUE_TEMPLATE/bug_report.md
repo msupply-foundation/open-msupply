@@ -22,6 +22,8 @@ Steps to reproduce the behaviour:
 3. Scroll down to '....'
 4. See error
 
+## Additional Info
+
 ## Your environment 🌱
 
 <!-- e.g. 1.2.3 -->

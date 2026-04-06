@@ -35,7 +35,7 @@ const createDraftFromItem = (
     id: FnUtils.generateUUID(),
     requisitionId: request.id,
     itemId: item.id,
-    requestedQuantity: suggested,
+    requestedQuantity: 0,
     suggestedQuantity: suggested,
     isCreated: true,
     itemStats: item.stats,

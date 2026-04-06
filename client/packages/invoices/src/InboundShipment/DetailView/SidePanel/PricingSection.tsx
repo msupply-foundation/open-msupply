@@ -31,11 +31,12 @@ export const PricingSectionComponent = () => {
   const { c } = useCurrency();
   const {
     isDisabled,
+    isExternal,
     query: { data, loading },
     update: { update },
   } = useInboundShipment();
 
-  const { mutateAsync: updateTax } = useUpdateInboundServiceTax();
+  const { mutateAsync: updateTax } = useUpdateInboundServiceTax(isExternal);
   const { c: foreignCurrency } = useCurrency(
     data?.currency?.code as Currencies
   );

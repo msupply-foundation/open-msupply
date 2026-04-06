@@ -1,6 +1,6 @@
 use crate::{
-    invoice_line::query::get_invoice_line, service_provider::ServiceContext, NullableUpdate,
-    WithDBError,
+    invoice::inbound_shipment::InboundShipmentType, invoice_line::query::get_invoice_line,
+    service_provider::ServiceContext, NullableUpdate, WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -52,6 +52,7 @@ pub struct InsertStockInLine {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
+    pub purchase_order_line_id: Option<String>,
 }
 
 type OutError = InsertStockInLineError;
@@ -59,11 +60,12 @@ type OutError = InsertStockInLineError;
 pub fn insert_stock_in_line(
     ctx: &ServiceContext,
     input: InsertStockInLine,
+    r#type: Option<InboundShipmentType>,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice) = validate(&input, &ctx.store_id, connection)?;
+            let (item, invoice) = validate(&input, &ctx.store_id, connection, r#type)?;
             let GenerateResult {
                 invoice: invoice_user_update,
                 invoice_line,
@@ -119,6 +121,9 @@ pub enum InsertStockInLineError {
     VVMStatusDoesNotExist,
     ProgramNotVisible,
     IncorrectLocationType,
+    PurchaseOrderLineIdRequired,
+    PurchaseOrderLineDoesNotExist,
+    WrongInboundShipmentType,
 }
 
 impl From<RepositoryError> for InsertStockInLineError {
@@ -148,8 +153,9 @@ mod test {
             mock_immunisation_program_a, mock_inbound_shipment_a, mock_inbound_shipment_c,
             mock_inbound_shipment_e, mock_item_a, mock_item_restricted_location_type_b,
             mock_location_with_restricted_location_type_a, mock_name_customer_a, mock_name_store_b,
-            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
-            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
+            mock_outbound_shipment_e, mock_purchase_order_a, mock_purchase_order_a_line_1,
+            mock_store_a, mock_store_b, mock_user_account_a, mock_vaccine_item_a,
+            mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::{
@@ -157,8 +163,8 @@ mod test {
             vvm_status_log_row::VVMStatusLogRow,
         },
         EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow,
-        StorePreferenceRowRepository,
+        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, PreferenceRow,
+        StorePreferenceRow, StorePreferenceRowRepository,
     };
 
     use crate::{
@@ -206,6 +212,7 @@ mod test {
                     id: mock_customer_return_a_invoice_line_a().id,
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::LineAlreadyExists)
         );
@@ -219,6 +226,7 @@ mod test {
                     pack_size: 0.0,
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::PackSizeBelowOne)
         );
@@ -233,6 +241,7 @@ mod test {
                     number_of_packs: -1.0,
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::NumberOfPacksBelowZero)
         );
@@ -248,6 +257,7 @@ mod test {
                     item_id: "invalid".to_string(),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -266,6 +276,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::LocationDoesNotExist)
         );
@@ -284,6 +295,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::IncorrectLocationType)
         );
@@ -300,6 +312,7 @@ mod test {
                     item_variant_id: Some("invalid".to_string()),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ItemVariantDoesNotExist)
         );
@@ -316,6 +329,7 @@ mod test {
                     invoice_id: "new invoice id".to_string(),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -332,6 +346,7 @@ mod test {
                     invoice_id: mock_outbound_shipment_e().id,
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::NotAStockIn)
         );
@@ -348,6 +363,7 @@ mod test {
                     invoice_id: verified_customer_return().id, // VERIFIED
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::CannotEditFinalised)
         );
@@ -364,6 +380,7 @@ mod test {
                     invoice_id: mock_customer_return_a().id, // Store B
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -381,6 +398,7 @@ mod test {
                     vvm_status_id: Some("vvm_status".to_string()),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::VVMStatusDoesNotExist)
         );
@@ -399,6 +417,7 @@ mod test {
                     donor_id: Some("invalid".to_string()),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::DonorDoesNotExist)
         );
@@ -417,6 +436,7 @@ mod test {
                     donor_id: Some(mock_name_customer_a().id), // Not a donor
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::SelectedDonorPartyIsNotADonor)
         );
@@ -435,6 +455,7 @@ mod test {
                     manufacturer_id: Some("invalid".to_string()),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ManufacturerDoesNotExist)
         );
@@ -453,6 +474,7 @@ mod test {
                     manufacturer_id: Some(mock_name_customer_a().id), // Not a manufacturer
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ManufacturerIsNotAManufacturer)
         );
@@ -471,6 +493,7 @@ mod test {
                     program_id: Some(mock_immunisation_program_a().id), // Not master list visible to store_b
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ProgramNotVisible)
         );
@@ -499,6 +522,7 @@ mod test {
                 barcode: Some(gtin.clone()),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -554,6 +578,7 @@ mod test {
                 sell_price_per_pack: 100.0,
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -588,6 +613,7 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -615,6 +641,7 @@ mod test {
                 r#type: StockInType::InboundShipment,
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -643,6 +670,7 @@ mod test {
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -677,6 +705,7 @@ mod test {
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -700,5 +729,71 @@ mod test {
             store_id: mock_store_a().id,
         };
         assert_eq!(log, &expected_vvm_log);
+    }
+
+    #[actix_rt::test]
+    async fn insert_external_inbound_line_no_stock_line_when_auth_preference_enabled() {
+        // Negative test: when ExternalInboundShipmentLinesMustBeAuthorised is enabled,
+        // inserting a line on an external inbound shipment (has purchase_order_id) should
+        // NOT create a stock line, even if the invoice status would normally allow it.
+        fn external_inbound_shipment() -> InvoiceRow {
+            InvoiceRow {
+                id: "external_inbound_auth_test".to_string(),
+                name_id: mock_name_store_b().id,
+                store_id: mock_store_a().id,
+                invoice_number: 999,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Delivered,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_external_inbound_no_stock_line_auth_pref",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![external_inbound_shipment()],
+                preferences: vec![PreferenceRow {
+                    id: "ext_auth_pref_insert_test".to_string(),
+                    key: "external_inbound_shipment_lines_must_be_authorised".to_string(),
+                    value: "true".to_string(),
+                    store_id: Some(mock_store_a().id),
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "ext_inbound_line_auth_test".to_string(),
+                invoice_id: external_inbound_shipment().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                r#type: StockInType::InboundShipment,
+                purchase_order_line_id: Some(mock_purchase_order_a_line_1().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let invoice_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("ext_inbound_line_auth_test")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            invoice_line.stock_line_id, None,
+            "Stock line should NOT be created for external inbound shipment when authorisation preference is enabled"
+        );
     }
 }

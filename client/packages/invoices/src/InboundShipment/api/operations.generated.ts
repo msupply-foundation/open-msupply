@@ -104,6 +104,8 @@ export type InboundLineFragment = {
   } | null;
   purchaseOrderLine?: {
     __typename: 'PurchaseOrderLineNode';
+    id: string;
+    lineNumber: number;
     adjustedNumberOfUnits?: number | null;
     shippedNumberOfUnits: number;
     inTransitNumberOfUnits: number;
@@ -136,6 +138,9 @@ export type InboundFragment = {
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
   currencyRate: number;
+  chargesLocalCurrency: number;
+  chargesForeignCurrency: number;
+  inboundType: Types.InboundNodeType;
   defaultDonor?: { __typename: 'NameNode'; id: string; name: string } | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
@@ -257,6 +262,8 @@ export type InboundFragment = {
       } | null;
       purchaseOrderLine?: {
         __typename: 'PurchaseOrderLineNode';
+        id: string;
+        lineNumber: number;
         adjustedNumberOfUnits?: number | null;
         shippedNumberOfUnits: number;
         inTransitNumberOfUnits: number;
@@ -314,6 +321,7 @@ export type InboundFragment = {
     id: string;
     number: number;
     reference?: string | null;
+    orderTotalAfterDiscount: number;
     currency?: {
       __typename: 'CurrencyNode';
       id: string;
@@ -321,6 +329,14 @@ export type InboundFragment = {
       rate: number;
       isHomeCurrency: boolean;
     } | null;
+    lines: {
+      __typename: 'PurchaseOrderLineConnector';
+      nodes: Array<{
+        __typename: 'PurchaseOrderLineNode';
+        id: string;
+        item: { __typename: 'ItemNode'; id: string };
+      }>;
+    };
   } | null;
 };
 
@@ -339,12 +355,18 @@ export type InboundRowFragment = {
   taxPercentage?: number | null;
   onHold: boolean;
   currencyRate: number;
+  inboundType: Types.InboundNodeType;
   pricing: {
     __typename: 'PricingNode';
     totalAfterTax: number;
     taxPercentage?: number | null;
     foreignCurrencyTotalAfterTax?: number | null;
   };
+  requisition?: {
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  } | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   currency?: {
     __typename: 'CurrencyNode';
@@ -367,6 +389,9 @@ export type InvoicesQueryVariables = Types.Exact<{
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.InvoiceFilterInput>;
   storeId: Types.Scalars['String']['input'];
+  type?: Types.InputMaybe<
+    Array<Types.InvoiceTypeInput> | Types.InvoiceTypeInput
+  >;
 }>;
 
 export type InvoicesQuery = {
@@ -389,12 +414,18 @@ export type InvoicesQuery = {
       taxPercentage?: number | null;
       onHold: boolean;
       currencyRate: number;
+      inboundType: Types.InboundNodeType;
       pricing: {
         __typename: 'PricingNode';
         totalAfterTax: number;
         taxPercentage?: number | null;
         foreignCurrencyTotalAfterTax?: number | null;
       };
+      requisition?: {
+        __typename: 'RequisitionNode';
+        id: string;
+        requisitionNumber: number;
+      } | null;
       linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
       currency?: {
         __typename: 'CurrencyNode';
@@ -415,6 +446,7 @@ export type InvoicesQuery = {
 export type InvoiceQueryVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
+  type?: Types.InputMaybe<Types.InvoiceTypeInput>;
 }>;
 
 export type InvoiceQuery = {
@@ -443,6 +475,9 @@ export type InvoiceQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
+        inboundType: Types.InboundNodeType;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
@@ -576,6 +611,8 @@ export type InvoiceQuery = {
             } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
+              id: string;
+              lineNumber: number;
               adjustedNumberOfUnits?: number | null;
               shippedNumberOfUnits: number;
               inTransitNumberOfUnits: number;
@@ -633,6 +670,7 @@ export type InvoiceQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -640,6 +678,14 @@ export type InvoiceQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -685,6 +731,9 @@ export type InboundByNumberQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
+        inboundType: Types.InboundNodeType;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
@@ -818,6 +867,8 @@ export type InboundByNumberQuery = {
             } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
+              id: string;
+              lineNumber: number;
               adjustedNumberOfUnits?: number | null;
               shippedNumberOfUnits: number;
               inTransitNumberOfUnits: number;
@@ -875,6 +926,7 @@ export type InboundByNumberQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -882,6 +934,14 @@ export type InboundByNumberQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -904,6 +964,32 @@ export type UpdateInboundShipmentMutationVariables = Types.Exact<{
 export type UpdateInboundShipmentMutation = {
   __typename: 'Mutations';
   updateInboundShipment:
+    | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number }
+    | {
+        __typename: 'UpdateInboundShipmentError';
+        error:
+          | {
+              __typename: 'CannotChangeStatusOfInvoiceOnHold';
+              description: string;
+            }
+          | { __typename: 'CannotEditInvoice'; description: string }
+          | { __typename: 'CannotIssueInForeignCurrency'; description: string }
+          | { __typename: 'CannotReceiveWithPendingLines'; description: string }
+          | { __typename: 'CannotReverseInvoiceStatus'; description: string }
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string }
+          | { __typename: 'RecordNotFound'; description: string };
+      };
+};
+
+export type UpdateInboundShipmentExternalMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateInboundShipmentInput;
+}>;
+
+export type UpdateInboundShipmentExternalMutation = {
+  __typename: 'Mutations';
+  updateInboundShipmentExternal:
     | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number }
     | {
         __typename: 'UpdateInboundShipmentError';
@@ -952,6 +1038,36 @@ export type DeleteInboundShipmentsMutation = {
   };
 };
 
+export type DeleteInboundShipmentsExternalMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  deleteInboundShipments:
+    | Array<Types.DeleteInboundShipmentInput>
+    | Types.DeleteInboundShipmentInput;
+}>;
+
+export type DeleteInboundShipmentsExternalMutation = {
+  __typename: 'Mutations';
+  batchInboundShipmentExternal: {
+    __typename: 'BatchInboundShipmentResponse';
+    deleteInboundShipments?: Array<{
+      __typename: 'DeleteInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentError';
+            error:
+              | {
+                  __typename: 'CannotDeleteInvoiceWithLines';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
 export type InsertInboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
   otherPartyId: Types.Scalars['String']['input'];
@@ -966,6 +1082,29 @@ export type InsertInboundShipmentMutationVariables = Types.Exact<{
 export type InsertInboundShipmentMutation = {
   __typename: 'Mutations';
   insertInboundShipment:
+    | {
+        __typename: 'InsertInboundShipmentError';
+        error:
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+};
+
+export type InsertInboundShipmentExternalMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  otherPartyId: Types.Scalars['String']['input'];
+  requisitionId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  storeId: Types.Scalars['String']['input'];
+  purchaseOrderId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  insertLinesFromPurchaseOrder?: Types.InputMaybe<
+    Types.Scalars['Boolean']['input']
+  >;
+}>;
+
+export type InsertInboundShipmentExternalMutation = {
+  __typename: 'Mutations';
+  insertInboundShipmentExternal:
     | {
         __typename: 'InsertInboundShipmentError';
         error:
@@ -1014,6 +1153,40 @@ export type DeleteInboundShipmentLinesMutation = {
   };
 };
 
+export type DeleteInboundShipmentLinesExternalMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+export type DeleteInboundShipmentLinesExternalMutation = {
+  __typename: 'Mutations';
+  batchInboundShipmentExternal: {
+    __typename: 'BatchInboundShipmentResponse';
+    deleteInboundShipmentLines?: Array<{
+      __typename: 'DeleteInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentLineError';
+            error:
+              | { __typename: 'BatchIsReserved'; description: string }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | {
+                  __typename: 'LineLinkedToTransferredInvoice';
+                  description: string;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
 export type UpsertInboundShipmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.BatchInboundShipmentInput;
@@ -1022,6 +1195,183 @@ export type UpsertInboundShipmentMutationVariables = Types.Exact<{
 export type UpsertInboundShipmentMutation = {
   __typename: 'Mutations';
   batchInboundShipment: {
+    __typename: 'BatchInboundShipmentResponse';
+    updateInboundShipments?: Array<{
+      __typename: 'UpdateInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number }
+        | {
+            __typename: 'UpdateInboundShipmentError';
+            error:
+              | {
+                  __typename: 'CannotChangeStatusOfInvoiceOnHold';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'CannotIssueInForeignCurrency';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotReceiveWithPendingLines';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotReverseInvoiceStatus';
+                  description: string;
+                }
+              | { __typename: 'OtherPartyNotASupplier'; description: string }
+              | { __typename: 'OtherPartyNotVisible'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          };
+    }> | null;
+    insertInboundShipments?: Array<{
+      __typename: 'InsertInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertInboundShipmentError';
+            error:
+              | { __typename: 'OtherPartyNotASupplier'; description: string }
+              | { __typename: 'OtherPartyNotVisible'; description: string };
+          }
+        | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+    }> | null;
+    deleteInboundShipments?: Array<{
+      __typename: 'DeleteInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentError';
+            error:
+              | {
+                  __typename: 'CannotDeleteInvoiceWithLines';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+    updateInboundShipmentServiceLines?: Array<{
+      __typename: 'UpdateInboundShipmentServiceLineResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceLineNode'; id: string }
+        | {
+            __typename: 'UpdateInboundShipmentServiceLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          };
+    }> | null;
+    updateInboundShipmentLines?: Array<{
+      __typename: 'UpdateInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceLineNode'; id: string }
+        | {
+            __typename: 'UpdateInboundShipmentLineError';
+            error:
+              | { __typename: 'BatchIsReserved'; description: string }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | { __typename: 'NotAnInboundShipment'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          };
+    }> | null;
+    insertInboundShipmentServiceLines?: Array<{
+      __typename: 'InsertInboundShipmentServiceLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertInboundShipmentServiceLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                };
+          }
+        | { __typename: 'InvoiceLineNode'; id: string };
+    }> | null;
+    insertInboundShipmentLines?: Array<{
+      __typename: 'InsertInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertInboundShipmentLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                };
+          }
+        | { __typename: 'InvoiceLineNode'; id: string };
+    }> | null;
+    deleteInboundShipmentServiceLines?: Array<{
+      __typename: 'DeleteInboundShipmentServiceLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentServiceLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+    deleteInboundShipmentLines?: Array<{
+      __typename: 'DeleteInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentLineError';
+            error:
+              | { __typename: 'BatchIsReserved'; description: string }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | {
+                  __typename: 'LineLinkedToTransferredInvoice';
+                  description: string;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
+export type UpsertInboundShipmentExternalMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+export type UpsertInboundShipmentExternalMutation = {
+  __typename: 'Mutations';
+  batchInboundShipmentExternal: {
     __typename: 'BatchInboundShipmentResponse';
     updateInboundShipments?: Array<{
       __typename: 'UpdateInboundShipmentResponseWithId';
@@ -1329,6 +1679,24 @@ export type InsertLinesFromInternalOrderMutation = {
   };
 };
 
+export type InsertLinesFromInternalOrderExternalMutationVariables =
+  Types.Exact<{
+    storeId: Types.Scalars['String']['input'];
+    input: Types.BatchInboundShipmentInput;
+  }>;
+
+export type InsertLinesFromInternalOrderExternalMutation = {
+  __typename: 'Mutations';
+  batchInboundShipmentExternal: {
+    __typename: 'BatchInboundShipmentResponse';
+    insertFromInternalOrderLines?: Array<{
+      __typename: 'InsertInboundShipmentLineFromInternalOrderLineResponseWithId';
+      id: string;
+      response: { __typename: 'InvoiceLineNode'; id: string };
+    }> | null;
+  };
+};
+
 export type InboundShipmentPurchaseOrderLineFragment = {
   __typename: 'PurchaseOrderNode';
   comment?: string | null;
@@ -1460,6 +1828,8 @@ export const InboundLineFragmentDoc = gql`
     }
     purchaseOrderLine {
       __typename
+      id
+      lineNumber
       adjustedNumberOfUnits
       shippedNumberOfUnits
       inTransitNumberOfUnits
@@ -1555,6 +1925,8 @@ export const InboundFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    chargesLocalCurrency
+    chargesForeignCurrency
     documents {
       __typename
       nodes {
@@ -1569,13 +1941,23 @@ export const InboundFragmentDoc = gql`
       id
       number
       reference
+      orderTotalAfterDiscount
       currency {
         id
         code
         rate
         isHomeCurrency
       }
+      lines {
+        nodes {
+          id
+          item {
+            id
+          }
+        }
+      }
     }
+    inboundType
   }
   ${InboundLineFragmentDoc}
   ${SyncFileReferenceFragmentDoc}
@@ -1601,6 +1983,10 @@ export const InboundRowFragmentDoc = gql`
       taxPercentage
       foreignCurrencyTotalAfterTax
     }
+    requisition {
+      id
+      requisitionNumber
+    }
     linkedShipment {
       id
     }
@@ -1615,6 +2001,7 @@ export const InboundRowFragmentDoc = gql`
       id
       number
     }
+    inboundType
   }
 `;
 export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`
@@ -1683,12 +2070,14 @@ export const InvoicesDocument = gql`
     $desc: Boolean
     $filter: InvoiceFilterInput
     $storeId: String!
+    $type: [InvoiceTypeInput!]
   ) {
     invoices(
       page: { first: $first, offset: $offset }
       sort: { key: $key, desc: $desc }
       filter: $filter
       storeId: $storeId
+      type: $type
     ) {
       ... on InvoiceConnector {
         __typename
@@ -1702,8 +2091,8 @@ export const InvoicesDocument = gql`
   ${InboundRowFragmentDoc}
 `;
 export const InvoiceDocument = gql`
-  query invoice($id: String!, $storeId: String!) {
-    invoice(id: $id, storeId: $storeId) {
+  query invoice($id: String!, $storeId: String!, $type: InvoiceTypeInput) {
+    invoice(id: $id, storeId: $storeId, type: $type) {
       ... on InvoiceNode {
         ...Inbound
       }
@@ -1799,12 +2188,84 @@ export const UpdateInboundShipmentDocument = gql`
     }
   }
 `;
+export const UpdateInboundShipmentExternalDocument = gql`
+  mutation updateInboundShipmentExternal(
+    $storeId: String!
+    $input: UpdateInboundShipmentInput!
+  ) {
+    updateInboundShipmentExternal(storeId: $storeId, input: $input) {
+      ... on UpdateInboundShipmentError {
+        __typename
+        error {
+          description
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+          ... on CannotChangeStatusOfInvoiceOnHold {
+            __typename
+            description
+          }
+          ... on CannotReceiveWithPendingLines {
+            __typename
+            description
+          }
+          ... on CannotEditInvoice {
+            __typename
+            description
+          }
+          ... on CannotReverseInvoiceStatus {
+            __typename
+            description
+          }
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+        }
+      }
+      ... on InvoiceNode {
+        __typename
+        id
+        invoiceNumber
+      }
+    }
+  }
+`;
 export const DeleteInboundShipmentsDocument = gql`
   mutation deleteInboundShipments(
     $storeId: String!
     $deleteInboundShipments: [DeleteInboundShipmentInput!]!
   ) {
     batchInboundShipment(
+      storeId: $storeId
+      input: { deleteInboundShipments: $deleteInboundShipments }
+    ) {
+      __typename
+      deleteInboundShipments {
+        id
+        response {
+          ... on DeleteInboundShipmentError {
+            __typename
+            error {
+              description
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+export const DeleteInboundShipmentsExternalDocument = gql`
+  mutation deleteInboundShipmentsExternal(
+    $storeId: String!
+    $deleteInboundShipments: [DeleteInboundShipmentInput!]!
+  ) {
+    batchInboundShipmentExternal(
       storeId: $storeId
       input: { deleteInboundShipments: $deleteInboundShipments }
     ) {
@@ -1837,6 +2298,43 @@ export const InsertInboundShipmentDocument = gql`
     $insertLinesFromPurchaseOrder: Boolean
   ) {
     insertInboundShipment(
+      storeId: $storeId
+      input: {
+        id: $id
+        otherPartyId: $otherPartyId
+        requisitionId: $requisitionId
+        purchaseOrderId: $purchaseOrderId
+        insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
+      }
+    ) {
+      ... on InsertInboundShipmentError {
+        __typename
+        error {
+          description
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+        }
+      }
+      ... on InvoiceNode {
+        __typename
+        id
+        invoiceNumber
+      }
+    }
+  }
+`;
+export const InsertInboundShipmentExternalDocument = gql`
+  mutation insertInboundShipmentExternal(
+    $id: String!
+    $otherPartyId: String!
+    $requisitionId: String
+    $storeId: String!
+    $purchaseOrderId: String
+    $insertLinesFromPurchaseOrder: Boolean
+  ) {
+    insertInboundShipmentExternal(
       storeId: $storeId
       input: {
         id: $id
@@ -1909,12 +2407,326 @@ export const DeleteInboundShipmentLinesDocument = gql`
   }
   ${LineLinkedToTransferredInvoiceErrorFragmentDoc}
 `;
+export const DeleteInboundShipmentLinesExternalDocument = gql`
+  mutation deleteInboundShipmentLinesExternal(
+    $storeId: String!
+    $input: BatchInboundShipmentInput!
+  ) {
+    batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+      deleteInboundShipmentLines {
+        id
+        response {
+          ... on DeleteInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on BatchIsReserved {
+                __typename
+                description
+              }
+              ... on LineLinkedToTransferredInvoice {
+                ...LineLinkedToTransferredInvoiceError
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+  ${LineLinkedToTransferredInvoiceErrorFragmentDoc}
+`;
 export const UpsertInboundShipmentDocument = gql`
   mutation upsertInboundShipment(
     $storeId: String!
     $input: BatchInboundShipmentInput!
   ) {
     batchInboundShipment(storeId: $storeId, input: $input) {
+      __typename
+      updateInboundShipments {
+        id
+        response {
+          ... on UpdateInboundShipmentError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotChangeStatusOfInvoiceOnHold {
+                __typename
+                description
+              }
+              ... on CannotReceiveWithPendingLines {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on CannotReverseInvoiceStatus {
+                __typename
+                description
+              }
+              ... on OtherPartyNotASupplier {
+                __typename
+                description
+              }
+            }
+          }
+          ... on InvoiceNode {
+            __typename
+            id
+            invoiceNumber
+          }
+        }
+      }
+      insertInboundShipments {
+        id
+        response {
+          ... on InsertInboundShipmentError {
+            __typename
+            error {
+              description
+              ... on OtherPartyNotASupplier {
+                __typename
+                description
+              }
+            }
+          }
+          ... on InvoiceNode {
+            __typename
+            id
+            invoiceNumber
+          }
+        }
+      }
+      deleteInboundShipments {
+        id
+        response {
+          ... on DeleteInboundShipmentError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotDeleteInvoiceWithLines {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+      updateInboundShipmentServiceLines {
+        id
+        response {
+          ... on UpdateInboundShipmentServiceLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      updateInboundShipmentLines {
+        id
+        response {
+          ... on UpdateInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on BatchIsReserved {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+              ... on NotAnInboundShipment {
+                __typename
+                description
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      insertInboundShipmentServiceLines {
+        id
+        response {
+          ... on InsertInboundShipmentServiceLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      insertInboundShipmentLines {
+        id
+        response {
+          ... on InsertInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      deleteInboundShipmentServiceLines {
+        id
+        response {
+          ... on DeleteInboundShipmentServiceLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+      deleteInboundShipmentLines {
+        id
+        response {
+          ... on DeleteInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on BatchIsReserved {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+export const UpsertInboundShipmentExternalDocument = gql`
+  mutation upsertInboundShipmentExternal(
+    $storeId: String!
+    $input: BatchInboundShipmentInput!
+  ) {
+    batchInboundShipmentExternal(storeId: $storeId, input: $input) {
       __typename
       updateInboundShipments {
         id
@@ -2259,6 +3071,24 @@ export const InsertLinesFromInternalOrderDocument = gql`
     }
   }
 `;
+export const InsertLinesFromInternalOrderExternalDocument = gql`
+  mutation insertLinesFromInternalOrderExternal(
+    $storeId: String!
+    $input: BatchInboundShipmentInput!
+  ) {
+    batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+      insertFromInternalOrderLines {
+        id
+        response {
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
 export const PurchaseOrdersDocument = gql`
   query purchaseOrders($storeId: String!, $filter: PurchaseOrderFilterInput) {
     purchaseOrders(storeId: $storeId, filter: $filter) {
@@ -2364,6 +3194,24 @@ export function getSdk(
         variables
       );
     },
+    updateInboundShipmentExternal(
+      variables: UpdateInboundShipmentExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdateInboundShipmentExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateInboundShipmentExternalMutation>({
+            document: UpdateInboundShipmentExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updateInboundShipmentExternal',
+        'mutation',
+        variables
+      );
+    },
     deleteInboundShipments(
       variables: DeleteInboundShipmentsMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -2378,6 +3226,24 @@ export function getSdk(
             signal,
           }),
         'deleteInboundShipments',
+        'mutation',
+        variables
+      );
+    },
+    deleteInboundShipmentsExternal(
+      variables: DeleteInboundShipmentsExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteInboundShipmentsExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteInboundShipmentsExternalMutation>({
+            document: DeleteInboundShipmentsExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteInboundShipmentsExternal',
         'mutation',
         variables
       );
@@ -2400,6 +3266,24 @@ export function getSdk(
         variables
       );
     },
+    insertInboundShipmentExternal(
+      variables: InsertInboundShipmentExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertInboundShipmentExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertInboundShipmentExternalMutation>({
+            document: InsertInboundShipmentExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertInboundShipmentExternal',
+        'mutation',
+        variables
+      );
+    },
     deleteInboundShipmentLines(
       variables: DeleteInboundShipmentLinesMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -2418,6 +3302,24 @@ export function getSdk(
         variables
       );
     },
+    deleteInboundShipmentLinesExternal(
+      variables: DeleteInboundShipmentLinesExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteInboundShipmentLinesExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteInboundShipmentLinesExternalMutation>({
+            document: DeleteInboundShipmentLinesExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteInboundShipmentLinesExternal',
+        'mutation',
+        variables
+      );
+    },
     upsertInboundShipment(
       variables: UpsertInboundShipmentMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -2432,6 +3334,24 @@ export function getSdk(
             signal,
           }),
         'upsertInboundShipment',
+        'mutation',
+        variables
+      );
+    },
+    upsertInboundShipmentExternal(
+      variables: UpsertInboundShipmentExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpsertInboundShipmentExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpsertInboundShipmentExternalMutation>({
+            document: UpsertInboundShipmentExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'upsertInboundShipmentExternal',
         'mutation',
         variables
       );
@@ -2504,6 +3424,24 @@ export function getSdk(
             signal,
           }),
         'insertLinesFromInternalOrder',
+        'mutation',
+        variables
+      );
+    },
+    insertLinesFromInternalOrderExternal(
+      variables: InsertLinesFromInternalOrderExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertLinesFromInternalOrderExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertLinesFromInternalOrderExternalMutation>({
+            document: InsertLinesFromInternalOrderExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertLinesFromInternalOrderExternal',
         'mutation',
         variables
       );
