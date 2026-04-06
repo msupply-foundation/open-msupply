@@ -1,7 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as path from 'path';
+
+export const authFile = path.join(__dirname, '.auth/state.json');
 
 export default defineConfig({
-  testDir: './specs',
+  testDir: '.',
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
@@ -20,8 +23,17 @@ export default defineConfig({
 
   projects: [
     {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      testDir: './specs',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: authFile,
+      },
+      dependencies: ['setup'],
     },
   ],
 });
