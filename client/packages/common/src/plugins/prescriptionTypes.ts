@@ -1,4 +1,4 @@
-import { PrescriptionRowFragment } from '@openmsupply-client/invoices/src/Prescriptions';
+import type { PrescriptionRowFragment } from '@openmsupply-client/invoices/src/Prescriptions';
 import { UsePluginEvents } from './usePluginEvents';
 
 export type PrescriptionPaymentComponentProps = {

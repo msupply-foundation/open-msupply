@@ -6,7 +6,7 @@ import { ApiException, isPermissionDeniedException } from '@common/types';
 import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
 import { Grid } from '@openmsupply-client/common';
 import { StatusChip } from '../../panels/StatusChip';
-import { useDashboardStats } from '@openmsupply-client/dashboard/src/hooks';
+import { usePluginProvider } from '../../../../plugins/pluginProvider';
 
 export type Stat = {
   label: string;
@@ -117,6 +117,36 @@ export const Statistic = ({
       )}
     </Grid>
   );
+};
+
+// Moved here from @openmsupply-client/dashboard/src/hooks — it only depends on
+// common, so keeping it in dashboard created a common→dashboard import cycle.
+const useDashboardStats = (coreStats: Stat[] = [], panelContext: string) => {
+  const { plugins } = usePluginProvider();
+  const statPlugins = plugins.dashboard?.statistic;
+
+  if (!statPlugins) {
+    return coreStats.map(stat => (
+      <Statistic key={stat.statContext} {...stat} />
+    ));
+  }
+
+  const hiddenContexts = new Set(
+    statPlugins.flatMap(plugin => plugin.hiddenStats ?? [])
+  );
+  const visibleCoreStats =
+    hiddenContexts.size > 0
+      ? coreStats.filter(stat => !hiddenContexts.has(stat.statContext))
+      : coreStats;
+
+  return [
+    ...visibleCoreStats.map(stat => (
+      <Statistic key={stat.statContext} {...stat} />
+    )),
+    ...statPlugins.map((plugin, index) => (
+      <plugin.Component key={index} panelContext={panelContext} />
+    )),
+  ];
 };
 
 const Content = ({
