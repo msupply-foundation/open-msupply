@@ -25,6 +25,8 @@ mod plugin_processor;
 mod requisition_auto_finalise;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
+mod changelog_race_condition_test;
+#[cfg(test)]
 mod test_helpers;
 pub(crate) mod transfer;
 
