@@ -2,8 +2,9 @@ import React from 'react';
 import { Box } from '@openmsupply-client/common';
 import { DraftRequestLine } from '../hooks';
 import { StockDistribution } from './StockDistribution';
-import { ConsumptionHistory } from './ConsumptionHistory';
-import { StockEvolution } from './StockEvolution';
+
+const ConsumptionHistory = React.lazy(() => import('./ConsumptionHistory'));
+const StockEvolution = React.lazy(() => import('./StockEvolution'));
 
 export interface RequestStatsProps {
   draft?: DraftRequestLine | null;
@@ -36,12 +37,12 @@ export const RequestStats = ({ draft }: RequestStatsProps) => {
         {draft?.isCreated ? (
           <Box display="flex" height={289} />
         ) : (
-          <>
+          <React.Suspense fallback={null}>
             <Box paddingBottom={2}>
               <ConsumptionHistory id={draft?.id || ''} />
             </Box>
             <StockEvolution id={draft?.id || ''} />
-          </>
+          </React.Suspense>
         )}
       </Box>
     </Box>

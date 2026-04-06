@@ -81,11 +81,12 @@ const asyncCssPlugin: Plugin = {
   },
 };
 
-// Pre-compresses build output with gzip and serves .gz files from the preview server.
-// In production, a real server (nginx, CDN) would handle this; this makes `vite preview`
-// behave closer to production for Lighthouse testing.
-const gzipPlugin: Plugin = {
-  name: 'gzip',
+// Pre-compresses build output with gzip + brotli and serves compressed files
+// from the preview server. Brotli is preferred when the client supports it
+// (typically 15–20% smaller than gzip at equivalent CPU cost). In production,
+// nginx / CDN handles this; this makes `vite preview` behave closer to prod.
+const compressionPlugin: Plugin = {
+  name: 'compression',
   async closeBundle() {
     const distDir = path.resolve(__dirname, 'dist');
     const compressible = /\.(js|css|html|json|svg)$/;
@@ -96,17 +97,28 @@ const gzipPlugin: Plugin = {
         return fs.statSync(full).isDirectory() ? walk(full) : [full];
       });
 
-    await Promise.all(
-      walk(distDir)
-        .filter(f => compressible.test(f))
-        .map(f =>
-          pipe(
-            fs.createReadStream(f),
-            zlib.createGzip({ level: 9 }),
-            fs.createWriteStream(`${f}.gz`)
-          )
+    const files = walk(distDir).filter(f => compressible.test(f));
+
+    await Promise.all([
+      // gzip — fallback for clients that don't support brotli
+      ...files.map(f =>
+        pipe(
+          fs.createReadStream(f),
+          zlib.createGzip({ level: 9 }),
+          fs.createWriteStream(`${f}.gz`)
         )
-    );
+      ),
+      // brotli — best compression, supported by all modern browsers
+      ...files.map(f =>
+        pipe(
+          fs.createReadStream(f),
+          zlib.createBrotliCompress({
+            params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11 },
+          }),
+          fs.createWriteStream(`${f}.br`)
+        )
+      ),
+    ]);
   },
   configurePreviewServer(server) {
     const mime: Record<string, string> = {
@@ -119,25 +131,44 @@ const gzipPlugin: Plugin = {
     server.middlewares.use(
       (req: IncomingMessage, res: ServerResponse, next: () => void) => {
         const ae = (req.headers['accept-encoding'] ?? '') as string;
-        if (!ae.includes('gzip')) return next();
-
         const urlPath = (req.url ?? '/').split('?')[0];
         const ext = path.extname(urlPath);
-        if (!mime[ext]) return next();
+        if (!mime[ext as keyof typeof mime]) return next();
+        const contentType = mime[ext as keyof typeof mime] as string;
 
-        const gzPath = path.join(__dirname, 'dist', urlPath + '.gz');
-        try {
-          const stat = fs.statSync(gzPath);
-          if (stat.isFile()) {
-            res.setHeader('Content-Encoding', 'gzip');
-            res.setHeader('Content-Type', mime[ext]);
-            res.setHeader('Content-Length', stat.size);
-            fs.createReadStream(gzPath).pipe(res as NodeJS.WritableStream);
-            return;
+        // Prefer brotli, fall back to gzip
+        if (ae.includes('br')) {
+          const brPath = path.join(__dirname, 'dist', urlPath + '.br');
+          try {
+            const stat = fs.statSync(brPath);
+            if (stat.isFile()) {
+              res.setHeader('Content-Encoding', 'br');
+              res.setHeader('Content-Type', contentType);
+              res.setHeader('Content-Length', stat.size);
+              fs.createReadStream(brPath).pipe(res as NodeJS.WritableStream);
+              return;
+            }
+          } catch {
+            // no .br file — try gzip
           }
-        } catch {
-          // no .gz file — fall through to default static handler
         }
+
+        if (ae.includes('gzip')) {
+          const gzPath = path.join(__dirname, 'dist', urlPath + '.gz');
+          try {
+            const stat = fs.statSync(gzPath);
+            if (stat.isFile()) {
+              res.setHeader('Content-Encoding', 'gzip');
+              res.setHeader('Content-Type', contentType);
+              res.setHeader('Content-Length', stat.size);
+              fs.createReadStream(gzPath).pipe(res as NodeJS.WritableStream);
+              return;
+            }
+          } catch {
+            // no .gz file — fall through to default static handler
+          }
+        }
+
         next();
       }
     );
@@ -263,10 +294,10 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       // not blocked by the JS bundle download in Lighthouse's simulate model.
       deferEntryScriptPlugin,
       // Pre-render the login page and inject HTML + critical CSS into dist/index.html
-      // (must run before gzipPlugin so the patched HTML is what gets compressed)
+      // (must run before compressionPlugin so the patched HTML is what gets compressed)
       prerenderPlugin,
-      // Pre-compress build output; serve .gz files from vite preview
-      gzipPlugin,
+      // Pre-compress build output with gzip + brotli; serve from vite preview
+      compressionPlugin,
       // Copy locale files to dist/locales/ in production builds
       viteStaticCopy({
         targets: [

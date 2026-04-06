@@ -1,5 +1,4 @@
 import { isEqual } from '@common/utils';
-import { pickBy } from 'lodash';
 import type {
   MRT_ColumnOrderState,
   MRT_ColumnPinningState,
@@ -41,7 +40,9 @@ export const updateSavedState = (
   const savedData = getSavedState(tableId);
 
   // Remove any keys with undefined values
-  const mergedState = pickBy({ ...savedData, ...newState });
+  const mergedState = Object.fromEntries(
+    Object.entries({ ...savedData, ...newState }).filter(([, v]) => v !== undefined)
+  ) as ManagedTableState;
 
   // No change, nothing to do
   if (isEqual(mergedState, savedData)) return;

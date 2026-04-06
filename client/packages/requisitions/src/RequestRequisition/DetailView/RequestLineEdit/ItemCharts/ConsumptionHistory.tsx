@@ -156,3 +156,5 @@ export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
     </Box>
   );
 };
+
+export default ConsumptionHistory;
