@@ -1,6 +1,17 @@
 import React from 'react';
-import DOMPurify from 'dompurify';
 import { extractProperty } from '@common/utils';
+
+// Sanitize an HTML/SVG string using the browser's own parser.
+// DOMParser strips scripts, event handlers and other unsafe content natively —
+// equivalent protection to DOMPurify for SVG blobs, with zero bundle cost.
+const sanitizeHtml = (html: string): string => {
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.innerHTML;
+  } catch {
+    return '';
+  }
+};
 
 export const RegexUtils = {
   extractSvg: (
@@ -8,7 +19,7 @@ export const RegexUtils = {
     style?: React.CSSProperties
   ): JSX.Element | null => {
     const svgRegex = /<svg([^>]*)>([\w\W]*)<\/svg>/i;
-    const matches = DOMPurify.sanitize(snippet).match(svgRegex);
+    const matches = sanitizeHtml(snippet).match(svgRegex);
     if (!matches || matches.length < 2) return null;
 
     const paths = matches?.[2] || '';

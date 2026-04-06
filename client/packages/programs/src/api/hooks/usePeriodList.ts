@@ -4,7 +4,7 @@ import {
 } from '@openmsupply-client/common';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { LIST, PERIOD } from './keys';
-import { PeriodFragment } from '@openmsupply-client/requisitions';
+import type { PeriodFragment } from '@openmsupply-client/requisitions';
 
 export const usePeriodList = (
   rowsPerPage: number,

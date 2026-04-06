@@ -15,7 +15,7 @@ import {
 } from '../common';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { usePeriodList } from '../../api/hooks/usePeriodList';
-import { PeriodFragment } from '@openmsupply-client/requisitions';
+import type { PeriodFragment } from '@openmsupply-client/requisitions';
 
 const RECORDS_PER_PAGE = 15;
 export const periodSearchTester = rankWith(10, uiTypeIs('PeriodSearch'));

@@ -361,6 +361,12 @@ export default defineConfig(({ mode, isSsrBuild }) => {
     build: {
       outDir: 'dist',
       sourcemap: !isProduction,
+      // Remove license/copyright comments from the output bundle.
+      // They remain in node_modules; stripping them from the served JS
+      // saves several KB (36+ @license blocks in the main chunk alone).
+      esbuildOptions: {
+        legalComments: 'none',
+      },
       rollupOptions: {
         // Suppress MISSING_EXPORT errors for TypeScript type-only re-exports.
         // These are `export type Foo` declarations that esbuild strips from the
@@ -371,6 +377,12 @@ export default defineConfig(({ mode, isSsrBuild }) => {
           if (log.code === 'MISSING_EXPORT') return;
           defaultHandler(level, log);
         },
+        // unknownGlobalSideEffects: false tells Rollup that reading an
+        // unknown global (e.g. `window.foo`) has no observable side effect
+        // and the expression can be dropped if unused.  This is safe because
+        // all workspace packages declare sideEffects: false and the app does
+        // not rely on global mutation for tree-shaking.
+        treeshake: { unknownGlobalSideEffects: false },
         output: {
           chunkFileNames: '[hash].js',
           entryFileNames: '[name].[hash].js',
