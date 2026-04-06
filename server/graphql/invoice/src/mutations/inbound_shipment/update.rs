@@ -52,6 +52,7 @@ pub struct UpdateInput {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
     pub delivered_datetime: Option<NaiveDate>,
+    pub received_datetime: Option<NaiveDate>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -132,6 +133,7 @@ impl UpdateInput {
             charges_foreign_currency,
             default_donor,
             delivered_datetime,
+            received_datetime,
         } = self;
 
         ServiceInput {
@@ -154,6 +156,7 @@ impl UpdateInput {
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
             delivered_datetime,
+            received_datetime,
         }
     }
 }
@@ -224,6 +227,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
         | ServiceError::CannotPutDeliveredDateAfterReceivedDate
         | ServiceError::CannotSetDeliveredDateInFuture
+        | ServiceError::CannotSetReceivedDateInFuture
+        | ServiceError::CannotPutReceivedDateBeforeDeliveredDate
+        | ServiceError::CanOnlyBackdateReceivedShipments
+        | ServiceError::CannotMoveReceivedDateForward
+        | ServiceError::ExceedsMaximumBackdatingDays
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment
         | ServiceError::CurrencyRateMustBePositive => {
             BadUserInput(formatted_error)
@@ -596,6 +604,7 @@ mod test {
                     charges_foreign_currency: None,
                     default_donor: None,
                     delivered_datetime: None,
+                    received_datetime: None,
                 }
             );
             Ok(Invoice {

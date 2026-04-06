@@ -57,6 +57,7 @@ pub struct UpdateInboundShipment {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
     pub delivered_datetime: Option<NaiveDate>,
+    pub received_datetime: Option<NaiveDate>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -81,6 +82,7 @@ pub fn update_inbound_shipment(
                 update_invoice,
                 empty_lines_to_trim,
                 location_movements,
+                backdate_location_movements,
                 update_tax_for_lines,
                 update_currency_for_lines,
                 update_cost_price_for_lines,
@@ -131,6 +133,12 @@ pub fn update_inbound_shipment(
                     for movement in movements {
                         LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                     }
+                }
+            }
+
+            if let Some(movements) = backdate_location_movements {
+                for movement in movements {
+                    LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                 }
             }
 
@@ -197,6 +205,11 @@ pub enum UpdateInboundShipmentError {
     CanOnlyChangeDateOfExternalInboundShipments,
     CannotSetDeliveredDateInFuture,
     CannotPutDeliveredDateAfterReceivedDate,
+    CannotSetReceivedDateInFuture,
+    CannotPutReceivedDateBeforeDeliveredDate,
+    CanOnlyBackdateReceivedShipments,
+    CannotMoveReceivedDateForward,
+    ExceedsMaximumBackdatingDays,
     CannotReceiveWithPendingLines,
     CannotSetShippedStatusOnManualInboundShipment,
     CurrencyRateMustBePositive,

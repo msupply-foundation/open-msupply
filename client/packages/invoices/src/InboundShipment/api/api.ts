@@ -117,6 +117,8 @@ export const inboundParsers = {
           : undefined,
       defaultDonor:
         'defaultDonorUpdate' in patch ? patch.defaultDonorUpdate : undefined,
+      receivedDatetime:
+        'receivedDatetime' in patch ? patch.receivedDatetime : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {

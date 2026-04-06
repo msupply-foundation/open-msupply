@@ -3,10 +3,12 @@ use crate::invoice::{
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
     inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
+use crate::preference::{preferences::MaximumBackdatingDays, Preference};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use chrono::{NaiveDateTime, Utc};
+use chrono::{Duration, Utc};
 use repository::{
-    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceType, Name, StorageConnection,
+    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceStatus, InvoiceType, Name,
+    StorageConnection,
 };
 
 use super::{super::InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError};
@@ -71,14 +73,59 @@ pub fn validate(
             return Err(CanOnlyChangeDateOfExternalInboundShipments);
         }
 
-        let delivered_datetime = NaiveDateTime::from(delivered_datetime);
-        if delivered_datetime > Utc::now().naive_utc() {
+        let max_allowed_date = Utc::now().date_naive() + Duration::days(1);
+        if delivered_datetime > max_allowed_date {
             return Err(CannotSetDeliveredDateInFuture);
         }
 
         if let Some(received_datetime) = invoice.received_datetime {
-            if delivered_datetime > received_datetime {
+            if delivered_datetime > received_datetime.date() {
                 return Err(CannotPutDeliveredDateAfterReceivedDate);
+            }
+        }
+    }
+
+    // Received datetime can only be backdated (moved earlier) on shipments that are already
+    // in Received or Verified status. Once moved back it cannot be moved forward again.
+    if let Some(received_datetime) = patch.received_datetime {
+        // Must already be received
+        if !matches!(
+            invoice.status,
+            InvoiceStatus::Received | InvoiceStatus::Verified
+        ) {
+            return Err(CanOnlyBackdateReceivedShipments);
+        }
+
+        // The input is a NaiveDate (no time/tz). The user picks "today" in their
+        // local timezone, which could be up to UTC+14. Compare against the UTC date
+        // plus one day so that no local timezone considers this "in the future". Should probably look into passing TZ from the client for all date inputs?
+        let max_allowed_date = Utc::now().date_naive() + Duration::days(1);
+
+        if received_datetime > max_allowed_date {
+            return Err(CannotSetReceivedDateInFuture);
+        }
+
+        // Can only move the date earlier, never forward
+        if let Some(current_received) = invoice.received_datetime {
+            if received_datetime >= current_received.date() {
+                return Err(CannotMoveReceivedDateForward);
+            }
+        }
+
+        // Check maximum backdating days preference
+        let max_days: i32 = MaximumBackdatingDays
+            .load(connection, None)
+            .unwrap_or(0);
+        if max_days > 0 {
+            let earliest_allowed = Utc::now().date_naive() - Duration::days(max_days as i64);
+            if received_datetime < earliest_allowed {
+                return Err(ExceedsMaximumBackdatingDays);
+            }
+        }
+
+        if let Some(delivered_datetime) = invoice.delivered_datetime {
+            if received_datetime < delivered_datetime.date() {
+                return Err(CannotPutReceivedDateBeforeDeliveredDate);
             }
         }
     }
