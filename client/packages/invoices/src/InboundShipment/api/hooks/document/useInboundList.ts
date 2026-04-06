@@ -106,20 +106,41 @@ const useDelete = () => {
   const mutationFn = async (
     invoices: InboundRowFragment[]
   ): Promise<string[]> => {
-    const result =
-      (await inboundApi.deleteInboundShipments({
-        storeId,
-        deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
-      })) || {};
+    const internal = invoices.filter(inv => !inv.purchaseOrder);
+    const external = invoices.filter(inv => !!inv.purchaseOrder);
+    const deletedIds: string[] = [];
 
-    const { batchInboundShipment } = result;
-    if (batchInboundShipment?.deleteInboundShipments) {
-      return batchInboundShipment.deleteInboundShipments.map(
-        ({ id }: { id: string }) => id
-      );
+    const extractIds = (
+      result: { deleteInboundShipments?: { id: string }[] | null } | undefined
+    ) =>
+      result?.deleteInboundShipments?.map(({ id }: { id: string }) => id) ?? [];
+
+    if (internal.length > 0) {
+      const variables = {
+        storeId,
+        deleteInboundShipments: internal.map(inv => ({ id: inv.id })),
+      };
+      const result = (await inboundApi.deleteInboundShipments(variables))
+        ?.batchInboundShipment;
+      deletedIds.push(...extractIds(result));
     }
 
-    throw new Error('Could not delete invoices');
+    if (external.length > 0) {
+      const variables = {
+        storeId,
+        deleteInboundShipments: external.map(inv => ({ id: inv.id })),
+      };
+      const result = (
+        await inboundApi.deleteInboundShipmentsExternal(variables)
+      )?.batchInboundShipmentExternal;
+      deletedIds.push(...extractIds(result));
+    }
+
+    if (deletedIds.length === 0) {
+      throw new Error('Could not delete invoices');
+    }
+
+    return deletedIds;
   };
 
   return useMutation({

@@ -1,13 +1,4 @@
-## common/ui/components/navigation
+# common/ui/components/navigation
 
-### Overview
-
-Navigation components.
-
-### Intentions
-
-Any component related to navigation - custom links / anchor tags, breadcrumbs or tabs.
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://dev-docs.msupply.foundation/client/packages/common/ui/components/navigation/
+- **Source**: [docs/content/client/packages/common/ui/components/navigation/_index.md](../../../../../../../docs/content/client/packages/common/ui/components/navigation/_index.md)

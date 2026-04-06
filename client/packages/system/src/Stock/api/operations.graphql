@@ -122,6 +122,9 @@ fragment LedgerRow on LedgerNode {
   stockLineId
   storeId
   runningBalance
+  user {
+    username
+  }
 }
 
 fragment VVMStatusLogRow on VvmstatusLogNode {

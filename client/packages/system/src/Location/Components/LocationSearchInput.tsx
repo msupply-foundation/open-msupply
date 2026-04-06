@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Autocomplete,
   CloseIcon,
@@ -117,6 +117,29 @@ export const LocationSearchInput = ({
 
   const [filter, setFilter] = useState<LocationFilter>(LocationFilter.All);
 
+  // Refs let the memoised Paper slot read fresh values without
+  // changing the component identity (which would remount the slot).
+  const filterRef = useRef(filter);
+  filterRef.current = filter;
+  const setFilterRef = useRef(setFilter);
+  setFilterRef.current = setFilter;
+
+  const paperSlot = useMemo(() => {
+    if (typeof volumeRequired !== 'number') return undefined;
+    return ({
+      children,
+      ...paperProps
+    }: React.ComponentProps<typeof Paper> & { children?: React.ReactNode }) => (
+      <Paper {...paperProps} sx={{ minWidth: '300px' }}>
+        <LocationFilters
+          filter={filterRef.current}
+          setFilter={setFilterRef.current}
+        />
+        {children}
+      </Paper>
+    );
+  }, [volumeRequired]);
+
   const {
     query: { data, isLoading },
   } = useLocationList(
@@ -225,15 +248,7 @@ export const LocationSearchInput = ({
       placeholder={placeholder}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       slots={{
-        paper:
-          typeof volumeRequired === 'number'
-            ? ({ children, ...paperProps }) => (
-                <Paper {...paperProps} sx={{ minWidth: '300px' }}>
-                  <LocationFilters filter={filter} setFilter={setFilter} />
-                  {children}
-                </Paper>
-              )
-            : undefined,
+        paper: paperSlot,
       }}
     />
   );

@@ -138,6 +138,8 @@ export type InboundFragment = {
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
   currencyRate: number;
+  chargesLocalCurrency: number;
+  chargesForeignCurrency: number;
   inboundType: Types.InboundNodeType;
   defaultDonor?: { __typename: 'NameNode'; id: string; name: string } | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -319,6 +321,7 @@ export type InboundFragment = {
     id: string;
     number: number;
     reference?: string | null;
+    orderTotalAfterDiscount: number;
     currency?: {
       __typename: 'CurrencyNode';
       id: string;
@@ -326,6 +329,14 @@ export type InboundFragment = {
       rate: number;
       isHomeCurrency: boolean;
     } | null;
+    lines: {
+      __typename: 'PurchaseOrderLineConnector';
+      nodes: Array<{
+        __typename: 'PurchaseOrderLineNode';
+        id: string;
+        item: { __typename: 'ItemNode'; id: string };
+      }>;
+    };
   } | null;
 };
 
@@ -464,6 +475,8 @@ export type InvoiceQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
         inboundType: Types.InboundNodeType;
         defaultDonor?: {
           __typename: 'NameNode';
@@ -657,6 +670,7 @@ export type InvoiceQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -664,6 +678,14 @@ export type InvoiceQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -709,6 +731,8 @@ export type InboundByNumberQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
         inboundType: Types.InboundNodeType;
         defaultDonor?: {
           __typename: 'NameNode';
@@ -902,6 +926,7 @@ export type InboundByNumberQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -909,6 +934,14 @@ export type InboundByNumberQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -1892,6 +1925,8 @@ export const InboundFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    chargesLocalCurrency
+    chargesForeignCurrency
     documents {
       __typename
       nodes {
@@ -1906,11 +1941,20 @@ export const InboundFragmentDoc = gql`
       id
       number
       reference
+      orderTotalAfterDiscount
       currency {
         id
         code
         rate
         isHomeCurrency
+      }
+      lines {
+        nodes {
+          id
+          item {
+            id
+          }
+        }
       }
     }
     inboundType

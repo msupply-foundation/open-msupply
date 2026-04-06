@@ -1,0 +1,18 @@
+{% macro docs_breadcrumbs(section) %}
+  {% if section.ancestors | length > 1 %}
+  <nav class="docs-breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+      {% for ancestor_path in section.ancestors %}
+        {% if not loop.first %}
+          {% set ancestor = get_section(path=ancestor_path) %}
+          <li>
+            <a href="{{ ancestor.permalink | safe }}">{{ ancestor.title | split(pat="/") | last }}</a>
+            <svg viewBox="0 0 24 24" width="12" height="12"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </li>
+        {% endif %}
+      {% endfor %}
+      <li aria-current="page">{{ section.title | split(pat="/") | last }}</li>
+    </ol>
+  </nav>
+  {% endif %}
+{% endmacro %}

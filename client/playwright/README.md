@@ -1,5 +1,8 @@
 # Playwright E2E Tests
 
+- **Docs site**: https://dev-docs.msupply.foundation/client/playwright/
+- **Source**: [docs/content/client/playwright/_index.md](../../docs/content/client/playwright/_index.md)
+
 ## About Playwright
 
 [Playwright](https://playwright.dev) is an open-source end-to-end testing framework by Microsoft. It supports testing across Chromium, Firefox, and WebKit browsers, and can run tests headlessly or with a visible browser. Key capabilities include:

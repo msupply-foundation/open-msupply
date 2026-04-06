@@ -72,6 +72,7 @@ export type PurchaseOrderFragment = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -87,6 +88,10 @@ export type PurchaseOrderFragment = {
         code: string;
         name: string;
         unitName?: string | null;
+        defaultPackSize: number;
+        isVaccine: boolean;
+        doses: number;
+        restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
@@ -106,6 +111,7 @@ export type PurchaseOrderFragment = {
         reference?: string | null;
         confirmedDatetime?: string | null;
         currencyId?: string | null;
+        foreignExchangeRate: number;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -152,6 +158,7 @@ export type PurchaseOrderLineFragment = {
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
   shippedNumberOfUnits: number;
+  receivedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
   pricePerPackAfterDiscount: number;
   pricePerPackBeforeDiscount: number;
@@ -167,6 +174,10 @@ export type PurchaseOrderLineFragment = {
     code: string;
     name: string;
     unitName?: string | null;
+    defaultPackSize: number;
+    isVaccine: boolean;
+    doses: number;
+    restrictedLocationTypeId?: string | null;
     stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
   };
   manufacturer?: {
@@ -186,6 +197,7 @@ export type PurchaseOrderLineFragment = {
     reference?: string | null;
     confirmedDatetime?: string | null;
     currencyId?: string | null;
+    foreignExchangeRate: number;
     supplier?: { __typename: 'NameNode'; code: string; name: string } | null;
     user?: { __typename: 'UserNode'; username: string } | null;
     currency?: {
@@ -289,6 +301,7 @@ export type PurchaseOrderByIdQuery = {
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
             shippedNumberOfUnits: number;
+            receivedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
             pricePerPackAfterDiscount: number;
             pricePerPackBeforeDiscount: number;
@@ -304,6 +317,10 @@ export type PurchaseOrderByIdQuery = {
               code: string;
               name: string;
               unitName?: string | null;
+              defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
+              restrictedLocationTypeId?: string | null;
               stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
             };
             manufacturer?: {
@@ -327,6 +344,7 @@ export type PurchaseOrderByIdQuery = {
               reference?: string | null;
               confirmedDatetime?: string | null;
               currencyId?: string | null;
+              foreignExchangeRate: number;
               supplier?: {
                 __typename: 'NameNode';
                 code: string;
@@ -457,6 +475,7 @@ export type PurchaseOrderLinesQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -472,6 +491,10 @@ export type PurchaseOrderLinesQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        defaultPackSize: number;
+        isVaccine: boolean;
+        doses: number;
+        restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
@@ -491,6 +514,7 @@ export type PurchaseOrderLinesQuery = {
         reference?: string | null;
         confirmedDatetime?: string | null;
         currencyId?: string | null;
+        foreignExchangeRate: number;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -529,6 +553,7 @@ export type PurchaseOrderLineQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -544,6 +569,10 @@ export type PurchaseOrderLineQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        defaultPackSize: number;
+        isVaccine: boolean;
+        doses: number;
+        restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
@@ -563,6 +592,7 @@ export type PurchaseOrderLineQuery = {
         reference?: string | null;
         confirmedDatetime?: string | null;
         currencyId?: string | null;
+        foreignExchangeRate: number;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -738,6 +768,10 @@ export const PurchaseOrderLineFragmentDoc = gql`
       code
       name
       unitName
+      defaultPackSize
+      isVaccine
+      doses
+      restrictedLocationTypeId
       stats(storeId: $storeId) {
         stockOnHand
       }
@@ -746,6 +780,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedDeliveryDate
     requestedNumberOfUnits
     shippedNumberOfUnits
+    receivedNumberOfUnits
     adjustedNumberOfUnits
     pricePerPackAfterDiscount
     pricePerPackBeforeDiscount
@@ -770,6 +805,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
         username
       }
       currencyId
+      foreignExchangeRate
       currency {
         id
         code
