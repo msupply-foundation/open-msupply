@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   Alert,
   Divider,
@@ -7,6 +13,9 @@ import {
   DialogButton,
   useDialog,
   useNotification,
+  useDisabledNotificationToast,
+  InvoiceLineStatusType,
+  InvoiceNodeStatus,
   ModalMode,
   useSimplifiedTabletUI,
   Box,
@@ -44,7 +53,7 @@ interface InboundLineEditProps {
   isOpen: boolean;
   onClose: () => void;
   isDisabled?: boolean;
-  currency?: CurrencyRowFragment | null;
+  foreignCurrency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   hasVvmStatusesEnabled?: boolean;
   hasItemVariantsEnabled?: boolean;
@@ -52,6 +61,8 @@ interface InboundLineEditProps {
   getSortedItems: () => ItemRowFragment[];
   /** For external mode: the PO line ID of the clicked invoice line */
   purchaseOrderLineId?: string | null;
+  /** The specific line ID to scroll into view when the modal opens */
+  scrollToLineId?: string | null;
 }
 
 export const InboundLineEdit = ({
@@ -60,20 +71,29 @@ export const InboundLineEdit = ({
   isOpen,
   onClose,
   isDisabled = false,
-  currency,
+  foreignCurrency,
   isExternalSupplier,
   hasVvmStatusesEnabled = false,
   hasItemVariantsEnabled = false,
   scannedBatchData,
   getSortedItems,
   purchaseOrderLineId,
+  scrollToLineId,
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
 
   const {
     query: { data },
+    hasAuthorisePermission,
+    isExternal,
   } = useInboundShipment();
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+  const isReceived =
+    data?.status === InvoiceNodeStatus.Received ||
+    data?.status === InvoiceNodeStatus.Verified;
   const purchaseOrder = data?.purchaseOrder;
   const hasPurchaseOrder = !!purchaseOrder;
 
@@ -120,12 +140,7 @@ export const InboundLineEdit = ({
 
   // Derive the item from selected PO line (external) or props (internal)
   const currentItemFromPOLine = selectedPOLine
-    ? {
-        ...selectedPOLine.item,
-        isVaccine: false,
-        doses: 0,
-        restrictedLocationTypeId: null,
-      }
+    ? selectedPOLine.item
     : null;
 
   // --- Item state (internal mode) ---
@@ -193,7 +208,13 @@ export const InboundLineEdit = ({
 
     setVariantShownForItem(effectiveItem?.id ?? null);
     setVariantAction('first');
-  }, [mode, hasVariants, draftLines.length, effectiveItem?.id, variantShownForItem]);
+  }, [
+    mode,
+    hasVariants,
+    draftLines.length,
+    effectiveItem?.id,
+    variantShownForItem,
+  ]);
 
   const onVariantSelected = useCallback(
     (variant: ItemVariantFragment) => {
@@ -237,13 +258,43 @@ export const InboundLineEdit = ({
     }
   }, [hasVariants, addDraftLine]);
 
+  // Check if saving these lines requires authorise permission.
+  // Only lines the user actually changed (isUpdated/isCreated) matter.
+  const saveNeedsAuthorise = () => {
+    if (!isExternal) return false;
+    return draftLines.some(line => {
+      // Skip lines the user hasn't touched
+      if (!line.isUpdated && !line.isCreated) return false;
+
+      // Setting status to approved/rejected always needs authorise
+      if (
+        line.status === InvoiceLineStatusType.Passed ||
+        line.status === InvoiceLineStatusType.Rejected
+      )
+        return true;
+
+      // Editing an already-approved line needs authorise, unless
+      // the user is changing it to pending
+      if (!line.isCreated) {
+        const original = data?.lines.nodes.find(l => l.id === line.id);
+        if (original?.status === InvoiceLineStatusType.Passed) {
+          return line.status !== InvoiceLineStatusType.Pending;
+        }
+      }
+
+      return false;
+    });
+  };
+
   // --- Next/OK disabled logic ---
   const okNextDisabled = hasPurchaseOrder
     ? (mode === ModalMode.Update && !nextPOLine) || !selectedPOLine
     : (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   const okDisabled = hasPurchaseOrder
-    ? !selectedPOLine || draftLines.length === 0 || manualLinesWithZeroNumberOfPacks
+    ? !selectedPOLine ||
+      draftLines.length === 0 ||
+      manualLinesWithZeroNumberOfPacks
     : !currentItem || manualLinesWithZeroNumberOfPacks;
 
   const cards = (
@@ -253,7 +304,8 @@ export const InboundLineEdit = ({
       duplicateDraftLine={duplicateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
-      currency={currency}
+      isReceived={isReceived}
+      foreignCurrency={foreignCurrency}
       isExternalSupplier={isExternalSupplier}
       item={effectiveItem}
       hasItemVariantsEnabled={hasItemVariantsEnabled}
@@ -261,24 +313,14 @@ export const InboundLineEdit = ({
       setPackRoundingMessage={setPackRoundingMessage}
       restrictedToLocationTypeId={effectiveItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
-      simplified={simplifiedTabletView}
-      actions={
-        <ButtonWithIcon
-          disabled={isDisabled}
-          color="primary"
-          variant="outlined"
-          onClick={handleAddBatch}
-          label={`${t('label.add-batch')} (+)`}
-          Icon={<PlusCircleIcon />}
-        />
-      }
+      scrollToLineId={scrollToLineId}
     />
   );
 
   const content = (
     <>
       {simplifiedTabletView ? (
-        cards
+        <Box sx={{ marginTop: 2 }}>{cards}</Box>
       ) : (
         <TableContainer
           sx={{
@@ -306,12 +348,26 @@ export const InboundLineEdit = ({
           ? t('heading.add-item')
           : t('heading.edit-item')
       }
+      headerActions={
+        <ButtonWithIcon
+          disabled={isDisabled || isReceived}
+          color="primary"
+          variant="outlined"
+          onClick={handleAddBatch}
+          label={t('label.add-batch')}
+          Icon={<PlusCircleIcon />}
+        />
+      }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={
         <DialogButton
           variant="next-and-ok"
           disabled={okNextDisabled || manualLinesWithZeroNumberOfPacks}
           onClick={async () => {
+            if (saveNeedsAuthorise() && !hasAuthorisePermission) {
+              permissionDeniedNotification();
+              return;
+            }
             await saveLines();
             if (hasPurchaseOrder) {
               if (mode === ModalMode.Update && nextPOLine) {
@@ -337,6 +393,10 @@ export const InboundLineEdit = ({
           variant="ok"
           disabled={okDisabled}
           onClick={async () => {
+            if (saveNeedsAuthorise() && !hasAuthorisePermission) {
+              permissionDeniedNotification();
+              return;
+            }
             try {
               await saveLines();
               onClose();

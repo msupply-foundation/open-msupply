@@ -39,9 +39,10 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   } = usePurchaseOrder();
   const { updateLines } = usePurchaseOrderLine();
 
-  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState<
-    Date | null
-  >(data?.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null);
+  const [requestedDeliveryDate, setRequestedDeliveryDate] =
+    useState<Date | null>(
+      data?.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null
+    );
 
   const getMostRecentExpectedDate = () => {
     const dates = data?.lines?.nodes
@@ -51,12 +52,12 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   };
 
   const mostRecentExpectedDate = getMostRecentExpectedDate();
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<
-    Date | null
-  >(mostRecentExpectedDate ? new Date(mostRecentExpectedDate) : null);
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date | null>(
+    mostRecentExpectedDate ? new Date(mostRecentExpectedDate) : null
+  );
 
   const disabledRequestedDeliveryDate = data?.status
-    ? isFieldDisabled(data.status, StatusGroup.AfterConfirmed)
+    ? isFieldDisabled(data.status, StatusGroup.AfterSent)
     : false;
   const disabledExpectedDeliveryDate = data?.status
     ? isFieldDisabled(data.status, StatusGroup.AfterSent)
@@ -112,6 +113,21 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     await updateLines(data?.lines?.nodes, {
       requestedDeliveryDate: { value: formattedDate },
     });
+    // Auto-fill expected delivery date for lines that have none
+    const linesWithoutExpected =
+      data?.lines?.nodes?.filter(line => !line.expectedDeliveryDate) ?? [];
+    if (linesWithoutExpected.length > 0) {
+      try {
+        await updateLines(linesWithoutExpected, {
+          expectedDeliveryDate: { value: formattedDate },
+        });
+        if (!getMostRecentExpectedDate()) {
+          setExpectedDeliveryDate(date);
+        }
+      } catch (e) {
+        error(t('messages.error-saving-purchase-order'))();
+      }
+    }
   };
 
   const confirmRequestedModal = useConfirmationModal({

@@ -48,6 +48,8 @@ pub struct UpdateInput {
     pub tax: Option<TaxInput>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub charges_local_currency: Option<f64>,
+    pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
     pub delivered_datetime: Option<NaiveDate>,
 }
@@ -87,6 +89,8 @@ pub fn update(
         },
     )?;
 
+    super::validate_shipment_verify_authorisation(ctx, store_id, &r#type, &input.status)?;
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
@@ -124,6 +128,8 @@ impl UpdateInput {
             tax,
             currency_id,
             currency_rate,
+            charges_local_currency,
+            charges_foreign_currency,
             default_donor,
             delivered_datetime,
         } = self;
@@ -141,6 +147,8 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
+            charges_local_currency,
+            charges_foreign_currency,
             default_donor: default_donor.map(|donor| UpdateDefaultDonor {
                 donor_id: donor.donor_id,
                 apply_to_lines: donor.apply_to_lines.to_domain(),
@@ -216,7 +224,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
         | ServiceError::CannotPutDeliveredDateAfterReceivedDate
         | ServiceError::CannotSetDeliveredDateInFuture
-        | ServiceError::CannotSetShippedStatusOnManualInboundShipment => {
+        | ServiceError::CannotSetShippedStatusOnManualInboundShipment
+        | ServiceError::CurrencyRateMustBePositive => {
             BadUserInput(formatted_error)
         }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
@@ -583,6 +592,8 @@ mod test {
                     tax: None,
                     currency_id: None,
                     currency_rate: None,
+                    charges_local_currency: None,
+                    charges_foreign_currency: None,
                     default_donor: None,
                     delivered_datetime: None,
                 }

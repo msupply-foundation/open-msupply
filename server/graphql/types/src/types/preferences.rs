@@ -147,6 +147,14 @@ impl PreferencesNode {
         )
     }
 
+    pub async fn external_inbound_shipment_lines_must_be_authorised(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .external_inbound_shipment_lines_must_be_authorised,
+        )
+    }
+
     pub async fn number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products(
         &self,
     ) -> Result<i32> {

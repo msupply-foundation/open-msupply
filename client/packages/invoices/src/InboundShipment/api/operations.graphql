@@ -212,6 +212,8 @@ fragment Inbound on InvoiceNode {
   }
 
   currencyRate
+  chargesLocalCurrency
+  chargesForeignCurrency
 
   documents {
     __typename
@@ -229,11 +231,20 @@ fragment Inbound on InvoiceNode {
     id
     number
     reference
+    orderTotalAfterDiscount
     currency {
       id
       code
       rate
       isHomeCurrency
+    }
+    lines {
+      nodes {
+        id
+        item {
+          id
+        }
+      }
     }
   }
 

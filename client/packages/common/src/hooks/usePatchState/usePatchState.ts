@@ -8,23 +8,26 @@
  */
 
 import { isEqual } from '@openmsupply-client/common';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 export const usePatchState = <T>(referenceData: Record<string, unknown>) => {
   const [patch, setPatch] = useState<Partial<T>>({});
+  const patchRef = useRef<Partial<T>>({});
 
-  const updatePatch = (newData: Partial<T>) => {
+  const updatePatch = useCallback((newData: Partial<T>) => {
+    patchRef.current = { ...patchRef.current, ...newData };
     setPatch(prev => ({ ...prev, ...newData }));
-  };
+  }, []);
 
-  const resetDraft = () => {
+  const resetDraft = useCallback(() => {
+    patchRef.current = {};
     setPatch({});
-  };
+  }, []);
 
   const isDirty = useMemo(
     () => !isEqual(referenceData, { ...referenceData, ...patch }),
     [referenceData, patch]
   );
 
-  return { patch, updatePatch, resetDraft, isDirty };
+  return { patch, patchRef, updatePatch, resetDraft, isDirty };
 };

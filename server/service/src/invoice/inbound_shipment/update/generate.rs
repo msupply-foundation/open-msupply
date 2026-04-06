@@ -3,7 +3,7 @@ use chrono::{NaiveDateTime, Utc};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
-    LocationMovementRow, Name, RepositoryError,
+    LocationMovementRow, Name, PurchaseOrderLineRowRepository, RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
@@ -38,6 +38,7 @@ pub(crate) struct GenerateResult {
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_currency_for_lines: Option<Vec<InvoiceLineRow>>,
+    pub(crate) update_cost_price_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) vvm_status_logs_to_update: Option<Vec<VVMStatusLogRow>>,
     pub(crate) update_donor: Option<Vec<LineAndStockLine>>,
 }
@@ -88,6 +89,12 @@ pub(crate) fn generate(
 
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = patch.currency_rate.unwrap_or(update_invoice.currency_rate);
+    update_invoice.charges_local_currency = patch
+        .charges_local_currency
+        .unwrap_or(update_invoice.charges_local_currency);
+    update_invoice.charges_foreign_currency = patch
+        .charges_foreign_currency
+        .unwrap_or(update_invoice.charges_foreign_currency);
 
     // Already validated in validate
     if let Some(delivered_datetime) = patch.delivered_datetime {
@@ -163,6 +170,26 @@ pub(crate) fn generate(
         None
     };
 
+    // Recalculate cost prices when currency rate or charges change,
+    // but only for invoices linked to a purchase order
+    let has_purchase_order = update_invoice.purchase_order_id.is_some();
+    let should_update_cost_prices = has_purchase_order
+        && (patch.currency_rate.is_some()
+            || patch.charges_local_currency.is_some()
+            || patch.charges_foreign_currency.is_some());
+
+    let update_cost_price_for_lines = if should_update_cost_prices {
+        Some(generate_cost_price_update_for_lines(
+            connection,
+            &update_invoice.id,
+            &update_invoice.currency_rate,
+            update_invoice.charges_foreign_currency,
+            update_invoice.charges_local_currency,
+        )?)
+    } else {
+        None
+    };
+
     let update_donor = match patch.default_donor {
         Some(update) => Some(update_donor_on_lines_and_stock(
             connection,
@@ -180,6 +207,7 @@ pub(crate) fn generate(
         location_movements,
         update_tax_for_lines,
         update_currency_for_lines,
+        update_cost_price_for_lines,
         vvm_status_logs_to_update,
         update_donor,
     })
@@ -230,6 +258,103 @@ fn generate_foreign_currency_before_tax_for_lines(
             currency_rate,
         )?;
         result.push(invoice_line_row);
+    }
+
+    Ok(result)
+}
+
+/// Recalculates cost_price_per_pack for each invoice line based on:
+/// - PO price per pack (from linked purchase_order_line) converted to local currency
+/// - Plus the % cost adjustment from charges
+///
+/// Rate convention: rate = home (local) currency units per 1 foreign currency unit
+/// e.g. rate = 1.33 means 1 EUR = 1.33 AUD (home)
+///
+/// new_cost_price = round_to_2dp((po_price * rate) * (1 + cost_adjustment_fraction))
+///
+/// where cost_adjustment_fraction = (charges_foreign * rate + charges_local) / total_goods_local
+/// and total_goods_local = sum of all (po_price * rate * number_of_packs) across lines
+///
+/// If sell_price_per_pack == old cost_price_per_pack, sell price is also updated.
+fn generate_cost_price_update_for_lines(
+    connection: &StorageConnection,
+    invoice_id: &str,
+    currency_rate: &f64,
+    charges_foreign_currency: f64,
+    charges_local_currency: f64,
+) -> Result<Vec<InvoiceLineRow>, UpdateInboundShipmentError> {
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
+            .r#type(InvoiceLineType::StockIn.equal_to()),
+    )?;
+
+    // Fallback to 1.0 if rate is zero (possible via sync data)
+    let safe_rate = if *currency_rate != 0.0 {
+        *currency_rate
+    } else {
+        1.0
+    };
+
+    let po_line_repo = PurchaseOrderLineRowRepository::new(connection);
+
+    // First pass: gather PO prices and compute total goods in local currency
+    struct LineInfo {
+        invoice_line_row: InvoiceLineRow,
+        po_price_local: f64,
+    }
+
+    let mut line_infos: Vec<LineInfo> = Vec::new();
+    let mut total_goods_local: f64 = 0.0;
+
+    for invoice_line in &invoice_lines {
+        let row = &invoice_line.invoice_line_row;
+        let po_line_id = &invoice_line.invoice_line_row.purchase_order_line_id;
+        let po_price_local = if let Some(ref po_line_id) = po_line_id {
+            if let Some(po_line) = po_line_repo.find_one_by_id(po_line_id)? {
+                po_line.price_per_pack_after_discount * safe_rate
+            } else {
+                // No PO line found, keep current cost price
+                row.cost_price_per_pack
+            }
+        } else {
+            // No PO line linked, keep current cost price
+            row.cost_price_per_pack
+        };
+
+        total_goods_local += po_price_local * row.number_of_packs;
+        line_infos.push(LineInfo {
+            invoice_line_row: row.clone(),
+            po_price_local,
+        });
+    }
+
+    // Calculate cost adjustment fraction
+    let charges_converted = charges_foreign_currency * safe_rate;
+    let total_charges = charges_converted + charges_local_currency;
+    let cost_adjustment_fraction = if total_goods_local != 0.0 {
+        total_charges / total_goods_local
+    } else {
+        0.0
+    };
+
+    // Second pass: update cost prices
+    let mut result = Vec::new();
+    for line_info in line_infos {
+        let mut row = line_info.invoice_line_row;
+        let old_cost = row.cost_price_per_pack;
+        let new_cost =
+            (line_info.po_price_local * (1.0 + cost_adjustment_fraction) * 100.0).round() / 100.0;
+
+        row.cost_price_per_pack = new_cost;
+
+        // If sell price matches old cost price, update sell price too
+        // Use currency-appropriate tolerance for floating point comparison
+        if (row.sell_price_per_pack - old_cost).abs() < 0.0001 {
+            row.sell_price_per_pack = new_cost;
+        }
+
+        result.push(row);
     }
 
     Ok(result)

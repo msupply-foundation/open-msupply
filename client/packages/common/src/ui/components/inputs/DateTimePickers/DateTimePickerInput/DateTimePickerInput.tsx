@@ -54,7 +54,7 @@ export const DateTimePickerInput = ({
   slotProps,
   ...props
 }: Omit<DateTimePickerProps<true>, 'onChange'> & {
-  error?: string | undefined;
+  error?: React.ReactNode;
   width?: number | string;
   label?: string;
   onChange: (value: Date | null) => void;

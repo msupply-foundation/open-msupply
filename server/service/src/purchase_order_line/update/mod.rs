@@ -161,7 +161,7 @@ fn create_purchase_order_input(purchase_order_id: &str) -> UpdatePurchaseOrderIn
     UpdatePurchaseOrderInput {
         id: purchase_order_id.to_string(),
         status: Some(PurchaseOrderStatus::Confirmed),
-        sent_datetime: Some(NullableUpdate { value: None }),
+        sent_datetime: None,
         supplier_id: None,
         confirmed_datetime: None,
         comment: None,
