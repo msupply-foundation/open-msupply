@@ -1,0 +1,27 @@
+# Standard Reports Integration Test Configuration
+# Copy this file to config.toml and uncomment/edit as needed:
+#   cp config.example.toml config.toml
+#
+# Report-specific filter arguments are NOT configured here.
+# Each report has its own test-config.json at:
+#   standard_reports/<code>/test-config.json
+# The test crate reads it and merges in store_id/credentials from this file.
+
+[defaults]
+# image_tag = "v2.17.0-dev"             # Docker image tag (required)
+# database = "omsupply-database.sqlite"  # Path to seed SQLite database
+# store_id = "YOUR-STORE-ID-HERE"       # Store ID from the seed database (required)
+# username = "admin"
+# password = "pass"
+# port_start = 9100                      # Each report container gets port_start + N
+# skip_build = false                     # Skip build-reports step
+# output = "temp/test-report.md"         # Markdown report output path
+# workers = 8                            # Max parallel containers (use 1 for CI)
+
+# Per-report overrides
+#
+# [reports.some-report]
+# database = "custom.sqlite"            # Use a different database for this report
+#
+# [reports.encounters]
+# skip = "DISPENSARY context"            # Skip this report with a reason

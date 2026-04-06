@@ -3,24 +3,25 @@ mod test_lib;
 use clap::Parser;
 use test_lib::*;
 
-const IMAGE_NAME: &str = "msupplyfoundation/omsupply";
-const CONTAINER_NAME: &str = "standard-reports-test";
-
 #[derive(Parser)]
 #[command(name = "standard-reports-test")]
 #[command(about = "Integration tests for standard reports")]
 struct Cli {
-    /// Docker image tag (e.g. v2.17.0)
+    /// Docker image tag — overrides config.toml
     #[arg(long, env = "IMAGE_TAG")]
-    image_tag: String,
+    image_tag: Option<String>,
 
-    /// Host port to map to container port 8000
-    #[arg(long, env = "HOST_PORT", default_value = "9000")]
-    port: i32,
+    /// Starting host port — each report gets port_start + N
+    #[arg(long)]
+    port_start: Option<i32>,
+
+    /// Path to seed database — overrides config.toml
+    #[arg(long)]
+    database: Option<String>,
 
     /// Skip the build-reports step
     #[arg(long)]
-    skip_build: bool,
+    skip_build: Option<bool>,
 
     /// Only run these reports (comma-separated codes)
     #[arg(long, value_delimiter = ',')]
@@ -30,13 +31,17 @@ struct Cli {
     #[arg(long, value_delimiter = ',')]
     skip: Option<Vec<String>>,
 
-    /// Path to seed SQLite database file
-    #[arg(long, default_value = "omsupply-database.sqlite")]
-    database: String,
+    /// Path to config file
+    #[arg(long, default_value = "config.toml")]
+    config: String,
 
-    /// Write a markdown test report to this file
-    #[arg(long, default_value = "temp/test-report.md")]
-    output: String,
+    /// Write a markdown test report to this file — overrides config.toml
+    #[arg(long)]
+    output: Option<String>,
+
+    /// Max parallel containers [default: 8, use 1 for CI]
+    #[arg(long, env = "WORKERS")]
+    workers: Option<usize>,
 }
 
 #[tokio::main]
@@ -64,79 +69,65 @@ async fn main() -> anyhow::Result<()> {
 async fn run_tests(cli: Cli) -> anyhow::Result<()> {
     let current_dir = std::env::current_dir()?;
     let standard_reports_dir = std::fs::canonicalize(current_dir.join("../"))?;
-    let base_url = format!("http://localhost:{}", cli.port);
 
-    // Set up container
-    let mut container = Container::new(IMAGE_NAME, &cli.image_tag);
-    container
-        .name(CONTAINER_NAME)
-        .platform("linux/amd64")
-        .add_port(cli.port, 8000);
+    // Load config, with CLI flags taking precedence
+    let mut config = load_config(std::path::Path::new(&cli.config))?;
 
-    // Stop any existing container with the same name
-    container.stop();
+    if let Some(tag) = &cli.image_tag {
+        config.defaults.image_tag = Some(tag.clone());
+    }
+    if let Some(port) = cli.port_start {
+        config.defaults.port_start = port;
+    }
+    if let Some(db) = &cli.database {
+        config.defaults.database = Some(db.clone());
+    }
+    if let Some(skip) = cli.skip_build {
+        config.defaults.skip_build = skip;
+    }
+    if let Some(workers) = cli.workers {
+        config.defaults.workers = workers;
+    }
 
-    // Copy seed database to temp directory
+    let image_tag = config
+        .defaults
+        .image_tag
+        .clone()
+        .expect("image_tag must be set via --image-tag, IMAGE_TAG env, or config.toml");
+    let output_path = cli
+        .output
+        .unwrap_or_else(|| config.defaults.output.clone());
+    let workers = config.defaults.workers;
+
+    // Temp dirs
     let temp_dir = current_dir.join("temp");
-    let temp_db_dir = temp_dir.join("database");
     let output_dir = temp_dir.join("output");
-    std::fs::create_dir_all(&temp_db_dir)?;
+    std::fs::create_dir_all(&temp_dir)?;
     std::fs::create_dir_all(&output_dir)?;
 
-    let db_source = std::path::Path::new(&cli.database);
-    let db_source = if db_source.is_absolute() {
-        db_source.to_path_buf()
-    } else {
-        current_dir.join(db_source)
-    };
-    let db_dest = temp_db_dir.join("omsupply-database.sqlite");
-    if db_source.exists() {
-        std::fs::copy(&db_source, &db_dest)?;
-        log::info!("Copied seed database from {}", db_source.display());
-    } else {
-        anyhow::bail!(
-            "Seed database not found at {}",
-            db_source.display()
-        );
-    }
-
-    // Mount database and standard_reports into the container
-    container.add_mount(&temp_db_dir, "/database/");
-    container.add_mount(&standard_reports_dir, "/standard_reports/");
-
-    // Start container (entry.sh starts the server automatically)
-    container.run_detached(&[], &[]).await?;
-    wait_for_server(&base_url, 60).await?;
-
-    // Build and upsert reports inside the container
-    if !cli.skip_build {
-        build_reports_in_container(CONTAINER_NAME)?;
-    }
-    upsert_reports_in_container(CONTAINER_NAME)?;
-
-    // Load config
-    let config = load_test_config(&standard_reports_dir)?;
-    log::info!("Loaded test-config.json (store_id: {})", config.store_id);
-
-    // Get all registered reports and apply filters
+    // Get all registered reports and apply CLI filters
     let reports = all_reports();
     log::info!("Registered {} reports", reports.len());
 
-    // Partition into skipped and runnable
+    // Semaphore to limit number of parallel tasks (containers)
+    let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(workers));
+    let mut tasks = Vec::new();
     let mut skipped: Vec<ReportTestResult> = Vec::new();
-    let mut to_run: Vec<std::sync::Arc<dyn test_lib::report::ReportTest>> = Vec::new();
+    let mut port = config.defaults.port_start;
 
     for report in reports {
         let code = report.code().to_string();
 
+        // --only filter
         if let Some(ref only) = cli.only {
             if !only.contains(&code) {
                 continue;
             }
         }
 
-        if let Some(ref skip) = cli.skip {
-            if skip.contains(&code) {
+        // --skip filter
+        if let Some(ref skip_list) = cli.skip {
+            if skip_list.contains(&code) {
                 skipped.push(ReportTestResult {
                     code,
                     status: TestStatus::Skipped,
@@ -146,78 +137,55 @@ async fn run_tests(cli: Cli) -> anyhow::Result<()> {
             }
         }
 
-        if let Some(reason) = report.skip() {
+        let resolved = config.resolve_for_report(&code);
+
+        // Resolve database path
+        let db_path = if std::path::Path::new(&resolved.database).is_absolute() {
+            std::path::PathBuf::from(&resolved.database)
+        } else {
+            current_dir.join(&resolved.database)
+        };
+
+        if !db_path.exists() {
             skipped.push(ReportTestResult {
                 code,
-                status: TestStatus::Skipped,
-                message: reason.to_string(),
+                status: TestStatus::Fail,
+                message: format!("Database not found: {}", db_path.display()),
             });
             continue;
         }
 
-        to_run.push(std::sync::Arc::from(report));
+        let input = ReportTestInput {
+            report,
+            config: resolved,
+            image_tag: image_tag.clone(),
+            port,
+            standard_reports_dir: standard_reports_dir.clone(),
+            temp_dir: temp_dir.clone(),
+            output_dir: output_dir.clone(),
+            skip_build: config.defaults.skip_build,
+        };
+
+        let permit = semaphore.clone();
+        tasks.push(tokio::spawn(async move {
+            let _permit = permit.acquire().await.unwrap();
+            run_isolated_report_test(input).await
+        }));
+        port += 1;
     }
 
-    // Check if the container supports test-report (parallel-safe, no yarn)
-    let use_test_report = has_test_report_command(CONTAINER_NAME);
-    if use_test_report {
-        log::info!("Container supports test-report — running in parallel");
-    } else {
-        log::info!("Container does not support test-report — falling back to show-report (sequential)");
-    }
-
-    let cli_command = if use_test_report {
-        "test-report"
-    } else {
-        "show-report"
-    };
-
+    // Wait for all parallel tasks
     let mut results = skipped;
-
-    if use_test_report {
-        // Parallel execution — safe because test-report skips yarn
-        let container_name = CONTAINER_NAME.to_string();
-        let config = std::sync::Arc::new(config);
-        let output_dir = std::sync::Arc::new(output_dir);
-        let cli_command = cli_command.to_string();
-
-        let handles: Vec<_> = to_run
-            .into_iter()
-            .map(|report| {
-                let container_name = container_name.clone();
-                let config = config.clone();
-                let output_dir = output_dir.clone();
-                let cli_command = cli_command.clone();
-                tokio::task::spawn_blocking(move || {
-                    run_report_test(
-                        &container_name,
-                        report.as_ref(),
-                        &config,
-                        &output_dir,
-                        &cli_command,
-                    )
-                })
-            })
-            .collect();
-
-        for handle in handles {
-            results.push(handle.await?);
-        }
-    } else {
-        // Sequential execution — show-report runs yarn install which corrupts under parallelism
-        for report in &to_run {
-            let result =
-                run_report_test(CONTAINER_NAME, report.as_ref(), &config, &output_dir, cli_command);
-            results.push(result);
-        }
+    for handle in tasks {
+        results.push(handle.await?);
     }
+
+    // Sort results by code for consistent output
+    results.sort_by(|a, b| a.code.cmp(&b.code));
 
     // Summary
     print_summary(&results);
-    write_report_markdown(&cli.output, &cli.image_tag, &results);
-
-    // Cleanup
-    container.stop();
+    write_report_markdown(&output_path, &image_tag, &results);
 
     let failures = results
         .iter()

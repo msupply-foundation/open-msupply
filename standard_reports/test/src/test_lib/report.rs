@@ -10,18 +10,6 @@ pub trait ReportTest: Send + Sync {
         format!("{}/latest", self.code())
     }
 
-    /// Whether to skip this report (e.g. needs DISPENSARY context)
-    fn skip(&self) -> Option<&str> {
-        None
-    }
-
-    /// Extra arguments to pass to show-report's test-config.
-    /// Returns None to use the default test-config.json arguments.
-    /// Override to provide report-specific filter values.
-    fn arguments(&self) -> Option<serde_json::Value> {
-        None
-    }
-
     /// Validate the generated HTML output.
     /// Default implementation checks for <table>, no error strings, and expected_substrings().
     fn validate(&self, html: &str) -> Result<(), String> {
@@ -63,15 +51,6 @@ pub struct ExpiringItems;
 impl ReportTest for ExpiringItems {
     fn code(&self) -> &str {
         "expiring-items"
-    }
-    fn arguments(&self) -> Option<serde_json::Value> {
-        Some(serde_json::json!({
-            "monthlyConsumptionLookBackPeriod": 3,
-            "monthsOverstock": 6,
-            "monthsUnderstock": 3,
-            "monthsItemsExpire": 6,
-            "timezone": "Pacific/Auckland"
-        }))
     }
     fn expected_substrings(&self) -> Vec<&str> {
         vec!["Code", "Name", "Batch", "Expiry"]
@@ -152,9 +131,6 @@ pub struct PendingEncounters;
 impl ReportTest for PendingEncounters {
     fn code(&self) -> &str {
         "encounters"
-    }
-    fn skip(&self) -> Option<&str> {
-        Some("DISPENSARY context — skipped")
     }
 }
 

@@ -89,12 +89,12 @@ pub fn generate_reports_recursive(
 }
 
 fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), Error> {
-    let report_data = generate_report_data(path, false)?;
+    let report_data = generate_report_data(path)?;
     reports_data.reports.push(report_data);
     Ok(())
 }
 
-pub fn generate_report_data(path: &PathBuf, skip_yarn: bool) -> Result<ReportData, Error> {
+pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     // install esbuild depedencies
     // read manifest file
     let manifest_file = fs::File::open(path.join("report-manifest.json"))
@@ -103,7 +103,7 @@ pub fn generate_report_data(path: &PathBuf, skip_yarn: bool) -> Result<ReportDat
     let manifest: Manifest = serde_json::from_reader(manifest_file)
         .map_err(|e| Error::CannotReadManifestFile(path.clone(), e))?;
 
-    let convert_data = generate_convert_data(path, &manifest, skip_yarn)?;
+    let convert_data = generate_convert_data(path, &manifest)?;
     let code = manifest.code;
 
     let version = manifest.version;
@@ -189,33 +189,26 @@ pub fn generate_report_data(path: &PathBuf, skip_yarn: bool) -> Result<ReportDat
     })
 }
 
-fn generate_convert_data(
-    path: &PathBuf,
-    manifest: &Manifest,
-    skip_yarn: bool,
-) -> Result<Option<String>, Error> {
+fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<String>, Error> {
     let Some(convert_data) = &manifest.convert_data else {
         return Ok(None);
     };
 
     let convert_dir = path.join(convert_data);
+    // Yarn install, use lock file bit it should be git ignored
+    run_command_with_error(
+        Command::new(YARN_COMMAND)
+            .args(["install", "--cwd"])
+            .arg(&convert_dir),
+    )
+    .map_err(|e| Error::FailedToYarnInstall(convert_dir.clone(), e))?;
 
-    if !skip_yarn {
-        // Yarn install, use lock file bit it should be git ignored
-        run_command_with_error(
-            Command::new(YARN_COMMAND)
-                .args(["install", "--cwd"])
-                .arg(&convert_dir),
-        )
-        .map_err(|e| Error::FailedToYarnInstall(convert_dir.clone(), e))?;
-
-        run_command_with_error(
-            Command::new(YARN_COMMAND)
-                .arg("build")
-                .current_dir(&convert_dir),
-        )
-        .map_err(|e| Error::FailedToBuildConvertData(convert_dir.clone(), e))?;
-    }
+    run_command_with_error(
+        Command::new(YARN_COMMAND)
+            .arg("build")
+            .current_dir(&convert_dir),
+    )
+    .map_err(|e| Error::FailedToBuildConvertData(convert_dir.clone(), e))?;
 
     let bundle_path: PathBuf = convert_dir
         .join("dist")
