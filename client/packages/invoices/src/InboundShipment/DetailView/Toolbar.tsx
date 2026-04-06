@@ -18,6 +18,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInboundShipment } from '../api';
+import { ReceivedDateInput } from './ReceivedDateInput';
 
 const InboundInfoPanel = ({
   shipment,
@@ -133,27 +134,31 @@ export const Toolbar = () => {
               </Box>
             </Grid>
             <Grid>
-              <InputWithLabelRow
-                label={t('label.delivered-date')}
-                Input={
-                  <DateTimePickerInput
-                    value={DateUtils.getDateOrNull(deliveredDatetime)}
-                    onChange={date =>
-                      update({
-                        deliveredDatetime:
-                          Formatter.naiveDate(date) ?? undefined,
-                      })
-                    }
-                    // Max now or received date, whichever is earlier
-                    maxDate={
-                      shipment?.receivedDatetime
-                        ? (DateUtils.getDateOrNull(shipment.receivedDatetime) ??
-                          new Date())
-                        : new Date()
-                    }
-                  />
-                }
-              />
+              <Box display="flex" flexDirection="column" gap={1}>
+                <InputWithLabelRow
+                  label={t('label.delivered-date')}
+                  Input={
+                    <DateTimePickerInput
+                      value={DateUtils.getDateOrNull(deliveredDatetime)}
+                      onChange={date =>
+                        update({
+                          deliveredDatetime:
+                            Formatter.naiveDate(date) ?? undefined,
+                        })
+                      }
+                      // Max now or received date, whichever is earlier
+                      maxDate={
+                        shipment?.receivedDatetime
+                          ? (DateUtils.getDateOrNull(
+                              shipment.receivedDatetime
+                            ) ?? new Date())
+                          : new Date()
+                      }
+                    />
+                  }
+                />
+                <ReceivedDateInput />
+              </Box>
             </Grid>
           </>
         )}

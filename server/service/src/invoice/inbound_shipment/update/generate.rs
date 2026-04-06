@@ -2,6 +2,7 @@ use chrono::{NaiveDateTime, Utc};
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
     LocationMovementRow, Name, PurchaseOrderLineRowRepository, RepositoryError,
 };
@@ -36,6 +37,7 @@ pub(crate) struct GenerateResult {
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) empty_lines_to_trim: Option<Vec<InvoiceLineRow>>,
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
+    pub(crate) backdate_location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_currency_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_cost_price_for_lines: Option<Vec<InvoiceLineRow>>,
@@ -100,6 +102,49 @@ pub(crate) fn generate(
     if let Some(delivered_datetime) = patch.delivered_datetime {
         update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
     }
+
+    // Already validated in validate
+    let backdate_location_movements = if let Some(received_datetime) = patch.received_datetime {
+        let new_received = NaiveDateTime::from(received_datetime);
+        update_invoice.received_datetime = Some(new_received);
+
+        // Update location movements for stock lines from this invoice to reflect the new date
+        let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(update_invoice.id.clone()))
+                .r#type(InvoiceLineType::StockIn.equal_to()),
+        )?;
+
+        let stock_line_ids: Vec<String> = invoice_lines
+            .iter()
+            .filter_map(|l| l.invoice_line_row.stock_line_id.clone())
+            .collect();
+
+        let mut movements_to_update = Vec::new();
+        for stock_line_id in stock_line_ids {
+            let movements = LocationMovementRepository::new(connection).query(
+                Default::default(),
+                Some(
+                    LocationMovementFilter::new()
+                        .stock_line_id(EqualFilter::equal_to(stock_line_id)),
+                ),
+                None,
+            )?;
+            for movement in movements {
+                let mut row = movement.location_movement_row;
+                row.enter_datetime = Some(new_received);
+                movements_to_update.push(row);
+            }
+        }
+
+        if movements_to_update.is_empty() {
+            None
+        } else {
+            Some(movements_to_update)
+        }
+    } else {
+        None
+    };
 
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
@@ -205,6 +250,7 @@ pub(crate) fn generate(
         empty_lines_to_trim: empty_lines_to_trim(connection, &existing_invoice, &patch.status)?,
         update_invoice,
         location_movements,
+        backdate_location_movements,
         update_tax_for_lines,
         update_currency_for_lines,
         update_cost_price_for_lines,

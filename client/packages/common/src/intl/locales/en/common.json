@@ -1989,6 +1989,7 @@
   "messages.confirm-delete-locations_one": "This will permanently remove 1 location",
   "messages.confirm-delete-locations_other": "This will permanently remove {{count}} locations",
   "messages.confirm-delete-prescription": "This will permanently remove Prescription #{{number}}",
+  "messages.confirm-backdate-received-date": "Moving the received date earlier cannot be undone. The date cannot be moved forward again. Are you sure you want to continue?",
   "messages.confirm-delete-prescription-lines": "This will permanently remove all lines from this prescription",
   "messages.confirm-delete-prescriptions_few": "This will permanently remove {{count}} prescriptions",
   "messages.confirm-delete-prescriptions_many": "This will permanently remove {{count}} prescriptions",
@@ -2350,6 +2351,7 @@
   "messages.stock-location-invalid": "This stock line is in an invalid location. Please select another location.",
   "messages.stock-location-invalid-many": "Some stock lines are in invalid locations. Please choose valid locations for them.",
   "messages.stock-on-hold": "Some stock lines are on hold and cannot be allocated.",
+  "messages.stocktake-after-backdate-warning": "Stocktake(s) have been recorded after the specified transaction date. Adding a new inbound shipment may result in stocktake counts that don't align with the ledger. Are you sure you want to continue with this date?",
   "messages.stopping-scanner": "Stopping scanner...",
   "messages.success-printing-label": "Label printed successfully.",
   "messages.supplier-return-created-shipped": "Supplier Return successfully created as Shipped",
@@ -2793,5 +2795,9 @@
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "label.backdating": "Backdating"
+  "label.backdating": "Backdating",
+  "messages.received-date-exceeds-backdating-limit": "The received date is already beyond the maximum backdating limit of {{days}} days",
+  "messages.received-date-backdating-not-enabled": "Date editing on shipments is not enabled. This can be changed in global preferences.",
+  "messages.received-date-not-received": "The received date can only be changed once the shipment has been received",
+  "messages.received-date-at-delivered-date": "The received date cannot be moved before the delivered date"
 }
