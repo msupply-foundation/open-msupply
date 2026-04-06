@@ -217,20 +217,29 @@ function detailTabSuite(
       page = await context.newPage();
       tracker = setupErrorTracking(page);
 
-      // Navigate to the list and intercept the app's GraphQL response
-      const responsePromise = page.waitForResponse(r =>
-        r.url().includes('/graphql')
-      );
+      // Collect GraphQL responses as they arrive
+      const graphqlResponses: Promise<any>[] = [];
+      page.on('response', r => {
+        if (r.url().includes('/graphql')) {
+          graphqlResponses.push(r.json().catch(() => null));
+        }
+      });
+
       await page
         .goto(listUrl, { waitUntil: 'networkidle', timeout: 15000 })
         .catch(() => {});
-      const response = await responsePromise;
-      const data = await response.json();
 
-      const id = findId(data);
-      if (id) {
-        detailUrl = `${detailPath}/${id}`;
-      } else {
+      // Check all GraphQL responses for a matching row
+      const allData = await Promise.all(graphqlResponses);
+      for (const data of allData) {
+        const id = findId(data);
+        if (id) {
+          detailUrl = `${detailPath}/${id}`;
+          break;
+        }
+      }
+
+      if (!detailUrl) {
         console.log(`  No matching row found in ${listUrl}, skipping ${name}`);
       }
     });
