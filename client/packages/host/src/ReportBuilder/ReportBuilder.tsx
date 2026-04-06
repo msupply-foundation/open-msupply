@@ -173,15 +173,15 @@ const parseReportDefinition = (
     if (!def.entries) return result;
 
     // Use the index to look up template and header entries
-    if (def.index.template && def.entries[def.index.template]) {
+    if (def.index.template) {
       const tpl = def.entries[def.index.template];
-      if (tpl.type === ReportEntryType.TeraTemplate) {
+      if (tpl?.type === ReportEntryType.TeraTemplate) {
         result.template = (tpl.data as any)?.template ?? '';
       }
     }
-    if (def.index.header && def.entries[def.index.header]) {
+    if (def.index.header) {
       const hdr = def.entries[def.index.header];
-      if (hdr.type === ReportEntryType.TeraTemplate) {
+      if (hdr?.type === ReportEntryType.TeraTemplate) {
         result.header = (hdr.data as any)?.template ?? '';
       }
     }
@@ -310,7 +310,6 @@ const RecordPicker = ({
   selectedRecord,
   setSelectedRecord,
   error,
-  hasContent,
 }: {
   detectedContext: DetectedContext;
   options: RecordOption[];
@@ -443,7 +442,7 @@ export const ReportBuilder: React.FC = () => {
   );
 
   useEffect(() => {
-    if (!selectedRecord && options.length > 0) setSelectedRecord(options[0]);
+    if (!selectedRecord && options.length > 0) setSelectedRecord(options[0] ?? null);
     else if (!options.length) setSelectedRecord(null);
   }, [options, selectedRecord]);
 
