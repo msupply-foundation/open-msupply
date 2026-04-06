@@ -100,6 +100,13 @@ async function clickFirstRowAndCheck(
     return false;
   }
 
+  // Dismiss any open MUI dialog that may intercept clicks
+  const dialog = page.locator('.MuiDialog-root');
+  if (await dialog.isVisible({ timeout: 500 }).catch(() => false)) {
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+  }
+
   await row.click();
   await page.waitForLoadState('networkidle').catch(() => {});
   await page.waitForTimeout(RENDER_SETTLE_MS);
