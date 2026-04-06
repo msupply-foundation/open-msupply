@@ -204,6 +204,7 @@ export const StockListView = () => {
         description: t('description.total-cost'),
         accessorFn: row => row.totalNumberOfPacks * row.costPricePerPack,
         columnType: ColumnType.Currency,
+        aggregationFn: 'sum',
         enableSorting: false,
         size: 100,
         defaultHideOnMobile: true,
@@ -240,6 +241,7 @@ export const StockListView = () => {
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
     enableRowSelection: false,
+    grouping: { field: 'item.code' },
     noDataElement: (
       <NothingHere
         body={t('error.no-stock')}
