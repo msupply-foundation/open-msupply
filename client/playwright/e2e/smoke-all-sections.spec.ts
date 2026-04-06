@@ -8,6 +8,7 @@
 import { test, expect, Page, BrowserContext } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
+import { InboundShipmentDetailTabs } from '../../packages/invoices/src/InboundShipment/DetailView/types';
 
 const screenshotDir = path.join(__dirname, '../screenshots/smoke');
 
@@ -117,7 +118,9 @@ async function clickFirstRowAndCheck(
   });
 
   reportErrors(tracker, `${label} detail`);
-  expect.soft(tracker.hasInfiniteLoop, `Infinite loop in ${label} detail`).toBe(false);
+  expect
+    .soft(tracker.hasInfiniteLoop, `Infinite loop in ${label} detail`)
+    .toBe(false);
   return true;
 }
 
@@ -145,10 +148,12 @@ async function clickTabsAndCheck(
     });
 
     reportErrors(tracker, `${label} > ${tabName}`);
-    expect.soft(
-      tracker.hasInfiniteLoop,
-      `Infinite loop in ${label} tab "${tabName}"`
-    ).toBe(false);
+    expect
+      .soft(
+        tracker.hasInfiniteLoop,
+        `Infinite loop in ${label} tab "${tabName}"`
+      )
+      .toBe(false);
   }
 }
 
@@ -191,24 +196,126 @@ function sectionSuite(
   });
 }
 
+// Helper to test specific tabs on a detail view found via the list's API response
+function detailTabSuite(
+  name: string,
+  listUrl: string,
+  detailPath: string,
+  findId: (data: any) => string | undefined,
+  tabs: { label: string; tab: string }[]
+) {
+  test.describe(name, () => {
+    test.describe.configure({ mode: 'serial' });
+
+    let page: Page;
+    let context: BrowserContext;
+    let tracker: ErrorTracker;
+    let detailUrl: string;
+
+    test.beforeAll(async ({ browser }) => {
+      context = await browser.newContext();
+      page = await context.newPage();
+      tracker = setupErrorTracking(page);
+
+      // Navigate to the list and intercept the app's GraphQL response
+      const responsePromise = page.waitForResponse(r =>
+        r.url().includes('/graphql')
+      );
+      await page
+        .goto(listUrl, { waitUntil: 'networkidle', timeout: 15000 })
+        .catch(() => {});
+      const response = await responsePromise;
+      const data = await response.json();
+
+      const id = findId(data);
+      if (id) {
+        detailUrl = `${detailPath}/${id}`;
+      } else {
+        console.log(`  No matching row found in ${listUrl}, skipping ${name}`);
+      }
+    });
+
+    test.afterAll(async () => {
+      await context?.close();
+    });
+
+    for (const { label, tab } of tabs) {
+      test(label, async () => {
+        test.skip(!detailUrl, `No matching row found in ${listUrl}`);
+        await navigateAndCheck(
+          page,
+          tracker,
+          `${detailUrl}?tab=${tab}`,
+          `${name}-${tab}`
+        );
+      });
+    }
+  });
+}
+
 // ─── Sections ─────────────────────────────────────────────────────────────────
 
 sectionSuite('Dashboard', [{ label: 'dashboard', url: '/dashboard' }]);
 
 sectionSuite('Distribution', [
-  { label: 'outbound-shipment', url: '/distribution/outbound-shipment', hasDetail: true },
-  { label: 'customer-return', url: '/distribution/customer-return', hasDetail: true },
+  {
+    label: 'outbound-shipment',
+    url: '/distribution/outbound-shipment',
+    hasDetail: true,
+  },
+  {
+    label: 'customer-return',
+    url: '/distribution/customer-return',
+    hasDetail: true,
+  },
   { label: 'customers', url: '/distribution/customers' },
 ]);
 
 sectionSuite('Replenishment', [
-  { label: 'inbound-shipment', url: '/replenishment/inbound-shipment', hasDetail: true },
-  { label: 'purchase-order', url: '/replenishment/purchase-order', hasDetail: true },
-  { label: 'internal-order', url: '/replenishment/internal-order', hasDetail: true },
-  { label: 'supplier-return', url: '/replenishment/supplier-return', hasDetail: true },
+  { label: 'inbound-shipment', url: '/replenishment/inbound-shipment' },
+  {
+    label: 'purchase-order',
+    url: '/replenishment/purchase-order',
+    hasDetail: true,
+  },
+  {
+    label: 'internal-order',
+    url: '/replenishment/internal-order',
+    hasDetail: true,
+  },
+  {
+    label: 'supplier-return',
+    url: '/replenishment/supplier-return',
+    hasDetail: true,
+  },
   { label: 'suppliers', url: '/replenishment/suppliers' },
-  { label: 'r-and-r-forms', url: '/replenishment/r-and-r-forms', hasDetail: true },
+  {
+    label: 'r-and-r-forms',
+    url: '/replenishment/r-and-r-forms',
+    hasDetail: true,
+  },
 ]);
+
+const { Details, Documents, Log, Financial, Currency, Delivery } =
+  InboundShipmentDetailTabs;
+
+detailTabSuite(
+  'Inbound Shipment Tabs',
+  '/replenishment/inbound-shipment',
+  '/replenishment/inbound-shipment-external',
+  data => {
+    const nodes = data.data?.invoices?.nodes ?? [];
+    return nodes.find((n: any) => n.purchaseOrder)?.id;
+  },
+  [
+    { label: 'shared: details', tab: Details },
+    { label: 'shared: documents', tab: Documents },
+    { label: 'shared: log', tab: Log },
+    { label: 'external: financial', tab: Financial },
+    { label: 'external: currency', tab: Currency },
+    { label: 'external: delivery', tab: Delivery },
+  ]
+);
 
 sectionSuite('Inventory', [
   { label: 'stock', url: '/inventory/stock', hasDetail: true },

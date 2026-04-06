@@ -7,3 +7,4 @@ export {
   InboundFragment,
 } from './InboundShipment/api';
 export { getStatusTranslator as getInvoiceStatusTranslator } from './utils';
+export { InboundShipmentDetailTabs } from './InboundShipment/DetailView';
