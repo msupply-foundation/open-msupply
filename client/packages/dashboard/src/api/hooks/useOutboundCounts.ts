@@ -16,12 +16,12 @@ export const useOutboundCounts = () => {
     }
   );
 
-  if (!data?.invoiceCounts) {
+  if (!data?.outboundShipmentCounts) {
     return { stats: undefined, ...rest };
   }
 
   const stats = {
-    notShipped: data.invoiceCounts.outbound.notShipped,
+    notShipped: data.outboundShipmentCounts.notShipped,
   };
 
   return { stats, ...rest };

@@ -81,6 +81,8 @@ pub fn generate(
         default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
@@ -118,6 +120,7 @@ pub fn generate_invoice_lines(
             batch: None,
             expiry_date: None,
             manufacture_date: None,
+            purchase_order_line_id: None,
             sell_price_per_pack: 0.0,
             cost_price_per_pack: 0.0,
             stock_line_id: None,

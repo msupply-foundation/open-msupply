@@ -19,10 +19,12 @@ export const CardListField = ({
     sx={span ? { gridColumn: `span ${span}` } : undefined}
   >
     <Typography
-      color="text.secondary"
-      fontSize="0.75em"
+      color="text.primary"
+      variant="body2"
+      fontWeight={500}
       lineHeight={1.4}
       whiteSpace="nowrap"
+      mb={0.5}
     >
       {label}
     </Typography>

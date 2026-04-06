@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   useAuthContext,
   useTranslation,
@@ -17,14 +17,20 @@ import {
   DateTimePickerInput,
   TextInputCell,
   NumberInputCell,
+  Currencies,
   CurrencyInputCell,
   CardList,
+  Box,
+  Typography,
   CopyIcon,
   StockIcon,
-  InvoiceIcon,
-  SlidersIcon,
-  EditIcon,
+  StatusChip,
+  InvoiceLineStatusType,
+  InvoiceNodeStatus,
+  InfoIcon,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
+import { Select, MenuItem } from '@mui/material';
 import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,
@@ -32,7 +38,6 @@ import {
   DonorSearchInput,
   getVolumePerPackFromVariant,
   ItemRowFragment,
-  ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
@@ -40,13 +45,15 @@ import {
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
+import { isInboundPlaceholderRow } from '../../../../utils';
+import { useInvoiceLineStatusMap } from '../../..';
 import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
 
 interface CardProps {
   lines: DraftInboundLine[];
   updateDraftLine: (patch: PatchDraftLineInput) => void;
   isDisabled?: boolean;
-  currency?: CurrencyRowFragment | null;
+  foreignCurrency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
@@ -58,9 +65,11 @@ interface CardProps {
 interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
+  isReceived?: boolean;
   lastCardRef?: React.RefObject<HTMLDivElement>;
-  simplified?: boolean;
   actions?: React.ReactNode;
+  /** The specific line ID to scroll into view when the modal opens */
+  scrollToLineId?: string | null;
 }
 
 export const InboundLineEditCards = ({
@@ -69,7 +78,8 @@ export const InboundLineEditCards = ({
   duplicateDraftLine,
   removeDraftLine,
   isDisabled = false,
-  currency,
+  isReceived = false,
+  foreignCurrency,
   isExternalSupplier,
   hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
@@ -77,23 +87,31 @@ export const InboundLineEditCards = ({
   setPackRoundingMessage,
   restrictedToLocationTypeId,
   lastCardRef,
-  simplified,
   actions,
+  scrollToLineId,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
+  const simplified = useSimplifiedTabletUI();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   // Ref avoids format in useMemo deps (unstable reference)
   const formatRef = useRef(format);
   formatRef.current = format;
   const { store } = useAuthContext();
-  const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
-    usePreferences();
+  const {
+    manageVaccinesInDoses,
+    allowTrackingOfStockByDonor,
+    externalInboundShipmentLinesMustBeAuthorised,
+  } = usePreferences();
 
   const {
     query: { data: inboundData },
+    hasAuthorisePermission,
+    isExternal,
   } = useInboundShipment();
   const purchaseOrderId = inboundData?.purchaseOrder?.id;
+  const isManualShipment =
+    !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
   const { query: poQuery } = usePurchaseOrder(purchaseOrderId);
 
   // Calculate outstanding packs for the current item from PO lines
@@ -115,172 +133,236 @@ export const InboundLineEditCards = ({
     return totalOutstandingPacks;
   }, [purchaseOrderId, item?.id, poQuery.data]);
 
+  const showLineStatus =
+    lines.some(line => line.status != null) ||
+    (isExternal && !!externalInboundShipmentLinesMustBeAuthorised);
+
+  const statusMap = useInvoiceLineStatusMap();
+  // Ref avoids statusMap in useMemo deps (unstable reference due to useAppTheme)
+  const statusMapRef = useRef(statusMap);
+  statusMapRef.current = statusMap;
+
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
   const pluralisedUnitName = getPlural(unitName, 2);
 
+  // Track which line to auto-focus packs received on:
+  // - initial mount with scrollToLineId → that specific line
+  // - initial mount / item change → first line
+  // - line added / duplicated → the new line
+  const prevLineIdsRef = useRef<Set<string> | null>(null);
+  const autoFocusLineIdRef = useRef<string | null>(null);
+  const currentLineIds = new Set(lines.map(l => l.id));
+  if (prevLineIdsRef.current === null) {
+    // Initial mount: focus the clicked line if provided, otherwise first line
+    autoFocusLineIdRef.current =
+      (scrollToLineId && currentLineIds.has(scrollToLineId)
+        ? scrollToLineId
+        : lines[0]?.id) ?? null;
+  } else {
+    for (const id of currentLineIds) {
+      if (!prevLineIdsRef.current.has(id)) {
+        autoFocusLineIdRef.current = id;
+      }
+    }
+  }
+  prevLineIdsRef.current = currentLineIds;
+
   const columns = useMemo(() => {
     const cols: ColumnDef<DraftInboundLine>[] = [
-      // --- General columns ---
+      // --- Stock line details fields ---
       {
-        accessorKey: 'batch',
-        header: t('label.batch'),
+        accessorKey: 'numberOfPacks',
+        header: t('label.packs-received'),
         size: 100,
-        columnGroup: 'general',
-        cardSummary: row => `${t('label.batch')} ${row.batch || ''}`,
-        Cell: ({ row, cell }) => (
-          <TextInputCell
-            cell={cell}
-            updateFn={(batch: string) =>
-              updateDraftLine({ id: row.original.id, batch })
-            }
-          />
-        ),
-      },
-      {
-        accessorKey: 'expiryDate',
-        header: t('label.expiry-date'),
-        size: 150,
-        columnType: ColumnType.Date,
-        columnGroup: 'general',
-        accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
-        Cell: ({ cell, row }) => {
-          const value = cell.getValue<Date | null>();
+        columnGroup: 'stockLineDetails',
+        cardSummary: row => {
+          const units = row.numberOfPacks * row.packSize;
+          return `${t('label.received')} ${formatRef.current(row.numberOfPacks)} ${getPlural(t('label.pack'), row.numberOfPacks)} (${formatRef.current(units)} ${pluralisedUnitName.toLowerCase()})`;
+        },
+        cardSummaryOrder: 1,
+        Cell: ({ row, cell }) => {
+          const [hasBlurred, setHasBlurred] = useState(false);
+          const line = row.original;
+          const shippedPacks = line.shippedNumberOfPacks;
+          const showWarning =
+            hasBlurred &&
+            shippedPacks != null &&
+            line.numberOfPacks !== shippedPacks;
+          const isPlaceholder =
+            !line.linkedInvoiceId && isInboundPlaceholderRow(line);
           return (
-            <ExpiryDateInput
-              value={value}
-              disabled={isDisabled}
-              onChange={date =>
-                updateDraftLine({
-                  id: row.original.id,
-                  expiryDate: Formatter.naiveDate(date),
-                })
-              }
-            />
+            <Box onBlur={() => setHasBlurred(true)}>
+              <NumberInputCell
+                cell={cell}
+                autoFocus={row.original.id === autoFocusLineIdRef.current}
+                updateFn={(value: number) => {
+                  const { packSize } = row.original;
+                  if (packSize !== undefined) {
+                    const packToUnits = packSize * value;
+                    setPackRoundingMessage?.('');
+                    updateDraftLine({
+                      receivedNumberOfUnits: packToUnits,
+                      id: row.original.id,
+                      numberOfPacks: value,
+                    });
+                  }
+                }}
+                disabled={isDisabled}
+                min={0}
+                error={isPlaceholder}
+                helperText={
+                  isPlaceholder
+                    ? t('error.field-must-be-specified', {
+                        field: t('label.packs-received'),
+                      })
+                    : undefined
+                }
+              />
+              {showWarning && (
+                <Typography
+                  variant="caption"
+                  color="warning.main"
+                  sx={{ mt: 0.5, display: 'block' }}
+                >
+                  {`${t('label.shipped-number-of-packs')}: ${shippedPacks}`}
+                </Typography>
+              )}
+              {!!purchaseOrderId && poOutstandingPacks != null && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 0.5, display: 'block' }}
+                >
+                  {`${t('label.outstanding-packs')}: ${poOutstandingPacks}`}
+                </Typography>
+              )}
+            </Box>
           );
         },
       },
       {
-        id: 'manufactureDate',
-        header: t('label.manufacture-date'),
-        size: 150,
-        columnType: ColumnType.Date,
-        columnGroup: 'general',
-        accessorFn: row => DateUtils.getDateOrNull(row.manufactureDate),
-        Cell: ({ cell, row }) => {
-          const value = cell.getValue<Date | null>();
+        accessorKey: 'packSize',
+        header: t('label.received-pack-size'),
+        size: 120,
+        columnGroup: 'stockLineDetails',
+        Cell: ({ row, cell }) => {
+          const [hasBlurred, setHasBlurred] = useState(false);
+          const line = row.original;
+          const shippedPackSize = line.shippedPackSize;
+          const showWarning =
+            hasBlurred &&
+            shippedPackSize != null &&
+            line.packSize !== shippedPackSize;
           return (
-            <DateTimePickerInput
-              value={value}
-              disabled={isDisabled}
-              onChange={date =>
-                updateDraftLine({
-                  id: row.original.id,
-                  manufactureDate: date ? Formatter.naiveDate(date) : null,
-                })
-              }
-            />
+            <Box onBlur={() => setHasBlurred(true)}>
+              <NumberInputCell
+                cell={cell}
+                updateFn={(value: number) => {
+                  const item = row.original.item;
+                  const shouldClearSellPrice =
+                    item?.defaultPackSize !== line.packSize &&
+                    item?.itemStoreProperties?.defaultSellPricePerPack ===
+                      line.sellPricePerPack;
+
+                  updateDraftLine({
+                    volumePerPack:
+                      getVolumePerPackFromVariant({
+                        itemVariant: line.itemVariant,
+                        packSize: value,
+                      }) ?? 0,
+                    sellPricePerPack: shouldClearSellPrice
+                      ? 0
+                      : line.sellPricePerPack,
+                    packSize: value,
+                    id: row.original.id,
+                  });
+                }}
+                disabled={isDisabled}
+                min={1}
+              />
+              {showWarning && (
+                <Typography
+                  variant="caption"
+                  color="warning.main"
+                  sx={{ mt: 0.5, display: 'block' }}
+                >
+                  {`${t('label.shipped-pack-size')}: ${shippedPackSize}`}
+                </Typography>
+              )}
+            </Box>
           );
         },
       },
-      // --- Quantities columns ---
       {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        columnGroup: 'quantities',
-        Cell: ({
-          row: {
-            original: { id, packSize, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={isDisabled}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              updateDraftLine({
-                id,
-                itemVariantId: itemVariant?.id,
-                itemVariant,
-                manufacturer: itemVariant?.manufacturer ?? null,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: hasItemVariantsEnabled,
-      },
-      {
-        id: 'itemDoses',
-        header: t('label.doses-per-unit'),
-        columnType: ColumnType.Number,
-        defaultHideOnMobile: true,
-        columnGroup: 'quantities',
-        includeColumn: displayInDoses,
-        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
-      },
-      {
-        id: 'vvmStatus',
-        header: t('label.vvm-status'),
-        size: 150,
-        columnGroup: 'quantities',
-        accessorFn: row => row.vvmStatus || '',
-        Cell: ({
-          row: {
-            original: { id, vvmStatus, stockLine },
-          },
-        }) => (
-          <VVMStatusSearchInput
-            disabled={isDisabled}
-            selected={vvmStatus ?? null}
-            onChange={vvmStatus => updateDraftLine({ id, vvmStatus })}
-            useDefault={!stockLine}
-          />
-        ),
-        includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
-      },
-      {
-        id: 'outstandingPacks',
-        header: t('label.outstanding-packs'),
-        size: 120,
-        columnGroup: 'quantities',
-        includeColumn: poOutstandingPacks != null,
-        accessorFn: () => poOutstandingPacks ?? 0,
-        Cell: ({ cell }) => (
-          <NumberInputCell cell={cell} updateFn={() => {}} disabled />
-        ),
-        defaultHideOnMobile: true,
-      },
-      {
-        accessorKey: 'shippedPackSize',
-        header: t('label.shipped-pack-size'),
-        size: 120,
-        columnGroup: 'quantities',
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              updateDraftLine({ shippedPackSize: value, id: row.original.id });
-            }}
-            disabled={isDisabled}
-            min={1}
-          />
-        ),
-        defaultHideOnMobile: true,
+        accessorKey: 'status',
+        header: t('label.auth-status'),
+        columnGroup: 'stockLineDetails',
+        includeColumn: showLineStatus,
+        Cell: ({ row }) => {
+          const status = row.original.status;
+          const isStatusDisabled =
+            isDisabled ||
+            inboundData?.status === InvoiceNodeStatus.Received ||
+            inboundData?.status === InvoiceNodeStatus.Verified;
+
+          if (isStatusDisabled) {
+            const entry = status ? statusMapRef.current[status] : undefined;
+            return entry ? (
+              <StatusChip label={entry.label} colour={entry.colour} />
+            ) : null;
+          }
+
+          return (
+            <Select
+              value={status ?? ''}
+              variant="standard"
+              size="small"
+              fullWidth
+              sx={{
+                backgroundColor: theme => theme.palette.background.input.main,
+                borderRadius: 2,
+                px: 0.5,
+                '& .MuiSelect-select': {
+                  py: 0.5,
+                },
+              }}
+              onChange={e => {
+                updateDraftLine({
+                  id: row.original.id,
+                  status: e.target.value as InvoiceLineStatusType,
+                });
+              }}
+              renderValue={() => {
+                const entry = status ? statusMapRef.current[status] : undefined;
+                return entry ? (
+                  <StatusChip label={entry.label} colour={entry.colour} />
+                ) : null;
+              }}
+            >
+              {Object.entries(statusMapRef.current)
+                .filter(
+                  ([key]) =>
+                    hasAuthorisePermission ||
+                    key === InvoiceLineStatusType.Pending
+                )
+                .map(([key, { label, colour }]) => (
+                  <MenuItem key={key} value={key}>
+                    <StatusChip label={label} colour={colour} />
+                  </MenuItem>
+                ))}
+            </Select>
+          );
+        },
       },
       {
         accessorKey: 'shippedNumberOfPacks',
         header: t('label.shipped-number-of-packs'),
         size: 100,
-        columnGroup: 'quantities',
+        columnGroup: 'stockLineDetails',
+        includeColumn: isManualShipment,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
@@ -296,33 +378,16 @@ export const InboundLineEditCards = ({
         ),
       },
       {
-        accessorKey: 'packSize',
-        header: t('label.received-pack-size'),
+        accessorKey: 'shippedPackSize',
+        header: t('label.shipped-pack-size'),
         size: 120,
-        columnGroup: 'quantities',
+        columnGroup: 'stockLineDetails',
+        includeColumn: isManualShipment,
         Cell: ({ row, cell }) => (
           <NumberInputCell
             cell={cell}
             updateFn={(value: number) => {
-              const line = row.original;
-              const item = row.original.item;
-              const shouldClearSellPrice =
-                item?.defaultPackSize !== line.packSize &&
-                item?.itemStoreProperties?.defaultSellPricePerPack ===
-                  line.sellPricePerPack;
-
-              updateDraftLine({
-                volumePerPack:
-                  getVolumePerPackFromVariant({
-                    itemVariant: line.itemVariant,
-                    packSize: value,
-                  }) ?? 0,
-                sellPricePerPack: shouldClearSellPrice
-                  ? 0
-                  : line.sellPricePerPack,
-                packSize: value,
-                id: row.original.id,
-              });
+              updateDraftLine({ shippedPackSize: value, id: row.original.id });
             }}
             disabled={isDisabled}
             min={1}
@@ -331,39 +396,13 @@ export const InboundLineEditCards = ({
         defaultHideOnMobile: true,
       },
       {
-        accessorKey: 'numberOfPacks',
-        header: t('label.packs-received'),
-        size: 100,
-        columnGroup: 'quantities',
-        cardSummary: row => `${row.numberOfPacks} ${t('label.packs-received')}`,
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              const { packSize } = row.original;
-              if (packSize !== undefined) {
-                const packToUnits = packSize * value;
-                setPackRoundingMessage?.('');
-                updateDraftLine({
-                  receivedNumberOfUnits: packToUnits,
-                  id: row.original.id,
-                  numberOfPacks: value,
-                });
-              }
-            }}
-            disabled={isDisabled}
-            min={0}
-          />
-        ),
-      },
-      {
         accessorKey: 'receivedNumberOfUnits',
         header: t('label.units-received', {
           unit: pluralisedUnitName,
         }),
         size: 120,
         defaultHideOnMobile: true,
-        columnGroup: 'quantities',
+        columnGroup: 'stockLineDetails',
         accessorFn: row => {
           return row.numberOfPacks * row.packSize;
         },
@@ -406,39 +445,24 @@ export const InboundLineEditCards = ({
         accessorKey: 'doseQuantity',
         header: t('label.doses-received'),
         size: 100,
-        columnGroup: 'quantities',
+        columnGroup: 'stockLineDetails',
         includeColumn: displayInDoses,
         accessorFn: row => {
           const total = row.numberOfPacks * row.packSize;
           return formatRef.current(total * row.item.doses);
         },
       },
-      {
-        accessorKey: 'volumePerPack',
-        header: t('label.volume-per-pack'),
-        size: 140,
-        columnGroup: 'quantities',
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              updateDraftLine({ volumePerPack: value, id: row.original.id });
-            }}
-            disabled={isDisabled}
-            decimalLimit={10}
-          />
-        ),
-      },
-      // --- Pricing columns ---
+      // --- More info fields ---
       {
         accessorKey: 'costPricePerPack',
         header: t('label.pack-cost-price'),
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ cell, row }) => (
           <CurrencyInputCell
             cell={cell}
-            disabled={isDisabled || !isExternalSupplier || !!purchaseOrderId}
+            disabled={isDisabled || !isManualShipment}
+            decimalsLimit={5}
             updateFn={value =>
               updateDraftLine({ id: row.original.id, costPricePerPack: value })
             }
@@ -448,29 +472,36 @@ export const InboundLineEditCards = ({
       {
         id: 'foreignCurrencyCostPricePerPack',
         header: t('label.fc-cost-price', {
-          currency: currency?.code,
+          currency: foreignCurrency?.code,
         }),
         size: 100,
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         accessorFn: row => {
-          if (currency) {
-            return row.costPricePerPack / currency.rate;
+          if (foreignCurrency) {
+            return row.costPricePerPack / foreignCurrency.rate;
           }
           return undefined;
         },
-        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
+        Cell: ({ cell }) => (
+          <CurrencyInputCell
+            cell={cell}
+            disabled
+            currencyCode={foreignCurrency?.code as Currencies}
+          />
+        ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
       {
         accessorKey: 'sellPricePerPack',
         header: t('label.pack-sell-price'),
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ cell, row }) => (
           <CurrencyInputCell
             cell={cell}
             disabled={isDisabled}
+            decimalsLimit={5}
             updateFn={value =>
               updateDraftLine({ id: row.original.id, sellPricePerPack: value })
             }
@@ -478,25 +509,10 @@ export const InboundLineEditCards = ({
         ),
       },
       {
-        id: 'foreignCurrencySellPricePerPack',
-        header: t('label.fc-sell-price'),
-        size: 100,
-        columnGroup: 'pricing',
-        accessorFn: row => {
-          if (currency) {
-            return row.sellPricePerPack / currency.rate;
-          }
-          return undefined;
-        },
-        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
-        includeColumn:
-          isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
-      },
-      {
         accessorKey: 'lineTotal',
         header: t('label.line-total'),
         size: 100,
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         accessorFn: row => row.costPricePerPack * row.numberOfPacks,
         Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
@@ -505,21 +521,68 @@ export const InboundLineEditCards = ({
         id: 'foreignCurrencyLineTotal',
         header: t('label.fc-line-total'),
         size: 100,
-        columnGroup: 'pricing',
+        columnGroup: 'moreInfo',
         accessorFn: row => {
-          if (currency) {
-            return (row.costPricePerPack * row.numberOfPacks) / currency.rate;
+          if (foreignCurrency) {
+            return (
+              (row.costPricePerPack * row.numberOfPacks) / foreignCurrency.rate
+            );
           }
           return undefined;
         },
-        Cell: ({ cell }) => <CurrencyInputCell cell={cell} disabled />,
+        Cell: ({ cell }) => (
+          <CurrencyInputCell
+            cell={cell}
+            disabled
+            currencyCode={foreignCurrency?.code as Currencies}
+          />
+        ),
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
       },
       {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 100,
+        columnGroup: 'stockLineDetails',
+        cardSummary: row => `${t('label.batch')} ${row.batch || ''}`,
+        cardSummaryOrder: 0,
+        Cell: ({ row, cell }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={(batch: string) =>
+              updateDraftLine({ id: row.original.id, batch })
+            }
+          />
+        ),
+      },
+      {
+        accessorKey: 'expiryDate',
+        header: t('label.expiry-date'),
+        size: 150,
+        columnType: ColumnType.Date,
+        columnGroup: 'stockLineDetails',
+        accessorFn: row => DateUtils.getDateOrNull(row.expiryDate),
+        Cell: ({ cell, row }) => {
+          const value = cell.getValue<Date | null>();
+          return (
+            <ExpiryDateInput
+              value={value}
+              disabled={isDisabled}
+              onChange={date =>
+                updateDraftLine({
+                  id: row.original.id,
+                  expiryDate: Formatter.naiveDate(date),
+                })
+              }
+            />
+          );
+        },
+      },
+      {
         id: 'location',
         header: t('label.location'),
-        columnGroup: 'general',
+        columnGroup: 'stockLineDetails',
         defaultHideOnMobile: true,
         Cell: ({ row: { original: row } }) => {
           return (
@@ -536,11 +599,79 @@ export const InboundLineEditCards = ({
           );
         },
       },
-      // --- Other columns ---
+      {
+        id: 'vvmStatus',
+        header: t('label.vvm-status'),
+        size: 150,
+        columnGroup: 'stockLineDetails',
+        accessorFn: row => row.vvmStatus || '',
+        Cell: ({
+          row: {
+            original: { id, vvmStatus, stockLine },
+          },
+        }) => (
+          <VVMStatusSearchInput
+            disabled={isDisabled}
+            selected={vvmStatus ?? null}
+            onChange={vvmStatus => updateDraftLine({ id, vvmStatus })}
+            useDefault={!stockLine}
+          />
+        ),
+        includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
+      },
+      {
+        accessorKey: 'note',
+        header: t('label.stocktake-comment'),
+        size: 200,
+        columnGroup: 'stockLineDetails',
+        cardSpan: 2,
+        Cell: ({ cell, row }) => (
+          <TextInputCell
+            cell={cell}
+            updateFn={value =>
+              updateDraftLine({ id: row.original.id, note: value })
+            }
+            disabled={isDisabled}
+          />
+        ),
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        columnGroup: 'moreInfo',
+        includeColumn: displayInDoses,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
+      },
+      {
+        id: 'manufactureDate',
+        header: t('label.manufacture-date'),
+        size: 150,
+        columnType: ColumnType.Date,
+        columnGroup: 'moreInfo',
+        accessorFn: row => DateUtils.getDateOrNull(row.manufactureDate),
+        Cell: ({ cell, row }) => {
+          const value = cell.getValue<Date | null>();
+          return (
+            <DateTimePickerInput
+              value={value}
+              disabled={isDisabled}
+              onChange={date =>
+                updateDraftLine({
+                  id: row.original.id,
+                  manufactureDate: date ? Formatter.naiveDate(date) : null,
+                })
+              }
+            />
+          );
+        },
+      },
       {
         id: 'donor',
         header: t('label.donor'),
-        columnGroup: 'other',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ row: { original: row } }) => (
           <DonorSearchInput
@@ -561,7 +692,7 @@ export const InboundLineEditCards = ({
       {
         id: 'campaignOrProgram',
         header: t('label.campaign'),
-        columnGroup: 'other',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ row }) => (
           <CampaignOrProgramCell
@@ -576,7 +707,7 @@ export const InboundLineEditCards = ({
       {
         id: 'manufacturer',
         header: t('label.manufacturer'),
-        columnGroup: 'other',
+        columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ row: { original: row } }) => (
           <ManufacturerSearchInput
@@ -596,23 +727,22 @@ export const InboundLineEditCards = ({
         ),
       },
       {
-        accessorKey: 'note',
-        header: t('label.stocktake-comment'),
-        size: 200,
-        columnGroup: 'other',
-        cardSpan: 2,
-        Cell: ({ cell, row }) => (
-          <TextInputCell
+        accessorKey: 'volumePerPack',
+        header: t('label.volume-per-pack'),
+        size: 140,
+        columnGroup: 'moreInfo',
+        Cell: ({ row, cell }) => (
+          <NumberInputCell
             cell={cell}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, note: value })
-            }
+            updateFn={(value: number) => {
+              updateDraftLine({ volumePerPack: value, id: row.original.id });
+            }}
             disabled={isDisabled}
+            decimalLimit={10}
           />
         ),
-        defaultHideOnMobile: true,
       },
-      // --- Action columns (no group) ---
+      // --- Actions (no group) ---
       {
         id: 'duplicate',
         header: '',
@@ -620,8 +750,9 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            disabled={isDisabled}
+            disabled={isDisabled || isReceived}
             label={t('label.duplicate-batch')}
+            showLabel={!simplified}
             onClick={() => {
               duplicateDraftLine(row.original.id);
               setTimeout(() => {
@@ -642,7 +773,10 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            label={t('button.delete')}
+            disabled={isDisabled || isReceived}
+            label={t('label.delete-batch')}
+            showLabel={!simplified}
+            color="error"
             onClick={() => removeDraftLine(row.original.id)}
             icon={<DeleteIcon fontSize="small" />}
           />
@@ -653,19 +787,23 @@ export const InboundLineEditCards = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     allowTrackingOfStockByDonor,
-    currency,
+    foreignCurrency,
     displayInDoses,
     duplicateDraftLine,
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
     isDisabled,
+    isReceived,
     isExternalSupplier,
+    isManualShipment,
     item?.isVaccine,
     pluralisedUnitName,
     poOutstandingPacks,
     removeDraftLine,
     restrictedToLocationTypeId,
     setPackRoundingMessage,
+    showLineStatus,
+    simplified,
     store?.preferences.issueInForeignCurrency,
     unitName,
     updateDraftLine,
@@ -681,20 +819,18 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-        general: <EditIcon />,
-        quantities: <StockIcon />,
-        pricing: <InvoiceIcon />,
-        other: <SlidersIcon />,
+        stockLineDetails: <StockIcon />,
+        moreInfo: <InfoIcon />,
       };
 
   return (
     <>
       <CardList
         table={table}
-        tableId="inbound-line-edit"
         lastItemRef={lastCardRef}
         groupIcons={groupIcons}
         actions={actions}
+        scrollToRowId={scrollToLineId}
       />
     </>
   );

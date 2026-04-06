@@ -72,6 +72,7 @@ export type PurchaseOrderFragment = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -87,6 +88,10 @@ export type PurchaseOrderFragment = {
         code: string;
         name: string;
         unitName?: string | null;
+        defaultPackSize: number;
+        isVaccine: boolean;
+        doses: number;
+        restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
@@ -106,6 +111,7 @@ export type PurchaseOrderFragment = {
         reference?: string | null;
         confirmedDatetime?: string | null;
         currencyId?: string | null;
+        foreignExchangeRate: number;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -152,6 +158,7 @@ export type PurchaseOrderLineFragment = {
   requestedDeliveryDate?: string | null;
   requestedNumberOfUnits: number;
   shippedNumberOfUnits: number;
+  receivedNumberOfUnits: number;
   adjustedNumberOfUnits?: number | null;
   pricePerPackAfterDiscount: number;
   pricePerPackBeforeDiscount: number;
@@ -167,6 +174,10 @@ export type PurchaseOrderLineFragment = {
     code: string;
     name: string;
     unitName?: string | null;
+    defaultPackSize: number;
+    isVaccine: boolean;
+    doses: number;
+    restrictedLocationTypeId?: string | null;
     stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
   };
   manufacturer?: {
@@ -186,6 +197,7 @@ export type PurchaseOrderLineFragment = {
     reference?: string | null;
     confirmedDatetime?: string | null;
     currencyId?: string | null;
+    foreignExchangeRate: number;
     supplier?: { __typename: 'NameNode'; code: string; name: string } | null;
     user?: { __typename: 'UserNode'; username: string } | null;
     currency?: {
@@ -289,6 +301,7 @@ export type PurchaseOrderByIdQuery = {
             requestedDeliveryDate?: string | null;
             requestedNumberOfUnits: number;
             shippedNumberOfUnits: number;
+            receivedNumberOfUnits: number;
             adjustedNumberOfUnits?: number | null;
             pricePerPackAfterDiscount: number;
             pricePerPackBeforeDiscount: number;
@@ -304,6 +317,10 @@ export type PurchaseOrderByIdQuery = {
               code: string;
               name: string;
               unitName?: string | null;
+              defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
+              restrictedLocationTypeId?: string | null;
               stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
             };
             manufacturer?: {
@@ -327,6 +344,7 @@ export type PurchaseOrderByIdQuery = {
               reference?: string | null;
               confirmedDatetime?: string | null;
               currencyId?: string | null;
+              foreignExchangeRate: number;
               supplier?: {
                 __typename: 'NameNode';
                 code: string;
@@ -402,15 +420,17 @@ export type UpdatePurchaseOrderMutation = {
     | { __typename: 'IdResponse'; id: string }
     | {
         __typename: 'UpdatePurchaseOrderError';
-        error: {
-          __typename: 'ItemsCannotBeOrdered';
-          description: string;
-          lines: Array<{
-            __typename: 'ItemCannotBeOrdered';
-            description: string;
-            line: { __typename: 'PurchaseOrderLineNode'; id: string };
-          }>;
-        };
+        error:
+          | { __typename: 'InboundShipmentsNotVerified'; description: string }
+          | {
+              __typename: 'ItemsCannotBeOrdered';
+              description: string;
+              lines: Array<{
+                __typename: 'ItemCannotBeOrdered';
+                description: string;
+                line: { __typename: 'PurchaseOrderLineNode'; id: string };
+              }>;
+            };
       };
 };
 
@@ -455,6 +475,7 @@ export type PurchaseOrderLinesQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -470,6 +491,10 @@ export type PurchaseOrderLinesQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        defaultPackSize: number;
+        isVaccine: boolean;
+        doses: number;
+        restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
@@ -489,6 +514,7 @@ export type PurchaseOrderLinesQuery = {
         reference?: string | null;
         confirmedDatetime?: string | null;
         currencyId?: string | null;
+        foreignExchangeRate: number;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -527,6 +553,7 @@ export type PurchaseOrderLineQuery = {
       requestedDeliveryDate?: string | null;
       requestedNumberOfUnits: number;
       shippedNumberOfUnits: number;
+      receivedNumberOfUnits: number;
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
@@ -542,6 +569,10 @@ export type PurchaseOrderLineQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        defaultPackSize: number;
+        isVaccine: boolean;
+        doses: number;
+        restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
       };
       manufacturer?: {
@@ -561,6 +592,7 @@ export type PurchaseOrderLineQuery = {
         reference?: string | null;
         confirmedDatetime?: string | null;
         currencyId?: string | null;
+        foreignExchangeRate: number;
         supplier?: {
           __typename: 'NameNode';
           code: string;
@@ -577,6 +609,17 @@ export type PurchaseOrderLineQuery = {
       } | null;
     }>;
   };
+};
+
+export type UnitsOrderedInOtherPurchaseOrdersQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+  excludePurchaseOrderId: Types.Scalars['String']['input'];
+}>;
+
+export type UnitsOrderedInOtherPurchaseOrdersQuery = {
+  __typename: 'Queries';
+  unitsOrderedInOtherPurchaseOrders: number;
 };
 
 export type PurchaseOrderLinesCountQueryVariables = Types.Exact<{
@@ -725,6 +768,10 @@ export const PurchaseOrderLineFragmentDoc = gql`
       code
       name
       unitName
+      defaultPackSize
+      isVaccine
+      doses
+      restrictedLocationTypeId
       stats(storeId: $storeId) {
         stockOnHand
       }
@@ -733,6 +780,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     requestedDeliveryDate
     requestedNumberOfUnits
     shippedNumberOfUnits
+    receivedNumberOfUnits
     adjustedNumberOfUnits
     pricePerPackAfterDiscount
     pricePerPackBeforeDiscount
@@ -757,6 +805,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
         username
       }
       currencyId
+      foreignExchangeRate
       currency {
         id
         code
@@ -926,6 +975,10 @@ export const UpdatePurchaseOrderDocument = gql`
           ... on ItemsCannotBeOrdered {
             ...ItemsCannotBeOrdered
           }
+          ... on InboundShipmentsNotVerified {
+            __typename
+            description
+          }
         }
       }
     }
@@ -994,6 +1047,19 @@ export const PurchaseOrderLineDocument = gql`
     }
   }
   ${PurchaseOrderLineFragmentDoc}
+`;
+export const UnitsOrderedInOtherPurchaseOrdersDocument = gql`
+  query unitsOrderedInOtherPurchaseOrders(
+    $storeId: String!
+    $itemId: String!
+    $excludePurchaseOrderId: String!
+  ) {
+    unitsOrderedInOtherPurchaseOrders(
+      storeId: $storeId
+      itemId: $itemId
+      excludePurchaseOrderId: $excludePurchaseOrderId
+    )
+  }
 `;
 export const PurchaseOrderLinesCountDocument = gql`
   query purchaseOrderLinesCount(
@@ -1285,6 +1351,24 @@ export function getSdk(
             signal,
           }),
         'purchaseOrderLine',
+        'query',
+        variables
+      );
+    },
+    unitsOrderedInOtherPurchaseOrders(
+      variables: UnitsOrderedInOtherPurchaseOrdersQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UnitsOrderedInOtherPurchaseOrdersQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UnitsOrderedInOtherPurchaseOrdersQuery>({
+            document: UnitsOrderedInOtherPurchaseOrdersDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'unitsOrderedInOtherPurchaseOrders',
         'query',
         variables
       );

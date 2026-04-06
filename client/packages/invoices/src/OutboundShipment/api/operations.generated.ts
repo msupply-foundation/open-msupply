@@ -556,23 +556,20 @@ export type OutboundByNumberQuery = {
       };
 };
 
-export type InvoiceCountsQueryVariables = Types.Exact<{
+export type OutboundShipmentCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
-export type InvoiceCountsQuery = {
+export type OutboundShipmentCountsQuery = {
   __typename: 'Queries';
-  invoiceCounts: {
-    __typename: 'InvoiceCounts';
-    outbound: {
-      __typename: 'OutboundInvoiceCounts';
-      notShipped: number;
-      created: {
-        __typename: 'InvoiceCountsSummary';
-        today: number;
-        thisWeek: number;
-      };
+  outboundShipmentCounts: {
+    __typename: 'OutboundInvoiceCounts';
+    notShipped: number;
+    created: {
+      __typename: 'InvoiceCountsSummary';
+      today: number;
+      thisWeek: number;
     };
   };
 };
@@ -1307,16 +1304,14 @@ export const OutboundByNumberDocument = gql`
   }
   ${OutboundFragmentDoc}
 `;
-export const InvoiceCountsDocument = gql`
-  query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
-    invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-      outbound {
-        created {
-          today
-          thisWeek
-        }
-        notShipped
+export const OutboundShipmentCountsDocument = gql`
+  query outboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
+    outboundShipmentCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
+      created {
+        today
+        thisWeek
       }
+      notShipped
     }
   }
 `;
@@ -2021,20 +2016,20 @@ export function getSdk(
         variables
       );
     },
-    invoiceCounts(
-      variables: InvoiceCountsQueryVariables,
+    outboundShipmentCounts(
+      variables: OutboundShipmentCountsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<InvoiceCountsQuery> {
+    ): Promise<OutboundShipmentCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InvoiceCountsQuery>({
-            document: InvoiceCountsDocument,
+          client.request<OutboundShipmentCountsQuery>({
+            document: OutboundShipmentCountsDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'invoiceCounts',
+        'outboundShipmentCounts',
         'query',
         variables
       );

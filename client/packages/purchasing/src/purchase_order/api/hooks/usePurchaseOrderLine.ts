@@ -52,12 +52,17 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
     id: '',
     code: '',
     name: '',
+    defaultPackSize: 1,
+    isVaccine: false,
+    doses: 0,
+    restrictedLocationTypeId: null,
     stats: {
       __typename: 'ItemStatsNode',
       stockOnHand: 0,
     },
   },
   unitsOrderedInOthers: 0,
+  receivedNumberOfUnits: 0,
   status: PurchaseOrderLineStatusNode.New,
   discountPercentage: 0,
   // These values not actually saved to DB
@@ -366,5 +371,31 @@ const useDeleteLines = () => {
     onSuccess: () => {
       queryClient.invalidateQueries([PURCHASE_ORDER]);
     },
+  });
+};
+
+const UNITS_ON_ORDER = 'units_on_order';
+
+export const useUnitsOnOrderForItem = (
+  itemId: string,
+  excludePurchaseOrderId: string,
+  enabled = true
+) => {
+  const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
+
+  const queryFn = async () => {
+    const result = await purchaseOrderApi.unitsOrderedInOtherPurchaseOrders({
+      storeId,
+      itemId,
+      excludePurchaseOrderId,
+    });
+
+    return result.unitsOrderedInOtherPurchaseOrders;
+  };
+
+  return useQuery({
+    queryKey: [UNITS_ON_ORDER, itemId, excludePurchaseOrderId],
+    queryFn,
+    enabled: enabled && itemId !== '',
   });
 };

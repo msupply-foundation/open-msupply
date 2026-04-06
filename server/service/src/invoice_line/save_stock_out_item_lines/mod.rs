@@ -168,7 +168,7 @@ pub fn save_stock_out_item_lines(
                 // TODO: Should we be able to remove the note e.g. nullable update?
             }
 
-            get_invoice(ctx, None, &input.invoice_id)
+            get_invoice(ctx, None, &input.invoice_id, None)
                 .map_err(SaveStockOutItemLinesError::DatabaseError)?
                 .ok_or(SaveStockOutItemLinesError::UpdatedShipmentDoesNotExist)
         })

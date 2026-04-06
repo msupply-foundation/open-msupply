@@ -10,7 +10,7 @@ import { Box } from '@mui/material';
 import React, { FC, PropsWithChildren } from 'react';
 
 interface SettingsSectionProps {
-  children: JSX.Element | JSX.Element[];
+  children: React.ReactNode;
   expanded: boolean;
   Icon: (props: SvgIconProps & { stroke?: string }) => JSX.Element;
   onChange: () => void;

@@ -55,6 +55,7 @@ define_linked_tables! {
         shipped_pack_size -> Nullable<Double>,
         status -> Nullable<crate::db_diesel::invoice_line_row::InvoiceLineStatusMapping>,
         manufacture_date -> Nullable<Date>,
+        purchase_order_line_id -> Nullable<Text>,
     },
     links: {
     },
@@ -78,7 +79,6 @@ allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 table! {
     invoice_line_stats (invoice_line_id) {
         invoice_line_id -> Text,
-        purchase_order_line_id -> Nullable<Text>,
     }
 }
 
@@ -146,6 +146,7 @@ pub struct InvoiceLineRow {
     pub shipped_pack_size: Option<f64>,
     pub status: Option<InvoiceLineStatus>,
     pub manufacture_date: Option<NaiveDate>,
+    pub purchase_order_line_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
@@ -155,7 +156,6 @@ pub struct InvoiceLineRow {
 #[diesel(table_name = invoice_line_stats)]
 pub struct InvoiceLineStatsRow {
     pub invoice_line_id: String,
-    pub purchase_order_line_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
@@ -233,6 +233,22 @@ impl<'a> InvoiceLineRowRepository<'a> {
                 invoice_line_with_links::foreign_currency_price_before_tax
                     .eq(foreign_currency_price_before_tax_calculation),
             )
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn update_cost_price(
+        &self,
+        record_id: &str,
+        new_cost_price_per_pack: f64,
+        new_sell_price_per_pack: f64,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
+            .set((
+                invoice_line_with_links::cost_price_per_pack.eq(new_cost_price_per_pack),
+                invoice_line_with_links::sell_price_per_pack.eq(new_sell_price_per_pack),
+            ))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
