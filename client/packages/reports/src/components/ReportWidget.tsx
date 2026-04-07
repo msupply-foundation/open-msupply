@@ -15,7 +15,7 @@ import { AppRoute } from '@openmsupply-client/config';
 interface ReportWidgetProps {
   maxWidth?: number | string;
   title: string;
-  Icon: React.ComponentType<SvgIconProps & { stroke?: string }>;
+  Icon: React.ElementType<SvgIconProps & { stroke?: string }>;
   reports: ReportRowFragment[] | undefined;
   onReportClick: (report: ReportRowFragment) => void;
   hasReports: boolean;
