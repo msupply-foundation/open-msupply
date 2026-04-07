@@ -1,10 +1,9 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
-export const CentralIcon = React.forwardRef<SVGSVGElement, SvgIconProps>(
-  (props, ref) => {
-    return (
-      <SvgIcon ref={ref} viewBox="0 0 512 640" {...props}>
+export const CentralIcon = (props: SvgIconProps): JSX.Element => {
+  return (
+    <SvgIcon viewBox="0 0 512 640" {...props}>
       <g>
         <g>
           <g>
@@ -42,6 +41,5 @@ export const CentralIcon = React.forwardRef<SVGSVGElement, SvgIconProps>(
         </g>
       </g>
     </SvgIcon>
-    );
-  }
-);
+  );
+};
