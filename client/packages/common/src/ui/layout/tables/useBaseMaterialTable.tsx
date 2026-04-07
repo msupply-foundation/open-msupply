@@ -46,6 +46,8 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
     field: string;
     groupedByDefault?: boolean;
     label?: string;
+    /** Fires when the user toggles grouping on/off. */
+    onToggle?: (isGrouped: boolean) => void;
   };
   columns: ColumnDef<T>[];
   noUrlSync?: boolean;
@@ -117,6 +119,14 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
   const columnPinning = useColumnPinning(tableId, columns);
   const grouping = useColumnGrouping(tableId, groupingInput);
+
+  // Notify parent of the initial grouping state (read from localStorage)
+  // so it can enable the correct data query before the first toggle click.
+  React.useEffect(() => {
+    groupingInput?.onToggle?.(grouping.state.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const columnOrder = useColumnOrder(
     tableId,
     columns,
@@ -175,7 +185,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     hasColumnFilters,
     onRowClick,
     isGrouped: !!grouping.state.length,
-    toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
+    toggleGrouped: grouping.enabled
+      ? () => {
+          grouping.toggle();
+          groupingInput?.onToggle?.(!grouping.state.length);
+        }
+      : undefined,
     groupByLabel: groupingInput?.label,
     getIsPlaceholderRow,
     getIsRestrictedRow,
