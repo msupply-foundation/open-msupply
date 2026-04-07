@@ -27,7 +27,7 @@ interface FilteringState {
 
 export const useTableFiltering = <T extends MRT_RowData>(
   columns: ColumnDef<T>[],
-  noUrlFiltering: boolean
+  noUrlSync: boolean
 ): FilteringState => {
   const [nonUrlFilterState, setNonUrlFilterState] =
     useState<MRT_ColumnFiltersState>([]);
@@ -36,10 +36,10 @@ export const useTableFiltering = <T extends MRT_RowData>(
   const { customDate, urlQueryDateTime, urlQueryDate } = useFormatDateTime();
 
   const filterState = useMemo(() => {
-    return noUrlFiltering
+    return noUrlSync
       ? nonUrlFilterState
       : getFilterState(urlQuery, columns);
-  }, [urlQuery, noUrlFiltering, nonUrlFilterState]);
+  }, [urlQuery, noUrlSync, nonUrlFilterState]);
 
   const filterUpdaters = useMemo(() => {
     const filterUpdaters: Record<string, (value: any) => void> = {};
@@ -99,7 +99,7 @@ export const useTableFiltering = <T extends MRT_RowData>(
   const handleFilterChange = (
     filterUpdate: MRT_Updater<MRT_ColumnFiltersState>
   ) => {
-    if (noUrlFiltering) {
+    if (noUrlSync) {
       setNonUrlFilterState(prevState => {
         if (typeof filterUpdate === 'function') {
           return filterUpdate(prevState);
