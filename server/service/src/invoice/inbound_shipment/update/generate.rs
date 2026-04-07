@@ -127,22 +127,27 @@ pub(crate) fn generate(
             .filter_map(|l| l.invoice_line_row.stock_line_id.clone())
             .collect();
 
-        let mut movements_to_update = Vec::new();
-        for stock_line_id in stock_line_ids {
-            let movements = LocationMovementRepository::new(connection).query(
+        let movements = if stock_line_ids.is_empty() {
+            vec![]
+        } else {
+            LocationMovementRepository::new(connection).query(
                 Default::default(),
                 Some(
                     LocationMovementFilter::new()
-                        .stock_line_id(EqualFilter::equal_to(stock_line_id)),
+                        .stock_line_id(EqualFilter::equal_any(stock_line_ids)),
                 ),
                 None,
-            )?;
-            for movement in movements {
-                let mut row = movement.location_movement_row;
+            )?
+        };
+
+        let movements_to_update: Vec<LocationMovementRow> = movements
+            .into_iter()
+            .map(|m| {
+                let mut row = m.location_movement_row;
                 row.enter_datetime = Some(new_received);
-                movements_to_update.push(row);
-            }
-        }
+                row
+            })
+            .collect();
 
         if movements_to_update.is_empty() {
             None
