@@ -138,6 +138,9 @@ export const InboundLineEditCards = ({
     (isExternal && !!externalInboundShipmentLinesMustBeAuthorised);
 
   const statusMap = useInvoiceLineStatusMap();
+  // Ref avoids statusMap in useMemo deps (unstable reference due to useAppTheme)
+  const statusMapRef = useRef(statusMap);
+  statusMapRef.current = statusMap;
 
   const displayInDoses = manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = Formatter.sentenceCase(
@@ -306,7 +309,7 @@ export const InboundLineEditCards = ({
             inboundData?.status === InvoiceNodeStatus.Verified;
 
           if (isStatusDisabled) {
-            const entry = status ? statusMap[status] : undefined;
+            const entry = status ? statusMapRef.current[status] : undefined;
             return entry ? (
               <StatusChip label={entry.label} colour={entry.colour} />
             ) : null;
@@ -333,13 +336,13 @@ export const InboundLineEditCards = ({
                 });
               }}
               renderValue={() => {
-                const entry = status ? statusMap[status] : undefined;
+                const entry = status ? statusMapRef.current[status] : undefined;
                 return entry ? (
                   <StatusChip label={entry.label} colour={entry.colour} />
                 ) : null;
               }}
             >
-              {Object.entries(statusMap)
+              {Object.entries(statusMapRef.current)
                 .filter(
                   ([key]) =>
                     hasAuthorisePermission ||
@@ -800,7 +803,6 @@ export const InboundLineEditCards = ({
     restrictedToLocationTypeId,
     setPackRoundingMessage,
     showLineStatus,
-    statusMap,
     simplified,
     store?.preferences.issueInForeignCurrency,
     unitName,
