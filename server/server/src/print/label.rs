@@ -11,18 +11,20 @@ use service::{
         PrescriptionLabelData,
     },
     service_provider::ServiceProvider,
-    settings::LabelPrinterSettingNode,
+    settings::{LabelPrinterSettingNode, Settings},
 };
 
 use crate::authentication::validate_cookie_auth;
 
 pub async fn print_label_asset(
     request: HttpRequest,
+    settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
     data: web::Json<AssetLabelData>,
 ) -> HttpResponse {
-    let auth_result = validate_cookie_auth(request.clone(), &auth_data);
+    let auth_result =
+        validate_cookie_auth(request.clone(), &auth_data, settings.server.cookie_suffix.as_deref());
     match auth_result {
         Ok(_) => (),
         Err(error) => {
@@ -51,11 +53,13 @@ pub struct QueryParams {
 
 pub async fn get_label_asset(
     request: HttpRequest,
+    settings: Data<Settings>,
     _service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
     query: web::Query<QueryParams>,
 ) -> HttpResponse {
-    let auth_result = validate_cookie_auth(request.clone(), &auth_data);
+    let auth_result =
+        validate_cookie_auth(request.clone(), &auth_data, settings.server.cookie_suffix.as_deref());
     match auth_result {
         Ok(_) => (),
         Err(error) => {
@@ -79,11 +83,13 @@ pub async fn get_label_asset(
 
 pub async fn print_label_prescription(
     request: HttpRequest,
+    settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
     data: web::Json<Vec<PrescriptionLabelData>>,
 ) -> HttpResponse {
-    let auth_result = validate_cookie_auth(request.clone(), &auth_data);
+    let auth_result =
+        validate_cookie_auth(request.clone(), &auth_data, settings.server.cookie_suffix.as_deref());
     match auth_result {
         Ok(_) => (),
         Err(error) => {
@@ -116,11 +122,13 @@ pub async fn print_label_prescription(
 
 pub async fn get_label_prescription(
     request: HttpRequest,
+    settings: Data<Settings>,
     _service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
     query: web::Query<QueryParams>,
 ) -> HttpResponse {
-    let auth_result = validate_cookie_auth(request.clone(), &auth_data);
+    let auth_result =
+        validate_cookie_auth(request.clone(), &auth_data, settings.server.cookie_suffix.as_deref());
     match auth_result {
         Ok(_) => (),
         Err(error) => {

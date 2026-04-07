@@ -303,6 +303,7 @@ pub struct GraphqlSchema {
     migration: MigrationSchema,
     /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
     operational_status: Data<RwLock<OperationalStatus>>,
+    cookie_suffix: Option<String>,
 }
 
 pub struct GraphSchemaData {
@@ -356,13 +357,14 @@ impl GraphqlSchema {
                 .data(operational_status_ref.clone())
                 .extension(GraphQLRequestLogger);
 
-        // Initialisation schema should ony need service_provider
+        // Initialisation schema needs service_provider and settings (for cookie_suffix)
         let initialisation_builder = InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
             EmptySubscription,
         )
         .data(service_provider.clone())
+        .data(settings.clone())
         .data(operational_status_ref.clone())
         .extension(GraphQLRequestLogger);
 
@@ -377,6 +379,7 @@ impl GraphqlSchema {
             initialisation: initialisation_builder.finish(),
             migration: migration_builder.finish(),
             operational_status: operational_status_ref.clone(),
+            cookie_suffix: settings.server.cookie_suffix.clone(),
         }
     }
 
@@ -395,7 +398,8 @@ impl GraphqlSchema {
         match &*self.operational_status.read().await {
             OperationalStatus::Operational => {
                 // auth_data is only available in schema in operational mode
-                let user_data = auth_data_from_request(&http_req);
+                let user_data =
+                    auth_data_from_request(&http_req, self.cookie_suffix.as_deref());
                 self.operational.execute(req.data(user_data)).await
             }
             OperationalStatus::MigratingDatabase => self.migration.execute(req).await,
@@ -470,11 +474,13 @@ pub type DiscoverySchema =
 
 pub fn attach_discovery_graphql_schema(
     service_provider: Data<ServiceProvider>,
+    settings: Data<Settings>,
 ) -> impl FnOnce(&mut actix_web::web::ServiceConfig) {
     |cfg| {
         cfg.app_data(Data::new(
             DiscoverySchema::build(DiscoveryQueries, EmptyMutation, EmptySubscription)
                 .data(service_provider)
+                .data(settings)
                 .finish(),
         ))
         .service(
@@ -505,7 +511,6 @@ impl ExecuteGraphql for PluginExecuteGraphql {
                 override_user_id: Some(override_user_id.to_string()),
                 auth_token: None,
                 refresh_token: None,
-                host_port: None,
             });
         let response = self.0.operational.execute(request).await;
         // Response is either success with data field populated or error with errors field populated

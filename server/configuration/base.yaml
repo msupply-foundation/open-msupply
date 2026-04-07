@@ -10,6 +10,7 @@ server:
       http://localhost:8000,
     ] # Used to set the allowed Origin in Cross Origin Request Security
   base_dir: "app_data"
+  # cookie_suffix: "instance1" # Optional: suffix for auth cookie names to prevent collisions between instances on the same domain
 database:
   host: "localhost"
   port: 5432

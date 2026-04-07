@@ -277,7 +277,8 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<InitialisationStatusNode> {
-        initialisation_status(ctx)
+        let cookie_suffix = ctx.get_settings().server.cookie_suffix.clone();
+        initialisation_status(ctx, cookie_suffix)
     }
 
     /// Available without authorisation in all states (Operational, Initialisation and MigratingDatabase)
@@ -638,7 +639,8 @@ impl InitialisationQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<InitialisationStatusNode> {
-        initialisation_status(ctx)
+        let cookie_suffix = ctx.get_settings().server.cookie_suffix.clone();
+        initialisation_status(ctx, cookie_suffix)
     }
 
     pub async fn latest_sync_status(
@@ -697,7 +699,8 @@ impl DiscoveryQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<InitialisationStatusNode> {
-        initialisation_status(ctx)
+        let cookie_suffix = ctx.get_settings().server.cookie_suffix.clone();
+        initialisation_status(ctx, cookie_suffix)
     }
 }
 

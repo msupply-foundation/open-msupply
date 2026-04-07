@@ -91,7 +91,12 @@ async fn delete_sync_file(
     request: HttpRequest,
     auth_data: Data<AuthData>,
 ) -> Result<HttpResponse, Error> {
-    validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
+    validate_cookie_auth(
+        request.clone(),
+        &auth_data,
+        settings.server.cookie_suffix.as_deref(),
+    )
+    .map_err(|_err| {
         InternalError::new(
             "You must be logged in to delete files",
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -141,7 +146,12 @@ async fn upload_sync_file(
     // For now, we just check that the user is authenticated
     // In future we might want to check that the user has access to the record
     // Access to the file UUID should normally only be exposed to users with access from the frontend
-    validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
+    validate_cookie_auth(
+        request.clone(),
+        &auth_data,
+        settings.server.cookie_suffix.as_deref(),
+    )
+    .map_err(|_err| {
         InternalError::new(
             "You need to be logged in",
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -228,7 +238,12 @@ async fn download_sync_file(
     // For now, we just check that the user is authenticated
     // In future we might want to check that the user has access to the record
     // Access to the file UUID should normally only be exposed to users with access from the frontend
-    validate_cookie_auth(req.clone(), &auth_data).map_err(|_err| {
+    validate_cookie_auth(
+        req.clone(),
+        &auth_data,
+        settings.server.cookie_suffix.as_deref(),
+    )
+    .map_err(|_err| {
         InternalError::new(
             "You need to be logged in",
             StatusCode::INTERNAL_SERVER_ERROR,

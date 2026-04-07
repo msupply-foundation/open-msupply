@@ -97,7 +97,7 @@ async fn graphql<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clon
     http_req: HttpRequest,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
-    let user_data = auth_data_from_request(&http_req);
+    let user_data = auth_data_from_request(&http_req, None);
     let query = req.into_inner().data(user_data);
     schema.execute(query).await.into()
 }

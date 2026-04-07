@@ -239,6 +239,7 @@ pub async fn start_server(
 
     info!("Starting discovery graphql server",);
     let closure_service_provider = service_provider.clone();
+    let closure_settings = Data::new(settings.clone());
     // See attach_discovery_graphql_schema for more details
     tokio::spawn(
         HttpServer::new(move || {
@@ -246,6 +247,7 @@ pub async fn start_server(
                 .wrap(Cors::permissive())
                 .configure(attach_discovery_graphql_schema(
                     closure_service_provider.clone(),
+                    closure_settings.clone(),
                 ))
         })
         .bind(settings.server.discovery_address())?

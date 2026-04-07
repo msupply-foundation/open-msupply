@@ -130,16 +130,14 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
         }
     };
 
-    let host_port = ctx
-        .data_opt::<RequestUserData>()
-        .and_then(|d| d.host_port.as_deref().map(|s| s.to_string()));
+    let cookie_suffix = ctx.get_settings().server.cookie_suffix.as_deref();
 
     set_refresh_token_cookie(
         ctx,
         &pair.refresh,
         max_age_refresh,
         auth_data.no_ssl,
-        host_port.as_deref(),
+        cookie_suffix,
     );
 
     RefreshTokenResponse::Response(RefreshToken { pair })

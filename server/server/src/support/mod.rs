@@ -33,6 +33,7 @@ fn validate_request(
     request: HttpRequest,
     service_provider: &ServiceProvider,
     auth_data: &AuthData,
+    cookie_suffix: Option<&str>,
 ) -> Result<ValidatedUser, AuthError> {
     // TODO: Refactor to use authentication::validate_cookie_auth
 
@@ -54,7 +55,13 @@ fn validate_request(
                     .into_iter()
                     .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
                     .find(|cookie_option| match &cookie_option {
-                        Some(cookie) => cookie.name() == "refresh_token",
+                        Some(cookie) => {
+                            let expected_name = match cookie_suffix {
+                                Some(suffix) => format!("refresh_token_{}", suffix),
+                                None => "refresh_token".to_string(),
+                            };
+                            cookie.name() == expected_name
+                        }
                         None => false,
                     })
                     .flatten()

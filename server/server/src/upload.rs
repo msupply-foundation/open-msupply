@@ -41,7 +41,13 @@ async fn upload(
     request: HttpRequest,
 ) -> HttpResponse {
     // Check that the user is authenticated
-    if validate_cookie_auth(request.clone(), &auth_data).is_err() {
+    if validate_cookie_auth(
+        request.clone(),
+        &auth_data,
+        settings.server.cookie_suffix.as_deref(),
+    )
+    .is_err()
+    {
         return HttpResponse::InternalServerError().body("You need to be logged in");
     };
 

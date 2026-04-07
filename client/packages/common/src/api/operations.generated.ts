@@ -13,6 +13,7 @@ export type InitialisationStatusQuery = {
     __typename: 'InitialisationStatusNode';
     status: Types.InitialisationStatusType;
     siteName?: string | null;
+    cookieSuffix?: string | null;
   };
 };
 
@@ -34,6 +35,7 @@ export const InitialisationStatusDocument = gql`
     initialisationStatus {
       status
       siteName
+      cookieSuffix
     }
   }
 `;

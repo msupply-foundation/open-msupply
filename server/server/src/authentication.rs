@@ -4,23 +4,6 @@ use service::{
     auth_data::AuthData,
 };
 
-/// Extract the port from a Host header value, if present.
-fn port_from_host(host: &str) -> Option<&str> {
-    host.rsplit_once(':').map(|(_, port)| port)
-}
-
-fn auth_cookie_name(request: &HttpRequest) -> String {
-    let host_port = request
-        .headers()
-        .get("Host")
-        .and_then(|h| h.to_str().ok())
-        .and_then(port_from_host);
-    match host_port {
-        Some(port) => format!("auth_{}", port),
-        None => "auth".to_string(),
-    }
-}
-
 #[derive(serde::Deserialize)]
 struct AuthCookie {
     token: String,
@@ -29,8 +12,12 @@ struct AuthCookie {
 pub(crate) fn validate_cookie_auth(
     request: HttpRequest,
     auth_data: &AuthData,
+    cookie_suffix: Option<&str>,
 ) -> Result<ValidatedUserAuth, AuthError> {
-    let cookie_name = auth_cookie_name(&request);
+    let cookie_name = match cookie_suffix {
+        Some(suffix) => format!("auth_{}", suffix),
+        None => "auth".to_string(),
+    };
     let token = match request.cookie(&cookie_name) {
         Some(cookie) => {
             let auth_cookie: AuthCookie = match serde_json::from_str(cookie.value()) {

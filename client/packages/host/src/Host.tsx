@@ -16,6 +16,7 @@ import {
   RandomLoader,
   ConfirmationModalProvider,
   AuthProvider,
+  CookieConfigProvider,
   AlertModalProvider,
   EnvUtils,
   LocalStorage,
@@ -178,16 +179,18 @@ const Host = () => (
                   skipRequest={skipRequest}
                 >
                   <MigrationInfoProvider>
-                    <AuthProvider>
-                      <PreInit>
-                        <Init />
-                      </PreInit>
-                      <ConfirmationModalProvider>
-                        <AlertModalProvider>
-                          <RouterProvider router={router} />
-                        </AlertModalProvider>
-                      </ConfirmationModalProvider>
-                    </AuthProvider>
+                    <CookieConfigProvider>
+                      <AuthProvider>
+                        <PreInit>
+                          <Init />
+                        </PreInit>
+                        <ConfirmationModalProvider>
+                          <AlertModalProvider>
+                            <RouterProvider router={router} />
+                          </AlertModalProvider>
+                        </ConfirmationModalProvider>
+                      </AuthProvider>
+                    </CookieConfigProvider>
                   </MigrationInfoProvider>
                   {/* <ReactQueryDevtools initialIsOpen /> */}
                 </GqlProvider>

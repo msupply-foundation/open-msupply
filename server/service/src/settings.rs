@@ -36,6 +36,11 @@ pub struct ServerSettings {
     /// Directory where the server stores its data, e.g. sqlite DB file or certs
     #[serde(default = "default_base_dir")]
     pub base_dir: String,
+    /// Optional suffix appended to auth cookie names to distinguish between
+    /// multiple instances running on the same domain (e.g. different ports).
+    /// When set, cookies are named `auth_{suffix}` and `refresh_token_{suffix}`.
+    /// When unset, bare `auth` and `refresh_token` names are used.
+    pub cookie_suffix: Option<String>,
     /// Option to set the machine id of the device for an OS that isn't supported by machine_uid
     pub machine_uid: Option<String>,
     // Option to set server mode as central server, should only be used in testing, demo and development

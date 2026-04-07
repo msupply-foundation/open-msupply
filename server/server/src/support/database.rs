@@ -22,7 +22,12 @@ pub async fn get_database(
         );
     }
 
-    let auth_result = validate_request(request.clone(), &service_provider, &auth_data);
+    let auth_result = validate_request(
+        request.clone(),
+        &service_provider,
+        &auth_data,
+        settings.server.cookie_suffix.as_deref(),
+    );
     if auth_result.is_err() {
         return Ok(HttpResponse::Unauthorized().body("Access Denied"));
     }

@@ -7,6 +7,9 @@ use service::sync::sync_status::status::InitialisationStatus;
 pub struct InitialisationStatusNode {
     status: InitialisationStatusType,
     site_name: Option<String>,
+    /// Optional suffix used to scope auth cookie names per-instance.
+    /// When set, frontend should use `auth_{suffix}` as the cookie name.
+    cookie_suffix: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -19,19 +22,26 @@ pub enum InitialisationStatusType {
     PreInitialisation,
 }
 
-pub(crate) fn initialisation_status(ctx: &Context<'_>) -> Result<InitialisationStatusNode> {
+pub(crate) fn initialisation_status(
+    ctx: &Context<'_>,
+    cookie_suffix: Option<String>,
+) -> Result<InitialisationStatusNode> {
     let service_provider = ctx.service_provider();
     let ctx = service_provider.basic_context()?;
     let initialisation_status = service_provider
         .sync_status_service
         .get_initialisation_status(&ctx)?;
 
-    Ok(InitialisationStatusNode::from_domain(initialisation_status))
+    Ok(InitialisationStatusNode::from_domain(
+        initialisation_status,
+        cookie_suffix,
+    ))
 }
 
 impl InitialisationStatusNode {
     pub(crate) fn from_domain(
         initialisation_status: InitialisationStatus,
+        cookie_suffix: Option<String>,
     ) -> InitialisationStatusNode {
         use InitialisationStatus as from;
         use InitialisationStatusType as to;
@@ -40,6 +50,7 @@ impl InitialisationStatusNode {
                 return InitialisationStatusNode {
                     site_name: Some(site_name),
                     status: to::Initialised,
+                    cookie_suffix,
                 }
             }
             from::Initialising => to::Initialising,
@@ -49,6 +60,7 @@ impl InitialisationStatusNode {
         InitialisationStatusNode {
             status,
             site_name: None,
+            cookie_suffix,
         }
     }
 }

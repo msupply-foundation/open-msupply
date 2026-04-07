@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt, RequestUserData};
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use service::auth::{validate_auth, AuthError};
 use service::settings::is_develop;
@@ -26,11 +26,9 @@ pub enum LogoutResponse {
 
 pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
     let auth_data = ctx.get_auth_data();
-    let host_port = ctx
-        .data_opt::<RequestUserData>()
-        .and_then(|d| d.host_port.as_deref().map(|s| s.to_string()));
+    let cookie_suffix = ctx.get_settings().server.cookie_suffix.as_deref();
     // invalid the refresh token cookie first (just in case an error happens before we do so)
-    set_refresh_token_cookie(ctx, "logged out", 0, auth_data.no_ssl, host_port.as_deref());
+    set_refresh_token_cookie(ctx, "logged out", 0, auth_data.no_ssl, cookie_suffix);
 
     let user_auth = match validate_auth(auth_data, &ctx.get_auth_token()) {
         Ok(value) => value,

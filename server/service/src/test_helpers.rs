@@ -45,6 +45,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             debug_no_access_control: false,
             cors_origins: vec![],
             base_dir: "test_output".to_string(),
+            cookie_suffix: None,
             machine_uid: None,
             override_is_central_server: false,
         },

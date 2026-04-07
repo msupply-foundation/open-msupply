@@ -2,6 +2,7 @@ query initialisationStatus {
   initialisationStatus {
     status
     siteName
+    cookieSuffix
   }
 }
 
