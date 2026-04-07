@@ -228,7 +228,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotPutDeliveredDateAfterReceivedDate
         | ServiceError::CannotSetDeliveredDateInFuture
         | ServiceError::CannotSetReceivedDateInFuture
-        | ServiceError::CannotPutReceivedDateBeforeDeliveredDate
         | ServiceError::CanOnlyBackdateReceivedShipments
         | ServiceError::CannotMoveReceivedDateForward
         | ServiceError::ExceedsMaximumBackdatingDays
