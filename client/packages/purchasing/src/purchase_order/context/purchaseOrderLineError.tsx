@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useState } from 'react';
 import { PropsWithChildrenOnly, RecordWithId } from '@common/types';
 import { ItemCannotBeOrderedFragment } from '../api';
 
@@ -9,23 +9,27 @@ const usePurchaseOrderLineErrors = () => {
     [purchaseOrderLineId: string]: PurchaseOrderLineError | undefined;
   }>({});
 
-  const getError = ({
-    id,
-  }: RecordWithId): PurchaseOrderLineError | undefined => {
-    return errors[id];
-  };
+  const getError = useCallback(
+    ({ id }: RecordWithId): PurchaseOrderLineError | undefined => {
+      return errors[id];
+    },
+    [errors]
+  );
 
-  const setError = (id: string, error: PurchaseOrderLineError) => {
-    setErrors(errors => ({ ...errors, [id]: error }));
-  };
+  const setError = useCallback(
+    (id: string, error: PurchaseOrderLineError) => {
+      setErrors(prev => ({ ...prev, [id]: error }));
+    },
+    []
+  );
 
-  const unsetError = (id: string) => {
-    setErrors(errors => ({ ...errors, [id]: undefined }));
-  };
+  const unsetError = useCallback((id: string) => {
+    setErrors(prev => ({ ...prev, [id]: undefined }));
+  }, []);
 
-  const unsetAll = () => {
+  const unsetAll = useCallback(() => {
     setErrors({});
-  };
+  }, []);
 
   return { errors, setError, setErrors, getError, unsetError, unsetAll };
 };
