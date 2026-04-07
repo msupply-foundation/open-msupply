@@ -1,14 +1,13 @@
 import {
   ArrayElement,
   Box,
-  createTableStore,
-  DataTable,
+  MaterialTable,
   Plugins,
   QueryClientProviderProxy,
   RecordWithId,
-  TableProvider,
-  TooltipTextCell,
-  useColumns,
+  TextWithTooltipCell,
+  useSimpleMaterialTable,
+  ColumnDef,
   usePluginGraphql,
 } from '@openmsupply-client/common';
 import { Graphql } from '../../../../shared/types';
@@ -34,24 +33,24 @@ const ItemInformation: RequestLineEditInfo = ({ line }) => {
     }
   );
 
-  const columns = useColumns<ColumnData>([
+  const columns: ColumnDef<ColumnData>[] = [
     {
-      key: 'name',
-      sortable: false,
-      label: 'Name',
-      accessor: ({ rowData }) => rowData.name,
-      width: 240,
-      Cell: TooltipTextCell,
+      id: 'name',
+      enableSorting: false,
+      header: 'Name',
+      accessorFn: row => row.name,
+      size: 240,
+      Cell: TextWithTooltipCell,
     },
     {
-      key: 'amc',
-      sortable: false,
-      label: 'AMC',
-      accessor: ({ rowData }) => rowData.amc,
-      width: 100,
-      Cell: TooltipTextCell,
+      id: 'amc',
+      enableSorting: false,
+      header: 'AMC',
+      accessorFn: row => row.amc,
+      size: 100,
+      Cell: TextWithTooltipCell,
     },
-  ]);
+  ];
 
   if (data && data?.type != 'aggregateAmc') {
     throw new Error('Unexpected api result, should return aggregateAmc type');
@@ -59,9 +58,16 @@ const ItemInformation: RequestLineEditInfo = ({ line }) => {
 
   const tableData = (data?.stats ?? []).map(row => ({ ...row, id: row.name }));
 
-  return (
-    <DataTable id="item-information" columns={columns} data={tableData} dense />
-  );
+  const table = useSimpleMaterialTable({
+    tableId: 'item-information',
+    columns,
+    data: tableData,
+    initialState: {
+      density: 'compact',
+    },
+  });
+
+  return <MaterialTable table={table} />;
 };
 
 const ItemInformationView: RequestLineEditInfo = props => (
@@ -74,9 +80,7 @@ const ItemInformationView: RequestLineEditInfo = props => (
       overflowY: 'auto',
     }}
   >
-    <TableProvider createStore={createTableStore}>
-      <ItemInformation {...props} />
-    </TableProvider>
+    <ItemInformation {...props} />
   </Box>
 );
 
