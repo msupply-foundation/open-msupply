@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 declare const LOCAL_PLUGINS: { pluginPath: string; pluginCode: string }[];
 
 export const useInitPlugins = () => {
-  const { addPluginBundle } = usePluginProvider();
+  const { addPluginBundle, setPluginsInitialised } = usePluginProvider();
   const { query } = usePlugins();
 
   const initRemotePlugins = async () => {
@@ -37,7 +37,15 @@ export const useInitPlugins = () => {
     }
   };
   useEffect(() => {
-    if (process.env['NODE_ENV'] === 'production') initRemotePlugins();
-    else initLocalPlugins();
+    const initialisePlugins = async () => {
+      try {
+        if (process.env['NODE_ENV'] === 'production') await initRemotePlugins();
+        else await initLocalPlugins();
+      } finally {
+        setPluginsInitialised(true);
+      }
+    };
+
+    initialisePlugins();
   }, []);
 };

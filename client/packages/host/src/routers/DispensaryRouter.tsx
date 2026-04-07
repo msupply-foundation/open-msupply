@@ -1,5 +1,12 @@
-import React, { FC } from 'react';
-import { RouteBuilder, Navigate, useMatch } from '@openmsupply-client/common';
+import React, { FC, useMemo } from 'react';
+import {
+  RouteBuilder,
+  Navigate,
+  matchPath,
+  useLocation,
+  useMatch,
+  usePluginProvider,
+} from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const InvoiceService = React.lazy(
@@ -51,15 +58,35 @@ const contactTracesListPath = RouteBuilder.create(AppRoute.Dispensary)
   .build();
 
 export const DispensaryRouter: FC = () => {
+  const location = useLocation();
+  const { plugins, pluginsInitialised } = usePluginProvider();
   const gotoDistribution = useMatch(fullPrescriptionPath);
   const gotoPatients = useMatch(fullPatientsPath);
   const gotoEncounters = useMatch(fullEncountersPath);
   const gotoClinicians = useMatch(fullCliniciansPath);
   const gotoContactTraces = useMatch(fullContactTracesPath);
   const gotoContactTracesList = useMatch(contactTracesListPath);
+  const dispensaryPluginPage = useMemo(
+    () =>
+      plugins.dispensary?.page?.find(({ path }) => {
+        const fullPath = RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(path)
+          .build();
+        return (
+          !!matchPath({ path: fullPath, end: true }, location.pathname) ||
+          !!matchPath({ path: `${fullPath}/*` }, location.pathname)
+        );
+      }),
+    [location.pathname, plugins.dispensary?.page]
+  );
 
   if (gotoDistribution) {
     return <InvoiceService />;
+  }
+
+  if (dispensaryPluginPage) {
+    const Component = dispensaryPluginPage.Component;
+    return <Component />;
   }
 
   if (gotoPatients) {
@@ -82,6 +109,10 @@ export const DispensaryRouter: FC = () => {
 
   if (gotoContactTraces) {
     return <ContactTraceService />;
+  }
+
+  if (!pluginsInitialised) {
+    return null;
   }
 
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();

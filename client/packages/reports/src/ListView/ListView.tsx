@@ -7,6 +7,7 @@ import {
   RouteBuilder,
   useAuthContext,
   useNavigate,
+  usePluginProvider,
   useTranslation,
 } from '@openmsupply-client/common';
 import { BarIcon, InvoiceIcon, SuppliersIcon, TruckIcon } from '@common/icons';
@@ -26,6 +27,7 @@ export const ListView = () => {
   const t = useTranslation();
   const { store } = useAuthContext();
   const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
   const { data, isLoading } = useReportList({
     queryParams: {
       filterBy: {
@@ -121,6 +123,9 @@ export const ListView = () => {
           onReportClick={onReportClick}
           hasReports={!!categorisedReports.other.length}
         />
+        {plugins.reports?.widget?.map((Widget, index) => (
+          <Widget key={index} />
+        ))}
       </Grid>
 
       <ReportArgumentsModal

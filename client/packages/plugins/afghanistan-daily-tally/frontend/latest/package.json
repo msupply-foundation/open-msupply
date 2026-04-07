@@ -1,0 +1,13 @@
+{
+  "name": "afghanistan_daily_tally",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/plugin.tsx",
+  "scripts": {
+    "build-plugin": "NODE_ENV=production node ./build-plugin.js"
+  },
+  "omSupplyPlugin": {
+    "target": "frontend",
+    "types": ["dispensary", "reports"]
+  }
+}
