@@ -5,7 +5,10 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, InvoiceRowStatusError,
 };
-use crate::preference::{preferences::MaximumBackdatingDays, Preference};
+use crate::preference::{
+    preferences::{AllowBackdatingOfShipments, MaximumBackdatingDays},
+    Preference,
+};
 use crate::validate::get_other_party;
 use crate::NullableUpdate;
 use chrono::{Duration, Utc};
@@ -50,8 +53,15 @@ pub fn validate(
         }
     }
 
-    // Backdating validation: only New outbound shipments, no lines, not future, max days
+    // Backdating validation: preference enabled, only New outbound shipments, no lines, not future, max days
     if let Some(backdated_datetime) = patch.backdated_datetime {
+        let backdating_allowed: bool = AllowBackdatingOfShipments.load(connection, None)?;
+        if !backdating_allowed {
+            return Err(CantBackDate(
+                "Backdating of shipments is not enabled".to_string(),
+            ));
+        }
+
         if invoice.status != InvoiceStatus::New {
             return Err(CantBackDate(
                 "Can only backdate new outbound shipments".to_string(),
@@ -63,22 +73,11 @@ pub fn validate(
             return Err(CantBackDate("Cannot set date in the future".to_string()));
         }
 
-        let line_count = InvoiceLineRepository::new(connection).count(Some(
-            InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(patch.id.to_string())),
-        ))?;
-        if line_count > 0 {
-            return Err(CantBackDate(
-                "Can't backdate as invoice has allocated lines".to_string(),
-            ));
-        }
+        // Lines are deleted atomically in generate if backdating with existing lines
 
-        let max_days: i32 = MaximumBackdatingDays
-            .load(connection, None)
-            .unwrap_or(0);
+        let max_days: i32 = MaximumBackdatingDays.load(connection, None)?;
         if max_days > 0 {
-            let earliest_allowed =
-                Utc::now().date_naive() - Duration::days(max_days as i64);
+            let earliest_allowed = Utc::now().date_naive() - Duration::days(max_days as i64);
             if backdated_datetime.date() < earliest_allowed {
                 return Err(ExceedsMaximumBackdatingDays);
             }

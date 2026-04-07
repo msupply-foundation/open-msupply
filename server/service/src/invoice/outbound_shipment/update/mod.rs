@@ -60,6 +60,7 @@ pub enum UpdateOutboundShipmentError {
     // Internal
     UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
+    PreferenceError(crate::preference::PreferenceError),
     /// Holds the id of the invalid invoice line
     InvoiceLineHasNoStockLine(String),
 }
@@ -136,6 +137,12 @@ pub fn update_outbound_shipment(
 impl From<RepositoryError> for UpdateOutboundShipmentError {
     fn from(error: RepositoryError) -> Self {
         UpdateOutboundShipmentError::DatabaseError(error)
+    }
+}
+
+impl From<crate::preference::PreferenceError> for UpdateOutboundShipmentError {
+    fn from(error: crate::preference::PreferenceError) -> Self {
+        UpdateOutboundShipmentError::PreferenceError(error)
     }
 }
 
@@ -811,7 +818,7 @@ mod test {
             }
         }
 
-        let (_, _connection, connection_manager, _) = setup_all_with_data(
+        let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_outbound_shipment_backdate_errors",
             MockDataInserts::all(),
             MockData {
@@ -825,6 +832,17 @@ mod test {
             },
         )
         .await;
+
+        // Enable backdating preference
+        use repository::{PreferenceRow, PreferenceRowRepository};
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "allow_backdating_of_shipments_global".to_string(),
+                key: "allow_backdating_of_shipments".to_string(),
+                value: "true".to_string(),
+                store_id: None,
+            })
+            .unwrap();
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
@@ -849,20 +867,16 @@ mod test {
             ))
         );
 
-        // CantBackDate: has allocated lines
-        assert_eq!(
-            service.update_outbound_shipment(
-                &context,
-                UpdateOutboundShipment {
-                    id: outbound_with_line().id,
-                    backdated_datetime: Some(two_days_ago),
-                    ..Default::default()
-                }
-            ),
-            Err(ServiceError::CantBackDate(
-                "Can't backdate as invoice has allocated lines".to_string()
-            ))
+        // Backdating with existing lines should succeed (lines deleted atomically)
+        let result = service.update_outbound_shipment(
+            &context,
+            UpdateOutboundShipment {
+                id: outbound_with_line().id,
+                backdated_datetime: Some(two_days_ago),
+                ..Default::default()
+            },
         );
+        assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
 
         // CantBackDate: future date
         let future = Utc::now().naive_utc() + Duration::days(5);
@@ -905,6 +919,17 @@ mod test {
             },
         )
         .await;
+
+        // Enable backdating preference
+        use repository::{PreferenceRow, PreferenceRowRepository};
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "allow_backdating_of_shipments_global".to_string(),
+                key: "allow_backdating_of_shipments".to_string(),
+                value: "true".to_string(),
+                store_id: None,
+            })
+            .unwrap();
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider

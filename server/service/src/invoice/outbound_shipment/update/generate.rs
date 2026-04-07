@@ -137,7 +137,23 @@ pub(crate) fn generate(
         None
     };
 
-    let lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
+    let mut lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
+
+    // When backdating, delete all existing lines atomically (they need re-allocation at the new date)
+    if input_backdated_datetime.is_some() {
+        let all_lines = InvoiceLineRepository::new(connection).query_by_filter(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(existing_invoice.id.clone())),
+        )?;
+        if !all_lines.is_empty() {
+            let backdate_lines: Vec<InvoiceLineRow> =
+                all_lines.into_iter().map(|l| l.invoice_line_row).collect();
+            match &mut lines_to_trim {
+                Some(existing) => existing.extend(backdate_lines),
+                None => lines_to_trim = Some(backdate_lines),
+            }
+        }
+    }
 
     Ok(GenerateResult {
         batches_to_update,
