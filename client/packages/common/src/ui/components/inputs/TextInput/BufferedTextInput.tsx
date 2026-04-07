@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { BasicTextInput, BasicTextInputProps } from './BasicTextInput';
 import { useBufferState } from '@common/hooks';
 
@@ -11,16 +11,15 @@ export type BufferedTextInputProps = BasicTextInputProps;
  * the component to be controlled.
  */
 
-export const BufferedTextInput: FC<BufferedTextInputProps> = ({
-  slotProps,
-  value,
-  onChange,
-  ...rest
-}) => {
+export const BufferedTextInput = React.forwardRef<
+  HTMLDivElement,
+  BufferedTextInputProps
+>(({ slotProps, value, onChange, ...rest }, ref) => {
   const [buffer, setBuffer] = useBufferState(value);
 
   return (
     <BasicTextInput
+      ref={ref}
       {...rest}
       value={buffer}
       slotProps={slotProps}
@@ -30,4 +29,4 @@ export const BufferedTextInput: FC<BufferedTextInputProps> = ({
       }}
     />
   );
-};
+});
