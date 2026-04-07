@@ -12,7 +12,7 @@ import React, { FC, PropsWithChildren } from 'react';
 interface SettingsSectionProps {
   children: React.ReactNode;
   expanded: boolean;
-  Icon: (props: SvgIconProps & { stroke?: string }) => JSX.Element;
+  Icon: React.ComponentType<SvgIconProps & { stroke?: string }>;
   onChange: () => void;
   titleKey: LocaleKey;
   visible: boolean;
