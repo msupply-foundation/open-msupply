@@ -1,5 +1,6 @@
 import { MRT_RowData } from 'material-react-table';
 import { Row } from '@tanstack/table-core';
+import isEqual from 'lodash/isEqual';
 
 export const multipleKeys = '[multiple]';
 
@@ -10,10 +11,7 @@ export const defaultAggregationFn = <T extends MRT_RowData>(
 ) => {
   // if all child rows have the same value, return that value, otherwise return '[multiple]'
   const firstValue = childRows[0]?.getValue(columnId);
-  const firstJson = JSON.stringify(firstValue);
-  if (
-    childRows.every(row => JSON.stringify(row.getValue(columnId)) === firstJson)
-  ) {
+  if (childRows.every(row => isEqual(row.getValue(columnId), firstValue))) {
     return firstValue;
   }
   return multipleKeys;
