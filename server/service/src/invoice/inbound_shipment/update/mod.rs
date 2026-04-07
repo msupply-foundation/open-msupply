@@ -206,7 +206,6 @@ pub enum UpdateInboundShipmentError {
     CannotSetDeliveredDateInFuture,
     CannotPutDeliveredDateAfterReceivedDate,
     CannotSetReceivedDateInFuture,
-    CannotPutReceivedDateBeforeDeliveredDate,
     CanOnlyBackdateReceivedShipments,
     CannotMoveReceivedDateForward,
     ExceedsMaximumBackdatingDays,

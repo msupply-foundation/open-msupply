@@ -35,43 +35,26 @@ export const ReceivedDateInput = () => {
     shipment?.receivedDatetime
   );
 
-  const deliveredDate = DateUtils.getDateOrNull(shipment?.deliveredDatetime);
-
-  const backdatingLimit =
+  const minDate =
     maximumBackdatingDays && maximumBackdatingDays > 0
       ? DateUtils.addDays(new Date(), -maximumBackdatingDays)
       : undefined;
 
-  // minDate is the later of the backdating limit and the delivered date
-  const minDate =
-    backdatingLimit && deliveredDate
-      ? DateUtils.maxDate(backdatingLimit, deliveredDate)
-      : backdatingLimit ?? deliveredDate ?? undefined;
-
-  // Check why there's no room to move the date further back
-  const atDeliveredDate =
-    !!deliveredDate &&
-    !!currentReceivedDate &&
-    currentReceivedDate.toLocaleDateString() ===
-      deliveredDate.toLocaleDateString();
-
   const atBackdatingLimit =
-    !!backdatingLimit &&
+    !!minDate &&
     !!currentReceivedDate &&
-    currentReceivedDate <= backdatingLimit;
+    currentReceivedDate <= minDate;
 
   const disabledReason = !allowBackdatingOfShipments
     ? t('messages.received-date-backdating-not-enabled' as LocaleKey)
     : !isReceived
       ? t('messages.received-date-not-received' as LocaleKey)
-      : atDeliveredDate
-        ? t('messages.received-date-at-delivered-date' as LocaleKey)
-        : atBackdatingLimit
-          ? t(
-              'messages.received-date-exceeds-backdating-limit' as LocaleKey,
-              { days: maximumBackdatingDays }
-            )
-          : undefined;
+      : atBackdatingLimit
+        ? t(
+            'messages.received-date-exceeds-backdating-limit' as LocaleKey,
+            { days: maximumBackdatingDays }
+          )
+        : undefined;
 
   const disabled = isDisabled || !!disabledReason;
 

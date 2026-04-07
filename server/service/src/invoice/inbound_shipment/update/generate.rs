@@ -108,6 +108,13 @@ pub(crate) fn generate(
         let new_received = NaiveDateTime::from(received_datetime);
         update_invoice.received_datetime = Some(new_received);
 
+        // Move delivered_datetime back if it's after the new received date
+        if let Some(delivered) = update_invoice.delivered_datetime {
+            if delivered > new_received {
+                update_invoice.delivered_datetime = Some(new_received);
+            }
+        }
+
         // Update location movements for stock lines from this invoice to reflect the new date
         let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
             InvoiceLineFilter::new()

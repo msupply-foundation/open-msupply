@@ -123,11 +123,6 @@ pub fn validate(
             }
         }
 
-        if let Some(delivered_datetime) = invoice.delivered_datetime {
-            if received_datetime < delivered_datetime.date() {
-                return Err(CannotPutReceivedDateBeforeDeliveredDate);
-            }
-        }
     }
 
     // Currency rate must be positive if provided
