@@ -1998,4 +1998,240 @@ mod test {
             line.cost_price_per_pack
         );
     }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_backdate_received_errors() {
+        use chrono::NaiveDate;
+        use repository::LocationMovementRow;
+
+        let now = Utc::now().naive_utc();
+        let two_days_ago = now - Duration::days(2);
+        fn new_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "new_inbound_backdate".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        fn received_inbound(received_datetime: chrono::NaiveDateTime) -> InvoiceRow {
+            InvoiceRow {
+                id: "received_inbound_backdate".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                received_datetime: Some(received_datetime),
+                delivered_datetime: Some(
+                    received_datetime - Duration::days(1),
+                ),
+                ..Default::default()
+            }
+        }
+
+        let (_, _connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_backdate_received_errors",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![new_inbound(), received_inbound(now)],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = &service_provider.invoice_service;
+
+        // CanOnlyBackdateReceivedShipments: invoice is New
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: new_inbound().id,
+                    received_datetime: Some(two_days_ago.date()),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::CanOnlyBackdateReceivedShipments)
+        );
+
+        // CannotSetReceivedDateInFuture
+        let future_date = (now + Duration::days(5)).date();
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now).id,
+                    received_datetime: Some(future_date),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::CannotSetReceivedDateInFuture)
+        );
+
+        // CannotMoveReceivedDateForward: try to set same date
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now).id,
+                    received_datetime: Some(now.date()),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::CannotMoveReceivedDateForward)
+        );
+
+        // CannotPutReceivedDateBeforeDeliveredDate
+        // delivered is now - 1 day, so setting received to now - 2 days should fail
+        let before_delivered = (now - Duration::days(2)).date();
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now).id,
+                    received_datetime: Some(before_delivered),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::CannotPutReceivedDateBeforeDeliveredDate)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_backdate_received_success() {
+        use repository::{
+            location_movement::{LocationMovementFilter, LocationMovementRepository},
+            LocationMovementRow, LocationMovementRowRepository,
+        };
+
+        let now = Utc::now().naive_utc();
+        let three_days_ago = now - Duration::days(3);
+
+        fn received_inbound(received_datetime: chrono::NaiveDateTime) -> InvoiceRow {
+            InvoiceRow {
+                id: "received_inbound_backdate_success".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                received_datetime: Some(received_datetime),
+                delivered_datetime: Some(
+                    received_datetime - Duration::days(5),
+                ),
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line(stock_line_id: &str) -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "backdate_success_line".to_string(),
+                invoice_id: "received_inbound_backdate_success".to_string(),
+                item_link_id: mock_item_a().id,
+                stock_line_id: Some(stock_line_id.to_string()),
+                r#type: InvoiceLineType::StockIn,
+                number_of_packs: 10.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn stock_line() -> repository::StockLineRow {
+            repository::StockLineRow {
+                id: "backdate_success_stock_line".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                available_number_of_packs: 10.0,
+                total_number_of_packs: 10.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn location_movement(
+            stock_line_id: &str,
+            enter_datetime: chrono::NaiveDateTime,
+        ) -> LocationMovementRow {
+            LocationMovementRow {
+                id: "backdate_success_movement".to_string(),
+                store_id: mock_store_a().id,
+                stock_line_id: stock_line_id.to_string(),
+                location_id: None,
+                enter_datetime: Some(enter_datetime),
+                exit_datetime: None,
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_backdate_received_success",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![received_inbound(now)],
+                invoice_lines: vec![invoice_line(&stock_line().id)],
+                stock_lines: vec![stock_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Insert location movement manually (not in MockData)
+        LocationMovementRowRepository::new(&connection)
+            .upsert_one(&location_movement(&stock_line().id, now))
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = &service_provider.invoice_service;
+
+        let result = service.update_inbound_shipment(
+            &context,
+            UpdateInboundShipment {
+                id: received_inbound(now).id,
+                received_datetime: Some(three_days_ago.date()),
+                ..Default::default()
+            },
+            InboundShipmentType::InboundShipment,
+        );
+
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
+
+        // Check received_datetime was updated
+        let updated = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&received_inbound(now).id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            updated.received_datetime,
+            Some(chrono::NaiveDateTime::from(three_days_ago.date()))
+        );
+
+        // Check location movement enter_datetime was updated
+        let movements = LocationMovementRepository::new(&connection).query(
+            Default::default(),
+            Some(
+                LocationMovementFilter::new()
+                    .stock_line_id(EqualFilter::equal_to(stock_line().id)),
+            ),
+            None,
+        ).unwrap();
+
+        assert_eq!(movements.len(), 1);
+        assert_eq!(
+            movements[0].location_movement_row.enter_datetime,
+            Some(chrono::NaiveDateTime::from(three_days_ago.date()))
+        );
+    }
 }
