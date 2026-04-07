@@ -21,13 +21,13 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
   showAlert,
 }: {
   cell: MRT_Cell<T>;
-  row: MRT_Row<T & { item: ItemData }>;
+  row: MRT_Row<T & { item?: ItemData }>;
   showAlert?: boolean;
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
   const { manageVaccinesInDoses } = usePreferences();
-  const item = row.original?.item as ItemData | undefined;
+  const item = row.original?.item;
 
   const value = cell.getValue<number | undefined>();
 
