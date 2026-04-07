@@ -18,9 +18,12 @@ if (!fs.existsSync(screenshotDir)) {
   fs.mkdirSync(screenshotDir, { recursive: true });
 }
 
-// Brief pause to let React hit an infinite loop if one exists.
-// Infinite loops fire errors within ~50ms, so 300ms is plenty.
-const RENDER_SETTLE_MS = 300;
+// How long to watch for infinite-loop warnings after navigation/click.
+// Loops usually fire within ~50ms, but intermittent ones can take longer.
+// Clean pages exit after the minimum wait; pages with errors keep polling.
+const RENDER_SETTLE_MIN_MS = 300;
+const RENDER_SETTLE_MAX_MS = 2000;
+const RENDER_SETTLE_POLL_MS = 100;
 
 function toSafeName(label: string) {
   return label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -33,6 +36,22 @@ function screenshot(page: Page, name: string) {
 interface ErrorTracker {
   errors: string[];
   hasInfiniteLoop: boolean;
+}
+
+/** Wait for renders to settle. Clean pages exit after the minimum wait;
+ *  pages that have errors keep polling up to the max to catch slow loops. */
+async function waitForRenderSettle(page: Page, tracker: ErrorTracker) {
+  await page.waitForTimeout(RENDER_SETTLE_MIN_MS);
+
+  // No errors at all — page is clean, no need to wait longer
+  if (!tracker.hasInfiniteLoop && tracker.errors.length === 0) return;
+
+  // Errors detected — keep polling to see if it escalates to a loop
+  const start = Date.now();
+  while (Date.now() - start < RENDER_SETTLE_MAX_MS - RENDER_SETTLE_MIN_MS) {
+    if (tracker.hasInfiniteLoop) return;
+    await page.waitForTimeout(RENDER_SETTLE_POLL_MS);
+  }
 }
 
 function setupErrorTracking(page: Page): ErrorTracker {
@@ -107,7 +126,7 @@ async function navigateAndCheck(
   await page
     .goto(url, { waitUntil: 'networkidle', timeout: 15000 })
     .catch(() => {});
-  await page.waitForTimeout(RENDER_SETTLE_MS);
+  await waitForRenderSettle(page, tracker);
 
   await screenshot(page, toSafeName(label));
 
@@ -137,7 +156,7 @@ async function clickFirstRowAndCheck(
 
   await row.click();
   await page.waitForLoadState('networkidle').catch(() => {});
-  await page.waitForTimeout(RENDER_SETTLE_MS);
+  await waitForRenderSettle(page, tracker);
 
   await screenshot(page, `${toSafeName(label)}-detail`);
 
@@ -162,7 +181,7 @@ async function clickTabsAndCheck(
 
     resetTracker(tracker);
     await tab.click();
-    await page.waitForTimeout(RENDER_SETTLE_MS);
+    await waitForRenderSettle(page, tracker);
 
     await screenshot(page, toSafeName(`${label}-tab-${tabName}`));
 
@@ -341,7 +360,7 @@ function lineEditSuite(
         await page
           .goto(detailUrl, { waitUntil: 'networkidle', timeout: 15000 })
           .catch(() => {});
-        await page.waitForTimeout(RENDER_SETTLE_MS);
+        await waitForRenderSettle(page, tracker);
 
         // Click the first line item row to open the edit modal
         const lineRow = page.locator('tbody tr').first();
@@ -351,7 +370,7 @@ function lineEditSuite(
         }
 
         await lineRow.click();
-        await page.waitForTimeout(RENDER_SETTLE_MS);
+        await waitForRenderSettle(page, tracker);
 
         const modal = page.locator('.MuiDialog-root');
         if (!(await modal.isVisible({ timeout: 3000 }).catch(() => false))) {
@@ -359,7 +378,7 @@ function lineEditSuite(
           return;
         }
 
-        await page.waitForTimeout(RENDER_SETTLE_MS);
+        await waitForRenderSettle(page, tracker);
 
         await screenshot(
           page,
