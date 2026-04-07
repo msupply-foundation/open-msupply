@@ -9,6 +9,7 @@ import { test, expect, Page, BrowserContext } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
 import { InboundShipmentDetailTabs } from '../../packages/invoices/src/InboundShipment/DetailView/types';
+import { authFile } from '../playwright.config';
 
 // ─── Shared utilities ────────────────────────────────────────────────────────
 
@@ -18,9 +19,13 @@ if (!fs.existsSync(screenshotDir)) {
   fs.mkdirSync(screenshotDir, { recursive: true });
 }
 
-// Brief pause to let React hit an infinite loop if one exists.
-// Infinite loops fire errors within ~50ms, so 300ms is plenty.
-const RENDER_SETTLE_MS = 300;
+// Wait time after navigation/click for infinite render loops to manifest and be detected via console messages.
+// Can be reduced once we update to React 19 as it is much stricter about infinite updates and will throw an error instead of trying to recover with degraded performance.
+const RENDER_WAIT_MS = 2000;
+
+// If a single navigation/action produces more than this many console messages
+// (of any type), treat it as excessive logging and fail.
+const EXCESSIVE_LOG_THRESHOLD = 30;
 
 function toSafeName(label: string) {
   return label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -32,14 +37,23 @@ function screenshot(page: Page, name: string) {
 
 interface ErrorTracker {
   errors: string[];
+  warnings: string[];
+  /** Total console messages (all types) — used to detect rapid accumulation. */
+  messageCount: number;
   hasInfiniteLoop: boolean;
 }
 
 function setupErrorTracking(page: Page): ErrorTracker {
-  const tracker: ErrorTracker = { errors: [], hasInfiniteLoop: false };
+  const tracker: ErrorTracker = {
+    errors: [],
+    warnings: [],
+    messageCount: 0,
+    hasInfiniteLoop: false,
+  };
   page.on('console', msg => {
+    tracker.messageCount++;
+    const text = msg.text();
     if (msg.type() === 'error') {
-      const text = msg.text();
       tracker.errors.push(text);
       if (
         text.includes('Maximum update depth exceeded') ||
@@ -47,6 +61,8 @@ function setupErrorTracking(page: Page): ErrorTracker {
       ) {
         tracker.hasInfiniteLoop = true;
       }
+    } else if (msg.type() === 'warning') {
+      tracker.warnings.push(text);
     }
   });
   page.on('pageerror', err => {
@@ -57,26 +73,44 @@ function setupErrorTracking(page: Page): ErrorTracker {
 
 function resetTracker(tracker: ErrorTracker) {
   tracker.errors = [];
+  tracker.warnings = [];
+  tracker.messageCount = 0;
   tracker.hasInfiniteLoop = false;
 }
 
 function reportErrors(tracker: ErrorTracker, label: string) {
-  const runtimeErrors = tracker.errors.filter(
-    e =>
-      !e.includes('Menu component') &&
-      !e.includes('validateDOMNesting') &&
-      !e.includes('404') &&
-      !e.includes('Failed to fetch')
-  );
-  if (runtimeErrors.length > 0) {
+  if (tracker.errors.length > 0) {
     console.log(`  ERRORS in ${label}:`);
-    runtimeErrors
-      .slice(0, 3)
+    tracker.errors
+      .slice(0, 5)
+      .forEach(e => console.log(`    ${e.substring(0, 200)}`));
+  }
+  if (tracker.warnings.length > 0) {
+    console.log(`  WARNINGS in ${label}:`);
+    tracker.warnings
+      .slice(0, 5)
       .forEach(e => console.log(`    ${e.substring(0, 200)}`));
   }
   if (tracker.hasInfiniteLoop) {
     console.log(`  !!! INFINITE LOOP in ${label}`);
   }
+
+  expect.soft(tracker.errors, `Console errors in ${label}`).toHaveLength(0);
+  expect.soft(tracker.warnings, `Console warnings in ${label}`).toHaveLength(0);
+  expect
+    .soft(
+      tracker.messageCount,
+      `Excessive logging in ${label} (${tracker.messageCount} messages)`
+    )
+    .toBeLessThan(EXCESSIVE_LOG_THRESHOLD);
+}
+
+/** Dismiss any open MUI dialog that may intercept clicks. */
+async function dismissOpenDialog(page: Page) {
+  const dialog = page.locator('.MuiDialog-root');
+  if (!(await dialog.isVisible({ timeout: 500 }).catch(() => false))) return;
+  await page.keyboard.press('Escape');
+  await dialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
 }
 
 /** Navigate to a list page and intercept all GraphQL responses. */
@@ -107,12 +141,11 @@ async function navigateAndCheck(
   await page
     .goto(url, { waitUntil: 'networkidle', timeout: 15000 })
     .catch(() => {});
-  await page.waitForTimeout(RENDER_SETTLE_MS);
+  await page.waitForTimeout(RENDER_WAIT_MS);
 
   await screenshot(page, toSafeName(label));
 
   reportErrors(tracker, label);
-  expect.soft(tracker.hasInfiniteLoop, `Infinite loop in ${label}`).toBe(false);
 }
 
 async function clickFirstRowAndCheck(
@@ -128,23 +161,13 @@ async function clickFirstRowAndCheck(
     return false;
   }
 
-  // Dismiss any open MUI dialog that may intercept clicks
-  const dialog = page.locator('.MuiDialog-root');
-  if (await dialog.isVisible({ timeout: 500 }).catch(() => false)) {
-    await page.keyboard.press('Escape');
-    await dialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
-  }
-
   await row.click();
   await page.waitForLoadState('networkidle').catch(() => {});
-  await page.waitForTimeout(RENDER_SETTLE_MS);
+  await page.waitForTimeout(RENDER_WAIT_MS);
 
   await screenshot(page, `${toSafeName(label)}-detail`);
 
   reportErrors(tracker, `${label} detail`);
-  expect
-    .soft(tracker.hasInfiniteLoop, `Infinite loop in ${label} detail`)
-    .toBe(false);
   return true;
 }
 
@@ -162,17 +185,11 @@ async function clickTabsAndCheck(
 
     resetTracker(tracker);
     await tab.click();
-    await page.waitForTimeout(RENDER_SETTLE_MS);
+    await page.waitForTimeout(RENDER_WAIT_MS);
 
     await screenshot(page, toSafeName(`${label}-tab-${tabName}`));
 
     reportErrors(tracker, `${label} > ${tabName}`);
-    expect
-      .soft(
-        tracker.hasInfiniteLoop,
-        `Infinite loop in ${label} tab "${tabName}"`
-      )
-      .toBe(false);
   }
 }
 
@@ -191,7 +208,7 @@ function sectionSuite(
     let tracker: ErrorTracker;
 
     test.beforeAll(async ({ browser }) => {
-      context = await browser.newContext();
+      context = await browser.newContext({ storageState: authFile });
       page = await context.newPage();
       tracker = setupErrorTracking(page);
     });
@@ -234,7 +251,7 @@ function detailTabSuite(
     let detailUrl: string;
 
     test.beforeAll(async ({ browser }) => {
-      context = await browser.newContext();
+      context = await browser.newContext({ storageState: authFile });
       page = await context.newPage();
       tracker = setupErrorTracking(page);
 
@@ -293,7 +310,7 @@ function lineEditSuite(
     let tracker: ErrorTracker;
 
     test.beforeAll(async ({ browser }) => {
-      context = await browser.newContext();
+      context = await browser.newContext({ storageState: authFile });
       page = await context.newPage();
       tracker = setupErrorTracking(page);
     });
@@ -341,7 +358,7 @@ function lineEditSuite(
         await page
           .goto(detailUrl, { waitUntil: 'networkidle', timeout: 15000 })
           .catch(() => {});
-        await page.waitForTimeout(RENDER_SETTLE_MS);
+        await page.waitForTimeout(RENDER_WAIT_MS);
 
         // Click the first line item row to open the edit modal
         const lineRow = page.locator('tbody tr').first();
@@ -350,8 +367,14 @@ function lineEditSuite(
           return;
         }
 
+        if (tracker.hasInfiniteLoop) {
+          reportErrors(tracker, `${route.label} line edit modal`);
+          return;
+        }
+        await dismissOpenDialog(page);
+
         await lineRow.click();
-        await page.waitForTimeout(RENDER_SETTLE_MS);
+        await page.waitForTimeout(RENDER_WAIT_MS);
 
         const modal = page.locator('.MuiDialog-root');
         if (!(await modal.isVisible({ timeout: 3000 }).catch(() => false))) {
@@ -359,12 +382,9 @@ function lineEditSuite(
           return;
         }
 
-        await page.waitForTimeout(RENDER_SETTLE_MS);
+        await page.waitForTimeout(RENDER_WAIT_MS);
 
-        await screenshot(
-          page,
-          `${toSafeName(route.label)}-line-edit-modal`
-        );
+        await screenshot(page, `${toSafeName(route.label)}-line-edit-modal`);
 
         reportErrors(tracker, `${route.label} line edit modal`);
         expect
@@ -373,8 +393,6 @@ function lineEditSuite(
             `Infinite loop in ${route.label} line edit modal`
           )
           .toBe(false);
-
-        await page.keyboard.press('Escape');
       });
     }
   });
