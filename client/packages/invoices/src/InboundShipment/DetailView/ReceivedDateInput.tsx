@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   InputWithLabelRow,
@@ -10,7 +10,7 @@ import {
   Formatter,
   useConfirmationModal,
   usePreferences,
-  LocaleKey,
+  useBufferState,
 } from '@openmsupply-client/common';
 import { useInboundShipment } from '../api';
 import { useInboundGraphQL } from '../api/useInboundGraphQL';
@@ -41,26 +41,23 @@ export const ReceivedDateInput = () => {
       : undefined;
 
   const atBackdatingLimit =
-    !!minDate &&
-    !!currentReceivedDate &&
-    currentReceivedDate <= minDate;
+    !!minDate && !!currentReceivedDate && currentReceivedDate <= minDate;
 
   const disabledReason = !allowBackdatingOfShipments
-    ? t('messages.received-date-backdating-not-enabled' as LocaleKey)
+    ? t('messages.received-date-backdating-not-enabled')
     : !isReceived
-      ? t('messages.received-date-not-received' as LocaleKey)
+      ? t('messages.received-date-not-received')
       : atBackdatingLimit
-        ? t(
-            'messages.received-date-exceeds-backdating-limit' as LocaleKey,
-            { days: maximumBackdatingDays }
-          )
+        ? t('messages.received-date-exceeds-backdating-limit', {
+            days: maximumBackdatingDays,
+          })
         : undefined;
 
   const disabled = isDisabled || !!disabledReason;
 
   const { inboundApi, storeId } = useInboundGraphQL();
 
-  const [dateValue, setDateValue] = useState<Date | null>(currentReceivedDate);
+  const [dateValue, setDateValue] = useBufferState(currentReceivedDate);
 
   const getBackdateConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -98,8 +95,7 @@ export const ReceivedDateInput = () => {
     const previousValue = dateValue;
     setDateValue(newDate);
 
-    const oldDate = DateUtils.getDateOrNull(dateValue);
-    if (newDate.toLocaleDateString() === oldDate?.toLocaleDateString()) return;
+    if (Formatter.naiveDate(newDate) === Formatter.naiveDate(dateValue)) return;
 
     const doUpdate = async () => {
       const hasStocktakeAfter = await checkStocktakeAfterDate(newDate);
