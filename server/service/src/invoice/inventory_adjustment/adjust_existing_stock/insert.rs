@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use repository::RepositoryError;
 use repository::{
     ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
@@ -27,6 +27,7 @@ pub struct InsertInventoryAdjustment {
     pub adjustment: f64,
     pub adjustment_type: AdjustmentType,
     pub reason_option_id: Option<String>,
+    pub backdated_datetime: Option<NaiveDateTime>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -37,7 +38,11 @@ pub enum InsertInventoryAdjustmentError {
     InvalidAdjustment,
     AdjustmentReasonNotValid,
     AdjustmentReasonNotProvided,
+    CannotSetDateInFuture,
+    ExceedsMaximumBackdatingDays,
+    LedgerGoesBelowZero,
     NewlyCreatedInvoiceDoesNotExist,
+    PreferenceError(String),
     DatabaseError(RepositoryError),
     InternalError(String),
     StockInLineInsertError(InsertStockInLineError),
@@ -53,6 +58,7 @@ pub fn insert_inventory_adjustment(
         .transaction_sync(|connection| {
             let stock_line = validate(connection, &ctx.store_id, &input)?;
             let stock_line_id = stock_line.stock_line_row.id.clone();
+            let backdated_datetime = input.backdated_datetime;
             let GenerateResult {
                 invoice,
                 insert_stock_in_or_out_line,
@@ -84,9 +90,11 @@ pub fn insert_inventory_adjustment(
                 update_inventory_adjustment_reason.reason_option_id,
             )?;
 
+            let verified_datetime = backdated_datetime.unwrap_or_else(|| Utc::now().naive_utc());
             let verified_invoice = InvoiceRow {
                 status: InvoiceStatus::Verified,
-                verified_datetime: Some(Utc::now().naive_utc()),
+                verified_datetime: Some(verified_datetime),
+                backdated_datetime,
                 ..invoice
             };
 
@@ -121,6 +129,12 @@ pub fn insert_inventory_adjustment(
 impl From<RepositoryError> for InsertInventoryAdjustmentError {
     fn from(error: RepositoryError) -> Self {
         InsertInventoryAdjustmentError::DatabaseError(error)
+    }
+}
+
+impl From<crate::preference::PreferenceError> for InsertInventoryAdjustmentError {
+    fn from(error: crate::preference::PreferenceError) -> Self {
+        InsertInventoryAdjustmentError::PreferenceError(format!("{error:?}"))
     }
 }
 
@@ -272,6 +286,7 @@ mod test {
                         crate::invoice::inventory_adjustment::AdjustmentType::Reduction,
                     adjustment: 50.0,
                     reason_option_id: Some(reduction_reason().id),
+                    ..Default::default()
                 }
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))
