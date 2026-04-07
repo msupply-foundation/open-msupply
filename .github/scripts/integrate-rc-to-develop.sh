@@ -135,7 +135,7 @@ update_existing_pull_request() {
     local MERGE_BRANCH=$2
     local PR_NUMBER=$3
 
-    echo "Updating PR #$PR_NUMBER: merging latest $RC_BRANCH into $MERGE_BRANCH"
+ echo "Updating PR #$PR_NUMBER: merging latest $RC_BRANCH into $MERGE_BRANCH"
     git checkout -B "$MERGE_BRANCH" "origin/$MERGE_BRANCH"
 
     if git merge "origin/$RC_BRANCH" --no-edit; then
@@ -143,6 +143,11 @@ update_existing_pull_request() {
     else
         echo "Conflicts merging $RC_BRANCH into $MERGE_BRANCH, aborting"
         git merge --abort
+        gh pr comment "$PR_NUMBER" --body "⚠️ **Failed to merge latest \`$RC_BRANCH\` commits into this branch** on $DATE_DISPLAY.
+
+New commits on \`$RC_BRANCH\` conflict with this branch (likely with previous conflict resolutions). This branch was **not updated** with the latest RC changes.
+
+Please manually merge \`$RC_BRANCH\` into \`$MERGE_BRANCH\` and re-resolve conflicts."
     fi
 
     merge_develop_into_branch "$MERGE_BRANCH"
