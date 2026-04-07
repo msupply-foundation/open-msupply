@@ -28,6 +28,9 @@ const RENDER_SETTLE_POLL_MS = 100;
 // treat it as a loop. Real loops produce hundreds+; normal page loads may
 // produce 10-20 messages from React warnings, i18next, etc.
 const MESSAGE_GROWTH_THRESHOLD = 50;
+// If a single navigation/action produces more than this many console messages
+// (of any type), treat it as excessive logging and fail.
+const EXCESSIVE_LOG_THRESHOLD = 30;
 
 function toSafeName(label: string) {
   return label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -39,6 +42,7 @@ function screenshot(page: Page, name: string) {
 
 interface ErrorTracker {
   errors: string[];
+  warnings: string[];
   /** Total console messages (all types) — used to detect rapid accumulation. */
   messageCount: number;
   hasInfiniteLoop: boolean;
@@ -85,13 +89,14 @@ async function waitForRenderSettle(page: Page, tracker: ErrorTracker) {
 function setupErrorTracking(page: Page): ErrorTracker {
   const tracker: ErrorTracker = {
     errors: [],
+    warnings: [],
     messageCount: 0,
     hasInfiniteLoop: false,
   };
   page.on('console', msg => {
     tracker.messageCount++;
+    const text = msg.text();
     if (msg.type() === 'error') {
-      const text = msg.text();
       tracker.errors.push(text);
       if (
         text.includes('Maximum update depth exceeded') ||
@@ -99,6 +104,8 @@ function setupErrorTracking(page: Page): ErrorTracker {
       ) {
         tracker.hasInfiniteLoop = true;
       }
+    } else if (msg.type() === 'warning') {
+      tracker.warnings.push(text);
     }
   });
   page.on('pageerror', err => {
@@ -109,27 +116,36 @@ function setupErrorTracking(page: Page): ErrorTracker {
 
 function resetTracker(tracker: ErrorTracker) {
   tracker.errors = [];
+  tracker.warnings = [];
   tracker.messageCount = 0;
   tracker.hasInfiniteLoop = false;
 }
 
 function reportErrors(tracker: ErrorTracker, label: string) {
-  const runtimeErrors = tracker.errors.filter(
-    e =>
-      !e.includes('Menu component') &&
-      !e.includes('validateDOMNesting') &&
-      !e.includes('404') &&
-      !e.includes('Failed to fetch')
-  );
-  if (runtimeErrors.length > 0) {
+  if (tracker.errors.length > 0) {
     console.log(`  ERRORS in ${label}:`);
-    runtimeErrors
-      .slice(0, 3)
+    tracker.errors
+      .slice(0, 5)
+      .forEach(e => console.log(`    ${e.substring(0, 200)}`));
+  }
+  if (tracker.warnings.length > 0) {
+    console.log(`  WARNINGS in ${label}:`);
+    tracker.warnings
+      .slice(0, 5)
       .forEach(e => console.log(`    ${e.substring(0, 200)}`));
   }
   if (tracker.hasInfiniteLoop) {
     console.log(`  !!! INFINITE LOOP in ${label}`);
   }
+
+  expect.soft(tracker.errors, `Console errors in ${label}`).toHaveLength(0);
+  expect.soft(tracker.warnings, `Console warnings in ${label}`).toHaveLength(0);
+  expect
+    .soft(
+      tracker.messageCount,
+      `Excessive logging in ${label} (${tracker.messageCount} messages)`
+    )
+    .toBeLessThan(EXCESSIVE_LOG_THRESHOLD);
 }
 
 /** Dismiss any open MUI dialog that may intercept clicks. */
@@ -173,7 +189,6 @@ async function navigateAndCheck(
   await screenshot(page, toSafeName(label));
 
   reportErrors(tracker, label);
-  expect.soft(tracker.hasInfiniteLoop, `Infinite loop in ${label}`).toBe(false);
 }
 
 async function clickFirstRowAndCheck(
@@ -194,9 +209,6 @@ async function clickFirstRowAndCheck(
   await waitForRenderSettle(page, tracker);
   if (tracker.hasInfiniteLoop) {
     reportErrors(tracker, `${label} (before detail click)`);
-    expect
-      .soft(tracker.hasInfiniteLoop, `Infinite loop in ${label}`)
-      .toBe(false);
     return false;
   }
   await dismissOpenDialog(page);
@@ -208,9 +220,6 @@ async function clickFirstRowAndCheck(
   await screenshot(page, `${toSafeName(label)}-detail`);
 
   reportErrors(tracker, `${label} detail`);
-  expect
-    .soft(tracker.hasInfiniteLoop, `Infinite loop in ${label} detail`)
-    .toBe(false);
   return true;
 }
 
@@ -233,12 +242,6 @@ async function clickTabsAndCheck(
     await screenshot(page, toSafeName(`${label}-tab-${tabName}`));
 
     reportErrors(tracker, `${label} > ${tabName}`);
-    expect
-      .soft(
-        tracker.hasInfiniteLoop,
-        `Infinite loop in ${label} tab "${tabName}"`
-      )
-      .toBe(false);
   }
 }
 
@@ -418,12 +421,6 @@ function lineEditSuite(
 
         if (tracker.hasInfiniteLoop) {
           reportErrors(tracker, `${route.label} line edit modal`);
-          expect
-            .soft(
-              tracker.hasInfiniteLoop,
-              `Infinite loop in ${route.label} line edit modal`
-            )
-            .toBe(false);
           return;
         }
         await dismissOpenDialog(page);
@@ -439,18 +436,9 @@ function lineEditSuite(
 
         await waitForRenderSettle(page, tracker);
 
-        await screenshot(
-          page,
-          `${toSafeName(route.label)}-line-edit-modal`
-        );
+        await screenshot(page, `${toSafeName(route.label)}-line-edit-modal`);
 
         reportErrors(tracker, `${route.label} line edit modal`);
-        expect
-          .soft(
-            tracker.hasInfiniteLoop,
-            `Infinite loop in ${route.label} line edit modal`
-          )
-          .toBe(false);
 
         await page.keyboard.press('Escape');
       });
