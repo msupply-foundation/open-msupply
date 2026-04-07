@@ -27,13 +27,13 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
   const t = useTranslation();
   const { format } = useFormatNumber();
   const { manageVaccinesInDoses } = usePreferences();
-  const { item } = row.original;
+  const item = row.original?.item as ItemData | undefined;
 
   const value = cell.getValue<number | undefined>();
 
   // Doses should always be a whole number, round if fractional packs are giving
   // us funky decimals
-  const doseCount = format((item.doses ?? 1) * (value ?? 0), {
+  const doseCount = format((item?.doses ?? 1) * (value ?? 0), {
     maximumFractionDigits: 0,
   });
 
@@ -43,7 +43,7 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
         value={typeof value === 'number' ? value : undefined}
         defaultValue={UNDEFINED_STRING_VALUE}
       />
-      {manageVaccinesInDoses && item.isVaccine && (
+      {manageVaccinesInDoses && item?.isVaccine && (
         <Typography
           sx={{
             fontSize: 'small',

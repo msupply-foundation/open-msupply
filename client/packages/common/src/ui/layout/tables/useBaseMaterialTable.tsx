@@ -47,6 +47,10 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
     groupedByDefault?: boolean;
     label?: string;
   };
+  /** Pass an externally-managed grouping state to avoid double-initialisation
+   *  of useColumnGrouping (e.g. when the parent component needs to read the
+   *  grouping state before fetching data). */
+  externalGrouping?: ReturnType<typeof useColumnGrouping>;
   columns: ColumnDef<T>[];
   noUrlFiltering?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
@@ -65,6 +69,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   columns: omsColumns,
   data,
   grouping: groupingInput,
+  externalGrouping,
   enableColumnResizing = true,
   manualFiltering = false,
   noUrlFiltering = false,
@@ -101,7 +106,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const columnSizing = useColumnSizing(tableId);
   const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
   const columnPinning = useColumnPinning(tableId, columns);
-  const grouping = useColumnGrouping(tableId, groupingInput);
+  const internalGrouping = useColumnGrouping(
+    tableId,
+    externalGrouping ? undefined : groupingInput
+  );
+  const grouping = externalGrouping ?? internalGrouping;
   const columnOrder = useColumnOrder(
     tableId,
     columns,
