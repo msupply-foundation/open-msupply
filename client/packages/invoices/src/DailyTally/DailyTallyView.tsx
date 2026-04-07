@@ -8,6 +8,7 @@ import {
   ChevronDownIcon,
   DateUtils,
   DialogButton,
+  Formatter,
   FnUtils,
   LoadingButton,
   NothingHere,
@@ -17,10 +18,10 @@ import {
   Stack,
   Switch,
   Typography,
+  ReasonOptionNodeType,
   UpdatePrescriptionStatusInput,
   UpdateStocktakeStatusInput,
   useDialog,
-  useNavigate,
   useNotification,
   usePreferences,
   useQuery,
@@ -33,6 +34,7 @@ import {
   useDemographicData,
   useItemApi,
   usePatient,
+  useReasonOptions,
 } from '@openmsupply-client/system';
 import { usePrescription, usePrescriptionList } from '../Prescriptions/api';
 import { usePrescriptionGraphQL } from '../Prescriptions/api/usePrescriptionGraphQL';
@@ -187,6 +189,14 @@ const defaultVaccineCoverageDraft = (): VaccineCoverageDraft => {
     womenAgeGroups: defaultWomenCoverageAgeGroups(),
   };
 };
+
+const toNumeric = (value: number | string | null | undefined) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const normaliseReason = (value: string | null | undefined) =>
+  (value ?? '').trim().toLowerCase();
 
 const round = (value: number) => Math.round((value + Number.EPSILON) * 1000) / 1000;
 
@@ -367,8 +377,10 @@ const sumBatchDraft = (
     )
   );
 
-const batchLabel = (stockLine: TallyStockLine) =>
-  stockLine.batch || stockLine.expiryDate || stockLine.id.slice(0, 8);
+const batchLabel = (stockLine: TallyStockLine) => {
+  const batch = stockLine.batch?.trim();
+  return batch || stockLine.expiryDate || 'No batch';
+};
 
 const dailyTallyListPath = RouteBuilder.create(AppRoute.Dispensary)
   .addPart('daily-tally')
@@ -386,7 +398,6 @@ export const DailyTallyView = () => {
   const isSimplifiedTabletUI = useSimplifiedTabletUI();
   const { useSimplifiedMobileUi = false } = usePreferences();
   const isSimplifiedMode = isSimplifiedTabletUI || useSimplifiedMobileUi;
-  const navigate = useNavigate();
   const { error, success } = useNotification();
   const {
     create: { create: createPrescription },
@@ -395,6 +406,8 @@ export const DailyTallyView = () => {
   const { stocktakeApi } = useStocktakeGraphQL();
   const itemApi = useItemApi();
   const { data: demographicData } = useDemographicData.demographics.list();
+  const { data: reasonOptionsData, isLoading: isReasonOptionsLoading } =
+    useReasonOptions();
 
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [filterText, setFilterText] = useState('');
@@ -465,6 +478,26 @@ export const DailyTallyView = () => {
     [patientData?.nodes]
   );
 
+  const openVialWastageReason = useMemo(
+    () =>
+      (reasonOptionsData?.nodes ?? []).find(
+        reason =>
+          reason.type === ReasonOptionNodeType.OpenVialWastage &&
+          normaliseReason(reason.reason) === 'open vial wastage'
+      ),
+    [reasonOptionsData?.nodes]
+  );
+
+  const damagedReason = useMemo(
+    () =>
+      (reasonOptionsData?.nodes ?? []).find(
+        reason =>
+          reason.type === ReasonOptionNodeType.NegativeInventoryAdjustment &&
+          normaliseReason(reason.reason) === 'damaged'
+      ),
+    [reasonOptionsData?.nodes]
+  );
+
   const itemQueryParams = useMemo(
     () => ({
       sortBy: { key: 'name', direction: 'asc' as const, isDesc: false },
@@ -486,21 +519,31 @@ export const DailyTallyView = () => {
 
   const groupedItems = useMemo((): ItemGroup[] => {
     return (data?.nodes ?? [])
-      .map(item => ({
-        itemId: item.id,
-        name: item.name,
-        unitName: item.unitName || 'Units',
-        isVaccine: item.isVaccine,
-        doses: item.doses,
-        sohPacks: round(item.availableStockOnHand),
-        stockLines: item.availableBatches.nodes.map(stockLine => ({
+      .map(item => {
+        const stockLines = item.availableBatches.nodes.map(stockLine => ({
           id: stockLine.id,
           batch: stockLine.batch,
           expiryDate: stockLine.expiryDate,
-          availableNumberOfPacks: round(stockLine.availableNumberOfPacks),
+          availableNumberOfPacks: toNumeric(stockLine.availableNumberOfPacks),
           packSize: stockLine.packSize,
-        })),
-      }))
+        }));
+
+        const sohPacks = stockLines.reduce(
+          (total, stockLine) => total + stockLine.availableNumberOfPacks,
+          0
+        );
+
+        return {
+          itemId: item.id,
+          name: item.name,
+          unitName: item.unitName || 'Units',
+          isVaccine: item.isVaccine,
+          doses: item.doses,
+          sohPacks,
+          stockLines,
+        };
+      })
+      .filter(item => item.stockLines.length > 0)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [data?.nodes]);
 
@@ -612,8 +655,11 @@ export const DailyTallyView = () => {
       };
       const isMultiBatch = item.stockLines.length > 1;
       const sohDisplay = toDisplayUnits(item.sohPacks, item.isVaccine, item.doses);
+      const batchWastage = sumBatchDraft(draft.batchDraftById, 'wastage');
       const effectiveWastage = isMultiBatch
-        ? sumBatchDraft(draft.batchDraftById, 'wastage')
+        ? batchWastage > 0
+          ? batchWastage
+          : draft.wastage
         : draft.wastage;
       const remaining = round(sohDisplay - draft.used - effectiveWastage);
 
@@ -977,6 +1023,9 @@ export const DailyTallyView = () => {
   };
 
   const onConfirm = async (skipSummaryDialog = false, skipDuplicateWarning = false) => {
+    let createdPrescriptionId: string | undefined;
+    let createdStocktakeId: string | undefined;
+
     try {
       const activeRows = rows.filter(row => row.used > 0 || row.wastage > 0);
       if (!activeRows.length) {
@@ -996,6 +1045,22 @@ export const DailyTallyView = () => {
       const wastageRows = activeRows.filter(row => row.wastage > 0);
       const vaccineRowsWithUse = usedRows.filter(row => row.isVaccine);
       const coverageSummary = coverageSummaryText(vaccineRowsWithUse, coverageByItem);
+      const vaccineWastageRows = wastageRows.filter(row => row.isVaccine);
+      const nonVaccineWastageRows = wastageRows.filter(row => !row.isVaccine);
+
+      const tooSmallUsedRow = usedRows.find(
+        row => toPacks(row.used, row.isVaccine, row.doses) <= 0
+      );
+      if (tooSmallUsedRow) {
+        error(`Used value for ${tooSmallUsedRow.item} is too small to allocate stock lines.`)();
+        return;
+      }
+
+      const missingStockLineRow = usedRows.find(row => row.stockLines.length === 0);
+      if (missingStockLineRow) {
+        error(`No stock lines available for ${missingStockLineRow.item}.`)();
+        return;
+      }
 
       const invalidMultiBatchUsed = usedRows.find(row => {
         if (row.stockLines.length <= 1) return false;
@@ -1042,6 +1107,25 @@ export const DailyTallyView = () => {
         return;
       }
 
+      if (wastageRows.length > 0 && isReasonOptionsLoading) {
+        error('Still loading adjustment reasons. Please try again.')();
+        return;
+      }
+
+      if (vaccineWastageRows.length > 0 && !openVialWastageReason) {
+        error(
+          'Missing required reason option "Open Vial Wastage" in the system. Add it before confirming Daily Tally.'
+        )();
+        return;
+      }
+
+      if (nonVaccineWastageRows.length > 0 && !damagedReason) {
+        error(
+          'Missing required reason option "Damaged" in the system. Add it before confirming Daily Tally.'
+        )();
+        return;
+      }
+
       const hasVaccineUse = usedRows.some(row => row.isVaccine);
       if (hasVaccineUse && !isSimplifiedMode) {
         const missingCoverageRow = vaccineRowsWithUse.find(
@@ -1065,6 +1149,7 @@ export const DailyTallyView = () => {
       }
 
       if (!skipDuplicateWarning && (sameDayTallyData?.totalCount ?? 0) > 0) {
+        setConfirmSummaryOpen(false);
         setDuplicateWarningOpen(true);
         return;
       }
@@ -1077,14 +1162,18 @@ export const DailyTallyView = () => {
           id: prescriptionId,
           patientId: selectedPatientId,
           theirReference: tallyReference,
+          prescriptionDate: Formatter.toIsoString(
+            DateUtils.endOfDayOrNull(new Date())
+          ),
         });
 
-        const createdPrescriptionId = prescription?.id;
+        createdPrescriptionId = prescription?.id;
         if (!createdPrescriptionId) {
           throw new Error('Could not create daily tally prescription');
         }
+        const confirmedPrescriptionId = createdPrescriptionId;
 
-        const lines = usedRows.flatMap(row => {
+        let lines = usedRows.flatMap(row => {
           const lineNote = dailyTallyLineNote(row, coverageByItem[row.itemId]);
 
           if (row.stockLines.length > 1) {
@@ -1095,13 +1184,14 @@ export const DailyTallyView = () => {
               if (batchUsed <= 0) return [];
 
               const packs = toPacks(batchUsed, row.isVaccine, row.doses);
+              if (packs <= 0) return [];
               if (packs - stockLine.availableNumberOfPacks > 0.0001) {
                 throw new Error(`Insufficient stock for ${row.item}`);
               }
 
               return {
                 id: FnUtils.generateUUID(),
-                invoiceId: createdPrescriptionId,
+                invoiceId: confirmedPrescriptionId,
                 stockLineId: stockLine.id,
                 numberOfPacks: packs,
                 note: lineNote,
@@ -1119,17 +1209,46 @@ export const DailyTallyView = () => {
             throw new Error(`Insufficient stock for ${row.item}`);
           }
 
-          return allocations.map(({ stockLine, packs }) => ({
-            id: FnUtils.generateUUID(),
-            invoiceId: createdPrescriptionId,
-            stockLineId: stockLine.id,
-            numberOfPacks: packs,
-            note: lineNote,
-          }));
+          return allocations
+            .filter(({ packs }) => packs > 0)
+            .map(({ stockLine, packs }) => ({
+              id: FnUtils.generateUUID(),
+              invoiceId: confirmedPrescriptionId,
+              stockLineId: stockLine.id,
+              numberOfPacks: packs,
+              note: lineNote,
+            }));
         });
 
         if (lines.length === 0) {
-          throw new Error('Could not create daily tally prescription lines');
+          lines = usedRows.flatMap(row => {
+            const lineNote = dailyTallyLineNote(row, coverageByItem[row.itemId]);
+            const requiredPacks = toPacks(row.used, row.isVaccine, row.doses);
+            const { allocations, remaining } = allocateAcrossStockLines(
+              row.stockLines,
+              requiredPacks
+            );
+
+            if (remaining > 0.0001) {
+              throw new Error(`Insufficient stock for ${row.item}`);
+            }
+
+            return allocations
+              .filter(({ packs }) => packs > 0)
+              .map(({ stockLine, packs }) => ({
+                id: FnUtils.generateUUID(),
+                invoiceId: confirmedPrescriptionId,
+                stockLineId: stockLine.id,
+                numberOfPacks: packs,
+                note: lineNote,
+              }));
+          });
+        }
+
+        if (lines.length === 0) {
+          throw new Error(
+            'Could not create daily tally prescription lines. Check used values and batch allocation.'
+          );
         }
 
         await prescriptionApi.upsertPrescription({
@@ -1138,7 +1257,7 @@ export const DailyTallyView = () => {
             insertPrescriptionLines: lines,
             updatePrescriptions: [
               {
-                id: createdPrescriptionId,
+                id: confirmedPrescriptionId,
                 status: UpdatePrescriptionStatusInput.Verified,
               },
             ],
@@ -1148,49 +1267,105 @@ export const DailyTallyView = () => {
       }
 
       if (wastageRows.length > 0) {
-        const stocktakeId = FnUtils.generateUUID();
-        const inserted = await stocktakeApi.insertStocktake({
-          storeId,
-          input: {
-            id: stocktakeId,
-            createBlankStocktake: true,
-            description: 'Daily tally wastage',
-            comment: tallyReference,
+        const usedPacksByStockLineId = usedRows.reduce<Record<string, number>>(
+          (acc, row) => {
+            if (row.stockLines.length > 1) {
+              const batchDraftById = draftByItem[row.itemId]?.batchDraftById ?? {};
+              for (const stockLine of row.stockLines) {
+                const batchUsed = batchDraftById[stockLine.id]?.used ?? 0;
+                if (batchUsed <= 0) continue;
+                const usedPacks = toPacks(batchUsed, row.isVaccine, row.doses);
+                acc[stockLine.id] = round((acc[stockLine.id] ?? 0) + usedPacks);
+              }
+              return acc;
+            }
+
+            const requiredPacks = toPacks(row.used, row.isVaccine, row.doses);
+            const { allocations } = allocateAcrossStockLines(row.stockLines, requiredPacks);
+            for (const { stockLine, packs } of allocations) {
+              acc[stockLine.id] = round((acc[stockLine.id] ?? 0) + packs);
+            }
+
+            return acc;
           },
-        });
+          {}
+        );
 
-        if (inserted.insertStocktake.__typename !== 'StocktakeNode') {
-          throw new Error('Could not create daily tally stocktake');
-        }
+        const availableAfterUse = (stockLine: TallyStockLine) =>
+          round(
+            Math.max(
+              0,
+              stockLine.availableNumberOfPacks -
+                (usedPacksByStockLineId[stockLine.id] ?? 0)
+            )
+          );
 
-        const insertStocktakeLines = wastageRows.flatMap(row => {
+        const stocktakeLineDrafts = wastageRows.flatMap(row => {
           if (row.stockLines.length > 1) {
             const batchDraftById = draftByItem[row.itemId]?.batchDraftById ?? {};
+            const batchWastageTotal = sumBatchDraft(batchDraftById, 'wastage');
 
-            return row.stockLines.flatMap(stockLine => {
-              const isOpen = batchDraftById[stockLine.id]?.openVialWastage ?? false;
-              const batchWastage = batchDraftById[stockLine.id]?.wastage ?? 0;
-              if (batchWastage <= 0) return [];
+            if (batchWastageTotal > 0) {
+              return row.stockLines.flatMap(stockLine => {
+                const batchWastage = batchDraftById[stockLine.id]?.wastage ?? 0;
+                if (batchWastage <= 0) return [];
 
-              const packs = toPacks(batchWastage, row.isVaccine, row.doses);
-              if (packs - stockLine.availableNumberOfPacks > 0.0001) {
-                throw new Error(`Insufficient stock for ${row.item}`);
-              }
+                const packs = toPacks(batchWastage, row.isVaccine, row.doses);
+                const availablePacks = availableAfterUse(stockLine);
+                if (packs - availablePacks > 0.0001) {
+                  throw new Error(`Insufficient stock for ${row.item}`);
+                }
 
-              return {
-                id: FnUtils.generateUUID(),
-                stocktakeId,
-                stockLineId: stockLine.id,
-                countedNumberOfPacks: round(stockLine.availableNumberOfPacks - packs),
-                packSize: stockLine.packSize,
-                comment: isOpen ? 'Open vial wastage' : 'Wastage',
-              };
-            });
+                return {
+                  stockLineId: stockLine.id,
+                  snapshotNumberOfPacks: availablePacks,
+                  countedNumberOfPacks: round(availablePacks - packs),
+                  packSize: stockLine.packSize,
+                  reasonOptionId: row.isVaccine
+                    ? openVialWastageReason?.id
+                    : damagedReason?.id,
+                  comment: row.isVaccine
+                    ? 'Open vial wastage'
+                    : 'Damaged',
+                };
+              });
+            }
+
+            if (row.wastage <= 0) return [];
+
+            const requiredPacks = toPacks(row.wastage, row.isVaccine, row.doses);
+            const adjustedStockLines = row.stockLines.map(stockLine => ({
+              ...stockLine,
+              availableNumberOfPacks: availableAfterUse(stockLine),
+            }));
+            const { allocations, remaining } = allocateAcrossStockLines(
+              adjustedStockLines,
+              requiredPacks
+            );
+
+            if (remaining > 0.0001) {
+              throw new Error(`Insufficient stock for ${row.item}`);
+            }
+
+            return allocations.map(({ stockLine, packs }) => ({
+              stockLineId: stockLine.id,
+              snapshotNumberOfPacks: stockLine.availableNumberOfPacks,
+              countedNumberOfPacks: round(stockLine.availableNumberOfPacks - packs),
+              packSize: stockLine.packSize,
+              reasonOptionId: row.isVaccine
+                ? openVialWastageReason?.id
+                : damagedReason?.id,
+              comment: row.isVaccine ? 'Open vial wastage' : 'Damaged',
+            }));
           }
 
           const requiredPacks = toPacks(row.wastage, row.isVaccine, row.doses);
+          const adjustedStockLines = row.stockLines.map(stockLine => ({
+            ...stockLine,
+            availableNumberOfPacks: availableAfterUse(stockLine),
+          }));
           const { allocations, remaining } = allocateAcrossStockLines(
-            row.stockLines,
+            adjustedStockLines,
             requiredPacks
           );
 
@@ -1199,36 +1374,118 @@ export const DailyTallyView = () => {
           }
 
           return allocations.map(({ stockLine, packs }) => ({
-            id: FnUtils.generateUUID(),
-            stocktakeId,
             stockLineId: stockLine.id,
+            snapshotNumberOfPacks: stockLine.availableNumberOfPacks,
             countedNumberOfPacks: round(stockLine.availableNumberOfPacks - packs),
             packSize: stockLine.packSize,
-            comment: row.openVialWastage ? 'Open vial wastage' : 'Wastage',
+            reasonOptionId: row.isVaccine
+              ? openVialWastageReason?.id
+              : damagedReason?.id,
+            comment: row.isVaccine ? 'Open vial wastage' : 'Damaged',
           }));
         });
 
-        if (insertStocktakeLines.length > 0) {
-          await stocktakeApi.upsertStocktakeLines({
-            storeId,
-            insertStocktakeLines,
-          });
-        }
+        if (stocktakeLineDrafts.length > 0) {
+          const stocktakeId = FnUtils.generateUUID();
+          createdStocktakeId = stocktakeId;
+          const deleteDraftStocktake = async () => {
+            await stocktakeApi.deleteStocktakes({
+              storeId,
+              ids: [{ id: stocktakeId }],
+            });
+          };
 
-        await stocktakeApi.updateStocktake({
-          storeId,
-          input: {
-            id: stocktakeId,
-            status: UpdateStocktakeStatusInput.Finalised,
-          },
-        });
+          const inserted = await stocktakeApi.insertStocktake({
+            storeId,
+            input: {
+              id: stocktakeId,
+              createBlankStocktake: true,
+              description: 'Daily tally wastage',
+              comment: createdPrescriptionId
+                ? `${tallyReference} | prescription:${createdPrescriptionId}`
+                : tallyReference,
+            },
+          });
+
+          if (inserted.insertStocktake.__typename !== 'StocktakeNode') {
+            throw new Error('Could not create daily tally stocktake');
+          }
+
+          const insertedLines = await stocktakeApi.upsertStocktakeLines({
+            storeId,
+            insertStocktakeLines: stocktakeLineDrafts.map(line => ({
+              id: FnUtils.generateUUID(),
+              stocktakeId,
+              ...line,
+            })),
+          });
+
+          const insertResponses =
+            insertedLines.batchStocktake.insertStocktakeLines ?? [];
+          const insertedCount = insertResponses.filter(
+            response => response.response.__typename === 'StocktakeLineNode'
+          ).length;
+          const insertErrorResponse = insertResponses.find(
+            response => response.response.__typename === 'InsertStocktakeLineError'
+          )?.response;
+
+          if (insertErrorResponse?.__typename === 'InsertStocktakeLineError' || insertedCount === 0) {
+            await deleteDraftStocktake();
+            throw new Error(
+              (insertErrorResponse?.__typename === 'InsertStocktakeLineError'
+                ? insertErrorResponse.error.description
+                : undefined) ||
+                'Could not create daily tally wastage adjustment lines'
+            );
+          }
+
+          const finalised = await stocktakeApi.updateStocktake({
+            storeId,
+            input: {
+              id: stocktakeId,
+              status: UpdateStocktakeStatusInput.Finalised,
+            },
+          });
+
+          if (finalised.updateStocktake.__typename !== 'StocktakeNode') {
+            await deleteDraftStocktake();
+            throw new Error(
+              finalised.updateStocktake.error.description ||
+                'Could not finalise daily tally wastage adjustment'
+            );
+          }
+        }
       }
 
-      success('Daily tally confirmed')();
+      const totalUsed = round(usedRows.reduce((sum, row) => sum + row.used, 0));
+      const totalWastage = round(
+        wastageRows.reduce((sum, row) => sum + row.wastage, 0)
+      );
+      success(
+        `Daily tally confirmed (Used: ${totalUsed}, Wastage: ${totalWastage})`
+      )();
       setConfirmSummaryOpen(false);
       setDuplicateWarningOpen(false);
-      navigate(dailyTallyListPath, { replace: true });
+      window.location.assign(dailyTallyListPath);
     } catch (e) {
+      if (createdStocktakeId) {
+        try {
+          await stocktakeApi.deleteStocktakes({
+            storeId,
+            ids: [{ id: createdStocktakeId }],
+          });
+        } catch {}
+      }
+
+      if (createdPrescriptionId) {
+        try {
+          await prescriptionApi.deletePrescriptions({
+            storeId,
+            deletePrescriptions: [createdPrescriptionId],
+          });
+        } catch {}
+      }
+
       error((e as Error).message || 'Unexpected error')();
     } finally {
       setIsSaving(false);
@@ -1245,10 +1502,7 @@ export const DailyTallyView = () => {
             color="secondary"
             variant="contained"
             isLoading={isSaving}
-            onClick={async () => {
-              setConfirmSummaryOpen(false);
-              await onConfirm(true);
-            }}
+            onClick={async () => await onConfirm(true)}
           />
         }
         cancelButton={
@@ -1256,26 +1510,6 @@ export const DailyTallyView = () => {
         }
       >
         <Stack spacing={1} sx={{ minWidth: 760, maxHeight: 420, overflowY: 'auto' }}>
-
-      <DuplicateWarningModal
-        title={'Daily tally already exists'}
-        okButton={
-          <DialogButton
-            variant="ok"
-            onClick={async () => {
-              setDuplicateWarningOpen(false);
-              await onConfirm(true, true);
-            }}
-          />
-        }
-        cancelButton={
-          <DialogButton variant="cancel" onClick={() => setDuplicateWarningOpen(false)} />
-        }
-      >
-        <Typography variant="body2" color="text.secondary">
-          A daily tally sheet already exists for today. Do you want to create another one for the same day?
-        </Typography>
-      </DuplicateWarningModal>
           {confirmSummaryRows.length > 0 ? (
             <Box
               display="grid"
@@ -1330,6 +1564,26 @@ export const DailyTallyView = () => {
           ) : null}
         </Stack>
       </ConfirmSummaryModal>
+
+      <DuplicateWarningModal
+        title={'Daily tally already exists'}
+        okButton={
+          <DialogButton
+            variant="ok"
+            onClick={async () => {
+              setDuplicateWarningOpen(false);
+              await onConfirm(true, true);
+            }}
+          />
+        }
+        cancelButton={
+          <DialogButton variant="cancel" onClick={() => setDuplicateWarningOpen(false)} />
+        }
+      >
+        <Typography variant="body2" color="text.secondary">
+          A daily tally sheet already exists for today. Do you want to create another one for the same day?
+        </Typography>
+      </DuplicateWarningModal>
 
       <AppBarContentPortal
         sx={{
