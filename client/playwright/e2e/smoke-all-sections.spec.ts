@@ -19,11 +19,15 @@ if (!fs.existsSync(screenshotDir)) {
 }
 
 // How long to watch for infinite-loop warnings after navigation/click.
-// Loops usually fire within ~50ms, but intermittent ones can take longer.
-// Clean pages exit after the minimum wait; pages with errors keep polling.
+// Loops usually fire within ~50ms, but async loops can take longer.
+// Clean pages exit early; pages with console activity get a growth check.
 const RENDER_SETTLE_MIN_MS = 300;
 const RENDER_SETTLE_MAX_MS = 2000;
 const RENDER_SETTLE_POLL_MS = 100;
+// If this many new console messages arrive during the polling window (~1.7s),
+// treat it as a loop. Real loops produce hundreds+; normal page loads may
+// produce 10-20 messages from React warnings, i18next, etc.
+const MESSAGE_GROWTH_THRESHOLD = 50;
 
 function toSafeName(label: string) {
   return label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -35,28 +39,57 @@ function screenshot(page: Page, name: string) {
 
 interface ErrorTracker {
   errors: string[];
+  /** Total console messages (all types) — used to detect rapid accumulation. */
+  messageCount: number;
   hasInfiniteLoop: boolean;
 }
 
-/** Wait for renders to settle. Clean pages exit after the minimum wait;
- *  pages that have errors keep polling up to the max to catch slow loops. */
+/** Wait for renders to settle, then check for infinite loops.
+ *  Two-phase detection:
+ *  1. React's own "Maximum update depth" errors (immediate, from tracker)
+ *  2. Rapid console message growth — catches async loops that React doesn't
+ *     flag (e.g. render→fetch→state update→render producing repeated warnings)
+ */
 async function waitForRenderSettle(page: Page, tracker: ErrorTracker) {
   await page.waitForTimeout(RENDER_SETTLE_MIN_MS);
+  if (tracker.hasInfiniteLoop) return;
 
-  // No errors at all — page is clean, no need to wait longer
-  if (!tracker.hasInfiniteLoop && tracker.errors.length === 0) return;
+  // No console activity at all — page is clean, no need to wait longer
+  if (tracker.messageCount === 0) return;
 
-  // Errors detected — keep polling to see if it escalates to a loop
+  // Take two snapshots a short interval apart to detect growth
+  const snapshot1 = tracker.messageCount;
+  await page.waitForTimeout(RENDER_SETTLE_POLL_MS);
+  if (tracker.hasInfiniteLoop) return;
+  const snapshot2 = tracker.messageCount;
+
+  // No growth — page has settled
+  if (snapshot2 === snapshot1) return;
+
+  // Messages are still arriving — poll longer to confirm it's a loop
   const start = Date.now();
   while (Date.now() - start < RENDER_SETTLE_MAX_MS - RENDER_SETTLE_MIN_MS) {
     if (tracker.hasInfiniteLoop) return;
     await page.waitForTimeout(RENDER_SETTLE_POLL_MS);
   }
+
+  // If messages kept accumulating through the polling window, it's likely
+  // an async rerender loop (e.g. repeated i18next warnings from a component
+  // that keeps re-rendering).
+  const totalGrowth = tracker.messageCount - snapshot1;
+  if (totalGrowth >= MESSAGE_GROWTH_THRESHOLD) {
+    tracker.hasInfiniteLoop = true;
+  }
 }
 
 function setupErrorTracking(page: Page): ErrorTracker {
-  const tracker: ErrorTracker = { errors: [], hasInfiniteLoop: false };
+  const tracker: ErrorTracker = {
+    errors: [],
+    messageCount: 0,
+    hasInfiniteLoop: false,
+  };
   page.on('console', msg => {
+    tracker.messageCount++;
     if (msg.type() === 'error') {
       const text = msg.text();
       tracker.errors.push(text);
@@ -76,6 +109,7 @@ function setupErrorTracking(page: Page): ErrorTracker {
 
 function resetTracker(tracker: ErrorTracker) {
   tracker.errors = [];
+  tracker.messageCount = 0;
   tracker.hasInfiniteLoop = false;
 }
 
@@ -96,6 +130,14 @@ function reportErrors(tracker: ErrorTracker, label: string) {
   if (tracker.hasInfiniteLoop) {
     console.log(`  !!! INFINITE LOOP in ${label}`);
   }
+}
+
+/** Dismiss any open MUI dialog that may intercept clicks. */
+async function dismissOpenDialog(page: Page) {
+  const dialog = page.locator('.MuiDialog-root');
+  if (!(await dialog.isVisible({ timeout: 500 }).catch(() => false))) return;
+  await page.keyboard.press('Escape');
+  await dialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
 }
 
 /** Navigate to a list page and intercept all GraphQL responses. */
@@ -147,12 +189,17 @@ async function clickFirstRowAndCheck(
     return false;
   }
 
-  // Dismiss any open MUI dialog that may intercept clicks
-  const dialog = page.locator('.MuiDialog-root');
-  if (await dialog.isVisible({ timeout: 500 }).catch(() => false)) {
-    await page.keyboard.press('Escape');
-    await dialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+  // The list page was already settled by navigateAndCheck, but an async
+  // rerender loop may have started since then — settle again to catch it.
+  await waitForRenderSettle(page, tracker);
+  if (tracker.hasInfiniteLoop) {
+    reportErrors(tracker, `${label} (before detail click)`);
+    expect
+      .soft(tracker.hasInfiniteLoop, `Infinite loop in ${label}`)
+      .toBe(false);
+    return false;
   }
+  await dismissOpenDialog(page);
 
   await row.click();
   await page.waitForLoadState('networkidle').catch(() => {});
@@ -368,6 +415,18 @@ function lineEditSuite(
           console.log(`  No line items in ${route.label}, skipping`);
           return;
         }
+
+        if (tracker.hasInfiniteLoop) {
+          reportErrors(tracker, `${route.label} line edit modal`);
+          expect
+            .soft(
+              tracker.hasInfiniteLoop,
+              `Infinite loop in ${route.label} line edit modal`
+            )
+            .toBe(false);
+          return;
+        }
+        await dismissOpenDialog(page);
 
         await lineRow.click();
         await waitForRenderSettle(page, tracker);
