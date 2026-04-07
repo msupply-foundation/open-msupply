@@ -9,6 +9,7 @@ import {
   AppNavSection,
   UserStoreNodeFragment,
   StoreModeNodeType,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -21,6 +22,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Dispensary).addWildCard().build()
   );
+  const { plugins } = usePluginProvider();
   const t = useTranslation();
   const visible = store?.storeMode === StoreModeNodeType.Dispensary;
   const isProgramModule = store?.preferences.omProgramModule;
@@ -51,6 +53,9 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
               .build()}
             text={t('prescriptions')}
           />
+          {plugins.dispensary?.navLink?.map((Plugin, index) => (
+            <Plugin key={index} store={store} />
+          ))}
           <AppNavLink
             visible={isProgramModule}
             to={RouteBuilder.create(AppRoute.Dispensary)

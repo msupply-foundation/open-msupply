@@ -11,13 +11,16 @@ import { Environment } from '@openmsupply-client/config';
 type PluginProvider = {
   plugins: Plugins;
   cachedPluginBundles: { [code: string]: Plugins };
+  pluginsInitialised: boolean;
   addPluginBundle: (bundle: Plugins, code: string) => void;
+  setPluginsInitialised: (initialised: boolean) => void;
 };
 
 export const usePluginProvider = create<PluginProvider>(set => {
   return {
     plugins: {},
     cachedPluginBundles: {},
+    pluginsInitialised: false,
     addPluginBundle: (pluginBundle, code) => {
       set(state => {
         // Cache plugin bundles by code, to support hot reloading
@@ -42,6 +45,11 @@ export const usePluginProvider = create<PluginProvider>(set => {
         };
       });
     },
+    setPluginsInitialised: pluginsInitialised =>
+      set(state => ({
+        ...state,
+        pluginsInitialised,
+      })),
   };
 });
 

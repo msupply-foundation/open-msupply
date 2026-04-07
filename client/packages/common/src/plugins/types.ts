@@ -1,4 +1,5 @@
 import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
+import { UserStoreNodeFragment } from '../authentication/api/operations.generated';
 import {
   ItemFragment,
   MasterListRowFragment,
@@ -11,6 +12,20 @@ import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 
 export type Plugins = {
+  dispensary?: {
+    navLink?: React.ComponentType<{ store?: UserStoreNodeFragment }>[];
+    page?: {
+      path: string;
+      Component: React.ComponentType;
+    }[];
+  };
+  reports?: {
+    widget?: React.ComponentType[];
+    page?: {
+      path: string;
+      Component: React.ComponentType;
+    }[];
+  };
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   item?: {
