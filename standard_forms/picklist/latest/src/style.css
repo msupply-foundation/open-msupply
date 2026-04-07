@@ -49,13 +49,13 @@ body > table {
 }
 
 .header_section_field_right {
-  text-align: right;
+  text-align: end;
   font-family: Tahoma;
   font-size: 8pt;
 }
 
 .header_section_field_left {
-  text-align: left;
+  text-align: start;
   font-family: Tahoma;
   font-size: 8pt;
 }
@@ -79,13 +79,13 @@ body > table {
 }
 
 .line_number, .quantity, .pack, .expiry {
-    text-align: right;
+    text-align: end;
     font-family: Tahoma;
     font-size: 8pt;
 }
 
 .location_code, .item_name, .batch, .unit {
-    text-align: left;
+    text-align: start;
     font-family: Tahoma;
     font-size: 8pt
 }
