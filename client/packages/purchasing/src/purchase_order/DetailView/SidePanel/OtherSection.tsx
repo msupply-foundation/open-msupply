@@ -16,14 +16,12 @@ import { PurchaseOrderFragment } from '../../api';
 
 interface OtherSectionProps {
   draft?: PurchaseOrderFragment;
-  onUpdate: (input: Partial<PurchaseOrderFragment>) => void;
   onChange: (input: Partial<PurchaseOrderFragment>) => void;
   disabled?: boolean;
 }
 
 export const OtherSection = ({
   draft,
-  onUpdate,
   onChange,
   disabled = false,
 }: OtherSectionProps): ReactElement => {
@@ -47,7 +45,7 @@ export const OtherSection = ({
           <PanelLabel>{t('label.donor')}</PanelLabel>
           <DonorSearchInput
             donorId={draft?.donor?.id ?? null}
-            onChange={donor => onUpdate({ donor: donor })}
+            onChange={donor => onChange({ donor: donor })}
             clearable
             disabled={disabled}
           />
