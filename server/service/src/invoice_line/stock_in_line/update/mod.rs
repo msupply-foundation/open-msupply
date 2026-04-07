@@ -685,4 +685,103 @@ mod test {
         )
         .is_ok());
     }
+
+    #[actix_rt::test]
+    async fn update_stock_in_line_cannot_edit_cost_price() {
+        fn internal_supplier_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "internal_supplier_inbound".to_string(),
+                store_id: mock_store_b().id,
+                name_id: mock_name_store_b().id,
+                name_store_id: Some(mock_store_b().id),
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        fn internal_supplier_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "internal_supplier_line".to_string(),
+                invoice_id: internal_supplier_inbound().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                cost_price_per_pack: 100_000.0,
+                number_of_packs: 1.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_stock_in_line_cannot_edit_cost_price",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![internal_supplier_inbound()],
+                invoice_lines: vec![internal_supplier_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        // CannotEditCostPrice: changing cost price on internal supplier invoice
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: internal_supplier_line().id,
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(999.0),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CannotEditCostPrice)
+        );
+
+        // Submitting the same cost price should succeed (not a real change)
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: internal_supplier_line().id,
+                r#type: StockInType::InboundShipment,
+                cost_price_per_pack: Some(100_000.0),
+                ..Default::default()
+            },
+            None
+        )
+        .is_ok());
+
+        // A value within floating-point tolerance of the original should also succeed
+        // (simulates round-trip through JSON serialization)
+        let nearly_same = 100_000.0 + (f64::EPSILON * 100_000.0 * 5.0);
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: internal_supplier_line().id,
+                r#type: StockInType::InboundShipment,
+                cost_price_per_pack: Some(nearly_same),
+                ..Default::default()
+            },
+            None
+        )
+        .is_ok());
+
+        // No cost_price_per_pack in input should skip the check entirely
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: internal_supplier_line().id,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+            None
+        )
+        .is_ok());
+    }
 }
