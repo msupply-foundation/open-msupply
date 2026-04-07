@@ -140,12 +140,7 @@ export const InboundLineEdit = ({
 
   // Derive the item from selected PO line (external) or props (internal)
   const currentItemFromPOLine = selectedPOLine
-    ? {
-        ...selectedPOLine.item,
-        isVaccine: false,
-        doses: 0,
-        restrictedLocationTypeId: null,
-      }
+    ? selectedPOLine.item
     : null;
 
   // --- Item state (internal mode) ---
