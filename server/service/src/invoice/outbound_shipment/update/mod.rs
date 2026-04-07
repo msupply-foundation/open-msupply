@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
@@ -38,6 +38,7 @@ pub struct UpdateOutboundShipment {
     pub currency_rate: Option<f64>,
     pub expected_delivery_date: Option<NullableUpdate<NaiveDate>>,
     pub shipping_method_id: Option<NullableUpdate<String>>,
+    pub backdated_datetime: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -54,6 +55,8 @@ pub enum UpdateOutboundShipmentError {
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     CannotHaveEstimatedDeliveryDateBeforeShippedDate,
+    CantBackDate(String),
+    ExceedsMaximumBackdatingDays,
     // Internal
     UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
@@ -496,6 +499,7 @@ mod test {
                 currency_rate: _,
                 expected_delivery_date,
                 shipping_method_id: _,
+                backdated_datetime: _,
             } = get_update();
             InvoiceRow {
                 on_hold: on_hold.unwrap(),
@@ -756,5 +760,179 @@ mod test {
                 ..stock_line()
             }
         );
+    }
+
+    #[actix_rt::test]
+    async fn update_outbound_shipment_backdate_errors() {
+        use chrono::{Duration, Utc};
+
+        fn new_outbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "new_outbound_for_backdate".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        fn picked_outbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "picked_outbound_for_backdate".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::Picked,
+                picked_datetime: Some(Utc::now().naive_utc()),
+                allocated_datetime: Some(Utc::now().naive_utc()),
+                ..Default::default()
+            }
+        }
+
+        fn outbound_with_line() -> InvoiceRow {
+            InvoiceRow {
+                id: "outbound_with_line_for_backdate".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        fn line_for_outbound() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "line_for_backdate_test".to_string(),
+                invoice_id: outbound_with_line().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockOut,
+                ..Default::default()
+            }
+        }
+
+        let (_, _connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_backdate_errors",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![
+                    new_outbound(),
+                    picked_outbound(),
+                    outbound_with_line(),
+                ],
+                invoice_lines: vec![line_for_outbound()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let two_days_ago = Utc::now().naive_utc() - Duration::days(2);
+
+        // CantBackDate: not a New outbound
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: picked_outbound().id,
+                    backdated_datetime: Some(two_days_ago),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CantBackDate(
+                "Can only backdate new outbound shipments".to_string()
+            ))
+        );
+
+        // CantBackDate: has allocated lines
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: outbound_with_line().id,
+                    backdated_datetime: Some(two_days_ago),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CantBackDate(
+                "Can't backdate as invoice has allocated lines".to_string()
+            ))
+        );
+
+        // CantBackDate: future date
+        let future = Utc::now().naive_utc() + Duration::days(5);
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: new_outbound().id,
+                    backdated_datetime: Some(future),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CantBackDate(
+                "Cannot set date in the future".to_string()
+            ))
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_outbound_shipment_backdate_success() {
+        use chrono::{Duration, Utc};
+
+        fn new_outbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "new_outbound_backdate_success".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_backdate_success",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![new_outbound()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let two_days_ago = Utc::now().naive_utc() - Duration::days(2);
+
+        let result = service.update_outbound_shipment(
+            &context,
+            UpdateOutboundShipment {
+                id: new_outbound().id,
+                backdated_datetime: Some(two_days_ago),
+                ..Default::default()
+            },
+        );
+
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
+
+        let updated = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&new_outbound().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(updated.backdated_datetime, Some(two_days_ago));
+        // Status datetimes should not be set (invoice is still New)
+        assert_eq!(updated.allocated_datetime, None);
+        assert_eq!(updated.picked_datetime, None);
     }
 }
