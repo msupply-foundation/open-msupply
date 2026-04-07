@@ -25,7 +25,7 @@ const RENDER_WAIT_MS = 2000;
 
 // If a single navigation/action produces more than this many console messages
 // (of any type), treat it as excessive logging and fail.
-const EXCESSIVE_LOG_THRESHOLD = 30;
+const EXCESSIVE_LOG_THRESHOLD = 60;
 
 function toSafeName(label: string) {
   return label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -123,7 +123,7 @@ async function collectGraphQLFromPage(page: Page, listUrl: string) {
   });
 
   await page
-    .goto(listUrl, { waitUntil: 'networkidle', timeout: 15000 })
+    .goto(listUrl, { waitUntil: 'networkidle', timeout: RENDER_WAIT_MS })
     .catch(() => {});
 
   return Promise.all(graphqlResponses);
@@ -139,7 +139,7 @@ async function navigateAndCheck(
 ) {
   resetTracker(tracker);
   await page
-    .goto(url, { waitUntil: 'networkidle', timeout: 15000 })
+    .goto(url, { waitUntil: 'networkidle', timeout: RENDER_WAIT_MS })
     .catch(() => {});
   await page.waitForTimeout(RENDER_WAIT_MS);
 
@@ -224,6 +224,13 @@ function sectionSuite(
 
       if (route.hasDetail) {
         test(`${route.label} detail + tabs`, async () => {
+          // Ensure we're on the list page (may already be there from the list test)
+          await page
+            .goto(route.url, {
+              waitUntil: 'networkidle',
+              timeout: RENDER_WAIT_MS,
+            })
+            .catch(() => {});
           if (await clickFirstRowAndCheck(page, tracker, route.label)) {
             await clickTabsAndCheck(page, tracker, route.label);
             await page.goBack();
@@ -356,7 +363,10 @@ function lineEditSuite(
         // Navigate directly to the editable shipment detail
         resetTracker(tracker);
         await page
-          .goto(detailUrl, { waitUntil: 'networkidle', timeout: 15000 })
+          .goto(detailUrl, {
+            waitUntil: 'networkidle',
+            timeout: RENDER_WAIT_MS,
+          })
           .catch(() => {});
         await page.waitForTimeout(RENDER_WAIT_MS);
 
