@@ -326,6 +326,144 @@ detailTabSuite(
   ]
 );
 
+// Helper: find an editable shipment via GraphQL, navigate to detail, open line edit modal
+// Editable statuses based on isInboundDisabled / isOutboundDisabled in utils.ts
+function lineEditSuite(
+  name: string,
+  routes: {
+    label: string;
+    listUrl: string;
+    detailPath: string | ((node: any) => string);
+    editableStatuses: string[];
+  }[]
+) {
+  test.describe(name, () => {
+    test.describe.configure({ mode: 'serial' });
+
+    let page: Page;
+    let context: BrowserContext;
+    let tracker: ErrorTracker;
+
+    test.beforeAll(async ({ browser }) => {
+      context = await browser.newContext();
+      page = await context.newPage();
+      tracker = setupErrorTracking(page);
+    });
+
+    test.afterAll(async () => {
+      await context?.close();
+    });
+
+    for (const route of routes) {
+      test(`${route.label} line edit modal`, async () => {
+        // Intercept GraphQL responses to find an editable shipment
+        const graphqlResponses: Promise<any>[] = [];
+        page.on('response', r => {
+          if (r.url().includes('/graphql')) {
+            graphqlResponses.push(r.json().catch(() => null));
+          }
+        });
+
+        await page
+          .goto(route.listUrl, { waitUntil: 'networkidle', timeout: 15000 })
+          .catch(() => {});
+
+        const allData = await Promise.all(graphqlResponses);
+        let detailUrl: string | undefined;
+        for (const data of allData) {
+          const nodes = data?.data?.invoices?.nodes ?? [];
+          const editable = nodes.filter((n: any) =>
+            route.editableStatuses.includes(n.status)
+          );
+          if (editable.length === 0) continue;
+          // Prefer shipments further along in the workflow (more likely to have lines)
+          const statusOrder = route.editableStatuses;
+          editable.sort(
+            (a: any, b: any) =>
+              statusOrder.indexOf(b.status) - statusOrder.indexOf(a.status)
+          );
+          const match = editable[0];
+          const basePath =
+            typeof route.detailPath === 'function'
+              ? route.detailPath(match)
+              : route.detailPath;
+          detailUrl = `${basePath}/${match.id}`;
+          break;
+        }
+
+        if (!detailUrl) {
+          console.log(
+            `  No editable ${route.label} found (need status: ${route.editableStatuses.join('/')}), skipping`
+          );
+          return;
+        }
+
+        // Navigate directly to the editable shipment detail
+        resetTracker(tracker);
+        await page
+          .goto(detailUrl, { waitUntil: 'networkidle', timeout: 15000 })
+          .catch(() => {});
+        await page.waitForTimeout(RENDER_SETTLE_MS);
+
+        // Click the first line item row to open the edit modal
+        const lineRow = page.locator('tbody tr').first();
+        if (!(await lineRow.isVisible({ timeout: 3000 }).catch(() => false))) {
+          console.log(`  No line items in ${route.label}, skipping`);
+          return;
+        }
+
+        await lineRow.click();
+        await page.waitForTimeout(RENDER_SETTLE_MS);
+
+        const modal = page.locator('.MuiDialog-root');
+        if (!(await modal.isVisible({ timeout: 3000 }).catch(() => false))) {
+          console.log(`  Modal did not open in ${route.label}, skipping`);
+          return;
+        }
+
+        await page.waitForTimeout(RENDER_SETTLE_MS);
+
+        const safeName = route.label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+        await page.screenshot({
+          path: path.join(screenshotDir, `${safeName}-line-edit-modal.png`),
+        });
+
+        reportErrors(tracker, `${route.label} line edit modal`);
+        expect
+          .soft(
+            tracker.hasInfiniteLoop,
+            `Infinite loop in ${route.label} line edit modal`
+          )
+          .toBe(false);
+
+        await page.keyboard.press('Escape');
+      });
+    }
+  });
+}
+
+// Editable statuses from isOutboundDisabled / isInboundDisabled in utils.ts
+lineEditSuite('Line Edit Modals', [
+  {
+    label: 'inbound-shipment',
+    listUrl: '/replenishment/inbound-shipment',
+    // External inbound shipments (from PO) use a different detail route
+    detailPath: (node: any) =>
+      node.purchaseOrder
+        ? '/replenishment/inbound-shipment-external'
+        : '/replenishment/inbound-shipment',
+    // Ordered by likelihood of having lines (last = preferred)
+    editableStatuses: ['NEW', 'DELIVERED', 'RECEIVED'],
+  },
+  {
+    label: 'outbound-shipment',
+    listUrl: '/distribution/outbound-shipment',
+    detailPath: '/distribution/outbound-shipment',
+    // Ordered by likelihood of having lines (last = preferred)
+    editableStatuses: ['NEW', 'ALLOCATED', 'PICKED'],
+  },
+]);
+
 sectionSuite('Inventory', [
   { label: 'stock', url: '/inventory/stock', hasDetail: true },
   { label: 'stocktakes', url: '/inventory/stocktakes', hasDetail: true },
