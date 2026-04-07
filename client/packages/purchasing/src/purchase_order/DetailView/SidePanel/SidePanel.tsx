@@ -90,7 +90,6 @@ export const SidePanel = (): ReactElement => {
       />
       <OtherSection
         draft={draft}
-        onUpdate={handleUpdate}
         onChange={handleChange}
         disabled={disabled}
       />

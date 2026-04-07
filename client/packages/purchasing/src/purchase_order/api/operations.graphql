@@ -102,6 +102,10 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     code
     name
     unitName
+    defaultPackSize
+    isVaccine
+    doses
+    restrictedLocationTypeId
     stats(storeId: $storeId) {
       stockOnHand
     }
@@ -135,6 +139,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
       username
     }
     currencyId
+    foreignExchangeRate
     currency {
       id
       code
