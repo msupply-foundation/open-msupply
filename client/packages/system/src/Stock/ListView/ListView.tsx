@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   useTranslation,
   NothingHere,
@@ -37,6 +37,7 @@ export const StockListView = () => {
 
   const {
     queryParams: { sortBy, first, offset, filterBy },
+    updateFilterQuery,
   } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
     filters: [
@@ -60,6 +61,26 @@ export const StockListView = () => {
       },
     ],
   });
+
+  // Stock-line-specific filters don't apply in grouped mode (and vice versa
+  // there are no grouped-only filters yet). Clear them on toggle so stale URL
+  // params don't silently affect the ungrouped query when the user switches back.
+  const stockLineFilterKeys = [
+    'location.code',
+    'masterList.name',
+    'expiryDate',
+    'vvmStatusId',
+  ];
+  const initialRender = useRef(true);
+  useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
+    if (isGrouped) {
+      stockLineFilterKeys.forEach(key => updateFilterQuery(key, ''));
+    }
+  }, [isGrouped]);
 
   const queryParams = {
     filterBy: { ...filterBy },
