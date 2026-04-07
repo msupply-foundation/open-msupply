@@ -2802,5 +2802,7 @@
   "messages.received-date-exceeds-backdating-limit": "The received date is already beyond the maximum backdating limit of {{days}} days",
   "messages.received-date-backdating-not-enabled": "Date editing on shipments is not enabled. This can be changed in global preferences.",
   "messages.received-date-not-received": "The received date can only be changed once the shipment has been received",
-  "log.invoice-date-backdated": "Received date backdated"
+  "log.invoice-date-backdated": "Received date backdated",
+  "preference.backdating": "Backdating",
+  "preference.allowBackdatingOfInventoryAdjustments": "Allow entry of inventory adjustment date"
 }

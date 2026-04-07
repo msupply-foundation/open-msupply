@@ -752,14 +752,16 @@ export type AvailableVolumeAtLocationTypeNode = {
 };
 
 export type BackdatingInput = {
-  enabled: Scalars['Boolean']['input'];
+  inventoryAdjustmentsEnabled: Scalars['Boolean']['input'];
   maxDays: Scalars['Int']['input'];
+  shipmentsEnabled: Scalars['Boolean']['input'];
 };
 
 export type BackdatingNode = {
   __typename: 'BackdatingNode';
-  enabled: Scalars['Boolean']['output'];
+  inventoryAdjustmentsEnabled: Scalars['Boolean']['output'];
   maxDays: Scalars['Int']['output'];
+  shipmentsEnabled: Scalars['Boolean']['output'];
 };
 
 export type BarcodeNode = {
