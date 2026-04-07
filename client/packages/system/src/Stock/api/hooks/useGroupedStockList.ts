@@ -48,15 +48,9 @@ export const useGroupedStockList = (
   }> => {
     const filter = {
       hasStockOnHand: true,
-      ...(filterBy?.['search']
-        ? { codeOrName: { like: filterBy['search'] as string } }
-        : {}),
-      ...(filterBy?.['name']
-        ? { codeOrName: { like: filterBy['name'] as string } }
-        : {}),
-      ...(filterBy?.['code']
-        ? { code: { like: filterBy['code'] as string } }
-        : {}),
+      ...(filterBy?.['search'] ? { codeOrName: filterBy['search'] } : {}),
+      ...(filterBy?.['name'] ? { codeOrName: filterBy['name'] } : {}),
+      ...(filterBy?.['code'] ? { code: filterBy['code'] } : {}),
     };
 
     const query = await stockApi.stockItemsGrouped({
