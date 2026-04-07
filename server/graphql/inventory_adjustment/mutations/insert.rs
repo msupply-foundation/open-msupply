@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::generic_errors::StockLineReducedBelowZero;
@@ -18,6 +19,7 @@ pub struct CreateInventoryAdjustmentInput {
     #[graphql(deprecation = "Since 2.8.0. Use reason_option_id")]
     pub inventory_adjustment_reason_id: Option<String>,
     pub reason_option_id: Option<String>,
+    pub backdated_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(SimpleObject)]
@@ -78,6 +80,7 @@ impl CreateInventoryAdjustmentInput {
             adjustment_type,
             inventory_adjustment_reason_id,
             reason_option_id,
+            backdated_datetime,
         }: CreateInventoryAdjustmentInput = self;
 
         InsertInventoryAdjustment {
@@ -85,6 +88,7 @@ impl CreateInventoryAdjustmentInput {
             adjustment,
             adjustment_type: adjustment_type.to_domain(),
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
+            backdated_datetime: backdated_datetime.map(|d| d.naive_utc()),
         }
     }
 }
@@ -118,12 +122,16 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::StockLineDoesNotExist
         | ServiceError::InvalidStore
         | ServiceError::InvalidAdjustment
-        | ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
+        | ServiceError::AdjustmentReasonNotValid
+        | ServiceError::CannotSetDateInFuture
+        | ServiceError::ExceedsMaximumBackdatingDays
+        | ServiceError::LedgerGoesBelowZero => BadUserInput(formatted_error),
 
         ServiceError::NewlyCreatedInvoiceDoesNotExist
         | ServiceError::StockInLineInsertError(_)
         | ServiceError::StockOutLineInsertError(_)
         | ServiceError::InternalError(_)
+        | ServiceError::PreferenceError(_)
         | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
