@@ -241,7 +241,7 @@ export const StockListView = () => {
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
     enableRowSelection: false,
-    grouping: { field: 'item.code' },
+    grouping: { field: 'code' },
     noDataElement: (
       <NothingHere
         body={t('error.no-stock')}
