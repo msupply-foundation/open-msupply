@@ -10,7 +10,10 @@ export const defaultAggregationFn = <T extends MRT_RowData>(
 ) => {
   // if all child rows have the same value, return that value, otherwise return '[multiple]'
   const firstValue = childRows[0]?.getValue(columnId);
-  if (childRows.every(row => row.getValue(columnId) === firstValue)) {
+  const firstJson = JSON.stringify(firstValue);
+  if (
+    childRows.every(row => JSON.stringify(row.getValue(columnId)) === firstJson)
+  ) {
     return firstValue;
   }
   return multipleKeys;
