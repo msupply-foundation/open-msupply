@@ -48,7 +48,7 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
     label?: string;
   };
   columns: ColumnDef<T>[];
-  noUrlFiltering?: boolean;
+  noUrlSync?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
   isMobile?: boolean;
@@ -67,7 +67,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   grouping: groupingInput,
   enableColumnResizing = true,
   manualFiltering = false,
-  noUrlFiltering = false,
+  noUrlSync = false,
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
@@ -93,10 +93,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   // Filter needs to be applied after columns are processed
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(
     columns,
-    noUrlFiltering
+    noUrlSync
   );
-  const { sorting: urlSorting, onSortingChange } =
-    useUrlSortManagement(initialSort);
+  const { sorting: urlSorting, onSortingChange } = useUrlSortManagement(
+    initialSort,
+    noUrlSync
+  );
 
   // The URL sort is shared across all tables on the page (e.g. multiple tabs
   // in a detail view). Ignore sort entries that reference columns this table
