@@ -116,14 +116,19 @@ pub fn get_historical_stock_lines(
         datetime,
     )?;
 
-    for stock_line in stock_lines.rows.iter_mut() {
+    // Update quantities and filter out stock lines that didn't exist at the historical date
+    stock_lines.rows.retain_mut(|stock_line| {
         if let Some(historic_available_number_of_packs) =
             historic_quantities.get(&stock_line.stock_line_row.id)
         {
             stock_line.stock_line_row.available_number_of_packs =
                 *historic_available_number_of_packs;
+            *historic_available_number_of_packs > 0.0
+        } else {
+            true
         }
-    }
+    });
+    stock_lines.count = stock_lines.rows.len() as u32;
 
     Ok(stock_lines)
 }
