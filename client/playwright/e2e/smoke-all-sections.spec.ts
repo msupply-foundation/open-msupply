@@ -8,11 +8,26 @@
 import { test, expect, Page, BrowserContext } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
+import { InboundShipmentDetailTabs } from '../../packages/invoices/src/InboundShipment/DetailView/types';
+
+// ─── Shared utilities ────────────────────────────────────────────────────────
 
 const screenshotDir = path.join(__dirname, '../screenshots/smoke');
 
 if (!fs.existsSync(screenshotDir)) {
   fs.mkdirSync(screenshotDir, { recursive: true });
+}
+
+// Brief pause to let React hit an infinite loop if one exists.
+// Infinite loops fire errors within ~50ms, so 300ms is plenty.
+const RENDER_SETTLE_MS = 300;
+
+function toSafeName(label: string) {
+  return label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+}
+
+function screenshot(page: Page, name: string) {
+  return page.screenshot({ path: path.join(screenshotDir, `${name}.png`) });
 }
 
 interface ErrorTracker {
@@ -45,10 +60,6 @@ function resetTracker(tracker: ErrorTracker) {
   tracker.hasInfiniteLoop = false;
 }
 
-// Brief pause to let React hit an infinite loop if one exists.
-// Infinite loops fire errors within ~50ms, so 300ms is plenty.
-const RENDER_SETTLE_MS = 300;
-
 function reportErrors(tracker: ErrorTracker, label: string) {
   const runtimeErrors = tracker.errors.filter(
     e =>
@@ -68,6 +79,24 @@ function reportErrors(tracker: ErrorTracker, label: string) {
   }
 }
 
+/** Navigate to a list page and intercept all GraphQL responses. */
+async function collectGraphQLFromPage(page: Page, listUrl: string) {
+  const graphqlResponses: Promise<any>[] = [];
+  page.on('response', r => {
+    if (r.url().includes('/graphql')) {
+      graphqlResponses.push(r.json().catch(() => null));
+    }
+  });
+
+  await page
+    .goto(listUrl, { waitUntil: 'networkidle', timeout: 15000 })
+    .catch(() => {});
+
+  return Promise.all(graphqlResponses);
+}
+
+// ─── Page-level helpers ──────────────────────────────────────────────────────
+
 async function navigateAndCheck(
   page: Page,
   tracker: ErrorTracker,
@@ -80,8 +109,7 @@ async function navigateAndCheck(
     .catch(() => {});
   await page.waitForTimeout(RENDER_SETTLE_MS);
 
-  const safeName = label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-  await page.screenshot({ path: path.join(screenshotDir, `${safeName}.png`) });
+  await screenshot(page, toSafeName(label));
 
   reportErrors(tracker, label);
   expect.soft(tracker.hasInfiniteLoop, `Infinite loop in ${label}`).toBe(false);
@@ -100,17 +128,23 @@ async function clickFirstRowAndCheck(
     return false;
   }
 
+  // Dismiss any open MUI dialog that may intercept clicks
+  const dialog = page.locator('.MuiDialog-root');
+  if (await dialog.isVisible({ timeout: 500 }).catch(() => false)) {
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+  }
+
   await row.click();
   await page.waitForLoadState('networkidle').catch(() => {});
   await page.waitForTimeout(RENDER_SETTLE_MS);
 
-  const safeName = label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-  await page.screenshot({
-    path: path.join(screenshotDir, `${safeName}-detail.png`),
-  });
+  await screenshot(page, `${toSafeName(label)}-detail`);
 
   reportErrors(tracker, `${label} detail`);
-  expect.soft(tracker.hasInfiniteLoop, `Infinite loop in ${label} detail`).toBe(false);
+  expect
+    .soft(tracker.hasInfiniteLoop, `Infinite loop in ${label} detail`)
+    .toBe(false);
   return true;
 }
 
@@ -130,22 +164,21 @@ async function clickTabsAndCheck(
     await tab.click();
     await page.waitForTimeout(RENDER_SETTLE_MS);
 
-    const safeName = `${label}-tab-${tabName}`
-      .replace(/[^a-z0-9]/gi, '-')
-      .toLowerCase();
-    await page.screenshot({
-      path: path.join(screenshotDir, `${safeName}.png`),
-    });
+    await screenshot(page, toSafeName(`${label}-tab-${tabName}`));
 
     reportErrors(tracker, `${label} > ${tabName}`);
-    expect.soft(
-      tracker.hasInfiniteLoop,
-      `Infinite loop in ${label} tab "${tabName}"`
-    ).toBe(false);
+    expect
+      .soft(
+        tracker.hasInfiniteLoop,
+        `Infinite loop in ${label} tab "${tabName}"`
+      )
+      .toBe(false);
   }
 }
 
-// Helper to create a section test suite with shared page
+// ─── Suite helpers ───────────────────────────────────────────────────────────
+
+/** Visit every route in a section; optionally click into the first row and its tabs. */
 function sectionSuite(
   name: string,
   routes: { label: string; url: string; hasDetail?: boolean }[]
@@ -184,23 +217,250 @@ function sectionSuite(
   });
 }
 
-// ─── Sections ─────────────────────────────────────────────────────────────────
+/** Find a specific row via GraphQL, then visit each tab on its detail view. */
+function detailTabSuite(
+  name: string,
+  listUrl: string,
+  detailPath: string,
+  findId: (data: any) => string | undefined,
+  tabs: { label: string; tab: string }[]
+) {
+  test.describe(name, () => {
+    test.describe.configure({ mode: 'serial' });
+
+    let page: Page;
+    let context: BrowserContext;
+    let tracker: ErrorTracker;
+    let detailUrl: string;
+
+    test.beforeAll(async ({ browser }) => {
+      context = await browser.newContext();
+      page = await context.newPage();
+      tracker = setupErrorTracking(page);
+
+      const allData = await collectGraphQLFromPage(page, listUrl);
+      for (const data of allData) {
+        const id = findId(data);
+        if (id) {
+          detailUrl = `${detailPath}/${id}`;
+          break;
+        }
+      }
+
+      if (!detailUrl) {
+        console.log(`  No matching row found in ${listUrl}, skipping ${name}`);
+      }
+    });
+
+    test.afterAll(async () => {
+      await context?.close();
+    });
+
+    for (const { label, tab } of tabs) {
+      test(label, async () => {
+        test.skip(!detailUrl, `No matching row found in ${listUrl}`);
+        await navigateAndCheck(
+          page,
+          tracker,
+          `${detailUrl}?tab=${tab}`,
+          `${name}-${tab}`
+        );
+      });
+    }
+  });
+}
+
+/**
+ * Find an editable shipment via GraphQL, navigate to its detail,
+ * click a line item to open the edit modal, and check for infinite rerenders.
+ * Editable statuses based on isInboundDisabled / isOutboundDisabled in utils.ts.
+ */
+function lineEditSuite(
+  name: string,
+  routes: {
+    label: string;
+    listUrl: string;
+    detailPath: string | ((node: any) => string);
+    /** Ordered by likelihood of having lines — last status is preferred. */
+    editableStatuses: string[];
+  }[]
+) {
+  test.describe(name, () => {
+    test.describe.configure({ mode: 'serial' });
+
+    let page: Page;
+    let context: BrowserContext;
+    let tracker: ErrorTracker;
+
+    test.beforeAll(async ({ browser }) => {
+      context = await browser.newContext();
+      page = await context.newPage();
+      tracker = setupErrorTracking(page);
+    });
+
+    test.afterAll(async () => {
+      await context?.close();
+    });
+
+    for (const route of routes) {
+      test(`${route.label} line edit modal`, async () => {
+        const allData = await collectGraphQLFromPage(page, route.listUrl);
+
+        // Find the best editable shipment (prefer statuses later in the list)
+        let detailUrl: string | undefined;
+        for (const data of allData) {
+          const nodes = data?.data?.invoices?.nodes ?? [];
+          const editable = nodes.filter((n: any) =>
+            route.editableStatuses.includes(n.status)
+          );
+          if (editable.length === 0) continue;
+
+          const statusOrder = route.editableStatuses;
+          editable.sort(
+            (a: any, b: any) =>
+              statusOrder.indexOf(b.status) - statusOrder.indexOf(a.status)
+          );
+          const match = editable[0];
+          const basePath =
+            typeof route.detailPath === 'function'
+              ? route.detailPath(match)
+              : route.detailPath;
+          detailUrl = `${basePath}/${match.id}`;
+          break;
+        }
+
+        if (!detailUrl) {
+          console.log(
+            `  No editable ${route.label} found (need status: ${route.editableStatuses.join('/')}), skipping`
+          );
+          return;
+        }
+
+        // Navigate directly to the editable shipment detail
+        resetTracker(tracker);
+        await page
+          .goto(detailUrl, { waitUntil: 'networkidle', timeout: 15000 })
+          .catch(() => {});
+        await page.waitForTimeout(RENDER_SETTLE_MS);
+
+        // Click the first line item row to open the edit modal
+        const lineRow = page.locator('tbody tr').first();
+        if (!(await lineRow.isVisible({ timeout: 3000 }).catch(() => false))) {
+          console.log(`  No line items in ${route.label}, skipping`);
+          return;
+        }
+
+        await lineRow.click();
+        await page.waitForTimeout(RENDER_SETTLE_MS);
+
+        const modal = page.locator('.MuiDialog-root');
+        if (!(await modal.isVisible({ timeout: 3000 }).catch(() => false))) {
+          console.log(`  Modal did not open in ${route.label}, skipping`);
+          return;
+        }
+
+        await page.waitForTimeout(RENDER_SETTLE_MS);
+
+        await screenshot(
+          page,
+          `${toSafeName(route.label)}-line-edit-modal`
+        );
+
+        reportErrors(tracker, `${route.label} line edit modal`);
+        expect
+          .soft(
+            tracker.hasInfiniteLoop,
+            `Infinite loop in ${route.label} line edit modal`
+          )
+          .toBe(false);
+
+        await page.keyboard.press('Escape');
+      });
+    }
+  });
+}
+
+// ─── Test configuration ──────────────────────────────────────────────────────
 
 sectionSuite('Dashboard', [{ label: 'dashboard', url: '/dashboard' }]);
 
 sectionSuite('Distribution', [
-  { label: 'outbound-shipment', url: '/distribution/outbound-shipment', hasDetail: true },
-  { label: 'customer-return', url: '/distribution/customer-return', hasDetail: true },
+  {
+    label: 'outbound-shipment',
+    url: '/distribution/outbound-shipment',
+    hasDetail: true,
+  },
+  {
+    label: 'customer-return',
+    url: '/distribution/customer-return',
+    hasDetail: true,
+  },
   { label: 'customers', url: '/distribution/customers' },
 ]);
 
 sectionSuite('Replenishment', [
-  { label: 'inbound-shipment', url: '/replenishment/inbound-shipment', hasDetail: true },
-  { label: 'purchase-order', url: '/replenishment/purchase-order', hasDetail: true },
-  { label: 'internal-order', url: '/replenishment/internal-order', hasDetail: true },
-  { label: 'supplier-return', url: '/replenishment/supplier-return', hasDetail: true },
+  { label: 'inbound-shipment', url: '/replenishment/inbound-shipment' },
+  {
+    label: 'purchase-order',
+    url: '/replenishment/purchase-order',
+    hasDetail: true,
+  },
+  {
+    label: 'internal-order',
+    url: '/replenishment/internal-order',
+    hasDetail: true,
+  },
+  {
+    label: 'supplier-return',
+    url: '/replenishment/supplier-return',
+    hasDetail: true,
+  },
   { label: 'suppliers', url: '/replenishment/suppliers' },
-  { label: 'r-and-r-forms', url: '/replenishment/r-and-r-forms', hasDetail: true },
+  {
+    label: 'r-and-r-forms',
+    url: '/replenishment/r-and-r-forms',
+    hasDetail: true,
+  },
+]);
+
+const { Details, Documents, Log, Financial, Currency, Delivery } =
+  InboundShipmentDetailTabs;
+
+detailTabSuite(
+  'Inbound Shipment Tabs',
+  '/replenishment/inbound-shipment',
+  '/replenishment/inbound-shipment-external',
+  data => {
+    const nodes = data.data?.invoices?.nodes ?? [];
+    return nodes.find((n: any) => n.purchaseOrder)?.id;
+  },
+  [
+    { label: 'shared: details', tab: Details },
+    { label: 'shared: documents', tab: Documents },
+    { label: 'shared: log', tab: Log },
+    { label: 'external: financial', tab: Financial },
+    { label: 'external: currency', tab: Currency },
+    { label: 'external: delivery', tab: Delivery },
+  ]
+);
+
+lineEditSuite('Line Edit Modals', [
+  {
+    label: 'inbound-shipment',
+    listUrl: '/replenishment/inbound-shipment',
+    // External inbound shipments (from PO) use a different detail route
+    detailPath: (node: any) =>
+      node.purchaseOrder
+        ? '/replenishment/inbound-shipment-external'
+        : '/replenishment/inbound-shipment',
+    editableStatuses: ['NEW', 'DELIVERED', 'RECEIVED'],
+  },
+  {
+    label: 'outbound-shipment',
+    listUrl: '/distribution/outbound-shipment',
+    detailPath: '/distribution/outbound-shipment',
+    editableStatuses: ['NEW', 'ALLOCATED', 'PICKED'],
+  },
 ]);
 
 sectionSuite('Inventory', [
