@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import { PropsWithChildrenOnly, RecordWithId } from '@common/types';
 import { ItemCannotBeOrderedFragment } from '../api';
 
@@ -31,7 +37,10 @@ const usePurchaseOrderLineErrors = () => {
     setErrors({});
   }, []);
 
-  return { errors, setError, setErrors, getError, unsetError, unsetAll };
+  return useMemo(
+    () => ({ errors, setError, setErrors, getError, unsetError, unsetAll }),
+    [errors, setError, setErrors, getError, unsetError, unsetAll]
+  );
 };
 
 export type UsePurchaseOrderLineErrors = ReturnType<
