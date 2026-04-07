@@ -5,9 +5,10 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, InvoiceRowStatusError,
 };
+use crate::preference::{preferences::MaximumBackdatingDays, Preference};
 use crate::validate::get_other_party;
 use crate::NullableUpdate;
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
     InvoiceStatus, InvoiceType, StorageConnection,
@@ -46,6 +47,41 @@ pub fn validate(
     {
         if !check_shipping_method_exists(connection, shipping_method_id)? {
             return Err(ShippingMethodDoesNotExist);
+        }
+    }
+
+    // Backdating validation: only New outbound shipments, no lines, not future, max days
+    if let Some(backdated_datetime) = patch.backdated_datetime {
+        if invoice.status != InvoiceStatus::New {
+            return Err(CantBackDate(
+                "Can only backdate new outbound shipments".to_string(),
+            ));
+        }
+
+        let max_allowed_date = Utc::now().date_naive() + Duration::days(1);
+        if backdated_datetime.date() > max_allowed_date {
+            return Err(CantBackDate("Cannot set date in the future".to_string()));
+        }
+
+        let line_count = InvoiceLineRepository::new(connection).count(Some(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(patch.id.to_string())),
+        ))?;
+        if line_count > 0 {
+            return Err(CantBackDate(
+                "Can't backdate as invoice has allocated lines".to_string(),
+            ));
+        }
+
+        let max_days: i32 = MaximumBackdatingDays
+            .load(connection, None)
+            .unwrap_or(0);
+        if max_days > 0 {
+            let earliest_allowed =
+                Utc::now().date_naive() - Duration::days(max_days as i64);
+            if backdated_datetime.date() < earliest_allowed {
+                return Err(ExceedsMaximumBackdatingDays);
+            }
         }
     }
 
