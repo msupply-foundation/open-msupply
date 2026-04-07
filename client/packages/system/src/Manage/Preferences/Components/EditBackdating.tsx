@@ -19,15 +19,13 @@ export const EditBackdating = ({
 }) => {
   const t = useTranslation();
 
-  const enabled = value?.enabled ?? false;
-  const maxDays = value?.maxDays ?? 0;
-
   const createUpdateValue = (
     updates: Partial<Omit<BackdatingNode, '__typename'>>
   ) => {
     update({
-      enabled,
-      maxDays,
+      shipmentsEnabled: value.shipmentsEnabled,
+      inventoryAdjustmentsEnabled: value.inventoryAdjustmentsEnabled,
+      maxDays: value.maxDays,
       ...updates,
     });
   };
@@ -39,8 +37,23 @@ export const EditBackdating = ({
         Input={
           <Switch
             disabled={disabled}
-            checked={enabled}
-            onChange={(_, checked) => createUpdateValue({ enabled: checked })}
+            checked={value.shipmentsEnabled}
+            onChange={(_, checked) =>
+              createUpdateValue({ shipmentsEnabled: checked })
+            }
+          />
+        }
+      />
+
+      <PreferenceLabelRow
+        label={t('preference.allowBackdatingOfInventoryAdjustments')}
+        Input={
+          <Switch
+            disabled={disabled}
+            checked={value.inventoryAdjustmentsEnabled}
+            onChange={(_, checked) =>
+              createUpdateValue({ inventoryAdjustmentsEnabled: checked })
+            }
           />
         }
       />
@@ -49,8 +62,8 @@ export const EditBackdating = ({
         label={t('preference.maximumBackdatingDays')}
         Input={
           <NumericTextInput
-            disabled={disabled || !enabled}
-            value={maxDays}
+            disabled={disabled || (!value.shipmentsEnabled && !value.inventoryAdjustmentsEnabled)}
+            value={value.maxDays}
             onChange={newMaxDays =>
               createUpdateValue({ maxDays: newMaxDays ?? 0 })
             }
