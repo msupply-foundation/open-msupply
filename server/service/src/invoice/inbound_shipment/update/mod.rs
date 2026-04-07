@@ -2090,20 +2090,27 @@ mod test {
             Err(UpdateInboundShipmentError::CannotMoveReceivedDateForward)
         );
 
-        // CannotPutReceivedDateBeforeDeliveredDate
-        // delivered is now - 1 day, so setting received to now - 2 days should fail
+        // Setting received before delivered should succeed and auto-adjust delivered
         let before_delivered = (now - Duration::days(2)).date();
+        let result = service.update_inbound_shipment(
+            &context,
+            UpdateInboundShipment {
+                id: received_inbound(now).id,
+                received_datetime: Some(before_delivered),
+                ..Default::default()
+            },
+            InboundShipmentType::InboundShipment,
+        );
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
+
+        let updated = InvoiceRowRepository::new(&_connection)
+            .find_one_by_id(&received_inbound(now).id)
+            .unwrap()
+            .unwrap();
+        // delivered_datetime should have been moved back to match received
         assert_eq!(
-            service.update_inbound_shipment(
-                &context,
-                UpdateInboundShipment {
-                    id: received_inbound(now).id,
-                    received_datetime: Some(before_delivered),
-                    ..Default::default()
-                },
-                InboundShipmentType::InboundShipment,
-            ),
-            Err(UpdateInboundShipmentError::CannotPutReceivedDateBeforeDeliveredDate)
+            updated.delivered_datetime,
+            Some(chrono::NaiveDateTime::from(before_delivered))
         );
     }
 

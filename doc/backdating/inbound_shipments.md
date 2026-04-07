@@ -61,8 +61,3 @@ When received_datetime is backdated:
 5. Confirmation dialog warns this is a one-way change
 6. If stocktake exists after the chosen date, additional warning shown
 7. On confirm, backend updates invoice received_datetime and location movement enter_datetimes
-
-## Still TODO
-
-- [ ] Wire up `MaximumBackdatingDays` to backend validation (currently only client-side via minDate)
-- [ ] "Cannot set a date after stock has been distributed" check
