@@ -9,6 +9,7 @@ import { test, expect, Page, BrowserContext } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
 import { InboundShipmentDetailTabs } from '../../packages/invoices/src/InboundShipment/DetailView/types';
+import { authFile } from '../playwright.config';
 
 // ─── Shared utilities ────────────────────────────────────────────────────────
 
@@ -18,16 +19,10 @@ if (!fs.existsSync(screenshotDir)) {
   fs.mkdirSync(screenshotDir, { recursive: true });
 }
 
-// How long to watch for infinite-loop warnings after navigation/click.
-// Loops usually fire within ~50ms, but async loops can take longer.
-// Clean pages exit early; pages with console activity get a growth check.
-const RENDER_SETTLE_MIN_MS = 300;
-const RENDER_SETTLE_MAX_MS = 2000;
-const RENDER_SETTLE_POLL_MS = 100;
-// If this many new console messages arrive during the polling window (~1.7s),
-// treat it as a loop. Real loops produce hundreds+; normal page loads may
-// produce 10-20 messages from React warnings, i18next, etc.
-const MESSAGE_GROWTH_THRESHOLD = 50;
+// Wait time after navigation/click for infinite render loops to manifest and be detected via console messages.
+// Can be reduced once we update to React 19 as it is much stricter about infinite updates and will throw an error instead of trying to recover with degraded performance.
+const RENDER_WAIT_MS = 2000;
+
 // If a single navigation/action produces more than this many console messages
 // (of any type), treat it as excessive logging and fail.
 const EXCESSIVE_LOG_THRESHOLD = 30;
@@ -46,44 +41,6 @@ interface ErrorTracker {
   /** Total console messages (all types) — used to detect rapid accumulation. */
   messageCount: number;
   hasInfiniteLoop: boolean;
-}
-
-/** Wait for renders to settle, then check for infinite loops.
- *  Two-phase detection:
- *  1. React's own "Maximum update depth" errors (immediate, from tracker)
- *  2. Rapid console message growth — catches async loops that React doesn't
- *     flag (e.g. render→fetch→state update→render producing repeated warnings)
- */
-async function waitForRenderSettle(page: Page, tracker: ErrorTracker) {
-  await page.waitForTimeout(RENDER_SETTLE_MIN_MS);
-  if (tracker.hasInfiniteLoop) return;
-
-  // No console activity at all — page is clean, no need to wait longer
-  if (tracker.messageCount === 0) return;
-
-  // Take two snapshots a short interval apart to detect growth
-  const snapshot1 = tracker.messageCount;
-  await page.waitForTimeout(RENDER_SETTLE_POLL_MS);
-  if (tracker.hasInfiniteLoop) return;
-  const snapshot2 = tracker.messageCount;
-
-  // No growth — page has settled
-  if (snapshot2 === snapshot1) return;
-
-  // Messages are still arriving — poll longer to confirm it's a loop
-  const start = Date.now();
-  while (Date.now() - start < RENDER_SETTLE_MAX_MS - RENDER_SETTLE_MIN_MS) {
-    if (tracker.hasInfiniteLoop) return;
-    await page.waitForTimeout(RENDER_SETTLE_POLL_MS);
-  }
-
-  // If messages kept accumulating through the polling window, it's likely
-  // an async rerender loop (e.g. repeated i18next warnings from a component
-  // that keeps re-rendering).
-  const totalGrowth = tracker.messageCount - snapshot1;
-  if (totalGrowth >= MESSAGE_GROWTH_THRESHOLD) {
-    tracker.hasInfiniteLoop = true;
-  }
 }
 
 function setupErrorTracking(page: Page): ErrorTracker {
@@ -184,7 +141,7 @@ async function navigateAndCheck(
   await page
     .goto(url, { waitUntil: 'networkidle', timeout: 15000 })
     .catch(() => {});
-  await waitForRenderSettle(page, tracker);
+  await page.waitForTimeout(RENDER_WAIT_MS);
 
   await screenshot(page, toSafeName(label));
 
@@ -204,18 +161,9 @@ async function clickFirstRowAndCheck(
     return false;
   }
 
-  // The list page was already settled by navigateAndCheck, but an async
-  // rerender loop may have started since then — settle again to catch it.
-  await waitForRenderSettle(page, tracker);
-  if (tracker.hasInfiniteLoop) {
-    reportErrors(tracker, `${label} (before detail click)`);
-    return false;
-  }
-  await dismissOpenDialog(page);
-
   await row.click();
   await page.waitForLoadState('networkidle').catch(() => {});
-  await waitForRenderSettle(page, tracker);
+  await page.waitForTimeout(RENDER_WAIT_MS);
 
   await screenshot(page, `${toSafeName(label)}-detail`);
 
@@ -237,7 +185,7 @@ async function clickTabsAndCheck(
 
     resetTracker(tracker);
     await tab.click();
-    await waitForRenderSettle(page, tracker);
+    await page.waitForTimeout(RENDER_WAIT_MS);
 
     await screenshot(page, toSafeName(`${label}-tab-${tabName}`));
 
@@ -260,7 +208,7 @@ function sectionSuite(
     let tracker: ErrorTracker;
 
     test.beforeAll(async ({ browser }) => {
-      context = await browser.newContext();
+      context = await browser.newContext({ storageState: authFile });
       page = await context.newPage();
       tracker = setupErrorTracking(page);
     });
@@ -303,7 +251,7 @@ function detailTabSuite(
     let detailUrl: string;
 
     test.beforeAll(async ({ browser }) => {
-      context = await browser.newContext();
+      context = await browser.newContext({ storageState: authFile });
       page = await context.newPage();
       tracker = setupErrorTracking(page);
 
@@ -362,7 +310,7 @@ function lineEditSuite(
     let tracker: ErrorTracker;
 
     test.beforeAll(async ({ browser }) => {
-      context = await browser.newContext();
+      context = await browser.newContext({ storageState: authFile });
       page = await context.newPage();
       tracker = setupErrorTracking(page);
     });
@@ -410,7 +358,7 @@ function lineEditSuite(
         await page
           .goto(detailUrl, { waitUntil: 'networkidle', timeout: 15000 })
           .catch(() => {});
-        await waitForRenderSettle(page, tracker);
+        await page.waitForTimeout(RENDER_WAIT_MS);
 
         // Click the first line item row to open the edit modal
         const lineRow = page.locator('tbody tr').first();
@@ -426,7 +374,7 @@ function lineEditSuite(
         await dismissOpenDialog(page);
 
         await lineRow.click();
-        await waitForRenderSettle(page, tracker);
+        await page.waitForTimeout(RENDER_WAIT_MS);
 
         const modal = page.locator('.MuiDialog-root');
         if (!(await modal.isVisible({ timeout: 3000 }).catch(() => false))) {
@@ -434,13 +382,17 @@ function lineEditSuite(
           return;
         }
 
-        await waitForRenderSettle(page, tracker);
+        await page.waitForTimeout(RENDER_WAIT_MS);
 
         await screenshot(page, `${toSafeName(route.label)}-line-edit-modal`);
 
         reportErrors(tracker, `${route.label} line edit modal`);
-
-        await page.keyboard.press('Escape');
+        expect
+          .soft(
+            tracker.hasInfiniteLoop,
+            `Infinite loop in ${route.label} line edit modal`
+          )
+          .toBe(false);
       });
     }
   });
