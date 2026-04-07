@@ -15,10 +15,12 @@ import {
   ChipTableCell,
   ExpiryDateCell,
   UnitsAndDosesCell,
+  useColumnGrouping,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
+import { useGroupedStockList } from '../api/hooks/useGroupedStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 import { Toolbar } from './Toolbar';
 
@@ -28,6 +30,10 @@ export const StockListView = () => {
   const { plugins } = usePluginProvider();
   const { manageVvmStatusForStock } = usePreferences();
   const { isOpen, onClose, onOpen } = useEditModal();
+
+  // Grouping state is lifted here so we can choose which query to fire
+  const grouping = useColumnGrouping('stock-list', { field: 'code' });
+  const isGrouped = grouping.state.length > 0;
 
   const {
     queryParams: { sortBy, first, offset, filterBy },
@@ -54,6 +60,7 @@ export const StockListView = () => {
       },
     ],
   });
+
   const queryParams = {
     filterBy: { ...filterBy },
     offset,
@@ -61,7 +68,19 @@ export const StockListView = () => {
     first,
   };
 
-  const { data, isFetching, isError } = useStockList(queryParams);
+  // Both hooks are always called (React rules), but only one is active
+  const ungroupedResult = useStockList(queryParams, {
+    enabled: !isGrouped,
+  });
+  const groupedResult = useGroupedStockList(queryParams, {
+    enabled: isGrouped,
+  });
+
+  const data = isGrouped ? groupedResult.data : ungroupedResult.data;
+  const isFetching = isGrouped
+    ? groupedResult.isFetching
+    : ungroupedResult.isFetching;
+  const isError = isGrouped ? groupedResult.isError : ungroupedResult.isError;
 
   const mrtColumns = useMemo(
     (): ColumnDef<StockLineRowFragment>[] => [
@@ -243,7 +262,7 @@ export const StockListView = () => {
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
     enableRowSelection: false,
-    grouping: { field: 'code' },
+    externalGrouping: grouping,
     noDataElement: (
       <NothingHere
         body={t('error.no-stock')}
@@ -255,7 +274,7 @@ export const StockListView = () => {
 
   return (
     <>
-      <Toolbar />
+      <Toolbar isGrouped={isGrouped} />
       <AppBarButtons exportFilter={filterBy} />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />

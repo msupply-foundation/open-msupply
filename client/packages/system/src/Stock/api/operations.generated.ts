@@ -1050,6 +1050,34 @@ export type UpdateVvmStatusLogMutation = {
   updateVvmStatusLog: { __typename: 'IdResponse'; id: string };
 };
 
+export type StockItemsGroupedQueryVariables = Types.Exact<{
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.ItemSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.ItemFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type StockItemsGroupedQuery = {
+  __typename: 'Queries';
+  items: {
+    __typename: 'ItemConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'ItemNode';
+      id: string;
+      code: string;
+      name: string;
+      availableBatches: {
+        __typename: 'StockLineConnector';
+        totalCount: number;
+        nodes: Array<StockLineRowFragment>;
+      };
+    }>;
+  };
+};
+
 export const VvmStatusLogRowFragmentDoc = gql`
   fragment VVMStatusLogRow on VvmstatusLogNode {
     id
@@ -1458,6 +1486,43 @@ export const UpdateVvmStatusLogDocument = gql`
     }
   }
 `;
+export const StockItemsGroupedDocument = gql`
+  query stockItemsGrouped(
+    $first: Int
+    $offset: Int
+    $key: ItemSortFieldInput!
+    $desc: Boolean
+    $filter: ItemFilterInput
+    $storeId: String!
+  ) {
+    items(
+      storeId: $storeId
+      page: { first: $first, offset: $offset }
+      sort: { key: $key, desc: $desc }
+      filter: $filter
+    ) {
+      ... on ItemConnector {
+        __typename
+        nodes {
+          __typename
+          id
+          code
+          name
+          availableBatches(storeId: $storeId) {
+            __typename
+            totalCount
+            nodes {
+              __typename
+              ...StockLineRow
+            }
+          }
+        }
+        totalCount
+      }
+    }
+  }
+  ${StockLineRowFragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1727,6 +1792,24 @@ export function getSdk(
           }),
         'updateVvmStatusLog',
         'mutation',
+        variables
+      );
+    },
+    stockItemsGrouped(
+      variables: StockItemsGroupedQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<StockItemsGroupedQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StockItemsGroupedQuery>({
+            document: StockItemsGroupedDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stockItemsGrouped',
+        'query',
         variables
       );
     },
