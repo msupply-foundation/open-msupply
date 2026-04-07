@@ -6,6 +6,7 @@ import {
   MRT_StatefulTableOptions,
   MRT_TableOptions,
 } from 'material-react-table';
+import { isEqual } from '@common/utils';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { ColumnDef } from '../types';
 import { useGlobalTableDefaults } from './useGlobalTableConfig';
@@ -46,10 +47,13 @@ export const useColumnOrder = <T extends MRT_RowData>(
 
   // If initial state changes (due to plugin column loading, for example) and no
   // custom column order has been saved, update the column order to the new
-  // default
+  // default. Use functional updater to avoid rerender when content is unchanged.
   useEffect(() => {
     if (!getSavedState(tableId)?.columnOrder)
-      setState(globalDefaults?.columnOrder ?? initial);
+      setState(prev => {
+        const next = globalDefaults?.columnOrder ?? initial;
+        return isEqual(prev, next) ? prev : next;
+      });
   }, [initial, enableExpanding]);
 
   const update = useCallback<
