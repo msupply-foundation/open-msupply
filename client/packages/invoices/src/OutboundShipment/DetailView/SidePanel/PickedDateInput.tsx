@@ -12,10 +12,8 @@ import {
   Formatter,
   useConfirmationModal,
   usePreferences,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
-import { useOutboundDeleteLines } from '../../api/hooks/line/useOutboundDeleteLines';
 
 export const PickedDateInput = () => {
   const t = useTranslation();
@@ -46,14 +44,12 @@ export const PickedDateInput = () => {
   const lineCount = lines?.totalCount ?? 0;
 
   const disabledReason = !allowBackdatingOfShipments
-    ? t('messages.received-date-backdating-not-enabled' as LocaleKey)
+    ? t('messages.received-date-backdating-not-enabled')
     : !isNew
-      ? t('messages.picked-date-not-new' as LocaleKey)
+      ? t('messages.picked-date-not-new')
       : undefined;
 
   const disabled = !!disabledReason;
-
-  const { mutateAsync: deleteLinesMutation } = useOutboundDeleteLines();
 
   const { sdk, storeId } = useOutbound.utils.api();
 
@@ -61,7 +57,7 @@ export const PickedDateInput = () => {
 
   const getDeleteLinesConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-backdate-picked-date' as LocaleKey),
+    message: t('messages.confirm-backdate-picked-date'),
   });
 
   const getStocktakeWarningConfirmation = useConfirmationModal({
@@ -95,8 +91,7 @@ export const PickedDateInput = () => {
     const previousValue = dateValue;
     setDateValue(newDate);
 
-    const oldDate = DateUtils.getDateOrNull(dateValue);
-    if (newDate.toLocaleDateString() === oldDate?.toLocaleDateString()) return;
+    if (dateValue && DateUtils.isSameDay(newDate, dateValue)) return;
 
     const doUpdate = async () => {
       const hasStocktakeAfter = await checkStocktakeAfterDate(newDate);
@@ -121,14 +116,10 @@ export const PickedDateInput = () => {
       });
     };
 
-    // If lines exist, warn they'll be deleted (prescription pattern)
+    // If lines exist, warn they'll be deleted (backend handles deletion atomically)
     if (lineCount > 0) {
       getDeleteLinesConfirmation({
-        onConfirm: async () => {
-          const lineIds = lines?.nodes?.map(l => ({ id: l.id })) ?? [];
-          await deleteLinesMutation(lineIds);
-          await doUpdate();
-        },
+        onConfirm: () => doUpdate(),
         onCancel: () => setDateValue(previousValue),
       });
       return;
