@@ -8,11 +8,16 @@ import { StockLineRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
+// Only a subset of stock-line filters can be translated to item-level filters.
+// Stock-line-specific filters (location, expiry, VVM, masterList) don't apply
+// when paginating by item — the Toolbar hides them in grouped mode.
+type GroupedFilterBy = Pick<StockLineFilterInput, 'search' | 'name' | 'code'>;
+
 export type GroupedStockListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<StockLineRowFragment>;
-  filterBy?: StockLineFilterInput;
+  filterBy?: GroupedFilterBy;
 };
 
 export const useGroupedStockList = (
