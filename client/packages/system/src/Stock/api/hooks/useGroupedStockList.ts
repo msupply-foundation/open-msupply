@@ -71,7 +71,8 @@ export const useGroupedStockList = (
     const items = query?.items;
     if (!items || !('nodes' in items)) return { nodes: [], totalCount: 0 };
 
-    // Flatten: items with nested stock lines → flat stock line array
+    // Flatten: items with nested stock lines → flat stock line array.
+    // MRT's column grouping handles the visual grouping + aggregation.
     const nodes: StockLineRowFragment[] = [];
     for (const item of items.nodes) {
       for (const stockLine of item.availableBatches.nodes) {

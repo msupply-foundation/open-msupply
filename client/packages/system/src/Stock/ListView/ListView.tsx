@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useTranslation,
   NothingHere,
@@ -15,7 +15,6 @@ import {
   ChipTableCell,
   ExpiryDateCell,
   UnitsAndDosesCell,
-  useColumnGrouping,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -31,9 +30,7 @@ export const StockListView = () => {
   const { manageVvmStatusForStock } = usePreferences();
   const { isOpen, onClose, onOpen } = useEditModal();
 
-  // Grouping state is lifted here so we can choose which query to fire
-  const grouping = useColumnGrouping('stock-list', { field: 'code' });
-  const isGrouped = grouping.state.length > 0;
+  const [isGrouped, setIsGrouped] = useState<boolean | null>(null);
 
   const {
     queryParams: { sortBy, first, offset, filterBy },
@@ -80,6 +77,7 @@ export const StockListView = () => {
     if (isGrouped) {
       stockLineFilterKeys.forEach(key => updateFilterQuery(key, ''));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGrouped]);
 
   const queryParams = {
@@ -91,10 +89,10 @@ export const StockListView = () => {
 
   // Both hooks are always called (React rules), but only one is active
   const ungroupedResult = useStockList(queryParams, {
-    enabled: !isGrouped,
+    enabled: isGrouped === false,
   });
   const groupedResult = useGroupedStockList(queryParams, {
-    enabled: isGrouped,
+    enabled: isGrouped === true,
   });
 
   const data = isGrouped ? groupedResult.data : ungroupedResult.data;
@@ -283,7 +281,10 @@ export const StockListView = () => {
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
     enableRowSelection: false,
-    externalGrouping: grouping,
+    grouping: {
+      field: 'code',
+      onToggle: setIsGrouped,
+    },
     noDataElement: (
       <NothingHere
         body={t('error.no-stock')}
@@ -295,7 +296,7 @@ export const StockListView = () => {
 
   return (
     <>
-      <Toolbar isGrouped={isGrouped} />
+      <Toolbar isGrouped={!!isGrouped} />
       <AppBarButtons exportFilter={filterBy} />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />

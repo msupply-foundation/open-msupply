@@ -46,11 +46,9 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
     field: string;
     groupedByDefault?: boolean;
     label?: string;
+    /** Fires when the user toggles grouping on/off. */
+    onToggle?: (isGrouped: boolean) => void;
   };
-  /** Pass an externally-managed grouping state to avoid double-initialisation
-   *  of useColumnGrouping (e.g. when the parent component needs to read the
-   *  grouping state before fetching data). */
-  externalGrouping?: ReturnType<typeof useColumnGrouping>;
   columns: ColumnDef<T>[];
   noUrlFiltering?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
@@ -69,7 +67,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   columns: omsColumns,
   data,
   grouping: groupingInput,
-  externalGrouping,
   enableColumnResizing = true,
   manualFiltering = false,
   noUrlFiltering = false,
@@ -106,11 +103,15 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const columnSizing = useColumnSizing(tableId);
   const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
   const columnPinning = useColumnPinning(tableId, columns);
-  const internalGrouping = useColumnGrouping(
-    tableId,
-    externalGrouping ? undefined : groupingInput
-  );
-  const grouping = externalGrouping ?? internalGrouping;
+  const grouping = useColumnGrouping(tableId, groupingInput);
+
+  // Notify parent of the initial grouping state (read from localStorage)
+  // so it can enable the correct data query before the first toggle click.
+  React.useEffect(() => {
+    groupingInput?.onToggle?.(grouping.state.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const columnOrder = useColumnOrder(
     tableId,
     columns,
@@ -169,7 +170,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     hasColumnFilters,
     onRowClick,
     isGrouped: !!grouping.state.length,
-    toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
+    toggleGrouped: grouping.enabled
+      ? () => {
+          grouping.toggle();
+          groupingInput?.onToggle?.(!grouping.state.length);
+        }
+      : undefined,
     groupByLabel: groupingInput?.label,
     getIsPlaceholderRow,
     getIsRestrictedRow,
