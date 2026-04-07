@@ -21,7 +21,7 @@
 .header_date_section,
 .body_section,
 .body_total_section {
-  margin-left: 8px;
+  margin-inline-start: 8px;
   width: 100%;
 }
 
@@ -49,13 +49,13 @@
 }
 
 .header_section_field_right {
-  text-align: right;
+  text-align: end;
   font-family: Tahoma;
   font-size: 8pt;
 }
 
 .header_section_field_left {
-  text-align: left;
+  text-align: start;
   font-family: Tahoma;
   font-size: 8pt;
 }
@@ -67,7 +67,7 @@
 .cost_price,
 .total_quantity,
 .total_extension {
-  text-align: right;
+  text-align: end;
   font-family: Tahoma;
   font-size: 8pt;
 }
@@ -75,7 +75,7 @@
 .location_code,
 .item_name,
 .batch {
-  text-align: left;
+  text-align: start;
   font-family: Tahoma;
   font-size: 8pt;
 }
@@ -96,27 +96,27 @@
 
 hr {
   width: 100%;
-  margin-left: 8px;
+  margin-inline-start: 8px;
   border: 0.1px solid black;
 }
 
 .header_left_section {
-  text-align: left;
+  text-align: start;
   font-family: Tahoma;
   font-size: 8pt;
   flex: 0 1 auto;
-  margin-right: 10px;
+  margin-inline-end: 10px;
 }
 
 .header_details_section {
   flex: 1 1 0;
-  text-align: left;
+  text-align: start;
   font-family: Tahoma;
   font-size: 8pt;
 }
 
 .header_right_section {
-  text-align: right;
+  text-align: end;
   font-family: Tahoma;
   font-size: 8pt;
   flex: 0 1 auto;

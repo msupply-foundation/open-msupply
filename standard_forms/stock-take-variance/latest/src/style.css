@@ -12,7 +12,7 @@
 
 .header_image_section,
 .header_supplied_section {
-  margin-left: 8px;
+  margin-inline-start: 8px;
   width: 100%;
   font-family: Tahoma;
   font-size: 8pt;
@@ -79,68 +79,68 @@ td.borderlineTopBottom {
 }
 
 .name_right {
-  text-align: right;
+  text-align: end;
   font-weight: normal;
   font-size: 10pt;
 }
 
 .col-item-code {
   width: 6%;
-  text-align: left;
+  text-align: start;
 }
 
 .col-item-name {
-  text-align: left;
+  text-align: start;
 }
 
 .col-batch {
   width: 5%;
-  text-align: left;
+  text-align: start;
 }
 
 .col-expiry-date {
   width: 7.5%;
-  text-align: right;
+  text-align: end;
 }
 
 .col-packsize {
   width: 5%;
-  text-align: right;
+  text-align: end;
 }
 
 .col-cost-price {
   width: 8%;
-  text-align: right;
+  text-align: end;
 }
 
 .col-snapshot-packs {
   width: 6%;
-  text-align: right;
+  text-align: end;
 }
 
 .col-counted-packs {
   width: 6%;
-  text-align: right;
+  text-align: end;
 }
 
 .col-variance-packs {
   width: 6%;
-  text-align: right;
+  text-align: end;
 }
 
 .col-variance-values {
   width: 6%;
-  text-align: right;
+  text-align: end;
 }
 
 .col-reason {
   width: 10%;
-  text-align: right;
+  text-align: end;
 }
 
 .col-comment {
   width: 12%;
-  text-align: right;
+  text-align: end;
 }
 
 .batch-wrap {
