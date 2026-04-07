@@ -607,14 +607,14 @@ export const InboundLineEditCards = ({
         accessorFn: row => row.vvmStatus || '',
         Cell: ({
           row: {
-            original: { id, vvmStatus, stockLine },
+            original: { id, vvmStatus, stockLine, isCreated },
           },
         }) => (
           <VVMStatusSearchInput
             disabled={isDisabled}
             selected={vvmStatus ?? null}
             onChange={vvmStatus => updateDraftLine({ id, vvmStatus })}
-            useDefault={!stockLine}
+            useDefault={!stockLine && !!isCreated}
           />
         ),
         includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
