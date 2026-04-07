@@ -1,9 +1,8 @@
 import * as React from 'react';
 
-export const UnhappyMan = React.forwardRef<SVGSVGElement>((_props, ref) => {
+export const UnhappyMan: React.FC = () => {
   return (
     <svg
-      ref={ref}
       width={301}
       height={300}
       viewBox="0 0 301 300"
@@ -282,6 +281,6 @@ export const UnhappyMan = React.forwardRef<SVGSVGElement>((_props, ref) => {
       </g>
     </svg>
   );
-});
+};
 
 export default UnhappyMan;

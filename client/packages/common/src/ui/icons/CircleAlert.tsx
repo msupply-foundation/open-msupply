@@ -1,14 +1,12 @@
 import React from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
-export const CircleAlertIcon = React.forwardRef<
-  SVGSVGElement,
-  SvgIconProps & { fill?: string }
->((props, ref) => {
+export const CircleAlertIcon = (
+  props: SvgIconProps & { fill?: string }
+): JSX.Element => {
   const { fill = 'none', ...rest } = props;
   return (
     <SvgIcon
-      ref={ref}
       {...rest}
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -25,4 +23,4 @@ export const CircleAlertIcon = React.forwardRef<
       </g>
     </SvgIcon>
   );
-});
+};
