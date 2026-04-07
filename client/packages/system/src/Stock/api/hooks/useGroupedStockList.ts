@@ -1,6 +1,7 @@
 import {
   ItemSortFieldInput,
   SortBy,
+  StockLineFilterInput,
   useQuery,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../operations.generated';
@@ -11,7 +12,7 @@ export type GroupedStockListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<StockLineRowFragment>;
-  filterBy?: Record<string, unknown>;
+  filterBy?: StockLineFilterInput;
 };
 
 export const useGroupedStockList = (
@@ -48,9 +49,9 @@ export const useGroupedStockList = (
   }> => {
     const filter = {
       hasStockOnHand: true,
-      ...(filterBy?.['search'] ? { codeOrName: filterBy['search'] } : {}),
-      ...(filterBy?.['name'] ? { codeOrName: filterBy['name'] } : {}),
-      ...(filterBy?.['code'] ? { code: filterBy['code'] } : {}),
+      ...(filterBy?.search ? { codeOrName: filterBy.search } : {}),
+      ...(filterBy?.name ? { codeOrName: filterBy.name } : {}),
+      ...(filterBy?.code ? { code: filterBy.code } : {}),
     };
 
     const query = await stockApi.stockItemsGrouped({
