@@ -1,17 +1,18 @@
 import {
-  INACTIVITY_TIMEOUT_MINUTES,
   DateUtils,
   getAuthCookie,
   setAuthCookie,
-  useGql,
 } from '@openmsupply-client/common';
 import { useGetRefreshToken } from './useGetRefreshToken';
 
+export const TOKEN_REFRESH_BUFFER_MINUTES = 5;
+export type RefreshAction = 'refresh' | 'none';
+
+export const getRefreshAction = (expiresInMinutes: number): RefreshAction =>
+  expiresInMinutes <= TOKEN_REFRESH_BUFFER_MINUTES ? 'refresh' : 'none';
+
 export const useRefreshToken = (onTimeout: () => void) => {
   const { mutateAsync } = useGetRefreshToken();
-  const {
-    client: { getLastRequestTime },
-  } = useGql();
 
   const refreshToken = () => {
     const authCookie = getAuthCookie();
@@ -24,25 +25,24 @@ export const useRefreshToken = (onTimeout: () => void) => {
         })
       : 0;
 
-    const minutesSinceLastRequest = DateUtils.differenceInMinutes(
-      Date.now(),
-      getLastRequestTime()
-    );
+    const action = getRefreshAction(expiresIn);
 
-    const expiresSoon = expiresIn === 1 || expiresIn === 2;
-
-    if (minutesSinceLastRequest >= INACTIVITY_TIMEOUT_MINUTES) {
-      onTimeout();
-      return;
-    }
-
-    if (expiresSoon && minutesSinceLastRequest < INACTIVITY_TIMEOUT_MINUTES) {
-      mutateAsync().then(data => {
-        const token = data?.token ?? '';
-        const newCookie = { ...authCookie, token };
-        setAuthCookie(newCookie);
-      });
+    if (action === 'refresh') {
+      mutateAsync()
+        .then(data => {
+          const token = data?.token ?? '';
+          if (token) {
+            const newCookie = { ...authCookie, token };
+            setAuthCookie(newCookie);
+          } else {
+            onTimeout(); // token expired -> logout
+          }
+        })
+        .catch(() => {
+          onTimeout(); // token expired/invalid -> logout
+        });
     }
   };
+
   return { refreshToken };
 };

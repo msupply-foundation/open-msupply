@@ -98,6 +98,7 @@ export const EditPreference = ({
       );
 
     case PreferenceValueNodeType.Integer:
+    case PreferenceValueNodeType.Float:
       if (!isNumber(preference.value)) {
         return t('error.something-wrong');
       }
@@ -110,6 +111,11 @@ export const EditPreference = ({
               onChange={handleChange}
               onBlur={() => {}}
               disabled={disabled}
+              decimalLimit={
+                preference.valueType === PreferenceValueNodeType.Float
+                  ? 2
+                  : 0
+              }
             />
           }
           isLast={isLast}

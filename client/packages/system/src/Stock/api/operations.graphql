@@ -370,3 +370,38 @@ mutation updateVvmStatusLog(
     }
   }
 }
+
+query stockItemsGrouped(
+  $first: Int
+  $offset: Int
+  $key: ItemSortFieldInput!
+  $desc: Boolean
+  $filter: ItemFilterInput
+  $storeId: String!
+) {
+  items(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        code
+        name
+        availableBatches(storeId: $storeId) {
+          __typename
+          totalCount
+          nodes {
+            __typename
+            ...StockLineRow
+          }
+        }
+      }
+      totalCount
+    }
+  }
+}

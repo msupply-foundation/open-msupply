@@ -172,7 +172,7 @@ export const inboundParsers = {
     numberOfPacks: line.numberOfPacks,
     location: setNullableInput('id', line.location),
     itemVariantId: setNullableInput('id', line.itemVariant),
-    vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
+    vvmStatusId: setNullableInput('id', 'vvmStatus' in line ? (line.vvmStatus ?? null) : undefined),
     donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
     manufacturerId: setNullableInput('manufacturerId', {
       manufacturerId: line.manufacturer?.id ?? null,
