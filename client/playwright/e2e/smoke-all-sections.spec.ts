@@ -231,10 +231,17 @@ function sectionSuite(
               timeout: RENDER_WAIT_MS,
             })
             .catch(() => {});
-          if (await clickFirstRowAndCheck(page, tracker, route.label)) {
-            await clickTabsAndCheck(page, tracker, route.label);
-            await page.goBack();
+          const hasRows = await clickFirstRowAndCheck(
+            page,
+            tracker,
+            route.label
+          );
+          if (!hasRows) {
+            test.skip(true, `No rows in ${route.label}`);
+            return;
           }
+          await clickTabsAndCheck(page, tracker, route.label);
+          await page.goBack();
         });
       }
     }
@@ -354,8 +361,9 @@ function lineEditSuite(
         }
 
         if (!detailUrl) {
-          console.log(
-            `  No editable ${route.label} found (need status: ${route.editableStatuses.join('/')}), skipping`
+          test.skip(
+            true,
+            `No editable ${route.label} found (need status: ${route.editableStatuses.join('/')})`
           );
           return;
         }
@@ -373,7 +381,7 @@ function lineEditSuite(
         // Click the first line item row to open the edit modal
         const lineRow = page.locator('tbody tr').first();
         if (!(await lineRow.isVisible({ timeout: 3000 }).catch(() => false))) {
-          console.log(`  No line items in ${route.label}, skipping`);
+          test.skip(true, `No line items in ${route.label}`);
           return;
         }
 
@@ -388,7 +396,7 @@ function lineEditSuite(
 
         const modal = page.locator('.MuiDialog-root');
         if (!(await modal.isVisible({ timeout: 3000 }).catch(() => false))) {
-          console.log(`  Modal did not open in ${route.label}, skipping`);
+          test.skip(true, `Modal did not open in ${route.label}`);
           return;
         }
 
