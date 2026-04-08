@@ -82,7 +82,7 @@ const stocktakeParser = {
         manufacturerId: line.manufacturer?.id ?? null,
       }),
       reasonOptionId: line.reasonOption?.id,
-      vvmStatusId: line.vvmStatus?.id,
+      vvmStatusId: setNullableInput('id', line.vvmStatus ?? null),
       volumePerPack: line.volumePerPack,
       campaignId: setNullableInput('id', line.campaign),
       programId: setNullableInput('id', line.program),

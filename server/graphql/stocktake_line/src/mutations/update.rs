@@ -41,7 +41,7 @@ pub struct UpdateInput {
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub reason_option_id: Option<String>,
-    pub vvm_status_id: Option<String>,
+    pub vvm_status_id: Option<NullableUpdateInput<String>>,
     pub volume_per_pack: Option<f64>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
@@ -139,7 +139,9 @@ impl UpdateInput {
             cost_price_per_pack,
             sell_price_per_pack,
             note,
-            vvm_status_id,
+            vvm_status_id: vvm_status_id.map(|vvm_status_id| NullableUpdate {
+                value: vvm_status_id.value,
+            }),
             expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
                 value: expiry_date.value,
             }),
