@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useMediaQuery, useTheme } from '@mui/material';
 import {
   AppBarButtonsPortal,
   AppBarContentPortal,
@@ -41,6 +42,11 @@ import { usePrescriptionGraphQL } from '../Prescriptions/api/usePrescriptionGrap
 import { useStocktakeGraphQL } from '@openmsupply-client/inventory/src/Stocktake/api/useStocktakeGraphQL';
 import {
   DemographicNodeLite,
+  isChild011Bucket,
+  isChild1223Bucket,
+  isChild25Bucket,
+  isWomenNonPregnantBucket,
+  isWomenPregnantBucket,
   resolveDemographicBuckets,
 } from './demographicBuckets';
 
@@ -95,6 +101,19 @@ type ConfirmationSummaryRow = {
   batch: string;
   issued: string;
   wastage: string;
+};
+
+type CoverageSummaryRow = {
+  itemId: string;
+  itemName: string;
+  childUnderOneMale: number;
+  childUnderOneFemale: number;
+  childOneToTwoMale: number;
+  childOneToTwoFemale: number;
+  childTwoToFiveMale: number;
+  childTwoToFiveFemale: number;
+  womenNonPregnant: number;
+  womenPregnant: number;
 };
 
 type ChildCoverageAgeGroup = {
@@ -303,6 +322,67 @@ const coveragePayloadForLine = (
   };
 };
 
+const buildCoverageSummaryRows = (
+  vaccineRows: DailyTallyRow[],
+  coverageByItem: Record<string, VaccineCoverageDraft>,
+  demographics: DemographicNodeLite[] | undefined
+): CoverageSummaryRow[] => {
+  const buckets = resolveDemographicBuckets(demographics);
+
+  return vaccineRows
+    .map(row => {
+      const coverage = coverageByItem[row.itemId];
+      if (!coverage || !hasCoverageValues(coverage)) return null;
+
+      const summary: CoverageSummaryRow = {
+        itemId: row.itemId,
+        itemName: row.item,
+        childUnderOneMale: 0,
+        childUnderOneFemale: 0,
+        childOneToTwoMale: 0,
+        childOneToTwoFemale: 0,
+        childTwoToFiveMale: 0,
+        childTwoToFiveFemale: 0,
+        womenNonPregnant: 0,
+        womenPregnant: 0,
+      };
+
+      for (const child of coverage.childAgeGroups) {
+        if (isChild011Bucket(child.id, child.label, buckets)) {
+          summary.childUnderOneMale += child.male;
+          summary.childUnderOneFemale += child.female;
+          continue;
+        }
+
+        if (isChild1223Bucket(child.id, child.label, buckets)) {
+          summary.childOneToTwoMale += child.male;
+          summary.childOneToTwoFemale += child.female;
+          continue;
+        }
+
+        if (isChild25Bucket(child.id, child.label, buckets)) {
+          summary.childTwoToFiveMale += child.male;
+          summary.childTwoToFiveFemale += child.female;
+        }
+      }
+
+      for (const women of coverage.womenAgeGroups) {
+        if (isWomenNonPregnantBucket(women.id, women.label, buckets)) {
+          summary.womenNonPregnant += women.count;
+          continue;
+        }
+
+        if (isWomenPregnantBucket(women.id, women.label, buckets)) {
+          summary.womenPregnant += women.count;
+        }
+      }
+
+      return summary;
+    })
+    .filter((row): row is CoverageSummaryRow => row !== null)
+    .sort((a, b) => a.itemName.localeCompare(b.itemName));
+};
+
 const dailyTallyLineNote = (
   row: DailyTallyRow,
   coverage: VaccineCoverageDraft | undefined
@@ -395,6 +475,8 @@ const itemTitleSx = {
 
 export const DailyTallyView = () => {
   const t = useTranslation();
+  const theme = useTheme();
+  const isLaptopLayout = useMediaQuery(theme.breakpoints.up('lg'));
   const isSimplifiedTabletUI = useSimplifiedTabletUI();
   const { useSimplifiedMobileUi = false } = usePreferences();
   const isSimplifiedMode = isSimplifiedTabletUI || useSimplifiedMobileUi;
@@ -477,6 +559,13 @@ export const DailyTallyView = () => {
       })),
     [patientData?.nodes]
   );
+
+  const selectedPatientLabel = useMemo(() => {
+    return (
+      patientOptions.find(option => option.value === selectedPatientId)?.label ||
+      'Not selected'
+    );
+  }, [patientOptions, selectedPatientId]);
 
   const openVialWastageReason = useMemo(
     () =>
@@ -682,6 +771,15 @@ export const DailyTallyView = () => {
 
   const vaccineRows = useMemo(() => rows.filter(row => row.isVaccine), [rows]);
   const nonVaccineRows = useMemo(() => rows.filter(row => !row.isVaccine), [rows]);
+  const confirmCoverageRows = useMemo(
+    () =>
+      buildCoverageSummaryRows(
+        rows.filter(row => row.isVaccine && row.used > 0),
+        coverageByItem,
+        demographicData?.nodes
+      ),
+    [rows, coverageByItem, demographicData?.nodes]
+  );
 
   const updateDraft = (itemId: string, patch: Partial<RowDraft>) => {
     setDraftByItem(previous => ({
@@ -821,7 +919,20 @@ export const DailyTallyView = () => {
     stockLine: TallyStockLine,
     rawValue: string
   ) => {
-    const used = parseInput(rawValue);
+    const requestedUsed = parseInput(rawValue);
+    const availableDisplay = toDisplayUnits(
+      stockLine.availableNumberOfPacks,
+      row.isVaccine,
+      row.doses
+    );
+    const used = Math.min(requestedUsed, availableDisplay);
+
+    if (requestedUsed - availableDisplay > 0.0001) {
+      error(
+        `Used for batch ${batchLabel(stockLine)} cannot exceed available ${availableDisplay}.`
+      )();
+    }
+
     setDraftByItem(previous => {
       const rowDraft = previous[row.itemId] ?? {
         used: 0,
@@ -1271,12 +1382,27 @@ export const DailyTallyView = () => {
           (acc, row) => {
             if (row.stockLines.length > 1) {
               const batchDraftById = draftByItem[row.itemId]?.batchDraftById ?? {};
-              for (const stockLine of row.stockLines) {
-                const batchUsed = batchDraftById[stockLine.id]?.used ?? 0;
-                if (batchUsed <= 0) continue;
-                const usedPacks = toPacks(batchUsed, row.isVaccine, row.doses);
-                acc[stockLine.id] = round((acc[stockLine.id] ?? 0) + usedPacks);
+              const batchUsedTotal = sumBatchDraft(batchDraftById, 'used');
+
+              if (batchUsedTotal > 0) {
+                for (const stockLine of row.stockLines) {
+                  const batchUsed = batchDraftById[stockLine.id]?.used ?? 0;
+                  if (batchUsed <= 0) continue;
+                  const usedPacks = toPacks(batchUsed, row.isVaccine, row.doses);
+                  acc[stockLine.id] = round((acc[stockLine.id] ?? 0) + usedPacks);
+                }
+              } else {
+                // Fallback to the same allocation logic used for prescription lines
+                const requiredPacks = toPacks(row.used, row.isVaccine, row.doses);
+                const { allocations } = allocateAcrossStockLines(
+                  row.stockLines,
+                  requiredPacks
+                );
+                for (const { stockLine, packs } of allocations) {
+                  acc[stockLine.id] = round((acc[stockLine.id] ?? 0) + packs);
+                }
               }
+
               return acc;
             }
 
@@ -1492,10 +1618,46 @@ export const DailyTallyView = () => {
     }
   };
 
+  const summaryGridTemplateColumns = {
+    xs: 'minmax(150px,1.8fr) minmax(100px,1fr) minmax(90px,0.9fr) minmax(90px,0.9fr)',
+    sm: 'minmax(200px,2fr) minmax(130px,1fr) minmax(110px,1fr) minmax(110px,1fr)',
+    md: 'minmax(280px,2fr) minmax(170px,1fr) minmax(140px,1fr) minmax(140px,1fr)',
+    lg: 'minmax(340px,2.2fr) minmax(220px,1.2fr) minmax(170px,1fr) minmax(170px,1fr)',
+  } as const;
+
+  const childCoverageGridTemplateColumns = {
+    xs: 'minmax(160px,1.8fr) repeat(7,minmax(56px,0.8fr))',
+    sm: 'minmax(190px,2fr) repeat(7,minmax(72px,0.9fr))',
+    md: 'minmax(250px,2.1fr) repeat(7,minmax(96px,1fr))',
+    lg: 'minmax(320px,2.3fr) repeat(7,minmax(120px,1fr))',
+  } as const;
+
+  const womenCoverageGridTemplateColumns = {
+    xs: 'minmax(160px,1.8fr) repeat(3,minmax(80px,1fr))',
+    sm: 'minmax(190px,2fr) repeat(3,minmax(100px,1fr))',
+    md: 'minmax(250px,2.1fr) repeat(3,minmax(130px,1fr))',
+    lg: 'minmax(320px,2.3fr) repeat(3,minmax(170px,1fr))',
+  } as const;
+  const hasWomenCoverageSummary = confirmCoverageRows.some(
+    row => row.womenPregnant > 0 || row.womenNonPregnant > 0
+  );
+
   return (
     <>
       <ConfirmSummaryModal
         title={'Confirm daily tally'}
+        width={5000}
+        height={5000}
+        sx={{
+          width: 'calc(100vw - 16px)',
+          minWidth: 'calc(100vw - 16px)',
+          maxWidth: 'calc(100vw - 16px)',
+          height: 'calc(100vh - 16px)',
+          minHeight: 'calc(100vh - 16px)',
+          maxHeight: 'calc(100vh - 16px)',
+          margin: '8px',
+          borderRadius: '16px',
+        }}
         okButton={
           <LoadingButton
             label={'Confirm'}
@@ -1509,57 +1671,472 @@ export const DailyTallyView = () => {
           <DialogButton variant="cancel" onClick={() => setConfirmSummaryOpen(false)} />
         }
       >
-        <Stack spacing={1} sx={{ minWidth: 760, maxHeight: 420, overflowY: 'auto' }}>
+        <Stack
+          spacing={2}
+          sx={{
+            width: {
+              xs: 'calc(100vw - 12px)',
+              sm: 'calc(100vw - 24px)',
+              md: 'calc(100vw - 36px)',
+              lg: 'calc(100vw - 56px)',
+            },
+            maxWidth: 'none',
+            maxHeight: 'none',
+            overflowY: 'visible',
+            overflowX: 'hidden',
+            paddingBottom: 0,
+          }}
+        >
+          <Box
+            display="grid"
+            gridTemplateColumns={{ xs: '1fr', sm: 'repeat(3,minmax(0,1fr))' }}
+            gap={1.5}
+            sx={{
+              border: '1px solid rgba(0,0,0,0.12)',
+              borderRadius: 1,
+              padding: 1.5,
+            }}
+          >
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                Reference
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {tallyReference}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                Patient
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {selectedPatientLabel}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                Lines
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {confirmSummaryRows.length}
+              </Typography>
+            </Box>
+          </Box>
+
           {confirmSummaryRows.length > 0 ? (
             <Box
-              display="grid"
-              gridTemplateColumns="minmax(280px,2fr) minmax(140px,1fr) minmax(140px,1fr) minmax(140px,1fr)"
-              columnGap={1}
-              rowGap={0.75}
-              alignItems="center"
+              sx={{
+                border: '1px solid rgba(0,0,0,0.12)',
+                borderRadius: 1,
+                overflowX: 'hidden',
+              }}
             >
-              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                Item
-              </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                Batch
-              </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                Issued
-              </Typography>
-              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                Wastage
-              </Typography>
-              {confirmSummaryRows.map((summaryRow, index) => (
-                <React.Fragment
-                  key={`${summaryRow.item}-${summaryRow.batch}-${summaryRow.issued}-${index}`}
+              <Box sx={{ minWidth: { xs: 560, sm: 760, md: 980, lg: 1240 } }}>
+                <Box
+                  display="grid"
+                  columnGap={1}
+                  alignItems="center"
+                  sx={{
+                    gridTemplateColumns: summaryGridTemplateColumns,
+                    paddingX: 1.5,
+                    paddingY: 1,
+                    backgroundColor: 'background.menu',
+                    borderBottom: '1px solid rgba(0,0,0,0.12)',
+                  }}
                 >
-                  <Typography variant="body2">{summaryRow.item}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {summaryRow.batch}
+                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                    Item
                   </Typography>
-                  <Typography variant="body2">{summaryRow.issued}</Typography>
-                  <Typography variant="body2">{summaryRow.wastage}</Typography>
-                </React.Fragment>
-              ))}
+                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                    Batch
+                  </Typography>
+                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                    Issued
+                  </Typography>
+                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                    Wastage
+                  </Typography>
+                </Box>
+                {confirmSummaryRows.map((summaryRow, index) => (
+                  <Box
+                    key={`${summaryRow.item}-${summaryRow.batch}-${summaryRow.issued}-${index}`}
+                    display="grid"
+                    columnGap={1}
+                    alignItems="center"
+                    sx={{
+                      gridTemplateColumns: summaryGridTemplateColumns,
+                      paddingX: 1.5,
+                      paddingY: 0.85,
+                      borderBottom:
+                        index === confirmSummaryRows.length - 1
+                          ? 'none'
+                          : '1px solid rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    <Typography variant="body2">{summaryRow.item}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {summaryRow.batch}
+                    </Typography>
+                    <Typography variant="body2">{summaryRow.issued}</Typography>
+                    <Typography variant="body2">{summaryRow.wastage}</Typography>
+                  </Box>
+                ))}
+              </Box>
             </Box>
           ) : (
             <Typography variant="body2" color="text.secondary">
               No summary lines available.
             </Typography>
           )}
-          {!isSimplifiedMode &&
-          coverageSummaryText(rows.filter(row => row.isVaccine && row.used > 0), coverageByItem) ? (
-            <Box marginTop={1}>
-              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                Coverage
+          {!isSimplifiedMode && confirmCoverageRows.length > 0 ? (
+            <Box
+              sx={{
+                border: '1px solid rgba(0,0,0,0.12)',
+                borderRadius: 1,
+                padding: 1.5,
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 700, display: 'block', marginBottom: 1 }}
+              >
+                Coverage Summary (Daily Report)
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {coverageSummaryText(
-                  rows.filter(row => row.isVaccine && row.used > 0),
-                  coverageByItem
-                )}
-              </Typography>
+
+              {isLaptopLayout ? (
+                <>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 700, display: 'block', marginBottom: 0.5 }}
+                  >
+                    Children vaccination
+                  </Typography>
+                  <Box
+                    sx={{
+                      border: '1px solid rgba(0,0,0,0.12)',
+                      borderRadius: 1,
+                      overflowX: 'hidden',
+                    }}
+                  >
+                    <Box sx={{ minWidth: { xs: 640, sm: 760, md: 1180, lg: 1460 } }}>
+                      <Box
+                        sx={{
+                          backgroundColor: 'background.menu',
+                          borderBottom: '1px solid rgba(0,0,0,0.12)',
+                        }}
+                      >
+                        <Box
+                          display="grid"
+                          columnGap={1}
+                          alignItems="center"
+                          sx={{
+                            gridTemplateColumns: childCoverageGridTemplateColumns,
+                            paddingX: 1.25,
+                            paddingY: 0.75,
+                          }}
+                        >
+                          <Box />
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 700,
+                              textAlign: 'center',
+                              gridColumn: '2 / span 2',
+                            }}
+                          >
+                            Children under 1 years
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 700,
+                              textAlign: 'center',
+                              gridColumn: '4 / span 2',
+                            }}
+                          >
+                            Children 1 to 2 years
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 700,
+                              textAlign: 'center',
+                              gridColumn: '6 / span 2',
+                            }}
+                          >
+                            Children 2 to 5 years
+                          </Typography>
+                          <Box />
+                        </Box>
+                        <Box
+                          display="grid"
+                          columnGap={1}
+                          alignItems="center"
+                          sx={{
+                            gridTemplateColumns: childCoverageGridTemplateColumns,
+                            paddingX: 1.25,
+                            paddingY: 0.85,
+                            borderTop: '1px solid rgba(0,0,0,0.08)',
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                            Vaccine
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                            Male
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                            Female
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                            Male
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                            Female
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                            Male
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                            Female
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                            Total
+                          </Typography>
+                        </Box>
+                      </Box>
+                      {confirmCoverageRows.map((coverageRow, index) => {
+                        const total =
+                          coverageRow.childUnderOneMale +
+                          coverageRow.childUnderOneFemale +
+                          coverageRow.childOneToTwoMale +
+                          coverageRow.childOneToTwoFemale +
+                          coverageRow.childTwoToFiveMale +
+                          coverageRow.childTwoToFiveFemale;
+
+                        return (
+                          <Box
+                            key={`child-${coverageRow.itemId}`}
+                            display="grid"
+                            columnGap={1}
+                            alignItems="center"
+                            sx={{
+                              gridTemplateColumns: childCoverageGridTemplateColumns,
+                              paddingX: 1.25,
+                              paddingY: 0.75,
+                              backgroundColor:
+                                index % 2 === 0 ? 'background.white' : 'background.menu',
+                              borderBottom:
+                                index === confirmCoverageRows.length - 1
+                                  ? 'none'
+                                  : '1px solid rgba(0,0,0,0.08)',
+                            }}
+                          >
+                            <Typography variant="body2">{coverageRow.itemName}</Typography>
+                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                              {coverageRow.childUnderOneMale}
+                            </Typography>
+                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                              {coverageRow.childUnderOneFemale}
+                            </Typography>
+                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                              {coverageRow.childOneToTwoMale}
+                            </Typography>
+                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                              {coverageRow.childOneToTwoFemale}
+                            </Typography>
+                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                              {coverageRow.childTwoToFiveMale}
+                            </Typography>
+                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                              {coverageRow.childTwoToFiveFemale}
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                              {total}
+                            </Typography>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+
+                  {hasWomenCoverageSummary ? (
+                    <>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 700,
+                          display: 'block',
+                          marginTop: 1.25,
+                          marginBottom: 0.5,
+                        }}
+                      >
+                        Women vaccination
+                      </Typography>
+                      <Box
+                        sx={{
+                          border: '1px solid rgba(0,0,0,0.12)',
+                          borderRadius: 1,
+                          overflowX: 'hidden',
+                        }}
+                      >
+                        <Box sx={{ minWidth: { xs: 520, sm: 680, md: 900, lg: 1100 } }}>
+                          <Box
+                            sx={{
+                              backgroundColor: 'background.menu',
+                              borderBottom: '1px solid rgba(0,0,0,0.12)',
+                            }}
+                          >
+                            <Box
+                              display="grid"
+                              columnGap={1}
+                              alignItems="center"
+                              sx={{
+                                gridTemplateColumns: womenCoverageGridTemplateColumns,
+                                paddingX: 1.25,
+                                paddingY: 0.75,
+                              }}
+                            >
+                              <Box />
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 700,
+                                  textAlign: 'center',
+                                  gridColumn: '2 / span 2',
+                                }}
+                              >
+                                Women 15 to 49 years
+                              </Typography>
+                              <Box />
+                            </Box>
+                            <Box
+                              display="grid"
+                              columnGap={1}
+                              alignItems="center"
+                              sx={{
+                                gridTemplateColumns: womenCoverageGridTemplateColumns,
+                                paddingX: 1.25,
+                                paddingY: 0.85,
+                                borderTop: '1px solid rgba(0,0,0,0.08)',
+                              }}
+                            >
+                              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                Vaccine
+                              </Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                                Pregnant
+                              </Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                                Non pregnant
+                              </Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                                Total
+                              </Typography>
+                            </Box>
+                          </Box>
+                          {confirmCoverageRows.map((coverageRow, index) => {
+                            const total =
+                              coverageRow.womenPregnant + coverageRow.womenNonPregnant;
+
+                            return (
+                              <Box
+                                key={`women-${coverageRow.itemId}`}
+                                display="grid"
+                                columnGap={1}
+                                alignItems="center"
+                                sx={{
+                                  gridTemplateColumns: womenCoverageGridTemplateColumns,
+                                  paddingX: 1.25,
+                                  paddingY: 0.75,
+                                  backgroundColor:
+                                    index % 2 === 0 ? 'background.white' : 'background.menu',
+                                  borderBottom:
+                                    index === confirmCoverageRows.length - 1
+                                      ? 'none'
+                                      : '1px solid rgba(0,0,0,0.08)',
+                                }}
+                              >
+                                <Typography variant="body2">{coverageRow.itemName}</Typography>
+                                <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                                  {coverageRow.womenPregnant}
+                                </Typography>
+                                <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                                  {coverageRow.womenNonPregnant}
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                                  {total}
+                                </Typography>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <Stack spacing={1.25}>
+                  {confirmCoverageRows.map(coverageRow => {
+                    const childTotal =
+                      coverageRow.childUnderOneMale +
+                      coverageRow.childUnderOneFemale +
+                      coverageRow.childOneToTwoMale +
+                      coverageRow.childOneToTwoFemale +
+                      coverageRow.childTwoToFiveMale +
+                      coverageRow.childTwoToFiveFemale;
+                    const womenTotal =
+                      coverageRow.womenPregnant + coverageRow.womenNonPregnant;
+
+                    return (
+                      <Box
+                        key={`compact-${coverageRow.itemId}`}
+                        sx={{
+                          border: '1px solid rgba(0,0,0,0.12)',
+                          borderRadius: 1,
+                          padding: 1,
+                          backgroundColor: 'background.white',
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 700, marginBottom: 0.75 }}>
+                          {coverageRow.itemName}
+                        </Typography>
+                        <Box
+                          display="grid"
+                          gridTemplateColumns="repeat(2,minmax(0,1fr))"
+                          columnGap={1}
+                          rowGap={0.5}
+                        >
+                          <Typography variant="caption" color="text.secondary">U1 M</Typography>
+                          <Typography variant="body2" textAlign="right">{coverageRow.childUnderOneMale}</Typography>
+                          <Typography variant="caption" color="text.secondary">U1 F</Typography>
+                          <Typography variant="body2" textAlign="right">{coverageRow.childUnderOneFemale}</Typography>
+                          <Typography variant="caption" color="text.secondary">1-2 M</Typography>
+                          <Typography variant="body2" textAlign="right">{coverageRow.childOneToTwoMale}</Typography>
+                          <Typography variant="caption" color="text.secondary">1-2 F</Typography>
+                          <Typography variant="body2" textAlign="right">{coverageRow.childOneToTwoFemale}</Typography>
+                          <Typography variant="caption" color="text.secondary">2-5 M</Typography>
+                          <Typography variant="body2" textAlign="right">{coverageRow.childTwoToFiveMale}</Typography>
+                          <Typography variant="caption" color="text.secondary">2-5 F</Typography>
+                          <Typography variant="body2" textAlign="right">{coverageRow.childTwoToFiveFemale}</Typography>
+                          <Typography variant="caption" color="text.secondary">Child Total</Typography>
+                          <Typography variant="body2" textAlign="right" sx={{ fontWeight: 700 }}>{childTotal}</Typography>
+                          {hasWomenCoverageSummary ? (
+                            <>
+                              <Typography variant="caption" color="text.secondary">Pregnant</Typography>
+                              <Typography variant="body2" textAlign="right">{coverageRow.womenPregnant}</Typography>
+                              <Typography variant="caption" color="text.secondary">Non pregnant</Typography>
+                              <Typography variant="body2" textAlign="right">{coverageRow.womenNonPregnant}</Typography>
+                              <Typography variant="caption" color="text.secondary">Women Total</Typography>
+                              <Typography variant="body2" textAlign="right" sx={{ fontWeight: 700 }}>{womenTotal}</Typography>
+                            </>
+                          ) : null}
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
             </Box>
           ) : null}
         </Stack>
@@ -1595,21 +2172,21 @@ export const DailyTallyView = () => {
           gap: 2,
         }}
       >
-        <Box display="flex" gap={2} alignItems="center">
+        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
           <Typography fontWeight="bold">Daily Tally</Typography>
           <BasicTextInput
             size="small"
             placeholder="Daily tally reference"
             value={referenceText}
             onChange={event => setReferenceText(event.target.value)}
-            sx={{ width: 280 }}
+            sx={{ width: { xs: '100%', sm: 280 } }}
           />
           <BasicTextInput
             size="small"
             placeholder={t('placeholder.filter-items')}
             value={filterText}
             onChange={event => setFilterText(event.target.value)}
-            sx={{ width: 260 }}
+            sx={{ width: { xs: '100%', sm: 260 } }}
           />
         </Box>
       </AppBarContentPortal>
@@ -1630,16 +2207,19 @@ export const DailyTallyView = () => {
           display="flex"
           alignItems="center"
           gap={2}
+          flexWrap="wrap"
           sx={{ paddingX: 2, paddingBottom: 1 }}
         >
-          <Typography sx={{ minWidth: 100 }}>{t('label.patient')}</Typography>
+          <Typography sx={{ minWidth: { xs: '100%', sm: 100 } }}>
+            {t('label.patient')}
+          </Typography>
           <Select
             value={selectedPatientId}
             onChange={event => setSelectedPatientId(String(event.target.value || ''))}
             options={patientOptions}
             fullWidth
             disabled={isPatientsLoading}
-            sx={{ maxWidth: 420 }}
+            sx={{ maxWidth: { xs: '100%', md: 420 } }}
           />
         </Box>
 
@@ -1735,7 +2315,7 @@ export const DailyTallyView = () => {
 
                         <Box
                           display="grid"
-                          gridTemplateColumns="110px 120px 110px 140px 110px 110px"
+                          gridTemplateColumns="repeat(6,minmax(0,1fr))"
                           columnGap={1.25}
                           rowGap={0.75}
                           alignItems="center"
@@ -1751,7 +2331,7 @@ export const DailyTallyView = () => {
                             Used
                           </Typography>
                           <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Open vial
+                            Open vial wastage
                           </Typography>
                           <Typography variant="caption" sx={{ fontWeight: 700 }}>
                             Waste
@@ -1799,138 +2379,48 @@ export const DailyTallyView = () => {
 
                         {!isSimplifiedMode && coverage.isOpen ? (
                           <Box sx={{ marginTop: 1 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                              Child coverage
-                            </Typography>
                             <Box
-                              display="grid"
-                              gridTemplateColumns="minmax(300px,1fr) 110px 110px 90px 64px"
-                              columnGap={1.25}
-                              rowGap={0.75}
-                              alignItems="center"
-                              marginTop={0.5}
+                              sx={{
+                                border: '1px solid rgba(0,0,0,0.12)',
+                                borderRadius: 1,
+                                padding: 1,
+                              }}
                             >
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Age group
-                              </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Male
-                              </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Female
-                              </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Total
-                              </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Del
-                              </Typography>
+                              <Box
+                                display="grid"
+                                gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                                columnGap={1.25}
+                                rowGap={0.75}
+                                alignItems="center"
+                              >
+                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                  Child coverage
+                                </Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                  Male
+                                </Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                  Female
+                                </Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                  Total
+                                </Typography>
 
-                              {coverage.childAgeGroups.map(ageGroup => (
-                                <React.Fragment key={ageGroup.id}>
-                                  <Typography variant="body2">{ageGroup.label}</Typography>
-                                  <BasicTextInput
-                                    type="number"
-                                    size="small"
-                                    value={String(ageGroup.male)}
-                                    onChange={event =>
-                                      updateCoverageForRow(row, current => ({
-                                        ...current,
-                                        childAgeGroups: current.childAgeGroups.map(group =>
-                                          group.id === ageGroup.id
-                                            ? {
-                                                ...group,
-                                                male: parseWholeNumber(event.target.value),
-                                              }
-                                            : group
-                                        ),
-                                      }))
-                                    }
-                                  />
-                                  <BasicTextInput
-                                    type="number"
-                                    size="small"
-                                    value={String(ageGroup.female)}
-                                    onChange={event =>
-                                      updateCoverageForRow(row, current => ({
-                                        ...current,
-                                        childAgeGroups: current.childAgeGroups.map(group =>
-                                          group.id === ageGroup.id
-                                            ? {
-                                                ...group,
-                                                female: parseWholeNumber(event.target.value),
-                                              }
-                                            : group
-                                        ),
-                                      }))
-                                    }
-                                  />
-                                  <Typography variant="body2" color="text.secondary">
-                                    {ageGroup.male + ageGroup.female}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.disabled">
-                                    -
-                                  </Typography>
-                                </React.Fragment>
-                              ))}
-                            </Box>
-
-                            <Typography
-                              variant="caption"
-                              sx={{ fontWeight: 700, display: 'block', marginTop: 1.25 }}
-                            >
-                              Women coverage
-                            </Typography>
-                            <Box
-                              display="grid"
-                              gridTemplateColumns="minmax(300px,1fr) 130px 130px 90px 64px"
-                              columnGap={1.25}
-                              rowGap={0.75}
-                              alignItems="center"
-                              marginTop={0.5}
-                            >
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Age group
-                              </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Non pregnant
-                              </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Pregnant
-                              </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Total
-                              </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                Del
-                              </Typography>
-
-                              {(() => {
-                                const nonPregnantGroup =
-                                  coverage.womenAgeGroups.find(isNonPregnantWomenGroup) ||
-                                  coverage.womenAgeGroups[0];
-                                const pregnantGroup =
-                                  coverage.womenAgeGroups.find(isPregnantWomenGroup) ||
-                                  coverage.womenAgeGroups[1];
-
-                                const nonPregnant = nonPregnantGroup?.count ?? 0;
-                                const pregnant = pregnantGroup?.count ?? 0;
-
-                                return (
-                                  <>
-                                    <Typography variant="body2">Women 15 to 49 years</Typography>
+                                {coverage.childAgeGroups.map(ageGroup => (
+                                  <React.Fragment key={ageGroup.id}>
+                                    <Typography variant="body2">{ageGroup.label}</Typography>
                                     <BasicTextInput
                                       type="number"
                                       size="small"
-                                      value={String(nonPregnant)}
+                                      value={String(ageGroup.male)}
                                       onChange={event =>
                                         updateCoverageForRow(row, current => ({
                                           ...current,
-                                          womenAgeGroups: current.womenAgeGroups.map(group =>
-                                            group.id === nonPregnantGroup?.id
+                                          childAgeGroups: current.childAgeGroups.map(group =>
+                                            group.id === ageGroup.id
                                               ? {
                                                   ...group,
-                                                  count: parseWholeNumber(event.target.value),
+                                                  male: parseWholeNumber(event.target.value),
                                                 }
                                               : group
                                           ),
@@ -1940,15 +2430,15 @@ export const DailyTallyView = () => {
                                     <BasicTextInput
                                       type="number"
                                       size="small"
-                                      value={String(pregnant)}
+                                      value={String(ageGroup.female)}
                                       onChange={event =>
                                         updateCoverageForRow(row, current => ({
                                           ...current,
-                                          womenAgeGroups: current.womenAgeGroups.map(group =>
-                                            group.id === pregnantGroup?.id
+                                          childAgeGroups: current.childAgeGroups.map(group =>
+                                            group.id === ageGroup.id
                                               ? {
                                                   ...group,
-                                                  count: parseWholeNumber(event.target.value),
+                                                  female: parseWholeNumber(event.target.value),
                                                 }
                                               : group
                                           ),
@@ -1956,14 +2446,98 @@ export const DailyTallyView = () => {
                                       }
                                     />
                                     <Typography variant="body2" color="text.secondary">
-                                      {nonPregnant + pregnant}
+                                      {ageGroup.male + ageGroup.female}
                                     </Typography>
-                                    <Typography variant="caption" color="text.disabled">
-                                      -
-                                    </Typography>
-                                  </>
-                                );
-                              })()}
+                                  </React.Fragment>
+                                ))}
+                              </Box>
+                            </Box>
+
+                            <Box
+                              sx={{
+                                marginTop: 1.25,
+                                border: '1px solid rgba(0,0,0,0.12)',
+                                borderRadius: 1,
+                                padding: 1,
+                              }}
+                            >
+                              <Box
+                                display="grid"
+                                gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                                columnGap={1.25}
+                                rowGap={0.75}
+                                alignItems="center"
+                              >
+                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                  Women coverage
+                                </Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                  Non pregnant
+                                </Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                  Pregnant
+                                </Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                  Total
+                                </Typography>
+
+                                {(() => {
+                                  const nonPregnantGroup =
+                                    coverage.womenAgeGroups.find(isNonPregnantWomenGroup) ||
+                                    coverage.womenAgeGroups[0];
+                                  const pregnantGroup =
+                                    coverage.womenAgeGroups.find(isPregnantWomenGroup) ||
+                                    coverage.womenAgeGroups[1];
+
+                                  const nonPregnant = nonPregnantGroup?.count ?? 0;
+                                  const pregnant = pregnantGroup?.count ?? 0;
+
+                                  return (
+                                    <>
+                                      <Typography variant="body2">Women 15 to 49 years</Typography>
+                                      <BasicTextInput
+                                        type="number"
+                                        size="small"
+                                        value={String(nonPregnant)}
+                                        onChange={event =>
+                                          updateCoverageForRow(row, current => ({
+                                            ...current,
+                                            womenAgeGroups: current.womenAgeGroups.map(group =>
+                                              group.id === nonPregnantGroup?.id
+                                                ? {
+                                                    ...group,
+                                                    count: parseWholeNumber(event.target.value),
+                                                  }
+                                                : group
+                                            ),
+                                          }))
+                                        }
+                                      />
+                                      <BasicTextInput
+                                        type="number"
+                                        size="small"
+                                        value={String(pregnant)}
+                                        onChange={event =>
+                                          updateCoverageForRow(row, current => ({
+                                            ...current,
+                                            womenAgeGroups: current.womenAgeGroups.map(group =>
+                                              group.id === pregnantGroup?.id
+                                                ? {
+                                                    ...group,
+                                                    count: parseWholeNumber(event.target.value),
+                                                  }
+                                                : group
+                                            ),
+                                          }))
+                                        }
+                                      />
+                                      <Typography variant="body2" color="text.secondary">
+                                        {nonPregnant + pregnant}
+                                      </Typography>
+                                    </>
+                                  );
+                                })()}
+                              </Box>
                             </Box>
                           </Box>
                         ) : null}
@@ -2017,7 +2591,7 @@ export const DailyTallyView = () => {
                               <>
                                 <Box
                                   display="grid"
-                                  gridTemplateColumns="minmax(280px,1fr) 130px 130px 110px"
+                                  gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
                                   columnGap={1.25}
                                   rowGap={0.75}
                                   alignItems="center"
@@ -2030,7 +2604,7 @@ export const DailyTallyView = () => {
                                     Used
                                   </Typography>
                                   <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                    Open vial
+                                    Open vial wastage
                                   </Typography>
                                   <Typography variant="caption" sx={{ fontWeight: 700 }}>
                                     Waste
@@ -2108,6 +2682,25 @@ export const DailyTallyView = () => {
                                     Batch used total must exactly match item used.
                                   </Typography>
                                 ) : null}
+                                {row.stockLines.some(stockLine => {
+                                  const batchUsed =
+                                    row.batchDraftById?.[stockLine.id]?.used ?? 0;
+                                  const availableDisplay = toDisplayUnits(
+                                    stockLine.availableNumberOfPacks,
+                                    row.isVaccine,
+                                    row.doses
+                                  );
+
+                                  return batchUsed - availableDisplay > 0.0001;
+                                }) ? (
+                                  <Typography
+                                    variant="caption"
+                                    color="error.main"
+                                    sx={{ display: 'block' }}
+                                  >
+                                    One or more batch Used values exceed that batch stock.
+                                  </Typography>
+                                ) : null}
                               </>
                             ) : null}
                           </Box>
@@ -2171,7 +2764,7 @@ export const DailyTallyView = () => {
                         </Typography>
                         <Box
                           display="grid"
-                          gridTemplateColumns="110px 120px 140px 140px 110px"
+                          gridTemplateColumns="repeat(5,minmax(0,1fr))"
                           columnGap={1.25}
                           rowGap={0.75}
                           alignItems="center"
@@ -2261,7 +2854,7 @@ export const DailyTallyView = () => {
                               <>
                                 <Box
                                   display="grid"
-                                  gridTemplateColumns="minmax(280px,1fr) 130px 110px"
+                                  gridTemplateColumns="minmax(220px,2fr) repeat(2,minmax(0,1fr))"
                                   columnGap={1.25}
                                   rowGap={0.75}
                                   alignItems="center"
@@ -2326,6 +2919,25 @@ export const DailyTallyView = () => {
                                     sx={{ display: 'block' }}
                                   >
                                     Batch used total must exactly match item used.
+                                  </Typography>
+                                ) : null}
+                                {row.stockLines.some(stockLine => {
+                                  const batchUsed =
+                                    row.batchDraftById?.[stockLine.id]?.used ?? 0;
+                                  const availableDisplay = toDisplayUnits(
+                                    stockLine.availableNumberOfPacks,
+                                    row.isVaccine,
+                                    row.doses
+                                  );
+
+                                  return batchUsed - availableDisplay > 0.0001;
+                                }) ? (
+                                  <Typography
+                                    variant="caption"
+                                    color="error.main"
+                                    sx={{ display: 'block' }}
+                                  >
+                                    One or more batch Used values exceed that batch stock.
                                   </Typography>
                                 ) : null}
                               </>

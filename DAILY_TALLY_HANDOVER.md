@@ -78,6 +78,35 @@ If stock is 16 packs, prescription uses 0.5 packs, and wastage is 0.5 packs:
 
 
 ## Todo list
-1. While showing summary if we can show similar report like daily tally report which is very clear and user can compare what they have before they confirm and can be in big modal not small
 
-2. It seems the available stock in prescription is shown after stock take which is wrong actually stock in prescription must show before stock take happens. Eg. if we ahve stock of 20 then in prescription it must show available stock 20 and used 0.5 and then in stock take it must show 19.5 snapshot and counted packs 19 and difference is 0.5
+### TODO 1: Improve confirm summary modal (report-style preview)
+Goal: Make pre-confirm review clearer and easier to compare before final submission.
+
+Acceptance criteria:
+1. Confirm summary opens in a larger modal on desktop/laptop.
+2. Layout follows a report-like structure similar to Daily Tally report output.
+3. User can clearly compare Used, Wastage, Coverage (if applicable), and batch-level values before confirm.
+4. Totals and per-item values are visible without horizontal clipping on common laptop widths.
+
+### TODO 2: Enforce stock flow ordering display consistency
+Goal: Show stock values in the correct process order.
+
+Acceptance criteria:
+1. Prescription stage reflects stock before wastage adjustment.
+2. Wastage adjustment snapshot reflects post-prescription stock.
+3. Counted packs in wastage adjustment equals snapshot minus wastage.
+4. Example must hold:
+  - Starting stock 20
+  - Prescription used 0.5
+  - Wastage snapshot 19.5
+  - Counted 19
+  - Difference -0.5
+
+### TODO 3: Responsive layout by screen size
+Goal: Use available space correctly on web, tablet, and laptop.
+
+Acceptance criteria:
+1. Laptop/desktop uses wider responsive layout and does not look like fixed tablet canvas.
+2. Tablet uses full-width tablet-appropriate layout.
+3. Modal and table containers scale with breakpoints instead of fixed narrow widths.
+4. No key Daily Tally controls are clipped or forced into awkward spacing on common web resolutions.
