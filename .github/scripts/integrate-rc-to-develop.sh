@@ -14,9 +14,14 @@ merge_develop_into_branch() {
     CONFLICTED_FILES=""
 
     echo "Merging develop into $MERGE_BRANCH to detect conflicts"
-    if git merge origin/develop --no-commit --no-ff; then
+    if git merge origin/develop --no-commit --no-ff 2>/dev/null; then
         echo "Clean merge - no conflicts detected"
-        git commit -m "Merge develop into $MERGE_BRANCH"
+        if git diff --cached --quiet; then
+            echo "Nothing to commit - develop is already up to date"
+            git merge --abort 2>/dev/null || true
+        else
+            git commit -m "Merge develop into $MERGE_BRANCH"
+        fi
     else
         echo "Merge conflicts detected"
         if git status --porcelain | grep -q "package.json"; then
