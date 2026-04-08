@@ -1,6 +1,6 @@
-use service::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
 use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{PluginType, RepositoryError};
+use service::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
 use std::collections::HashMap;
 use tokio::task::JoinHandle;
 use util::format_error;
@@ -59,7 +59,7 @@ pub fn spawn() -> JoinHandle<()> {
         loop {
             interval.tick().await;
             match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| runner.run())) {
-                Ok(Ok(())) => log::info!("Schedule plugin runner complete"),
+                Ok(Ok(())) => log::trace!("Schedule plugin runner complete"),
                 Ok(Err(error)) => {
                     log::error!("Error running schedule plugins: {error:?}");
                 }
