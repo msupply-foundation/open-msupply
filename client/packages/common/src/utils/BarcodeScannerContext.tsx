@@ -75,11 +75,11 @@ const BarcodeScannerContext = createContext<BarcodeScannerControl>(
 
 const { Provider } = BarcodeScannerContext;
 
-export const parseResult = (content?: string): ScanResult => {
+export const parseResult = async (content?: string): Promise<ScanResult> => {
   if (!content) return {};
 
   try {
-    const gs1 = BarcodeUtils.parseGS1Barcode(content);
+    const gs1 = await BarcodeUtils.parseGS1Barcode(content);
 
     // If no items were parsed, treat as raw barcode
     if (!gs1.parsedCodeItems || gs1.parsedCodeItems.length === 0) {
@@ -330,7 +330,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
       try {
         const barcode = await scanBarcode(formats);
-        result = parseResult(barcode);
+        result = await parseResult(barcode);
       } catch (e) {
         const msg = (e as Error)?.message || '';
         if (!msg.includes('canceled')) {
@@ -359,7 +359,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         setIsListening(true);
 
         // Set up listener (automatically claims the scanner)
-        await HoneywellScanner.listen({}, (data, err) => {
+        await HoneywellScanner.listen({}, async (data, err) => {
           if (err) {
             console.error('Honeywell scanning error:', err);
             // I think we can ignore errors here for now as they seem to happen regularly
@@ -368,7 +368,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
           }
           if (data && 'barcode' in data) {
             if (callbackRef.current) {
-              callbackRef.current(parseResult(data.barcode));
+              callbackRef.current(await parseResult(data.barcode));
             } else {
               console.error(
                 'No scan callback registered to handle barcode:',
@@ -392,10 +392,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       try {
         const { startBarcodeScan } = electronNativeAPI;
         await startBarcodeScan();
-        electronNativeAPI.onBarcodeScan((_event, data) => {
+        electronNativeAPI.onBarcodeScan(async (_event, data) => {
           const barcode = BarcodeUtils.parseBarcodeFromBytes(data);
           if (callbackRef.current) {
-            callbackRef.current(parseResult(barcode));
+            callbackRef.current(await parseResult(barcode));
           } else {
             console.error(
               'No scan callback registered to handle barcode:',
@@ -417,7 +417,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     if (mockScannerEnabled) {
       setIsListening(true);
       const scanHandler = async (barcode: string) => {
-        const result = parseResult(barcode);
+        const result = await parseResult(barcode);
         if (callbackRef.current) {
           callbackRef.current(result);
         } else {

@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { TimePicker, TimePickerProps } from '@mui/x-date-pickers';
+import React, { Suspense, useEffect, useState } from 'react';
+import type { TimePickerProps } from '@mui/x-date-pickers';
+import { CircularProgress } from '@mui/material';
 import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
 import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
+
+const TimePicker = React.lazy(() =>
+  import('@mui/x-date-pickers').then(m => ({ default: m.TimePicker }))
+);
 
 export const TimePickerInput = ({
   disabled,
@@ -36,26 +41,28 @@ export const TimePickerInput = ({
   );
 
   return (
-    <TimePicker
-      disabled={disabled}
-      format="HH:mm"
-      slotProps={{
-        desktopPaper: { sx: getPaperSx() },
-        mobilePaper: { sx: getPaperSx() },
-        actionBar: { sx: getActionBarSx() },
+    <Suspense fallback={<CircularProgress size={20} />}>
+      <TimePicker
+        disabled={disabled}
+        format="HH:mm"
+        slotProps={{
+          desktopPaper: { sx: getPaperSx() },
+          mobilePaper: { sx: getPaperSx() },
+          actionBar: { sx: getActionBarSx() },
 
-        textField: {
-          disabled: !!disabled,
-          error: isInvalid(internalValue),
-          sx: getTextFieldSx(!!props.label, false),
-        },
-      }}
-      {...props}
-      onChange={(d: Date | null) => {
-        setInternalValue(d);
-        debouncedOnChange(d);
-      }}
-      value={internalValue}
-    />
+          textField: {
+            disabled: !!disabled,
+            error: isInvalid(internalValue),
+            sx: getTextFieldSx(!!props.label, false),
+          },
+        }}
+        {...props}
+        onChange={(d: Date | null) => {
+          setInternalValue(d);
+          debouncedOnChange(d);
+        }}
+        value={internalValue}
+      />
+    </Suspense>
   );
 };

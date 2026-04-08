@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import {
-  DateTimePicker,
+import React, { Suspense, useState } from 'react';
+import type {
   DateTimePickerProps,
   DateTimeValidationError,
   DateValidationError,
   PickersActionBarAction,
 } from '@mui/x-date-pickers';
-import { Box, SxProps, Typography, useMediaQuery } from '@mui/material';
+import { Box, CircularProgress, SxProps, Typography, useMediaQuery } from '@mui/material';
 import {
   DateUtils,
   LocaleKey,
@@ -15,6 +14,10 @@ import {
 } from '@common/intl';
 import { useBufferState } from '@common/hooks';
 import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
+
+const DateTimePicker = React.lazy(() =>
+  import('@mui/x-date-pickers').then(m => ({ default: m.DateTimePicker }))
+);
 
 export const getFormattedDateError = (
   t: TypedTFunction<LocaleKey>,
@@ -102,73 +105,75 @@ export const DateTimePickerInput = ({
 
   return (
     <Box sx={{ display: 'flex', width: '100%', maxWidth: width }}>
-      <DateTimePicker
-        format={format}
-        onChange={(date, context) => {
-          const { validationError } = context;
+      <Suspense fallback={<CircularProgress size={20} />}>
+        <DateTimePicker
+          format={format}
+          onChange={(date, context) => {
+            const { validationError } = context;
 
-          if (validationError) {
-            const translatedError = getFormattedDateError(t, validationError);
-            if (onError) onError(translatedError, date);
-            else setInternalError(validationError ? translatedError : null);
+            if (validationError) {
+              const translatedError = getFormattedDateError(t, validationError);
+              if (onError) onError(translatedError, date);
+              else setInternalError(validationError ? translatedError : null);
 
-            // If there is a validation error, set internal value (so user can
-            // keep typing) but not the external one via handleDateInput
-            setValue(date);
-            return;
-          }
-          if (!validationError) {
-            setIsInitialEntry(false);
-            setInternalError(null);
-          }
-
-          handleDateInput(date);
-        }}
-        label={label}
-        slotProps={{
-          mobilePaper: { sx: getPaperSx() },
-          desktopPaper: { sx: getPaperSx() },
-          actionBar: {
-            actions: actions ?? ['clear', 'accept'],
-            sx: getActionBarSx(),
-          },
-          textField: {
-            onBlur: () => {
+              // If there is a validation error, set internal value (so user can
+              // keep typing) but not the external one via handleDateInput
+              setValue(date);
+              return;
+            }
+            if (!validationError) {
               setIsInitialEntry(false);
-              // Apply max/mins on blur if present
-              if (minDate || maxDate) {
-                setInternalError(null);
-                handleDateInput(value);
-              }
-            },
-            error: !!error || (!isInitialEntry && !!internalError),
-            helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
-            sx: {
-              ...getTextFieldSx(!!label, !showTime, inputSx, width),
-              width,
-              minWidth: showTime ? 200 : undefined,
-            },
-          },
+              setInternalError(null);
+            }
 
-          tabs: {
-            hidden: showTime && !isDesktop ? false : true,
-          },
-          ...slotProps,
-        }}
-        views={
-          showTime
-            ? ['year', 'month', 'day', 'hours', 'minutes']
-            : ['year', 'month', 'day']
-        }
-        minDate={minDate}
-        maxDate={maxDate}
-        disableFuture={disableFuture}
-        closeOnSelect={true}
-        onOpen={() => setIsOpen?.(true)}
-        onClose={() => setIsOpen?.(false)}
-        {...props}
-        value={value}
-      />
+            handleDateInput(date);
+          }}
+          label={label}
+          slotProps={{
+            mobilePaper: { sx: getPaperSx() },
+            desktopPaper: { sx: getPaperSx() },
+            actionBar: {
+              actions: actions ?? ['clear', 'accept'],
+              sx: getActionBarSx(),
+            },
+            textField: {
+              onBlur: () => {
+                setIsInitialEntry(false);
+                // Apply max/mins on blur if present
+                if (minDate || maxDate) {
+                  setInternalError(null);
+                  handleDateInput(value);
+                }
+              },
+              error: !!error || (!isInitialEntry && !!internalError),
+              helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
+              sx: {
+                ...getTextFieldSx(!!label, !showTime, inputSx, width),
+                width,
+                minWidth: showTime ? 200 : undefined,
+              },
+            },
+
+            tabs: {
+              hidden: showTime && !isDesktop ? false : true,
+            },
+            ...slotProps,
+          }}
+          views={
+            showTime
+              ? ['year', 'month', 'day', 'hours', 'minutes']
+              : ['year', 'month', 'day']
+          }
+          minDate={minDate}
+          maxDate={maxDate}
+          disableFuture={disableFuture}
+          closeOnSelect={true}
+          onOpen={() => setIsOpen?.(true)}
+          onClose={() => setIsOpen?.(false)}
+          {...props}
+          value={value}
+        />
+      </Suspense>
       {required && (
         <Typography
           sx={{

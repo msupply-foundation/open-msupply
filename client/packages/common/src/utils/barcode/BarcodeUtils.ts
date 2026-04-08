@@ -1,19 +1,27 @@
-import {
-  Gs1Barcode as LibGs1Barcode,
-  parseBarcode,
-} from 'gs1-barcode-parser-mod';
+import type { Gs1Barcode as LibGs1Barcode } from 'gs1-barcode-parser-mod';
 
 export type Gs1Barcode = LibGs1Barcode;
+
+// Lazily loaded on first scan — keeps gs1-barcode-parser-mod out of the eager bundle.
+let _parseBarcode: ((barcode: string) => Gs1Barcode) | null = null;
+async function getParser() {
+  if (!_parseBarcode) {
+    const mod = await import('gs1-barcode-parser-mod');
+    _parseBarcode = mod.parseBarcode;
+  }
+  return _parseBarcode;
+}
 
 export const BarcodeUtils = {
   /**
    * Parse GS1 barcode string into its components
    * Returns empty result if parsing fails
    */
-  parseGS1Barcode: (barcode: string): Gs1Barcode => {
+  parseGS1Barcode: async (barcode: string): Promise<Gs1Barcode> => {
     const cleanedBarcode = cleanBarcodeString(barcode);
 
     try {
+      const parseBarcode = await getParser();
       const gs1 = parseBarcode(cleanedBarcode);
       return gs1;
     } catch (error) {

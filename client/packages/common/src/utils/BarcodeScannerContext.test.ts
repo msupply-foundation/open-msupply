@@ -33,18 +33,18 @@ describe('barcode parsing', () => {
 
 describe('GS1 parsing', () => {
   const barcode = '01095011015300031714070410AB-123';
-  it('parses GTIN', () => {
-    const result = parseResult(barcode);
+  it('parses GTIN', async () => {
+    const result = await parseResult(barcode);
     expect(result.gtin).toBe('09501101530003');
   });
 
-  it('parses batch', () => {
-    const result = parseResult(barcode);
+  it('parses batch', async () => {
+    const result = await parseResult(barcode);
     expect(result.batch).toBe('AB-123');
   });
 
-  it('parses expiry', () => {
-    const result = parseResult(barcode);
+  it('parses expiry', async () => {
+    const result = await parseResult(barcode);
     expect(result.expiryDate).toBe('2014-07-04');
   });
 });

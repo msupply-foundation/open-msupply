@@ -3,7 +3,7 @@ import { RangeObject, useUrlQuery } from '@common/hooks';
 import { DateTimePickerInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { DateUtils, useFormatDateTime } from '@common/intl';
-import { PickersActionBarAction } from '@mui/x-date-pickers';
+import type { PickersActionBarAction } from '@mui/x-date-pickers';
 
 export interface DateFilterDefinition extends FilterDefinitionCommon {
   /**

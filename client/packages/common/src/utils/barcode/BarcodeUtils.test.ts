@@ -47,9 +47,9 @@ describe('BarcodeUtils', () => {
   });
 
   describe('parseGS1Barcode', () => {
-    it('parses a valid GS1 barcode with multiple AIs', () => {
+    it('parses a valid GS1 barcode with multiple AIs', async () => {
       const barcode = '01095066821013521729100310test\x1D21532';
-      const result = BarcodeUtils.parseGS1Barcode(barcode);
+      const result = await BarcodeUtils.parseGS1Barcode(barcode);
 
       expect(result.parsedCodeItems).toBeDefined();
       expect(result.parsedCodeItems?.length).toBeGreaterThan(0);
@@ -64,35 +64,35 @@ describe('BarcodeUtils', () => {
       expect(serial?.data).toBe('532');
     });
 
-    it('handles barcode with leading FNC1 character', () => {
+    it('handles barcode with leading FNC1 character', async () => {
       const barcodeWithFNC1 = '\x1D01095066821343501728080410batch21532';
-      const result = BarcodeUtils.parseGS1Barcode(barcodeWithFNC1);
+      const result = await BarcodeUtils.parseGS1Barcode(barcodeWithFNC1);
 
       expect(result.parsedCodeItems).toBeDefined();
       const gtin = result.parsedCodeItems?.find(item => item.ai === '01');
       expect(gtin?.data).toBe('09506682134350');
     });
 
-    it('removes zero-width characters', () => {
+    it('removes zero-width characters', async () => {
       const barcodeWithZeroWidth =
         '\u200B01095066821013521729100310test\u200D21532';
-      const result = BarcodeUtils.parseGS1Barcode(barcodeWithZeroWidth);
+      const result = await BarcodeUtils.parseGS1Barcode(barcodeWithZeroWidth);
 
       expect(result.parsedCodeItems).toBeDefined();
       expect(result.parsedCodeItems?.length).toBeGreaterThan(0);
     });
 
-    it('trims leading and trailing whitespace', () => {
+    it('trims leading and trailing whitespace', async () => {
       const barcodeWithSpaces = '  01095066821013521729100310test21532  ';
-      const result = BarcodeUtils.parseGS1Barcode(barcodeWithSpaces);
+      const result = await BarcodeUtils.parseGS1Barcode(barcodeWithSpaces);
 
       expect(result.parsedCodeItems).toBeDefined();
       expect(result.parsedCodeItems?.length).toBeGreaterThan(0);
     });
 
-    it('returns empty result for invalid barcode', () => {
+    it('returns empty result for invalid barcode', async () => {
       const invalidBarcode = 'not-a-valid-gs1-barcode';
-      const result = BarcodeUtils.parseGS1Barcode(invalidBarcode);
+      const result = await BarcodeUtils.parseGS1Barcode(invalidBarcode);
 
       expect(result.parsedCodeItems).toEqual([]);
       expect(result.codeName).toBe('');
