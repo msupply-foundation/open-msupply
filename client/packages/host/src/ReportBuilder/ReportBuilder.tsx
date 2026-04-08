@@ -259,6 +259,8 @@ const useRecordOptions = (
   const options = useMemo<RecordOption[]>(() => {
     if (isInvoiceContext && invoices) {
       return [...invoices]
+        .sort((a, b) => b.invoiceNumber - a.invoiceNumber)
+        .slice(0, 100)
         .sort((a, b) => a.invoiceNumber - b.invoiceNumber)
         .map(r => ({
           label: `#${r.invoiceNumber} — ${r.otherPartyName}`,
@@ -267,6 +269,8 @@ const useRecordOptions = (
     }
     if (isRequisition && requisitions) {
       return [...requisitions]
+        .sort((a, b) => b.requisitionNumber - a.requisitionNumber)
+        .slice(0, 100)
         .sort((a, b) => a.requisitionNumber - b.requisitionNumber)
         .map(r => ({
           label: `#${r.requisitionNumber} — ${r.otherPartyName}`,
@@ -275,6 +279,8 @@ const useRecordOptions = (
     }
     if (isStocktake && stocktakes) {
       return [...stocktakes]
+        .sort((a, b) => b.stocktakeNumber - a.stocktakeNumber)
+        .slice(0, 100)
         .sort((a, b) => a.stocktakeNumber - b.stocktakeNumber)
         .map(r => ({
           label: `#${r.stocktakeNumber}${r.description ? ` — ${r.description}` : ''}`,
@@ -283,6 +289,8 @@ const useRecordOptions = (
     }
     if (isPurchaseOrder && purchaseOrders) {
       return [...purchaseOrders]
+        .sort((a, b) => b.number - a.number)
+        .slice(0, 100)
         .sort((a, b) => a.number - b.number)
         .map(r => ({
           label: `#${r.number} — ${r.supplier?.name ?? 'Unknown supplier'}`,
