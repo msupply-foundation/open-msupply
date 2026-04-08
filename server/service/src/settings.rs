@@ -41,6 +41,9 @@ pub struct ServerSettings {
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+    /// When true, suppresses GraphQL request/response logging
+    #[serde(default)]
+    pub suppress_graphql_logging: bool,
 }
 
 fn default_base_dir() -> String {

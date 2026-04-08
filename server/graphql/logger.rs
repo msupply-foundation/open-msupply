@@ -26,15 +26,21 @@ fn mask_passwords(value: &mut async_graphql::Value) {
     }
 }
 
-pub struct GraphQLRequestLogger;
+pub struct GraphQLRequestLogger {
+    pub suppress: bool,
+}
 
 impl ExtensionFactory for GraphQLRequestLogger {
     fn create(&self) -> Arc<dyn Extension> {
-        Arc::new(LoggerExtension {})
+        Arc::new(LoggerExtension {
+            suppress: self.suppress,
+        })
     }
 }
 
-struct LoggerExtension {}
+struct LoggerExtension {
+    suppress: bool,
+}
 
 #[derive(Debug, Default)]
 pub struct QueryLogInfo {
@@ -68,6 +74,10 @@ impl Extension for LoggerExtension {
     ) -> Result<ValidationResult, Vec<ServerError>> {
         let res = next.run(ctx).await;
 
+        if self.suppress {
+            return res;
+        }
+
         match res {
             Ok(_) => res,
             Err(ref errors) => match ctx.data_opt::<QueryLogInfo>() {
@@ -97,46 +107,49 @@ impl Extension for LoggerExtension {
         next: NextParseQuery<'_>,
     ) -> ServerResult<ExecutableDocument> {
         let document = next.run(ctx, query, variables).await?;
-        if let Some(info) = ctx.data_opt::<QueryLogInfo>() {
-            let info = info.inner.lock().await;
+        if !self.suppress {
+            if let Some(info) = ctx.data_opt::<QueryLogInfo>() {
+                let info = info.inner.lock().await;
 
-            let mut variables = variables.clone();
-            for (key, value) in variables.iter_mut() {
-                mask_password_entry(key.as_str(), value);
-            }
+                let mut variables = variables.clone();
+                for (key, value) in variables.iter_mut() {
+                    mask_password_entry(key.as_str(), value);
+                }
 
-            for (_, operation) in document.operations.iter() {
-                let roots_queried = operation
-                    .node
-                    .selection_set
-                    .node
-                    .items
-                    .iter()
-                    .filter_map(|i| {
-                        if let Selection::Field(field) = &i.node {
-                            Some(field.node.name.node.as_str())
+                for (_, operation) in document.operations.iter() {
+                    let roots_queried = operation
+                        .node
+                        .selection_set
+                        .node
+                        .items
+                        .iter()
+                        .filter_map(|i| {
+                            if let Selection::Field(field) = &i.node {
+                                Some(field.node.name.node.as_str())
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>();
+
+                    log::info!(
+                        target: "gql_logger",
+                        "[QueryID: {}] {}: {} {}",
+                        info.id,
+                        operation.node.ty,        // mutation or query
+                        roots_queried.join(", "), // e.g. `updateStockLine`, or `locations`
+                        if variables.is_empty() {
+                           "".to_string()
                         } else {
-                            None
+                            format!(" - variables: {:?}", serde_json::to_value(&variables).unwrap_or(serde_json::Value::Null))
                         }
-                    })
-                    .collect::<Vec<_>>();
+                    );
+                }
 
-                log::info!(
-                    target: "gql_logger",
-                    "[QueryID: {}] {}: {} {}",
-                    info.id,
-                    operation.node.ty,        // mutation or query
-                    roots_queried.join(", "), // e.g. `updateStockLine`, or `locations`
-                    if variables.is_empty() {
-                       "".to_string()
-                    } else {
-                        format!(" - variables: {:?}", serde_json::to_value(&variables).unwrap_or(serde_json::Value::Null))
-                    }
-                );
+                log::trace!(target: "gql_logger", "[QueryID: {}] Full request: {}", info.id, ctx.stringify_execute_doc(&document, &variables));
             }
-
-            log::trace!(target: "gql_logger", "[QueryID: {}] Full request: {}", info.id, ctx.stringify_execute_doc(&document, &variables));
         }
+
         Ok(document)
     }
 
@@ -148,6 +161,11 @@ impl Extension for LoggerExtension {
         next: NextExecute<'_>,
     ) -> Response {
         let resp = next.run(ctx, operation_name).await;
+
+        if self.suppress {
+            return resp;
+        }
+
         if let Some(info) = ctx.data_opt::<QueryLogInfo>() {
             let info = info.inner.lock().await;
             let query_id = info.id;
@@ -163,6 +181,7 @@ impl Extension for LoggerExtension {
                     );
                 }
             }
+
             let query_start_time = info.start_time;
             let duration = Utc::now() - query_start_time;
 

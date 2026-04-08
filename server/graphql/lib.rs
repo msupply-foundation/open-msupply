@@ -325,6 +325,8 @@ impl GraphqlSchema {
             validated_plugins,
         } = data;
 
+        let suppress_graphql_logging = settings.server.suppress_graphql_logging;
+
         // Self requester schema is a copy of operational schema, used for reports
         // needs to be available as data in operational schema
         let self_requester_schema =
@@ -335,7 +337,7 @@ impl GraphqlSchema {
                 .data(auth.clone())
                 .data(settings.clone())
                 .data(validated_plugins.clone())
-                .extension(GraphQLRequestLogger)
+                .extension(GraphQLRequestLogger { suppress: suppress_graphql_logging })
                 .finish();
         // Self requester does not need loggers
 
@@ -354,7 +356,7 @@ impl GraphqlSchema {
                 // Add self requester to operational
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
                 .data(operational_status_ref.clone())
-                .extension(GraphQLRequestLogger);
+                .extension(GraphQLRequestLogger { suppress: suppress_graphql_logging });
 
         // Initialisation schema should ony need service_provider
         let initialisation_builder = InitialisationSchema::build(
@@ -364,13 +366,13 @@ impl GraphqlSchema {
         )
         .data(service_provider.clone())
         .data(operational_status_ref.clone())
-        .extension(GraphQLRequestLogger);
+        .extension(GraphQLRequestLogger { suppress: true });
 
         let migration_builder =
             MigrationSchema::build(MigrationQueries, EmptyMutation, EmptySubscription)
                 .data(service_provider.clone())
                 .data(operational_status_ref.clone())
-                .extension(GraphQLRequestLogger);
+                .extension(GraphQLRequestLogger { suppress: true });
 
         GraphqlSchema {
             operational: operational_builder.finish(),
