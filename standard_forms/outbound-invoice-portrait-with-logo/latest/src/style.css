@@ -68,7 +68,12 @@
 
 .line_number,
 .quantity,
-.pack,
+.pack {
+  text-align: right;
+  font-family: Tahoma;
+  font-size: 8pt;
+}
+
 .expiry {
   text-align: end;
   font-family: Tahoma;

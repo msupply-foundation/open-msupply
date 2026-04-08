@@ -68,12 +68,17 @@
 .line_number,
 .quantity,
 .pack,
-.expiry,
 .sell_price,
 .cost_price,
 .total_quantity,
 .total_extension {
   text-align: right;
+  font-family: Tahoma;
+  font-size: 8pt;
+}
+
+.expiry {
+  text-align: end;
   font-family: Tahoma;
   font-size: 8pt;
 }

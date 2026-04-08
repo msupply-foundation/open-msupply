@@ -78,8 +78,14 @@ body > table {
   padding: 4px;
 }
 
-.line_number, .quantity, .pack, .expiry {
+.line_number, .quantity, .pack {
     text-align: right;
+    font-family: Tahoma;
+    font-size: 8pt;
+}
+
+.expiry {
+    text-align: end;
     font-family: Tahoma;
     font-size: 8pt;
 }
