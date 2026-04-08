@@ -2838,6 +2838,11 @@ export type FinalisedRequisition = DeleteResponseRequisitionErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type FloatStorePrefInput = {
+  storeId: Scalars['String']['input'];
+  value: Scalars['Float']['input'];
+};
+
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
@@ -6803,6 +6808,7 @@ export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
   Colour = 'COLOUR',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
+  Float = 'FLOAT',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
   String = 'STRING',
@@ -6833,8 +6839,8 @@ export type PreferencesNode = {
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   maximumBackdatingDays: Scalars['Int']['output'];
-  numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Int']['output'];
-  numberOfMonthsThresholdToShowOverStockAlertsForProducts: Scalars['Int']['output'];
+  numberOfMonthsThresholdToShowLowStockAlertsForProducts: Scalars['Float']['output'];
+  numberOfMonthsThresholdToShowOverStockAlertsForProducts: Scalars['Float']['output'];
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
@@ -11165,10 +11171,10 @@ export type UpsertPreferencesInput = {
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   maximumBackdatingDays?: InputMaybe<Scalars['Int']['input']>;
   numberOfMonthsThresholdToShowLowStockAlertsForProducts?: InputMaybe<
-    Array<IntegerStorePrefInput>
+    Array<FloatStorePrefInput>
   >;
   numberOfMonthsThresholdToShowOverStockAlertsForProducts?: InputMaybe<
-    Array<IntegerStorePrefInput>
+    Array<FloatStorePrefInput>
   >;
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts?: InputMaybe<
     Array<IntegerStorePrefInput>
