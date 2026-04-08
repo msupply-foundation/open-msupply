@@ -56,7 +56,6 @@ pub struct UpdateInboundShipment {
     pub charges_local_currency: Option<f64>,
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
-    pub delivered_datetime: Option<NaiveDate>,
     pub received_datetime: Option<NaiveDate>,
 }
 
@@ -216,9 +215,6 @@ pub enum UpdateInboundShipmentError {
     CannotChangeStatusOfInvoiceOnHold,
     CannotIssueForeignCurrencyForInternalSuppliers,
     CannotUpdateStatusAndDonorAtTheSameTime,
-    CanOnlyChangeDateOfExternalInboundShipments,
-    CannotSetDeliveredDateInFuture,
-    CannotPutDeliveredDateAfterReceivedDate,
     CannotSetReceivedDateInFuture,
     CanOnlyBackdateReceivedShipments,
     CannotMoveReceivedDateForward,
