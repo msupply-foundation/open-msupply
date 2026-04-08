@@ -165,8 +165,7 @@ const getFilterOptions = (
     }));
 };
 
-// Updates the active filter list based on the URL, but doesn't remove already
-// active filters and preserves the current order
+// Updates the active filters, creating a conflict here to test rc branch merging!
 const updateFilters = (
   filters: (FilterDefinition | GroupFilterDefinition)[],
   activeFilters: FilterDefinition[],
