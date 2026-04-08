@@ -10170,7 +10170,7 @@ export type UpdateInboundShipmentLineInput = {
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdateInboundShipmentLineResponse =
@@ -10908,7 +10908,7 @@ export type UpdateStocktakeLineInput = {
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdateStocktakeLineResponse =
