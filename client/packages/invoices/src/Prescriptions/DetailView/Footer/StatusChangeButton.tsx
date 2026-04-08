@@ -11,9 +11,9 @@ import {
   InvoiceLineNodeType,
   useDisabledNotificationToast,
   useEditModal,
-  useRegisterActions,
   ALT_KEY,
 } from '@openmsupply-client/common';
+import { useRegisterActions } from 'kbar';
 import { useInsuranceProviders } from '@openmsupply-client/system';
 import {
   getButtonLabel,

@@ -20,7 +20,6 @@ import {
   DetailContainer,
   usePluginProvider,
   UsePluginEvents,
-  useRegisterActions,
   usePreferences,
   ReasonOptionNodeType,
   QuantityUtils,
@@ -28,6 +27,7 @@ import {
   RouteBuilder,
   Link,
 } from '@openmsupply-client/common';
+import { useRegisterActions } from 'kbar';
 import { DraftStockLine, StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import {

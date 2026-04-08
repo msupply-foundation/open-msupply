@@ -37,8 +37,8 @@ import {
   useIsCentralServerApi,
   useRootNavigationPath,
   useIntlUtils,
-  KBarProvider,
 } from '@openmsupply-client/common';
+import { KBarProvider } from 'kbar';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { useInitPlugins } from './useInitPlugins';
 import { CommandK } from './CommandK';
