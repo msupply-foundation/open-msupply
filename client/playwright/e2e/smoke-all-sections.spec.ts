@@ -123,7 +123,7 @@ async function collectGraphQLFromPage(page: Page, listUrl: string) {
   });
 
   await page
-    .goto(listUrl, { waitUntil: 'networkidle', timeout: RENDER_WAIT_MS })
+    .goto(listUrl, { waitUntil: 'networkidle', timeout: 15000 })
     .catch(() => {});
 
   return Promise.all(graphqlResponses);
@@ -139,7 +139,7 @@ async function navigateAndCheck(
 ) {
   resetTracker(tracker);
   await page
-    .goto(url, { waitUntil: 'networkidle', timeout: RENDER_WAIT_MS })
+    .goto(url, { waitUntil: 'networkidle', timeout: 15000 })
     .catch(() => {});
   await page.waitForTimeout(RENDER_WAIT_MS);
 
@@ -156,7 +156,7 @@ async function clickFirstRowAndCheck(
   resetTracker(tracker);
 
   const row = page.locator('tbody tr').first();
-  if (!(await row.isVisible({ timeout: 3000 }).catch(() => false))) {
+  if (!(await row.isVisible({ timeout: 15000 }).catch(() => false))) {
     console.log(`  No rows in ${label}, skipping detail`);
     return false;
   }
