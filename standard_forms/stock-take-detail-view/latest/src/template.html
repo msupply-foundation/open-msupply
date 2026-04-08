@@ -38,14 +38,14 @@
         <td>{{ line.packSize}}</td>
         <td>{{ line.snapshotNumberOfPacks }}</td>
         <td>
-            {% if line.countedNumberOfPacks %}
+            {% if line.countedNumberOfPacks is number %}
             {{ line.countedNumberOfPacks }}
             {% else %}
             -
             {% endif %}
         </td>
         <td>
-            {% if line.countedNumberOfPacks %}
+            {% if line.countedNumberOfPacks is number %}
             {{ line.countedNumberOfPacks - line.snapshotNumberOfPacks }}
             {% else %}
             -
