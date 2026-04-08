@@ -7,7 +7,7 @@ export const useUrlSortManagement = (
     key: string;
     dir: 'asc' | 'desc';
   },
-  noUrlSync = false
+  localStateOnly = false
 ) => {
   const {
     updateSortQuery,
@@ -55,8 +55,8 @@ export const useUrlSortManagement = (
   }, [sortBy.key, sortBy.isDesc]);
 
   return {
-    sorting: noUrlSync ? localSorting : urlSorting,
-    onSortingChange: noUrlSync
+    sorting: localStateOnly ? localSorting : urlSorting,
+    onSortingChange: localStateOnly
       ? handleLocalSortingChange
       : handleUrlSortingChange,
   };

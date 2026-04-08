@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   MRT_Row,
   MRT_RowData,
@@ -50,7 +50,8 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
     onToggle?: (isGrouped: boolean) => void;
   };
   columns: ColumnDef<T>[];
-  noUrlSync?: boolean;
+  /** Keep sorting and filtering in local component state instead of syncing to URL query params. Use for tables in modals, popovers, or anywhere the table state shouldn't affect the URL. */
+  localStateOnly?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
   isMobile?: boolean;
@@ -69,7 +70,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   grouping: groupingInput,
   enableColumnResizing = true,
   manualFiltering = false,
-  noUrlSync = false,
+  localStateOnly = false,
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
@@ -95,23 +96,11 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   // Filter needs to be applied after columns are processed
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(
     columns,
-    noUrlSync
+    localStateOnly
   );
-  const { sorting: urlSorting, onSortingChange } = useUrlSortManagement(
+  const { sorting, onSortingChange } = useUrlSortManagement(
     initialSort,
-    noUrlSync
-  );
-
-  // The URL sort is shared across all tables on the page (e.g. multiple tabs
-  // in a detail view). Ignore sort entries that reference columns this table
-  // doesn't have, to avoid TanStack Table "Column does not exist" errors.
-  const columnIds = useMemo(
-    () => new Set(columns.map(c => c.id ?? c.accessorKey)),
-    [columns]
-  );
-  const sorting = useMemo(
-    () => urlSorting.filter(s => columnIds.has(s.id)),
-    [urlSorting, columnIds]
+    localStateOnly
   );
 
   const density = useColumnDensity(tableId);
