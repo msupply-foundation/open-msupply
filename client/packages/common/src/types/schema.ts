@@ -9586,13 +9586,10 @@ export type StringStorePrefInput = {
 
 export type Subscriptions = {
   __typename: 'Subscriptions';
-  /** Subscribe to initialisation status changes (authenticated). */
   initialisationStatusUpdated: InitialisationStatusNode;
   /** Simple subscription to verify WebSocket connectivity */
   ping: Scalars['String']['output'];
-  /** Subscribe to push queue count updates (authenticated). */
   pushQueueCountUpdated: Scalars['Int']['output'];
-  /** Subscribe to real-time sync status updates (authenticated). */
   syncStatusUpdated?: Maybe<FullSyncStatusNode>;
 };
 

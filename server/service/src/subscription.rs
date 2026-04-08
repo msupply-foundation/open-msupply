@@ -90,6 +90,21 @@ async fn subscription_worker_loop(
     service_provider: Arc<ServiceProvider>,
 ) {
     let mut last_successful: Option<FullSyncStatus> = None;
+    // Once a sync has completed, the site is initialised. Don't emit
+    // InitialisationStatus::Initialising during subsequent syncs, as that
+    // would cause Host.tsx's PreInit to logout the user.
+    // Check DB at startup to see if there's already a completed sync.
+    let mut initialised = service_provider
+        .basic_context()
+        .ok()
+        .and_then(|ctx| {
+            service_provider
+                .sync_status_service
+                .get_latest_successful_sync_status(&ctx)
+                .ok()
+                .flatten()
+        })
+        .is_some();
     let mut last_push_queue_query = Instant::now() - PUSH_QUEUE_DEBOUNCE;
     let mut push_queue_pending = false;
 
@@ -132,25 +147,26 @@ async fn subscription_worker_loop(
                 });
 
                 // Derive initialisation status from the same row.
-                // Only relevant when the InitialisationSchema is active —
-                // the operational schema does not expose this subscription.
-                let init_status = if row.finished_datetime.is_some() {
-                    let site_name = service_provider
-                        .connection()
-                        .ok()
-                        .and_then(|conn| {
-                            KeyValueStoreRepository::new(&conn)
-                                .get_string(KeyType::SettingsSyncUsername)
-                                .ok()
-                                .flatten()
-                        })
-                        .unwrap_or_default();
-                    InitialisationStatus::Initialised(site_name)
-                } else {
-                    InitialisationStatus::Initialising
-                };
+                if !initialised {
+                    let init_status = if row.finished_datetime.is_some() {
+                        initialised = true;
+                        let site_name = service_provider
+                            .connection()
+                            .ok()
+                            .and_then(|conn| {
+                                KeyValueStoreRepository::new(&conn)
+                                    .get_string(KeyType::SettingsSyncUsername)
+                                    .ok()
+                                    .flatten()
+                            })
+                            .unwrap_or_default();
+                        InitialisationStatus::Initialised(site_name)
+                    } else {
+                        InitialisationStatus::Initialising
+                    };
 
-                let _ = tx.send(ResolvedSubscription::InitialisationStatus(init_status));
+                    let _ = tx.send(ResolvedSubscription::InitialisationStatus(init_status));
+                }
             }
             SubscriptionTrigger::PushQueueChanged => {
                 if last_push_queue_query.elapsed() >= PUSH_QUEUE_DEBOUNCE {

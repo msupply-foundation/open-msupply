@@ -53,10 +53,17 @@ impl SyncStatusSubscriptions {
         Ok(sync_status_stream(get_subscription_broadcast(ctx)?))
     }
 
-    async fn push_queue_count_updated(
+    async fn initialisation_status_updated(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<impl Stream<Item = u64>> {
+    ) -> Result<impl Stream<Item = InitialisationStatusNode>> {
+        validate_sync_auth(ctx)?;
+        Ok(initialisation_status_stream(get_subscription_broadcast(
+            ctx,
+        )?))
+    }
+
+    async fn push_queue_count_updated(&self, ctx: &Context<'_>) -> Result<impl Stream<Item = u64>> {
         validate_sync_auth(ctx)?;
         Ok(push_queue_count_stream(get_subscription_broadcast(ctx)?))
     }
@@ -80,6 +87,8 @@ impl InitialisationSubscriptions {
         &self,
         ctx: &Context<'_>,
     ) -> Result<impl Stream<Item = InitialisationStatusNode>> {
-        Ok(initialisation_status_stream(get_subscription_broadcast(ctx)?))
+        Ok(initialisation_status_stream(get_subscription_broadcast(
+            ctx,
+        )?))
     }
 }
