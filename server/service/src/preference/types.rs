@@ -69,6 +69,7 @@ pub enum PreferenceType {
 pub enum PreferenceValueType {
     Boolean,
     Integer,
+    Float,
     MultiChoice,
     // specific type to CustomTranslations preference
     CustomTranslations,
