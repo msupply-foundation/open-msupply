@@ -34,10 +34,10 @@
         </td>
         <td>{{stockLine.location.code | default(value='')}}</td>
         <td>{{stockLine.item.unitName | default(value='')}}</td>
-        <td>{{stockLine.packSize }}</td>
-        <td>{{stockLine.totalNumberOfPacks}}</td>
-        <td>{{
-          stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)  
+        <td style="text-align: right">{{stockLine.packSize }}</td>
+        <td style="text-align: right">{{stockLine.totalNumberOfPacks}}</td>
+        <td style="text-align: right">{{
+          stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)
         }}</td>
         <td>{{stockLine.supplierName | default(value='')}}</td>    
       </tr>
