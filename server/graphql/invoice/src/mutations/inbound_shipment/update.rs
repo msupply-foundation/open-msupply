@@ -51,7 +51,6 @@ pub struct UpdateInput {
     pub charges_local_currency: Option<f64>,
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
-    pub delivered_datetime: Option<NaiveDate>,
     pub received_datetime: Option<NaiveDate>,
 }
 
@@ -132,7 +131,6 @@ impl UpdateInput {
             charges_local_currency,
             charges_foreign_currency,
             default_donor,
-            delivered_datetime,
             received_datetime,
         } = self;
 
@@ -155,7 +153,6 @@ impl UpdateInput {
                 donor_id: donor.donor_id,
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
-            delivered_datetime,
             received_datetime,
         }
     }
@@ -224,9 +221,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::NotAnInboundShipment
         | ServiceError::WrongInboundShipmentType
         | ServiceError::OtherPartyDoesNotExist
-        | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
-        | ServiceError::CannotPutDeliveredDateAfterReceivedDate
-        | ServiceError::CannotSetDeliveredDateInFuture
         | ServiceError::CannotSetReceivedDateInFuture
         | ServiceError::CanOnlyBackdateReceivedShipments
         | ServiceError::CannotMoveReceivedDateForward
@@ -602,7 +596,6 @@ mod test {
                     charges_local_currency: None,
                     charges_foreign_currency: None,
                     default_donor: None,
-                    delivered_datetime: None,
                     received_datetime: None,
                 }
             );

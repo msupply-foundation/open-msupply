@@ -65,26 +65,6 @@ pub fn validate(
         }
     }
 
-    // Delivered datetime is only editable for external inbound shipments (those created from a
-    // purchase order). It must not be in the future and must not be after the received datetime,
-    // as the goods can't have been delivered after they were received.
-    if let Some(delivered_datetime) = patch.delivered_datetime {
-        if invoice.purchase_order_id.is_none() {
-            return Err(CanOnlyChangeDateOfExternalInboundShipments);
-        }
-
-        let max_allowed_date = Utc::now().date_naive() + Duration::days(1);
-        if delivered_datetime > max_allowed_date {
-            return Err(CannotSetDeliveredDateInFuture);
-        }
-
-        if let Some(received_datetime) = invoice.received_datetime {
-            if delivered_datetime > received_datetime.date() {
-                return Err(CannotPutDeliveredDateAfterReceivedDate);
-            }
-        }
-    }
-
     // Received datetime can only be backdated (moved earlier) on shipments that are already
     // in Received or Verified status. Once moved back it cannot be moved forward again.
     if let Some(received_datetime) = patch.received_datetime {
