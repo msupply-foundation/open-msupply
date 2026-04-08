@@ -11,12 +11,12 @@
             <th class="item_name" style="width: 24%;">{{t(k="report.item-name", f="Item name")}}</th>
             <th class="unit" style="width: 6%;">{{t(k="label.unit", f="Units")}}</th>
             <th class="quantity" style="width: 7%;">{{t(k="label.quantity", f="Quantity")}}</th>
-            <th style="text-align: left; width: 8%;">{{t(k="report.issued", f="Issued")}}</th>
-            <th style="text-align: left; width: 8%;">{{t(k="label.checked", f="Checked")}}</th>
+            <th style="text-align: start; width: 8%;">{{t(k="report.issued", f="Issued")}}</th>
+            <th style="text-align: start; width: 8%;">{{t(k="label.checked", f="Checked")}}</th>
             <th class="pack" style="width: 7%;">{{t(k="label.pack", f="Pack")}}</th>
             <th class="batch" style="width: 8%;">{{t(k="label.batch", f="Batch")}}</th>
             <th class="expiry" style="width: 8%;">{{t(k="label.expiry", f="Expiry")}}</th>
-            <th style="text-align: left; width: 8%;">{{t(k="label.box", f="Box")}}</th>
+            <th style="text-align: start; width: 8%;">{{t(k="label.box", f="Box")}}</th>
         </tr>
     </thead>
     {% for line in data.invoiceLines.nodes -%}
