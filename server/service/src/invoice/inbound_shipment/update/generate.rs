@@ -99,11 +99,6 @@ pub(crate) fn generate(
         .unwrap_or(update_invoice.charges_foreign_currency);
 
     // Already validated in validate
-    if let Some(delivered_datetime) = patch.delivered_datetime {
-        update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
-    }
-
-    // Already validated in validate
     let backdate_location_movements = if let Some(received_datetime) = patch.received_datetime {
         let new_received = NaiveDateTime::from(received_datetime);
         update_invoice.received_datetime = Some(new_received);
