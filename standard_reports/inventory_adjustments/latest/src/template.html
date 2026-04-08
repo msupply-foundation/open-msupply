@@ -30,9 +30,9 @@
 						{% endif %}
 					</td>
 					<td>{{ line.location.code | default(value='-') }}</td>
-					<td style="text-align: end">{{ line.snapshotPacks | default(value='-') }}</td>
-					<td style="text-align: end">{{ line.countedPacks | default(value='-') }}</td>
-					<td style="text-align: end">{{ line.adjustmentPacks | round(precision=2) }}</td>
+					<td style="text-align: right">{{ line.snapshotPacks | default(value='-') }}</td>
+					<td style="text-align: right">{{ line.countedPacks | default(value='-') }}</td>
+					<td style="text-align: right">{{ line.adjustmentPacks | round(precision=2) }}</td>
 					<td>{{ line.inventoryAdjustmentReason.reason | default(value='') }}</td>
 				</tr>
 			{% endfor %}
