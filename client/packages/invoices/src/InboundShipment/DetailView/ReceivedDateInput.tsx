@@ -61,12 +61,12 @@ export const ReceivedDateInput = () => {
 
   const getBackdateConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-backdate-received-date'),
+    message: '', // set in handleChange
   });
 
   const getStocktakeWarningConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.stocktake-after-backdate-warning'),
+    message: '', // set in handleChange
   });
 
   const checkStocktakeAfterDate = async (date: Date): Promise<boolean> => {
@@ -97,10 +97,15 @@ export const ReceivedDateInput = () => {
 
     if (Formatter.naiveDate(newDate) === Formatter.naiveDate(dateValue)) return;
 
+    const formattedDate = newDate.toLocaleDateString();
+
     const doUpdate = async () => {
       const hasStocktakeAfter = await checkStocktakeAfterDate(newDate);
       if (hasStocktakeAfter) {
         getStocktakeWarningConfirmation({
+          message: t('messages.stocktake-after-backdate-warning', {
+            date: formattedDate,
+          }),
           onConfirm: async () => {
             await update({
               receivedDatetime: Formatter.naiveDate(newDate) ?? undefined,
@@ -117,6 +122,9 @@ export const ReceivedDateInput = () => {
     };
 
     getBackdateConfirmation({
+      message: t('messages.confirm-backdate-received-date', {
+        date: formattedDate,
+      }),
       onConfirm: () => doUpdate(),
       onCancel: () => setDateValue(previousValue),
     });
