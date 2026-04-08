@@ -1,7 +1,8 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
-    inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
+    inbound_shipment::UpdateInboundShipmentStatus, invoice_date_utils::is_date_in_future,
+    InvoiceRowStatusError,
 };
 use crate::preference::{preferences::MaximumBackdatingDays, Preference};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
@@ -76,12 +77,7 @@ pub fn validate(
             return Err(CanOnlyBackdateReceivedShipments);
         }
 
-        // The input is a NaiveDate (no time/tz). The user picks "today" in their
-        // local timezone, which could be up to UTC+14. Compare against the UTC date
-        // plus one day so that no local timezone considers this "in the future". Should probably look into passing TZ from the client for all date inputs?
-        let max_allowed_date = Utc::now().date_naive() + Duration::days(1);
-
-        if received_datetime > max_allowed_date {
+        if is_date_in_future(received_datetime) {
             return Err(CannotSetReceivedDateInFuture);
         }
 
@@ -93,16 +89,13 @@ pub fn validate(
         }
 
         // Check maximum backdating days preference
-        let max_days: i32 = MaximumBackdatingDays
-            .load(connection, None)
-            .unwrap_or(0);
+        let max_days: i32 = MaximumBackdatingDays.load(connection, None).unwrap_or(0);
         if max_days > 0 {
             let earliest_allowed = Utc::now().date_naive() - Duration::days(max_days as i64);
             if received_datetime < earliest_allowed {
                 return Err(ExceedsMaximumBackdatingDays);
             }
         }
-
     }
 
     // Currency rate must be positive if provided

@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Utc};
+use chrono::{NaiveDate, NaiveDateTime, Utc};
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow,
@@ -89,7 +89,7 @@ pub(crate) fn generate(
     if let Some(backdated_datetime) = input_backdated_datetime {
         handle_new_backdated_datetime(
             &mut update_invoice,
-            backdated_datetime,
+            NaiveDateTime::from(backdated_datetime),
             Utc::now().naive_utc(),
         );
     }

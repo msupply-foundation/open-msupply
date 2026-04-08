@@ -3,7 +3,7 @@ use crate::common::check_shipping_method_exists;
 use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_status_change, check_store, InvoiceRowStatusError,
+    check_status_change, check_store, invoice_date_utils::is_date_in_future, InvoiceRowStatusError,
 };
 use crate::preference::{
     preferences::{AllowBackdatingOfShipments, MaximumBackdatingDays},
@@ -68,8 +68,7 @@ pub fn validate(
             ));
         }
 
-        let max_allowed_date = Utc::now().date_naive() + Duration::days(1);
-        if backdated_datetime.date() > max_allowed_date {
+        if is_date_in_future(backdated_datetime) {
             return Err(CantBackDate("Cannot set date in the future".to_string()));
         }
 
@@ -78,7 +77,7 @@ pub fn validate(
         let max_days: i32 = MaximumBackdatingDays.load(connection, None)?;
         if max_days > 0 {
             let earliest_allowed = Utc::now().date_naive() - Duration::days(max_days as i64);
-            if backdated_datetime.date() < earliest_allowed {
+            if backdated_datetime < earliest_allowed {
                 return Err(ExceedsMaximumBackdatingDays);
             }
         }

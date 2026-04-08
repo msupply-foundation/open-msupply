@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDate;
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
@@ -38,7 +38,7 @@ pub struct UpdateOutboundShipment {
     pub currency_rate: Option<f64>,
     pub expected_delivery_date: Option<NullableUpdate<NaiveDate>>,
     pub shipping_method_id: Option<NullableUpdate<String>>,
-    pub backdated_datetime: Option<NaiveDateTime>,
+    pub backdated_datetime: Option<NaiveDate>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -850,7 +850,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let two_days_ago = Utc::now().naive_utc() - Duration::days(2);
+        let two_days_ago = (Utc::now() - Duration::days(2)).date_naive();
 
         // CantBackDate: not a New outbound
         assert_eq!(
@@ -879,7 +879,7 @@ mod test {
         assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
 
         // CantBackDate: future date
-        let future = Utc::now().naive_utc() + Duration::days(5);
+        let future = (Utc::now() + Duration::days(5)).date_naive();
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
@@ -937,7 +937,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let two_days_ago = Utc::now().naive_utc() - Duration::days(2);
+        let two_days_ago = (Utc::now() - Duration::days(2)).date_naive();
 
         let result = service.update_outbound_shipment(
             &context,
@@ -955,7 +955,10 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(updated.backdated_datetime, Some(two_days_ago));
+        assert_eq!(
+            updated.backdated_datetime,
+            Some(chrono::NaiveDateTime::from(two_days_ago))
+        );
         // Status datetimes should not be set (invoice is still New)
         assert_eq!(updated.allocated_datetime, None);
         assert_eq!(updated.picked_datetime, None);
