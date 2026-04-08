@@ -2803,5 +2803,6 @@
   "messages.received-date-not-received": "The received date can only be changed once the shipment has been received",
   "messages.picked-date-not-new": "The picked date can only be set on new outbound shipments",
   "messages.confirm-backdate-picked-date": "Changing the picked date will remove all existing lines from this outbound shipment. Are you sure you want to continue?",
-  "label.picked-date": "Picked date"
+  "label.picked-date": "Picked date",
+  "log.invoice-date-backdated": "Received date backdated"
 }

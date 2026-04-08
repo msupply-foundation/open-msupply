@@ -3,11 +3,11 @@ use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use chrono::NaiveDate;
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
-use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
-    StockLineRowRepository,
+    ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
+    RepositoryError, StockLineRowRepository,
 };
+use repository::{Invoice, LocationMovementRowRepository};
 
 mod generate;
 mod validate;
@@ -77,6 +77,7 @@ pub fn update_inbound_shipment(
                 &patch,
                 r#type,
             )?;
+            let old_received_datetime = invoice.received_datetime;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
@@ -176,6 +177,19 @@ pub fn update_inbound_shipment(
                     Some(update_invoice.id.to_string()),
                     None,
                     None,
+                    store_id.map(|id| id.to_string()),
+                )?;
+            }
+
+            if patch.received_datetime.is_some() {
+                activity_log_entry_with_store(
+                    ctx,
+                    ActivityLogType::InvoiceDateBackdated,
+                    Some(update_invoice.id.to_string()),
+                    old_received_datetime.map(|d| d.format("%Y-%m-%d").to_string()),
+                    update_invoice
+                        .received_datetime
+                        .map(|d| d.format("%Y-%m-%d").to_string()),
                     store_id.map(|id| id.to_string()),
                 )?;
             }
@@ -1512,9 +1526,7 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_cost_price_with_po() {
-        use repository::{
-            PurchaseOrderLineRow, PurchaseOrderRow, PurchaseOrderStatus,
-        };
+        use repository::{PurchaseOrderLineRow, PurchaseOrderRow, PurchaseOrderStatus};
 
         fn supplier() -> NameRow {
             NameRow {
@@ -2024,9 +2036,7 @@ mod test {
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Received,
                 received_datetime: Some(received_datetime),
-                delivered_datetime: Some(
-                    received_datetime - Duration::days(1),
-                ),
+                delivered_datetime: Some(received_datetime - Duration::days(1)),
                 ..Default::default()
             }
         }
@@ -2131,10 +2141,9 @@ mod test {
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Received,
+                created_datetime: received_datetime,
                 received_datetime: Some(received_datetime),
-                delivered_datetime: Some(
-                    received_datetime - Duration::days(5),
-                ),
+                delivered_datetime: Some(received_datetime),
                 ..Default::default()
             }
         }
@@ -2224,20 +2233,55 @@ mod test {
             Some(chrono::NaiveDateTime::from(three_days_ago.date()))
         );
 
+        // Check delivered_datetime was moved back
+        assert_eq!(
+            updated.delivered_datetime,
+            Some(chrono::NaiveDateTime::from(three_days_ago.date()))
+        );
+
+        // Check created_datetime was moved back
+        assert_eq!(
+            updated.created_datetime,
+            chrono::NaiveDateTime::from(three_days_ago.date())
+        );
+
         // Check location movement enter_datetime was updated
-        let movements = LocationMovementRepository::new(&connection).query(
-            Default::default(),
-            Some(
-                LocationMovementFilter::new()
-                    .stock_line_id(EqualFilter::equal_to(stock_line().id)),
-            ),
-            None,
-        ).unwrap();
+        let movements = LocationMovementRepository::new(&connection)
+            .query(
+                Default::default(),
+                Some(
+                    LocationMovementFilter::new()
+                        .stock_line_id(EqualFilter::equal_to(stock_line().id)),
+                ),
+                None,
+            )
+            .unwrap();
 
         assert_eq!(movements.len(), 1);
         assert_eq!(
             movements[0].location_movement_row.enter_datetime,
             Some(chrono::NaiveDateTime::from(three_days_ago.date()))
         );
+
+        // Check activity log entry was created for backdating
+        use repository::activity_log::{ActivityLogFilter, ActivityLogRepository};
+        let logs = ActivityLogRepository::new(&connection)
+            .query(
+                Default::default(),
+                Some(
+                    ActivityLogFilter::new()
+                        .r#type(ActivityLogType::InvoiceDateBackdated.equal_to()),
+                ),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(logs.len(), 1);
+        assert_eq!(
+            logs[0].activity_log_row.record_id,
+            Some(received_inbound(now).id)
+        );
+        assert!(logs[0].activity_log_row.changed_from.is_some());
+        assert!(logs[0].activity_log_row.changed_to.is_some());
     }
 }
