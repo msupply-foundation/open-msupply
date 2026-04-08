@@ -1,0 +1,11 @@
+# Postgres 17 - Default configuration
+# Baseline for insert performance testing
+
+shared_buffers = 128MB
+wal_buffers = -1
+synchronous_commit = on
+max_wal_size = 1GB
+checkpoint_completion_target = 0.9
+work_mem = 4MB
+effective_io_concurrency = 1
+autovacuum = on

@@ -1,0 +1,11 @@
+# Postgres 17 - Moderate production configuration
+# Basic production tune without touching durability settings
+
+shared_buffers = 1GB
+wal_buffers = 64MB
+synchronous_commit = on
+max_wal_size = 4GB
+checkpoint_completion_target = 0.9
+work_mem = 4MB
+effective_io_concurrency = 200
+autovacuum = on
