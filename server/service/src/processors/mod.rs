@@ -2,7 +2,6 @@ use repository::system_log_row::SystemLogType;
 use repository::{RepositoryError, StorageConnection};
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::broadcast;
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
@@ -37,9 +36,6 @@ pub struct ProcessorsTrigger {
     invoice_transfer: Sender<()>,
     general_processor: Sender<ProcessorType>,
     await_process_queue: Sender<oneshot::Sender<()>>,
-    /// Fires whenever a mutation creates/modifies changelogs.
-    /// Used by the push queue count subscription to know when to re-query.
-    pub push_queue_changed: broadcast::Sender<()>,
 }
 
 pub struct Processors {
@@ -80,7 +76,6 @@ impl Processors {
                 invoice_transfer: invoice_transfer_sender,
                 general_processor: general_processor_sender,
                 await_process_queue: request_check_sender,
-                push_queue_changed: broadcast::channel(16).0,
             },
             Processors {
                 requisition_transfer: requisition_transfer_receiver,
@@ -173,7 +168,6 @@ impl ProcessorsTrigger {
             invoice_transfer: mpsc::channel(1).0,
             general_processor: mpsc::channel(1).0,
             await_process_queue: mpsc::channel(1).0,
-            push_queue_changed: broadcast::channel(16).0,
         }
     }
 }

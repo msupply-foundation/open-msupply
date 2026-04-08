@@ -67,8 +67,10 @@ use graphql_vvm::{VVMMutations, VVMQueries};
 use repository::StorageConnectionManager;
 
 use futures::stream::Stream;
+use tokio::sync::broadcast;
 
 use service::auth_data::AuthData;
+use service::subscription::ResolvedSubscription;
 use service::boajs::utils::{ExecuteGraphQlError, ExecuteGraphql};
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
@@ -328,6 +330,7 @@ pub struct GraphSchemaData {
     pub auth: Data<AuthData>,
     pub settings: Data<Settings>,
     pub validated_plugins: Data<Mutex<ValidatedPluginBucket>>,
+    pub subscription_broadcast: broadcast::Sender<ResolvedSubscription>,
 }
 
 impl GraphqlSchema {
@@ -339,7 +342,9 @@ impl GraphqlSchema {
             auth,
             settings,
             validated_plugins,
+            subscription_broadcast,
         } = data;
+        let subscription_broadcast = Data::new(subscription_broadcast);
 
         // Self requester schema is a copy of operational schema, used for reports
         // needs to be available as data in operational schema
@@ -367,6 +372,7 @@ impl GraphqlSchema {
                 .data(auth.clone())
                 .data(settings.clone())
                 .data(validated_plugins.clone())
+                .data(subscription_broadcast.clone())
                 // Add self requester to operational
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
                 .data(operational_status_ref.clone())
@@ -379,6 +385,7 @@ impl GraphqlSchema {
             InitialisationSubscriptions::default(),
         )
         .data(service_provider.clone())
+        .data(subscription_broadcast.clone())
         .data(operational_status_ref.clone())
         .extension(GraphQLRequestLogger);
 

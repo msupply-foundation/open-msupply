@@ -8,8 +8,9 @@ use futures::stream::Stream;
 use graphql_core::standard_graphql_error::validate_auth;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    service_provider::ServiceProvider,
+    subscription::ResolvedSubscription,
 };
+use tokio::sync::broadcast;
 
 use crate::queries::initialisation_status::InitialisationStatusNode;
 use crate::queries::sync_status::FullSyncStatusNode;
@@ -18,9 +19,11 @@ use initialisation_status::initialisation_status_stream;
 use push_queue_count::push_queue_count_stream;
 use sync_status::sync_status_stream;
 
-fn get_service_provider(ctx: &Context<'_>) -> Result<Data<ServiceProvider>> {
-    ctx.data::<Data<ServiceProvider>>()
-        .map_err(|_| Error::new("ServiceProvider not found in context"))
+fn get_subscription_broadcast(
+    ctx: &Context<'_>,
+) -> Result<Data<broadcast::Sender<ResolvedSubscription>>> {
+    ctx.data::<Data<broadcast::Sender<ResolvedSubscription>>>()
+        .map_err(|_| Error::new("Subscription broadcast not found in context"))
         .cloned()
 }
 
@@ -47,15 +50,7 @@ impl SyncStatusSubscriptions {
         ctx: &Context<'_>,
     ) -> Result<impl Stream<Item = Option<FullSyncStatusNode>>> {
         validate_sync_auth(ctx)?;
-        Ok(sync_status_stream(get_service_provider(ctx)?))
-    }
-
-    async fn initialisation_status_updated(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<impl Stream<Item = InitialisationStatusNode>> {
-        validate_sync_auth(ctx)?;
-        Ok(initialisation_status_stream(get_service_provider(ctx)?))
+        Ok(sync_status_stream(get_subscription_broadcast(ctx)?))
     }
 
     async fn push_queue_count_updated(
@@ -63,7 +58,7 @@ impl SyncStatusSubscriptions {
         ctx: &Context<'_>,
     ) -> Result<impl Stream<Item = u64>> {
         validate_sync_auth(ctx)?;
-        Ok(push_queue_count_stream(get_service_provider(ctx)?))
+        Ok(push_queue_count_stream(get_subscription_broadcast(ctx)?))
     }
 }
 
@@ -78,13 +73,13 @@ impl InitialisationSubscriptions {
         &self,
         ctx: &Context<'_>,
     ) -> Result<impl Stream<Item = Option<FullSyncStatusNode>>> {
-        Ok(sync_status_stream(get_service_provider(ctx)?))
+        Ok(sync_status_stream(get_subscription_broadcast(ctx)?))
     }
 
     async fn initialisation_status_updated(
         &self,
         ctx: &Context<'_>,
     ) -> Result<impl Stream<Item = InitialisationStatusNode>> {
-        Ok(initialisation_status_stream(get_service_provider(ctx)?))
+        Ok(initialisation_status_stream(get_subscription_broadcast(ctx)?))
     }
 }

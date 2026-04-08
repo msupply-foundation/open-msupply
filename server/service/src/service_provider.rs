@@ -82,13 +82,12 @@ use crate::{
     vvm::{VVMService, VVMServiceTrait},
     ListError, ListResult,
 };
-use std::sync::atomic::AtomicBool;
-
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
-    StoreFilter, StoreSort, SyncLogRow,
+    StoreFilter, StoreSort,
 };
-use tokio::sync::{broadcast, watch};
+
+use crate::subscription::SubscriptionTriggerHandle;
 use util::constants::SYSTEM_USER_ID;
 
 pub struct ServiceProvider {
@@ -203,17 +202,9 @@ pub struct ServiceProvider {
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
-    // Broadcast channel for sync status updates (subscriptions).
-    // Sends the actual SyncLogRow so subscribers get every intermediate state
-    // (step transitions, progress) without querying the DB.
-    pub sync_status_broadcast: broadcast::Sender<SyncLogRow>,
-    // Push queue count subscription infrastructure.
-    // push_queue_changed: signal from ProcessorsTrigger when mutations create changelogs.
-    // push_queue_count_watch: shared result — all subscribers read from this.
-    // push_queue_worker_active: ensures only one worker task runs at a time.
-    pub push_queue_changed: broadcast::Sender<()>,
-    pub push_queue_count_watch: watch::Sender<u64>,
-    pub push_queue_worker_active: AtomicBool,
+    // Subscription trigger handle — used by SyncLogger and changelog callbacks
+    // to send events to the shared subscription worker.
+    pub subscription_trigger: SubscriptionTriggerHandle,
 }
 
 pub struct ServiceContext {
@@ -238,6 +229,7 @@ impl ServiceProvider {
             LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
+            SubscriptionTriggerHandle::new_void(),
         )
     }
 
@@ -248,8 +240,8 @@ impl ServiceProvider {
         ledger_fix_trigger: LedgerFixTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
+        subscription_trigger: SubscriptionTriggerHandle,
     ) -> Self {
-        let push_queue_changed = processors_trigger.push_queue_changed.clone();
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -326,10 +318,7 @@ impl ServiceProvider {
             contact_service: Box::new(ContactService {}),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
-            sync_status_broadcast: broadcast::channel(64).0,
-            push_queue_changed,
-            push_queue_count_watch: watch::channel(0).0,
-            push_queue_worker_active: AtomicBool::new(false),
+            subscription_trigger,
         }
     }
 

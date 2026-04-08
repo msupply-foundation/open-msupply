@@ -156,7 +156,7 @@ pub enum SyncStatusType {
     Integration,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum InitialisationStatus {
     /// Fully initialised (name)
     Initialised(String),

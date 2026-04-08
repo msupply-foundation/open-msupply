@@ -38,6 +38,7 @@ use service::{
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
+    subscription::{SubscriptionTrigger, SubscriptionWorker},
     settings::{is_develop, ServerSettings, Settings},
     standard_reports::StandardReports,
     sync::{
@@ -122,12 +123,13 @@ pub async fn start_server(
     // INITIALISE CONTEXT
     info!("Initialising server context..");
     let (processors_trigger, processors) = Processors::init();
+    let (subscription_trigger, subscription_worker) = SubscriptionWorker::init();
 
-    // Wire changelog insert notifications to the push_queue_changed broadcast.
-    // Every ChangelogRepository::insert() will fire this callback.
-    let push_queue_changed = processors_trigger.push_queue_changed.clone();
+    // Wire changelog insert notifications to the subscription worker.
+    // Every ChangelogRepository::insert() will fire this callback after commit.
+    let changelog_trigger = subscription_trigger.clone();
     connection_manager.set_changelog_callback(std::sync::Arc::new(move || {
-        let _ = push_queue_changed.send(());
+        changelog_trigger.send(SubscriptionTrigger::PushQueueChanged);
     }));
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
@@ -142,6 +144,7 @@ pub async fn start_server(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        subscription_trigger,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
     let certificates = Certificates::try_load(&settings.server).unwrap();
@@ -193,6 +196,9 @@ pub async fn start_server(
     let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
     let validated_plugins = Data::new(Mutex::new(validated_plugins));
 
+    let (_subscription_task, subscription_broadcast) =
+        subscription_worker.spawn(service_provider.clone().into_inner());
+
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
             connection_manager: Data::new(connection_manager.clone()),
@@ -201,6 +207,7 @@ pub async fn start_server(
             settings: Data::new(settings.clone()),
             auth: auth.clone(),
             validated_plugins: validated_plugins.clone(),
+            subscription_broadcast,
         },
         OperationalStatus::MigratingDatabase,
     ));
