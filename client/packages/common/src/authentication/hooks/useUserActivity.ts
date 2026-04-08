@@ -4,10 +4,9 @@ const ACTIVITY_EVENTS: (keyof DocumentEventMap)[] = [
   'mousedown',
   'keydown',
   'touchstart',
-  'scroll',
 ];
 
-export const INACTIVITY_TIMEOUT_MINUTES = 60;
+export const INACTIVITY_TIMEOUT_MINUTES = 30;
 
 export const useUserActivity = () => {
   const lastActivityRef = useRef(Date.now());
