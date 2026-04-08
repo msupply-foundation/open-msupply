@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   AppBarContentPortal,
+  Box,
   InputWithLabelRow,
   BufferedTextInput,
   Grid,
@@ -179,15 +180,17 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             label={t('label.supplier-ref')}
             Input={
               <Tooltip title={data?.reference} placement="bottom-start">
-                <BufferedTextInput
-                  disabled={isDisabled}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={data?.reference ?? ''}
-                  onChange={e => {
-                    handleChange({ reference: e.target.value });
-                  }}
-                />
+                <Box>
+                  <BufferedTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={data?.reference ?? ''}
+                    onChange={e => {
+                      handleChange({ reference: e.target.value });
+                    }}
+                  />
+                </Box>
               </Tooltip>
             }
           />
