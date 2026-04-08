@@ -52,6 +52,7 @@ pub use self::prescription::*;
 
 pub mod common;
 pub mod stock_effect;
+pub mod stock_ledger;
 pub mod update_picked_date;
 
 pub trait InvoiceServiceTrait: Sync + Send {
