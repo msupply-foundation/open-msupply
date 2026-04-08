@@ -8,11 +8,15 @@ import {
   ButtonWithIcon,
   ChevronDownIcon,
   DateUtils,
+  DownloadIcon,
   DialogButton,
+  EnvUtils,
   Formatter,
   FnUtils,
   LoadingButton,
   NothingHere,
+  Platform,
+  PrinterIcon,
   RouteBuilder,
   SaveIcon,
   Select,
@@ -49,6 +53,7 @@ import {
   isWomenPregnantBucket,
   resolveDemographicBuckets,
 } from './demographicBuckets';
+import { buildPrintableHtml, downloadPdfFromHtml, printHtml } from './printHelpers';
 
 type TallyStockLine = {
   id: string;
@@ -1642,6 +1647,153 @@ export const DailyTallyView = () => {
     row => row.womenPregnant > 0 || row.womenNonPregnant > 0
   );
 
+  const summaryPrintMarkup = useMemo(() => {
+    const escapeHtml = (value: string) =>
+      value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const summaryRowsHtml = confirmSummaryRows
+      .map(
+        row => `
+          <tr>
+            <td>${escapeHtml(row.item)}</td>
+            <td>${escapeHtml(row.batch)}</td>
+            <td>${escapeHtml(row.issued)}</td>
+            <td>${escapeHtml(row.wastage)}</td>
+          </tr>
+        `
+      )
+      .join('');
+
+    const coverageRowsHtml = confirmCoverageRows
+      .map(row => {
+        const childTotal =
+          row.childUnderOneMale +
+          row.childUnderOneFemale +
+          row.childOneToTwoMale +
+          row.childOneToTwoFemale +
+          row.childTwoToFiveMale +
+          row.childTwoToFiveFemale;
+
+        return `
+          <tr>
+            <td>${escapeHtml(row.itemName)}</td>
+            <td>${row.childUnderOneMale}</td>
+            <td>${row.childUnderOneFemale}</td>
+            <td>${row.childOneToTwoMale}</td>
+            <td>${row.childOneToTwoFemale}</td>
+            <td>${row.childTwoToFiveMale}</td>
+            <td>${row.childTwoToFiveFemale}</td>
+            <td><strong>${childTotal}</strong></td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    const womenRowsHtml = confirmCoverageRows
+      .map(row => `
+        <tr>
+          <td>${escapeHtml(row.itemName)}</td>
+          <td>${row.womenPregnant}</td>
+          <td>${row.womenNonPregnant}</td>
+          <td><strong>${row.womenPregnant + row.womenNonPregnant}</strong></td>
+        </tr>
+      `)
+      .join('');
+
+    return `
+      <style>
+        .daily-tally-summary-print { font-family: Arial, sans-serif; color: #111827; padding: 20px; }
+        .daily-tally-summary-print h1 { margin: 0; font-size: 21px; }
+        .daily-tally-summary-print .meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0 14px; }
+        .daily-tally-summary-print .meta-card { border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px; }
+        .daily-tally-summary-print .meta-label { font-size: 11px; color: #6b7280; }
+        .daily-tally-summary-print .meta-value { font-size: 13px; margin-top: 2px; word-break: break-word; }
+        .daily-tally-summary-print h2 { font-size: 15px; margin: 14px 0 8px; }
+        .daily-tally-summary-print table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .daily-tally-summary-print th, .daily-tally-summary-print td { border: 1px solid #e5e7eb; padding: 6px 8px; font-size: 12px; }
+        .daily-tally-summary-print th { background: #f3f4f6; text-align: center; font-weight: 700; }
+        .daily-tally-summary-print td:first-child { text-align: left; }
+        .daily-tally-summary-print td:not(:first-child) { text-align: center; }
+        @media print {
+          @page { size: A4 landscape; margin: 10mm; }
+          .daily-tally-summary-print { padding: 6mm; }
+        }
+      </style>
+      <div class="daily-tally-summary-print">
+        <h1>Daily Tally Summary</h1>
+        <div class="meta">
+          <div class="meta-card"><div class="meta-label">Reference</div><div class="meta-value">${escapeHtml(tallyReference)}</div></div>
+          <div class="meta-card"><div class="meta-label">Patient</div><div class="meta-value">${escapeHtml(selectedPatientLabel || '-')}</div></div>
+          <div class="meta-card"><div class="meta-label">Lines</div><div class="meta-value">${confirmSummaryRows.length}</div></div>
+        </div>
+
+        <h2>Item Batch Issued Wastage</h2>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Batch</th><th>Issued</th><th>Wastage</th></tr>
+          </thead>
+          <tbody>${summaryRowsHtml || '<tr><td colspan="4">No items entered.</td></tr>'}</tbody>
+        </table>
+
+        ${confirmCoverageRows.length > 0 ? `
+          <h2>Coverage Summary (Children vaccination)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Vaccine</th>
+                <th>U1 Male</th>
+                <th>U1 Female</th>
+                <th>1-2 Male</th>
+                <th>1-2 Female</th>
+                <th>2-5 Male</th>
+                <th>2-5 Female</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>${coverageRowsHtml}</tbody>
+          </table>
+        ` : ''}
+
+        ${confirmCoverageRows.length > 0 && hasWomenCoverageSummary ? `
+          <h2>Coverage Summary (Women vaccination)</h2>
+          <table>
+            <thead>
+              <tr><th>Vaccine</th><th>Pregnant</th><th>Non pregnant</th><th>Total</th></tr>
+            </thead>
+            <tbody>${womenRowsHtml}</tbody>
+          </table>
+        ` : ''}
+      </div>
+    `;
+  }, [
+    confirmSummaryRows,
+    confirmCoverageRows,
+    hasWomenCoverageSummary,
+    selectedPatientLabel,
+    tallyReference,
+  ]);
+
+  const onPrintSummary = async () => {
+    const html = buildPrintableHtml(summaryPrintMarkup, {
+      title: 'Daily Tally Summary',
+      orientation: 'landscape',
+    });
+    await printHtml(html);
+  };
+
+  const onDownloadPdfSummary = async () => {
+    const html = buildPrintableHtml(summaryPrintMarkup, {
+      title: 'Daily Tally Summary',
+      orientation: 'landscape',
+    });
+    await downloadPdfFromHtml(html);
+  };
+
   return (
     <>
       <ConfirmSummaryModal
@@ -1687,6 +1839,21 @@ export const DailyTallyView = () => {
             paddingBottom: 0,
           }}
         >
+          <Box display="flex" justifyContent="flex-end" gap={1}>
+            <ButtonWithIcon
+              Icon={<PrinterIcon />}
+              label={t('button.print')}
+              onClick={onPrintSummary}
+            />
+            {EnvUtils.platform !== Platform.Android && (
+              <ButtonWithIcon
+                Icon={<DownloadIcon />}
+                label={t('button.download-pdf')}
+                onClick={onDownloadPdfSummary}
+              />
+            )}
+          </Box>
+
           <Box
             display="grid"
             gridTemplateColumns={{ xs: '1fr', sm: 'repeat(3,minmax(0,1fr))' }}

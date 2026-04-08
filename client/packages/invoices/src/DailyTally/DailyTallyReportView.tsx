@@ -1,12 +1,18 @@
 import React, { useMemo } from 'react';
 import { useMediaQuery, useTheme } from '@mui/material';
 import {
+  AppBarButtonsPortal,
   AppBarContentPortal,
   Box,
+  ButtonWithIcon,
   ColumnDef,
+  DownloadIcon,
+  EnvUtils,
   FilterMenu,
   MaterialTable,
   NothingHere,
+  Platform,
+  PrinterIcon,
   Typography,
   usePaginatedMaterialTable,
   useTranslation,
@@ -14,6 +20,7 @@ import {
 } from '@openmsupply-client/common';
 import { useDemographicData } from '@openmsupply-client/system';
 import { usePrescriptionList } from '../Prescriptions/api';
+import { buildPrintableHtml, downloadPdfFromHtml, printHtml } from './printHelpers';
 import {
   isChild011Bucket,
   isChild1223Bucket,
@@ -443,6 +450,137 @@ export const DailyTallyReportView = () => {
     noDataElement: <NothingHere body={'No women vaccination data found for this date range.'} />,
   });
 
+  const totals = useMemo(() => {
+    const children = childRows.reduce((sum, row) => sum + row.total, 0);
+    const women = womenRows.reduce((sum, row) => sum + row.total, 0);
+
+    return {
+      vaccinatedChildren: children,
+      vaccinatedWomen: women,
+      vaccinesWithChildCoverage: childRows.length,
+      vaccinesWithWomenCoverage: womenRows.length,
+    };
+  }, [childRows, womenRows]);
+
+  const printMarkup = useMemo(() => {
+    const escapeHtml = (value: string) =>
+      value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const childRowsHtml = childRows
+      .map(
+        row => `
+          <tr>
+            <td>${escapeHtml(row.itemName)}</td>
+            <td>${row.childUnderOneMale}</td>
+            <td>${row.childUnderOneFemale}</td>
+            <td>${row.childOneToTwoMale}</td>
+            <td>${row.childOneToTwoFemale}</td>
+            <td>${row.childTwoToFiveMale}</td>
+            <td>${row.childTwoToFiveFemale}</td>
+            <td><strong>${row.total}</strong></td>
+          </tr>
+        `
+      )
+      .join('');
+
+    const womenRowsHtml = womenRows
+      .map(
+        row => `
+          <tr>
+            <td>${escapeHtml(row.itemName)}</td>
+            <td>${row.pregnant}</td>
+            <td>${row.nonPregnant}</td>
+            <td><strong>${row.total}</strong></td>
+          </tr>
+        `
+      )
+      .join('');
+
+    return `
+      <style>
+        .daily-tally-print { font-family: Arial, sans-serif; color: #1f2937; padding: 20px; }
+        .daily-tally-print h1 { margin: 0; font-size: 22px; }
+        .daily-tally-print .subtitle { margin: 6px 0 14px; color: #4b5563; font-size: 13px; }
+        .daily-tally-print .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .daily-tally-print .stat { border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px; }
+        .daily-tally-print .stat-label { font-size: 11px; color: #6b7280; }
+        .daily-tally-print .stat-value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+        .daily-tally-print h2 { font-size: 15px; margin: 16px 0 8px; }
+        .daily-tally-print table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        .daily-tally-print th, .daily-tally-print td { border: 1px solid #e5e7eb; padding: 6px 8px; font-size: 12px; }
+        .daily-tally-print th { background: #f3f4f6; font-weight: 700; text-align: center; }
+        .daily-tally-print td:first-child { text-align: left; }
+        .daily-tally-print td:not(:first-child) { text-align: center; }
+        @media print {
+          @page { size: A4 landscape; margin: 10mm; }
+          .daily-tally-print { padding: 6mm; }
+        }
+      </style>
+      <div class="daily-tally-print">
+        <h1>Daily Coverage Report</h1>
+        <div class="subtitle">Vaccination coverage summary by demographic group</div>
+
+        <div class="stats">
+          <div class="stat"><div class="stat-label">Children Vaccinated</div><div class="stat-value">${totals.vaccinatedChildren}</div></div>
+          <div class="stat"><div class="stat-label">Women Vaccinated</div><div class="stat-value">${totals.vaccinatedWomen}</div></div>
+          <div class="stat"><div class="stat-label">Vaccines (Child)</div><div class="stat-value">${totals.vaccinesWithChildCoverage}</div></div>
+          <div class="stat"><div class="stat-label">Vaccines (Women)</div><div class="stat-value">${totals.vaccinesWithWomenCoverage}</div></div>
+        </div>
+
+        <h2>Child Vaccination</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Vaccine</th>
+              <th>U1 Male</th>
+              <th>U1 Female</th>
+              <th>1-2 Male</th>
+              <th>1-2 Female</th>
+              <th>2-5 Male</th>
+              <th>2-5 Female</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>${childRowsHtml || '<tr><td colspan="8">No child vaccination data found for this date range.</td></tr>'}</tbody>
+        </table>
+
+        <h2>Women Vaccination</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Vaccine</th>
+              <th>Pregnant</th>
+              <th>Non pregnant</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>${womenRowsHtml || '<tr><td colspan="4">No women vaccination data found for this date range.</td></tr>'}</tbody>
+        </table>
+      </div>
+    `;
+  }, [childRows, womenRows, totals]);
+
+  const onPrintReport = async () => {
+    const html = buildPrintableHtml(printMarkup, {
+      title: 'Daily Coverage Report',
+      orientation: 'landscape',
+    });
+    await printHtml(html);
+  };
+
+  const onDownloadPdfReport = async () => {
+    const html = buildPrintableHtml(printMarkup, {
+      title: 'Daily Coverage Report',
+      orientation: 'landscape',
+    });
+    await downloadPdfFromHtml(html);
+  };
+
   return (
     <>
       <AppBarContentPortal
@@ -489,23 +627,144 @@ export const DailyTallyReportView = () => {
         </Box>
       </AppBarContentPortal>
 
+      <AppBarButtonsPortal>
+        <Box display="flex" gap={1}>
+          <ButtonWithIcon
+            label={t('button.print')}
+            Icon={<PrinterIcon />}
+            onClick={onPrintReport}
+          />
+          {EnvUtils.platform !== Platform.Android && (
+            <ButtonWithIcon
+              label={t('button.download-pdf')}
+              Icon={<DownloadIcon />}
+              onClick={onDownloadPdfReport}
+            />
+          )}
+        </Box>
+      </AppBarButtonsPortal>
+
       {!isFetching && !isError && childRows.length === 0 && womenRows.length === 0 ? (
         <NothingHere body={'No Daily Tally coverage data found for this date range.'} />
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <Box>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            width: '100%',
+            maxWidth: 'none',
+            paddingX: { xs: 1, sm: 2, md: 3 },
+            paddingBottom: 2,
+          }}
+        >
+          <Box
+            sx={{
+              border: '1px solid rgba(0,0,0,0.12)',
+              borderRadius: 1,
+              padding: { xs: 1.25, md: 1.5 },
+              backgroundColor: 'background.white',
+            }}
+          >
+            <Typography variant="h5" sx={{ fontWeight: 800, marginBottom: 0.25 }}>
+              Daily Coverage Report
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Vaccination coverage summary by demographic group
+            </Typography>
+            <Box
+              display="grid"
+              gridTemplateColumns={{ xs: '1fr 1fr', md: 'repeat(4,minmax(0,1fr))' }}
+              gap={1}
+              sx={{ marginTop: 1.25 }}
+            >
+              <Box
+                sx={{
+                  border: '1px solid rgba(0,0,0,0.12)',
+                  borderRadius: 1,
+                  padding: 1,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Children Vaccinated
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                  {totals.vaccinatedChildren}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  border: '1px solid rgba(0,0,0,0.12)',
+                  borderRadius: 1,
+                  padding: 1,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Women Vaccinated
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                  {totals.vaccinatedWomen}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  border: '1px solid rgba(0,0,0,0.12)',
+                  borderRadius: 1,
+                  padding: 1,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Vaccines (Child)
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                  {totals.vaccinesWithChildCoverage}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  border: '1px solid rgba(0,0,0,0.12)',
+                  borderRadius: 1,
+                  padding: 1,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Vaccines (Women)
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                  {totals.vaccinesWithWomenCoverage}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              border: '1px solid rgba(0,0,0,0.12)',
+              borderRadius: 1,
+              padding: { xs: 1, md: 1.5 },
+              backgroundColor: 'background.white',
+            }}
+          >
             <Typography
               variant="h6"
-              sx={{ fontWeight: 800, marginBottom: 1.5, textAlign: 'center' }}
+              sx={{ fontWeight: 800, marginBottom: 1 }}
             >
               Child Vaccination
             </Typography>
             <MaterialTable table={childTable} />
           </Box>
-          <Box>
+
+          <Box
+            sx={{
+              border: '1px solid rgba(0,0,0,0.12)',
+              borderRadius: 1,
+              padding: { xs: 1, md: 1.5 },
+              backgroundColor: 'background.white',
+            }}
+          >
             <Typography
               variant="h6"
-              sx={{ fontWeight: 800, marginBottom: 1.5, textAlign: 'center' }}
+              sx={{ fontWeight: 800, marginBottom: 1 }}
             >
               Women Vaccination
             </Typography>
