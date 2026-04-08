@@ -105,32 +105,32 @@ td.borderlineTopBottom {
 
 .col-packsize {
   width: 5%;
-  text-align: end;
+  text-align: right;
 }
 
 .col-cost-price {
   width: 8%;
-  text-align: end;
+  text-align: right;
 }
 
 .col-snapshot-packs {
   width: 6%;
-  text-align: end;
+  text-align: right;
 }
 
 .col-counted-packs {
   width: 6%;
-  text-align: end;
+  text-align: right;
 }
 
 .col-variance-packs {
   width: 6%;
-  text-align: end;
+  text-align: right;
 }
 
 .col-variance-values {
   width: 6%;
-  text-align: end;
+  text-align: right;
 }
 
 .col-reason {

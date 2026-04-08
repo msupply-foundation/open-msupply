@@ -51,7 +51,7 @@ body > table {
 }
 
 .location .pack .batch .quantity {
-  text-align: end;
+  text-align: right;
   font-family: Tahoma;
   font-size: 8pt;
 }
@@ -61,7 +61,7 @@ body > table {
   width: 100%;
   font-family: Tahoma;
   font-size: 8pt;
-  text-align: end;
+  text-align: right;
 }
 
 .body_section tr.body_column_header th {

@@ -74,7 +74,7 @@
 .cost_price,
 .total_quantity,
 .total_extension {
-  text-align: end;
+  text-align: right;
   font-family: Tahoma;
   font-size: 8pt;
 }

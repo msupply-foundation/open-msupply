@@ -75,7 +75,7 @@ body > table {
 .right-aligned-table {
   font-family: Tahoma;
   font-size: 8pt;
-  text-align: end;
+  text-align: right;
   border-spacing: 20pt 0; /* Adds horizontal space between columns */
   margin-inline-start: auto;
   margin-inline-end: 0; /* Aligns table to the right */
