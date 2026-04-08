@@ -1,12 +1,12 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct DaysInMonth;
+pub struct AllowBackdatingOfShipments;
 
-impl Preference for DaysInMonth {
-    type Value = f64;
+impl Preference for AllowBackdatingOfShipments {
+    type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::DaysInMonth
+        PrefKey::AllowBackdatingOfShipments
     }
 
     fn preference_type(&self) -> PreferenceType {
@@ -14,6 +14,6 @@ impl Preference for DaysInMonth {
     }
 
     fn value_type(&self) -> PreferenceValueType {
-        PreferenceValueType::Float
+        PreferenceValueType::Boolean
     }
 }

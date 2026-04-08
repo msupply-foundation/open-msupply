@@ -31,6 +31,7 @@ interface EditPreferenceProps {
   ) => Promise<boolean>;
   label?: string;
   isLast?: boolean;
+  disabled?: boolean;
 }
 
 export const EditPreference = ({
@@ -38,6 +39,7 @@ export const EditPreference = ({
   update,
   label,
   isLast = false,
+  disabled: disabledProp,
 }: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -45,7 +47,9 @@ export const EditPreference = ({
   const isCentralServer = useIsCentralServerApi();
 
   const disabled =
-    !isCentralServer || !userHasPermission(UserPermission.EditCentralData);
+    disabledProp ||
+    !isCentralServer ||
+    !userHasPermission(UserPermission.EditCentralData);
 
   const preferenceLabel =
     label ?? t(`preference.${preference.key}` as LocaleKey);
@@ -94,6 +98,7 @@ export const EditPreference = ({
       );
 
     case PreferenceValueNodeType.Integer:
+    case PreferenceValueNodeType.Float:
       if (!isNumber(preference.value)) {
         return t('error.something-wrong');
       }
@@ -106,6 +111,11 @@ export const EditPreference = ({
               onChange={handleChange}
               onBlur={() => {}}
               disabled={disabled}
+              decimalLimit={
+                preference.valueType === PreferenceValueNodeType.Float
+                  ? 2
+                  : 0
+              }
             />
           }
           isLast={isLast}
