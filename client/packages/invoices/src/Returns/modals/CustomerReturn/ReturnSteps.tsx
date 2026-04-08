@@ -86,7 +86,7 @@ export const ReturnSteps = ({
         }}
       >
         <InputWithLabelRow
-          label={t('label.return-to')}
+          label={t('label.return-from')}
           Input={
             <Typography>
               {returnToStoreName ?? data?.otherPartyName ?? ''}

@@ -167,7 +167,7 @@ impl PreferencesNode {
 
     pub async fn number_of_months_threshold_to_show_low_stock_alerts_for_products(
         &self,
-    ) -> Result<i32> {
+    ) -> Result<f64> {
         self.load_preference(
             &self
                 .preferences
@@ -177,7 +177,7 @@ impl PreferencesNode {
 
     pub async fn number_of_months_threshold_to_show_over_stock_alerts_for_products(
         &self,
-    ) -> Result<i32> {
+    ) -> Result<f64> {
         self.load_preference(
             &self
                 .preferences
@@ -314,6 +314,7 @@ pub enum PreferenceNodeType {
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
+    Float,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,
