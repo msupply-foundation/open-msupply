@@ -1027,6 +1027,7 @@
   "label.dose-number": "Dose #",
   "label.doses": "Doses",
   "label.doses-available": "Doses Available",
+  "label.doses-counted": "Doses Counted",
   "label.doses-issued": "Doses Issued",
   "label.doses-per-unit": "Doses per unit",
   "label.doses-per-unit-name": "Doses per {{unit}}",
