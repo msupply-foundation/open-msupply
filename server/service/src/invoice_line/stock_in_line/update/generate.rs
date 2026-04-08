@@ -19,6 +19,7 @@ use repository::{
 };
 
 use super::UpdateStockInLine;
+use crate::NullableUpdate;
 
 pub struct GenerateResult {
     pub invoice_row_option: Option<InvoiceRow>,
@@ -80,7 +81,10 @@ pub fn generate(
         )?;
         update_line.stock_line_id = Some(new_batch.id.clone());
 
-        let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
+        let vvm_status_log_option = if let Some(NullableUpdate {
+            value: Some(vvm_status_id),
+        }) = input.vvm_status_id
+        {
             let existing_log_id =
                 get_existing_vvm_status_log_id(connection, &new_batch.id, &update_line.id)?;
 
@@ -189,15 +193,15 @@ fn generate_line(
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
 
-    update_line.donor_id = donor_id
-        .map(|d| d.value)
-        .unwrap_or(update_line.donor_id);
+    update_line.donor_id = donor_id.map(|d| d.value).unwrap_or(update_line.donor_id);
 
     update_line.manufacturer_id = manufacturer_id
         .map(|m| m.value)
         .unwrap_or(update_line.manufacturer_id);
 
-    update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
+    update_line.vvm_status_id = vvm_status_id
+        .map(|v| v.value)
+        .unwrap_or(update_line.vvm_status_id);
 
     if let Some(status) = status {
         use InvoiceLineStatus::*;
