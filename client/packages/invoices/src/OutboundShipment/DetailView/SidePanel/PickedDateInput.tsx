@@ -99,9 +99,7 @@ export const PickedDateInput = () => {
         getStocktakeWarningConfirmation({
           onConfirm: async () => {
             await update({
-              backdatedDatetime: Formatter.toIsoString(
-                DateUtils.endOfDayOrNull(newDate)
-              ),
+              backdatedDatetime: Formatter.naiveDate(newDate),
             });
           },
           onCancel: () => setDateValue(previousValue),
@@ -110,9 +108,7 @@ export const PickedDateInput = () => {
       }
 
       await update({
-        backdatedDatetime: Formatter.toIsoString(
-          DateUtils.endOfDayOrNull(newDate)
-        ),
+        backdatedDatetime: Formatter.naiveDate(newDate),
       });
     };
 

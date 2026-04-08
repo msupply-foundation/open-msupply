@@ -1,5 +1,13 @@
-use chrono::NaiveDateTime;
+use chrono::{Duration, NaiveDate, NaiveDateTime, Utc};
 use repository::InvoiceRow;
+
+/// The input is a NaiveDate (no time/tz). The user picks "today" in their
+/// local timezone, which could be up to UTC+14. Compare against the UTC date
+/// plus one day so that no local timezone considers this "in the future".
+pub fn is_date_in_future(date: NaiveDate) -> bool {
+    let max_allowed_date = Utc::now().date_naive() + Duration::days(1);
+    date > max_allowed_date
+}
 
 // Replace datetimes that are not null with the new status_datetime
 fn replace_status_datetimes(invoice: &mut InvoiceRow, new_status_datetime: NaiveDateTime) {
