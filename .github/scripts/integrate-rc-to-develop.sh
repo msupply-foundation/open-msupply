@@ -171,8 +171,7 @@ echo "Checking RC branches for unmerged commits"
 
 git fetch origin
 
-# RC_BRANCHES=$(git branch -r | grep -E 'origin/v[0-9.]+-(R|r)(C|c)' | sed 's|.*origin/||')
-RC_BRANCHES=$(git branch -r | grep -E 'origin/test-rc-merge' | sed 's|.*origin/||')
+RC_BRANCHES=$(git branch -r | grep -E 'origin/v[0-9.]+-(R|r)(C|c)' | sed 's|.*origin/||')
 
 if [[ -z "$RC_BRANCHES" ]]; then
     echo "No RC branches found"
