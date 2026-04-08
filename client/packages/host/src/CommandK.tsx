@@ -4,23 +4,25 @@ import {
   RouteBuilder,
   useDrawer,
   styled,
-  useMatches,
   alpha,
   useTranslation,
-  KBarAnimator,
-  KBarResults,
-  KBarSearch,
-  KBarPositioner,
-  KBarPortal,
   PropsWithChildrenOnly,
   useAuthContext,
   StoreModeNodeType,
-  useRegisterActions,
   useConfirmationModal,
   useDetailPanelStore,
   ALT_KEY,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
+import {
+  KBarAnimator,
+  KBarResults,
+  KBarSearch,
+  KBarPositioner,
+  KBarPortal,
+  useMatches,
+  useRegisterActions,
+} from 'kbar';
 import { Action } from 'kbar/lib/types';
 import { useEasterEggModal } from './components/EasterEggModal';
 import { useSyncModal } from './components/Sync';

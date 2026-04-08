@@ -1,17 +1,6 @@
 import { create } from 'zustand';
 
 export {
-  KBarProvider,
-  KBarPortal,
-  KBarPositioner,
-  KBarAnimator,
-  KBarSearch,
-  KBarResults,
-  useRegisterActions,
-  useMatches,
-} from 'kbar';
-
-export {
   useInfiniteQuery,
   useMutation,
   useQueryClient,

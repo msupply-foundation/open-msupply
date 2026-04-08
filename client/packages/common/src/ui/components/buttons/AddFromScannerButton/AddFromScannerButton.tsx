@@ -5,10 +5,10 @@ import {
   ScanIcon,
   ButtonWithIcon,
   useNotification,
-  useRegisterActions,
   Tooltip,
   Box,
 } from '@openmsupply-client/common';
+import { useRegisterActions } from 'kbar';
 
 interface AddFromScannerButtonProps {
   disabled?: boolean;
