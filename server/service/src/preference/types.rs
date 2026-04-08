@@ -29,6 +29,8 @@ pub enum PrefKey {
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
+    AllowBackdatingOfShipments,
+    MaximumBackdatingDays,
 
     // Store preferences
     ManageVaccinesInDoses,
