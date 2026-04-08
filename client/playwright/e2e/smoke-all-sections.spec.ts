@@ -25,7 +25,7 @@ const RENDER_WAIT_MS = 2000;
 
 // If a single navigation/action produces more than this many console messages
 // (of any type), treat it as excessive logging and fail.
-const EXCESSIVE_LOG_THRESHOLD = 60;
+const EXCESSIVE_LOG_THRESHOLD = 30;
 
 function toSafeName(label: string) {
   return label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -156,7 +156,7 @@ async function clickFirstRowAndCheck(
   resetTracker(tracker);
 
   const row = page.locator('tbody tr').first();
-  if (!(await row.isVisible({ timeout: 15000 }).catch(() => false))) {
+  if (!(await row.isVisible({ timeout: 3000 }).catch(() => false))) {
     console.log(`  No rows in ${label}, skipping detail`);
     return false;
   }
@@ -371,10 +371,7 @@ function lineEditSuite(
         // Navigate directly to the editable shipment detail
         resetTracker(tracker);
         await page
-          .goto(detailUrl, {
-            waitUntil: 'networkidle',
-            timeout: RENDER_WAIT_MS,
-          })
+          .goto(detailUrl, { waitUntil: 'networkidle', timeout: 15000 })
           .catch(() => {});
         await page.waitForTimeout(RENDER_WAIT_MS);
 
