@@ -165,7 +165,7 @@ export const ReportList = ({
             </>}
 
             {/* ── Data rows ── */}
-            {reports.map(report => {
+            {reports.filter(r => r.context !== 'REPORT').map(report => {
               const base = dataCellSx(report);
               const handleClick = () => {
                 onSelectReport(report);
