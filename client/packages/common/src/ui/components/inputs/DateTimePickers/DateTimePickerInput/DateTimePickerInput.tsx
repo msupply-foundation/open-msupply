@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   DateTimePicker,
   DateTimePickerProps,
@@ -72,6 +72,7 @@ export const DateTimePickerInput = ({
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
+  const pickerOpen = useRef(false);
   const t = useTranslation();
   const format =
     props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
@@ -105,6 +106,15 @@ export const DateTimePickerInput = ({
       <DateTimePicker
         format={format}
         onChange={(date, context) => {
+          // When the picker is open, intermediate view selections (e.g.
+          // clicking a year) fire onChange before the user has finished
+          // selecting. Only update internal state here; the final value is
+          // propagated via onAccept.
+          if (pickerOpen.current) {
+            setValue(date);
+            return;
+          }
+
           const { validationError } = context;
 
           if (validationError) {
@@ -117,11 +127,9 @@ export const DateTimePickerInput = ({
             setValue(date);
             return;
           }
-          if (!validationError) {
-            setIsInitialEntry(false);
-            setInternalError(null);
-          }
 
+          setIsInitialEntry(false);
+          setInternalError(null);
           handleDateInput(date);
         }}
         label={label}
@@ -164,8 +172,19 @@ export const DateTimePickerInput = ({
         maxDate={maxDate}
         disableFuture={disableFuture}
         closeOnSelect={true}
-        onOpen={() => setIsOpen?.(true)}
-        onClose={() => setIsOpen?.(false)}
+        onOpen={() => {
+          pickerOpen.current = true;
+          setIsOpen?.(true);
+        }}
+        onClose={() => {
+          pickerOpen.current = false;
+          setIsOpen?.(false);
+        }}
+        onAccept={date => {
+          setIsInitialEntry(false);
+          setInternalError(null);
+          handleDateInput(date);
+        }}
         {...props}
         value={value}
       />
