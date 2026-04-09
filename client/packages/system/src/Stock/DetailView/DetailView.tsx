@@ -27,7 +27,7 @@ import { StatusHistory } from '../Components/StatusHistory';
 
 enum StockLineDetailTabs {
   Details = 'details',
-  StatusHistory = 'vvm-history',
+  VvmHistory = 'vvm-history',
   Log = 'log',
   Ledger = 'ledger',
 }
@@ -120,7 +120,7 @@ export const StockLineDetailView: React.FC = () => {
       ? [
           {
             Component: <StatusHistory draft={draft} isLoading={isLoading} />,
-            value: StockLineDetailTabs.StatusHistory,
+            value: StockLineDetailTabs.VvmHistory,
           },
         ]
       : []),
