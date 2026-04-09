@@ -72,11 +72,21 @@ pub fn generate_phase_charts(
             for (name, get_value) in percentiles {
                 generate_index_bar_chart(&phase_results, phase, name, *get_value, &dir)?;
             }
+        } else if phase == 1 {
+            // Phase 1: one line chart per percentile metric
+            // Each line = a pg config scenario
+            let percentiles: &[(&str, fn(&BenchResult) -> u64)] = &[
+                ("p50", |r: &BenchResult| r.stats.p50_us),
+                ("p95", |r: &BenchResult| r.stats.p95_us),
+                ("p99", |r: &BenchResult| r.stats.p99_us),
+            ];
+            for (name, get_value) in percentiles {
+                generate_percentile_line_chart(&phase_results, phase, name, *get_value, &dir)?;
+            }
         } else {
-            // Other phases: one line chart per scenario
-            let mut scenario_names: Vec<String> = results
+            // Other phases: one line chart per scenario (lines = p50/p95/p99)
+            let mut scenario_names: Vec<String> = phase_results
                 .iter()
-                .filter(|r| r.phase == phase)
                 .map(|r| r.scenario_name.clone())
                 .collect();
             scenario_names.sort();
@@ -88,6 +98,113 @@ pub fn generate_phase_charts(
         }
     }
 
+    Ok(())
+}
+
+/// Generate a line chart for one percentile metric. Each line = a scenario (pg config).
+/// X axis: N values (evenly spaced). Y axis: latency.
+fn generate_percentile_line_chart(
+    phase_results: &[BenchResult],
+    phase: u8,
+    percentile_name: &str,
+    get_value: fn(&BenchResult) -> u64,
+    output_dir: &str,
+) -> Result<()> {
+    let output_path = format!("{}/{}.png", output_dir, percentile_name);
+
+    if phase_results.is_empty() {
+        return Ok(());
+    }
+
+    let mut all_n: Vec<u64> = phase_results.iter().map(|r| r.n).collect();
+    all_n.sort();
+    all_n.dedup();
+
+    let mut scenario_names: Vec<String> = phase_results
+        .iter()
+        .map(|r| r.scenario_name.clone())
+        .collect();
+    scenario_names.sort();
+    scenario_names.dedup();
+
+    let max_val = phase_results
+        .iter()
+        .map(|r| get_value(r))
+        .max()
+        .unwrap_or(1);
+    let max_val_f64 = (max_val as f64) * 1.1;
+    let num_points = all_n.len();
+
+    let n_to_idx = |n: u64| -> f64 {
+        all_n.iter().position(|&v| v == n).unwrap_or(0) as f64
+    };
+
+    let root = BitMapBackend::new(&output_path, (CHART_WIDTH, CHART_HEIGHT)).into_drawing_area();
+    root.fill(&WHITE)?;
+
+    let title = format!(
+        "{} - {} Insert Latency vs Table Size",
+        phase_label(phase),
+        percentile_name.to_uppercase(),
+    );
+
+    let all_n_clone = all_n.clone();
+    let mut chart = ChartBuilder::on(&root)
+        .caption(&title, ("sans-serif", 28))
+        .margin(15)
+        .x_label_area_size(50)
+        .y_label_area_size(80)
+        .build_cartesian_2d(0.0..((num_points - 1) as f64), 0.0..max_val_f64)?;
+
+    chart
+        .configure_mesh()
+        .x_desc("Pre-populated rows (N)")
+        .y_desc(format!("{} Latency (us)", percentile_name.to_uppercase()))
+        .x_labels(num_points)
+        .x_label_formatter(&|v| {
+            let idx = v.round() as usize;
+            if idx < all_n_clone.len() {
+                format_n(all_n_clone[idx])
+            } else {
+                String::new()
+            }
+        })
+        .y_label_formatter(&|v| format!("{:.0}", v))
+        .draw()?;
+
+    for (s_idx, scenario_name) in scenario_names.iter().enumerate() {
+        let color = COLORS[s_idx % COLORS.len()];
+
+        let mut points: Vec<(f64, f64)> = phase_results
+            .iter()
+            .filter(|r| r.scenario_name == *scenario_name)
+            .map(|r| (n_to_idx(r.n), get_value(r) as f64))
+            .collect();
+        points.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+        chart
+            .draw_series(LineSeries::new(points.clone(), color.stroke_width(2)))?
+            .label(scenario_name.as_str())
+            .legend(move |(x, y)| {
+                PathElement::new(vec![(x, y), (x + 20, y)], color.stroke_width(2))
+            });
+
+        chart.draw_series(
+            points
+                .iter()
+                .map(|(x, y)| Circle::new((*x, *y), 4, color.filled())),
+        )?;
+    }
+
+    chart
+        .configure_series_labels()
+        .position(SeriesLabelPosition::UpperLeft)
+        .border_style(BLACK)
+        .background_style(WHITE.mix(0.8))
+        .draw()?;
+
+    root.present()?;
+    eprintln!("  Generated: {}", output_path);
     Ok(())
 }
 
@@ -474,17 +591,19 @@ mod tests {
         let timestamp = "2026-01-01_00-00-00";
         generate_phase_charts(&results, 1, tmp_dir.to_str().unwrap(), timestamp, false).unwrap();
 
-        // Mock results have two scenarios: scenario_a and scenario_b
+        // Phase 1: one file per percentile, lines = scenarios
         let phase_dir = format!("phase1_pg_config_{}", timestamp);
-        let scenario_a_path = tmp_dir.join(format!("{}/scenario_a.png", phase_dir));
-        let scenario_b_path = tmp_dir.join(format!("{}/scenario_b.png", phase_dir));
+        let p50_path = tmp_dir.join(format!("{}/p50.png", phase_dir));
+        let p95_path = tmp_dir.join(format!("{}/p95.png", phase_dir));
+        let p99_path = tmp_dir.join(format!("{}/p99.png", phase_dir));
 
-        assert!(scenario_a_path.exists(), "scenario_a chart should exist");
-        assert!(scenario_b_path.exists(), "scenario_b chart should exist");
+        assert!(p50_path.exists(), "p50 chart should exist");
+        assert!(p95_path.exists(), "p95 chart should exist");
+        assert!(p99_path.exists(), "p99 chart should exist");
 
-        // Verify files are non-empty
-        assert!(fs::metadata(&scenario_a_path).unwrap().len() > 0, "scenario_a chart should be non-empty");
-        assert!(fs::metadata(&scenario_b_path).unwrap().len() > 0, "scenario_b chart should be non-empty");
+        assert!(fs::metadata(&p50_path).unwrap().len() > 0);
+        assert!(fs::metadata(&p95_path).unwrap().len() > 0);
+        assert!(fs::metadata(&p99_path).unwrap().len() > 0);
 
         let _ = fs::remove_dir_all(&tmp_dir);
     }
