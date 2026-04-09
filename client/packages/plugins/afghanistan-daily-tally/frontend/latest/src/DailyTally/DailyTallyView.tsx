@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useMediaQuery, useTheme } from '@mui/material';
+import { Button, useMediaQuery, useTheme } from '@mui/material';
 import {
   AppBarButtonsPortal,
   AppBarContentPortal,
@@ -55,8 +55,6 @@ import {
   isChild011Bucket,
   isChild1223Bucket,
   isChild25Bucket,
-  isWomenNonPregnantBucket,
-  isWomenPregnantBucket,
   resolveDemographicBuckets,
 } from './demographicBuckets';
 import { buildPrintableHtml, downloadPdfFromHtml, printHtml } from './printHelpers';
@@ -152,6 +150,19 @@ type TallyGenderKey = 'male' | 'female' | 'other';
 
 type VaccineSessionTallyDraft = {
   counts: Record<TallyAgeKey, Record<TallyGenderKey, number>>;
+};
+
+type DailyTallyLocalDraft = {
+  version: 1;
+  selectedPatientId: string;
+  filterText: string;
+  referenceText: string;
+  draftByItem: Record<string, RowDraft>;
+  coverageByItem: Record<string, VaccineCoverageDraft>;
+  sessionTallyByItem: Record<string, VaccineSessionTallyDraft>;
+  selectedTallyItemId: string | null;
+  useSimplifiedVaccination: boolean;
+  workflowStep: WorkflowStep;
 };
 
 const tallyAgeGroups: Array<{ key: TallyAgeKey; label: string }> = [
@@ -664,6 +675,7 @@ const batchLabel = (stockLine: TallyStockLine) => {
 const dailyTallyListPath = RouteBuilder.create(AppRoute.Dispensary)
   .addPart('daily-tally')
   .build();
+const dailyTallyDraftStoragePrefix = '@openmsupply-client/daily-tally-plugin-draft';
 
 const itemTitleSx = {
   fontWeight: 800,
@@ -681,7 +693,7 @@ export const DailyTallyView = () => {
   const preferences = usePreferences();
   const { useSimplifiedMobileUi = false } = preferences;
   const isSessionTallyStepEnabled = Boolean(
-    (preferences as Record<string, unknown>).enableDailyTallySessionTallyStep
+    (preferences as Record<string, unknown>)['enableDailyTallySessionTallyStep']
   );
   const isSimplifiedMode = isSimplifiedTabletUI || useSimplifiedMobileUi;
   const { error, success } = useNotification();
@@ -714,11 +726,18 @@ export const DailyTallyView = () => {
     Record<string, VaccineSessionTallyDraft>
   >({});
   const [selectedTallyItemId, setSelectedTallyItemId] = useState<string | null>(null);
+  const [useSimplifiedVaccination, setUseSimplifiedVaccination] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const hasHydratedLocalDraft = useRef(false);
+  const showsSessionTallyStep =
+    isSessionTallyStepEnabled || useSimplifiedVaccination;
+  const isVaccinationSimplified =
+    isSimplifiedMode || useSimplifiedVaccination;
+  const draftStorageKey = `${dailyTallyDraftStoragePrefix}/${storeId}`;
   const [workflowStep, setWorkflowStep] = useState<WorkflowStep>(
-    isSessionTallyStepEnabled
+    showsSessionTallyStep
       ? 'tally'
-      : isSimplifiedMode
+      : isVaccinationSimplified
         ? 'allocation'
         : 'coverage'
   );
@@ -971,11 +990,104 @@ export const DailyTallyView = () => {
   useEffect(() => {
     if (!selectedTallyItemId) return;
 
-    const selectedExists = vaccineRows.some(row => row.itemId === selectedTallyItemId);
+    const selectedExists = groupedItems.some(
+      item => item.isVaccine && item.itemId === selectedTallyItemId
+    );
     if (!selectedExists) {
       setSelectedTallyItemId(null);
     }
-  }, [selectedTallyItemId, vaccineRows]);
+  }, [groupedItems, selectedTallyItemId]);
+
+  useEffect(() => {
+    if (hasHydratedLocalDraft.current) return;
+
+    try {
+      const saved = window.localStorage.getItem(draftStorageKey);
+      if (!saved) {
+        hasHydratedLocalDraft.current = true;
+        return;
+      }
+
+      const parsed = JSON.parse(saved) as Partial<DailyTallyLocalDraft>;
+      if (parsed.version !== 1) {
+        hasHydratedLocalDraft.current = true;
+        return;
+      }
+
+      if (typeof parsed.selectedPatientId === 'string') {
+        setSelectedPatientId(parsed.selectedPatientId);
+      }
+      if (typeof parsed.filterText === 'string') {
+        setFilterText(parsed.filterText);
+      }
+      if (typeof parsed.referenceText === 'string') {
+        setReferenceText(parsed.referenceText);
+      }
+      if (parsed.draftByItem && typeof parsed.draftByItem === 'object') {
+        setDraftByItem(parsed.draftByItem as Record<string, RowDraft>);
+      }
+      if (parsed.coverageByItem && typeof parsed.coverageByItem === 'object') {
+        setCoverageByItem(parsed.coverageByItem as Record<string, VaccineCoverageDraft>);
+      }
+      if (parsed.sessionTallyByItem && typeof parsed.sessionTallyByItem === 'object') {
+        setSessionTallyByItem(
+          parsed.sessionTallyByItem as Record<string, VaccineSessionTallyDraft>
+        );
+      }
+      if (parsed.selectedTallyItemId === null || typeof parsed.selectedTallyItemId === 'string') {
+        setSelectedTallyItemId(parsed.selectedTallyItemId ?? null);
+      }
+      if (typeof parsed.useSimplifiedVaccination === 'boolean') {
+        setUseSimplifiedVaccination(parsed.useSimplifiedVaccination);
+      }
+      if (
+        parsed.workflowStep === 'tally' ||
+        parsed.workflowStep === 'coverage' ||
+        parsed.workflowStep === 'allocation' ||
+        parsed.workflowStep === 'non-vaccine'
+      ) {
+        setWorkflowStep(parsed.workflowStep);
+      }
+    } catch {
+      // Ignore malformed local draft data.
+    } finally {
+      hasHydratedLocalDraft.current = true;
+    }
+  }, [draftStorageKey]);
+
+  useEffect(() => {
+    if (!hasHydratedLocalDraft.current) return;
+
+    const payload: DailyTallyLocalDraft = {
+      version: 1,
+      selectedPatientId,
+      filterText,
+      referenceText,
+      draftByItem,
+      coverageByItem,
+      sessionTallyByItem,
+      selectedTallyItemId,
+      useSimplifiedVaccination,
+      workflowStep,
+    };
+
+    try {
+      window.localStorage.setItem(draftStorageKey, JSON.stringify(payload));
+    } catch {
+      // Ignore localStorage write failures.
+    }
+  }, [
+    coverageByItem,
+    draftByItem,
+    draftStorageKey,
+    filterText,
+    referenceText,
+    selectedPatientId,
+    selectedTallyItemId,
+    sessionTallyByItem,
+    useSimplifiedVaccination,
+    workflowStep,
+  ]);
 
   const rows = useMemo((): DailyTallyRow[] => {
     return groupedItems.map(item => {
@@ -1015,21 +1127,21 @@ export const DailyTallyView = () => {
   const nonVaccineRows = useMemo(() => rows.filter(row => !row.isVaccine), [rows]);
   const allocationVaccineRows = useMemo(
     () =>
-      isSimplifiedMode
+      isVaccinationSimplified
         ? vaccineRows
         : vaccineRows.filter(row => hasCoverageValues(coverageByItem[row.itemId])),
-    [isSimplifiedMode, vaccineRows, coverageByItem]
+    [isVaccinationSimplified, vaccineRows, coverageByItem]
   );
   const allocationNonVaccineRows = nonVaccineRows;
   const hasNonVaccineItems = allocationNonVaccineRows.length > 0;
   const workflowStepSequence = useMemo(() => {
     const sequence: WorkflowStep[] = [];
-    if (isSessionTallyStepEnabled) sequence.push('tally');
-    if (!isSimplifiedMode) sequence.push('coverage');
+    if (showsSessionTallyStep) sequence.push('tally');
+    if (!isVaccinationSimplified) sequence.push('coverage');
     sequence.push('allocation');
     if (hasNonVaccineItems) sequence.push('non-vaccine');
     return sequence;
-  }, [hasNonVaccineItems, isSessionTallyStepEnabled, isSimplifiedMode]);
+  }, [hasNonVaccineItems, showsSessionTallyStep, isVaccinationSimplified]);
 
   const workflowStepIndex = Math.max(workflowStepSequence.indexOf(workflowStep), 0);
   const workflowStepTotal = workflowStepSequence.length;
@@ -1109,26 +1221,41 @@ export const DailyTallyView = () => {
     row: DailyTallyRow,
     draft: VaccineSessionTallyDraft
   ) => {
-    if (isSimplifiedMode) return;
-
     const currentCoverage =
       coverageByItemRef.current[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate);
+    const buckets = resolveDemographicBuckets(demographicData?.nodes);
 
     const nextCoverage: VaccineCoverageDraft = {
       ...currentCoverage,
-      childAgeGroups: currentCoverage.childAgeGroups.map((group, index) => {
-        const mapKeyByIndex: Record<number, TallyAgeKey> = {
-          0: 'under1',
-          1: 'oneToTwo',
-          2: 'twoToFive',
-        };
-        const mappedAgeKey = mapKeyByIndex[index];
-        if (!mappedAgeKey) return group;
+      childAgeGroups: currentCoverage.childAgeGroups.map(group => {
+        if (isChild011Bucket(group.id, group.label, buckets)) {
+          return {
+            ...group,
+            male: draft.counts.under1.male,
+            female: draft.counts.under1.female,
+          };
+        }
+
+        if (isChild1223Bucket(group.id, group.label, buckets)) {
+          return {
+            ...group,
+            male: draft.counts.oneToTwo.male,
+            female: draft.counts.oneToTwo.female,
+          };
+        }
+
+        if (isChild25Bucket(group.id, group.label, buckets)) {
+          return {
+            ...group,
+            male: draft.counts.twoToFive.male,
+            female: draft.counts.twoToFive.female,
+          };
+        }
 
         return {
           ...group,
-          male: draft.counts[mappedAgeKey].male,
-          female: draft.counts[mappedAgeKey].female,
+          male: 0,
+          female: 0,
         };
       }),
       womenAgeGroups: currentCoverage.womenAgeGroups.map(group => ({
@@ -1765,7 +1892,7 @@ export const DailyTallyView = () => {
       }
 
       const hasVaccineUse = usedRows.some(row => row.isVaccine);
-      if (hasVaccineUse && !isSimplifiedMode && !isSessionTallyStepEnabled) {
+      if (hasVaccineUse && !isVaccinationSimplified && !showsSessionTallyStep) {
         const missingCoverageRow = vaccineRowsWithUse.find(
           row => !hasCoverageValues(coverageByItem[row.itemId])
         );
@@ -1778,8 +1905,8 @@ export const DailyTallyView = () => {
       if (
         hasVaccineUse &&
         !coverageSummary &&
-        !isSimplifiedMode &&
-        !isSessionTallyStepEnabled
+        !isVaccinationSimplified &&
+        !showsSessionTallyStep
       ) {
         error('Enter coverage details for vaccinated groups')();
         return;
@@ -2122,6 +2249,7 @@ export const DailyTallyView = () => {
       success(
         `Daily tally confirmed (Issued: ${totalUsed}, Wastage: ${totalWastage})`
       )();
+      window.localStorage.removeItem(draftStorageKey);
       setConfirmSummaryOpen(false);
       setDuplicateWarningOpen(false);
       window.location.assign(dailyTallyListPath);
@@ -2514,7 +2642,7 @@ export const DailyTallyView = () => {
               No summary lines available.
             </Typography>
           )}
-          {!isSimplifiedMode && confirmCoverageRows.length > 0 ? (
+          {!isVaccinationSimplified && confirmCoverageRows.length > 0 ? (
             <Box
               sx={{
                 border: '1px solid rgba(0,0,0,0.12)',
@@ -2900,6 +3028,15 @@ export const DailyTallyView = () => {
               {workflowStepLabel}
             </Typography>
           </Box>
+          <Button
+            variant={useSimplifiedVaccination ? 'contained' : 'outlined'}
+            size="small"
+            onClick={() => setUseSimplifiedVaccination(previous => !previous)}
+          >
+            {useSimplifiedVaccination
+              ? 'Simplified vaccination'
+              : 'Detailed vaccination'}
+          </Button>
           <Select
             value={selectedPatientId}
             onChange={event => setSelectedPatientId(String(event.target.value || ''))}
@@ -3071,10 +3208,11 @@ export const DailyTallyView = () => {
                                       display="flex"
                                       alignItems="center"
                                       justifyContent="center"
-                                      gap={0.5}
+                                      gap={1}
                                     >
-                                      <ButtonWithIcon
-                                        label="-"
+                                      <Button
+                                        variant="outlined"
+                                        color="error"
                                         onClick={() =>
                                           updateSessionTallyCell(
                                             selectedTallyRow,
@@ -3083,10 +3221,31 @@ export const DailyTallyView = () => {
                                             -1
                                           )
                                         }
-                                        sx={{ minWidth: 44, height: 44, paddingX: 0.75 }}
-                                      />
-                                      <ButtonWithIcon
-                                        label={value > 0 ? String(value) : '+'}
+                                        disabled={value <= 0}
+                                        sx={{ minWidth: 52, height: 48, paddingX: 1 }}
+                                      >
+                                        -
+                                      </Button>
+                                      <Box
+                                        sx={{
+                                          minWidth: 56,
+                                          height: 48,
+                                          borderRadius: 1,
+                                          border: '1px solid rgba(0,0,0,0.2)',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          backgroundColor:
+                                            value > 0 ? 'rgba(25,118,210,0.10)' : 'transparent',
+                                        }}
+                                      >
+                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                          {value}
+                                        </Typography>
+                                      </Box>
+                                      <Button
+                                        variant="contained"
+                                        color="primary"
                                         onClick={() =>
                                           updateSessionTallyCell(
                                             selectedTallyRow,
@@ -3095,15 +3254,10 @@ export const DailyTallyView = () => {
                                             1
                                           )
                                         }
-                                        sx={{
-                                          minWidth: 72,
-                                          height: 50,
-                                          paddingX: 1,
-                                          backgroundColor:
-                                            value > 0 ? 'rgba(25,118,210,0.12)' : undefined,
-                                          border: value > 0 ? '1px solid rgba(25,118,210,0.35)' : undefined,
-                                        }}
-                                      />
+                                        sx={{ minWidth: 52, height: 48, paddingX: 1 }}
+                                      >
+                                        +
+                                      </Button>
                                     </Box>
                                   );
                                 })}
@@ -3122,7 +3276,9 @@ export const DailyTallyView = () => {
                         <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
                           Vaccines
                         </Typography>
-                        <ButtonWithIcon label="Reset day" onClick={resetSessionTally} />
+                        <Button variant="outlined" onClick={resetSessionTally}>
+                          Reset day
+                        </Button>
                       </Box>
 
                       <Box
@@ -3222,7 +3378,7 @@ export const DailyTallyView = () => {
                               </Typography>
                             </Box>
                           </Box>
-                          {!isSimplifiedMode && workflowStep === 'allocation' ? (
+                          {!isVaccinationSimplified && workflowStep === 'allocation' ? (
                             <ButtonWithIcon
                               Icon={
                                 <ChevronDownIcon
@@ -3296,7 +3452,7 @@ export const DailyTallyView = () => {
                                 : '-'}
                           </Typography>
                           <Typography variant="body2">{row.units}</Typography>
-                          {isSimplifiedMode ? (
+                          {isVaccinationSimplified ? (
                             <BasicTextInput
                               type="text"
                               size="small"
@@ -3327,7 +3483,6 @@ export const DailyTallyView = () => {
                               <Switch
                                 checked={row.openVialWastage}
                                 onChange={(_, checked) => updateOpenVialWastage(row, checked)}
-                                sx={{ margin: 0 }}
                               />
                             </Box>
                           )}
@@ -3348,7 +3503,7 @@ export const DailyTallyView = () => {
                           </Box>
                         ) : null}
 
-                        {(workflowStep === 'coverage' || (!isSimplifiedMode && coverage.isOpen)) ? (
+                        {(workflowStep === 'coverage' || (!isVaccinationSimplified && coverage.isOpen)) ? (
                           <Box sx={{ marginTop: 1 }}>
                             <Box
                               sx={{
@@ -3581,7 +3736,7 @@ export const DailyTallyView = () => {
                                 color="text.secondary"
                                 sx={{ fontWeight: 600 }}
                               >
-                                {isSimplifiedMode
+                                {isVaccinationSimplified
                                   ? 'Enter issued to allocate batches'
                                   : 'Enter coverage to allocate batches'}
                               </Typography>

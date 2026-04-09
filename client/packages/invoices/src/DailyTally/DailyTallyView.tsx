@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useMediaQuery, useTheme } from '@mui/material';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Button, useMediaQuery, useTheme } from '@mui/material';
 import {
   AppBarButtonsPortal,
   AppBarContentPortal,
@@ -138,6 +138,17 @@ type VaccineCoverageDraft = {
   isOpen: boolean;
   childAgeGroups: ChildCoverageAgeGroup[];
   womenAgeGroups: WomenCoverageAgeGroup[];
+};
+
+type DailyTallyDraftState = {
+  version: 1;
+  savedAt: string;
+  selectedPatientId: string;
+  referenceText: string;
+  simpleCaptureMode: boolean;
+  selectedVaccineItemId: string;
+  draftByItem: Record<string, RowDraft>;
+  coverageByItem: Record<string, VaccineCoverageDraft>;
 };
 
 const isNonPregnantWomenGroup = (group: WomenCoverageAgeGroup) => {
@@ -471,6 +482,8 @@ const dailyTallyListPath = RouteBuilder.create(AppRoute.Dispensary)
   .addPart('daily-tally')
   .build();
 
+const DAILY_TALLY_DRAFT_STORAGE_PREFIX = '@openmsupply-client/daily-tally-draft';
+
 const itemTitleSx = {
   fontWeight: 800,
   fontSize: 18,
@@ -508,10 +521,49 @@ export const DailyTallyView = () => {
   >([]);
   const [isVaccineBucketOpen, setIsVaccineBucketOpen] = useState(true);
   const [isNonVaccineBucketOpen, setIsNonVaccineBucketOpen] = useState(true);
+  const [simpleCaptureMode, setSimpleCaptureMode] = useState(true);
+  const [selectedVaccineItemId, setSelectedVaccineItemId] = useState('');
   const [coverageByItem, setCoverageByItem] = useState<
     Record<string, VaccineCoverageDraft>
   >({});
   const [isSaving, setIsSaving] = useState(false);
+  const hasHydratedDraftRef = useRef(false);
+
+  const draftStorageKey = useMemo(
+    () => `${DAILY_TALLY_DRAFT_STORAGE_PREFIX}/${storeId}`,
+    [storeId]
+  );
+
+  const persistDraftState = () => {
+    if (typeof window === 'undefined') return;
+
+    const payload: DailyTallyDraftState = {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      selectedPatientId,
+      referenceText,
+      simpleCaptureMode,
+      selectedVaccineItemId,
+      draftByItem,
+      coverageByItem,
+    };
+
+    try {
+      window.localStorage.setItem(draftStorageKey, JSON.stringify(payload));
+    } catch {
+      // Ignore local persistence errors and continue normal flow.
+    }
+  };
+
+  const clearDraftState = () => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      window.localStorage.removeItem(draftStorageKey);
+    } catch {
+      // Ignore local persistence errors and continue normal flow.
+    }
+  };
 
   const { Modal: ConfirmSummaryModal } = useDialog({
     isOpen: confirmSummaryOpen,
@@ -740,6 +792,72 @@ export const DailyTallyView = () => {
     });
   }, [groupedItems]);
 
+  useEffect(() => {
+    if (hasHydratedDraftRef.current) return;
+    if (typeof window === 'undefined') {
+      hasHydratedDraftRef.current = true;
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(draftStorageKey);
+      if (!stored) {
+        hasHydratedDraftRef.current = true;
+        return;
+      }
+
+      const parsed = JSON.parse(stored) as Partial<DailyTallyDraftState>;
+
+      if (parsed.version !== 1) {
+        hasHydratedDraftRef.current = true;
+        return;
+      }
+
+      if (typeof parsed.selectedPatientId === 'string') {
+        setSelectedPatientId(parsed.selectedPatientId);
+      }
+
+      if (typeof parsed.referenceText === 'string') {
+        setReferenceText(parsed.referenceText);
+      }
+
+      if (typeof parsed.simpleCaptureMode === 'boolean') {
+        setSimpleCaptureMode(parsed.simpleCaptureMode);
+      }
+
+      if (typeof parsed.selectedVaccineItemId === 'string') {
+        setSelectedVaccineItemId(parsed.selectedVaccineItemId);
+      }
+
+      if (parsed.draftByItem && typeof parsed.draftByItem === 'object') {
+        setDraftByItem(parsed.draftByItem as Record<string, RowDraft>);
+      }
+
+      if (parsed.coverageByItem && typeof parsed.coverageByItem === 'object') {
+        setCoverageByItem(
+          parsed.coverageByItem as Record<string, VaccineCoverageDraft>
+        );
+      }
+    } catch {
+      // Ignore invalid local draft payload.
+    } finally {
+      hasHydratedDraftRef.current = true;
+    }
+  }, [draftStorageKey]);
+
+  useEffect(() => {
+    if (!hasHydratedDraftRef.current) return;
+    persistDraftState();
+  }, [
+    coverageByItem,
+    draftByItem,
+    persistDraftState,
+    referenceText,
+    selectedPatientId,
+    selectedVaccineItemId,
+    simpleCaptureMode,
+  ]);
+
   const rows = useMemo((): DailyTallyRow[] => {
     return groupedItems.map(item => {
       const draft = draftByItem[item.itemId] || {
@@ -776,6 +894,138 @@ export const DailyTallyView = () => {
 
   const vaccineRows = useMemo(() => rows.filter(row => row.isVaccine), [rows]);
   const nonVaccineRows = useMemo(() => rows.filter(row => !row.isVaccine), [rows]);
+
+  useEffect(() => {
+    if (vaccineRows.length === 0) {
+      setSelectedVaccineItemId('');
+      return;
+    }
+
+    if (!selectedVaccineItemId) {
+      setSelectedVaccineItemId(vaccineRows[0]?.itemId ?? '');
+      return;
+    }
+
+    const stillExists = vaccineRows.some(row => row.itemId === selectedVaccineItemId);
+    if (!stillExists) {
+      setSelectedVaccineItemId(vaccineRows[0]?.itemId ?? '');
+    }
+  }, [vaccineRows, selectedVaccineItemId]);
+
+  const selectedVaccineRow = useMemo(
+    () => vaccineRows.find(row => row.itemId === selectedVaccineItemId),
+    [vaccineRows, selectedVaccineItemId]
+  );
+
+  const selectedVaccineCoverage = useMemo(
+    () =>
+      (selectedVaccineRow && coverageByItem[selectedVaccineRow.itemId]) ||
+      defaultVaccineCoverageDraft(),
+    [coverageByItem, selectedVaccineRow]
+  );
+
+  const updateSelectedChildCount = (
+    groupId: string,
+    key: 'male' | 'female',
+    delta: number
+  ) => {
+    if (!selectedVaccineRow) return;
+
+    updateCoverageForRow(selectedVaccineRow, current => ({
+      ...current,
+      childAgeGroups: current.childAgeGroups.map(group =>
+        group.id === groupId
+          ? {
+              ...group,
+              [key]: Math.max(0, (group[key] ?? 0) + delta),
+            }
+          : group
+      ),
+    }));
+  };
+
+  const updateSelectedWomenCount = (groupId: string, delta: number) => {
+    if (!selectedVaccineRow) return;
+
+    updateCoverageForRow(selectedVaccineRow, current => ({
+      ...current,
+      womenAgeGroups: current.womenAgeGroups.map(group =>
+        group.id === groupId
+          ? {
+              ...group,
+              count: Math.max(0, (group.count ?? 0) + delta),
+            }
+          : group
+      ),
+    }));
+  };
+
+  const resetSelectedVaccineEntry = () => {
+    if (!selectedVaccineRow) return;
+
+    updateCoverageForRow(selectedVaccineRow, current => ({
+      ...current,
+      childAgeGroups: current.childAgeGroups.map(group => ({
+        ...group,
+        male: 0,
+        female: 0,
+      })),
+      womenAgeGroups: current.womenAgeGroups.map(group => ({
+        ...group,
+        count: 0,
+      })),
+    }));
+  };
+
+  const saveCurrentVaccineEntry = () => {
+    if (!selectedVaccineRow) {
+      error('Select a vaccine first')();
+      return;
+    }
+
+    if (selectedVaccineRow.used <= 0) {
+      error('Add at least one dose before saving')();
+      return;
+    }
+
+    persistDraftState();
+    success(`Saved ${selectedVaccineRow.item}`)();
+  };
+
+  const saveAndNextVaccine = () => {
+    if (!selectedVaccineRow) {
+      error('Select a vaccine first')();
+      return;
+    }
+
+    if (selectedVaccineRow.used <= 0) {
+      error('Add at least one dose before saving')();
+      return;
+    }
+
+    persistDraftState();
+    success(`Saved ${selectedVaccineRow.item}`)();
+
+    const currentIndex = vaccineRows.findIndex(
+      row => row.itemId === selectedVaccineRow.itemId
+    );
+    const nextIndex =
+      currentIndex >= 0 ? (currentIndex + 1) % Math.max(vaccineRows.length, 1) : 0;
+    setSelectedVaccineItemId(vaccineRows[nextIndex]?.itemId ?? selectedVaccineRow.itemId);
+  };
+
+  const simpleCaptureTotals = useMemo(() => {
+    const totalAdministered = vaccineRows.reduce((sum, row) => sum + row.used, 0);
+    const totalWastage = vaccineRows.reduce((sum, row) => sum + row.wastage, 0);
+    const vaccinesCaptured = vaccineRows.filter(row => row.used > 0).length;
+
+    return {
+      totalAdministered,
+      totalWastage,
+      vaccinesCaptured,
+    };
+  }, [vaccineRows]);
+
   const confirmCoverageRows = useMemo(
     () =>
       buildCoverageSummaryRows(
@@ -1595,6 +1845,7 @@ export const DailyTallyView = () => {
       success(
         `Daily tally confirmed (Used: ${totalUsed}, Wastage: ${totalWastage})`
       )();
+      clearDraftState();
       setConfirmSummaryOpen(false);
       setDuplicateWarningOpen(false);
       window.location.assign(dailyTallyListPath);
@@ -2341,6 +2592,13 @@ export const DailyTallyView = () => {
       >
         <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
           <Typography fontWeight="bold">Daily Tally</Typography>
+          <Button
+            variant={simpleCaptureMode ? 'contained' : 'outlined'}
+            size="small"
+            onClick={() => setSimpleCaptureMode(previous => !previous)}
+          >
+            {simpleCaptureMode ? 'Simple mode' : 'Detailed mode'}
+          </Button>
           <BasicTextInput
             size="small"
             placeholder="Daily tally reference"
@@ -2413,7 +2671,199 @@ export const DailyTallyView = () => {
             />
           ) : (
             <>
-              {vaccineRows.length > 0 ? (
+              {simpleCaptureMode ? (
+                <Box
+                  sx={{
+                    border: '1px solid rgba(0,0,0,0.12)',
+                    borderRadius: 1,
+                    padding: 1.25,
+                    marginBottom: 1.25,
+                  }}
+                >
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    gap={1}
+                    flexWrap="wrap"
+                    sx={{ marginBottom: 1 }}
+                  >
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                      Simple vaccine capture
+                    </Typography>
+                    <Box display="flex" gap={1} flexWrap="wrap">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={saveCurrentVaccineEntry}
+                      >
+                        Save current
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={saveAndNextVaccine}
+                      >
+                        Save and next
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={resetSelectedVaccineEntry}
+                      >
+                        Reset vaccine
+                      </Button>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ maxWidth: 420, marginBottom: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                      Vaccine
+                    </Typography>
+                    <Select
+                      value={selectedVaccineItemId}
+                      onChange={event =>
+                        setSelectedVaccineItemId(String(event.target.value || ''))
+                      }
+                      options={vaccineRows.map(row => ({
+                        value: row.itemId,
+                        label: row.item,
+                      }))}
+                      fullWidth
+                    />
+                  </Box>
+
+                  {selectedVaccineRow ? (
+                    <>
+                      <Box
+                        display="grid"
+                        gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                        columnGap={1}
+                        rowGap={0.6}
+                        alignItems="center"
+                      >
+                        <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                          Group
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          Male
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          Female
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          Total
+                        </Typography>
+
+                        {selectedVaccineCoverage.childAgeGroups.map(group => (
+                          <React.Fragment key={group.id}>
+                            <Typography variant="body2">{group.label}</Typography>
+                            <Box display="flex" justifyContent="center" alignItems="center" gap={0.5}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => updateSelectedChildCount(group.id, 'male', -1)}
+                              >
+                                -
+                              </Button>
+                              <Typography variant="body2" sx={{ minWidth: 24, textAlign: 'center' }}>
+                                {group.male}
+                              </Typography>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => updateSelectedChildCount(group.id, 'male', 1)}
+                              >
+                                +
+                              </Button>
+                            </Box>
+                            <Box display="flex" justifyContent="center" alignItems="center" gap={0.5}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() =>
+                                  updateSelectedChildCount(group.id, 'female', -1)
+                                }
+                              >
+                                -
+                              </Button>
+                              <Typography variant="body2" sx={{ minWidth: 24, textAlign: 'center' }}>
+                                {group.female}
+                              </Typography>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() =>
+                                  updateSelectedChildCount(group.id, 'female', 1)
+                                }
+                              >
+                                +
+                              </Button>
+                            </Box>
+                            <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700 }}>
+                              {group.male + group.female}
+                            </Typography>
+                          </React.Fragment>
+                        ))}
+
+                        {selectedVaccineCoverage.womenAgeGroups.map(group => (
+                          <React.Fragment key={group.id}>
+                            <Typography variant="body2">{group.label}</Typography>
+                            <Box display="flex" justifyContent="center" alignItems="center" gap={0.5}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => updateSelectedWomenCount(group.id, -1)}
+                              >
+                                -
+                              </Button>
+                              <Typography variant="body2" sx={{ minWidth: 24, textAlign: 'center' }}>
+                                {group.count}
+                              </Typography>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => updateSelectedWomenCount(group.id, 1)}
+                              >
+                                +
+                              </Button>
+                            </Box>
+                            <Box />
+                            <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700 }}>
+                              {group.count}
+                            </Typography>
+                          </React.Fragment>
+                        ))}
+                      </Box>
+
+                      <Box
+                        sx={{
+                          marginTop: 1.25,
+                          borderTop: '1px solid rgba(0,0,0,0.12)',
+                          paddingTop: 1,
+                        }}
+                        display="flex"
+                        gap={2}
+                        flexWrap="wrap"
+                      >
+                        <Typography variant="body2">
+                          Current vaccine doses: <strong>{selectedVaccineRow.used}</strong>
+                        </Typography>
+                        <Typography variant="body2">
+                          Today total doses: <strong>{simpleCaptureTotals.totalAdministered}</strong>
+                        </Typography>
+                        <Typography variant="body2">
+                          Vaccines captured: <strong>{simpleCaptureTotals.vaccinesCaptured}</strong>
+                        </Typography>
+                      </Box>
+                    </>
+                  ) : (
+                    <NothingHere body={'Select a vaccine to start entry.'} />
+                  )}
+                </Box>
+              ) : null}
+
+              {!simpleCaptureMode && vaccineRows.length > 0 ? (
                 <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ marginY: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
                     Vaccine items
@@ -2433,7 +2883,7 @@ export const DailyTallyView = () => {
                 </Box>
               ) : null}
 
-              {isVaccineBucketOpen
+              {!simpleCaptureMode && isVaccineBucketOpen
                 ? vaccineRows.map(row => {
                     const coverage = coverageByItem[row.itemId] ?? defaultVaccineCoverageDraft();
                     const batchOptions = row.stockLines.map(stockLine => ({
@@ -2885,7 +3335,7 @@ export const DailyTallyView = () => {
                   })
                 : null}
 
-              {nonVaccineRows.length > 0 ? (
+              {!simpleCaptureMode && nonVaccineRows.length > 0 ? (
                 <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ marginY: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
                     Non-vaccine items
@@ -2907,7 +3357,7 @@ export const DailyTallyView = () => {
                 </Box>
               ) : null}
 
-              {isNonVaccineBucketOpen
+              {!simpleCaptureMode && isNonVaccineBucketOpen
                 ? nonVaccineRows.map(row => {
                     const batchOptions = row.stockLines.map(stockLine => ({
                       value: stockLine.id,
