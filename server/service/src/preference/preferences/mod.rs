@@ -70,8 +70,8 @@ pub mod display_population_based_forecasting;
 pub use display_population_based_forecasting::*;
 pub mod global_table_configs;
 pub use global_table_configs::*;
-pub mod backdating_of_shipments;
-pub use backdating_of_shipments::*;
+pub mod backdating;
+pub use backdating::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -91,7 +91,7 @@ pub struct PreferenceProvider {
     pub is_gaps: IsGaps,
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub global_table_configs: GlobalTableConfigs,
-    pub backdating_of_shipments: BackdatingOfShipments,
+    pub backdating: Backdating,
 
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
@@ -140,7 +140,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         is_gaps: IsGaps,
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         global_table_configs: GlobalTableConfigs,
-        backdating_of_shipments: BackdatingOfShipments,
+        backdating: Backdating,
 
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,

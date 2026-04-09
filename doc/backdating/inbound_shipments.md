@@ -14,7 +14,7 @@ Allow users to backdate the Received date on inbound shipments that have already
 - When backdating, **shipped**, **delivered**, and **created (new)** dates are automatically moved back if they are after the new received date
 - Location movement `enter_datetime` values are updated to reflect the new date
 - Only editable when the shipment is in **Received** or **Verified** status
-- Gated by the `BackdatingOfShipments` preference (combined struct with `enabled` and `max_days` fields, #11060)
+- Gated by the `Backdating` preference (combined struct with `enabled` and `max_days` fields, #11060)
 - `max_days` field limits how far back the date can be set
 - User is warned (with the selected date shown) that the change is one-way before confirming
 - Stocktake warning shown if a stocktake exists after the selected date
@@ -23,7 +23,7 @@ Allow users to backdate the Received date on inbound shipments that have already
 
 ## Backend Validation (server-side enforced)
 
-1. `BackdatingOfShipments` preference must be enabled (`BackdatingNotEnabled`)
+1. `Backdating` preference must be enabled (`BackdatingNotEnabled`)
 2. Shipment must be in Received or Verified status (`CanOnlyBackdateReceivedShipments`)
 3. New datetime (UTC) must be strictly earlier than current received_datetime (`CannotMoveReceivedDateForward`)
 4. Respects `max_days` preference (`ExceedsMaximumBackdatingDays`)
@@ -65,7 +65,7 @@ When received_datetime is backdated:
 ## User Flow
 
 1. Shipment is received (status = Received), received_datetime set automatically
-2. If `BackdatingOfShipments` preference is enabled, "Received date" field appears in toolbar
+2. If `Backdating` preference is enabled, "Received date" field appears in toolbar
 3. Date picker constrains to: earlier than current received date (minus 1 day for timezone safety), not before `max_days` ago
 4. User picks an earlier date
 5. Confirmation dialog warns this is a one-way change and shows the selected date

@@ -29,7 +29,7 @@ pub enum PrefKey {
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
-    BackdatingOfShipments,
+    Backdating,
 
     // Store preferences
     ManageVaccinesInDoses,
@@ -73,7 +73,7 @@ pub enum PreferenceValueType {
     // specific type to CustomTranslations preference
     CustomTranslations,
     WarnWhenMissingRecentStocktakeData,
-    BackdatingOfShipmentsData,
+    BackdatingData,
     String,
     Colour,
     // MultilineString,

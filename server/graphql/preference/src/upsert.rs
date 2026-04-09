@@ -7,7 +7,7 @@ use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingOfShipmentsData, StorePrefUpdate, UpsertPreferences,
+        BackdatingData, StorePrefUpdate, UpsertPreferences,
         WarnWhenMissingRecentStocktakeData,
     },
 };
@@ -37,7 +37,7 @@ pub struct StringStorePrefInput {
 }
 
 #[derive(InputObject)]
-pub struct BackdatingOfShipmentsInput {
+pub struct BackdatingInput {
     pub enabled: bool,
     pub max_days: i32,
 }
@@ -80,7 +80,7 @@ pub struct UpsertPreferencesInput {
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
-    pub backdating_of_shipments: Option<BackdatingOfShipmentsInput>,
+    pub backdating: Option<BackdatingInput>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -151,7 +151,7 @@ impl UpsertPreferencesInput {
             is_gaps,
             display_population_based_forecasting,
             global_table_configs,
-            backdating_of_shipments,
+            backdating,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -198,8 +198,8 @@ impl UpsertPreferencesInput {
             display_population_based_forecasting: *display_population_based_forecasting,
 
             global_table_configs: global_table_configs.clone(),
-            backdating_of_shipments: backdating_of_shipments.as_ref().map(|b| {
-                BackdatingOfShipmentsData {
+            backdating: backdating.as_ref().map(|b| {
+                BackdatingData {
                     enabled: b.enabled,
                     max_days: b.max_days,
                 }

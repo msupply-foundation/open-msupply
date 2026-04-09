@@ -3,18 +3,18 @@ import {
   Box,
   NumericTextInput,
   Switch,
-  BackdatingOfShipmentsNode,
+  BackdatingNode,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PreferenceLabelRow } from '../EditPage/PreferenceLabelRow';
 
-export const EditBackdatingOfShipments = ({
+export const EditBackdating = ({
   value,
   update,
   disabled = false,
 }: {
-  value: BackdatingOfShipmentsNode;
-  update: (value: Omit<BackdatingOfShipmentsNode, '__typename'>) => void;
+  value: BackdatingNode;
+  update: (value: Omit<BackdatingNode, '__typename'>) => void;
   disabled?: boolean;
 }) => {
   const t = useTranslation();
@@ -23,7 +23,7 @@ export const EditBackdatingOfShipments = ({
   const maxDays = value?.maxDays ?? 0;
 
   const createUpdateValue = (
-    updates: Partial<Omit<BackdatingOfShipmentsNode, '__typename'>>
+    updates: Partial<Omit<BackdatingNode, '__typename'>>
   ) => {
     update({
       enabled,
