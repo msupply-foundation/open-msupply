@@ -16,6 +16,24 @@ user = "postgres"
 password = "postgres"
 database = "changelog_bench"
 
+# ── NULL distribution profiles (probability of NULL, 0.0–1.0) ──
+# Used by Phase 4 scenarios. source_site_id stays at fixed 25%.
+
+[null_profiles.mostly_null]
+store_id = 0.9
+transfer_store_id = 0.9
+patient_id = 0.9
+
+[null_profiles.balanced]
+store_id = 0.5
+transfer_store_id = 0.5
+patient_id = 0.5
+
+[null_profiles.mostly_present]
+store_id = 0.1
+transfer_store_id = 0.1
+patient_id = 0.1
+
 # ── Phase 1: PG Config comparison (same indexes = v7, no partitioning) ──
 # Goal: isolate the impact of Postgres configuration on insert performance
 # Settings are applied via ALTER SYSTEM + pg_reload_conf() before each scenario
@@ -87,3 +105,46 @@ indexes = "v7"
 [scenarios.partition]
 strategy = "list"
 key = "table_name"
+
+# ── Phase 4: NULL distribution impact on v7 indexes, no partitioning ──
+# Goal: compare v7 vs v7_all_partial as null percentages vary
+# Uses grouped loop: UPDATE once per (N, profile), then cycle index types
+
+# mostly_null — 90% NULL
+[[scenarios]]
+name = "null90_v7"
+phase = 4
+indexes = "index-configs/v7.sql"
+null_profile = "mostly_null"
+
+[[scenarios]]
+name = "null90_v7_all_partial"
+phase = 4
+indexes = "index-configs/v7_all_partial.sql"
+null_profile = "mostly_null"
+
+# balanced — 50% NULL (matches seed default, no UPDATE needed)
+[[scenarios]]
+name = "null50_v7"
+phase = 4
+indexes = "index-configs/v7.sql"
+null_profile = "balanced"
+
+[[scenarios]]
+name = "null50_v7_all_partial"
+phase = 4
+indexes = "index-configs/v7_all_partial.sql"
+null_profile = "balanced"
+
+# mostly_present — 10% NULL
+[[scenarios]]
+name = "null10_v7"
+phase = 4
+indexes = "index-configs/v7.sql"
+null_profile = "mostly_present"
+
+[[scenarios]]
+name = "null10_v7_all_partial"
+phase = 4
+indexes = "index-configs/v7_all_partial.sql"
+null_profile = "mostly_present"
