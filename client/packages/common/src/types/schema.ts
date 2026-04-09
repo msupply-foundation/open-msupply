@@ -10142,7 +10142,7 @@ export type UpdateInboundShipmentInput = {
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
-  receivedDatetime?: InputMaybe<Scalars['NaiveDate']['input']>;
+  receivedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
   tax?: InputMaybe<TaxInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
