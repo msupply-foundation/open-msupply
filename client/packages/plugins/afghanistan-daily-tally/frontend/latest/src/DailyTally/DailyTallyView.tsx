@@ -1091,8 +1091,21 @@ export const DailyTallyView = () => {
     return sequence;
   }, [hasNonVaccineItems, isSessionTallyStepEnabled, isSimplifiedMode]);
 
-  const workflowStepIndex = Math.max(workflowStepSequence.indexOf(workflowStep), 0);
-  const workflowStepTotal = workflowStepSequence.length;
+  const hasAnyCoveredMultiBatchVaccines = vaccineRows.some(
+    row => row.stockLines.length > 1 && hasCoverageValues(coverageByItem[row.itemId])
+  );
+  const shouldCollapseAllocationStepInTitle =
+    !isSimplifiedMode &&
+    workflowStep !== 'allocation' &&
+    workflowStepSequence.includes('allocation') &&
+    !hasAnyCoveredMultiBatchVaccines;
+  const workflowDisplayStepSequence = workflowStepSequence.filter(step => {
+    if (shouldCollapseAllocationStepInTitle && step === 'allocation') return false;
+    return true;
+  });
+
+  const workflowStepIndex = Math.max(workflowDisplayStepSequence.indexOf(workflowStep), 0);
+  const workflowStepTotal = workflowDisplayStepSequence.length;
   const workflowStepTitleByKey: Record<WorkflowStep, string> = {
     tally: 'Vaccine Session Tally',
     coverage: 'Coverage',
@@ -2530,10 +2543,10 @@ export const DailyTallyView = () => {
   };
 
   const previousWorkflowStep =
-    workflowStepSequence[workflowStepSequence.indexOf(workflowStep) - 1];
+    workflowDisplayStepSequence[workflowDisplayStepSequence.indexOf(workflowStep) - 1];
   const hasPreviousWorkflowStep = Boolean(previousWorkflowStep);
   const nextWorkflowStep =
-    workflowStepSequence[workflowStepSequence.indexOf(workflowStep) + 1];
+    workflowDisplayStepSequence[workflowDisplayStepSequence.indexOf(workflowStep) + 1];
 
   const backButtonLabelByStep: Record<WorkflowStep, string> = {
     tally: 'Back',
@@ -2542,9 +2555,6 @@ export const DailyTallyView = () => {
     wastage: 'Back to Batches',
     'non-vaccine': 'Back to Vaccines',
   };
-  const hasAnyCoveredMultiBatchVaccines = vaccineRows.some(
-    row => row.stockLines.length > 1 && hasCoverageValues(coverageByItem[row.itemId])
-  );
   const backButtonLabel = previousWorkflowStep
     ? workflowStep === 'wastage' && !hasAnyCoveredMultiBatchVaccines
       ? 'Back to Coverage'
@@ -3122,7 +3132,7 @@ export const DailyTallyView = () => {
       >
         <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
           <Box>
-            <Typography fontWeight="bold">Daily Tally</Typography>
+            <Typography fontWeight="bold">Daily tally</Typography>
           </Box>
           <Box sx={{ width: { xs: '100%', sm: 260 } }}>
             <Select

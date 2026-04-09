@@ -22,7 +22,7 @@ const DailyTallyNavLink = ({ store }: { store?: { storeMode?: StoreModeNodeType 
   <AppNavLink
     visible={store?.storeMode === StoreModeNodeType.Dispensary}
     to={dailyTallyRoute}
-    text={'Daily Tally'}
+    text={'Daily tally'}
   />
 );
 
