@@ -13,8 +13,12 @@ use crate::{
 use chrono::Utc;
 use repository::{
     asset_log_row::AssetLogStatus,
-    assets::asset_log_row::{AssetLogRow, AssetLogRowRepository},
-    ActivityLogType, RepositoryError, StorageConnection,
+    assets::{
+        asset_log::AssetLogFilter,
+        asset_log_row::{AssetLogRow, AssetLogRowRepository},
+        asset_row::AssetRowRepository,
+    },
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 #[derive(PartialEq, Debug)]
@@ -28,6 +32,7 @@ pub enum InsertAssetLogError {
     InsufficientPermission,
     ReasonInvalidForStatus,
     CommentRequiredForReason,
+    LogDatetimeInFuture,
 }
 
 pub struct InsertAssetLog {
@@ -37,6 +42,7 @@ pub struct InsertAssetLog {
     pub comment: Option<String>,
     pub r#type: Option<String>,
     pub reason_id: Option<String>,
+    pub log_datetime: Option<chrono::NaiveDateTime>,
 }
 
 pub fn insert_asset_log(
@@ -49,6 +55,10 @@ pub fn insert_asset_log(
             validate(&input, connection)?;
             let new_asset_log = generate(ctx, input);
             AssetLogRowRepository::new(connection).upsert_one(&new_asset_log)?;
+
+            if new_asset_log.r#type.as_deref() == Some("Temperature Mapping") {
+                recalculate_mapping_dates(connection, &new_asset_log.asset_id)?;
+            }
 
             activity_log_entry(
                 ctx,
@@ -91,7 +101,8 @@ pub fn validate(
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }
 
-    if input.status.is_none() {
+    // Status is required unless a type is provided (e.g., "Temperature Mapping" events)
+    if input.status.is_none() && input.r#type.is_none() {
         return Err(InsertAssetLogError::StatusNotProvided);
     }
 
@@ -110,6 +121,12 @@ pub fn validate(
         return Err(InsertAssetLogError::CommentRequiredForReason);
     }
 
+    if let Some(log_datetime) = &input.log_datetime {
+        if *log_datetime > Utc::now().naive_utc() {
+            return Err(InsertAssetLogError::LogDatetimeInFuture);
+        }
+    }
+
     Ok(())
 }
 
@@ -122,8 +139,10 @@ pub fn generate(
         comment,
         r#type,
         reason_id,
+        log_datetime,
     }: InsertAssetLog,
 ) -> AssetLogRow {
+    let now = Utc::now().naive_utc();
     AssetLogRow {
         id,
         asset_id,
@@ -132,8 +151,68 @@ pub fn generate(
         comment,
         r#type,
         reason_id,
-        log_datetime: Utc::now().naive_utc(),
+        log_datetime: log_datetime.unwrap_or(now),
+        created_datetime: now,
     }
+}
+
+pub fn recalculate_mapping_dates(
+    connection: &StorageConnection,
+    asset_id: &str,
+) -> Result<(), InsertAssetLogError> {
+    use repository::assets::asset_log::AssetLogRepository;
+
+    let logs = AssetLogRepository::new(connection).query_by_filter(
+        AssetLogFilter::new()
+            .asset_id(EqualFilter::equal_to(asset_id.to_string()))
+            .r#type(StringFilter::equal_to("Temperature Mapping")),
+    )?;
+
+    let min_date = logs.iter().map(|l| l.log_datetime).min();
+    let max_date = logs.iter().map(|l| l.log_datetime).max();
+
+    let asset_row = AssetRowRepository::new(connection)
+        .find_one_by_id(asset_id)?
+        .ok_or(InsertAssetLogError::AssetDoesNotExist)?;
+
+    let mut properties: serde_json::Map<String, serde_json::Value> =
+        match &asset_row.properties {
+            Some(props) => serde_json::from_str(props).unwrap_or_default(),
+            None => serde_json::Map::new(),
+        };
+
+    let format_date = |dt: chrono::NaiveDateTime| dt.format("%Y-%m-%d").to_string();
+
+    match min_date {
+        Some(d) => {
+            properties.insert(
+                "initial_mapping_date".to_string(),
+                serde_json::Value::String(format_date(d)),
+            );
+        }
+        None => {
+            properties.remove("initial_mapping_date");
+        }
+    }
+    match max_date {
+        Some(d) => {
+            properties.insert(
+                "most_recent_mapping_date".to_string(),
+                serde_json::Value::String(format_date(d)),
+            );
+        }
+        None => {
+            properties.remove("most_recent_mapping_date");
+        }
+    }
+
+    let mut updated_row = asset_row;
+    updated_row.properties = serde_json::to_string(&properties).ok();
+    updated_row.modified_datetime = Utc::now().naive_utc();
+
+    AssetRowRepository::new(connection).upsert_one(&updated_row, None)?;
+
+    Ok(())
 }
 
 impl From<RepositoryError> for InsertAssetLogError {
