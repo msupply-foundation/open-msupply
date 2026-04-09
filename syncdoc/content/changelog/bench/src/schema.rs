@@ -154,9 +154,16 @@ pub fn index_sql(indexes: &IndexSet) -> Vec<String> {
 }
 
 /// Generate the PK constraint SQL for partitioned tables.
-/// (Non-partitioned tables get the PK in the CREATE TABLE statement.)
-pub fn partitioned_pk_sql() -> String {
-    "ALTER TABLE changelog ADD PRIMARY KEY (cursor);".to_string()
+/// Postgres requires that unique constraints include all partitioning columns.
+/// For range/hash by cursor: PK on (cursor) is fine since cursor is the partition key.
+/// For list by table_name: PK must be (cursor, table_name).
+pub fn partitioned_pk_sql(partition: &PartitionConfig) -> String {
+    match partition {
+        PartitionConfig::List { .. } => {
+            "ALTER TABLE changelog ADD PRIMARY KEY (cursor, table_name);".to_string()
+        }
+        _ => "ALTER TABLE changelog ADD PRIMARY KEY (cursor);".to_string(),
+    }
 }
 
 /// Generate SQL for table structure only (types, table, partitions).
@@ -171,7 +178,7 @@ pub fn structure_sql(scenario: &ScenarioConfig, n: u64, batch_size: u64) -> Vec<
         Some(partition) => {
             stmts.push(partitioned_table_sql(partition));
             stmts.extend(partition_ddl(partition, n, batch_size));
-            stmts.push(partitioned_pk_sql());
+            stmts.push(partitioned_pk_sql(partition));
         }
     }
 
@@ -228,7 +235,7 @@ pub fn migrate_to_partitioned(
     }
 
     // Add PK on new partitioned table
-    sql_query(&partitioned_pk_sql())
+    sql_query(&partitioned_pk_sql(partition))
         .execute(conn)
         .context("Failed to add PK to partitioned table")?;
 

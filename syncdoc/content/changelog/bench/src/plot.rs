@@ -84,16 +84,14 @@ pub fn generate_phase_charts(
                 generate_percentile_line_chart(&phase_results, phase, name, *get_value, &dir)?;
             }
         } else {
-            // Other phases: one line chart per scenario (lines = p50/p95/p99)
-            let mut scenario_names: Vec<String> = phase_results
-                .iter()
-                .map(|r| r.scenario_name.clone())
-                .collect();
-            scenario_names.sort();
-            scenario_names.dedup();
-
-            for name in &scenario_names {
-                generate_scenario_chart(results, phase, name, &dir)?;
+            // Other phases (including Phase 3): one file per percentile, lines = scenarios
+            let percentiles: &[(&str, fn(&BenchResult) -> u64)] = &[
+                ("p50", |r: &BenchResult| r.stats.p50_us),
+                ("p95", |r: &BenchResult| r.stats.p95_us),
+                ("p99", |r: &BenchResult| r.stats.p99_us),
+            ];
+            for (name, get_value) in percentiles {
+                generate_percentile_line_chart(&phase_results, phase, name, *get_value, &dir)?;
             }
         }
     }

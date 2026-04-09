@@ -56,62 +56,33 @@ name = "idx_v7_all_partial"
 phase = 2
 indexes = "index-configs/v7_all_partial.sql"
 
-# ── Phase 3: Partition strategy comparison (same indexes = v7) ──
+# ── Phase 3: Partition strategy comparison (same indexes = v7, write-optimised PG config) ──
 # Goal: isolate the impact of different partitioning strategies on insert performance
-
-[[scenarios]]
-name = "no_partition"
-phase = 3
-indexes = "v7"
 
 [[scenarios]]
 name = "range_cursor_100k"
 phase = 3
 indexes = "v7"
+pg_config_file = "pg-configs/write-optimised.txt"
 [scenarios.partition]
 strategy = "range"
 key = "cursor"
 size = 100_000
 
 [[scenarios]]
-name = "range_cursor_1m"
+name = "hash_cursor_32"
 phase = 3
 indexes = "v7"
-[scenarios.partition]
-strategy = "range"
-key = "cursor"
-size = 1_000_000
-
-[[scenarios]]
-name = "range_cursor_10m"
-phase = 3
-indexes = "v7"
-[scenarios.partition]
-strategy = "range"
-key = "cursor"
-size = 10_000_000
-
-[[scenarios]]
-name = "hash_cursor_16"
-phase = 3
-indexes = "v7"
+pg_config_file = "pg-configs/write-optimised.txt"
 [scenarios.partition]
 strategy = "hash"
 key = "cursor"
-count = 16
-
-[[scenarios]]
-name = "hash_cursor_64"
-phase = 3
-indexes = "v7"
-[scenarios.partition]
-strategy = "hash"
-key = "cursor"
-count = 64
+count = 32
 
 [[scenarios]]
 name = "list_table_name"
 phase = 3
+pg_config_file = "pg-configs/write-optimised.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "list"
