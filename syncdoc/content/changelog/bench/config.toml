@@ -46,6 +46,12 @@ phase = 2
 pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 
+[[scenarios]]
+name = "idx_v7_all_partial"
+phase = 2
+pg_config_file = "pg-configs/moderate.txt"
+indexes = "v7_all_partial"
+
 # ── Phase 3: Partition strategy comparison (same PG config = moderate, same indexes = v7) ──
 # Goal: isolate the impact of different partitioning strategies on insert performance
 

@@ -43,6 +43,7 @@ pub enum PartitionConfig {
 pub enum IndexSet {
     PkOnly,
     V7,
+    V7AllPartial,
 }
 
 impl Config {
