@@ -120,89 +120,217 @@ fn main() -> Result<()> {
         );
         eprintln!("{}", "=".repeat(60));
 
-        for scenario in &phase_scenarios {
+        if phase == 4 {
+            // Phase 4: grouped loop — for each (N, null_profile), UPDATE once, then cycle index types
+            // Group scenarios by null_profile
+            let mut profile_names: Vec<String> = phase_scenarios
+                .iter()
+                .filter_map(|s| s.null_profile.clone())
+                .collect();
+            profile_names.sort();
+            profile_names.dedup();
+
             for n in &config.n_values {
-                eprintln!(
-                    "\n--- Scenario: {} | N: {} ---",
-                    scenario.name,
-                    plot::format_n(*n)
-                );
+                for profile_name in &profile_names {
+                    let profile = config
+                        .null_profiles
+                        .get(profile_name)
+                        .expect("validated in config");
 
-                // Apply PG config overrides if specified
-                if let Some(ref pg_config_file) = scenario.pg_config_file {
-                    eprintln!("  Applying PG config from {}...", pg_config_file);
-                    let mut maint_conn = db::connect_maintenance(&config.pg)?;
-                    db::apply_pg_config(&mut maint_conn, pg_config_file)?;
-                }
+                    let profile_scenarios: Vec<_> = phase_scenarios
+                        .iter()
+                        .filter(|s| s.null_profile.as_deref() == Some(profile_name))
+                        .collect();
 
-                // Create benchmark DB from seed template (fast file-level copy)
-                eprintln!("  Creating database from seed template...");
-                seed::create_from_template(*n, &config.pg)?;
-
-                let mut conn = db::connect(&config.pg, Duration::from_secs(10))
-                    .context("Failed to connect to Postgres")?;
-
-                if *n > 0 {
-                    seed::reset_sequence_after_restore(&mut conn, *n)?;
-                }
-
-                // For partitioned scenarios: migrate data from base table into partitioned structure
-                if scenario.partition.is_some() {
-                    eprintln!("  Migrating to partitioned table...");
-                    schema::migrate_to_partitioned(&mut conn, scenario, *n, config.batch_size as u64)?;
-                }
-
-                // Create indexes after data load
-                eprintln!("  Creating indexes...");
-                let index_stmts = schema::index_sql(&scenario.indexes);
-                for stmt in &index_stmts {
-                    sql_query(stmt).execute(&mut conn).with_context(|| {
-                        format!("Failed index SQL: {}", &stmt[..stmt.len().min(100)])
-                    })?;
-                }
-
-                // Ensure extra partitions exist for measurement batch (range partitions)
-                if let Some(config::PartitionConfig::Range { key: _, size }) = &scenario.partition
-                {
-                    let extra_partitions = schema::partition_ddl(
-                        scenario.partition.as_ref().unwrap(),
-                        *n,
-                        config.batch_size as u64 + *size,
+                    eprintln!(
+                        "\n--- Phase 4 | N: {} | Profile: {} ---",
+                        plot::format_n(*n),
+                        profile_name,
                     );
-                    for stmt in &extra_partitions {
-                        let _ = sql_query(stmt).execute(&mut conn);
+
+                    // Fresh DB from template
+                    eprintln!("  Creating database from seed template...");
+                    seed::create_from_template(*n, &config.pg)?;
+
+                    let mut conn = db::connect(&config.pg, Duration::from_secs(10))
+                        .context("Failed to connect to Postgres")?;
+
+                    if *n > 0 {
+                        seed::reset_sequence_after_restore(&mut conn, *n)?;
+                    }
+
+                    // Redistribute nulls (skip if balanced = 50% which matches seed default)
+                    let is_balanced = profile.store_id == 0.5
+                        && profile.transfer_store_id == 0.5
+                        && profile.patient_id == 0.5;
+                    if !is_balanced {
+                        eprintln!("  Redistributing NULL percentages...");
+                        bench::redistribute_nulls(&mut conn, profile)?;
+                    } else {
+                        eprintln!("  Skipping redistribution (balanced matches seed default)");
+                    }
+
+                    let base_cursor = *n;
+
+                    // Cycle index types within the same DB
+                    for scenario in &profile_scenarios {
+                        eprintln!("  --- Index: {} ---", scenario.name);
+
+                        // Create indexes
+                        eprintln!("    Creating indexes...");
+                        let index_stmts = schema::index_sql(&scenario.indexes);
+                        for stmt in &index_stmts {
+                            sql_query(stmt).execute(&mut conn).with_context(|| {
+                                format!("Failed index SQL: {}", &stmt[..stmt.len().min(100)])
+                            })?;
+                        }
+
+                        // ANALYZE
+                        eprintln!("    Running ANALYZE...");
+                        sql_query("ANALYZE changelog;").execute(&mut conn)?;
+
+                        // Measure
+                        eprintln!("    Measuring {} inserts...", config.batch_size);
+                        let mut latencies = bench::measure_inserts(
+                            &mut conn,
+                            config.batch_size,
+                            scenario,
+                            Some(profile),
+                        )?;
+
+                        let stats = bench::compute_stats(&mut latencies);
+                        eprintln!(
+                            "    Results: p50={}us p95={}us p99={}us max={}us",
+                            stats.p50_us, stats.p95_us, stats.p99_us, stats.max_us
+                        );
+
+                        all_results.push(BenchResult {
+                            scenario_name: scenario.name.clone(),
+                            phase: scenario.phase,
+                            n: *n,
+                            batch_size: config.batch_size,
+                            stats,
+                            null_profile: Some(profile_name.clone()),
+                        });
+
+                        // Drop indexes and delete measurement rows for next index type
+                        eprintln!("    Dropping indexes...");
+                        for stmt in &index_stmts {
+                            let idx_name = stmt
+                                .split_whitespace()
+                                .nth(2)
+                                .unwrap_or("unknown");
+                            let drop_sql = format!("DROP INDEX IF EXISTS {}", idx_name);
+                            let _ = sql_query(&drop_sql).execute(&mut conn);
+                        }
+
+                        // Delete measurement rows and reset sequence
+                        sql_query(&format!(
+                            "DELETE FROM changelog WHERE cursor > {}",
+                            base_cursor
+                        ))
+                        .execute(&mut conn)?;
+                        sql_query(&format!(
+                            "SELECT setval('changelog_cursor_seq', {}, true)",
+                            base_cursor + 1
+                        ))
+                        .execute(&mut conn)?;
                     }
                 }
+            }
+        } else {
+            // Phases 1-3: one fresh DB per (scenario, N) pair
+            for scenario in &phase_scenarios {
+                for n in &config.n_values {
+                    eprintln!(
+                        "\n--- Scenario: {} | N: {} ---",
+                        scenario.name,
+                        plot::format_n(*n)
+                    );
 
-                // ANALYZE after data load + index creation
-                eprintln!("  Running ANALYZE...");
-                sql_query("ANALYZE changelog;").execute(&mut conn)?;
+                    // Apply PG config overrides if specified
+                    if let Some(ref pg_config_file) = scenario.pg_config_file {
+                        eprintln!("  Applying PG config from {}...", pg_config_file);
+                        let mut maint_conn = db::connect_maintenance(&config.pg)?;
+                        db::apply_pg_config(&mut maint_conn, pg_config_file)?;
+                    }
 
-                // Measure
-                eprintln!("  Measuring {} inserts...", config.batch_size);
-                let mut latencies =
-                    bench::measure_inserts(&mut conn, config.batch_size, scenario)?;
+                    // Create benchmark DB from seed template (fast file-level copy)
+                    eprintln!("  Creating database from seed template...");
+                    seed::create_from_template(*n, &config.pg)?;
 
-                let stats = bench::compute_stats(&mut latencies);
-                eprintln!(
-                    "  Results: p50={}us p95={}us p99={}us max={}us",
-                    stats.p50_us, stats.p95_us, stats.p99_us, stats.max_us
-                );
+                    let mut conn = db::connect(&config.pg, Duration::from_secs(10))
+                        .context("Failed to connect to Postgres")?;
 
-                all_results.push(BenchResult {
-                    scenario_name: scenario.name.clone(),
-                    phase: scenario.phase,
-                    n: *n,
-                    batch_size: config.batch_size,
-                    stats,
-                });
+                    if *n > 0 {
+                        seed::reset_sequence_after_restore(&mut conn, *n)?;
+                    }
 
-                // Reset PG config overrides if we applied any
-                if scenario.pg_config_file.is_some() {
-                    eprintln!("  Resetting PG config...");
-                    drop(conn);
-                    let mut maint_conn = db::connect_maintenance(&config.pg)?;
-                    db::reset_pg_config(&mut maint_conn)?;
+                    // For partitioned scenarios: migrate data from base table into partitioned structure
+                    if scenario.partition.is_some() {
+                        eprintln!("  Migrating to partitioned table...");
+                        schema::migrate_to_partitioned(
+                            &mut conn,
+                            scenario,
+                            *n,
+                            config.batch_size as u64,
+                        )?;
+                    }
+
+                    // Create indexes after data load
+                    eprintln!("  Creating indexes...");
+                    let index_stmts = schema::index_sql(&scenario.indexes);
+                    for stmt in &index_stmts {
+                        sql_query(stmt).execute(&mut conn).with_context(|| {
+                            format!("Failed index SQL: {}", &stmt[..stmt.len().min(100)])
+                        })?;
+                    }
+
+                    // Ensure extra partitions exist for measurement batch (range partitions)
+                    if let Some(config::PartitionConfig::Range { key: _, size }) =
+                        &scenario.partition
+                    {
+                        let extra_partitions = schema::partition_ddl(
+                            scenario.partition.as_ref().unwrap(),
+                            *n,
+                            config.batch_size as u64 + *size,
+                        );
+                        for stmt in &extra_partitions {
+                            let _ = sql_query(stmt).execute(&mut conn);
+                        }
+                    }
+
+                    // ANALYZE after data load + index creation
+                    eprintln!("  Running ANALYZE...");
+                    sql_query("ANALYZE changelog;").execute(&mut conn)?;
+
+                    // Measure
+                    eprintln!("  Measuring {} inserts...", config.batch_size);
+                    let mut latencies =
+                        bench::measure_inserts(&mut conn, config.batch_size, scenario, None)?;
+
+                    let stats = bench::compute_stats(&mut latencies);
+                    eprintln!(
+                        "  Results: p50={}us p95={}us p99={}us max={}us",
+                        stats.p50_us, stats.p95_us, stats.p99_us, stats.max_us
+                    );
+
+                    all_results.push(BenchResult {
+                        scenario_name: scenario.name.clone(),
+                        phase: scenario.phase,
+                        n: *n,
+                        batch_size: config.batch_size,
+                        stats,
+                        null_profile: None,
+                    });
+
+                    // Reset PG config overrides if we applied any
+                    if scenario.pg_config_file.is_some() {
+                        eprintln!("  Resetting PG config...");
+                        drop(conn);
+                        let mut maint_conn = db::connect_maintenance(&config.pg)?;
+                        db::reset_pg_config(&mut maint_conn)?;
+                    }
                 }
             }
         }
@@ -218,6 +346,7 @@ fn main() -> Result<()> {
             &config.output_dir,
             &timestamp,
             cli.no_graphs,
+            &config.null_profiles,
         )?;
     }
 

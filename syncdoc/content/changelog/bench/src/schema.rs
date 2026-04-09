@@ -353,6 +353,7 @@ mod tests {
             indexes: IndexSet::V7,
             partition: None,
             pg_config_file: None,
+            null_profile: None,
         };
         let stmts = structure_sql(&scenario, 1_000_000, 10_000);
 
@@ -369,6 +370,7 @@ mod tests {
             indexes: IndexSet::V7,
             partition: None,
             pg_config_file: None,
+            null_profile: None,
         };
         let stmts = setup_sql(&scenario, 1_000_000, 10_000);
 
@@ -387,6 +389,7 @@ mod tests {
                 size: 1_000_000,
             }),
             pg_config_file: None,
+            null_profile: None,
         };
         let stmts = setup_sql(&scenario, 10_000_000, 10_000);
 
@@ -426,6 +429,7 @@ mod tests {
                 indexes: IndexSet::PkOnly,
                 partition: None,
                 pg_config_file: None,
+                null_profile: None,
             },
             ScenarioConfig {
                 name: "v7".to_string(),
@@ -433,6 +437,7 @@ mod tests {
                 indexes: IndexSet::V7,
                 partition: None,
                 pg_config_file: None,
+                null_profile: None,
             },
         ];
 

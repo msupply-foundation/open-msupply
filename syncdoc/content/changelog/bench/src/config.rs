@@ -1,6 +1,16 @@
 use anyhow::{bail, Context, Result};
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::path::Path;
+
+/// Null probability profile for the 3 UUID columns.
+/// Each value is the probability of NULL (0.0 = always populated, 1.0 = always NULL).
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct NullProfile {
+    pub store_id: f64,
+    pub transfer_store_id: f64,
+    pub patient_id: f64,
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
@@ -9,6 +19,8 @@ pub struct Config {
     pub n_values: Vec<u64>,
     pub pg: PgConfig,
     pub scenarios: Vec<ScenarioConfig>,
+    #[serde(default)]
+    pub null_profiles: HashMap<String, NullProfile>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -55,6 +67,8 @@ pub struct ScenarioConfig {
     /// Settings are applied via ALTER SYSTEM + pg_reload_conf() before the scenario,
     /// and reset via ALTER SYSTEM RESET ALL afterwards.
     pub pg_config_file: Option<String>,
+    /// Name of a null_profile defined in [null_profiles]. Required for phase 4.
+    pub null_profile: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -114,13 +128,55 @@ impl Config {
         if self.n_values.is_empty() {
             bail!("No n_values defined in config");
         }
+        // Validate null profiles
+        for (name, profile) in &self.null_profiles {
+            for (field, val) in [
+                ("store_id", profile.store_id),
+                ("transfer_store_id", profile.transfer_store_id),
+                ("patient_id", profile.patient_id),
+            ] {
+                if !(0.0..=1.0).contains(&val) {
+                    bail!(
+                        "Null profile '{}' has invalid {} = {} (must be 0.0–1.0)",
+                        name,
+                        field,
+                        val
+                    );
+                }
+            }
+        }
+
         for scenario in &self.scenarios {
-            if scenario.phase < 1 || scenario.phase > 3 {
+            if scenario.phase < 1 || scenario.phase > 4 {
                 bail!(
-                    "Scenario '{}' has invalid phase {} (must be 1, 2, or 3)",
+                    "Scenario '{}' has invalid phase {} (must be 1–4)",
                     scenario.name,
                     scenario.phase
                 );
+            }
+            // Phase 4 requires null_profile, no partitioning
+            if scenario.phase == 4 {
+                match &scenario.null_profile {
+                    None => bail!(
+                        "Scenario '{}' is phase 4 but has no null_profile",
+                        scenario.name
+                    ),
+                    Some(ref name) => {
+                        if !self.null_profiles.contains_key(name) {
+                            bail!(
+                                "Scenario '{}' references null_profile '{}' which is not defined in [null_profiles]",
+                                scenario.name,
+                                name
+                            );
+                        }
+                    }
+                }
+                if scenario.partition.is_some() {
+                    bail!(
+                        "Scenario '{}' is phase 4 but has a partition config (not supported)",
+                        scenario.name
+                    );
+                }
             }
             if let Some(ref path) = scenario.pg_config_file {
                 if !Path::new(path).exists() {
@@ -163,6 +219,14 @@ impl Config {
 
     pub fn scenarios_for_phase(&self, phase: u8) -> Vec<&ScenarioConfig> {
         self.scenarios.iter().filter(|s| s.phase == phase).collect()
+    }
+
+    /// Get the resolved NullProfile for a scenario, or None for phases 1-3.
+    pub fn null_profile_for(&self, scenario: &ScenarioConfig) -> Option<&NullProfile> {
+        scenario
+            .null_profile
+            .as_ref()
+            .and_then(|name| self.null_profiles.get(name))
     }
 
     pub fn phases(&self) -> Vec<u8> {
@@ -357,5 +421,140 @@ indexes = "pk_only"
         let phase3 = config.scenarios_for_phase(3);
         assert_eq!(phase3.len(), 3);
         assert!(phase3.iter().all(|s| s.phase == 3));
+    }
+
+    fn phase4_config_toml() -> &'static str {
+        r#"
+batch_size = 5000
+output_dir = "results"
+n_values = [1_000_000]
+
+[pg]
+host = "localhost"
+port = 5432
+user = "postgres"
+password = "bench"
+database = "changelog_bench"
+
+[null_profiles.mostly_null]
+store_id = 0.9
+transfer_store_id = 0.9
+patient_id = 0.9
+
+[null_profiles.balanced]
+store_id = 0.5
+transfer_store_id = 0.5
+patient_id = 0.5
+
+[[scenarios]]
+name = "null90_v7"
+phase = 4
+indexes = "v7"
+null_profile = "mostly_null"
+
+[[scenarios]]
+name = "null50_v7"
+phase = 4
+indexes = "v7"
+null_profile = "balanced"
+"#
+    }
+
+    #[test]
+    fn test_phase4_config_deserialize() {
+        let config: Config = toml::from_str(phase4_config_toml()).unwrap();
+        assert_eq!(config.null_profiles.len(), 2);
+        assert_eq!(config.scenarios.len(), 2);
+        assert_eq!(config.scenarios[0].null_profile, Some("mostly_null".to_string()));
+        assert_eq!(config.scenarios[1].null_profile, Some("balanced".to_string()));
+
+        let profile = config.null_profiles.get("mostly_null").unwrap();
+        assert_eq!(profile.store_id, 0.9);
+        assert_eq!(profile.transfer_store_id, 0.9);
+        assert_eq!(profile.patient_id, 0.9);
+    }
+
+    #[test]
+    fn test_phase4_null_profile_for() {
+        let config: Config = toml::from_str(phase4_config_toml()).unwrap();
+        let profile = config.null_profile_for(&config.scenarios[0]).unwrap();
+        assert_eq!(profile.store_id, 0.9);
+        assert!(config.null_profile_for(&config.scenarios[1]).is_some());
+    }
+
+    #[test]
+    fn test_phase4_missing_profile_fails_validation() {
+        let toml_str = r#"
+batch_size = 100
+output_dir = "out"
+n_values = [1000]
+
+[pg]
+host = "localhost"
+port = 5432
+user = "postgres"
+password = "pass"
+database = "bench"
+
+[[scenarios]]
+name = "bad"
+phase = 4
+indexes = "v7"
+null_profile = "nonexistent"
+"#;
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn test_phase4_no_profile_fails_validation() {
+        let toml_str = r#"
+batch_size = 100
+output_dir = "out"
+n_values = [1000]
+
+[pg]
+host = "localhost"
+port = 5432
+user = "postgres"
+password = "pass"
+database = "bench"
+
+[[scenarios]]
+name = "bad"
+phase = 4
+indexes = "v7"
+"#;
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn test_null_profile_invalid_range() {
+        let toml_str = r#"
+batch_size = 100
+output_dir = "out"
+n_values = [1000]
+
+[pg]
+host = "localhost"
+port = 5432
+user = "postgres"
+password = "pass"
+database = "bench"
+
+[null_profiles.bad]
+store_id = 1.5
+transfer_store_id = 0.5
+patient_id = 0.5
+
+[[scenarios]]
+name = "test"
+phase = 4
+indexes = "v7"
+null_profile = "bad"
+"#;
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert!(config.validate().is_err());
     }
 }

@@ -6,7 +6,7 @@ use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
-use crate::config::ScenarioConfig;
+use crate::config::{NullProfile, ScenarioConfig};
 use crate::schema::TABLE_NAME_VALUES;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,6 +16,8 @@ pub struct BenchResult {
     pub n: u64,
     pub batch_size: usize,
     pub stats: Stats,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub null_profile: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -78,8 +80,8 @@ SELECT
     CASE WHEN g % 20 = 0 THEN 'DELETE'::row_action_type ELSE 'UPSERT'::row_action_type END,
     CASE WHEN g % 4 = 0 THEN (g % 100)::integer ELSE NULL END,
     CASE WHEN g % 2 = 0 THEN md5((g+1)::text)::uuid ELSE NULL END,
-    CASE WHEN g % 5 = 0 THEN md5((g+2)::text)::uuid ELSE NULL END,
-    CASE WHEN g % 8 = 0 THEN md5((g+3)::text)::uuid ELSE NULL END
+    CASE WHEN g % 2 = 0 THEN md5((g+2)::text)::uuid ELSE NULL END,
+    CASE WHEN g % 2 = 0 THEN md5((g+3)::text)::uuid ELSE NULL END
 FROM generate_series({from}, {to}) AS g;",
             enum_array = TABLE_NAME_VALUES
                 .iter()
@@ -100,7 +102,9 @@ FROM generate_series({from}, {to}) AS g;",
 }
 
 /// Generate a random INSERT statement for a single changelog row.
-pub fn generate_random_insert() -> String {
+/// When `profile` is `None`, uses 50% NULL defaults for all 3 UUID columns.
+/// When `Some`, uses the profile's null percentages.
+pub fn generate_random_insert(profile: Option<&NullProfile>) -> String {
     let mut rng = rand::rng();
 
     let table_name = TABLE_NAME_VALUES[rng.random_range(0..TABLE_NAME_VALUES.len())];
@@ -112,25 +116,31 @@ pub fn generate_random_insert() -> String {
         "UPSERT"
     };
 
+    // source_site_id: always 25% populated (fixed)
     let source_site = if rng.sample(Bernoulli::from_ratio(1, 4).unwrap()) {
         format!("{}", rng.random_range(1..100))
     } else {
         "NULL".to_string()
     };
 
-    let store_id = if rng.sample(Bernoulli::from_ratio(1, 2).unwrap()) {
+    let (store_null, transfer_null, patient_null) = match profile {
+        Some(p) => (p.store_id, p.transfer_store_id, p.patient_id),
+        None => (0.5, 0.5, 0.5),
+    };
+
+    let store_id = if rng.sample(Bernoulli::new(1.0 - store_null).unwrap()) {
         format!("'{}'", uuid::Uuid::now_v7())
     } else {
         "NULL".to_string()
     };
 
-    let transfer_store_id = if rng.sample(Bernoulli::from_ratio(1, 5).unwrap()) {
+    let transfer_store_id = if rng.sample(Bernoulli::new(1.0 - transfer_null).unwrap()) {
         format!("'{}'", uuid::Uuid::now_v7())
     } else {
         "NULL".to_string()
     };
 
-    let patient_id = if rng.sample(Bernoulli::from_ratio(1, 8).unwrap()) {
+    let patient_id = if rng.sample(Bernoulli::new(1.0 - patient_null).unwrap()) {
         format!("'{}'", uuid::Uuid::now_v7())
     } else {
         "NULL".to_string()
@@ -174,16 +184,33 @@ pub fn prepopulate(conn: &mut PgConnection, n: u64) -> Result<()> {
     Ok(())
 }
 
+/// Redistribute null percentages on the 3 UUID columns for Phase 4.
+/// Runs a single full-table UPDATE before indexes are created.
+pub fn redistribute_nulls(conn: &mut PgConnection, profile: &NullProfile) -> Result<()> {
+    let sql = format!(
+        "UPDATE changelog SET
+            store_id = CASE WHEN random() < {} THEN NULL ELSE md5(cursor::text)::uuid END,
+            transfer_store_id = CASE WHEN random() < {} THEN NULL ELSE md5((cursor+2)::text)::uuid END,
+            patient_id = CASE WHEN random() < {} THEN NULL ELSE md5((cursor+3)::text)::uuid END;",
+        profile.store_id, profile.transfer_store_id, profile.patient_id,
+    );
+    sql_query(&sql)
+        .execute(conn)
+        .context("Failed to redistribute null percentages")?;
+    Ok(())
+}
+
 /// Run the measurement phase: insert batch_size rows one at a time, timing each.
 pub fn measure_inserts(
     conn: &mut PgConnection,
     batch_size: usize,
     _scenario: &ScenarioConfig,
+    profile: Option<&NullProfile>,
 ) -> Result<Vec<Duration>> {
     let mut latencies = Vec::with_capacity(batch_size);
 
     for i in 0..batch_size {
-        let insert_sql = generate_random_insert();
+        let insert_sql = generate_random_insert(profile);
 
         let start = Instant::now();
         sql_query(&insert_sql)
@@ -235,7 +262,7 @@ mod tests {
 
     #[test]
     fn test_generate_random_insert() {
-        let sql = generate_random_insert();
+        let sql = generate_random_insert(None);
 
         assert!(sql.starts_with("INSERT INTO changelog"));
         assert!(sql.contains("record_id"));
@@ -258,6 +285,20 @@ mod tests {
 
         // Verify row_action is valid
         assert!(sql.contains("'UPSERT'") || sql.contains("'DELETE'"));
+    }
+
+    #[test]
+    fn test_generate_random_insert_with_profile() {
+        let profile = NullProfile {
+            store_id: 0.9,
+            transfer_store_id: 0.9,
+            patient_id: 0.9,
+        };
+        let sql = generate_random_insert(Some(&profile));
+
+        assert!(sql.starts_with("INSERT INTO changelog"));
+        assert!(sql.contains("record_id"));
+        assert!(sql.contains("store_id"));
     }
 
     #[test]
@@ -316,6 +357,7 @@ mod tests {
             indexes: IndexSet::V7,
             partition: None,
             pg_config_file: None,
+            null_profile: None,
         };
 
         let stmts = schema::setup_sql(&scenario, 0, 100);
@@ -323,7 +365,7 @@ mod tests {
             sql_query(stmt).execute(&mut conn).unwrap();
         }
 
-        let latencies = measure_inserts(&mut conn, 100, &scenario).unwrap();
+        let latencies = measure_inserts(&mut conn, 100, &scenario, None).unwrap();
 
         assert_eq!(latencies.len(), 100);
         assert!(latencies.iter().all(|d| d.as_nanos() > 0));
