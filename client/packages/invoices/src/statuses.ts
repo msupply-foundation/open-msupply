@@ -129,6 +129,12 @@ const INBOUND_INTERNAL_NEXT: NextStatusMap = {
 };
 
 const INBOUND_EXTERNAL_NEXT: NextStatusMap = {
+  [InvoiceNodeStatus.New]: [
+    InvoiceNodeStatus.Shipped,
+    InvoiceNodeStatus.Delivered,
+    InvoiceNodeStatus.Received,
+    InvoiceNodeStatus.Verified,
+  ],
   [InvoiceNodeStatus.Shipped]: [
     InvoiceNodeStatus.Delivered,
     InvoiceNodeStatus.Received,
