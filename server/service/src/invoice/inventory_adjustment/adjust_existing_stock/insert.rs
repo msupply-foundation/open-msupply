@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use repository::RepositoryError;
 use repository::{
     ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
@@ -27,7 +27,7 @@ pub struct InsertInventoryAdjustment {
     pub adjustment: f64,
     pub adjustment_type: AdjustmentType,
     pub reason_option_id: Option<String>,
-    pub backdated_datetime: Option<NaiveDateTime>,
+    pub backdated_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -90,11 +90,13 @@ pub fn insert_inventory_adjustment(
                 update_inventory_adjustment_reason.reason_option_id,
             )?;
 
-            let verified_datetime = backdated_datetime.unwrap_or_else(|| Utc::now().naive_utc());
+            let verified_datetime = backdated_datetime
+                .map(|d| d.naive_utc())
+                .unwrap_or_else(|| Utc::now().naive_utc());
             let verified_invoice = InvoiceRow {
                 status: InvoiceStatus::Verified,
                 verified_datetime: Some(verified_datetime),
-                backdated_datetime,
+                backdated_datetime: backdated_datetime.map(|d| d.naive_utc()),
                 ..invoice
             };
 
@@ -411,6 +413,129 @@ mod test {
         assert_eq!(
             updated_stockline.total_number_of_packs,
             mock_stock_line_b().total_number_of_packs - 10.5
+        );
+    }
+
+    // Timeline: stock received 10 packs (5 days ago), 8 picked out (2 days ago), current = 2.
+    // Backdated reduction at 3 days ago must not cause a dip below zero at any point
+    // between then and now. The min-available algorithm tracks the lowest point.
+    //
+    // With a 5-pack backdated reduction: 10 → 5 at 3 days ago, then 5 - 8 = -3 at
+    // 2 days ago → dip below zero → LedgerGoesBelowZero.
+    //
+    // With a 2-pack backdated reduction: 10 → 8 at 3 days ago, then 8 - 8 = 0 at
+    // 2 days ago → no dip → success.
+    #[actix_rt::test]
+    async fn insert_inventory_adjustment_backdated_ledger_below_zero() {
+        use chrono::{DateTime, Duration, Utc};
+        use repository::{
+            InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, PreferenceRow,
+            PreferenceRowRepository, StockLineRow,
+        };
+
+        let two_days_ago = Utc::now().naive_utc() - Duration::days(2);
+
+        // Current stock: 2 packs (10 originally, 8 went out 2 days ago)
+        fn stock_line() -> StockLineRow {
+            StockLineRow {
+                id: "backdate_ledger_stock".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: repository::mock::mock_item_a().id,
+                available_number_of_packs: 2.0,
+                total_number_of_packs: 2.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn outbound_invoice(picked: chrono::NaiveDateTime) -> InvoiceRow {
+            InvoiceRow {
+                id: "backdate_ledger_outbound".to_string(),
+                name_id: repository::mock::mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::Picked,
+                picked_datetime: Some(picked),
+                ..Default::default()
+            }
+        }
+
+        fn outbound_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "backdate_ledger_outbound_line".to_string(),
+                invoice_id: "backdate_ledger_outbound".to_string(),
+                item_link_id: repository::mock::mock_item_a().id,
+                stock_line_id: Some("backdate_ledger_stock".to_string()),
+                r#type: InvoiceLineType::StockOut,
+                number_of_packs: 8.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_inventory_adjustment_backdated_ledger",
+            MockDataInserts::all(),
+            MockData {
+                stock_lines: vec![stock_line()],
+                invoices: vec![outbound_invoice(two_days_ago)],
+                invoice_lines: vec![outbound_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Enable backdating preference
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
+                    .to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let three_days_ago: DateTime<Utc> = Utc::now() - Duration::days(3);
+
+        // Min available across timeline with 5-pack reduction:
+        // current=2, walk back: undo 8-pack outbound → 10, that's the historical value.
+        // Min is min(2, 10) = 2. So 2 - 5 < 0 → LedgerGoesBelowZero
+        assert_eq!(
+            service.insert_inventory_adjustment(
+                &context,
+                InsertInventoryAdjustment {
+                    stock_line_id: stock_line().id,
+                    adjustment_type: AdjustmentType::Reduction,
+                    adjustment: 5.0,
+                    backdated_datetime: Some(three_days_ago),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::LedgerGoesBelowZero)
+        );
+
+        // With 1-pack reduction: min=2, 2 - 1 >= 0 → success
+        let result = service.insert_inventory_adjustment(
+            &context,
+            InsertInventoryAdjustment {
+                stock_line_id: stock_line().id,
+                adjustment_type: AdjustmentType::Reduction,
+                adjustment: 1.0,
+                backdated_datetime: Some(three_days_ago),
+                ..Default::default()
+            },
+        );
+        assert!(
+            result.is_ok(),
+            "Backdated reduction within ledger limits should succeed: {:#?}",
+            result
         );
     }
 }
