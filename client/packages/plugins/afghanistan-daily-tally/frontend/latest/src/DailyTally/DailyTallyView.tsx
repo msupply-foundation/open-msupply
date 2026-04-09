@@ -418,10 +418,25 @@ const parseInput = (value: string) => {
 const parseWholeNumber = (value: string) => Math.floor(parseInput(value));
 const numericInputMode = 'numeric' as const;
 const numericHtmlInputProps = { pattern: '[0-9]*' };
+const selectZeroValueOnFocus = (
+  event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+) => {
+  if (event.target.value === '0') {
+    event.target.select();
+  }
+};
 const compactNumberInputSx = {
   width: { xs: '100%', sm: 92 },
   '& .MuiInputBase-input': {
     textAlign: 'center',
+  },
+};
+const highlightedIssuedInputSlotProps = {
+  input: {
+    sx: {
+      backgroundColor: 'rgba(255, 193, 7, 0.22)',
+      boxShadow: 'inset 0 0 0 1px rgba(245, 124, 0, 0.5)',
+    },
   },
 };
 
@@ -781,6 +796,7 @@ export const DailyTallyView = () => {
       'Not selected'
     );
   }, [patientOptions, selectedPatientId]);
+  const shouldHighlightPatientSelection = !selectedPatientId;
 
   const openVialWastageReason = useMemo(
     () =>
@@ -968,15 +984,6 @@ export const DailyTallyView = () => {
     });
   }, [groupedItems]);
 
-  useEffect(() => {
-    if (!selectedTallyItemId) return;
-
-    const selectedExists = vaccineRows.some(row => row.itemId === selectedTallyItemId);
-    if (!selectedExists) {
-      setSelectedTallyItemId(null);
-    }
-  }, [selectedTallyItemId, vaccineRows]);
-
   const rows = useMemo((): DailyTallyRow[] => {
     return groupedItems.map(item => {
       const draft = draftByItem[item.itemId] || {
@@ -1013,6 +1020,16 @@ export const DailyTallyView = () => {
 
   const vaccineRows = useMemo(() => rows.filter(row => row.isVaccine), [rows]);
   const nonVaccineRows = useMemo(() => rows.filter(row => !row.isVaccine), [rows]);
+
+  useEffect(() => {
+    if (!selectedTallyItemId) return;
+
+    const selectedExists = vaccineRows.some(row => row.itemId === selectedTallyItemId);
+    if (!selectedExists) {
+      setSelectedTallyItemId(null);
+    }
+  }, [selectedTallyItemId, vaccineRows]);
+
   const allocationVaccineRows = useMemo(
     () =>
       isSimplifiedMode
@@ -1039,7 +1056,6 @@ export const DailyTallyView = () => {
     allocation: 'Vaccine Batches and Wastage',
     'non-vaccine': 'Non-vaccine Issuance',
   };
-  const workflowStepLabel = `Step ${workflowStepIndex + 1} of ${workflowStepTotal}: ${workflowStepTitleByKey[workflowStep]}`;
   const workflowStepBreadcrumbLabel = `Step ${workflowStepIndex + 1} of ${workflowStepTotal}: ${workflowStepTitleByKey[workflowStep]}`;
   const displayedVaccineRows =
     workflowStep === 'coverage'
@@ -1204,6 +1220,29 @@ export const DailyTallyView = () => {
   const moveToAllocationStep = () => {
     if (!selectedPatientId) {
       error('Select Daily Tally (patient) before continuing to Batches.')();
+      return;
+    }
+
+    // If coverage is entirely empty (all zeros), skip allocation and go to the next workflow step.
+    const hasAnyCoverageValues = vaccineRows.some(row =>
+      hasCoverageValues(coverageByItem[row.itemId])
+    );
+    if (!hasAnyCoverageValues) {
+      const allocationIndex = workflowStepSequence.indexOf('allocation');
+      const stepAfterAllocation =
+        allocationIndex >= 0 ? workflowStepSequence[allocationIndex + 1] : undefined;
+
+      if (stepAfterAllocation === 'non-vaccine') {
+        moveToNonVaccineStep();
+        return;
+      }
+
+      if (stepAfterAllocation) {
+        setWorkflowStep(stepAfterAllocation);
+        return;
+      }
+
+      onConfirm();
       return;
     }
 
@@ -2896,17 +2935,28 @@ export const DailyTallyView = () => {
         <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
           <Box>
             <Typography fontWeight="bold">Daily Tally</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {workflowStepLabel}
-            </Typography>
           </Box>
-          <Select
-            value={selectedPatientId}
-            onChange={event => setSelectedPatientId(String(event.target.value || ''))}
-            options={patientOptions}
-            disabled={isPatientsLoading}
-            sx={{ width: { xs: '100%', sm: 260 } }}
-          />
+          <Box sx={{ width: { xs: '100%', sm: 260 } }}>
+            <Select
+              value={selectedPatientId}
+              onChange={event => setSelectedPatientId(String(event.target.value || ''))}
+              options={patientOptions}
+              disabled={isPatientsLoading}
+              slotProps={{
+                input: shouldHighlightPatientSelection
+                  ? {
+                      sx: {
+                        backgroundColor: 'rgba(255, 193, 7, 0.22)',
+                        boxShadow: 'inset 0 0 0 1px rgba(245, 124, 0, 0.5)',
+                      },
+                    }
+                  : undefined,
+              }}
+              sx={{
+                width: '100%',
+              }}
+            />
+          </Box>
           <BasicTextInput
             size="small"
             placeholder="Daily tally reference"
@@ -2958,7 +3008,7 @@ export const DailyTallyView = () => {
       </AppBarButtonsPortal>
 
       <Box paddingBottom={2}>
-        <Box sx={{ paddingX: 2, paddingBottom: 1 }}>
+        <Box sx={{ paddingX: 2, paddingBottom: 1, width: '100%', boxSizing: 'border-box' }}>
           {isLoading ? (
             <Typography variant="body2" color="text.secondary">
               Loading daily tally items...
@@ -3127,8 +3177,9 @@ export const DailyTallyView = () => {
 
                       <Box
                         display="grid"
-                        gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr' }}
+                        gridTemplateColumns={{ xs: '1fr', sm: 'repeat(auto-fit,minmax(280px,1fr))' }}
                         columnGap={1.25}
+                        sx={{ width: '100%' }}
                       >
                         {vaccineRows.map(row => {
                           const total = sessionTallyVaccineTotal(sessionTallyByItem[row.itemId]);
@@ -3148,6 +3199,8 @@ export const DailyTallyView = () => {
                                 paddingX: 1.25,
                                 paddingY: 1,
                                 marginBottom: 1,
+                                width: '100%',
+                                boxSizing: 'border-box',
                                 cursor: 'pointer',
                               }}
                             >
@@ -3186,6 +3239,11 @@ export const DailyTallyView = () => {
                       label: batchLabel(stockLine),
                     }));
                     const batchUsedTotal = sumBatchDraft(row.batchDraftById, 'used');
+                    const hasBatchIssuedMismatch = Math.abs(batchUsedTotal - row.used) > 0.0001;
+                    const shouldHighlightUpperIssuedValue =
+                      workflowStep === 'allocation' &&
+                      row.stockLines.length > 1 &&
+                      hasBatchIssuedMismatch;
 
                     return (
                       <Box
@@ -3196,53 +3254,63 @@ export const DailyTallyView = () => {
                           paddingX: 2,
                           paddingY: 1.5,
                           marginBottom: 1.25,
+                          width: '100%',
+                          boxSizing: 'border-box',
                         }}
                       >
                         <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
-                          <Box display="flex" alignItems="center" gap={1.25} flexWrap="wrap">
-                            <Typography variant="body1" sx={itemTitleSx}>
-                              {row.item}
-                            </Typography>
-                            <Box
-                              sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                paddingX: 1.25,
-                                paddingY: 0.5,
-                                borderRadius: 1,
-                                border: '1px solid rgba(0,0,0,0.18)',
-                                backgroundColor: 'rgba(0,0,0,0.03)',
-                              }}
-                            >
-                              <Typography
-                                variant="body2"
-                                sx={{ fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.2 }}
+                          <Typography variant="body1" sx={itemTitleSx}>
+                            {row.item}
+                          </Typography>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="flex-end"
+                            gap={1}
+                            flexWrap="wrap"
+                          >
+                            {!isSimplifiedMode && workflowStep === 'allocation' ? (
+                              <ButtonWithIcon
+                                Icon={
+                                  <ChevronDownIcon
+                                    sx={{
+                                      transform: coverage.isOpen
+                                        ? 'rotate(180deg)'
+                                        : 'rotate(0deg)',
+                                      transition: 'transform 0.2s ease',
+                                    }}
+                                  />
+                                }
+                                label={coverage.isOpen ? 'Hide coverage' : 'Show coverage'}
+                                onClick={() =>
+                                  updateCoverageForRow(row, current => ({
+                                    ...current,
+                                    isOpen: !current.isOpen,
+                                  }))
+                                }
+                              />
+                            ) : null}
+                            {workflowStep !== 'allocation' ? (
+                              <Box
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  paddingX: 1.25,
+                                  paddingY: 0.5,
+                                  borderRadius: 1,
+                                  border: '1px solid rgba(0,0,0,0.18)',
+                                  backgroundColor: 'rgba(0,0,0,0.03)',
+                                }}
                               >
-                                Issued doses: {row.used}
-                              </Typography>
-                            </Box>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.2 }}
+                                >
+                                  Issued doses: {row.used}
+                                </Typography>
+                              </Box>
+                            ) : null}
                           </Box>
-                          {!isSimplifiedMode && workflowStep === 'allocation' ? (
-                            <ButtonWithIcon
-                              Icon={
-                                <ChevronDownIcon
-                                  sx={{
-                                    transform: coverage.isOpen
-                                      ? 'rotate(180deg)'
-                                      : 'rotate(0deg)',
-                                    transition: 'transform 0.2s ease',
-                                  }}
-                                />
-                              }
-                              label={coverage.isOpen ? 'Hide coverage' : 'Show coverage'}
-                              onClick={() =>
-                                updateCoverageForRow(row, current => ({
-                                  ...current,
-                                  isOpen: !current.isOpen,
-                                }))
-                              }
-                            />
-                          ) : null}
                         </Box>
 
                         {workflowStep === 'coverage' && coverageSohWarning ? (
@@ -3302,12 +3370,36 @@ export const DailyTallyView = () => {
                               size="small"
                               inputMode={numericInputMode}
                               inputProps={numericHtmlInputProps}
-                              sx={compactNumberInputSx}
+                              slotProps={
+                                row.stockLines.length > 1
+                                  ? highlightedIssuedInputSlotProps
+                                  : undefined
+                              }
+                              sx={
+                                shouldHighlightUpperIssuedValue
+                                  ? {
+                                      ...compactNumberInputSx,
+                                      '& input': {
+                                        fontWeight: 700,
+                                        color: 'error.main',
+                                      },
+                                    }
+                                  : compactNumberInputSx
+                              }
                               value={String(row.used)}
                               onChange={event => updateUsed(row, event.target.value)}
                             />
                           ) : (
-                            <Typography variant="body2">{row.used}</Typography>
+                            <Typography
+                              variant="body2"
+                              sx={
+                                shouldHighlightUpperIssuedValue
+                                  ? { fontWeight: 700, color: 'error.main' }
+                                  : undefined
+                              }
+                            >
+                              {row.used}
+                            </Typography>
                           )}
                           {row.stockLines.length > 1 ? (
                             <Typography
@@ -3387,6 +3479,7 @@ export const DailyTallyView = () => {
                                       inputProps={numericHtmlInputProps}
                                       sx={compactNumberInputSx}
                                       value={String(ageGroup.male)}
+                                      onFocus={selectZeroValueOnFocus}
                                       onChange={event =>
                                         updateCoverageForRow(row, current => ({
                                           ...current,
@@ -3408,6 +3501,7 @@ export const DailyTallyView = () => {
                                       inputProps={numericHtmlInputProps}
                                       sx={compactNumberInputSx}
                                       value={String(ageGroup.female)}
+                                      onFocus={selectZeroValueOnFocus}
                                       onChange={event =>
                                         updateCoverageForRow(row, current => ({
                                           ...current,
@@ -3481,6 +3575,7 @@ export const DailyTallyView = () => {
                                       inputProps={numericHtmlInputProps}
                                       sx={compactNumberInputSx}
                                       value={String(nonPregnant)}
+                                      onFocus={selectZeroValueOnFocus}
                                       onChange={event =>
                                         updateCoverageForRow(row, current => ({
                                           ...current,
@@ -3525,6 +3620,7 @@ export const DailyTallyView = () => {
                                         inputProps={numericHtmlInputProps}
                                         sx={compactNumberInputSx}
                                         value={String(pregnant)}
+                                        onFocus={selectZeroValueOnFocus}
                                         onChange={event =>
                                           updateCoverageForRow(row, current => ({
                                             ...current,
@@ -3637,6 +3733,7 @@ export const DailyTallyView = () => {
                                           size="small"
                                           inputMode={numericInputMode}
                                           inputProps={numericHtmlInputProps}
+                                          slotProps={highlightedIssuedInputSlotProps}
                                           sx={compactNumberInputSx}
                                           value={String(batchDraft.used)}
                                           onChange={event =>
@@ -3684,9 +3781,20 @@ export const DailyTallyView = () => {
                                   color="text.secondary"
                                   sx={{ display: 'block', marginTop: 0.75 }}
                                 >
-                                  Batch issued total: {batchUsedTotal} / Item issued: {row.used}
+                                  Batch issued total: {batchUsedTotal} / Item issued:{' '}
+                                  <Typography
+                                    component="span"
+                                    variant="caption"
+                                    sx={
+                                      hasBatchIssuedMismatch
+                                        ? { fontWeight: 700, color: 'error.main' }
+                                        : undefined
+                                    }
+                                  >
+                                    {row.used}
+                                  </Typography>
                                 </Typography>
-                                {Math.abs(batchUsedTotal - row.used) > 0.0001 ? (
+                                {hasBatchIssuedMismatch ? (
                                   <Typography
                                     variant="caption"
                                     color="error.main"
@@ -3748,6 +3856,8 @@ export const DailyTallyView = () => {
                           paddingX: 2,
                           paddingY: 1.5,
                           marginBottom: 1.25,
+                          width: '100%',
+                          boxSizing: 'border-box',
                         }}
                       >
                         <Typography variant="body1" sx={itemTitleSx}>

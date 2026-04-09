@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
 
@@ -5,10 +6,14 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 
 const pluginName = require('./package.json').name;
 const createConfig = require('../../../frontend-plugin-webpack.config.js');
+const distDir = path.resolve(__dirname, 'dist');
+
+// Ensure stale generated files (for example old main.js artifacts) are removed.
+fs.rmSync(distDir, { recursive: true, force: true });
 
 const config = createConfig({
   pluginName,
-  distDir: path.resolve(__dirname, 'dist'),
+  distDir,
 });
 
 if (config.module?.rules) {
@@ -46,6 +51,15 @@ webpack(config, (error, stats) => {
 
   if (stats.hasWarnings()) {
     console.warn(info.warnings);
+  }
+
+  // Keep dist minimal for deployment: plugin system loads <pluginName>.js entry point.
+  const redundantAssets = ['main.js', 'main.js.LICENSE.txt'];
+  for (const assetName of redundantAssets) {
+    const assetPath = path.join(distDir, assetName);
+    if (fs.existsSync(assetPath)) {
+      fs.rmSync(assetPath, { force: true });
+    }
   }
 
   console.log(
