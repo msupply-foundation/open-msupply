@@ -39,27 +39,51 @@ fn phase_dir(phase: u8) -> &'static str {
     }
 }
 
-/// Generate one chart per scenario, each showing p50/p95/p99 lines vs N.
+/// Generate charts for a given phase.
+/// Phase 2 gets clustered bar charts (one per N, scenarios on x-axis, p50/p95/p99 bars).
+/// Other phases get one line chart per scenario (p50/p95/p99 lines vs N).
 pub fn generate_phase_charts(
     results: &[BenchResult],
     phase: u8,
     output_dir: &str,
     timestamp: &str,
+    skip_graphs: bool,
 ) -> Result<()> {
     let dir = format!("{}/{}_{}", output_dir, phase_dir(phase), timestamp);
     fs::create_dir_all(&dir).context("Failed to create output directory")?;
 
-    // Get unique scenario names for this phase
-    let mut scenario_names: Vec<String> = results
-        .iter()
-        .filter(|r| r.phase == phase)
-        .map(|r| r.scenario_name.clone())
-        .collect();
-    scenario_names.sort();
-    scenario_names.dedup();
+    // Save phase-specific results.json alongside the charts
+    let phase_results: Vec<_> = results.iter().filter(|r| r.phase == phase).cloned().collect();
+    save_results_json(&phase_results, &dir)?;
 
-    for name in &scenario_names {
-        generate_scenario_chart(results, phase, name, &dir)?;
+    if !skip_graphs {
+        if phase == 2 {
+            // Phase 2: one clustered bar chart per N value
+            let mut n_values: Vec<u64> = results
+                .iter()
+                .filter(|r| r.phase == phase)
+                .map(|r| r.n)
+                .collect();
+            n_values.sort();
+            n_values.dedup();
+
+            for n in &n_values {
+                generate_index_bar_chart(results, phase, *n, &dir)?;
+            }
+        } else {
+            // Other phases: one line chart per scenario
+            let mut scenario_names: Vec<String> = results
+                .iter()
+                .filter(|r| r.phase == phase)
+                .map(|r| r.scenario_name.clone())
+                .collect();
+            scenario_names.sort();
+            scenario_names.dedup();
+
+            for name in &scenario_names {
+                generate_scenario_chart(results, phase, name, &dir)?;
+            }
+        }
     }
 
     Ok(())
@@ -150,6 +174,144 @@ fn generate_scenario_chart(
                 .iter()
                 .map(|(x, y)| Circle::new((*x, *y), 4, color.filled())),
         )?;
+    }
+
+    chart
+        .configure_series_labels()
+        .position(SeriesLabelPosition::UpperLeft)
+        .border_style(BLACK)
+        .background_style(WHITE.mix(0.8))
+        .draw()?;
+
+    root.present()?;
+    eprintln!("  Generated: {}", output_path);
+    Ok(())
+}
+
+/// Generate a clustered bar chart for Phase 2: one chart per N value.
+/// X-axis: index strategies, Y-axis: latency (us).
+/// Each cluster has 3 bars: p50, p95, p99.
+fn generate_index_bar_chart(
+    results: &[BenchResult],
+    phase: u8,
+    n: u64,
+    output_dir: &str,
+) -> Result<()> {
+    let output_path = format!("{}/n_{}.png", output_dir, format_n(n));
+
+    let phase_results: Vec<&BenchResult> = results
+        .iter()
+        .filter(|r| r.phase == phase && r.n == n)
+        .collect();
+
+    if phase_results.is_empty() {
+        return Ok(());
+    }
+
+    let mut scenario_names: Vec<String> = phase_results
+        .iter()
+        .map(|r| r.scenario_name.clone())
+        .collect();
+    scenario_names.sort();
+    scenario_names.dedup();
+
+    let num_scenarios = scenario_names.len();
+    let max_val = phase_results
+        .iter()
+        .map(|r| r.stats.p99_us)
+        .max()
+        .unwrap_or(1);
+    let max_val_f64 = (max_val as f64) * 1.2; // 20% headroom
+
+    let root = BitMapBackend::new(&output_path, (CHART_WIDTH, CHART_HEIGHT)).into_drawing_area();
+    root.fill(&WHITE)?;
+
+    let title = format!(
+        "{} - N={} - Insert Latency by Index Strategy",
+        phase_label(phase),
+        format_n(n)
+    );
+
+    // Each scenario gets a cluster of 3 bars (p50, p95, p99)
+    // X range: 0..num_scenarios, with bars positioned within each unit
+    let mut chart = ChartBuilder::on(&root)
+        .caption(&title, ("sans-serif", 28))
+        .margin(15)
+        .x_label_area_size(80)
+        .y_label_area_size(80)
+        .build_cartesian_2d(
+            0.0..(num_scenarios as f64),
+            0.0..max_val_f64,
+        )?;
+
+    chart
+        .configure_mesh()
+        .disable_x_mesh()
+        .y_desc("Latency (us)")
+        .x_desc("Index Strategy")
+        .x_label_formatter(&|v| {
+            let idx = *v as usize;
+            if idx < scenario_names.len() && (*v - idx as f64).abs() < 0.01 {
+                scenario_names[idx].clone()
+            } else {
+                String::new()
+            }
+        })
+        .y_label_formatter(&|v| format!("{:.0}", v))
+        .draw()?;
+
+    let bar_width = 0.25;
+    let percentile_colors: &[(&str, RGBColor)] = &[
+        ("p50", COLORS[0]),   // blue
+        ("p95", COLORS[1]),   // orange
+        ("p99", COLORS[3]),   // red
+    ];
+
+    for (p_idx, (label, color)) in percentile_colors.iter().enumerate() {
+        let get_value: fn(&BenchResult) -> u64 = match *label {
+            "p50" => |r: &BenchResult| r.stats.p50_us,
+            "p95" => |r: &BenchResult| r.stats.p95_us,
+            "p99" => |r: &BenchResult| r.stats.p99_us,
+            _ => unreachable!(),
+        };
+
+        let bars: Vec<_> = scenario_names
+            .iter()
+            .enumerate()
+            .filter_map(|(s_idx, name)| {
+                phase_results
+                    .iter()
+                    .find(|r| r.scenario_name == *name)
+                    .map(|r| {
+                        let x_center = s_idx as f64 + 0.15 + (p_idx as f64 * bar_width);
+                        let x0 = x_center - bar_width * 0.4;
+                        let x1 = x_center + bar_width * 0.4;
+                        let val = get_value(r) as f64;
+                        Rectangle::new([(x0, 0.0), (x1, val)], color.filled())
+                    })
+            })
+            .collect();
+
+        let color = *color;
+        chart
+            .draw_series(bars)?
+            .label(*label)
+            .legend(move |(x, y)| Rectangle::new([(x, y - 5), (x + 15, y + 5)], color.filled()));
+    }
+
+    // Draw value labels on top of each bar
+    for (s_idx, name) in scenario_names.iter().enumerate() {
+        if let Some(r) = phase_results.iter().find(|r| r.scenario_name == *name) {
+            let values = [r.stats.p50_us, r.stats.p95_us, r.stats.p99_us];
+            for (p_idx, val) in values.iter().enumerate() {
+                let x_center = s_idx as f64 + 0.15 + (p_idx as f64 * bar_width);
+                chart.draw_series(std::iter::once(Text::new(
+                    format!("{}", val),
+                    (x_center, *val as f64 + max_val_f64 * 0.02),
+                    ("sans-serif", 12).into_font().color(&BLACK),
+                )))?;
+            }
+        }
     }
 
     chart
@@ -297,7 +459,7 @@ mod tests {
 
         let results = mock_results();
         let timestamp = "2026-01-01_00-00-00";
-        generate_phase_charts(&results, 1, tmp_dir.to_str().unwrap(), timestamp).unwrap();
+        generate_phase_charts(&results, 1, tmp_dir.to_str().unwrap(), timestamp, false).unwrap();
 
         // Mock results have two scenarios: scenario_a and scenario_b
         let phase_dir = format!("phase1_pg_config_{}", timestamp);
@@ -310,6 +472,58 @@ mod tests {
         // Verify files are non-empty
         assert!(fs::metadata(&scenario_a_path).unwrap().len() > 0, "scenario_a chart should be non-empty");
         assert!(fs::metadata(&scenario_b_path).unwrap().len() > 0, "scenario_b chart should be non-empty");
+
+        let _ = fs::remove_dir_all(&tmp_dir);
+    }
+
+    #[test]
+    fn test_generate_phase2_bar_charts() {
+        let tmp_dir = std::env::temp_dir().join("changelog-bench-test-phase2");
+        let _ = fs::remove_dir_all(&tmp_dir);
+        fs::create_dir_all(&tmp_dir).unwrap();
+
+        let results = vec![
+            BenchResult {
+                scenario_name: "idx_pk_only".to_string(),
+                phase: 2,
+                n: 1_000_000,
+                batch_size: 10_000,
+                stats: Stats { p50_us: 30, p95_us: 80, p99_us: 150, mean_us: 40, min_us: 10, max_us: 300 },
+            },
+            BenchResult {
+                scenario_name: "idx_v7".to_string(),
+                phase: 2,
+                n: 1_000_000,
+                batch_size: 10_000,
+                stats: Stats { p50_us: 50, p95_us: 120, p99_us: 200, mean_us: 65, min_us: 20, max_us: 500 },
+            },
+            BenchResult {
+                scenario_name: "idx_pk_only".to_string(),
+                phase: 2,
+                n: 10_000_000,
+                batch_size: 10_000,
+                stats: Stats { p50_us: 40, p95_us: 100, p99_us: 180, mean_us: 50, min_us: 15, max_us: 400 },
+            },
+            BenchResult {
+                scenario_name: "idx_v7".to_string(),
+                phase: 2,
+                n: 10_000_000,
+                batch_size: 10_000,
+                stats: Stats { p50_us: 70, p95_us: 180, p99_us: 300, mean_us: 85, min_us: 25, max_us: 700 },
+            },
+        ];
+
+        let timestamp = "2026-01-01_00-00-00";
+        generate_phase_charts(&results, 2, tmp_dir.to_str().unwrap(), timestamp, false).unwrap();
+
+        let phase_dir = format!("phase2_indexes_{}", timestamp);
+        let n1m_path = tmp_dir.join(format!("{}/n_1M.png", phase_dir));
+        let n10m_path = tmp_dir.join(format!("{}/n_10M.png", phase_dir));
+
+        assert!(n1m_path.exists(), "N=1M bar chart should exist");
+        assert!(n10m_path.exists(), "N=10M bar chart should exist");
+        assert!(fs::metadata(&n1m_path).unwrap().len() > 0);
+        assert!(fs::metadata(&n10m_path).unwrap().len() > 0);
 
         let _ = fs::remove_dir_all(&tmp_dir);
     }

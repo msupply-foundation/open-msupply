@@ -233,17 +233,10 @@ fn main() -> Result<()> {
         // Print phase summary
         plot::print_phase_table(&all_results, phase);
 
-        // Generate phase graphs
-        if !cli.no_graphs {
-            eprintln!("\nGenerating Phase {} graphs...", phase);
-            plot::generate_phase_charts(&all_results, phase, &config.output_dir, &timestamp)?;
-        }
+        // Save results and generate phase graphs
+        eprintln!("\nSaving Phase {} results and generating graphs...", phase);
+        plot::generate_phase_charts(&all_results, phase, &config.output_dir, &timestamp, cli.no_graphs)?;
     }
-
-    // Save all results
-    let results_dir = format!("{}_{}", config.output_dir, timestamp);
-    std::fs::create_dir_all(&results_dir)?;
-    plot::save_results_json(&all_results, &results_dir)?;
 
     eprintln!("\nDone!");
     Ok(())
