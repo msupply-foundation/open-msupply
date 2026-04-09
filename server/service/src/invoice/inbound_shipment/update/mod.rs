@@ -2015,7 +2015,7 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_backdate_received_errors() {
-        use repository::LocationMovementRow;
+        use chrono::DateTime;
 
         let now = Utc::now();
         let two_days_ago = now - Duration::days(2);
@@ -2154,6 +2154,7 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_backdate_received_success() {
+        use chrono::DateTime;
         use repository::{
             location_movement::{LocationMovementFilter, LocationMovementRepository},
             LocationMovementRow, LocationMovementRowRepository,
@@ -2233,6 +2234,17 @@ mod test {
             .upsert_one(&location_movement(&stock_line().id, now.naive_utc()))
             .unwrap();
 
+        // Enable backdating preference
+        use repository::{PreferenceRow, PreferenceRowRepository};
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"enabled":true,"maxDays":0}"#.to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
@@ -2259,19 +2271,19 @@ mod test {
 
         assert_eq!(
             updated.received_datetime,
-            Some(chrono::NaiveDateTime::from(three_days_ago.date()))
+            Some(three_days_ago.naive_utc())
         );
 
         // Check delivered_datetime was moved back
         assert_eq!(
             updated.delivered_datetime,
-            Some(chrono::NaiveDateTime::from(three_days_ago.date()))
+            Some(three_days_ago.naive_utc())
         );
 
         // Check created_datetime was moved back
         assert_eq!(
             updated.created_datetime,
-            chrono::NaiveDateTime::from(three_days_ago.date())
+            three_days_ago.naive_utc()
         );
 
         // Check location movement enter_datetime was updated
@@ -2289,7 +2301,7 @@ mod test {
         assert_eq!(movements.len(), 1);
         assert_eq!(
             movements[0].location_movement_row.enter_datetime,
-            Some(chrono::NaiveDateTime::from(three_days_ago.date()))
+            Some(three_days_ago.naive_utc())
         );
 
         // Check activity log entry was created for backdating
