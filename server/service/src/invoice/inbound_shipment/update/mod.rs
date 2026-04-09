@@ -1,7 +1,7 @@
 use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
-use chrono::NaiveDate;
+use chrono::{DateTime, Utc};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
 use repository::{
     ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
@@ -56,7 +56,7 @@ pub struct UpdateInboundShipment {
     pub charges_local_currency: Option<f64>,
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
-    pub received_datetime: Option<NaiveDate>,
+    pub received_datetime: Option<DateTime<Utc>>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -2015,10 +2015,9 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_backdate_received_errors() {
-        use chrono::NaiveDate;
         use repository::LocationMovementRow;
 
-        let now = Utc::now().naive_utc();
+        let now = Utc::now();
         let two_days_ago = now - Duration::days(2);
         fn new_inbound() -> InvoiceRow {
             InvoiceRow {
@@ -2031,15 +2030,16 @@ mod test {
             }
         }
 
-        fn received_inbound(received_datetime: chrono::NaiveDateTime) -> InvoiceRow {
+        fn received_inbound(received_datetime: DateTime<Utc>) -> InvoiceRow {
+            let naive = received_datetime.naive_utc();
             InvoiceRow {
                 id: "received_inbound_backdate".to_string(),
                 name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Received,
-                received_datetime: Some(received_datetime),
-                delivered_datetime: Some(received_datetime - Duration::days(1)),
+                received_datetime: Some(naive),
+                delivered_datetime: Some(naive - Duration::days(1)),
                 ..Default::default()
             }
         }
@@ -2066,7 +2066,7 @@ mod test {
                 &context,
                 UpdateInboundShipment {
                     id: received_inbound(now).id,
-                    received_datetime: Some(two_days_ago.date()),
+                    received_datetime: Some(two_days_ago),
                     ..Default::default()
                 },
                 InboundShipmentType::InboundShipment,
@@ -2091,7 +2091,7 @@ mod test {
                 &context,
                 UpdateInboundShipment {
                     id: new_inbound().id,
-                    received_datetime: Some(two_days_ago.date()),
+                    received_datetime: Some(two_days_ago),
                     ..Default::default()
                 },
                 InboundShipmentType::InboundShipment,
@@ -2100,7 +2100,7 @@ mod test {
         );
 
         // CannotMoveReceivedDateForward: future date
-        let future_date = (now + Duration::days(5)).date();
+        let future_date = now + Duration::days(5);
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
@@ -2114,67 +2114,13 @@ mod test {
             Err(UpdateInboundShipmentError::CannotMoveReceivedDateForward)
         );
 
-        // Same UTC date is allowed: midnight (00:00:00) is earlier than the
-        // stored time component, so it's genuinely moving backward
-        let result = service.update_inbound_shipment(
-            &context,
-            UpdateInboundShipment {
-                id: received_inbound(now).id,
-                received_datetime: Some(now.date()),
-                ..Default::default()
-            },
-            InboundShipmentType::InboundShipment,
-        );
-        assert!(result.is_ok(), "Same UTC date should succeed: {:#?}", result);
-
-        // Timezone scenario: stored received_datetime is at 23:00 UTC on April 9.
-        // A user in UTC+14 sees this as April 10 local time and picks April 9
-        // (one day before what they see). This should succeed because the new
-        // datetime (midnight April 9) is earlier than the stored (23:00 April 9).
-        let late_utc = NaiveDate::from_ymd_opt(2020, 4, 9)
-            .unwrap()
-            .and_hms_opt(23, 0, 0)
-            .unwrap();
-        let tz_inbound_id = "tz_inbound_backdate";
-        let tz_inbound = InvoiceRow {
-            id: tz_inbound_id.to_string(),
-            name_id: mock_name_a().id,
-            store_id: mock_store_a().id,
-            r#type: InvoiceType::InboundShipment,
-            status: InvoiceStatus::Received,
-            received_datetime: Some(late_utc),
-            delivered_datetime: Some(late_utc - Duration::days(1)),
-            ..Default::default()
-        };
-        InvoiceRowRepository::new(&_connection)
-            .upsert_one(&tz_inbound)
-            .unwrap();
-
-        // Picking same UTC date (April 9) should succeed: midnight < 23:00
-        let same_utc_date = late_utc.date();
-        let result = service.update_inbound_shipment(
-            &context,
-            UpdateInboundShipment {
-                id: tz_inbound_id.to_string(),
-                received_datetime: Some(same_utc_date),
-                ..Default::default()
-            },
-            InboundShipmentType::InboundShipment,
-        );
-        assert!(
-            result.is_ok(),
-            "User in UTC+14 picking same UTC date should succeed: {:#?}",
-            result
-        );
-
-        // But picking the next day (April 10) should fail
-        let next_day = same_utc_date + Duration::days(1);
+        // CannotMoveReceivedDateForward: same datetime
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
                 UpdateInboundShipment {
-                    id: tz_inbound_id.to_string(),
-                    received_datetime: Some(next_day),
+                    id: received_inbound(now).id,
+                    received_datetime: Some(now),
                     ..Default::default()
                 },
                 InboundShipmentType::InboundShipment,
@@ -2183,7 +2129,7 @@ mod test {
         );
 
         // Setting received before delivered should succeed and auto-adjust delivered
-        let before_delivered = (now - Duration::days(2)).date();
+        let before_delivered = now - Duration::days(2);
         let result = service.update_inbound_shipment(
             &context,
             UpdateInboundShipment {
@@ -2202,7 +2148,7 @@ mod test {
         // delivered_datetime should have been moved back to match received
         assert_eq!(
             updated.delivered_datetime,
-            Some(chrono::NaiveDateTime::from(before_delivered))
+            Some(before_delivered.naive_utc())
         );
     }
 
@@ -2213,19 +2159,20 @@ mod test {
             LocationMovementRow, LocationMovementRowRepository,
         };
 
-        let now = Utc::now().naive_utc();
+        let now = Utc::now();
         let three_days_ago = now - Duration::days(3);
 
-        fn received_inbound(received_datetime: chrono::NaiveDateTime) -> InvoiceRow {
+        fn received_inbound(received_datetime: DateTime<Utc>) -> InvoiceRow {
+            let naive = received_datetime.naive_utc();
             InvoiceRow {
                 id: "received_inbound_backdate_success".to_string(),
                 name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Received,
-                created_datetime: received_datetime,
-                received_datetime: Some(received_datetime),
-                delivered_datetime: Some(received_datetime),
+                created_datetime: naive,
+                received_datetime: Some(naive),
+                delivered_datetime: Some(naive),
                 ..Default::default()
             }
         }
@@ -2283,7 +2230,7 @@ mod test {
 
         // Insert location movement manually (not in MockData)
         LocationMovementRowRepository::new(&connection)
-            .upsert_one(&location_movement(&stock_line().id, now))
+            .upsert_one(&location_movement(&stock_line().id, now.naive_utc()))
             .unwrap();
 
         let service_provider = ServiceProvider::new(connection_manager);
@@ -2296,7 +2243,7 @@ mod test {
             &context,
             UpdateInboundShipment {
                 id: received_inbound(now).id,
-                received_datetime: Some(three_days_ago.date()),
+                received_datetime: Some(three_days_ago),
                 ..Default::default()
             },
             InboundShipmentType::InboundShipment,

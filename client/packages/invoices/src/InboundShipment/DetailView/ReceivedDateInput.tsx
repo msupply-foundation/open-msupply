@@ -36,6 +36,12 @@ export const ReceivedDateInput = () => {
     shipment?.receivedDatetime
   );
 
+  // maxDate: one day before current received date to guarantee the UTC
+  // datetime (midnight local) is strictly earlier than the stored value
+  const maxDate = currentReceivedDate
+    ? DateUtils.addDays(currentReceivedDate, -1)
+    : new Date();
+
   const minDate =
     maximumBackdatingDays && maximumBackdatingDays > 0
       ? DateUtils.addDays(new Date(), -maximumBackdatingDays)
@@ -109,7 +115,7 @@ export const ReceivedDateInput = () => {
           }),
           onConfirm: async () => {
             await update({
-              receivedDatetime: Formatter.naiveDate(newDate) ?? undefined,
+              receivedDatetime: newDate.toISOString(),
             });
           },
           onCancel: () => setDateValue(previousValue),
@@ -118,7 +124,7 @@ export const ReceivedDateInput = () => {
       }
 
       await update({
-        receivedDatetime: Formatter.naiveDate(newDate) ?? undefined,
+        receivedDatetime: newDate.toISOString(),
       });
     };
 
@@ -142,7 +148,7 @@ export const ReceivedDateInput = () => {
               value={dateValue}
               format="P"
               onChange={handleChange}
-              maxDate={currentReceivedDate ?? new Date()}
+              maxDate={maxDate}
               minDate={minDate}
               actions={['cancel', 'accept']}
             />

@@ -5,7 +5,7 @@ use crate::invoice::{
 };
 use crate::preference::{preferences::BackdatingOfShipments, Preference};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use chrono::{Duration, NaiveDateTime, Utc};
+use chrono::{Duration, Utc};
 use repository::{
     InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceStatus, InvoiceType, Name,
     StorageConnection,
@@ -81,20 +81,16 @@ pub fn validate(
             return Err(CanOnlyBackdateReceivedShipments);
         }
 
-        // Can only move the date earlier, never forward.
-        // Compare as NaiveDateTime values: the input NaiveDate becomes midnight (00:00:00),
-        // which is the actual value that will be stored.
+        // Can only move the date earlier, never forward
         if let Some(current_received) = invoice.received_datetime {
-            let new_received = NaiveDateTime::from(received_datetime);
-            if new_received >= current_received {
+            if received_datetime.naive_utc() >= current_received {
                 return Err(CannotMoveReceivedDateForward);
             }
         }
 
         // Check maximum backdating days preference
         if backdating.max_days > 0 {
-            let earliest_allowed =
-                Utc::now().date_naive() - Duration::days(backdating.max_days as i64);
+            let earliest_allowed = Utc::now() - Duration::days(backdating.max_days as i64);
             if received_datetime < earliest_allowed {
                 return Err(ExceedsMaximumBackdatingDays);
             }

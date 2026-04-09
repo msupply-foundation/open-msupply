@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
@@ -100,7 +100,7 @@ pub(crate) fn generate(
 
     // Already validated in validate
     let backdate_location_movements = if let Some(received_datetime) = patch.received_datetime {
-        let new_received = NaiveDateTime::from(received_datetime);
+        let new_received = received_datetime.naive_utc();
         update_invoice.received_datetime = Some(new_received);
 
         // Move shipped_datetime back if it's after the new received date
