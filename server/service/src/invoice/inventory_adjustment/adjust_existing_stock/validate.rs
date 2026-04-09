@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDateTime, Utc};
+use chrono::{Duration, Utc};
 use repository::{RepositoryError, StockLine, StorageConnection};
 
 use crate::common::{check_stock_line_exists, CommonStockLineError};
@@ -46,17 +46,13 @@ pub fn validate(
 
     // Backdating validation
     if let Some(backdated_datetime) = input.backdated_datetime {
-        let now = Utc::now().naive_utc();
-        // Compare as NaiveDateTime: the backdated datetime must not be after now
-        if backdated_datetime >= now {
+        if backdated_datetime >= Utc::now() {
             return Err(CannotSetDateInFuture);
         }
 
         let backdating = Backdating.load(connection, None)?;
         if backdating.max_days > 0 {
-            let earliest_allowed = NaiveDateTime::from(
-                Utc::now().date_naive() - Duration::days(backdating.max_days as i64),
-            );
+            let earliest_allowed = Utc::now() - Duration::days(backdating.max_days as i64);
             if backdated_datetime < earliest_allowed {
                 return Err(ExceedsMaximumBackdatingDays);
             }
@@ -68,7 +64,7 @@ pub fn validate(
                 connection,
                 &stock_line.stock_line_row,
                 None,
-                &backdated_datetime,
+                &backdated_datetime.naive_utc(),
             )
             .map_err(|e| DatabaseError(e))?;
 

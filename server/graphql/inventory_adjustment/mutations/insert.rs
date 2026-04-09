@@ -88,7 +88,7 @@ impl CreateInventoryAdjustmentInput {
             adjustment,
             adjustment_type: adjustment_type.to_domain(),
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
-            backdated_datetime: backdated_datetime.map(|d| d.naive_utc()),
+            backdated_datetime,
         }
     }
 }
