@@ -12,6 +12,31 @@ use ts_rs::TS;
 
 use diesel_derive_enum::DbEnum;
 
+// Helper structs for raw SQL queries used by pg_max_safe_changelog_cursor
+#[cfg(feature = "postgres")]
+use diesel::sql_types::{BigInt, Bool, Nullable};
+
+#[cfg(feature = "postgres")]
+#[derive(QueryableByName, Debug)]
+struct BoolQueryResult {
+    #[diesel(sql_type = Bool)]
+    result: bool,
+}
+
+#[cfg(feature = "postgres")]
+#[derive(QueryableByName, Debug)]
+struct SeqLastValue {
+    #[diesel(sql_type = BigInt)]
+    last_value: i64,
+}
+
+#[cfg(feature = "postgres")]
+#[derive(QueryableByName, Debug)]
+struct OptionalBigInt {
+    #[diesel(sql_type = Nullable<BigInt>)]
+    result: Option<i64>,
+}
+
 table! {
     changelog (cursor) {
         cursor -> BigInt,
@@ -256,43 +281,71 @@ pub struct ChangelogFilter {
     pub source_site_id: Option<EqualFilter<i32>>,
 }
 
+/// Controls how changelog reads protect against the cursor race condition.
+/// See syncdoc/content/changelog/README.md for details on each approach.
+#[derive(Debug, Clone, Copy, Default)]
+pub enum ChangelogReadMode {
+    /// Acquire ACCESS EXCLUSIVE table lock before reading. Blocks all concurrent
+    /// operations but guarantees a complete read. Current production default.
+    #[default]
+    AccessExclusiveLock,
+    /// Acquire EXCLUSIVE table lock. Same as ACCESS EXCLUSIVE but allows plain
+    /// SELECTs (ACCESS SHARE) to proceed. Serializes changelog reads.
+    ExclusiveLock,
+    /// Acquire SHARE table lock. Allows concurrent changelog reads (multiple SHARE
+    /// locks can coexist) but blocks writers. Risk of write starvation if readers stack.
+    ShareLock,
+    /// Use pg_locks to detect in-flight writers and gap detection to compute a
+    /// safe cursor upper bound. No lock acquired. Prototype — see limitations.
+    SafeCursorPostgres,
+}
+
 pub struct ChangelogRepository<'a> {
     connection: &'a StorageConnection,
+    read_mode: ChangelogReadMode,
+}
+
+impl ChangelogReadMode {
+    /// Read from CHANGELOG_READ_MODE env var. Falls back to AccessExclusiveLock.
+    /// Valid values: "access_exclusive", "exclusive", "share", "safe_cursor_postgres"
+    pub fn from_env() -> Self {
+        match std::env::var("CHANGELOG_READ_MODE").as_deref() {
+            Ok("exclusive") => Self::ExclusiveLock,
+            Ok("share") => Self::ShareLock,
+            Ok("safe_cursor_postgres") => Self::SafeCursorPostgres,
+            _ => Self::AccessExclusiveLock,
+        }
+    }
 }
 
 impl<'a> ChangelogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        ChangelogRepository { connection }
+        ChangelogRepository {
+            connection,
+            read_mode: ChangelogReadMode::from_env(),
+        }
     }
 
-    /// Returns changelog rows order by operation sequence in asc order
+    pub fn with_read_mode(mut self, mode: ChangelogReadMode) -> Self {
+        self.read_mode = mode;
+        self
+    }
+
+    /// Returns changelog rows ordered by cursor in ascending order.
+    /// Uses the configured `read_mode` to protect against the cursor race condition.
     ///
     /// # Arguments
     ///
-    /// * `earliest` - Starting cursor (first returned changelogs may be ahead in sequence from starting cursor)
+    /// * `earliest` - Starting cursor (first returned changelogs may be ahead in sequence)
     /// * `limit` - Maximum number of entries to be returned
-    /// * `filter` - Extra filter to apply on change_logs
+    /// * `filter` - Extra filter to apply on changelogs
     pub fn changelogs(
         &self,
         earliest: u64,
         limit: u32,
         filter: Option<ChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let result = with_locked_changelog_table(self.connection, |locked_con| {
-            let query = create_filtered_query(earliest, filter)
-                .order(changelog_deduped::dsl::cursor.asc())
-                .limit(limit.into());
-
-            // // Debug diesel query
-            // println!(
-            //     "{}",
-            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
-
-            let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
-            Ok(result)
-        })?;
-        Ok(result)
+        self.read_changelogs(earliest, limit, |e| create_filtered_query(e, filter))
     }
 
     pub fn count(
@@ -313,21 +366,9 @@ impl<'a> ChangelogRepository<'a> {
         sync_site_id: i32,
         is_initialized: bool,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let result = with_locked_changelog_table(self.connection, |locked_con| {
-            let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
-                .order(changelog_deduped::cursor.asc())
-                .limit(batch_size.into());
-
-            // Debug diesel query
-            // println!(
-            //     "{}",
-            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
-
-            let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
-            Ok(result)
-        })?;
-        Ok(result)
+        self.read_changelogs(earliest, batch_size, |e| {
+            create_filtered_outgoing_sync_query(e, sync_site_id, is_initialized)
+        })
     }
 
     pub fn outgoing_patient_sync_records_from_central(
@@ -337,25 +378,67 @@ impl<'a> ChangelogRepository<'a> {
         sync_site_id: i32,
         fetch_patient_id: String,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let result = with_locked_changelog_table(self.connection, |locked_con| {
-            let query = create_filtered_outgoing_patient_sync_query(
-                earliest,
-                sync_site_id,
-                fetch_patient_id,
-            )
-            .order(changelog_deduped::cursor.asc())
-            .limit(batch_size.into());
+        self.read_changelogs(earliest, batch_size, |e| {
+            create_filtered_outgoing_patient_sync_query(e, sync_site_id, fetch_patient_id.clone())
+        })
+    }
 
-            // Debug diesel query
-            // println!(
-            //     "{}",
-            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
-
-            let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
-            Ok(result)
-        })?;
-        Ok(result)
+    /// Shared implementation for all changelog read methods.
+    /// Dispatches to lock-based or safe-cursor approach based on `self.read_mode`.
+    fn read_changelogs<F>(
+        &self,
+        earliest: u64,
+        limit: u32,
+        build_query: F,
+    ) -> Result<Vec<ChangelogRow>, RepositoryError>
+    where
+        F: FnOnce(u64) -> BoxedChangelogQuery,
+    {
+        match self.read_mode {
+            ChangelogReadMode::AccessExclusiveLock
+            | ChangelogReadMode::ExclusiveLock
+            | ChangelogReadMode::ShareLock => {
+                let lock_level = match self.read_mode {
+                    ChangelogReadMode::AccessExclusiveLock => "ACCESS EXCLUSIVE",
+                    ChangelogReadMode::ExclusiveLock => "EXCLUSIVE",
+                    ChangelogReadMode::ShareLock => "SHARE",
+                    _ => unreachable!(),
+                };
+                with_locked_changelog_table(self.connection, lock_level, |locked_con| {
+                    let query = build_query(earliest)
+                        .order(changelog_deduped::cursor.asc())
+                        .limit(limit.into());
+                    let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
+                    Ok(result)
+                })
+            }
+            ChangelogReadMode::SafeCursorPostgres => {
+                #[cfg(feature = "postgres")]
+                {
+                    let safe_limit =
+                        pg_max_safe_changelog_cursor(self.connection, earliest)?;
+                    let mut query = build_query(earliest)
+                        .order(changelog_deduped::cursor.asc())
+                        .limit(limit.into());
+                    if let Some(max_cursor) = safe_limit {
+                        query = query.filter(changelog_deduped::cursor.le(max_cursor));
+                    }
+                    let result: Vec<ChangelogRow> =
+                        query.load(self.connection.lock().connection())?;
+                    Ok(result)
+                }
+                #[cfg(not(feature = "postgres"))]
+                {
+                    // SQLite: no concurrent writers, just read directly
+                    let query = build_query(earliest)
+                        .order(changelog_deduped::cursor.asc())
+                        .limit(limit.into());
+                    let result: Vec<ChangelogRow> =
+                        query.load(self.connection.lock().connection())?;
+                    Ok(result)
+                }
+            }
+        }
     }
 
     /// This returns the number of changelog records that should be evaluated to send to the remote site when doing a v6_pull
@@ -614,6 +697,106 @@ fn create_filtered_outgoing_patient_sync_query(
     query
 }
 
+/// PROTOTYPE: Returns the maximum changelog cursor that is safe to read up to,
+/// without requiring an ACCESS EXCLUSIVE table lock.
+///
+/// Strategy:
+/// 1. Check pg_locks for any other backend holding RowExclusiveLock on the changelog
+///    table (indicates an in-flight INSERT from a trigger, not yet committed).
+/// 2. If no writers are active: all gaps in the cursor sequence are from rolled-back
+///    transactions → safe to read everything visible (return None = no limit).
+/// 3. If writers ARE active: get the sequence's last_value and find the first gap
+///    in the cursor sequence starting from `earliest`. That gap may be an uncommitted
+///    row, so return gap - 1 as the safe upper bound.
+///
+/// Known limitation: if there is a permanent gap from a rolled-back transaction AND
+/// an unrelated active writer on the changelog table, the processor will conservatively
+/// stall at the rollback gap until the active writer commits. This is transient —
+/// once the writer finishes, has_writers becomes false and the gap is skipped.
+#[cfg(feature = "postgres")]
+fn pg_max_safe_changelog_cursor(
+    connection: &StorageConnection,
+    earliest: u64,
+) -> Result<Option<i64>, RepositoryError> {
+    use diesel::{sql_query, RunQueryDsl};
+
+    let mut con = connection.lock();
+    let pg = con.connection();
+
+    // Step 1: Are there any other backends with an in-flight write on changelog?
+    // pg_locks is cluster-wide, so filter by current database to avoid seeing
+    // locks from other databases (e.g. parallel test databases).
+    let has_writers = sql_query(
+        "SELECT EXISTS (
+            SELECT 1 FROM pg_locks l
+            WHERE l.relation = 'changelog'::regclass
+              AND l.database = (SELECT oid FROM pg_database WHERE datname = current_database())
+              AND l.mode = 'RowExclusiveLock'
+              AND l.granted = true
+              AND l.pid != pg_backend_pid()
+        ) AS result",
+    )
+    .get_result::<BoolQueryResult>(pg)?
+    .result;
+
+    if !has_writers {
+        return Ok(None);
+    }
+
+    // Step 2: Get the sequence's last_value (highest cursor allocated, even if uncommitted)
+    let seq_last = sql_query("SELECT last_value FROM changelog_cursor_seq")
+        .get_result::<SeqLastValue>(pg)?
+        .last_value;
+
+    // Step 3: Get the max visible cursor
+    let max_visible = sql_query("SELECT MAX(cursor) AS result FROM changelog")
+        .get_result::<OptionalBigInt>(pg)?
+        .result;
+
+    let max_visible = match max_visible {
+        Some(v) => v,
+        None => return Ok(Some(0)), // No visible rows at all
+    };
+
+    // Step 4: Find the first gap in visible cursors between earliest and seq_last.
+    // A gap is a cursor value c where c-1 exists but c doesn't (or where the first
+    // visible cursor is above earliest, meaning there's a gap at the start).
+    //
+    // We only look for gaps between consecutive VISIBLE rows — not from `earliest`
+    // itself, because `earliest` may be 0 or any value before the first real cursor.
+    // Instead, find the first visible row >= earliest and look for gaps after it.
+    let first_gap = sql_query(
+        "SELECT c.cursor + 1 AS result
+         FROM changelog c
+         WHERE c.cursor >= $1::bigint
+           AND c.cursor < $2::bigint
+           AND NOT EXISTS (SELECT 1 FROM changelog c2 WHERE c2.cursor = c.cursor + 1)
+         ORDER BY c.cursor
+         LIMIT 1",
+    )
+    .bind::<BigInt, _>(earliest as i64)
+    .bind::<BigInt, _>(seq_last)
+    .get_result::<OptionalBigInt>(pg)
+    .optional()?
+    .and_then(|r| r.result);
+
+    match first_gap {
+        Some(gap) if gap <= seq_last => {
+            // Gap found — could be an in-flight insert. Safe up to gap - 1.
+            Ok(Some(gap - 1))
+        }
+        _ => {
+            // No gaps between visible rows, but sequence may be ahead of max_visible
+            // (meaning there are uncommitted rows at the high end)
+            if seq_last > max_visible {
+                Ok(Some(max_visible))
+            } else {
+                Ok(None) // Everything visible, no gaps, safe to read all
+            }
+        }
+    }
+}
+
 /// Runs some DB operation with a fully locked `changelog` table.
 /// This only applies for for Postgres and does nothing for Sqlite.
 ///
@@ -634,6 +817,7 @@ fn create_filtered_outgoing_patient_sync_query(
 /// reading the changelog.
 fn with_locked_changelog_table<T, F>(
     connection: &StorageConnection,
+    lock_level: &str,
     f: F,
 ) -> Result<T, RepositoryError>
 where
@@ -641,12 +825,11 @@ where
 {
     if cfg!(feature = "postgres") {
         use diesel::connection::SimpleConnection;
+        let lock_sql = format!("LOCK TABLE ONLY changelog IN {} MODE", lock_level);
         let result = connection.transaction_sync_etc(
             |con| {
                 let mut locked_con = con.lock();
-                locked_con
-                    .connection()
-                    .batch_execute("LOCK TABLE ONLY changelog IN ACCESS EXCLUSIVE MODE")?;
+                locked_con.connection().batch_execute(&lock_sql)?;
 
                 f(&mut locked_con)
             },
@@ -738,12 +921,23 @@ mod test {
         ClinicianRowRepositoryTrait, RepositoryError, TransactionError,
     };
 
-    /// Example from with_locked_changelog_table() comment
-    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-    async fn test_late_changelog_rows() {
+    /// Core test: 3 clinicians inserted concurrently. Clinician 2's transaction
+    /// is held open, so its changelog cursor is allocated but not visible.
+    /// After the slow tx commits, all 3 must be returned.
+    ///
+    /// Behavior differs by mode:
+    /// - Lock: blocks until slow tx commits, returns all 3 in one call
+    /// - SafeCursorPostgres: returns 1 while tx is open, then 3 after commit
+    #[cfg(feature = "postgres")]
+    async fn concurrent_write_test(test_name: &str, mode: ChangelogReadMode) {
         let (_, connection, connection_manager, _) =
-            setup_all("test_late_changelog_rows", MockDataInserts::none()).await;
+            setup_all(test_name, MockDataInserts::none()).await;
 
+        // Record starting cursor so we only look at rows we create
+        let start_cursor =
+            ChangelogRepository::new(&connection).latest_cursor().unwrap() + 1;
+
+        // Step 1: Insert clinician 1 — commits immediately
         ClinicianRowRepository::new(&connection)
             .upsert_one(&ClinicianRow {
                 id: String::from("1"),
@@ -752,12 +946,15 @@ mod test {
             })
             .unwrap();
 
-        let (sender, receiver) = oneshot::channel::<()>();
+        // Step 2: Start a slow transaction that inserts clinician 2 but delays commit.
+        // This simulates a long-running sync or bulk operation.
+        let (inserted_sender, inserted_receiver) = oneshot::channel::<()>();
+        let (proceed_sender, proceed_receiver) = std::sync::mpsc::channel::<()>();
         let manager_2 = connection_manager.clone();
-        let process_2 = tokio::spawn(async move {
+        let slow_tx = tokio::spawn(async move {
             let connection = manager_2.connection().unwrap();
-            let result: Result<(), TransactionError<RepositoryError>> = connection
-                .transaction_sync(|con| {
+            let result: Result<(), TransactionError<RepositoryError>> =
+                connection.transaction_sync(|con| {
                     ClinicianRowRepository::new(con)
                         .upsert_one(&ClinicianRow {
                             id: String::from("2"),
@@ -765,13 +962,18 @@ mod test {
                             ..Default::default()
                         })
                         .unwrap();
-                    sender.send(()).unwrap();
-                    std::thread::sleep(core::time::Duration::from_millis(100));
+                    // Signal: row inserted, cursor allocated, but tx still open
+                    inserted_sender.send(()).unwrap();
+                    // Block until told to proceed — simulating a slow transaction
+                    proceed_receiver.recv().unwrap();
                     Ok(())
                 });
             result
         });
-        receiver.await.unwrap();
+        // Wait for clinician 2 to be inserted (but NOT committed)
+        inserted_receiver.await.unwrap();
+
+        // Step 3: Insert clinician 3 — commits immediately (gets cursor after 2)
         ClinicianRowRepository::new(&connection)
             .upsert_one(&ClinicianRow {
                 id: String::from("3"),
@@ -780,20 +982,177 @@ mod test {
             })
             .unwrap();
 
-        let changelogs = ChangelogRepository::new(&connection)
-            .changelogs(
-                0,
-                10,
-                Some(
-                    ChangelogFilter::new()
-                        .table_name(EqualFilter::not_equal_to(ChangelogTableName::SystemLog)),
-                ),
-            )
-            .unwrap();
-        assert_eq!(changelogs.len(), 3);
+        let filter = Some(
+            ChangelogFilter::new()
+                .table_name(EqualFilter::not_equal_to(ChangelogTableName::SystemLog)),
+        );
+        let repo = ChangelogRepository::new(&connection).with_read_mode(mode);
 
-        // being good and awaiting the task to finish orderly and check it did run fine
-        process_2.await.unwrap().unwrap();
+        // While slow tx is open: SafeCursorPostgres returns only rows before the gap,
+        // Lock mode would block here (so we skip this assertion for Lock).
+        if matches!(mode, ChangelogReadMode::SafeCursorPostgres) {
+            let changelogs_during =
+                repo.changelogs(start_cursor, 10, filter.clone()).unwrap();
+            assert_eq!(
+                changelogs_during.len(), 1,
+                "[{mode:?}] While tx open, expected 1 row, got {}: {:?}",
+                changelogs_during.len(),
+                changelogs_during.iter().map(|c| c.cursor).collect::<Vec<_>>()
+            );
+        }
+
+        // Step 4: Release the slow transaction
+        proceed_sender.send(()).unwrap();
+        slow_tx.await.unwrap().unwrap();
+
+        // After commit: all 3 must be visible regardless of mode
+        let changelogs_after = repo.changelogs(start_cursor, 10, filter).unwrap();
+        assert_eq!(
+            changelogs_after.len(), 3,
+            "[{mode:?}] After commit, expected 3 rows, got {}: {:?}",
+            changelogs_after.len(),
+            changelogs_after.iter().map(|c| c.cursor).collect::<Vec<_>>()
+        );
+    }
+
+    /// Core test: a rolled-back transaction creates a permanent gap in the cursor
+    /// sequence. Both modes must return all visible rows (skipping the gap).
+    #[cfg(feature = "postgres")]
+    async fn rollback_gap_test(test_name: &str, mode: ChangelogReadMode) {
+        let (_, connection, connection_manager, _) =
+            setup_all(test_name, MockDataInserts::none()).await;
+
+        // Record starting cursor so we only look at rows we create
+        let start_cursor =
+            ChangelogRepository::new(&connection).latest_cursor().unwrap() + 1;
+
+        // Insert clinician 1 — commits
+        ClinicianRowRepository::new(&connection)
+            .upsert_one(&ClinicianRow {
+                id: String::from("1"),
+                is_active: true,
+                ..Default::default()
+            })
+            .unwrap();
+
+        // Insert clinician 2 in a transaction that rolls back — creates permanent gap
+        let manager_2 = connection_manager.clone();
+        let rollback_tx = tokio::spawn(async move {
+            let connection = manager_2.connection().unwrap();
+            let _: Result<(), TransactionError<RepositoryError>> =
+                connection.transaction_sync(|con| {
+                    ClinicianRowRepository::new(con)
+                        .upsert_one(&ClinicianRow {
+                            id: String::from("2"),
+                            is_active: true,
+                            ..Default::default()
+                        })
+                        .unwrap();
+                    // Force rollback by returning an error
+                    Err(RepositoryError::UniqueViolation(
+                        "intentional rollback".into(),
+                    ))
+                });
+        });
+        rollback_tx.await.unwrap();
+
+        // Insert clinician 3 — commits (with permanent gap where clinician 2 was)
+        ClinicianRowRepository::new(&connection)
+            .upsert_one(&ClinicianRow {
+                id: String::from("3"),
+                is_active: true,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let filter = Some(
+            ChangelogFilter::new()
+                .table_name(EqualFilter::not_equal_to(ChangelogTableName::SystemLog)),
+        );
+        let repo = ChangelogRepository::new(&connection).with_read_mode(mode);
+
+        // Both visible rows should be returned — the gap from rollback should not block
+        let changelogs = repo.changelogs(start_cursor, 10, filter).unwrap();
+        assert_eq!(
+            changelogs.len(), 2,
+            "[{mode:?}] After rollback, expected 2 visible rows, got {}: {:?}",
+            changelogs.len(),
+            changelogs.iter().map(|c| c.cursor).collect::<Vec<_>>()
+        );
+    }
+
+    // --- Test entry points: one per (scenario, mode) combination ---
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_concurrent_write_lock() {
+        concurrent_write_test(
+            "test_concurrent_write_lock",
+            ChangelogReadMode::AccessExclusiveLock,
+        ).await;
+    }
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_concurrent_write_exclusive_lock() {
+        concurrent_write_test(
+            "test_concurrent_write_exclusive_lock",
+            ChangelogReadMode::ExclusiveLock,
+        ).await;
+    }
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_concurrent_write_share_lock() {
+        concurrent_write_test(
+            "test_concurrent_write_share_lock",
+            ChangelogReadMode::ShareLock,
+        ).await;
+    }
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_concurrent_write_safe_cursor() {
+        concurrent_write_test(
+            "test_concurrent_write_safe_cursor",
+            ChangelogReadMode::SafeCursorPostgres,
+        ).await;
+    }
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_rollback_gap_lock() {
+        rollback_gap_test(
+            "test_rollback_gap_lock",
+            ChangelogReadMode::AccessExclusiveLock,
+        ).await;
+    }
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_rollback_gap_exclusive_lock() {
+        rollback_gap_test(
+            "test_rollback_gap_exclusive_lock",
+            ChangelogReadMode::ExclusiveLock,
+        ).await;
+    }
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_rollback_gap_share_lock() {
+        rollback_gap_test(
+            "test_rollback_gap_share_lock",
+            ChangelogReadMode::ShareLock,
+        ).await;
+    }
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_rollback_gap_safe_cursor() {
+        rollback_gap_test(
+            "test_rollback_gap_safe_cursor",
+            ChangelogReadMode::SafeCursorPostgres,
+        ).await;
     }
 
     #[actix_rt::test]
