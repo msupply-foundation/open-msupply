@@ -1,10 +1,11 @@
-use repository::{
-    Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
-};
+use repository::{Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError};
 
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
-    invoice::get_invoice,
+    invoice::{
+        get_invoice,
+        stock_ledger::{invoice_adjust_status, AdjustStockError},
+    },
     service_provider::ServiceContext,
 };
 
@@ -54,19 +55,20 @@ pub fn update_supplier_return(
         .connection
         .transaction_sync(|connection| {
             let (return_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
-            let GenerateResult {
-                updated_return,
-                stock_lines_to_update,
-            } = generate(connection, input.clone(), return_row)?;
+
+            // Adjust stock BEFORE updating the invoice (reads old status from DB)
+            if let Some(status) = input.status.as_ref() {
+                invoice_adjust_status(
+                    connection,
+                    &input.supplier_return_id,
+                    status.as_invoice_row_status(),
+                )?;
+            }
+
+            let GenerateResult { updated_return } =
+                generate(connection, input.clone(), return_row)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&updated_return)?;
-
-            if let Some(stock_lines) = stock_lines_to_update {
-                let repository = StockLineRowRepository::new(connection);
-                for stock_line in stock_lines {
-                    repository.upsert_one(&stock_line)?;
-                }
-            }
 
             if status_changed {
                 activity_log_entry(
@@ -92,6 +94,21 @@ pub fn update_supplier_return(
 impl From<RepositoryError> for UpdateSupplierReturnError {
     fn from(error: RepositoryError) -> Self {
         UpdateSupplierReturnError::DatabaseError(error)
+    }
+}
+
+impl From<AdjustStockError> for UpdateSupplierReturnError {
+    fn from(error: AdjustStockError) -> Self {
+        match error {
+            AdjustStockError::DatabaseError(e) => UpdateSupplierReturnError::DatabaseError(e),
+            AdjustStockError::InvoiceLineHasNoStockLine(id) => {
+                UpdateSupplierReturnError::InvoiceLineHasNoStockLine(id)
+            }
+            other => UpdateSupplierReturnError::DatabaseError(RepositoryError::DBError {
+                msg: format!("{:?}", other),
+                extra: String::new(),
+            }),
+        }
     }
 }
 

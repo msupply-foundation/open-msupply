@@ -1,6 +1,10 @@
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
-    invoice::{query::get_invoice, stock_effect::StockEffect},
+    invoice::{
+        query::get_invoice,
+        stock_effect::StockEffect,
+        stock_ledger::{invoice_adjust_status, AdjustStockError},
+    },
     service_provider::ServiceContext,
     NullableUpdate,
 };
@@ -70,20 +74,18 @@ pub fn update_prescription(
         .connection
         .transaction_sync(|connection| {
             let (invoice, status_changed) = validate(connection, &ctx.store_id, &patch)?;
+
+            // Adjust stock BEFORE updating the invoice (reads old status from DB)
+            if let Some(status) = patch.full_status() {
+                invoice_adjust_status(connection, &patch.id, status)?;
+            }
+
             let GenerateResult {
-                batches_to_update,
                 update_invoice,
                 stock_effect,
             } = generate(invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
-
-            if let Some(stock_lines) = batches_to_update {
-                let repository = StockLineRowRepository::new(connection);
-                for stock_line in stock_lines {
-                    repository.upsert_one(&stock_line)?;
-                }
-            }
 
             if status_changed {
                 activity_log_entry(
@@ -186,6 +188,21 @@ impl UpdatePrescription {
 impl From<RepositoryError> for UpdatePrescriptionError {
     fn from(error: RepositoryError) -> Self {
         UpdatePrescriptionError::DatabaseError(error)
+    }
+}
+
+impl From<AdjustStockError> for UpdatePrescriptionError {
+    fn from(error: AdjustStockError) -> Self {
+        match error {
+            AdjustStockError::DatabaseError(e) => UpdatePrescriptionError::DatabaseError(e),
+            AdjustStockError::InvoiceLineHasNoStockLine(id) => {
+                UpdatePrescriptionError::InvoiceLineHasNoStockLine(id)
+            }
+            other => UpdatePrescriptionError::DatabaseError(RepositoryError::DBError {
+                msg: format!("{:?}", other),
+                extra: String::new(),
+            }),
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
-    LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
+    LocationMovementRowRepository, RepositoryError, TransactionError,
 };
 
 pub mod generate;
@@ -13,6 +13,7 @@ use validate::validate;
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
+use crate::invoice::stock_ledger::{invoice_adjust_status, AdjustStockError};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::processors::ProcessorType::RequisitionAutoFinalise;
 use crate::service_provider::ServiceContext;
@@ -71,23 +72,22 @@ pub fn update_outbound_shipment(
         .connection
         .transaction_sync(|connection| {
             let (invoice, status_changed) = validate(connection, &ctx.store_id, &patch)?;
+
+            // Adjust stock BEFORE updating the invoice (reads old status from DB)
+            let adjusted_stock_lines = if let Some(new_status) = patch.full_status() {
+                invoice_adjust_status(connection, &patch.id, new_status)?
+            } else {
+                Vec::new()
+            };
+
             let GenerateResult {
-                batches_to_update,
                 update_invoice,
                 lines_to_trim,
-                location_movements,
                 update_lines,
             } = generate(&ctx.store_id, invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
-
-            if let Some(stock_lines) = batches_to_update {
-                let repository = StockLineRowRepository::new(connection);
-                for stock_line in stock_lines {
-                    repository.upsert_one(&stock_line)?;
-                }
-            }
 
             if let Some(lines) = lines_to_trim {
                 for line in lines {
@@ -95,8 +95,14 @@ pub fn update_outbound_shipment(
                 }
             }
 
-            if let Some(movements) = location_movements {
-                for movement in movements {
+            // Generate location movements from the adjusted stock lines
+            if !adjusted_stock_lines.is_empty() {
+                let location_movements = generate::generate_location_movements(
+                    connection,
+                    &adjusted_stock_lines,
+                    &ctx.store_id,
+                )?;
+                for movement in location_movements {
                     LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                 }
             }
@@ -133,6 +139,21 @@ pub fn update_outbound_shipment(
 impl From<RepositoryError> for UpdateOutboundShipmentError {
     fn from(error: RepositoryError) -> Self {
         UpdateOutboundShipmentError::DatabaseError(error)
+    }
+}
+
+impl From<AdjustStockError> for UpdateOutboundShipmentError {
+    fn from(error: AdjustStockError) -> Self {
+        match error {
+            AdjustStockError::DatabaseError(e) => UpdateOutboundShipmentError::DatabaseError(e),
+            AdjustStockError::InvoiceLineHasNoStockLine(id) => {
+                UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(id)
+            }
+            other => UpdateOutboundShipmentError::DatabaseError(RepositoryError::DBError {
+                msg: format!("{:?}", other),
+                extra: String::new(),
+            }),
+        }
     }
 }
 

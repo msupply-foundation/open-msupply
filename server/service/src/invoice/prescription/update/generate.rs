@@ -1,12 +1,9 @@
 use chrono::Utc;
 
-use repository::{InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow, StorageConnection};
+use repository::{InvoiceRow, InvoiceStatus, InvoiceType, StorageConnection};
 
 use crate::invoice::{
-    common::{
-        generate_batches_total_number_of_packs_update, get_invoice_status_datetime,
-        InvoiceLineHasNoStockLine,
-    },
+    common::get_invoice_status_datetime,
     invoice_date_utils::handle_new_backdated_datetime,
     stock_effect::{stock_effects, StockEffect},
 };
@@ -14,7 +11,6 @@ use crate::invoice::{
 use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatus};
 
 pub(crate) struct GenerateResult {
-    pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) stock_effect: Option<StockEffect>,
 }
@@ -36,14 +32,12 @@ pub(crate) fn generate(
         insurance_discount_amount: input_insurance_discount_amount,
         insurance_discount_percentage: input_insurance_discount_percentage,
     }: UpdatePrescription,
-    connection: &StorageConnection,
+    _connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdatePrescriptionError> {
     let new_status = UpdatePrescriptionStatus::full_status_option(&input_status);
     let stock_effect = new_status
         .as_ref()
         .map(|to| stock_effects(&InvoiceType::Prescription, &existing_invoice.status, to));
-    let should_update_batches_total_number_of_packs =
-        stock_effect == Some(StockEffect::ReduceStock);
     let mut update_invoice = existing_invoice.clone();
 
     if let Some(backdated_datetime) = backdated_datetime_input {
@@ -90,25 +84,7 @@ pub(crate) fn generate(
     update_invoice.insurance_discount_percentage =
         input_insurance_discount_percentage.or(update_invoice.insurance_discount_percentage);
 
-    let batches_to_update = if should_update_batches_total_number_of_packs {
-        Some(
-            generate_batches_total_number_of_packs_update(&update_invoice.id, connection).map_err(
-                |e| match e {
-                    InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(line) => {
-                        UpdatePrescriptionError::InvoiceLineHasNoStockLine(line)
-                    }
-                    InvoiceLineHasNoStockLine::DatabaseError(e) => {
-                        UpdatePrescriptionError::DatabaseError(e)
-                    }
-                },
-            )?,
-        )
-    } else {
-        None
-    };
-
     Ok(GenerateResult {
-        batches_to_update,
         update_invoice,
         stock_effect,
     })

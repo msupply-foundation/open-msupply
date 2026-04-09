@@ -1,22 +1,16 @@
 use chrono::Utc;
-use repository::{InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow, StorageConnection};
-
-use crate::invoice::{
-    common::{generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine},
-    stock_effect::{stock_effects, StockEffect},
-};
+use repository::{InvoiceRow, InvoiceStatus, StorageConnection};
 
 use super::{UpdateSupplierReturn, UpdateSupplierReturnError, UpdateSupplierReturnStatus};
 
 pub struct GenerateResult {
     pub updated_return: InvoiceRow,
-    pub stock_lines_to_update: Option<Vec<StockLineRow>>,
 }
 
 pub fn generate(
-    connection: &StorageConnection,
+    _connection: &StorageConnection,
     UpdateSupplierReturn {
-        supplier_return_id,
+        supplier_return_id: _,
         comment,
         status,
         on_hold,
@@ -40,34 +34,8 @@ pub fn generate(
         updated_return.status = status.as_invoice_row_status()
     }
 
-    let new_invoice_status = status.as_ref().map(|s| s.as_invoice_row_status());
-    let should_update_total_number_of_packs = match &new_invoice_status {
-        Some(to) => {
-            stock_effects(&InvoiceType::SupplierReturn, &existing_return.status, to)
-                == StockEffect::ReduceStock
-        }
-        None => false,
-    };
-
-    let stock_lines_to_update = if should_update_total_number_of_packs {
-        Some(
-            generate_batches_total_number_of_packs_update(&supplier_return_id, connection)
-                .map_err(|e| match e {
-                    InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(line) => {
-                        UpdateSupplierReturnError::InvoiceLineHasNoStockLine(line)
-                    }
-                    InvoiceLineHasNoStockLine::DatabaseError(e) => {
-                        UpdateSupplierReturnError::DatabaseError(e)
-                    }
-                })?,
-        )
-    } else {
-        None
-    };
-
     Ok(GenerateResult {
         updated_return,
-        stock_lines_to_update,
     })
 }
 

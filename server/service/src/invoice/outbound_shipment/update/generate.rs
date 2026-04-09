@@ -5,19 +5,13 @@ use repository::{
     RepositoryError,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, StockLineRow,
     StorageConnection,
 };
 use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
 use crate::{
-    invoice::{
-        common::{
-            calculate_foreign_currency_total, calculate_total_after_tax,
-            generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
-        },
-        stock_effect::{stock_effects, StockEffect},
-    },
+    invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax},
     store_preference::get_store_preferences,
     NullableUpdate,
 };
@@ -25,10 +19,8 @@ use crate::{
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
 
 pub(crate) struct GenerateResult {
-    pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) lines_to_trim: Option<Vec<InvoiceLineRow>>,
-    pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_lines: Option<Vec<InvoiceLineRow>>,
 }
 
@@ -52,14 +44,6 @@ pub(crate) fn generate(
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
     let store_preferences = get_store_preferences(connection, store_id)?;
-    let new_status = UpdateOutboundShipmentStatus::full_status_option(&input_status);
-    let should_update_batches_total_number_of_packs = match &new_status {
-        Some(to) => {
-            stock_effects(&InvoiceType::OutboundShipment, &existing_invoice.status, to)
-                == StockEffect::ReduceStock
-        }
-        None => false,
-    };
     let mut update_invoice = existing_invoice.clone();
 
     set_new_status_datetime(&mut update_invoice, &input_status);
@@ -91,29 +75,6 @@ pub(crate) fn generate(
 
     update_invoice.expected_delivery_date = expected_delivery_date;
 
-    let batches_to_update = if should_update_batches_total_number_of_packs {
-        Some(
-            generate_batches_total_number_of_packs_update(&update_invoice.id, connection).map_err(
-                |e| match e {
-                    InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(line) => {
-                        UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(line)
-                    }
-                    InvoiceLineHasNoStockLine::DatabaseError(e) => {
-                        UpdateOutboundShipmentError::DatabaseError(e)
-                    }
-                },
-            )?,
-        )
-    } else {
-        None
-    };
-
-    let location_movements = if let Some(batches) = batches_to_update.clone() {
-        Some(generate_location_movements(connection, &batches, store_id)?)
-    } else {
-        None
-    };
-
     let update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
         Some(generate_update_for_lines(
             connection,
@@ -129,10 +90,8 @@ pub(crate) fn generate(
     let lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
 
     Ok(GenerateResult {
-        batches_to_update,
         lines_to_trim,
         update_invoice,
-        location_movements,
         update_lines,
     })
 }

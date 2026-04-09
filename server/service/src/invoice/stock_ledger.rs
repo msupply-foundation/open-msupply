@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use repository::{
     InvoiceLineRowRepository, InvoiceLineType, InvoiceRowRepository, InvoiceStatus, InvoiceType,
-    RepositoryError, StockLineRowRepository, StorageConnection,
+    RepositoryError, StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
 // ---------------------------------------------------------------------------
@@ -262,15 +262,21 @@ pub fn invoice_line_adjust_stock(
 /// the status change requires stock to be updated.  Only transitions from
 /// "not tracked" (false/n/a) → "tracked" (true) cause an adjustment.
 ///
+/// Returns the adjusted stock lines (already persisted) so the caller can use
+/// them for side-effects like location movements.
+///
+/// **Does not update the invoice row** — the caller is responsible for
+/// persisting the invoice with the new status and any other field changes.
+///
 /// This function does **not** open its own transaction — the caller must wrap
 /// it in `connection.transaction_sync()`.
 pub fn invoice_adjust_status(
     connection: &StorageConnection,
     invoice_id: &str,
     new_status: InvoiceStatus,
-) -> Result<(), AdjustStockError> {
-    // 1. Fetch invoice
-    let mut invoice = InvoiceRowRepository::new(connection)
+) -> Result<Vec<StockLineRow>, AdjustStockError> {
+    // 1. Fetch invoice (to read the OLD status before caller changes it)
+    let invoice = InvoiceRowRepository::new(connection)
         .find_one_by_id(invoice_id)?
         .ok_or(AdjustStockError::InvoiceDoesNotExist)?;
 
@@ -290,11 +296,9 @@ pub fn invoice_adjust_status(
         });
     }
 
-    // 4. If no stock updates are needed, just update the status and return
+    // 4. If no stock updates are needed, return empty
     if !transition.apply_available && !transition.apply_total {
-        invoice.status = new_status;
-        InvoiceRowRepository::new(connection).upsert_one(&invoice)?;
-        return Ok(());
+        return Ok(Vec::new());
     }
 
     // 5. Batch-fetch all invoice lines for this invoice
@@ -376,11 +380,8 @@ pub fn invoice_adjust_status(
         stock_line_repo.upsert_one(stock_line)?;
     }
 
-    // 11. Update invoice status and persist
-    invoice.status = new_status;
-    InvoiceRowRepository::new(connection).upsert_one(&invoice)?;
-
-    Ok(())
+    // 11. Return the adjusted stock lines
+    Ok(stock_map.into_values().collect())
 }
 
 // ---------------------------------------------------------------------------
