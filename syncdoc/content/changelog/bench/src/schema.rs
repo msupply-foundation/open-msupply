@@ -187,6 +187,65 @@ pub fn setup_sql(scenario: &ScenarioConfig, n: u64, batch_size: u64) -> Vec<Stri
     stmts
 }
 
+/// Migrate data from a non-partitioned changelog table (created by template)
+/// into a partitioned table structure.
+///
+/// Steps: rename old table -> create partitioned table -> insert data -> drop old table.
+pub fn migrate_to_partitioned(
+    conn: &mut diesel::PgConnection,
+    scenario: &ScenarioConfig,
+    n: u64,
+    batch_size: u64,
+) -> anyhow::Result<()> {
+    use anyhow::Context;
+    use diesel::prelude::*;
+    use diesel::sql_query;
+
+    let partition = scenario
+        .partition
+        .as_ref()
+        .expect("migrate_to_partitioned called without partition config");
+
+    // Rename the original (non-partitioned) table
+    sql_query("ALTER TABLE changelog RENAME TO changelog_old;")
+        .execute(conn)
+        .context("Failed to rename changelog to changelog_old")?;
+
+    // Drop PK on old table (sequences are shared)
+    let _ = sql_query("ALTER TABLE changelog_old DROP CONSTRAINT IF EXISTS changelog_pkey;")
+        .execute(conn);
+
+    // Create the partitioned table
+    sql_query(&partitioned_table_sql(partition))
+        .execute(conn)
+        .context("Failed to create partitioned changelog table")?;
+
+    // Create partitions
+    for stmt in partition_ddl(partition, n, batch_size) {
+        sql_query(&stmt)
+            .execute(conn)
+            .context("Failed to create partition")?;
+    }
+
+    // Add PK on new partitioned table
+    sql_query(&partitioned_pk_sql())
+        .execute(conn)
+        .context("Failed to add PK to partitioned table")?;
+
+    // Copy data from old to new
+    eprintln!("  Copying data into partitioned table...");
+    sql_query("INSERT INTO changelog SELECT * FROM changelog_old;")
+        .execute(conn)
+        .context("Failed to copy data into partitioned table")?;
+
+    // Drop old table
+    sql_query("DROP TABLE changelog_old;")
+        .execute(conn)
+        .context("Failed to drop changelog_old")?;
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

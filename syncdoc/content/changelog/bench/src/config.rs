@@ -6,8 +6,6 @@ use std::path::Path;
 pub struct Config {
     pub batch_size: usize,
     pub output_dir: String,
-    #[serde(default = "default_seed_dir")]
-    pub seed_dir: String,
     pub n_values: Vec<u64>,
     pub pg: PgConfig,
     pub scenarios: Vec<ScenarioConfig>,
@@ -45,10 +43,6 @@ impl PgConfig {
             self.port,
         )
     }
-}
-
-fn default_seed_dir() -> String {
-    "seeds".to_string()
 }
 
 #[derive(Debug, Clone, Deserialize)]

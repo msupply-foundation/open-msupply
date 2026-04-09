@@ -77,18 +77,15 @@ fn main() -> Result<()> {
     // ── Step 1: Ensure seed dumps exist for all required N values ──
     if cli.reseed {
         eprintln!("\n{}", "=".repeat(60));
-        eprintln!("=== Reseed: removing existing dumps ===");
+        eprintln!("=== Reseed: dropping existing templates ===");
         eprintln!("{}", "=".repeat(60));
         for n in &config.n_values {
-            let path = seed::dump_path(&config.seed_dir, *n);
-            if std::path::Path::new(&path).exists() {
-                eprintln!("  Removing existing dump: {}", path);
-                std::fs::remove_file(&path)?;
-            }
+            eprintln!("  Dropping template for N={}...", plot::format_n(*n));
+            seed::drop_template(*n, &config.pg)?;
         }
     }
 
-    seed::ensure_seeds(&config.n_values, &config.seed_dir, &config.pg)?;
+    seed::ensure_seeds(&config.n_values, &config.pg)?;
 
     if cli.seed_only {
         eprintln!("\nSeed generation complete. Exiting (--seed-only).");
@@ -138,27 +135,21 @@ fn main() -> Result<()> {
                     db::apply_pg_config(&mut maint_conn, pg_config_file)?;
                 }
 
-                // Reset the database for a clean slate
-                eprintln!("  Resetting database...");
-                db::reset_database(&config.pg)?;
+                // Create benchmark DB from seed template (fast file-level copy)
+                eprintln!("  Creating database from seed template...");
+                seed::create_from_template(*n, &config.pg)?;
 
                 let mut conn = db::connect(&config.pg, Duration::from_secs(10))
                     .context("Failed to connect to Postgres")?;
 
-                // Create table structure (types, table, partitions — NO indexes)
-                eprintln!("  Setting up schema structure...");
-                let stmts = schema::structure_sql(scenario, *n, config.batch_size as u64);
-                for stmt in &stmts {
-                    sql_query(stmt).execute(&mut conn).with_context(|| {
-                        format!("Failed SQL: {}", &stmt[..stmt.len().min(100)])
-                    })?;
+                if *n > 0 {
+                    seed::reset_sequence_after_restore(&mut conn, *n)?;
                 }
 
-                // Restore seed data
-                if *n > 0 {
-                    eprintln!("  Restoring seed data for N={}...", plot::format_n(*n));
-                    seed::restore_seed(&config.seed_dir, *n, &config.pg)?;
-                    seed::reset_sequence_after_restore(&mut conn, *n)?;
+                // For partitioned scenarios: migrate data from base table into partitioned structure
+                if scenario.partition.is_some() {
+                    eprintln!("  Migrating to partitioned table...");
+                    schema::migrate_to_partitioned(&mut conn, scenario, *n, config.batch_size as u64)?;
                 }
 
                 // Create indexes after data load

@@ -1,9 +1,6 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use diesel::prelude::*;
 use diesel::sql_query;
-use std::fs;
-use std::path::Path;
-use std::process::Command;
 use std::time::Duration;
 
 use crate::bench;
@@ -11,35 +8,69 @@ use crate::config::PgConfig;
 use crate::db;
 use crate::schema;
 
-/// Returns the path where a seed dump for N rows would be stored.
-pub fn dump_path(seed_dir: &str, n: u64) -> String {
-    format!("{}/n_{}.sql", seed_dir, n)
+/// Template database name for a given N.
+pub fn template_name(n: u64) -> String {
+    format!("changelog_bench_seed_{}", n)
 }
 
-/// Check if a seed dump already exists for a given N.
-pub fn dump_exists(seed_dir: &str, n: u64) -> bool {
-    Path::new(&dump_path(seed_dir, n)).exists()
+/// Check if a seed template database already exists.
+pub fn template_exists(pg: &PgConfig, n: u64) -> Result<bool> {
+    let mut conn = db::connect_maintenance(pg)?;
+
+    #[derive(diesel::QueryableByName)]
+    struct CountRow {
+        #[diesel(sql_type = diesel::sql_types::BigInt)]
+        cnt: i64,
+    }
+
+    let result: Vec<CountRow> = sql_query(&format!(
+        "SELECT count(*)::bigint AS cnt FROM pg_database WHERE datname = '{}'",
+        template_name(n)
+    ))
+    .load(&mut conn)?;
+
+    Ok(result[0].cnt > 0)
 }
 
-/// Generate a seed dump for N rows.
+/// Generate a seed template database for N rows.
 ///
-/// Connects to the configured Postgres, resets the database, populates N rows,
-/// dumps data-only via pg_dump, and saves to `{seed_dir}/n_{N}.sql`.
-pub fn generate_seed(n: u64, seed_dir: &str, pg: &PgConfig) -> Result<()> {
+/// Creates a database with the base changelog table (non-partitioned, no indexes)
+/// populated with N rows, then marks it as a template.
+pub fn generate_seed(n: u64, pg: &PgConfig) -> Result<()> {
     if n == 0 {
         return Ok(());
     }
 
-    fs::create_dir_all(seed_dir).context("Failed to create seed directory")?;
+    let tpl_name = template_name(n);
+    let mut maint_conn = db::connect_maintenance(pg)?;
 
-    // Reset the database for a clean seed
-    eprintln!("  Resetting database for seed generation...");
-    db::reset_database(pg)?;
+    // Drop if exists (need to unmark as template first)
+    let _ = sql_query(&format!(
+        "ALTER DATABASE \"{}\" IS_TEMPLATE false",
+        tpl_name
+    ))
+    .execute(&mut maint_conn);
+    let _ = sql_query(&format!(
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{}'",
+        tpl_name
+    ))
+    .execute(&mut maint_conn);
+    let _ = sql_query(&format!("DROP DATABASE IF EXISTS \"{}\"", tpl_name)).execute(&mut maint_conn);
 
-    let mut conn = db::connect(pg, Duration::from_secs(10))
-        .context("Failed to connect for seed generation")?;
+    // Create the seed database
+    eprintln!("  Creating seed database '{}'...", tpl_name);
+    sql_query(&format!("CREATE DATABASE \"{}\"", tpl_name))
+        .execute(&mut maint_conn)
+        .with_context(|| format!("Failed to create seed database '{}'", tpl_name))?;
 
-    // Create a minimal schema: types + table, no indexes
+    // Connect to the seed database
+    let seed_pg = PgConfig {
+        database: tpl_name.clone(),
+        ..pg.clone()
+    };
+    let mut conn = db::connect(&seed_pg, Duration::from_secs(10))?;
+
+    // Create minimal schema: types + table, no indexes
     eprintln!("  Creating seed schema...");
     for stmt in schema::base_types_sql() {
         sql_query(&stmt).execute(&mut conn)?;
@@ -50,120 +81,63 @@ pub fn generate_seed(n: u64, seed_dir: &str, pg: &PgConfig) -> Result<()> {
     eprintln!("  Populating {} rows...", n);
     bench::prepopulate(&mut conn, n)?;
 
-    // Dump data-only via pg_dump, streaming directly to file
-    eprintln!("  Dumping data with pg_dump...");
-    let output_path = dump_path(seed_dir, n);
-    let output_file = fs::File::create(&output_path)
-        .with_context(|| format!("Failed to create dump file {}", output_path))?;
+    // Disconnect before marking as template
+    drop(conn);
 
-    let mut child = Command::new("pg_dump")
-        .args([
-            "-h",
-            &pg.host,
-            "-p",
-            &pg.port.to_string(),
-            "-U",
-            &pg.user,
-            "--data-only",
-            "--no-owner",
-            "--no-privileges",
-            &pg.database,
-        ])
-        .env("PGPASSWORD", &pg.password)
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .context("Failed to spawn pg_dump. Is pg_dump installed and in PATH?")?;
+    // Mark as template so it can't be modified accidentally
+    eprintln!("  Marking as template...");
+    sql_query(&format!(
+        "ALTER DATABASE \"{}\" IS_TEMPLATE true",
+        tpl_name
+    ))
+    .execute(&mut maint_conn)
+    .with_context(|| format!("Failed to mark '{}' as template", tpl_name))?;
 
-    let mut stdout = child
-        .stdout
-        .take()
-        .context("Failed to capture pg_dump stdout")?;
-    let mut writer = std::io::BufWriter::new(output_file);
-    let bytes_written =
-        std::io::copy(&mut stdout, &mut writer).context("Failed to stream pg_dump output")?;
-    drop(writer);
-
-    let output = child
-        .wait_with_output()
-        .context("Failed to wait for pg_dump")?;
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        let _ = fs::remove_file(&output_path);
-        bail!("pg_dump failed: {}", stderr);
-    }
-
-    let size_mb = bytes_written as f64 / 1_048_576.0;
-    eprintln!("  Dump saved to {} ({:.1} MB)", output_path, size_mb);
-
+    eprintln!("  Seed template '{}' ready.", tpl_name);
     Ok(())
 }
 
-/// Restore a seed dump into the benchmark database via psql.
+/// Create the benchmark database from a seed template.
 ///
-/// The database must already have the schema (table + partitions) created
-/// but with NO data.
-pub fn restore_seed(seed_dir: &str, n: u64, pg: &PgConfig) -> Result<()> {
+/// Uses `CREATE DATABASE ... TEMPLATE ...` for a fast file-level copy.
+/// The resulting database has the base table with N rows (non-partitioned, no indexes).
+pub fn create_from_template(n: u64, pg: &PgConfig) -> Result<()> {
     if n == 0 {
+        db::reset_database(pg)?;
         return Ok(());
     }
 
-    let path = dump_path(seed_dir, n);
-    if !Path::new(&path).exists() {
-        bail!(
-            "Seed dump not found at {}. Run seed generation first.",
-            path
-        );
-    }
+    let tpl_name = template_name(n);
+    let mut maint_conn = db::connect_maintenance(pg)?;
 
-    let dump_data =
-        fs::read(&path).with_context(|| format!("Failed to read dump file {}", path))?;
+    // Terminate connections to the benchmark database
+    let _ = sql_query(&format!(
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{}' AND pid <> pg_backend_pid()",
+        pg.database
+    ))
+    .execute(&mut maint_conn);
 
-    eprintln!("  Restoring seed data from {}...", path);
+    // Drop and recreate from template
+    let _ = sql_query(&format!("DROP DATABASE IF EXISTS \"{}\"", pg.database))
+        .execute(&mut maint_conn);
 
-    let mut child = Command::new("psql")
-        .args([
-            "-h",
-            &pg.host,
-            "-p",
-            &pg.port.to_string(),
-            "-U",
-            &pg.user,
-            "-d",
-            &pg.database,
-            "-q",
-        ])
-        .env("PGPASSWORD", &pg.password)
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .context("Failed to spawn psql. Is psql installed and in PATH?")?;
-
-    use std::io::Write;
-    if let Some(ref mut stdin) = child.stdin {
-        stdin
-            .write_all(&dump_data)
-            .context("Failed to write dump data to psql stdin")?;
-    }
-    drop(child.stdin.take());
-
-    let output = child
-        .wait_with_output()
-        .context("Failed to wait for psql")?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        if stderr.contains("ERROR") {
-            bail!("psql restore failed: {}", stderr);
-        }
-    }
+    sql_query(&format!(
+        "CREATE DATABASE \"{}\" TEMPLATE \"{}\"",
+        pg.database, tpl_name
+    ))
+    .execute(&mut maint_conn)
+    .with_context(|| {
+        format!(
+            "Failed to create '{}' from template '{}'. Does the template exist?",
+            pg.database, tpl_name
+        )
+    })?;
 
     Ok(())
 }
 
 /// Reset the changelog_cursor_seq sequence to match the restored data.
-/// Must be called after restore so new inserts get correct cursor values.
+/// Must be called after creating from template so new inserts get correct cursor values.
 pub fn reset_sequence_after_restore(conn: &mut PgConnection, n: u64) -> Result<()> {
     let next_val = n + 1;
     sql_query(&format!(
@@ -175,21 +149,22 @@ pub fn reset_sequence_after_restore(conn: &mut PgConnection, n: u64) -> Result<(
     Ok(())
 }
 
-/// Ensure all required seed dumps exist, generating any that are missing.
-pub fn ensure_seeds(n_values: &[u64], seed_dir: &str, pg: &PgConfig) -> Result<()> {
-    let missing: Vec<u64> = n_values
-        .iter()
-        .filter(|&&n| n > 0 && !dump_exists(seed_dir, n))
-        .copied()
-        .collect();
+/// Ensure all required seed templates exist, generating any that are missing.
+pub fn ensure_seeds(n_values: &[u64], pg: &PgConfig) -> Result<()> {
+    let mut missing: Vec<u64> = Vec::new();
+    for &n in n_values {
+        if n > 0 && !template_exists(pg, n)? {
+            missing.push(n);
+        }
+    }
 
     if missing.is_empty() {
-        eprintln!("All seed dumps already exist in {}/", seed_dir);
+        eprintln!("All seed templates already exist.");
         return Ok(());
     }
 
     eprintln!(
-        "Generating {} seed dump(s): {:?}",
+        "Generating {} seed template(s): {:?}",
         missing.len(),
         missing
             .iter()
@@ -199,8 +174,30 @@ pub fn ensure_seeds(n_values: &[u64], seed_dir: &str, pg: &PgConfig) -> Result<(
 
     for n in missing {
         eprintln!("\n--- Seeding N={} ---", crate::plot::format_n(n));
-        generate_seed(n, seed_dir, pg)?;
+        generate_seed(n, pg)?;
     }
+
+    Ok(())
+}
+
+/// Drop a seed template (for --reseed).
+pub fn drop_template(n: u64, pg: &PgConfig) -> Result<()> {
+    let tpl_name = template_name(n);
+    let mut maint_conn = db::connect_maintenance(pg)?;
+
+    // Unmark as template first
+    let _ = sql_query(&format!(
+        "ALTER DATABASE \"{}\" IS_TEMPLATE false",
+        tpl_name
+    ))
+    .execute(&mut maint_conn);
+    let _ = sql_query(&format!(
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{}'",
+        tpl_name
+    ))
+    .execute(&mut maint_conn);
+    let _ = sql_query(&format!("DROP DATABASE IF EXISTS \"{}\"", tpl_name))
+        .execute(&mut maint_conn);
 
     Ok(())
 }
@@ -210,70 +207,32 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_dump_path() {
-        assert_eq!(dump_path("seeds", 1_000_000), "seeds/n_1000000.sql");
-        assert_eq!(dump_path("my/dir", 0), "my/dir/n_0.sql");
+    fn test_template_name() {
+        assert_eq!(template_name(1_000_000), "changelog_bench_seed_1000000");
+        assert_eq!(template_name(0), "changelog_bench_seed_0");
     }
 
     #[test]
-    fn test_dump_exists_false() {
-        assert!(!dump_exists("/nonexistent/path", 999));
-    }
-
-    #[test]
-    fn test_dump_exists_true() {
-        let tmp_dir = std::env::temp_dir().join("changelog-bench-test-seed");
-        let _ = fs::remove_dir_all(&tmp_dir);
-        fs::create_dir_all(&tmp_dir).unwrap();
-
-        let path = format!("{}/n_1000.sql", tmp_dir.display());
-        fs::write(&path, "-- test dump").unwrap();
-
-        assert!(dump_exists(tmp_dir.to_str().unwrap(), 1000));
-        assert!(!dump_exists(tmp_dir.to_str().unwrap(), 2000));
-
-        let _ = fs::remove_dir_all(&tmp_dir);
-    }
-
-    #[test]
-    #[ignore] // Requires a running Postgres and pg_dump/psql in PATH
-    fn test_generate_and_restore_seed() {
-        let tmp_dir = std::env::temp_dir().join("changelog-bench-test-seed-e2e");
-        let _ = fs::remove_dir_all(&tmp_dir);
-
+    #[ignore] // Requires a running Postgres
+    fn test_generate_and_create_from_template() {
         let pg = PgConfig {
             host: "localhost".to_string(),
             port: 5432,
             user: "postgres".to_string(),
-            password: "bench".to_string(),
-            database: "changelog_bench_test_seed".to_string(),
+            password: "postgres".to_string(),
+            database: "changelog_bench_test_tpl".to_string(),
         };
 
         let n = 1000;
-        let seed_dir = tmp_dir.to_str().unwrap();
 
-        // Generate seed
-        generate_seed(n, seed_dir, &pg).unwrap();
-        assert!(dump_exists(seed_dir, n));
+        // Generate seed template
+        generate_seed(n, &pg).unwrap();
+        assert!(template_exists(&pg, n).unwrap());
 
-        // Verify dump file is non-empty
-        let dump = fs::read_to_string(dump_path(seed_dir, n)).unwrap();
-        assert!(dump.contains("COPY"), "Dump should contain COPY statements");
+        // Create benchmark DB from template
+        create_from_template(n, &pg).unwrap();
 
-        // Reset and restore into a fresh database
-        db::reset_database(&pg).unwrap();
         let mut conn = db::connect(&pg, Duration::from_secs(5)).unwrap();
-
-        // Create schema (no indexes)
-        for stmt in schema::base_types_sql() {
-            sql_query(&stmt).execute(&mut conn).unwrap();
-        }
-        sql_query(&schema::base_table_sql())
-            .execute(&mut conn)
-            .unwrap();
-
-        // Restore
-        restore_seed(seed_dir, n, &pg).unwrap();
         reset_sequence_after_restore(&mut conn, n).unwrap();
 
         // Verify row count
@@ -288,7 +247,7 @@ mod tests {
                 .unwrap();
         assert_eq!(result[0].cnt, n as i64);
 
-        // Verify new inserts work (sequence is correct)
+        // Verify new inserts work
         sql_query(
             "INSERT INTO changelog (record_id, table_name, row_action) VALUES ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'invoice', 'UPSERT')",
         )
@@ -302,13 +261,10 @@ mod tests {
         assert_eq!(result[0].cnt, n as i64 + 1);
 
         // Cleanup
-        let maint_str = pg.maintenance_connection_string();
-        let mut maint = PgConnection::establish(&maint_str).unwrap();
-        let _ = sql_query(&format!(
-            "DROP DATABASE IF EXISTS \"{}\"",
-            pg.database
-        ))
-        .execute(&mut maint);
-        let _ = fs::remove_dir_all(&tmp_dir);
+        drop(conn);
+        drop_template(n, &pg).unwrap();
+        let mut maint = db::connect_maintenance(&pg).unwrap();
+        let _ = sql_query(&format!("DROP DATABASE IF EXISTS \"{}\"", pg.database))
+            .execute(&mut maint);
     }
 }
