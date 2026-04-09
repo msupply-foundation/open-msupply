@@ -7,5 +7,4 @@ synchronous_commit = on
 max_wal_size = 1GB
 checkpoint_completion_target = 0.9
 work_mem = 4MB
-effective_io_concurrency = 1
 autovacuum = on
