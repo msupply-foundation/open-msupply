@@ -222,7 +222,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::WrongInboundShipmentType
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::BackdatingNotEnabled
-        | ServiceError::CannotSetReceivedDateInFuture
         | ServiceError::CanOnlyBackdateReceivedShipments
         | ServiceError::CannotMoveReceivedDateForward
         | ServiceError::ExceedsMaximumBackdatingDays
