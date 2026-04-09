@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 use crate::{
-    preference::{BackdatingOfShipmentsData, WarnWhenMissingRecentStocktakeData},
+    preference::{BackdatingData, WarnWhenMissingRecentStocktakeData},
     service_provider::ServiceContext,
 };
 use repository::{GenderType, InvoiceStatus, StorageConnection, TransactionError};
@@ -32,7 +32,7 @@ pub struct UpsertPreferences {
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
-    pub backdating_of_shipments: Option<BackdatingOfShipmentsData>,
+    pub backdating: Option<BackdatingData>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -82,7 +82,7 @@ pub fn upsert_preferences(
         is_gaps: is_gaps_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
         global_table_configs: global_table_configs_input,
-        backdating_of_shipments: backdating_of_shipments_input,
+        backdating: backdating_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -131,7 +131,7 @@ pub fn upsert_preferences(
         is_gaps,
         display_population_based_forecasting,
         global_table_configs,
-        backdating_of_shipments,
+        backdating,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -224,8 +224,8 @@ pub fn upsert_preferences(
                 global_table_configs.upsert(connection, input, None)?;
             }
 
-            if let Some(input) = backdating_of_shipments_input {
-                backdating_of_shipments.upsert(connection, input, None)?;
+            if let Some(input) = backdating_input {
+                backdating.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

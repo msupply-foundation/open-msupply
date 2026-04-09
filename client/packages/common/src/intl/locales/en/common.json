@@ -2449,7 +2449,7 @@
   "preference.itemMarginOverridesSupplierMargin": "Item margin overrides supplier margin",
   "preference.manageVaccinesInDoses": "Manage vaccines in doses",
   "preference.manageVvmStatusForStock": "Manage VVM status for stock",
-  "preference.backdatingOfShipments": "Backdating of shipments",
+  "preference.backdating": "Backdating",
   "preference.maximumBackdatingDays": "Maximum days before current date for backdating",
   "preference.numberOfMonthsThresholdToShowLowStockAlertsForProducts": "Number of months threshold to show low stock alerts for products",
   "preference.numberOfMonthsThresholdToShowOverStockAlertsForProducts": "Number of months threshold to show overstock alerts for products",

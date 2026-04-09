@@ -1,2 +1,2 @@
-pub mod backdating_of_shipments;
+pub mod backdating;
 pub mod warn_when_missing_recent_stocktake;

@@ -278,8 +278,8 @@ export type PreferencesQuery = {
       maxAge: number;
       minItems: number;
     };
-    backdatingOfShipments: {
-      __typename: 'BackdatingOfShipmentsNode';
+    backdating: {
+      __typename: 'BackdatingNode';
       enabled: boolean;
       maxDays: number;
     };
@@ -543,7 +543,7 @@ export const PreferencesDocument = gql`
       showIndicativePriceInRequisitions
       isGaps
       globalTableConfigs
-      backdatingOfShipments {
+      backdating {
         enabled
         maxDays
       }

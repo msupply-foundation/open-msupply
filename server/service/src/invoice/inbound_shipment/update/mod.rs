@@ -2078,8 +2078,8 @@ mod test {
         use repository::{PreferenceRow, PreferenceRowRepository};
         PreferenceRowRepository::new(&_connection)
             .upsert_one(&PreferenceRow {
-                id: "backdating_of_shipments_global".to_string(),
-                key: "backdating_of_shipments".to_string(),
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
                 value: r#"{"enabled":true,"maxDays":0}"#.to_string(),
                 store_id: None,
             })

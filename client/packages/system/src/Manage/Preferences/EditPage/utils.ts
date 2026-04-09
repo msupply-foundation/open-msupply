@@ -14,7 +14,7 @@ export const PREFERENCE_GROUP_CONFIG: Partial<
     PreferenceKey.ExpiredStockPreventIssue,
     PreferenceKey.ExpiredStockIssueThreshold,
   ],
-  'label.backdating': [PreferenceKey.BackdatingOfShipments],
+  'label.backdating': [PreferenceKey.Backdating],
 };
 
 

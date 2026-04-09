@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::types::{
-    backdating_of_shipments::BackdatingOfShipmentsNode,
+    backdating::BackdatingNode,
     invoice_query::InvoiceNodeStatus,
     patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
@@ -96,9 +96,9 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.global_table_configs)
     }
 
-    pub async fn backdating_of_shipments(&self) -> Result<BackdatingOfShipmentsNode> {
-        Ok(BackdatingOfShipmentsNode::from_domain(
-            self.load_preference(&self.preferences.backdating_of_shipments)?,
+    pub async fn backdating(&self) -> Result<BackdatingNode> {
+        Ok(BackdatingNode::from_domain(
+            self.load_preference(&self.preferences.backdating)?,
         ))
     }
 
@@ -284,7 +284,7 @@ pub enum PreferenceKey {
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
-    BackdatingOfShipments,
+    Backdating,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -327,7 +327,7 @@ pub enum PreferenceValueNodeType {
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,
-    BackdatingOfShipmentsData,
+    BackdatingData,
     String,
     Colour,
 }

@@ -751,13 +751,13 @@ export type AvailableVolumeAtLocationTypeNode = {
   locationType: LocationTypeNode;
 };
 
-export type BackdatingOfShipmentsInput = {
+export type BackdatingInput = {
   enabled: Scalars['Boolean']['input'];
   maxDays: Scalars['Int']['input'];
 };
 
-export type BackdatingOfShipmentsNode = {
-  __typename: 'BackdatingOfShipmentsNode';
+export type BackdatingNode = {
+  __typename: 'BackdatingNode';
   enabled: Scalars['Boolean']['output'];
   maxDays: Scalars['Int']['output'];
 };
@@ -6762,7 +6762,7 @@ export enum PreferenceKey {
   AdjustForNumberOfDaysOutOfStock = 'adjustForNumberOfDaysOutOfStock',
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
-  BackdatingOfShipments = 'backdatingOfShipments',
+  Backdating = 'backdating',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
   DaysInMonth = 'daysInMonth',
@@ -6816,7 +6816,7 @@ export enum PreferenceNodeType {
 }
 
 export enum PreferenceValueNodeType {
-  BackdatingOfShipmentsData = 'BACKDATING_OF_SHIPMENTS_DATA',
+  BackdatingData = 'BACKDATING_DATA',
   Boolean = 'BOOLEAN',
   Colour = 'COLOUR',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
@@ -6832,7 +6832,7 @@ export type PreferencesNode = {
   adjustForNumberOfDaysOutOfStock: Scalars['Boolean']['output'];
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
-  backdatingOfShipments: BackdatingOfShipmentsNode;
+  backdating: BackdatingNode;
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
   daysInMonth: Scalars['Float']['output'];
@@ -11157,7 +11157,7 @@ export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
-  backdatingOfShipments?: InputMaybe<BackdatingOfShipmentsInput>;
+  backdating?: InputMaybe<BackdatingInput>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;

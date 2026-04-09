@@ -3,7 +3,7 @@ use crate::invoice::{
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
     inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
-use crate::preference::{preferences::BackdatingOfShipments, Preference};
+use crate::preference::{preferences::Backdating, Preference};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use chrono::{Duration, Utc};
 use repository::{
@@ -68,7 +68,7 @@ pub fn validate(
     // Received datetime can only be backdated (moved earlier) on shipments that are already
     // in Received or Verified status. Once moved back it cannot be moved forward again.
     if let Some(received_datetime) = patch.received_datetime {
-        let backdating = BackdatingOfShipments.load(connection, None)?;
+        let backdating = Backdating.load(connection, None)?;
         if !backdating.enabled {
             return Err(BackdatingNotEnabled);
         }
