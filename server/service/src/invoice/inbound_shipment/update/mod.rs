@@ -215,6 +215,7 @@ pub enum UpdateInboundShipmentError {
     CannotChangeStatusOfInvoiceOnHold,
     CannotIssueForeignCurrencyForInternalSuppliers,
     CannotUpdateStatusAndDonorAtTheSameTime,
+    BackdatingNotEnabled,
     CannotSetReceivedDateInFuture,
     CanOnlyBackdateReceivedShipments,
     CannotMoveReceivedDateForward,
@@ -227,6 +228,7 @@ pub enum UpdateInboundShipmentError {
     OtherPartyNotVisible,
     OtherPartyNotASupplier,
     // Internal
+    PreferenceError(String),
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,
 }
@@ -234,6 +236,12 @@ pub enum UpdateInboundShipmentError {
 impl From<RepositoryError> for UpdateInboundShipmentError {
     fn from(error: RepositoryError) -> Self {
         UpdateInboundShipmentError::DatabaseError(error)
+    }
+}
+
+impl From<crate::preference::PreferenceError> for UpdateInboundShipmentError {
+    fn from(error: crate::preference::PreferenceError) -> Self {
+        UpdateInboundShipmentError::PreferenceError(format!("{error:?}"))
     }
 }
 

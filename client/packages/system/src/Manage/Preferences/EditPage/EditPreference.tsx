@@ -20,6 +20,7 @@ import {
 } from '@openmsupply-client/common';
 import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
+import { EditBackdatingOfShipments } from '../Components/EditBackdatingOfShipments';
 import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 import { PreferenceLabelRow } from './PreferenceLabelRow';
 import { ColorPickerPreference } from '../Components/ColorPickerPreference';
@@ -215,6 +216,14 @@ export const EditPreference = ({
           update={handleChange}
           disabled={disabled}
           label={preferenceLabel}
+        />
+      );
+    case PreferenceValueNodeType.BackdatingOfShipmentsData:
+      return (
+        <EditBackdatingOfShipments
+          value={value}
+          update={handleChange}
+          disabled={disabled}
         />
       );
     default:

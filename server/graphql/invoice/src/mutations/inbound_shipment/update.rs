@@ -221,6 +221,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::NotAnInboundShipment
         | ServiceError::WrongInboundShipmentType
         | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::BackdatingNotEnabled
         | ServiceError::CannotSetReceivedDateInFuture
         | ServiceError::CanOnlyBackdateReceivedShipments
         | ServiceError::CannotMoveReceivedDateForward
@@ -229,6 +230,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CurrencyRateMustBePositive => {
             BadUserInput(formatted_error)
         }
+        ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
