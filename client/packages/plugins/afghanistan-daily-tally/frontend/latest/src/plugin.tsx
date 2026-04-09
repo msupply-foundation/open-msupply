@@ -11,7 +11,7 @@ import {
   DailyTallyListView,
   DailyTallyReportView,
   DailyTallyView,
-} from '@openmsupply-client/invoices';
+} from './DailyTally';
 import { ReportWidget } from '@openmsupply-client/reports/src/components';
 
 const dailyTallyRoute = RouteBuilder.create(AppRoute.Dispensary)
