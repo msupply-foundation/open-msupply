@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use plotters::prelude::*;
-use std::collections::HashMap;
 use std::fs;
 
 use crate::bench::BenchResult;
@@ -49,11 +48,16 @@ pub fn generate_phase_charts(
     timestamp: &str,
     skip_graphs: bool,
 ) -> Result<()> {
+    let phase_results: Vec<_> = results.iter().filter(|r| r.phase == phase).cloned().collect();
+    if phase_results.is_empty() {
+        eprintln!("  No results for phase {}, skipping.", phase);
+        return Ok(());
+    }
+
     let dir = format!("{}/{}_{}", output_dir, phase_dir(phase), timestamp);
     fs::create_dir_all(&dir).context("Failed to create output directory")?;
 
     // Save phase-specific results.json alongside the charts
-    let phase_results: Vec<_> = results.iter().filter(|r| r.phase == phase).cloned().collect();
     save_results_json(&phase_results, &dir)?;
 
     if !skip_graphs {

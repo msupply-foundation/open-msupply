@@ -5,13 +5,46 @@ use std::path::Path;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub batch_size: usize,
-    pub port: u16,
-    pub pg_image: String,
     pub output_dir: String,
     #[serde(default = "default_seed_dir")]
     pub seed_dir: String,
     pub n_values: Vec<u64>,
+    pub pg: PgConfig,
     pub scenarios: Vec<ScenarioConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PgConfig {
+    pub host: String,
+    pub port: u16,
+    pub user: String,
+    pub password: String,
+    /// Database name used for benchmarks. Will be dropped and recreated between scenarios.
+    pub database: String,
+}
+
+impl PgConfig {
+    pub fn connection_string(&self) -> String {
+        format!(
+            "postgres://{}:{}@{}:{}/{}",
+            self.user,
+            urlencoding::encode(&self.password),
+            self.host,
+            self.port,
+            self.database
+        )
+    }
+
+    /// Connection string to the `postgres` maintenance database (for CREATE/DROP DATABASE).
+    pub fn maintenance_connection_string(&self) -> String {
+        format!(
+            "postgres://{}:{}@{}:{}/postgres",
+            self.user,
+            urlencoding::encode(&self.password),
+            self.host,
+            self.port,
+        )
+    }
 }
 
 fn default_seed_dir() -> String {
@@ -22,9 +55,12 @@ fn default_seed_dir() -> String {
 pub struct ScenarioConfig {
     pub name: String,
     pub phase: u8,
-    pub pg_config_file: String,
     pub indexes: IndexSet,
     pub partition: Option<PartitionConfig>,
+    /// Optional path to a PG config .txt file (key = value per line).
+    /// Settings are applied via ALTER SYSTEM + pg_reload_conf() before the scenario,
+    /// and reset via ALTER SYSTEM RESET ALL afterwards.
+    pub pg_config_file: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -38,12 +74,33 @@ pub enum PartitionConfig {
     List { key: String },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "snake_case")]
+/// Index configuration: either a known preset or a path to a .sql file.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IndexSet {
     PkOnly,
     V7,
     V7AllPartial,
+    /// Path to a .sql file containing CREATE INDEX statements (one per line/statement).
+    SqlFile(String),
+}
+
+impl<'de> serde::Deserialize<'de> for IndexSet {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.as_str() {
+            "pk_only" => Ok(IndexSet::PkOnly),
+            "v7" => Ok(IndexSet::V7),
+            "v7_all_partial" => Ok(IndexSet::V7AllPartial),
+            _ if s.ends_with(".sql") => Ok(IndexSet::SqlFile(s)),
+            _ => Err(serde::de::Error::custom(format!(
+                "Unknown index set '{}'. Use 'pk_only', 'v7', 'v7_all_partial', or a path to a .sql file",
+                s
+            ))),
+        }
+    }
 }
 
 impl Config {
@@ -71,12 +128,23 @@ impl Config {
                     scenario.phase
                 );
             }
-            if !Path::new(&scenario.pg_config_file).exists() {
-                bail!(
-                    "Scenario '{}' references pg_config_file '{}' which does not exist",
-                    scenario.name,
-                    scenario.pg_config_file
-                );
+            if let Some(ref path) = scenario.pg_config_file {
+                if !Path::new(path).exists() {
+                    bail!(
+                        "Scenario '{}' references pg_config_file '{}' which does not exist",
+                        scenario.name,
+                        path
+                    );
+                }
+            }
+            if let IndexSet::SqlFile(ref path) = scenario.indexes {
+                if !Path::new(path).exists() {
+                    bail!(
+                        "Scenario '{}' references index SQL file '{}' which does not exist",
+                        scenario.name,
+                        path
+                    );
+                }
             }
         }
         Ok(())
@@ -118,27 +186,29 @@ mod tests {
     fn sample_config_toml() -> &'static str {
         r#"
 batch_size = 5000
-port = 15432
-pg_image = "postgres:17"
 output_dir = "results"
 n_values = [1_000_000, 10_000_000]
+
+[pg]
+host = "localhost"
+port = 5432
+user = "postgres"
+password = "bench"
+database = "changelog_bench"
 
 [[scenarios]]
 name = "test_scenario"
 phase = 1
-pg_config_file = "pg-configs/default.txt"
 indexes = "v7"
 
 [[scenarios]]
 name = "test_pk"
 phase = 2
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "pk_only"
 
 [[scenarios]]
 name = "test_range"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "range"
@@ -148,7 +218,6 @@ size = 1_000_000
 [[scenarios]]
 name = "test_hash"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "hash"
@@ -158,7 +227,6 @@ count = 16
 [[scenarios]]
 name = "test_list"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "list"
@@ -170,8 +238,11 @@ key = "table_name"
     fn test_deserialize_full_config() {
         let config: Config = toml::from_str(sample_config_toml()).unwrap();
         assert_eq!(config.batch_size, 5000);
-        assert_eq!(config.port, 15432);
-        assert_eq!(config.pg_image, "postgres:17");
+        assert_eq!(config.pg.host, "localhost");
+        assert_eq!(config.pg.port, 5432);
+        assert_eq!(config.pg.user, "postgres");
+        assert_eq!(config.pg.password, "bench");
+        assert_eq!(config.pg.database, "changelog_bench");
         assert_eq!(config.output_dir, "results");
         assert_eq!(config.n_values, vec![1_000_000, 10_000_000]);
         assert_eq!(config.scenarios.len(), 5);
@@ -184,15 +255,19 @@ key = "table_name"
     fn test_deserialize_minimal_config() {
         let toml_str = r#"
 batch_size = 100
-port = 5432
-pg_image = "postgres:16"
 output_dir = "out"
 n_values = [1000]
+
+[pg]
+host = "localhost"
+port = 5432
+user = "postgres"
+password = "pass"
+database = "bench"
 
 [[scenarios]]
 name = "minimal"
 phase = 1
-pg_config_file = "pg-configs/default.txt"
 indexes = "pk_only"
 "#;
         let config: Config = toml::from_str(toml_str).unwrap();
@@ -202,34 +277,39 @@ indexes = "pk_only"
     }
 
     #[test]
-    fn test_invalid_pg_config_file() {
-        let toml_str = r#"
-batch_size = 100
-port = 5432
-pg_image = "postgres:16"
-output_dir = "out"
-n_values = [1000]
+    fn test_connection_string() {
+        let pg = PgConfig {
+            host: "localhost".to_string(),
+            port: 5432,
+            user: "postgres".to_string(),
+            password: "bench".to_string(),
+            database: "changelog_bench".to_string(),
+        };
+        assert_eq!(
+            pg.connection_string(),
+            "postgres://postgres:bench@localhost:5432/changelog_bench"
+        );
+    }
 
-[[scenarios]]
-name = "bad"
-phase = 1
-pg_config_file = "nonexistent/path.txt"
-indexes = "pk_only"
-"#;
-        let config: Config = toml::from_str(toml_str).unwrap();
-        let result = config.validate();
-        assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("does not exist"));
+    #[test]
+    fn test_maintenance_connection_string() {
+        let pg = PgConfig {
+            host: "localhost".to_string(),
+            port: 5432,
+            user: "postgres".to_string(),
+            password: "s3cret!".to_string(),
+            database: "changelog_bench".to_string(),
+        };
+        assert_eq!(
+            pg.maintenance_connection_string(),
+            "postgres://postgres:s3cret%21@localhost:5432/postgres"
+        );
     }
 
     #[test]
     fn test_partition_variants_deserialize() {
         let config: Config = toml::from_str(sample_config_toml()).unwrap();
 
-        // Range
         match &config.scenarios[2].partition {
             Some(PartitionConfig::Range { key, size }) => {
                 assert_eq!(key, "cursor");
@@ -238,7 +318,6 @@ indexes = "pk_only"
             other => panic!("Expected Range partition, got {:?}", other),
         }
 
-        // Hash
         match &config.scenarios[3].partition {
             Some(PartitionConfig::Hash { key, count }) => {
                 assert_eq!(key, "cursor");
@@ -247,7 +326,6 @@ indexes = "pk_only"
             other => panic!("Expected Hash partition, got {:?}", other),
         }
 
-        // List
         match &config.scenarios[4].partition {
             Some(PartitionConfig::List { key }) => {
                 assert_eq!(key, "table_name");
@@ -260,17 +338,14 @@ indexes = "pk_only"
     fn test_cli_overrides() {
         let mut config: Config = toml::from_str(sample_config_toml()).unwrap();
 
-        // Filter by phase
         config.filter_phase(3);
         assert_eq!(config.scenarios.len(), 3);
         assert!(config.scenarios.iter().all(|s| s.phase == 3));
 
-        // Filter by scenario names
         let mut config2: Config = toml::from_str(sample_config_toml()).unwrap();
         config2.filter_scenarios(&["test_scenario".to_string(), "test_pk".to_string()]);
         assert_eq!(config2.scenarios.len(), 2);
 
-        // Filter by n_values
         let mut config3: Config = toml::from_str(sample_config_toml()).unwrap();
         config3.filter_n_values(&[1_000_000]);
         assert_eq!(config3.n_values, vec![1_000_000]);

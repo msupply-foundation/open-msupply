@@ -1,6 +1,6 @@
 mod bench;
 mod config;
-mod docker;
+mod db;
 mod plot;
 mod schema;
 mod seed;
@@ -48,8 +48,6 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
-    docker::install_signal_handler();
-
     let cli = Cli::parse();
 
     let mut config = Config::load(&cli.config)?;
@@ -90,12 +88,7 @@ fn main() -> Result<()> {
         }
     }
 
-    seed::ensure_seeds(
-        &config.n_values,
-        &config.seed_dir,
-        config.port,
-        &config.pg_image,
-    )?;
+    seed::ensure_seeds(&config.n_values, &config.seed_dir, &config.pg)?;
 
     if cli.seed_only {
         eprintln!("\nSeed generation complete. Exiting (--seed-only).");
@@ -103,8 +96,9 @@ fn main() -> Result<()> {
     }
 
     // ── Step 2: Run benchmarks using seed dumps ──
-    // Timestamp for this run, appended to phase directory names
-    let timestamp = chrono::Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
+    let timestamp = chrono::Local::now()
+        .format("%Y-%m-%d_%H-%M-%S")
+        .to_string();
     eprintln!("Results will be saved to: {}/", config.output_dir);
 
     eprintln!(
@@ -131,65 +125,53 @@ fn main() -> Result<()> {
 
         for scenario in &phase_scenarios {
             for n in &config.n_values {
-                let container_name = format!("changelog-bench-{}-{}", scenario.name, n);
                 eprintln!(
                     "\n--- Scenario: {} | N: {} ---",
                     scenario.name,
                     plot::format_n(*n)
                 );
 
-                // Start container with scenario-specific PG config
-                eprintln!("  Starting Postgres container...");
-                let container = docker::start_container(
-                    &container_name,
-                    config.port,
-                    &scenario.pg_config_file,
-                    &config.pg_image,
-                )
-                .with_context(|| {
-                    format!("Failed to start container for {}", scenario.name)
-                })?;
+                // Apply PG config overrides if specified
+                if let Some(ref pg_config_file) = scenario.pg_config_file {
+                    eprintln!("  Applying PG config from {}...", pg_config_file);
+                    let mut maint_conn = db::connect_maintenance(&config.pg)?;
+                    db::apply_pg_config(&mut maint_conn, pg_config_file)?;
+                }
 
-                docker::wait_for_ready(&container_name, Duration::from_secs(60))
-                    .context("Postgres failed to become ready")?;
+                // Reset the database for a clean slate
+                eprintln!("  Resetting database...");
+                db::reset_database(&config.pg)?;
 
-                // Connect (retry until host port mapping is ready)
-                let mut conn =
-                    docker::wait_for_connection(&container.connection_string(), Duration::from_secs(30))
-                        .context("Failed to connect to Postgres")?;
+                let mut conn = db::connect(&config.pg, Duration::from_secs(10))
+                    .context("Failed to connect to Postgres")?;
 
-                // Create table structure (types, table, partitions, v7 columns — NO indexes)
+                // Create table structure (types, table, partitions — NO indexes)
                 eprintln!("  Setting up schema structure...");
                 let stmts = schema::structure_sql(scenario, *n, config.batch_size as u64);
                 for stmt in &stmts {
-                    sql_query(stmt)
-                        .execute(&mut conn)
-                        .with_context(|| {
-                            format!("Failed SQL: {}", &stmt[..stmt.len().min(100)])
-                        })?;
+                    sql_query(stmt).execute(&mut conn).with_context(|| {
+                        format!("Failed SQL: {}", &stmt[..stmt.len().min(100)])
+                    })?;
                 }
 
                 // Restore seed data
                 if *n > 0 {
                     eprintln!("  Restoring seed data for N={}...", plot::format_n(*n));
-                    seed::restore_seed(&container_name, &config.seed_dir, *n)?;
+                    seed::restore_seed(&config.seed_dir, *n, &config.pg)?;
                     seed::reset_sequence_after_restore(&mut conn, *n)?;
                 }
 
-                // Now create indexes (after data is loaded — faster than indexing during inserts)
+                // Create indexes after data load
                 eprintln!("  Creating indexes...");
-                let index_stmts = schema::index_sql(scenario.indexes);
+                let index_stmts = schema::index_sql(&scenario.indexes);
                 for stmt in &index_stmts {
-                    sql_query(stmt)
-                        .execute(&mut conn)
-                        .with_context(|| {
-                            format!("Failed index SQL: {}", &stmt[..stmt.len().min(100)])
-                        })?;
+                    sql_query(stmt).execute(&mut conn).with_context(|| {
+                        format!("Failed index SQL: {}", &stmt[..stmt.len().min(100)])
+                    })?;
                 }
 
                 // Ensure extra partitions exist for measurement batch (range partitions)
-                if let Some(config::PartitionConfig::Range { key: _, size }) =
-                    &scenario.partition
+                if let Some(config::PartitionConfig::Range { key: _, size }) = &scenario.partition
                 {
                     let extra_partitions = schema::partition_ddl(
                         scenario.partition.as_ref().unwrap(),
@@ -224,9 +206,13 @@ fn main() -> Result<()> {
                     stats,
                 });
 
-                // Container dropped here via Drop impl
-                drop(container);
-                eprintln!("  Container cleaned up.");
+                // Reset PG config overrides if we applied any
+                if scenario.pg_config_file.is_some() {
+                    eprintln!("  Resetting PG config...");
+                    drop(conn);
+                    let mut maint_conn = db::connect_maintenance(&config.pg)?;
+                    db::reset_pg_config(&mut maint_conn)?;
+                }
             }
         }
 
@@ -235,7 +221,13 @@ fn main() -> Result<()> {
 
         // Save results and generate phase graphs
         eprintln!("\nSaving Phase {} results and generating graphs...", phase);
-        plot::generate_phase_charts(&all_results, phase, &config.output_dir, &timestamp, cli.no_graphs)?;
+        plot::generate_phase_charts(
+            &all_results,
+            phase,
+            &config.output_dir,
+            &timestamp,
+            cli.no_graphs,
+        )?;
     }
 
     eprintln!("\nDone!");

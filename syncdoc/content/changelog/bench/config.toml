@@ -2,69 +2,71 @@
 
 # Global settings
 batch_size = 10_000          # inserts to measure per (scenario, N) pair
-port = 15432
-pg_image = "postgres:17"
 output_dir = "results"
 seed_dir = "seeds"
 
 # Table sizes to test
-n_values = [1_000_000, 10_000_000, 100_000_000]
+n_values = [100_000, 1_200_000, 2_300_000, 3_400_000, 4_500_000, 5_600_000, 6_700_000, 7_800_000, 8_900_000, 10_000_000]
 
-# ── Phase 1: PG Config comparison (same indexes = "v7", no partitioning) ──
+# Postgres connection
+[pg]
+host = "localhost"
+port = 5432
+user = "postgres"
+password = "postgres"
+database = "changelog_bench"
+
+# ── Phase 1: PG Config comparison (same indexes = v7, no partitioning) ──
 # Goal: isolate the impact of Postgres configuration on insert performance
+# Settings are applied via ALTER SYSTEM + pg_reload_conf() before each scenario
 
 [[scenarios]]
 name = "v7_default"
 phase = 1
-pg_config_file = "pg-configs/default.txt"
 indexes = "v7"
+pg_config_file = "pg-configs/default.txt"
 
 [[scenarios]]
 name = "v7_moderate"
 phase = 1
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
+pg_config_file = "pg-configs/moderate.txt"
 
 [[scenarios]]
 name = "v7_write_optimised"
 phase = 1
-pg_config_file = "pg-configs/write-optimised.txt"
 indexes = "v7"
+pg_config_file = "pg-configs/write-optimised.txt"
 
-# ── Phase 2: Index strategy comparison (same PG config = moderate, no partitioning) ──
-# Goal: isolate the impact of indexes on insert performance
+# ── Phase 2: Index strategy comparison ──
+# Goal: isolate the impact of different index sets on insert performance
 
 [[scenarios]]
 name = "idx_pk_only"
 phase = 2
-pg_config_file = "pg-configs/moderate.txt"
-indexes = "pk_only"
+indexes = "index-configs/pk_only.sql"
 
 [[scenarios]]
 name = "idx_v7"
 phase = 2
-pg_config_file = "pg-configs/moderate.txt"
-indexes = "v7"
+indexes = "index-configs/v7.sql"
 
 [[scenarios]]
 name = "idx_v7_all_partial"
 phase = 2
-pg_config_file = "pg-configs/moderate.txt"
-indexes = "v7_all_partial"
+indexes = "index-configs/v7_all_partial.sql"
 
-# ── Phase 3: Partition strategy comparison (same PG config = moderate, same indexes = v7) ──
+# ── Phase 3: Partition strategy comparison (same indexes = v7) ──
 # Goal: isolate the impact of different partitioning strategies on insert performance
 
 [[scenarios]]
 name = "no_partition"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 
 [[scenarios]]
 name = "range_cursor_100k"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "range"
@@ -74,7 +76,6 @@ size = 100_000
 [[scenarios]]
 name = "range_cursor_1m"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "range"
@@ -84,7 +85,6 @@ size = 1_000_000
 [[scenarios]]
 name = "range_cursor_10m"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "range"
@@ -94,7 +94,6 @@ size = 10_000_000
 [[scenarios]]
 name = "hash_cursor_16"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "hash"
@@ -104,7 +103,6 @@ count = 16
 [[scenarios]]
 name = "hash_cursor_64"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "hash"
@@ -114,7 +112,6 @@ count = 64
 [[scenarios]]
 name = "list_table_name"
 phase = 3
-pg_config_file = "pg-configs/moderate.txt"
 indexes = "v7"
 [scenarios.partition]
 strategy = "list"

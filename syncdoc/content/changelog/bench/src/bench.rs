@@ -293,43 +293,41 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Requires Docker
+    #[ignore] // Requires a running Postgres
     fn test_measurement_inserts() {
-        use crate::docker;
+        use crate::config::PgConfig;
+        use crate::db;
         use crate::schema;
-        use std::time::Duration as StdDuration;
 
-        let name = "changelog-bench-test-measure";
-        let port = 15497;
+        let pg = PgConfig {
+            host: "localhost".to_string(),
+            port: 5432,
+            user: "postgres".to_string(),
+            password: "bench".to_string(),
+            database: "changelog_bench_test_measure".to_string(),
+        };
 
-        let container =
-            docker::start_container(name, port, "pg-configs/default.txt", "postgres:17").unwrap();
-        docker::wait_for_ready(name, StdDuration::from_secs(30)).unwrap();
-
-        let mut conn =
-            docker::wait_for_connection(&container.connection_string(), StdDuration::from_secs(30)).unwrap();
+        db::reset_database(&pg).unwrap();
+        let mut conn = db::connect(&pg, std::time::Duration::from_secs(5)).unwrap();
 
         let scenario = ScenarioConfig {
             name: "test".to_string(),
             phase: 1,
-            pg_config_file: "pg-configs/default.txt".to_string(),
             indexes: IndexSet::V7,
             partition: None,
+            pg_config_file: None,
         };
 
-        // Setup schema
         let stmts = schema::setup_sql(&scenario, 0, 100);
         for stmt in &stmts {
             sql_query(stmt).execute(&mut conn).unwrap();
         }
 
-        // Measure 100 inserts
         let latencies = measure_inserts(&mut conn, 100, &scenario).unwrap();
 
         assert_eq!(latencies.len(), 100);
         assert!(latencies.iter().all(|d| d.as_nanos() > 0));
 
-        // Verify rows were inserted
         #[derive(diesel::QueryableByName)]
         struct CountRow {
             #[diesel(sql_type = diesel::sql_types::BigInt)]
@@ -342,6 +340,11 @@ mod tests {
                 .unwrap();
         assert_eq!(result[0].cnt, 100);
 
-        drop(container);
+        // Cleanup
+        let maint_str = pg.maintenance_connection_string();
+        drop(conn);
+        let mut maint = diesel::PgConnection::establish(&maint_str).unwrap();
+        let _ = sql_query(&format!("DROP DATABASE IF EXISTS \"{}\"", pg.database))
+            .execute(&mut maint);
     }
 }

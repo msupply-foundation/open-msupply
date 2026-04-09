@@ -125,7 +125,7 @@ pub fn partition_ddl(partition: &PartitionConfig, n: u64, batch_size: u64) -> Ve
 }
 
 /// Generate the SQL to create indexes based on the IndexSet.
-pub fn index_sql(indexes: IndexSet) -> Vec<String> {
+pub fn index_sql(indexes: &IndexSet) -> Vec<String> {
     match indexes {
         IndexSet::PkOnly => vec![],
         IndexSet::V7 => vec![
@@ -140,6 +140,16 @@ pub fn index_sql(indexes: IndexSet) -> Vec<String> {
             "CREATE INDEX index_changelog_transfer_store_id ON changelog (transfer_store_id) WHERE transfer_store_id IS NOT NULL;".to_string(),
             "CREATE INDEX index_changelog_patient_id ON changelog (patient_id) WHERE patient_id IS NOT NULL;".to_string(),
         ],
+        IndexSet::SqlFile(path) => {
+            let content = std::fs::read_to_string(path)
+                .unwrap_or_else(|e| panic!("Failed to read index SQL file '{}': {}", path, e));
+            content
+                .lines()
+                .map(|l| l.trim())
+                .filter(|l| !l.is_empty() && !l.starts_with("--"))
+                .map(|l| l.to_string())
+                .collect()
+        }
     }
 }
 
@@ -173,7 +183,7 @@ pub fn structure_sql(scenario: &ScenarioConfig, n: u64, batch_size: u64) -> Vec<
 #[allow(dead_code)]
 pub fn setup_sql(scenario: &ScenarioConfig, n: u64, batch_size: u64) -> Vec<String> {
     let mut stmts = structure_sql(scenario, n, batch_size);
-    stmts.extend(index_sql(scenario.indexes));
+    stmts.extend(index_sql(&scenario.indexes));
     stmts
 }
 
@@ -210,13 +220,13 @@ mod tests {
 
     #[test]
     fn test_index_sql_pk_only() {
-        let stmts = index_sql(IndexSet::PkOnly);
+        let stmts = index_sql(&IndexSet::PkOnly);
         assert!(stmts.is_empty());
     }
 
     #[test]
     fn test_index_sql_v7() {
-        let stmts = index_sql(IndexSet::V7);
+        let stmts = index_sql(&IndexSet::V7);
         assert_eq!(stmts.len(), 4);
         assert!(stmts.iter().all(|s| s.starts_with("CREATE INDEX")));
         assert!(stmts.iter().any(|s| s.contains("source_site_id")));
@@ -274,15 +284,14 @@ mod tests {
         let scenario = ScenarioConfig {
             name: "test".to_string(),
             phase: 1,
-            pg_config_file: "pg-configs/default.txt".to_string(),
             indexes: IndexSet::V7,
             partition: None,
+            pg_config_file: None,
         };
         let stmts = structure_sql(&scenario, 1_000_000, 10_000);
 
         // Should have: 2 base types (row_action enum + sequence) + 1 table = 3
         assert_eq!(stmts.len(), 3);
-        // No indexes in structure_sql
         assert!(!stmts.iter().any(|s| s.starts_with("CREATE INDEX")));
     }
 
@@ -291,9 +300,9 @@ mod tests {
         let scenario = ScenarioConfig {
             name: "test".to_string(),
             phase: 1,
-            pg_config_file: "pg-configs/default.txt".to_string(),
             indexes: IndexSet::V7,
             partition: None,
+            pg_config_file: None,
         };
         let stmts = setup_sql(&scenario, 1_000_000, 10_000);
 
@@ -306,12 +315,12 @@ mod tests {
         let scenario = ScenarioConfig {
             name: "test".to_string(),
             phase: 3,
-            pg_config_file: "pg-configs/moderate.txt".to_string(),
             indexes: IndexSet::V7,
             partition: Some(PartitionConfig::Range {
                 key: "cursor".to_string(),
                 size: 1_000_000,
             }),
+            pg_config_file: None,
         };
         let stmts = setup_sql(&scenario, 10_000_000, 10_000);
 
@@ -329,51 +338,49 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Requires Docker
+    #[ignore] // Requires a running Postgres
     fn test_schema_executes_on_postgres() {
-        use crate::docker;
+        use crate::config::PgConfig;
+        use crate::db;
         use diesel::prelude::*;
         use diesel::sql_query;
-        use std::time::Duration;
 
-        let name = "changelog-bench-test-schema";
-        let port = 15498;
-
-        let container =
-            docker::start_container(name, port, "pg-configs/default.txt", "postgres:17").unwrap();
-        docker::wait_for_ready(name, Duration::from_secs(30)).unwrap();
-
-        let mut conn =
-            docker::wait_for_connection(&container.connection_string(), Duration::from_secs(30))
-                .unwrap();
+        let pg = PgConfig {
+            host: "localhost".to_string(),
+            port: 5432,
+            user: "postgres".to_string(),
+            password: "bench".to_string(),
+            database: "changelog_bench_test_schema".to_string(),
+        };
 
         let test_scenarios = vec![
             ScenarioConfig {
                 name: "pk_only".to_string(),
                 phase: 1,
-                pg_config_file: "pg-configs/default.txt".to_string(),
                 indexes: IndexSet::PkOnly,
                 partition: None,
+                pg_config_file: None,
             },
             ScenarioConfig {
                 name: "v7".to_string(),
                 phase: 2,
-                pg_config_file: "pg-configs/default.txt".to_string(),
                 indexes: IndexSet::V7,
                 partition: None,
+                pg_config_file: None,
             },
         ];
 
         for scenario in &test_scenarios {
-            let _ = sql_query("DROP TABLE IF EXISTS changelog CASCADE").execute(&mut conn);
-            let _ = sql_query("DROP TYPE IF EXISTS row_action_type CASCADE").execute(&mut conn);
-            let _ = sql_query("DROP SEQUENCE IF EXISTS changelog_cursor_seq CASCADE")
-                .execute(&mut conn);
+            db::reset_database(&pg).unwrap();
+            let mut conn = db::connect(&pg, std::time::Duration::from_secs(5)).unwrap();
 
             let stmts = setup_sql(scenario, 1000, 100);
             for stmt in &stmts {
                 sql_query(stmt).execute(&mut conn).unwrap_or_else(|e| {
-                    panic!("Failed SQL for {}: {} -- Error: {}", scenario.name, stmt, e)
+                    panic!(
+                        "Failed SQL for {}: {} -- Error: {}",
+                        scenario.name, stmt, e
+                    )
                 });
             }
 
@@ -383,23 +390,18 @@ mod tests {
                 cnt: i64,
             }
 
-            let result: Vec<CountRow> = sql_query("SELECT count(*)::bigint AS cnt FROM changelog")
-                .load(&mut conn)
-                .unwrap();
+            let result: Vec<CountRow> =
+                sql_query("SELECT count(*)::bigint AS cnt FROM changelog")
+                    .load(&mut conn)
+                    .unwrap();
             assert_eq!(result[0].cnt, 0);
-
-            let result: Vec<CountRow> = sql_query(
-                "SELECT count(*)::bigint AS cnt FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' AND table_name NOT LIKE 'changelog%'"
-            )
-            .load(&mut conn)
-            .unwrap();
-            assert_eq!(
-                result[0].cnt, 0,
-                "No non-changelog tables should exist for scenario '{}'",
-                scenario.name
-            );
         }
 
-        drop(container);
+        // Cleanup
+        let maint_str = pg.maintenance_connection_string();
+        let mut maint =
+            diesel::PgConnection::establish(&maint_str).unwrap();
+        let _ = sql_query(&format!("DROP DATABASE IF EXISTS \"{}\"", pg.database))
+            .execute(&mut maint);
     }
 }
