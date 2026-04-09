@@ -52,7 +52,7 @@ pub struct InsertAssetLogInput {
     pub reason_id: Option<String>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
-    pub log_datetime: Option<chrono::NaiveDateTime>,
+    pub log_datetime: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl From<InsertAssetLogInput> for InsertAssetLog {

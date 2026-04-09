@@ -12,7 +12,6 @@ import {
   InputWithLabelRow,
   Typography,
   useIsExtraSmallScreen,
-  Formatter,
   DateUtils,
   BasicTextInput,
   useDebounceCallback,
@@ -25,7 +24,7 @@ const getEmptyDraft = (assetId: string): Draft => ({
   id: FnUtils.generateUUID(),
   assetId,
   type: 'Temperature Mapping',
-  logDatetime: Formatter.naiveDateTime(new Date()),
+  logDatetime: new Date().toISOString(),
 });
 
 const Row = ({
@@ -141,7 +140,7 @@ export const RecordMappingModal = ({
                 setDraft(prev => ({
                   ...prev,
                   logDatetime: date
-                    ? Formatter.naiveDateTime(date)
+                    ? date.toISOString()
                     : undefined,
                 }))
               }

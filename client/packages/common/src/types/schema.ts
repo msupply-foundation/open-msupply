@@ -3145,7 +3145,7 @@ export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  logDatetime?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+  logDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   reasonId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<AssetLogStatusNodeType>;
   type?: InputMaybe<Scalars['String']['input']>;
