@@ -119,11 +119,25 @@ mod finalise {
                 ..Default::default()
             }
         }
+        fn zero_quantity_line() -> RnRFormLineRow {
+            RnRFormLineRow {
+                id: "zero_quantity_line".to_string(),
+                rnr_form_id: mock_rnr_form_b().id,
+                item_link_id: mock_item_c().id,
+                calculated_requested_quantity: 0.0,
+                entered_requested_quantity: None,
+                ..Default::default()
+            }
+        }
         let (_, _, connection_manager, _) = setup_all_with_data(
             "finalise_rnr_form_success",
             MockDataInserts::all(),
             MockData {
-                rnr_form_lines: vec![auto_populated_line(), manually_entered_line()],
+                rnr_form_lines: vec![
+                    auto_populated_line(),
+                    manually_entered_line(),
+                    zero_quantity_line(),
+                ],
                 ..Default::default()
             },
         )
@@ -181,7 +195,7 @@ mod finalise {
         // Check the store of the internal order is the same as the RnR form
         assert_eq!(requisition.requisition_row.store_id, mock_store_a().id);
 
-        // Check the same number of lines in the internal order as the RnR form
+        // Check lines: zero-quantity lines are excluded; mock_rnr_form_b_line_a (zero) is also excluded
         let requisition_lines =
             RequisitionLineRepository::new(&context.connection)
                 .query_by_filter(RequisitionLineFilter::new().requisition_id(
@@ -189,7 +203,9 @@ mod finalise {
                 ))
                 .unwrap();
 
-        assert_eq!(requisition_lines.len(), 3); // 1 from rnr_form mock data, plus 2 (above)
+        // Only 2 lines: auto_populated_line and manually_entered_line
+        // zero_quantity_line and mock_rnr_form_b_line_a (zero calculated_requested_quantity) are excluded
+        assert_eq!(requisition_lines.len(), 2);
 
         // Check correct data was populated
         let auto_populated_line = &requisition_lines
@@ -220,5 +236,15 @@ mod finalise {
         assert_eq!(manually_entered_line.outgoing_units, 14.0);
         assert_eq!(manually_entered_line.addition_in_units, 5.0);
         assert_eq!(manually_entered_line.loss_in_units, 2.0);
+
+        // Zero-quantity line should NOT be in the internal order
+        assert!(
+            requisition_lines
+                .iter()
+                .find(|line| line.requisition_line_row.item_link_id
+                    == zero_quantity_line().item_link_id)
+                .is_none(),
+            "Zero-quantity lines should not appear in the internal order"
+        );
     }
 }
