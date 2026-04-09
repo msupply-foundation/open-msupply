@@ -112,6 +112,9 @@ pub fn start_container(
     pg_config_file: &str,
     pg_image: &str,
 ) -> Result<Container> {
+    // Remove any stale container with the same name (e.g. from a previous crash)
+    let _ = stop_and_remove(name);
+
     let args = build_docker_run_args(name, port, pg_config_file, pg_image)?;
 
     let output = Command::new("docker")

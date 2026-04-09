@@ -66,10 +66,14 @@ pub fn generate_seed(
     eprintln!("  Populating {} rows...", n);
     bench::prepopulate(&mut conn, n)?;
 
-    // Dump data-only via pg_dump
+    // Dump data-only via pg_dump, streaming directly to file to avoid
+    // holding the entire dump in memory (500M rows can be ~50GB).
     eprintln!("  Dumping data with pg_dump...");
     let output_path = dump_path(seed_dir, n);
-    let dump_output = Command::new("docker")
+    let output_file = fs::File::create(&output_path)
+        .with_context(|| format!("Failed to create dump file {}", output_path))?;
+
+    let mut child = Command::new("docker")
         .args([
             "exec",
             &container_name,
@@ -81,18 +85,26 @@ pub fn generate_seed(
             "--no-privileges",
             "bench",
         ])
-        .output()
-        .context("Failed to execute pg_dump")?;
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .context("Failed to spawn pg_dump")?;
 
-    if !dump_output.status.success() {
-        let stderr = String::from_utf8_lossy(&dump_output.stderr);
+    let mut stdout = child.stdout.take().context("Failed to capture pg_dump stdout")?;
+    let mut writer = std::io::BufWriter::new(output_file);
+    let bytes_written = std::io::copy(&mut stdout, &mut writer)
+        .context("Failed to stream pg_dump output to file")?;
+    drop(writer);
+
+    let output = child.wait_with_output().context("Failed to wait for pg_dump")?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        // Clean up partial dump file on failure
+        let _ = fs::remove_file(&output_path);
         bail!("pg_dump failed: {}", stderr);
     }
 
-    fs::write(&output_path, &dump_output.stdout)
-        .with_context(|| format!("Failed to write dump to {}", output_path))?;
-
-    let size_mb = dump_output.stdout.len() as f64 / 1_048_576.0;
+    let size_mb = bytes_written as f64 / 1_048_576.0;
     eprintln!("  Dump saved to {} ({:.1} MB)", output_path, size_mb);
 
     drop(container);
