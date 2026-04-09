@@ -72,7 +72,7 @@ impl<'a> SyncBuffer<'a> {
                     .source_site_id(match record_type {
                         SyncBufferSource::Central(source_site_id) => {
                             EqualFilter::equal_any_or_null(vec![source_site_id])
-                        } // Includes all records with no source site ID (OMS Cetntral) + the site passed in
+                        } // Includes all records with no source site ID (OMS Central) + the site passed in
                         SyncBufferSource::Remote(source_site_id) => {
                             EqualFilter::equal_to(source_site_id)
                         }

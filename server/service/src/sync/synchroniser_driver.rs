@@ -58,7 +58,7 @@ impl SynchroniserDriver {
         }
 
         loop {
-            // Need to check is_initialsed from database on every iteration, since it could have been updated
+            // Need to check is_initialised from database on every iteration, since it could have been updated
             let fetch_patient_id = if is_initialised(&service_provider) {
                 tokio::select! {
                     // Wait for trigger
