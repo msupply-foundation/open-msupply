@@ -42,7 +42,7 @@ pub struct InsertAssetLog {
     pub comment: Option<String>,
     pub r#type: Option<String>,
     pub reason_id: Option<String>,
-    pub log_datetime: Option<chrono::NaiveDateTime>,
+    pub log_datetime: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 pub fn insert_asset_log(
@@ -122,7 +122,7 @@ pub fn validate(
     }
 
     if let Some(log_datetime) = &input.log_datetime {
-        if *log_datetime > Utc::now().naive_utc() {
+        if *log_datetime >= Utc::now() {
             return Err(InsertAssetLogError::LogDatetimeInFuture);
         }
     }
@@ -151,7 +151,7 @@ pub fn generate(
         comment,
         r#type,
         reason_id,
-        log_datetime: log_datetime.unwrap_or(now),
+        log_datetime: log_datetime.map(|d| d.naive_utc()).unwrap_or(now),
         created_datetime: now,
     }
 }
