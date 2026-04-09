@@ -46,11 +46,14 @@ pub fn validate(
 
     // Backdating validation
     if let Some(backdated_datetime) = input.backdated_datetime {
+        let backdating = Backdating.load(connection, None)?;
+        if !backdating.inventory_adjustments_enabled {
+            return Err(BackdatingNotEnabled);
+        }
+
         if backdated_datetime >= Utc::now() {
             return Err(CannotSetDateInFuture);
         }
-
-        let backdating = Backdating.load(connection, None)?;
         if backdating.max_days > 0 {
             let earliest_allowed = Utc::now() - Duration::days(backdating.max_days as i64);
             if backdated_datetime < earliest_allowed {

@@ -123,6 +123,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::InvalidStore
         | ServiceError::InvalidAdjustment
         | ServiceError::AdjustmentReasonNotValid
+        | ServiceError::BackdatingNotEnabled
         | ServiceError::CannotSetDateInFuture
         | ServiceError::ExceedsMaximumBackdatingDays
         | ServiceError::LedgerGoesBelowZero => BadUserInput(formatted_error),

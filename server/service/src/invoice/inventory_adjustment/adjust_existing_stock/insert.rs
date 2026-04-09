@@ -38,6 +38,7 @@ pub enum InsertInventoryAdjustmentError {
     InvalidAdjustment,
     AdjustmentReasonNotValid,
     AdjustmentReasonNotProvided,
+    BackdatingNotEnabled,
     CannotSetDateInFuture,
     ExceedsMaximumBackdatingDays,
     LedgerGoesBelowZero,
