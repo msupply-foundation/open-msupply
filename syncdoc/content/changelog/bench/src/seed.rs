@@ -39,12 +39,13 @@ pub fn generate_seed(
 
     let container_name = format!("changelog-bench-seed-{}", n);
 
-    // Use default PG config for seeding (doesn't need to be tuned)
+    // Use write-optimised PG config for seeding (synchronous_commit=off
+    // reduces WAL overhead significantly for bulk inserts)
     eprintln!("  Starting seed container for N={}...", n);
     let container = docker::start_container(
         &container_name,
         port,
-        "pg-configs/default.txt",
+        "pg-configs/write-optimised.txt",
         pg_image,
     )
     .context("Failed to start seed container")?;

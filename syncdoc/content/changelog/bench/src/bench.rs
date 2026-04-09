@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
 use crate::config::ScenarioConfig;
-use crate::schema::TABLE_NAME_ENUM_VALUES;
+use crate::schema::TABLE_NAME_VALUES;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BenchResult {
@@ -58,7 +58,7 @@ pub fn compute_stats(latencies: &mut Vec<Duration>) -> Stats {
 /// Generate the SQL for pre-populating the changelog table using generate_series.
 /// Returns (sql, batch_from, batch_to) tuples for batched insertion.
 pub fn prepopulate_sql(n: u64) -> Vec<(String, u64, u64)> {
-    let batch_size: u64 = 100_000;
+    let batch_size: u64 = 1_000_000;
     let mut batches = Vec::new();
 
     let mut remaining = n;
@@ -81,12 +81,12 @@ SELECT
     CASE WHEN g % 5 = 0 THEN md5((g+2)::text)::uuid ELSE NULL END,
     CASE WHEN g % 8 = 0 THEN md5((g+3)::text)::uuid ELSE NULL END
 FROM generate_series({from}, {to}) AS g;",
-            enum_array = TABLE_NAME_ENUM_VALUES
+            enum_array = TABLE_NAME_VALUES
                 .iter()
                 .map(|v| format!("'{}'", v))
                 .collect::<Vec<_>>()
                 .join(", "),
-            enum_count = TABLE_NAME_ENUM_VALUES.len(),
+            enum_count = TABLE_NAME_VALUES.len(),
             from = from,
             to = to,
         );
@@ -103,7 +103,7 @@ FROM generate_series({from}, {to}) AS g;",
 pub fn generate_random_insert() -> String {
     let mut rng = rand::rng();
 
-    let table_name = TABLE_NAME_ENUM_VALUES[rng.random_range(0..TABLE_NAME_ENUM_VALUES.len())];
+    let table_name = TABLE_NAME_VALUES[rng.random_range(0..TABLE_NAME_VALUES.len())];
     let record_id = uuid::Uuid::now_v7().to_string();
 
     let row_action = if rng.sample(Bernoulli::from_ratio(1, 20).unwrap()) {
@@ -168,9 +168,8 @@ pub fn prepopulate(conn: &mut PgConnection, n: u64) -> Result<()> {
             .with_context(|| format!("Failed to pre-populate batch {}", i + 1))?;
     }
 
-    eprintln!("  Running ANALYZE and CHECKPOINT...");
-    sql_query("ANALYZE changelog;").execute(conn)?;
-    sql_query("CHECKPOINT;").execute(conn)?;
+    // ANALYZE and CHECKPOINT are skipped here — the seed container is
+    // throwaway, and ANALYZE is run after restore in the benchmark step.
 
     Ok(())
 }
@@ -252,7 +251,7 @@ mod tests {
         assert!(!sql.contains("is_sync_update"));
 
         // Verify it contains a valid table_name enum value
-        let has_valid_table_name = TABLE_NAME_ENUM_VALUES
+        let has_valid_table_name = TABLE_NAME_VALUES
             .iter()
             .any(|v| sql.contains(&format!("'{}'", v)));
         assert!(has_valid_table_name, "SQL should contain a valid table_name enum value");
@@ -265,16 +264,13 @@ mod tests {
     fn test_prepopulate_sql_generation() {
         let batches = prepopulate_sql(1_000_000);
 
-        // 1M / 100K = 10 batches
-        assert_eq!(batches.len(), 10);
+        // 1M / 1M = 1 batch
+        assert_eq!(batches.len(), 1);
 
-        // First batch should be 1..100000
-        assert!(batches[0].0.contains("generate_series(1, 100000)"));
+        // Single batch should be 1..1000000
+        assert!(batches[0].0.contains("generate_series(1, 1000000)"));
         assert_eq!(batches[0].1, 1);
-        assert_eq!(batches[0].2, 100_000);
-
-        // Last batch should be 900001..1000000
-        assert!(batches[9].0.contains("generate_series(900001, 1000000)"));
+        assert_eq!(batches[0].2, 1_000_000);
 
         // Should NOT contain old columns
         assert!(!batches[0].0.contains("name_link_id"));
@@ -289,11 +285,11 @@ mod tests {
 
     #[test]
     fn test_prepopulate_sql_uneven_batches() {
-        let batches = prepopulate_sql(250_000);
+        let batches = prepopulate_sql(2_500_000);
 
-        // 250K / 100K = 2 full batches + 1 partial
+        // 2.5M / 1M = 2 full batches + 1 partial
         assert_eq!(batches.len(), 3);
-        assert!(batches[2].0.contains("generate_series(200001, 250000)"));
+        assert!(batches[2].0.contains("generate_series(2000001, 2500000)"));
     }
 
     #[test]

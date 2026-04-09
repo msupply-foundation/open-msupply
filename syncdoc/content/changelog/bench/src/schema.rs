@@ -1,7 +1,7 @@
 use crate::config::{IndexSet, PartitionConfig, ScenarioConfig};
 
-/// All changelog_table_name enum values used in the benchmark.
-pub const TABLE_NAME_ENUM_VALUES: &[&str] = &[
+/// All changelog_table_name values used in the benchmark.
+pub const TABLE_NAME_VALUES: &[&str] = &[
     "number",
     "location",
     "stock_line",
@@ -106,7 +106,7 @@ pub fn partition_ddl(partition: &PartitionConfig, n: u64, batch_size: u64) -> Ve
             })
             .collect(),
         PartitionConfig::List { .. } => {
-            let mut stmts: Vec<String> = TABLE_NAME_ENUM_VALUES
+            let mut stmts: Vec<String> = TABLE_NAME_VALUES
                 .iter()
                 .enumerate()
                 .map(|(i, val)| {
@@ -261,10 +261,10 @@ mod tests {
         };
         let stmts = partition_ddl(&partition, 1_000_000, 10_000);
         // One per enum value + DEFAULT
-        assert_eq!(stmts.len(), TABLE_NAME_ENUM_VALUES.len() + 1);
+        assert_eq!(stmts.len(), TABLE_NAME_VALUES.len() + 1);
         assert!(stmts.last().unwrap().contains("DEFAULT"));
 
-        for val in TABLE_NAME_ENUM_VALUES {
+        for val in TABLE_NAME_VALUES {
             assert!(stmts.iter().any(|s| s.contains(&format!("IN ('{}')", val))));
         }
     }
@@ -318,12 +318,13 @@ mod tests {
         assert!(stmts
             .iter()
             .any(|s| s.contains("PARTITION BY RANGE (cursor)")));
-        assert!(stmts
-            .iter()
-            .any(|s| s.contains("ADD PRIMARY KEY (cursor)")));
+        assert!(stmts.iter().any(|s| s.contains("ADD PRIMARY KEY (cursor)")));
         assert!(stmts.iter().any(|s| s.contains("transfer_store_id")));
         assert!(stmts.iter().any(|s| s.contains("patient_id")));
-        let index_count = stmts.iter().filter(|s| s.starts_with("CREATE INDEX")).count();
+        let index_count = stmts
+            .iter()
+            .filter(|s| s.starts_with("CREATE INDEX"))
+            .count();
         assert_eq!(index_count, 4);
     }
 
@@ -343,7 +344,8 @@ mod tests {
         docker::wait_for_ready(name, Duration::from_secs(30)).unwrap();
 
         let mut conn =
-            docker::wait_for_connection(&container.connection_string(), Duration::from_secs(30)).unwrap();
+            docker::wait_for_connection(&container.connection_string(), Duration::from_secs(30))
+                .unwrap();
 
         let test_scenarios = vec![
             ScenarioConfig {
@@ -365,13 +367,14 @@ mod tests {
         for scenario in &test_scenarios {
             let _ = sql_query("DROP TABLE IF EXISTS changelog CASCADE").execute(&mut conn);
             let _ = sql_query("DROP TYPE IF EXISTS row_action_type CASCADE").execute(&mut conn);
-            let _ = sql_query("DROP SEQUENCE IF EXISTS changelog_cursor_seq CASCADE").execute(&mut conn);
+            let _ = sql_query("DROP SEQUENCE IF EXISTS changelog_cursor_seq CASCADE")
+                .execute(&mut conn);
 
             let stmts = setup_sql(scenario, 1000, 100);
             for stmt in &stmts {
-                sql_query(stmt)
-                    .execute(&mut conn)
-                    .unwrap_or_else(|e| panic!("Failed SQL for {}: {} -- Error: {}", scenario.name, stmt, e));
+                sql_query(stmt).execute(&mut conn).unwrap_or_else(|e| {
+                    panic!("Failed SQL for {}: {} -- Error: {}", scenario.name, stmt, e)
+                });
             }
 
             #[derive(diesel::QueryableByName)]
@@ -380,10 +383,9 @@ mod tests {
                 cnt: i64,
             }
 
-            let result: Vec<CountRow> =
-                sql_query("SELECT count(*)::bigint AS cnt FROM changelog")
-                    .load(&mut conn)
-                    .unwrap();
+            let result: Vec<CountRow> = sql_query("SELECT count(*)::bigint AS cnt FROM changelog")
+                .load(&mut conn)
+                .unwrap();
             assert_eq!(result[0].cnt, 0);
 
             let result: Vec<CountRow> = sql_query(
