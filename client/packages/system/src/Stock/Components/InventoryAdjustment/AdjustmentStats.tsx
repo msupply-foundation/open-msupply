@@ -12,18 +12,26 @@ import { StockLineRowFragment } from '../../api';
 export const ItemDetailAndStats = ({
   stockLine,
   variation,
+  historicalAvailableNumberOfPacks,
+  historicalTotalNumberOfPacks,
+  isLoading,
 }: {
   stockLine: StockLineRowFragment;
   variation: number;
+  historicalAvailableNumberOfPacks?: number;
+  historicalTotalNumberOfPacks?: number;
+  isLoading?: boolean;
 }) => {
   const t = useTranslation();
 
   const {
     item: { code, name },
     packSize,
-    totalNumberOfPacks,
-    availableNumberOfPacks,
   } = stockLine;
+  const availableNumberOfPacks =
+    historicalAvailableNumberOfPacks ?? stockLine.availableNumberOfPacks;
+  const totalNumberOfPacks =
+    historicalTotalNumberOfPacks ?? stockLine.totalNumberOfPacks;
   return (
     <Box
       sx={{
@@ -51,11 +59,15 @@ export const ItemDetailAndStats = ({
           originalValue={availableNumberOfPacks}
           variation={variation}
           label={t('label.available-packs')}
+          isHistorical={historicalAvailableNumberOfPacks != null}
+          isLoading={isLoading}
         />
         <AdjustmentStats
           originalValue={totalNumberOfPacks}
           variation={variation}
           label={t('label.packs-on-hand')}
+          isHistorical={historicalTotalNumberOfPacks != null}
+          isLoading={isLoading}
         />
       </Box>
     </Box>
@@ -81,10 +93,14 @@ const AdjustmentStats = ({
   originalValue,
   variation,
   label,
+  isHistorical,
+  isLoading,
 }: {
   originalValue: number;
   variation: number;
   label: string;
+  isHistorical?: boolean;
+  isLoading?: boolean;
 }) => {
   const t = useTranslation();
 
@@ -112,8 +128,8 @@ const AdjustmentStats = ({
         }}
       >
         <SimpleStatistic
-          label={t('label.current')}
-          value={NumUtils.round(originalValue, 2)}
+          label={isHistorical ? t('label.historical') : t('label.current')}
+          value={isLoading ? '...' : NumUtils.round(originalValue, 2)}
           color={'secondary.main'}
         />
         <Box

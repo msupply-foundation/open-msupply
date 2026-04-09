@@ -5,9 +5,11 @@ import { HISTORICAL_STOCK_LINES } from '../../keys';
 export const useHistoricalStockLines = ({
   itemId,
   datetime,
+  enabled = true,
 }: {
   itemId: string;
   datetime?: string;
+  enabled?: boolean;
 }) => {
   const { client } = useGql();
   const sdk = getSdk(client);
@@ -20,8 +22,10 @@ export const useHistoricalStockLines = ({
     datetime ?? 'NO_DATETIME',
   ];
 
-  const result = useQuery(key, () =>
-    sdk.getHistoricalStockLines({ storeId, itemId, datetime })
+  const result = useQuery(
+    key,
+    () => sdk.getHistoricalStockLines({ storeId, itemId, datetime }),
+    { enabled, keepPreviousData: true }
   );
 
   return {

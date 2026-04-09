@@ -16,11 +16,16 @@ struct MinAvailableAndPackSize {
     total: f64,
 }
 
+pub struct HistoricalQuantities {
+    pub min_available: f64,
+    pub total: f64,
+}
+
 pub fn get_historical_stock_lines_available_quantity(
     connection: &StorageConnection,
     stock_lines: Vec<(&StockLineRow, Option<f64>)>,
     datetime: &NaiveDateTime,
-) -> Result<HashMap<String /* Stock Line Id */, f64>, RepositoryError> {
+) -> Result<HashMap<String /* Stock Line Id */, HistoricalQuantities>, RepositoryError> {
     let filter = StockMovementFilter::new()
         .stock_line_id(EqualFilter::equal_any(
             stock_lines
@@ -73,8 +78,11 @@ pub fn get_historical_stock_lines_available_quantity(
     Ok(min_available_and_pack_size
         .into_iter()
         .map(
-            |(stock_line_id, MinAvailableAndPackSize { min, pack_size, .. })| {
-                (stock_line_id, min / pack_size)
+            |(stock_line_id, MinAvailableAndPackSize { min, pack_size, total })| {
+                (stock_line_id, HistoricalQuantities {
+                    min_available: min / pack_size,
+                    total: total / pack_size,
+                })
             },
         )
         .collect())
@@ -117,11 +125,9 @@ pub fn get_historical_stock_lines(
     )?;
 
     for stock_line in stock_lines.rows.iter_mut() {
-        if let Some(historic_available_number_of_packs) =
-            historic_quantities.get(&stock_line.stock_line_row.id)
-        {
-            stock_line.stock_line_row.available_number_of_packs =
-                *historic_available_number_of_packs;
+        if let Some(historic) = historic_quantities.get(&stock_line.stock_line_row.id) {
+            stock_line.stock_line_row.available_number_of_packs = historic.min_available;
+            stock_line.stock_line_row.total_number_of_packs = historic.total;
         }
     }
 
@@ -139,5 +145,9 @@ pub fn get_historical_stock_line_available_quantity(
         vec![(stock_line, reserved_available_number_of_packs)],
         datetime,
     )
-    .map(|r| *r.get(&stock_line.id).unwrap_or(&0.0))
+    .map(|r| {
+        r.get(&stock_line.id)
+            .map(|q| q.min_available)
+            .unwrap_or(0.0)
+    })
 }
