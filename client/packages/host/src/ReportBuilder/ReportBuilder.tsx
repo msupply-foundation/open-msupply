@@ -467,11 +467,16 @@ export const ReportBuilder: React.FC = () => {
           if (!result) return;
           if (result.__typename === 'PrintReportError') {
             setReportUrl('');
+            setError(result.error.description);
             return;
           }
+          setError('');
           setReportUrl(`${Environment.FILE_URL}${result.fileId}`);
         })
-        .catch(() => setReportUrl(''));
+        .catch(e => {
+          setReportUrl('');
+          setError(String(e));
+        });
     }, 500);
     return () => clearTimeout(handler);
   }, [template, header, style, query, selectedRecord, effectiveContext, options]);
