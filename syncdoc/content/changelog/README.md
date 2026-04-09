@@ -83,11 +83,15 @@ See: [max_safe_cursor_research.md](max_safe_cursor_research.md)
 
 ### 4. Rust-side in-flight tracker
 
-**Status**: Not yet prototyped.
+**Status**: Prototype implemented, passing all tests.
 
-In sync v7, changelog inserts move from database triggers to Rust code. This makes application-level tracking viable: after `INSERT ... RETURNING cursor`, register the cursor in a shared tracker. Deregister after commit/rollback. Readers compute `max_safe = min(in_flight) - 1` and only read up to that.
+Track in-flight changelog cursors in a process-global `Mutex<BTreeSet<i64>>`. When `ChangelogRepository::insert()` creates a changelog row inside a transaction, the returned cursor is registered in the tracker immediately. When the transaction commits or rolls back (via `transaction_sync_etc`), all its cursors are deregistered. Readers compute `max_safe = min(in_flight) - 1` and only read up to that.
 
-This was less viable with triggers (Rust doesn't control or observe trigger-inserted cursors), but with Rust-side inserts it becomes a clean option — same concept as #3 but with exact knowledge instead of gap inference.
+Implementation:
+- `ChangelogTracker` (`server/repository/src/db_diesel/changelog/tracker.rs`) — the `BTreeSet<i64>` with register/deregister/max_safe_cursor methods, plus a global singleton via `OnceLock`
+- `StorageConnection::track_changelog_cursor()` — called by `insert()`, only registers when inside an explicit transaction (autocommit statements are immediately visible and don't need tracking)
+- `StorageConnection::flush_changelog_cursors()` — called after commit and rollback in `transaction_sync_etc`
+- Crash safety: on process crash, in-memory tracker state is lost, but all in-flight transactions are rolled back by the database — empty tracker on restart is correct
 
 **Pros:**
 - No locking — writers never blocked by readers
@@ -95,8 +99,7 @@ This was less viable with triggers (Rust doesn't control or observe trigger-inse
 - Readers complete immediately (non-blocking)
 
 **Cons:**
-- Only viable when all changelog inserts go through Rust (requires sync v7)
-- Deregister must be wired to transaction commit/rollback lifecycle
+- Deregister wired to `transaction_sync_etc` — writes outside this path (if any) would not be tracked
 - Process-global shared state (but just a `Mutex<BTreeSet<i64>>`)
 - Long-running transactions stall cursor advancement (same as locking, but readers return immediately with fewer results instead of blocking)
 
@@ -118,14 +121,47 @@ After sync integration, roll processor/sync cursors back to the earliest cursor 
 
 ## Test coverage
 
-- `test_late_changelog_rows` — unit test in `server/repository/src/db_diesel/changelog/changelog.rs` reproducing the race condition at the changelog query level
-- `test_changelog_race_condition_with_processor` — integration test in `server/service/src/processors/changelog_race_condition_test.rs` using the real AssignRequisitionNumber processor
-- `test_safe_cursor_during_concurrent_write` — unit test for the max safe cursor prototype (Postgres only)
-- `test_safe_cursor_with_rollback_gap` — unit test verifying rollback gaps don't permanently stall the safe cursor
+All changelog read modes share the same two test scenarios, run via `ChangelogReadMode` parameterisation:
 
-## Key edge case
+**Concurrent write test** (`concurrent_write_test`): 3 clinicians inserted, middle one's transaction held open. Verifies all 3 are returned after commit.
+- `test_concurrent_write_lock` — ACCESS EXCLUSIVE
+- `test_concurrent_write_exclusive_lock` — EXCLUSIVE
+- `test_concurrent_write_share_lock` — SHARE
+- `test_concurrent_write_safe_cursor_pg` — SafeCursorPostgres (also asserts only 1 row returned while tx is open)
+- `test_concurrent_write_safe_cursor_rust` — SafeCursorRust (also asserts only 1 row returned while tx is open)
 
-Identified in [#11087](https://github.com/msupply-foundation/open-msupply/issues/11087): a processor that commits an operation and then needs to run again expecting the previous operation to already be processed. With the lock approach, `changelogs()` blocks and returns everything. With the safe cursor approach, a long-running transaction on another connection could keep the safe cursor behind the processor's own recently-committed cursor, requiring a retry loop.
+**Rollback gap test** (`rollback_gap_test`): 3 clinicians inserted, middle one's transaction rolled back. Verifies both visible rows returned despite permanent gap.
+- `test_rollback_gap_lock` — ACCESS EXCLUSIVE
+- `test_rollback_gap_exclusive_lock` — EXCLUSIVE
+- `test_rollback_gap_share_lock` — SHARE
+- `test_rollback_gap_safe_cursor_pg` — SafeCursorPostgres
+- `test_rollback_gap_safe_cursor_rust` — SafeCursorRust
+
+All tests are Postgres-only (SQLite uses Serializable isolation and can't reproduce the race condition).
+
+**Integration test**: `test_changelog_race_condition_with_processor` in `server/service/src/processors/changelog_race_condition_test.rs` — uses the real AssignRequisitionNumber processor to verify end-to-end correctness.
+
+## Key edge case: "commit then expect processor to see it"
+
+Identified in [#11087](https://github.com/msupply-foundation/open-msupply/issues/11087): a processor that commits an operation and then needs to run again expecting the previous operation to already be processed.
+
+Investigation found this is NOT a problem in practice. The production pattern is fire-and-forget:
+
+```rust
+// transaction_sync commits data (changelog entries created)
+ctx.processors_trigger.trigger_invoice_transfer_processors(); // fire-and-forget via channel
+Ok(invoice)
+```
+
+This pattern is used in ~11 places (invoice updates/deletes, requisition updates, synchroniser). None of them await the processor result. `await_events_processed()` exists but is only used in tests.
+
+The processor runs independently on its own loop. By the time it wakes up and reads changelogs, the triggering transaction has already committed and the Rust tracker has deregistered its cursors — so the processor sees the new entries regardless of read mode.
+
+The only scenario where safe cursor returns fewer results is when a **different** long-running transaction is holding an in-flight cursor. In that case:
+- Lock approach: processor blocks until that transaction finishes, then sees everything
+- Safe cursor approach: processor sees entries up to `min_in_flight - 1`, processes what it can, and catches up on the next cycle after the transaction finishes
+
+Both are correct — safe cursor just delays processing slightly for entries near an unrelated in-flight cursor.
 
 ## Files
 

@@ -1,7 +1,9 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::apply_equal_filter,
-    name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
-    LockedConnection, RepositoryError, StorageConnection,
+    db_diesel::{changelog::tracker::global_changelog_tracker, store_row::store},
+    diesel_macros::apply_equal_filter,
+    name_store_join::name_store_join,
+    vaccination_row::vaccination,
+    DBType, EqualFilter, LockedConnection, RepositoryError, StorageConnection,
 };
 use diesel::{helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -298,6 +300,10 @@ pub enum ChangelogReadMode {
     /// Use pg_locks to detect in-flight writers and gap detection to compute a
     /// safe cursor upper bound. No lock acquired. Prototype — see limitations.
     SafeCursorPostgres,
+    /// Use the Rust-side ChangelogTracker to compute a safe cursor upper bound.
+    /// No lock acquired. Exact knowledge of in-flight cursors — no gap inference.
+    /// Requires all changelog inserts to go through ChangelogRepository::insert().
+    SafeCursorRust,
 }
 
 pub struct ChangelogRepository<'a> {
@@ -313,6 +319,7 @@ impl ChangelogReadMode {
             Ok("exclusive") => Self::ExclusiveLock,
             Ok("share") => Self::ShareLock,
             Ok("safe_cursor_postgres") => Self::SafeCursorPostgres,
+            Ok("safe_cursor_rust") => Self::SafeCursorRust,
             _ => Self::AccessExclusiveLock,
         }
     }
@@ -415,8 +422,7 @@ impl<'a> ChangelogRepository<'a> {
             ChangelogReadMode::SafeCursorPostgres => {
                 #[cfg(feature = "postgres")]
                 {
-                    let safe_limit =
-                        pg_max_safe_changelog_cursor(self.connection, earliest)?;
+                    let safe_limit = pg_max_safe_changelog_cursor(self.connection, earliest)?;
                     let mut query = build_query(earliest)
                         .order(changelog_deduped::cursor.asc())
                         .limit(limit.into());
@@ -437,6 +443,17 @@ impl<'a> ChangelogRepository<'a> {
                         query.load(self.connection.lock().connection())?;
                     Ok(result)
                 }
+            }
+            ChangelogReadMode::SafeCursorRust => {
+                let safe_limit = global_changelog_tracker().max_safe_cursor();
+                let mut query = build_query(earliest)
+                    .order(changelog_deduped::cursor.asc())
+                    .limit(limit.into());
+                if let Some(max_cursor) = safe_limit {
+                    query = query.filter(changelog_deduped::cursor.le(max_cursor));
+                }
+                let result: Vec<ChangelogRow> = query.load(self.connection.lock().connection())?;
+                Ok(result)
             }
         }
     }
@@ -512,7 +529,9 @@ impl<'a> ChangelogRepository<'a> {
         Ok(())
     }
 
-    /// Inserts a changelog record, and returns the cursor of the inserted record
+    /// Inserts a changelog record, and returns the cursor of the inserted record.
+    /// Also registers the cursor in the global ChangelogTracker for the
+    /// SafeCursorRust read mode.
     #[cfg(feature = "postgres")]
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
         // Insert the record, and then return the cursor of the inserted record
@@ -524,6 +543,7 @@ impl<'a> ChangelogRepository<'a> {
             .pop()
             .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
 
+        self.connection.track_changelog_cursor(cursor_id);
         Ok(cursor_id)
     }
 
@@ -536,6 +556,8 @@ impl<'a> ChangelogRepository<'a> {
             .execute(self.connection.lock().connection())?;
         let cursor_id = diesel::select(last_insert_rowid())
             .get_result::<i64>(self.connection.lock().connection())?;
+
+        self.connection.track_changelog_cursor(cursor_id);
         Ok(cursor_id)
     }
 }
@@ -934,8 +956,10 @@ mod test {
             setup_all(test_name, MockDataInserts::none()).await;
 
         // Record starting cursor so we only look at rows we create
-        let start_cursor =
-            ChangelogRepository::new(&connection).latest_cursor().unwrap() + 1;
+        let start_cursor = ChangelogRepository::new(&connection)
+            .latest_cursor()
+            .unwrap()
+            + 1;
 
         // Step 1: Insert clinician 1 — commits immediately
         ClinicianRowRepository::new(&connection)
@@ -953,8 +977,8 @@ mod test {
         let manager_2 = connection_manager.clone();
         let slow_tx = tokio::spawn(async move {
             let connection = manager_2.connection().unwrap();
-            let result: Result<(), TransactionError<RepositoryError>> =
-                connection.transaction_sync(|con| {
+            let result: Result<(), TransactionError<RepositoryError>> = connection
+                .transaction_sync(|con| {
                     ClinicianRowRepository::new(con)
                         .upsert_one(&ClinicianRow {
                             id: String::from("2"),
@@ -990,14 +1014,20 @@ mod test {
 
         // While slow tx is open: SafeCursorPostgres returns only rows before the gap,
         // Lock mode would block here (so we skip this assertion for Lock).
-        if matches!(mode, ChangelogReadMode::SafeCursorPostgres) {
-            let changelogs_during =
-                repo.changelogs(start_cursor, 10, filter.clone()).unwrap();
+        if matches!(
+            mode,
+            ChangelogReadMode::SafeCursorPostgres | ChangelogReadMode::SafeCursorRust
+        ) {
+            let changelogs_during = repo.changelogs(start_cursor, 10, filter.clone()).unwrap();
             assert_eq!(
-                changelogs_during.len(), 1,
+                changelogs_during.len(),
+                1,
                 "[{mode:?}] While tx open, expected 1 row, got {}: {:?}",
                 changelogs_during.len(),
-                changelogs_during.iter().map(|c| c.cursor).collect::<Vec<_>>()
+                changelogs_during
+                    .iter()
+                    .map(|c| c.cursor)
+                    .collect::<Vec<_>>()
             );
         }
 
@@ -1008,10 +1038,14 @@ mod test {
         // After commit: all 3 must be visible regardless of mode
         let changelogs_after = repo.changelogs(start_cursor, 10, filter).unwrap();
         assert_eq!(
-            changelogs_after.len(), 3,
+            changelogs_after.len(),
+            3,
             "[{mode:?}] After commit, expected 3 rows, got {}: {:?}",
             changelogs_after.len(),
-            changelogs_after.iter().map(|c| c.cursor).collect::<Vec<_>>()
+            changelogs_after
+                .iter()
+                .map(|c| c.cursor)
+                .collect::<Vec<_>>()
         );
     }
 
@@ -1023,8 +1057,10 @@ mod test {
             setup_all(test_name, MockDataInserts::none()).await;
 
         // Record starting cursor so we only look at rows we create
-        let start_cursor =
-            ChangelogRepository::new(&connection).latest_cursor().unwrap() + 1;
+        let start_cursor = ChangelogRepository::new(&connection)
+            .latest_cursor()
+            .unwrap()
+            + 1;
 
         // Insert clinician 1 — commits
         ClinicianRowRepository::new(&connection)
@@ -1074,7 +1110,8 @@ mod test {
         // Both visible rows should be returned — the gap from rollback should not block
         let changelogs = repo.changelogs(start_cursor, 10, filter).unwrap();
         assert_eq!(
-            changelogs.len(), 2,
+            changelogs.len(),
+            2,
             "[{mode:?}] After rollback, expected 2 visible rows, got {}: {:?}",
             changelogs.len(),
             changelogs.iter().map(|c| c.cursor).collect::<Vec<_>>()
@@ -1089,7 +1126,8 @@ mod test {
         concurrent_write_test(
             "test_concurrent_write_lock",
             ChangelogReadMode::AccessExclusiveLock,
-        ).await;
+        )
+        .await;
     }
 
     #[cfg(feature = "postgres")]
@@ -1098,7 +1136,8 @@ mod test {
         concurrent_write_test(
             "test_concurrent_write_exclusive_lock",
             ChangelogReadMode::ExclusiveLock,
-        ).await;
+        )
+        .await;
     }
 
     #[cfg(feature = "postgres")]
@@ -1107,16 +1146,28 @@ mod test {
         concurrent_write_test(
             "test_concurrent_write_share_lock",
             ChangelogReadMode::ShareLock,
-        ).await;
+        )
+        .await;
     }
 
     #[cfg(feature = "postgres")]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-    async fn test_concurrent_write_safe_cursor() {
+    async fn test_concurrent_write_safe_cursor_pg() {
         concurrent_write_test(
-            "test_concurrent_write_safe_cursor",
+            "test_concurrent_write_safe_cursor_pg",
             ChangelogReadMode::SafeCursorPostgres,
-        ).await;
+        )
+        .await;
+    }
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_concurrent_write_safe_cursor_rust() {
+        concurrent_write_test(
+            "test_concurrent_write_safe_cursor_rust",
+            ChangelogReadMode::SafeCursorRust,
+        )
+        .await;
     }
 
     #[cfg(feature = "postgres")]
@@ -1125,7 +1176,8 @@ mod test {
         rollback_gap_test(
             "test_rollback_gap_lock",
             ChangelogReadMode::AccessExclusiveLock,
-        ).await;
+        )
+        .await;
     }
 
     #[cfg(feature = "postgres")]
@@ -1134,25 +1186,34 @@ mod test {
         rollback_gap_test(
             "test_rollback_gap_exclusive_lock",
             ChangelogReadMode::ExclusiveLock,
-        ).await;
+        )
+        .await;
     }
 
     #[cfg(feature = "postgres")]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_rollback_gap_share_lock() {
-        rollback_gap_test(
-            "test_rollback_gap_share_lock",
-            ChangelogReadMode::ShareLock,
-        ).await;
+        rollback_gap_test("test_rollback_gap_share_lock", ChangelogReadMode::ShareLock).await;
     }
 
     #[cfg(feature = "postgres")]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-    async fn test_rollback_gap_safe_cursor() {
+    async fn test_rollback_gap_safe_cursor_pg() {
         rollback_gap_test(
-            "test_rollback_gap_safe_cursor",
+            "test_rollback_gap_safe_cursor_pg",
             ChangelogReadMode::SafeCursorPostgres,
-        ).await;
+        )
+        .await;
+    }
+
+    #[cfg(feature = "postgres")]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_rollback_gap_safe_cursor_rust() {
+        rollback_gap_test(
+            "test_rollback_gap_safe_cursor_rust",
+            ChangelogReadMode::SafeCursorRust,
+        )
+        .await;
     }
 
     #[actix_rt::test]

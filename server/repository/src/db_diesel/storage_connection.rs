@@ -59,6 +59,9 @@ impl<'a> LockedConnection<'a> {
 
 pub struct StorageConnection {
     raw_connection: Mutex<DBConnection>,
+    /// Changelog cursors inserted during the current transaction, pending deregistration
+    /// from the global ChangelogTracker on commit/rollback.
+    pending_changelog_cursors: Mutex<Vec<i64>>,
 }
 
 impl StorageConnection {
@@ -109,6 +112,40 @@ impl StorageConnection {
     pub fn new(connection: DBConnection) -> StorageConnection {
         StorageConnection {
             raw_connection: Mutex::new(connection),
+            pending_changelog_cursors: Mutex::new(Vec::new()),
+        }
+    }
+
+    /// Called by ChangelogRepository::insert() to track an in-flight cursor.
+    /// Only registers if we're inside an explicit transaction — autocommit
+    /// statements are immediately visible and don't need tracking.
+    pub fn track_changelog_cursor(&self, cursor: i64) {
+        // Check if we're in a transaction (level > 0)
+        let in_transaction = self
+            .lock()
+            .transaction_level::<RepositoryError>()
+            .unwrap_or(0)
+            > 0;
+
+        if !in_transaction {
+            return; // Autocommit — cursor is immediately visible, no tracking needed
+        }
+
+        use crate::db_diesel::changelog::tracker::global_changelog_tracker;
+        global_changelog_tracker().register(cursor);
+        self.pending_changelog_cursors
+            .lock()
+            .unwrap()
+            .push(cursor);
+    }
+
+    /// Deregister all pending changelog cursors from the global tracker.
+    /// Called after commit or rollback.
+    fn flush_changelog_cursors(&self) {
+        use crate::db_diesel::changelog::tracker::global_changelog_tracker;
+        let cursors: Vec<i64> = std::mem::take(&mut self.pending_changelog_cursors.lock().unwrap());
+        if !cursors.is_empty() {
+            global_changelog_tracker().deregister(&cursors);
         }
     }
 
@@ -168,11 +205,15 @@ impl StorageConnection {
                         level: current_level + 1,
                     }
                 })?;
+                // After commit: cursors are now visible, deregister from tracker
+                self.flush_changelog_cursors();
                 Ok(value)
             }
             Err(e) => {
                 let mut guard = self.raw_connection.lock().unwrap();
                 let con: &mut DBBackendConnection = &mut guard;
+                // After rollback: cursors were never committed, deregister from tracker
+                self.flush_changelog_cursors();
                 AnsiTransactionManager::rollback_transaction(con).map_err(|err| {
                     error!("Failed to rollback tx: {err:?}");
                     TransactionError::Transaction {
