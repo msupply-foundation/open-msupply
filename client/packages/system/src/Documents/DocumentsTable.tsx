@@ -60,6 +60,7 @@ export const DocumentsTable = ({
       columns,
       data: documents,
       initialSort: { key: 'createdDatetime', dir: 'desc' },
+      localStateOnly: true,
       noDataElement: (
         <NothingHere
           body={t('messages.no-documents-uploaded')}
