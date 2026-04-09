@@ -166,7 +166,6 @@ export const ActivityLogList: FC<{ recordId: string }> = ({ recordId }) => {
     isError,
     noDataElement: <NothingHere body={t('messages.no-log-entries')} />,
     enableRowSelection: false,
-    localStateOnly: true,
   });
 
   return <MaterialTable table={table} />;
