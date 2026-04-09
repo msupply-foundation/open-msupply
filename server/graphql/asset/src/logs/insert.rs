@@ -52,6 +52,7 @@ pub struct InsertAssetLogInput {
     pub reason_id: Option<String>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
+    pub log_datetime: Option<chrono::NaiveDateTime>,
 }
 
 impl From<InsertAssetLogInput> for InsertAssetLog {
@@ -63,6 +64,7 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             reason_id,
             comment,
             r#type,
+            log_datetime,
         }: InsertAssetLogInput,
     ) -> Self {
         InsertAssetLog {
@@ -72,6 +74,7 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             reason_id,
             comment,
             r#type,
+            log_datetime,
         }
     }
 }
@@ -106,7 +109,8 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
         | ServiceError::ReasonInvalidForStatus
         | ServiceError::ReasonDoesNotExist
         | ServiceError::StatusNotProvided
-        | ServiceError::CommentRequiredForReason => BadUserInput(formatted_error),
+        | ServiceError::CommentRequiredForReason
+        | ServiceError::LogDatetimeInFuture => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
             InternalError(formatted_error)
         }

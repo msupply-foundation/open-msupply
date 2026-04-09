@@ -28,6 +28,7 @@ pub struct AssetLogFilter {
     pub log_datetime: Option<DatetimeFilter>,
     pub user: Option<StringFilter>,
     pub reason_id: Option<EqualFilter<String>>,
+    pub r#type: Option<StringFilter>,
 }
 
 impl AssetLogFilter {
@@ -57,6 +58,10 @@ impl AssetLogFilter {
     }
     pub fn reason_id(mut self, filter: EqualFilter<String>) -> Self {
         self.reason_id = Some(filter);
+        self
+    }
+    pub fn r#type(mut self, filter: StringFilter) -> Self {
+        self.r#type = Some(filter);
         self
     }
 }
@@ -154,6 +159,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
             log_datetime,
             user,
             reason_id,
+            r#type,
         } = f;
 
         apply_equal_filter!(query, id, asset_log::id);
@@ -162,6 +168,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
 
         apply_equal_filter!(query, asset_id, asset_log::asset_id);
         apply_equal_filter!(query, reason_id, asset_log::reason_id);
+        apply_string_filter!(query, r#type, asset_log::type_);
 
         if let Some(user) = user {
             let mut sub_query = user_account::table.select(user_account::id).into_boxed();

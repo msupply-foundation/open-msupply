@@ -63,6 +63,7 @@ pub struct AssetLogFilterInput {
     pub log_datetime: Option<DatetimeFilterInput>,
     pub user: Option<StringFilterInput>,
     pub reason_id: Option<EqualFilterStringInput>,
+    pub r#type: Option<StringFilterInput>,
 }
 
 impl From<AssetLogFilterInput> for AssetLogFilter {
@@ -74,6 +75,7 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
             reason_id: f.reason_id.map(EqualFilter::from),
+            r#type: f.r#type.map(StringFilter::from),
         }
     }
 }
@@ -143,6 +145,10 @@ impl AssetLogNode {
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
         &self.row().log_datetime
+    }
+
+    pub async fn created_datetime(&self) -> &chrono::NaiveDateTime {
+        &self.row().created_datetime
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {

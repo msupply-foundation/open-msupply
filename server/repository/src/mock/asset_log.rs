@@ -15,6 +15,10 @@ pub fn mock_asset_log_a() -> AssetLogRow {
             .unwrap()
             .and_hms_opt(11, 11, 11)
             .unwrap(),
+        created_datetime: NaiveDate::from_ymd_opt(2022, 4, 12)
+            .unwrap()
+            .and_hms_opt(11, 11, 11)
+            .unwrap(),
     }
 }
 
@@ -31,6 +35,10 @@ pub fn mock_asset_log_b() -> AssetLogRow {
             .unwrap()
             .and_hms_opt(11, 11, 11)
             .unwrap(),
+        created_datetime: NaiveDate::from_ymd_opt(2022, 5, 12)
+            .unwrap()
+            .and_hms_opt(11, 11, 11)
+            .unwrap(),
     }
 }
 
@@ -44,6 +52,10 @@ pub fn mock_asset_log_c() -> AssetLogRow {
         r#type: None,
         reason_id: None,
         log_datetime: NaiveDate::from_ymd_opt(2021, 6, 12)
+            .unwrap()
+            .and_hms_opt(11, 11, 11)
+            .unwrap(),
+        created_datetime: NaiveDate::from_ymd_opt(2021, 6, 12)
             .unwrap()
             .and_hms_opt(11, 11, 11)
             .unwrap(),

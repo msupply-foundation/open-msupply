@@ -1,6 +1,14 @@
-import React from 'react';
-import { BasicSpinner, NothingHere, Typography } from '@common/components';
+import React, { useMemo, useState } from 'react';
 import {
+  Autocomplete,
+  BasicSpinner,
+  DateTimePickerInput,
+  NothingHere,
+  Typography,
+} from '@common/components';
+import {
+  AssetLogFilterInput,
+  AssetLogStatusNodeType,
   Box,
   Paper,
   SettingsCircleIcon,
@@ -8,7 +16,12 @@ import {
   UserCircleIcon,
   StatusChip,
 } from '@openmsupply-client/common';
-import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
+import {
+  DateUtils,
+  useFormatDateTime,
+  useIntlUtils,
+  useTranslation,
+} from '@common/intl';
 import { ColdchainAssetLogFragment, useAssets } from '../../api';
 import { FileList } from '../../Components';
 import { statusColourMap } from '../../utils';
@@ -176,10 +189,15 @@ const StatusLog = ({
             >
               {localisedDate(log.logDatetime)}
             </Typography>
-            <StatusChip
-              label={status ? t(status.label) : undefined}
-              colour={status?.colour}
-            />
+            {status && (
+              <StatusChip
+                label={t(status.label)}
+                colour={status.colour}
+              />
+            )}
+            {log.type && (
+              <StatusChip label={log.type} colour="gray.main" />
+            )}
           </Box>
           <User user={log.user} />
           <Box display="flex" alignItems="flex-start">
@@ -223,39 +241,171 @@ const StatusLog = ({
   );
 };
 
-export const StatusLogs = ({ assetId }: { assetId: string }) => {
+type EventOption = {
+  label: string;
+  value: 'status' | 'type';
+};
+
+const useEventOptions = (): EventOption[] => {
   const t = useTranslation();
+  return useMemo<EventOption[]>(
+    () => [
+      { label: t('label.status-change'), value: 'status' },
+      { label: t('label.temperature-mapping'), value: 'type' },
+    ],
+    [t]
+  );
+};
 
-  const { data: logs, isLoading } = useAssets.log.list(assetId);
-
-  if (isLoading) return <BasicSpinner />;
-
-  if (logs?.totalCount === 0)
-    return <NothingHere body={t('messages.no-status-logs')} />;
+const LogFilters = ({
+  fromDate,
+  toDate,
+  selectedEvent,
+  eventOptions,
+  onFromDateChange,
+  onToDateChange,
+  onEventChange,
+}: {
+  fromDate: Date | null;
+  toDate: Date | null;
+  selectedEvent: EventOption | null;
+  eventOptions: EventOption[];
+  onFromDateChange: (date: Date | null) => void;
+  onToDateChange: (date: Date | null) => void;
+  onEventChange: (value: EventOption | null) => void;
+}) => {
+  const t = useTranslation();
 
   return (
     <Box
-      paddingX={8}
-      paddingY={4}
       display="flex"
-      flex={1}
-      flexDirection="column"
+      gap={2}
+      paddingX={8}
+      paddingTop={2}
+      alignItems="center"
+      flexWrap="wrap"
       sx={theme => ({
         [theme.breakpoints.down('sm')]: {
-          paddingX: 0,
-          paddingY: 0,
-          justifyItems: 'center',
+          paddingX: 1,
+          flexDirection: 'column',
+          alignItems: 'stretch',
         },
       })}
     >
-      {logs?.nodes?.map((log, index, nodes) => (
-        <StatusLog
-          log={log}
-          key={log.id}
-          isFirst={index === 0}
-          isLast={index === nodes.length - 1}
+      <Box display="flex" alignItems="center" gap={1}>
+        <Typography sx={{ fontWeight: 'bold', fontSize: '14px' }}>
+          {t('label.from-date')}:
+        </Typography>
+        <DateTimePickerInput
+          value={fromDate}
+          format="P"
+          onChange={onFromDateChange}
+          width={180}
         />
-      ))}
+      </Box>
+      <Box display="flex" alignItems="center" gap={1}>
+        <Typography sx={{ fontWeight: 'bold', fontSize: '14px' }}>
+          {t('label.to-date')}:
+        </Typography>
+        <DateTimePickerInput
+          value={toDate}
+          format="P"
+          onChange={onToDateChange}
+          width={180}
+        />
+      </Box>
+      <Box display="flex" alignItems="center" gap={1}>
+        <Typography sx={{ fontWeight: 'bold', fontSize: '14px' }}>
+          {t('label.event')}:
+        </Typography>
+        <Autocomplete
+          value={selectedEvent}
+          options={eventOptions}
+          onChange={(_, option) => onEventChange(option ?? null)}
+          isOptionEqualToValue={(a, b) => a.value === b.value}
+          width="280px"
+          clearable
+        />
+      </Box>
+    </Box>
+  );
+};
+
+export const StatusLogs = ({ assetId }: { assetId: string }) => {
+  const t = useTranslation();
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<EventOption | null>(null);
+  const eventOptions = useEventOptions();
+
+  const additionalFilter: Partial<AssetLogFilterInput> = {};
+  if (fromDate || toDate) {
+    additionalFilter.logDatetime = {};
+    if (fromDate) {
+      additionalFilter.logDatetime.afterOrEqualTo =
+        DateUtils.startOfDay(fromDate).toISOString();
+    }
+    if (toDate) {
+      additionalFilter.logDatetime.beforeOrEqualTo =
+        DateUtils.endOfDay(toDate).toISOString();
+    }
+  }
+  if (selectedEvent) {
+    if (selectedEvent.value === 'status') {
+      additionalFilter.status = {
+        equalAny: Object.values(AssetLogStatusNodeType),
+      };
+    } else {
+      additionalFilter.type = { equalTo: 'Temperature Mapping' };
+    }
+  }
+
+  const hasFilter = fromDate || toDate || selectedEvent;
+  const { data: logs, isLoading } = useAssets.log.list(
+    assetId,
+    hasFilter ? additionalFilter : undefined
+  );
+
+  return (
+    <Box display="flex" flex={1} flexDirection="column">
+      <LogFilters
+        fromDate={fromDate}
+        toDate={toDate}
+        selectedEvent={selectedEvent}
+        eventOptions={eventOptions}
+        onFromDateChange={setFromDate}
+        onToDateChange={setToDate}
+        onEventChange={setSelectedEvent}
+      />
+      {isLoading ? (
+        <BasicSpinner />
+      ) : logs?.totalCount === 0 ? (
+        <NothingHere body={t('messages.no-status-logs')} />
+      ) : (
+        <Box
+          paddingX={8}
+          paddingY={4}
+          display="flex"
+          flex={1}
+          flexDirection="column"
+          sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              paddingX: 0,
+              paddingY: 0,
+              justifyItems: 'center',
+            },
+          })}
+        >
+          {logs?.nodes?.map((log, index, nodes) => (
+            <StatusLog
+              log={log}
+              key={log.id}
+              isFirst={index === 0}
+              isLast={index === nodes.length - 1}
+            />
+          ))}
+        </Box>
+      )}
     </Box>
   );
 };

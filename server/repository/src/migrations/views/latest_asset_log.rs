@@ -27,7 +27,8 @@ impl ViewMigrationFragment for ViewMigration {
       al.type,
       al.log_datetime,
       al.status,
-      al.reason_id
+      al.reason_id,
+      al.created_datetime
     FROM (
       SELECT asset_id, MAX(log_datetime) AS latest_log_datetime
       FROM asset_log

@@ -22,6 +22,7 @@ table! {
         #[sql_name = "type"] type_ -> Nullable<Text>,
         reason_id -> Nullable<Text>,
         log_datetime -> Timestamp,
+        created_datetime -> Timestamp,
     }
 }
 
@@ -35,6 +36,7 @@ table! {
         #[sql_name = "type"] type_ -> Nullable<Text>,
         reason_id -> Nullable<Text>,
         log_datetime -> Timestamp,
+        created_datetime -> Timestamp,
     }
 }
 
@@ -68,6 +70,7 @@ pub struct AssetLogRow {
     pub r#type: Option<String>,
     pub reason_id: Option<String>,
     pub log_datetime: NaiveDateTime,
+    pub created_datetime: NaiveDateTime,
 }
 
 pub struct AssetLogRowRepository<'a> {
