@@ -27,7 +27,7 @@ import { StatusHistory } from '../Components/StatusHistory';
 
 enum StockLineDetailTabs {
   Details = 'details',
-  StatusHistory = 'statushistory',
+  StatusHistory = 'vvm-history',
   Log = 'log',
   Ledger = 'ledger',
 }
