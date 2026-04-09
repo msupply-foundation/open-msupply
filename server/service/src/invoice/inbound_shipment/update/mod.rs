@@ -216,7 +216,6 @@ pub enum UpdateInboundShipmentError {
     CannotIssueForeignCurrencyForInternalSuppliers,
     CannotUpdateStatusAndDonorAtTheSameTime,
     BackdatingNotEnabled,
-    CannotSetReceivedDateInFuture,
     CanOnlyBackdateReceivedShipments,
     CannotMoveReceivedDateForward,
     ExceedsMaximumBackdatingDays,
@@ -2061,6 +2060,31 @@ mod test {
             .unwrap();
         let service = &service_provider.invoice_service;
 
+        // BackdatingNotEnabled: preference not yet enabled
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now).id,
+                    received_datetime: Some(two_days_ago.date()),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::BackdatingNotEnabled)
+        );
+
+        // Enable backdating preference
+        use repository::{PreferenceRow, PreferenceRowRepository};
+        PreferenceRowRepository::new(&_connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_of_shipments_global".to_string(),
+                key: "backdating_of_shipments".to_string(),
+                value: r#"{"enabled":true,"maxDays":0}"#.to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
         // CanOnlyBackdateReceivedShipments: invoice is New
         assert_eq!(
             service.update_inbound_shipment(
@@ -2075,7 +2099,7 @@ mod test {
             Err(UpdateInboundShipmentError::CanOnlyBackdateReceivedShipments)
         );
 
-        // CannotSetReceivedDateInFuture
+        // CannotMoveReceivedDateForward: future date
         let future_date = (now + Duration::days(5)).date();
         assert_eq!(
             service.update_inbound_shipment(
@@ -2087,16 +2111,70 @@ mod test {
                 },
                 InboundShipmentType::InboundShipment,
             ),
-            Err(UpdateInboundShipmentError::CannotSetReceivedDateInFuture)
+            Err(UpdateInboundShipmentError::CannotMoveReceivedDateForward)
         );
 
-        // CannotMoveReceivedDateForward: try to set same date
+        // Same UTC date is allowed: midnight (00:00:00) is earlier than the
+        // stored time component, so it's genuinely moving backward
+        let result = service.update_inbound_shipment(
+            &context,
+            UpdateInboundShipment {
+                id: received_inbound(now).id,
+                received_datetime: Some(now.date()),
+                ..Default::default()
+            },
+            InboundShipmentType::InboundShipment,
+        );
+        assert!(result.is_ok(), "Same UTC date should succeed: {:#?}", result);
+
+        // Timezone scenario: stored received_datetime is at 23:00 UTC on April 9.
+        // A user in UTC+14 sees this as April 10 local time and picks April 9
+        // (one day before what they see). This should succeed because the new
+        // datetime (midnight April 9) is earlier than the stored (23:00 April 9).
+        let late_utc = NaiveDate::from_ymd_opt(2020, 4, 9)
+            .unwrap()
+            .and_hms_opt(23, 0, 0)
+            .unwrap();
+        let tz_inbound_id = "tz_inbound_backdate";
+        let tz_inbound = InvoiceRow {
+            id: tz_inbound_id.to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::Received,
+            received_datetime: Some(late_utc),
+            delivered_datetime: Some(late_utc - Duration::days(1)),
+            ..Default::default()
+        };
+        InvoiceRowRepository::new(&_connection)
+            .upsert_one(&tz_inbound)
+            .unwrap();
+
+        // Picking same UTC date (April 9) should succeed: midnight < 23:00
+        let same_utc_date = late_utc.date();
+        let result = service.update_inbound_shipment(
+            &context,
+            UpdateInboundShipment {
+                id: tz_inbound_id.to_string(),
+                received_datetime: Some(same_utc_date),
+                ..Default::default()
+            },
+            InboundShipmentType::InboundShipment,
+        );
+        assert!(
+            result.is_ok(),
+            "User in UTC+14 picking same UTC date should succeed: {:#?}",
+            result
+        );
+
+        // But picking the next day (April 10) should fail
+        let next_day = same_utc_date + Duration::days(1);
         assert_eq!(
             service.update_inbound_shipment(
                 &context,
                 UpdateInboundShipment {
-                    id: received_inbound(now).id,
-                    received_datetime: Some(now.date()),
+                    id: tz_inbound_id.to_string(),
+                    received_datetime: Some(next_day),
                     ..Default::default()
                 },
                 InboundShipmentType::InboundShipment,

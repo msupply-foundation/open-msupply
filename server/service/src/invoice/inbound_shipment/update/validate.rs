@@ -5,7 +5,7 @@ use crate::invoice::{
 };
 use crate::preference::{preferences::BackdatingOfShipments, Preference};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use chrono::{Duration, Utc};
+use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{
     InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceStatus, InvoiceType, Name,
     StorageConnection,
@@ -81,18 +81,12 @@ pub fn validate(
             return Err(CanOnlyBackdateReceivedShipments);
         }
 
-        // The input is a NaiveDate (no time/tz). The user picks "today" in their
-        // local timezone, which could be up to UTC+14. Compare against the UTC date
-        // plus one day so that no local timezone considers this "in the future".
-        let max_allowed_date = Utc::now().date_naive() + Duration::days(1);
-
-        if received_datetime > max_allowed_date {
-            return Err(CannotSetReceivedDateInFuture);
-        }
-
-        // Can only move the date earlier, never forward
+        // Can only move the date earlier, never forward.
+        // Compare as NaiveDateTime values: the input NaiveDate becomes midnight (00:00:00),
+        // which is the actual value that will be stored.
         if let Some(current_received) = invoice.received_datetime {
-            if received_datetime >= current_received.date() {
+            let new_received = NaiveDateTime::from(received_datetime);
+            if new_received >= current_received {
                 return Err(CannotMoveReceivedDateForward);
             }
         }
