@@ -146,7 +146,12 @@ type VaccineCoverageDraft = {
   womenAgeGroups: WomenCoverageAgeGroup[];
 };
 
-type WorkflowStep = 'tally' | 'coverage' | 'allocation' | 'non-vaccine';
+type WorkflowStep =
+  | 'tally'
+  | 'coverage'
+  | 'allocation'
+  | 'wastage'
+  | 'non-vaccine';
 type TallyAgeKey = 'under1' | 'oneToTwo' | 'twoToFive';
 type TallyGenderKey = 'male' | 'female' | 'other';
 
@@ -444,7 +449,7 @@ const formatPatientName = (value: string) => {
   const normalized = value.trim().replace(/\s+/g, ' ');
   if (!normalized) return normalized;
 
-  // Some patient names are stored as "last, first"; display as "first, last".
+  // Some patient names are stored as "last, first"; display as "first last".
   if (normalized.includes(',')) {
     const [lastName, ...firstParts] = normalized
       .split(',')
@@ -452,11 +457,26 @@ const formatPatientName = (value: string) => {
       .filter(Boolean);
 
     if (firstParts.length > 0) {
-      return `${firstParts.join(' ')}, ${lastName}`.trim();
+      return `${firstParts.join(' ')} ${lastName}`.trim();
     }
   }
 
-  return normalized;
+  return normalized.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+};
+
+const getWomenCoverageTotals = (coverage: VaccineCoverageDraft | undefined) => {
+  if (!coverage) {
+    return { nonPregnant: 0, pregnant: 0 };
+  }
+
+  const { nonPregnantGroup, pregnantGroup } = resolveWomenCoverageGroups(
+    coverage.womenAgeGroups
+  );
+
+  return {
+    nonPregnant: nonPregnantGroup?.count ?? 0,
+    pregnant: pregnantGroup?.count ?? 0,
+  };
 };
 
 const getCoverageUsedTotal = (coverage: VaccineCoverageDraft | undefined) => {
@@ -466,10 +486,8 @@ const getCoverageUsedTotal = (coverage: VaccineCoverageDraft | undefined) => {
     (total, ageGroup) => total + ageGroup.male + ageGroup.female,
     0
   );
-  const womenTotal = coverage.womenAgeGroups.reduce(
-    (total, ageGroup) => total + ageGroup.count,
-    0
-  );
+  const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
+  const womenTotal = nonPregnant + pregnant;
 
   return childTotal + womenTotal;
 };
@@ -480,7 +498,8 @@ const hasCoverageValues = (coverage: VaccineCoverageDraft | undefined) => {
   const childValues = coverage.childAgeGroups.some(
     ageGroup => ageGroup.male > 0 || ageGroup.female > 0
   );
-  const womenValues = coverage.womenAgeGroups.some(ageGroup => ageGroup.count > 0);
+  const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
+  const womenValues = nonPregnant > 0 || pregnant > 0;
 
   return childValues || womenValues;
 };
@@ -498,9 +517,12 @@ const coverageSummaryText = (
       .filter(group => group.male > 0 || group.female > 0)
       .map(group => `${group.label} M:${group.male} F:${group.female}`)
       .join(' ; ');
-    const womenSummary = coverage.womenAgeGroups
-      .filter(group => group.count > 0)
-      .map(group => `${group.label} ${group.count}`)
+    const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
+    const womenSummary = [
+      nonPregnant > 0 ? `Non pregnant ${nonPregnant}` : null,
+      pregnant > 0 ? `Pregnant ${pregnant}` : null,
+    ]
+      .filter((part): part is string => part !== null)
       .join(' ; ');
 
     return [
@@ -579,17 +601,9 @@ const buildCoverageSummaryRows = (
         }
       }
 
-      const { nonPregnantGroup, pregnantGroup } = resolveWomenCoverageGroups(
-        coverage.womenAgeGroups
-      );
-
-      if (nonPregnantGroup) {
-        summary.womenNonPregnant += nonPregnantGroup.count;
-      }
-
-      if (pregnantGroup && pregnantGroup.id !== nonPregnantGroup?.id) {
-        summary.womenPregnant += pregnantGroup.count;
-      }
+      const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
+      summary.womenNonPregnant = nonPregnant;
+      summary.womenPregnant = pregnant;
 
       return summary;
     })
@@ -637,6 +651,35 @@ const allocateAcrossStockLines = (
   return { allocations, remaining };
 };
 
+const getSuggestedOpenVialWastageAmount = ({
+  stockOnHand,
+  used,
+  doses,
+}: {
+  stockOnHand: number;
+  used: number;
+  doses: number;
+}) => {
+  if (doses <= 0 || used <= 0) return 0;
+
+  const availableDoses = round(stockOnHand);
+  const administered = round(used);
+  const openUnitOnHand = round(availableDoses % doses);
+
+  if (openUnitOnHand > 0) {
+    if (administered <= openUnitOnHand) {
+      return round(openUnitOnHand - administered);
+    }
+
+    const fromNewUnits = round(administered - openUnitOnHand);
+    const remainder = round(fromNewUnits % doses);
+    return remainder === 0 ? 0 : round(doses - remainder);
+  }
+
+  const remainder = round(administered % doses);
+  return remainder === 0 ? 0 : round(doses - remainder);
+};
+
 const getSuggestedOpenVialWastage = ({
   soh,
   used,
@@ -645,19 +688,11 @@ const getSuggestedOpenVialWastage = ({
 }: Pick<DailyTallyRow, 'soh' | 'used' | 'isVaccine' | 'doses'>) => {
   if (!isVaccine || doses <= 0 || used <= 0) return null;
 
-  const stockOnHand = round(soh);
-  const administered = round(used);
-  const openRemainderFromStock = round(stockOnHand % doses);
-
-  if (administered <= openRemainderFromStock) {
-    return 0;
-  }
-
-  const fromNewVials = round(administered - openRemainderFromStock);
-  const remainder = round(fromNewVials % doses);
-  if (remainder === 0) return 0;
-
-  return round(doses - remainder);
+  return getSuggestedOpenVialWastageAmount({
+    stockOnHand: soh,
+    used,
+    doses,
+  });
 };
 
 const sumBatchDraft = (
@@ -825,10 +860,9 @@ export const DailyTallyView = () => {
       first: 5000,
       filterBy: {
         type: { equalTo: ItemNodeType.Stock },
-        ...(filterText ? { search: { like: filterText } } : {}),
       },
     }),
-    [filterText]
+    []
   );
 
   const { data, isLoading, isError } = useQuery({
@@ -1020,6 +1054,14 @@ export const DailyTallyView = () => {
 
   const vaccineRows = useMemo(() => rows.filter(row => row.isVaccine), [rows]);
   const nonVaccineRows = useMemo(() => rows.filter(row => !row.isVaccine), [rows]);
+  const normalizedFilterText = filterText.trim().toLowerCase();
+  const filteredVaccineRows = useMemo(
+    () =>
+      normalizedFilterText
+        ? vaccineRows.filter(row => row.item.toLowerCase().includes(normalizedFilterText))
+        : vaccineRows,
+    [normalizedFilterText, vaccineRows]
+  );
 
   useEffect(() => {
     if (!selectedTallyItemId) return;
@@ -1033,9 +1075,9 @@ export const DailyTallyView = () => {
   const allocationVaccineRows = useMemo(
     () =>
       isSimplifiedMode
-        ? vaccineRows
-        : vaccineRows.filter(row => hasCoverageValues(coverageByItem[row.itemId])),
-    [isSimplifiedMode, vaccineRows, coverageByItem]
+        ? filteredVaccineRows
+        : filteredVaccineRows.filter(row => hasCoverageValues(coverageByItem[row.itemId])),
+    [isSimplifiedMode, filteredVaccineRows, coverageByItem]
   );
   const allocationNonVaccineRows = nonVaccineRows;
   const hasNonVaccineItems = allocationNonVaccineRows.length > 0;
@@ -1044,6 +1086,7 @@ export const DailyTallyView = () => {
     if (isSessionTallyStepEnabled) sequence.push('tally');
     if (!isSimplifiedMode) sequence.push('coverage');
     sequence.push('allocation');
+    sequence.push('wastage');
     if (hasNonVaccineItems) sequence.push('non-vaccine');
     return sequence;
   }, [hasNonVaccineItems, isSessionTallyStepEnabled, isSimplifiedMode]);
@@ -1053,15 +1096,23 @@ export const DailyTallyView = () => {
   const workflowStepTitleByKey: Record<WorkflowStep, string> = {
     tally: 'Vaccine Session Tally',
     coverage: 'Coverage',
-    allocation: 'Vaccine Batches and Wastage',
+    allocation: 'Vaccine Batch Allocation',
+    wastage: 'Open Vial Wastage',
     'non-vaccine': 'Non-vaccine Issuance',
   };
   const workflowStepBreadcrumbLabel = `Step ${workflowStepIndex + 1} of ${workflowStepTotal}: ${workflowStepTitleByKey[workflowStep]}`;
+  const allocationStepRows = useSimplifiedMobileUi
+    ? allocationVaccineRows
+    : allocationVaccineRows.filter(row => row.stockLines.length > 1);
   const displayedVaccineRows =
     workflowStep === 'coverage'
-      ? vaccineRows
+      ? filteredVaccineRows
       : workflowStep === 'allocation'
-        ? allocationVaccineRows
+        ? allocationStepRows
+        : workflowStep === 'wastage'
+        ? useSimplifiedMobileUi
+          ? allocationVaccineRows.filter(row => row.used > 0)
+          : allocationVaccineRows
         : [];
 
   useEffect(() => {
@@ -1223,7 +1274,7 @@ export const DailyTallyView = () => {
       return;
     }
 
-    // If coverage is entirely empty (all zeros), skip allocation and go to the next workflow step.
+    // If coverage is entirely empty (all zeros), skip allocation and wastage.
     const hasAnyCoverageValues = vaccineRows.some(row =>
       hasCoverageValues(coverageByItem[row.itemId])
     );
@@ -1231,18 +1282,30 @@ export const DailyTallyView = () => {
       const allocationIndex = workflowStepSequence.indexOf('allocation');
       const stepAfterAllocation =
         allocationIndex >= 0 ? workflowStepSequence[allocationIndex + 1] : undefined;
+      const wastageIndex = workflowStepSequence.indexOf('wastage');
+      const stepAfterVaccineSteps =
+        wastageIndex >= 0 ? workflowStepSequence[wastageIndex + 1] : stepAfterAllocation;
 
-      if (stepAfterAllocation === 'non-vaccine') {
+      if (stepAfterVaccineSteps === 'non-vaccine') {
         moveToNonVaccineStep();
         return;
       }
 
-      if (stepAfterAllocation) {
-        setWorkflowStep(stepAfterAllocation);
+      if (stepAfterVaccineSteps) {
+        setWorkflowStep(stepAfterVaccineSteps);
         return;
       }
 
       onConfirm();
+      return;
+    }
+
+    // If covered vaccine rows are all single-batch, skip allocation and go straight to wastage.
+    const hasAnyCoveredMultiBatchVaccines = vaccineRows.some(
+      row => row.stockLines.length > 1 && hasCoverageValues(coverageByItem[row.itemId])
+    );
+    if (!hasAnyCoveredMultiBatchVaccines) {
+      setWorkflowStep('wastage');
       return;
     }
 
@@ -1262,7 +1325,7 @@ export const DailyTallyView = () => {
     setWorkflowStep('allocation');
   };
 
-  const moveToNonVaccineStep = () => {
+  const ensureMultiBatchAllocationIsValid = () => {
     const usedVaccineRows = allocationVaccineRows.filter(row => row.used > 0);
 
     const invalidMultiBatchUsed = usedVaccineRows.find(row => {
@@ -1280,7 +1343,7 @@ export const DailyTallyView = () => {
       error(
         `For ${invalidMultiBatchUsed.item}, batch Issued is mandatory and must equal item Issued.`
       )();
-      return;
+      return false;
     }
 
     const invalidMultiBatchCapacity = usedVaccineRows.find(row => {
@@ -1302,8 +1365,39 @@ export const DailyTallyView = () => {
       error(
         `For ${invalidMultiBatchCapacity.item}, one or more batch Issued values exceed that batch stock.`
       )();
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  const ensureSimplifiedMobileIssuedWithinSoh = () => {
+    if (!useSimplifiedMobileUi || workflowStep !== 'allocation') return true;
+
+    const invalidRows = allocationVaccineRows.filter(row => row.used - row.soh > 0.0001);
+    if (invalidRows.length === 0) return true;
+
+    const summary = invalidRows
+      .slice(0, 3)
+      .map(row => `${row.item} (Issued ${row.used} > SOH ${row.soh})`)
+      .join('; ');
+    const remainingCount = invalidRows.length - 3;
+
+    error(
+      `Cannot continue to Open Vial Wastage because Issued exceeds SOH for: ${summary}${remainingCount > 0 ? `; and ${remainingCount} more item(s)` : ''}.`
+    )();
+    return false;
+  };
+
+  const moveToWastageStep = () => {
+    if (!ensureSimplifiedMobileIssuedWithinSoh()) return;
+    if (!ensureMultiBatchAllocationIsValid()) return;
+
+    setWorkflowStep('wastage');
+  };
+
+  const moveToNonVaccineStep = () => {
+    if (!ensureMultiBatchAllocationIsValid()) return;
 
     setWorkflowStep('non-vaccine');
   };
@@ -1324,6 +1418,11 @@ export const DailyTallyView = () => {
     }
 
     if (workflowStep === 'allocation') {
+      moveToWastageStep();
+      return;
+    }
+
+    if (workflowStep === 'wastage') {
       if (nextStep === 'non-vaccine') {
         moveToNonVaccineStep();
         return;
@@ -1336,6 +1435,44 @@ export const DailyTallyView = () => {
   };
 
   const moveToPreviousWorkflowStep = () => {
+    if (workflowStep === 'non-vaccine') {
+      const hasAnyCoverageValues = vaccineRows.some(row =>
+        hasCoverageValues(coverageByItem[row.itemId])
+      );
+
+      if (!hasAnyCoverageValues) {
+        if (workflowStepSequence.includes('coverage')) {
+          setWorkflowStep('coverage');
+          return;
+        }
+
+        const firstStep = workflowStepSequence[0];
+        if (firstStep) {
+          setWorkflowStep(firstStep);
+          return;
+        }
+      }
+    }
+
+    if (workflowStep === 'wastage') {
+      const hasAnyCoveredMultiBatchVaccines = vaccineRows.some(
+        row => row.stockLines.length > 1 && hasCoverageValues(coverageByItem[row.itemId])
+      );
+
+      if (!hasAnyCoveredMultiBatchVaccines) {
+        if (workflowStepSequence.includes('coverage')) {
+          setWorkflowStep('coverage');
+          return;
+        }
+
+        const firstStep = workflowStepSequence[0];
+        if (firstStep) {
+          setWorkflowStep(firstStep);
+          return;
+        }
+      }
+    }
+
     const currentIndex = workflowStepSequence.indexOf(workflowStep);
     const previousStep = workflowStepSequence[currentIndex - 1];
     if (previousStep) {
@@ -1460,24 +1597,29 @@ export const DailyTallyView = () => {
     });
   };
 
-  const batchSuggestion = (row: DailyTallyRow, used: number) => {
+  const batchSuggestion = (row: DailyTallyRow, stockOnHand: number, used: number) => {
     if (!row.isVaccine || row.doses <= 0 || used <= 0) return 0;
 
-    const remainder = round(used % row.doses);
-    if (remainder === 0) return 0;
-
-    return round(row.doses - remainder);
+    return getSuggestedOpenVialWastageAmount({
+      stockOnHand,
+      used,
+      doses: row.doses,
+    });
   };
 
   const batchCalculatedWastage = (
     row: DailyTallyRow,
-    _stockLine: TallyStockLine,
+    stockLine: TallyStockLine,
     used: number,
     isOpenVialWastage: boolean
   ) => {
     if (!isOpenVialWastage) return 0;
     if (used <= 0) return 0;
-    return batchSuggestion(row, used);
+    return batchSuggestion(
+      row,
+      toDisplayUnits(stockLine.availableNumberOfPacks, row.isVaccine, row.doses),
+      used
+    );
   };
 
   const updateBatchUsed = (
@@ -1514,7 +1656,11 @@ export const DailyTallyView = () => {
 
       const nextOpenVialWastage = used > 0 ? currentBatchDraft.openVialWastage : false;
       const suggested = nextOpenVialWastage
-        ? batchSuggestion(row, used)
+        ? batchSuggestion(
+            row,
+            toDisplayUnits(stockLine.availableNumberOfPacks, row.isVaccine, row.doses),
+            used
+          )
         : 0;
 
       const nextBatchDraftById = {
@@ -1559,7 +1705,11 @@ export const DailyTallyView = () => {
 
       const nextChecked = row.isVaccine && currentBatchDraft.used > 0 ? checked : false;
       const nextWastage = nextChecked
-        ? batchSuggestion(row, currentBatchDraft.used)
+        ? batchSuggestion(
+            row,
+            toDisplayUnits(stockLine.availableNumberOfPacks, row.isVaccine, row.doses),
+            currentBatchDraft.used
+          )
         : 0;
 
       const nextBatchDraftById = {
@@ -1804,7 +1954,7 @@ export const DailyTallyView = () => {
       }
 
       const hasVaccineUse = usedRows.some(row => row.isVaccine);
-      if (hasVaccineUse && !isSimplifiedMode && !isSessionTallyStepEnabled) {
+      if (hasVaccineUse && !isSimplifiedMode) {
         const missingCoverageRow = vaccineRowsWithUse.find(
           row => !hasCoverageValues(coverageByItem[row.itemId])
         );
@@ -1812,13 +1962,36 @@ export const DailyTallyView = () => {
           error(`Enter coverage for ${missingCoverageRow.item}.`)();
           return;
         }
+
+        const mismatchedCoverageRows = vaccineRowsWithUse.filter(row => {
+          const coverage = coverageByItem[row.itemId];
+          if (!coverage) return true;
+
+          const coverageTotal = getCoverageUsedTotal(coverage);
+          return Math.abs(coverageTotal - row.used) > 0.0001;
+        });
+
+        if (mismatchedCoverageRows.length > 0) {
+          const summary = mismatchedCoverageRows
+            .slice(0, 3)
+            .map(row => {
+              const coverageTotal = getCoverageUsedTotal(coverageByItem[row.itemId]);
+              return `${row.item} (Coverage ${coverageTotal}, Issued ${row.used})`;
+            })
+            .join('; ');
+          const remainingCount = mismatchedCoverageRows.length - 3;
+
+          error(
+            `Coverage and Issued must match for all vaccine items before confirming: ${summary}${remainingCount > 0 ? `; and ${remainingCount} more item(s)` : ''}.`
+          )();
+          return;
+        }
       }
 
       if (
         hasVaccineUse &&
         !coverageSummary &&
-        !isSimplifiedMode &&
-        !isSessionTallyStepEnabled
+        !isSimplifiedMode
       ) {
         error('Enter coverage details for vaccinated groups')();
         return;
@@ -2366,11 +2539,20 @@ export const DailyTallyView = () => {
     tally: 'Back',
     coverage: 'Back to Session Tally',
     allocation: 'Back to Coverage',
+    wastage: 'Back to Batches',
     'non-vaccine': 'Back to Vaccines',
   };
+  const hasAnyCoveredMultiBatchVaccines = vaccineRows.some(
+    row => row.stockLines.length > 1 && hasCoverageValues(coverageByItem[row.itemId])
+  );
   const backButtonLabel = previousWorkflowStep
-    ? backButtonLabelByStep[workflowStep]
+    ? workflowStep === 'wastage' && !hasAnyCoveredMultiBatchVaccines
+      ? 'Back to Coverage'
+      : backButtonLabelByStep[workflowStep]
     : 'Back';
+  const hasAnyCoverageValues = vaccineRows.some(row =>
+    hasCoverageValues(coverageByItem[row.itemId])
+  );
 
   const continueButtonLabel =
     workflowStep === 'tally'
@@ -2378,8 +2560,14 @@ export const DailyTallyView = () => {
         ? 'Continue to Coverage'
         : 'Continue to Batches'
       : workflowStep === 'coverage'
-        ? 'Continue to Batches'
+        ? hasAnyCoverageValues
+          ? hasAnyCoveredMultiBatchVaccines
+            ? 'Continue to Batches'
+            : 'Continue to Open Vial Wastage'
+          : 'Continue to Non-vaccine'
         : workflowStep === 'allocation'
+          ? 'Continue to Open Vial Wastage'
+          : workflowStep === 'wastage'
           ? nextWorkflowStep === 'non-vaccine'
             ? 'Continue to Non-vaccine'
             : 'Confirm'
@@ -3025,6 +3213,8 @@ export const DailyTallyView = () => {
                   : 'No stock items are available for Daily Tally.'
               }
             />
+          ) : workflowStep === 'coverage' && filterText && displayedVaccineRows.length === 0 ? (
+            <NothingHere body="No vaccine items match the current filter." />
           ) : (
             <>
               {workflowStep === 'tally' ? (
@@ -3240,8 +3430,10 @@ export const DailyTallyView = () => {
                     }));
                     const batchUsedTotal = sumBatchDraft(row.batchDraftById, 'used');
                     const hasBatchIssuedMismatch = Math.abs(batchUsedTotal - row.used) > 0.0001;
+                    const isAllocationStep = workflowStep === 'allocation';
+                    const isWastageStep = workflowStep === 'wastage';
                     const shouldHighlightUpperIssuedValue =
-                      workflowStep === 'allocation' &&
+                      (isAllocationStep || isWastageStep) &&
                       row.stockLines.length > 1 &&
                       hasBatchIssuedMismatch;
 
@@ -3290,7 +3482,7 @@ export const DailyTallyView = () => {
                                 }
                               />
                             ) : null}
-                            {workflowStep !== 'allocation' ? (
+                            {workflowStep !== 'allocation' && workflowStep !== 'wastage' ? (
                               <Box
                                 sx={{
                                   display: 'inline-flex',
@@ -3324,10 +3516,14 @@ export const DailyTallyView = () => {
                           </Typography>
                         ) : null}
 
-                        {workflowStep === 'allocation' ? (
+                        {isAllocationStep || isWastageStep ? (
                           <Box
                             display="grid"
-                            gridTemplateColumns="repeat(7,minmax(0,1fr))"
+                            gridTemplateColumns={
+                              isAllocationStep
+                                ? 'repeat(4,minmax(0,1fr))'
+                                : 'repeat(7,minmax(0,1fr))'
+                            }
                             columnGap={0.75}
                             rowGap={0.75}
                             alignItems="center"
@@ -3345,98 +3541,171 @@ export const DailyTallyView = () => {
                           <Typography variant="caption" sx={{ fontWeight: 700 }}>
                             Issued
                           </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Open vial wastage
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Wasted
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Remaining
-                          </Typography>
+                          {isWastageStep ? (
+                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              Open vial wastage
+                            </Typography>
+                          ) : null}
+                          {isWastageStep ? (
+                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              Wasted
+                            </Typography>
+                          ) : null}
+                          {isWastageStep ? (
+                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              Remaining
+                            </Typography>
+                          ) : null}
 
-                          <Typography variant="body2">{row.soh}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {row.stockLines.length > 1
-                              ? 'Needs allocation'
-                              : row.stockLines[0]
-                                ? batchLabel(row.stockLines[0])
-                                : '-'}
-                          </Typography>
-                          <Typography variant="body2">{row.units}</Typography>
-                          {isSimplifiedMode ? (
-                            <BasicTextInput
-                              type="text"
-                              size="small"
-                              inputMode={numericInputMode}
-                              inputProps={numericHtmlInputProps}
-                              slotProps={
-                                row.stockLines.length > 1
-                                  ? highlightedIssuedInputSlotProps
-                                  : undefined
-                              }
-                              sx={
-                                shouldHighlightUpperIssuedValue
-                                  ? {
-                                      ...compactNumberInputSx,
-                                      '& input': {
-                                        fontWeight: 700,
-                                        color: 'error.main',
-                                      },
-                                    }
-                                  : compactNumberInputSx
-                              }
-                              value={String(row.used)}
-                              onChange={event => updateUsed(row, event.target.value)}
-                            />
+                          {isWastageStep && row.stockLines.length > 1 ? (
+                            <>
+                              {row.stockLines.map(stockLine => {
+                                const batchDraft = row.batchDraftById?.[stockLine.id] ?? {
+                                  used: 0,
+                                  wastage: 0,
+                                  openVialWastage: row.isVaccine,
+                                };
+                                const batchSoh = toDisplayUnits(
+                                  stockLine.availableNumberOfPacks,
+                                  row.isVaccine,
+                                  row.doses
+                                );
+                                const batchRemaining = round(
+                                  Math.max(0, batchSoh - batchDraft.used - batchDraft.wastage)
+                                );
+
+                                return (
+                                  <React.Fragment key={`wastage-grid-${row.itemId}-${stockLine.id}`}>
+                                    <Typography variant="body2">{batchSoh}</Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      {batchLabel(stockLine)}
+                                    </Typography>
+                                    <Typography variant="body2">{row.units}</Typography>
+                                    <Typography
+                                      variant="body2"
+                                      sx={
+                                        hasBatchIssuedMismatch
+                                          ? { fontWeight: 700, color: 'error.main' }
+                                          : undefined
+                                      }
+                                    >
+                                      {batchDraft.used}
+                                    </Typography>
+                                    <Box
+                                      display="flex"
+                                      justifyContent="center"
+                                      alignItems="center"
+                                      sx={{ justifySelf: 'center' }}
+                                    >
+                                      <Switch
+                                        checked={batchDraft.openVialWastage}
+                                        disabled={batchDraft.used <= 0}
+                                        onChange={(_, checked) =>
+                                          updateBatchOpenVialWastage(row, stockLine, checked)
+                                        }
+                                        sx={{ margin: 0 }}
+                                      />
+                                    </Box>
+                                    <BasicTextInput
+                                      type="text"
+                                      size="small"
+                                      inputMode={numericInputMode}
+                                      inputProps={numericHtmlInputProps}
+                                      sx={compactNumberInputSx}
+                                      value={String(batchDraft.wastage)}
+                                      onChange={event =>
+                                        updateBatchWastage(row, stockLine, event.target.value)
+                                      }
+                                    />
+                                    <Typography variant="body2">{batchRemaining}</Typography>
+                                  </React.Fragment>
+                                );
+                              })}
+                            </>
                           ) : (
-                            <Typography
-                              variant="body2"
-                              sx={
-                                shouldHighlightUpperIssuedValue
-                                  ? { fontWeight: 700, color: 'error.main' }
-                                  : undefined
-                              }
-                            >
-                              {row.used}
-                            </Typography>
+                            <>
+                              <Typography variant="body2">{row.soh}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {row.stockLines.length > 1
+                                  ? 'Needs allocation'
+                                  : row.stockLines[0]
+                                    ? batchLabel(row.stockLines[0])
+                                    : '-'}
+                              </Typography>
+                              <Typography variant="body2">{row.units}</Typography>
+                              {isSimplifiedMode &&
+                              !(isWastageStep && row.stockLines.length > 1) &&
+                              !(useSimplifiedMobileUi && isWastageStep) ? (
+                                <BasicTextInput
+                                  type="text"
+                                  size="small"
+                                  inputMode={numericInputMode}
+                                  inputProps={numericHtmlInputProps}
+                                  slotProps={
+                                    row.stockLines.length > 1 && hasBatchIssuedMismatch
+                                      ? highlightedIssuedInputSlotProps
+                                      : undefined
+                                  }
+                                  sx={
+                                    shouldHighlightUpperIssuedValue
+                                      ? {
+                                          ...compactNumberInputSx,
+                                          '& input': {
+                                            fontWeight: 700,
+                                            color: 'error.main',
+                                          },
+                                        }
+                                      : compactNumberInputSx
+                                  }
+                                  value={String(row.used)}
+                                  onChange={event => updateUsed(row, event.target.value)}
+                                />
+                              ) : (
+                                <Typography
+                                  variant="body2"
+                                  sx={
+                                    shouldHighlightUpperIssuedValue
+                                      ? { fontWeight: 700, color: 'error.main' }
+                                      : undefined
+                                  }
+                                >
+                                  {row.used}
+                                </Typography>
+                              )}
+                              {isWastageStep ? (
+                                <Box
+                                  display="flex"
+                                  justifyContent="center"
+                                  alignItems="center"
+                                  sx={{ justifySelf: 'center' }}
+                                >
+                                  <Switch
+                                    checked={row.openVialWastage}
+                                    onChange={(_, checked) => updateOpenVialWastage(row, checked)}
+                                    sx={{ margin: 0 }}
+                                  />
+                                </Box>
+                              ) : null}
+                              {isWastageStep ? (
+                                <BasicTextInput
+                                  type="text"
+                                  size="small"
+                                  inputMode={numericInputMode}
+                                  inputProps={numericHtmlInputProps}
+                                  sx={compactNumberInputSx}
+                                  value={String(row.wastage)}
+                                  onChange={event =>
+                                    updateDraft(row.itemId, {
+                                      wastage: parseInput(event.target.value),
+                                    })
+                                  }
+                                />
+                              ) : null}
+                              {isWastageStep ? (
+                                <Typography variant="body2">{row.remainingStock}</Typography>
+                              ) : null}
+                            </>
                           )}
-                          {row.stockLines.length > 1 ? (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ justifySelf: 'center', textAlign: 'center' }}
-                            >
-                              Per-batch
-                            </Typography>
-                          ) : (
-                            <Box
-                              display="flex"
-                              justifyContent="center"
-                              alignItems="center"
-                              sx={{ justifySelf: 'center' }}
-                            >
-                              <Switch
-                                checked={row.openVialWastage}
-                                onChange={(_, checked) => updateOpenVialWastage(row, checked)}
-                                sx={{ margin: 0 }}
-                              />
-                            </Box>
-                          )}
-                          <BasicTextInput
-                            type="text"
-                            size="small"
-                            inputMode={numericInputMode}
-                            inputProps={numericHtmlInputProps}
-                            sx={compactNumberInputSx}
-                            value={String(row.wastage)}
-                            onChange={event =>
-                              updateDraft(row.itemId, {
-                                wastage: parseInput(event.target.value),
-                              })
-                            }
-                          />
-                          <Typography variant="body2">{row.remainingStock}</Typography>
                           </Box>
                         ) : null}
 
@@ -3669,7 +3938,7 @@ export const DailyTallyView = () => {
                           </Box>
                         ) : null}
 
-                        {workflowStep === 'allocation' && row.stockLines.length > 1 ? (
+                        {isAllocationStep && row.stockLines.length > 1 ? (
                           <Box sx={{ marginTop: 0.75 }}>
                             {row.used <= 0 ? (
                               <Typography
@@ -3682,19 +3951,25 @@ export const DailyTallyView = () => {
                                   : 'Enter coverage to allocate batches'}
                               </Typography>
                             ) : null}
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: 'block', marginTop: 0.25 }}
-                            >
-                              {issuedBatchSummary(row) || 'No batches selected yet'}
-                            </Typography>
+                            {issuedBatchSummary(row) ? (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: 'block', marginTop: 0.25 }}
+                              >
+                                {issuedBatchSummary(row)}
+                              </Typography>
+                            ) : null}
 
                             {row.used > 0 ? (
                               <>
                                 <Box
                                   display="grid"
-                                  gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                                  gridTemplateColumns={
+                                    workflowStep === 'allocation'
+                                      ? 'minmax(220px,2fr) minmax(0,1fr)'
+                                      : 'minmax(220px,2fr) repeat(3,minmax(0,1fr))'
+                                  }
                                   columnGap={1.25}
                                   rowGap={0.75}
                                   alignItems="center"
@@ -3706,12 +3981,16 @@ export const DailyTallyView = () => {
                                   <Typography variant="caption" sx={{ fontWeight: 700 }}>
                                     Issued
                                   </Typography>
-                                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                    Open vial wastage
-                                  </Typography>
-                                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                    Wasted
-                                  </Typography>
+                                  {workflowStep === 'wastage' ? (
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                      Open vial wastage
+                                    </Typography>
+                                  ) : null}
+                                  {workflowStep === 'wastage' ? (
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                      Wasted
+                                    </Typography>
+                                  ) : null}
 
                                   {row.stockLines.map(stockLine => {
                                     const batchDraft = row.batchDraftById?.[stockLine.id] ?? {
@@ -3728,50 +4007,74 @@ export const DailyTallyView = () => {
                                           disabled
                                           options={batchOptions}
                                         />
-                                        <BasicTextInput
-                                          type="text"
-                                          size="small"
-                                          inputMode={numericInputMode}
-                                          inputProps={numericHtmlInputProps}
-                                          slotProps={highlightedIssuedInputSlotProps}
-                                          sx={compactNumberInputSx}
-                                          value={String(batchDraft.used)}
-                                          onChange={event =>
-                                            updateBatchUsed(row, stockLine, event.target.value)
-                                          }
-                                        />
-                                        <Box
-                                          display="flex"
-                                          justifyContent="center"
-                                          alignItems="center"
-                                        >
-                                          <Switch
-                                            checked={batchDraft.openVialWastage}
-                                            disabled={batchDraft.used <= 0}
-                                            onChange={(_, checked) =>
-                                              updateBatchOpenVialWastage(
+                                        {isWastageStep ? (
+                                          <Typography
+                                            variant="body2"
+                                            sx={{
+                                              alignSelf: 'center',
+                                              justifySelf: 'start',
+                                              fontWeight: hasBatchIssuedMismatch ? 700 : undefined,
+                                              color: hasBatchIssuedMismatch
+                                                ? 'error.main'
+                                                : 'text.primary',
+                                            }}
+                                          >
+                                            {batchDraft.used}
+                                          </Typography>
+                                        ) : (
+                                          <BasicTextInput
+                                            type="text"
+                                            size="small"
+                                            inputMode={numericInputMode}
+                                            inputProps={numericHtmlInputProps}
+                                            slotProps={
+                                              hasBatchIssuedMismatch
+                                                ? highlightedIssuedInputSlotProps
+                                                : undefined
+                                            }
+                                            sx={compactNumberInputSx}
+                                            value={String(batchDraft.used)}
+                                            onChange={event =>
+                                              updateBatchUsed(row, stockLine, event.target.value)
+                                            }
+                                          />
+                                        )}
+                                        {workflowStep === 'wastage' ? (
+                                          <Box
+                                            display="flex"
+                                            justifyContent="center"
+                                            alignItems="center"
+                                          >
+                                            <Switch
+                                              checked={batchDraft.openVialWastage}
+                                              disabled={batchDraft.used <= 0}
+                                              onChange={(_, checked) =>
+                                                updateBatchOpenVialWastage(
+                                                  row,
+                                                  stockLine,
+                                                  checked
+                                                )
+                                              }
+                                            />
+                                          </Box>
+                                        ) : null}
+                                        {workflowStep === 'wastage' ? (
+                                          <BasicTextInput
+                                            type="text"
+                                            size="small"
+                                            inputMode={numericInputMode}
+                                            inputProps={numericHtmlInputProps}
+                                            sx={compactNumberInputSx}
+                                            value={String(batchDraft.wastage)}
+                                            onChange={event =>
+                                              updateBatchWastage(
                                                 row,
                                                 stockLine,
-                                                checked
+                                                event.target.value
                                               )
                                             }
                                           />
-                                        </Box>
-                                        <BasicTextInput
-                                          type="text"
-                                          size="small"
-                                          inputMode={numericInputMode}
-                                          inputProps={numericHtmlInputProps}
-                                          sx={compactNumberInputSx}
-                                          value={String(batchDraft.wastage)}
-                                          onChange={event =>
-                                            updateBatchWastage(
-                                              row,
-                                              stockLine,
-                                              event.target.value
-                                            )
-                                          }
-                                        />
+                                        ) : null}
                                       </React.Fragment>
                                     );
                                   })}
@@ -3846,6 +4149,8 @@ export const DailyTallyView = () => {
                       label: batchLabel(stockLine),
                     }));
                     const batchUsedTotal = sumBatchDraft(row.batchDraftById, 'used');
+                    const nonVaccineSohWarning =
+                      row.used + row.wastage > row.soh || row.remainingStock < 0;
 
                     return (
                       <Box
@@ -3883,7 +4188,7 @@ export const DailyTallyView = () => {
                           <Typography variant="caption" sx={{ fontWeight: 700 }}>
                             Issued
                           </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
                             Wasted
                           </Typography>
                           <Typography variant="caption" sx={{ fontWeight: 700 }}>
@@ -3923,6 +4228,16 @@ export const DailyTallyView = () => {
                           />
                           <Typography variant="body2">{row.remainingStock}</Typography>
                         </Box>
+
+                        {nonVaccineSohWarning ? (
+                          <Typography
+                            variant="caption"
+                            color="error.main"
+                            sx={{ display: 'block', marginTop: 0.75, fontWeight: 700 }}
+                          >
+                            Issued + Wasted exceeds SOH for this item. Reduce the totals so they are less than or equal to SOH.
+                          </Typography>
+                        ) : null}
 
                         {row.stockLines.length > 1 ? (
                           <Box sx={{ marginTop: 0.75 }}>

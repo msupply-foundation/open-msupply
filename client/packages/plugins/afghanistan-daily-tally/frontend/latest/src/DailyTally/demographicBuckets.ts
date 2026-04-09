@@ -99,6 +99,7 @@ const isChildUnderOneLike = (name: string) => {
   const normalized = normalize(name);
   return (
     ageRangeMatch(name, 0, 11) ||
+    ageRangeMatch(name, 0, 1) ||
     normalized.includes('under 1') ||
     normalized.includes('under one')
   );
@@ -221,7 +222,11 @@ export const isChild011Bucket = (
   buckets?: DemographicBuckets
 ) => {
   if (buckets?.child011 && groupId === buckets.child011.id) return true;
-  return groupId === 'child-0-11' || ageRangeMatch(groupName, 0, 11);
+  return (
+    groupId === 'child-0-11' ||
+    ageRangeMatch(groupName, 0, 11) ||
+    ageRangeMatch(groupName, 0, 1)
+  );
 };
 
 export const isChild1223Bucket = (
