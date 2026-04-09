@@ -24,8 +24,9 @@ export const ReceivedDateInput = () => {
     update: { update },
   } = useInboundShipment();
 
-  const { allowBackdatingOfShipments, maximumBackdatingDays } =
-    usePreferences();
+  const { backdatingOfShipments } = usePreferences();
+  const allowBackdatingOfShipments = backdatingOfShipments?.enabled;
+  const maximumBackdatingDays = backdatingOfShipments?.maxDays;
 
   const isReceived =
     shipment?.status === InvoiceNodeStatus.Received ||
