@@ -22,6 +22,7 @@ pub struct StockLineQueries;
 #[graphql(remote = "repository::db_diesel::stock_line::StockLineSortField")]
 pub enum StockLineSortFieldInput {
     ExpiryDate,
+    ManufactureDate,
     NumberOfPacks,
     ItemCode,
     ItemName,

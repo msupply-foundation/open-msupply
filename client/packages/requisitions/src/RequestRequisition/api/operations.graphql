@@ -357,6 +357,10 @@ mutation insertProgramRequest(
           __typename
           description
         }
+        ... on SupplierNotValid {
+          __typename
+          description
+        }
       }
     }
   }
@@ -491,12 +495,14 @@ fragment IndicatorLineRow on IndicatorLineRowNode {
   lineNumber
   name
   valueType
+  isActive
 }
 fragment IndicatorColumn on IndicatorColumnNode {
   id
   columnNumber
   name
   valueType
+  isActive
   value(
     periodId: $periodId
     customerNameId: $customerNameId

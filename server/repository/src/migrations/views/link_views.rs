@@ -99,11 +99,14 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW requisition_view AS
                 SELECT
                     requisition.*,
-                    name_link.name_id as name_id
+                    name_link.name_id as name_id,
+                    destination_customer_link.name_id as destination_customer_id
                 FROM
                     requisition
                 JOIN
-                    name_link ON requisition.name_link_id = name_link.id;
+                    name_link ON requisition.name_link_id = name_link.id
+                LEFT JOIN
+                    name_link AS destination_customer_link ON requisition.destination_customer_link_id = destination_customer_link.id;
 
                 CREATE VIEW rnr_form_view AS
                 SELECT

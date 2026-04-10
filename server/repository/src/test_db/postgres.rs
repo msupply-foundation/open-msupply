@@ -67,6 +67,7 @@ table! {
 
 #[derive(QueryableByName)]
 #[diesel(table_name = pg_database)]
+#[allow(dead_code)]
 struct PgDatabaseRow {
     #[allow(dead_code)]
     oid: i64,

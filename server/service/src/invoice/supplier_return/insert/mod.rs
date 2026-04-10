@@ -119,7 +119,7 @@ pub fn insert_supplier_return(
                 None,
             )?;
 
-            get_invoice(ctx, None, &supplier_return.id)
+            get_invoice(ctx, None, &supplier_return.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })

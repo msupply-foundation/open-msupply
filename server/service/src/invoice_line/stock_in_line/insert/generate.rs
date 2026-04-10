@@ -71,10 +71,11 @@ pub fn generate(
 
     let barcode_option = generate_barcode(&input, connection)?;
 
-    let (batch_option, vvm_status_log) = if should_upsert_batch(&input.r#type, &existing_invoice_row)
-        // when this is true, new lines are created with pending status and shouldn't update stock
-        && !external_inbound_shipment_lines_must_be_authorised
-    {
+    let (batch_option, vvm_status_log) = if should_create_stock_line_for_new_line(
+        &input.r#type,
+        &existing_invoice_row,
+        external_inbound_shipment_lines_must_be_authorised,
+    ) {
         let batch = generate_batch(
             connection,
             new_line.clone(),
@@ -144,6 +145,7 @@ fn generate_line(
         shipped_number_of_packs,
         volume_per_pack,
         shipped_pack_size,
+        purchase_order_line_id,
         barcode: _,
         stock_on_hold: _,
         tax_percentage: _,
@@ -184,6 +186,7 @@ fn generate_line(
         batch,
         expiry_date,
         manufacture_date,
+        purchase_order_line_id,
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineType::StockIn,
@@ -212,9 +215,20 @@ fn generate_line(
     }
 }
 
-fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &InvoiceRow) -> bool {
+fn should_create_stock_line_for_new_line(
+    stock_in_type: &StockInType,
+    existing_invoice_row: &InvoiceRow,
+    external_inbound_shipment_lines_must_be_authorised: bool,
+) -> bool {
     match stock_in_type {
         StockInType::InboundShipment | StockInType::CustomerReturn => {
+            if existing_invoice_row.purchase_order_id.is_some()
+                && external_inbound_shipment_lines_must_be_authorised
+            {
+                // If we're adding an external inbound shipment line, and the authorisation preference is enabled
+                // We assume that we can't create a stock line. When the preference is enabled, lines start with a status of pending which shouldn't affect stock.
+                return false;
+            }
             should_update_stock(existing_invoice_row)
         }
         StockInType::InventoryAddition => true,

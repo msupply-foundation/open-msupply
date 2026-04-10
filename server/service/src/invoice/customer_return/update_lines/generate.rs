@@ -83,6 +83,7 @@ pub fn generate(
                 manufacture_date: None,
                 shipped_number_of_packs: None,
                 shipped_pack_size: None,
+                purchase_order_line_id: None,
             },
         )
         .collect();
@@ -117,7 +118,7 @@ pub fn generate(
                 item_variant_id: Some(NullableUpdate {
                     value: item_variant_id,
                 }),
-                vvm_status_id,
+                vvm_status_id: vvm_status_id.map(|id| NullableUpdate { value: Some(id) }),
                 volume_per_pack,
                 // Default
                 location: None,

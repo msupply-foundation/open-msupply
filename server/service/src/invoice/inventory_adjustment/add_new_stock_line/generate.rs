@@ -97,6 +97,8 @@ pub fn generate(
         default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     let invoice_line_id = uuid();
@@ -128,6 +130,7 @@ pub fn generate(
         note: None,
         shipped_number_of_packs: None,
         shipped_pack_size: None,
+        purchase_order_line_id: None,
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {

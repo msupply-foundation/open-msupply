@@ -221,6 +221,7 @@ query preferences($storeId: String!) {
       minItems
     }
     warningForExcessRequest
+    externalInboundShipmentLinesMustBeAuthorised
     invoiceStatusOptions
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions

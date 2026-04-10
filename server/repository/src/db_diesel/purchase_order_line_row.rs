@@ -1,7 +1,5 @@
 use crate::{
-    db_diesel::{
-        item_link_row::item_link, item_row::item, purchase_order_row::purchase_order,
-    },
+    db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
     diesel_macros::define_linked_tables,
     Delete, PurchaseOrderRowRepository, Upsert,
 };
@@ -10,7 +8,7 @@ use crate::{
     StorageConnection,
 };
 use chrono::NaiveDate;
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
@@ -18,6 +16,8 @@ table! {
     purchase_order_line_stats (purchase_order_line_id) {
         purchase_order_line_id -> Text,
         shipped_number_of_units -> Double,
+        in_transit_number_of_units -> Double,
+        received_number_of_units -> Double,
     }
 }
 
@@ -26,6 +26,8 @@ table! {
 pub struct PurchaseOrderLineStatsRow {
     pub purchase_order_line_id: String,
     pub shipped_number_of_units: f64,
+    pub in_transit_number_of_units: f64,
+    pub received_number_of_units: f64,
 }
 
 define_linked_tables! {
@@ -214,7 +216,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = purchase_order_line::table
             .filter(purchase_order_line::purchase_order_id.eq(purchase_order_id))
-            .select(max(purchase_order_line::line_number))
+            .select(diesel::dsl::max(purchase_order_line::line_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

@@ -29,6 +29,8 @@ pub struct UpsertPreferences {
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
+    pub allow_backdating_of_shipments: Option<bool>,
+    pub maximum_backdating_days: Option<i32>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -46,9 +48,9 @@ pub struct UpsertPreferences {
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<StorePrefUpdate<i32>>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
-        Option<Vec<StorePrefUpdate<i32>>>,
+        Option<Vec<StorePrefUpdate<f64>>>,
     pub number_of_months_threshold_to_show_over_stock_alerts_for_products:
-        Option<Vec<StorePrefUpdate<i32>>>,
+        Option<Vec<StorePrefUpdate<f64>>>,
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub warn_when_missing_recent_stocktake:
@@ -78,6 +80,8 @@ pub fn upsert_preferences(
         is_gaps: is_gaps_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
         global_table_configs: global_table_configs_input,
+        allow_backdating_of_shipments: allow_backdating_of_shipments_input,
+        maximum_backdating_days: maximum_backdating_days_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -126,6 +130,8 @@ pub fn upsert_preferences(
         is_gaps,
         display_population_based_forecasting,
         global_table_configs,
+        allow_backdating_of_shipments,
+        maximum_backdating_days,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -216,6 +222,14 @@ pub fn upsert_preferences(
             
             if let Some(input) = global_table_configs_input {
                 global_table_configs.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = allow_backdating_of_shipments_input {
+                allow_backdating_of_shipments.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = maximum_backdating_days_input {
+                maximum_backdating_days.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

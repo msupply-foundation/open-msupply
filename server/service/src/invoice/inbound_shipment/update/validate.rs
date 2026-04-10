@@ -9,12 +9,13 @@ use repository::{
     InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceType, Name, StorageConnection,
 };
 
-use super::{UpdateInboundShipment, UpdateInboundShipmentError};
+use super::{super::InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError};
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     patch: &UpdateInboundShipment,
+    r#type: InboundShipmentType,
 ) -> Result<(InvoiceRow, Option<Name>, bool), UpdateInboundShipmentError> {
     use UpdateInboundShipmentError::*;
 
@@ -22,11 +23,15 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
+
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
+    }
+    if !r#type.matches_input(invoice.purchase_order_id.is_some()) {
+        return Err(WrongInboundShipmentType);
     }
 
     // Status check
@@ -40,6 +45,14 @@ pub fn validate(
                 InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
             },
         )?;
+
+        // Shipped isn't valid for manual inbound shipments
+        if matches!(patch.status, Some(Shipped))
+            && invoice.purchase_order_id.is_none()
+            && invoice.linked_invoice_id.is_none()
+        {
+            return Err(CannotSetShippedStatusOnManualInboundShipment);
+        }
 
         // All pending lines must be resolved (accepted or rejected) before the invoice can be
         // received or verified, otherwise stock would be created for lines that haven't been
@@ -67,6 +80,13 @@ pub fn validate(
             if delivered_datetime > received_datetime {
                 return Err(CannotPutDeliveredDateAfterReceivedDate);
             }
+        }
+    }
+
+    // Currency rate must be positive if provided
+    if let Some(rate) = patch.currency_rate {
+        if rate <= 0.0 {
+            return Err(CurrencyRateMustBePositive);
         }
     }
 
