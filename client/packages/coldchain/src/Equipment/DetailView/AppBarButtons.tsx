@@ -18,9 +18,7 @@ import { UpdateStatusButton } from './UpdateStatusButton';
 import { RecordMappingModal } from './RecordMappingButton';
 import { Environment } from '@openmsupply-client/config';
 import { useStatusLogDialog } from './useStatusLogDialog';
-
-const COLD_ROOMS_AND_FREEZER_ROOMS_CATEGORY_ID =
-  '7db32eb6-5929-4dd1-a5e9-01e36baa73ad';
+import { useIsColdRoom } from '../utils';
 
 type ActionValue = 'update-status' | 'record-mapping';
 
@@ -98,8 +96,7 @@ export const AppBarButtonsComponent = () => {
   const { data: settings } = useAssets.utils.labelPrinterSettings();
   const { isPrinting, print } = usePrinter(settings);
 
-  const isColdRoom =
-    data?.assetCategory?.id === COLD_ROOMS_AND_FREEZER_ROOMS_CATEGORY_ID;
+  const isColdRoom = useIsColdRoom();
 
   const onClick = () => {
     const date = new Date().toLocaleDateString();

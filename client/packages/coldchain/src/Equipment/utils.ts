@@ -1,4 +1,4 @@
-import { AssetRowFragment } from './api';
+import { AssetRowFragment, useAssets } from './api';
 import {
   LocaleKey,
   TypedTFunction,
@@ -11,6 +11,13 @@ import { ImportRow, LineNumber } from './ImportAsset';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
+export const COLD_ROOMS_AND_FREEZER_ROOMS_CATEGORY_ID =
+  '7db32eb6-5929-4dd1-a5e9-01e36baa73ad';
+
+export const useIsColdRoom = (): boolean => {
+  const { data } = useAssets.document.get();
+  return data?.assetCategory?.id === COLD_ROOMS_AND_FREEZER_ROOMS_CATEGORY_ID;
+};
 
 // DB value for the log type field — must match the backend constant
 export const TEMPERATURE_MAPPING_TYPE = 'Temperature Mapping';
