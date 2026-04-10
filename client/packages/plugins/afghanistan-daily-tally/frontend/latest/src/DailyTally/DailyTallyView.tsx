@@ -800,6 +800,8 @@ export const DailyTallyView = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const theme = useTheme();
   const isLaptopLayout = useMediaQuery(theme.breakpoints.up('lg'));
+  const useDesktopCoverageSummaryLayout =
+    isLaptopLayout || EnvUtils.platform === Platform.Android;
   const isSimplifiedTabletUI = useSimplifiedTabletUI();
   const preferences = usePreferences();
   const { useSimplifiedMobileUi = false } = preferences;
@@ -879,7 +881,7 @@ export const DailyTallyView = () => {
   const {
     query: { data: sameDayTallyData },
   } = usePrescriptionList({
-    first: 1,
+    first: 500,
     offset: 0,
     sortBy: { key: 'createdDateTime', direction: 'desc' },
     filterBy: {
@@ -912,6 +914,18 @@ export const DailyTallyView = () => {
       'Not selected'
     );
   }, [patientOptions, selectedPatientId]);
+  const sameDayTalliesForSelectedPatient = useMemo(
+    () =>
+      (sameDayTallyData?.nodes ?? []).filter(
+        tally => tally.patientId === selectedPatientId
+      ),
+    [sameDayTallyData?.nodes, selectedPatientId]
+  );
+  const existingSameDayTallyForSelectedPatient =
+    sameDayTalliesForSelectedPatient.length > 0;
+  const duplicateWarningPatientName = formatPatientName(
+    sameDayTalliesForSelectedPatient[0]?.otherPartyName || selectedPatientLabel
+  );
   const shouldHighlightPatientSelection = !selectedPatientId;
 
   const openVialWastageReason = useMemo(
@@ -1194,6 +1208,10 @@ export const DailyTallyView = () => {
 
   const vaccineRows = useMemo(() => rows.filter(row => row.isVaccine), [rows]);
   const nonVaccineRows = useMemo(() => rows.filter(row => !row.isVaccine), [rows]);
+  const hasAnyIssuedVaccineRows = useMemo(
+    () => vaccineRows.some(row => row.used > 0),
+    [vaccineRows]
+  );
   const coverageFieldVisibilityByItem = useMemo(
     () => {
       const childItemIds = new Set(coverageMasterListMembership?.childItemIds ?? []);
@@ -1246,6 +1264,8 @@ export const DailyTallyView = () => {
   );
   const allocationNonVaccineRows = nonVaccineRows;
   const hasNonVaccineItems = allocationNonVaccineRows.length > 0;
+  const isBaseThreeStepFlow =
+    isSimplifiedMode && !isSessionTallyStepEnabled && hasNonVaccineItems;
   const workflowStepSequence = useMemo(() => {
     const sequence: WorkflowStep[] = [];
     if (isSessionTallyStepEnabled) sequence.push('tally');
@@ -1267,13 +1287,29 @@ export const DailyTallyView = () => {
         }
       )
   );
+  const hasAnyCoverageValues = vaccineRows.some(row =>
+    hasVisibleCoverageValues(
+      coverageByItem[row.itemId],
+      coverageFieldVisibilityByItem[row.itemId] ?? {
+        showChild: false,
+        showWomen: false,
+      }
+    )
+  );
   const shouldCollapseAllocationStepInTitle =
     !isSimplifiedMode &&
     workflowStep !== 'allocation' &&
     workflowStepSequence.includes('allocation') &&
     !hasAnyCoveredMultiBatchVaccines;
+  const shouldCollapseWastageStepInFourStepTitle =
+    !isSimplifiedMode &&
+    !hasAnyCoverageValues &&
+    (workflowStep === 'coverage' || workflowStep === 'non-vaccine');
   const workflowDisplayStepSequence = workflowStepSequence.filter(step => {
     if (shouldCollapseAllocationStepInTitle && step === 'allocation') return false;
+    if (isBaseThreeStepFlow && !hasAnyIssuedVaccineRows && step === 'wastage')
+      return false;
+    if (shouldCollapseWastageStepInFourStepTitle && step === 'wastage') return false;
     return true;
   });
 
@@ -1619,6 +1655,11 @@ export const DailyTallyView = () => {
     if (!ensureSimplifiedMobileIssuedWithinSoh()) return;
     if (!ensureMultiBatchAllocationIsValid()) return;
 
+    if (isBaseThreeStepFlow && !hasAnyIssuedVaccineRows) {
+      setWorkflowStep('non-vaccine');
+      return;
+    }
+
     setWorkflowStep('wastage');
   };
 
@@ -1669,7 +1710,7 @@ export const DailyTallyView = () => {
         workflowStepSequence[2] === 'non-vaccine';
 
       if (isThreeStepFlow) {
-        setWorkflowStep('wastage');
+        setWorkflowStep(hasAnyIssuedVaccineRows ? 'wastage' : 'allocation');
         return;
       }
 
@@ -2294,7 +2335,7 @@ export const DailyTallyView = () => {
         return;
       }
 
-      if (!skipDuplicateWarning && (sameDayTallyData?.totalCount ?? 0) > 0) {
+      if (!skipDuplicateWarning && existingSameDayTallyForSelectedPatient) {
         setConfirmSummaryOpen(false);
         setDuplicateWarningOpen(true);
         return;
@@ -2868,21 +2909,13 @@ export const DailyTallyView = () => {
     workflowStepSequence[2] === 'non-vaccine';
   const backButtonLabel = previousWorkflowStep
     ? workflowStep === 'non-vaccine' && isThreeStepFlow
-      ? 'Back to Open Vial Wastage'
+      ? hasAnyIssuedVaccineRows
+        ? 'Back to Open Vial Wastage'
+        : 'Back to Vaccines'
       : workflowStep === 'wastage' && !hasAnyCoveredMultiBatchVaccines
       ? 'Back to Batches'
       : backButtonLabelByStep[workflowStep]
     : 'Back';
-  const hasAnyCoverageValues = vaccineRows.some(row =>
-    hasVisibleCoverageValues(
-      coverageByItem[row.itemId],
-      coverageFieldVisibilityByItem[row.itemId] ?? {
-        showChild: false,
-        showWomen: false,
-      }
-    )
-  );
-
   const continueButtonLabel =
     workflowStep === 'tally'
       ? nextWorkflowStep === 'coverage'
@@ -2895,7 +2928,9 @@ export const DailyTallyView = () => {
             : 'Continue to Open Vial Wastage'
           : 'Continue to Non-vaccine'
         : workflowStep === 'allocation'
-          ? 'Continue to Open Vial Wastage'
+          ? isBaseThreeStepFlow && !hasAnyIssuedVaccineRows
+            ? 'Continue to Non-vaccine'
+            : 'Continue to Open Vial Wastage'
           : workflowStep === 'wastage'
           ? nextWorkflowStep === 'non-vaccine'
             ? 'Continue to Non-vaccine'
@@ -2960,13 +2995,11 @@ export const DailyTallyView = () => {
               onClick={onPrintSummary}
               sx={{ paddingX: 1.25, paddingY: 0.5 }}
             />
-            {EnvUtils.platform !== Platform.Android && (
-              <ButtonWithIcon
-                Icon={<DownloadIcon />}
-                label={t('button.download-pdf')}
-                onClick={onDownloadPdfSummary}
-              />
-            )}
+            <ButtonWithIcon
+              Icon={<DownloadIcon />}
+              label={t('button.download-pdf')}
+              onClick={onDownloadPdfSummary}
+            />
           </Box>
 
           <Box
@@ -3085,7 +3118,7 @@ export const DailyTallyView = () => {
                 Coverage Summary (Daily Report)
               </Typography>
 
-              {isLaptopLayout ? (
+              {useDesktopCoverageSummaryLayout ? (
                 <>
                   <Typography
                     variant="caption"
@@ -3434,9 +3467,34 @@ export const DailyTallyView = () => {
 
       <DuplicateWarningModal
         title={'Daily tally already exists'}
+        width={760}
+        height={250}
+        contentProps={{
+          sx: {
+            pt: 1,
+            pb: 0.5,
+            px: 2,
+          },
+        }}
+        sx={{
+          width: 'min(760px, calc(100vw - 32px))',
+          minWidth: 'min(760px, calc(100vw - 32px))',
+          maxWidth: 'min(760px, calc(100vw - 32px))',
+          borderRadius: '14px',
+          margin: '16px',
+          '& .MuiDialogTitle-root': {
+            fontSize: theme => theme.typography.subtitle1.fontSize,
+            lineHeight: theme => theme.typography.subtitle1.lineHeight,
+          },
+          '& .MuiDialogActions-root': {
+            marginTop: '6px',
+            marginBottom: '6px',
+          },
+        }}
         okButton={
           <DialogButton
             variant="ok"
+            customLabel="Create Another Tally"
             onClick={async () => {
               setDuplicateWarningOpen(false);
               await onConfirm(true, true);
@@ -3444,12 +3502,42 @@ export const DailyTallyView = () => {
           />
         }
         cancelButton={
-          <DialogButton variant="cancel" onClick={() => setDuplicateWarningOpen(false)} />
+          <DialogButton
+            variant="cancel"
+            customLabel="Go Back"
+            onClick={() => setDuplicateWarningOpen(false)}
+          />
         }
       >
-        <Typography variant="body2" color="text.secondary">
-          A daily tally sheet already exists for today. Do you want to create another one for the same day?
-        </Typography>
+        <Stack spacing={0.75} sx={{ py: 0, pl: 0.75 }}>
+          <Typography variant="body1" sx={{ fontWeight: 700 }}>
+            A daily tally already exists for{' '}
+            <Box
+              component="span"
+              sx={{
+                display: 'inline-block',
+                px: 0.75,
+                py: 0.2,
+                borderRadius: '6px',
+                border: '1px solid rgba(0,0,0,0.18)',
+                backgroundColor: 'rgba(0,0,0,0.04)',
+                fontWeight: 800,
+                color: 'text.primary',
+                fontFamily: 'monospace',
+                lineHeight: 1.25,
+              }}
+            >
+              {duplicateWarningPatientName}
+            </Box>{' '}
+            on this date.
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Creating another tally for the same day may duplicate submitted activity.
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Do you want to continue and create another daily tally anyway?
+          </Typography>
+        </Stack>
       </DuplicateWarningModal>
 
       <AppBarContentPortal
@@ -4022,7 +4110,7 @@ export const DailyTallyView = () => {
                     const isAllocationStep = workflowStep === 'allocation';
                     const isWastageStep = workflowStep === 'wastage';
                     const isThreeStepStepOneAllocation =
-                      isAllocationStep && workflowStepTotal === 3 && workflowStepIndex === 0;
+                      isAllocationStep && isBaseThreeStepFlow;
                     const hasIssuedDoses = row.used > 0;
                     const isStepOneVaccineExpanded =
                       expandedStepOneVaccineItemIds[row.itemId] ?? false;
