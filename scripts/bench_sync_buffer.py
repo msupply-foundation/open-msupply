@@ -1,4 +1,16 @@
+from __future__ import annotations
+
 import json
+import sys
+import time
+
+try:
+    import psycopg2
+    import psycopg2.extensions
+except ImportError:
+    print("ERROR: psycopg2 is required.  Install with:")
+    print("  pip install psycopg2-binary")
+    sys.exit(1)
 
 # ─── Mock data ───────────────────────────────────────────────────────────────
 MOCK_TABLE_NAMES = [
@@ -156,3 +168,279 @@ def populate(conn, table: str, n_integrated: int, n_pending: int, *,
         populate_table(conn, table, n, integrated,
                        extra_cols=extra_cols, extra_vals_fn=extra_vals_fn,
                        id_offset=id_offset)
+
+# ─── Helpers ─────────────────────────────────────────────────────────────────
+def readable_string(n: int) -> str:
+    if n >= 1_000_000:
+        return f"{n/1_000_000:.1f}M" if n % 1_000_000 else f"{n // 1_000_000}M"
+    if n >= 1_000:
+        return f"{n/1_000:.1f}K" if n % 1_000 else f"{n // 1_000}K"
+    return str(n)
+
+def exec_sql(conn, sql: str):
+    if conn.info.transaction_status != psycopg2.extensions.TRANSACTION_STATUS_IDLE:
+        conn.rollback()
+    with conn.cursor() as cur:
+        cur.execute(sql)
+    conn.commit()
+
+
+# Global search_path to re-apply after any potential reset
+_search_path_schema: str | None = None
+
+def set_schema(conn, schema: str):
+    """Set and remember the search_path."""
+    global _search_path_schema
+    _search_path_schema = schema
+    exec_sql(conn, f"SET search_path TO {schema}")
+
+def ensure_schema(conn):
+    """Re-apply the search_path if one was set."""
+    if _search_path_schema and _search_path_schema != "public":
+        exec_sql(conn, f"SET search_path TO {_search_path_schema}")
+
+def bench(fn) -> float:
+    """Run fn, return elapsed milliseconds."""
+    start = time.perf_counter()
+    fn()
+    return (time.perf_counter() - start) * 1000
+
+def make_new_rows(n: int = 1000) -> list[tuple]:
+    return [
+        (f"new_{i}", MOCK_TABLE_NAMES[i % len(MOCK_TABLE_NAMES)],
+         (i % 10) + 1, mock_trans_line_json(f"new_{i}"))
+        for i in range(n)
+    ]
+
+# ─── Benchmark operations ────────────────────────────────────────────────────
+def run(conn, approach: str, new_rows: list[tuple]) -> list[dict]:
+    """Run benchmark operations against the current table state.
+    Returns list of {operation, duration_ms} dicts."""
+    results = []
+    is_pt = approach == "partitioned"
+    upsert_sql = UPSERT_PT if is_pt else UPSERT_STD
+    table = "sync_buffer_pt" if is_pt else "sync_buffer"
+    filter_col = "is_integrated = FALSE" if is_pt else "integration_datetime IS NULL"
+
+    # Helper: partitioned SQL has an extra leading %s for the DELETE function
+    def upsert_params(rid, tbl, data, src):
+        if is_pt:
+            return (rid, rid, tbl, data, src)
+        return (rid, tbl, data, src)
+
+    # 1. Upsert 1K new (in tx)
+    def upsert_new():
+        with conn.cursor() as cur:
+            for rid, tbl, src, data in new_rows:
+                cur.execute(upsert_sql, upsert_params(rid, tbl, data, src))
+        conn.commit()
+    results.append({"operation": "upsert_1k_new_tx", "duration_ms": bench(upsert_new)})
+
+    # 2. Upsert 1K existing pending (in tx)
+    def upsert_existing():
+        with conn.cursor() as cur:
+            for rid, tbl, src, data in new_rows:
+                cur.execute(upsert_sql, upsert_params(rid, tbl, data, src))
+        conn.commit()
+    results.append({"operation": "upsert_1k_existing_tx", "duration_ms": bench(upsert_existing)})
+
+    # Clean up new rows before queries
+    with conn.cursor() as cur:
+        cur.execute(f"DELETE FROM {table} WHERE record_id LIKE 'new_%'")
+    conn.commit()
+
+    # 2b. Upsert 100 already-integrated records via upsert
+    int_rows = [
+        (f"int_{i}", MOCK_TABLE_NAMES[i % len(MOCK_TABLE_NAMES)],
+         (i % 10) + 1, mock_trans_line_json(f"int_{i}_resync"))
+        for i in range(100)
+    ]
+
+    def upsert_integrated():
+        with conn.cursor() as cur:
+            for rid, tbl, src, data in int_rows:
+                cur.execute(upsert_sql, upsert_params(rid, tbl, data, src))
+        conn.commit()
+    results.append({"operation": "upsert_100_integrated_tx", "duration_ms": bench(upsert_integrated)})
+
+    # Restore integrated rows to their original state
+    int_id_list = ",".join(f"'int_{i}'" for i in range(100))
+    with conn.cursor() as cur:
+        if is_pt:
+            cur.execute(
+                "UPDATE sync_buffer_pt SET is_integrated = TRUE, "
+                "integration_datetime = '2025-01-01 00:00:00' "
+                f"WHERE record_id IN ({int_id_list}) AND is_integrated = FALSE"
+            )
+        else:
+            cur.execute(
+                "UPDATE sync_buffer SET integration_datetime = '2025-01-01 00:00:00' "
+                f"WHERE record_id IN ({int_id_list})"
+            )
+    conn.commit()
+
+    # 3. Query unintegrated (filtered)
+    def query_filtered():
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT * FROM {table} WHERE {filter_col} "
+                f"AND action = 'UPSERT' AND table_name = 'transact' AND source_site_id = 1"
+            )
+            return cur.fetchall()
+    r = None
+    def query_filtered_capture():
+        nonlocal r
+        r = query_filtered()
+    ms = bench(query_filtered_capture)
+    results.append({"operation": "query_filtered", "duration_ms": ms,
+                     "rows": len(r) if r else 0})
+
+    # 4. Query unintegrated (all)
+    def query_all():
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT * FROM {table} WHERE {filter_col}")
+            return cur.fetchall()
+    r2 = None
+    def query_all_capture():
+        nonlocal r2
+        r2 = query_all()
+    ms = bench(query_all_capture)
+    results.append({"operation": "query_all_unintegrated", "duration_ms": ms,
+                     "rows": len(r2) if r2 else 0})
+
+    # 5. Mark 100 integrated (in tx)
+    with conn.cursor() as cur:
+        for rid, tbl, src, data in new_rows[:100]:
+            cur.execute(upsert_sql, upsert_params(rid, tbl, data, src))
+    conn.commit()
+
+    if is_pt:
+        def mark_integrated():
+            with conn.cursor() as cur:
+                for rid, _tbl, _src, _data in new_rows[:100]:
+                    cur.execute(
+                        "UPDATE sync_buffer_pt SET is_integrated = TRUE, "
+                        "integration_datetime = '2025-06-01 12:00:00' "
+                        "WHERE record_id = %s AND is_integrated = FALSE", (rid,))
+            conn.commit()
+    else:
+        def mark_integrated():
+            with conn.cursor() as cur:
+                for rid, tbl, src, data in new_rows[:100]:
+                    cur.execute(
+                        "INSERT INTO sync_buffer "
+                        "(record_id, received_datetime, integration_datetime, integration_error, "
+                        "table_name, action, data, source_site_id) "
+                        "VALUES (%s, '2025-06-01', '2025-06-01 12:00:00', NULL, %s, 'UPSERT', %s, %s) "
+                        "ON CONFLICT (record_id) DO UPDATE SET "
+                        "received_datetime=EXCLUDED.received_datetime, "
+                        "integration_datetime=EXCLUDED.integration_datetime, "
+                        "integration_error=EXCLUDED.integration_error, "
+                        "table_name=EXCLUDED.table_name, action=EXCLUDED.action, "
+                        "data=EXCLUDED.data, source_site_id=EXCLUDED.source_site_id",
+                        (rid, tbl, data, src))
+            conn.commit()
+    results.append({"operation": "mark_100_integrated_tx", "duration_ms": bench(mark_integrated)})
+
+    # 6. Re-sync 100 integrated → pending via upsert path (in tx)
+    def resync():
+        with conn.cursor() as cur:
+            for i in range(100):
+                rid = f"new_{i}"
+                tbl = MOCK_TABLE_NAMES[i % len(MOCK_TABLE_NAMES)]
+                src = (i % 10) + 1
+                data = mock_trans_line_json(f"resync_{i}")
+                cur.execute(upsert_sql, upsert_params(rid, tbl, data, src))
+        conn.commit()
+    results.append({"operation": "resync_100_tx", "duration_ms": bench(resync)})
+
+    # Clean up
+    with conn.cursor() as cur:
+        cur.execute(f"DELETE FROM {table} WHERE record_id LIKE 'new_%'")
+    conn.commit()
+
+    return results
+
+# ─── Main benchmark loop ────────────────────────────────────────────────────
+def bench_loop(conn, args):
+    """Run the interval-based benchmark sweep."""
+    approaches = ["standard", "partitioned"] if args.partitioned else ["standard"]
+    new_rows = make_new_rows(1000)
+    all_results = []
+
+    # Ensure search_path is set
+    ensure_schema(conn)
+
+    # Create tables
+    exec_sql(conn, SCHEMA_ENUM)
+    exec_sql(conn, SCHEMA_STANDARD)
+    if args.partitioned:
+        exec_sql(conn, SCHEMA_PARTITIONED)
+
+    test_points = []
+    sizes = list(range(args.min, args.max + 1, args.interval))
+    if args.max not in sizes:
+        sizes.append(args.max)
+
+    if args.pending_min is not None:
+        for total in sizes:
+            pending_sizes = list(range(args.pending_min,
+                                       min(args.pending_max, total) + 1,
+                                       args.pending_interval))
+            if args.pending_max not in pending_sizes and args.pending_max <= total:
+                pending_sizes.append(args.pending_max)
+            for pending in pending_sizes:
+                test_points.append((total, pending))
+    else:
+        # Default: pending = 1% of total
+        for total in sizes:
+            test_points.append((total, max(total // 100, 1)))
+
+    print(f"Approaches: {approaches}", file=sys.stderr)
+    print(file=sys.stderr)
+
+    for point_idx, (total, pending) in enumerate(test_points, 1):
+        integrated = total - pending
+        print(f"[{point_idx}/{len(test_points)}] "
+              f"total={readable_string(total)}, pending={readable_string(pending)}, "
+              f"integrated={readable_string(integrated)}",
+              file=sys.stderr, end="", flush=True)
+
+        for approach in approaches:
+            is_pt = approach == "partitioned"
+            table = "sync_buffer_pt" if is_pt else "sync_buffer"
+
+            # Re-apply search_path before each approach
+            ensure_schema(conn)
+
+            # Repopulate from scratch
+            exec_sql(conn, f"TRUNCATE {table}")
+            pop_start = time.perf_counter()
+            populate(conn, table, integrated, pending, partitioned=is_pt)
+            pop_secs = time.perf_counter() - pop_start
+
+            print(f"  {approach}({pop_secs:.0f}s)", file=sys.stderr,
+                  end="", flush=True)
+
+            # Run operations
+            results = run(conn, approach, new_rows)
+            for r in results:
+                row = {
+                    "total_rows": total,
+                    "pending_rows": pending,
+                    "approach": approach,
+                    "operation": r["operation"],
+                    "duration_ms": round(r["duration_ms"], 2),
+                }
+                if "rows" in r:
+                    row["result_rows"] = r["rows"]
+                all_results.append(row)
+
+        print(file=sys.stderr)  # newline after approaches
+
+    # Cleanup
+    if args.partitioned:
+        exec_sql(conn, "DROP TABLE IF EXISTS sync_buffer_pt CASCADE")
+
+    return all_results
+
