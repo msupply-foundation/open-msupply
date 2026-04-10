@@ -4,6 +4,7 @@ import {
   FnUtils,
   PlusCircleIcon,
   AppBarButtonsPortal,
+  ButtonWithIcon,
   Grid,
   useTranslation,
   ToggleState,
@@ -13,6 +14,7 @@ import {
   useUrlQuery,
   useCallbackWithPermission,
   useNotification,
+  usePreferences,
   UserPermission,
   SplitButtonOption,
   SplitButton,
@@ -187,6 +189,7 @@ export const AddButton = ({
 }) => {
   const t = useTranslation();
   const currentTab = useUrlQuery().urlQuery['tab'];
+  const { useProcurementFunctionality } = usePreferences();
 
   const handleNewShipment = useCallbackWithPermission(
     UserPermission.InboundShipmentMutate,
@@ -203,10 +206,14 @@ export const AddButton = ({
       value: 'new-shipment',
       label: t('button.new-shipment'),
     },
-    {
-      value: 'new-external-shipment',
-      label: t('button.new-external-shipment'),
-    },
+    ...(useProcurementFunctionality
+      ? [
+          {
+            value: 'new-external-shipment',
+            label: t('button.new-external-shipment'),
+          },
+        ]
+      : []),
   ];
 
   const [selectedOption, setSelectedOption] = useState<
@@ -214,7 +221,7 @@ export const AddButton = ({
   >(allOptions[0] ?? { value: '', label: '' });
 
   useEffect(() => {
-    if (currentTab === t('label.external')) {
+    if (currentTab === t('label.external') && useProcurementFunctionality) {
       const externalOption = allOptions.find(
         o => o.value === 'new-external-shipment'
       );
@@ -223,7 +230,7 @@ export const AddButton = ({
       const internalOption = allOptions.find(o => o.value === 'new-shipment');
       if (internalOption) setSelectedOption(internalOption);
     }
-  }, [currentTab]);
+  }, [currentTab, useProcurementFunctionality]);
 
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
@@ -240,6 +247,16 @@ export const AddButton = ({
     setSelectedOption(option);
     handleOptionSelection(option);
   };
+
+  if (allOptions.length === 1) {
+    return (
+      <ButtonWithIcon
+        Icon={<PlusCircleIcon />}
+        label={t('button.new-shipment')}
+        onClick={handleNewShipment}
+      />
+    );
+  }
 
   return (
     <>
