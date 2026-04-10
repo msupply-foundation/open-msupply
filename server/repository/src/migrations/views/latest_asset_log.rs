@@ -32,10 +32,12 @@ impl ViewMigrationFragment for ViewMigration {
     FROM (
       SELECT asset_id, MAX(log_datetime) AS latest_log_datetime
       FROM asset_log
+      WHERE status IS NOT NULL
       GROUP BY asset_id
     ) grouped
     INNER JOIN asset_log al
-      ON al.asset_id = grouped.asset_id AND al.log_datetime = grouped.latest_log_datetime;    
+      ON al.asset_id = grouped.asset_id AND al.log_datetime = grouped.latest_log_datetime
+      AND al.status IS NOT NULL;    
             "#
         )?;
 
