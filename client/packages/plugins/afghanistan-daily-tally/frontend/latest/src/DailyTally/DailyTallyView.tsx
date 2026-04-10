@@ -834,10 +834,17 @@ export const DailyTallyView = () => {
     Record<string, VaccineCoverageDraft>
   >({});
   const coverageByItemRef = useRef<Record<string, VaccineCoverageDraft>>({});
+  const [expandedStepOneVaccineItemIds, setExpandedStepOneVaccineItemIds] = useState<
+    Record<string, boolean>
+  >({});
+  const [expandedNonVaccineItemIds, setExpandedNonVaccineItemIds] = useState<
+    Record<string, boolean>
+  >({});
   const [sessionTallyByItem, setSessionTallyByItem] = useState<
     Record<string, VaccineSessionTallyDraft>
   >({});
   const [selectedTallyItemId, setSelectedTallyItemId] = useState<string | null>(null);
+  const [expandedCoverageItemIds, setExpandedCoverageItemIds] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [workflowStep, setWorkflowStep] = useState<WorkflowStep>(
     isSessionTallyStepEnabled
@@ -1285,7 +1292,7 @@ export const DailyTallyView = () => {
     : allocationVaccineRows.filter(row => row.stockLines.length > 1);
   const displayedVaccineRows =
     workflowStep === 'coverage'
-      ? filteredVaccineRows
+      ? []
       : workflowStep === 'allocation'
         ? allocationStepRows
         : workflowStep === 'wastage'
@@ -1511,6 +1518,19 @@ export const DailyTallyView = () => {
       return;
     }
 
+    if (coverageExceedsSohRows.length > 0) {
+      const summary = coverageExceedsSohRows
+        .slice(0, 3)
+        .map(row => `${row.item} (${row.coverageTotal} > SOH ${row.soh})`)
+        .join('; ');
+      const remainingCount = coverageExceedsSohRows.length - 3;
+
+      error(
+        `Cannot continue to Batches because coverage exceeds stock on hand for: ${summary}${remainingCount > 0 ? `; and ${remainingCount} more item(s)` : ''}. Reduce coverage totals so they are <= SOH.`
+      )();
+      return;
+    }
+
     // If covered vaccine rows are all single-batch, skip allocation and go straight to wastage.
     const hasAnyCoveredMultiBatchVaccines = vaccineRows.some(
       row =>
@@ -1525,19 +1545,6 @@ export const DailyTallyView = () => {
     );
     if (!hasAnyCoveredMultiBatchVaccines) {
       setWorkflowStep('wastage');
-      return;
-    }
-
-    if (coverageExceedsSohRows.length > 0) {
-      const summary = coverageExceedsSohRows
-        .slice(0, 3)
-        .map(row => `${row.item} (${row.coverageTotal} > SOH ${row.soh})`)
-        .join('; ');
-      const remainingCount = coverageExceedsSohRows.length - 3;
-
-      error(
-        `Cannot continue to Batches because coverage exceeds stock on hand for: ${summary}${remainingCount > 0 ? `; and ${remainingCount} more item(s)` : ''}. Reduce coverage totals so they are <= SOH.`
-      )();
       return;
     }
 
@@ -1655,6 +1662,17 @@ export const DailyTallyView = () => {
 
   const moveToPreviousWorkflowStep = () => {
     if (workflowStep === 'non-vaccine') {
+      const isThreeStepFlow =
+        workflowStepSequence.length === 3 &&
+        workflowStepSequence[0] === 'allocation' &&
+        workflowStepSequence[1] === 'wastage' &&
+        workflowStepSequence[2] === 'non-vaccine';
+
+      if (isThreeStepFlow) {
+        setWorkflowStep('wastage');
+        return;
+      }
+
       const hasAnyCoverageValues = vaccineRows.some(row =>
         hasVisibleCoverageValues(
           coverageByItem[row.itemId],
@@ -2843,9 +2861,16 @@ export const DailyTallyView = () => {
     wastage: 'Back to Batches',
     'non-vaccine': 'Back to Vaccines',
   };
+  const isThreeStepFlow =
+    workflowStepSequence.length === 3 &&
+    workflowStepSequence[0] === 'allocation' &&
+    workflowStepSequence[1] === 'wastage' &&
+    workflowStepSequence[2] === 'non-vaccine';
   const backButtonLabel = previousWorkflowStep
-    ? workflowStep === 'wastage' && !hasAnyCoveredMultiBatchVaccines
-      ? 'Back to Coverage'
+    ? workflowStep === 'non-vaccine' && isThreeStepFlow
+      ? 'Back to Open Vial Wastage'
+      : workflowStep === 'wastage' && !hasAnyCoveredMultiBatchVaccines
+      ? 'Back to Batches'
       : backButtonLabelByStep[workflowStep]
     : 'Back';
   const hasAnyCoverageValues = vaccineRows.some(row =>
@@ -3529,8 +3554,6 @@ export const DailyTallyView = () => {
                   : 'No stock items are available for Daily Tally.'
               }
             />
-          ) : workflowStep === 'coverage' && filterText && displayedVaccineRows.length === 0 ? (
-            <NothingHere body="No vaccine items match the current filter." />
           ) : (
             <>
               {workflowStep === 'tally' ? (
@@ -3725,12 +3748,258 @@ export const DailyTallyView = () => {
                 </>
               ) : null}
 
+              {workflowStep === 'coverage' ? (
+                <>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary', marginY: 1 }}>
+                    Vaccine coverage
+                  </Typography>
+                  {filteredVaccineRows
+                    .filter(row => {
+                      const v = coverageFieldVisibilityByItem[row.itemId] ?? { showChild: false, showWomen: false };
+                      return v.showChild || v.showWomen;
+                    })
+                    .map(row => {
+                      const coverage = coverageByItem[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate);
+                      const coverageVisibility = coverageFieldVisibilityByItem[row.itemId] ?? { showChild: false, showWomen: false };
+                      const hasCoverage = hasVisibleCoverageValues(coverage, coverageVisibility);
+                      const isExpanded = expandedCoverageItemIds[row.itemId] ?? false;
+                      const coverageSohWarning = coverageExceedsSohByItem[row.itemId];
+
+                      return (
+                        <Box key={`coverage-expand-${row.itemId}`} sx={{ marginBottom: 1.25, width: '100%', boxSizing: 'border-box' }}>
+                          <Box
+                            role="button"
+                            onClick={() => setExpandedCoverageItemIds(prev => ({ ...prev, [row.itemId]: !prev[row.itemId] }))}
+                            sx={{
+                              border: hasCoverage ? '1px solid rgba(25,118,210,0.38)' : '1px solid rgba(0,0,0,0.12)',
+                              backgroundColor: hasCoverage ? 'rgba(25,118,210,0.10)' : 'background.white',
+                              borderRadius: isExpanded ? '4px 4px 0 0' : 1,
+                              paddingX: 1.25,
+                              paddingY: 1,
+                              width: '100%',
+                              boxSizing: 'border-box',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                              <Box>
+                                <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                                  {row.item}
+                                </Typography>
+                              </Box>
+                              <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
+                                {hasCoverage ? (
+                                  <Box
+                                    sx={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      paddingX: 1.25,
+                                      paddingY: 0.5,
+                                      borderRadius: 1,
+                                      border: '1px solid rgba(0,0,0,0.18)',
+                                      backgroundColor: 'rgba(0,0,0,0.03)',
+                                    }}
+                                  >
+                                    <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.76rem', lineHeight: 1.2 }}>
+                                      Issued doses: {row.used}
+                                    </Typography>
+                                  </Box>
+                                ) : null}
+                                <ChevronDownIcon
+                                  sx={{
+                                    transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                    transition: 'transform 0.2s ease',
+                                    color: 'text.secondary',
+                                  }}
+                                />
+                              </Box>
+                            </Box>
+                          </Box>
+
+                          {isExpanded ? (
+                            <Box
+                              sx={{
+                                border: hasCoverage ? '1px solid rgba(25,118,210,0.38)' : '1px solid rgba(0,0,0,0.12)',
+                                borderTop: 'none',
+                                borderRadius: '0 0 4px 4px',
+                                paddingX: 2,
+                                paddingY: 1.5,
+                              }}
+                            >
+                              {coverageSohWarning ? (
+                                <Typography
+                                  variant="caption"
+                                  color="error.main"
+                                  sx={{ display: 'block', marginBottom: 0.75, fontWeight: 700 }}
+                                >
+                                  Coverage total ({coverageSohWarning.coverageTotal}) exceeds SOH ({coverageSohWarning.soh}). Reduce coverage to continue.
+                                </Typography>
+                              ) : null}
+                              {coverageVisibility.showChild ? (
+                                <Box sx={{ border: '1px solid rgba(0,0,0,0.12)', borderRadius: 1, padding: 1 }}>
+                                  <Box
+                                    display="grid"
+                                    gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                                    columnGap={1.25}
+                                    rowGap={0.75}
+                                    alignItems="center"
+                                  >
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Child coverage</Typography>
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Male</Typography>
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Female</Typography>
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Total</Typography>
+                                    {coverage.childAgeGroups.map(ageGroup => (
+                                      <React.Fragment key={ageGroup.id}>
+                                        <Typography variant="body2">{ageGroup.label}</Typography>
+                                        <BasicTextInput
+                                          type="text"
+                                          size="small"
+                                          inputMode={numericInputMode}
+                                          inputProps={numericHtmlInputProps}
+                                          sx={compactNumberInputSx}
+                                          value={String(ageGroup.male)}
+                                          onFocus={selectZeroValueOnFocus}
+                                          onChange={event =>
+                                            updateCoverageForRow(row, current => ({
+                                              ...current,
+                                              childAgeGroups: current.childAgeGroups.map(group =>
+                                                group.id === ageGroup.id
+                                                  ? { ...group, male: parseWholeNumber(event.target.value) }
+                                                  : group
+                                              ),
+                                            }))
+                                          }
+                                        />
+                                        <BasicTextInput
+                                          type="text"
+                                          size="small"
+                                          inputMode={numericInputMode}
+                                          inputProps={numericHtmlInputProps}
+                                          sx={compactNumberInputSx}
+                                          value={String(ageGroup.female)}
+                                          onFocus={selectZeroValueOnFocus}
+                                          onChange={event =>
+                                            updateCoverageForRow(row, current => ({
+                                              ...current,
+                                              childAgeGroups: current.childAgeGroups.map(group =>
+                                                group.id === ageGroup.id
+                                                  ? { ...group, female: parseWholeNumber(event.target.value) }
+                                                  : group
+                                              ),
+                                            }))
+                                          }
+                                        />
+                                        <Typography variant="body2" color="text.secondary">
+                                          {ageGroup.male + ageGroup.female}
+                                        </Typography>
+                                      </React.Fragment>
+                                    ))}
+                                  </Box>
+                                </Box>
+                              ) : null}
+                              {coverageVisibility.showWomen ? (
+                                <Box
+                                  sx={{
+                                    marginTop: coverageVisibility.showChild ? 1.25 : 0,
+                                    border: '1px solid rgba(0,0,0,0.12)',
+                                    borderRadius: 1,
+                                    padding: 1,
+                                  }}
+                                >
+                                  <Box
+                                    display="grid"
+                                    gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                                    columnGap={1.25}
+                                    rowGap={0.75}
+                                    alignItems="center"
+                                  >
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Women coverage</Typography>
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Non pregnant</Typography>
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Pregnant</Typography>
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Total</Typography>
+                                    {(() => {
+                                      const { nonPregnantGroup, pregnantGroup } = resolveWomenCoverageGroups(coverage.womenAgeGroups);
+                                      const womenBaseLabel = womenCoverageLabel(nonPregnantGroup, pregnantGroup);
+                                      const nonPregnant = nonPregnantGroup?.count ?? 0;
+                                      const pregnant = pregnantGroup?.count ?? 0;
+                                      return (
+                                        <>
+                                          <Typography variant="body2">{womenBaseLabel}</Typography>
+                                          <BasicTextInput
+                                            type="text"
+                                            size="small"
+                                            inputMode={numericInputMode}
+                                            inputProps={numericHtmlInputProps}
+                                            sx={compactNumberInputSx}
+                                            value={String(nonPregnant)}
+                                            onFocus={selectZeroValueOnFocus}
+                                            onChange={event =>
+                                              updateCoverageForRow(row, current => ({
+                                                ...current,
+                                                womenAgeGroups: (() => {
+                                                  const nextCount = parseWholeNumber(event.target.value);
+                                                  if (nonPregnantGroup?.id) {
+                                                    return current.womenAgeGroups.map(group =>
+                                                      group.id === nonPregnantGroup.id ? { ...group, count: nextCount } : group
+                                                    );
+                                                  }
+                                                  const fallbackId = pregnantGroup?.id ? `${pregnantGroup.id}-non-pregnant` : 'women-non-pregnant';
+                                                  const fallbackLabel = womenBaseLabel === 'Women' ? 'Women - Non pregnant' : `${womenBaseLabel} - Non pregnant`;
+                                                  return [...current.womenAgeGroups, { id: fallbackId, label: fallbackLabel, count: nextCount }];
+                                                })(),
+                                              }))
+                                            }
+                                          />
+                                          <BasicTextInput
+                                            type="text"
+                                            size="small"
+                                            inputMode={numericInputMode}
+                                            inputProps={numericHtmlInputProps}
+                                            sx={compactNumberInputSx}
+                                            value={String(pregnant)}
+                                            onFocus={selectZeroValueOnFocus}
+                                            onChange={event =>
+                                              updateCoverageForRow(row, current => ({
+                                                ...current,
+                                                womenAgeGroups: (() => {
+                                                  const nextCount = parseWholeNumber(event.target.value);
+                                                  if (pregnantGroup?.id) {
+                                                    return current.womenAgeGroups.map(group =>
+                                                      group.id === pregnantGroup.id ? { ...group, count: nextCount } : group
+                                                    );
+                                                  }
+                                                  const fallbackId = nonPregnantGroup?.id ? `${nonPregnantGroup.id}-pregnant` : 'women-pregnant';
+                                                  const fallbackLabel = womenBaseLabel === 'Women' ? 'Women - Pregnant' : `${womenBaseLabel} - Pregnant`;
+                                                  return [...current.womenAgeGroups, { id: fallbackId, label: fallbackLabel, count: nextCount }];
+                                                })(),
+                                              }))
+                                            }
+                                          />
+                                          <Typography variant="body2" color="text.secondary">
+                                            {nonPregnant + pregnant}
+                                          </Typography>
+                                        </>
+                                      );
+                                    })()}
+                                  </Box>
+                                </Box>
+                              ) : null}
+                            </Box>
+                          ) : null}
+                        </Box>
+                      );
+                    })}
+                </>
+              ) : null}
+
               {displayedVaccineRows.length > 0 ? (
-                <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ marginY: 1 }}>
+                <Box display="flex" alignItems="center" sx={{ marginY: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                    {workflowStep === 'coverage'
-                      ? 'Vaccine coverage'
-                      : 'Vaccine items'}
+                    {workflowStep === 'allocation' && !isThreeStepFlow
+                      ? 'Vaccine batch allocation'
+                      : workflowStep === 'wastage'
+                        ? 'Open vial wastage'
+                        : 'Vaccine items'}
                   </Typography>
                 </Box>
               ) : null}
@@ -3752,6 +4021,13 @@ export const DailyTallyView = () => {
                     const hasBatchIssuedMismatch = Math.abs(batchUsedTotal - row.used) > 0.0001;
                     const isAllocationStep = workflowStep === 'allocation';
                     const isWastageStep = workflowStep === 'wastage';
+                    const isThreeStepStepOneAllocation =
+                      isAllocationStep && workflowStepTotal === 3 && workflowStepIndex === 0;
+                    const hasIssuedDoses = row.used > 0;
+                    const isStepOneVaccineExpanded =
+                      expandedStepOneVaccineItemIds[row.itemId] ?? false;
+                    const showExpandedVaccineContent =
+                      !isThreeStepStepOneAllocation || isStepOneVaccineExpanded;
                     const shouldHighlightUpperIssuedValue =
                       (isAllocationStep || isWastageStep) &&
                       row.stockLines.length > 1 &&
@@ -3761,17 +4037,64 @@ export const DailyTallyView = () => {
                       <Box
                         key={row.itemId}
                         sx={{
-                          border: '1px solid rgba(0,0,0,0.12)',
-                          borderRadius: 1,
-                          paddingX: 2,
-                          paddingY: 1.5,
                           marginBottom: 1.25,
                           width: '100%',
                           boxSizing: 'border-box',
+                          ...(isThreeStepStepOneAllocation
+                            ? {}
+                            : {
+                                border: '1px solid rgba(0,0,0,0.12)',
+                                backgroundColor: 'background.white',
+                                borderRadius: 1,
+                                paddingX: 2,
+                                paddingY: 1.5,
+                              }),
                         }}
                       >
-                        <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
-                          <Typography variant="body1" sx={itemTitleSx}>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          gap={1}
+                          role={isThreeStepStepOneAllocation ? 'button' : undefined}
+                          onClick={
+                            isThreeStepStepOneAllocation
+                              ? () =>
+                                  setExpandedStepOneVaccineItemIds(previous => ({
+                                    ...previous,
+                                    [row.itemId]: !previous[row.itemId],
+                                  }))
+                              : undefined
+                          }
+                          sx={
+                            isThreeStepStepOneAllocation
+                              ? {
+                                  cursor: 'pointer',
+                                  border: hasIssuedDoses
+                                    ? '1px solid rgba(25,118,210,0.38)'
+                                    : '1px solid rgba(0,0,0,0.12)',
+                                  backgroundColor: hasIssuedDoses
+                                    ? 'rgba(25,118,210,0.10)'
+                                    : 'background.white',
+                                  borderRadius: isStepOneVaccineExpanded
+                                    ? '4px 4px 0 0'
+                                    : 1,
+                                  paddingX: 1.25,
+                                  paddingY: 1,
+                                  width: '100%',
+                                  boxSizing: 'border-box',
+                                }
+                              : undefined
+                          }
+                        >
+                          <Typography
+                            variant="body1"
+                            sx={
+                              isAllocationStep || isWastageStep
+                                ? { fontWeight: 800 }
+                                : itemTitleSx
+                            }
+                          >
                             {row.item}
                           </Typography>
                           <Box
@@ -3802,7 +4125,8 @@ export const DailyTallyView = () => {
                                 }
                               />
                             ) : null}
-                            {workflowStep !== 'allocation' && workflowStep !== 'wastage' ? (
+                            {(workflowStep !== 'allocation' && workflowStep !== 'wastage') ||
+                            (isThreeStepStepOneAllocation && hasIssuedDoses) ? (
                               <Box
                                 sx={{
                                   display: 'inline-flex',
@@ -3816,15 +4140,40 @@ export const DailyTallyView = () => {
                               >
                                 <Typography
                                   variant="body2"
-                                  sx={{ fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.2 }}
+                                  sx={{ fontWeight: 700, fontSize: '0.76rem', lineHeight: 1.2 }}
                                 >
                                   Issued doses: {row.used}
                                 </Typography>
                               </Box>
                             ) : null}
+                            {isThreeStepStepOneAllocation ? (
+                              <ChevronDownIcon
+                                sx={{
+                                  transform: isStepOneVaccineExpanded
+                                    ? 'rotate(180deg)'
+                                    : 'rotate(0deg)',
+                                  transition: 'transform 0.2s ease',
+                                  color: 'text.secondary',
+                                }}
+                              />
+                            ) : null}
                           </Box>
                         </Box>
 
+                        {showExpandedVaccineContent ? (
+                          <Box
+                            sx={
+                              isThreeStepStepOneAllocation
+                                ? {
+                                    border: '1px solid rgba(0,0,0,0.12)',
+                                    borderTop: 'none',
+                                    borderRadius: '0 0 4px 4px',
+                                    paddingX: 2,
+                                    paddingY: 1.5,
+                                  }
+                                : undefined
+                            }
+                          >
                         {workflowStep === 'coverage' && coverageSohWarning ? (
                           <Typography
                             variant="caption"
@@ -4275,15 +4624,6 @@ export const DailyTallyView = () => {
                                   : 'Enter coverage to allocate batches'}
                               </Typography>
                             ) : null}
-                            {issuedBatchSummary(row) ? (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ display: 'block', marginTop: 0.25 }}
-                              >
-                                {issuedBatchSummary(row)}
-                              </Typography>
-                            ) : null}
 
                             {row.used > 0 ? (
                               <>
@@ -4297,7 +4637,12 @@ export const DailyTallyView = () => {
                                   columnGap={1.25}
                                   rowGap={0.75}
                                   alignItems="center"
-                                  marginTop={0.75}
+                                  sx={{
+                                    marginTop: 0.75,
+                                    border: '1px solid rgba(0,0,0,0.12)',
+                                    borderRadius: 1,
+                                    padding: 1,
+                                  }}
                                 >
                                   <Typography variant="caption" sx={{ fontWeight: 700 }}>
                                     Batch
@@ -4453,6 +4798,8 @@ export const DailyTallyView = () => {
                             ) : null}
                           </Box>
                         ) : null}
+                          </Box>
+                        ) : null}
                       </Box>
                     );
                   })
@@ -4475,234 +4822,300 @@ export const DailyTallyView = () => {
                     const batchUsedTotal = sumBatchDraft(row.batchDraftById, 'used');
                     const nonVaccineSohWarning =
                       row.used + row.wastage > row.soh || row.remainingStock < 0;
+                    const isExpanded = expandedNonVaccineItemIds[row.itemId] ?? false;
+                    const hasValues = row.used > 0 || row.wastage > 0;
 
                     return (
                       <Box
                         key={row.itemId}
                         sx={{
-                          border: '1px solid rgba(0,0,0,0.12)',
-                          borderRadius: 1,
-                          paddingX: 2,
-                          paddingY: 1.5,
                           marginBottom: 1.25,
                           width: '100%',
                           boxSizing: 'border-box',
                         }}
                       >
-                        <Typography variant="body1" sx={itemTitleSx}>
-                          {row.item}
-                        </Typography>
                         <Box
-                          display="grid"
-                          gridTemplateColumns="repeat(6,minmax(0,1fr))"
-                          columnGap={1.25}
-                          rowGap={0.75}
-                          alignItems="center"
-                          marginTop={0.75}
+                          role="button"
+                          onClick={() =>
+                            setExpandedNonVaccineItemIds(previous => ({
+                              ...previous,
+                              [row.itemId]: !previous[row.itemId],
+                            }))
+                          }
+                          sx={{
+                            border: '1px solid rgba(0,0,0,0.12)',
+                            backgroundColor: hasValues
+                              ? 'rgba(25,118,210,0.10)'
+                              : 'background.white',
+                            borderRadius: isExpanded ? '4px 4px 0 0' : 1,
+                            paddingX: 1.25,
+                            paddingY: 1,
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            cursor: 'pointer',
+                          }}
                         >
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            SOH
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Batch
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Units
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Issued
-                          </Typography>
-                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Wasted
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Remaining
-                          </Typography>
-
-                          <Typography variant="body2">{row.soh}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {row.stockLines.length > 1
-                              ? 'Needs allocation'
-                              : row.stockLines[0]
-                                ? batchLabel(row.stockLines[0])
-                                : '-'}
-                          </Typography>
-                          <Typography variant="body2">{row.units}</Typography>
-                          <BasicTextInput
-                            type="text"
-                            size="small"
-                            inputMode={numericInputMode}
-                            inputProps={numericHtmlInputProps}
-                            sx={compactNumberInputSx}
-                            value={String(row.used)}
-                            onChange={event => updateUsed(row, event.target.value)}
-                          />
-                          <BasicTextInput
-                            type="text"
-                            size="small"
-                            inputMode={numericInputMode}
-                            inputProps={numericHtmlInputProps}
-                            sx={compactNumberInputSx}
-                            value={String(row.wastage)}
-                            onChange={event =>
-                              updateDraft(row.itemId, {
-                                wastage: parseInput(event.target.value),
-                              })
-                            }
-                          />
-                          <Typography variant="body2">{row.remainingStock}</Typography>
+                          <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                            <Box>
+                              <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                                {row.item}
+                              </Typography>
+                            </Box>
+                            <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
+                              {hasValues ? (
+                                <Box
+                                  sx={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    paddingX: 1.25,
+                                    paddingY: 0.5,
+                                    borderRadius: 1,
+                                    border: '1px solid rgba(0,0,0,0.18)',
+                                    backgroundColor: 'rgba(0,0,0,0.03)',
+                                  }}
+                                >
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ fontWeight: 700, fontSize: '0.76rem', lineHeight: 1.2 }}
+                                  >
+                                    Issued: {row.used} | Wasted: {row.wastage}
+                                  </Typography>
+                                </Box>
+                              ) : null}
+                              <ChevronDownIcon
+                                sx={{
+                                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                  transition: 'transform 0.2s ease',
+                                  color: 'text.secondary',
+                                }}
+                              />
+                            </Box>
+                          </Box>
                         </Box>
 
-                        {nonVaccineSohWarning ? (
-                          <Typography
-                            variant="caption"
-                            color="error.main"
-                            sx={{ display: 'block', marginTop: 0.75, fontWeight: 700 }}
+                        {isExpanded ? (
+                          <Box
+                            sx={{
+                              border: '1px solid rgba(0,0,0,0.12)',
+                              borderTop: 'none',
+                              borderRadius: '0 0 4px 4px',
+                              paddingX: 2,
+                              paddingY: 1.5,
+                            }}
                           >
-                            Issued + Wasted exceeds SOH for this item. Reduce the totals so they are less than or equal to SOH.
-                          </Typography>
-                        ) : null}
+                            <Box
+                              display="grid"
+                              gridTemplateColumns="repeat(6,minmax(0,1fr))"
+                              columnGap={1.25}
+                              rowGap={0.75}
+                              alignItems="center"
+                              marginTop={0.25}
+                            >
+                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                SOH
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                Batch
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                Units
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                Issued
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                Wasted
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                Remaining
+                              </Typography>
 
-                        {row.stockLines.length > 1 ? (
-                          <Box sx={{ marginTop: 0.75 }}>
-                            {row.used > 0 ? (
-                              <ButtonWithIcon
-                                Icon={
-                                  <ChevronDownIcon
-                                    sx={{
-                                      transform: expandedByItem[row.itemId]
-                                        ? 'rotate(180deg)'
-                                        : 'rotate(0deg)',
-                                      transition: 'transform 0.2s ease',
-                                    }}
-                                  />
-                                }
-                                label={
-                                  expandedByItem[row.itemId]
-                                    ? 'Hide batch allocation'
-                                    : 'Show batch allocation'
-                                }
-                                onClick={() =>
-                                  setExpandedByItem(previous => ({
-                                    ...previous,
-                                    [row.itemId]: !previous[row.itemId],
-                                  }))
+                              <Typography variant="body2">{row.soh}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {row.stockLines.length > 1
+                                  ? 'Needs allocation'
+                                  : row.stockLines[0]
+                                    ? batchLabel(row.stockLines[0])
+                                    : '-'}
+                              </Typography>
+                              <Typography variant="body2">{row.units}</Typography>
+                              <BasicTextInput
+                                type="text"
+                                size="small"
+                                inputMode={numericInputMode}
+                                inputProps={numericHtmlInputProps}
+                                sx={compactNumberInputSx}
+                                value={String(row.used)}
+                                onChange={event => updateUsed(row, event.target.value)}
+                              />
+                              <BasicTextInput
+                                type="text"
+                                size="small"
+                                inputMode={numericInputMode}
+                                inputProps={numericHtmlInputProps}
+                                sx={compactNumberInputSx}
+                                value={String(row.wastage)}
+                                onChange={event =>
+                                  updateDraft(row.itemId, {
+                                    wastage: parseInput(event.target.value),
+                                  })
                                 }
                               />
-                            ) : (
+                              <Typography variant="body2">{row.remainingStock}</Typography>
+                            </Box>
+
+                            {nonVaccineSohWarning ? (
                               <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ fontWeight: 600 }}
+                                variant="caption"
+                                color="error.main"
+                                sx={{ display: 'block', marginTop: 0.75, fontWeight: 700 }}
                               >
-                                Enter issued to allocate batches
+                                Issued + Wasted exceeds SOH for this item. Reduce the totals so they are less than or equal to SOH.
                               </Typography>
-                            )}
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: 'block', marginTop: 0.25 }}
-                            >
-                              {issuedBatchSummary(row) || 'No batches selected yet'}
-                            </Typography>
+                            ) : null}
 
-                            {expandedByItem[row.itemId] && row.used > 0 ? (
-                              <>
-                                <Box
-                                  display="grid"
-                                  gridTemplateColumns="minmax(220px,2fr) repeat(2,minmax(0,1fr))"
-                                  columnGap={1.25}
-                                  rowGap={0.75}
-                                  alignItems="center"
-                                  marginTop={0.75}
-                                >
-                                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                    Batch
+                            {row.stockLines.length > 1 ? (
+                              <Box sx={{ marginTop: 0.75 }}>
+                                {row.used > 0 ? (
+                                  <ButtonWithIcon
+                                    Icon={
+                                      <ChevronDownIcon
+                                        sx={{
+                                          transform: expandedByItem[row.itemId]
+                                            ? 'rotate(180deg)'
+                                            : 'rotate(0deg)',
+                                          transition: 'transform 0.2s ease',
+                                        }}
+                                      />
+                                    }
+                                    label={
+                                      expandedByItem[row.itemId]
+                                        ? 'Hide batch allocation'
+                                        : 'Show batch allocation'
+                                    }
+                                    onClick={() =>
+                                      setExpandedByItem(previous => ({
+                                        ...previous,
+                                        [row.itemId]: !previous[row.itemId],
+                                      }))
+                                    }
+                                  />
+                                ) : (
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{ fontWeight: 600 }}
+                                  >
+                                    Enter issued to allocate batches
                                   </Typography>
-                                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                    Issued
-                                  </Typography>
-                                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                    Wasted
-                                  </Typography>
-
-                                  {row.stockLines.map(stockLine => {
-                                    const batchDraft = row.batchDraftById?.[stockLine.id] ?? {
-                                      used: 0,
-                                      wastage: 0,
-                                      openVialWastage: false,
-                                    };
-
-                                    return (
-                                      <React.Fragment key={stockLine.id}>
-                                        <Select
-                                          size="small"
-                                          value={stockLine.id}
-                                          disabled
-                                          options={batchOptions}
-                                        />
-                                        <BasicTextInput
-                                          type="text"
-                                          size="small"
-                                          inputMode={numericInputMode}
-                                          inputProps={numericHtmlInputProps}
-                                          sx={compactNumberInputSx}
-                                          value={String(batchDraft.used)}
-                                          onChange={event =>
-                                            updateBatchUsed(row, stockLine, event.target.value)
-                                          }
-                                        />
-                                        <BasicTextInput
-                                          type="text"
-                                          size="small"
-                                          inputMode={numericInputMode}
-                                          inputProps={numericHtmlInputProps}
-                                          sx={compactNumberInputSx}
-                                          value={String(batchDraft.wastage)}
-                                          onChange={event =>
-                                            updateBatchWastage(row, stockLine, event.target.value)
-                                          }
-                                        />
-                                      </React.Fragment>
-                                    );
-                                  })}
-                                </Box>
+                                )}
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
-                                  sx={{ display: 'block', marginTop: 0.75 }}
+                                  sx={{ display: 'block', marginTop: 0.25 }}
                                 >
-                                  Batch issued total: {batchUsedTotal} / Item issued: {row.used}
+                                  {issuedBatchSummary(row) || 'No batches selected yet'}
                                 </Typography>
-                                {Math.abs(batchUsedTotal - row.used) > 0.0001 ? (
-                                  <Typography
-                                    variant="caption"
-                                    color="error.main"
-                                    sx={{ display: 'block' }}
-                                  >
-                                    Batch issued total must exactly match item issued.
-                                  </Typography>
-                                ) : null}
-                                {row.stockLines.some(stockLine => {
-                                  const batchUsed =
-                                    row.batchDraftById?.[stockLine.id]?.used ?? 0;
-                                  const availableDisplay = toDisplayUnits(
-                                    stockLine.availableNumberOfPacks,
-                                    row.isVaccine,
-                                    row.doses
-                                  );
 
-                                  return batchUsed - availableDisplay > 0.0001;
-                                }) ? (
-                                  <Typography
-                                    variant="caption"
-                                    color="error.main"
-                                    sx={{ display: 'block' }}
-                                  >
-                                    One or more batch Issued values exceed that batch stock.
-                                  </Typography>
+                                {expandedByItem[row.itemId] && row.used > 0 ? (
+                                  <>
+                                    <Box
+                                      display="grid"
+                                      gridTemplateColumns="minmax(220px,2fr) repeat(2,minmax(0,1fr))"
+                                      columnGap={1.25}
+                                      rowGap={0.75}
+                                      alignItems="center"
+                                      marginTop={0.75}
+                                    >
+                                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                        Batch
+                                      </Typography>
+                                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                        Issued
+                                      </Typography>
+                                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                        Wasted
+                                      </Typography>
+
+                                      {row.stockLines.map(stockLine => {
+                                        const batchDraft = row.batchDraftById?.[stockLine.id] ?? {
+                                          used: 0,
+                                          wastage: 0,
+                                          openVialWastage: false,
+                                        };
+
+                                        return (
+                                          <React.Fragment key={stockLine.id}>
+                                            <Select
+                                              size="small"
+                                              value={stockLine.id}
+                                              disabled
+                                              options={batchOptions}
+                                            />
+                                            <BasicTextInput
+                                              type="text"
+                                              size="small"
+                                              inputMode={numericInputMode}
+                                              inputProps={numericHtmlInputProps}
+                                              sx={compactNumberInputSx}
+                                              value={String(batchDraft.used)}
+                                              onChange={event =>
+                                                updateBatchUsed(row, stockLine, event.target.value)
+                                              }
+                                            />
+                                            <BasicTextInput
+                                              type="text"
+                                              size="small"
+                                              inputMode={numericInputMode}
+                                              inputProps={numericHtmlInputProps}
+                                              sx={compactNumberInputSx}
+                                              value={String(batchDraft.wastage)}
+                                              onChange={event =>
+                                                updateBatchWastage(row, stockLine, event.target.value)
+                                              }
+                                            />
+                                          </React.Fragment>
+                                        );
+                                      })}
+                                    </Box>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{ display: 'block', marginTop: 0.75 }}
+                                    >
+                                      Batch issued total: {batchUsedTotal} / Item issued: {row.used}
+                                    </Typography>
+                                    {Math.abs(batchUsedTotal - row.used) > 0.0001 ? (
+                                      <Typography
+                                        variant="caption"
+                                        color="error.main"
+                                        sx={{ display: 'block' }}
+                                      >
+                                        Batch issued total must exactly match item issued.
+                                      </Typography>
+                                    ) : null}
+                                    {row.stockLines.some(stockLine => {
+                                      const batchUsed =
+                                        row.batchDraftById?.[stockLine.id]?.used ?? 0;
+                                      const availableDisplay = toDisplayUnits(
+                                        stockLine.availableNumberOfPacks,
+                                        row.isVaccine,
+                                        row.doses
+                                      );
+
+                                      return batchUsed - availableDisplay > 0.0001;
+                                    }) ? (
+                                      <Typography
+                                        variant="caption"
+                                        color="error.main"
+                                        sx={{ display: 'block' }}
+                                      >
+                                        One or more batch Issued values exceed that batch stock.
+                                      </Typography>
+                                    ) : null}
+                                  </>
                                 ) : null}
-                              </>
+                              </Box>
                             ) : null}
                           </Box>
                         ) : null}
