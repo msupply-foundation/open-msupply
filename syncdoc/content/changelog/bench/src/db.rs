@@ -121,13 +121,7 @@ mod tests {
     #[test]
     #[ignore] // Requires a running Postgres
     fn test_reset_database() {
-        let pg = PgConfig {
-            host: "localhost".to_string(),
-            port: 5432,
-            user: "postgres".to_string(),
-            password: "bench".to_string(),
-            database: "changelog_bench_test_reset".to_string(),
-        };
+        let pg = PgConfig::localhost("changelog_bench_test_reset");
 
         // Reset should create the database
         reset_database(&pg).unwrap();

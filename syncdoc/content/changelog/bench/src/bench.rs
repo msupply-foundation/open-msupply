@@ -340,13 +340,7 @@ mod tests {
         use crate::db;
         use crate::schema;
 
-        let pg = PgConfig {
-            host: "localhost".to_string(),
-            port: 5432,
-            user: "postgres".to_string(),
-            password: "bench".to_string(),
-            database: "changelog_bench_test_measure".to_string(),
-        };
+        let pg = PgConfig::localhost("changelog_bench_test_measure");
 
         db::reset_database(&pg).unwrap();
         let mut conn = db::connect(&pg, std::time::Duration::from_secs(5)).unwrap();
@@ -355,9 +349,7 @@ mod tests {
             name: "test".to_string(),
             phase: 1,
             indexes: IndexSet::V7,
-            partition: None,
-            pg_config_file: None,
-            null_profile: None,
+            ..Default::default()
         };
 
         let stmts = schema::setup_sql(&scenario, 0, 100);

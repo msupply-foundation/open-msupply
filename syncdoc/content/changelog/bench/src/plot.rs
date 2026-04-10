@@ -9,6 +9,12 @@ use crate::config::NullProfile;
 const CHART_WIDTH: u32 = 1200;
 const CHART_HEIGHT: u32 = 800;
 
+const PERCENTILES: &[(&str, fn(&BenchResult) -> u64)] = &[
+    ("p50", |r: &BenchResult| r.stats.p50_us),
+    ("p95", |r: &BenchResult| r.stats.p95_us),
+    ("p99", |r: &BenchResult| r.stats.p99_us),
+];
+
 const COLORS: &[RGBColor] = &[
     RGBColor(31, 119, 180),   // blue
     RGBColor(255, 127, 14),   // orange
@@ -72,33 +78,12 @@ pub fn generate_phase_charts(
         } else if phase == 2 {
             // Phase 2: one bar chart per percentile metric
             // Each cluster = N value, each bar = index strategy
-            let percentiles: &[(&str, fn(&BenchResult) -> u64)] = &[
-                ("p50", |r: &BenchResult| r.stats.p50_us),
-                ("p95", |r: &BenchResult| r.stats.p95_us),
-                ("p99", |r: &BenchResult| r.stats.p99_us),
-            ];
-            for (name, get_value) in percentiles {
+            for (name, get_value) in PERCENTILES {
                 generate_index_bar_chart(&phase_results, phase, name, *get_value, &dir)?;
             }
-        } else if phase == 1 {
-            // Phase 1: one line chart per percentile metric
-            // Each line = a pg config scenario
-            let percentiles: &[(&str, fn(&BenchResult) -> u64)] = &[
-                ("p50", |r: &BenchResult| r.stats.p50_us),
-                ("p95", |r: &BenchResult| r.stats.p95_us),
-                ("p99", |r: &BenchResult| r.stats.p99_us),
-            ];
-            for (name, get_value) in percentiles {
-                generate_percentile_line_chart(&phase_results, phase, name, *get_value, &dir)?;
-            }
         } else {
-            // Other phases (including Phase 3): one file per percentile, lines = scenarios
-            let percentiles: &[(&str, fn(&BenchResult) -> u64)] = &[
-                ("p50", |r: &BenchResult| r.stats.p50_us),
-                ("p95", |r: &BenchResult| r.stats.p95_us),
-                ("p99", |r: &BenchResult| r.stats.p99_us),
-            ];
-            for (name, get_value) in percentiles {
+            // Phases 1, 3+: one line chart per percentile, each line = a scenario
+            for (name, get_value) in PERCENTILES {
                 generate_percentile_line_chart(&phase_results, phase, name, *get_value, &dir)?;
             }
         }
@@ -497,12 +482,6 @@ fn generate_phase4_charts(
     }
     index_types.sort();
 
-    let percentiles: &[(&str, fn(&BenchResult) -> u64)] = &[
-        ("p50", |r: &BenchResult| r.stats.p50_us),
-        ("p95", |r: &BenchResult| r.stats.p95_us),
-        ("p99", |r: &BenchResult| r.stats.p99_us),
-    ];
-
     for idx_type in &index_types {
         let idx_dir = format!("{}/{}", output_dir, idx_type);
         fs::create_dir_all(&idx_dir)?;
@@ -523,7 +502,7 @@ fn generate_phase4_charts(
             continue;
         }
 
-        for (pct_name, get_value) in percentiles {
+        for (pct_name, get_value) in PERCENTILES {
             generate_phase4_bar_chart(
                 &idx_results,
                 idx_type,

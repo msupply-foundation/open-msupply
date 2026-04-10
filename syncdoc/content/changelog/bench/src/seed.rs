@@ -215,13 +215,7 @@ mod tests {
     #[test]
     #[ignore] // Requires a running Postgres
     fn test_generate_and_create_from_template() {
-        let pg = PgConfig {
-            host: "localhost".to_string(),
-            port: 5432,
-            user: "postgres".to_string(),
-            password: "postgres".to_string(),
-            database: "changelog_bench_test_tpl".to_string(),
-        };
+        let pg = PgConfig::localhost("changelog_bench_test_tpl");
 
         let n = 1000;
 

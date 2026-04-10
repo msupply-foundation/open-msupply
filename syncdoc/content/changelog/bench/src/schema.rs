@@ -348,12 +348,8 @@ mod tests {
     #[test]
     fn test_structure_sql_non_partitioned() {
         let scenario = ScenarioConfig {
-            name: "test".to_string(),
-            phase: 1,
             indexes: IndexSet::V7,
-            partition: None,
-            pg_config_file: None,
-            null_profile: None,
+            ..Default::default()
         };
         let stmts = structure_sql(&scenario, 1_000_000, 10_000);
 
@@ -365,12 +361,8 @@ mod tests {
     #[test]
     fn test_setup_sql_non_partitioned_v7() {
         let scenario = ScenarioConfig {
-            name: "test".to_string(),
-            phase: 1,
             indexes: IndexSet::V7,
-            partition: None,
-            pg_config_file: None,
-            null_profile: None,
+            ..Default::default()
         };
         let stmts = setup_sql(&scenario, 1_000_000, 10_000);
 
@@ -381,15 +373,12 @@ mod tests {
     #[test]
     fn test_setup_sql_partitioned_v7() {
         let scenario = ScenarioConfig {
-            name: "test".to_string(),
-            phase: 3,
             indexes: IndexSet::V7,
             partition: Some(PartitionConfig::Range {
                 key: "cursor".to_string(),
                 size: 1_000_000,
             }),
-            pg_config_file: None,
-            null_profile: None,
+            ..Default::default()
         };
         let stmts = setup_sql(&scenario, 10_000_000, 10_000);
 
@@ -414,30 +403,18 @@ mod tests {
         use diesel::prelude::*;
         use diesel::sql_query;
 
-        let pg = PgConfig {
-            host: "localhost".to_string(),
-            port: 5432,
-            user: "postgres".to_string(),
-            password: "bench".to_string(),
-            database: "changelog_bench_test_schema".to_string(),
-        };
+        let pg = PgConfig::localhost("changelog_bench_test_schema");
 
         let test_scenarios = vec![
             ScenarioConfig {
                 name: "pk_only".to_string(),
-                phase: 1,
                 indexes: IndexSet::PkOnly,
-                partition: None,
-                pg_config_file: None,
-                null_profile: None,
+                ..Default::default()
             },
             ScenarioConfig {
                 name: "v7".to_string(),
-                phase: 2,
                 indexes: IndexSet::V7,
-                partition: None,
-                pg_config_file: None,
-                null_profile: None,
+                ..Default::default()
             },
         ];
 

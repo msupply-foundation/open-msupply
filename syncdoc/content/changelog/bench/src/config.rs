@@ -17,6 +17,7 @@ pub struct Config {
     pub batch_size: usize,
     pub output_dir: String,
     pub n_values: Vec<u64>,
+    #[serde(default)]
     pub pg: PgConfig,
     pub scenarios: Vec<ScenarioConfig>,
     #[serde(default)]
@@ -24,6 +25,7 @@ pub struct Config {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct PgConfig {
     pub host: String,
     pub port: u16,
@@ -33,7 +35,48 @@ pub struct PgConfig {
     pub database: String,
 }
 
+impl Default for PgConfig {
+    fn default() -> Self {
+        Self {
+            host: "localhost".to_string(),
+            port: 5432,
+            user: "postgres".to_string(),
+            password: "postgres".to_string(),
+            database: "changelog_bench".to_string(),
+        }
+    }
+}
+
 impl PgConfig {
+    /// Create a PgConfig with localhost defaults for the given database name.
+    pub fn localhost(database: &str) -> Self {
+        Self {
+            database: database.to_string(),
+            ..Default::default()
+        }
+    }
+
+    /// Apply environment variable overrides (PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DATABASE).
+    pub fn apply_env_overrides(&mut self) {
+        if let Ok(v) = std::env::var("PG_HOST") {
+            self.host = v;
+        }
+        if let Ok(v) = std::env::var("PG_PORT") {
+            if let Ok(p) = v.parse() {
+                self.port = p;
+            }
+        }
+        if let Ok(v) = std::env::var("PG_USER") {
+            self.user = v;
+        }
+        if let Ok(v) = std::env::var("PG_PASSWORD") {
+            self.password = v;
+        }
+        if let Ok(v) = std::env::var("PG_DATABASE") {
+            self.database = v;
+        }
+    }
+
     pub fn connection_string(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",
@@ -57,10 +100,13 @@ impl PgConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct ScenarioConfig {
+    #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub phase: u8,
+    #[serde(default)]
     pub indexes: IndexSet,
     pub partition: Option<PartitionConfig>,
     /// Optional path to a PG config .txt file (key = value per line).
@@ -83,8 +129,9 @@ pub enum PartitionConfig {
 }
 
 /// Index configuration: either a known preset or a path to a .sql file.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum IndexSet {
+    #[default]
     PkOnly,
     V7,
     V7AllPartial,
@@ -115,8 +162,9 @@ impl Config {
     pub fn load(path: &str) -> Result<Self> {
         let content =
             std::fs::read_to_string(path).with_context(|| format!("Failed to read {}", path))?;
-        let config: Config =
+        let mut config: Config =
             toml::from_str(&content).with_context(|| format!("Failed to parse {}", path))?;
+        config.pg.apply_env_overrides();
         config.validate()?;
         Ok(config)
     }
@@ -247,13 +295,6 @@ batch_size = 5000
 output_dir = "results"
 n_values = [1_000_000, 10_000_000]
 
-[pg]
-host = "localhost"
-port = 5432
-user = "postgres"
-password = "bench"
-database = "changelog_bench"
-
 [[scenarios]]
 name = "test_scenario"
 phase = 1
@@ -296,10 +337,10 @@ key = "table_name"
     fn test_deserialize_full_config() {
         let config: Config = toml::from_str(sample_config_toml()).unwrap();
         assert_eq!(config.batch_size, 5000);
+        // pg defaults applied when [pg] section is omitted
         assert_eq!(config.pg.host, "localhost");
         assert_eq!(config.pg.port, 5432);
         assert_eq!(config.pg.user, "postgres");
-        assert_eq!(config.pg.password, "bench");
         assert_eq!(config.pg.database, "changelog_bench");
         assert_eq!(config.output_dir, "results");
         assert_eq!(config.n_values, vec![1_000_000, 10_000_000]);
@@ -316,13 +357,6 @@ batch_size = 100
 output_dir = "out"
 n_values = [1000]
 
-[pg]
-host = "localhost"
-port = 5432
-user = "postgres"
-password = "pass"
-database = "bench"
-
 [[scenarios]]
 name = "minimal"
 phase = 1
@@ -336,16 +370,10 @@ indexes = "pk_only"
 
     #[test]
     fn test_connection_string() {
-        let pg = PgConfig {
-            host: "localhost".to_string(),
-            port: 5432,
-            user: "postgres".to_string(),
-            password: "bench".to_string(),
-            database: "changelog_bench".to_string(),
-        };
+        let pg = PgConfig::localhost("changelog_bench");
         assert_eq!(
             pg.connection_string(),
-            "postgres://postgres:bench@localhost:5432/changelog_bench"
+            "postgres://postgres:postgres@localhost:5432/changelog_bench"
         );
     }
 
@@ -429,13 +457,6 @@ batch_size = 5000
 output_dir = "results"
 n_values = [1_000_000]
 
-[pg]
-host = "localhost"
-port = 5432
-user = "postgres"
-password = "bench"
-database = "changelog_bench"
-
 [null_profiles.mostly_null]
 store_id = 0.9
 transfer_store_id = 0.9
@@ -489,13 +510,6 @@ batch_size = 100
 output_dir = "out"
 n_values = [1000]
 
-[pg]
-host = "localhost"
-port = 5432
-user = "postgres"
-password = "pass"
-database = "bench"
-
 [[scenarios]]
 name = "bad"
 phase = 4
@@ -513,13 +527,6 @@ batch_size = 100
 output_dir = "out"
 n_values = [1000]
 
-[pg]
-host = "localhost"
-port = 5432
-user = "postgres"
-password = "pass"
-database = "bench"
-
 [[scenarios]]
 name = "bad"
 phase = 4
@@ -535,13 +542,6 @@ indexes = "v7"
 batch_size = 100
 output_dir = "out"
 n_values = [1000]
-
-[pg]
-host = "localhost"
-port = 5432
-user = "postgres"
-password = "pass"
-database = "bench"
 
 [null_profiles.bad]
 store_id = 1.5
