@@ -22,12 +22,6 @@ export const buildPrintableHtml = (
 ): string => {
   const title = options?.title ?? document.title;
   const orientation = options?.orientation ?? 'portrait';
-  const styleTags = Array.from(
-    document.querySelectorAll('style, link[rel="stylesheet"]')
-  )
-    .map(element => element.outerHTML)
-    .join('\n');
-
   return `<!doctype html>
 <html>
   <head>
@@ -41,6 +35,10 @@ export const buildPrintableHtml = (
       html, body {
         margin: 0;
         padding: 0;
+        width: auto !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
       }
       #oms-print-controls {
         position: sticky;
@@ -67,6 +65,10 @@ export const buildPrintableHtml = (
       }
       #oms-print-content {
         padding: 12px;
+        width: auto !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
       }
       @media print {
         #oms-print-controls {
@@ -74,10 +76,21 @@ export const buildPrintableHtml = (
         }
         #oms-print-content {
           padding: 0;
+          width: auto !important;
+          height: auto !important;
+          max-height: none !important;
+          overflow: visible !important;
+        }
+        html,
+        body,
+        #oms-print-content {
+          width: auto !important;
+          height: auto !important;
+          max-height: none !important;
+          overflow: visible !important;
         }
       }
     </style>
-    ${styleTags}
   </head>
   <body>
     <div id="oms-print-controls">
