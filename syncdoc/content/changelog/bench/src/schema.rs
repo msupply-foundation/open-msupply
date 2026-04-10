@@ -1,4 +1,4 @@
-use crate::config::{IndexSet, PartitionConfig, ScenarioConfig};
+use crate::config::{IndexSet, ScenarioConfig};
 
 /// All changelog_table_name values used in the benchmark.
 pub const TABLE_NAME_VALUES: &[&str] = &[
@@ -56,35 +56,76 @@ pub fn base_table_sql() -> String {
     .to_string()
 }
 
-/// Generate the SQL to create the changelog table with partitioning.
-pub fn partitioned_table_sql(partition: &PartitionConfig) -> String {
-    let partition_clause = match partition {
-        PartitionConfig::Range { key, .. } => format!("PARTITION BY RANGE ({})", key),
-        PartitionConfig::Hash { key, .. } => format!("PARTITION BY HASH ({})", key),
-        PartitionConfig::List { key } => format!("PARTITION BY LIST ({})", key),
-    };
-
-    format!(
-        "CREATE TABLE changelog (
-    cursor BIGINT NOT NULL DEFAULT nextval('changelog_cursor_seq'),
-    record_id UUID NOT NULL,
-    table_name TEXT NOT NULL,
-    row_action row_action_type NOT NULL,
-    source_site_id INTEGER,
-    store_id UUID,
-    transfer_store_id UUID,
-    patient_id UUID
-) {};",
-        partition_clause
-    )
+/// Partition directive parsed from a SQL file comment.
+#[derive(Debug)]
+enum PartitionDirective {
+    /// `-- @range_partitions: size=100000, key=cursor`
+    Range { size: u64 },
+    /// `-- @hash_partitions: count=32, key=cursor`
+    Hash { count: u32 },
+    /// `-- @list_partitions: key=table_name`
+    List,
 }
 
-/// Generate the SQL to create partitions for a partitioned table.
-pub fn partition_ddl(partition: &PartitionConfig, n: u64, batch_size: u64) -> Vec<String> {
-    match partition {
-        PartitionConfig::Range { size, .. } => {
+/// Parse a partition SQL file.
+/// Returns: (sql_statements, optional_directive_for_child_partitions)
+///
+/// Directives are parsed from comments: `-- @range_partitions: size=100000`
+/// SQL statements are split on `;` (multi-line statements supported).
+fn parse_partition_file(path: &str) -> (Vec<String>, Option<PartitionDirective>) {
+    let content = std::fs::read_to_string(path)
+        .unwrap_or_else(|e| panic!("Failed to read partition SQL file '{}': {}", path, e));
+
+    let mut directive = None;
+
+    // Extract directives from comment lines first
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix("-- @range_partitions:") {
+            let mut size = 0u64;
+            for part in rest.split(',') {
+                let part = part.trim();
+                if let Some(val) = part.strip_prefix("size=") {
+                    size = val.trim().parse().expect("Invalid size in @range_partitions");
+                }
+            }
+            directive = Some(PartitionDirective::Range { size });
+        } else if let Some(rest) = trimmed.strip_prefix("-- @hash_partitions:") {
+            let mut count = 0u32;
+            for part in rest.split(',') {
+                let part = part.trim();
+                if let Some(val) = part.strip_prefix("count=") {
+                    count = val.trim().parse().expect("Invalid count in @hash_partitions");
+                }
+            }
+            directive = Some(PartitionDirective::Hash { count });
+        } else if trimmed.starts_with("-- @list_partitions:") {
+            directive = Some(PartitionDirective::List);
+        }
+    }
+
+    // Strip comments, then split on `;` for multi-line SQL statements
+    let sql_only: String = content
+        .lines()
+        .filter(|l| !l.trim().starts_with("--"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let stmts: Vec<String> = sql_only
+        .split(';')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .map(|s| format!("{};", s))
+        .collect();
+
+    (stmts, directive)
+}
+
+/// Generate the child partition DDL from a directive.
+fn child_partition_ddl(directive: &PartitionDirective, n: u64, batch_size: u64) -> Vec<String> {
+    match directive {
+        PartitionDirective::Range { size } => {
             let total = n + batch_size;
-            // +1 for headroom
             let num_partitions = (total / size) + 2;
             (0..num_partitions)
                 .map(|i| {
@@ -97,7 +138,7 @@ pub fn partition_ddl(partition: &PartitionConfig, n: u64, batch_size: u64) -> Ve
                 })
                 .collect()
         }
-        PartitionConfig::Hash { count, .. } => (0..*count)
+        PartitionDirective::Hash { count } => (0..*count)
             .map(|i| {
                 format!(
                     "CREATE TABLE changelog_p{} PARTITION OF changelog FOR VALUES WITH (MODULUS {}, REMAINDER {});",
@@ -105,7 +146,7 @@ pub fn partition_ddl(partition: &PartitionConfig, n: u64, batch_size: u64) -> Ve
                 )
             })
             .collect(),
-        PartitionConfig::List { .. } => {
+        PartitionDirective::List => {
             let mut stmts: Vec<String> = TABLE_NAME_VALUES
                 .iter()
                 .enumerate()
@@ -153,54 +194,30 @@ pub fn index_sql(indexes: &IndexSet) -> Vec<String> {
     }
 }
 
-/// Generate the PK constraint SQL for partitioned tables.
-/// Postgres requires that unique constraints include all partitioning columns.
-/// For range/hash by cursor: PK on (cursor) is fine since cursor is the partition key.
-/// For list by table_name: PK must be (cursor, table_name).
-pub fn partitioned_pk_sql(partition: &PartitionConfig) -> String {
-    match partition {
-        PartitionConfig::List { .. } => {
-            "ALTER TABLE changelog ADD PRIMARY KEY (cursor, table_name);".to_string()
-        }
-        _ => "ALTER TABLE changelog ADD PRIMARY KEY (cursor);".to_string(),
-    }
-}
-
-/// Generate SQL for table structure only (types, table, partitions).
-/// No indexes are created. This is used before restoring seed data.
-pub fn structure_sql(scenario: &ScenarioConfig, n: u64, batch_size: u64) -> Vec<String> {
+/// Generate SQL for table structure only (types + base table, no partitions, no indexes).
+pub fn structure_sql() -> Vec<String> {
     let mut stmts = base_types_sql();
-
-    match &scenario.partition {
-        None => {
-            stmts.push(base_table_sql());
-        }
-        Some(partition) => {
-            stmts.push(partitioned_table_sql(partition));
-            stmts.extend(partition_ddl(partition, n, batch_size));
-            stmts.push(partitioned_pk_sql(partition));
-        }
-    }
-
+    stmts.push(base_table_sql());
     stmts
 }
 
 /// Generate all setup SQL for a given scenario and N value (structure + indexes).
-/// Used in tests and when NOT restoring from a seed dump.
+/// Used in tests. Does not support partitioning.
 #[allow(dead_code)]
-pub fn setup_sql(scenario: &ScenarioConfig, n: u64, batch_size: u64) -> Vec<String> {
-    let mut stmts = structure_sql(scenario, n, batch_size);
+pub fn setup_sql(scenario: &ScenarioConfig, _n: u64, _batch_size: u64) -> Vec<String> {
+    let mut stmts = structure_sql();
     stmts.extend(index_sql(&scenario.indexes));
     stmts
 }
 
 /// Migrate data from a non-partitioned changelog table (created by template)
-/// into a partitioned table structure.
+/// into a partitioned table structure defined in a SQL file.
 ///
-/// Steps: rename old table -> create partitioned table -> insert data -> drop old table.
+/// Steps: rename old table -> execute partition SQL (creates table + PK) ->
+///        generate child partitions from directive -> copy data -> drop old table.
 pub fn migrate_to_partitioned(
     conn: &mut diesel::PgConnection,
-    scenario: &ScenarioConfig,
+    partition_file: &str,
     n: u64,
     batch_size: u64,
 ) -> anyhow::Result<()> {
@@ -208,36 +225,31 @@ pub fn migrate_to_partitioned(
     use diesel::prelude::*;
     use diesel::sql_query;
 
-    let partition = scenario
-        .partition
-        .as_ref()
-        .expect("migrate_to_partitioned called without partition config");
+    let (sql_stmts, directive) = parse_partition_file(partition_file);
 
     // Rename the original (non-partitioned) table
     sql_query("ALTER TABLE changelog RENAME TO changelog_old;")
         .execute(conn)
         .context("Failed to rename changelog to changelog_old")?;
 
-    // Drop PK on old table (sequences are shared)
     let _ = sql_query("ALTER TABLE changelog_old DROP CONSTRAINT IF EXISTS changelog_pkey;")
         .execute(conn);
 
-    // Create the partitioned table
-    sql_query(&partitioned_table_sql(partition))
-        .execute(conn)
-        .context("Failed to create partitioned changelog table")?;
-
-    // Create partitions
-    for stmt in partition_ddl(partition, n, batch_size) {
-        sql_query(&stmt)
+    // Execute the SQL from the partition file (CREATE TABLE ... PARTITION BY, PK, etc.)
+    for stmt in &sql_stmts {
+        sql_query(stmt)
             .execute(conn)
-            .context("Failed to create partition")?;
+            .with_context(|| format!("Failed partition SQL: {}", &stmt[..stmt.len().min(100)]))?;
     }
 
-    // Add PK on new partitioned table
-    sql_query(&partitioned_pk_sql(partition))
-        .execute(conn)
-        .context("Failed to add PK to partitioned table")?;
+    // Generate and create child partitions from the directive
+    if let Some(ref dir) = directive {
+        for stmt in child_partition_ddl(dir, n, batch_size) {
+            sql_query(&stmt)
+                .execute(conn)
+                .context("Failed to create child partition")?;
+        }
+    }
 
     // Copy data from old to new
     eprintln!("  Copying data into partitioned table...");
@@ -245,11 +257,31 @@ pub fn migrate_to_partitioned(
         .execute(conn)
         .context("Failed to copy data into partitioned table")?;
 
-    // Drop old table
     sql_query("DROP TABLE changelog_old;")
         .execute(conn)
         .context("Failed to drop changelog_old")?;
 
+    Ok(())
+}
+
+/// Ensure extra child partitions exist for measurement inserts (range partitions).
+/// Re-parses the partition file to get the directive, then generates additional partitions.
+pub fn ensure_extra_partitions(
+    conn: &mut diesel::PgConnection,
+    partition_file: &str,
+    n: u64,
+    extra: u64,
+) -> anyhow::Result<()> {
+    use diesel::prelude::*;
+    use diesel::sql_query;
+
+    let (_, directive) = parse_partition_file(partition_file);
+    if let Some(ref dir) = directive {
+        for stmt in child_partition_ddl(dir, n, extra) {
+            // Ignore errors for partitions that already exist
+            let _ = sql_query(&stmt).execute(conn);
+        }
+    }
     Ok(())
 }
 
@@ -305,12 +337,9 @@ mod tests {
     }
 
     #[test]
-    fn test_range_partition_ddl() {
-        let partition = PartitionConfig::Range {
-            key: "cursor".to_string(),
-            size: 100_000,
-        };
-        let stmts = partition_ddl(&partition, 1_000_000, 10_000);
+    fn test_child_partition_ddl_range() {
+        let dir = PartitionDirective::Range { size: 100_000 };
+        let stmts = child_partition_ddl(&dir, 1_000_000, 10_000);
         // 1_010_000 / 100_000 = 10, + 2 = 12 partitions
         assert_eq!(stmts.len(), 12);
         assert!(stmts[0].contains("PARTITION OF changelog"));
@@ -319,39 +348,50 @@ mod tests {
     }
 
     #[test]
-    fn test_hash_partition_ddl() {
-        let partition = PartitionConfig::Hash {
-            key: "cursor".to_string(),
-            count: 16,
-        };
-        let stmts = partition_ddl(&partition, 1_000_000, 10_000);
+    fn test_child_partition_ddl_hash() {
+        let dir = PartitionDirective::Hash { count: 16 };
+        let stmts = child_partition_ddl(&dir, 1_000_000, 10_000);
         assert_eq!(stmts.len(), 16);
         assert!(stmts[0].contains("MODULUS 16, REMAINDER 0"));
         assert!(stmts[15].contains("MODULUS 16, REMAINDER 15"));
     }
 
     #[test]
-    fn test_list_partition_ddl() {
-        let partition = PartitionConfig::List {
-            key: "table_name".to_string(),
-        };
-        let stmts = partition_ddl(&partition, 1_000_000, 10_000);
-        // One per enum value + DEFAULT
+    fn test_child_partition_ddl_list() {
+        let dir = PartitionDirective::List;
+        let stmts = child_partition_ddl(&dir, 1_000_000, 10_000);
         assert_eq!(stmts.len(), TABLE_NAME_VALUES.len() + 1);
         assert!(stmts.last().unwrap().contains("DEFAULT"));
-
         for val in TABLE_NAME_VALUES {
-            assert!(stmts.iter().any(|s| s.contains(&format!("IN ('{}')", val))));
+            assert!(stmts.iter().any(|s: &String| s.contains(&format!("IN ('{}')", val))));
         }
     }
 
     #[test]
+    fn test_parse_partition_file_range() {
+        let (stmts, dir) = parse_partition_file("partition-configs/range_cursor_100k.sql");
+        assert!(!stmts.is_empty());
+        assert!(stmts.iter().any(|s| s.contains("PARTITION BY RANGE")));
+        assert!(matches!(dir, Some(PartitionDirective::Range { size: 100000 })));
+    }
+
+    #[test]
+    fn test_parse_partition_file_hash() {
+        let (stmts, dir) = parse_partition_file("partition-configs/hash_cursor_32.sql");
+        assert!(stmts.iter().any(|s| s.contains("PARTITION BY HASH")));
+        assert!(matches!(dir, Some(PartitionDirective::Hash { count: 32 })));
+    }
+
+    #[test]
+    fn test_parse_partition_file_list() {
+        let (stmts, dir) = parse_partition_file("partition-configs/list_table_name.sql");
+        assert!(stmts.iter().any(|s| s.contains("PARTITION BY LIST")));
+        assert!(matches!(dir, Some(PartitionDirective::List)));
+    }
+
+    #[test]
     fn test_structure_sql_non_partitioned() {
-        let scenario = ScenarioConfig {
-            indexes: IndexSet::V7,
-            ..Default::default()
-        };
-        let stmts = structure_sql(&scenario, 1_000_000, 10_000);
+        let stmts = structure_sql();
 
         // Should have: 2 base types (row_action enum + sequence) + 1 table = 3
         assert_eq!(stmts.len(), 3);
@@ -368,31 +408,6 @@ mod tests {
 
         // Should have: 2 base types + 1 table + 4 indexes = 7
         assert_eq!(stmts.len(), 7);
-    }
-
-    #[test]
-    fn test_setup_sql_partitioned_v7() {
-        let scenario = ScenarioConfig {
-            indexes: IndexSet::V7,
-            partition: Some(PartitionConfig::Range {
-                key: "cursor".to_string(),
-                size: 1_000_000,
-            }),
-            ..Default::default()
-        };
-        let stmts = setup_sql(&scenario, 10_000_000, 10_000);
-
-        assert!(stmts
-            .iter()
-            .any(|s| s.contains("PARTITION BY RANGE (cursor)")));
-        assert!(stmts.iter().any(|s| s.contains("ADD PRIMARY KEY (cursor)")));
-        assert!(stmts.iter().any(|s| s.contains("transfer_store_id")));
-        assert!(stmts.iter().any(|s| s.contains("patient_id")));
-        let index_count = stmts
-            .iter()
-            .filter(|s| s.starts_with("CREATE INDEX"))
-            .count();
-        assert_eq!(index_count, 4);
     }
 
     #[test]

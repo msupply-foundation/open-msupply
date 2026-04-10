@@ -108,24 +108,15 @@ pub struct ScenarioConfig {
     pub phase: u8,
     #[serde(default)]
     pub indexes: IndexSet,
-    pub partition: Option<PartitionConfig>,
+    /// Optional path to a .sql file defining the partitioned table structure.
+    /// Contains CREATE TABLE ... PARTITION BY, PK, and @directives for child partitions.
+    pub partition_file: Option<String>,
     /// Optional path to a PG config .txt file (key = value per line).
     /// Settings are applied via ALTER SYSTEM + pg_reload_conf() before the scenario,
     /// and reset via ALTER SYSTEM RESET ALL afterwards.
     pub pg_config_file: Option<String>,
     /// Name of a null_profile defined in [null_profiles]. Required for phase 4.
     pub null_profile: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(tag = "strategy")]
-pub enum PartitionConfig {
-    #[serde(rename = "range")]
-    Range { key: String, size: u64 },
-    #[serde(rename = "hash")]
-    Hash { key: String, count: u32 },
-    #[serde(rename = "list")]
-    List { key: String },
 }
 
 /// Index configuration: either a known preset or a path to a .sql file.
@@ -219,10 +210,19 @@ impl Config {
                         }
                     }
                 }
-                if scenario.partition.is_some() {
+                if scenario.partition_file.is_some() {
                     bail!(
-                        "Scenario '{}' is phase 4 but has a partition config (not supported)",
+                        "Scenario '{}' is phase 4 but has a partition_file (not supported)",
                         scenario.name
+                    );
+                }
+            }
+            if let Some(ref path) = scenario.partition_file {
+                if !Path::new(path).exists() {
+                    bail!(
+                        "Scenario '{}' references partition_file '{}' which does not exist",
+                        scenario.name,
+                        path
                     );
                 }
             }
@@ -309,27 +309,19 @@ indexes = "pk_only"
 name = "test_range"
 phase = 3
 indexes = "v7"
-[scenarios.partition]
-strategy = "range"
-key = "cursor"
-size = 1_000_000
+partition_file = "partition-configs/range_cursor_100k.sql"
 
 [[scenarios]]
 name = "test_hash"
 phase = 3
 indexes = "v7"
-[scenarios.partition]
-strategy = "hash"
-key = "cursor"
-count = 16
+partition_file = "partition-configs/hash_cursor_32.sql"
 
 [[scenarios]]
 name = "test_list"
 phase = 3
 indexes = "v7"
-[scenarios.partition]
-strategy = "list"
-key = "table_name"
+partition_file = "partition-configs/list_table_name.sql"
 "#
     }
 
@@ -365,7 +357,7 @@ indexes = "pk_only"
         let config: Config = toml::from_str(toml_str).unwrap();
         assert_eq!(config.scenarios.len(), 1);
         assert_eq!(config.scenarios[0].indexes, IndexSet::PkOnly);
-        assert!(config.scenarios[0].partition.is_none());
+        assert!(config.scenarios[0].partition_file.is_none());
     }
 
     #[test]
@@ -393,31 +385,21 @@ indexes = "pk_only"
     }
 
     #[test]
-    fn test_partition_variants_deserialize() {
+    fn test_partition_file_deserialize() {
         let config: Config = toml::from_str(sample_config_toml()).unwrap();
 
-        match &config.scenarios[2].partition {
-            Some(PartitionConfig::Range { key, size }) => {
-                assert_eq!(key, "cursor");
-                assert_eq!(*size, 1_000_000);
-            }
-            other => panic!("Expected Range partition, got {:?}", other),
-        }
-
-        match &config.scenarios[3].partition {
-            Some(PartitionConfig::Hash { key, count }) => {
-                assert_eq!(key, "cursor");
-                assert_eq!(*count, 16);
-            }
-            other => panic!("Expected Hash partition, got {:?}", other),
-        }
-
-        match &config.scenarios[4].partition {
-            Some(PartitionConfig::List { key }) => {
-                assert_eq!(key, "table_name");
-            }
-            other => panic!("Expected List partition, got {:?}", other),
-        }
+        // test_range has partition_file
+        assert_eq!(
+            config.scenarios[2].partition_file,
+            Some("partition-configs/range_cursor_100k.sql".to_string())
+        );
+        // test_hash has partition_file
+        assert_eq!(
+            config.scenarios[3].partition_file,
+            Some("partition-configs/hash_cursor_32.sql".to_string())
+        );
+        // test_scenario (phase 1) has no partition_file
+        assert!(config.scenarios[0].partition_file.is_none());
     }
 
     #[test]

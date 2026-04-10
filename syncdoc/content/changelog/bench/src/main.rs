@@ -266,12 +266,12 @@ fn main() -> Result<()> {
                         seed::reset_sequence_after_restore(&mut conn, *n)?;
                     }
 
-                    // For partitioned scenarios: migrate data from base table into partitioned structure
-                    if scenario.partition.is_some() {
+                    // For partitioned scenarios: migrate data into partitioned structure
+                    if let Some(ref partition_file) = scenario.partition_file {
                         eprintln!("  Migrating to partitioned table...");
                         schema::migrate_to_partitioned(
                             &mut conn,
-                            scenario,
+                            partition_file,
                             *n,
                             config.batch_size as u64,
                         )?;
@@ -286,18 +286,14 @@ fn main() -> Result<()> {
                         })?;
                     }
 
-                    // Ensure extra partitions exist for measurement batch (range partitions)
-                    if let Some(config::PartitionConfig::Range { key: _, size }) =
-                        &scenario.partition
-                    {
-                        let extra_partitions = schema::partition_ddl(
-                            scenario.partition.as_ref().unwrap(),
+                    // Ensure extra partitions exist for measurement batch
+                    if let Some(ref partition_file) = scenario.partition_file {
+                        schema::ensure_extra_partitions(
+                            &mut conn,
+                            partition_file,
                             *n,
-                            config.batch_size as u64 + *size,
-                        );
-                        for stmt in &extra_partitions {
-                            let _ = sql_query(stmt).execute(&mut conn);
-                        }
+                            config.batch_size as u64 * 2,
+                        )?;
                     }
 
                     // ANALYZE after data load + index creation
