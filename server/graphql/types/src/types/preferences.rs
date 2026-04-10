@@ -94,6 +94,14 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.global_table_configs)
     }
 
+    pub async fn allow_backdating_of_shipments(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.allow_backdating_of_shipments)
+    }
+
+    pub async fn maximum_backdating_days(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.maximum_backdating_days)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -147,6 +155,14 @@ impl PreferencesNode {
         )
     }
 
+    pub async fn external_inbound_shipment_lines_must_be_authorised(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .external_inbound_shipment_lines_must_be_authorised,
+        )
+    }
+
     pub async fn number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products(
         &self,
     ) -> Result<i32> {
@@ -159,7 +175,7 @@ impl PreferencesNode {
 
     pub async fn number_of_months_threshold_to_show_low_stock_alerts_for_products(
         &self,
-    ) -> Result<i32> {
+    ) -> Result<f64> {
         self.load_preference(
             &self
                 .preferences
@@ -169,7 +185,7 @@ impl PreferencesNode {
 
     pub async fn number_of_months_threshold_to_show_over_stock_alerts_for_products(
         &self,
-    ) -> Result<i32> {
+    ) -> Result<f64> {
         self.load_preference(
             &self
                 .preferences
@@ -268,6 +284,8 @@ pub enum PreferenceKey {
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
+    AllowBackdatingOfShipments,
+    MaximumBackdatingDays,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -306,6 +324,7 @@ pub enum PreferenceNodeType {
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
+    Float,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,

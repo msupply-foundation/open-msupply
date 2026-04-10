@@ -213,7 +213,7 @@ export const InboundListView = () => {
     <>
       {isExtraSmallScreen ? (
         // We don't want to show any app bar button on mobile list view
-        <CardList table={table} tableId={TABLE_ID} />
+        <CardList table={table} />
       ) : (
         <>
           <AppBarButtons

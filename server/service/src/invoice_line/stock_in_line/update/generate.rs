@@ -19,6 +19,7 @@ use repository::{
 };
 
 use super::UpdateStockInLine;
+use crate::NullableUpdate;
 
 pub struct GenerateResult {
     pub invoice_row_option: Option<InvoiceRow>,
@@ -53,11 +54,9 @@ pub fn generate(
         update_line = convert_invoice_line_to_single_pack(update_line);
     }
 
-    // Only update stock when the invoice status has reached a status that effect stock and the line
-    // hasn't be rejected. The current logic makes it so lines can't be rejected after being accepted as
-    // in that case the stock could have already been assigned so it mightn't be possible to then
-    // remove the stock line. This does mean that new lines added when received will be stuck in pending
-    // and can't go into stock.
+    // Only update stock when the invoice status has reached a status that affects stock and the
+    // line is passed (not rejected or pending). Line status changes are blocked once the invoice
+    // reaches Received, so at Delivered status no stock lines exist yet and all transitions are safe.
     let (upsert_batch_option, vvm_status_log_option) = if should_update_stock(&existing_invoice_row)
         && matches!(update_line.status, None | Some(InvoiceLineStatus::Passed))
     {
@@ -82,7 +81,10 @@ pub fn generate(
         )?;
         update_line.stock_line_id = Some(new_batch.id.clone());
 
-        let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
+        let vvm_status_log_option = if let Some(NullableUpdate {
+            value: Some(vvm_status_id),
+        }) = input.vvm_status_id
+        {
             let existing_log_id =
                 get_existing_vvm_status_log_id(connection, &new_batch.id, &update_line.id)?;
 
@@ -191,15 +193,15 @@ fn generate_line(
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
 
-    update_line.donor_id = donor_id
-        .map(|d| d.value)
-        .unwrap_or(update_line.donor_id);
+    update_line.donor_id = donor_id.map(|d| d.value).unwrap_or(update_line.donor_id);
 
     update_line.manufacturer_id = manufacturer_id
         .map(|m| m.value)
         .unwrap_or(update_line.manufacturer_id);
 
-    update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
+    update_line.vvm_status_id = vvm_status_id
+        .map(|v| v.value)
+        .unwrap_or(update_line.vvm_status_id);
 
     if let Some(status) = status {
         use InvoiceLineStatus::*;

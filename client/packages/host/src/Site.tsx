@@ -24,6 +24,7 @@ import {
   usePreferences,
   useIsCentralServerApi,
   useRootNavigationPath,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -80,6 +81,7 @@ export const Site: FC = () => {
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const rootNavigationPath = useRootNavigationPath();
   const isCentralServer = useIsCentralServerApi();
+  const { isRtl } = useIntlUtils();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
 
@@ -116,7 +118,13 @@ export const Site: FC = () => {
       <EasterEggModalProvider>
         <SyncModalProvider>
           <CommandK>
-            <SnackbarProvider maxSnack={3}>
+            <SnackbarProvider
+              maxSnack={3}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: isRtl ? 'right' : 'left',
+              }}
+            >
               <BarcodeScannerProvider>
                 {!isExtraSmallScreen && <AppDrawer />}
                 <Box

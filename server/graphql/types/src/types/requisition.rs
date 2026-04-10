@@ -24,8 +24,12 @@ use crate::types::SyncFileReferenceConnector;
 pub enum RequisitionNodeType {
     /// Requisition created by store that is ordering stock
     Request,
-    /// Supplying store requisition in response to request requisition
+    /// Supplying store requisition in response to request requisition, or manual requisition for a customer
     Response,
+    /// Imprest requisition where each item has a pre-determined max/target quantity
+    Imprest,
+    /// Stock history requisition where facility submits stock on hand
+    StockHistory,
 }
 
 /// Approval status is applicable to response requisition only

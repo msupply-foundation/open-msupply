@@ -83,7 +83,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                 label={t('heading.username')}
                 text={user.name}
                 textProps={{
-                  textAlign: 'left',
                   lineHeight: 1.5,
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -91,7 +90,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                 }}
                 labelProps={{
                   sx: {
-                    textAlign: 'left',
                     width: LABEL_WIDTH,
                     lineHeight: 1.5,
                   },
@@ -103,7 +101,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                 label={t('label.email')}
                 text={user.email ?? UNDEFINED_STRING_VALUE}
                 textProps={{
-                  textAlign: 'left',
                   lineHeight: 1.5,
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -111,7 +108,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                 }}
                 labelProps={{
                   sx: {
-                    textAlign: 'left',
                     width: LABEL_WIDTH,
                     lineHeight: 1.5,
                   },
@@ -123,7 +119,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                 label={t('label.job-title')}
                 text={user.jobTitle ?? UNDEFINED_STRING_VALUE}
                 textProps={{
-                  textAlign: 'left',
                   lineHeight: 1.5,
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -131,7 +126,6 @@ export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
                 }}
                 labelProps={{
                   sx: {
-                    textAlign: 'left',
                     width: LABEL_WIDTH,
                     lineHeight: 1.5,
                   },

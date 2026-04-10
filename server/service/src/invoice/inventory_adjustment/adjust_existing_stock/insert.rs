@@ -52,6 +52,7 @@ pub fn insert_inventory_adjustment(
         .connection
         .transaction_sync(|connection| {
             let stock_line = validate(connection, &ctx.store_id, &input)?;
+            let stock_line_id = stock_line.stock_line_row.id.clone();
             let GenerateResult {
                 invoice,
                 insert_stock_in_or_out_line,
@@ -95,6 +96,15 @@ pub fn insert_inventory_adjustment(
                 ctx,
                 ActivityLogType::InventoryAdjustment,
                 Some(verified_invoice.id.to_string()),
+                None,
+                None,
+            )?;
+
+            // Also log against the stock line so it appears in the stock line's Log tab
+            activity_log_entry(
+                ctx,
+                ActivityLogType::InventoryAdjustment,
+                Some(stock_line_id),
                 None,
                 None,
             )?;
