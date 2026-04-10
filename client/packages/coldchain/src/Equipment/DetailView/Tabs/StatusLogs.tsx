@@ -24,7 +24,11 @@ import {
 } from '@common/intl';
 import { ColdchainAssetLogFragment, useAssets } from '../../api';
 import { FileList } from '../../Components';
-import { statusColourMap, TEMPERATURE_MAPPING_TYPE } from '../../utils';
+import {
+  statusColourMap,
+  TEMPERATURE_MAPPING_TYPE,
+  useIsColdRoom,
+} from '../../utils';
 
 const Divider = () => (
   <Box
@@ -253,15 +257,17 @@ type EventOption = {
   value: 'status' | 'type';
 };
 
-const useEventOptions = (): EventOption[] => {
+const useEventOptions = (isColdRoom: boolean): EventOption[] => {
   const t = useTranslation();
-  return useMemo<EventOption[]>(
-    () => [
+  return useMemo<EventOption[]>(() => {
+    const options: EventOption[] = [
       { label: t('label.status-change'), value: 'status' },
-      { label: t('label.temperature-mapping'), value: 'type' },
-    ],
-    [t]
-  );
+    ];
+    if (isColdRoom) {
+      options.push({ label: t('label.temperature-mapping'), value: 'type' });
+    }
+    return options;
+  }, [t, isColdRoom]);
 };
 
 const LogFilters = ({
@@ -340,10 +346,11 @@ const LogFilters = ({
 
 export const StatusLogs = ({ assetId }: { assetId: string }) => {
   const t = useTranslation();
+  const isColdRoom = useIsColdRoom();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventOption | null>(null);
-  const eventOptions = useEventOptions();
+  const eventOptions = useEventOptions(isColdRoom);
 
   const additionalFilter: Partial<AssetLogFilterInput> = {};
   if (fromDate || toDate) {
