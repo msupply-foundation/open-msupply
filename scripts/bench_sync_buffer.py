@@ -266,7 +266,30 @@ def run(conn, approach: str, new_rows: list[tuple]) -> list[dict]:
             return (rid, rid, tbl, data, src)
         return (rid, tbl, data, src)
 
-    # 1. Upsert 1K new (in tx)
+    # 1a. Upsert 1K new (raw)
+    def upsert_new_raw():
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            for rid, tbl, src, data in new_rows:
+                cur.execute(upsert_sql, upsert_params(rid, tbl, data, src))
+        conn.autocommit = False
+    results.append({"operation": "upsert_1k_new_raw", "duration_ms": bench(upsert_new_raw)})
+
+    # 1b. Upsert 1K existing (raw)
+    def upsert_existing_raw():
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            for rid, tbl, src, data in new_rows:
+                cur.execute(upsert_sql, upsert_params(rid, tbl, data, src))
+        conn.autocommit = False
+    results.append({"operation": "upsert_1k_existing_raw", "duration_ms": bench(upsert_existing_raw)})
+
+    # Clean up raw rows before tx benchmarks
+    with conn.cursor() as cur:
+        cur.execute(f"DELETE FROM {table} WHERE record_id LIKE 'new_%'")
+    conn.commit()
+
+    # 1c. Upsert 1K new (in tx)
     def upsert_new():
         with conn.cursor() as cur:
             for rid, tbl, src, data in new_rows:
