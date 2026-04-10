@@ -7,33 +7,20 @@ import {
   LoadingButton,
   usePrinter,
   PlusCircleIcon,
-  useDialog,
-  DialogButton,
   useNotification,
-  InsertAssetLogInput,
-  FnUtils,
   UserPermission,
   useAuthContext,
-  AssetLogStatusNodeType,
-  Box,
   SplitButton,
   SplitButtonOption,
-  DetailContainer,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { UpdateStatusButton } from './UpdateStatusButton';
-import { StatusForm, Draft } from './StatusForm';
 import { RecordMappingModal } from './RecordMappingButton';
 import { Environment } from '@openmsupply-client/config';
-import { useAssetLogReasonList } from '@openmsupply-client/system';
+import { useStatusLogDialog } from './useStatusLogDialog';
 
 const COLD_ROOMS_AND_FREEZER_ROOMS_CATEGORY_ID =
   '7db32eb6-5929-4dd1-a5e9-01e36baa73ad';
-
-const getEmptyAssetLog = (assetId: string) => ({
-  id: FnUtils.generateUUID(),
-  assetId,
-});
 
 type ActionValue = 'update-status' | 'record-mapping';
 
@@ -43,73 +30,14 @@ const ColdRoomActionButton = ({
   assetId: string;
 }) => {
   const t = useTranslation();
-  const { error, success, info } = useNotification();
+  const { info } = useNotification();
   const { userHasPermission } = useAuthContext();
   const [mappingOpen, setMappingOpen] = useState(false);
-
-  // Status dialog state (same as UpdateStatusButton)
-  const { insertLog, invalidateQueries } = useAssets.log.insert();
-  const [draft, setDraft] = useState<Partial<Draft>>(
-    getEmptyAssetLog(assetId)
-  );
-  const onStatusClose = () => setDraft(getEmptyAssetLog(assetId));
-  const {
-    Modal: StatusModal,
-    hideDialog: hideStatusDialog,
-    showDialog: showStatusDialog,
-  } = useDialog({ onClose: onStatusClose });
-
-  const { data: reasonsData } = useAssetLogReasonList(
-    draft.status
-      ? { assetLogStatus: { equalTo: draft.status } }
-      : undefined
-  );
-
-  const isSubmitDisabled = () => {
-    if (!draft.status) return true;
-    if (
-      draft.status === AssetLogStatusNodeType.NotFunctioning &&
-      (draft.reasonId === undefined || draft.reasonId === '')
-    )
-      return true;
-    const selectedReason = reasonsData?.nodes?.find(
-      reason => reason.id === draft.reasonId
-    );
-    if (selectedReason?.commentsRequired && !draft.comment?.trim()) return true;
-    return false;
-  };
+  const { StatusModal, showDialog } = useStatusLogDialog(assetId);
 
   const checkPermission = () =>
     userHasPermission(UserPermission.AssetMutate) ||
     userHasPermission(UserPermission.AssetStatusMutate);
-
-  const onStatusOk = async () => {
-    await insertLog(draft)
-      .then(({ id }) => {
-        invalidateQueries();
-        if (!draft.files?.length)
-          return new Promise(resolve => resolve('no files'));
-        const url = `${Environment.SYNC_FILES_URL}/asset_log/${id}`;
-        const formData = new FormData();
-        draft.files?.forEach(file => formData.append('files', file));
-        return fetch(url, {
-          method: 'POST',
-          headers: { Accept: 'application/json' },
-          credentials: 'include',
-          body: formData,
-        });
-      })
-      .then(() => {
-        success(t('messages.log-saved-successfully'))();
-        hideStatusDialog();
-        onStatusClose();
-      })
-      .catch(e => error(`${t('error.unable-to-save-log')}: ${e.message}`)());
-  };
-
-  const onStatusChange = (patch: Partial<InsertAssetLogInput>) => {
-    setDraft(prev => ({ ...prev, ...patch }));
-  };
 
   const options: SplitButtonOption<ActionValue>[] = [
     {
@@ -132,7 +60,7 @@ const ColdRoomActionButton = ({
       return;
     }
     if (option.value === 'update-status') {
-      showStatusDialog();
+      showDialog();
     } else {
       setMappingOpen(true);
     }
@@ -153,42 +81,8 @@ const ColdRoomActionButton = ({
         openFrom="bottom"
       />
 
-      {/* Status update modal */}
-      <StatusModal
-        width={785}
-        sx={{ '& .MuiDialogContent-root': { paddingTop: 0 } }}
-        title={t('button.update-status')}
-        cancelButton={
-          <DialogButton
-            variant="cancel"
-            onClick={() => {
-              onStatusClose();
-              hideStatusDialog();
-            }}
-          />
-        }
-        okButton={
-          <DialogButton
-            variant="ok"
-            onClick={onStatusOk}
-            disabled={isSubmitDisabled()}
-          />
-        }
-      >
-        <DetailContainer paddingTop={1}>
-          <Box
-            alignItems="center"
-            display="flex"
-            flex={1}
-            flexDirection="column"
-            gap={2}
-          >
-            <StatusForm draft={draft} onChange={onStatusChange} />
-          </Box>
-        </DetailContainer>
-      </StatusModal>
+      {StatusModal}
 
-      {/* Record mapping modal */}
       <RecordMappingModal
         assetId={assetId}
         isOpen={mappingOpen}
