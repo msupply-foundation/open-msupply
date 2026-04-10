@@ -51,6 +51,7 @@ export const StoreProperties = ({
         .filter(
           p => p.property.key !== 'latitude' && p.property.key !== 'longitude'
         )
+        .sort((a, b) => a.property.name.localeCompare(b.property.name))
         .map(p => (
           <Row
             key={p.id}

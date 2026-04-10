@@ -22,6 +22,12 @@ pub struct IntegerStorePrefInput {
 }
 
 #[derive(InputObject)]
+pub struct FloatStorePrefInput {
+    pub store_id: String,
+    pub value: f64,
+}
+
+#[derive(InputObject)]
 pub struct StringStorePrefInput {
     pub store_id: String,
     pub value: String,
@@ -65,6 +71,8 @@ pub struct UpsertPreferencesInput {
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
+    pub allow_backdating_of_shipments: Option<bool>,
+    pub maximum_backdating_days: Option<i32>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -82,9 +90,9 @@ pub struct UpsertPreferencesInput {
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<IntegerStorePrefInput>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
-        Option<Vec<IntegerStorePrefInput>>,
+        Option<Vec<FloatStorePrefInput>>,
     pub number_of_months_threshold_to_show_over_stock_alerts_for_products:
-        Option<Vec<IntegerStorePrefInput>>,
+        Option<Vec<FloatStorePrefInput>>,
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
@@ -135,6 +143,8 @@ impl UpsertPreferencesInput {
             is_gaps,
             display_population_based_forecasting,
             global_table_configs,
+            allow_backdating_of_shipments,
+            maximum_backdating_days,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -181,6 +191,8 @@ impl UpsertPreferencesInput {
             display_population_based_forecasting: *display_population_based_forecasting,
 
             global_table_configs: global_table_configs.clone(),
+            allow_backdating_of_shipments: *allow_backdating_of_shipments,
+            maximum_backdating_days: *maximum_backdating_days,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
@@ -266,6 +278,15 @@ impl BoolStorePrefInput {
 
 impl IntegerStorePrefInput {
     pub fn to_domain(&self) -> StorePrefUpdate<i32> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value,
+        }
+    }
+}
+
+impl FloatStorePrefInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<f64> {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value,

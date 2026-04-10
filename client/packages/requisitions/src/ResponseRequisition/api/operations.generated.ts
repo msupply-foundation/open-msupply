@@ -1105,6 +1105,7 @@ export type ProgramIndicatorsQuery = {
           columnNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
           value?: {
             __typename: 'IndicatorValueNode';
             id: string;
@@ -1118,6 +1119,7 @@ export type ProgramIndicatorsQuery = {
           lineNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
         };
         customerIndicatorInfo: Array<{
           __typename: 'CustomerIndicatorInformationNode';

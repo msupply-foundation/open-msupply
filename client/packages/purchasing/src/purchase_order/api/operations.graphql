@@ -17,6 +17,10 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
     totalCount
   }
   comment
+  orderTotalAfterDiscount
+  currency {
+    code
+  }
 }
 
 fragment PurchaseOrder on PurchaseOrderNode {
@@ -98,6 +102,10 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     code
     name
     unitName
+    defaultPackSize
+    isVaccine
+    doses
+    restrictedLocationTypeId
     stats(storeId: $storeId) {
       stockOnHand
     }
@@ -106,6 +114,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   requestedDeliveryDate
   requestedNumberOfUnits
   shippedNumberOfUnits
+  receivedNumberOfUnits
   adjustedNumberOfUnits
   pricePerPackAfterDiscount
   pricePerPackBeforeDiscount
@@ -130,6 +139,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
       username
     }
     currencyId
+    foreignExchangeRate
     currency {
       id
       code
@@ -218,6 +228,10 @@ mutation updatePurchaseOrder(
         ... on ItemsCannotBeOrdered {
           ...ItemsCannotBeOrdered
         }
+        ... on InboundShipmentsNotVerified {
+          __typename
+          description
+        }
       }
     }
   }
@@ -279,6 +293,18 @@ query purchaseOrderLine($id: String!, $storeId: String!) {
       totalCount
     }
   }
+}
+
+query unitsOrderedInOtherPurchaseOrders(
+  $storeId: String!
+  $itemId: String!
+  $excludePurchaseOrderId: String!
+) {
+  unitsOrderedInOtherPurchaseOrders(
+    storeId: $storeId
+    itemId: $itemId
+    excludePurchaseOrderId: $excludePurchaseOrderId
+  )
 }
 
 query purchaseOrderLinesCount(

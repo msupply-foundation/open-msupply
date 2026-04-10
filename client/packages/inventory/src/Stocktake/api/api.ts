@@ -82,7 +82,7 @@ const stocktakeParser = {
         manufacturerId: line.manufacturer?.id ?? null,
       }),
       reasonOptionId: line.reasonOption?.id,
-      vvmStatusId: line.vvmStatus?.id,
+      vvmStatusId: setNullableInput('id', line.vvmStatus ?? null),
       volumePerPack: line.volumePerPack,
       campaignId: setNullableInput('id', line.campaign),
       programId: setNullableInput('id', line.program),
@@ -302,6 +302,7 @@ const getInsertStocktakeLines = (stocktakeId: string, items: Item[]) => {
           batch: stockLine.batch,
           costPricePerPack: stockLine.costPricePerPack,
           expiryDate: stockLine.expiryDate,
+          manufactureDate: stockLine.manufactureDate,
           packSize: stockLine.packSize,
           sellPricePerPack: stockLine.sellPricePerPack,
         });

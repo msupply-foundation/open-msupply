@@ -24,8 +24,12 @@ use crate::types::SyncFileReferenceConnector;
 pub enum RequisitionNodeType {
     /// Requisition created by store that is ordering stock
     Request,
-    /// Supplying store requisition in response to request requisition
+    /// Supplying store requisition in response to request requisition, or manual requisition for a customer
     Response,
+    /// Imprest requisition where each item has a pre-determined max/target quantity
+    Imprest,
+    /// Stock history requisition where facility submits stock on hand
+    StockHistory,
 }
 
 /// Approval status is applicable to response requisition only
@@ -182,13 +186,14 @@ impl RequisitionNode {
     ) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
-        let original_customer_id = match &self.requisition.requisition_row.original_customer_id {
-            Some(customer) => customer,
-            None => return Ok(None),
-        };
+        let destination_customer_id =
+            match &self.requisition.requisition_row.destination_customer_id {
+                Some(customer) => customer,
+                None => return Ok(None),
+            };
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, original_customer_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, destination_customer_id))
             .await?;
 
         match response_option {

@@ -42,7 +42,7 @@ mod test {
 
         let mock = mock_server.mock(|when, then| {
             when.method(POST)
-                .body(r#"{"queueLength":0,"data":[{"syncOutId":"ID1","tableName":"test_table_name","recordId":"ID2","action":"insert","recordData":{"test_key":"test_value"}}]}"#)
+                .body(r#"{"queueLength":0,"data":[{"syncOutId":"ID1","tableName":"test_table_name","recordId":"ID2","action":"Insert","recordData":{"test_key":"test_value"}}]}"#)
                 .path("/sync/v5/queued_records");
             then.status(200).body(
                 r#"{

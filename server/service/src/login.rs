@@ -190,8 +190,8 @@ impl LoginService {
             auth_data.auth_token_secret.as_bytes(),
             !is_develop(),
         );
-        let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
-        let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
+        let max_age_token = crate::auth_data::TOKEN_LIFETIME_SEC;
+        let max_age_refresh = crate::auth_data::REFRESH_TOKEN_LIFETIME_SEC;
 
         let pair = match token_service.jwt_token(
             &user_account.id,
@@ -472,13 +472,16 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
                 output.insert(PermissionType::PurchaseOrderAuthorise);
             }
             // goods received
-            Permissions::ViewInboundShipmentExternal => {
+            Permissions::ViewGoodsReceived => {
                 output.insert(PermissionType::InboundShipmentExternalQuery);
             }
-            Permissions::AddEditInboundShipmentExternal => {
+            Permissions::AddEditGoodsReceived => {
                 output.insert(PermissionType::InboundShipmentExternalMutate);
             }
-            Permissions::AuthoriseInboundShipmentExternal => {
+            Permissions::FinaliseGoodsReceived => {
+                output.insert(PermissionType::InboundShipmentExternalVerify);
+            }
+            Permissions::AuthoriseGoodsReceived => {
                 output.insert(PermissionType::InboundShipmentExternalAuthorise);
             }
             // reports

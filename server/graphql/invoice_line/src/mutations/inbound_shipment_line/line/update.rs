@@ -8,15 +8,16 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
 
+use graphql_core::generic_inputs::InboundShipmentType;
 use repository::{InvoiceLine, InvoiceLineStatus};
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::ResourceAccessRequest;
 use service::invoice_line::stock_in_line::{
     StockInType, UpdateStockInLine as ServiceInput, UpdateStockInLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
 use service::NullableUpdate;
 
-use super::BatchIsReserved;
+use super::{validate_line_edit_authorisation, BatchIsReserved};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentLineInput")]
@@ -34,7 +35,7 @@ pub struct UpdateInput {
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
-    pub vvm_status_id: Option<String>,
+    pub vvm_status_id: Option<NullableUpdateInput<String>>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
@@ -59,11 +60,16 @@ pub enum UpdateResponse {
     Response(InvoiceLineNode),
 }
 
-pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub fn update(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateInput,
+    r#type: InboundShipmentType,
+) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -71,10 +77,19 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    let response = match service_provider
-        .invoice_line_service
-        .update_stock_in_line(&service_context, input.to_domain())
-    {
+    validate_line_edit_authorisation(
+        ctx,
+        store_id,
+        &r#type,
+        &service_context.connection,
+        &[(input.id.clone(), input.status.clone())],
+    )?;
+
+    let response = match service_provider.invoice_line_service.update_stock_in_line(
+        &service_context,
+        input.to_domain(),
+        Some(r#type.to_domain()),
+    ) {
         Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
@@ -148,7 +163,9 @@ impl UpdateInput {
                 percentage: tax.percentage,
             }),
             r#type: StockInType::InboundShipment,
-            vvm_status_id,
+            vvm_status_id: vvm_status_id.map(|vvm_status_id| NullableUpdate {
+                value: vvm_status_id.value,
+            }),
             note: note.map(|note| NullableUpdate { value: note.value }),
             donor_id: donor_id.map(|donor_id| NullableUpdate {
                 value: donor_id.value,
@@ -224,10 +241,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramNotVisible
         | ServiceError::CampaignDoesNotExist
+        | ServiceError::CannotEditCostPrice
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
         ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
+        ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -245,7 +264,7 @@ mod test {
             mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_item_a,
             mock_location_1, MockDataInserts,
         },
-        InvoiceLine, RepositoryError, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -271,6 +290,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: ServiceInput,
+            _: Option<service::invoice::inbound_shipment::InboundShipmentType>,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)
         }
@@ -550,6 +570,7 @@ mod test {
                 invoice_row: mock_inbound_shipment_c(),
                 invoice_line_row: mock_inbound_shipment_c_invoice_lines()[0].clone(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })
