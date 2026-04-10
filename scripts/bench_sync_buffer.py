@@ -116,3 +116,43 @@ UPSERT_PT = (
     "table_name=EXCLUDED.table_name, action=EXCLUDED.action, "
     "data=EXCLUDED.data, source_site_id=EXCLUDED.source_site_id"
 )
+
+# ─── Populate operations ────────────────────────────────────────────────────
+def populate_table(conn, table: str, n: int, integrated: bool, *,
+                   extra_cols: str = "", extra_vals_fn=None, chunk_size: int = 500,
+                   id_offset: int = 0):
+    """Generic batch-insert into any table, committing per chunk."""
+    integration_dt = "'2025-01-01 00:00:00'" if integrated else "NULL"
+    prefix = "int" if integrated else "pending"
+    cols = ("record_id, received_datetime, integration_datetime, integration_error, "
+            "table_name, action, data, source_site_id")
+    if extra_cols:
+        cols += ", " + extra_cols
+
+    for chunk_start in range(0, n, chunk_size):
+        chunk_end = min(chunk_start + chunk_size, n)
+        rows = []
+        for i in range(chunk_start, chunk_end):
+            idx = i + id_offset
+            table_name = MOCK_TABLE_NAMES[idx % len(MOCK_TABLE_NAMES)]
+            source_site = (idx % 10) + 1
+            rid = f"{prefix}_{idx}"
+            data = mock_trans_line_json(rid).replace("'", "''")
+            val = (f"('{rid}', '2025-01-01 00:00:00', {integration_dt}, NULL, "
+                   f"'{table_name}', 'UPSERT', '{data}', {source_site}")
+            if extra_vals_fn:
+                val += ", " + extra_vals_fn(integrated)
+            val += ")"
+            rows.append(val)
+        with conn.cursor() as cur:
+            cur.execute(f"INSERT INTO {table} ({cols}) VALUES {','.join(rows)}")
+        conn.commit()
+
+def populate(conn, table: str, n_integrated: int, n_pending: int, *,
+             partitioned: bool = False, id_offset: int = 0):
+    extra_cols = "is_integrated" if partitioned else ""
+    extra_vals_fn = (lambda integ: "TRUE" if integ else "FALSE") if partitioned else None
+    for integrated, n in ((True, n_integrated), (False, n_pending)):
+        populate_table(conn, table, n, integrated,
+                       extra_cols=extra_cols, extra_vals_fn=extra_vals_fn,
+                       id_offset=id_offset)
