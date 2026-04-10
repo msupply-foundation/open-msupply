@@ -12,6 +12,9 @@ import { ImportRow, LineNumber } from './ImportAsset';
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 
+// DB value for the log type field — must match the backend constant
+export const TEMPERATURE_MAPPING_TYPE = 'Temperature Mapping';
+
 const statusTranslation: Record<AssetLogStatusNodeType, LocaleKey> = {
   [AssetLogStatusNodeType.Decommissioned]: 'status.decommissioned',
   [AssetLogStatusNodeType.Functioning]: 'status.functioning',

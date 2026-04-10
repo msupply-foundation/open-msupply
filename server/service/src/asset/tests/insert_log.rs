@@ -2,7 +2,7 @@
 mod query {
     use crate::{
         asset::{
-            insert_log::{InsertAssetLog, InsertAssetLogError},
+            insert_log::{InsertAssetLog, InsertAssetLogError, TEMPERATURE_MAPPING_TYPE},
             insert_log_reason::InsertAssetLogReason,
         },
         service_provider::ServiceProvider,
@@ -359,7 +359,7 @@ mod query {
                     asset_id: mock_asset_a().id,
                     status: None,
                     comment: None,
-                    r#type: Some("Temperature Mapping".to_string()),
+                    r#type: Some(TEMPERATURE_MAPPING_TYPE.to_string()),
                     reason_id: None,
                     log_datetime: Some(Utc::now() - Duration::hours(1)),
                 },
@@ -367,7 +367,7 @@ mod query {
             .unwrap();
 
         assert_eq!(asset_log.id, "event_type_log");
-        assert_eq!(asset_log.r#type.as_deref(), Some("Temperature Mapping"));
+        assert_eq!(asset_log.r#type.as_deref(), Some(TEMPERATURE_MAPPING_TYPE));
         assert_eq!(asset_log.status, None);
     }
 
@@ -398,7 +398,7 @@ mod query {
                     asset_id: asset_id.clone(),
                     status: None,
                     comment: None,
-                    r#type: Some("Temperature Mapping".to_string()),
+                    r#type: Some(TEMPERATURE_MAPPING_TYPE.to_string()),
                     reason_id: None,
                     log_datetime: Some(earlier_date),
                 },
@@ -432,7 +432,7 @@ mod query {
                     asset_id: asset_id.clone(),
                     status: None,
                     comment: None,
-                    r#type: Some("Temperature Mapping".to_string()),
+                    r#type: Some(TEMPERATURE_MAPPING_TYPE.to_string()),
                     reason_id: None,
                     log_datetime: Some(later_date),
                 },

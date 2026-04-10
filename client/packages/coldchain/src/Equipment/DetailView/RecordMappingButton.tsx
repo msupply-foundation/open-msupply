@@ -17,13 +17,14 @@ import {
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
+import { TEMPERATURE_MAPPING_TYPE } from '../utils';
 
 type Draft = Partial<InsertAssetLogInput> & { files?: File[] };
 
 const getEmptyDraft = (assetId: string): Draft => ({
   id: FnUtils.generateUUID(),
   assetId,
-  type: 'Temperature Mapping',
+  type: TEMPERATURE_MAPPING_TYPE,
   logDatetime: new Date().toISOString(),
 });
 

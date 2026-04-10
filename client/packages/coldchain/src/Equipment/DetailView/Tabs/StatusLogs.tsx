@@ -24,7 +24,7 @@ import {
 } from '@common/intl';
 import { ColdchainAssetLogFragment, useAssets } from '../../api';
 import { FileList } from '../../Components';
-import { statusColourMap } from '../../utils';
+import { statusColourMap, TEMPERATURE_MAPPING_TYPE } from '../../utils';
 
 const Divider = () => (
   <Box
@@ -196,7 +196,14 @@ const StatusLog = ({
               />
             )}
             {log.type && (
-              <StatusChip label={log.type} colour="gray.main" />
+              <StatusChip
+                label={
+                  log.type === TEMPERATURE_MAPPING_TYPE
+                    ? t('label.temperature-mapping')
+                    : log.type
+                }
+                colour="gray.main"
+              />
             )}
           </Box>
           <User user={log.user} />
@@ -356,7 +363,7 @@ export const StatusLogs = ({ assetId }: { assetId: string }) => {
         equalAny: Object.values(AssetLogStatusNodeType),
       };
     } else {
-      additionalFilter.type = { equalTo: 'Temperature Mapping' };
+      additionalFilter.type = { equalTo: TEMPERATURE_MAPPING_TYPE };
     }
   }
 
