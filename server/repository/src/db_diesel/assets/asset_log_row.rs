@@ -70,6 +70,7 @@ pub struct AssetLogRow {
     pub r#type: Option<String>,
     pub reason_id: Option<String>,
     pub log_datetime: NaiveDateTime,
+    #[serde(default)]
     pub created_datetime: NaiveDateTime,
 }
 
