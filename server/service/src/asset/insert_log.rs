@@ -11,6 +11,8 @@ use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
 use chrono::Utc;
+pub const TEMPERATURE_MAPPING_TYPE: &str = "Temperature Mapping";
+
 use repository::{
     asset_log_row::AssetLogStatus,
     assets::{
@@ -56,7 +58,7 @@ pub fn insert_asset_log(
             let new_asset_log = generate(ctx, input);
             AssetLogRowRepository::new(connection).upsert_one(&new_asset_log)?;
 
-            if new_asset_log.r#type.as_deref() == Some("Temperature Mapping") {
+            if new_asset_log.r#type.as_deref() == Some(TEMPERATURE_MAPPING_TYPE) {
                 recalculate_mapping_dates(connection, &new_asset_log.asset_id)?;
             }
 
@@ -101,7 +103,7 @@ pub fn validate(
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }
 
-    // Status is required unless a type is provided (e.g., "Temperature Mapping" events)
+    // Status is required unless a type is provided (e.g., Temperature Mapping events)
     if input.status.is_none() && input.r#type.is_none() {
         return Err(InsertAssetLogError::StatusNotProvided);
     }
@@ -165,7 +167,7 @@ pub fn recalculate_mapping_dates(
     let logs = AssetLogRepository::new(connection).query_by_filter(
         AssetLogFilter::new()
             .asset_id(EqualFilter::equal_to(asset_id.to_string()))
-            .r#type(StringFilter::equal_to("Temperature Mapping")),
+            .r#type(StringFilter::equal_to(TEMPERATURE_MAPPING_TYPE)),
     )?;
 
     let min_date = logs.iter().map(|l| l.log_datetime).min();
