@@ -174,7 +174,7 @@ const StatusLog = ({
                 lineHeight: 2,
               })}
             >
-              {localisedDate(log.logDatetime + 'Z')}
+              {localisedDate(log.logDatetime)}
             </Typography>
             <StatusChip
               label={status ? t(status.label) : undefined}
