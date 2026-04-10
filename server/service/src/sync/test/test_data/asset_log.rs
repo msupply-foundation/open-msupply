@@ -14,7 +14,8 @@ const ASSET_LOG1: (&str, &str) = (
         "status": "FUNCTIONING",
         "comment": "test_comment",
         "reason_id": null,
-        "log_datetime": "2020-01-22T15:16:00"   
+        "log_datetime": "2020-01-22T15:16:00",
+        "created_datetime": "2020-01-22T15:16:00"
     }"#,
 );
 fn asset_log1() -> AssetLogRow {
