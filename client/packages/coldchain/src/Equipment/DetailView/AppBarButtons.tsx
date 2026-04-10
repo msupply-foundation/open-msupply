@@ -141,6 +141,7 @@ const ColdRoomActionButton = ({
   return (
     <>
       <SplitButton
+        color="primary"
         options={options}
         selectedOption={selectedOption}
         onSelectOption={option => {
