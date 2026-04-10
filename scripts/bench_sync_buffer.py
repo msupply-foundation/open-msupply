@@ -1,6 +1,33 @@
+"""
+Sync buffer scaling benchmark for PostgreSQL.
+
+Tests insert, query, and mark-integrated performance across table sizes,
+comparing standard table vs native LIST partitioning (is_integrated BOOLEAN).
+
+Requires: pip install psycopg2-binary
+
+Pass in connection string via --db or set DATABASE_URL env.
+Examples:
+    # Standard table: test every 500K from 1M to 5M
+    python3 bench_sync_buffer.py --db "connection_string" --min 1000000 --max 5000000 --interval 500000
+
+    # Partitioned table comparison
+    python3 bench_sync_buffer.py --db "connection_string" --min 1000000 --max 5000000 --interval 500000 --partitioned
+
+    # Also vary unintegrated count (default: 1% of total)
+    python3 bench_sync_buffer.py --db "connection_string" --min 1000000 --max 5000000 --interval 500000 
+        --pending-min 1000 --pending-max 100000 --pending-interval 10000
+
+Output is CSV (to stdout or file) with columns:
+    total_rows, pending_rows, approach, operation, duration_ms
+"""
+
 from __future__ import annotations
 
+import argparse
+import csv
 import json
+import os
 import sys
 import time
 
@@ -444,3 +471,102 @@ def bench_loop(conn, args):
 
     return all_results
 
+
+# ─── CLI ─────────────────────────────────────────────────────────────────────
+def parse_size(s: str) -> int:
+    """Parse '1M', '500K', '1000000' etc."""
+    s = s.strip().replace(",", "").replace("_", "")
+    if s.upper().endswith("M"):
+        return int(float(s[:-1]) * 1_000_000)
+    if s.upper().endswith("K"):
+        return int(float(s[:-1]) * 1_000)
+    return int(s)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Sync buffer scaling benchmark for PostgreSQL",
+    )
+    parser.add_argument("--db", "--database-url",
+                        default=os.environ.get("DATABASE_URL", ""),
+                        help="PostgreSQL connection string (or set DATABASE_URL)")
+    parser.add_argument("--schema", default="bench_sync_buffer",
+                        help="Temp schema name (default: bench_sync_buffer). "
+                             "Use 'public' for default schema.")
+    parser.add_argument("--keep-schema", action="store_true")
+    parser.add_argument("--min", type=parse_size, default=10_000,
+                        help="Minimum total rows (default: 10K)")
+    parser.add_argument("--max", type=parse_size, default=1_000_000,
+                        help="Maximum total rows (default: 1M)")
+    parser.add_argument("--interval", type=parse_size, default=1_000_000,
+                        help="Step between total row counts (default: 1M)")
+    parser.add_argument("--pending-min", type=parse_size, default=None,
+                        help="Min pending rows (default: 1%% of total)")
+    parser.add_argument("--pending-max", type=parse_size, default=None,
+                        help="Max pending rows (default: 1%% of total)")
+    parser.add_argument("--pending-interval", type=parse_size, default=None,
+                        help="Step between pending counts")
+    parser.add_argument("--partitioned", action="store_true",
+                        help="Also benchmark native LIST partitioning")
+    parser.add_argument("--csv", type=str, default="results.csv",
+                        help="Write CSV to file (default: results.csv)")
+    args = parser.parse_args()
+
+    if not args.db:
+        print("ERROR: No database connection string.", file=sys.stderr)
+        print("  Set DATABASE_URL or pass --db 'postgresql://...'", file=sys.stderr)
+        sys.exit(1)
+
+    # Validate pending args: all-or-none
+    pending_args = [args.pending_min, args.pending_max, args.pending_interval]
+    if any(a is not None for a in pending_args):
+        if args.pending_min is None or args.pending_max is None or args.pending_interval is None:
+            print("ERROR: --pending-min, --pending-max, --pending-interval "
+                  "must all be specified together.", file=sys.stderr)
+            sys.exit(1)
+
+    conn = psycopg2.connect(args.db)
+    conn.autocommit = False
+
+    use_temp_schema = args.schema != "public"
+    if use_temp_schema:
+        print(f"Using schema: {args.schema}", file=sys.stderr)
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            cur.execute(f"DROP SCHEMA IF EXISTS {args.schema} CASCADE")
+            cur.execute(f"CREATE SCHEMA {args.schema}")
+        conn.autocommit = False
+        set_schema(conn, args.schema)
+
+    try:
+        results = bench_loop(conn, args)
+
+        # Write CSV
+        if not results:
+            print("No results.", file=sys.stderr)
+            return
+
+        fieldnames = ["total_rows", "pending_rows", "approach", "operation",
+                      "duration_ms", "result_rows"]
+        out = open(args.csv, "w", newline="") if args.csv else sys.stdout
+        writer = csv.DictWriter(out, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(results)
+        if args.csv:
+            out.close()
+            print(f"\nWrote {len(results)} rows to {args.csv}", file=sys.stderr)
+        else:
+            print(file=sys.stderr)  # blank line after CSV on stdout
+
+    finally:
+        if use_temp_schema and not args.keep_schema:
+            conn.rollback()  # clear any failed transaction state
+            conn.autocommit = True
+            with conn.cursor() as cur:
+                cur.execute(f"DROP SCHEMA IF EXISTS {args.schema} CASCADE")
+            print(f"Cleaned up schema '{args.schema}'", file=sys.stderr)
+        conn.close()
+
+
+if __name__ == "__main__":
+    main()
