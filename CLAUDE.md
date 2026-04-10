@@ -1,24 +1,5 @@
 # CLAUDE.md
 
-See AGENT.md for general development commands and conventions.
+See AGENT.md for development commands, conventions, and tool versions.
 
-## Running Tests
-
-Always use `cargo nextest run` to run server tests. Do not use `cargo test`.
-
-```bash
-# Run all tests (sqlite, the default)
-cargo nextest run
-
-# Run all tests with postgres
-cargo nextest run --features postgres
-
-# Run a specific test
-cargo nextest run <test_name>
-```
-
-If cargo-nextest is not installed, install the exact required version:
-
-```bash
-cargo install cargo-nextest --locked --version 0.9.121
-```
+Always use `cargo nextest run` instead of `cargo test` for server tests.

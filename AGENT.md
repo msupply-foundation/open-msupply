@@ -7,7 +7,7 @@
 - **Generate Types From Graphql** `yarn generate`
 - **Lint:** `cd client && yarn eslint` (client), `cd server && cargo fmt` (server)
 - **Single test:** `cargo nextest run test_name` (server), `yarn test --testNamePattern="test_name"` (client)
-- **Install nextest:** `cargo install cargo-nextest --locked --version 0.9.121`
+- **Install nextest:** `cargo install cargo-nextest --locked --version 0.9.114`
 
 ## Architecture
 - **Monorepo:** Client (React/TypeScript) + Server (Rust) + shared GraphQL schema
