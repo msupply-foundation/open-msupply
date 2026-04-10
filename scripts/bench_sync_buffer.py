@@ -11,6 +11,9 @@ Examples:
     # Standard table: test every 500K from 1M to 5M
     python3 bench_sync_buffer.py --db "connection_string" --min 1000000 --max 5000000 --interval 500000
 
+    # With partial index on unintegrated rows
+    python3 bench_sync_buffer.py --db "connection_string" --min 1000000 --max 5000000 --interval 500000 --partial-index
+
     # Partitioned table comparison
     python3 bench_sync_buffer.py --db "connection_string" --min 1000000 --max 5000000 --interval 500000 --partitioned
 
@@ -99,6 +102,14 @@ CREATE INDEX IF NOT EXISTS index_sync_buffer_integration_datetime
 CREATE INDEX IF NOT EXISTS index_sync_buffer_integration_error
     ON sync_buffer (integration_error)
 """
+
+SCHEMA_PARTIAL_INDEX = """\
+CREATE INDEX IF NOT EXISTS idx_sync_buffer_unintegrated
+    ON sync_buffer (action, table_name, source_site_id)
+    WHERE integration_datetime IS NULL
+"""
+
+DROP_PARTIAL_INDEX = "DROP INDEX IF EXISTS idx_sync_buffer_unintegrated"
 
 SCHEMA_PARTITIONED = """\
 DROP TABLE IF EXISTS sync_buffer_pt CASCADE;
@@ -391,7 +402,11 @@ def run(conn, approach: str, new_rows: list[tuple]) -> list[dict]:
 # ─── Main benchmark loop ────────────────────────────────────────────────────
 def bench_loop(conn, args):
     """Run the interval-based benchmark sweep."""
-    approaches = ["standard", "partitioned"] if args.partitioned else ["standard"]
+    approaches = ["standard"]
+    if args.partial_index:
+        approaches.append("standard+partial")
+    if args.partitioned:
+        approaches.append("partitioned")
     new_rows = make_new_rows(1000)
     all_results = []
 
@@ -435,6 +450,7 @@ def bench_loop(conn, args):
 
         for approach in approaches:
             is_pt = approach == "partitioned"
+            is_partial = approach == "standard+partial"
             table = "sync_buffer_pt" if is_pt else "sync_buffer"
 
             # Re-apply search_path before each approach
@@ -446,16 +462,23 @@ def bench_loop(conn, args):
             populate(conn, table, integrated, pending, partitioned=is_pt)
             pop_secs = time.perf_counter() - pop_start
 
+            # Add/remove partial index as needed
+            if is_partial:
+                exec_sql(conn, SCHEMA_PARTIAL_INDEX)
+                exec_sql(conn, "ANALYZE sync_buffer")
+            else:
+                exec_sql(conn, DROP_PARTIAL_INDEX)
+
             print(f"  {approach}({pop_secs:.0f}s)", file=sys.stderr,
                   end="", flush=True)
 
-            # Run operations
-            results = run(conn, approach, new_rows)
+            # Run operations — standard+partial uses the same table/queries as standard
+            results = run(conn, "standard" if is_partial else approach, new_rows)
             for r in results:
                 row = {
                     "total_rows": total,
                     "pending_rows": pending,
-                    "approach": approach,
+                    "approach": approach,  # preserves "standard+partial" label
                     "operation": r["operation"],
                     "duration_ms": round(r["duration_ms"], 2),
                 }
@@ -506,6 +529,8 @@ def main():
                         help="Max pending rows (default: 1%% of total)")
     parser.add_argument("--pending-interval", type=parse_size, default=None,
                         help="Step between pending counts")
+    parser.add_argument("--partial-index", action="store_true",
+                        help="Also benchmark with a partial index on unintegrated rows")
     parser.add_argument("--partitioned", action="store_true",
                         help="Also benchmark native LIST partitioning")
     parser.add_argument("--csv", type=str, default="results.csv",
