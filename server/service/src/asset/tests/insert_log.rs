@@ -41,6 +41,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: None,
+                    log_datetime: None,
                 },
             )
             .unwrap();
@@ -58,6 +59,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: None,
+                    log_datetime: None,
                 },
             ),
             Err(InsertAssetLogError::AssetLogAlreadyExists)
@@ -74,6 +76,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: None,
+                    log_datetime: None,
                 },
             ),
             Err(InsertAssetLogError::AssetDoesNotExist)
@@ -106,6 +109,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: None,
+                    log_datetime: None,
                 },
             ),
             Err(InsertAssetLogError::StatusNotProvided)
@@ -122,6 +126,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: Some("test_reason_id".to_string()),
+                    log_datetime: None,
                 },
             ),
             Err(InsertAssetLogError::ReasonInvalidForStatus)
@@ -138,6 +143,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: Some("test_reason_id".to_string()),
+                    log_datetime: None,
                 },
             ),
             Err(InsertAssetLogError::ReasonInvalidForStatus)
@@ -154,6 +160,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: Some("non_existant_id".to_string()),
+                    log_datetime: None,
                 },
             ),
             Err(InsertAssetLogError::ReasonInvalidForStatus)
@@ -170,6 +177,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: Some("test_reason_id".to_string()),
+                    log_datetime: None,
                 },
             )
             .unwrap();
@@ -187,6 +195,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: None,
+                    log_datetime: None,
                 },
             ),
             Err(InsertAssetLogError::ReasonInvalidForStatus)
@@ -218,6 +227,7 @@ mod query {
                     comment: None,
                     r#type: None,
                     reason_id: Some("test_reason_with_comments".to_string()),
+                    log_datetime: None,
                 },
             ),
             Err(InsertAssetLogError::CommentRequiredForReason)
@@ -234,6 +244,7 @@ mod query {
                     comment: Some("   ".to_string()),
                     r#type: None,
                     reason_id: Some("test_reason_with_comments".to_string()),
+                    log_datetime: None,
                 },
             ),
             Err(InsertAssetLogError::CommentRequiredForReason)
@@ -250,6 +261,7 @@ mod query {
                     comment: Some("This is a valid comment".to_string()),
                     r#type: None,
                     reason_id: Some("test_reason_with_comments".to_string()),
+                    log_datetime: None,
                 },
             )
             .unwrap();

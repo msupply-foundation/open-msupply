@@ -29,6 +29,10 @@ fn asset_log1() -> AssetLogRow {
             .unwrap()
             .and_hms_opt(15, 16, 0)
             .unwrap(),
+        created_datetime: chrono::NaiveDate::from_ymd_opt(2020, 01, 22)
+            .unwrap()
+            .and_hms_opt(15, 16, 0)
+            .unwrap(),
         r#type: None,
     }
 }
