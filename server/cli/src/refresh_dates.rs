@@ -97,6 +97,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("user_account", "last_successful_sync"),
         ("activity_log", "datetime"),
         ("asset_log", "log_datetime"),
+        ("asset_log", "created_datetime"),
         ("sync_file_reference", "retry_at"),
         ("migration_fragment_log", "datetime"),
         ("system_log", "datetime"),
