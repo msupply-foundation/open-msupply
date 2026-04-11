@@ -215,6 +215,31 @@ const prerenderPlugin: Plugin = {
   },
 };
 
+// Forces @mui/x-date-pickers to resolve via its CJS entry rather than the
+// esm/ tree, regardless of the global resolve.conditions.  The package exports
+// map only has `require` and `default`; with ESM-first conditions the `default`
+// condition points to the esm/ tree which has had internal import issues in
+// earlier v8 builds.  Pinning to CJS is safe because the pickers are
+// lazy-loaded (not in the entry chunk) so this doesn't affect TBT/entry size.
+const muiDatePickersCjsPlugin: Plugin = {
+  name: 'mui-date-pickers-cjs',
+  enforce: 'pre',
+  async resolveId(id, importer, options) {
+    if (!id.startsWith('@mui/x-date-pickers')) return null;
+    // Resolve using the other plugins / Vite default (skipSelf avoids recursion).
+    const resolved = await this.resolve(id, importer, {
+      ...options,
+      skipSelf: true,
+    });
+    if (!resolved) return null;
+    // If global conditions resolved to the esm/ tree, redirect to CJS sibling.
+    if (resolved.id.includes('/@mui/x-date-pickers/esm/')) {
+      return { ...resolved, id: resolved.id.replace('/esm/', '/') };
+    }
+    return resolved;
+  },
+};
+
 // Serves locale JSON files from source in dev mode (mirrors CopyPlugin behaviour)
 const serveLocalesPlugin: Plugin = {
   name: 'serve-locales',
@@ -286,6 +311,8 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       // Resolves @common/* and other tsconfig path aliases defined in
       // the root client/tsconfig.json (followed via the extends chain).
       tsconfigPaths(),
+      // Force @mui/x-date-pickers to CJS entry regardless of ESM conditions
+      muiDatePickersCjsPlugin,
       // Serve locale files from source in dev mode
       serveLocalesPlugin,
       // Load font CSS asynchronously (it's only @font-face, not layout CSS)
@@ -321,12 +348,13 @@ export default defineConfig(({ mode, isSsrBuild }) => {
     },
 
     resolve: {
-      // @mui/x-date-pickers v8 ESM build has broken internal imports
-      // (missing "./esm" specifier / can't resolve @mui/material/styles from
-      // its esm/ dir). Prefer the `require` (CJS) condition for all packages
-      // to match the webpack `conditionNames: ['require', '...']` workaround.
-      // This is safe now that all type-only re-exports use `export type`.
-      conditions: ['require', 'module', 'browser', 'default'],
+      // ESM-first: lets Rollup see named exports and tree-shake packages that
+      // publish separate ESM builds (i18next, graphql-request, date-fns, etc.).
+      // @mui/x-date-pickers is handled explicitly via the plugin below because
+      // its package.json has only `require` + `default` conditions, and the
+      // `default` condition points to the esm/ tree which used to have broken
+      // internal paths (verified fixed in v8.27+ but kept explicit for safety).
+      conditions: ['module', 'browser', 'default'],
     },
 
     server: {
