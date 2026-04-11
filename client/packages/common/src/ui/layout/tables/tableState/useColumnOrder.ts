@@ -1,20 +1,34 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getDefaultColumnOrderIds } from 'material-react-table';
 import type {
   MRT_ColumnOrderState,
   MRT_RowData,
-  MRT_StatefulTableOptions,
   MRT_TableOptions,
-} from 'material-react-table';
+} from '../mrtCompat';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { ColumnDef } from '../types';
 import { useGlobalTableDefaults } from './useGlobalTableConfig';
 
+/** Replicates MRT's getDefaultColumnOrderIds without importing MRT. */
+const getDefaultColumnOrderIds = <T extends MRT_RowData>(
+  columns: ColumnDef<T>[],
+  enableRowSelection?: boolean | ((row: unknown) => boolean),
+  enableExpanding?: boolean
+): string[] => {
+  const ids: string[] = [];
+  if (enableRowSelection) ids.push('mrt-row-select');
+  if (enableExpanding) ids.push('mrt-row-expand');
+  for (const col of columns) {
+    const id = col.id ?? (col as { accessorKey?: string }).accessorKey ?? '';
+    if (id) ids.push(id);
+  }
+  return ids;
+};
+
 export const useColumnOrder = <T extends MRT_RowData>(
   tableId: string,
   columns: ColumnDef<T>[],
-  enableRowSelection: MRT_TableOptions<T>['enableRowSelection'],
-  enableExpanding: MRT_TableOptions<T>['enableExpanding']
+  enableRowSelection?: boolean | ((row: unknown) => boolean),
+  enableExpanding?: boolean
 ) => {
   const globalDefaults = useGlobalTableDefaults(tableId);
   const initial = useMemo(() => {
@@ -30,12 +44,7 @@ export const useColumnOrder = <T extends MRT_RowData>(
       }
     }
 
-    return getDefaultColumnOrderIds({
-      columns,
-      state: {},
-      enableRowSelection, // adds `mrt-row-select`
-      enableExpanding, // adds `mrt-row-expand`
-    } as MRT_StatefulTableOptions<MRT_RowData>);
+    return getDefaultColumnOrderIds(columns, enableRowSelection, enableExpanding);
   }, [columns, enableRowSelection, enableExpanding]);
 
   const [state, setState] = useState<MRT_ColumnOrderState>(

@@ -5,7 +5,7 @@ import type {
   MRT_ColumnSizingState,
   MRT_DensityState,
   MRT_VisibilityState,
-} from 'material-react-table';
+} from '../mrtCompat';
 
 export type ViewMode = 'table' | 'card';
 

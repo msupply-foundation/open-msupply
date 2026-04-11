@@ -10,12 +10,13 @@ import type {
   MRT_RowSelectionState,
   MRT_Updater,
   MRT_PaginationState,
-} from 'material-react-table';
-import { useCallback, useMemo, useRef, useState } from 'react';
+} from './mrtCompat';
+import { useCallback, useMemo, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
+import { TablePagination } from '@mui/material';
 
 interface PaginatedTableConfig<T extends MRT_RowData>
-  extends BaseTableConfig<T> {
+  extends Omit<BaseTableConfig<T>, 'enablePagination' | 'enableBottomToolbar'> {
   totalCount: number;
 }
 
@@ -32,28 +33,82 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     queryParams: { page, first, offset },
   } = useUrlQueryParams();
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
-  const paginationRef = useRef<number>(0);
 
   const pagination = { page, first, offset };
 
   const handlePaginationChange = useCallback(
     (paginationUpdate: MRT_Updater<MRT_PaginationState>) => {
       if (typeof paginationUpdate === 'function') {
-        const lastUpdate = paginationRef.current;
         const current = { pageIndex: page, pageSize: first };
         const newPaginationValue = paginationUpdate(current);
-        paginationRef.current = Date.now();
-        // This is a hacky workaround for this bug:
-        // https://github.com/KevinVandy/material-react-table/issues/1251
-        if (paginationRef.current - lastUpdate < 300) return;
         updatePaginationQuery(
           newPaginationValue.pageIndex,
           newPaginationValue.pageSize
         );
       }
     },
-    [updatePaginationQuery]
+    [updatePaginationQuery, page, first]
   );
+
+  const hasSelection = Object.keys(rowSelection).length > 0;
+
+  const renderBottomToolbar = useCallback(() => {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          '& .MuiInputLabel-root': { fontSize: '0.9em' },
+        }}
+      >
+        {totalCount > 0 && (
+          <Box
+            display="flex"
+            flexDirection="row"
+            flexWrap="wrap"
+            flex={1}
+            paddingLeft={2}
+          >
+            <Typography sx={{ marginRight: '4px' }}>
+              {t('label.showing')}
+            </Typography>
+            <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
+              {`${offset + 1}-${Math.min(first + offset, totalCount)}`}
+            </Typography>
+            <Typography sx={{ marginRight: '4px' }}>{t('label.of')}</Typography>
+            <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
+              {totalCount}
+            </Typography>
+          </Box>
+        )}
+        {!hasSelection && (
+          <TablePagination
+            component="div"
+            count={totalCount}
+            page={page}
+            rowsPerPage={first}
+            rowsPerPageOptions={[10, 20, 50, 100]}
+            onPageChange={(_e, newPage) =>
+              handlePaginationChange(() => ({ pageIndex: newPage, pageSize: first }))
+            }
+            onRowsPerPageChange={e =>
+              handlePaginationChange(() => ({
+                pageIndex: 0,
+                pageSize: parseInt(e.target.value, 10),
+              }))
+            }
+            SelectProps={{ sx: { minWidth: '40px', fontSize: '0.9em' } }}
+            sx={{
+              '& .MuiTablePagination-toolbar': { minHeight: 0, padding: 0 },
+              '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows':
+                { fontSize: '0.9em' },
+            }}
+          />
+        )}
+      </Box>
+    );
+  }, [totalCount, offset, first, page, hasSelection, handlePaginationChange, t]);
 
   const table = useBaseMaterialTable<T>({
     isLoading,
@@ -71,55 +126,9 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
-    enableBottomToolbar: Object.keys(rowSelection).length === 0, // required for pagination
-    enablePagination: true,
-    paginationDisplayMode: 'pages',
-    muiBottomToolbarProps: {
-      sx: {
-        '& .MuiInputLabel-root': {
-          fontSize: '0.9em',
-        },
-        // Makes the content vertically centered (when custom component added)
-        '& > .MuiBox-root': {
-          padding: 0,
-        },
-      },
-    },
-    muiPaginationProps: {
-      rowsPerPageOptions: [10, 20, 50, 100], // TO-DO: Make this customisable?
-      SelectProps: {
-        sx: {
-          minWidth: '40px',
-          fontSize: '0.9em',
-        },
-      },
-    },
-    // Summary display in toolbar, e.g. "Showing 1-20 of 45"
-    renderBottomToolbarCustomActions: () => {
-      if (totalCount === 0) return <Box />; // empty box to kep toolbar layout consistent
-
-      const xToY = `${offset + 1}-${Math.min(first + offset, totalCount)}`;
-      return (
-        <Box
-          display="flex"
-          flexDirection="row"
-          flexWrap="wrap"
-          flex={1}
-          paddingLeft={2}
-        >
-          <Typography sx={{ marginRight: '4px' }}>
-            {t('label.showing')}
-          </Typography>
-          <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
-            {xToY}
-          </Typography>
-          <Typography sx={{ marginRight: '4px' }}>{t('label.of')}</Typography>
-          <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
-            {totalCount}
-          </Typography>
-        </Box>
-      );
-    },
+    enableBottomToolbar: true,
+    enablePagination: false, // pagination UI handled manually in renderBottomToolbar
+    renderBottomToolbar,
 
     ...tableOptions,
   });

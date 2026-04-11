@@ -8,7 +8,7 @@ import type {
   MRT_ColumnFiltersState,
   MRT_RowData,
   MRT_Updater,
-} from 'material-react-table';
+} from './mrtCompat';
 import {
   ColumnDef,
   DateUtils,

@@ -7,7 +7,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { parseBreachType } from './utils';
-import { MRT_Cell } from 'material-react-table';
+import { MRT_Cell } from '@openmsupply-client/common';
 
 export const BreachTypeCell = <T extends RecordWithId>(
   { cell }: { cell: MRT_Cell<T> }

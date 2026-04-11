@@ -8,15 +8,6 @@ import {
   IntlContext,
   CUSTOM_TRANSLATIONS_NAMESPACE,
 } from '@common/intl';
-// Material React Table translations
-import { MRT_Localization_AR } from 'material-react-table/locales/ar';
-import { MRT_Localization_ES } from 'material-react-table/locales/es';
-import { MRT_Localization_FR } from 'material-react-table/locales/fr';
-import { MRT_Localization_PT } from 'material-react-table/locales/pt';
-import { MRT_Localization_RU } from 'material-react-table/locales/ru';
-// Persian/Farsi locale, used as an approximation for the unsupported Dari and Pashto
-import { MRT_Localization_FA } from 'material-react-table/locales/fa';
-
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
 // but the locales are not. when adding, please add as below
@@ -52,39 +43,6 @@ export const getLocale = (language: SupportedLocales) => {
       return fa;
     default:
       return getLocaleObj[language];
-  }
-};
-
-const getTableLocalisations = (language: SupportedLocales) => {
-  switch (language) {
-    case 'fr':
-    case 'fr-DJ':
-      return MRT_Localization_FR;
-
-    case 'es':
-      return MRT_Localization_ES;
-
-    case 'ru':
-      return MRT_Localization_RU;
-
-    case 'pt':
-      return MRT_Localization_PT;
-    case 'ar':
-      return MRT_Localization_AR;
-    case 'prs':
-    case 'ps':
-      return MRT_Localization_FA;
-
-    // Default is English
-    // Not every language is supported, and some dialects may want
-    // overrides. If/when needed - pass in t() here and overwrite needed fields,
-    // or define the full localisations object for the required language
-    // https://www.material-react-table.com/docs/guides/localization#localization-(i18n)-guide
-    case 'en':
-    case 'tet':
-      return undefined;
-    default:
-      noOtherVariants(language);
   }
 };
 
@@ -228,7 +186,6 @@ export const useIntlUtils = () => {
     changeLanguage,
     getLocaleCode,
     getLocale: () => getLocale(currentLanguage),
-    getTableLocalisations: () => getTableLocalisations(currentLanguage),
     getUserLocale,
     setUserLocale,
     getLocalisedFullName,

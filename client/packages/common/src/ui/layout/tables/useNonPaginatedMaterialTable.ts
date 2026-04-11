@@ -1,4 +1,4 @@
-import type { MRT_RowData } from 'material-react-table';
+import type { MRT_RowData } from './mrtCompat';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 import { useMemo } from 'react';
 
@@ -10,7 +10,8 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
   ...tableOptions
 }: NonPaginatedTableConfig<T>) => {
   const table = useBaseMaterialTable<T>({
-    enableRowVirtualization: true,
+    enableVirtualization: true,
+    manualSorting: false,
     ...tableOptions,
   });
 

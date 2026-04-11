@@ -4,7 +4,7 @@ import {
   useDebounceCallback,
   NumericTextInputProps,
 } from '@openmsupply-client/common';
-import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
 
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 

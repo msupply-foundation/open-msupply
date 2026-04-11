@@ -1,5 +1,5 @@
 import { useUrlQueryParams } from '@openmsupply-client/common';
-import type { MRT_SortingState, MRT_Updater } from 'material-react-table';
+import type { MRT_SortingState, MRT_Updater } from './mrtCompat';
 import { useCallback, useMemo } from 'react';
 
 export const useUrlSortManagement = (initialSort?: {

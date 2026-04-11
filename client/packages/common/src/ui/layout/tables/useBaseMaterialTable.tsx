@@ -1,12 +1,26 @@
-import React from 'react';
-import { useMaterialReactTable } from 'material-react-table';
-import type { MRT_Row, MRT_RowData, MRT_TableOptions } from 'material-react-table';
-import { Row } from '@tanstack/table-core';
-import { useIntlUtils, useTranslation } from '@common/intl';
+import React, { useMemo, useRef, useCallback } from 'react';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getGroupedRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  ColumnDef as TanstackColumnDef,
+  Row,
+  TableState,
+  OnChangeFn,
+  PaginationState,
+  RowSelectionState,
+  Table,
+} from '@tanstack/react-table';
+import { Checkbox } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { useTableFiltering } from './useTableFiltering';
-import { useTableDisplayOptions } from './useTableDisplayOptions';
 import { useUrlSortManagement } from './useUrlSortManagement';
 import {
   useColumnDensity,
@@ -19,35 +33,69 @@ import {
   useColumnGrouping,
 } from './tableState';
 import { clearSavedState, getSavedState } from './tableState/utils';
-import { DataError, NothingHere } from '@common/components';
 import {
   useIsCentralServerApi,
   useAuthContext,
   UserPermission,
 } from '@openmsupply-client/common';
+import { MRT_RowData } from './mrtCompat';
+import { OmsTableMeta } from './tableMeta';
+import {
+  CheckboxCheckedIcon,
+  CheckboxEmptyIcon,
+  CheckboxIndeterminateIcon,
+} from '@common/icons';
 
-export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
-  MRT_TableOptions<T>,
-  'data'
-> {
-  tableId: string; // key for local storage
+// ── Row model factories — created once at module level (pure, no state) ──────
+const _getCoreRowModel = getCoreRowModel();
+const _getSortedRowModel = getSortedRowModel();
+const _getFilteredRowModel = getFilteredRowModel();
+const _getGroupedRowModel = getGroupedRowModel();
+const _getFacetedRowModel = getFacetedRowModel();
+const _getFacetedUniqueValues = getFacetedUniqueValues();
+
+export interface BaseTableConfig<T extends MRT_RowData> {
+  tableId: string;
   data: T[] | undefined;
+  columns: ColumnDef<T>[];
+
+  // Row interaction
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isLoading?: boolean;
   isError?: boolean;
-  getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
-  /** Whether row should be greyed out - still potentially clickable */
-  getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
-  grouping?: {
-    field: string;
-    groupedByDefault?: boolean;
-    label?: string;
-  };
-  columns: ColumnDef<T>[];
+  getIsPlaceholderRow?: (row: Row<T>) => boolean;
+  getIsRestrictedRow?: (row: Row<T>) => boolean;
+  grouping?: { field: string; groupedByDefault?: boolean; label?: string };
   noUrlFiltering?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
   isMobile?: boolean;
+
+  // @tanstack pass-through options
+  state?: Partial<TableState>;
+  enableRowSelection?: boolean | ((row: Row<T>) => boolean);
+  enableColumnResizing?: boolean;
+  manualFiltering?: boolean;
+  manualPagination?: boolean;
+  manualSorting?: boolean;
+  autoResetPageIndex?: boolean;
+  rowCount?: number;
+  onPaginationChange?: OnChangeFn<PaginationState>;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  filterFromLeafRows?: boolean;
+
+  // DataTable display flags (stored in meta)
+  enableBottomToolbar?: boolean;
+  enableTopToolbar?: boolean;
+  enableColumnActions?: boolean;
+  enableSorting?: boolean;
+  enableVirtualization?: boolean;
+  enablePagination?: boolean;
+
+  // Bottom toolbar content
+  renderBottomToolbar?: (table: Table<T>) => React.ReactNode;
+  renderBottomToolbarCustomActions?: () => React.ReactNode;
+  bottomToolbarContent?: React.ReactNode;
 }
 
 export const useBaseMaterialTable = <T extends MRT_RowData>({
@@ -66,27 +114,34 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   noUrlFiltering = false,
   initialSort,
   noDataElement,
-  muiTableBodyRowProps,
   isMobile,
   enableRowSelection = true,
-  ...tableOptions
+  enableBottomToolbar = false,
+  enableTopToolbar = true,
+  enableSorting = true,
+  enableVirtualization = false,
+  enablePagination = false,
+  renderBottomToolbar,
+  renderBottomToolbarCustomActions,
+  bottomToolbarContent,
+  manualPagination,
+  manualSorting,
+  autoResetPageIndex,
+  rowCount,
+  onPaginationChange,
+  onRowSelectionChange,
+  filterFromLeafRows = true,
 }: BaseTableConfig<T>) => {
-  const t = useTranslation();
-  const { getTableLocalisations } = useIntlUtils();
-  const localization = getTableLocalisations();
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
   const canEditGlobalDefaults =
     isCentralServer && userHasPermission(UserPermission.EditCentralData);
   const { saveGlobalTableConfig } = useSaveGlobalTableConfig();
   const globalDefaults = useGlobalTableDefaults(tableId);
-  // Admins reset to hard-coded defaults so they can undo their global config;
-  // non-admins reset to global defaults.
   const resetDefaults = canEditGlobalDefaults ? undefined : globalDefaults;
 
   const { columns } = useMaterialTableColumns(omsColumns);
 
-  // Filter needs to be applied after columns are processed
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(
     columns,
     noUrlFiltering
@@ -105,146 +160,249 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     !!grouping.state.length
   );
 
-  const resetTableState = () => {
+  // Ref so resetTableState can call table methods after table is created
+  const tableRef = useRef<Table<T>>(null!);
+
+  const resetTableState = useCallback(() => {
+    const t = tableRef.current;
+    if (!t) return;
+
     clearSavedState(tableId);
+    t.resetColumnPinning();
+    t.resetGrouping();
 
-    // We have to call each of these reset/set fns, as MRT's general
-    // reset function doesn't fire the onChange handlers (needed to trigger our
-    // state handlers).
-    // Seeing as local storage has already been cleared,
-    // these shouldn't trigger additional local storage updates
-    table.resetColumnPinning();
-    table.resetColumnSizing();
-    table.resetGrouping();
+    if (resetDefaults?.columnSizing) t.setColumnSizing(resetDefaults.columnSizing);
+    else t.resetColumnSizing();
 
-    if (resetDefaults?.columnSizing)
-      table.setColumnSizing(resetDefaults.columnSizing);
-    else table.resetColumnSizing();
+    if (resetDefaults?.columnOrder) t.setColumnOrder(resetDefaults.columnOrder);
+    else t.resetColumnOrder();
 
-    if (resetDefaults?.columnOrder)
-      table.setColumnOrder(resetDefaults.columnOrder);
-    else table.resetColumnOrder();
+    t.resetGrouping();
 
-    table.resetGrouping();
-
-    // Visibility `initial` could change if prefs have come on/screen size
-    // changed so reset to latest initial value rather than default initial
-    // mount state
-    table.setColumnVisibility(
+    t.setColumnVisibility(
       resetDefaults?.columnVisibility ?? columnVisibility.initial
     );
 
-    // Density doesn't have a `reset` function
-    table.setDensity(density.initial);
-  };
-
-  // hiding all table filter related options for now
-  const hasColumnFilters = false;
+    density.update(density.initial);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableId, resetDefaults, columnVisibility.initial, density.initial]);
 
   const onSaveAsGlobalDefault = canEditGlobalDefaults
     ? () => saveGlobalTableConfig(tableId, getSavedState(tableId) ?? {})
     : undefined;
 
-  const displayOptions = useTableDisplayOptions({
-    tableId,
-    density,
-    columnSizing,
-    columnVisibility,
-    columnPinning,
-    columnOrder,
-    resetTableState,
-    hasColumnFilters,
-    onRowClick,
-    isGrouped: !!grouping.state.length,
-    toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
-    groupByLabel: groupingInput?.label,
-    getIsPlaceholderRow,
-    getIsRestrictedRow,
-    muiTableBodyRowProps,
-    isMobile,
-    onSaveAsGlobalDefault,
-    globalDefaults: resetDefaults,
-  });
+  const hasRowSelection = !!enableRowSelection;
+  const hasGrouping = !!groupingInput;
 
-  const table = useMaterialReactTable<T>({
-    columns,
+  // ── Built-in columns — memoized with empty deps since header/cell fns
+  //    receive fresh table/row from @tanstack at call time, no closures ───────
+  const selectColumn = useMemo<TanstackColumnDef<T>>(
+    () => ({
+      id: 'mrt-row-select',
+      size: 50,
+      enableResizing: false,
+      enablePinning: false,
+      enableSorting: false,
+      header: ({ table: t }) => (
+        <Checkbox
+          color="outline"
+          size="small"
+          icon={<CheckboxEmptyIcon />}
+          checkedIcon={<CheckboxCheckedIcon />}
+          indeterminateIcon={<CheckboxIndeterminateIcon />}
+          checked={t.getIsAllRowsSelected()}
+          indeterminate={t.getIsSomeRowsSelected()}
+          onChange={t.getToggleAllRowsSelectedHandler()}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          color="outline"
+          size="small"
+          icon={<CheckboxEmptyIcon />}
+          checkedIcon={<CheckboxCheckedIcon />}
+          indeterminateIcon={<CheckboxIndeterminateIcon />}
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          indeterminate={row.getIsSomeSelected()}
+          onChange={row.getToggleSelectedHandler()}
+        />
+      ),
+    }),
+    [] // icons are module-level constants; header/cell receive fresh params
+  );
 
-    localization,
+  const expandColumn = useMemo<TanstackColumnDef<T>>(
+    () => ({
+      id: 'mrt-row-expand',
+      size: 50,
+      enableResizing: false,
+      enablePinning: false,
+      enableSorting: false,
+      header: ({ table: t }) => (
+        <Checkbox
+          size="small"
+          icon={<ChevronRightIcon fontSize="small" />}
+          checkedIcon={<ExpandMoreIcon fontSize="small" />}
+          checked={t.getIsAllRowsExpanded()}
+          indeterminate={!t.getIsAllRowsExpanded() && t.getIsSomeRowsExpanded()}
+          onChange={() => t.toggleAllRowsExpanded()}
+          sx={{ '& .MuiSvgIcon-root': { fontSize: '1.1rem' } }}
+        />
+      ),
+      cell: ({ row }) =>
+        row.getCanExpand() ? (
+          <Checkbox
+            size="small"
+            icon={<ChevronRightIcon fontSize="small" />}
+            checkedIcon={<ExpandMoreIcon fontSize="small" />}
+            checked={row.getIsExpanded()}
+            onChange={() => row.toggleExpanded()}
+            sx={{ '& .MuiSvgIcon-root': { fontSize: '1.1rem' } }}
+          />
+        ) : null,
+    }),
+    []
+  );
 
-    data: data ?? [],
-    enablePagination: false,
+  const allColumns = useMemo<TanstackColumnDef<T>[]>(
+    () => [
+      ...(hasRowSelection ? [selectColumn] : []),
+      ...(hasGrouping ? [expandColumn] : []),
+      ...(columns as TanstackColumnDef<T>[]),
+    ],
+    [hasRowSelection, hasGrouping, columns, selectColumn, expandColumn]
+  );
 
-    layoutMode: 'grid',
-    enableColumnResizing,
+  // Custom expanded row model — stable reference, reads live table at call time
+  const expandedRowModel = useCallback(
+    (tanTable: Table<T>) =>
+      () => {
+        const rowModel = tanTable.getPreExpandedRowModel();
+        const rows: Row<T>[] = [];
+        const handleRow = (r: Row<T>) => {
+          rows.push(r);
+          if (r.subRows?.length > 1 && r.getIsExpanded()) {
+            r.subRows.forEach(handleRow);
+          }
+        };
+        rowModel.rows.forEach(handleRow);
 
-    enableColumnFilters: false, // hide all column filters in the column menu
-    enableColumnPinning: true,
-    enableColumnOrdering: true,
-    enableColumnDragging: false,
-    enableRowSelection,
-    enableFacetedValues: true,
-    enableStickyHeader: true,
-    enableStickyFooter: true,
-    // We want tab navigation to follow our normal behaviour of moving to the
-    // next INPUT, not move through every table cell. If we need specific Table
-    // keyboard navigation in future, we can enable this in a more granular way
-    // using our own custom shortcuts:
-    // https://www.material-react-table.com/docs/guides/accessibility#custom-keyboard-shortcuts
-    enableKeyboardShortcuts: false,
+        const flatRows: Row<T>[] = [];
+        const seenRowIds = new Set<string>();
+        rowModel.flatRows.forEach(r => {
+          if (!seenRowIds.has(r.id)) {
+            flatRows.push(r);
+            seenRowIds.add(r.id);
+          }
+        });
 
-    // Disable bottom footer - use OMS custom action footer instead
-    enableBottomToolbar: false,
+        return { rows, flatRows, rowsById: rowModel.rowsById };
+      },
+    []
+  );
 
-    // Grouping options
-    enableGrouping: true,
-    groupedColumnMode: false,
+  // ── meta object — recreated only when display-relevant values change ───────
+  const meta = useMemo<OmsTableMeta<T>>(
+    () => ({
+      density: density.state,
+      setDensity: density.update,
+      onRowClick,
+      getIsPlaceholderRow,
+      getIsRestrictedRow,
+      isLoading,
+      isError,
+      noDataElement,
+      showTopToolbar: enableTopToolbar,
+      showBottomToolbar: enableBottomToolbar,
+      isGrouped: !!grouping.state.length,
+      toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
+      groupByLabel: groupingInput?.label,
+      isMobile,
+      enableVirtualization,
+      enableColumnResizing,
+      enableRowSelection: hasRowSelection,
+      renderBottomToolbar,
+      renderBottomToolbarCustomActions,
+      bottomToolbarContent,
+      tableId,
+      densityHook: density,
+      columnSizingHook: columnSizing,
+      columnVisibilityHook: columnVisibility,
+      columnPinningHook: columnPinning,
+      columnOrderHook: columnOrder,
+      resetTableState,
+      onSaveAsGlobalDefault,
+      globalDefaults: resetDefaults,
+    }),
+    // Only re-create meta when actual display state changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      density.state,
+      density.update,
+      onRowClick,
+      getIsPlaceholderRow,
+      getIsRestrictedRow,
+      isLoading,
+      isError,
+      noDataElement,
+      enableTopToolbar,
+      enableBottomToolbar,
+      grouping.state,
+      grouping.enabled,
+      grouping.toggle,
+      groupingInput?.label,
+      isMobile,
+      enableVirtualization,
+      enableColumnResizing,
+      hasRowSelection,
+      renderBottomToolbar,
+      renderBottomToolbarCustomActions,
+      bottomToolbarContent,
+      tableId,
+      density,
+      columnSizing,
+      columnVisibility,
+      columnPinning,
+      columnOrder,
+      resetTableState,
+      onSaveAsGlobalDefault,
+      resetDefaults,
+    ]
+  );
 
-    // These options are needed to stop groups with only 1 child being expandable - we only want groups to be expandable if they have multiple children
+  // Stable empty array avoids passing a new [] reference every render when data is undefined
+  const emptyData = useMemo<T[]>(() => [], []);
+  const tableData = data ?? emptyData;
+
+  const table = useReactTable<T>({
+    columns: allColumns,
+    data: tableData,
+
+    getCoreRowModel: _getCoreRowModel,
+    getSortedRowModel: _getSortedRowModel,
+    getFilteredRowModel: _getFilteredRowModel,
+    getGroupedRowModel: _getGroupedRowModel,
+    getFacetedRowModel: _getFacetedRowModel,
+    getFacetedUniqueValues: _getFacetedUniqueValues,
+
     getRowCanExpand: row => row.getLeafRows().length > 1,
-    getExpandedRowModel: table => () => {
-      const rowModel = table.getPreExpandedRowModel();
+    getExpandedRowModel: expandedRowModel,
 
-      // Rows should contain all visible rows, including group rows and their children (if expanded)
-      const rows: Row<T>[] = [];
-
-      const handleRow = (row: Row<T>) => {
-        rows.push(row);
-
-        if (row.subRows?.length > 1 && row.getIsExpanded()) {
-          row.subRows.forEach(handleRow);
-        }
-      };
-
-      rowModel.rows.forEach(handleRow);
-
-      // We can't pass rowModel.flatRows directly as for some reason rows come in duplicated when there's grouping and no sorting applied
-      // I think this is a bug in tanstack table
-      const flatRows: Row<T>[] = [];
-
-      const seenRowIds = new Set<string>();
-      rowModel.flatRows.forEach(row => {
-        if (!seenRowIds.has(row.id)) {
-          flatRows.push(row);
-          seenRowIds.add(row.id);
-        }
-      });
-
-      return {
-        rows,
-        flatRows,
-        rowsById: rowModel.rowsById,
-      };
-    },
-
-    // Disable selection Toolbar, we use our own custom footer for this
-    positionToolbarAlertBanner: 'none',
-
+    enableColumnResizing,
+    columnResizeMode: 'onChange',
+    enableColumnPinning: true,
+    enableSorting,
+    enableRowSelection: !!enableRowSelection,
+    groupedColumnMode: false,
+    filterFromLeafRows,
     manualFiltering,
-
-    filterFromLeafRows: true,
+    manualSorting: manualSorting ?? true,
+    manualPagination,
+    autoResetPageIndex,
+    rowCount,
 
     initialState: {
-      density: density.initial,
       columnSizing: columnSizing.initial,
       columnVisibility: columnVisibility.initial,
       columnPinning: columnPinning.initial,
@@ -252,10 +410,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       grouping: grouping.initial,
     },
     state: {
-      showLoadingOverlay: isLoading,
       columnFilters,
       sorting,
-      density: density.state,
       columnSizing: columnSizing.state,
       columnVisibility: columnVisibility.state,
       columnPinning: columnPinning.state,
@@ -263,27 +419,21 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
       grouping: grouping.state,
       ...state,
     },
+
     onColumnFiltersChange,
     onSortingChange,
-    onDensityChange: density.update,
-    onColumnSizingChange: columnSizing.update,
-    onColumnVisibilityChange: columnVisibility.update,
-    onColumnPinningChange: columnPinning.update,
-    onColumnOrderChange: columnOrder.update,
-    onGroupingChange: grouping.update,
+    onColumnSizingChange: columnSizing.update as OnChangeFn<Record<string, number>>,
+    onColumnVisibilityChange: columnVisibility.update as OnChangeFn<Record<string, boolean>>,
+    onColumnPinningChange: columnPinning.update as OnChangeFn<{ left?: string[]; right?: string[] }>,
+    onColumnOrderChange: columnOrder.update as OnChangeFn<string[]>,
+    onGroupingChange: grouping.update as OnChangeFn<string[]>,
+    onPaginationChange,
+    onRowSelectionChange,
 
-    renderEmptyRowsFallback: () =>
-      isLoading ? (
-        <></>
-      ) : isError ? (
-        <DataError error={t('error.unable-to-load-data')} />
-      ) : (
-        (noDataElement ?? <NothingHere />)
-      ),
-
-    ...displayOptions,
-    ...tableOptions,
+    meta,
   });
+
+  tableRef.current = table;
 
   return table;
 };

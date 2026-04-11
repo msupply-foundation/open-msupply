@@ -30,5 +30,26 @@ export * from './types';
 export * from './useGetColumnDefDefaults';
 export * from './components';
 
-// Re-exporting so all imports come from common folder
-export { MaterialReactTable as MaterialTable } from 'material-react-table';
+// Custom thin wrapper replacing material-react-table
+export { DataTable as MaterialTable } from './DataTable';
+
+// Re-export MRT compat types so consumer packages can import from @openmsupply-client/common
+export type {
+  MRT_RowData,
+  MRT_Row,
+  MRT_Cell,
+  MRT_Column,
+  MRT_TableInstance,
+  MRT_ColumnDef,
+  MRT_DensityState,
+  MRT_ColumnOrderState,
+  MRT_ColumnPinningState,
+  MRT_ColumnSizingState,
+  MRT_VisibilityState,
+  MRT_ColumnFiltersState,
+  MRT_SortingState,
+  MRT_PaginationState,
+  MRT_RowSelectionState,
+  MRT_GroupingState,
+  MRT_Updater,
+} from './mrtCompat';

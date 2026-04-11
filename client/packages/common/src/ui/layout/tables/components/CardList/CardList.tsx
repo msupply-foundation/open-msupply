@@ -1,8 +1,10 @@
 import React from 'react';
 import { Box, Stack } from '@mui/material';
-import type { MRT_Row, MRT_RowData, MRT_TableInstance } from 'material-react-table';
+import type { MRT_Row, MRT_RowData, MRT_TableInstance } from '../../mrtCompat';
 import { CardListItem } from './CardListItem';
 import { useIsLandscapeTablet } from '@common/hooks';
+import { OmsTableMeta } from '../../tableMeta';
+import { NothingHere } from '@common/components';
 
 interface CardListProps<T extends MRT_RowData> {
   table: MRT_TableInstance<T>;
@@ -18,18 +20,12 @@ const getRowOnClick = <T extends MRT_RowData>(
   table: MRT_TableInstance<T>,
   row: MRT_Row<T>
 ): React.MouseEventHandler<HTMLDivElement> | undefined => {
-  const muiRowProps = table.options.muiTableBodyRowProps;
-  const rowProps =
-    typeof muiRowProps === 'function'
-      ? muiRowProps({ row, table, staticRowIndex: 0 })
-      : (muiRowProps ?? {});
-
-  // TableRowProps.onClick is typed for HTMLTableRowElement, but we're
-  // applying it to a Card (HTMLDivElement). The handler signatures are
-  // compatible at runtime, so we need this cast to bridge the element types.
-  return rowProps.onClick as
-    | React.MouseEventHandler<HTMLDivElement>
-    | undefined;
+  const meta = table.options.meta as OmsTableMeta<T> | undefined;
+  if (!meta?.onRowClick) return undefined;
+  return (e: React.MouseEvent<HTMLDivElement>) => {
+    const isCtrlClick = e.getModifierState('Control') || e.getModifierState('Meta');
+    meta.onRowClick!(row.original as T, isCtrlClick);
+  };
 };
 
 export const CardList = <T extends MRT_RowData>({
@@ -43,6 +39,7 @@ export const CardList = <T extends MRT_RowData>({
   const rows = table.getRowModel().rows;
   const isLandscape = useIsLandscapeTablet();
   const scrollToRef = React.useRef<HTMLDivElement>(null);
+  const meta = table.options.meta as OmsTableMeta<T> | undefined;
 
   React.useEffect(() => {
     if (scrollToRowId && scrollToRef.current) {
@@ -54,7 +51,12 @@ export const CardList = <T extends MRT_RowData>({
   }, [scrollToRowId]);
 
   const getCardRef = (row: MRT_Row<T>, index: number) => {
-    if (scrollToRowId && row.original && 'id' in row.original && (row.original as Record<string, unknown>)['id'] === scrollToRowId) {
+    if (
+      scrollToRowId &&
+      row.original &&
+      'id' in row.original &&
+      (row.original as Record<string, unknown>)['id'] === scrollToRowId
+    ) {
       return scrollToRef;
     }
     if (index === rows.length - 1) return lastItemRef;
@@ -86,7 +88,7 @@ export const CardList = <T extends MRT_RowData>({
         </Box>
       )}
       {rows.length === 0
-        ? table.options.renderEmptyRowsFallback?.({ table })
+        ? (meta?.noDataElement ?? <NothingHere />)
         : rows.map((row, index) => (
             <CardListItem
               key={row.id}

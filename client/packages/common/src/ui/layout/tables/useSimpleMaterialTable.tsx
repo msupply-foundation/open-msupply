@@ -1,11 +1,10 @@
 import React from 'react';
-import { MRT_ShowHideColumnsButton } from 'material-react-table';
-import type { MRT_RowData } from 'material-react-table';
+import type { MRT_RowData } from './mrtCompat';
+import type { Row } from '@tanstack/react-table';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
-import { Box } from '@mui/material';
 
-interface SimpleTableConfig<T extends MRT_RowData> extends BaseTableConfig<T> {
-  bottomToolbarContent?: string | React.JSX.Element | React.JSX.Element[];
+interface SimpleTableConfig<T extends MRT_RowData> extends Omit<BaseTableConfig<T>, 'enableBottomToolbar'> {
+  bottomToolbarContent?: React.ReactNode;
 }
 
 export const useSimpleMaterialTable = <T extends MRT_RowData>({
@@ -21,51 +20,17 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
     enableRowSelection: false,
     enableBottomToolbar: true,
     enableTopToolbar: false,
-    enableColumnActions: false,
     enableSorting: false,
     enableColumnResizing: false,
+    bottomToolbarContent,
     state: {
       ...tableOptions.state,
-      density: 'compact',
-      // Disable all filtering/sorting for simple table
       columnFilters: [],
       sorting: [],
     },
     ...tableOptions,
-    renderBottomToolbar: ({ table }) => (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          '& .MuiTableCell-root': { border: 'none' },
-        }}
-      >
-        <MRT_ShowHideColumnsButton table={table} />
-        {bottomToolbarContent}
-      </Box>
-    ),
-
-    muiTableHeadCellProps: {
-      sx: {
-        fontSize: '0.85em',
-      },
-    },
-    muiTableBodyCellProps: ({ row }) => ({
-      sx: {
-        fontSize: '0.85em',
-        fontWeight: 400,
-        alignItems: 'flex-end',
-        color: getIsPlaceholderRow(row)
-          ? 'secondary.light'
-          : getIsRestrictedRow(row)
-            ? 'gray.main'
-            : undefined,
-        paddingY: '0.2rem',
-      },
-    }),
-    muiTableBodyRowProps: {
-      sx: { minHeight: '32px' },
-    },
+    getIsPlaceholderRow: getIsPlaceholderRow as (row: Row<T>) => boolean,
+    getIsRestrictedRow: getIsRestrictedRow as (row: Row<T>) => boolean,
   });
 
   return table;

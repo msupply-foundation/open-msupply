@@ -3,7 +3,7 @@ import type {
   MRT_ColumnSizingState,
   MRT_RowData,
   MRT_TableOptions,
-} from 'material-react-table';
+} from '../mrtCompat';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { useDebounceCallback } from '@common/hooks';
 import { useGlobalTableDefaults } from './useGlobalTableConfig';

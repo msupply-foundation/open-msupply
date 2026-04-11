@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { differentOrUndefined, getSavedState, updateSavedState } from './utils';
-import type { MRT_RowData, MRT_TableOptions } from 'material-react-table';
+import type { MRT_RowData, MRT_TableOptions } from '../mrtCompat';
 
 export const useColumnGrouping = (
   tableId: string,

@@ -3,7 +3,7 @@ import type {
   MRT_Column,
   MRT_Row,
   MRT_TableInstance,
-} from 'material-react-table';
+} from './mrtCompat';
 import type { TableCellProps } from '@mui/material/TableCell';
 
 // Type for the function parameters passed to muiTableBodyCellProps
@@ -14,30 +14,20 @@ type MuiTableBodyCellPropsParams<TData extends Record<string, any>> = {
   table: MRT_TableInstance<TData>;
 };
 
-// Helper function to merge props - gets global props from table automatically
+// Helper function to merge column-level cell props with any additional props.
+// Global styling is applied by the DataTable renderer; this only merges the
+// per-column customProps with the resolved base (empty or from a function).
 export const mergeCellProps = <TData extends Record<string, any>>(
   customProps:
     | TableCellProps
     | ((params: MuiTableBodyCellPropsParams<TData>) => TableCellProps),
   params: MuiTableBodyCellPropsParams<TData>
 ): TableCellProps => {
-  const { table } = params;
-  const globalPropsOption = table.options.muiTableBodyCellProps;
-
   const resolvedCustomProps =
     typeof customProps === 'function' ? customProps(params) : customProps || {};
 
-  const globalProps =
-    typeof globalPropsOption === 'function'
-      ? globalPropsOption(params)
-      : globalPropsOption || {};
-
   return {
-    ...globalProps,
     ...resolvedCustomProps,
-    sx: {
-      ...(globalProps.sx || {}),
-      ...(resolvedCustomProps.sx || {}),
-    } as TableCellProps['sx'],
-  };
+    sx: resolvedCustomProps.sx || {},
+  } as TableCellProps;
 };

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { MRT_Row } from 'material-react-table';
+import { MRT_Row } from '@openmsupply-client/common';
 import {
   useAuthContext,
   usePreferences,

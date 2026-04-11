@@ -10,7 +10,7 @@ import type {
   MRT_Cell,
   MRT_Row,
   MRT_TableInstance,
-} from 'material-react-table';
+} from './mrtCompat';
 import {
   defaultAggregationFn,
   mergeCellProps,
@@ -55,7 +55,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
                           // Left aligned (fallback):
                           // Padding varies based on density
                           paddingLeft:
-                            params.table.getState().density === 'compact'
+                            (params.table.options.meta as { density?: string })?.density === 'compact'
                               ? '0.7em'
                               : '1.2em',
                         },

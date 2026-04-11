@@ -3,7 +3,7 @@ import type {
   MRT_VisibilityState,
   MRT_RowData,
   MRT_TableOptions,
-} from 'material-react-table';
+} from '../mrtCompat';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { ColumnDef } from '../types';
 import { useSimplifiedTabletUI } from '@common/hooks';
