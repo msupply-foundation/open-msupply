@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { StandardTextFieldProps } from '@mui/material/TextField';
 import { BasicTextInput } from '../TextInput';
-import merge from 'lodash/merge';
+import { merge } from '@common/utils';
 
 export const TextArea: FC<StandardTextFieldProps> = ({
   value,

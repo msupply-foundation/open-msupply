@@ -1,10 +1,57 @@
 import { RecordPatch, RecordWithId } from '@common/types';
-import groupBy from 'lodash/groupBy';
-import uniqBy from 'lodash/uniqBy';
-import keyBy from 'lodash/keyBy';
-import uniq from 'lodash/uniq';
-import flatMap from 'lodash/flatMap';
-import partition from 'lodash/partition';
+
+const _groupBy = <T>(
+  arr: T[],
+  fn: ((item: T) => string) | string
+): Record<string, T[]> =>
+  arr.reduce(
+    (acc, item) => {
+      const key =
+        typeof fn === 'function'
+          ? fn(item)
+          : (item as Record<string, unknown>)[fn as string] as string;
+      (acc[key] = acc[key] || []).push(item);
+      return acc;
+    },
+    {} as Record<string, T[]>
+  );
+
+const _uniqBy = <T>(arr: T[], fn: ((item: T) => unknown) | string): T[] =>
+  [
+    ...new Map(
+      arr.map(item => [
+        typeof fn === 'function'
+          ? fn(item)
+          : (item as Record<string, unknown>)[fn as string],
+        item,
+      ])
+    ).values(),
+  ];
+
+const _keyBy = <T>(
+  arr: T[],
+  fn: ((item: T) => string) | string
+): Record<string, T> =>
+  Object.fromEntries(
+    arr.map(item => [
+      typeof fn === 'function'
+        ? fn(item)
+        : (item as Record<string, unknown>)[fn as string],
+      item,
+    ])
+  );
+
+const _uniq = <T>(arr: T[]): T[] => [...new Set(arr)];
+
+const _partition = <T>(
+  arr: T[],
+  predicate: (item: T) => boolean
+): [T[], T[]] => {
+  const pass: T[] = [];
+  const fail: T[] = [];
+  arr.forEach(item => (predicate(item) ? pass : fail).push(item));
+  return [pass, fail];
+};
 
 export const ArrayUtils = {
   ifTheSameElseDefault: <T, K extends keyof T, J>(
@@ -40,7 +87,7 @@ export const ArrayUtils = {
     return arr.reduce((sum, someEntity) => sum + someEntity[key], 0);
   },
   // De-duplicate (remove duplicates)
-  dedupe: uniq,
+  dedupe: _uniq,
   immutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) =>
     arr.map(entity => {
       if (entity.id === patch.id) {
@@ -51,11 +98,11 @@ export const ArrayUtils = {
       }
       return entity;
     }),
-  groupBy,
-  uniqBy,
-  keyBy,
-  flatMap,
-  partition,
+  groupBy: _groupBy,
+  uniqBy: _uniqBy,
+  keyBy: _keyBy,
+  flatMap: <T, U>(arr: T[], fn: (item: T) => U[]): U[] => arr.flatMap(fn),
+  partition: _partition,
   toObject: <T extends RecordWithId>(arr: T[]) => {
     const obj: Record<string, T> = {};
     arr.forEach(t => (obj[t.id] = { ...t }));

@@ -5,8 +5,7 @@ import {
   RecordWithId,
   ViewportListRef,
 } from '@openmsupply-client/common';
-import keyBy from 'lodash/keyBy';
-import mapValues from 'lodash/mapValues';
+import { keyBy, mapValues } from '@openmsupply-client/common';
 import { itemMatchesSearch } from '../../utils';
 import { isLineError } from '../../DetailView/helpers';
 
