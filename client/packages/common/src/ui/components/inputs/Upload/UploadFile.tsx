@@ -1,6 +1,6 @@
 import React from 'react';
 import { Capacitor } from '@capacitor/core';
-import { Accept } from 'react-dropzone';
+import { Accept } from './types';
 import { UploadButton } from './UploadButton';
 import { UploadDragAndDrop } from './UploadDragAndDrop';
 
