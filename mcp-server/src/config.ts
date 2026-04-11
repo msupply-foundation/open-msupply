@@ -3,6 +3,7 @@ export interface Config {
   username: string;
   password: string;
   storeId?: string;
+  allowSelfSigned: boolean;
 }
 
 export function loadConfig(): Config {
@@ -10,6 +11,9 @@ export function loadConfig(): Config {
   const username = process.env.OMSUPPLY_USERNAME;
   const password = process.env.OMSUPPLY_PASSWORD;
   const storeId = process.env.OMSUPPLY_STORE_ID;
+  const allowSelfSigned =
+    process.env.OMSUPPLY_ALLOW_SELF_SIGNED === 'true' ||
+    process.env.OMSUPPLY_ALLOW_SELF_SIGNED === '1';
 
   if (!url) {
     throw new Error(
@@ -23,5 +27,5 @@ export function loadConfig(): Config {
     throw new Error('OMSUPPLY_PASSWORD environment variable is required');
   }
 
-  return { url: url.replace(/\/$/, ''), username, password, storeId };
+  return { url: url.replace(/\/$/, ''), username, password, storeId, allowSelfSigned };
 }
