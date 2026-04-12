@@ -46,7 +46,14 @@ type CoverageWomenGroup = {
   count: number;
 };
 
-type CoveragePayload = {
+type CoverageDosePayload = {
+  doseId: string;
+  doseLabel: string;
+  child: CoverageChildGroup[];
+  women: CoverageWomenGroup[];
+};
+
+type CoveragePayloadV1 = {
   version: 'DT_COVERAGE_V1';
   itemId: string;
   itemName: string;
@@ -54,9 +61,28 @@ type CoveragePayload = {
   women: CoverageWomenGroup[];
 };
 
+type CoveragePayloadV2 = {
+  version: 'DT_COVERAGE_V2';
+  itemId: string;
+  itemName: string;
+  doses: CoverageDosePayload[];
+};
+
+type CoverageEntry = {
+  itemId: string;
+  itemName: string;
+  itemDisplayName: string;
+  doseId?: string;
+  doseLabel?: string;
+  child: CoverageChildGroup[];
+  women: CoverageWomenGroup[];
+};
+
 type AggregatedCoverageRow = {
   itemId: string;
   itemName: string;
+  itemDisplayName: string;
+  doseLabel?: string;
   childUnderOneMale: number;
   childUnderOneFemale: number;
   childOneToTwoMale: number;
@@ -70,6 +96,8 @@ type AggregatedCoverageRow = {
 type ChildVaccinationRow = {
   itemId: string;
   itemName: string;
+  itemDisplayName: string;
+  doseLabel?: string;
   childUnderOneMale: number;
   childUnderOneFemale: number;
   childOneToTwoMale: number;
@@ -82,6 +110,8 @@ type ChildVaccinationRow = {
 type WomenVaccinationRow = {
   itemId: string;
   itemName: string;
+  itemDisplayName: string;
+  doseLabel?: string;
   pregnant: number;
   nonPregnant: number;
   total: number;
@@ -93,32 +123,56 @@ const toNumber = (value: unknown): number => {
   return parsed;
 };
 
-const parseCoveragePayload = (note?: string | null): CoveragePayload | null => {
-  if (!note) return null;
+const normaliseChildGroups = (groups: Array<Partial<CoverageChildGroup>> = []) =>
+  groups.map(group => ({
+    groupId: String(group.groupId ?? ''),
+    groupName: String(group.groupName ?? ''),
+    male: toNumber(group.male),
+    female: toNumber(group.female),
+  }));
+
+const normaliseWomenGroups = (groups: Array<Partial<CoverageWomenGroup>> = []) =>
+  groups.map(group => ({
+    groupId: String(group.groupId ?? ''),
+    groupName: String(group.groupName ?? ''),
+    count: toNumber(group.count),
+  }));
+
+const parseCoverageEntries = (note?: string | null): CoverageEntry[] => {
+  if (!note) return [];
 
   try {
-    const parsed = JSON.parse(note) as Partial<CoveragePayload>;
-    if (parsed?.version !== 'DT_COVERAGE_V1') return null;
-    if (!parsed.itemId || !parsed.itemName) return null;
+    const parsed = JSON.parse(note) as Partial<CoveragePayloadV1 & CoveragePayloadV2>;
+    if (!parsed.itemId || !parsed.itemName) return [];
 
-    return {
-      version: 'DT_COVERAGE_V1',
-      itemId: parsed.itemId,
-      itemName: parsed.itemName,
-      child: (parsed.child ?? []).map(group => ({
-        groupId: String(group.groupId ?? ''),
-        groupName: String(group.groupName ?? ''),
-        male: toNumber(group.male),
-        female: toNumber(group.female),
-      })),
-      women: (parsed.women ?? []).map(group => ({
-        groupId: String(group.groupId ?? ''),
-        groupName: String(group.groupName ?? ''),
-        count: toNumber(group.count),
-      })),
-    };
+    if (parsed.version === 'DT_COVERAGE_V2') {
+      return (parsed.doses ?? []).map(dose => {
+        const doseLabel = String(dose.doseLabel ?? '');
+        return {
+          itemId: parsed.itemId as string,
+          itemName: parsed.itemName as string,
+          itemDisplayName: String(parsed.itemName),
+          doseId: String(dose.doseId ?? ''),
+          doseLabel,
+          child: normaliseChildGroups(dose.child as Array<Partial<CoverageChildGroup>>),
+          women: normaliseWomenGroups(dose.women as Array<Partial<CoverageWomenGroup>>),
+        };
+      });
+    }
+
+    if (parsed.version !== 'DT_COVERAGE_V1') return [];
+
+    return [
+      {
+        itemId: parsed.itemId,
+        itemName: parsed.itemName,
+        itemDisplayName: parsed.itemName,
+        child: normaliseChildGroups(parsed.child as Array<Partial<CoverageChildGroup>>),
+        women: normaliseWomenGroups(parsed.women as Array<Partial<CoverageWomenGroup>>),
+      },
+    ];
   } catch {
-    return null;
+    return [];
   }
 };
 
@@ -170,75 +224,83 @@ export const DailyTallyReportView = () => {
   );
 
   const rows = useMemo((): AggregatedCoverageRow[] => {
-    const byItem = new Map<string, AggregatedCoverageRow>();
+    const byItemDose = new Map<string, AggregatedCoverageRow>();
 
     for (const prescription of data?.nodes ?? []) {
       const dedupePerInvoice = new Set<string>();
 
       for (const line of prescription.lines.nodes) {
-        const payload = parseCoveragePayload(line.note);
-        if (!payload) continue;
+        const coverageEntries = parseCoverageEntries(line.note);
+        if (coverageEntries.length === 0) continue;
 
-        const dedupeKey = `${prescription.id}:${payload.itemId}`;
-        if (dedupePerInvoice.has(dedupeKey)) continue;
-        dedupePerInvoice.add(dedupeKey);
+        for (const payload of coverageEntries) {
+          const doseKey = payload.doseId || 'aggregate';
+          const dedupeKey = `${prescription.id}:${payload.itemId}:${doseKey}`;
+          if (dedupePerInvoice.has(dedupeKey)) continue;
+          dedupePerInvoice.add(dedupeKey);
 
-        const current = byItem.get(payload.itemId) ?? {
-          itemId: payload.itemId,
-          itemName: payload.itemName,
-          childUnderOneMale: 0,
-          childUnderOneFemale: 0,
-          childOneToTwoMale: 0,
-          childOneToTwoFemale: 0,
-          childTwoToFiveMale: 0,
-          childTwoToFiveFemale: 0,
-          womenNonPregnant: 0,
-          womenPregnant: 0,
-        };
+          const itemDoseKey = `${payload.itemId}:${doseKey}`;
+          const current = byItemDose.get(itemDoseKey) ?? {
+            itemId: payload.itemId,
+            itemName: payload.itemName,
+            itemDisplayName: payload.itemDisplayName,
+            doseLabel: payload.doseLabel,
+            childUnderOneMale: 0,
+            childUnderOneFemale: 0,
+            childOneToTwoMale: 0,
+            childOneToTwoFemale: 0,
+            childTwoToFiveMale: 0,
+            childTwoToFiveFemale: 0,
+            womenNonPregnant: 0,
+            womenPregnant: 0,
+          };
 
-        for (const child of payload.child) {
-          if (isChild011Bucket(child.groupId, child.groupName, demographicBuckets)) {
-            current.childUnderOneMale += child.male;
-            current.childUnderOneFemale += child.female;
-            continue;
+          for (const child of payload.child) {
+            if (isChild011Bucket(child.groupId, child.groupName, demographicBuckets)) {
+              current.childUnderOneMale += child.male;
+              current.childUnderOneFemale += child.female;
+              continue;
+            }
+
+            if (isChild1223Bucket(child.groupId, child.groupName, demographicBuckets)) {
+              current.childOneToTwoMale += child.male;
+              current.childOneToTwoFemale += child.female;
+              continue;
+            }
+
+            if (isChild25Bucket(child.groupId, child.groupName, demographicBuckets)) {
+              current.childTwoToFiveMale += child.male;
+              current.childTwoToFiveFemale += child.female;
+            }
           }
 
-          if (isChild1223Bucket(child.groupId, child.groupName, demographicBuckets)) {
-            current.childOneToTwoMale += child.male;
-            current.childOneToTwoFemale += child.female;
-            continue;
+          for (const women of payload.women) {
+            if (
+              isWomenNonPregnantBucket(
+                women.groupId,
+                women.groupName,
+                demographicBuckets
+              )
+            ) {
+              current.womenNonPregnant += women.count;
+              continue;
+            }
+
+            if (
+              isWomenPregnantBucket(women.groupId, women.groupName, demographicBuckets)
+            ) {
+              current.womenPregnant += women.count;
+            }
           }
 
-          if (isChild25Bucket(child.groupId, child.groupName, demographicBuckets)) {
-            current.childTwoToFiveMale += child.male;
-            current.childTwoToFiveFemale += child.female;
-          }
+          byItemDose.set(itemDoseKey, current);
         }
-
-        for (const women of payload.women) {
-          if (
-            isWomenNonPregnantBucket(
-              women.groupId,
-              women.groupName,
-              demographicBuckets
-            )
-          ) {
-            current.womenNonPregnant += women.count;
-            continue;
-          }
-
-          if (
-            isWomenPregnantBucket(women.groupId, women.groupName, demographicBuckets)
-          ) {
-            current.womenPregnant += women.count;
-          }
-        }
-
-        byItem.set(payload.itemId, current);
       }
     }
 
-    return [...byItem.values()].sort((a, b) => a.itemName.localeCompare(b.itemName));
+    return [...byItemDose.values()].sort((a, b) =>
+      a.itemDisplayName.localeCompare(b.itemDisplayName)
+    );
   }, [data?.nodes, demographicBuckets]);
 
   const childRows = useMemo((): ChildVaccinationRow[] => {
@@ -246,6 +308,8 @@ export const DailyTallyReportView = () => {
       .map(row => ({
         itemId: row.itemId,
         itemName: row.itemName,
+        itemDisplayName: row.itemDisplayName,
+        doseLabel: row.doseLabel,
         childUnderOneMale: row.childUnderOneMale,
         childUnderOneFemale: row.childUnderOneFemale,
         childOneToTwoMale: row.childOneToTwoMale,
@@ -268,6 +332,8 @@ export const DailyTallyReportView = () => {
       .map(row => ({
         itemId: row.itemId,
         itemName: row.itemName,
+        itemDisplayName: row.itemDisplayName,
+        doseLabel: row.doseLabel,
         pregnant: row.womenPregnant,
         nonPregnant: row.womenNonPregnant,
         total: row.womenPregnant + row.womenNonPregnant,
@@ -275,20 +341,33 @@ export const DailyTallyReportView = () => {
       .filter(row => row.total > 0);
   }, [rows]);
 
-  const itemColumnSize = isLargeScreen ? 180 : isTablet ? 140 : 120;
-  const childNumberColumnSize = isLargeScreen ? 110 : isTablet ? 86 : 74;
-  const womenNumberColumnSize = isLargeScreen ? 130 : isTablet ? 100 : 88;
-  const totalColumnSize = isLargeScreen ? 90 : 74;
+  const doseColumnSize = isLargeScreen ? 84 : isTablet ? 72 : 64;
+  const itemColumnSize = isLargeScreen ? 300 : isTablet ? 240 : 200;
+  const childNumberColumnSize = isLargeScreen ? 76 : isTablet ? 66 : 58;
+  const womenNumberColumnSize = isLargeScreen ? 88 : isTablet ? 76 : 66;
+  const totalColumnSize = isLargeScreen ? 72 : 62;
   const cellPaddingX = isLargeScreen ? '10px' : isTablet ? '8px' : '6px';
   const cellPaddingY = isLargeScreen ? '8px' : '4px';
 
   const childColumns = useMemo(
     (): ColumnDef<ChildVaccinationRow>[] => [
       {
-        accessorKey: 'itemName',
-        header: 'Vaccine',
-        enableSorting: true,
-        size: itemColumnSize,
+        id: 'doseAndVaccine',
+        header: '',
+        columns: [
+          {
+            accessorKey: 'doseLabel',
+            header: 'Dose',
+            size: doseColumnSize,
+            Cell: ({ cell }) => cell.getValue<string>() || '-',
+          },
+          {
+            accessorKey: 'itemName',
+            header: 'Vaccine',
+            enableSorting: true,
+            size: itemColumnSize,
+          },
+        ],
       },
       {
         id: 'childrenUnderOne',
@@ -339,21 +418,47 @@ export const DailyTallyReportView = () => {
         ],
       },
       {
-        accessorKey: 'total',
-        header: 'Total',
-        size: totalColumnSize,
+        id: 'totals',
+        header: '',
+        columns: [
+          {
+            accessorKey: 'total',
+            header: 'Total',
+            size: totalColumnSize,
+          },
+        ],
       },
     ],
-    [t, itemColumnSize, childNumberColumnSize, totalColumnSize]
+    [
+      t,
+      isLargeScreen,
+      isTablet,
+      doseColumnSize,
+      itemColumnSize,
+      childNumberColumnSize,
+      totalColumnSize,
+    ]
   );
 
   const womenColumns = useMemo(
     (): ColumnDef<WomenVaccinationRow>[] => [
       {
-        accessorKey: 'itemName',
-        header: 'Vaccine',
-        enableSorting: true,
-        size: itemColumnSize,
+        id: 'doseAndVaccine',
+        header: '',
+        columns: [
+          {
+            accessorKey: 'doseLabel',
+            header: 'Dose',
+            size: doseColumnSize,
+            Cell: ({ cell }) => cell.getValue<string>() || '-',
+          },
+          {
+            accessorKey: 'itemName',
+            header: 'Vaccine',
+            enableSorting: true,
+            size: itemColumnSize,
+          },
+        ],
       },
       {
         id: 'women1549',
@@ -372,33 +477,74 @@ export const DailyTallyReportView = () => {
         ],
       },
       {
-        accessorKey: 'total',
-        header: 'Total',
-        size: totalColumnSize,
+        id: 'totals',
+        header: '',
+        columns: [
+          {
+            accessorKey: 'total',
+            header: 'Total',
+            size: totalColumnSize,
+          },
+        ],
       },
     ],
-    [t, itemColumnSize, womenNumberColumnSize, totalColumnSize]
+    [
+      t,
+      isLargeScreen,
+      isTablet,
+      doseColumnSize,
+      itemColumnSize,
+      womenNumberColumnSize,
+      totalColumnSize,
+    ]
   );
 
   const { table: childTable } = usePaginatedMaterialTable({
-    tableId: 'daily-tally-report-children',
+    tableId: 'daily-tally-report-children-dose-left',
     columns: childColumns,
     data: childRows,
     totalCount: childRows.length,
     isLoading: isFetching,
     isError,
+    enableColumnOrdering: false,
+    state: {
+      density: 'compact',
+      columnOrder: [
+        'doseLabel',
+        'itemName',
+        'childUnderOneMale',
+        'childUnderOneFemale',
+        'childOneToTwoMale',
+        'childOneToTwoFemale',
+        'childTwoToFiveMale',
+        'childTwoToFiveFemale',
+        'total',
+      ],
+      columnPinning: {
+        left: ['doseLabel', 'itemName'],
+      },
+    },
+    enableRowSelection: false,
+    enableMultiRowSelection: false,
+    enableSelectAll: false,
     enablePagination: false,
     enableColumnActions: false,
     enableSorting: false,
     enableTopToolbar: false,
     enableBottomToolbar: false,
     enableColumnResizing: false,
-    state: { density: 'compact' },
     muiTableHeadCellProps: ({ column }) => ({
       sx: {
         textAlign: column.id === 'itemName' ? 'left' : 'center',
         paddingX: cellPaddingX,
         paddingY: cellPaddingY,
+        ...(column.id === 'itemName'
+          ? {
+              whiteSpace: 'normal',
+              overflow: 'visible',
+              textOverflow: 'clip',
+            }
+          : {}),
         '& .Mui-TableHeadCell-Content': {
           justifyContent: column.id === 'itemName' ? 'flex-start' : 'center',
         },
@@ -413,31 +559,75 @@ export const DailyTallyReportView = () => {
         textAlign: column.id === 'itemName' ? 'left' : 'center',
         paddingX: cellPaddingX,
         paddingY: isLargeScreen ? '6px' : '4px',
+        ...(column.id === 'itemName'
+          ? {
+              whiteSpace: 'normal',
+              overflow: 'visible',
+              textOverflow: 'clip',
+            }
+          : {}),
+        ...(column.getIsPinned()
+          ? {
+              backgroundColor: 'inherit !important',
+            }
+          : {}),
       },
     }),
-    muiTableContainerProps: { sx: { width: '100%', overflowX: 'auto' } },
+    muiTableContainerProps: {
+      sx: {
+        width: '100%',
+        overflowX: 'auto',
+        '& .MuiTableCell-root[data-pinned]': {
+          boxShadow: 'none !important',
+        },
+        '& .MuiTableCell-root[data-pinned]::before, & .MuiTableCell-root[data-pinned]::after': {
+          boxShadow: 'none !important',
+          background: 'transparent !important',
+        },
+        '& .MuiTableCell-root[data-pinned="left"]': {
+          borderRight: 'none !important',
+        },
+      },
+    },
     noDataElement: <NothingHere body={'No child vaccination data found for this date range.'} />,
   });
 
   const { table: womenTable } = usePaginatedMaterialTable({
-    tableId: 'daily-tally-report-women',
+    tableId: 'daily-tally-report-women-dose-left',
     columns: womenColumns,
     data: womenRows,
     totalCount: womenRows.length,
     isLoading: isFetching,
     isError,
+    enableColumnOrdering: false,
+    state: {
+      density: 'compact',
+      columnOrder: ['doseLabel', 'itemName', 'pregnant', 'nonPregnant', 'total'],
+      columnPinning: {
+        left: ['doseLabel', 'itemName'],
+      },
+    },
+    enableRowSelection: false,
+    enableMultiRowSelection: false,
+    enableSelectAll: false,
     enablePagination: false,
     enableColumnActions: false,
     enableSorting: false,
     enableTopToolbar: false,
     enableBottomToolbar: false,
     enableColumnResizing: false,
-    state: { density: 'compact' },
     muiTableHeadCellProps: ({ column }) => ({
       sx: {
         textAlign: column.id === 'itemName' ? 'left' : 'center',
         paddingX: cellPaddingX,
         paddingY: cellPaddingY,
+        ...(column.id === 'itemName'
+          ? {
+              whiteSpace: 'normal',
+              overflow: 'visible',
+              textOverflow: 'clip',
+            }
+          : {}),
         '& .Mui-TableHeadCell-Content': {
           justifyContent: column.id === 'itemName' ? 'flex-start' : 'center',
         },
@@ -452,21 +642,50 @@ export const DailyTallyReportView = () => {
         textAlign: column.id === 'itemName' ? 'left' : 'center',
         paddingX: cellPaddingX,
         paddingY: isLargeScreen ? '6px' : '4px',
+        ...(column.id === 'itemName'
+          ? {
+              whiteSpace: 'normal',
+              overflow: 'visible',
+              textOverflow: 'clip',
+            }
+          : {}),
+        ...(column.getIsPinned()
+          ? {
+              backgroundColor: 'inherit !important',
+            }
+          : {}),
       },
     }),
-    muiTableContainerProps: { sx: { width: '100%', overflowX: 'auto' } },
+    muiTableContainerProps: {
+      sx: {
+        width: '100%',
+        overflowX: 'auto',
+        '& .MuiTableCell-root[data-pinned]': {
+          boxShadow: 'none !important',
+        },
+        '& .MuiTableCell-root[data-pinned]::before, & .MuiTableCell-root[data-pinned]::after': {
+          boxShadow: 'none !important',
+          background: 'transparent !important',
+        },
+        '& .MuiTableCell-root[data-pinned="left"]': {
+          borderRight: 'none !important',
+        },
+      },
+    },
     noDataElement: <NothingHere body={'No women vaccination data found for this date range.'} />,
   });
 
   const totals = useMemo(() => {
     const children = childRows.reduce((sum, row) => sum + row.total, 0);
     const women = womenRows.reduce((sum, row) => sum + row.total, 0);
+    const vaccinesUsedChild = new Set(childRows.map(row => row.itemId)).size;
+    const vaccinesUsedWomen = new Set(womenRows.map(row => row.itemId)).size;
 
     return {
       vaccinatedChildren: children,
       vaccinatedWomen: women,
-      vaccinesWithChildCoverage: childRows.length,
-      vaccinesWithWomenCoverage: womenRows.length,
+      vaccinesUsedChild,
+      vaccinesUsedWomen,
     };
   }, [childRows, womenRows]);
 
@@ -483,6 +702,7 @@ export const DailyTallyReportView = () => {
       .map(
         row => `
           <tr>
+            <td>${escapeHtml(row.doseLabel || '-')}</td>
             <td>${escapeHtml(row.itemName)}</td>
             <td>${row.childUnderOneMale}</td>
             <td>${row.childUnderOneFemale}</td>
@@ -500,6 +720,7 @@ export const DailyTallyReportView = () => {
       .map(
         row => `
           <tr>
+            <td>${escapeHtml(row.doseLabel || '-')}</td>
             <td>${escapeHtml(row.itemName)}</td>
             <td>${row.pregnant}</td>
             <td>${row.nonPregnant}</td>
@@ -536,14 +757,15 @@ export const DailyTallyReportView = () => {
         <div class="stats">
           <div class="stat"><div class="stat-label">Children Vaccinated</div><div class="stat-value">${totals.vaccinatedChildren}</div></div>
           <div class="stat"><div class="stat-label">Women Vaccinated</div><div class="stat-value">${totals.vaccinatedWomen}</div></div>
-          <div class="stat"><div class="stat-label">Vaccines (Child)</div><div class="stat-value">${totals.vaccinesWithChildCoverage}</div></div>
-          <div class="stat"><div class="stat-label">Vaccines (Women)</div><div class="stat-value">${totals.vaccinesWithWomenCoverage}</div></div>
+          <div class="stat"><div class="stat-label">Vaccines used (Child)</div><div class="stat-value">${totals.vaccinesUsedChild}</div></div>
+          <div class="stat"><div class="stat-label">Vaccines used (Women)</div><div class="stat-value">${totals.vaccinesUsedWomen}</div></div>
         </div>
 
         <h2>Child Vaccination</h2>
         <table>
           <thead>
             <tr>
+              <th>Dose</th>
               <th>Vaccine</th>
               <th>U1 Male</th>
               <th>U1 Female</th>
@@ -554,20 +776,21 @@ export const DailyTallyReportView = () => {
               <th>Total</th>
             </tr>
           </thead>
-          <tbody>${childRowsHtml || '<tr><td colspan="8">No child vaccination data found for this date range.</td></tr>'}</tbody>
+          <tbody>${childRowsHtml || '<tr><td colspan="9">No child vaccination data found for this date range.</td></tr>'}</tbody>
         </table>
 
         <h2>Women Vaccination</h2>
         <table>
           <thead>
             <tr>
+              <th>Dose</th>
               <th>Vaccine</th>
               <th>Pregnant</th>
               <th>Non pregnant</th>
               <th>Total</th>
             </tr>
           </thead>
-          <tbody>${womenRowsHtml || '<tr><td colspan="4">No women vaccination data found for this date range.</td></tr>'}</tbody>
+          <tbody>${womenRowsHtml || '<tr><td colspan="5">No women vaccination data found for this date range.</td></tr>'}</tbody>
         </table>
       </div>
     `;
@@ -722,10 +945,10 @@ export const DailyTallyReportView = () => {
                 }}
               >
                 <Typography variant="caption" color="text.secondary">
-                  Vaccines (Child)
+                  Vaccines used (Child)
                 </Typography>
                 <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
-                  {totals.vaccinesWithChildCoverage}
+                  {totals.vaccinesUsedChild}
                 </Typography>
               </Box>
               <Box
@@ -736,10 +959,10 @@ export const DailyTallyReportView = () => {
                 }}
               >
                 <Typography variant="caption" color="text.secondary">
-                  Vaccines (Women)
+                  Vaccines used (Women)
                 </Typography>
                 <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
-                  {totals.vaccinesWithWomenCoverage}
+                  {totals.vaccinesUsedWomen}
                 </Typography>
               </Box>
             </Box>

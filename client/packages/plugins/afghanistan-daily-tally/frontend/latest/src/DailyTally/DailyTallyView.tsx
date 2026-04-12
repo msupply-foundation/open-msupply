@@ -36,6 +36,7 @@ import {
   useSimplifiedTabletUI,
   useTranslation,
   ItemNodeType,
+  useGql,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -118,6 +119,8 @@ type ConfirmationSummaryRow = {
 type CoverageSummaryRow = {
   itemId: string;
   itemName: string;
+  itemDisplayName: string;
+  doseLabel?: string;
   childUnderOneMale: number;
   childUnderOneFemale: number;
   childOneToTwoMale: number;
@@ -163,6 +166,11 @@ type TallyGenderKey = 'male' | 'female' | 'other';
 
 type VaccineSessionTallyDraft = {
   counts: Record<TallyAgeKey, Record<TallyGenderKey, number>>;
+};
+
+type VaccineCourseDose = {
+  id: string;
+  label: string;
 };
 
 const tallyAgeGroups: Array<{ key: TallyAgeKey; label: string }> = [
@@ -624,76 +632,165 @@ const buildCoverageSummaryRows = (
   vaccineRows: DailyTallyRow[],
   coverageByItem: Record<string, VaccineCoverageDraft>,
   demographics: DemographicNodeLite[] | undefined,
-  coverageFieldVisibilityByItem: Record<string, CoverageFieldVisibility>
+  coverageFieldVisibilityByItem: Record<string, CoverageFieldVisibility>,
+  perDoseCoverageByItem?: Record<string, Record<string, VaccineCoverageDraft>>,
+  dosesForItemId?: Record<string, VaccineCourseDose[]>
 ): CoverageSummaryRow[] => {
   const buckets = resolveDemographicBuckets(demographics);
 
+  const summariseCoverage = (
+    row: DailyTallyRow,
+    coverage: VaccineCoverageDraft,
+    visibility: CoverageFieldVisibility,
+    doseLabel?: string
+  ): CoverageSummaryRow => {
+    const summary: CoverageSummaryRow = {
+      itemId: row.itemId,
+      itemName: row.item,
+      itemDisplayName: row.item,
+      doseLabel,
+      childUnderOneMale: 0,
+      childUnderOneFemale: 0,
+      childOneToTwoMale: 0,
+      childOneToTwoFemale: 0,
+      childTwoToFiveMale: 0,
+      childTwoToFiveFemale: 0,
+      womenNonPregnant: 0,
+      womenPregnant: 0,
+    };
+
+    if (visibility.showChild) {
+      for (const child of coverage.childAgeGroups) {
+        if (isChild011Bucket(child.id, child.label, buckets)) {
+          summary.childUnderOneMale += child.male;
+          summary.childUnderOneFemale += child.female;
+          continue;
+        }
+
+        if (isChild1223Bucket(child.id, child.label, buckets)) {
+          summary.childOneToTwoMale += child.male;
+          summary.childOneToTwoFemale += child.female;
+          continue;
+        }
+
+        if (isChild25Bucket(child.id, child.label, buckets)) {
+          summary.childTwoToFiveMale += child.male;
+          summary.childTwoToFiveFemale += child.female;
+        }
+      }
+    }
+
+    if (visibility.showWomen) {
+      const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
+      summary.womenNonPregnant = nonPregnant;
+      summary.womenPregnant = pregnant;
+    }
+
+    return summary;
+  };
+
   return vaccineRows
-    .map(row => {
+    .flatMap(row => {
       const coverage = coverageByItem[row.itemId];
       const visibility = coverageFieldVisibilityByItem[row.itemId] ?? {
         showChild: false,
         showWomen: false,
       };
-      if (!coverage || !hasVisibleCoverageValues(coverage, visibility)) return null;
+      const rowDoses = dosesForItemId?.[row.itemId] ?? [];
 
-      const summary: CoverageSummaryRow = {
-        itemId: row.itemId,
-        itemName: row.item,
-        childUnderOneMale: 0,
-        childUnderOneFemale: 0,
-        childOneToTwoMale: 0,
-        childOneToTwoFemale: 0,
-        childTwoToFiveMale: 0,
-        childTwoToFiveFemale: 0,
-        womenNonPregnant: 0,
-        womenPregnant: 0,
-      };
+      if (rowDoses.length > 0 && perDoseCoverageByItem) {
+        const perDoseRows = rowDoses
+          .map(dose => {
+            const doseCoverage = perDoseCoverageByItem[row.itemId]?.[dose.id];
+            if (!doseCoverage || !hasVisibleCoverageValues(doseCoverage, visibility)) {
+              return null;
+            }
+            return summariseCoverage(row, doseCoverage, visibility, dose.label);
+          })
+          .filter((summary): summary is CoverageSummaryRow => summary !== null);
 
-      if (visibility.showChild) {
-        for (const child of coverage.childAgeGroups) {
-          if (isChild011Bucket(child.id, child.label, buckets)) {
-            summary.childUnderOneMale += child.male;
-            summary.childUnderOneFemale += child.female;
-            continue;
-          }
-
-          if (isChild1223Bucket(child.id, child.label, buckets)) {
-            summary.childOneToTwoMale += child.male;
-            summary.childOneToTwoFemale += child.female;
-            continue;
-          }
-
-          if (isChild25Bucket(child.id, child.label, buckets)) {
-            summary.childTwoToFiveMale += child.male;
-            summary.childTwoToFiveFemale += child.female;
-          }
-        }
+        if (perDoseRows.length > 0) return perDoseRows;
       }
 
-      if (visibility.showWomen) {
-        const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
-        summary.womenNonPregnant = nonPregnant;
-        summary.womenPregnant = pregnant;
-      }
-
-      return summary;
+      if (!coverage || !hasVisibleCoverageValues(coverage, visibility)) return [];
+      return [summariseCoverage(row, coverage, visibility)];
     })
-    .filter((row): row is CoverageSummaryRow => row !== null)
-    .sort((a, b) => a.itemName.localeCompare(b.itemName));
+    .sort((a, b) => a.itemDisplayName.localeCompare(b.itemDisplayName));
 };
 
 const dailyTallyLineNote = (
   row: DailyTallyRow,
   coverage: VaccineCoverageDraft | undefined,
-  visibility: CoverageFieldVisibility
+  visibility: CoverageFieldVisibility,
+  perDoseCoverages?: Array<{ doseId: string; doseLabel: string; coverage: VaccineCoverageDraft }>
 ) => {
   if (!row.isVaccine) return `Daily tally issued (${row.item})`;
+
+  if (perDoseCoverages && perDoseCoverages.length > 0) {
+    const hasAnyDoseValues = perDoseCoverages.some(dc =>
+      hasVisibleCoverageValues(dc.coverage, visibility)
+    );
+    if (hasAnyDoseValues) {
+      return JSON.stringify({
+        version: 'DT_COVERAGE_V2',
+        itemId: row.itemId,
+        itemName: row.item,
+        doses: perDoseCoverages.map(dc => ({
+          doseId: dc.doseId,
+          doseLabel: dc.doseLabel,
+          child: visibility.showChild
+            ? dc.coverage.childAgeGroups.map(g => ({
+                groupId: g.id,
+                groupName: g.label,
+                male: g.male,
+                female: g.female,
+              }))
+            : [],
+          women: visibility.showWomen
+            ? dc.coverage.womenAgeGroups.map(g => ({
+                groupId: g.id,
+                groupName: g.label,
+                count: g.count,
+              }))
+            : [],
+        })),
+      });
+    }
+  }
 
   const payload = coveragePayloadForLine(row, coverage, visibility);
   if (!payload) return `Daily tally issued (${row.item})`;
 
   return JSON.stringify(payload);
+};
+
+const computeAggregateCoverage = (
+  dosesCoverages: Record<string, VaccineCoverageDraft>,
+  template: VaccineCoverageDraft
+): VaccineCoverageDraft => {
+  const allDrafts = Object.values(dosesCoverages);
+
+  const childAgeGroups = template.childAgeGroups.map(templateGroup => {
+    const male = allDrafts.reduce((sum, draft) => {
+      const group = draft.childAgeGroups.find(g => g.id === templateGroup.id);
+      return sum + (group?.male ?? 0);
+    }, 0);
+    const female = allDrafts.reduce((sum, draft) => {
+      const group = draft.childAgeGroups.find(g => g.id === templateGroup.id);
+      return sum + (group?.female ?? 0);
+    }, 0);
+    return { ...templateGroup, male, female };
+  });
+
+  const womenAgeGroups = template.womenAgeGroups.map(templateGroup => {
+    const count = allDrafts.reduce((sum, draft) => {
+      const group = draft.womenAgeGroups.find(g => g.id === templateGroup.id);
+      return sum + (group?.count ?? 0);
+    }, 0);
+    return { ...templateGroup, count };
+  });
+
+  return { isOpen: false, childAgeGroups, womenAgeGroups };
 };
 
 const allocateAcrossStockLines = (
@@ -816,6 +913,7 @@ export const DailyTallyView = () => {
   const { prescriptionApi, storeId } = usePrescriptionGraphQL();
   const { stocktakeApi } = useStocktakeGraphQL();
   const { masterListApi } = useMasterListGraphQL();
+  const { client: gqlClient } = useGql();
   const itemApi = useItemApi();
   const { data: demographicData } = useDemographicData.demographics.list();
   const { data: reasonOptionsData, isLoading: isReasonOptionsLoading } =
@@ -836,6 +934,11 @@ export const DailyTallyView = () => {
     Record<string, VaccineCoverageDraft>
   >({});
   const coverageByItemRef = useRef<Record<string, VaccineCoverageDraft>>({});
+  const [perDoseCoverageByItem, setPerDoseCoverageByItem] = useState<
+    Record<string, Record<string, VaccineCoverageDraft>>
+  >({});
+  const perDoseCoverageByItemRef = useRef<Record<string, Record<string, VaccineCoverageDraft>>>({});
+  const [selectedDoseIdByItem, setSelectedDoseIdByItem] = useState<Record<string, string>>({});
   const [expandedStepOneVaccineItemIds, setExpandedStepOneVaccineItemIds] = useState<
     Record<string, boolean>
   >({});
@@ -1025,6 +1128,48 @@ export const DailyTallyView = () => {
     keepPreviousData: true,
   });
 
+  const { data: dosesForItemId } = useQuery({
+    queryKey: ['daily-tally', 'vaccine-course-doses'],
+    queryFn: async () => {
+      const result = await gqlClient.request<{
+        vaccineCourses: {
+          nodes: Array<{
+            vaccineCourseItems?: Array<{ itemId: string }> | null;
+            vaccineCourseDoses?: Array<{ id: string; label: string }> | null;
+          }>;
+        };
+      }, Record<string, never>>(`
+        query dailyTallyVaccineCourses {
+          vaccineCourses(
+            sort: { key: name }
+            page: { first: 1000 }
+          ) {
+            ... on VaccineCourseConnector {
+              nodes {
+                vaccineCourseItems { itemId }
+                vaccineCourseDoses { id label }
+              }
+            }
+          }
+        }
+      `);
+      const courses = result.vaccineCourses?.nodes ?? [];
+      const dosesByItemId: Record<string, VaccineCourseDose[]> = {};
+      for (const course of courses) {
+        const items = course.vaccineCourseItems ?? [];
+        const doses = (course.vaccineCourseDoses ?? []).filter(d => d.label);
+        if (doses.length === 0) continue;
+        for (const item of items) {
+          if (!dosesByItemId[item.itemId]) {
+            dosesByItemId[item.itemId] = doses;
+          }
+        }
+      }
+      return dosesByItemId;
+    },
+    keepPreviousData: true,
+  });
+
   const groupedItems = useMemo((): ItemGroup[] => {
     return (data?.nodes ?? [])
       .map(item => {
@@ -1097,8 +1242,51 @@ export const DailyTallyView = () => {
   }, [coverageTemplate, groupedItems]);
 
   useEffect(() => {
+    if (!dosesForItemId) return;
+    setPerDoseCoverageByItem(previous => {
+      const next = { ...previous };
+      for (const item of groupedItems) {
+        if (!item.isVaccine) continue;
+        const doses = dosesForItemId[item.itemId];
+        if (!doses || doses.length === 0) continue;
+
+        const existingItemDoses = next[item.itemId] ?? {};
+        const nextItemDoses: Record<string, VaccineCoverageDraft> = {};
+
+        for (const dose of doses) {
+          const existing = existingItemDoses[dose.id];
+          const childById = new Map(
+            (existing?.childAgeGroups ?? []).map(g => [g.id, g])
+          );
+          const womenById = new Map(
+            (existing?.womenAgeGroups ?? []).map(g => [g.id, g])
+          );
+          nextItemDoses[dose.id] = {
+            isOpen: existing?.isOpen ?? false,
+            childAgeGroups: coverageTemplate.childAgeGroups.map(group => {
+              const e = childById.get(group.id);
+              return { ...group, male: e?.male ?? 0, female: e?.female ?? 0 };
+            }),
+            womenAgeGroups: coverageTemplate.womenAgeGroups.map(group => {
+              const e = womenById.get(group.id);
+              return { ...group, count: e?.count ?? 0 };
+            }),
+          };
+        }
+
+        next[item.itemId] = nextItemDoses;
+      }
+      return next;
+    });
+  }, [coverageTemplate, groupedItems, dosesForItemId]);
+
+  useEffect(() => {
     coverageByItemRef.current = coverageByItem;
   }, [coverageByItem]);
+
+  useEffect(() => {
+    perDoseCoverageByItemRef.current = perDoseCoverageByItem;
+  }, [perDoseCoverageByItem]);
 
   useEffect(() => {
     setDraftByItem(previous => {
@@ -1387,9 +1575,18 @@ export const DailyTallyView = () => {
         rows.filter(row => row.isVaccine && row.used > 0),
         coverageByItem,
         demographicData?.nodes,
-        coverageFieldVisibilityByItem
+        coverageFieldVisibilityByItem,
+        perDoseCoverageByItem,
+        dosesForItemId
       ),
-    [rows, coverageByItem, demographicData?.nodes, coverageFieldVisibilityByItem]
+    [
+      rows,
+      coverageByItem,
+      demographicData?.nodes,
+      coverageFieldVisibilityByItem,
+      perDoseCoverageByItem,
+      dosesForItemId,
+    ]
   );
   const childCoverageSummaryRows = useMemo(
     () =>
@@ -1887,6 +2084,46 @@ export const DailyTallyView = () => {
     );
   };
 
+  const updateDoseCoverageForRow = (
+    row: DailyTallyRow,
+    doseId: string,
+    updater: (current: VaccineCoverageDraft) => VaccineCoverageDraft
+  ) => {
+    const itemDoses = perDoseCoverageByItemRef.current[row.itemId] ?? {};
+    const currentDoseCoverage =
+      itemDoses[doseId] ?? defaultVaccineCoverageDraft(coverageTemplate);
+    const nextDoseCoverage = updater(currentDoseCoverage);
+    const nextItemDoses = { ...itemDoses, [doseId]: nextDoseCoverage };
+
+    perDoseCoverageByItemRef.current = {
+      ...perDoseCoverageByItemRef.current,
+      [row.itemId]: nextItemDoses,
+    };
+    setPerDoseCoverageByItem(prev => ({ ...prev, [row.itemId]: nextItemDoses }));
+
+    const aggregate = computeAggregateCoverage(
+      nextItemDoses,
+      defaultVaccineCoverageDraft(coverageTemplate)
+    );
+
+    coverageByItemRef.current = {
+      ...coverageByItemRef.current,
+      [row.itemId]: aggregate,
+    };
+    setCoverageByItem(prev => ({ ...prev, [row.itemId]: aggregate }));
+
+    applyUsedValue(
+      row,
+      getVisibleCoverageUsedTotal(
+        aggregate,
+        coverageFieldVisibilityByItem[row.itemId] ?? {
+          showChild: false,
+          showWomen: false,
+        }
+      )
+    );
+  };
+
   const updateOpenVialWastage = (row: DailyTallyRow, checked: boolean) => {
     const nextChecked = row.isVaccine ? checked : false;
     const suggested = nextChecked ? getSuggestedOpenVialWastage(row) : null;
@@ -2361,13 +2598,20 @@ export const DailyTallyView = () => {
         const confirmedPrescriptionId = createdPrescriptionId;
 
         let lines = usedRows.flatMap(row => {
+          const rowDoses = dosesForItemId?.[row.itemId];
+          const perDoseCoverages = rowDoses?.map(dose => ({
+            doseId: dose.id,
+            doseLabel: dose.label,
+            coverage: perDoseCoverageByItem[row.itemId]?.[dose.id] ?? defaultVaccineCoverageDraft(coverageTemplate),
+          }));
           const lineNote = dailyTallyLineNote(
             row,
             coverageByItem[row.itemId],
             coverageFieldVisibilityByItem[row.itemId] ?? {
               showChild: false,
               showWomen: false,
-            }
+            },
+            perDoseCoverages
           );
 
           if (row.stockLines.length > 1) {
@@ -2416,13 +2660,20 @@ export const DailyTallyView = () => {
 
         if (lines.length === 0) {
           lines = usedRows.flatMap(row => {
+            const rowDoses = dosesForItemId?.[row.itemId];
+            const perDoseCoverages = rowDoses?.map(dose => ({
+              doseId: dose.id,
+              doseLabel: dose.label,
+              coverage: perDoseCoverageByItem[row.itemId]?.[dose.id] ?? defaultVaccineCoverageDraft(coverageTemplate),
+            }));
             const lineNote = dailyTallyLineNote(
               row,
               coverageByItem[row.itemId],
               coverageFieldVisibilityByItem[row.itemId] ?? {
                 showChild: false,
                 showWomen: false,
-              }
+              },
+              perDoseCoverages
             );
             const requiredPacks = toPacks(row.used, row.isVaccine, row.doses);
             const { allocations, remaining } = allocateAcrossStockLines(
@@ -2716,17 +2967,17 @@ export const DailyTallyView = () => {
   } as const;
 
   const childCoverageGridTemplateColumns = {
-    xs: 'minmax(160px,2fr) repeat(7,minmax(0,1fr))',
-    sm: 'minmax(190px,2fr) repeat(7,minmax(0,1fr))',
-    md: 'minmax(220px,2fr) repeat(7,minmax(0,1fr))',
-    lg: 'minmax(260px,2.1fr) repeat(7,minmax(0,1fr))',
+    xs: 'minmax(90px,1fr) minmax(160px,2fr) repeat(7,minmax(0,1fr))',
+    sm: 'minmax(100px,1fr) minmax(190px,2fr) repeat(7,minmax(0,1fr))',
+    md: 'minmax(110px,1fr) minmax(220px,2fr) repeat(7,minmax(0,1fr))',
+    lg: 'minmax(120px,1fr) minmax(260px,2.1fr) repeat(7,minmax(0,1fr))',
   } as const;
 
   const womenCoverageGridTemplateColumns = {
-    xs: 'minmax(160px,2fr) repeat(3,minmax(0,1fr))',
-    sm: 'minmax(190px,2fr) repeat(3,minmax(0,1fr))',
-    md: 'minmax(220px,2fr) repeat(3,minmax(0,1fr))',
-    lg: 'minmax(260px,2.1fr) repeat(3,minmax(0,1fr))',
+    xs: 'minmax(90px,1fr) minmax(160px,2fr) repeat(3,minmax(0,1fr))',
+    sm: 'minmax(100px,1fr) minmax(190px,2fr) repeat(3,minmax(0,1fr))',
+    md: 'minmax(110px,1fr) minmax(220px,2fr) repeat(3,minmax(0,1fr))',
+    lg: 'minmax(120px,1fr) minmax(260px,2.1fr) repeat(3,minmax(0,1fr))',
   } as const;
 
   const summaryPrintMarkup = useMemo(() => {
@@ -2763,7 +3014,8 @@ export const DailyTallyView = () => {
 
         return `
           <tr>
-            <td>${escapeHtml(row.itemName)}</td>
+            <td>${escapeHtml(row.doseLabel ?? '-')}</td>
+            <td>${escapeHtml(row.itemDisplayName)}</td>
             <td>${row.childUnderOneMale}</td>
             <td>${row.childUnderOneFemale}</td>
             <td>${row.childOneToTwoMale}</td>
@@ -2779,7 +3031,8 @@ export const DailyTallyView = () => {
     const womenRowsHtml = womenCoverageSummaryRows
       .map(row => `
         <tr>
-          <td>${escapeHtml(row.itemName)}</td>
+          <td>${escapeHtml(row.doseLabel ?? '-')}</td>
+          <td>${escapeHtml(row.itemDisplayName)}</td>
           <td>${row.womenPregnant}</td>
           <td>${row.womenNonPregnant}</td>
           <td><strong>${row.womenPregnant + row.womenNonPregnant}</strong></td>
@@ -2837,6 +3090,7 @@ export const DailyTallyView = () => {
             <table>
               <thead>
                 <tr>
+                  <th>Dose</th>
                   <th>Vaccine</th>
                   <th>U1 Male</th>
                   <th>U1 Female</th>
@@ -2857,7 +3111,7 @@ export const DailyTallyView = () => {
             <h2>Coverage Summary (Women vaccination)</h2>
             <table>
               <thead>
-                <tr><th>Vaccine</th><th>Pregnant</th><th>Non pregnant</th><th>Total</th></tr>
+                <tr><th>Dose</th><th>Vaccine</th><th>Pregnant</th><th>Non pregnant</th><th>Total</th></tr>
               </thead>
               <tbody>${womenRowsHtml}</tbody>
             </table>
@@ -2912,8 +3166,8 @@ export const DailyTallyView = () => {
       ? hasAnyIssuedVaccineRows
         ? 'Back to Open Vial Wastage'
         : 'Back to Vaccines'
-      : workflowStep === 'wastage' && !hasAnyCoveredMultiBatchVaccines
-      ? 'Back to Batches'
+      : workflowStep === 'wastage' && previousWorkflowStep === 'coverage'
+      ? 'Back to Coverage'
       : backButtonLabelByStep[workflowStep]
     : 'Back';
   const continueButtonLabel =
@@ -3151,12 +3405,13 @@ export const DailyTallyView = () => {
                           }}
                         >
                           <Box />
+                          <Box />
                           <Typography
                             variant="body2"
                             sx={{
                               fontWeight: 700,
                               textAlign: 'center',
-                              gridColumn: '2 / span 2',
+                              gridColumn: '3 / span 2',
                             }}
                           >
                             Children under 1 years
@@ -3166,7 +3421,7 @@ export const DailyTallyView = () => {
                             sx={{
                               fontWeight: 700,
                               textAlign: 'center',
-                              gridColumn: '4 / span 2',
+                              gridColumn: '5 / span 2',
                             }}
                           >
                             Children 1 to 2 years
@@ -3176,7 +3431,7 @@ export const DailyTallyView = () => {
                             sx={{
                               fontWeight: 700,
                               textAlign: 'center',
-                              gridColumn: '6 / span 2',
+                              gridColumn: '7 / span 2',
                             }}
                           >
                             Children 2 to 5 years
@@ -3194,6 +3449,9 @@ export const DailyTallyView = () => {
                             borderTop: '1px solid rgba(0,0,0,0.08)',
                           }}
                         >
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                            Dose
+                          </Typography>
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>
                             Vaccine
                           </Typography>
@@ -3231,7 +3489,7 @@ export const DailyTallyView = () => {
 
                         return (
                           <Box
-                            key={`child-${coverageRow.itemId}`}
+                            key={`child-${coverageRow.itemId}-${coverageRow.doseLabel ?? 'aggregate'}-${index}`}
                             display="grid"
                             columnGap={1}
                             alignItems="center"
@@ -3247,7 +3505,8 @@ export const DailyTallyView = () => {
                                   : '1px solid rgba(0,0,0,0.08)',
                             }}
                           >
-                            <Typography variant="body2">{coverageRow.itemName}</Typography>
+                            <Typography variant="body2">{coverageRow.doseLabel ?? '-'}</Typography>
+                            <Typography variant="body2">{coverageRow.itemDisplayName}</Typography>
                             <Typography variant="body2" sx={{ textAlign: 'center' }}>
                               {coverageRow.childUnderOneMale}
                             </Typography>
@@ -3313,12 +3572,13 @@ export const DailyTallyView = () => {
                             }}
                           >
                             <Box />
+                            <Box />
                             <Typography
                               variant="body2"
                               sx={{
                                 fontWeight: 700,
                                 textAlign: 'center',
-                                gridColumn: '2 / span 2',
+                                gridColumn: '3 / span 2',
                               }}
                             >
                               Women 15 to 49 years
@@ -3336,6 +3596,9 @@ export const DailyTallyView = () => {
                               borderTop: '1px solid rgba(0,0,0,0.08)',
                             }}
                           >
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              Dose
+                            </Typography>
                             <Typography variant="body2" sx={{ fontWeight: 700 }}>
                               Vaccine
                             </Typography>
@@ -3356,7 +3619,7 @@ export const DailyTallyView = () => {
 
                           return (
                             <Box
-                              key={`women-${coverageRow.itemId}`}
+                              key={`women-${coverageRow.itemId}-${coverageRow.doseLabel ?? 'aggregate'}-${index}`}
                               display="grid"
                               columnGap={1}
                               alignItems="center"
@@ -3372,7 +3635,8 @@ export const DailyTallyView = () => {
                                     : '1px solid rgba(0,0,0,0.08)',
                               }}
                             >
-                              <Typography variant="body2">{coverageRow.itemName}</Typography>
+                              <Typography variant="body2">{coverageRow.doseLabel ?? '-'}</Typography>
+                              <Typography variant="body2">{coverageRow.itemDisplayName}</Typography>
                               <Typography variant="body2" sx={{ textAlign: 'center' }}>
                                 {coverageRow.womenPregnant}
                               </Typography>
@@ -3409,7 +3673,7 @@ export const DailyTallyView = () => {
 
                     return (
                       <Box
-                        key={`compact-${coverageRow.itemId}`}
+                        key={`compact-${coverageRow.itemId}-${coverageRow.doseLabel ?? 'aggregate'}`}
                         sx={{
                           border: '1px solid rgba(0,0,0,0.12)',
                           borderRadius: 1,
@@ -3418,7 +3682,7 @@ export const DailyTallyView = () => {
                         }}
                       >
                         <Typography variant="body2" sx={{ fontWeight: 700, marginBottom: 0.75 }}>
-                          {coverageRow.itemName}
+                          {coverageRow.itemDisplayName}
                         </Typography>
                         <Box
                           display="grid"
@@ -3426,6 +3690,8 @@ export const DailyTallyView = () => {
                           columnGap={1}
                           rowGap={0.5}
                         >
+                          <Typography variant="caption" color="text.secondary">Dose</Typography>
+                          <Typography variant="body2" textAlign="right">{coverageRow.doseLabel ?? '-'}</Typography>
                           {showChild ? (
                             <>
                           <Typography variant="caption" color="text.secondary">U1 M</Typography>
@@ -3852,6 +4118,18 @@ export const DailyTallyView = () => {
                       const hasCoverage = hasVisibleCoverageValues(coverage, coverageVisibility);
                       const isExpanded = expandedCoverageItemIds[row.itemId] ?? false;
                       const coverageSohWarning = coverageExceedsSohByItem[row.itemId];
+                      const itemDoses = dosesForItemId?.[row.itemId] ?? [];
+                      const selectedDoseId = selectedDoseIdByItem[row.itemId] ?? itemDoses[0]?.id ?? '';
+                      const activeCoverage = itemDoses.length > 0
+                        ? (perDoseCoverageByItem[row.itemId]?.[selectedDoseId] ?? defaultVaccineCoverageDraft(coverageTemplate))
+                        : coverage;
+                      const updateActiveCoverage = (updater: (current: VaccineCoverageDraft) => VaccineCoverageDraft) => {
+                        if (itemDoses.length > 0 && selectedDoseId) {
+                          updateDoseCoverageForRow(row, selectedDoseId, updater);
+                        } else {
+                          updateCoverageForRow(row, updater);
+                        }
+                      };
 
                       return (
                         <Box key={`coverage-expand-${row.itemId}`} sx={{ marginBottom: 1.25, width: '100%', boxSizing: 'border-box' }}>
@@ -3923,6 +4201,59 @@ export const DailyTallyView = () => {
                                   Coverage total ({coverageSohWarning.coverageTotal}) exceeds SOH ({coverageSohWarning.soh}). Reduce coverage to continue.
                                 </Typography>
                               ) : null}
+                              <Box display="flex" gap={1.5} alignItems="flex-start">
+                                {itemDoses.length > 0 ? (
+                                  <Box
+                                    sx={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: 0.5,
+                                      flexShrink: 0,
+                                      minWidth: 72,
+                                    }}
+                                  >
+                                    {itemDoses.map(dose => {
+                                      const isSelected = selectedDoseId === dose.id;
+                                      return (
+                                        <Box
+                                          key={dose.id}
+                                          role="button"
+                                          onClick={() =>
+                                            setSelectedDoseIdByItem(prev => ({
+                                              ...prev,
+                                              [row.itemId]: dose.id,
+                                            }))
+                                          }
+                                          sx={{
+                                            paddingX: 1,
+                                            paddingY: 0.75,
+                                            borderRadius: 1,
+                                            border: isSelected
+                                              ? '1px solid rgba(237,108,2,0.75)'
+                                              : '1px solid rgba(0,0,0,0.18)',
+                                            backgroundColor: isSelected
+                                              ? 'rgba(237,108,2,0.16)'
+                                              : 'background.white',
+                                            cursor: 'pointer',
+                                            textAlign: 'center',
+                                          }}
+                                        >
+                                          <Typography
+                                            variant="caption"
+                                            sx={{
+                                              fontWeight: isSelected ? 700 : 400,
+                                              fontSize: '0.72rem',
+                                              color: isSelected ? '#8A3C00' : 'inherit',
+                                            }}
+                                          >
+                                            {dose.label}
+                                          </Typography>
+                                        </Box>
+                                      );
+                                    })}
+                                  </Box>
+                                ) : null}
+                                <Box flex={1} minWidth={0}>
                               {coverageVisibility.showChild ? (
                                 <Box sx={{ border: '1px solid rgba(0,0,0,0.12)', borderRadius: 1, padding: 1 }}>
                                   <Box
@@ -3936,7 +4267,7 @@ export const DailyTallyView = () => {
                                     <Typography variant="caption" sx={{ fontWeight: 700 }}>Male</Typography>
                                     <Typography variant="caption" sx={{ fontWeight: 700 }}>Female</Typography>
                                     <Typography variant="caption" sx={{ fontWeight: 700 }}>Total</Typography>
-                                    {coverage.childAgeGroups.map(ageGroup => (
+                                    {activeCoverage.childAgeGroups.map(ageGroup => (
                                       <React.Fragment key={ageGroup.id}>
                                         <Typography variant="body2">{ageGroup.label}</Typography>
                                         <BasicTextInput
@@ -3948,7 +4279,7 @@ export const DailyTallyView = () => {
                                           value={String(ageGroup.male)}
                                           onFocus={selectZeroValueOnFocus}
                                           onChange={event =>
-                                            updateCoverageForRow(row, current => ({
+                                            updateActiveCoverage(current => ({
                                               ...current,
                                               childAgeGroups: current.childAgeGroups.map(group =>
                                                 group.id === ageGroup.id
@@ -3967,7 +4298,7 @@ export const DailyTallyView = () => {
                                           value={String(ageGroup.female)}
                                           onFocus={selectZeroValueOnFocus}
                                           onChange={event =>
-                                            updateCoverageForRow(row, current => ({
+                                            updateActiveCoverage(current => ({
                                               ...current,
                                               childAgeGroups: current.childAgeGroups.map(group =>
                                                 group.id === ageGroup.id
@@ -4006,7 +4337,7 @@ export const DailyTallyView = () => {
                                     <Typography variant="caption" sx={{ fontWeight: 700 }}>Pregnant</Typography>
                                     <Typography variant="caption" sx={{ fontWeight: 700 }}>Total</Typography>
                                     {(() => {
-                                      const { nonPregnantGroup, pregnantGroup } = resolveWomenCoverageGroups(coverage.womenAgeGroups);
+                                      const { nonPregnantGroup, pregnantGroup } = resolveWomenCoverageGroups(activeCoverage.womenAgeGroups);
                                       const womenBaseLabel = womenCoverageLabel(nonPregnantGroup, pregnantGroup);
                                       const nonPregnant = nonPregnantGroup?.count ?? 0;
                                       const pregnant = pregnantGroup?.count ?? 0;
@@ -4022,7 +4353,7 @@ export const DailyTallyView = () => {
                                             value={String(nonPregnant)}
                                             onFocus={selectZeroValueOnFocus}
                                             onChange={event =>
-                                              updateCoverageForRow(row, current => ({
+                                              updateActiveCoverage(current => ({
                                                 ...current,
                                                 womenAgeGroups: (() => {
                                                   const nextCount = parseWholeNumber(event.target.value);
@@ -4047,7 +4378,7 @@ export const DailyTallyView = () => {
                                             value={String(pregnant)}
                                             onFocus={selectZeroValueOnFocus}
                                             onChange={event =>
-                                              updateCoverageForRow(row, current => ({
+                                              updateActiveCoverage(current => ({
                                                 ...current,
                                                 womenAgeGroups: (() => {
                                                   const nextCount = parseWholeNumber(event.target.value);
@@ -4072,6 +4403,8 @@ export const DailyTallyView = () => {
                                   </Box>
                                 </Box>
                               ) : null}
+                                </Box>
+                              </Box>
                             </Box>
                           ) : null}
                         </Box>
@@ -4109,6 +4442,23 @@ export const DailyTallyView = () => {
                     const hasBatchIssuedMismatch = Math.abs(batchUsedTotal - row.used) > 0.0001;
                     const isAllocationStep = workflowStep === 'allocation';
                     const isWastageStep = workflowStep === 'wastage';
+                    const itemDoses = dosesForItemId?.[row.itemId] ?? [];
+                    const selectedDoseId =
+                      selectedDoseIdByItem[row.itemId] ?? itemDoses[0]?.id ?? '';
+                    const activeCoverage =
+                      itemDoses.length > 0
+                        ? (perDoseCoverageByItem[row.itemId]?.[selectedDoseId] ??
+                          defaultVaccineCoverageDraft(coverageTemplate))
+                        : coverage;
+                    const updateActiveCoverage = (
+                      updater: (current: VaccineCoverageDraft) => VaccineCoverageDraft
+                    ) => {
+                      if (itemDoses.length > 0 && selectedDoseId) {
+                        updateDoseCoverageForRow(row, selectedDoseId, updater);
+                      } else {
+                        updateCoverageForRow(row, updater);
+                      }
+                    };
                     const isThreeStepStepOneAllocation =
                       isAllocationStep && isBaseThreeStepFlow;
                     const hasIssuedDoses = row.used > 0;
@@ -4192,27 +4542,6 @@ export const DailyTallyView = () => {
                             gap={1}
                             flexWrap="wrap"
                           >
-                            {!isSimplifiedMode && workflowStep === 'allocation' ? (
-                              <ButtonWithIcon
-                                Icon={
-                                  <ChevronDownIcon
-                                    sx={{
-                                      transform: coverage.isOpen
-                                        ? 'rotate(180deg)'
-                                        : 'rotate(0deg)',
-                                      transition: 'transform 0.2s ease',
-                                    }}
-                                  />
-                                }
-                                label={coverage.isOpen ? 'Hide coverage' : 'Show coverage'}
-                                onClick={() =>
-                                  updateCoverageForRow(row, current => ({
-                                    ...current,
-                                    isOpen: !current.isOpen,
-                                  }))
-                                }
-                              />
-                            ) : null}
                             {(workflowStep !== 'allocation' && workflowStep !== 'wastage') ||
                             (isThreeStepStepOneAllocation && hasIssuedDoses) ? (
                               <Box
@@ -4466,7 +4795,7 @@ export const DailyTallyView = () => {
                           </Box>
                         ) : null}
 
-                        {(workflowStep === 'coverage' || (!isSimplifiedMode && coverage.isOpen)) ? (
+                        {workflowStep === 'coverage' ? (
                           <Box sx={{ marginTop: 1 }}>
                             {coverageVisibility.showChild ? (
                             <Box
@@ -4496,7 +4825,7 @@ export const DailyTallyView = () => {
                                   Total
                                 </Typography>
 
-                                {coverage.childAgeGroups.map(ageGroup => (
+                                {activeCoverage.childAgeGroups.map(ageGroup => (
                                   <React.Fragment key={ageGroup.id}>
                                     <Typography variant="body2">{ageGroup.label}</Typography>
                                     <BasicTextInput
@@ -4508,7 +4837,7 @@ export const DailyTallyView = () => {
                                       value={String(ageGroup.male)}
                                       onFocus={selectZeroValueOnFocus}
                                       onChange={event =>
-                                        updateCoverageForRow(row, current => ({
+                                        updateActiveCoverage(current => ({
                                           ...current,
                                           childAgeGroups: current.childAgeGroups.map(group =>
                                             group.id === ageGroup.id
@@ -4530,7 +4859,7 @@ export const DailyTallyView = () => {
                                       value={String(ageGroup.female)}
                                       onFocus={selectZeroValueOnFocus}
                                       onChange={event =>
-                                        updateCoverageForRow(row, current => ({
+                                        updateActiveCoverage(current => ({
                                           ...current,
                                           childAgeGroups: current.childAgeGroups.map(group =>
                                             group.id === ageGroup.id
@@ -4583,7 +4912,7 @@ export const DailyTallyView = () => {
 
                                 {(() => {
                                   const { nonPregnantGroup, pregnantGroup } =
-                                    resolveWomenCoverageGroups(coverage.womenAgeGroups);
+                                    resolveWomenCoverageGroups(activeCoverage.womenAgeGroups);
                                   const womenBaseLabel = womenCoverageLabel(
                                     nonPregnantGroup,
                                     pregnantGroup
@@ -4606,7 +4935,7 @@ export const DailyTallyView = () => {
                                       value={String(nonPregnant)}
                                       onFocus={selectZeroValueOnFocus}
                                       onChange={event =>
-                                        updateCoverageForRow(row, current => ({
+                                        updateActiveCoverage(current => ({
                                           ...current,
                                           womenAgeGroups: (() => {
                                             const nextCount = parseWholeNumber(
@@ -4651,7 +4980,7 @@ export const DailyTallyView = () => {
                                         value={String(pregnant)}
                                         onFocus={selectZeroValueOnFocus}
                                         onChange={event =>
-                                          updateCoverageForRow(row, current => ({
+                                          updateActiveCoverage(current => ({
                                             ...current,
                                             womenAgeGroups: (() => {
                                               const nextCount = parseWholeNumber(
