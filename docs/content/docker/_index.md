@@ -84,14 +84,42 @@ Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DO
 
 ## Building image locally
 
-This is needed when building apple m chip version on your m chip mac.
+By default, `docker build` produces an image matching your host architecture. On Apple Silicon Macs this means `linux/arm64`, which won't run on typical x86_64 Linux servers. Use `--platform linux/amd64` on **both** the cargo compile step and the `docker build` step to produce an amd64 image.
 
 ### SQLite
+
+#### For linux/amd64 servers (built on Apple Silicon Mac)
+
+QEMU cannot reliably emulate `rustc` on Apple Silicon, so we cross-compile from a native ARM container instead. The `docker build` step still uses `--platform linux/amd64` to get the correct base image layers.
 
 ```bash
 # Build client
 cd client && yarn && yarn build
-# Build server
+# Cross-compile server for amd64 from native ARM container
+cd ../ && docker run --rm --platform linux/arm64 -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim bash -c "\
+  apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
+  rustup target add x86_64-unknown-linux-gnu && \
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
+    cargo build --release --target x86_64-unknown-linux-gnu --target-dir target-amd64 --bin remote_server --bin remote_server_cli && \
+  mkdir -p target/release && \
+  cp target-amd64/x86_64-unknown-linux-gnu/release/remote_server target/release/remote_server && \
+  cp target-amd64/x86_64-unknown-linux-gnu/release/remote_server_cli target/release/remote_server_cli && \
+  chown -R $(id -u):$(id -g) target/release"
+# Dockerise with tag
+docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3 && \
+docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3-dev --target dev
+# "docker hub" in bitwarden
+docker login
+docker push msupplyfoundation/omsupply:v2.7.3 && \
+docker push msupplyfoundation/omsupply:v2.7.3-dev
+```
+
+#### For Apple Silicon (arm64) Macs
+
+```bash
+# Build client
+cd client && yarn && yarn build
+# Build server (native arm64)
 cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
 # Dockerise with tag
 docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64 && \
@@ -104,10 +132,38 @@ docker push msupplyfoundation/omsupply:v2.7.3-arm64-dev
 
 ### Postgres
 
+#### For linux/amd64 servers (built on Apple Silicon Mac)
+
+Same cross-compilation approach as SQLite above:
+
 ```bash
 # Build client
 cd client && yarn && yarn build
-# Build server with postgres feature
+# Cross-compile server for amd64 with postgres feature
+cd ../ && docker run --rm --platform linux/arm64 -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 bash -c "\
+  apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
+  rustup target add x86_64-unknown-linux-gnu && \
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
+    cargo build --release --target x86_64-unknown-linux-gnu --target-dir target-postgres-amd64 --bin remote_server --bin remote_server_cli --no-default-features --features postgres && \
+  mkdir -p target-postgres/release && \
+  cp target-postgres-amd64/x86_64-unknown-linux-gnu/release/remote_server target-postgres/release/remote_server && \
+  cp target-postgres-amd64/x86_64-unknown-linux-gnu/release/remote_server_cli target-postgres/release/remote_server_cli && \
+  chown -R $(id -u):$(id -g) target-postgres/release"
+# Dockerise with tag
+docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3-postgres --target postgres && \
+docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3-postgres-dev --target postgres-dev
+# "docker hub" in bitwarden
+docker login
+docker push msupplyfoundation/omsupply:v2.7.3-postgres && \
+docker push msupplyfoundation/omsupply:v2.7.3-postgres-dev
+```
+
+#### For Apple Silicon (arm64) Macs
+
+```bash
+# Build client
+cd client && yarn && yarn build
+# Build server with postgres feature (native arm64)
 cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
 # Dockerise with tag
 docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-postgres --target postgres && \

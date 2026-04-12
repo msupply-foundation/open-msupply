@@ -1,6 +1,7 @@
 # build
 /target
 /target-postgres
+/target-amd64
 schema.graphql
 
 # emacs
