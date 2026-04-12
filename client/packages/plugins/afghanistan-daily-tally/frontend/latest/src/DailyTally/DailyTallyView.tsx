@@ -3960,7 +3960,7 @@ export const DailyTallyView = () => {
                           label="Back to Vaccine List"
                           onClick={() => setSelectedTallyItemId(null)}
                         />
-                        <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 700 }}>
                           Total for {selectedTallyRow.item}: {sessionTallyVaccineTotal(selectedTallyDraft)}
                         </Typography>
                       </Box>
@@ -4087,7 +4087,7 @@ export const DailyTallyView = () => {
                                 cursor: 'pointer',
                               }}
                             >
-                              <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                              <Typography variant="body1" sx={{ fontWeight: selectedTallyItemId === row.itemId ? 700 : 'normal' }}>
                                 {row.item}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
@@ -4149,7 +4149,7 @@ export const DailyTallyView = () => {
                           >
                             <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
                               <Box>
-                                <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                                <Typography variant="body1" sx={{ fontWeight: isExpanded ? 700 : 'normal' }}>
                                   {row.item}
                                 </Typography>
                               </Box>
@@ -4201,7 +4201,16 @@ export const DailyTallyView = () => {
                                   Coverage total ({coverageSohWarning.coverageTotal}) exceeds SOH ({coverageSohWarning.soh}). Reduce coverage to continue.
                                 </Typography>
                               ) : null}
-                              <Box display="flex" gap={1.5} alignItems="flex-start">
+                              <Box
+                                display="flex"
+                                gap={1.5}
+                                alignItems={
+                                  itemDoses.length > 0 &&
+                                  (coverageVisibility.showChild || coverageVisibility.showWomen)
+                                    ? 'stretch'
+                                    : 'flex-start'
+                                }
+                              >
                                 {itemDoses.length > 0 ? (
                                   <Box
                                     sx={{
@@ -4234,8 +4243,30 @@ export const DailyTallyView = () => {
                                             backgroundColor: isSelected
                                               ? 'rgba(237,108,2,0.16)'
                                               : 'background.white',
+                                            boxShadow: isSelected
+                                              ? '0 3px 10px rgba(237,108,2,0.16)'
+                                              : 'none',
+                                            position: 'relative',
+                                            zIndex: isSelected ? 2 : 1,
                                             cursor: 'pointer',
                                             textAlign: 'center',
+                                            transition: 'border 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            '&::after': isSelected
+                                              ? {
+                                                  content: '""',
+                                                  position: 'absolute',
+                                                  top: '50%',
+                                                  right: -10,
+                                                  transform: 'translateY(-50%)',
+                                                  width: 6,
+                                                  height: 2,
+                                                  backgroundColor: 'rgba(237,108,2,0.78)',
+                                                  borderRadius: 999,
+                                                  boxShadow: '0 0 6px rgba(237,108,2,0.18)',
+                                                  pointerEvents: 'none',
+                                                  transition: 'opacity 0.4s ease-in-out',
+                                                }
+                                              : undefined,
                                           }}
                                         >
                                           <Typography
@@ -4253,9 +4284,44 @@ export const DailyTallyView = () => {
                                     })}
                                   </Box>
                                 ) : null}
-                                <Box flex={1} minWidth={0}>
+                                <Box
+                                  flex={1}
+                                  minWidth={0}
+                                  sx={
+                                    itemDoses.length > 0 &&
+                                    (coverageVisibility.showChild || coverageVisibility.showWomen)
+                                      ? {
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                        }
+                                      : undefined
+                                  }
+                                >
                               {coverageVisibility.showChild ? (
-                                <Box sx={{ border: '1px solid rgba(0,0,0,0.12)', borderRadius: 1, padding: 1 }}>
+                                <Box
+                                  key={selectedDoseId}
+                                  sx={{
+                                    border:
+                                      itemDoses.length > 0
+                                        ? '1px solid rgba(237,108,2,0.75)'
+                                        : '1px solid rgba(0,0,0,0.12)',
+                                    boxShadow:
+                                      itemDoses.length > 0
+                                        ? '0 3px 10px rgba(237,108,2,0.16)'
+                                        : 'none',
+                                    borderRadius: 1,
+                                    padding: 1,
+                                    position: 'relative',
+                                    zIndex: itemDoses.length > 0 ? 2 : 1,
+                                    flex: itemDoses.length > 0 ? 1 : undefined,
+                                    transition: 'border 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    animation: 'fadeInRefresh 0.5s ease-in-out',
+                                    '@keyframes fadeInRefresh': {
+                                      from: { opacity: 0.5 },
+                                      to: { opacity: 1 },
+                                    },
+                                  }}
+                                >
                                   <Box
                                     display="grid"
                                     gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
@@ -4318,11 +4384,31 @@ export const DailyTallyView = () => {
                               ) : null}
                               {coverageVisibility.showWomen ? (
                                 <Box
+                                  key={selectedDoseId}
                                   sx={{
                                     marginTop: coverageVisibility.showChild ? 1.25 : 0,
-                                    border: '1px solid rgba(0,0,0,0.12)',
+                                    border:
+                                      itemDoses.length > 0
+                                        ? '1px solid rgba(237,108,2,0.75)'
+                                        : '1px solid rgba(0,0,0,0.12)',
+                                    boxShadow:
+                                      itemDoses.length > 0
+                                        ? '0 3px 10px rgba(237,108,2,0.16)'
+                                        : 'none',
                                     borderRadius: 1,
                                     padding: 1,
+                                    position: 'relative',
+                                    zIndex: itemDoses.length > 0 ? 2 : 1,
+                                    flex:
+                                      !coverageVisibility.showChild && itemDoses.length > 0
+                                        ? 1
+                                        : undefined,
+                                    transition: 'border 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    animation: 'fadeInRefresh 0.5s ease-in-out',
+                                    '@keyframes fadeInRefresh': {
+                                      from: { opacity: 0.5 },
+                                      to: { opacity: 1 },
+                                    },
                                   }}
                                 >
                                   <Box
@@ -4527,11 +4613,7 @@ export const DailyTallyView = () => {
                         >
                           <Typography
                             variant="body1"
-                            sx={
-                              isAllocationStep || isWastageStep
-                                ? { fontWeight: 800 }
-                                : itemTitleSx
-                            }
+                            sx={{ ...itemTitleSx, fontWeight: isStepOneVaccineExpanded ? 700 : 'normal' }}
                           >
                             {row.item}
                           </Typography>
@@ -4800,7 +4882,14 @@ export const DailyTallyView = () => {
                             {coverageVisibility.showChild ? (
                             <Box
                               sx={{
-                                border: '1px solid rgba(0,0,0,0.12)',
+                                border:
+                                  itemDoses.length > 0
+                                    ? '1px solid rgba(237,108,2,0.75)'
+                                    : '1px solid rgba(0,0,0,0.12)',
+                                boxShadow:
+                                  itemDoses.length > 0
+                                    ? '0 3px 10px rgba(237,108,2,0.16)'
+                                    : 'none',
                                 borderRadius: 1,
                                 padding: 1,
                               }}
@@ -5274,7 +5363,7 @@ export const DailyTallyView = () => {
                         >
                           <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
                             <Box>
-                              <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                              <Typography variant="body1" sx={{ fontWeight: isExpanded ? 700 : 'normal' }}>
                                 {row.item}
                               </Typography>
                             </Box>
