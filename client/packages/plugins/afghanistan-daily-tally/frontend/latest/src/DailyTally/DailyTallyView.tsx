@@ -441,7 +441,15 @@ const selectZeroValueOnFocus = (
   event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
 ) => {
   if (event.target.value === '0') {
-    event.target.select();
+    const input = event.target;
+    input.select();
+    window.setTimeout(() => {
+      if (typeof input.setSelectionRange === 'function') {
+        input.setSelectionRange(0, input.value.length);
+      } else {
+        input.select();
+      }
+    }, 0);
   }
 };
 const compactNumberInputSx = {
@@ -885,18 +893,14 @@ const dailyTallyListPath = RouteBuilder.create(AppRoute.Dispensary)
   .addPart('daily-tally')
   .build();
 
-const itemTitleSx = {
-  fontWeight: 800,
-  fontSize: 18,
-  color: 'text.primary',
-  lineHeight: 1.3,
-};
-
 export const DailyTallyView = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const theme = useTheme();
   const isLaptopLayout = useMediaQuery(theme.breakpoints.up('lg'));
+  const isPortraitOrientation = useMediaQuery('(orientation: portrait)');
+  const isTabletOrSmaller = useMediaQuery(theme.breakpoints.down('md'));
+  const keepTopRightButtonTextVisible = isTabletOrSmaller && isPortraitOrientation;
   const useDesktopCoverageSummaryLayout =
     isLaptopLayout || EnvUtils.platform === Platform.Android;
   const isSimplifiedTabletUI = useSimplifiedTabletUI();
@@ -1500,7 +1504,9 @@ export const DailyTallyView = () => {
   const workflowStepTitleByKey: Record<WorkflowStep, string> = {
     tally: 'Vaccine Session Tally',
     coverage: 'Coverage',
-    allocation: 'Vaccine Batch Allocation',
+    allocation: keepTopRightButtonTextVisible
+      ? 'Vaccine batches'
+      : 'Vaccine Batch Allocation',
     wastage: 'Open Vial Wastage',
     'non-vaccine': 'Non-vaccine Issuance',
   };
@@ -2983,14 +2989,24 @@ export const DailyTallyView = () => {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
+    const parseNumeric = (value: string | number | null | undefined) => {
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+      if (!value) return 0;
+
+      const parsed = Number(String(value).replace(/[^0-9.-]/g, ''));
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const asCount = (value: unknown) => parseNumeric(value as string | number | null | undefined);
+
     const summaryRowsHtml = confirmSummaryRows
       .map(
         row => `
           <tr>
-            <td>${escapeHtml(row.item)}</td>
-            <td>${escapeHtml(row.batch)}</td>
-            <td>${escapeHtml(row.issued)}</td>
-            <td>${escapeHtml(row.wastage)}</td>
+            <td class="left">${escapeHtml(row.item)}</td>
+            <td class="left">${escapeHtml(row.batch)}</td>
+            <td class="center">${escapeHtml(row.issued)}</td>
+            <td class="center">${escapeHtml(row.wastage)}</td>
           </tr>
         `
       )
@@ -2998,41 +3014,69 @@ export const DailyTallyView = () => {
 
     const coverageRowsHtml = childCoverageSummaryRows
       .map(row => {
+        const underOneMale = asCount(row.childUnderOneMale);
+        const underOneFemale = asCount(row.childUnderOneFemale);
+        const oneToTwoMale = asCount(row.childOneToTwoMale);
+        const oneToTwoFemale = asCount(row.childOneToTwoFemale);
+        const twoToFiveMale = asCount(row.childTwoToFiveMale);
+        const twoToFiveFemale = asCount(row.childTwoToFiveFemale);
         const childTotal =
-          row.childUnderOneMale +
-          row.childUnderOneFemale +
-          row.childOneToTwoMale +
-          row.childOneToTwoFemale +
-          row.childTwoToFiveMale +
-          row.childTwoToFiveFemale;
+          underOneMale +
+          underOneFemale +
+          oneToTwoMale +
+          oneToTwoFemale +
+          twoToFiveMale +
+          twoToFiveFemale;
 
         return `
           <tr>
-            <td>${escapeHtml(row.doseLabel ?? '-')}</td>
-            <td>${escapeHtml(row.itemDisplayName)}</td>
-            <td>${row.childUnderOneMale}</td>
-            <td>${row.childUnderOneFemale}</td>
-            <td>${row.childOneToTwoMale}</td>
-            <td>${row.childOneToTwoFemale}</td>
-            <td>${row.childTwoToFiveMale}</td>
-            <td>${row.childTwoToFiveFemale}</td>
-            <td><strong>${childTotal}</strong></td>
+            <td class="center">${escapeHtml(row.doseLabel ?? '-')}</td>
+            <td class="left">${escapeHtml(row.itemDisplayName)}</td>
+            <td class="center">${underOneMale}</td>
+            <td class="center">${underOneFemale}</td>
+            <td class="center">${oneToTwoMale}</td>
+            <td class="center">${oneToTwoFemale}</td>
+            <td class="center">${twoToFiveMale}</td>
+            <td class="center">${twoToFiveFemale}</td>
+            <td class="center"><strong>${childTotal}</strong></td>
           </tr>
         `;
       })
       .join('');
 
+    const childCoverageGrandTotal = childCoverageSummaryRows.reduce((sum, row) => {
+      const childTotal =
+        asCount(row.childUnderOneMale) +
+        asCount(row.childUnderOneFemale) +
+        asCount(row.childOneToTwoMale) +
+        asCount(row.childOneToTwoFemale) +
+        asCount(row.childTwoToFiveMale) +
+        asCount(row.childTwoToFiveFemale);
+      return sum + childTotal;
+    }, 0);
+
     const womenRowsHtml = womenCoverageSummaryRows
-      .map(row => `
+      .map(row => {
+        const womenPregnant = asCount(row.womenPregnant);
+        const womenNonPregnant = asCount(row.womenNonPregnant);
+        const womenTotal = womenPregnant + womenNonPregnant;
+
+        return `
         <tr>
-          <td>${escapeHtml(row.doseLabel ?? '-')}</td>
-          <td>${escapeHtml(row.itemDisplayName)}</td>
-          <td>${row.womenPregnant}</td>
-          <td>${row.womenNonPregnant}</td>
-          <td><strong>${row.womenPregnant + row.womenNonPregnant}</strong></td>
+          <td class="center">${escapeHtml(row.doseLabel ?? '-')}</td>
+          <td class="left">${escapeHtml(row.itemDisplayName)}</td>
+          <td class="center">${womenPregnant}</td>
+          <td class="center">${womenNonPregnant}</td>
+          <td class="center"><strong>${womenTotal}</strong></td>
         </tr>
-      `)
+      `;
+      })
       .join('');
+
+    const womenCoverageGrandTotal = womenCoverageSummaryRows.reduce(
+      (sum, row) => sum + asCount(row.womenPregnant) + asCount(row.womenNonPregnant),
+      0
+    );
 
     return `
       <style>
@@ -3044,15 +3088,72 @@ export const DailyTallyView = () => {
         .daily-tally-summary-print .meta-value { font-size: 13px; margin-top: 2px; word-break: break-word; }
         .daily-tally-summary-print h2 { font-size: 14px; margin: 12px 0 6px; }
         .daily-tally-summary-print .print-section { margin-bottom: 8px; break-inside: avoid-page; }
-        .daily-tally-summary-print table { width: 100%; border-collapse: collapse; margin-bottom: 8px; table-layout: fixed; page-break-inside: auto; }
+        .daily-tally-summary-print table { width: 100%; border-collapse: collapse; margin-bottom: 10px; table-layout: fixed; page-break-inside: auto; }
         .daily-tally-summary-print thead { display: table-header-group; }
         .daily-tally-summary-print tfoot { display: table-footer-group; }
         .daily-tally-summary-print tr { page-break-inside: avoid; break-inside: avoid; }
         .daily-tally-summary-print th, .daily-tally-summary-print td { border: 1px solid #e5e7eb; padding: 4px 6px; font-size: 11px; white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
-        .daily-tally-summary-print th { background: #f3f4f6; text-align: center; font-weight: 700; }
-        .daily-tally-summary-print td:first-child,
-        .daily-tally-summary-print th:first-child { text-align: left; width: 28%; }
-        .daily-tally-summary-print td:not(:first-child) { text-align: center; }
+        .daily-tally-summary-print th {
+          background: #e5e7eb !important;
+          text-align: center;
+          font-weight: 700;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .daily-tally-summary-print .left { text-align: left; }
+        .daily-tally-summary-print .center { text-align: center; }
+        .daily-tally-summary-print .subheader th {
+          background: #f3f4f6 !important;
+          font-size: 10px;
+          font-weight: 700;
+        }
+        .daily-tally-summary-print tfoot td {
+          background: #f9fafb !important;
+          font-weight: 700;
+        }
+        .daily-tally-summary-print tbody tr:nth-child(even) td {
+          background: #fcfcfd;
+        }
+        @media screen and (min-width: 1000px) {
+          .daily-tally-summary-print {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 14px;
+          }
+          .daily-tally-summary-print h1 {
+            font-size: 24px;
+            letter-spacing: 0.2px;
+          }
+          .daily-tally-summary-print .meta {
+            gap: 10px;
+            margin: 12px 0 16px;
+          }
+          .daily-tally-summary-print .meta-card {
+            border-radius: 8px;
+            padding: 10px;
+          }
+          .daily-tally-summary-print .meta-label {
+            font-size: 12px;
+          }
+          .daily-tally-summary-print .meta-value {
+            font-size: 14px;
+          }
+          .daily-tally-summary-print h2 {
+            font-size: 16px;
+            margin: 14px 0 8px;
+          }
+          .daily-tally-summary-print .print-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            background: #ffffff;
+          }
+          .daily-tally-summary-print th,
+          .daily-tally-summary-print td {
+            font-size: 12px;
+            padding: 6px 8px;
+          }
+        }
         @media print {
           @page { size: A4 landscape; margin: 10mm; }
           html, body { width: 100%; height: auto; }
@@ -3069,8 +3170,14 @@ export const DailyTallyView = () => {
         </div>
 
         <div class="print-section">
-          <h2>Item Batch Issued Wastage</h2>
+          <h2>Items issued</h2>
           <table>
+            <colgroup>
+              <col style="width: 40%;" />
+              <col style="width: 28%;" />
+              <col style="width: 16%;" />
+              <col style="width: 16%;" />
+            </colgroup>
             <thead>
               <tr><th>Item</th><th>Batch</th><th>Issued</th><th>Wastage</th></tr>
             </thead>
@@ -3082,20 +3189,42 @@ export const DailyTallyView = () => {
           <div class="print-section">
             <h2>Coverage Summary (Children vaccination)</h2>
             <table>
+              <colgroup>
+                <col style="width: 7%;" />
+                <col style="width: 29%;" />
+                <col style="width: 8%;" />
+                <col style="width: 8%;" />
+                <col style="width: 8%;" />
+                <col style="width: 8%;" />
+                <col style="width: 8%;" />
+                <col style="width: 8%;" />
+                <col style="width: 16%;" />
+              </colgroup>
               <thead>
                 <tr>
-                  <th>Dose</th>
-                  <th>Vaccine</th>
-                  <th>U1 Male</th>
-                  <th>U1 Female</th>
-                  <th>1-2 Male</th>
-                  <th>1-2 Female</th>
-                  <th>2-5 Male</th>
-                  <th>2-5 Female</th>
-                  <th>Total</th>
+                  <th rowspan="2">Dose</th>
+                  <th rowspan="2">Vaccine</th>
+                  <th colspan="2">Under 1 Year</th>
+                  <th colspan="2">1-2 Years</th>
+                  <th colspan="2">2-5 Years</th>
+                  <th rowspan="2">Total (All Children)</th>
+                </tr>
+                <tr class="subheader">
+                  <th>Male</th>
+                  <th>Female</th>
+                  <th>Male</th>
+                  <th>Female</th>
+                  <th>Male</th>
+                  <th>Female</th>
                 </tr>
               </thead>
               <tbody>${coverageRowsHtml}</tbody>
+              <tfoot>
+                <tr>
+                  <td class="left" colspan="8">Grand total</td>
+                  <td class="center">${childCoverageGrandTotal}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         ` : ''}
@@ -3104,10 +3233,32 @@ export const DailyTallyView = () => {
           <div class="print-section">
             <h2>Coverage Summary (Women vaccination)</h2>
             <table>
+              <colgroup>
+                <col style="width: 9%;" />
+                <col style="width: 44%;" />
+                <col style="width: 16%;" />
+                <col style="width: 18%;" />
+                <col style="width: 13%;" />
+              </colgroup>
               <thead>
-                <tr><th>Dose</th><th>Vaccine</th><th>Pregnant</th><th>Non pregnant</th><th>Total</th></tr>
+                <tr>
+                  <th rowspan="2">Dose</th>
+                  <th rowspan="2">Vaccine</th>
+                  <th colspan="2">Women</th>
+                  <th rowspan="2">Total</th>
+                </tr>
+                <tr class="subheader">
+                  <th>Pregnant</th>
+                  <th>Non-pregnant</th>
+                </tr>
               </thead>
               <tbody>${womenRowsHtml}</tbody>
+              <tfoot>
+                <tr>
+                  <td class="left" colspan="4">Grand total</td>
+                  <td class="center">${womenCoverageGrandTotal}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         ` : ''}
@@ -3186,6 +3337,16 @@ export const DailyTallyView = () => {
           : 'Confirm';
 
   const continueButtonIsFinal = !nextWorkflowStep;
+  const backButtonLabelForDisplay = keepTopRightButtonTextVisible
+    ? 'Back'
+    : backButtonLabel;
+  const continueButtonLabelForDisplay = keepTopRightButtonTextVisible
+    ? workflowStep === 'tally'
+      ? continueButtonLabel
+      : continueButtonIsFinal
+        ? 'Save'
+        : 'Next'
+    : continueButtonLabel;
 
   const sessionGrandTotals = sessionTallyGenderTotals(sessionTallyByItem, vaccineRows);
   const selectedTallyRow = selectedTallyItemId
@@ -3194,6 +3355,21 @@ export const DailyTallyView = () => {
   const selectedTallyDraft = selectedTallyRow
     ? sessionTallyByItem[selectedTallyRow.itemId] ?? createEmptySessionTallyDraft()
     : null;
+
+  const childCoverageModalGrandTotal = childCoverageSummaryRows.reduce((sum, coverageRow) => {
+    const total =
+      coverageRow.childUnderOneMale +
+      coverageRow.childUnderOneFemale +
+      coverageRow.childOneToTwoMale +
+      coverageRow.childOneToTwoFemale +
+      coverageRow.childTwoToFiveMale +
+      coverageRow.childTwoToFiveFemale;
+    return sum + total;
+  }, 0);
+
+  const womenCoverageModalGrandTotal = womenCoverageSummaryRows.reduce((sum, coverageRow) => {
+    return sum + coverageRow.womenPregnant + coverageRow.womenNonPregnant;
+  }, 0);
 
   return (
     <>
@@ -3216,12 +3392,17 @@ export const DailyTallyView = () => {
             label={'Confirm'}
             color="secondary"
             variant="contained"
+            shouldShrink={false}
             isLoading={isSaving}
             onClick={async () => await onConfirm(true)}
           />
         }
         cancelButton={
-          <DialogButton variant="cancel" onClick={() => setConfirmSummaryOpen(false)} />
+          <DialogButton
+            variant="cancel"
+            shouldShrink={false}
+            onClick={() => setConfirmSummaryOpen(false)}
+          />
         }
       >
         <Stack
@@ -3240,12 +3421,14 @@ export const DailyTallyView = () => {
             <ButtonWithIcon
               Icon={<PrinterIcon />}
               label={t('button.print')}
+              shouldShrink={false}
               onClick={onPrintSummary}
               sx={{ paddingX: 1.25, paddingY: 0.5 }}
             />
             <ButtonWithIcon
               Icon={<DownloadIcon />}
               label={t('button.download-pdf')}
+              shouldShrink={false}
               onClick={onDownloadPdfSummary}
             />
           </Box>
@@ -3525,6 +3708,34 @@ export const DailyTallyView = () => {
                           </Box>
                         );
                       })}
+                      {childCoverageSummaryRows.length > 0 ? (
+                        <Box
+                          display="grid"
+                          columnGap={1}
+                          alignItems="center"
+                          sx={{
+                            gridTemplateColumns: childCoverageGridTemplateColumns,
+                            paddingX: 1.25,
+                            paddingY: 0.85,
+                            backgroundColor: 'background.menu',
+                            borderTop: '1px solid rgba(0,0,0,0.12)',
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                            Grand total
+                          </Typography>
+                          <Box />
+                          <Box />
+                          <Box />
+                          <Box />
+                          <Box />
+                          <Box />
+                          <Box />
+                          <Typography variant="body2" sx={{ fontWeight: 800, textAlign: 'center' }}>
+                            {childCoverageModalGrandTotal}
+                          </Typography>
+                        </Box>
+                      ) : null}
                     </Box>
                   </Box>
 
@@ -3643,6 +3854,30 @@ export const DailyTallyView = () => {
                             </Box>
                           );
                         })}
+                        {womenCoverageSummaryRows.length > 0 ? (
+                          <Box
+                            display="grid"
+                            columnGap={1}
+                            alignItems="center"
+                            sx={{
+                              gridTemplateColumns: womenCoverageGridTemplateColumns,
+                              paddingX: 1.25,
+                              paddingY: 0.85,
+                              backgroundColor: 'background.menu',
+                              borderTop: '1px solid rgba(0,0,0,0.12)',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              Grand total
+                            </Typography>
+                            <Box />
+                            <Box />
+                            <Box />
+                            <Typography variant="body2" sx={{ fontWeight: 800, textAlign: 'center' }}>
+                              {womenCoverageModalGrandTotal}
+                            </Typography>
+                          </Box>
+                        ) : null}
                       </Box>
                     </Box>
                   </>
@@ -3718,6 +3953,30 @@ export const DailyTallyView = () => {
                       </Box>
                     );
                   })}
+                  {(childCoverageModalGrandTotal > 0 || womenCoverageModalGrandTotal > 0) ? (
+                    <Box
+                      sx={{
+                        border: '1px solid rgba(0,0,0,0.12)',
+                        borderRadius: 1,
+                        padding: 1,
+                        backgroundColor: 'background.menu',
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 700, marginBottom: 0.5 }}>
+                        Grand totals
+                      </Typography>
+                      <Box display="grid" gridTemplateColumns="repeat(2,minmax(0,1fr))" rowGap={0.35}>
+                        <Typography variant="caption" color="text.secondary">Children</Typography>
+                        <Typography variant="body2" textAlign="right" sx={{ fontWeight: 700 }}>
+                          {childCoverageModalGrandTotal}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">Women</Typography>
+                        <Typography variant="body2" textAlign="right" sx={{ fontWeight: 700 }}>
+                          {womenCoverageModalGrandTotal}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ) : null}
                 </Stack>
               )}
             </Box>
@@ -3847,10 +4106,11 @@ export const DailyTallyView = () => {
       <AppBarButtonsPortal>
         {hasPreviousWorkflowStep ? (
           <LoadingButton
-            label={backButtonLabel}
+            label={backButtonLabelForDisplay}
             startIcon={<ArrowLeftIcon />}
             color="secondary"
             variant="outlined"
+            shouldShrink={!keepTopRightButtonTextVisible}
             sx={{ marginRight: 1.25 }}
             onClick={moveToPreviousWorkflowStep}
             isLoading={false}
@@ -3867,9 +4127,10 @@ export const DailyTallyView = () => {
               ? <ArrowRightIcon />
               : undefined
           }
-          label={continueButtonLabel}
+          label={continueButtonLabelForDisplay}
           color="secondary"
           variant="contained"
+          shouldShrink={!keepTopRightButtonTextVisible}
           onClick={moveToNextWorkflowStep}
           isLoading={
             continueButtonIsFinal ? isSaving : false
@@ -3997,7 +4258,7 @@ export const DailyTallyView = () => {
                                       gap={0.5}
                                     >
                                       <ButtonWithIcon
-                                        label="-"
+                                        label="-1"
                                         onClick={() =>
                                           updateSessionTallyCell(
                                             selectedTallyRow,
@@ -4009,7 +4270,7 @@ export const DailyTallyView = () => {
                                         sx={{ minWidth: 44, height: 44, paddingX: 0.75 }}
                                       />
                                       <ButtonWithIcon
-                                        label={value > 0 ? String(value) : '+'}
+                                        label={value > 0 ? `${value} +1` : '+1'}
                                         onClick={() =>
                                           updateSessionTallyCell(
                                             selectedTallyRow,
@@ -4607,7 +4868,7 @@ export const DailyTallyView = () => {
                         >
                           <Typography
                             variant="body1"
-                            sx={{ ...itemTitleSx, fontWeight: isStepOneVaccineExpanded ? 700 : 'normal' }}
+                            sx={{ fontWeight: isStepOneVaccineExpanded ? 700 : 'normal' }}
                           >
                             {row.item}
                           </Typography>
@@ -4775,6 +5036,7 @@ export const DailyTallyView = () => {
                                       inputProps={numericHtmlInputProps}
                                       sx={compactNumberInputSx}
                                       value={String(batchDraft.wastage)}
+                                      onFocus={selectZeroValueOnFocus}
                                       onChange={event =>
                                         updateBatchWastage(row, stockLine, event.target.value)
                                       }
@@ -4820,6 +5082,7 @@ export const DailyTallyView = () => {
                                       : compactNumberInputSx
                                   }
                                   value={String(row.used)}
+                                  onFocus={selectZeroValueOnFocus}
                                   onChange={event => updateUsed(row, event.target.value)}
                                 />
                               ) : (
@@ -4856,6 +5119,7 @@ export const DailyTallyView = () => {
                                   inputProps={numericHtmlInputProps}
                                   sx={compactNumberInputSx}
                                   value={String(row.wastage)}
+                                  onFocus={selectZeroValueOnFocus}
                                   onChange={event =>
                                     updateDraft(row.itemId, {
                                       wastage: parseInput(event.target.value),
@@ -5203,6 +5467,7 @@ export const DailyTallyView = () => {
                                             }
                                             sx={compactNumberInputSx}
                                             value={String(batchDraft.used)}
+                                            onFocus={selectZeroValueOnFocus}
                                             onChange={event =>
                                               updateBatchUsed(row, stockLine, event.target.value)
                                             }
@@ -5235,6 +5500,7 @@ export const DailyTallyView = () => {
                                             inputProps={numericHtmlInputProps}
                                             sx={compactNumberInputSx}
                                             value={String(batchDraft.wastage)}
+                                            onFocus={selectZeroValueOnFocus}
                                             onChange={event =>
                                               updateBatchWastage(
                                                 row,
@@ -5446,6 +5712,7 @@ export const DailyTallyView = () => {
                                 inputProps={numericHtmlInputProps}
                                 sx={compactNumberInputSx}
                                 value={String(row.used)}
+                                onFocus={selectZeroValueOnFocus}
                                 onChange={event => updateUsed(row, event.target.value)}
                               />
                               <BasicTextInput
@@ -5455,6 +5722,7 @@ export const DailyTallyView = () => {
                                 inputProps={numericHtmlInputProps}
                                 sx={compactNumberInputSx}
                                 value={String(row.wastage)}
+                                onFocus={selectZeroValueOnFocus}
                                 onChange={event =>
                                   updateDraft(row.itemId, {
                                     wastage: parseInput(event.target.value),
@@ -5559,6 +5827,7 @@ export const DailyTallyView = () => {
                                               inputProps={numericHtmlInputProps}
                                               sx={compactNumberInputSx}
                                               value={String(batchDraft.used)}
+                                              onFocus={selectZeroValueOnFocus}
                                               onChange={event =>
                                                 updateBatchUsed(row, stockLine, event.target.value)
                                               }
@@ -5570,6 +5839,7 @@ export const DailyTallyView = () => {
                                               inputProps={numericHtmlInputProps}
                                               sx={compactNumberInputSx}
                                               value={String(batchDraft.wastage)}
+                                              onFocus={selectZeroValueOnFocus}
                                               onChange={event =>
                                                 updateBatchWastage(row, stockLine, event.target.value)
                                               }

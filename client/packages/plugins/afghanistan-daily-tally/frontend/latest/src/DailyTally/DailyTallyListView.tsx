@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import { useMediaQuery, useTheme } from '@mui/material';
 import {
   AppBarButtonsPortal,
   AppBarContentPortal,
@@ -71,6 +72,10 @@ export const DailyTallyListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const theme = useTheme();
+  const isPortraitOrientation = useMediaQuery('(orientation: portrait)');
+  const isTabletOrSmaller = useMediaQuery(theme.breakpoints.down('md'));
+  const useCompactAddButtonLabel = isTabletOrSmaller && isPortraitOrientation;
 
   useEffect(() => {
     setCustomBreadcrumbs({
@@ -377,7 +382,8 @@ export const DailyTallyListView = () => {
         <Grid container gap={1}>
           <ButtonWithIcon
             Icon={<PlusCircleIcon />}
-            label={'Add new tally sheet'}
+            label={useCompactAddButtonLabel ? 'Add tally' : 'Add new tally sheet'}
+            shouldShrink={!useCompactAddButtonLabel}
             onClick={() => navigate(dailyTallyNewPath)}
           />
         </Grid>

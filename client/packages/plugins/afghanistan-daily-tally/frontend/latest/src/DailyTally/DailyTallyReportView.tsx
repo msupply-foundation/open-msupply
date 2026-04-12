@@ -182,6 +182,8 @@ export const DailyTallyReportView = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
+  const isPortraitOrientation = useMediaQuery('(orientation: portrait)');
+  const isAndroidPortrait = EnvUtils.platform === Platform.Android && isPortraitOrientation;
   const { data: demographicData } = useDemographicData.demographics.list();
 
   useEffect(() => {
@@ -341,12 +343,12 @@ export const DailyTallyReportView = () => {
       .filter(row => row.total > 0);
   }, [rows]);
 
-  const doseColumnSize = isLargeScreen ? 84 : isTablet ? 72 : 64;
-  const itemColumnSize = isLargeScreen ? 300 : isTablet ? 240 : 200;
-  const childNumberColumnSize = isLargeScreen ? 76 : isTablet ? 66 : 58;
+  const doseColumnSize = isAndroidPortrait ? 52 : isLargeScreen ? 84 : isTablet ? 72 : 64;
+  const itemColumnSize = isAndroidPortrait ? 160 : isLargeScreen ? 300 : isTablet ? 240 : 200;
+  const childNumberColumnSize = isAndroidPortrait ? 46 : isLargeScreen ? 76 : isTablet ? 66 : 58;
   const womenNumberColumnSize = isLargeScreen ? 88 : isTablet ? 76 : 66;
-  const totalColumnSize = isLargeScreen ? 72 : 62;
-  const cellPaddingX = isLargeScreen ? '10px' : isTablet ? '8px' : '6px';
+  const totalColumnSize = isAndroidPortrait ? 52 : isLargeScreen ? 72 : 62;
+  const cellPaddingX = isAndroidPortrait ? '4px' : isLargeScreen ? '10px' : isTablet ? '8px' : '6px';
   const cellPaddingY = isLargeScreen ? '8px' : '4px';
 
   const childColumns = useMemo(
@@ -437,6 +439,7 @@ export const DailyTallyReportView = () => {
       itemColumnSize,
       childNumberColumnSize,
       totalColumnSize,
+      isAndroidPortrait,
     ]
   );
 
@@ -521,7 +524,7 @@ export const DailyTallyReportView = () => {
         'total',
       ],
       columnPinning: {
-        left: ['doseLabel', 'itemName'],
+        left: isAndroidPortrait ? [] : ['doseLabel', 'itemName'],
       },
     },
     enableRowSelection: false,
@@ -538,6 +541,9 @@ export const DailyTallyReportView = () => {
         textAlign: column.id === 'itemName' ? 'left' : 'center',
         paddingX: cellPaddingX,
         paddingY: cellPaddingY,
+        whiteSpace: isAndroidPortrait ? 'normal' : undefined,
+        lineHeight: isAndroidPortrait ? 1.15 : undefined,
+        wordBreak: isAndroidPortrait ? 'break-word' : undefined,
         ...(column.id === 'itemName'
           ? {
               whiteSpace: 'normal',
@@ -604,7 +610,7 @@ export const DailyTallyReportView = () => {
       density: 'compact',
       columnOrder: ['doseLabel', 'itemName', 'pregnant', 'nonPregnant', 'total'],
       columnPinning: {
-        left: ['doseLabel', 'itemName'],
+        left: isAndroidPortrait ? [] : ['doseLabel', 'itemName'],
       },
     },
     enableRowSelection: false,

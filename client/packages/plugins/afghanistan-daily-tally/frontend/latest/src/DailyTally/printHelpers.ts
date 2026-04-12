@@ -21,7 +21,8 @@ export const buildPrintableHtml = (
   options?: { title?: string; orientation?: 'portrait' | 'landscape' }
 ): string => {
   const title = options?.title ?? document.title;
-  const orientation = options?.orientation ?? 'portrait';
+  const orientation = options?.orientation ?? 'landscape';
+  const pageSize = orientation === 'landscape' ? '297mm 210mm' : '210mm 297mm';
   return `<!doctype html>
 <html>
   <head>
@@ -30,7 +31,7 @@ export const buildPrintableHtml = (
     <title>${title}</title>
     <style>
       @page {
-        size: A4 ${orientation};
+        size: ${pageSize};
       }
       html, body {
         margin: 0;
@@ -39,6 +40,15 @@ export const buildPrintableHtml = (
         height: auto !important;
         max-height: none !important;
         overflow: visible !important;
+      }
+      html,
+      body,
+      #oms-print-content,
+      table,
+      th,
+      td {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       #oms-print-controls {
         position: sticky;
@@ -108,7 +118,10 @@ export const printHtml = async (html: string) => {
   if (EnvUtils.platform === Platform.Android) {
     const printer = (window as any)?.Capacitor?.Plugins?.Printer;
     if (printer?.print) {
-      await printer.print({ content: html });
+      await printer.print({
+        content: html,
+        orientation: 'landscape',
+      });
       return;
     }
   }
@@ -119,11 +132,10 @@ export const printHtml = async (html: string) => {
     popup.document.write(html);
     popup.document.close();
 
-    // Trigger print automatically, while still keeping the preview window visible with a Close button.
-    setTimeout(() => {
-      popup.focus();
-      popup.print();
-    }, 30);
+    // Wait for popup document styles/layout so browser print defaults pick up A4 landscape.
+    await new Promise(resolve => setTimeout(resolve, 180));
+    popup.focus();
+    popup.print();
     return;
   }
 
@@ -159,8 +171,8 @@ export const downloadPdfFromHtml = async (html: string) => {
     popup.close();
   };
 
-  setTimeout(() => {
-    popup.focus();
-    popup.print();
-  }, 30);
+  // Wait for popup document styles/layout so browser print defaults pick up A4 landscape.
+  await new Promise(resolve => setTimeout(resolve, 180));
+  popup.focus();
+  popup.print();
 };
