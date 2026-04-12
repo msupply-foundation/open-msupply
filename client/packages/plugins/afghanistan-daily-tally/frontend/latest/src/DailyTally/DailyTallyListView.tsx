@@ -218,15 +218,37 @@ export const DailyTallyListView = () => {
         header: t('label.reference'),
         enableSorting: true,
         enableColumnFilter: true,
+        size: 130,
+        Cell: ({ row }) => (
+          <Typography
+            sx={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={row.original.theirReference ?? ''}
+          >
+            {row.original.theirReference}
+          </Typography>
+        ),
       },
       {
         accessorKey: 'otherPartyName',
         header: t('label.name'),
         enableSorting: true,
-        size: 180,
+        size: 130,
         accessorFn: row => formatPatientName(row.otherPartyName),
         Cell: ({ row }) => (
-          <Typography>{formatPatientName(row.original.otherPartyName)}</Typography>
+          <Typography
+            sx={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={formatPatientName(row.original.otherPartyName)}
+          >
+            {formatPatientName(row.original.otherPartyName)}
+          </Typography>
         ),
       },
       {
@@ -234,7 +256,7 @@ export const DailyTallyListView = () => {
         header: 'Prescription',
         accessorFn: row => row.invoiceNumber,
         enableSorting: true,
-        size: 120,
+        size: 90,
         Cell: ({ row }) => (
           <Typography
             color="primary"
@@ -253,7 +275,7 @@ export const DailyTallyListView = () => {
         header: 'Wastage Adjustment',
         accessorFn: row => row.stocktakeNumber ?? '',
         enableSorting: false,
-        size: 120,
+        size: 90,
         Cell: ({ row }) => {
           const stocktakeId = row.original.stocktakeId;
           const stocktakeNumber = row.original.stocktakeNumber;
@@ -280,7 +302,7 @@ export const DailyTallyListView = () => {
         enableSorting: true,
         accessorFn: (row: DailyTallyListRow) =>
           row.prescriptionDate || row.createdDatetime,
-        size: 150,
+        size: 120,
       },
     ],
     [navigate, t]

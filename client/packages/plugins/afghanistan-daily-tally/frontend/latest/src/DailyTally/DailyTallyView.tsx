@@ -3878,7 +3878,14 @@ export const DailyTallyView = () => {
       </AppBarButtonsPortal>
 
       <Box paddingBottom={2}>
-        <Box sx={{ paddingX: 2, paddingBottom: 1, width: '100%', boxSizing: 'border-box' }}>
+        <Box
+          sx={{
+            paddingX: { xs: 1, sm: 1.5, md: 2 },
+            paddingBottom: 1,
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
+        >
           {isLoading ? (
             <Typography variant="body2" color="text.secondary">
               Loading daily tally items...
@@ -4043,7 +4050,11 @@ export const DailyTallyView = () => {
 
                       <Box
                         display="grid"
-                        gridTemplateColumns={{ xs: '1fr', sm: 'repeat(auto-fit,minmax(280px,1fr))' }}
+                        gridTemplateColumns={{
+                          xs: '1fr',
+                          sm: 'repeat(auto-fit,minmax(240px,1fr))',
+                          lg: 'repeat(auto-fit,minmax(280px,1fr))',
+                        }}
                         columnGap={1.25}
                         sx={{ width: '100%' }}
                       >
