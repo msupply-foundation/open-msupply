@@ -124,7 +124,7 @@ pub fn validate(
     }
 
     if let Some(log_datetime) = &input.log_datetime {
-        if *log_datetime >= Utc::now() {
+        if *log_datetime > Utc::now() {
             return Err(InsertAssetLogError::LogDatetimeInFuture);
         }
     }
