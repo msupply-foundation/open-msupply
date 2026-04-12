@@ -1418,13 +1418,7 @@ export const DailyTallyView = () => {
     [vaccineRows, coverageMasterListMembership]
   );
   const normalizedFilterText = filterText.trim().toLowerCase();
-  const filteredVaccineRows = useMemo(
-    () =>
-      normalizedFilterText
-        ? vaccineRows.filter(row => row.item.toLowerCase().includes(normalizedFilterText))
-        : vaccineRows,
-    [normalizedFilterText, vaccineRows]
-  );
+  const filteredVaccineRows = vaccineRows;
 
   useEffect(() => {
     if (!selectedTallyItemId) return;
@@ -3847,13 +3841,6 @@ export const DailyTallyView = () => {
             onChange={event => setReferenceText(event.target.value)}
             sx={{ width: { xs: '100%', sm: 280 } }}
           />
-          <BasicTextInput
-            size="small"
-            placeholder={t('placeholder.filter-items')}
-            value={filterText}
-            onChange={event => setFilterText(event.target.value)}
-            sx={{ width: { xs: '100%', sm: 260 } }}
-          />
         </Box>
       </AppBarContentPortal>
 
@@ -3902,11 +3889,7 @@ export const DailyTallyView = () => {
             </Typography>
           ) : rows.length === 0 ? (
             <NothingHere
-              body={
-                filterText
-                  ? 'No stock items match the current filter.'
-                  : 'No stock items are available for Daily Tally.'
-              }
+              body={'No stock items are available for Daily Tally.'}
             />
           ) : (
             <>
