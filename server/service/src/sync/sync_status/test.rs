@@ -303,6 +303,7 @@ fn get_initialisation_sync_status_tester(
                         sync_id: "".to_string(),
                         record: CommonSyncRecord::test(),
                     }],
+                    wait_before_integrating: false,
                 };
                 let pull_remote = current_status.pull_remote.unwrap();
 

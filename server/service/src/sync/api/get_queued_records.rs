@@ -72,9 +72,7 @@ mod test {
                             table_name: "test_table_1".to_string(),
                             record_id: "ID2".to_string(),
                             action: SyncAction::Update,
-                            record_data: json!({
-                                "test_key": "test_value"
-                            })
+                            record_data: json!({"test_key":"test_value"})
                         }
                     },
                     RemoteSyncRecordV5 {
@@ -86,7 +84,8 @@ mod test {
                             record_data: json!({})
                         }
                     }
-                ]
+                ],
+                wait_before_integrating: false,
             }
         );
     }

@@ -19,6 +19,7 @@ impl SyncApiV5 {
         let body = RemoteSyncBatchV5 {
             queue_length,
             data: records,
+            wait_before_integrating: false,
         };
 
         let response = self.do_post(route, &body).await?;

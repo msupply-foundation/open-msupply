@@ -153,6 +153,7 @@ impl RemoteDataSynchroniser {
             let RemoteSyncBatchV5 {
                 queue_length: remaining,
                 data,
+                wait_before_integrating,
             } = sync_batch;
 
             let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
@@ -172,7 +173,7 @@ impl RemoteDataSynchroniser {
                     .map_err(|e| e.to_inner_error())?;
 
                 self.sync_api_v5.post_acknowledged_records(sync_ids).await?;
-            } else {
+            } else if !wait_before_integrating {
                 break;
             }
 
