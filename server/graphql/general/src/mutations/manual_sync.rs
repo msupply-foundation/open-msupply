@@ -9,7 +9,11 @@ use service::{
     sync::sync_status::status::InitialisationStatus,
 };
 
-pub fn manual_sync(ctx: &Context<'_>, with_auth: bool) -> Result<String> {
+pub fn manual_sync(
+    ctx: &Context<'_>,
+    with_auth: bool,
+    fetch_patient_id: Option<String>,
+) -> Result<String> {
     if with_auth {
         validate_auth(
             ctx,
@@ -34,7 +38,7 @@ pub fn manual_sync(ctx: &Context<'_>, with_auth: bool) -> Result<String> {
         .extend());
     };
 
-    service_provider.sync_trigger.trigger();
+    service_provider.sync_trigger.trigger(fetch_patient_id);
 
     Ok("Sync triggered".to_string())
 }

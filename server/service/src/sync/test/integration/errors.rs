@@ -61,14 +61,14 @@ mod tests {
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, &hardware_id);
 
-        synchroniser.sync().await.unwrap();
+        synchroniser.sync(None).await.unwrap();
 
         // Change hardware id
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, "id2");
 
         let error = synchroniser
-            .sync()
+            .sync(None)
             .await
             .err()
             .expect("Should result in error");
@@ -118,7 +118,7 @@ mod tests {
         .unwrap();
 
         let error = synchroniser
-            .sync()
+            .sync(None)
             .await
             .err()
             .expect("Should result in error");

@@ -224,7 +224,7 @@ pub async fn add_patient_to_oms_central(
     info!("Created name_store_join for patient {name_id} and central store {central_store_id}");
 
     // TODO: possibly should check is not pre-initialisation here?
-    service_provider.sync_trigger.trigger();
+    service_provider.sync_trigger.trigger(None);
     info!("Sync cycle triggered to receive patient records");
 
     Ok(())
