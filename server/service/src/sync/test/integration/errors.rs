@@ -12,8 +12,6 @@ mod tests {
         service_provider::ServiceProvider,
         sync::{
             api::{ParsedError, SyncApiError, SyncApiErrorVariantV5, SyncErrorCodeV5},
-            api_v6::{SyncApiErrorV6, SyncApiErrorVariantV6, SyncParsedErrorV6},
-            central_data_synchroniser_v6::CentralPullErrorV6,
             settings::SyncSettings,
             sync_status::SyncLogError,
             synchroniser::{SyncError, Synchroniser},
@@ -63,14 +61,14 @@ mod tests {
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, &hardware_id);
 
-        synchroniser.sync(None).await.unwrap();
+        synchroniser.sync().await.unwrap();
 
         // Change hardware id
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, "id2");
 
         let error = synchroniser
-            .sync(None)
+            .sync()
             .await
             .err()
             .expect("Should result in error");
@@ -116,12 +114,11 @@ mod tests {
             sync_settings.clone(),
             service_provider.clone(),
             10000,
-            1,
         )
         .unwrap();
 
         let error = synchroniser
-            .sync(None)
+            .sync()
             .await
             .err()
             .expect("Should result in error");
@@ -140,58 +137,5 @@ mod tests {
                 ..
             })
         );
-
-        // V6
-        let synchroniser =
-            Synchroniser::new_with_version(sync_settings.clone(), service_provider, 2, 10000)
-                .unwrap();
-
-        let error = synchroniser
-            .sync(None)
-            .await
-            .err()
-            .expect("Should result in error");
-
-        assert_matches!(
-            error,
-            SyncError::CentralPullErrorV6(CentralPullErrorV6::SyncApiError(SyncApiErrorV6 {
-                source: SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncVersionMismatch(
-                    0,
-                    // Should match `SYNC_V6_VERSION` in server/service/src/sync/settings.rs
-                    2, 10000
-                )),
-                ..
-            }))
-        );
     }
-
-    // This test was checking for `html` type return from 4d server, this seems to be captured now
-    // and AsText variant is returned
-    //
-    // #[actix_rt::test]
-    // async fn integration_sync_not_parsed_error() {
-    //     let central_config = ConfigureCentralServer::from_env();
-
-    //     // Should result in an error in non standard format
-    //     let error = match central_config
-    //         .upsert_records(json!({
-    //             "this_one_does_not_exist": [{"should_error":  true}]
-    //         }))
-    //         .await
-    //     {
-    //         Ok(_) => panic!("Should result in error"),
-    //         Err(e) => e,
-    //     };
-
-    //     assert_matches!(
-    //         error,
-    //         SyncApiError {
-    //             source: SyncApiErrorVariant::AsText {
-    //                 status: StatusCode::INTERNAL_SERVER_ERROR,
-    //                 ..
-    //             },
-    //             ..
-    //         }
-    //     );
-    // }
 }
