@@ -2,7 +2,7 @@ import { useQuery } from '@openmsupply-client/common';
 import { DASHBOARD, INBOUND } from './keys';
 import { useApi } from './useApi';
 
-export const useInboundExternalCounts = () => {
+export const useInboundExternalCounts = (enabled = true) => {
   const { storeId, api } = useApi();
 
   const { data, ...rest } = useQuery(
@@ -13,6 +13,7 @@ export const useInboundExternalCounts = () => {
       }),
     {
       retry: false,
+      enabled,
     }
   );
 

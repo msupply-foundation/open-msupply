@@ -48,7 +48,7 @@ export const ReplenishmentWidget = ({
   const navigate = useNavigate();
   const { useProcurementFunctionality } = usePreferences();
   const inboundInternal = useInboundInternalCounts();
-  const inboundExternal = useInboundExternalCounts();
+  const inboundExternal = useInboundExternalCounts(useProcurementFunctionality);
   const internalOrder = useInternalOrderCounts();
 
   const inboundInternalPanelContext = `${widgetContext}-inbound-shipments-internal`;
