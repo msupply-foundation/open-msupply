@@ -47,7 +47,7 @@ pub async fn initialise_site(
         .update_sync_settings(&service_context, &sync_settings)
         .map_err(StandardGraphqlError::from_debug)?;
 
-    service_provider.sync_trigger.trigger(None);
+    service_provider.sync_trigger.trigger();
 
     Ok(InitialiseSiteResponse::Response(SyncSettingsNode {
         settings: sync_settings,
