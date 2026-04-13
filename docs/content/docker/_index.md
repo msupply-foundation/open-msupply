@@ -52,8 +52,6 @@ cd server && cargo build --release --bin remote_server --bin remote_server_cli -
 
 [docker-hub.md](./docker-hub.md) explains the feature set of the docker image.
 
-`async-dataloader.patch` is required because of 'blocking' [requests issue](https://github.com/async-graphql/async-graphql/issues/1716) in async graphql loaders.
-
 `entry.sh` calls cli before starting server or allows use of cli as an argument.
 
 `entry-postgres.sh` starts an embedded PostgreSQL instance, optionally imports a dump file, then hands off to `entry.sh`.
