@@ -36,6 +36,7 @@ pub(crate) struct RemoteSyncBatchV5 {
     pub(crate) data: Vec<RemoteSyncRecordV5>,
     #[serde(rename = "waitBeforeIntegrating")]
     #[serde(default)]
+    #[serde(skip_serializing)]
     pub(crate) wait_before_integrating: bool,
 }
 
