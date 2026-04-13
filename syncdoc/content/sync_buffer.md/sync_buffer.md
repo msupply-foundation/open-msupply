@@ -140,3 +140,106 @@ to maintain. Removing the three redundant indexes would:
 | **Periodic deletion**              | Not recommended                       | Destroys data needed for debugging and migration re-integration.                                                                                                                                                                                                                                                                                                         |
 | **Drop redundant indexes**         | **Recommended**                       | Three single-column indexes are redundant with the combined index. The planner does use them when present, but the combined index covers all queries after `ANALYZE`. Dropping them improves upsert throughput ~42% and saves ~552 MB at 30M.                                                                                                                            |
 | **Partial index**                  | **Recommended** (if not partitioning) | Low cost, improves cold-cache queries at scale. Not needed if using LIST partitioning since the pending partition is inherently small.                                                                                                                                                                                                                                   |
+
+## Partitioning by Integration Status
+
+### Recommended approach: `is_integrated BOOLEAN` partition key
+
+Native PostgreSQL LIST partitioning using an `is_integrated BOOLEAN` column as the partition key. The PK becomes `(record_id, is_integrated)`. PostgreSQL requires the partition key in any unique constraint, just like any partitioned table:
+
+```sql
+CREATE TABLE sync_buffer (
+    record_id            TEXT NOT NULL,
+    received_datetime    TIMESTAMP NOT NULL,
+    is_integrated        BOOLEAN NOT NULL DEFAULT FALSE,
+    integration_datetime TIMESTAMP,
+    integration_error    TEXT,
+    table_name           TEXT NOT NULL,
+    action               sync_action NOT NULL,
+    data                 TEXT NOT NULL,
+    source_site_id       INTEGER,
+    PRIMARY KEY (record_id, is_integrated)
+) PARTITION BY LIST (is_integrated);
+
+CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (FALSE);
+CREATE TABLE sync_buffer_done    PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+```
+
+**How it works:**
+
+- New records are inserted with `is_integrated = FALSE` → routed to `sync_buffer_pending`
+- Mark integrated: `UPDATE SET is_integrated = TRUE, integration_datetime = NOW()` → PostgreSQL 11+ **automatically moves the row** from `pending` to `done` (cross-partition row movement)
+- Re-sync: `UPDATE SET is_integrated = FALSE, integration_datetime = NULL, data = ...` → automatically moves back from `done` to `pending`
+- Queries for unintegrated records use `WHERE is_integrated = FALSE` → PostgreSQL prunes to the `pending` partition only
+- Upserts for new records: `INSERT ... ON CONFLICT (record_id, is_integrated) DO UPDATE` works within the pending partition
+- _(NOTE: This isn't a valid statement anymore if we want all history of sync
+  i.e. inserts of every instance of a record instead of upserting)_ Upserts for already-integrated records: A CTE deletes the integrated
+  row before inserting the pending replacement, since the conflict key
+  `(record_id, is_integrated)` won't match across partitions:
+
+```sql
+WITH moved AS (
+    DELETE FROM sync_buffer
+    WHERE record_id = $1 AND is_integrated = TRUE
+    RETURNING record_id
+)
+INSERT INTO sync_buffer (record_id, ..., is_integrated, ...)
+VALUES ($1, ..., FALSE, ...)
+ON CONFLICT (record_id, is_integrated) DO UPDATE SET ...;
+```
+
+**Why `is_integrated BOOLEAN` instead of `integration_datetime IS NULL`:**
+
+- `integration_datetime` is nullable, and PostgreSQL does not allow nullable columns in primary keys — so it cannot be used as a partition key in a composite PK
+- A `BOOLEAN` column is non-nullable, small (1 byte), and maps directly to the two partitions
+
+### Benchmark: Partitioned vs Standard
+
+Three variants are compared:
+
+- **standard** — current single-table design
+- **partitioned** — LIST-partitioned with CTE delete-then-insert to guarantee uniqueness by `record_id` across partitions
+- **partitioned-naive** — LIST-partitioned with plain `INSERT ... ON CONFLICT (record_id, is_integrated)`. Cheaper, but the same `record_id` can exist in both pending and done partitions.
+
+At 1M rows (10K pending, 990K integrated):
+
+| Operation                     | standard | partitioned | partitioned-naive |
+| ----------------------------- | -------- | ----------- | ----------------- |
+| Upsert 1K new (in tx)         | 79ms     | 92ms        | **74ms**          |
+| Upsert 1K existing (in tx)    | 65ms     | 90ms        | **64ms**          |
+| Upsert 100 integrated         | 22ms     | 22ms        | **11ms**          |
+| Query unintegrated (filtered) | 3.7ms    | **0.14ms**  | 0.2ms             |
+| Query all unintegrated        | 23ms     | 25ms        | **20ms**          |
+| Mark 100 integrated (in tx)   | 9ms      | 7ms         | **6ms**           |
+| Re-sync 100 (in tx)           | 10ms     | 10ms        | **7ms**           |
+
+At 30M rows (300K pending, 29.7M integrated):
+
+| Operation                     | standard | partitioned | partitioned-naive |
+| ----------------------------- | -------- | ----------- | ----------------- |
+| Upsert 1K new (in tx)         | **99ms** | 114ms       | 100ms             |
+| Upsert 1K existing (in tx)    | 92ms     | 97ms        | 94ms              |
+| Upsert 100 integrated         | 54ms     | 53ms        | **11ms**          |
+| Query unintegrated (filtered) | 375ms    | **0.7ms**   | 1.4ms             |
+| Query all unintegrated        | 736ms    | 748ms       | **544ms**         |
+| Mark 100 integrated (in tx)   | **12ms** | **11ms**    | 72ms              |
+| Re-sync 100 (in tx)           | **12ms** | 14ms        | 15ms              |
+
+### Analysis
+
+**Keeping one record in the between partitions is ~20-30% slower** due to the CTE delete-then-insert. The extra DELETE is a no-op for pending rows but must still be executed (114ms vs 99ms for new rows at 30M).
+
+**Naive partitioned upserts match standard on writes** (no CTE overhead) while gaining partition-pruned queries. Trade-off: duplicate `record_id`s accumulate across partitions — acceptable if we want full sync history, a problem if upsert semantics are required. `upsert_100_integrated` is ~5x faster (11ms vs 54ms at 30M) because the naive path doesn't scan the done partition to delete.
+
+**Query performance is the major win for both partitioned variants**: filtered queries are 0.7-1.4ms vs 375ms (standard) at 30M — a **~270-530x improvement** via partition pruning.
+
+**Mark-integrated is slow for naive at 30M** (72ms vs 12ms): `UPDATE SET is_integrated = TRUE` triggers cross-partition row movement that can collide with existing duplicates in the done partition.
+
+### Schema changes required
+
+1. Add `is_integrated BOOLEAN NOT NULL DEFAULT FALSE` column
+2. Change PK from `(record_id)` to `(record_id, is_integrated)`
+3. Convert to partitioned table with two partitions
+4. Update mark-integrated to `UPDATE SET is_integrated = TRUE`
+5. Update queries to filter on `is_integrated = FALSE` instead of
+   `integration_datetime IS NULL`
