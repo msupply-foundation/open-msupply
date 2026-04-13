@@ -34,7 +34,7 @@ Environment variables take precedence over `config.toml` values.
 
 2. **Per-scenario run** -- The benchmark database is created from the template using `CREATE DATABASE ... TEMPLATE` (a fast file-level copy). PG config overrides are applied if specified, indexes are built, `ANALYZE` is run, then 10,000 individual INSERTs are executed sequentially, each timed independently.
 
-3. **Results** -- Latency percentiles (p50, p95, p99, mean, min, max) are computed and saved. Charts are generated as PNGs.
+3. **Results** -- Latency percentiles (p50, p95, p99, mean, min, max) are computed and saved to `results.json` after each scenario completes. If the run is interrupted, results from completed scenarios are preserved. Charts are generated as PNGs at the end of each phase.
 
 The template approach means each scenario starts from an identical data state without re-importing data.
 
@@ -63,6 +63,9 @@ cargo run -- --no-graphs
 
 # 7. Regenerate seed templates (if changelog schema changes)
 cargo run -- --reseed --seed-only
+
+# 8. Regenerate charts from existing results (without re-running benchmarks)
+cargo run -- --generate-graphs results/phase2_indexes_2026-04-14_15-30-45/results.json
 ```
 
 ## What the phases test
@@ -107,15 +110,16 @@ Compares how v7 and v7_all_partial index strategies perform as the NULL/value ra
 
 **How it works:** All scenarios reuse the same seed templates (50% NULL baseline). After copying the template, a single `UPDATE` redistributes NULLs to match the profile's percentages before indexes are created. Scenarios sharing the same null profile share a single `UPDATE` -- the loop cycles index types within the same database to avoid redundant full-table scans.
 
-| Null profile      | store_id NULL | transfer_store_id NULL | patient_id NULL |
-| ----------------- | ------------- | ---------------------- | --------------- |
-| `mostly_null`     | 90%           | 90%                    | 90%             |
-| `balanced`        | 50%           | 50%                    | 50%             |
-| `mostly_present`  | 10%           | 10%                    | 10%             |
+| Null profile     | store_id NULL | transfer_store_id NULL | patient_id NULL |
+| ---------------- | ------------- | ---------------------- | --------------- |
+| `mostly_null`    | 90%           | 90%                    | 90%             |
+| `balanced`       | 50%           | 50%                    | 50%             |
+| `mostly_present` | 10%           | 10%                    | 10%             |
 
 For each profile, both `v7` and `v7_all_partial` index configs are tested.
 
 **Phase 4 loop structure:**
+
 ```
 for each N:
   for each null_profile:
@@ -133,9 +137,9 @@ Larger N values take longer to seed and run. During development, use `--n-values
 
 ## Output
 
-Results are saved to `results/` with a timestamped subdirectory per phase:
+Results are saved to `results/` with a timestamped subdirectory per phase (e.g. `results/phase2_indexes_2026-04-14_15-30-45/`):
 
-- `results.json` -- raw latency stats for all scenarios in that phase
+- `results.json` -- raw latency stats, updated after each scenario completes (so partial results are preserved if a run is interrupted)
 - **Phase 1 & 3**: one PNG per percentile (p50, p95, p99) -- line chart with one line per scenario, N on X-axis
 - **Phase 2**: three PNGs (p50.png, p95.png, p99.png) -- grouped bar chart with N on X-axis, one bar per index strategy
 - **Phase 4**: subdirectory per index type (v7/, v7_all_partial/), each with p50.png, p95.png, p99.png -- grouped bar chart with N on X-axis, one bar per null profile
@@ -146,16 +150,16 @@ A summary table is printed to the console after each phase.
 
 All parameters are in `config.toml`. The `[pg]` section and `[null_profiles]` are optional.
 
-| Setting                      | Default              | Description                                             |
-| ---------------------------- | -------------------- | ------------------------------------------------------- |
-| `batch_size`                 | 10,000               | Individual inserts measured per (scenario, N) pair      |
-| `output_dir`                 | `results`            | Where results and charts are saved                      |
-| `n_values`                   | 100K to 5.6M         | Table sizes to test                                     |
-| `pg.*`                       | localhost:5432       | Postgres connection (overridable via PG_* env vars)     |
-| `scenarios[].indexes`        | required             | `pk_only`, `v7`, `v7_all_partial`, or path to .sql file |
-| `scenarios[].pg_config_file` | (optional)           | Path to PG settings file for ALTER SYSTEM               |
-| `scenarios[].null_profile`   | (required phase 4)   | Name of a profile defined in `[null_profiles]`          |
-| `null_profiles.<name>.*`     | (optional)           | NULL probabilities (0.0--1.0) for store_id, transfer_store_id, patient_id |
+| Setting                      | Default            | Description                                                               |
+| ---------------------------- | ------------------ | ------------------------------------------------------------------------- |
+| `batch_size`                 | 10,000             | Individual inserts measured per (scenario, N) pair                        |
+| `output_dir`                 | `results`          | Where results and charts are saved                                        |
+| `n_values`                   | 100K to 5.6M       | Table sizes to test                                                       |
+| `pg.*`                       | localhost:5432     | Postgres connection (overridable via PG\_\* env vars)                     |
+| `scenarios[].indexes`        | required           | `pk_only`, `v7`, `v7_all_partial`, or path to .sql file                   |
+| `scenarios[].pg_config_file` | (optional)         | Path to PG settings file for ALTER SYSTEM                                 |
+| `scenarios[].null_profile`   | (required phase 4) | Name of a profile defined in `[null_profiles]`                            |
+| `null_profiles.<name>.*`     | (optional)         | NULL probabilities (0.0--1.0) for store_id, transfer_store_id, patient_id |
 
 ### Adding index strategies
 
