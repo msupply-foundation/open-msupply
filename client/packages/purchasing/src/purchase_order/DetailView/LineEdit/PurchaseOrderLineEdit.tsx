@@ -30,7 +30,6 @@ import {
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 
 const PRICE_DECIMAL_LIMIT = 6;
-const CURRENCY_DECIMAL_LIMIT = 2;
 
 import {
   calculatePricesAndDiscount,
@@ -305,7 +304,7 @@ export const PurchaseOrderLineEdit = ({
                       (draft.numberOfPacks ?? 0) || 0
                   : 0
               }
-              decimalLimit={CURRENCY_DECIMAL_LIMIT}
+              decimalLimit={options.precision}
               endAdornment={options.symbol}
               disabled={true}
             />
