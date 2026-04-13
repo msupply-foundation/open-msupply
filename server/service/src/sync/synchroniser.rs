@@ -118,7 +118,10 @@ impl Synchroniser {
         })
     }
 
-    pub(crate) async fn sync(&self) -> Result<(), SyncError> {
+    pub(crate) async fn sync(
+        &self,
+        _fetch_patient_id: Option<String>,
+    ) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
         let mut logger = SyncLogger::start(&ctx.connection)?;
 
@@ -380,10 +383,10 @@ mod tests {
         .unwrap();
 
         // First check that synch fails (due to wrong url)
-        assert!(s.sync().await.is_err());
+        assert!(s.sync(None).await.is_err());
 
         // Check that disabling return Ok(())
         service.disable_sync(&ctx).unwrap();
-        assert!(s.sync().await.is_ok());
+        assert!(s.sync(None).await.is_ok());
     }
 }

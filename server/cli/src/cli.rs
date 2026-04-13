@@ -292,7 +292,7 @@ async fn initialise_from_central(
         .update_sync_settings(&service_context, &sync_settings)?;
 
     let (_, sync_driver) = SynchroniserDriver::init();
-    sync_driver.sync(service_provider.clone()).await;
+    sync_driver.sync(service_provider.clone(), None).await;
 
     info!("Syncing users");
     for user in users.split(',') {
