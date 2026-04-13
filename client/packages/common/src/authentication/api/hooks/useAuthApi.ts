@@ -10,9 +10,9 @@ export const useAuthApi = () => {
   const queries = getAuthQueries(sdk, t);
 
   const keys = {
-    me: (token: string) => ['me', token] as const,
+    me: () => ['me'] as const,
     isCentralServer: ['isCentralServer'] as const,
-    refresh: (token: string) => ['refresh', token] as const,
+    refresh: () => ['refresh'] as const,
     userSync: () => ['userSync'] as const,
   };
 

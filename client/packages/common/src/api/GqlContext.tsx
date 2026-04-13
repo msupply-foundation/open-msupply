@@ -5,7 +5,7 @@ import {
   RequestOptions,
   Variables,
 } from 'graphql-request';
-import { AuthError, getAuthCookie } from '../authentication/AuthContext';
+import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DocumentNode } from 'graphql';
 import { RequestConfig } from 'graphql-request/build/esm/types';
@@ -103,7 +103,8 @@ class GQLClient extends GraphQLClient {
       return new Promise(() => this.emptyData);
     }
 
-    super.setHeader('Authorization', `Bearer ${getAuthCookie().token}`);
+    // Auth token is in an HttpOnly cookie — sent automatically by the browser
+    // via credentials: 'include'. No need to set an Authorization header.
     const response = options.document
       ? super.request(options)
       : super.request(

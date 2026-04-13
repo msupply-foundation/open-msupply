@@ -1,7 +1,9 @@
-import { AuthCookie, AuthError, setAuthCookie } from '../../AuthContext';
+import { AuthState, AuthError } from '../../AuthContext';
+import { setTokenExpiry } from './useRefreshToken';
 import { useGetAuthToken } from './useGetAuthToken';
 import {
   AuthenticationCredentials,
+  DateUtils,
   LocalStorage,
   useAuthApi,
   useGetUserDetails,
@@ -83,7 +85,7 @@ export const getStore = async (
 };
 
 export const useLogin = (
-  setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
+  setAuthState: React.Dispatch<React.SetStateAction<AuthState | undefined>>
 ) => {
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
@@ -133,17 +135,19 @@ export const useLogin = (
 
   const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
-    const userDetails = await getUserDetails(token);
-    queryClient.setQueryData(api.keys.me(token), userDetails);
+    // token is only used to check if login succeeded — we don't store it
+    const loggedIn = !!token;
+    const userDetails = await getUserDetails();
+    const userId = userDetails?.userId ?? '';
+    queryClient.setQueryData(api.keys.me(), userDetails);
     const store = await getStore(userDetails, mostRecentCredentials);
-    const permissions = await getUserPermissions(token, store);
+    const permissions = await getUserPermissions(store);
     setSkipRequest(skipNoStoreRequests);
 
-    const authCookie = {
+    const authState = {
       store,
-      token,
       user: {
-        id: userDetails?.userId ?? '',
+        id: userId,
         name: username,
         permissions,
         firstName: userDetails?.firstName,
@@ -154,7 +158,7 @@ export const useLogin = (
       },
     };
 
-    if (token) {
+    if (loggedIn) {
       const userLocale = getUserLocale(username);
       if (userLocale === undefined) {
         changeLanguage(
@@ -162,10 +166,10 @@ export const useLogin = (
         );
       }
       upsertMostRecentCredential(username, store);
-      setAuthCookie(authCookie);
-      setCookie(authCookie);
+      setTokenExpiry(DateUtils.addMinutes(new Date(), 60));
+      setAuthState(authState);
     }
-    setLoginError(!!token, !!store);
+    setLoginError(loggedIn, !!store);
     setSkipRequest(
       () => LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned
     );

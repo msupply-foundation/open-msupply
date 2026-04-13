@@ -5,7 +5,7 @@ use service::auth::{validate_auth, AuthError};
 use service::settings::is_develop;
 use service::token::TokenService;
 
-use super::set_refresh_token_cookie;
+use super::{set_auth_token_cookie, set_refresh_token_cookie};
 
 pub struct Logout {
     pub user_id: String,
@@ -26,8 +26,10 @@ pub enum LogoutResponse {
 
 pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
     let auth_data = ctx.get_auth_data();
-    // invalid the refresh token cookie first (just in case an error happens before we do so)
-    set_refresh_token_cookie(ctx, "logged out", 0, auth_data.no_ssl);
+    let suffix = &auth_data.cookie_suffix;
+    // invalidate auth cookies first (just in case an error happens before we do so)
+    set_refresh_token_cookie(ctx, "logged out", 0, auth_data.no_ssl, suffix);
+    set_auth_token_cookie(ctx, "logged out", 0, auth_data.no_ssl, suffix);
 
     let user_auth = match validate_auth(auth_data, &ctx.get_auth_token()) {
         Ok(value) => value,

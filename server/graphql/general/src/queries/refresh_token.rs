@@ -9,7 +9,7 @@ use service::{
     token::{JWTRefreshError, TokenPair, TokenService},
 };
 
-use crate::set_refresh_token_cookie;
+use crate::{set_auth_token_cookie, set_refresh_token_cookie};
 
 pub struct RefreshToken {
     pub pair: TokenPair,
@@ -17,7 +17,8 @@ pub struct RefreshToken {
 
 #[Object]
 impl RefreshToken {
-    /// New Bearer token
+    /// New Bearer token. Returned for backward compatibility and external
+    /// integrations — the web client uses the HttpOnly cookie instead.
     pub async fn token(&self) -> &str {
         &self.pair.token
     }
@@ -130,7 +131,9 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
         }
     };
 
-    set_refresh_token_cookie(ctx, &pair.refresh, max_age_refresh, auth_data.no_ssl);
+    let suffix = &auth_data.cookie_suffix;
+    set_refresh_token_cookie(ctx, &pair.refresh, max_age_refresh, auth_data.no_ssl, suffix);
+    set_auth_token_cookie(ctx, &pair.token, max_age_token, auth_data.no_ssl, suffix);
 
     RefreshTokenResponse::Response(RefreshToken { pair })
 }

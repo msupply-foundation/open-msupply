@@ -1,4 +1,4 @@
-import { getAuthCookie, useQuery } from '@openmsupply-client/common';
+import { useAuthContext, useQuery } from '@openmsupply-client/common';
 import { useSyncApi } from './useSyncApi';
 
 export const useSyncInfo = (
@@ -6,19 +6,14 @@ export const useSyncInfo = (
   enabled: boolean = true
 ) => {
   const api = useSyncApi();
-  const { token } = getAuthCookie();
+  const { isAuthenticated } = useAuthContext();
 
-  // manually adding the token and setting the authorization header
-  // there were instances where the token was not included in the request
-  // even though the auth cookie existed with a valid token
-  // the query is only enabled if there's a token -
-  // no need to check the sync status if there's no token
   const { data, ...rest } = useQuery(
     api.keys.syncInfo(),
-    () => api.get.syncInfo(token),
+    () => api.get.syncInfo(),
     {
       refetchInterval,
-      enabled: !!token && enabled,
+      enabled: isAuthenticated && enabled,
     }
   );
 

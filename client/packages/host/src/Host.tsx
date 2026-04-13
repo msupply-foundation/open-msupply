@@ -78,7 +78,6 @@ const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   if (data?.data?.status == InitialisationStatusType.Initialised)
     return children;
 
-  // Clear token
   logout();
 
   return null;

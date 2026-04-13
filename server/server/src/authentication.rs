@@ -1,34 +1,19 @@
 use actix_web::HttpRequest;
 use service::{
-    auth::{validate_auth, AuthDeniedKind, AuthError, ValidatedUserAuth},
+    auth::{validate_auth, ValidatedUserAuth},
     auth_data::AuthData,
 };
 
-const COOKIE_NAME: &str = "auth";
-
-#[derive(serde::Deserialize)]
-struct AuthCookie {
-    token: String,
-}
-
+/// Validate auth from the HttpOnly auth cookie.
+/// The cookie contains the raw JWT token (set by set_auth_token_cookie).
 pub(crate) fn validate_cookie_auth(
     request: HttpRequest,
     auth_data: &AuthData,
-) -> Result<ValidatedUserAuth, AuthError> {
-    let token = match request.cookie(COOKIE_NAME) {
-        Some(cookie) => {
-            let auth_cookie: AuthCookie = match serde_json::from_str(cookie.value()) {
-                Ok(auth_cookie) => auth_cookie,
-                Err(err) => {
-                    return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
-                        err.to_string(),
-                    )))
-                }
-            };
-            Some(auth_cookie.token)
-        }
-        None => None,
-    };
+) -> Result<ValidatedUserAuth, service::auth::AuthError> {
+    let name = format!("auth_{}", auth_data.cookie_suffix);
+    let token = request
+        .cookie(&name)
+        .map(|cookie| cookie.value().to_owned());
 
     validate_auth(auth_data, &token)
 }

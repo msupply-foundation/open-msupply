@@ -279,6 +279,7 @@ async fn initialise_from_central(
         token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
         no_ssl: true,
         debug_no_access_control: false,
+        cookie_suffix: settings.server.port.to_string(),
     };
 
     let service_context = service_provider.basic_context()?;

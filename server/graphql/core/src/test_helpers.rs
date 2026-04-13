@@ -52,6 +52,7 @@ pub async fn run_test_gql_query<
         // TODO: configure ssl
         no_ssl: true,
         debug_no_access_control: true,
+        cookie_suffix: "test".to_string(),
     });
 
     let app = actix_web::test::init_service(
@@ -97,7 +98,7 @@ async fn graphql<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clon
     http_req: HttpRequest,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
-    let user_data = auth_data_from_request(&http_req);
+    let user_data = auth_data_from_request(&http_req, "test");
     let query = req.into_inner().data(user_data);
     schema.execute(query).await.into()
 }

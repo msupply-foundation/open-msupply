@@ -1464,6 +1464,7 @@ mod permission_validation_test {
             token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
             no_ssl: true,
             debug_no_access_control: false,
+            cookie_suffix: "test".to_string(),
         };
         let user_id = "test_user_id";
         let password = "pass";
@@ -1661,6 +1662,7 @@ mod permission_validation_test {
             token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
             no_ssl: true,
             debug_no_access_control: false,
+            cookie_suffix: "test".to_string(),
         };
 
         let token = TokenService::new(

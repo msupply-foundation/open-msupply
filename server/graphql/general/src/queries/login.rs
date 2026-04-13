@@ -17,7 +17,9 @@ pub struct AuthToken {
 
 #[Object]
 impl AuthToken {
-    /// Bearer token
+    /// Bearer token. The web client uses the HttpOnly cookie instead, but
+    /// the token is still returned here for backward compatibility and
+    /// external integrations that use the Authorization header directly.
     pub async fn token(&self) -> &str {
         &self.pair.token
     }
@@ -160,34 +162,39 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     };
 
     let now = Utc::now().timestamp() as usize;
-    set_refresh_token_cookie(
-        ctx,
-        &pair.refresh,
-        pair.refresh_expiry_date - now,
-        auth_data.no_ssl,
-    );
+    let suffix = &auth_data.cookie_suffix;
+
+    set_refresh_token_cookie(ctx, &pair.refresh, pair.refresh_expiry_date - now, auth_data.no_ssl, suffix);
+    set_auth_token_cookie(ctx, &pair.token, pair.expiry_date - now, auth_data.no_ssl, suffix);
 
     Ok(AuthTokenResponse::Response(AuthToken { pair }))
 }
 
-/// Store refresh token in a cookie:
-/// - HttpOnly cookie (not readable from js).
-/// - Secure (https only)
-/// - SameSite (only attached to request originating from the same site)
-///
-/// Also see:
-///     https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/
+fn set_cookie(ctx: &Context<'_>, name: &str, value: &str, max_age: usize, no_ssl: bool) {
+    let secure = if no_ssl { "" } else { "; Secure" };
+    // Use append so multiple Set-Cookie headers are sent (one per cookie)
+    ctx.append_http_header(
+        SET_COOKIE,
+        format!("{name}={value}; Max-Age={max_age}{secure}; HttpOnly; SameSite=Strict; Path=/"),
+    );
+}
+
 pub fn set_refresh_token_cookie(
     ctx: &Context<'_>,
     refresh_token: &str,
     max_age: usize,
     no_ssl: bool,
+    suffix: &str,
 ) {
-    let secure = if no_ssl { "" } else { "; Secure" };
-    ctx.insert_http_header(
-        SET_COOKIE,
-        format!(
-            "refresh_token={refresh_token}; Max-Age={max_age}{secure}; HttpOnly; SameSite=Strict"
-        ),
-    );
+    set_cookie(ctx, &format!("refresh_token_{suffix}"), refresh_token, max_age, no_ssl);
+}
+
+pub fn set_auth_token_cookie(
+    ctx: &Context<'_>,
+    token: &str,
+    max_age: usize,
+    no_ssl: bool,
+    suffix: &str,
+) {
+    set_cookie(ctx, &format!("auth_{suffix}"), token, max_age, no_ssl);
 }
