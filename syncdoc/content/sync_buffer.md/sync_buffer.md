@@ -243,3 +243,11 @@ At 30M rows (300K pending, 29.7M integrated):
 4. Update mark-integrated to `UPDATE SET is_integrated = TRUE`
 5. Update queries to filter on `is_integrated = FALSE` instead of
    `integration_datetime IS NULL`
+
+### Drawbacks of partitioning
+
+- **Queries must include the partition key to benefit from pruning.** This is already handled for the current `is_integrated` key. However, any future change to the partition key requires reviewing every query on `sync_buffer`, queries that don't filter on the new key will scan all partitions, and lookups by non-partition-key columns (e.g. `record_id` alone) will need to probe every partition instead of one.
+- **Every schema change must be applied to every partition.** Adding a column, index, or constraint on the parent table propagates to children in PG 11+, but partition-specific indexes (e.g. `idx_pt_pending_combined`) must be managed explicitly.
+- **Uneven partition sizes.** The split is 1% pending / 99% done, which is the whole point for reads. But the `done` partition grows unbounded. The same storage-growth concern as the current single-table design, just scoped to one partition. No rebalancing is needed since the split is by boolean.
+- **Foreign keys referencing the partitioned table are restricted.** PG supports this from 12+, but some tooling and ORMs (including diesel) may need workarounds.
+- **Operational tooling.** Backups, VACUUM, and monitoring all need to handle multiple relations per logical table. Most tools handle this, but it's extra surface area.
