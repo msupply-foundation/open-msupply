@@ -38,18 +38,17 @@ Benchmarks tested both **raw** and **in tx**.
 `Filter: action = 'UPSERT' AND table_name = 'transact' AND source_site_id = 1
 AND integration_datetime IS NULL.`
 
-| Operation                     | 1K        | 10K       | 100K      | 1M        | 30M      |
-| ----------------------------- | --------- | --------- | --------- | --------- | -------- |
-| Upsert 1K new (raw)           | 135ms     | 131ms     | 146ms     | 147ms     | —        |
-| Upsert 1K existing (raw)      | 79ms      | 79ms      | 86ms      | 86ms      | —        |
-| Upsert 1K new (in tx)         | **60ms**  | **60ms**  | **64ms**  | **77ms**  | **83ms** |
-| Upsert 1K existing (in tx)    | **60ms**  | **63ms**  | **64ms**  | **66ms**  | **71ms** |
-| Upsert 1K + history (in tx)   | **133ms** | **134ms** | **134ms** | **138ms** | —        |
-| Query unintegrated (filtered) | <1ms      | <1ms      | <1ms      | <1ms      | 343ms    |
-| Query unintegrated (all)      | <1ms      | <1ms      | 2ms       | 25ms      | 749ms    |
-| Mark N integrated (raw)       | 1ms       | 5ms       | 46ms      | 498ms     | —        |
-| Mark N integrated (in tx)     | <1ms      | 3ms       | 33ms      | 381ms     | 17ms     |
-| Re-sync 100 (in tx)           | 7ms       | 8ms       | 8ms       | 9ms       | 23ms     |
+| Operation                     | 1K       | 10K      | 100K     | 1M       | 30M      |
+| ----------------------------- | -------- | -------- | -------- | -------- | -------- |
+| Upsert 1K new (raw)           | 135ms    | 131ms    | 146ms    | 147ms    | 166ms    |
+| Upsert 1K existing (raw)      | 79ms     | 79ms     | 86ms     | 86ms     | 97ms     |
+| Upsert 1K new (in tx)         | **60ms** | **60ms** | **64ms** | **77ms** | **84ms** |
+| Upsert 1K existing (in tx)    | **60ms** | **63ms** | **64ms** | **66ms** | **71ms** |
+| Query unintegrated (filtered) | <1ms     | <1ms     | <1ms     | <1ms     | 360ms    |
+| Query unintegrated (all)      | <1ms     | <1ms     | 2ms      | 25ms     | 600ms    |
+| Mark N integrated (raw)       | 1ms      | 5ms      | 46ms     | 498ms    | —        |
+| Mark N integrated (in tx)     | <1ms     | 3ms      | 33ms     | 381ms    | 11ms     |
+| Re-sync 100 (in tx)           | 7ms      | 8ms      | 8ms      | 9ms      | 10ms     |
 
 ### With Partial Index
 
@@ -63,9 +62,9 @@ AND integration_datetime IS NULL.`
 ### Reads Scale Well Up to 1M, Degrade at 30M
 
 Filtered queries for unintegrated records remain constant from 1K to 1M (<1ms).
-At 30M, however, the filtered query degrades to 343ms because it must scan the
+At 30M, however, the filtered query degrades to ~360ms because it must scan the
 entire table to find the 300K unintegrated rows. The "Query unintegrated (all)"
-results show the cost of deserializing large result sets: 749ms for 300K rows at
+results show the cost of deserializing large result sets: ~600ms for 300K rows at
 30M table size.
 
 ### Writes Remain Stable
@@ -86,7 +85,7 @@ Transaction wrapping provides a consistent ~2x improvement across all sizes.
 
 At 1M and below, the partial index showed no significant improvement. Filtered
 queries are already sub-millisecond. **At 30M, the difference is dramatic:**
-343ms without → **2ms** with the partial index (172x improvement).
+~360ms without → **2ms** with the partial index (~180x improvement).
 
 ## Operational Overhead at 30M Rows
 
@@ -99,7 +98,7 @@ _Measured with ~1.2 KB invoice-line JSON payloads at 30M rows._
 
 | Component                                                                   | Size     | Notes                                                             |
 | --------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------- |
-| Table data (heap)                                                           | 38 GB    | ~1.3 KB/row average with realistic payloads                       |
+| Table data (heap)                                                           | 38 GB    | ~1.3 KB/row average                                               |
 | Primary key index (`record_id` TEXT)                                        | 1,551 MB | 4% of data size — TEXT PKs are expensive                          |
 | Combined index `(action, table_name, integration_datetime, source_site_id)` | 189 MB   | Covers all hot-path queries when single-column indexes are absent |
 | `index_sync_buffer_action`                                                  | 184 MB   | Redundant — combined index leads with `action`                    |
@@ -131,3 +130,13 @@ to maintain. Removing the three redundant indexes would:
 - **TOAST**: The ~1.2 KB test payloads don't trigger TOAST (threshold is ~2 KB).
   Production payloads larger than 2 KB will be automatically TOASTed, which
   would reduce heap size but add indirection for reads.
+
+## Approaches Evaluated
+
+| Approach                           | Recommendation                        | Rationale                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Archive table**                  | Not needed up to 1M+                  | Reads and writes scale well up to 1M.                                                                                                                                                                                                                                                                                                                                    |
+| **LIST partition (is_integrated)** | **Recommended for scale**             | Native PG partitioning with `is_integrated BOOLEAN`. Upserts ~30% slower due to CTE delete-then-insert for cross-partition correctness, if we are okay with having duplicate entries, then ignore upsert comment, but queries are dramatically faster at scale (0.4ms vs 360ms at 30M). PG 11+ handles cross-partition row movement automatically. See benchmarks below. |
+| **Periodic deletion**              | Not recommended                       | Destroys data needed for debugging and migration re-integration.                                                                                                                                                                                                                                                                                                         |
+| **Drop redundant indexes**         | **Recommended**                       | Three single-column indexes are redundant with the combined index. The planner does use them when present, but the combined index covers all queries after `ANALYZE`. Dropping them improves upsert throughput ~42% and saves ~552 MB at 30M.                                                                                                                            |
+| **Partial index**                  | **Recommended** (if not partitioning) | Low cost, improves cold-cache queries at scale. Not needed if using LIST partitioning since the pending partition is inherently small.                                                                                                                                                                                                                                   |
