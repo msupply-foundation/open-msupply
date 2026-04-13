@@ -18,8 +18,9 @@ export const getSyncQueries = (sdk: Sdk) => ({
       const result = await sdk.syncStatus();
       return result?.syncStatus;
     },
-    syncInfo: (token?: string) =>
-      sdk.syncInfo({}, { Authorization: `Bearer ${token}` }),
+    syncInfo: () =>
+      // Auth is handled by the HttpOnly cookie sent automatically by the browser
+      sdk.syncInfo(),
   },
   // manualSync is a trigger that returns a string result (don't need to capture it)
   manualSync: async (fetchPatientId?: string) =>

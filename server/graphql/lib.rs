@@ -303,6 +303,8 @@ pub struct GraphqlSchema {
     migration: MigrationSchema,
     /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
     operational_status: Data<RwLock<OperationalStatus>>,
+    /// Port-derived cookie suffix for auth cookies (e.g. "8000")
+    cookie_suffix: String,
 }
 
 pub struct GraphSchemaData {
@@ -377,6 +379,7 @@ impl GraphqlSchema {
             initialisation: initialisation_builder.finish(),
             migration: migration_builder.finish(),
             operational_status: operational_status_ref.clone(),
+            cookie_suffix: auth.cookie_suffix.clone(),
         }
     }
 
@@ -395,7 +398,7 @@ impl GraphqlSchema {
         match &*self.operational_status.read().await {
             OperationalStatus::Operational => {
                 // auth_data is only available in schema in operational mode
-                let user_data = auth_data_from_request(&http_req);
+                let user_data = auth_data_from_request(&http_req, &self.cookie_suffix);
                 self.operational.execute(req.data(user_data)).await
             }
             OperationalStatus::MigratingDatabase => self.migration.execute(req).await,

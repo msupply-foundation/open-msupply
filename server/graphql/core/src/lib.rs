@@ -106,10 +106,16 @@ pub struct RequestUserData {
     pub refresh_token: Option<String>,
 }
 
-pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
+pub fn auth_data_from_request(
+    http_req: &HttpRequest,
+    cookie_suffix: &str,
+) -> RequestUserData {
     let headers = http_req.headers();
-    // retrieve auth token
-    let auth_token = headers.get("Authorization").and_then(|header_value| {
+    let auth_cookie_name = format!("auth_{cookie_suffix}");
+    let refresh_cookie_name = format!("refresh_token_{cookie_suffix}");
+
+    // retrieve auth token from Authorization header first
+    let auth_token_from_header = headers.get("Authorization").and_then(|header_value| {
         header_value.to_str().ok().and_then(|header| {
             if header.starts_with("Bearer ") {
                 return Some(header["Bearer ".len()..header.len()].to_string());
@@ -118,24 +124,30 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
         })
     });
 
-    // retrieve refresh token
-    let refresh_token = headers.get(COOKIE).and_then(|header_value| {
-        header_value
-            .to_str()
-            .ok()
-            .and_then(|header| {
-                let cookies = header.split(' ').collect::<Vec<&str>>();
-                cookies
-                    .into_iter()
-                    .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
-                    .find(|cookie_option| match &cookie_option {
-                        Some(cookie) => cookie.name() == "refresh_token",
-                        None => false,
-                    })
-                    .flatten()
-            })
+    // parse cookies once for both auth and refresh_token lookups
+    let parsed_cookies: Vec<Cookie> = headers
+        .get(COOKIE)
+        .and_then(|header_value| header_value.to_str().ok())
+        .map(|header| {
+            header
+                .split(' ')
+                .filter_map(|raw_cookie| Cookie::parse(raw_cookie).ok())
+                .collect()
+        })
+        .unwrap_or_default();
+
+    // fall back to HttpOnly auth cookie when no Authorization header
+    let auth_token = auth_token_from_header.or_else(|| {
+        parsed_cookies
+            .iter()
+            .find(|cookie| cookie.name() == auth_cookie_name)
             .map(|cookie| cookie.value().to_owned())
     });
+
+    let refresh_token = parsed_cookies
+        .iter()
+        .find(|cookie| cookie.name() == refresh_cookie_name)
+        .map(|cookie| cookie.value().to_owned());
 
     RequestUserData {
         auth_token,

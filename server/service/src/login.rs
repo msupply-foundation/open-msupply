@@ -594,6 +594,7 @@ mod test {
             token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
             no_ssl: true,
             debug_no_access_control: false,
+            cookie_suffix: "test".to_string(),
         };
 
         let expected: LoginResponseV4 = serde_json::from_str(LOGIN_V4_RESPONSE_1).unwrap();

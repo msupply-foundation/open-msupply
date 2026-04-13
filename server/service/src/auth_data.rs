@@ -15,6 +15,10 @@ pub struct AuthData {
     /// testing).
     /// However, if a token is provided this token is fully evaluate.
     pub debug_no_access_control: bool,
+    /// Suffix for cookie names, derived from the server port.
+    /// Cookies are named `auth_{port}` / `refresh_token_{port}` to prevent
+    /// collisions between instances on the same domain.
+    pub cookie_suffix: String,
 }
 
 #[cfg(test)]

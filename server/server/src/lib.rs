@@ -483,5 +483,6 @@ fn auth_data(
         token_bucket,
         no_ssl: !certificates.is_https(),
         debug_no_access_control: is_develop() && server_settings.debug_no_access_control,
+        cookie_suffix: server_settings.port.to_string(),
     })
 }

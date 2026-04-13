@@ -6,11 +6,9 @@ export const useGetUserDetails = () => {
   return useMutation(api.get.me);
 };
 
-export const useUserDetails = (token: string) => {
+export const useUserDetails = () => {
   const api = useAuthApi();
-  return useQuery(api.keys.me(token), () => api.get.me(token), {
-    enabled: !!token,
-  });
+  return useQuery(api.keys.me(), () => api.get.me());
 };
 
 export const useUserPermissions = () => {
