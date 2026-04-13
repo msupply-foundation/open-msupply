@@ -13,11 +13,10 @@ use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse}
 use fs::NamedFile;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
-use repository::{
-    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus,
-    RepositoryError,
-};
 use repository::SyncFileDirection;
+use repository::{
+    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
+};
 use serde::Deserialize;
 
 use repository::sync_file_reference_row::SyncFileReferenceRow;
@@ -63,9 +62,9 @@ fn check_purchase_order_document_editable(
         return Ok(());
     }
 
-    let connection = service_provider.connection().map_err(|err| {
-        InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR)
-    })?;
+    let connection = service_provider
+        .connection()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
     let purchase_order = PurchaseOrderRepository::new(&connection)
         .query_by_filter(
@@ -262,7 +261,6 @@ async fn upload_sync_file_inner(
 async fn download_sync_file(
     req: HttpRequest,
     settings: Data<Settings>,
-    service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String, String)>,
     auth_data: Data<AuthData>,
 ) -> Result<HttpResponse, Error> {
@@ -276,8 +274,7 @@ async fn download_sync_file(
         )
     })?;
 
-    let error = match download_sync_file_inner(service_provider, &settings, path.into_inner()).await
-    {
+    let error = match download_sync_file_inner(&settings, path.into_inner()).await {
         Ok((named_file, file_name)) => {
             let response = named_file
                 .set_content_disposition(ContentDisposition {
@@ -318,7 +315,6 @@ enum DownloadFileError {
 }
 
 async fn download_sync_file_inner(
-    _service_provider: Data<ServiceProvider>,
     settings: &Settings,
     (table_name, parent_record_id, file_id): (String, String, String),
 ) -> Result<(NamedFile, /* file_name */ String), DownloadFileError> {
