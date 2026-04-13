@@ -28,6 +28,9 @@ import {
   StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
+
+const PRICE_DECIMAL_LIMIT = 6;
+
 import {
   calculatePricesAndDiscount,
   calculateUnitQuantities,
@@ -257,7 +260,7 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={5}
+              decimalLimit={PRICE_DECIMAL_LIMIT}
               endAdornment={options.symbol}
             />
             <NumInputRow
@@ -290,7 +293,7 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={5}
+              decimalLimit={PRICE_DECIMAL_LIMIT}
               endAdornment={options.symbol}
             />
             <NumInputRow
