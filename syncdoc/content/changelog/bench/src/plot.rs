@@ -38,7 +38,7 @@ fn phase_label(phase: u8) -> &'static str {
     }
 }
 
-fn phase_dir(phase: u8) -> &'static str {
+pub fn phase_dir(phase: u8) -> &'static str {
     match phase {
         1 => "phase1_pg_config",
         2 => "phase2_indexes",
@@ -48,44 +48,60 @@ fn phase_dir(phase: u8) -> &'static str {
     }
 }
 
-/// Generate charts for a given phase.
-/// Phase 2 gets clustered bar charts (one per N, scenarios on x-axis, p50/p95/p99 bars).
-/// Other phases get one line chart per scenario (p50/p95/p99 lines vs N).
-pub fn generate_phase_charts(
-    results: &[BenchResult],
-    phase: u8,
-    output_dir: &str,
-    timestamp: &str,
-    skip_graphs: bool,
+/// Generate charts for results in the given directory.
+/// Reads `results.json` from `dir`, groups by phase, and generates the appropriate charts.
+pub fn generate_charts_from_file(
+    results_path: &str,
     null_profiles: &HashMap<String, NullProfile>,
 ) -> Result<()> {
-    let phase_results: Vec<_> = results.iter().filter(|r| r.phase == phase).cloned().collect();
+    let json = fs::read_to_string(results_path)
+        .with_context(|| format!("Failed to read {}", results_path))?;
+    let results: Vec<BenchResult> =
+        serde_json::from_str(&json).with_context(|| format!("Failed to parse {}", results_path))?;
+
+    let dir = std::path::Path::new(results_path)
+        .parent()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| ".".to_string());
+
+    let mut phases: Vec<u8> = results.iter().map(|r| r.phase).collect();
+    phases.sort();
+    phases.dedup();
+
+    for phase in phases {
+        let phase_results: Vec<_> = results.iter().filter(|r| r.phase == phase).cloned().collect();
+        generate_charts(&phase_results, phase, &dir, null_profiles)?;
+    }
+
+    Ok(())
+}
+
+/// Generate charts for a given phase into the specified directory.
+/// Does not create the directory or save results — caller is responsible for that.
+pub fn generate_charts(
+    phase_results: &[BenchResult],
+    phase: u8,
+    dir: &str,
+    null_profiles: &HashMap<String, NullProfile>,
+) -> Result<()> {
     if phase_results.is_empty() {
-        eprintln!("  No results for phase {}, skipping.", phase);
+        eprintln!("  No results for phase {}, skipping charts.", phase);
         return Ok(());
     }
 
-    let dir = format!("{}/{}_{}", output_dir, phase_dir(phase), timestamp);
-    fs::create_dir_all(&dir).context("Failed to create output directory")?;
-
-    // Save phase-specific results.json alongside the charts
-    save_results_json(&phase_results, &dir)?;
-
-    if !skip_graphs {
-        if phase == 4 {
-            // Phase 4: group by index type, bars = null profiles
-            generate_phase4_charts(&phase_results, &dir, null_profiles)?;
-        } else if phase == 2 {
-            // Phase 2: one bar chart per percentile metric
-            // Each cluster = N value, each bar = index strategy
-            for (name, get_value) in PERCENTILES {
-                generate_index_bar_chart(&phase_results, phase, name, *get_value, &dir)?;
-            }
-        } else {
-            // Phases 1, 3+: one line chart per percentile, each line = a scenario
-            for (name, get_value) in PERCENTILES {
-                generate_percentile_line_chart(&phase_results, phase, name, *get_value, &dir)?;
-            }
+    if phase == 4 {
+        // Phase 4: group by index type, bars = null profiles
+        generate_phase4_charts(phase_results, dir, null_profiles)?;
+    } else if phase == 2 {
+        // Phase 2: one bar chart per percentile metric
+        // Each cluster = N value, each bar = index strategy
+        for (name, get_value) in PERCENTILES {
+            generate_index_bar_chart(phase_results, phase, name, *get_value, dir)?;
+        }
+    } else {
+        // Phases 1, 3+: one line chart per percentile, each line = a scenario
+        for (name, get_value) in PERCENTILES {
+            generate_percentile_line_chart(phase_results, phase, name, *get_value, dir)?;
         }
     }
 
@@ -719,15 +735,6 @@ pub fn save_results_json(results: &[BenchResult], output_dir: &str) -> Result<()
     Ok(())
 }
 
-/// Load results from a JSON file.
-#[allow(dead_code)]
-pub fn load_results_json(output_dir: &str) -> Result<Vec<BenchResult>> {
-    let path = format!("{}/results.json", output_dir);
-    let json = fs::read_to_string(&path)?;
-    let results: Vec<BenchResult> = serde_json::from_str(&json)?;
-    Ok(results)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -805,14 +812,12 @@ mod tests {
         fs::create_dir_all(&tmp_dir).unwrap();
 
         let results = mock_results();
-        let timestamp = "2026-01-01_00-00-00";
-        generate_phase_charts(&results, 1, tmp_dir.to_str().unwrap(), timestamp, false, &HashMap::new()).unwrap();
+        generate_charts(&results, 1, tmp_dir.to_str().unwrap(), &HashMap::new()).unwrap();
 
         // Phase 1: one file per percentile, lines = scenarios
-        let phase_dir = format!("phase1_pg_config_{}", timestamp);
-        let p50_path = tmp_dir.join(format!("{}/p50.png", phase_dir));
-        let p95_path = tmp_dir.join(format!("{}/p95.png", phase_dir));
-        let p99_path = tmp_dir.join(format!("{}/p99.png", phase_dir));
+        let p50_path = tmp_dir.join("p50.png");
+        let p95_path = tmp_dir.join("p95.png");
+        let p99_path = tmp_dir.join("p99.png");
 
         assert!(p50_path.exists(), "p50 chart should exist");
         assert!(p95_path.exists(), "p95 chart should exist");
@@ -866,13 +871,11 @@ mod tests {
             },
         ];
 
-        let timestamp = "2026-01-01_00-00-00";
-        generate_phase_charts(&results, 2, tmp_dir.to_str().unwrap(), timestamp, false, &HashMap::new()).unwrap();
+        generate_charts(&results, 2, tmp_dir.to_str().unwrap(), &HashMap::new()).unwrap();
 
-        let phase_dir = format!("phase2_indexes_{}", timestamp);
-        let p50_path = tmp_dir.join(format!("{}/p50.png", phase_dir));
-        let p95_path = tmp_dir.join(format!("{}/p95.png", phase_dir));
-        let p99_path = tmp_dir.join(format!("{}/p99.png", phase_dir));
+        let p50_path = tmp_dir.join("p50.png");
+        let p95_path = tmp_dir.join("p95.png");
+        let p99_path = tmp_dir.join("p99.png");
 
         assert!(p50_path.exists(), "p50 bar chart should exist");
         assert!(p95_path.exists(), "p95 bar chart should exist");
@@ -893,7 +896,9 @@ mod tests {
         let results = mock_results();
         save_results_json(&results, tmp_dir.to_str().unwrap()).unwrap();
 
-        let loaded = load_results_json(tmp_dir.to_str().unwrap()).unwrap();
+        let results_path = tmp_dir.join("results.json");
+        let json = fs::read_to_string(&results_path).unwrap();
+        let loaded: Vec<BenchResult> = serde_json::from_str(&json).unwrap();
 
         assert_eq!(results.len(), loaded.len());
         for (orig, loaded) in results.iter().zip(loaded.iter()) {
@@ -902,6 +907,26 @@ mod tests {
             assert_eq!(orig.stats.p95_us, loaded.stats.p95_us);
             assert_eq!(orig.stats.p99_us, loaded.stats.p99_us);
         }
+
+        let _ = fs::remove_dir_all(&tmp_dir);
+    }
+
+    #[test]
+    fn test_generate_charts_from_file() {
+        let tmp_dir = std::env::temp_dir().join("changelog-bench-test-from-file");
+        let _ = fs::remove_dir_all(&tmp_dir);
+        fs::create_dir_all(&tmp_dir).unwrap();
+
+        let results = mock_results();
+        save_results_json(&results, tmp_dir.to_str().unwrap()).unwrap();
+
+        let results_path = tmp_dir.join("results.json");
+        generate_charts_from_file(results_path.to_str().unwrap(), &HashMap::new()).unwrap();
+
+        // Should generate phase 1 charts next to results.json
+        assert!(tmp_dir.join("p50.png").exists(), "p50 chart should exist");
+        assert!(tmp_dir.join("p95.png").exists(), "p95 chart should exist");
+        assert!(tmp_dir.join("p99.png").exists(), "p99 chart should exist");
 
         let _ = fs::remove_dir_all(&tmp_dir);
     }

@@ -45,12 +45,30 @@ struct Cli {
     /// Force regeneration of seed dumps even if they exist
     #[arg(long)]
     reseed: bool,
+
+    /// Generate graphs from an existing results.json (skip benchmarks)
+    #[arg(long)]
+    generate_graphs: Option<String>,
+}
+
+fn phase_results(all_results: &[BenchResult], phase: u8) -> Vec<BenchResult> {
+    all_results.iter().filter(|r| r.phase == phase).cloned().collect()
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let mut config = Config::load(&cli.config)?;
+    let config = Config::load(&cli.config)?;
+
+    // --generate-graphs: generate graphs from existing results.json and exit
+    if let Some(ref results_path) = cli.generate_graphs {
+        eprintln!("Generating graphs from: {}", results_path);
+        plot::generate_charts_from_file(results_path, &config.null_profiles)?;
+        eprintln!("\nDone!");
+        return Ok(());
+    }
+
+    let mut config = config;
 
     // Apply CLI overrides
     if let Some(phase) = cli.phase {
@@ -119,6 +137,10 @@ fn main() -> Result<()> {
             phase_scenarios.len()
         );
         eprintln!("{}", "=".repeat(60));
+
+        let phase_dir = format!(
+            "{}/{}_{}", config.output_dir, plot::phase_dir(phase), timestamp
+        );
 
         if phase == 4 {
             // Phase 4: grouped loop — for each (N, null_profile), UPDATE once, then cycle index types
@@ -212,6 +234,9 @@ fn main() -> Result<()> {
                             stats,
                             null_profile: Some(profile_name.clone()),
                         });
+
+                        // Save results incrementally
+                        plot::save_results_json(&phase_results(&all_results, phase), &phase_dir)?;
 
                         // Drop indexes and delete measurement rows for next index type
                         eprintln!("    Dropping indexes...");
@@ -320,6 +345,9 @@ fn main() -> Result<()> {
                         null_profile: None,
                     });
 
+                    // Save results incrementally
+                    plot::save_results_json(&phase_results(&all_results, phase), &phase_dir)?;
+
                     // Reset PG config overrides if we applied any
                     if scenario.pg_config_file.is_some() {
                         eprintln!("  Resetting PG config...");
@@ -334,16 +362,11 @@ fn main() -> Result<()> {
         // Print phase summary
         plot::print_phase_table(&all_results, phase);
 
-        // Save results and generate phase graphs
-        eprintln!("\nSaving Phase {} results and generating graphs...", phase);
-        plot::generate_phase_charts(
-            &all_results,
-            phase,
-            &config.output_dir,
-            &timestamp,
-            cli.no_graphs,
-            &config.null_profiles,
-        )?;
+        // Generate phase graphs (results.json already saved incrementally)
+        if !cli.no_graphs {
+            eprintln!("\nGenerating Phase {} graphs...", phase);
+            plot::generate_charts(&phase_results(&all_results, phase), phase, &phase_dir, &config.null_profiles)?;
+        }
     }
 
     eprintln!("\nDone!");
