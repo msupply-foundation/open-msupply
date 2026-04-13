@@ -54,6 +54,10 @@ pub fn add_from_purchase_order(
         let pack_size = purchase_order_line.requested_pack_size;
         let remaining_units = (purchase_order_number_of_units - shipped_number_of_units).max(0.0);
         let number_of_packs = remaining_units / pack_size;
+        // Ideally this would use the currency's minor unit precision, but the
+        // currency table doesn't have a decimal_places field yet. Defaulting to
+        // 2dp for now — see #9654.
+        let round_2dp = |v: f64| (v * 100.0).round() / 100.0;
 
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
@@ -70,12 +74,16 @@ pub fn add_from_purchase_order(
             pack_size: pack_size,
             cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
             sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
-            total_before_tax: purchase_order_line.price_per_pack_after_discount
-                * exchange_rate
-                * number_of_packs,
-            total_after_tax: purchase_order_line.price_per_pack_after_discount
-                * exchange_rate
-                * number_of_packs,
+            total_before_tax: round_2dp(
+                purchase_order_line.price_per_pack_after_discount
+                    * exchange_rate
+                    * number_of_packs,
+            ),
+            total_after_tax: round_2dp(
+                purchase_order_line.price_per_pack_after_discount
+                    * exchange_rate
+                    * number_of_packs,
+            ),
             tax_percentage: None,
             r#type: InvoiceLineType::StockIn,
             number_of_packs,
