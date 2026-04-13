@@ -21,6 +21,9 @@ Examples:
     python3 bench_sync_buffer.py --db "connection_string" --min 1000000 --max 5000000 --interval 500000 
         --pending-min 1000 --pending-max 100000 --pending-interval 10000
 
+    # Name the output CSV file (default: results.csv)
+    python3 bench_sync_buffer.py --db "connection_string" --csv my_results.csv
+
 Output is CSV (to stdout or file) with columns:
     total_rows, pending_rows, approach, operation, duration_ms
 """
@@ -167,6 +170,21 @@ UPSERT_PT = (
     "data=EXCLUDED.data, source_site_id=EXCLUDED.source_site_id"
 )
 
+# Naive variant: plain INSERT ... ON CONFLICT without the CTE DELETE.
+# Accepts duplicate record_ids across (pending, done) partitions
+UPSERT_PT_NAIVE = (
+    "INSERT INTO sync_buffer_pt "
+    "(record_id, received_datetime, is_integrated, integration_datetime, "
+    "integration_error, table_name, action, data, source_site_id) "
+    "VALUES (%s, '2025-06-01', FALSE, NULL, NULL, %s, 'UPSERT', %s, %s) "
+    "ON CONFLICT (record_id, is_integrated) DO UPDATE SET "
+    "received_datetime=EXCLUDED.received_datetime, "
+    "integration_datetime=EXCLUDED.integration_datetime, "
+    "integration_error=EXCLUDED.integration_error, "
+    "table_name=EXCLUDED.table_name, action=EXCLUDED.action, "
+    "data=EXCLUDED.data, source_site_id=EXCLUDED.source_site_id"
+)
+
 # ─── Populate operations ────────────────────────────────────────────────────
 def populate_table(conn, table: str, n: int, integrated: bool, *,
                    extra_cols: str = "", extra_vals_fn=None, chunk_size: int = 500,
@@ -255,14 +273,21 @@ def run(conn, approach: str, new_rows: list[tuple]) -> list[dict]:
     """Run benchmark operations against the current table state.
     Returns list of {operation, duration_ms} dicts."""
     results = []
-    is_pt = approach == "partitioned"
-    upsert_sql = UPSERT_PT if is_pt else UPSERT_STD
+    is_pt = approach in ("partitioned", "partitioned-naive")
+    is_pt_naive = approach == "partitioned-naive"
+    if is_pt_naive:
+        upsert_sql = UPSERT_PT_NAIVE
+    elif is_pt:
+        upsert_sql = UPSERT_PT
+    else:
+        upsert_sql = UPSERT_STD
     table = "sync_buffer_pt" if is_pt else "sync_buffer"
     filter_col = "is_integrated = FALSE" if is_pt else "integration_datetime IS NULL"
 
-    # Helper: partitioned SQL has an extra leading %s for the DELETE function
+    # Helper: the (correct) partitioned SQL has an extra leading %s for the
+    # DELETE CTE. The naive variant does not.
     def upsert_params(rid, tbl, data, src):
-        if is_pt:
+        if is_pt and not is_pt_naive:
             return (rid, rid, tbl, data, src)
         return (rid, tbl, data, src)
 
@@ -324,21 +349,24 @@ def run(conn, approach: str, new_rows: list[tuple]) -> list[dict]:
         conn.commit()
     results.append({"operation": "upsert_100_integrated_tx", "duration_ms": bench(upsert_integrated)})
 
-    # Restore integrated rows to their original state
-    int_id_list = ",".join(f"'int_{i}'" for i in range(100))
-    with conn.cursor() as cur:
-        if is_pt:
-            cur.execute(
-                "UPDATE sync_buffer_pt SET is_integrated = TRUE, "
-                "integration_datetime = '2025-01-01 00:00:00' "
-                f"WHERE record_id IN ({int_id_list}) AND is_integrated = FALSE"
-            )
-        else:
-            cur.execute(
-                "UPDATE sync_buffer SET integration_datetime = '2025-01-01 00:00:00' "
-                f"WHERE record_id IN ({int_id_list})"
-            )
-    conn.commit()
+    # Restore integrated rows to their original state.
+    # In naive partitioned mode we allow the duplicates to remain (pending copy
+    # alongside the original integrated row)
+    if not is_pt_naive:
+        int_id_list = ",".join(f"'int_{i}'" for i in range(100))
+        with conn.cursor() as cur:
+            if is_pt:
+                cur.execute(
+                    "UPDATE sync_buffer_pt SET is_integrated = TRUE, "
+                    "integration_datetime = '2025-01-01 00:00:00' "
+                    f"WHERE record_id IN ({int_id_list}) AND is_integrated = FALSE"
+                )
+            else:
+                cur.execute(
+                    "UPDATE sync_buffer SET integration_datetime = '2025-01-01 00:00:00' "
+                    f"WHERE record_id IN ({int_id_list})"
+                )
+        conn.commit()
 
     # 3. Query unintegrated (filtered)
     def query_filtered():
@@ -430,6 +458,8 @@ def bench_loop(conn, args):
         approaches.append("standard+partial")
     if args.partitioned:
         approaches.append("partitioned")
+    if args.partitioned_naive:
+        approaches.append("partitioned-naive")
     new_rows = make_new_rows(1000)
     all_results = []
 
@@ -439,7 +469,7 @@ def bench_loop(conn, args):
     # Create tables
     exec_sql(conn, SCHEMA_ENUM)
     exec_sql(conn, SCHEMA_STANDARD)
-    if args.partitioned:
+    if args.partitioned or args.partitioned_naive:
         exec_sql(conn, SCHEMA_PARTITIONED)
 
     test_points = []
@@ -472,7 +502,7 @@ def bench_loop(conn, args):
               file=sys.stderr, end="", flush=True)
 
         for approach in approaches:
-            is_pt = approach == "partitioned"
+            is_pt = approach in ("partitioned", "partitioned-naive")
             is_partial = approach == "standard+partial"
             table = "sync_buffer_pt" if is_pt else "sync_buffer"
 
@@ -512,7 +542,7 @@ def bench_loop(conn, args):
         print(file=sys.stderr)  # newline after approaches
 
     # Cleanup
-    if args.partitioned:
+    if args.partitioned or args.partitioned_naive:
         exec_sql(conn, "DROP TABLE IF EXISTS sync_buffer_pt CASCADE")
 
     return all_results
@@ -556,6 +586,9 @@ def main():
                         help="Also benchmark with a partial index on unintegrated rows")
     parser.add_argument("--partitioned", action="store_true",
                         help="Also benchmark native LIST partitioning")
+    parser.add_argument("--partitioned-naive", action="store_true",
+                        help="Also benchmark partitioning without the CTE "
+                             "delete (allows duplicate record_ids across partitions)")
     parser.add_argument("--csv", type=str, default="results.csv",
                         help="Write CSV to file (default: results.csv)")
     args = parser.parse_args()
