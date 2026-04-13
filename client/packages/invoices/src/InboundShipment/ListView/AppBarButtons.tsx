@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
@@ -11,7 +11,6 @@ import {
   useNavigate,
   RouteBuilder,
   useAuthContext,
-  useUrlQuery,
   useCallbackWithPermission,
   useNotification,
   usePreferences,
@@ -20,8 +19,8 @@ import {
   SplitButton,
 } from '@openmsupply-client/common';
 
-import { ExportSelector } from '@openmsupply-client/system';
 import {
+  ExportSelector,
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
@@ -188,7 +187,6 @@ export const AddButton = ({
   onNewShipmentExternal: () => void;
 }) => {
   const t = useTranslation();
-  const currentTab = useUrlQuery().urlQuery['tab'];
   const { useProcurementFunctionality } = usePreferences();
 
   const handleNewShipment = useCallbackWithPermission(
@@ -220,18 +218,6 @@ export const AddButton = ({
     SplitButtonOption<string>
   >(allOptions[0] ?? { value: '', label: '' });
 
-  useEffect(() => {
-    if (currentTab === t('label.external') && useProcurementFunctionality) {
-      const externalOption = allOptions.find(
-        o => o.value === 'new-external-shipment'
-      );
-      if (externalOption) setSelectedOption(externalOption);
-    } else {
-      const internalOption = allOptions.find(o => o.value === 'new-shipment');
-      if (internalOption) setSelectedOption(internalOption);
-    }
-  }, [currentTab, useProcurementFunctionality]);
-
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
       case 'new-shipment':
@@ -259,16 +245,14 @@ export const AddButton = ({
   }
 
   return (
-    <>
-      <SplitButton
-        color="primary"
-        options={allOptions}
-        selectedOption={selectedOption}
-        onSelectOption={onSelectOption}
-        onClick={handleOptionSelection}
-        openFrom="bottom"
-        Icon={<PlusCircleIcon />}
-      />
-    </>
+    <SplitButton
+      color="primary"
+      options={allOptions}
+      selectedOption={selectedOption}
+      onSelectOption={onSelectOption}
+      onClick={handleOptionSelection}
+      openFrom="bottom"
+      Icon={<PlusCircleIcon />}
+    />
   );
 };
