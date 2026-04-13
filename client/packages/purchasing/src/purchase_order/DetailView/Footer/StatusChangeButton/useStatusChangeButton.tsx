@@ -1,6 +1,4 @@
 import {
-  mapKeys,
-  mapValues,
   PurchaseOrderNodeStatus,
   useAuthContext,
   useConfirmationModal,
@@ -19,6 +17,7 @@ import {
   PurchaseOrderStatusOption,
 } from './utils';
 import { usePurchaseOrderLineErrorContext } from '../../../context';
+import { ItemCannotBeOrderedFragment } from '../../../api';
 
 export const useStatusChangeButton = () => {
   const t = useTranslation();
@@ -55,11 +54,21 @@ export const useStatusChangeButton = () => {
 
     switch (error?.__typename) {
       case 'ItemsCannotBeOrdered': {
-        const ids = mapValues(
-          mapKeys(lines?.nodes, line => line?.id),
-          'id'
-        );
-        const mappedErrors = mapKeys(error.lines, line => ids[line.line.id]);
+        const ids = (lines?.nodes || []).reduce<Record<string, string>>((acc, line) => {
+          if (line?.id) {
+            acc[line.id] = line.id;
+          }
+          return acc;
+        }, {});
+        const mappedErrors = error.lines.reduce<{
+          [purchaseOrderLineId: string]: ItemCannotBeOrderedFragment | undefined;
+        }>((acc, errorLine) => {
+          const lineId = ids[errorLine.line.id];
+          if (lineId) {
+            acc[lineId] = errorLine;
+          }
+          return acc;
+        }, {});
         errorsContext.setErrors(mappedErrors);
         return t('error.cannot-order-items');
       }

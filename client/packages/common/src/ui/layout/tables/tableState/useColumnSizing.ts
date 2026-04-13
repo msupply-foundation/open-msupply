@@ -32,7 +32,7 @@ export const useColumnSizing = (tableId: string) => {
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnSizingChange']>
   >(
     updaterOrValue =>
-      setState(prev => {
+      setState((prev: MRT_ColumnSizingState) => {
         const newColumnSizing =
           typeof updaterOrValue === 'function'
             ? updaterOrValue(prev)

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from '@openmsupply-client/common';
-import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_RowData } from '../mrtCompat';
 
 export const TextWithTooltipCell = <T extends MRT_RowData>({
   cell,

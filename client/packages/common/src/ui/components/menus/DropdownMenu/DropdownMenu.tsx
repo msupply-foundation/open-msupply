@@ -78,7 +78,6 @@ interface DropdownMenuProps {
 }
 
 // Styled doesn't like `sx` prop being passed to it.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
   label,
   children,

@@ -256,7 +256,7 @@ const useFilteredItems = (
       customErrors.remove(path);
       return;
     }
-    const mapping = options.fieldFilter.mapping[conditionField] ?? [];
+    const mapping = options.fieldFilter.mapping[conditionField as string] ?? [];
     const filtered = allItems.filter(item => mapping.includes(item));
     if (
       currentSelection !== undefined &&

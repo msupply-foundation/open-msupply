@@ -8,7 +8,7 @@ import {
   UNDEFINED_STRING_VALUE,
   AlertIcon,
 } from '@openmsupply-client/common';
-import type { MRT_Cell, MRT_Row, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_Row, MRT_RowData } from '../mrtCompat';
 
 interface ItemData {
   doses?: number;

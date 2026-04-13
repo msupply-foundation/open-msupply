@@ -27,20 +27,20 @@ async function dismissDialogs(page: Page) {
 }
 
 test.describe('Translation Import/Export', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: Page }) => {
     await login(page);
     await navigateToPreferences(page);
     await dismissDialogs(page);
   });
 
-  test('capture global preferences page', async ({ page }) => {
+  test('capture global preferences page', async ({ page }: { page: Page }) => {
     await page.screenshot({
       path: path.join(screenshotDir, '01-global-preferences-initial.png'),
       fullPage: true,
     });
   });
 
-  test('capture translations editor interface', async ({ page }) => {
+  test('capture translations editor interface', async ({ page }: { page: Page }) => {
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible();
     await editButton.click({ force: true });
@@ -60,7 +60,7 @@ test.describe('Translation Import/Export', () => {
     }
   });
 
-  test('capture upload dialog and results', async ({ page }) => {
+  test('capture upload dialog and results', async ({ page }: { page: Page }) => {
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible();
     await editButton.click({ force: true });
@@ -99,7 +99,7 @@ test.describe('Translation Import/Export', () => {
     });
   });
 
-  test('capture delete translation', async ({ page }) => {
+  test('capture delete translation', async ({ page }: { page: Page }) => {
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible();
     await editButton.click({ force: true });
@@ -125,7 +125,7 @@ test.describe('Translation Import/Export', () => {
     }
   });
 
-  test('capture delete all confirmation', async ({ page }) => {
+  test('capture delete all confirmation', async ({ page }: { page: Page }) => {
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible();
     await editButton.click({ force: true });

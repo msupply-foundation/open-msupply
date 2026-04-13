@@ -1,5 +1,5 @@
 import { useCallback, useContext, useState } from 'react';
-import { EnvUtils, Formatter, noOtherVariants } from '@common/utils';
+import { EnvUtils, Formatter } from '@common/utils';
 import { LanguageTypeNode } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
 import {

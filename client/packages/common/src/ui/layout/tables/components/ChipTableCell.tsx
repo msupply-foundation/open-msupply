@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Chip } from '@openmsupply-client/common';
-import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_RowData } from '../mrtCompat';
 
 interface ChipTableCellProps<T extends MRT_RowData> {
   cell: MRT_Cell<T>;
@@ -26,7 +26,7 @@ export const ChipTableCell = <T extends MRT_RowData>({
         gap: 0.5,
       }}
     >
-      {items.map((item, index) => (
+      {items.map((item: string, index: number) => (
         <Chip
           key={index}
           label={item}

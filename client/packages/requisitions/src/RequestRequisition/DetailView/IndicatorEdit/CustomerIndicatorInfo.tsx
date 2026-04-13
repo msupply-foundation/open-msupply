@@ -51,9 +51,6 @@ export const CustomerIndicatorInfoView = ({
     columns: columnsDefs,
     data: customerInfos,
     enableBottomToolbar: false,
-    initialState: {
-      density: 'comfortable',
-    },
   });
 
   return (

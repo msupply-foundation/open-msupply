@@ -95,13 +95,14 @@ export const VaccineCardTable = ({
           sx: {
             fontWeight: 'bold',
             paddingLeft: 2,
-            ...(isAgeSameAsNextRow(row.original)
+            ...(isAgeSameAsNextRow(
+              (row as { original: VaccinationCardItemFragment }).original
+            )
               ? { borderBottom: 'none' }
               : {}),
           },
         }),
         enableHiding: false,
-        enableColumnOrdering: false,
       },
       {
         accessorKey: 'label',
@@ -176,17 +177,6 @@ export const VaccineCardTable = ({
     onRowClick: row => {
       if (canClickRow(isEncounter, row, data?.items)) openModal(row);
     },
-    muiTableBodyRowProps: ({ row }) => ({
-      sx: {
-        cursor: canClickRow(isEncounter, row.original, data?.items)
-          ? 'pointer'
-          : 'default',
-        backgroundColor:
-          row.original.status === VaccinationCardItemNodeStatus.Given
-            ? theme.palette.background.success
-            : undefined,
-      },
-    }),
     noDataElement: <NothingHere body={t('error.no-items')} />,
   });
 

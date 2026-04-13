@@ -131,7 +131,7 @@ const compressionPlugin: Plugin = {
     server.middlewares.use(
       (req: IncomingMessage, res: ServerResponse, next: () => void) => {
         const ae = (req.headers['accept-encoding'] ?? '') as string;
-        const urlPath = (req.url ?? '/').split('?')[0];
+        const urlPath = (req.url ?? '/').split('?')[0]!;
         const ext = path.extname(urlPath);
         if (!mime[ext as keyof typeof mime]) return next();
         const contentType = mime[ext as keyof typeof mime] as string;
@@ -247,7 +247,7 @@ const serveLocalesPlugin: Plugin = {
     server.middlewares.use(
       '/locales',
       (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-        const urlPath = (req.url ?? '/').split('?')[0];
+        const urlPath = (req.url ?? '/').split('?')[0]!;
         const filePath = path.join(localesSourceDir, urlPath);
         try {
           const stat = fs.statSync(filePath);

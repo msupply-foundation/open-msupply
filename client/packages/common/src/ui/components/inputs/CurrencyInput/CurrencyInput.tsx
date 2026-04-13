@@ -49,8 +49,8 @@ const parseRawValue = (
   suffix: string
 ): string => {
   let raw = displayValue;
-  if (prefix) raw = raw.replaceAll(prefix, '');
-  if (suffix) raw = raw.replaceAll(suffix, '');
+  if (prefix) raw = raw.split(prefix).join('');
+  if (suffix) raw = raw.split(prefix).join('');
   if (groupSep) raw = raw.split(groupSep).join('');
   // Normalise decimal separator to '.'
   if (decimalSep !== '.') raw = raw.replace(decimalSep, '.');

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_RowData } from '../mrtCompat';
 import { Checkbox } from '@common/components';
 
 export const CheckBoxCell = <T extends MRT_RowData>({

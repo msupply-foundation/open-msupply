@@ -51,7 +51,7 @@ export const useGetColumnTypeDefaults = () => {
           },
           align: 'right',
           filterVariant: 'date-range',
-          muiFilterDatePickerProps: ({ column, rangeFilterIndex }) => {
+          muiFilterDatePickerProps: ({ column, rangeFilterIndex }: { column: any; rangeFilterIndex: number }) => {
             const [start, end] =
               (column.getFilterValue() as [
                 Date | undefined,
@@ -86,7 +86,7 @@ export const useGetColumnTypeDefaults = () => {
           },
           align: 'right',
           filterVariant: 'datetime-range',
-          muiFilterDateTimePickerProps: ({ column, rangeFilterIndex }) => {
+          muiFilterDateTimePickerProps: ({ column, rangeFilterIndex }: { column: any; rangeFilterIndex: number }) => {
             const [start, end] =
               (column.getFilterValue() as [
                 Date | undefined,
@@ -137,7 +137,7 @@ export const useGetColumnTypeDefaults = () => {
           enableSorting: false,
           enableColumnFilter: false,
           enableResizing: false,
-          enableColumnActions: false,
+          // enableColumnActions: false, // Not a valid property
           // Comment popover is pretty narrow, show icon rather than full label
           Header: () => (
             <Tooltip title={t('label.comment')} placement="top">
@@ -145,7 +145,7 @@ export const useGetColumnTypeDefaults = () => {
             </Tooltip>
           ),
           Cell: ({ cell, row }) => {
-            if ('subRows' in row.original) {
+            if (row.original && typeof row.original === 'object' && 'subRows' in row.original) {
               // Don't show comment icon for grouped rows
               return null;
             }

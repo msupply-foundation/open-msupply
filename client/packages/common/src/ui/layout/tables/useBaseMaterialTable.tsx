@@ -14,6 +14,7 @@ import {
   PaginationState,
   RowSelectionState,
   Table,
+  RowModel,
 } from '@tanstack/react-table';
 import { Checkbox } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -74,6 +75,7 @@ export interface BaseTableConfig<T extends MRT_RowData> {
   // @tanstack pass-through options
   state?: Partial<TableState>;
   enableRowSelection?: boolean | ((row: Row<T>) => boolean);
+  enableMultiRowSelection?: boolean;
   enableColumnResizing?: boolean;
   manualFiltering?: boolean;
   manualPagination?: boolean;
@@ -83,6 +85,7 @@ export interface BaseTableConfig<T extends MRT_RowData> {
   onPaginationChange?: OnChangeFn<PaginationState>;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
   filterFromLeafRows?: boolean;
+  getRowId?: (row: T, index: number, parent?: Row<T>) => string;
 
   // DataTable display flags (stored in meta)
   enableBottomToolbar?: boolean;
@@ -116,11 +119,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   noDataElement,
   isMobile,
   enableRowSelection = true,
+  enableMultiRowSelection,
   enableBottomToolbar = false,
   enableTopToolbar = true,
   enableSorting = true,
   enableVirtualization = false,
-  enablePagination = false,
+  enablePagination: _enablePagination = false,
   renderBottomToolbar,
   renderBottomToolbarCustomActions,
   bottomToolbarContent,
@@ -131,6 +135,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   onPaginationChange,
   onRowSelectionChange,
   filterFromLeafRows = true,
+  getRowId,
 }: BaseTableConfig<T>) => {
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
@@ -156,7 +161,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const columnOrder = useColumnOrder(
     tableId,
     columns,
-    enableRowSelection,
+    enableRowSelection as boolean | ((row: unknown) => boolean) | undefined,
     !!grouping.state.length
   );
 
@@ -383,8 +388,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     getSortedRowModel: _getSortedRowModel,
     getFilteredRowModel: _getFilteredRowModel,
     getGroupedRowModel: _getGroupedRowModel,
-    getFacetedRowModel: _getFacetedRowModel,
-    getFacetedUniqueValues: _getFacetedUniqueValues,
+    getFacetedRowModel: _getFacetedRowModel as (table: Table<T>, columnId: string) => () => RowModel<T>,
+    getFacetedUniqueValues: _getFacetedUniqueValues as (table: Table<T>, columnId: string) => () => Map<any, number>,
 
     getRowCanExpand: row => row.getLeafRows().length > 1,
     getExpandedRowModel: expandedRowModel,
@@ -394,6 +399,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     enableColumnPinning: true,
     enableSorting,
     enableRowSelection: !!enableRowSelection,
+    enableMultiRowSelection,
     groupedColumnMode: false,
     filterFromLeafRows,
     manualFiltering,
@@ -401,6 +407,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     manualPagination,
     autoResetPageIndex,
     rowCount,
+    getRowId,
 
     initialState: {
       columnSizing: columnSizing.initial,

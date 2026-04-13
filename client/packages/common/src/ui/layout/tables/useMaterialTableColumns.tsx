@@ -11,6 +11,7 @@ import type {
   MRT_Row,
   MRT_TableInstance,
 } from './mrtCompat';
+import type { CellContext } from '@tanstack/react-table';
 import {
   defaultAggregationFn,
   mergeCellProps,
@@ -40,7 +41,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         // Add alignment styling
         const alignment = col.align ?? columnDefaults.align;
         if (alignment) {
-          col.muiTableBodyCellProps = params => {
+          col.muiTableBodyCellProps = (params: any) => {
             return mergeCellProps(
               {
                 sx:
@@ -68,23 +69,27 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         // Merge any custom cell props with defaults
         const cellProps = col.muiTableBodyCellProps;
         if (cellProps) {
-          col.muiTableBodyCellProps = params => {
-            return mergeCellProps(cellProps, params);
+          col.muiTableBodyCellProps = (params: any) => {
+            return mergeCellProps(cellProps as any, params);
           };
         }
 
         // Default aggregation cell that shows '[multiple]' if there are multiple values, otherwise renders as normal cell
         const DefaultAggregationCell = (props: {
           cell: MRT_Cell<T, unknown>;
-          column: MRT_Column<T, unknown>;
+          column: MRT_Column<T>;
           row: MRT_Row<T>;
           table: MRT_TableInstance<T>;
           staticColumnIndex?: number;
           staticRowIndex?: number;
         }) => {
-          const cellProps = {
-            renderedCellValue: props.cell.renderValue()?.toString(),
-            ...props,
+          const cellContext = {
+            cell: props.cell,
+            column: props.column,
+            row: props.row,
+            table: props.table,
+            getValue: () => props.cell.getValue(),
+            renderValue: () => props.cell.renderValue(),
           };
           return (
             <>
@@ -99,7 +104,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
                     columnDefaults.Cell ??
                     // fallback to rendering the cell value as a string
                     (({ cell }) => cell.renderValue()?.toString() ?? '')
-                  )(cellProps)}
+                  )(cellContext as CellContext<T, unknown>)}
             </>
           );
         };
@@ -131,15 +136,25 @@ const ColumnHeaderWithTooltip = <T extends MRT_RowData>({
   column,
 }: {
   column: MRT_Column<T>;
-}) => (
-  <Tooltip title={column.columnDef.header} placement="top">
+}) => {
+  const header = column.columnDef.header;
+  const headerText = typeof header === 'string' ? header : '';
+  const content = (
     <div
       style={{
         overflow: 'hidden',
         textOverflow: 'ellipsis',
       }}
     >
-      {column.columnDef.header}
+      {headerText}
     </div>
-  </Tooltip>
-);
+  );
+
+  return typeof header === 'string' ? (
+    <Tooltip title={headerText} placement="top">
+      {content}
+    </Tooltip>
+  ) : (
+    content
+  );
+};

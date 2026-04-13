@@ -26,7 +26,7 @@ export const useOutboundColumns = () => {
         pin: 'left',
         enableColumnFilter: true,
         enableSorting: true,
-        Footer: t('label.total'),
+        footer: () => t('label.total'),
       },
       {
         accessorKey: 'itemName',
@@ -154,7 +154,7 @@ export const useOutboundColumns = () => {
         accessorFn: row =>
           (row.stockLine?.volumePerPack ?? 0) * row.numberOfPacks,
         aggregationFn: 'sum',
-        Footer: ({ table }) => {
+        footer: ({ table }) => {
           const totalVolume = table
             .getFilteredRowModel()
             .flatRows.reduce((sum, row) => {

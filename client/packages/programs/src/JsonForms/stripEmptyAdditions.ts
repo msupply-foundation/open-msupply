@@ -99,7 +99,7 @@ const isEqualIgnoreUndefined = (
   a: JsonData | undefined,
   b: JsonData | undefined
 ) => {
-  const comparisonFunc = (a: JsonData | undefined, b: JsonData | undefined) => {
+  const comparisonFunc = (a: unknown, b: unknown): boolean | undefined => {
     if (isArray(a) || isArray(b)) return;
     if (!isObject(a) || !isObject(b)) return;
 

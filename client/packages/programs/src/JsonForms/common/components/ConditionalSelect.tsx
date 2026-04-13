@@ -54,8 +54,9 @@ const UIComponent = (props: ControlProps) => {
     schemaOptions?.conditionField ?? ''
   );
   useEffect(() => {
+    const conditionFieldStr = typeof conditionField === 'string' ? conditionField : '';
     const currentOptions =
-      schemaOptions?.conditionalValues[conditionField]?.map(it => ({
+      schemaOptions?.conditionalValues[conditionFieldStr]?.map((it: string) => ({
         label: it,
       })) ?? [];
     setOptions(currentOptions);

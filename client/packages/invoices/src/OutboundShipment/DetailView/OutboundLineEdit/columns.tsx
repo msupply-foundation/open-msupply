@@ -84,7 +84,7 @@ export const useOutboundLineEditColumns = ({
       {
         id: 'canAllocate',
         header: t('description.used-in-auto-allocation'),
-        Header: <></>,
+        Header: () => <></>,
         size: 30,
         defaultHideOnMobile: true,
         accessorFn: row => canAutoAllocate(row, expiryThresholdDays, packSize),

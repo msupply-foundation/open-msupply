@@ -52,7 +52,7 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
           ),
         enableColumnFilter: true,
         enableSorting: true,
-        Footer: t('label.total'),
+        footer: () => t('label.total'),
       },
       {
         accessorKey: 'item.name',
@@ -120,7 +120,7 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
           const packSize = row.requestedPackSize || 1;
           return (row.pricePerPackAfterDiscount ?? 0) * (units / packSize);
         },
-        Footer: ({ table }) => {
+        footer: ({ table }) => {
           const total = table.getFilteredRowModel().rows.reduce((sum, row) => {
             const { original } = row;
             const units =

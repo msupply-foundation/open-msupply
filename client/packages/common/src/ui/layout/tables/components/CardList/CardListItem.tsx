@@ -34,10 +34,14 @@ const isSummaryCell = <T extends MRT_RowData>(
 
 const getCellContent = <T extends MRT_RowData>(
   cell: MRT_Cell<T, unknown>
-): React.ReactNode =>
-  cell.column.columnDef.Cell
-    ? flexRender(cell.column.columnDef.Cell, cell.getContext())
+): React.ReactNode => {
+  const def = colDef(cell);
+  // Try uppercase 'Cell' first (MRT compatibility), then lowercase 'cell' (TanStack convention)
+  const cellRenderer = (def as any).Cell ?? def.cell;
+  return cellRenderer
+    ? flexRender(cellRenderer, cell.getContext())
     : cell.renderValue<React.ReactNode>();
+};
 
 const getSummaryContent = <T extends MRT_RowData>(
   cell: MRT_Cell<T, unknown>
@@ -158,7 +162,9 @@ export const CardListItem = <T extends MRT_RowData>({
                 py={0.5}
               >
                 <Typography color="text.secondary">
-                  {flexRender(cell.column.columnDef.header, cell.getContext())}
+                  {typeof cell.column.columnDef.header === 'string'
+                    ? cell.column.columnDef.header
+                    : ''}
                 </Typography>
                 <Box
                   sx={{
@@ -177,10 +183,9 @@ export const CardListItem = <T extends MRT_RowData>({
                 {dataCells.map(cell => (
                   <CardListField
                     key={cell.id}
-                    label={flexRender(
-                      cell.column.columnDef.header,
-                      cell.getContext()
-                    )}
+                    label={typeof cell.column.columnDef.header === 'string'
+                      ? cell.column.columnDef.header
+                      : ''}
                     span={colDef(cell).cardSpan}
                   >
                     {getCellContent(cell)}
@@ -196,10 +201,9 @@ export const CardListItem = <T extends MRT_RowData>({
                   {groupCells.map(cell => (
                     <CardListField
                       key={cell.id}
-                      label={flexRender(
-                        cell.column.columnDef.header,
-                        cell.getContext()
-                      )}
+                      label={typeof cell.column.columnDef.header === 'string'
+                        ? cell.column.columnDef.header
+                        : ''}
                       span={colDef(cell).cardSpan}
                     >
                       {getCellContent(cell)}

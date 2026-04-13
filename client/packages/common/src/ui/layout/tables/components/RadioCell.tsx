@@ -1,5 +1,5 @@
 import React from 'react';
-import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_RowData } from '../mrtCompat';
 import { Radio, Box } from '@openmsupply-client/common';
 
 export const MRTRadioCell = <T extends MRT_RowData>({

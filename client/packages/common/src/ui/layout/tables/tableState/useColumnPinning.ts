@@ -15,7 +15,7 @@ export const useColumnPinning = <T extends MRT_RowData>(
   const globalDefaults = useGlobalTableDefaults(tableId);
   const initial = useMemo(() => {
     const columnId = (column: ColumnDef<T>): string =>
-      column.id ?? column.accessorKey ?? '';
+      column.id ?? (column as any).accessorKey ?? '';
 
     return {
       left: [
@@ -37,7 +37,7 @@ export const useColumnPinning = <T extends MRT_RowData>(
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnPinningChange']>
   >(
     updaterOrValue =>
-      setState(prev => {
+      setState((prev: MRT_ColumnPinningState) => {
         const newColumnPinning =
           typeof updaterOrValue === 'function'
             ? updaterOrValue(prev)

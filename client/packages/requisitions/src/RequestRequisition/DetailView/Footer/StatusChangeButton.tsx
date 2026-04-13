@@ -13,8 +13,6 @@ import {
   useDisabledNotificationToast,
   UNDEFINED_STRING_VALUE,
   noOtherVariants,
-  mapKeys,
-  mapValues,
 } from '@openmsupply-client/common';
 import {
   getNextRequisitionStatus,
@@ -23,6 +21,7 @@ import {
 } from '../../../utils';
 import { useRequest } from '../../api';
 import { useRequestRequisitionLineErrorContext } from '../../context';
+import { RequisitionReasonNotProvidedErrorFragment } from '../../api';
 
 const getStatusOptions = (
   currentStatus: RequisitionNodeStatus,
@@ -130,14 +129,21 @@ const useStatusChangeButton = () => {
 
     switch (error.__typename) {
       case 'RequisitionReasonsNotProvided': {
-        const ids = mapValues(
-          mapKeys(lines.nodes, line => line?.id),
-          'id'
-        );
-        const mappedErrors = mapKeys(
-          error.errors,
-          line => ids[line.requisitionLine.id]
-        );
+        const ids = lines.nodes.reduce<Record<string, string>>((acc, line) => {
+          if (line?.id) {
+            acc[line.id] = line.id;
+          }
+          return acc;
+        }, {});
+        const mappedErrors = error.errors.reduce<{
+          [RequestRequisitionLineId: string]: RequisitionReasonNotProvidedErrorFragment | undefined;
+        }>((acc, errorLine) => {
+          const lineId = ids[errorLine.requisitionLine.id];
+          if (lineId) {
+            acc[lineId] = errorLine;
+          }
+          return acc;
+        }, {});
         errorsContext.setErrors(mappedErrors);
         return t('error.reasons-not-provided-program-requisition');
       }

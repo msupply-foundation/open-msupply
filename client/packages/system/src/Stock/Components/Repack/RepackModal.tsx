@@ -151,7 +151,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     noDataElement: (
       <NothingHere body={t('messages.no-repacks')} onCreate={newRepack} />
     ),
-    muiTableContainerProps: { sx: { maxHeight: 300 } },
   });
 
   return (

@@ -7,8 +7,6 @@ import {
   SplitButtonOption,
   useConfirmationModal,
   RequisitionNodeStatus,
-  mapKeys,
-  mapValues,
   noOtherVariants,
   PlusCircleIcon,
 } from '@openmsupply-client/common';
@@ -18,7 +16,10 @@ import {
   responseStatuses,
 } from '../../../utils';
 import { ResponseFragment, useResponse } from '../../api';
-import { useResponseRequisitionLineErrorContext } from '../../context';
+import {
+  useResponseRequisitionLineErrorContext,
+  ResponseRequisitionLineError,
+} from '../../context';
 import { useCreateShipment } from './useCreateShipment';
 
 const getStatusOptions = (
@@ -130,14 +131,21 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
 
     switch (error.__typename) {
       case 'RequisitionReasonsNotProvided': {
-        const ids = mapValues(
-          mapKeys(lines.nodes, line => line?.id),
-          'id'
-        );
-        const mappedErrors = mapKeys(
-          error.errors,
-          line => ids[line.requisitionLine.id]
-        );
+        const ids = lines.nodes.reduce<Record<string, string>>((acc, line) => {
+          if (line?.id) {
+            acc[line.id] = line.id;
+          }
+          return acc;
+        }, {});
+        const mappedErrors = error.errors.reduce<{
+          [ResponseRequisitionLineId: string]: ResponseRequisitionLineError | undefined;
+        }>((acc, errorLine) => {
+          const lineId = ids[errorLine.requisitionLine.id];
+          if (lineId) {
+            acc[lineId] = errorLine;
+          }
+          return acc;
+        }, {});
         errorsContext.setErrors(mappedErrors);
         return t('error.reasons-not-provided-program-requisition');
       }

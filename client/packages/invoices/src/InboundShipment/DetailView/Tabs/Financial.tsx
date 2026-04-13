@@ -42,7 +42,7 @@ export const FinancialTab = () => {
       {
         accessorKey: 'item.name',
         header: t('label.name'),
-        Footer: t('label.total'),
+        footer: () => t('label.total'),
       },
       {
         accessorKey: 'purchaseOrderLine.lineNumber',
@@ -108,7 +108,7 @@ export const FinancialTab = () => {
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={poCurrencyCode} />
         ),
-        Footer: ({ table }) => {
+        footer: ({ table }) => {
           const total = table
             .getFilteredRowModel()
             .rows.reduce(
@@ -141,7 +141,7 @@ export const FinancialTab = () => {
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
         ),
-        Footer: ({ table }) => {
+        footer: ({ table }) => {
           const total = table
             .getFilteredRowModel()
             .rows.reduce(
@@ -170,7 +170,7 @@ export const FinancialTab = () => {
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
         ),
-        Footer: ({ table }) => {
+        footer: ({ table }) => {
           const total = table
             .getFilteredRowModel()
             .rows.reduce(

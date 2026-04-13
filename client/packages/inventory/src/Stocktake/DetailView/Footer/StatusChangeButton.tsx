@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { keyBy, mapKeys, mapValues } from '@common/utils';
 import {
   ArrowRightIcon,
   useTranslation,
@@ -14,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { getNextStocktakeStatus, getStatusTranslation } from '../../../utils';
 import { useStocktakeOld } from '../../api';
-import { useStocktakeLineErrorContext } from '../../context';
+import { useStocktakeLineErrorContext, StocktakeLineError } from '../../context';
 
 const getStatusOptions = (
   getButtonLabel: (status: StocktakeNodeStatus) => string
@@ -99,28 +98,37 @@ const useStatusChangeButton = () => {
         // we want to match StocktakeLine ids for those errors
 
         // ids = { stockLineId: stocktakeLineId }
-        const ids = mapValues(
-          mapKeys(lines.nodes, line => line.stockLine?.id),
-          'id'
-        );
-        // mappedErrors = { stockLineId: StockLineReducedBelowZero }
-        const mappedErrors = mapKeys(
-          error.errors,
-          line => ids[line.stockLine.id]
-        );
+        const ids = lines.nodes.reduce<Record<string, string>>((acc, line) => {
+          const stockLineId = line.stockLine?.id;
+          if (stockLineId) {
+            acc[stockLineId] = line.id;
+          }
+          return acc;
+        }, {});
+        // mappedErrors = { stocktakeLineId: StockLineReducedBelowZero }
+        const mappedErrors = error.errors.reduce<Record<string, StocktakeLineError>>((acc, errorLine) => {
+          const stocktakeLineId = ids[errorLine.stockLine.id];
+          if (stocktakeLineId) {
+            acc[stocktakeLineId] = errorLine;
+          }
+          return acc;
+        }, {});
 
         errorsContext.setErrors(mappedErrors);
         return t('error.stocktake-has-stock-reduced-below-zero');
 
       case 'SnapshotCountCurrentCountMismatch':
-        const lineId = mapValues(
-          keyBy(lines.nodes, lines => lines.id),
-          'id'
-        );
-        const mappedE = mapKeys(
-          error.lines,
-          line => lineId[line.stocktakeLine.id]
-        );
+        const lineId = lines.nodes.reduce<Record<string, string>>((acc, line) => {
+          acc[line.id] = line.id;
+          return acc;
+        }, {});
+        const mappedE = error.lines.reduce<Record<string, StocktakeLineError>>((acc, line) => {
+          const stocktakeLineId = lineId[line.stocktakeLine.id];
+          if (stocktakeLineId) {
+            acc[stocktakeLineId] = line as StocktakeLineError;
+          }
+          return acc;
+        }, {});
         errorsContext.setErrors(mappedE);
 
         return t('error.stocktake-snapshot-total-mismatch');

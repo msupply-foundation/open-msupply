@@ -16,7 +16,6 @@ const config: CapacitorConfig = {
   // This is only needed for `npx cap copy` to work, and it does have to point to actual bundle
   // bundle is server by remote server (local or discovered) or through webpack if debugging (see comment below)
   webDir: '../host/dist/',
-  bundledWebRuntime: false,
   android: {
     path: './',
     // Required to access discovery graphql on http

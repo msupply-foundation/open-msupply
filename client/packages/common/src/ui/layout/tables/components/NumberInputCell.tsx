@@ -5,7 +5,7 @@ import {
   useBufferState,
   NumericTextInputProps,
 } from '@openmsupply-client/common';
-import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_RowData } from '../mrtCompat';
 
 interface NumberInputCellProps<T extends MRT_RowData>
   extends NumericTextInputProps {

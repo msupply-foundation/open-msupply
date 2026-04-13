@@ -57,7 +57,7 @@ const UIComponent = (props: ControlProps) => {
   const { core } = useJsonForms();
 
   const prescriptionIdPath = options?.prescriptionIdPath;
-  const prescriptionId = extractProperty(core?.data, prescriptionIdPath ?? '');
+  const prescriptionId = extractProperty<string | undefined>(core?.data, prescriptionIdPath ?? '');
   const {
     query: {
       data: prescription,

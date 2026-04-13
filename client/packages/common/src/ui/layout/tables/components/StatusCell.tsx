@@ -1,5 +1,5 @@
 import React from 'react';
-import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_RowData } from '../mrtCompat';
 import { StatusChip } from '@openmsupply-client/common';
 
 export const StatusCell = <T extends MRT_RowData>({

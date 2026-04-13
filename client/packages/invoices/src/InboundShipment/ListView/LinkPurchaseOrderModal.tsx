@@ -72,15 +72,8 @@ export const LinkPurchaseOrderModal = ({
       columns,
       data: data?.nodes,
       enableMultiRowSelection: false,
-      enableColumnFilters: true,
       noUrlFiltering: true,
-      getRowId: row => row.id,
-      muiTableBodyRowProps: ({ row }) => ({
-        // add onClick to row to select upon clicking anywhere in the row
-        onClick: row.getToggleSelectedHandler(),
-        sx: { cursor: 'pointer' },
-      }),
-      state: { showColumnFilters: true },
+      getRowId: (row: InboundShipmentPurchaseOrderLineFragment) => row.id,
       isLoading,
       isError,
     });

@@ -46,7 +46,6 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         slotProps={merge(
           {
             input: {
-              color: 'secondary',
               sx: {
                 backgroundColor: props.disabled
                   ? 'background.input.disabled'
@@ -56,10 +55,10 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
               },
             },
             inputLabel: {
-              color: 'secondary',
+              color: 'secondary' as const,
             },
-          },
-          slotProps
+          } as const,
+          slotProps as Record<string, any> | undefined
         )}
         {...props}
       >

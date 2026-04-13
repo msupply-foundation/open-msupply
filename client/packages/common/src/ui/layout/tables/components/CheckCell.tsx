@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip, Typography } from '@mui/material';
-import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_RowData } from '../mrtCompat';
 
 export const CheckCell = <T extends MRT_RowData>({
   cell,

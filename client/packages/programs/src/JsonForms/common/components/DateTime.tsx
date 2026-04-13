@@ -52,10 +52,10 @@ const UIComponent = (props: ControlProps) => {
   const dateOnly = options?.dateOnly ?? false;
   const inputFormat = !dateOnly ? 'P p' : 'P';
   const max = options?.max
-    ? extractProperty(core?.data, options.max.split('/').pop() ?? '')
+    ? extractProperty<string | null>(core?.data, options.max.split('/').pop() ?? '')
     : undefined;
   const min = options?.min
-    ? extractProperty(core?.data, options.min.split('/').pop() ?? '')
+    ? extractProperty<string | null>(core?.data, options.min.split('/').pop() ?? '')
     : undefined;
 
   const onChange = (e: Date | null) => {

@@ -316,8 +316,8 @@ export const NumericTextInput = React.forwardRef<
                     : 'background.input.main',
                 },
               },
-            },
-            slotProps
+            } as const,
+            slotProps as Record<string, any>
           )}
           onChange={e => {
             if (!isDirty) setIsDirty(true);

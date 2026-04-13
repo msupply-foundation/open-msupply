@@ -54,6 +54,8 @@ export const CardList = <T extends MRT_RowData>({
     if (
       scrollToRowId &&
       row.original &&
+      typeof row.original === 'object' &&
+      row.original !== null &&
       'id' in row.original &&
       (row.original as Record<string, unknown>)['id'] === scrollToRowId
     ) {

@@ -82,7 +82,7 @@ export const useIndicatorsDemographicsColumns = ({
           header: `${t('label.year')} ${yearOffset}`,
           columnType: ColumnType.Number,
           Header: ({ column }) => <Box display="flex" flexDirection="row" alignItems="center" gap={2}>
-            {column.columnDef.header}
+            {column.columnDef.header as React.ReactNode}
             <NumericTextInput
               value={headerDraft ? headerDraft[yearOffset].value : 0}
               min={0}

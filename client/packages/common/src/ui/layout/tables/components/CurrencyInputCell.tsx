@@ -1,7 +1,7 @@
 import React from 'react';
 import { CurrencyInput } from '@common/components';
 import { Currencies } from '@common/intl';
-import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_RowData } from '../mrtCompat';
 
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 const noop = () => {};

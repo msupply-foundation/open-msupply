@@ -379,7 +379,7 @@ function createTestLine({
           __typename: 'VvmstatusNode',
           description: 'status meaning...',
           id: 'vvmStatusId' + id,
-          level: 1,
+          priority: 1,
           unusable: false,
           ...vvmStatus,
         }

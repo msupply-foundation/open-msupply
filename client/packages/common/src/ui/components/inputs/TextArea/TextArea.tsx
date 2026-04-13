@@ -21,7 +21,7 @@ export const TextArea: FC<StandardTextFieldProps> = ({
             backgroundColor: 'background.white',
           },
         },
-        slotProps?.input
+        slotProps?.input as Record<string, any>
       ),
     }}
     multiline

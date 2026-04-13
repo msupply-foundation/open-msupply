@@ -49,6 +49,8 @@ const createTestLine = ({
         name: '',
         unitName: '',
         __typename: 'ItemNode',
+        isVaccine: false,
+        doses: 0,
         itemDirections: [
           {
             __typename: 'ItemDirectionNode',
@@ -86,10 +88,13 @@ const createTestLine = ({
         costPricePerPack: 0,
         itemId,
         packSize,
+        volumePerPack: 0,
         item: {
           code: '',
           name: '',
           __typename: 'ItemNode',
+          isVaccine: false,
+          doses: 0,
           itemDirections: [
             {
               __typename: 'ItemDirectionNode',

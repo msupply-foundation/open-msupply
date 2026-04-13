@@ -22,7 +22,7 @@ export const useColumnVisibility = <T extends MRT_RowData>(
       simplifiedMobileView || isMobile
         ? columns
             .filter(col => col.defaultHideOnMobile)
-            .map(c => c.id ?? c.accessorKey ?? '')
+            .map(c => c.id ?? (c as any).accessorKey ?? '')
         : [];
 
     return Object.fromEntries(
@@ -47,7 +47,7 @@ export const useColumnVisibility = <T extends MRT_RowData>(
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnVisibilityChange']>
   >(
     updaterOrValue =>
-      setState(prev => {
+      setState((prev: MRT_VisibilityState) => {
         const newColumnVisibility =
           typeof updaterOrValue === 'function'
             ? updaterOrValue(prev)

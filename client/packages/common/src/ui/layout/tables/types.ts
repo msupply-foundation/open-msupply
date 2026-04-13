@@ -24,6 +24,8 @@ export type { RowData, MRT_DensityState };
  *  - filterVariant so useTableFiltering can recognise date/range columns.
  */
 export type ColumnDef<T extends RowData> = TanstackColumnDef<T, unknown> & {
+  /** Column accessor key for TanStack Table */
+  accessorKey?: string;
   /** Short explanation of the column. Displayed in the column menu */
   description?: string;
 
@@ -50,6 +52,9 @@ export type ColumnDef<T extends RowData> = TanstackColumnDef<T, unknown> & {
   /** For date filters, specifies whether to update URL with full datetime or
    * just a (naive) date. Defaults to date-time */
   dateFilterFormat?: 'date' | 'date-time';
+
+  /** Options for select filters */
+  filterSelectOptions?: Array<{ label: string; value: string }>;
 
   /** Function to determine if cell should be marked as error. Cell will be
    * highlighted in red. */
@@ -88,6 +93,10 @@ export type ColumnDef<T extends RowData> = TanstackColumnDef<T, unknown> & {
   PlaceholderCell?:
     | ((props: CellContext<T, unknown>) => React.ReactNode)
     | null;
+
+  /** Footer renderer - MRT-style uppercase alias */
+  Footer?: ((props: HeaderContext<T, unknown>) => React.ReactNode) | null;
+  footer?: ((props: HeaderContext<T, unknown>) => React.ReactNode) | null;
 
   // ─── Filter variant (used by useTableFiltering to pick URL updater) ────────
   filterVariant?:

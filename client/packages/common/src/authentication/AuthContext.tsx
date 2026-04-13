@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useMemo, useState, useEffect, FC } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import { useLocalStorage } from '../localStorage';

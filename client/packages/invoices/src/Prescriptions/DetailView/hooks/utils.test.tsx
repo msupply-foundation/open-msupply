@@ -59,6 +59,8 @@ const createTestLine = ({
         name: '',
         unitName: 'tablet',
         __typename: 'ItemNode',
+        isVaccine: false,
+        doses: 0,
         itemDirections: [
           {
             __typename: 'ItemDirectionNode',
@@ -89,10 +91,13 @@ const createTestLine = ({
         costPricePerPack: 0,
         itemId,
         packSize,
+        volumePerPack: 0,
         item: {
           code: '',
           name: 'Ibuprofen',
           __typename: 'ItemNode',
+          isVaccine: false,
+          doses: 0,
           itemDirections: [
             {
               __typename: 'ItemDirectionNode',
@@ -129,6 +134,20 @@ const createTestPrescription = (): PrescriptionRowFragment => {
     currencyRate: 0,
     status: InvoiceNodeStatus.Picked,
     patientId: '',
+    isCancellation: false,
+    comment: null,
+    pickedDatetime: null,
+    verifiedDatetime: null,
+    cancelledDatetime: null,
+    colour: null,
+    nameInsuranceJoinId: null,
+    insuranceDiscountAmount: null,
+    insuranceDiscountPercentage: null,
+    theirReference: null,
+    diagnosisId: null,
+    programId: null,
+    prescriptionDate: null,
+    clinicianId: null,
     pricing: {
       __typename: 'PricingNode',
       totalAfterTax: 0,
@@ -157,6 +176,8 @@ const createTestPrescription = (): PrescriptionRowFragment => {
       code: 'code',
       isDeceased: false,
     },
+    store: { __typename: 'StoreNode', id: 'store-id' },
+    user: null,
   };
 };
 

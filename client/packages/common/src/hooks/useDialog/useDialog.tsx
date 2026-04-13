@@ -187,7 +187,6 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     let WrappedOkButton: ModalProps['okButton'] = undefined;
 
     if (nextButton) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { onClick, type, ...restOfNextButtonProps } = nextButton.props;
 
       const handler = defaultPreventedOnClick(onClick);
@@ -208,7 +207,6 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     }
 
     if (okButton) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { onClick, type, ...restOfOkButtonProps } = okButton.props;
 
       WrappedOkButton = React.cloneElement(okButton, {

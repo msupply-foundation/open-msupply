@@ -132,13 +132,16 @@ export const CreateAssetModal = ({
   };
 
   const catalogueItems = ArrayUtils.flatMap(
-    catalogueItemData?.pages,
+    catalogueItemData?.pages ?? [],
     page => page.data?.nodes ?? []
   );
 
   const selectedCatalogueItem = catalogueItems.find(
-    ci => ci.id === draft.catalogueItemId
+    (ci: AssetCatalogueItemFragment) => ci.id === draft.catalogueItemId
   );
+  const selectedCatalogueItemOption = selectedCatalogueItem
+    ? mapCatalogueItem(selectedCatalogueItem)
+    : null;
 
   const onStoreChange = (store: StoreRowFragment) => {
     updateDraft({
@@ -253,10 +256,10 @@ export const CreateAssetModal = ({
                   totalRows={
                     catalogueItemData?.pages?.[0]?.data?.totalCount ?? 0
                   }
-                  value={selectedCatalogueItem}
+                  value={selectedCatalogueItemOption}
                   mapOptions={mapCatalogueItems}
                   isOptionEqualToValue={option =>
-                    option.id === selectedCatalogueItem?.id
+                    option.id === selectedCatalogueItemOption?.id
                   }
                   width="100%"
                   sx={{ width: '100%' }}

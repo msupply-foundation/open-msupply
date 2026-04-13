@@ -4,7 +4,7 @@ import {
   useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
-import type { MRT_Cell, MRT_RowData } from '../../mrtCompat';
+import type { MRT_Cell, MRT_RowData } from '../mrtCompat';
 import { stopPropagationForArrowKeys } from './NumberInputCell';
 
 export const AgeInputCell = <T extends MRT_RowData>({

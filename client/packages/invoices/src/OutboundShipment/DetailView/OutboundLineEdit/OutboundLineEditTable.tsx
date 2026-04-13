@@ -143,7 +143,7 @@ export const OutboundLineEditTable = ({
         />
       </Box>
     ),
-    renderEmptyRowsFallback: () => (
+    noDataElement: (
       <Box sx={{ margin: 'auto' }}>
         <Typography>{t('messages.no-stock-available')}</Typography>
       </Box>

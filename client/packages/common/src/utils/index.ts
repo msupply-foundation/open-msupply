@@ -37,18 +37,19 @@ export const debounce = <T extends (...args: any[]) => any>(
 };
 
 /** Reads a nested value by dot-path string (lodash/get replacement) */
-export const extractProperty = (
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const extractProperty = <T = any>(
   obj: unknown,
   path: string | string[],
-  defaultValue?: unknown
-): unknown => {
+  defaultValue?: T
+): T => {
   const keys = Array.isArray(path) ? path : path.split('.');
   let result: unknown = obj;
   for (const key of keys) {
-    if (result == null) return defaultValue;
+    if (result == null) return defaultValue as T;
     result = (result as Record<string, unknown>)[key];
   }
-  return result !== undefined ? result : defaultValue;
+  return result !== undefined ? (result as T) : (defaultValue as T);
 };
 
 export const groupBy = <T>(
@@ -156,7 +157,7 @@ export const mapValues = <T, U>(
 export const merge = <T extends Record<string, any>>(
   target: T,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ...sources: Record<string, any>[]
+  ...sources: (Record<string, any> | undefined | null)[]
 ): T => {
   for (const source of sources) {
     if (!source) continue;
@@ -216,9 +217,10 @@ export const uniqWith = <T>(
 export const mergeWith = <T extends Record<string, any>>(
   target: T,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  source: Record<string, any>,
+  source: Record<string, any> | undefined | null,
   customizer: (destVal: unknown, srcVal: unknown, key: string) => unknown
 ): T => {
+  if (!source) return target;
   for (const key of Object.keys(source)) {
     const sv = source[key];
     const tv = target[key];
