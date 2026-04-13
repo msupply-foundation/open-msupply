@@ -92,6 +92,7 @@ const DetailViewInner = ({
 
     // No urlQuery/reportArgs parameters exist, open modal
     openReportArgumentsModal();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const generateReport = useCallback(
@@ -142,11 +143,13 @@ const DetailViewInner = ({
         });
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
   const openReportArgumentsModal = useCallback(() => {
     setReportWithArgs(report);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const printReport = useCallback(() => {
@@ -155,6 +158,7 @@ const DetailViewInner = ({
       dataId: '',
       args: reportArgs,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportArgs]);
 
   const exportExcelReport = useCallback(async () => {
@@ -197,6 +201,7 @@ const DetailViewInner = ({
         errorMessage: t('error.failed-to-generate-report'),
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportArgs]);
 
   return (

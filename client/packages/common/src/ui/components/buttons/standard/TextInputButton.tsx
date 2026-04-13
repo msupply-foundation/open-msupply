@@ -34,7 +34,7 @@ export const TextInputButton = ({ onClick, ...rest }: MuiButtonProps) => {
       size="small"
       onClick={onClick}
       onKeyDown={(event: React.KeyboardEvent<HTMLButtonElement>) => {
-        if (event.code === 'Enter' && !!onClick) onClick({} as any);
+        if (event.code === 'Enter' && !!onClick) onClick(event as unknown as React.MouseEvent<HTMLButtonElement>);
       }}
       {...rest}
     />

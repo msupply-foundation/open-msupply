@@ -124,6 +124,7 @@ export const DetailView = () => {
         if (!acc.find(i => i.id === item.id)) acc.push(item);
         return acc;
       }, []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

@@ -105,6 +105,7 @@ export const useIndicatorsDemographicsColumns = ({
 
       return columns;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [draft]
   );
 

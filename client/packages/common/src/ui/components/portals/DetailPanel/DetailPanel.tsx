@@ -61,6 +61,7 @@ export const DetailPanel: FC = () => {
 
   useEffect(() => {
     setDetailPanelRef(ref);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <StyledDrawer data-testid="detail-panel" isOpen={isOpen} ref={ref} />;
@@ -96,6 +97,7 @@ export const DetailPanelPortal: FC<
     // set isOpen to false on unmounting, so that the open state
     // is controlled by the portal and only shown if there is content
     return () => setIsOpen(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!detailPanelRef) return null;

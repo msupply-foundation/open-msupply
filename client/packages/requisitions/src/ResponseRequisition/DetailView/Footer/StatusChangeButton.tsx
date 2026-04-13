@@ -221,6 +221,7 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
         placeholderOrEmpty
       )
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, options, linesFullySupplied]);
 
   return {

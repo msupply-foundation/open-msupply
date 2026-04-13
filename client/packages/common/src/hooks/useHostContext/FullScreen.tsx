@@ -1,7 +1,7 @@
 import { ButtonWithIcon } from '@common/components';
 import { MaximiseIcon } from '@common/icons';
 import { useHostContext } from './useHostContext';
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useTranslation } from '@common/intl';
 import { useNotification } from '../useNotification';
 
@@ -10,11 +10,11 @@ export const FullScreenButton = () => {
   const { fullScreen, setFullScreen } = useHostContext();
   const { success } = useNotification();
 
-  const exitFullScreen = (e: KeyboardEvent) => {
+  const exitFullScreen = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       setFullScreen(false);
     }
-  };
+  }, [setFullScreen]);
 
   useEffect(() => {
     if (fullScreen) {
@@ -26,7 +26,7 @@ export const FullScreenButton = () => {
 
     // unmount
     return () => window.removeEventListener('keydown', exitFullScreen);
-  }, [fullScreen]);
+  }, [fullScreen, exitFullScreen, success, t]);
 
   return (
     <ButtonWithIcon

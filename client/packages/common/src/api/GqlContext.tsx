@@ -159,7 +159,11 @@ interface GqlControl {
 
 const GqlContext = createRegisteredContext<GqlControl>(
   'gql-context',
-  {} as any
+  {
+    client: new GQLClient(''),
+    setUrl: () => {},
+    setSkipRequest: () => {},
+  }
 );
 
 const { Provider } = GqlContext;

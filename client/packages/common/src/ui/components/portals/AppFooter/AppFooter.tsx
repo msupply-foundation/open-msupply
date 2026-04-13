@@ -33,6 +33,7 @@ export const AppFooter = ({
   useEffect(() => {
     setAppFooterRef(appFooterRef);
     setAppSessionDetailsRef(appSessionDetailsRef);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hideFooter = fullScreen || keyboardIsOpen;

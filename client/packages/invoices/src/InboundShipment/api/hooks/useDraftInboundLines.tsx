@@ -82,6 +82,7 @@ export const useDraftInboundLines = (
     } else {
       setDraftLines([]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lines, item, id, isDirty]);
 
   const addDraftLine = (initialPatch?: Partial<DraftInboundLine>) => {

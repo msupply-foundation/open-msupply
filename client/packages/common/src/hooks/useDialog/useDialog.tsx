@@ -132,7 +132,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     if (isOpen != null) setOpen(isOpen);
   }, [isOpen]);
 
-  const handleClose = (_: Event, reason: 'escapeKeyDown' | 'backdropClick') => {
+  const handleClose = useCallback((_: Event, reason: 'escapeKeyDown' | 'backdropClick') => {
     const canClose =
       (!disableBackdrop && reason === 'backdropClick') ||
       (!disableEscapeKey && reason === 'escapeKeyDown');
@@ -143,167 +143,177 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       return;
     }
     setOpen(true);
-  };
+  }, [disableBackdrop, disableEscapeKey, onClose, hideDialog]);
 
-  const ModalComponent = ({
-    cancelButton,
-    children,
-    height,
-    nextButton,
-    okButton,
-    reportSelector,
-    copyButton,
-    saveButton,
-    width,
-    title,
-    contentProps,
-    slideAnimation = true,
-    Transition,
-    disableOkKeyBinding,
-    enableAutocomplete,
-    sx = {},
-    deleteButton,
-    headerActions,
-    disableEnforceFocus = false,
-  }: ModalProps) => {
-    const t = useTranslation();
-    // The slide animation is triggered by cloning the next button and wrapping the passed
-    // on click with a trigger to slide.
-    const { slideConfig, onTriggerSlide } = useSlideAnimation(
-      isRtl,
-      animationTimeout
-    );
-    const { keyboardIsOpen } = useKeyboard();
-    const isAndroid = EnvUtils.platform === Platform.Android;
+  const Modal = React.useMemo(() => {
+    const ModalComponent = ({
+      cancelButton,
+      children,
+      height,
+      nextButton,
+      okButton,
+      reportSelector,
+      copyButton,
+      saveButton,
+      width,
+      title,
+      contentProps,
+      slideAnimation = true,
+      Transition,
+      disableOkKeyBinding,
+      enableAutocomplete,
+      sx = {},
+      deleteButton,
+      headerActions,
+      disableEnforceFocus = false,
+    }: ModalProps) => {
+      const t = useTranslation();
+      // The slide animation is triggered by cloning the next button and wrapping the passed
+      // on click with a trigger to slide.
+      const { slideConfig, onTriggerSlide } = useSlideAnimation(
+        isRtl,
+        animationTimeout
+      );
+      const { keyboardIsOpen } = useKeyboard();
+      const isAndroid = EnvUtils.platform === Platform.Android;
 
-    const defaultPreventedOnClick =
-      (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
-      (e?: OkClickEvent) => {
-        e && e.preventDefault();
-        return onClick(e);
+      const defaultPreventedOnClick =
+        (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
+        (e?: OkClickEvent) => {
+          e && e.preventDefault();
+          return onClick(e);
+        };
+
+      let WrappedNextButton: ModalProps['nextButton'] = undefined;
+      let WrappedOkButton: ModalProps['okButton'] = undefined;
+
+      if (nextButton) {
+        const { onClick, type: _type, ...restOfNextButtonProps } = nextButton.props;
+
+        const handler = defaultPreventedOnClick(onClick);
+
+        // TODO: If you want to change the slide direction or other animation details, add a prop
+        // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
+        WrappedNextButton = React.cloneElement(nextButton, {
+          onClick: slideAnimation
+            ? async (e?: OkClickEvent) => {
+                const result = await handler(e);
+                if (!!result) onTriggerSlide();
+                return result;
+              }
+            : handler,
+          type: !disableOkKeyBinding ? 'submit' : 'button',
+          ...restOfNextButtonProps,
+        });
+      }
+
+      if (okButton) {
+        const { onClick, type: _type, ...restOfOkButtonProps } = okButton.props;
+
+        WrappedOkButton = React.cloneElement(okButton, {
+          onClick: defaultPreventedOnClick(onClick),
+          // If the next button is not present/disabled, the ok button should be a submit button (allow firing on enter key press)
+          type:
+            !disableOkKeyBinding && (!nextButton || nextButton.props.disabled)
+              ? 'submit'
+              : 'button',
+          ...restOfOkButtonProps,
+        });
+      }
+
+      const formProps = enableAutocomplete ? { autoComplete: 'on' } : {};
+      const { sx: contentSX, ...restOfContentProps } = contentProps ?? {};
+      const dimensions = {
+        height: height ? Math.min(window.innerHeight - 50, height) : undefined,
+        width: width ? Math.min(window.innerWidth - 50, width) : undefined,
       };
 
-    let WrappedNextButton: ModalProps['nextButton'] = undefined;
-    let WrappedOkButton: ModalProps['okButton'] = undefined;
+      const defaultFullscreen = isAndroid && !disableMobileFullScreen;
 
-    if (nextButton) {
-      const { onClick, type, ...restOfNextButtonProps } = nextButton.props;
-
-      const handler = defaultPreventedOnClick(onClick);
-
-      // TODO: If you want to change the slide direction or other animation details, add a prop
-      // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
-      WrappedNextButton = React.cloneElement(nextButton, {
-        onClick: slideAnimation
-          ? async (e?: OkClickEvent) => {
-              const result = await handler(e);
-              if (!!result) onTriggerSlide();
-              return result;
-            }
-          : handler,
-        type: !disableOkKeyBinding ? 'submit' : 'button',
-        ...restOfNextButtonProps,
-      });
-    }
-
-    if (okButton) {
-      const { onClick, type, ...restOfOkButtonProps } = okButton.props;
-
-      WrappedOkButton = React.cloneElement(okButton, {
-        onClick: defaultPreventedOnClick(onClick),
-        // If the next button is not present/disabled, the ok button should be a submit button (allow firing on enter key press)
-        type:
-          !disableOkKeyBinding && (!nextButton || nextButton.props.disabled)
-            ? 'submit'
-            : 'button',
-        ...restOfOkButtonProps,
-      });
-    }
-
-    const formProps = enableAutocomplete ? { autoComplete: 'on' } : {};
-    const { sx: contentSX, ...restOfContentProps } = contentProps ?? {};
-    const dimensions = {
-      height: height ? Math.min(window.innerHeight - 50, height) : undefined,
-      width: width ? Math.min(window.innerWidth - 50, width) : undefined,
+      return (
+        <BasicModal
+          open={open}
+          onClose={handleClose}
+          width={dimensions.width}
+          height={dimensions.height}
+          sx={sx}
+          TransitionComponent={Transition}
+          disableEscapeKeyDown={false}
+          fullScreen={defaultFullscreen}
+          disableEnforceFocus={disableEnforceFocus}
+        >
+          {defaultFullscreen && (
+            <IconButton
+              icon={<CloseIcon />}
+              color="primary"
+              onClick={() => {
+                onClose && onClose();
+                hideDialog();
+              }}
+              sx={{
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                padding: 2,
+                zIndex: 1,
+              }}
+              label={t('button.close')}
+            />
+          )}
+          {title ? <ModalTitle title={title} headerActions={headerActions} /> : null}
+          <form
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              flex: '1 1 auto',
+              overflow: 'auto',
+              width: defaultFullscreen ? '100%' : dimensions.width,
+              margin: '0 auto',
+            }}
+            {...formProps}
+          >
+            <DialogContent
+              {...restOfContentProps}
+              sx={{ overflowX: 'hidden', ...contentSX }}
+            >
+              {slideAnimation ? (
+                <Slide in={slideConfig.in} direction={slideConfig.direction}>
+                  <div>{slideConfig.in && children}</div>
+                </Slide>
+              ) : (
+                <div>{children}</div>
+              )}
+            </DialogContent>
+            <DialogActions
+              sx={{
+                justifyContent: 'center',
+                marginBottom: keyboardIsOpen ? 0 : '30px',
+                marginTop: keyboardIsOpen ? 0 : '30px',
+              }}
+            >
+              {cancelButton}
+              {deleteButton}
+              {saveButton}
+              {copyButton}
+              {WrappedOkButton}
+              {WrappedNextButton}
+              {reportSelector}
+            </DialogActions>
+          </form>
+        </BasicModal>
+      );
     };
 
-    const defaultFullscreen = isAndroid && !disableMobileFullScreen;
-
-    return (
-      <BasicModal
-        open={open}
-        onClose={handleClose}
-        width={dimensions.width}
-        height={dimensions.height}
-        sx={sx}
-        TransitionComponent={Transition}
-        disableEscapeKeyDown={false}
-        fullScreen={defaultFullscreen}
-        disableEnforceFocus={disableEnforceFocus}
-      >
-        {defaultFullscreen && (
-          <IconButton
-            icon={<CloseIcon />}
-            color="primary"
-            onClick={() => {
-              onClose && onClose();
-              hideDialog();
-            }}
-            sx={{
-              position: 'absolute',
-              right: 0,
-              top: 0,
-              padding: 2,
-              zIndex: 1,
-            }}
-            label={t('button.close')}
-          />
-        )}
-        {title ? <ModalTitle title={title} headerActions={headerActions} /> : null}
-        <form
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            flex: '1 1 auto',
-            overflow: 'auto',
-            width: defaultFullscreen ? '100%' : dimensions.width,
-            margin: '0 auto',
-          }}
-          {...formProps}
-        >
-          <DialogContent
-            {...restOfContentProps}
-            sx={{ overflowX: 'hidden', ...contentSX }}
-          >
-            {slideAnimation ? (
-              <Slide in={slideConfig.in} direction={slideConfig.direction}>
-                <div>{slideConfig.in && children}</div>
-              </Slide>
-            ) : (
-              <div>{children}</div>
-            )}
-          </DialogContent>
-          <DialogActions
-            sx={{
-              justifyContent: 'center',
-              marginBottom: keyboardIsOpen ? 0 : '30px',
-              marginTop: keyboardIsOpen ? 0 : '30px',
-            }}
-          >
-            {cancelButton}
-            {deleteButton}
-            {saveButton}
-            {copyButton}
-            {WrappedOkButton}
-            {WrappedNextButton}
-            {reportSelector}
-          </DialogActions>
-        </form>
-      </BasicModal>
-    );
-  };
-
-  const Modal = React.useMemo(() => ModalComponent, [open]);
+    return ModalComponent;
+  }, [
+    isRtl,
+    animationTimeout,
+    open,
+    handleClose,
+    hideDialog,
+    onClose,
+    disableMobileFullScreen,
+  ]);
 
   return { hideDialog, Modal, open, showDialog };
 };

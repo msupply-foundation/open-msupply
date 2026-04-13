@@ -124,7 +124,7 @@ export const AutocompleteMultiList = <T extends { id: string }>({
 
   useEffect(() => {
     if (onChange) onChange(selectedOptions.map(({ id }) => id));
-  }, [selectedOptions]);
+  }, [selectedOptions, onChange]);
 
   return (
     <AutocompleteList

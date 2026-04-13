@@ -60,6 +60,7 @@ export const RnRFormListView = () => {
         Cell: ({ row: { original: row } }) => getStatusTranslator(t)(row.status),
       }
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

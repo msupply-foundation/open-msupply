@@ -38,6 +38,7 @@ export const SelectItem = ({
     }
 
     return options;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dose.id]);
 
   // Auto-select if there is only one item (and not already selected)
@@ -45,6 +46,7 @@ export const SelectItem = ({
     if (vaccineItemOptions.length === 1 && !draft.item) {
       updateDraft({ itemId: vaccineItemOptions[0]!.value });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vaccineItemOptions]);
 
   if (!vaccineItemOptions.length) {

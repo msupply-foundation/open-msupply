@@ -120,5 +120,6 @@ export const usePrescriptionLineEditColumns = ({
         Cell: CheckCell,
       },
     ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unit, allocate, getIsDisabled]);
 };

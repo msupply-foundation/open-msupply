@@ -37,6 +37,7 @@ const getCellContent = <T extends MRT_RowData>(
 ): React.ReactNode => {
   const def = colDef(cell);
   // Try uppercase 'Cell' first (MRT compatibility), then lowercase 'cell' (TanStack convention)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cellRenderer = (def as any).Cell ?? def.cell;
   return cellRenderer
     ? flexRender(cellRenderer, cell.getContext())

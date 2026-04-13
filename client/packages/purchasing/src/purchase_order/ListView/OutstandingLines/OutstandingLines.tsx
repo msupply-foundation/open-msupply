@@ -117,6 +117,7 @@ export const OutstandingLinesListView = () => {
         },
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

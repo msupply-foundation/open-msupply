@@ -98,6 +98,7 @@ export const ReportSelector = ({
           label: translateDynamicKey(`report-code.${report.code}`, report.name),
         }))
       : [];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   return (

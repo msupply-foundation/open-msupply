@@ -203,6 +203,7 @@ export const PatientResultsTab: FC<
         },
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

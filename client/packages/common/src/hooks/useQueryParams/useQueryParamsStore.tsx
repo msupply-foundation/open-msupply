@@ -25,7 +25,7 @@ export interface QueryParamsState<T extends RecordWithId> {
 const getDirection = (isDesc: boolean): 'asc' | 'desc' =>
   isDesc ? 'desc' : 'asc';
 
-const queryParamsStoreContext = createContext<QueryParamsState<any>>({} as any);
+const queryParamsStoreContext = createContext<QueryParamsState<RecordWithId>>({} as QueryParamsState<RecordWithId>);
 
 export const createQueryParamsStore = <T extends RecordWithId>({
   initialSortBy,
@@ -160,7 +160,7 @@ export const QueryParamsProvider = ({
   createStore,
 }: {
   children: ReactNode;
-  createStore: () => QueryParamsState<any>;
+  createStore: () => QueryParamsState<RecordWithId>;
 }) => {
   const { Provider } = queryParamsStoreContext;
   const store = createStore();

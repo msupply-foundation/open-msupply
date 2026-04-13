@@ -55,6 +55,7 @@ export const Contacts = ({ nameId }: ContactsProps): ReactElement => {
         enableColumnFilter: true,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

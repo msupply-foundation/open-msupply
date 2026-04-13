@@ -165,6 +165,7 @@ export const VaccineCardTable = ({
         header: t('label.facility'),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [data]
   );
 

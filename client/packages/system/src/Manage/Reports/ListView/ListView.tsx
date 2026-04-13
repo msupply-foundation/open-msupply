@@ -83,6 +83,7 @@ export const ReportsList = () => {
         columnType: ColumnType.Boolean,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

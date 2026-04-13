@@ -62,6 +62,7 @@ export const PurchaseOrder = ({
         header: t('label.comment'),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

@@ -317,7 +317,7 @@ export const NumericTextInput = React.forwardRef<
                 },
               },
             } as const,
-            slotProps as Record<string, any>
+            slotProps as Record<string, unknown>
           )}
           onChange={e => {
             if (!isDirty) setIsDirty(true);

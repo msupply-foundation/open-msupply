@@ -95,6 +95,7 @@ const UIComponent = (props: ControlProps) => {
     );
     if (existing && existing[0]?.item.id === selectedItem?.id)
       setDraftLines(existing);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -112,6 +113,7 @@ const UIComponent = (props: ControlProps) => {
     }
 
     formActions.setState(`${path}_category`, categoryName);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryName]);
 
   const handleItemSelect = (selectedItem: ItemStockOnHandFragment | null) => {

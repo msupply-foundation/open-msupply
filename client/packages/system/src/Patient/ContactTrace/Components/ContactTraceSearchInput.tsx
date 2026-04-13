@@ -55,6 +55,7 @@ export const ContactTraceSearchInput: FC<ContactTraceSearchInputProps> = ({
       setRegistry(defaultRegistry);
       defaultRegistry && onChange(defaultRegistry);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, isLoading]);
   const OptionRenderer = getContactTraceOptionRenderer();
 

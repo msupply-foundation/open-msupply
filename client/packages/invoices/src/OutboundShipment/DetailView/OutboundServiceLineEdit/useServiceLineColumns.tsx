@@ -101,6 +101,7 @@ export const useServiceLineColumns = <T extends DraftInboundLine | DraftStockOut
         ),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

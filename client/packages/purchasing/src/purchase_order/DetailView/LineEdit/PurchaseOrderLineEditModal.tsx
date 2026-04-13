@@ -77,6 +77,7 @@ export const PurchaseOrderLineEditModal = React.memo(
             itemId: item.id,
           });
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [purchaseOrder.id, updatePatch]
     );
 

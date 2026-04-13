@@ -88,6 +88,7 @@ export const PrescriptionLineEditView = () => {
       1: data?.invoiceNumber.toString() ?? '',
       2: item?.name || '',
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item, data?.invoiceNumber, itemId]);
 
   useConfirmOnLeaving(

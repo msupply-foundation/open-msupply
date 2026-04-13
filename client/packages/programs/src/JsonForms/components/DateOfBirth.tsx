@@ -112,6 +112,7 @@ const UIComponent = (props: ControlProps) => {
       return;
     }
     setAge(DateUtils.age(naiveDoB));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, options?.dobFieldName]);
 
   if (!props.visible) {

@@ -82,6 +82,7 @@ const useHostSync = (enabled: boolean) => {
       // Shouldn't run on first mount, when translations might still be loading - see issue #9042
       !isInitialMount && invalidateCustomTranslations();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncStatus?.isSyncing]);
 
   const onManualSync = async () => {

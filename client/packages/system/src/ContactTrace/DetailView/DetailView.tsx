@@ -151,6 +151,7 @@ export const DetailView: FC<DetailViewProps> = ({
     }
     // note: not including dateFormat in the dependencies as it shouldn't change
     // and causes perpetual re-renders!
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactData, setCustomBreadcrumbs, getLocalisedFullName]);
 
   const documentData =

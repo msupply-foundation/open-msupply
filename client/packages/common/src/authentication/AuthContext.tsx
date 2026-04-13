@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, FC } from 'react';
+import React, { useMemo, useState, useEffect, FC, useCallback } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
@@ -125,7 +125,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
 
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
 
-  const setStore = async (store: UserStoreNodeFragment) => {
+  const setStore = useCallback(async (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
 
     upsertMostRecentCredential(mostRecentUsername ?? '', store);
@@ -141,7 +141,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     const newCookie = { ...cookie, store, user };
     setAuthCookie(newCookie);
     setCookie(newCookie);
-  };
+  }, [cookie, mostRecentUsername, upsertMostRecentCredential, getUserPermissions, setCookie]);
 
   const {
     isLoading: updateUserIsLoading,
@@ -150,14 +150,14 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     error: updateUserError,
   } = useUpdateUserInfo(setCookie, cookie, mostRecentCredentials);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     Cookies.remove('auth');
     setError(undefined);
     setCookie(undefined);
-  };
+  }, [setError, setCookie]);
 
-  const userHasPermission = (permission: UserPermission) =>
-    cookie?.user?.permissions.some(p => p === permission) || false;
+  const userHasPermission = useCallback((permission: UserPermission) =>
+    cookie?.user?.permissions.some(p => p === permission) || false, [cookie?.user?.permissions]);
 
   const val = useMemo(
     () => ({
@@ -187,6 +187,12 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       setStore,
       setError,
       userHasPermission,
+      lastSuccessfulSync,
+      logout,
+      storeId,
+      updateUser,
+      updateUserError,
+      updateUserIsLoading,
     ]
   );
 
@@ -218,7 +224,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       refreshToken();
     }, TOKEN_CHECK_INTERVAL);
     return () => window.clearInterval(timer);
-  }, [cookie?.token]);
+  }, [cookie?.token, refreshToken, setError]);
 
   return <Provider value={val}>{children}</Provider>;
 };

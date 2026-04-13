@@ -116,6 +116,7 @@ const BundledVariants = ({
         ),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -173,6 +174,7 @@ const BundledOn = ({ variant }: { variant: ItemVariantFragment }) => {
         Cell: TextWithTooltipCell,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

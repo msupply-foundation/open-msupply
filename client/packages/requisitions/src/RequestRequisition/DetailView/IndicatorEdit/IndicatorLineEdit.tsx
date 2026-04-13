@@ -61,6 +61,7 @@ const InputWithLabel = ({
   );
 
   const errorHandler = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (res: any) => {
       // probably shouldn't be any, but UpdateIndicatorValue doesn't have res.error.__typename
       if (res.__typename === 'UpdateIndicatorValueError') {
@@ -71,6 +72,7 @@ const InputWithLabel = ({
         }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [t]
   );
 

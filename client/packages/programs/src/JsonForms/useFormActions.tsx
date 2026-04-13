@@ -50,6 +50,7 @@ export const useFormActions = (
       if (setDirty && !ObjUtils.isEqual(currentValue, value)) setIsDirty(true);
       state.current[key] = value;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

@@ -132,7 +132,7 @@ export const TemperatureBreachList: FC = () => {
             : null,
       },
     ],
-    []
+    [acknowledgeBreach, formatTemperature, t]
   );
 
   const { table } = usePaginatedMaterialTable<TemperatureBreachFragment>({

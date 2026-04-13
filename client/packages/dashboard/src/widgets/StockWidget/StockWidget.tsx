@@ -88,6 +88,7 @@ export const StockWidget = ({ widgetContext }: { widgetContext: string }) => {
         )();
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       onCreate,
       onProgramCreate,

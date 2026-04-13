@@ -25,7 +25,7 @@ export const TimePickerInput = ({
     // the internal date is still empty)
     if (value && internalValue === null)
       setInternalValue(DateUtils.getDateOrNull(value));
-  }, [value]);
+  }, [value, internalValue]);
 
   const isInvalid = (value: Date | null) => {
     const dateValue = DateUtils.getDateOrNull(value);

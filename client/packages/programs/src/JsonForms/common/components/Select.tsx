@@ -268,6 +268,7 @@ const useFilteredItems = (
       setVisibleItems(filtered);
       customErrors.remove(path);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, currentSelection, conditionField]);
 
   return visibleItems;

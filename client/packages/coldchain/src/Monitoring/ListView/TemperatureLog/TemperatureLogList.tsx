@@ -80,7 +80,7 @@ export const TemperatureLogList: FC = () => {
         filterSelectOptions: breachTypeOptions(t),
       },
     ],
-    []
+    [formatTemperature, t]
   );
 
   const { table } = usePaginatedMaterialTable<TemperatureLogFragment>({

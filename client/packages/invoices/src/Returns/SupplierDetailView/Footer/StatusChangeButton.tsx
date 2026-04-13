@@ -46,6 +46,7 @@ const useStatusChangeButton = () => {
       );
     }
     return statusOptions;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, invoiceStatusOptions]);
 
   const currentStatus =

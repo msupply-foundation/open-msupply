@@ -223,6 +223,7 @@ export const AddButton = ({
       const internalOption = allOptions.find(o => o.value === 'new-shipment');
       if (internalOption) setSelectedOption(internalOption);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTab]);
 
   const handleOptionSelection = (option: SplitButtonOption<string>) => {

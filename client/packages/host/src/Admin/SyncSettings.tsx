@@ -167,6 +167,7 @@ export const SyncSettings = ({}) => {
     if (data) {
       setSyncSettings({ ...data, password: '' });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const onSave = async () => {

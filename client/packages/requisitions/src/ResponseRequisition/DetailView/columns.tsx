@@ -279,6 +279,7 @@ export const useResponseColumns = () => {
         includeColumn: showIndicativePriceInRequisitions,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       isRemoteAuthorisation,
       manageVaccinesInDoses,

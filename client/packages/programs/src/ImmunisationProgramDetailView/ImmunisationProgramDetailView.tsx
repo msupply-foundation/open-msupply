@@ -80,6 +80,7 @@ export const ImmunisationProgramDetailView: FC = () => {
         header: t('label.doses'),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

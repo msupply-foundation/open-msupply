@@ -36,6 +36,7 @@ export type UseRequestRequisitionLineErrors = ReturnType<
 >;
 
 const RequestRequisitionLineErrorContext =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createContext<UseRequestRequisitionLineErrors>({} as any);
 
 export const useRequestRequisitionLineErrorContext = () => {

@@ -15,6 +15,7 @@ export const AppBarTabs: FC = () => {
 
   useEffect(() => {
     setAppBarTabsRef(ref);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <Container ref={ref} />;

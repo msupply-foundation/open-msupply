@@ -138,6 +138,7 @@ export const ListView = () => {
         includeColumn: requireSupplierAuthorisation,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [hasProgramSettings, requireSupplierAuthorisation, simplifiedTabletView]
   );
 

@@ -89,6 +89,7 @@ const UIComponent = (props: ControlProps) => {
     if (options?.findByProgram) {
       onChange(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programId]);
 
   return (

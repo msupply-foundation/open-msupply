@@ -67,6 +67,7 @@ export const SupplySelection = ({
       { label: unitPlural, value: Representation.UNITS },
       { label: packPlural, value: Representation.PACKS },
     ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPacksEnabled, unitName, currentValue]);
 
   const debouncedUpdate = useDebounceCallback(
@@ -84,6 +85,7 @@ export const SupplySelection = ({
 
   useEffect(() => {
     setValue(currentValue);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft?.id, representation]);
 
   const handleValueChange = (newValue?: number) => {

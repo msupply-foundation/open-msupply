@@ -36,6 +36,7 @@ export type UseInboundShipmentLineErrors = ReturnType<
 >;
 
 const InboundShipmentLineErrorContext =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createContext<UseInboundShipmentLineErrors>({} as any);
 
 export const useInboundShipmentLineErrorContext = () => {

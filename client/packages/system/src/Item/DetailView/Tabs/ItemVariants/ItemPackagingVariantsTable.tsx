@@ -84,6 +84,7 @@ export const ItemPackagingVariantsTable = ({
         size: 100,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

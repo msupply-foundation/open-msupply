@@ -41,6 +41,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         // Add alignment styling
         const alignment = col.align ?? columnDefaults.align;
         if (alignment) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           col.muiTableBodyCellProps = (params: any) => {
             return mergeCellProps(
               {
@@ -69,7 +70,9 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         // Merge any custom cell props with defaults
         const cellProps = col.muiTableBodyCellProps;
         if (cellProps) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           col.muiTableBodyCellProps = (params: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return mergeCellProps(cellProps as any, params);
           };
         }
@@ -125,6 +128,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
       });
 
     return { columns };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [omsColumns]);
 
   return tableDefinition;

@@ -96,7 +96,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     lastOptions.current = newOptions;
 
     return newOptions;
-  }, [pages, value]);
+  }, [pages, value, mapOptions, getOptionLabel]);
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput

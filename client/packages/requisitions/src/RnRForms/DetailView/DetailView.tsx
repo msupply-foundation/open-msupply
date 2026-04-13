@@ -41,6 +41,7 @@ export const RnRFormDetailView = () => {
       setInitial(data.id, data.lines);
       setIsInitialising(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInitialising, data]);
 
   if (isLoading || isInitialising) return <DetailViewSkeleton />;

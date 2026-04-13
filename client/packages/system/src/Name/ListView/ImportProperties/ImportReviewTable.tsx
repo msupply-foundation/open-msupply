@@ -73,6 +73,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
         enableColumnFilter: true,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [propertyNodes]
   );
 

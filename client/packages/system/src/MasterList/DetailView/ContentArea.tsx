@@ -40,6 +40,7 @@ export const ContentArea = () => {
         header: t('label.unit'),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

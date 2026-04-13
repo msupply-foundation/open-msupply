@@ -32,7 +32,7 @@ export const AlertModal: React.FC<AlertModalProps> = ({
   React.useEffect(() => {
     if (isCurrentlyOpen && !!isCurrentlyImportant && !important) return;
     setState({ important, message, onOk, open, title });
-  }, [important, message, onOk, open, title]);
+  }, [important, message, onOk, open, title, isCurrentlyOpen, isCurrentlyImportant, setState]);
 
   return <></>;
 };

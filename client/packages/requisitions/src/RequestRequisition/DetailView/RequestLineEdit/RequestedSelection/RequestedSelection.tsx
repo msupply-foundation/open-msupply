@@ -70,6 +70,7 @@ export const RequestedSelection = ({
 
   useEffect(() => {
     setValue(currentValue);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft?.id, representation]);
 
   const options = useMemo((): Option[] => {
@@ -88,6 +89,7 @@ export const RequestedSelection = ({
     }
 
     return opts;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unitName, currentValue, isPacksEnabled, isDosesEnabled, dosesPerUnit]);
 
   const debouncedUpdate = useDebounceCallback(

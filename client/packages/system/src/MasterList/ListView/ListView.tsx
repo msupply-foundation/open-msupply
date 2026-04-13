@@ -57,6 +57,7 @@ export const MasterListListView = () => {
       },
       ...(plugins.masterLists?.tableColumn || []),
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [plugins.masterLists?.tableColumn]
   );
 

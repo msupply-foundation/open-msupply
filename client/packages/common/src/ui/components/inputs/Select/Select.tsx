@@ -58,7 +58,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
               color: 'secondary' as const,
             },
           } as const,
-          slotProps as Record<string, any> | undefined
+          slotProps as Record<string, unknown> | undefined
         )}
         {...props}
       >

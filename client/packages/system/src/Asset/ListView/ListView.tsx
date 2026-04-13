@@ -109,6 +109,7 @@ export const AssetListView: FC = () => {
         filterSelectOptions: mapIdNameToOptions(categoryData?.nodes || []),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [filteredTypes],
   );
 

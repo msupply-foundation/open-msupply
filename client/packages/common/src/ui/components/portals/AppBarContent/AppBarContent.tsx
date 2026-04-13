@@ -25,6 +25,7 @@ export const AppBarContent: FC = () => {
 
   useEffect(() => {
     setAppBarContentRef(ref);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isExtraSmallScreen) {

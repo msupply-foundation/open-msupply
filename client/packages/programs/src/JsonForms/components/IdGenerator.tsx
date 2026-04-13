@@ -323,6 +323,7 @@ const UIComponent = (props: ControlProps) => {
       return;
     }
     return validateFields(options, core?.data, t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, core?.data]);
   const error = !!validationError || !!zErrors;
 
@@ -337,6 +338,7 @@ const UIComponent = (props: ControlProps) => {
       }
       handleChange(path, value);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [options, path]
   );
 
@@ -390,6 +392,7 @@ const UIComponent = (props: ControlProps) => {
     onChange(id);
     customErrors?.remove(path);
     handleChange(path, id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, path, core?.data, handleChange]);
 
   const confirmRegenerate = useConfirmationModal({

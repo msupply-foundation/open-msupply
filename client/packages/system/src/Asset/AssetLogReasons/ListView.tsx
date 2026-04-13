@@ -55,6 +55,7 @@ export const AssetLogReasonsListView: FC = () => {
         pin: 'right',
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

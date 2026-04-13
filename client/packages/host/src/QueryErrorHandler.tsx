@@ -26,6 +26,7 @@ export const QueryErrorHandler = () => {
         error(errorMessage);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [errorMessage]);
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export const QueryErrorHandler = () => {
         onError: e => setErrorMessage((e as Error).message || generalError),
       },
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <></>;

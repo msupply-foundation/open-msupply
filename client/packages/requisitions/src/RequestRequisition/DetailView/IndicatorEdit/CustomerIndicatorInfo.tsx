@@ -43,6 +43,7 @@ export const CustomerIndicatorInfoView = ({
         columnType: ColumnType.Date,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [columns]
   );
 

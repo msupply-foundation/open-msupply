@@ -22,5 +22,15 @@ export interface AlertModalControllerState extends AlertModalState {
 export const AlertModalContext =
   createRegisteredContext<AlertModalControllerState>(
     'alert-modal-context',
-    {} as any
+    {
+      open: false,
+      message: '',
+      title: '',
+      setState: () => {},
+      setOpen: () => {},
+      setMessage: () => {},
+      setTitle: () => {},
+      setOnOk: () => {},
+      setImportant: () => {},
+    }
   );

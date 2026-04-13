@@ -71,6 +71,7 @@ export const LinkInternalOrderModal = ({
         columnType: ColumnType.Comment,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

@@ -31,6 +31,7 @@ export const StatusChangeButton = ({
         currentStatus
       )
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStatus]);
 
   const statusOptions = [

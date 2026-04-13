@@ -45,6 +45,7 @@ export const SelectBatch = ({
           : null;
       setStockLine(autoSelect);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, isNewlyGiven, stockLine]);
 
   const columns = useMemo(
@@ -83,6 +84,7 @@ export const SelectBatch = ({
         size: 80,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [stockLine]
   );
 

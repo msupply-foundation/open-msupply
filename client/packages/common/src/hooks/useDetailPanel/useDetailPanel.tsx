@@ -67,7 +67,7 @@ export const useDetailPanel = (): DetailPanel => {
   useEffect(() => {
     setEnabled(true);
     return () => setEnabled(false);
-  }, []);
+  }, [setEnabled]);
 
   return { OpenButton, open, close };
 };

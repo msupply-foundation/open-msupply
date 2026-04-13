@@ -389,6 +389,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     getFilteredRowModel: _getFilteredRowModel,
     getGroupedRowModel: _getGroupedRowModel,
     getFacetedRowModel: _getFacetedRowModel as (table: Table<T>, columnId: string) => () => RowModel<T>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getFacetedUniqueValues: _getFacetedUniqueValues as (table: Table<T>, columnId: string) => () => Map<any, number>,
 
     getRowCanExpand: row => row.getLeafRows().length > 1,

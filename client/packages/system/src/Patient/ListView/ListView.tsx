@@ -152,6 +152,7 @@ export const PatientListView = () => {
         align: 'center',
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [store?.preferences.omProgramModule, t]
   );
 

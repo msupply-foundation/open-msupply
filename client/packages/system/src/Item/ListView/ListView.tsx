@@ -90,6 +90,7 @@ export const ItemListView = () => {
         size: 120,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

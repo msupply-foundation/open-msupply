@@ -231,6 +231,7 @@ const DetailViewInner = () => {
 
     onOpenReturns(selectedStockLineIds);
     setMode(ModalMode.Create);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, selectedRows, info, onOpenReturns, setMode]);
 
   useEffect(() => {
@@ -256,6 +257,7 @@ const DetailViewInner = () => {
         if (!acc.find(i => i.id === item.id)) acc.push(item);
         return acc;
       }, []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

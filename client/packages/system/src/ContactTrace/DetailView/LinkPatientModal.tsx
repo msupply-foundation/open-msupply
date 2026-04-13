@@ -142,6 +142,7 @@ const ModalContent: FC<ModalContentProps> = ({
         maxSize: 250,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
   const { data: linkedPatient } = usePatient.document.get(linkedPatientId);

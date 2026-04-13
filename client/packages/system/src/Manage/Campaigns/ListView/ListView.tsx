@@ -77,6 +77,7 @@ export const CampaignsList = () => {
         columnType: ColumnType.Date,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

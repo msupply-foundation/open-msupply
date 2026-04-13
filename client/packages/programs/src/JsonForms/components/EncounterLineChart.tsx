@@ -133,6 +133,7 @@ const UIComponent = (props: ControlProps) => {
     }
 
     setData(data);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [encounterFields, currentData]);
 
   if (errors) {

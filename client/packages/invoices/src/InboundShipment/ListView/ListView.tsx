@@ -175,6 +175,7 @@ export const InboundListView = () => {
         defaultHideOnMobile: true,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [t]
   );
 

@@ -149,6 +149,7 @@ export const PurchaseOrderListView = () => {
         enableSorting: true,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

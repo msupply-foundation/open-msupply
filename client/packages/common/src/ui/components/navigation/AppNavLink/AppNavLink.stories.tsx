@@ -16,7 +16,7 @@ const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
   useEffect(() => {
     if (collapsed) drawer.close();
     else drawer.open();
-  }, []);
+  }, [collapsed, drawer]);
 
   return null;
 };

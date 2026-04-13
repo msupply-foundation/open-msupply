@@ -218,6 +218,7 @@ export const useUpsertPatient = (
     if (savedDocument) {
       setDocumentName(savedDocument.name);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveData, setCreateNewPatient, setDocumentName]);
 
   useEffect(() => {

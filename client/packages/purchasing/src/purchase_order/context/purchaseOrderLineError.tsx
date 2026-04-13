@@ -35,6 +35,7 @@ export type UsePurchaseOrderLineErrors = ReturnType<
 >;
 
 const PurchaseOrderLineErrorContext = createContext<UsePurchaseOrderLineErrors>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   {} as any
 );
 

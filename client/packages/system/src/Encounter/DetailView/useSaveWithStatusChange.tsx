@@ -55,6 +55,7 @@ export function useSaveWithStatusChange(
       if (saveStatus.status === EncounterNodeStatus.Visited)
         saveStatus.callback();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveStatus, encounterData?.status]);
 
   const saveWithStatusChange = (

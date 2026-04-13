@@ -21,6 +21,7 @@ export const RequireAuthentication: FC<PropsWithChildrenOnly> = ({
         state: { from: location },
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;

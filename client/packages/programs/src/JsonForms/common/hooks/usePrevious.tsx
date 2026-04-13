@@ -37,6 +37,7 @@ export const usePrevious = (
   path: string,
   data: unknown,
   options: Options = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setValue?: (value: any) => void
 ) => {
   const [previousValue, setPreviousValue] = useState<
@@ -66,6 +67,7 @@ export const usePrevious = (
           }
         });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayPrevious, defaultToPrevious]);
 
   return displayPrevious ? previousValue : undefined;

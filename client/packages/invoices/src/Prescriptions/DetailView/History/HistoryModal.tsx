@@ -81,6 +81,7 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
     });
 
     return compiled;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const table = useSimpleMaterialTable({

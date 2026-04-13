@@ -287,6 +287,7 @@ export const useOutboundLineEditColumns = ({
       },
     ];
     return cols;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allocateIn.type]);
 
   return columns;

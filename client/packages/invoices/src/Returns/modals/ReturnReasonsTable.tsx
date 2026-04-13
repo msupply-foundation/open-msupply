@@ -86,6 +86,7 @@ export const ReturnReasonsComponent = ({
         pin: 'right',
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

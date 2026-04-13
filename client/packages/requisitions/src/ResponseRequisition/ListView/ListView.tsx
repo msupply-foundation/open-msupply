@@ -155,6 +155,7 @@ export const ListView = () => {
         includeColumn: authoriseResponseRequisitions,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

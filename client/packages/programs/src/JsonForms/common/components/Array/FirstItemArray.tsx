@@ -64,6 +64,7 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
         uischema,
         rootSchema
       ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [uischemas, schema, uischema.scope, path, uischema, rootSchema]
   );
 

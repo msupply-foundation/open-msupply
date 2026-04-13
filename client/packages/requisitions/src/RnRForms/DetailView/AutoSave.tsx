@@ -51,6 +51,7 @@ export const AutoSave = () => {
     const interval = setInterval(saveLines, AUTO_SAVE_EVERY);
 
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return null;

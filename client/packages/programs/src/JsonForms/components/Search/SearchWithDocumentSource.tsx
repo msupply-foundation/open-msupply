@@ -63,6 +63,7 @@ export const SearchWithDocumentSource = (
       field => (newObj[field] = requestedData[field] ?? null)
     );
     handleChange(path, newObj);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestedData]);
 
   const displayElement = (

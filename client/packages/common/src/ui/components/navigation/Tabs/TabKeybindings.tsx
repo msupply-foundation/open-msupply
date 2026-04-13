@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 
 interface TabKeybindingsProps<T> {
   tabs: T[];
@@ -18,7 +18,7 @@ export function TabKeybindings<T>({
   onAdd,
   setCurrentTab,
 }: TabKeybindingsProps<T>) {
-  const keybindings = (e: KeyboardEvent) => {
+  const keybindings = useCallback((e: KeyboardEvent) => {
     if (e.ctrlKey) {
       tabs.forEach((tab, n) => {
         if (e.key === `${n + 1}`) {
@@ -33,12 +33,12 @@ export function TabKeybindings<T>({
         onAdd();
       }
     }
-  };
+  }, [tabs, setCurrentTab, onAdd]);
 
   useEffect(() => {
     window.addEventListener('keydown', keybindings);
     return () => window.removeEventListener('keydown', keybindings);
-  }, dependencies);
+  }, [keybindings, dependencies]);
 
   return <></>;
 }

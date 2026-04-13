@@ -43,7 +43,7 @@ const deferEntryScriptPlugin: Plugin = {
   transformIndexHtml(html) {
     if (process.env['VITE_SSR_BUILD']) return html;
     const srcs: string[] = [];
-    let result = html.replace(
+    const result = html.replace(
       /<script type="module" crossorigin src="([^"]+)"><\/script>/g,
       (_, src) => {
         srcs.push(src);
@@ -191,6 +191,7 @@ const prerenderPlugin: Plugin = {
     const viteBin = path.resolve(__dirname, '../../node_modules/vite/bin/vite.js');
 
     // 1. Build the SSR entry in a separate process.
+    // eslint-disable-next-line no-console -- build-time logging
     console.log('\n[prerender] Building SSR entry…');
     execFileSync(
       process.execPath,
@@ -203,6 +204,7 @@ const prerenderPlugin: Plugin = {
     );
 
     // 2. Patch dist/index.html with the pre-rendered output.
+    // eslint-disable-next-line no-console -- build-time logging
     console.log('[prerender] Running prerender script…');
     execFileSync(process.execPath, [path.join(__dirname, 'scripts/prerender.mjs')], {
       cwd: __dirname,
@@ -211,6 +213,7 @@ const prerenderPlugin: Plugin = {
 
     // 3. Remove the temporary SSR output directory.
     fs.rmSync(path.join(__dirname, 'dist-ssr'), { recursive: true, force: true });
+    // eslint-disable-next-line no-console -- build-time logging
     console.log('[prerender] Done.\n');
   },
 };

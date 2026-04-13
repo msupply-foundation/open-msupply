@@ -160,6 +160,7 @@ export const DetailView: FC = () => {
         }
       })();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deleteRequest, data]);
 
   const {
@@ -214,6 +215,7 @@ export const DetailView: FC = () => {
     if (shouldMarkVisited && dataStatus === EncounterNodeStatus.Visited) {
       setShouldMarkVisited(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataStatus, isDirty]);
 
   useEffect(() => {
@@ -247,6 +249,7 @@ export const DetailView: FC = () => {
         setLogicalStatus(undefined);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [encounter]);
 
   if (!isSuccess && !isError) return <DetailViewSkeleton />;

@@ -220,6 +220,7 @@ const StockDistributionContent = ({
         </Box>
       </>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [availableStockOnHand, averageMonthlyConsumption, suggestedQuantity]
   );
 

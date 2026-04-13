@@ -186,11 +186,13 @@ export const useJsonFormsHandler = <R,>(
     if (data === undefined) {
       setData(initialData);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, data, isSaving, isLoading, isCreating]);
 
   useEffect(() => {
     setData(initialData);
     return () => setIsDirty(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
 
   const schema = jsonFormData.schema;

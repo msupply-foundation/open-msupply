@@ -51,6 +51,7 @@ export const PatientSearchInput = ({
       setInput(value.name);
       search(value.name);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const asOption = (

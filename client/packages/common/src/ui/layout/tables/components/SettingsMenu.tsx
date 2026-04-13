@@ -40,6 +40,7 @@ export const SettingsMenu = ({
   onSaveAsGlobalDefault,
   globalDefaults,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: MRT_TableInstance<any>;
   tableId: string;
   density: ReturnType<typeof useColumnDensity>;

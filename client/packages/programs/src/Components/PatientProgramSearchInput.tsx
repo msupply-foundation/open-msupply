@@ -23,6 +23,7 @@ export const PatientProgramSearchInput = ({
     if (data?.nodes.length == 1 && !value) {
       onChange(data.nodes[0]!); // if length is 1, the first element must exist
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.nodes.length]);
 
   if (programId && !value) {

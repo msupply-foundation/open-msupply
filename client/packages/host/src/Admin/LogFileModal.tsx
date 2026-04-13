@@ -32,6 +32,7 @@ export const LogDisplay = ({
     if (!!data?.fileContent) {
       setLogContent(data.fileContent);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.fileContent]);
 
   if (isLoading) {

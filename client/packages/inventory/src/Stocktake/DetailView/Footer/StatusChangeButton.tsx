@@ -68,6 +68,7 @@ const useStatusChangeButton = () => {
 
   const options = useMemo(
     () => getStatusOptions(getButtonLabel(t)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [getButtonLabel]
   );
 

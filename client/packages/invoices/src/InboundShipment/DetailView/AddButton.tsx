@@ -68,6 +68,7 @@ export const AddButton = ({
         isDisabled: disable,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [disable, disableAddFromMasterListButton, disableAddFromInternalOrderButton]
   );
 

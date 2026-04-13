@@ -82,6 +82,7 @@ export const useDraftRequisitionLine = (
     } else {
       setDraft(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lines, item, data]);
 
   const update = useCallback((patch: Partial<DraftResponseLine>) => {
@@ -120,6 +121,7 @@ export const useDraftRequisitionLine = (
     }
 
     return null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft, saveMutation]);
 
   return { draft, isLoading, save, update, isReasonsError };

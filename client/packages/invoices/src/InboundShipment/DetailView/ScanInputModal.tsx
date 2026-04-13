@@ -316,6 +316,7 @@ export const ScanInputModal = ({
         return newState;
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isOpen, shouldOpen, getBarcode, draftState, t, saveCurrentLine]
   );
 

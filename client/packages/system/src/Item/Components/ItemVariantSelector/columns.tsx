@@ -58,5 +58,6 @@ export const useItemVariantSelectorColumns = ({
         includeColumn: isVaccine,
       },
     ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, onVariantSelected, isVaccine]);
 };

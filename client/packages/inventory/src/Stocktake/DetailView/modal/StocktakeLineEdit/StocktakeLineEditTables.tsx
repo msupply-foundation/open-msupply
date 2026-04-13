@@ -224,6 +224,7 @@ export const BatchTable = ({
         ),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [showVVMStatusColumn, errors]
   );
 
@@ -302,6 +303,7 @@ export const PricingTable = ({
         ),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -442,6 +444,7 @@ export const LocationTable = ({
         defaultHideOnMobile: true,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [allowTrackingOfStockByDonor]
   );
 

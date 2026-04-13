@@ -77,7 +77,7 @@ const DetailButton = ({
   notification:
     | TemperatureNotificationBreachFragment
     | TemperatureExcursionFragment;
-  queryParameters: any;
+  queryParameters: Record<string, string>;
   tab: string;
 }) => {
   const t = useTranslation();

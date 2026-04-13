@@ -51,6 +51,7 @@ export const usePreviousEncounter = (
         ? getEncounterData(fetchedEncounter.document.data, path)
         : undefined;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

@@ -49,6 +49,7 @@ const useStatusChangeButton = () => {
       );
     }
     return statusOptions;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, getButtonLabel, invoiceStatusOptions]);
 
   // If the status has already been set, but is not included in the preferences,

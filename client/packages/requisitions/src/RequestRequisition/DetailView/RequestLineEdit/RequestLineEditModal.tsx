@@ -131,6 +131,7 @@ export const RequestLineEditModal = ({
     if (!!draft?.isCreated) {
       save();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft?.isCreated]);
 
   return (

@@ -129,7 +129,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
         includeColumn: showErrors,
       },
     ],
-    [showWarnings, showErrors, isCentralServer]
+    [t, showWarnings, showErrors, isCentralServer]
   );
 
   const { table } = useNonPaginatedMaterialTable<ImportRow>({

@@ -132,6 +132,7 @@ export const Android = () => {
     if (mode === NativeMode.Server) {
       setServerMode(handleConnectionResult);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   useEffect(() => {

@@ -51,6 +51,7 @@ export const useGetColumnTypeDefaults = () => {
           },
           align: 'right',
           filterVariant: 'date-range',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           muiFilterDatePickerProps: ({ column, rangeFilterIndex }: { column: any; rangeFilterIndex: number }) => {
             const [start, end] =
               (column.getFilterValue() as [
@@ -86,6 +87,7 @@ export const useGetColumnTypeDefaults = () => {
           },
           align: 'right',
           filterVariant: 'datetime-range',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           muiFilterDateTimePickerProps: ({ column, rangeFilterIndex }: { column: any; rangeFilterIndex: number }) => {
             const [start, end] =
               (column.getFilterValue() as [

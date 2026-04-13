@@ -39,6 +39,7 @@ const useStocktakeLineErrors = () => {
 export type UseStocktakeLineErrors = ReturnType<typeof useStocktakeLineErrors>;
 
 const StocktakeLineErrorContext = createContext<UseStocktakeLineErrors>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   {} as any
 );
 

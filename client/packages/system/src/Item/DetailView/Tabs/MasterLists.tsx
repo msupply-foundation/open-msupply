@@ -52,6 +52,7 @@ export const MasterListsTab = ({ itemId }: { itemId?: string }) => {
         enableColumnFilter: true,
       }
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

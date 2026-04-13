@@ -116,7 +116,7 @@ export const SensorListView: FC = () => {
         Cell: BreachTypeCell,
       },
     ],
-    []
+    [formatTemperature, t]
   );
 
   const { table } = usePaginatedMaterialTable<SensorFragment>({

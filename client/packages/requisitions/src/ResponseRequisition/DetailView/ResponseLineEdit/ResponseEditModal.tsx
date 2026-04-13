@@ -122,6 +122,7 @@ export const ResponseLineEditModal = ({
     if (!!draft?.isCreated) {
       save();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft?.isCreated]);
 
   const { data } = useResponse.line.stats(!draft?.isCreated, draft?.id);

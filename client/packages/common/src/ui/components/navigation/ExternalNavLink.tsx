@@ -54,7 +54,7 @@ export const ExternalNavLink: FC<ExternalNavLinkProps> = props => {
           rel={trustedSite ? 'noopener' : 'noreferrer'}
         />
       )),
-    [to]
+    [to, text, trustedSite]
   );
 
   return (

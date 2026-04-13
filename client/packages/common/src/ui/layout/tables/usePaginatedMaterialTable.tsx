@@ -135,6 +135,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
 
   const selectedRows = useMemo(
     () => table.getSelectedRowModel().rows.map(r => r.original),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [rowSelection]
   );
 

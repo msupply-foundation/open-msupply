@@ -121,6 +121,7 @@ export const PrescriptionListView = () => {
         size: 120,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

@@ -125,6 +125,7 @@ export const CustomerReturnListView = () => {
         Cell: TextWithTooltipCell,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 

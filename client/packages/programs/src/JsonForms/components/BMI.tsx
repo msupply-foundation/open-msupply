@@ -103,6 +103,7 @@ const UIComponent = (props: ControlProps) => {
 
     const bmi = round(w / height ** 2);
     handleChange(composePaths(path, 'bodyMassIndex'), bmi);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [height, weight]);
 
   if (!props.visible) {

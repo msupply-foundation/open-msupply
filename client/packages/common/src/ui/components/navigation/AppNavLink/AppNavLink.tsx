@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 import {
   Badge,
   ListItem,
@@ -91,14 +91,14 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const isSelectedParentItem = isParent && !!match;
   const showMenuSectionIcon = isParent && drawer.isOpen;
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+  const handleClick = useCallback((e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     // reset the clicked nav path when navigating
     // otherwise the child menu remains open
     drawer.setClickedNavPath(undefined);
     if (isExtraSmallScreen) drawer.close();
     if (onClick) onClick(e);
     drawer.onClick();
-  };
+  }, [drawer, isExtraSmallScreen, onClick]);
 
   const CustomLink = React.useMemo(
     () =>
@@ -121,7 +121,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           />
         )
       ),
-    [to]
+    [to, drawer, isParent, text, handleClick]
   );
 
   return visible ? (
