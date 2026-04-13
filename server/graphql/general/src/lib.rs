@@ -550,12 +550,8 @@ impl GeneralMutations {
         initialise_site(ctx, input).await
     }
 
-    pub async fn manual_sync(
-        &self,
-        ctx: &Context<'_>,
-        fetch_patient_id: Option<String>,
-    ) -> Result<String> {
-        manual_sync(ctx, true, fetch_patient_id)
+    pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
+        manual_sync(ctx, true)
     }
 
     pub async fn update_display_settings(
@@ -667,12 +663,8 @@ impl InitialisationMutations {
         initialise_site(ctx, input).await
     }
 
-    pub async fn manual_sync(
-        &self,
-        ctx: &Context<'_>,
-        _fetch_patient_id: Option<String>,
-    ) -> Result<String> {
-        manual_sync(ctx, false, None)
+    pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
+        manual_sync(ctx, false)
     }
 }
 

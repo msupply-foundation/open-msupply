@@ -3,42 +3,33 @@ use std::{future::Future, sync::Arc};
 use crate::service_provider::ServiceProvider;
 use crate::sync::is_initialised;
 
-use super::{
-    file_sync_driver::FileSyncTrigger, settings::SyncSettings, synchroniser::Synchroniser,
-};
+use super::{settings::SyncSettings, synchroniser::Synchroniser};
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
 };
 
 pub struct SynchroniserDriver {
-    receiver: Receiver<Option<String>>,
-    file_sync_trigger: FileSyncTrigger,
+    receiver: Receiver<()>,
 }
 
 #[derive(Clone)]
 pub struct SyncTrigger {
-    sender: Sender<Option<String>>,
+    sender: Sender<()>,
 }
 
 /// Used to 'drive' synchronisation, it's tasks:
 /// * Expose channel for manually triggering sync
 /// * Trigger sync every SyncSettings.interval_seconds (only when initialised)
 impl SynchroniserDriver {
-    pub fn init(file_sync_trigger: FileSyncTrigger) -> (SyncTrigger, SynchroniserDriver) {
+    pub fn init() -> (SyncTrigger, SynchroniserDriver) {
         // We use a single-element channel so that we can only have one sync pending at a time.
         // We consume this at the *start* of sync, so we could schedule a sync while syncing.
         // Worst-case scenario, we produce an infinite stream of sync instructions and always go
         // straight from one sync to the next, but that's OK.
         let (sender, receiver) = mpsc::channel(1);
 
-        (
-            SyncTrigger { sender },
-            SynchroniserDriver {
-                receiver,
-                file_sync_trigger,
-            },
-        )
+        (SyncTrigger { sender }, SynchroniserDriver { receiver })
     }
 
     /// SynchroniserDriver entry point, this method is meant to be run within main `select!` macro
@@ -54,22 +45,26 @@ impl SynchroniserDriver {
     ///    * do sync if any of the above were triggered
     pub async fn run(mut self, service_provider: Arc<ServiceProvider>, force_run: bool) {
         if force_run || is_initialised(&service_provider) {
-            self.sync(service_provider.clone(), None).await;
+            self.sync(service_provider.clone()).await;
         }
 
         loop {
             // Need to check is_initialsed from database on every iteration, since it could have been updated
-            let fetch_patient_id = if is_initialised(&service_provider) {
+            if is_initialised(&service_provider) {
                 tokio::select! {
                     // Wait for trigger
-                    Some(patient_id) = self.receiver.recv() => patient_id,
+                    msg = self.receiver.recv() => {
+                        if msg.is_none() {
+                            break;
+                        }
+                    },
                     // OR wait for SyncSettings.interval_seconds
                     _ = async {
                         // Need to get interval_seconds from database on every iteration, since it could have been updated
                         let sync_settings = get_sync_settings(&service_provider);
                         let duration = Duration::from_secs(sync_settings.interval_seconds);
                         tokio::time::sleep(duration).await;
-                     } => None,
+                     } => {},
                     else => break,
                 }
             } else {
@@ -77,37 +72,25 @@ impl SynchroniserDriver {
                 if self.receiver.recv().await.is_none() {
                     break;
                 }
-                None
-            };
+            }
 
-            self.sync(service_provider.clone(), fetch_patient_id).await;
+            self.sync(service_provider.clone()).await;
         }
     }
 
-    pub async fn sync(
-        &self,
-        service_provider: Arc<ServiceProvider>,
-        fetch_patient_id: Option<String>,
-    ) {
+    pub async fn sync(&self, service_provider: Arc<ServiceProvider>) {
         // Error is already logged, keeping result with `_` to avoid compilation warning
         // We initialise new instance of Syncrhoniser since SyncSettings could have changed
-
-        // Pause file sync
-        self.file_sync_trigger.pause();
-
         let _ = Synchroniser::new(get_sync_settings(&service_provider), service_provider)
             .unwrap()
-            .sync(fetch_patient_id)
+            .sync()
             .await;
-
-        // Unpause file sync
-        self.file_sync_trigger.unpause();
     }
 }
 
 impl SyncTrigger {
-    pub fn trigger(&self, fetch_patient_id: Option<String>) {
-        if let Err(error) = self.sender.try_send(fetch_patient_id) {
+    pub fn trigger(&self) {
+        if let Err(error) = self.sender.try_send(()) {
             log::error!("Problem triggering sync {error:#?}")
         }
     }

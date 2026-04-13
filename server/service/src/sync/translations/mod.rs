@@ -387,6 +387,7 @@ pub(crate) enum ToSyncRecordTranslationType {
     /// When omSupply remote is pushing to og mSupply central
     PushToLegacyCentral,
     /// When omSupply remote is pushing to omSupply central
+    #[allow(dead_code)]
     PushToOmSupplyCentral,
     // When omSupply remote is pulling from omSupply central
     PullFromOmSupplyCentral,
