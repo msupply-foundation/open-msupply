@@ -30,6 +30,7 @@ import {
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
 
 const PRICE_DECIMAL_LIMIT = 6;
+const CURRENCY_DECIMAL_LIMIT = 2;
 
 import {
   calculatePricesAndDiscount,
@@ -304,7 +305,7 @@ export const PurchaseOrderLineEdit = ({
                       (draft.numberOfPacks ?? 0) || 0
                   : 0
               }
-              decimalLimit={5}
+              decimalLimit={CURRENCY_DECIMAL_LIMIT}
               endAdornment={options.symbol}
               disabled={true}
             />
@@ -341,7 +342,7 @@ export const PurchaseOrderLineEdit = ({
               }
             />
             <MultilineTextInput
-              label={t('label.comment')}
+              label={t('label.comment-for-supplier')}
               value={draft?.comment || ''}
               disabled={
                 draft?.status === PurchaseOrderLineStatusNode.Closed ||
@@ -350,7 +351,7 @@ export const PurchaseOrderLineEdit = ({
               onChange={(value?: string) => update({ comment: value })}
             />
             <MultilineTextInput
-              label={t('label.notes')}
+              label={t('label.note-internal')}
               value={draft?.note || ''}
               disabled={
                 draft?.status === PurchaseOrderLineStatusNode.Closed ||
