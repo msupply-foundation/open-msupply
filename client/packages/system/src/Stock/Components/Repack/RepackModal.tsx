@@ -22,6 +22,7 @@ import {
   NothingHere,
   ActivityLogNodeType,
   Link,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { RepackEditForm } from './RepackEditForm';
@@ -53,9 +54,14 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
 
+  const { userHasPermission } = useAuthContext();
+  const hasLogPermission = userHasPermission(UserPermission.LogQuery);
+
   const { data: logData } = useActivityLog(
     stockLine?.id ?? '',
-    ActivityLogNodeType.Repack
+    hasLogPermission,
+    ActivityLogNodeType.Repack,
+    undefined,
   );
   const toLogData = logData?.nodes.find(node => !!node.from);
 
