@@ -34,6 +34,7 @@
     "storybook": "storybook dev -p 6006",
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom --testPathIgnorePatterns codegen.test.ts --testPathIgnorePatterns playwright",
     "test:codegen": "jest --config ./jest.config.js codegen.test.ts",
+    "e2e": "npx playwright test --config playwright/playwright.config.ts",
     "translate": "node translate_locale"
   },
   "workspaces": {
@@ -49,6 +50,8 @@
     "@graphql-codegen/typescript": "^4.0.1",
     "@graphql-codegen/typescript-graphql-request": "^6.2.0",
     "@graphql-codegen/typescript-operations": "^4.0.1",
+    "@playwright/test": "^1.58.2",
+    "@storybook/addon-actions": "^8.1.11",
     "@storybook/addon-essentials": "^8.1.11",
     "@storybook/addon-interactions": "^8.1.11",
     "@storybook/addon-links": "^8.1.11",

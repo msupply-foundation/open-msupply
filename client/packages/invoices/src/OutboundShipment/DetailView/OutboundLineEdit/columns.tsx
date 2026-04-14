@@ -134,7 +134,6 @@ export const useOutboundLineEditColumns = ({
             onChange={vvmStatus => setVvmStatus(row.original.id, vvmStatus)}
             selected={row.original.vvmStatus ?? null}
             disabled={getIsDisabled(row.original)}
-            clearable
           />
         ),
       },

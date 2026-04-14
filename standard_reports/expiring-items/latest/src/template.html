@@ -42,17 +42,17 @@
             N/A
           {% endif %}
         </td>
-        <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)
+        <td style="text-align: right">{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)
           }}</td>
-        <td>{{stockLine.averageMonthlyConsumption }}</td>
-        <td>
+        <td style="text-align: right">{{stockLine.averageMonthlyConsumption }}</td>
+        <td style="text-align: right">
           {% if stockLine.expectedUsage %}
               {{ stockLine.expectedUsage | round( precision=1) }}
           {% else %}
             N/A
           {% endif %}
         </td>
-        <td>
+        <td style="text-align: right">
           {% if stockLine.stockAtRisk %}
             {{ stockLine.stockAtRisk | round( precision=1) }}
           {% else %}

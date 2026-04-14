@@ -13,6 +13,7 @@ import {
   useFormatDateTime,
   PopoverCell,
   useTranslation,
+  Box,
   CircleIcon,
   MessageSquareIcon,
   Tooltip,
@@ -143,7 +144,9 @@ export const useGetColumnTypeDefaults = () => {
           // Comment popover is pretty narrow, show icon rather than full label
           Header: () => (
             <Tooltip title={t('label.comment')} placement="top">
-              <MessageSquareIcon fontSize="small" />
+              <Box>
+                <MessageSquareIcon fontSize="small" />
+              </Box>
             </Tooltip>
           ),
           Cell: ({ cell, row }) => {

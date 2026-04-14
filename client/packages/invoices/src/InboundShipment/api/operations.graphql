@@ -1360,3 +1360,14 @@ query purchaseOrders(
     }
   }
 }
+
+query stocktakeCountAfterDate(
+  $storeId: String!
+  $filter: StocktakeFilterInput
+) {
+  stocktakes(storeId: $storeId, filter: $filter) {
+    ... on StocktakeConnector {
+      totalCount
+    }
+  }
+}
