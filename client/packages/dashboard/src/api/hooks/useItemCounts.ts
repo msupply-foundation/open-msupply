@@ -13,6 +13,7 @@ export const useItemCounts = (lowStockThreshold: number) => {
         lowStockThreshold,
       }),
     {
+      enabled: !!storeId,
       retry: false,
     }
   );
