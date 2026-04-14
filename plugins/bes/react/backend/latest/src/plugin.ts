@@ -182,7 +182,7 @@ const plugins: BackendPlugins = {
         }
       }
 
-      // Determine if LEFO expired can fullfill rest of order
+      // Determine if LEFO expired can fullfil rest of order
       for (let j = 0; j < expiredBatches.length; j++) {
         if (totalUnitsSupplied >= item.numberOfUnits) break;
         const batch = expiredBatches[j];
