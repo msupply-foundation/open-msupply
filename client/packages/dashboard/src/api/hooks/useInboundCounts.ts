@@ -12,6 +12,7 @@ export const useInboundCounts = () => {
         storeId,
       }),
     {
+      enabled: !!storeId,
       retry: false,
     }
   );
