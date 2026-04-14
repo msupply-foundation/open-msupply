@@ -365,7 +365,8 @@ const TRANS_LINE_OM_FIELDS: (&str, &str) = (
         "oms_fields": {
             "campaign_id": "campaign_a",
             "program_id": "program_a",
-            "status": "PENDING"
+            "status": "PENDING",
+            "purchase_order_line_id": "test_purchase_order_a_line_1"
         }
     }"#,
 );
@@ -397,7 +398,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
             linked_invoice_id: None,
-            purchase_order_line_id: None,
+            purchase_order_line_id: Some("test_purchase_order_a_line_1".to_string()),
             donor_id: None,
             manufacturer_id: None,
             vvm_status_id: None,
@@ -447,7 +448,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
                 program_id: Some("program_a".to_string()),
                 status: Some("PENDING".to_string()),
                 manufacture_date: None,
-                purchase_order_line_id: None,
+                purchase_order_line_id: Some("test_purchase_order_a_line_1".to_string()),
             }),
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
