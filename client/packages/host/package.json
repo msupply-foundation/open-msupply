@@ -25,6 +25,9 @@
     "eslint": "eslint ./src"
   },
   "dependencies": {
+    "@mui/material": "^6.4.2",
+    "kbar": "^0.1.0-beta.45",
+    "zustand": "^4.5.7",
     "@fontsource-variable/inter": "^5.0.19",
     "@mui/x-date-pickers": "^8.26.0",
     "@openmsupply-client/coldchain": "^0.0.0",
