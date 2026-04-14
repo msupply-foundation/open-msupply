@@ -325,4 +325,3 @@ export const Site: FC = () => {
   );
 };
 
-export default Site;

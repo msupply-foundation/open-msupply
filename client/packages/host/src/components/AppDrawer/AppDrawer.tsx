@@ -239,4 +239,3 @@ export const AppDrawer: React.FC = () => {
   );
 };
 
-export default AppDrawer;

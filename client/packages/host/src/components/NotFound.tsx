@@ -40,4 +40,3 @@ export const NotFound: React.FC = () => {
     </Grid>
   );
 };
-export default NotFound;

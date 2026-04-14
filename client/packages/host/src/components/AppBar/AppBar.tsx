@@ -84,4 +84,3 @@ export const AppBar: React.FC = () => {
   );
 };
 
-export default AppBar;

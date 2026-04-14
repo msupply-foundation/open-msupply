@@ -137,4 +137,3 @@ export const StockEvolution = ({ id }: StockEvolutionProps) => {
   );
 };
 
-export default StockEvolution;

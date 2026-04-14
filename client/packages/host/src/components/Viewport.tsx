@@ -55,4 +55,3 @@ export const Viewport: React.FC<PropsWithChildrenOnly> = props => {
   );
 };
 
-export default Viewport;

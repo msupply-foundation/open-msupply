@@ -37,4 +37,3 @@ export const Environment = {
   REPORT_UPLOAD_URL: `${apiHost}/upload`,
 };
 
-export default Environment;

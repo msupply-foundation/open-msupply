@@ -157,4 +157,3 @@ export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
   );
 };
 
-export default ConsumptionHistory;

@@ -283,4 +283,3 @@ export const UnhappyMan: React.FC = () => {
   );
 };
 
-export default UnhappyMan;

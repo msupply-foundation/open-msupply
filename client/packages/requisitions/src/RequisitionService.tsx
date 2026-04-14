@@ -81,4 +81,3 @@ export const RequisitionService: FC = () => {
   );
 };
 
-export default RequisitionService;
