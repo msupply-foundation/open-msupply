@@ -18,13 +18,10 @@ export const useSyncInfo = (
 
   const isEnabled = !!token && enabled;
 
-  const { isSubscribed, data: subData } = useSubscription<
-    SyncInfoUpdatedSubscription,
-    SyncInfoUpdatedSubscription['syncInfoUpdated']
-  >({
+  const { isSubscribed, data: subData } = useSubscription({
     document: SyncInfoUpdatedDocument,
     enabled: isEnabled,
-    select: data => data.syncInfoUpdated,
+    select: (data: SyncInfoUpdatedSubscription) => data.syncInfoUpdated,
   });
 
   const { data: queryData, ...rest } = useQuery(

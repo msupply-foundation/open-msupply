@@ -15,14 +15,12 @@ export const useInitialisationStatus = (
 
   const queryKey = 'initialisationStatus';
 
-  const { isSubscribed, data: subData } = useSubscription<
-    InitialisationStatusUpdatedSubscription,
-    InitialisationStatusUpdatedSubscription['initialisationStatusUpdated']
-  >({
+  const { isSubscribed, data: subData } = useSubscription({
     document: InitialisationStatusUpdatedDocument,
     enabled: true,
     requireAuth: false,
-    select: data => data.initialisationStatusUpdated,
+    select: (data: InitialisationStatusUpdatedSubscription) =>
+      data.initialisationStatusUpdated,
   });
 
   const { data: queryData, ...rest } = useQuery(

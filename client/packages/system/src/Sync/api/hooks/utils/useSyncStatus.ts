@@ -12,14 +12,12 @@ export const useSyncStatus = (
 ) => {
   const api = useSyncApi();
 
-  const { isSubscribed, data: subData } = useSubscription<
-    SyncInfoUpdatedSubscription,
-    SyncInfoUpdatedSubscription['syncInfoUpdated']['syncStatus']
-  >({
+  const { isSubscribed, data: subData } = useSubscription({
     document: SyncInfoUpdatedDocument,
     enabled: enabled !== false,
     requireAuth,
-    select: data => data.syncInfoUpdated.syncStatus,
+    select: (data: SyncInfoUpdatedSubscription) =>
+      data.syncInfoUpdated.syncStatus,
   });
 
   const { data: queryData, ...rest } = useQuery(
