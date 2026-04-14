@@ -4,7 +4,7 @@ use crate::mutations::{
 };
 use async_graphql::*;
 
-use chrono::NaiveDate;
+use chrono::{DateTime, Utc};
 use graphql_core::generic_inputs::{InboundShipmentType, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
@@ -51,7 +51,7 @@ pub struct UpdateInput {
     pub charges_local_currency: Option<f64>,
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
-    pub received_datetime: Option<NaiveDate>,
+    pub received_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -221,7 +221,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::NotAnInboundShipment
         | ServiceError::WrongInboundShipmentType
         | ServiceError::OtherPartyDoesNotExist
-        | ServiceError::CannotSetReceivedDateInFuture
+        | ServiceError::BackdatingNotEnabled
         | ServiceError::CanOnlyBackdateReceivedShipments
         | ServiceError::CannotMoveReceivedDateForward
         | ServiceError::ExceedsMaximumBackdatingDays
@@ -229,6 +229,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CurrencyRateMustBePositive => {
             BadUserInput(formatted_error)
         }
+        ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };

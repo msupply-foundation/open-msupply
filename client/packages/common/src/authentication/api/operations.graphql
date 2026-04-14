@@ -227,8 +227,10 @@ query preferences($storeId: String!) {
     showIndicativePriceInRequisitions
     isGaps
     globalTableConfigs
-    allowBackdatingOfShipments
-    maximumBackdatingDays
+    backdating {
+      enabled
+      maxDays
+    }
   }
 }
 
