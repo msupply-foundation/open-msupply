@@ -37,7 +37,7 @@ pub struct DatabaseSettings {
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!(
-            "postgres://{}:{}@{}:{}/{}",
+            "postgres://{}:{}@{}:{}/{}?application_name=open-msupply",
             self.username,
             urlencoding::encode(&self.password),
             self.host,
@@ -232,6 +232,27 @@ mod database_setting_test {
             connection_pool_max_connections: None,
             connection_pool_timeout_seconds: None,
         }
+    }
+
+    // feature postgres
+    #[cfg(feature = "postgres")]
+    #[test]
+    fn test_connection_string_includes_application_name() {
+        let settings = DatabaseSettings {
+            username: "user".to_string(),
+            password: "pass".to_string(),
+            port: 5432,
+            host: "localhost".to_string(),
+            database_name: "testdb".to_string(),
+            init_sql: None,
+            database_path: None,
+            connection_pool_max_connections: None,
+            connection_pool_timeout_seconds: None,
+        };
+        assert_eq!(
+            settings.connection_string(),
+            "postgres://user:pass@localhost:5432/testdb?application_name=open-msupply"
+        );
     }
 
     // feature sqlite
