@@ -52,7 +52,6 @@ pub struct TransLineRowOmsFields {
     #[serde(default)]
     pub manufacture_date: Option<NaiveDate>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub purchase_order_line_id: Option<String>,
 }
 
