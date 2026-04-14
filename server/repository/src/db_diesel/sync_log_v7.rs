@@ -1,4 +1,4 @@
-use crate::{RepositoryError, StorageConnection};
+use crate::{syncv7::SyncError, RepositoryError, StorageConnection};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -60,14 +60,12 @@ pub struct SyncLogV7Row {
     pub integration_finished_datetime: Option<NaiveDateTime>,
     pub integration_progress_total: Option<i32>,
     pub integration_progress_done: Option<i32>,
-    pub error: Option<String>,
+    pub error: Option<SyncError>,
 }
 
 pub struct SyncLogV7Repository<'a> {
     connection: &'a StorageConnection,
 }
-
-type Source = sync_log_v7::table;
 
 impl<'a> SyncLogV7Repository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -83,16 +81,23 @@ impl<'a> SyncLogV7Repository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
     // Sorts by started_datetime descending
-    pub fn query_one(
-        &self,
-        filter: Condition::Inner,
-    ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-        let results = sync_log_v7::table
-            .filter(filter.to_boxed())
+    // TODO: replace with query_one and the dynamic query from prototype
+    pub fn latest(&self) -> Result<Option<SyncLogV7Row>, RepositoryError> {
+        let result = sync_log_v7::table
             .order(sync_log_v7::started_datetime.desc())
             .first::<SyncLogV7Row>(self.connection.lock().connection())
             .optional()?;
-        Ok(results)
+        Ok(result)
+    }
+
+    pub fn is_initialised(&self) -> Result<bool, RepositoryError> {
+        let result = sync_log_v7::table
+            .filter(sync_log_v7::finished_datetime.is_not_null())
+            .filter(sync_log_v7::error.is_null())
+            .first::<SyncLogV7Row>(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
     }
 }
