@@ -152,6 +152,7 @@ pub(crate) fn generate(
             .map(|m| {
                 let mut row = m.location_movement_row;
                 row.enter_datetime = Some(new_received);
+                row.exit_datetime = row.exit_datetime.map(|_| new_received);
                 row
             })
             .collect();
