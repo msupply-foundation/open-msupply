@@ -12,13 +12,6 @@ import {
 import { useImmunisationProgramList } from '../api/hooks/useImmunisationProgramList';
 import { ImmunisationProgramFragment } from '../api';
 
-export interface Program {
-  id: string;
-  name: string;
-  immunisations: string[];
-  isNew: boolean;
-}
-
 export const ImmunisationProgramListView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();  

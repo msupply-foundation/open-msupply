@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   FnUtils,
   InsertPurchaseOrderInput,
-  PurchaseOrderLineNode,
   useConfirmationModal,
   useMutation,
   useNotification,
@@ -22,10 +21,6 @@ import { parseUpdateInput } from './utils';
 import { PURCHASE_ORDER } from './keys';
 
 const DEBOUNCED_TIME = 1000;
-
-export type PurchaseOrderLineInsertFromCsvInput = Partial<
-  PurchaseOrderLineNode & { purchaseOrderId: string; itemCode: string }
->;
 
 export const usePurchaseOrder = (id?: string) => {
   const { purchaseOrderId = id } = useParams();

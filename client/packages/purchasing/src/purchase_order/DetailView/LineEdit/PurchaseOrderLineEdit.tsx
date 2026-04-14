@@ -35,7 +35,6 @@ import {
 } from './utils';
 import { isFieldDisabled, StatusGroup } from '../../../utils';
 
-export type PurchaseOrderLineItem = Partial<PurchaseOrderLineFragment>;
 export interface PurchaseOrderLineEditProps {
   isUpdateMode?: boolean;
   draft?: DraftPurchaseOrderLine | null;

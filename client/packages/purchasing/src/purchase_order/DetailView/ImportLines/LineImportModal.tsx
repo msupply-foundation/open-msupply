@@ -40,10 +40,6 @@ export type ImportRow = Omit<
   warningMessage: string;
 };
 
-export type LineNumber = {
-  lineNumber: number;
-};
-
 enum Tabs {
   Upload = 'Upload',
   Review = 'Review',

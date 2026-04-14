@@ -90,21 +90,6 @@ export const toExportEquipment = (
   lineNumber: index + 2,
 });
 
-export const toUpdateEquipmentInput = (
-  row: ImportRow,
-  catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): Partial<DraftAsset> => ({
-  assetNumber: row.assetNumber,
-  catalogueItemId: catalogueItemData
-    ?.filter(
-      (item: { code: string | null | undefined }) =>
-        item.code == row.catalogueItemCode
-    )
-    ?.map((item: { id: string }) => item.id)
-    .pop(),
-  id: row.id,
-});
-
 export const EquipmentImportModal = ({
   isOpen,
   onClose,

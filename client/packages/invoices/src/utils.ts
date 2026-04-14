@@ -221,14 +221,6 @@ export const createSummaryItem = (
   return item;
 };
 
-export const inboundLinesToSummaryItems = (
-  lines: InboundLineFragment[]
-): InboundItem[] => {
-  const grouped = ArrayUtils.groupBy(lines, line => line.item.id);
-  return Object.entries(grouped).map(([itemId, lines]) =>
-    createSummaryItem(itemId, lines)
-  );
-};
 export const canDeleteInvoice = (
   invoice:
     | OutboundRowFragment

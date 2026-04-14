@@ -232,38 +232,6 @@ export const createDraftPrescriptionLine = ({
   return draftPrescriptionLine;
 };
 
-export const issuePrescriptionStock = (
-  draftPrescriptionLines: DraftPrescriptionLine[],
-  idToIssue: string,
-  packs: number
-) => {
-  const foundRowIdx = draftPrescriptionLines.findIndex(
-    ({ id }) => id === idToIssue
-  );
-  const foundRow = draftPrescriptionLines[foundRowIdx];
-  if (!foundRow) return draftPrescriptionLines;
-
-  const newDraftPrescriptionLines = [...draftPrescriptionLines];
-  newDraftPrescriptionLines[foundRowIdx] = {
-    ...foundRow,
-    numberOfPacks: packs,
-    isUpdated: true,
-  };
-
-  return newDraftPrescriptionLines;
-};
-
-export const updateNotes = (
-  draftPrescriptionLines: DraftPrescriptionLine[],
-  note: string
-) => {
-  return draftPrescriptionLines.map(line => ({
-    ...line,
-    note,
-    isUpdated: true,
-  }));
-};
-
 export const issueStock = (
   draftPrescriptionLines: DraftPrescriptionLine[],
   idToIssue: string,

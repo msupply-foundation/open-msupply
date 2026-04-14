@@ -49,17 +49,11 @@ export enum AppRoute {
   GlobalPreferences = 'global-preferences',
   Campaigns = 'campaigns',
 
-  Tools = 'tools',
-
   Reports = 'reports',
-
-  Messages = 'messages',
 
   Settings = 'settings',
 
   Help = 'help',
-
-  Logout = 'logout',
 
   Catalogue = 'catalogue',
   Items = 'items',
