@@ -9,6 +9,7 @@ pub mod diesel_macros;
 pub mod migrations;
 pub mod mock;
 mod repository_error;
+pub mod syncv7;
 pub mod test_db;
 pub use self::db_diesel::*;
 pub use self::repository_error::RepositoryError;
