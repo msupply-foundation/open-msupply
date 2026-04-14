@@ -18,3 +18,4 @@ export const MasterListService: FC = () => {
   );
 };
 
+export default MasterListService;

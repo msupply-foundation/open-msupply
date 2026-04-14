@@ -31,3 +31,4 @@ export const ManageService: FC = () => {
   );
 };
 
+export default ManageService;

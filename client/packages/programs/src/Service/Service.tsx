@@ -29,3 +29,4 @@ export const ProgramService: FC = () => {
   );
 };
 
+export default ProgramService;

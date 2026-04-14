@@ -40,3 +40,4 @@ export const ColdchainService: FC = () => {
   );
 };
 
+export default ColdchainService;

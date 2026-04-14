@@ -18,7 +18,7 @@ import {
   useNavigate,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import Viewport from './Viewport';
+import { Viewport } from './Viewport';
 import { LoginIcon } from './Login/LoginIcon';
 import { LanguageButton } from './LanguageButton';
 

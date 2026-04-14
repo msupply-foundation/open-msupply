@@ -21,3 +21,4 @@ export const InventoryService: FC = () => {
   );
 };
 
+export default InventoryService;

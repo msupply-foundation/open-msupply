@@ -18,3 +18,4 @@ export const Service: FC = () => {
   );
 };
 
+export default Service;

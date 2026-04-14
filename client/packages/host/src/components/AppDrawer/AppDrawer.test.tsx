@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import AppDrawer from './AppDrawer';
+import { AppDrawer } from './AppDrawer';
 import {
   setScreenSize_ONLY_FOR_TESTING,
   TestingProvider,
