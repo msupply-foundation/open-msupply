@@ -97,10 +97,16 @@ Add this repo as a submodule in our plugins directory:
 git submodule add https://github.com/msupply-foundation/bes-plugins ../client/packages/plugins/bes-plugins
 ```
 
-To build and install the plugin bundle, run:
+To build and install the plugin bundle locally, run:
 
 ```sh
 cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/bes-plugins' --url http://localhost:8000 --username admin --password pass
+```
+
+To build the plugin for committing to the repo:
+
+```sh
+cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/bes-plugins/ -o ../client/packages/plugins/bes-plugins/bundle.json
 ```
 
 ### Dev troubleshooting
