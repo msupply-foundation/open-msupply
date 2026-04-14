@@ -34,7 +34,7 @@ Environment variables take precedence over `config.toml` values.
 
 2. **Per-scenario run** -- The benchmark database is created from the template using `CREATE DATABASE ... TEMPLATE` (a fast file-level copy). PG config overrides are applied if specified, indexes are built, `ANALYZE` is run, then 10,000 individual INSERTs are executed sequentially, each timed independently.
 
-3. **Results** -- Latency percentiles (p50, p95, p99, mean, min, max) are computed and saved. Charts are generated as PNGs.
+3. **Results** -- Latency percentiles (p50, p95, p99, mean, min, max) are computed and saved to `results.json` after each scenario completes. If the run is interrupted, results from completed scenarios are preserved. Charts are generated as PNGs at the end of each phase.
 
 The template approach means each scenario starts from an identical data state without re-importing data.
 
@@ -63,6 +63,15 @@ cargo run -- --no-graphs
 
 # 7. Regenerate seed templates (if changelog schema changes)
 cargo run -- --reseed --seed-only
+
+# 8. Regenerate charts from existing results (without re-running benchmarks)
+cargo run -- --generate-graphs results/phase2_indexes_2026-04-14_15-30-45/results.json
+```
+
+A full run can take a long time (the tested table sizes of 1M to 100M rows took ~18 hours). On macOS, use `caffeinate` to prevent the system from sleeping while the benchmarks run:
+
+```bash
+caffeinate -i cargo run
 ```
 
 ## What the phases test
@@ -107,15 +116,16 @@ Compares how v7 and v7_all_partial index strategies perform as the NULL/value ra
 
 **How it works:** All scenarios reuse the same seed templates (50% NULL baseline). After copying the template, a single `UPDATE` redistributes NULLs to match the profile's percentages before indexes are created. Scenarios sharing the same null profile share a single `UPDATE` -- the loop cycles index types within the same database to avoid redundant full-table scans.
 
-| Null profile      | store_id NULL | transfer_store_id NULL | patient_id NULL |
-| ----------------- | ------------- | ---------------------- | --------------- |
-| `mostly_null`     | 90%           | 90%                    | 90%             |
-| `balanced`        | 50%           | 50%                    | 50%             |
-| `mostly_present`  | 10%           | 10%                    | 10%             |
+| Null profile     | store_id NULL | transfer_store_id NULL | patient_id NULL |
+| ---------------- | ------------- | ---------------------- | --------------- |
+| `mostly_null`    | 90%           | 90%                    | 90%             |
+| `balanced`       | 50%           | 50%                    | 50%             |
+| `mostly_present` | 10%           | 10%                    | 10%             |
 
 For each profile, both `v7` and `v7_all_partial` index configs are tested.
 
 **Phase 4 loop structure:**
+
 ```
 for each N:
   for each null_profile:
@@ -133,9 +143,9 @@ Larger N values take longer to seed and run. During development, use `--n-values
 
 ## Output
 
-Results are saved to `results/` with a timestamped subdirectory per phase:
+Results are saved to `results/` with a timestamped subdirectory per phase (e.g. `results/phase2_indexes_2026-04-14_15-30-45/`):
 
-- `results.json` -- raw latency stats for all scenarios in that phase
+- `results.json` -- raw latency stats, updated after each scenario completes (so partial results are preserved if a run is interrupted)
 - **Phase 1 & 3**: one PNG per percentile (p50, p95, p99) -- line chart with one line per scenario, N on X-axis
 - **Phase 2**: three PNGs (p50.png, p95.png, p99.png) -- grouped bar chart with N on X-axis, one bar per index strategy
 - **Phase 4**: subdirectory per index type (v7/, v7_all_partial/), each with p50.png, p95.png, p99.png -- grouped bar chart with N on X-axis, one bar per null profile
@@ -146,16 +156,16 @@ A summary table is printed to the console after each phase.
 
 All parameters are in `config.toml`. The `[pg]` section and `[null_profiles]` are optional.
 
-| Setting                      | Default              | Description                                             |
-| ---------------------------- | -------------------- | ------------------------------------------------------- |
-| `batch_size`                 | 10,000               | Individual inserts measured per (scenario, N) pair      |
-| `output_dir`                 | `results`            | Where results and charts are saved                      |
-| `n_values`                   | 100K to 5.6M         | Table sizes to test                                     |
-| `pg.*`                       | localhost:5432       | Postgres connection (overridable via PG_* env vars)     |
-| `scenarios[].indexes`        | required             | `pk_only`, `v7`, `v7_all_partial`, or path to .sql file |
-| `scenarios[].pg_config_file` | (optional)           | Path to PG settings file for ALTER SYSTEM               |
-| `scenarios[].null_profile`   | (required phase 4)   | Name of a profile defined in `[null_profiles]`          |
-| `null_profiles.<name>.*`     | (optional)           | NULL probabilities (0.0--1.0) for store_id, transfer_store_id, patient_id |
+| Setting                      | Default            | Description                                                               |
+| ---------------------------- | ------------------ | ------------------------------------------------------------------------- |
+| `batch_size`                 | 10,000             | Individual inserts measured per (scenario, N) pair                        |
+| `output_dir`                 | `results`          | Where results and charts are saved                                        |
+| `n_values`                   | 100K to 5.6M       | Table sizes to test                                                       |
+| `pg.*`                       | localhost:5432     | Postgres connection (overridable via PG\_\* env vars)                     |
+| `scenarios[].indexes`        | required           | `pk_only`, `v7`, `v7_all_partial`, or path to .sql file                   |
+| `scenarios[].pg_config_file` | (optional)         | Path to PG settings file for ALTER SYSTEM                                 |
+| `scenarios[].null_profile`   | (required phase 4) | Name of a profile defined in `[null_profiles]`                            |
+| `null_profiles.<name>.*`     | (optional)         | NULL probabilities (0.0--1.0) for store_id, transfer_store_id, patient_id |
 
 ### Adding index strategies
 
@@ -221,3 +231,105 @@ For a 10M row changelog table, these defaults mean autovacuum won't trigger unti
 - **Results vary by machine** -- disk speed, available RAM, and background load all affect latency. Results are only comparable across runs on the same machine under similar conditions.
 - **Measurement is single-threaded** -- inserts are executed one at a time on a single connection. This measures per-insert overhead, not throughput under concurrency.
 - **Seed data uses 50% NULL** for all three UUID columns (store_id, transfer_store_id, patient_id). Phase 4 redistributes these via UPDATE after template copy. source_site_id is always 25% populated.
+
+## Testing on a test server
+
+Some benchmark tests are being run on test servers. These are the steps to set up a Windows server to run the benchmark suite. These steps were tested with PostgreSQL 17 but should also work with PostgreSQL 18.
+
+### Install
+
+1. **Visual Studio** -- download and run the Visual Studio installer. During installation, select the **Desktop development with C++** workload. This installs the MSVC compiler and linker that Rust requires on Windows.
+2. **PostgreSQL** -- use the default install path (e.g. `C:\Program Files\PostgreSQL\17\`)
+3. **GitHub Desktop**
+4. **Rust toolchain** -- download and run `rustup-init.exe` from https://rustup.rs to install `rustc` and `cargo`
+
+### Configure
+
+1. **Clone the repository** -- open GitHub Desktop and clone the `open-msupply` repository
+
+2. **Switch branch** -- switch to whichever branch you need to test with (e.g. `11086-change-log-insert-performance-research`)
+
+3. **Ensure PostgreSQL is running** -- open Windows Services and check that the PostgreSQL service is started
+
+4. **Check PostgreSQL credentials** -- `config.toml` defaults to `postgres`/`postgres` for the username and password. If you set a different password during PostgreSQL installation, update the config to match:
+
+   ```powershell
+   notepad C:\Users\Administrator\Documents\GitHub\open-msupply\syncdoc\content\changelog\bench\config.toml
+   ```
+
+   Edit the `[pg]` section with your credentials and save.
+
+5. **Add PostgreSQL to PATH** -- Cargo needs to find PostgreSQL libraries at build time. Add the `bin` directory to the system PATH:
+   - Open **Start** > search for **Environment Variables** > click **Edit the system environment variables**
+   - Click **Environment Variables**
+   - Under **System variables**, select `Path` and click **Edit**
+   - Click **New** and add the path to your PostgreSQL `bin` directory, e.g.:
+     ```
+     C:\Program Files\PostgreSQL\17\bin
+     ```
+   - Click **OK** on all dialogs to save
+
+6. **Configure Cargo to find PostgreSQL libraries** -- open a terminal and run:
+
+   ```powershell
+   notepad C:\Users\Administrator\.cargo\config.toml
+   ```
+
+   Add the following to the file (adjust the version number in the path to match your PostgreSQL install) and save:
+
+   ```toml
+   [build]
+   rustflags = ["-L", "C:\\Program Files\\PostgreSQL\\17\\lib"]
+   ```
+
+7. **Close and reopen your terminal** -- the PATH and Cargo config changes from the previous steps are not picked up by an already-open terminal.
+
+### Build and run
+
+1. Open a new terminal and navigate to the benchmark directory:
+
+   ```powershell
+   cd C:\Users\Administrator\Documents\GitHub\open-msupply\syncdoc\content\changelog\bench
+   ```
+
+2. Build the release binary:
+
+   ```powershell
+   cargo build --release
+   ```
+
+3. Run the benchmarks. Seed databases are generated automatically on first run for each table size. A full run can take a long time (the tested table sizes of 1M to 100M rows took ~18 hours), so it is recommended to run the process in the background rather than directly in the terminal. This keeps the benchmarks running if the terminal is closed or the session is disconnected.
+
+   ```powershell
+   Start-Process -FilePath ".\target\release\changelog-bench.exe" -RedirectStandardOutput "output.log" -RedirectStandardError "error.log" -WindowStyle Normal
+   ```
+
+A new, empty terminal widow will open. Leave this open during the process
+
+4. To check progress while the benchmarks are running, open the error log:
+
+```powershell
+notepad error.log
+```
+
+5. When the benchmarks finish, results are saved to the `results/` directory within the benchmark folder. See the [Output](#output) section for details on the files generated.
+
+### Rebuilding after changes
+
+If the branch has been updated on another machine (e.g. new scenarios or config changes were pushed), pull the changes and rebuild before running again:
+
+1. In GitHub Desktop, make sure you are on the correct branch and click **Fetch origin**, then **Pull origin**
+
+2. Open a terminal and navigate to the benchmark directory:
+
+   ```powershell
+   cd C:\Users\Administrator\Documents\GitHub\open-msupply\syncdoc\content\changelog\bench
+   ```
+
+3. Rebuild:
+
+   ```powershell
+   cargo build --release
+   ```
+
+4. Run the benchmarks again using the same `Start-Process` command from step 3 above.
