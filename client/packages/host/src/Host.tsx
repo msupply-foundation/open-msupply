@@ -73,8 +73,10 @@ const PreInit: React.FC = () => {
   const { logout } = useAuthContext();
   const data = useInitialisationStatus(false, true);
 
-  // Technically this should not fire before query is loaded because we are doing suspense
-  if (data?.data?.status !== InitialisationStatusType.Initialised) {
+  // Query still loading — don't logout yet
+  if (!data?.data) return null;
+
+  if (data.data.status !== InitialisationStatusType.Initialised) {
     // Clear token
     logout();
   }
@@ -199,7 +201,8 @@ const Host = () => {
                   <MigrationInfoProvider>
                     <AuthProvider>
                       <PreInit />
-                      <RouterProvider router={router} />
+                      {/* eslint-disable-next-line camelcase */}
+                      <RouterProvider router={router} future={{ v7_startTransition: true }} />
                     </AuthProvider>
                   </MigrationInfoProvider>
                   {/* <ReactQueryDevtools initialIsOpen /> */}

@@ -96,6 +96,7 @@ export const Site: FC = () => {
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const rootNavigationPath = useRootNavigationPath();
   const isCentralServer = useIsCentralServerApi();
+  const { isRtl } = useIntlUtils();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
   const { getLocale, currentLanguage } = useIntlUtils();
@@ -167,7 +168,13 @@ export const Site: FC = () => {
         <SyncModalProvider>
           <KBarProvider actions={[]}>
             <CommandK>
-            <SnackbarProvider maxSnack={3}>
+            <SnackbarProvider
+              maxSnack={3}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: isRtl ? 'right' : 'left',
+              }}
+            >
               <BarcodeScannerProvider>
                 {!isExtraSmallScreen && <AppDrawer />}
                 <Box

@@ -216,8 +216,8 @@ export const InboundLineEditCards = ({
                 helperText={
                   isPlaceholder
                     ? t('error.field-must-be-specified', {
-                        field: t('label.packs-received'),
-                      })
+                      field: t('label.packs-received'),
+                    })
                     : undefined
                 }
               />
@@ -265,7 +265,7 @@ export const InboundLineEditCards = ({
                   const shouldClearSellPrice =
                     item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
-                      line.sellPricePerPack;
+                    line.sellPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -607,14 +607,14 @@ export const InboundLineEditCards = ({
         accessorFn: row => row.vvmStatus || '',
         Cell: ({
           row: {
-            original: { id, vvmStatus, stockLine },
+            original: { id, vvmStatus, stockLine, isCreated },
           },
         }) => (
           <VVMStatusSearchInput
             disabled={isDisabled}
             selected={vvmStatus ?? null}
             onChange={vvmStatus => updateDraftLine({ id, vvmStatus })}
-            useDefault={!stockLine}
+            useDefault={!stockLine && !!isCreated}
           />
         ),
         includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
@@ -819,9 +819,9 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-        stockLineDetails: <StockIcon />,
-        moreInfo: <InfoIcon />,
-      };
+      stockLineDetails: <StockIcon />,
+      moreInfo: <InfoIcon />,
+    };
 
   return (
     <>
