@@ -57,14 +57,11 @@ const dateInputHandler = (date: Date | string | number): Date => {
     // Any dates we receive from the server without timezone information are
     // assumed to be in UTC time
     const tIndex = date.indexOf('T');
-    if (
+    const needsUtcSuffix =
       tIndex !== -1 &&
       !date.endsWith('Z') &&
-      !/[+-]/.test(date.substring(tIndex))
-    ) {
-      return parseISO(date + 'Z');
-    }
-    return parseISO(date);
+      !/[+-]/.test(date.substring(tIndex));
+    return parseISO(needsUtcSuffix ? date + 'Z' : date);
   }
   // Assume a number is a UNIX timestamp
   if (typeof date === 'number') return fromUnixTime(date);
