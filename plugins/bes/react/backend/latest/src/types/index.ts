@@ -1,7 +1,7 @@
 // import { NameFilterInput, ItemFilterInput } from '../../codegenTypes';
 
 export type EndpointItems = {
-  universalCode: string;
+  itemCode: string;
   numberOfUnits: number;
 };
 
@@ -12,7 +12,7 @@ export type IssueStockEndpointInput = {
 };
 
 export type ItemsEndpointResponse = {
-  universalCode: string;
+  itemCode: string;
   success: boolean;
   message: string;
 };

@@ -69,15 +69,15 @@ export const fixWeirdNumberAsIntBug = (num: number | string): number => {
   return num;
 };
 
-export function aggregateItemsByUniversalCode(items: EndpointItems[]) {
+export function aggregateItemsByItemCode(items: EndpointItems[]) {
   return items.reduce<Array<EndpointItems>>((acc, item) => {
-    const existing = acc.find(x => x.universalCode === item.universalCode);
+    const existing = acc.find(x => x.itemCode === item.itemCode);
 
     if (existing) {
       existing.numberOfUnits += item.numberOfUnits;
     } else {
       acc.push({
-        universalCode: item.universalCode,
+        itemCode: item.itemCode,
         numberOfUnits: item.numberOfUnits,
       });
     }

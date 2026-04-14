@@ -60,7 +60,7 @@ request structure
     "customerCode": "string", // string for customerCode
     "items": [
       {
-        "universalCode": "AR33197", // string for universalCode search
+        "itemCode": "AR33197", // string for item code search
         "numberOfUnits": 60,
       },
     ],
@@ -76,14 +76,14 @@ response structure
   "success": false,
   "items": [
     {
-      "message": "Inserted universalCode: 041011, Number of units requested: 500, Allocated Units: 100, Placeholder Units: 400",
+      "message": "Inserted itemCode: 041011, Number of units requested: 500, Allocated Units: 100, Placeholder Units: 400",
       "success": true,
-      "universalCode": "041011",
+      "itemCode": "041011",
     },
     {
-      "message": "No item found for universalCode: 0300634",
+      "message": "No item found for itemCode: 0300634",
       "success": false,
-      "universalCode": "0300634",
+      "itemCode": "0300634",
     },
   ],
 }
@@ -111,7 +111,7 @@ API will return "success" : false, a message, and items: [], in the following sc
 
 API will return "success: false", a message, and items: [...item results]
 
-- No item retrieved from "universalCode" input param
+- No item retrieved from "itemCode" input param
 - Invalid or empty parameters are passed
 
 If all item lines were successfully either allocated, or had a placeholder inserted, "success: true", message: "...", items: [...item results] will be returned.

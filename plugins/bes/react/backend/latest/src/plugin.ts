@@ -12,7 +12,7 @@ import {
   checkOutboundShipmentExistsQuery,
   batchDeleteOutboundShipmentMutation,
 } from './queries';
-import { sortAndClassifyBatches, aggregateItemsByUniversalCode } from './utils';
+import { sortAndClassifyBatches, aggregateItemsByItemCode } from './utils';
 import {
   insertOutboundShipment,
   saveOutboundShipmentItemLines,
@@ -95,7 +95,7 @@ const plugins: BackendPlugins = {
 
     // ******************************** Iterate over all items *********************
 
-    const aggregatedItems = aggregateItemsByUniversalCode(inp.items);
+    const aggregatedItems = aggregateItemsByItemCode(inp.items);
     const itemsResponses: ItemsEndpointResponse[] = [];
     let updateToShipped = true;
     let rollbackOperation = false;
@@ -105,7 +105,7 @@ const plugins: BackendPlugins = {
 
       if (item.numberOfUnits === 0) {
         itemsResponses.push({
-          universalCode: item.universalCode,
+          itemCode: item.itemCode,
           success: false,
           message: "param 'numberOfUnits' is 0 or invalid",
         });
@@ -116,7 +116,7 @@ const plugins: BackendPlugins = {
 
       const { result: itemsQueryResult, itemsError } = itemsQuery(
         issuingStoreId,
-        item.universalCode
+        item.itemCode
       );
 
       if (itemsError) {
@@ -128,7 +128,7 @@ const plugins: BackendPlugins = {
 
       if (!itemsQueryResult) {
         itemsResponses.push({
-          universalCode: item.universalCode,
+          itemCode: item.itemCode,
           success: false,
           message: 'did not receive a response from open-msupply',
         });
@@ -217,12 +217,12 @@ const plugins: BackendPlugins = {
         foundItem.id,
         placeHolderQuantity,
         insertLines,
-        `Customer code: ${inp.customerCode}, Issuing Store: ${customer.name}, universal code: ${item.universalCode}`
+        `Customer code: ${inp.customerCode}, Issuing Store: ${customer.name}, item code: ${item.itemCode}`
       );
 
       if (saveError) {
         itemsResponses.push({
-          universalCode: item.universalCode,
+          itemCode: item.itemCode,
           success: false,
           message: saveError.message,
         });
@@ -230,10 +230,10 @@ const plugins: BackendPlugins = {
         rollbackOperation = true;
       }
 
-      let insertMsg = `Inserted universalCode: ${item.universalCode}, Number of units requested: ${item.numberOfUnits}, `;
+      let insertMsg = `Inserted itemCode: ${item.itemCode}, Number of units requested: ${item.numberOfUnits}, `;
       insertMsg += `Allocated Units: ${totalUnitsSupplied}, Placeholder Units: ${placeHolderQuantity}`;
       itemsResponses.push({
-        universalCode: item.universalCode,
+        itemCode: item.itemCode,
         success: true,
         message: insertMsg,
       });

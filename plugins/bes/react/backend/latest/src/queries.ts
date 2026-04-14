@@ -48,22 +48,22 @@ export const customerQuery = (
 
 export const itemsQuery = (
   storeId: string,
-  universalCode: string
+  itemCode: string
 ): { result?: ItemsQuery; itemsError?: ItemsEndpointResponse } => {
   try {
     const result = use_graphql({
       query: itemsQueryText,
       variables: {
         storeId,
-        filter: { universalCode: { equalTo: universalCode } },
+        filter: { code: { equalTo: itemCode } },
       } as ItemsQueryVariables,
     }) as ItemsQuery;
     if (!result || result.items.totalCount < 1) {
       return {
         itemsError: {
-          universalCode,
+          itemCode,
           success: false,
-          message: `No item found for universalCode: ${universalCode}`,
+          message: `No item found for itemCode: ${itemCode}`,
         },
       };
     }
@@ -71,7 +71,7 @@ export const itemsQuery = (
   } catch (error) {
     return {
       itemsError: {
-        universalCode,
+        itemCode,
         success: false,
         message: `Error getting items: ${error}`,
       },
