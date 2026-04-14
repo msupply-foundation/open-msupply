@@ -324,5 +324,3 @@ export const Site: FC = () => {
     </LocalizationProvider>
   );
 };
-
-export default Site;

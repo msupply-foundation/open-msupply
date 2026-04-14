@@ -12,5 +12,3 @@ export const Service: FC = () => {
     </Routes>
   );
 };
-
-export default Service;

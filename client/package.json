@@ -43,7 +43,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.21.3",
-    "@babel/preset-flow": "^7.21.4",
     "@chromatic-com/storybook": "^1.6.1",
     "@graphql-codegen/cli": "^5.0.0",
     "@graphql-codegen/near-operation-file-preset": "^3.0.0",

@@ -28,5 +28,3 @@ export const ProgramService: FC = () => {
     </Routes>
   );
 };
-
-export default ProgramService;

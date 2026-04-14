@@ -1,4 +1,3 @@
-import { PurchaseOrderLineFragment } from '../api';
 import {
   LocaleKey,
   TypedTFunction,
@@ -41,22 +40,6 @@ function mapImportRowToArray(node: Partial<ImportRow>) {
   ];
 }
 
-export const purchaseOrderLinesToCsv = (
-  items: PurchaseOrderLineFragment[],
-  t: TypedTFunction<LocaleKey>
-) => {
-  const fields = [
-    'id',
-    ...basePurchaseOrderLineFields(t),
-    t('label.created-datetime-UTC'),
-    t('label.modified-datetime-UTC'),
-  ];
-  const data = items.map(node => {
-    return [node.id, node.purchaseOrderId, node.item.id];
-  });
-
-  return Formatter.csv({ fields, data });
-};
 
 export const importPurchaseOrderLinesToCSVWithErrors = (
   purchaseOrderLines: Partial<ImportRow & LineNumber>[],

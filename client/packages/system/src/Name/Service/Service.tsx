@@ -22,5 +22,3 @@ export const Service = () => {
     </Routes>
   );
 };
-
-export default Service;

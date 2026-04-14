@@ -41,17 +41,6 @@ export const getPurchaseOrderLineStatusTranslator =
     );
   };
 
-export enum DeliveryStatus {
-  NotDelivered = 'NOT_DELIVERED',
-  PartiallyDelivered = 'PARTIALLY_DELIVERED',
-  FullyDelivered = 'FULLY_DELIVERED',
-}
-
-const deliveryStatusTranslation: Record<DeliveryStatus, LocaleKey> = {
-  NOT_DELIVERED: 'label.not-delivered',
-  PARTIALLY_DELIVERED: 'label.partially-delivered',
-  FULLY_DELIVERED: 'label.fully-delivered',
-};
 
 export const getPurchaseOrderStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
@@ -62,14 +51,6 @@ export const getPurchaseOrderStatusTranslator =
     );
   };
 
-export const getDeliveryStatusTranslator =
-  (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: DeliveryStatus): string => {
-    return t(
-      deliveryStatusTranslation[currentStatus] ??
-        deliveryStatusTranslation[DeliveryStatus.NotDelivered]
-    );
-  };
 
 export const isPurchaseOrderDisabled = (
   purchaseOrder: PurchaseOrderFragment | PurchaseOrderRowFragment

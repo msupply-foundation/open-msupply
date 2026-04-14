@@ -30,5 +30,3 @@ export const ManageService: FC = () => {
     </Routes>
   );
 };
-
-export default ManageService;
