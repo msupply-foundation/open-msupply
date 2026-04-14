@@ -121,6 +121,7 @@ const DetailViewInner = () => {
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   const isExtraSmallScreen = useIsExtraSmallScreen();
+  const canAddItem = !isDisabled && !isExtraSmallScreen;
 
   const [editPurchaseOrderLineId, setEditPurchaseOrderLineId] = useState<
     string | null
@@ -192,12 +193,12 @@ const DetailViewInner = () => {
         : { field: 'item.code' },
       isLoading: false,
       initialSort: { key: 'itemName', dir: 'asc' },
-      onRowClick: !isDisabled && !isExtraSmallScreen ? onRowClick : undefined,
+      onRowClick: canAddItem ? onRowClick : undefined,
       getIsPlaceholderRow: row => isInboundPlaceholderRow(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-inbound-items')}
-          onCreate={isDisabled ? undefined : () => onAddItem()}
+          onCreate={canAddItem ? () => onAddItem() : undefined}
           buttonText={t('button.add-item')}
         />
       ),
