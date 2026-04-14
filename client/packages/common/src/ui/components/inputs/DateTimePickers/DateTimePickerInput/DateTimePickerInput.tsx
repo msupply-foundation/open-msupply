@@ -134,9 +134,12 @@ export const DateTimePickerInput = ({
           },
           textField: {
             onBlur: () => {
+              if (props.disabled) return;
               setIsInitialEntry(false);
-              // Apply max/mins on blur if present
-              if (minDate || maxDate) {
+              // Apply max/mins on blur only if the user changed the value
+              // (e.g. by typing). Without this check, existing values
+              // outside the min/max range get clamped on every blur.
+              if ((minDate || maxDate) && value !== props.value) {
                 setInternalError(null);
                 handleDateInput(value);
               }
