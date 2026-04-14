@@ -5,10 +5,6 @@ import {
   UpdatePatientInput,
   FilterBy,
   PatientSearchInput,
-  ProgramEnrolmentSortFieldInput,
-  SortRule,
-  EncounterSortFieldInput,
-  PaginationInput,
   CentralPatientSearchInput,
   InsertProgramPatientInput,
   UpdateProgramPatientInput,
@@ -27,19 +23,6 @@ export type ListParams = {
   offset?: number;
   sortBy?: SortBy<PatientRowFragment>;
   filterBy?: FilterBy | null;
-};
-
-export type ProgramEnrolmentListParams = {
-  sortBy?: SortRule<ProgramEnrolmentSortFieldInput>;
-  filterBy?: FilterBy;
-};
-
-export type EncounterListParams = {
-  first?: number;
-  offset?: number;
-  sortBy: SortRule<EncounterSortFieldInput>;
-  filterBy?: FilterBy | null;
-  pagination?: PaginationInput;
 };
 
 export type CentralPatientSearchResponse =

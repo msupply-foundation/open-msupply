@@ -205,22 +205,6 @@ export const isInboundStatusChangeDisabled = (
         inbound.status === InvoiceNodeStatus.Verified;
 };
 
-export const createSummaryItem = (
-  itemId: string,
-  lines: InboundLineFragment[]
-): InboundItem => {
-  const item: InboundItem = {
-    // TODO: Could generate a unique UUID here if wanted for the id. But not needed for now.
-    // the lines all have the itemID in common, so we can use that. Have added the itemID also
-    // as it is explicit that this is the itemID in common for all of the invoice lines.
-    id: itemId,
-    itemId,
-    lines,
-  };
-
-  return item;
-};
-
 export const canDeleteInvoice = (
   invoice:
     | OutboundRowFragment

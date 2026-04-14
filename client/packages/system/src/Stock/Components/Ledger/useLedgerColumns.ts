@@ -18,7 +18,6 @@ export enum ColumnKey {
   Quantity = 'quantity',
   Type = 'type',
   Reason = 'reason',
-  Number = 'number',
   Balance = 'runningBalance',
   User = 'user',
 }

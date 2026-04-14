@@ -12,7 +12,7 @@ const stocktakeRoute = RouteBuilder.create(AppRoute.Stocktakes)
   .addPart(':id')
   .build();
 
-export const InventoryService: FC = () => {
+const InventoryService: FC = () => {
   return (
     <Routes>
       <Route path={stocktakesRoute} element={<StocktakeListView />} />

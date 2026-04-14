@@ -13,7 +13,7 @@ import { EquipmentDetailView } from './Equipment/DetailView';
 import { EquipmentDetailView as MobileEquipmentDetailView } from './Mobile/Equipment/DetailView/DetailView';
 import { MobileTemperatureChart } from './Mobile/Monitoring/MobileTemperatureChart';
 
-export const ColdchainService: FC = () => {
+const ColdchainService: FC = () => {
   const monitoringRoute = RouteBuilder.create(AppRoute.Monitoring).build();
   const sensorRoute = RouteBuilder.create(AppRoute.Sensors).build();
   const equipmentListRoute = RouteBuilder.create(AppRoute.Equipment).build();

@@ -60,7 +60,7 @@ const ActiveDot = (
     />
   );
 
-export const Chart = ({
+const Chart = ({
   data,
   dataTruncated,
   startTime,

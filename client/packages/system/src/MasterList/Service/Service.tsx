@@ -4,7 +4,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { MasterListListView } from '../ListView';
 import { MasterListDetailView } from '../DetailView';
 
-export const MasterListService: FC = () => {
+const MasterListService: FC = () => {
   const masterListsRoute = RouteBuilder.create(AppRoute.MasterLists).build();
   const masterListRoute = RouteBuilder.create(AppRoute.MasterLists)
     .addPart(':id')

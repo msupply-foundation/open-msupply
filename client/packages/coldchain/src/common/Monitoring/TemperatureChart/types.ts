@@ -1,8 +1,3 @@
-export interface PopoverVirtualElement {
-  getBoundingClientRect: () => DOMRect;
-  nodeType: Node['ELEMENT_NODE'];
-}
-
 export interface DataPoint {
   datetime: Date | null;
   temperature: number | null;

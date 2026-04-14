@@ -48,7 +48,7 @@ const rnrFormRoute = RouteBuilder.create(AppRoute.RnRForms)
   .addPart(':id')
   .build();
 
-export const RequisitionService: FC = () => {
+const RequisitionService: FC = () => {
   return (
     <Routes>
       <Route
