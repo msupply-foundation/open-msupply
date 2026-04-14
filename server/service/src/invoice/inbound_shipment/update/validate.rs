@@ -1,10 +1,9 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
-    inbound_shipment::UpdateInboundShipmentStatus, invoice_date_utils::is_date_in_future,
-    InvoiceRowStatusError,
+    inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
-use crate::preference::{preferences::MaximumBackdatingDays, Preference};
+use crate::preference::{preferences::Backdating, Preference};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use chrono::{Duration, Utc};
 use repository::{
@@ -69,6 +68,11 @@ pub fn validate(
     // Received datetime can only be backdated (moved earlier) on shipments that are already
     // in Received or Verified status. Once moved back it cannot be moved forward again.
     if let Some(received_datetime) = patch.received_datetime {
+        let backdating = Backdating.load(connection, None)?;
+        if !backdating.enabled {
+            return Err(BackdatingNotEnabled);
+        }
+
         // Must already be received
         if !matches!(
             invoice.status,
@@ -77,21 +81,16 @@ pub fn validate(
             return Err(CanOnlyBackdateReceivedShipments);
         }
 
-        if is_date_in_future(received_datetime) {
-            return Err(CannotSetReceivedDateInFuture);
-        }
-
         // Can only move the date earlier, never forward
         if let Some(current_received) = invoice.received_datetime {
-            if received_datetime >= current_received.date() {
+            if received_datetime.naive_utc() >= current_received {
                 return Err(CannotMoveReceivedDateForward);
             }
         }
 
         // Check maximum backdating days preference
-        let max_days: i32 = MaximumBackdatingDays.load(connection, None).unwrap_or(0);
-        if max_days > 0 {
-            let earliest_allowed = Utc::now().date_naive() - Duration::days(max_days as i64);
+        if backdating.max_days > 0 {
+            let earliest_allowed = Utc::now() - Duration::days(backdating.max_days as i64);
             if received_datetime < earliest_allowed {
                 return Err(ExceedsMaximumBackdatingDays);
             }

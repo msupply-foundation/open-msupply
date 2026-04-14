@@ -272,13 +272,16 @@ export type PreferencesQuery = {
     showIndicativePriceInRequisitions: boolean;
     isGaps: boolean;
     globalTableConfigs: any;
-    allowBackdatingOfShipments: boolean;
-    maximumBackdatingDays: number;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
       enabled: boolean;
       maxAge: number;
       minItems: number;
+    };
+    backdating: {
+      __typename: 'BackdatingNode';
+      enabled: boolean;
+      maxDays: number;
     };
   };
 };
@@ -540,8 +543,10 @@ export const PreferencesDocument = gql`
       showIndicativePriceInRequisitions
       isGaps
       globalTableConfigs
-      allowBackdatingOfShipments
-      maximumBackdatingDays
+      backdating {
+        enabled
+        maxDays
+      }
     }
   }
 `;
