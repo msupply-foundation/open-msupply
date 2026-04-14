@@ -4,7 +4,7 @@ use thiserror::Error;
 use ts_rs::TS;
 
 diesel_json_type! {
-    #[derive(Debug, Error, Clone, TS)]
+    #[derive(Debug, Error, Clone, PartialEq, TS)]
     pub enum SyncError {
         #[error(transparent)]
         DatabaseError(#[from] RepositoryError),
@@ -43,7 +43,7 @@ diesel_json_type! {
     }
 }
 
-#[derive(Error, Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Error, Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 pub enum GetCurrentSiteIdError {
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
@@ -51,13 +51,13 @@ pub enum GetCurrentSiteIdError {
     SiteIdNotSet,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Error, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Error, TS)]
 pub enum SiteLockError {
     #[error("Integration in progress")]
     IntegrationInProgress,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Error, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Error, TS)]
 pub enum SyncRecordSerializeError {
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
