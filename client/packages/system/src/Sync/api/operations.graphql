@@ -110,12 +110,11 @@ mutation manualSync($fetchPatientId: String) {
   manualSync(fetchPatientId: $fetchPatientId)
 }
 
-subscription syncStatusUpdated {
-  syncStatusUpdated {
-    ...FullSyncStatus
+subscription syncInfoUpdated {
+  syncInfoUpdated {
+    syncStatus {
+      ...FullSyncStatus
+    }
+    numberOfRecordsInPushQueue
   }
-}
-
-subscription pushQueueCountUpdated {
-  pushQueueCountUpdated
 }

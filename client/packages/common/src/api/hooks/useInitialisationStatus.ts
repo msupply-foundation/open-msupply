@@ -4,7 +4,6 @@ import {
   getSdk,
   InitialisationStatusUpdatedDocument,
   InitialisationStatusUpdatedSubscription,
-  InitialisationStatusQuery,
 } from '../operations.generated';
 
 export const useInitialisationStatus = (
@@ -16,18 +15,17 @@ export const useInitialisationStatus = (
 
   const queryKey = 'initialisationStatus';
 
-  const { isSubscribed } = useSubscription<
+  const { isSubscribed, data: subData } = useSubscription<
     InitialisationStatusUpdatedSubscription,
-    InitialisationStatusQuery['initialisationStatus']
+    InitialisationStatusUpdatedSubscription['initialisationStatusUpdated']
   >({
-    queryKey: [queryKey],
     document: InitialisationStatusUpdatedDocument,
     enabled: true,
     requireAuth: false,
     select: data => data.initialisationStatusUpdated,
   });
 
-  return useQuery(
+  const { data: queryData, ...rest } = useQuery(
     queryKey,
     async () => {
       const result = await sdk.initialisationStatus();
@@ -39,4 +37,6 @@ export const useInitialisationStatus = (
       refetchInterval: isSubscribed ? false : refetchInterval,
     }
   );
+
+  return { ...rest, data: subData ?? queryData };
 };

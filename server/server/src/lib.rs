@@ -4,12 +4,18 @@
 extern crate machine_uid;
 
 use crate::{
-    central::config_central, certs::Certificates, cold_chain::config_cold_chain,
+    central::config_central,
+    certs::Certificates,
+    cold_chain::config_cold_chain,
     configuration::{get_or_create_token_secret, save_token_secret},
     cors::cors_policy,
-    custom_translations::config_custom_translations, middleware::central_server_only,
-    print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
-    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
+    custom_translations::config_custom_translations,
+    middleware::central_server_only,
+    print::config_print,
+    serve_frontend::config_serve_frontend,
+    static_files::config_static_files,
+    support::config_support,
+    upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -38,9 +44,9 @@ use service::{
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
-    subscription::{SubscriptionTrigger, SubscriptionWorker},
     settings::{is_develop, ServerSettings, Settings},
     standard_reports::StandardReports,
+    subscription::{SubscriptionTrigger, SubscriptionWorker},
     sync::{
         file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
@@ -125,11 +131,15 @@ pub async fn start_server(
     let (processors_trigger, processors) = Processors::init();
     let (subscription_trigger, subscription_worker) = SubscriptionWorker::init();
 
-    // Wire changelog insert notifications to the subscription worker.
-    // Every ChangelogRepository::insert() will fire this callback after commit.
-    let changelog_trigger = subscription_trigger.clone();
-    connection_manager.set_changelog_callback(std::sync::Arc::new(move || {
-        changelog_trigger.send(SubscriptionTrigger::PushQueueChanged);
+    // Wire transaction notifications to the subscription worker.
+    // Fired after outermost transaction commits.
+    let commit_trigger = subscription_trigger.clone();
+    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
+        match notification {
+            repository::TransactionNotification::ChangelogInsert => {
+                commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
+            }
+        }
     }));
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
@@ -196,7 +206,7 @@ pub async fn start_server(
     let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
     let validated_plugins = Data::new(Mutex::new(validated_plugins));
 
-    let (_subscription_task, subscription_broadcast) =
+    let (subscription_task_handle, subscription_broadcast) =
         subscription_worker.spawn(service_provider.clone().into_inner());
 
     let graphql_schema = Data::new(GraphqlSchema::new(
@@ -460,6 +470,7 @@ pub async fn start_server(
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
         result = schedule_plugin_task => unreachable!("Schedule plugin runner terminated ({:?})", result),
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
+        subscription_error = subscription_task_handle => unreachable!("Subscription task stopped unexpectedly: {:?}", subscription_error),
     };
 
     server_handle.stop(true).await;

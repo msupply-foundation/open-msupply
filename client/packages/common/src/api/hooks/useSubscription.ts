@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { DocumentNode, print } from 'graphql';
 import { useGql } from '../GqlContext';
 import { useAuthContext } from '../../authentication/AuthContext';
@@ -8,9 +7,7 @@ import {
   reconnectSubscriptionClient,
 } from '../SubscriptionClient';
 
-interface UseSubscriptionOptions<TSubscription, TCacheData> {
-  /** react-query cache key to update when subscription data arrives */
-  queryKey: readonly unknown[];
+interface UseSubscriptionOptions<TSubscription, TData> {
   /** GraphQL subscription document */
   document: DocumentNode;
   /** Optional variables for the subscription */
@@ -20,17 +17,15 @@ interface UseSubscriptionOptions<TSubscription, TCacheData> {
   /** Whether an auth token is required to subscribe. Defaults to true.
    *  Set to false for unauthenticated subscriptions (e.g. during initialisation). */
   requireAuth?: boolean;
-  /**
-   * Transform the typed subscription response before writing to cache.
-   * Use this to reshape subscription payloads to match query cache shape.
-   * e.g. `data => ({ syncStatus: data.syncStatusUpdated })`
-   */
-  select: (data: TSubscription) => TCacheData;
+  /** Transform the raw subscription response into the shape consumers need. */
+  select: (data: TSubscription) => TData;
 }
 
-interface UseSubscriptionResult {
+interface UseSubscriptionResult<TData> {
   /** Whether the WebSocket subscription is currently connected and active */
   isSubscribed: boolean;
+  /** Latest data received from the subscription, or undefined if none yet */
+  data: TData | undefined;
 }
 
 // Track the last token across all useSubscription instances.
@@ -40,24 +35,25 @@ let lastKnownToken: string | undefined;
 
 /**
  * Hook that subscribes to a GraphQL subscription over WebSocket and
- * writes incoming data into the react-query cache.
+ * returns the latest data via local state.
+ *
+ * Consuming hooks merge this with useQuery data — subscription takes
+ * priority, query provides initial fetch and polling fallback.
  *
  * Automatically re-subscribes when the auth token changes (e.g. after
- * re-authentication), disposing the old WebSocket connection so the
- * new one picks up the fresh token.
+ * re-authentication).
  */
-export const useSubscription = <TSubscription, TCacheData>({
-  queryKey,
+export const useSubscription = <TSubscription, TData>({
   document,
   variables,
   enabled = true,
   requireAuth = true,
   select,
-}: UseSubscriptionOptions<TSubscription, TCacheData>): UseSubscriptionResult => {
-  const queryClient = useQueryClient();
+}: UseSubscriptionOptions<TSubscription, TData>): UseSubscriptionResult<TData> => {
   const { client: gqlClient } = useGql();
   const { token } = useAuthContext();
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [data, setData] = useState<TData | undefined>(undefined);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -66,15 +62,9 @@ export const useSubscription = <TSubscription, TCacheData>({
       return;
     }
 
-    // When the token changes (login/re-auth/logout), dispose the old
-    // WebSocket client so a fresh connection is made with the new token.
-    // The module-level lastKnownToken ensures this happens exactly once
-    // across all useSubscription instances.
     if (token !== lastKnownToken) {
       lastKnownToken = token;
       reconnectSubscriptionClient();
-      // Invalidate stale cache from before the auth interruption
-      queryClient.invalidateQueries(queryKey);
     }
 
     const httpUrl = gqlClient.getUrl();
@@ -84,29 +74,33 @@ export const useSubscription = <TSubscription, TCacheData>({
 
     let disposed = false;
 
+    setIsSubscribed(true);
+
     unsubscribeRef.current = wsClient.subscribe(
       {
         query: print(document),
         variables,
       },
       {
-        next: ({ data }) => {
-          if (!disposed && data) {
-            const cacheData = select(data as TSubscription);
-            queryClient.setQueryData(queryKey, cacheData);
-            if (!isSubscribed) setIsSubscribed(true);
+        next: ({ data: rawData }) => {
+          if (!disposed && rawData) {
+            setData(select(rawData as TSubscription));
           }
         },
         error: () => {
-          if (!disposed) setIsSubscribed(false);
+          if (!disposed) {
+            setIsSubscribed(false);
+            setData(undefined);
+          }
         },
         complete: () => {
-          if (!disposed) setIsSubscribed(false);
+          if (!disposed) {
+            setIsSubscribed(false);
+            setData(undefined);
+          }
         },
       }
     );
-
-    setIsSubscribed(true);
 
     return () => {
       disposed = true;
@@ -116,9 +110,8 @@ export const useSubscription = <TSubscription, TCacheData>({
         unsubscribeRef.current = null;
       }
     };
-    // Re-subscribe when token changes (e.g. after re-authentication)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, document, token]);
 
-  return { isSubscribed };
+  return { isSubscribed, data };
 };

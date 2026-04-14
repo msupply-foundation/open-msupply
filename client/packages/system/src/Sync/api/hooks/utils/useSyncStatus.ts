@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useSubscription } from '@openmsupply-client/common';
 import { useSyncApi } from './useSyncApi';
 import {
-  SyncStatusUpdatedDocument,
-  SyncStatusUpdatedSubscription,
+  SyncInfoUpdatedDocument,
+  SyncInfoUpdatedSubscription,
 } from '../../operations.generated';
 
 export const useSyncStatus = (
@@ -12,22 +12,30 @@ export const useSyncStatus = (
 ) => {
   const api = useSyncApi();
 
-  const { isSubscribed } = useSubscription<
-    SyncStatusUpdatedSubscription,
-    SyncStatusUpdatedSubscription['syncStatusUpdated']
+  const { isSubscribed, data: subData } = useSubscription<
+    SyncInfoUpdatedSubscription,
+    SyncInfoUpdatedSubscription['syncInfoUpdated']['syncStatus']
   >({
-    queryKey: api.keys.syncStatus(),
-    document: SyncStatusUpdatedDocument,
+    document: SyncInfoUpdatedDocument,
     enabled: enabled !== false,
     requireAuth,
-    select: data => data.syncStatusUpdated,
+    select: data => data.syncInfoUpdated.syncStatus,
   });
 
-  return useQuery(api.keys.syncStatus(), api.get.syncStatus, {
-    cacheTime: 0,
-    refetchInterval: isSubscribed ? false : refetchInterval,
-    enabled,
-  });
+  const { data: queryData, ...rest } = useQuery(
+    api.keys.syncStatus(),
+    api.get.syncStatus,
+    {
+      cacheTime: 0,
+      refetchInterval: isSubscribed ? false : refetchInterval,
+      enabled,
+    }
+  );
+
+  return {
+    ...rest,
+    data: subData ?? queryData ?? null,
+  };
 };
 
 export const useMutateSyncStatus = () => {

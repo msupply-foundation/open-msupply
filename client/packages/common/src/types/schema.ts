@@ -9589,8 +9589,7 @@ export type Subscriptions = {
   initialisationStatusUpdated: InitialisationStatusNode;
   /** Simple subscription to verify WebSocket connectivity */
   ping: Scalars['String']['output'];
-  pushQueueCountUpdated: Scalars['Int']['output'];
-  syncStatusUpdated?: Maybe<FullSyncStatusNode>;
+  syncInfoUpdated: SyncInfoUpdatedNode;
 };
 
 export type Success = {
@@ -9716,6 +9715,12 @@ export type SyncFileReferenceNode = {
   mimeType?: Maybe<Scalars['String']['output']>;
   recordId: Scalars['String']['output'];
   tableName: Scalars['String']['output'];
+};
+
+export type SyncInfoUpdatedNode = {
+  __typename: 'SyncInfoUpdatedNode';
+  numberOfRecordsInPushQueue: Scalars['Int']['output'];
+  syncStatus?: Maybe<FullSyncStatusNode>;
 };
 
 export type SyncSettingsInput = {

@@ -6,10 +6,6 @@ use repository::{
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 
-/// Cache the last successful sync status to avoid a DB query per subscription start.
-/// Updated when get_latest_successful_sync_status finds a result, and by the
-/// subscription stream when it detects a successful completion.
-static LATEST_SUCCESSFUL_SYNC: RwLock<Option<FullSyncStatus>> = RwLock::new(None);
 
 use crate::{
     cursor_controller::CursorController,
@@ -275,10 +271,6 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
 fn get_latest_successful_sync_status(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatus>, RepositoryError> {
-    // Return cached value if available
-    if let Some(cached) = LATEST_SUCCESSFUL_SYNC.read().unwrap().clone() {
-        return Ok(Some(cached));
-    }
 
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
@@ -302,16 +294,10 @@ fn get_latest_successful_sync_status(
     };
 
     let result = FullSyncStatus::from_sync_log_row(sync_log.sync_log_row);
-    *LATEST_SUCCESSFUL_SYNC.write().unwrap() = Some(result.clone());
 
     Ok(Some(result))
 }
 
-/// Update the cached last successful sync status.
-/// Called by the subscription stream when it detects a successful sync completion.
-pub fn cache_successful_sync_status(status: FullSyncStatus) {
-    *LATEST_SUCCESSFUL_SYNC.write().unwrap() = Some(status);
-}
 
 #[derive(Debug)]
 pub enum NumberOfRecordsInPushQueueError {

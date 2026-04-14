@@ -319,92 +319,87 @@ export type ManualSyncMutation = {
   manualSync: string;
 };
 
-export type SyncStatusUpdatedSubscriptionVariables = Types.Exact<{
+export type SyncInfoUpdatedSubscriptionVariables = Types.Exact<{
   [key: string]: never;
 }>;
 
-export type SyncStatusUpdatedSubscription = {
+export type SyncInfoUpdatedSubscription = {
   __typename: 'Subscriptions';
-  syncStatusUpdated?: {
-    __typename: 'FullSyncStatusNode';
-    isSyncing: boolean;
-    errorThreshold: number;
-    warningThreshold: number;
-    error?: {
-      __typename: 'SyncErrorNode';
-      variant: Types.SyncErrorVariant;
-      fullError: string;
+  syncInfoUpdated: {
+    __typename: 'SyncInfoUpdatedNode';
+    numberOfRecordsInPushQueue: number;
+    syncStatus?: {
+      __typename: 'FullSyncStatusNode';
+      isSyncing: boolean;
+      errorThreshold: number;
+      warningThreshold: number;
+      error?: {
+        __typename: 'SyncErrorNode';
+        variant: Types.SyncErrorVariant;
+        fullError: string;
+      } | null;
+      integration?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      prepareInitial?: {
+        __typename: 'SyncStatusNode';
+        finished?: string | null;
+        durationInSeconds: number;
+        started: string;
+      } | null;
+      pullCentral?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      pullRemote?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      push?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      pullV6?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      pushV6?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      summary: {
+        __typename: 'SyncStatusNode';
+        finished?: string | null;
+        durationInSeconds: number;
+        started: string;
+      };
+      lastSuccessfulSync?: {
+        __typename: 'SyncStatusNode';
+        finished?: string | null;
+        durationInSeconds: number;
+        started: string;
+      } | null;
     } | null;
-    integration?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    prepareInitial?: {
-      __typename: 'SyncStatusNode';
-      finished?: string | null;
-      durationInSeconds: number;
-      started: string;
-    } | null;
-    pullCentral?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    pullRemote?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    push?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    pullV6?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    pushV6?: {
-      __typename: 'SyncStatusWithProgressNode';
-      finished?: string | null;
-      started: string;
-      done?: number | null;
-      total?: number | null;
-    } | null;
-    summary: {
-      __typename: 'SyncStatusNode';
-      finished?: string | null;
-      durationInSeconds: number;
-      started: string;
-    };
-    lastSuccessfulSync?: {
-      __typename: 'SyncStatusNode';
-      finished?: string | null;
-      durationInSeconds: number;
-      started: string;
-    } | null;
-  } | null;
-};
-
-export type PushQueueCountUpdatedSubscriptionVariables = Types.Exact<{
-  [key: string]: never;
-}>;
-
-export type PushQueueCountUpdatedSubscription = {
-  __typename: 'Subscriptions';
-  pushQueueCountUpdated: number;
+  };
 };
 
 export const SyncSettingsFragmentDoc = gql`
@@ -540,18 +535,16 @@ export const ManualSyncDocument = gql`
     manualSync(fetchPatientId: $fetchPatientId)
   }
 `;
-export const SyncStatusUpdatedDocument = gql`
-  subscription syncStatusUpdated {
-    syncStatusUpdated {
-      ...FullSyncStatus
+export const SyncInfoUpdatedDocument = gql`
+  subscription syncInfoUpdated {
+    syncInfoUpdated {
+      syncStatus {
+        ...FullSyncStatus
+      }
+      numberOfRecordsInPushQueue
     }
   }
   ${FullSyncStatusFragmentDoc}
-`;
-export const PushQueueCountUpdatedDocument = gql`
-  subscription pushQueueCountUpdated {
-    pushQueueCountUpdated
-  }
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -681,38 +674,20 @@ export function getSdk(
         variables
       );
     },
-    syncStatusUpdated(
-      variables?: SyncStatusUpdatedSubscriptionVariables,
+    syncInfoUpdated(
+      variables?: SyncInfoUpdatedSubscriptionVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<SyncStatusUpdatedSubscription> {
+    ): Promise<SyncInfoUpdatedSubscription> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SyncStatusUpdatedSubscription>({
-            document: SyncStatusUpdatedDocument,
+          client.request<SyncInfoUpdatedSubscription>({
+            document: SyncInfoUpdatedDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'syncStatusUpdated',
-        'subscription',
-        variables
-      );
-    },
-    pushQueueCountUpdated(
-      variables?: PushQueueCountUpdatedSubscriptionVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<PushQueueCountUpdatedSubscription> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<PushQueueCountUpdatedSubscription>({
-            document: PushQueueCountUpdatedDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'pushQueueCountUpdated',
+        'syncInfoUpdated',
         'subscription',
         variables
       );
