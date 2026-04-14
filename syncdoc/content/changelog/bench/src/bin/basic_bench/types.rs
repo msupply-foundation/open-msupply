@@ -1,6 +1,8 @@
 use plotters::prelude::RGBColor;
 use serde::{Deserialize, Serialize};
 
+use anyhow::Context;
+
 pub const TABLE_NAME_VALUES: &[&str] = &[
     "number", "location", "stock_line", "name", "name_store_join", "invoice",
     "invoice_line", "stocktake", "stocktake_line", "requisition",
@@ -56,12 +58,14 @@ pub struct MeasurementPoint {
     pub batch_rows_per_sec: Vec<f64>,
 }
 
-pub fn save_results(dir: &str, results: &[MeasurementPoint]) -> anyhow::Result<()> {
-    let path = std::path::PathBuf::from(dir).join("results.json");
+pub fn save_results(dir: &str, results: &[MeasurementPoint], suffix: Option<&str>) -> anyhow::Result<()> {
+    let filename = match suffix {
+        Some(s) => format!("results_{}.json", s),
+        None => "results.json".to_string(),
+    };
+    let path = std::path::PathBuf::from(dir).join(filename);
     let json = serde_json::to_string_pretty(results)?;
     std::fs::write(&path, json)
         .with_context(|| format!("failed to write {:?}", path))?;
     Ok(())
 }
-
-use anyhow::Context;

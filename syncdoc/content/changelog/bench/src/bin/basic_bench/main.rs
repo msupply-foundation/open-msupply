@@ -32,6 +32,11 @@ struct Cli {
     /// Use the fastest N% of batch rates for each measurement point (default 50).
     #[arg(long, default_value = "50")]
     top_pct: f64,
+
+    /// Run single-insert mode: inserts rows one at a time instead of in batches.
+    /// Same config, same scenarios, same results format — only the insert method differs.
+    #[arg(long)]
+    single_insert: bool,
 }
 
 fn main() -> Result<()> {
@@ -57,10 +62,12 @@ fn main() -> Result<()> {
     fs::create_dir_all(output_dir)
         .with_context(|| format!("failed to create {}", output_dir))?;
 
+    let mode_label = if cli.single_insert { "single-insert" } else { "batch" };
+    let results_suffix = if cli.single_insert { Some("single") } else { None };
     let mut results: Vec<MeasurementPoint> = Vec::new();
 
     for scenario in &config.scenarios {
-        eprintln!("\n=== Scenario: {} ===", scenario.name);
+        eprintln!("\n=== Scenario ({}): {} ===", mode_label, scenario.name);
         let profile = config.resolved_profile(scenario);
         eprintln!(
             "  null profile: store={:.2} transfer={:.2} patient={:.2}",
@@ -121,8 +128,8 @@ fn main() -> Result<()> {
             let x_value = rows_in_db;
 
             eprintln!(
-                "  measure: {} batches of {} rows at {} rows in DB",
-                config.bench_batch_repeat, config.bench_batch_size, x_value
+                "  measure ({}): {} batches of {} rows at {} rows in DB",
+                mode_label, config.bench_batch_repeat, config.bench_batch_size, x_value
             );
 
             // Ensure partitions cover the upcoming measurement inserts.
@@ -139,12 +146,29 @@ fn main() -> Result<()> {
                 let from = rows_in_db + 1;
                 let to = rows_in_db + config.bench_batch_size;
 
-                let start = Instant::now();
-                db::insert_series(&mut conn, from, to, &profile)?;
-                let elapsed = start.elapsed();
+                if cli.single_insert {
+                    // Single-insert: pre-generate SQL, then execute one at a time,
+                    // timing the entire batch of sequential inserts.
+                    let sqls = db::prepare_single_row_sqls(from, config.bench_batch_size, &profile);
 
-                durations.push(elapsed.as_micros() as u64);
-                rates.push(config.bench_batch_size as f64 / elapsed.as_secs_f64());
+                    let start = Instant::now();
+                    for sql in &sqls {
+                        db::execute_single_insert(&mut conn, sql)?;
+                    }
+                    let elapsed = start.elapsed();
+
+                    durations.push(elapsed.as_micros() as u64);
+                    rates.push(config.bench_batch_size as f64 / elapsed.as_secs_f64());
+                } else {
+                    // Batch: one generate_series statement for all rows.
+                    let start = Instant::now();
+                    db::insert_series(&mut conn, from, to, &profile)?;
+                    let elapsed = start.elapsed();
+
+                    durations.push(elapsed.as_micros() as u64);
+                    rates.push(config.bench_batch_size as f64 / elapsed.as_secs_f64());
+                }
+
                 rows_in_db = to;
             }
 
@@ -156,20 +180,26 @@ fn main() -> Result<()> {
                 avg, min, max
             );
 
+            let scenario_label = if cli.single_insert {
+                format!("{}_single", scenario.name)
+            } else {
+                scenario.name.clone()
+            };
+
             results.push(MeasurementPoint {
-                scenario: scenario.name.clone(),
+                scenario: scenario_label,
                 records_in_db: x_value,
                 batch_durations_us: durations,
                 batch_rows_per_sec: rates,
             });
 
             // Flush after every measurement so partial runs are not lost.
-            save_results(output_dir, &results)?;
+            save_results(output_dir, &results, results_suffix)?;
         }
     }
 
     eprintln!("\nGenerating charts...");
-    chart::generate_charts(output_dir, &results, cli.top_pct)?;
+    chart::generate_charts(output_dir, &results, cli.top_pct, results_suffix)?;
 
     eprintln!("\nDone. Results in {}/", output_dir);
     Ok(())

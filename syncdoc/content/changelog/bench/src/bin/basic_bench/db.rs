@@ -1,6 +1,8 @@
 use anyhow::{Context, Result};
 use diesel::prelude::*;
 use diesel::sql_query;
+use md5::{Md5, Digest};
+use rand::RngExt;
 
 use crate::config::{NullProfile, PgConfig};
 use crate::types::*;
@@ -115,5 +117,90 @@ FROM generate_series({from}, {to}) AS g;"
     sql_query(&sql)
         .execute(conn)
         .with_context(|| format!("generate_series insert {}..{} failed", from, to))?;
+    Ok(())
+}
+
+/// Compute md5(value)::uuid the same way Postgres does: md5 hash → hex string → UUID.
+fn md5_uuid(value: &str) -> String {
+    let hash = Md5::digest(value.as_bytes());
+    let hex = format!("{:x}", hash);
+    // Format as UUID: 8-4-4-4-12
+    format!(
+        "{}-{}-{}-{}-{}",
+        &hex[0..8],
+        &hex[8..12],
+        &hex[12..16],
+        &hex[16..20],
+        &hex[20..32]
+    )
+}
+
+/// Pre-generate all single-row INSERT SQL strings with all values computed in Rust.
+/// Uses the same data generation logic as `insert_series`:
+/// - record_id: md5(g::text)::uuid
+/// - table_name: TABLE_NAME_VALUES[g % count]
+/// - row_action: 5% DELETE, 95% UPSERT
+/// - source_site_id: 25% chance of (1 + g % 99), else NULL
+/// - store_id/transfer_store_id/patient_id: md5-based UUID with null probability from profile
+///
+/// All randomness uses Rust's `rand` instead of Postgres `random()`.
+/// Call BEFORE the timing loop so generation doesn't affect latency.
+pub fn prepare_single_row_sqls(
+    g_from: u64,
+    count: u64,
+    profile: &NullProfile,
+) -> Vec<String> {
+    let enum_count = TABLE_NAME_VALUES.len();
+    let store_populated = 1.0 - profile.store_id;
+    let transfer_populated = 1.0 - profile.transfer_store_id;
+    let patient_populated = 1.0 - profile.patient_id;
+
+    let mut rng = rand::rng();
+
+    (0..count)
+        .map(|i| {
+            let g = g_from + i;
+
+            let record_id = md5_uuid(&g.to_string());
+            let table_name = TABLE_NAME_VALUES[(g as usize) % enum_count];
+            let row_action = if rng.random_bool(0.05) { "DELETE" } else { "UPSERT" };
+
+            let source_site_id = if rng.random_bool(0.25) {
+                format!("{}", 1 + (g % 99))
+            } else {
+                "NULL".to_string()
+            };
+
+            let store_id = if rng.random_bool(store_populated) {
+                format!("'{}'", md5_uuid(&(g + 1).to_string()))
+            } else {
+                "NULL".to_string()
+            };
+
+            let transfer_store_id = if rng.random_bool(transfer_populated) {
+                format!("'{}'", md5_uuid(&(g + 2).to_string()))
+            } else {
+                "NULL".to_string()
+            };
+
+            let patient_id = if rng.random_bool(patient_populated) {
+                format!("'{}'", md5_uuid(&(g + 3).to_string()))
+            } else {
+                "NULL".to_string()
+            };
+
+            format!(
+                "INSERT INTO changelog (record_id, table_name, row_action, source_site_id, store_id, transfer_store_id, patient_id) \
+                 VALUES ('{record_id}', '{table_name}', '{row_action}'::row_action_type, {source_site_id}, {store_id}, {transfer_store_id}, {patient_id})"
+            )
+        })
+        .collect()
+}
+
+/// Execute a pre-generated single-row INSERT SQL string.
+pub fn execute_single_insert(conn: &mut PgConnection, sql: &str) -> Result<()> {
+    sql_query(sql)
+        .execute(conn)
+        .context("single-row INSERT failed")?;
     Ok(())
 }

@@ -138,16 +138,18 @@ fn render_chart(
 }
 
 /// Generate all charts: one combined + one per scenario.
-pub fn generate_charts(dir: &str, results: &[MeasurementPoint], top_pct: f64) -> Result<()> {
+pub fn generate_charts(dir: &str, results: &[MeasurementPoint], top_pct: f64, suffix: Option<&str>) -> Result<()> {
     if results.is_empty() {
         return Ok(());
     }
     let dir = PathBuf::from(dir);
     let by_scenario = aggregate(results, top_pct);
 
+    let tag = suffix.map(|s| format!("_{}", s)).unwrap_or_default();
+
     // Combined chart
     render_chart(
-        &dir.join("insert_rate.png"),
+        &dir.join(format!("insert_rate{}.png", tag)),
         &format!("Insert rate vs records in DB (top {}% avg)", top_pct),
         &by_scenario,
     )?;
@@ -157,7 +159,7 @@ pub fn generate_charts(dir: &str, results: &[MeasurementPoint], top_pct: f64) ->
         let mut single = HashMap::new();
         single.insert(name.clone(), data.clone());
         render_chart(
-            &dir.join(format!("insert_rate_{}.png", name)),
+            &dir.join(format!("insert_rate_{}{}.png", name, tag)),
             &format!("{} — insert rate (top {}% avg)", name, top_pct),
             &single,
         )?;
@@ -181,5 +183,6 @@ pub fn generate_charts_from_files(
             .with_context(|| format!("Failed to parse {}", path))?;
         all_results.extend(results);
     }
-    generate_charts(output_dir, &all_results, top_pct)
+    generate_charts(output_dir, &all_results, top_pct, None)
 }
+
