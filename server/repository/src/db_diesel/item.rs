@@ -1,7 +1,7 @@
 use super::{
     item_category_row::item_category_join, item_link_row::item_link, item_row::item,
     master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, program_row::program, stock_on_hand::stock_on_hand,
+    master_list_row::master_list, program_row::program, stock_on_hand::store_stock_on_hand,
     store_row::store, unit_row::unit, DBType, ItemRow, ItemType, StorageConnection, UnitRow,
 };
 
@@ -336,11 +336,11 @@ impl<'a> ItemRepository<'a> {
 
             let item_ids_with_stock_on_hand = item_link::table
                 .select(item_link::item_id)
-                .inner_join(stock_on_hand::table)
+                .inner_join(store_stock_on_hand::table)
                 .filter(
-                    stock_on_hand::available_stock_on_hand
+                    store_stock_on_hand::available_stock_on_hand
                         .gt(0.0)
-                        .and(stock_on_hand::store_id.eq(store_id.clone())),
+                        .and(store_stock_on_hand::store_id.eq(store_id.clone())),
                 )
                 .group_by(item_link::item_id);
 
