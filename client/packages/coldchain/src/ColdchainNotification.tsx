@@ -246,7 +246,7 @@ export const ColdchainNotification = () => {
       tab={t('label.breaches')}
       queryParameters={{
         sort: TemperatureLogSortFieldInput.Datetime,
-        unacknowledged: true,
+        unacknowledged: 'true',
       }}
     />
   ) : null;

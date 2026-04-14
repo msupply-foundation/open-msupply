@@ -21,7 +21,6 @@ import {
   InfoRow,
   Grid,
 } from '@openmsupply-client/common';
-import { PurchaseOrderLineFragment } from '../../api';
 import {
   ItemStockOnHandFragment,
   ManufacturerSearchInput,

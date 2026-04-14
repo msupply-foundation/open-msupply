@@ -2,9 +2,8 @@ import React, { useRef } from 'react';
 import { RecordWithId } from '@common/types';
 import {
   Box,
-  Column,
-  HeaderRow,
   TableHead,
+  TableRow,
   TableContainer,
   TableCell,
   Table as MuiTable,
@@ -13,6 +12,12 @@ import {
   useTranslation,
   useBufferState,
 } from '@openmsupply-client/common';
+
+interface Column<T extends RecordWithId> {
+  key: string | keyof T;
+  align?: 'left' | 'center' | 'right' | 'inherit' | 'justify';
+  width?: number | string;
+}
 import { HeaderData } from '../types';
 import { isHeaderDataYearKey } from './utils';
 
@@ -70,7 +75,7 @@ export const GrowthRow = <T extends RecordWithId>({
             zIndex: 'tableHeader',
           }}
         >
-          <HeaderRow>
+          <TableRow>
             {columns.map(column => {
               const { align, width } = column;
 
@@ -124,7 +129,7 @@ export const GrowthRow = <T extends RecordWithId>({
                 </TableCell>
               );
             })}
-          </HeaderRow>
+          </TableRow>
         </TableHead>
       </MuiTable>
     </TableContainer>

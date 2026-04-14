@@ -160,7 +160,8 @@ export const QueryParamsProvider = ({
   createStore,
 }: {
   children: ReactNode;
-  createStore: () => QueryParamsState<RecordWithId>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  createStore: () => QueryParamsState<any>;
 }) => {
   const { Provider } = queryParamsStoreContext;
   const store = createStore();
