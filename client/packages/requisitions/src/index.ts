@@ -12,7 +12,7 @@ export {
 export { NewRequisitionType } from './types';
 export * from './RnRForms/api';
 
-export { RequisitionService } from './RequisitionService';
+export { default as RequisitionService } from './RequisitionService';
 export {
   STOCK_DISTRIBUTION_INFO,
   CONSUMPTION_HISTORY_INFO,

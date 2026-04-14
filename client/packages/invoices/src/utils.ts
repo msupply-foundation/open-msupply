@@ -16,7 +16,7 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
-import { InboundItem } from './types';
+
 import {
   PrescriptionLineFragment,
   PrescriptionRowFragment,

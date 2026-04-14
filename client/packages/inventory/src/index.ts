@@ -1,2 +1,2 @@
 export { ListView, DetailView } from './Stocktake';
-export { InventoryService } from './InventoryService';
+export { default as InventoryService } from './InventoryService';
