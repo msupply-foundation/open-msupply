@@ -49,7 +49,8 @@ const queryClient = new QueryClient({
       // These are disabled during development because they're
       // annoying to have constantly refetching.
       refetchOnWindowFocus: EnvUtils.isProduction(),
-      retry: EnvUtils.isProduction(),
+      // Retries are handled at the transport layer by GQLClient.requestWithRetry
+      retry: false,
       // This is the default in v4 which is currently in alpha as it is
       // what most users think the default is.
       // This will subscribe components of a query only to the data they

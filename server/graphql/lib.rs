@@ -413,8 +413,32 @@ async fn graphql_index(
     schema: Data<GraphqlSchema>,
     http_req: HttpRequest,
     req: GraphQLRequest,
-) -> GraphQLResponse {
-    schema.execute(http_req, req).await.into()
+) -> HttpResponse {
+    let response = schema.execute(http_req, req).await;
+
+    // Return HTTP 503 for transient DB connection pool errors so clients can retry.
+    // Resolvers typically return `RepositoryError` directly (which async-graphql
+    // converts via its `Display` impl), so we match on the message string rather
+    // than a typed variant.
+    let is_service_unavailable = response
+        .errors
+        .iter()
+        .any(|e| e.message.contains("Failed to open Connection"));
+
+    let status = if is_service_unavailable {
+        eprintln!(
+            "[RETRY] Returning 503 — response has {} error(s), first: '{}'",
+            response.errors.len(),
+            response.errors.first().map(|e| e.message.as_str()).unwrap_or("")
+        );
+        actix_web::http::StatusCode::SERVICE_UNAVAILABLE
+    } else {
+        actix_web::http::StatusCode::OK
+    };
+
+    HttpResponse::build(status)
+        .content_type("application/json")
+        .json(response)
 }
 
 async fn graphql_playground() -> HttpResponse {
