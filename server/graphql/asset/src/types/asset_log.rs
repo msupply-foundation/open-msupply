@@ -2,6 +2,7 @@ use std::vec;
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::generic_filters::{
     DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
@@ -141,8 +142,8 @@ impl AssetLogNode {
         }
     }
 
-    pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
-        &self.row().log_datetime
+    pub async fn log_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().log_datetime, Utc)
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
