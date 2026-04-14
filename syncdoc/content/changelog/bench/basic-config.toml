@@ -15,7 +15,7 @@ bench_batch_repeat = 10      # number of measured batches per interval
 bench_max_size = 100_000_000 # stop once the DB reaches this many rows
 
 # Maximum wall-clock minutes per scenario (omit for unlimited).
-max_scenario_minutes = 1
+max_scenario_minutes = 120
 
 output_dir = "results-basic-partitioned"
 
