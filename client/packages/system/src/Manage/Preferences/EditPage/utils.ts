@@ -14,28 +14,9 @@ export const PREFERENCE_GROUP_CONFIG: Partial<
     PreferenceKey.ExpiredStockPreventIssue,
     PreferenceKey.ExpiredStockIssueThreshold,
   ],
-  'label.backdating': [
-    PreferenceKey.AllowBackdatingOfShipments,
-    PreferenceKey.MaximumBackdatingDays,
-  ],
+  'label.backdating': [PreferenceKey.Backdating],
 };
 
-// Map of preferences that depend on another preference being truthy to be editable (no server side validation, just a UI hint)
-const PREFERENCE_DEPENDENCIES: Partial<Record<PreferenceKey, PreferenceKey>> = {
-  [PreferenceKey.MaximumBackdatingDays]:
-    PreferenceKey.AllowBackdatingOfShipments,
-};
-
-export const isPreferenceDisabledByDependency = (
-  key: PreferenceKey,
-  preferences: AdminPreferenceFragment[]
-): boolean => {
-  const dependsOn = PREFERENCE_DEPENDENCIES[key];
-  if (!dependsOn) return false;
-
-  const parent = preferences.find(p => p.key === dependsOn);
-  return !parent?.value;
-};
 
 export const isAnyAmcPrefOn = (
   preferences: AdminPreferenceFragment[]
