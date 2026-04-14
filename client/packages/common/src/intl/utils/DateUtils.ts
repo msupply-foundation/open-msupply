@@ -54,17 +54,16 @@ const URL_QUERY_DATE_TIME = 'yyyy-MM-dd HH:mm';
 const dateInputHandler = (date: Date | string | number): Date => {
   // Assume a string is an ISO date-time string
   if (typeof date === 'string') {
-    // NaiveDateTime strings from the server have no timezone suffix but are
-    // stored as UTC. Without the 'Z', parseISO treats them as local time,
-    // which shifts dates in timezones ahead of UTC. Appending 'Z' ensures
-    // they are parsed as UTC. Date-only strings (no 'T') are left as-is.
+    // Any dates we receive from the server without timezone information are
+    // assumed to be in UTC time
     const tIndex = date.indexOf('T');
     if (
       tIndex !== -1 &&
       !date.endsWith('Z') &&
       !/[+-]/.test(date.substring(tIndex))
-    )
+    ) {
       return parseISO(date + 'Z');
+    }
     return parseISO(date);
   }
   // Assume a number is a UNIX timestamp
