@@ -19,7 +19,8 @@ import {
 import { getOptionLabel, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
-const DEBOUNCE_TIMEOUT = 300;
+const SEARCH_DEBOUNCE_TIMEOUT = 500;
+const PAGINATION_DEBOUNCE_TIMEOUT = 300;
 const ROWS_PER_PAGE = 100;
 
 export const StockItemSearchInput = ({
@@ -46,7 +47,7 @@ export const StockItemSearchInput = ({
   const debounceOnFilter = useDebouncedValueCallback(
     (searchText: string) => onFilter(searchText),
     [onFilter],
-    DEBOUNCE_TIMEOUT
+    SEARCH_DEBOUNCE_TIMEOUT
   );
 
   const fullFilter: ItemFilterInput = useMemo(() => {
@@ -108,7 +109,7 @@ export const StockItemSearchInput = ({
     // positioned when used within a Dialog. This is a workaround to fix the
     // popper position.
     if (openOnFocus) {
-      setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
+      setTimeout(() => selectControl.toggleOn(), SEARCH_DEBOUNCE_TIMEOUT);
     }
 
     // Force focus after component mounts (this can conflict with openOnFocus)
@@ -155,7 +156,7 @@ export const StockItemSearchInput = ({
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
-      paginationDebounce={DEBOUNCE_TIMEOUT}
+      paginationDebounce={PAGINATION_DEBOUNCE_TIMEOUT}
       onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
       mapOptions={items =>
         defaultOptionMapper(items, 'name').sort((a, b) =>
