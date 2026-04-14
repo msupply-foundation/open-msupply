@@ -42,9 +42,10 @@ export const ReceivedDateInput = () => {
     ? DateUtils.addDays(currentReceivedDate, -1)
     : new Date();
 
+  // +1 day buffer so the boundary date isn't rejected by server UTC check
   const minDate =
     maximumBackdatingDays && maximumBackdatingDays > 0
-      ? DateUtils.addDays(new Date(), -maximumBackdatingDays)
+      ? DateUtils.addDays(new Date(), -maximumBackdatingDays + 1)
       : undefined;
 
   const atBackdatingLimit =
