@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime, Utc};
+use chrono::{NaiveDate, Utc};
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow,
@@ -89,7 +89,7 @@ pub(crate) fn generate(
     if let Some(backdated_datetime) = input_backdated_datetime {
         handle_new_backdated_datetime(
             &mut update_invoice,
-            NaiveDateTime::from(backdated_datetime),
+            backdated_datetime.naive_utc(),
             Utc::now().naive_utc(),
         );
     }
@@ -125,7 +125,7 @@ pub(crate) fn generate(
         None
     };
 
-    let update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
+    let mut update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
         Some(generate_update_for_lines(
             connection,
             &update_invoice.id,
@@ -139,8 +139,10 @@ pub(crate) fn generate(
 
     let mut lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
 
-    // When backdating, delete all existing lines atomically (they need re-allocation at the new date)
+    // When backdating, delete all existing lines (they need re-allocation at the new date)
+    // and clear update_lines so deleted lines don't get re-inserted
     if input_backdated_datetime.is_some() {
+        update_lines = None;
         let all_lines = InvoiceLineRepository::new(connection).query_by_filter(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(existing_invoice.id.clone())),

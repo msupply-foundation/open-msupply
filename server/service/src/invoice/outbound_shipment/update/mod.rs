@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
@@ -38,7 +38,7 @@ pub struct UpdateOutboundShipment {
     pub currency_rate: Option<f64>,
     pub expected_delivery_date: Option<NullableUpdate<NaiveDate>>,
     pub shipping_method_id: Option<NullableUpdate<String>>,
-    pub backdated_datetime: Option<NaiveDate>,
+    pub backdated_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -837,9 +837,9 @@ mod test {
         use repository::{PreferenceRow, PreferenceRowRepository};
         PreferenceRowRepository::new(&connection)
             .upsert_one(&PreferenceRow {
-                id: "allow_backdating_of_shipments_global".to_string(),
-                key: "allow_backdating_of_shipments".to_string(),
-                value: "true".to_string(),
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"enabled":true,"maxDays":0}"#.to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -850,7 +850,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let two_days_ago = (Utc::now() - Duration::days(2)).date_naive();
+        let two_days_ago = Utc::now() - Duration::days(2);
 
         // CantBackDate: not a New outbound
         assert_eq!(
@@ -879,7 +879,7 @@ mod test {
         assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
 
         // CantBackDate: future date
-        let future = (Utc::now() + Duration::days(5)).date_naive();
+        let future = Utc::now() + Duration::days(5);
         assert_eq!(
             service.update_outbound_shipment(
                 &context,
@@ -924,9 +924,9 @@ mod test {
         use repository::{PreferenceRow, PreferenceRowRepository};
         PreferenceRowRepository::new(&connection)
             .upsert_one(&PreferenceRow {
-                id: "allow_backdating_of_shipments_global".to_string(),
-                key: "allow_backdating_of_shipments".to_string(),
-                value: "true".to_string(),
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"enabled":true,"maxDays":0}"#.to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -937,7 +937,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let two_days_ago = (Utc::now() - Duration::days(2)).date_naive();
+        let two_days_ago = Utc::now() - Duration::days(2);
 
         let result = service.update_outbound_shipment(
             &context,
@@ -957,7 +957,7 @@ mod test {
 
         assert_eq!(
             updated.backdated_datetime,
-            Some(chrono::NaiveDateTime::from(two_days_ago))
+            Some(two_days_ago.naive_utc())
         );
         // Status datetimes should not be set (invoice is still New)
         assert_eq!(updated.allocated_datetime, None);
