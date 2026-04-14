@@ -44,7 +44,9 @@ const Android = React.lazy(() =>
   import('./components/Android').then(m => ({ default: m.Android }))
 );
 
-const Site = React.lazy(() => import('./Site'));
+const Site = React.lazy(() =>
+  import('./Site').then(m => ({ default: m.Site }))
+);
 
 import pkg from '../../../../package.json';
 const appVersion = pkg.version;
