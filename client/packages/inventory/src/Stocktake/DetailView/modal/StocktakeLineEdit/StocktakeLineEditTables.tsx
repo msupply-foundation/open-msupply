@@ -237,7 +237,7 @@ export const BatchTable = ({
         ),
       },
     ],
-    [showVVMStatusColumn, showDosesCountedColumn, errors]
+    [showVVMStatusColumn, showDosesCountedColumn, errors, disabled, isInitialStocktake, t, update]
   );
 
   const table = useSimpleMaterialTable({
