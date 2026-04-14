@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
@@ -39,7 +39,7 @@ pub struct UpdateInput {
     currency_rate: Option<f64>,
     expected_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
     shipping_method_id: Option<NullableUpdateInput<String>>,
-    backdated_datetime: Option<NaiveDate>,
+    backdated_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]

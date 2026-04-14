@@ -26,20 +26,21 @@ export const PickedDateInput = () => {
       'lines',
     ]);
 
-  const { allowBackdatingOfShipments, maximumBackdatingDays } =
-    usePreferences();
+  const { backdating } = usePreferences();
+  const allowBackdatingOfShipments = backdating?.enabled;
+  const maximumBackdatingDays = backdating?.maxDays;
 
   const isNew = status === InvoiceNodeStatus.New;
 
-  const currentDate = DateUtils.getDateOrNull(backdatedDatetime) ??
+  const currentDate =
+    DateUtils.getDateOrNull(backdatedDatetime) ??
     DateUtils.getDateOrNull(createdDatetime);
 
-  const backdatingLimit =
+  // +1 day buffer so the boundary date isn't rejected by server UTC check
+  const minDate =
     maximumBackdatingDays && maximumBackdatingDays > 0
-      ? DateUtils.addDays(new Date(), -maximumBackdatingDays)
+      ? DateUtils.addDays(new Date(), -maximumBackdatingDays + 1)
       : undefined;
-
-  const minDate = backdatingLimit;
 
   const lineCount = lines?.totalCount ?? 0;
 
@@ -57,12 +58,12 @@ export const PickedDateInput = () => {
 
   const getDeleteLinesConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-backdate-picked-date'),
+    message: t('messages.confirm-backdate-picked-date', { date: '' }),
   });
 
   const getStocktakeWarningConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.stocktake-after-backdate-warning'),
+    message: t('messages.stocktake-after-backdate-warning', { date: '' }),
   });
 
   const checkStocktakeAfterDate = async (date: Date): Promise<boolean> => {
@@ -93,13 +94,18 @@ export const PickedDateInput = () => {
 
     if (dateValue && DateUtils.isSameDay(newDate, dateValue)) return;
 
+    const formattedDate = newDate.toLocaleDateString();
+
     const doUpdate = async () => {
       const hasStocktakeAfter = await checkStocktakeAfterDate(newDate);
       if (hasStocktakeAfter) {
         getStocktakeWarningConfirmation({
+          message: t('messages.stocktake-after-backdate-warning', {
+            date: formattedDate,
+          }),
           onConfirm: async () => {
             await update({
-              backdatedDatetime: Formatter.naiveDate(newDate),
+              backdatedDatetime: newDate.toISOString(),
             });
           },
           onCancel: () => setDateValue(previousValue),
@@ -108,13 +114,16 @@ export const PickedDateInput = () => {
       }
 
       await update({
-        backdatedDatetime: Formatter.naiveDate(newDate),
+        backdatedDatetime: newDate.toISOString(),
       });
     };
 
     // If lines exist, warn they'll be deleted (backend handles deletion atomically)
     if (lineCount > 0) {
       getDeleteLinesConfirmation({
+        message: t('messages.confirm-backdate-picked-date', {
+          date: formattedDate,
+        }),
         onConfirm: () => doUpdate(),
         onCancel: () => setDateValue(previousValue),
       });

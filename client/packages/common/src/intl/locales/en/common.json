@@ -2803,6 +2803,6 @@
   "warning.nothing-to-supply": "Nothing left to supply!",
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
   "messages.picked-date-not-new": "The picked date can only be set on new outbound shipments",
-  "messages.confirm-backdate-picked-date": "Changing the picked date will remove all existing lines from this outbound shipment. Are you sure you want to continue?",
+  "messages.confirm-backdate-picked-date": "Changing the picked date to {{date}} will remove all existing lines from this outbound shipment. Are you sure you want to continue?",
   "label.picked-date": "Picked date"
 }
