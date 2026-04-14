@@ -17,3 +17,5 @@ export const MasterListService: FC = () => {
     </Routes>
   );
 };
+
+export default MasterListService;

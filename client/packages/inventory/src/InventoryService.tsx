@@ -20,3 +20,5 @@ export const InventoryService: FC = () => {
     </Routes>
   );
 };
+
+export default InventoryService;

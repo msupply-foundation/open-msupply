@@ -39,3 +39,5 @@ export const ColdchainService: FC = () => {
     </Routes>
   );
 };
+
+export default ColdchainService;

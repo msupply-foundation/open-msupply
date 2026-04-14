@@ -297,3 +297,5 @@ export const Chart = ({
     </Box>
   );
 };
+
+export default Chart;

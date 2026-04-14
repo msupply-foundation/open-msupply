@@ -37,5 +37,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./typings", "./node_modules/@types"]
-  }
+  },
+  "exclude": ["playwright", "node_modules"]
 }

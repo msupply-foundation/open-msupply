@@ -80,3 +80,5 @@ export const RequisitionService: FC = () => {
     </Routes>
   );
 };
+
+export default RequisitionService;
