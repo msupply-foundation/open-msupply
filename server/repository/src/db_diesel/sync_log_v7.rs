@@ -101,6 +101,16 @@ impl<'a> SyncLogV7Repository<'a> {
             .optional()?;
         Ok(result.is_some())
     }
+
+    pub fn latest_successful(&self) -> Result<Option<SyncLogV7Row>, RepositoryError> {
+        let result = sync_log_v7::table
+            .filter(sync_log_v7::finished_datetime.is_not_null())
+            .filter(sync_log_v7::error.is_null())
+            .order(sync_log_v7::started_datetime.desc())
+            .first::<SyncLogV7Row>(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
