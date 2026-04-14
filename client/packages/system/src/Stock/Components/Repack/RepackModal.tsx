@@ -59,9 +59,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const { data: logData } = useActivityLog(
     stockLine?.id ?? '',
+    hasLogPermission,
     ActivityLogNodeType.Repack,
     undefined,
-    hasLogPermission
   );
   const toLogData = logData?.nodes.find(node => !!node.from);
 

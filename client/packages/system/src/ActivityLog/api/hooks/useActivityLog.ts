@@ -12,9 +12,9 @@ import { ACTIVITY_LOG } from './keys';
 
 export function useActivityLog(
   recordId: string,
+  enabled: boolean = true,
   logType?: ActivityLogNodeType,
-  sortBy?: SortBy<ActivityLogRowFragment>,
-  enabled: boolean = true
+  sortBy?: SortBy<ActivityLogRowFragment>
 ) {
   const { activityLogApi } = useActivityLogGraphQL();
 
