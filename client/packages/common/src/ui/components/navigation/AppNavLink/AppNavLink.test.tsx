@@ -8,12 +8,13 @@ import { TestingProvider, TestingRouter } from '../../../../utils/testing';
 import { TruckIcon } from '@common/icons';
 
 const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
-  const drawer = useDrawer();
+  const open = useDrawer(s => s.open);
+  const close = useDrawer(s => s.close);
 
   useEffect(() => {
-    if (collapsed) drawer.close();
-    else drawer.open();
-  }, [collapsed, drawer]);
+    if (collapsed) close();
+    else open();
+  }, [collapsed, close, open]);
 
   return null;
 };
