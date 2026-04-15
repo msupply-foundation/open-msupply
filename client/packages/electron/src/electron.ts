@@ -324,6 +324,23 @@ const start = (): void => {
     });
   });
 
+  // Clear auth state when the window is closed
+  // so the user must log in again on next launch.
+  // This runs while the app is still fully alive, which is more reliable
+  // than clearing during the will-quit phase.
+  let isClosing = false;
+  window.on('close', event => {
+    if (!isClosing) {
+      isClosing = true;
+      event.preventDefault();
+      session.defaultSession
+        .clearStorageData({ storages: ['cookies'] })
+        .finally(() => {
+          window.destroy();
+        });
+    }
+  });
+
   window.webContents.on(
     'did-fail-load',
     (_event, _errorCode, errorDescription, validatedURL) => {
@@ -347,13 +364,6 @@ app.on('ready', start);
 
 app.on('window-all-closed', () => {
   app.quit();
-});
-
-app.on('will-quit', event => {
-  event.preventDefault();
-  session.defaultSession
-    .clearStorageData({ storages: ['cookies'] })
-    .finally(() => app.exit());
 });
 
 process.on('uncaughtException', error => {
