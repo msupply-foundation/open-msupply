@@ -1,4 +1,10 @@
-import { useEffect, useState, Dispatch, SetStateAction } from 'react';
+import { useState, useRef, Dispatch, SetStateAction } from 'react';
+
+const defaultIsEqual = <T>(a: T, b: T): boolean => {
+  if (Object.is(a, b)) return true;
+  if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
+  return false;
+};
 
 // It is generally discouraged to sync props and state. Generally, you should just use
 // props. Other times, you may want to seed some state with props (useState(props.value))
@@ -9,13 +15,16 @@ import { useEffect, useState, Dispatch, SetStateAction } from 'react';
 // was initially mounted with. If you can, try to avoid using this hook and find a different way
 // but if there isn't one, here you go!
 export const useBufferState = <T>(
-  value: T
+  value: T,
+  isEqual: (a: T, b: T) => boolean = defaultIsEqual
 ): [T, Dispatch<SetStateAction<T>>] => {
   const [buffer, setBuffer] = useState(value);
+  const prevValueRef = useRef(value);
 
-  useEffect(() => {
+  if (!isEqual(prevValueRef.current, value)) {
+    prevValueRef.current = value;
     setBuffer(value);
-  }, [value]);
+  }
 
   return [buffer, setBuffer];
 };
