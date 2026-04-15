@@ -5,13 +5,6 @@ query initialisationStatus {
   }
 }
 
-query migrationStatus {
-  migrationStatus {
-    inProgress
-    version
-  }
-}
-
 subscription initialisationStatusUpdated {
   initialisationStatusUpdated {
     status
