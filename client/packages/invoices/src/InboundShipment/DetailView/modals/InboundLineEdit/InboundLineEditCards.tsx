@@ -307,19 +307,13 @@ export const InboundLineEditCards = ({
             inboundData?.status === InvoiceNodeStatus.Received ||
             inboundData?.status === InvoiceNodeStatus.Verified;
 
-          if (isStatusDisabled) {
-            const entry = status ? statusMapRef.current[status] : undefined;
-            return entry ? (
-              <Typography variant="body2">{entry.label}</Typography>
-            ) : null;
-          }
-
           return (
             <Select
               value={status ?? ''}
               variant="standard"
               size="small"
               fullWidth
+              disabled={isStatusDisabled}
               sx={{
                 backgroundColor: theme => theme.palette.background.input.main,
                 borderRadius: 2,
