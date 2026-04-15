@@ -29,7 +29,7 @@ fi
 # Import dump file if it exists
 if [ -f "$IMPORT_DUMP" ]; then
     echo "Importing database dump from $IMPORT_DUMP..."
-    gosu $PG_USER pg_restore --clean --if-exists --no-owner --dbname "$PG_DB" "$IMPORT_DUMP" || true
+    gosu $PG_USER pg_restore --no-owner --exit-on-error --dbname "$PG_DB" "$IMPORT_DUMP"
     echo "Database import complete."
 fi
 
