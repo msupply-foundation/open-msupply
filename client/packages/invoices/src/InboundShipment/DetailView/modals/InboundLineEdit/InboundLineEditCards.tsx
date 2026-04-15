@@ -24,7 +24,6 @@ import {
   Typography,
   CopyIcon,
   StockIcon,
-  StatusChip,
   InvoiceLineStatusType,
   InvoiceNodeStatus,
   InfoIcon,
@@ -216,8 +215,8 @@ export const InboundLineEditCards = ({
                 helperText={
                   isPlaceholder
                     ? t('error.field-must-be-specified', {
-                      field: t('label.packs-received'),
-                    })
+                        field: t('label.packs-received'),
+                      })
                     : undefined
                 }
               />
@@ -265,7 +264,7 @@ export const InboundLineEditCards = ({
                   const shouldClearSellPrice =
                     item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
-                    line.sellPricePerPack;
+                      line.sellPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -311,7 +310,7 @@ export const InboundLineEditCards = ({
           if (isStatusDisabled) {
             const entry = status ? statusMapRef.current[status] : undefined;
             return entry ? (
-              <StatusChip label={entry.label} colour={entry.colour} />
+              <Typography variant="body2">{entry.label}</Typography>
             ) : null;
           }
 
@@ -335,12 +334,6 @@ export const InboundLineEditCards = ({
                   status: e.target.value as InvoiceLineStatusType,
                 });
               }}
-              renderValue={() => {
-                const entry = status ? statusMapRef.current[status] : undefined;
-                return entry ? (
-                  <StatusChip label={entry.label} colour={entry.colour} />
-                ) : null;
-              }}
             >
               {Object.entries(statusMapRef.current)
                 .filter(
@@ -348,9 +341,9 @@ export const InboundLineEditCards = ({
                     hasAuthorisePermission ||
                     key === InvoiceLineStatusType.Pending
                 )
-                .map(([key, { label, colour }]) => (
+                .map(([key, { label }]) => (
                   <MenuItem key={key} value={key}>
-                    <StatusChip label={label} colour={colour} />
+                    {label}
                   </MenuItem>
                 ))}
             </Select>
@@ -819,9 +812,9 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-      stockLineDetails: <StockIcon />,
-      moreInfo: <InfoIcon />,
-    };
+        stockLineDetails: <StockIcon />,
+        moreInfo: <InfoIcon />,
+      };
 
   return (
     <>
