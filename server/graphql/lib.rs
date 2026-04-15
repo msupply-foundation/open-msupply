@@ -321,7 +321,6 @@ pub struct Subscriptions(pub BaseSubscriptions, pub SyncStatusSubscriptions);
 pub enum OperationalStatus {
     Operational,
     Initialising,
-    MigratingDatabase,
 }
 
 /// We need to swap schema between initialisation and operational modes
@@ -476,12 +475,6 @@ async fn graphql_ws(
             GraphQLSubscription::new(schema.initialisation.clone())
                 .on_connection_init(on_connection_init)
                 .start(&req, payload)
-        }
-        OperationalStatus::MigratingDatabase => {
-            //TODO: add migration status subscription and route to that instead of returning an error here
-            Err(actix_web::error::ErrorServiceUnavailable(
-                "Subscriptions unavailable during database migration",
-            ))
         }
     }
 }
