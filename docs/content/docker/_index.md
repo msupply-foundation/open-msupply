@@ -22,7 +22,7 @@ If building natively on Linux, you can use `cargo build` directly.
 
 ### SQLite (default)
 
-Via Docker (for macOS or other non-Linux hosts):
+Via Docker (for macOS or other non-Linux hosts — uses `rust:1.94-slim` since SQLite is compiled from source and needs no system libraries):
 
 ```bash
 docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
