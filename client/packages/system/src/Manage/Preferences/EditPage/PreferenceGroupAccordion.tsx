@@ -13,7 +13,7 @@ import {
 import React from 'react';
 import { AdminPreferenceFragment } from '../api/operations.generated';
 import { EditPreference } from './EditPreference';
-import { isAnyAmcPrefOn, isPreferenceDisabledByDependency } from './utils';
+import { isAnyAmcPrefOn } from './utils';
 
 interface PreferenceGroupAccordionProps {
   label: string;
@@ -55,10 +55,7 @@ export const PreferenceGroupAccordion = ({
               preference={pref}
               update={value => update({ [pref.key]: value })}
               isLast={isLast}
-              disabled={isPreferenceDisabledByDependency(
-                pref.key,
-                preferences
-              )}
+              disabled={false}
             />
           );
         })}
