@@ -248,6 +248,31 @@ mod tests {
     }
 
     #[actix_rt::test]
+    #[cfg(not(feature = "postgres"))]
+    async fn test_report_query_rejects_all_writes() {
+        let (_, _connection, _, settings) = test_db::setup_all(
+            "test_report_query_rejects_all_writes",
+            MockDataInserts::none().stores(),
+        )
+        .await;
+
+        let write_statements = [
+            "INSERT INTO store (id, name_id, code, site_id) VALUES ('x', 'y', 'z', 0)",
+            "UPDATE store SET code = 'x' WHERE id = 'store_a'",
+            "CREATE TABLE foo (id TEXT)",
+            "DROP TABLE store",
+        ];
+
+        for stmt in &write_statements {
+            let result = query_json(&settings, stmt, &serde_json::Map::new());
+            assert!(
+                result.is_err(),
+                "report query_json should reject write statement: {stmt}"
+            );
+        }
+    }
+
+    #[actix_rt::test]
     async fn test_report_query() {
         let (_, connection, _, settings) = test_db::setup_all(
             "test_report_query",

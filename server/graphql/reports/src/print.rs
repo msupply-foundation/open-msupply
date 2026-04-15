@@ -447,6 +447,49 @@ async fn fetch_graphql_data(
     Ok(FetchResult::Data(response.data.into_json()?))
 }
 
+#[cfg(test)]
+mod test {
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_standard_graphql_error, test_helpers::setup_graphql_test};
+    use repository::mock::{MockDataInserts, mock_store_a};
+    use serde_json::json;
+
+    use crate::ReportQueries;
+
+    #[actix_rt::test]
+    async fn test_generate_report_data_bad_json() {
+        let (_, _, _, settings) = setup_graphql_test(
+            ReportQueries,
+            EmptyMutation,
+            "test_generate_report_data_bad_json",
+            MockDataInserts::none().stores(),
+        )
+        .await;
+
+        // The `report` argument must deserialise as `ReportDefinition`.
+        // Passing an object that lacks the required `index` / `entries` structure triggers
+        // `serde_json::from_value` to fail, which the handler maps to a BadUserInput error.
+        let query = r#"query GenerateReportData($storeId: String!, $report: JSON!) {
+            generateReportData(storeId: $storeId, report: $report) {
+                ... on PrintReportError {
+                    error { description }
+                }
+                ... on ReportDataNode {
+                    data
+                }
+            }
+        }"#;
+
+        let variables = Some(json!({
+            "storeId": mock_store_a().id,
+            "report": { "not": "a valid report definition" }
+        }));
+
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(&settings, &query, &variables, &expected_message, None, None);
+    }
+}
+
 fn map_error(error: ReportError) -> Result<PrintReportErrorInterface> {
     let formatted_error = format!("{error:#?}");
 
