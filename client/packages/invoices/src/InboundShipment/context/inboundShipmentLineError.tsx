@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import { PropsWithChildrenOnly, RecordWithId } from '@common/types';
 import { LineLinkedToTransferredInvoiceErrorFragment } from '../api';
 
@@ -10,25 +16,32 @@ const useInboundShipmentLineErrors = () => {
     [InboundShipmentLineId: string]: InboundShipmentLineError | undefined;
   }>({});
 
-  const getError = ({
-    id,
-  }: RecordWithId): InboundShipmentLineError | undefined => {
-    return errors[id];
-  };
+  const getError = useCallback(
+    ({ id }: RecordWithId): InboundShipmentLineError | undefined => {
+      return errors[id];
+    },
+    [errors]
+  );
 
-  const setError = (id: string, error: InboundShipmentLineError) => {
-    setErrors(errors => ({ ...errors, [id]: error }));
-  };
+  const setError = useCallback(
+    (id: string, error: InboundShipmentLineError) => {
+      setErrors(errors => ({ ...errors, [id]: error }));
+    },
+    []
+  );
 
-  const unsetError = (id: string) => {
+  const unsetError = useCallback((id: string) => {
     setErrors(errors => ({ ...errors, [id]: undefined }));
-  };
+  }, []);
 
-  const unsetAll = () => {
+  const unsetAll = useCallback(() => {
     setErrors({});
-  };
+  }, []);
 
-  return { errors, setError, setErrors, getError, unsetError, unsetAll };
+  return useMemo(
+    () => ({ errors, setError, setErrors, getError, unsetError, unsetAll }),
+    [errors, setError, setErrors, getError, unsetError, unsetAll]
+  );
 };
 
 export type UseInboundShipmentLineErrors = ReturnType<
