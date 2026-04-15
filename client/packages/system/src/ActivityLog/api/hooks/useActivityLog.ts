@@ -12,6 +12,7 @@ import { ACTIVITY_LOG } from './keys';
 
 export function useActivityLog(
   recordId: string,
+  enabled: boolean = true,
   logType?: ActivityLogNodeType,
   sortBy?: SortBy<ActivityLogRowFragment>
 ) {
@@ -37,7 +38,11 @@ export function useActivityLog(
     return { nodes, totalCount };
   };
 
-  const query = useQuery({ queryKey, queryFn });
+  const query = useQuery({
+    queryKey,
+    queryFn,
+    enabled,
+  });
   return query;
 }
 
