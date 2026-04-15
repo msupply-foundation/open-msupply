@@ -28,7 +28,7 @@ pub struct UpdateStocktakeLine {
     pub donor_id: Option<NullableUpdate<String>>,
     pub manufacturer_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
-    pub vvm_status_id: Option<String>,
+    pub vvm_status_id: Option<NullableUpdate<String>>,
     pub volume_per_pack: Option<f64>,
     pub campaign_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
@@ -274,7 +274,9 @@ mod stocktake_line_test {
                 &context,
                 UpdateStocktakeLine {
                     id: stocktake_line_a.id,
-                    vvm_status_id: Some("invalid".to_string()),
+                    vvm_status_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
                     ..Default::default()
                 },
             )
