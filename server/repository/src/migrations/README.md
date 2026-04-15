@@ -87,6 +87,18 @@ A quick note about type safety in migrations, since the schema (before/after) is
 
 We've also considered using [SeaQL](https://github.com/SeaQL/sea-query), but haven't made any examples, mainly because it's another tool and pattern to learn and refine vs learning a bit more about diesel dsl and also there wasn't that much difference in schema sql syntax (which SeaQL also provides vs diesel), lastly couldn't find `CREATE VIEW` in SeaQL so thought we would at the very least have to use raw sql for that.
 
+## Foreign Key Constraints on OG-synced Fields
+
+When adding a column that references another table and will be populated via sync from legacy mSupply (OG), **do not add a database-level FK constraint**. OG data can contain references to records that don't exist in OMS (due to deleted records, sync issues, or data corruption accumulated over years of usage).
+
+A FK constraint on such a column will cause `ForeignKeyViolation` errors during sync integration, preventing the record from being created in OMS entirely.
+
+Instead, follow this pattern:
+- **No DB-level FK constraint** on the column (use plain `TEXT` without `REFERENCES`)
+- **Service-layer validation** in the GraphQL mutation handlers to ensure OMS-created records still have valid references
+
+This is already the pattern used for `invoice.requisition_id`, `invoice.linked_invoice_id`, and `invoice.original_shipment_id`. See [#10898](https://github.com/msupply-foundation/open-msupply/issues/10898) for an example of what happens when this pattern isn't followed.
+
 ## Long Lived/Feature branch migrations
 
 For feature branches it's a good idea to add migrations as some `future` major version, this version should be much higher then base branch version. This allows updating from base branch while keeping base branch migrations before feature branch migrations and when feature branch is merged to base branch we can set exact version for feature update.
