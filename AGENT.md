@@ -15,6 +15,9 @@
 - **Database:** SQLite (dev) or PostgreSQL (prod), migrations in server/repository
 - **API:** GraphQL endpoint at `/graphql`, schema generated from Rust code
 
+## Database Conventions
+- **FK constraints on OG-synced fields:** Do NOT add database-level foreign key constraints on columns populated via sync from legacy mSupply (OG). OG data can reference records that don't exist in OMS, causing ForeignKeyViolation errors during sync integration. Use service-layer validation instead. See `invoice.requisition_id`, `invoice.linked_invoice_id`, `invoice.original_shipment_id` as examples.
+
 ## Code Style
 - **Client:** TypeScript, ESLint (Google config), Prettier, camelCase, single quotes, 2-space tabs
 - **Server:** Rust with rustfmt, snake_case, clippy lints allowed for large_enum_variant
