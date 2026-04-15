@@ -132,13 +132,22 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     }
   }, [displaySettings]);
 
+  // logout must only run once on mount — if it shares deps with the page
+  // title effect (which re-runs when `t` changes), an i18n language change
+  // during a startTransition navigation will re-trigger logout and wipe the
+  // auth cookie mid-login.
   useEffect(() => {
     if (fullSize) {
       logout();
-      setPageTitle(`${t('app.login')} | ${t('app')} `);
       LocalStorage.removeItem('/error/auth');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (fullSize) {
+      setPageTitle(`${t('app.login')} | ${t('app')} `);
+    }
   }, [setPageTitle, t, fullSize]);
 
   return (

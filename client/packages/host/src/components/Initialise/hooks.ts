@@ -96,7 +96,8 @@ export const useInitialiseForm = () => {
   // to login when initialisation is finished, but syncStatus will be behind auth after
   // initialisation has finished, whereas syncStatus is always an open API
   const { data: initStatus } = useInitialisationStatus(refetchInterval);
-  const { data: syncStatus } = useSync.utils.syncStatus(refetchInterval);
+  // No auth during init — use unauthenticated subscription
+  const { data: syncStatus } = useSync.utils.syncStatus(refetchInterval, undefined, false);
   const { data: syncSettings } = useSync.settings.syncSettings();
   const { allowSleep, keepAwake } = useNativeClient();
 

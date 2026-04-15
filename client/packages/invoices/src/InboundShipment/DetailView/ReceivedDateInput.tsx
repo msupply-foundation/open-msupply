@@ -36,15 +36,15 @@ export const ReceivedDateInput = () => {
     shipment?.receivedDatetime
   );
 
-  // maxDate: one day before current received date to guarantee the UTC
-  // datetime (midnight local) is strictly earlier than the stored value
-  const maxDate = currentReceivedDate
-    ? DateUtils.addDays(currentReceivedDate, -1)
-    : new Date();
+  // Don't set maxDate on the picker — it would clamp the displayed value
+  // (which IS the current received date) on blur, triggering a false change.
+  // The same-date check in handleChange and server validation handle this.
+  const maxDate = currentReceivedDate ?? new Date();
 
+  // +1 day buffer so the boundary date isn't rejected by server UTC check
   const minDate =
     maximumBackdatingDays && maximumBackdatingDays > 0
-      ? DateUtils.addDays(new Date(), -maximumBackdatingDays)
+      ? DateUtils.addDays(new Date(), -maximumBackdatingDays + 1)
       : undefined;
 
   const atBackdatingLimit =
