@@ -1,7 +1,6 @@
 use repository::{RepositoryError, StorageConnection, SyncBufferV7Repository, SyncBufferV7Row};
 use util::format_error;
 
-pub mod integrate;
 pub mod prepare;
 pub mod serde;
 pub mod sync;

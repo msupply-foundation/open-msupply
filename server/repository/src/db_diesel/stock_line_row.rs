@@ -5,17 +5,17 @@ use super::{
 
 use crate::{
     db_diesel::barcode_row::barcode, db_diesel::vvm_status::vvm_status_row::vvm_status,
-    repository_error::RepositoryError, syncv7::*, Delete, Upsert,
+    repository_error::RepositoryError, Delete, Upsert,
 };
 use crate::{
     ChangeLogInsertRow, ChangeLogInsertRowV7, ChangelogRepository, ChangelogTableName,
     RowActionType,
 };
+use serde::{Deserialize, Serialize};
 
 use diesel::prelude::*;
 
 use chrono::NaiveDate;
-use serde::{Deserialize, Serialize};
 
 table! {
     stock_line (id) {
@@ -58,7 +58,7 @@ allow_tables_to_appear_in_same_query!(stock_line, name_link);
 allow_tables_to_appear_in_same_query!(stock_line, item_variant);
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, Serialize, Deserialize, PartialEq, Default,
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = stock_line)]
@@ -87,46 +87,6 @@ pub struct StockLineRow {
     pub volume_per_pack: f64,
 }
 
-impl_record! {
-    struct: StockLineRow,
-    table: stock_line,
-    id_field: id
-}
-
-impl SyncRecord for StockLineRow {
-    fn table_name() -> &'static ChangelogTableName {
-        &ChangelogTableName::StockLine
-    }
-
-    fn sync_type() -> &'static SyncType {
-        &SyncType::Remote
-    }
-
-    fn changelog_extra(
-        &self,
-        _connection: &StorageConnection,
-    ) -> Result<Option<ChangeLogInsertRowV7>, RepositoryError> {
-        Ok(Some(ChangeLogInsertRowV7 {
-            store_id: Some(self.store_id.clone()),
-            ..Default::default()
-        }))
-    }
-}
-
-pub(crate) struct Translator;
-
-impl TranslatorTrait for Translator {
-    type Item = StockLineRow;
-}
-
-impl Translator {
-    // Needs to be added to translators() in ..
-    #[deny(dead_code)]
-    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
-        Box::new(Self)
-    }
-}
-
 pub struct StockLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -137,8 +97,33 @@ impl<'a> StockLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StockLineRow) -> Result<i64, RepositoryError> {
-        row.upsert_internal(self.connection)?;
+        diesel::insert_into(stock_line::table)
+            .values(row)
+            .on_conflict(stock_line::id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
         self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    pub fn upsert_sync(
+        &self,
+        row: &StockLineRow,
+        extra: ChangeLogInsertRowV7,
+    ) -> Result<(), RepositoryError> {
+        diesel::insert_into(stock_line::table)
+            .values(row)
+            .on_conflict(stock_line::id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        ChangeLogInsertRowV7 {
+            table_name: ChangelogTableName::StockLine,
+            record_id: row.id.clone(),
+            ..extra
+        }
+        .insert(self.connection)?;
+        Ok(())
     }
 
     fn insert_changelog(
@@ -172,7 +157,11 @@ impl<'a> StockLineRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
-        StockLineRow::find_by_id(self.connection, id)
+        let result = stock_line::table
+            .filter(stock_line::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
     }
 
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<StockLineRow>, RepositoryError> {

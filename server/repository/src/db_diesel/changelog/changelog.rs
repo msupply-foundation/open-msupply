@@ -4,7 +4,7 @@ use crate::{
     dynamic_query::create_condition,
     name_link,
     name_store_join::name_store_join,
-    syncv7::{translators, SyncType},
+    syncv7::SyncType,
     vaccination_row::vaccination,
     DBConnection, DBType, EqualFilter, KeyType, KeyValueStoreRepository, LockedConnection,
     NameLinkRow, RepositoryError, StorageConnection, SyncBufferV7Row,
@@ -1063,10 +1063,20 @@ impl Site {
 }
 
 pub fn get_table_names_for_sync_types(sync_types: &[SyncType]) -> Vec<ChangelogTableName> {
-    translators()
-        .iter()
-        .filter(|r| sync_types.contains(&r.sync_type()))
-        .map(|visitor| visitor.table_name().to_owned())
+    let all: &[(ChangelogTableName, SyncType)] = &[
+        (ChangelogTableName::Unit, SyncType::Central),
+        (ChangelogTableName::Currency, SyncType::Central),
+        (ChangelogTableName::Name, SyncType::Central),
+        (ChangelogTableName::Store, SyncType::Central),
+        (ChangelogTableName::LocationType, SyncType::Central),
+        (ChangelogTableName::Item, SyncType::Central),
+        (ChangelogTableName::StockLine, SyncType::Remote),
+        (ChangelogTableName::Invoice, SyncType::Remote),
+        (ChangelogTableName::InvoiceLine, SyncType::Remote),
+    ];
+    all.iter()
+        .filter(|(_, st)| sync_types.contains(st))
+        .map(|(tn, _)| tn.clone())
         .collect()
 }
 

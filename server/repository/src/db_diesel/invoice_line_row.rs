@@ -7,16 +7,16 @@ use super::{
 
 use crate::repository_error::RepositoryError;
 use crate::{
-    syncv7::*, ChangeLogInsertRow, ChangeLogInsertRowV7, ChangelogRepository, ChangelogTableName,
-    InvoiceRow, InvoiceRowRepository, RowActionType,
+    ChangeLogInsertRow, ChangeLogInsertRowV7, ChangelogRepository, ChangelogTableName,
+    InvoiceRowRepository, RowActionType,
 };
 use crate::{Delete, Upsert};
+use serde::{Deserialize, Serialize};
 
 use diesel::prelude::*;
 
 use chrono::NaiveDate;
 use diesel_derive_enum::DbEnum;
-use serde::{Deserialize, Serialize};
 
 table! {
     invoice_line (id) {
@@ -65,7 +65,7 @@ allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Serialize, Deserialize, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineType {
     #[default]
@@ -76,7 +76,7 @@ pub enum InvoiceLineType {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Serialize, Deserialize, Debug, PartialEq, Default,
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = invoice_line)]
@@ -116,57 +116,6 @@ pub struct InvoiceLineRow {
     pub shipped_pack_size: Option<f64>,
 }
 
-impl_record! {
-    struct: InvoiceLineRow,
-    table: invoice_line,
-    id_field: id
-}
-
-impl SyncRecord for InvoiceLineRow {
-    fn table_name() -> &'static ChangelogTableName {
-        &ChangelogTableName::InvoiceLine
-    }
-
-    fn sync_type() -> &'static SyncType {
-        &SyncType::Remote
-    }
-
-    fn changelog_extra(
-        &self,
-        connection: &StorageConnection,
-    ) -> Result<Option<ChangeLogInsertRowV7>, RepositoryError> {
-        let Some(InvoiceRow {
-            name_link_id,
-            store_id,
-            ..
-        }) = InvoiceRowRepository::new(connection).find_one_by_id(&self.invoice_id)?
-        else {
-            return Err(RepositoryError::NotFound);
-        };
-
-        Ok(Some(ChangeLogInsertRowV7 {
-            store_id: Some(store_id),
-            name_link_id: Some(name_link_id),
-            ..Default::default()
-        }))
-    }
-}
-
-pub(crate) struct Translator;
-
-impl TranslatorTrait for Translator {
-    type Item = InvoiceLineRow;
-}
-
-// Needs to be added to translators() in ..
-#[deny(dead_code)]
-impl Translator {
-    #[deny(dead_code)]
-    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
-        Box::new(Self)
-    }
-}
-
 pub struct InvoiceLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -177,8 +126,33 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
-        row.upsert_internal(self.connection)?;
+        diesel::insert_into(invoice_line)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
         self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    pub fn upsert_sync(
+        &self,
+        row: &InvoiceLineRow,
+        extra: ChangeLogInsertRowV7,
+    ) -> Result<(), RepositoryError> {
+        diesel::insert_into(invoice_line)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        ChangeLogInsertRowV7 {
+            table_name: ChangelogTableName::InvoiceLine,
+            record_id: row.id.clone(),
+            ..extra
+        }
+        .insert(self.connection)?;
+        Ok(())
     }
 
     fn insert_changelog(
@@ -277,7 +251,11 @@ impl<'a> InvoiceLineRowRepository<'a> {
         &self,
         invoice_line_id: &str,
     ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
-        InvoiceLineRow::find_by_id(self.connection, invoice_line_id)
+        let result = invoice_line
+            .filter(id.eq(invoice_line_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceLineRow>, RepositoryError> {

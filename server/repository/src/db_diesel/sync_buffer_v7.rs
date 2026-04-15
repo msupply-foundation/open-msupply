@@ -6,7 +6,7 @@ use crate::{
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 table! {
     sync_buffer_v7 (record_id) {
@@ -136,6 +136,10 @@ impl<'a> SyncBufferV7Repository<'a> {
 }
 
 impl SyncBufferV7Row {
+    pub fn deserialize<T: DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
+        serde_json::from_value(self.data.0.clone())
+    }
+
     pub fn to_changelog_extra(self) -> ChangeLogInsertRowV7 {
         let Self {
             name_id,
