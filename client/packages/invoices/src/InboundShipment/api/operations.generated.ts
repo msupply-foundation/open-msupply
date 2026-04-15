@@ -1727,6 +1727,16 @@ export type PurchaseOrdersQuery = {
   };
 };
 
+export type StocktakeCountAfterDateQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.StocktakeFilterInput>;
+}>;
+
+export type StocktakeCountAfterDateQuery = {
+  __typename: 'Queries';
+  stocktakes: { __typename: 'StocktakeConnector'; totalCount: number };
+};
+
 export const InboundLineFragmentDoc = gql`
   fragment InboundLine on InvoiceLineNode {
     __typename
@@ -3102,6 +3112,18 @@ export const PurchaseOrdersDocument = gql`
   }
   ${InboundShipmentPurchaseOrderLineFragmentDoc}
 `;
+export const StocktakeCountAfterDateDocument = gql`
+  query stocktakeCountAfterDate(
+    $storeId: String!
+    $filter: StocktakeFilterInput
+  ) {
+    stocktakes(storeId: $storeId, filter: $filter) {
+      ... on StocktakeConnector {
+        totalCount
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -3460,6 +3482,24 @@ export function getSdk(
             signal,
           }),
         'purchaseOrders',
+        'query',
+        variables
+      );
+    },
+    stocktakeCountAfterDate(
+      variables: StocktakeCountAfterDateQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<StocktakeCountAfterDateQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StocktakeCountAfterDateQuery>({
+            document: StocktakeCountAfterDateDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stocktakeCountAfterDate',
         'query',
         variables
       );

@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync::sync_status::status::FullSyncStatus,
+    sync::sync_status::status::{FullSyncStatus, SyncStatus, SyncStatusWithProgress},
 };
 
 use crate::sync_api_error::SyncErrorNode;
@@ -77,6 +77,41 @@ pub struct FullSyncStatusNode {
     error_threshold: i64,
 }
 
+impl FullSyncStatusNode {
+    pub fn from_sync_status(
+        status: FullSyncStatus,
+        last_successful_sync: Option<FullSyncStatus>,
+    ) -> Self {
+        let to_node = |s: SyncStatus| SyncStatusNode {
+            started: s.started,
+            duration_in_seconds: s.duration_in_seconds,
+            finished: s.finished,
+        };
+        let to_progress_node = |s: SyncStatusWithProgress| SyncStatusWithProgressNode {
+            started: s.started,
+            finished: s.finished,
+            total: s.total,
+            done: s.done,
+        };
+
+        FullSyncStatusNode {
+            is_syncing: status.is_syncing,
+            error: status.error.map(SyncErrorNode::from_sync_log_error),
+            summary: to_node(status.summary),
+            prepare_initial: status.prepare_initial.map(to_node),
+            integration: status.integration.map(to_progress_node),
+            pull_central: status.pull_central.map(to_progress_node),
+            pull_remote: status.pull_remote.map(to_progress_node),
+            push: status.push.map(to_progress_node),
+            pull_v6: status.pull_v6.map(to_progress_node),
+            push_v6: status.push_v6.map(to_progress_node),
+            last_successful_sync: last_successful_sync.map(|s| to_node(s.summary)),
+            warning_threshold: 1,
+            error_threshold: 3,
+        }
+    }
+}
+
 pub fn latest_sync_status(
     ctx: &Context<'_>,
     with_auth: bool,
@@ -99,80 +134,10 @@ pub fn latest_sync_status(
         .get_latest_successful_sync_status(&ctx)
         .unwrap_or(None);
 
-    let FullSyncStatus {
-        is_syncing,
-        error,
-        summary,
-        prepare_initial,
-        integration,
-        pull_central,
-        pull_remote,
-        push,
-        pull_v6,
-        push_v6,
-    } = sync_status;
-
-    let result = FullSyncStatusNode {
-        is_syncing,
-        error: error.map(SyncErrorNode::from_sync_log_error),
-        summary: SyncStatusNode {
-            started: summary.started,
-            duration_in_seconds: summary.duration_in_seconds,
-            finished: summary.finished,
-        },
-        prepare_initial: prepare_initial.map(|status| SyncStatusNode {
-            started: status.started,
-            duration_in_seconds: status.duration_in_seconds,
-            finished: status.finished,
-        }),
-        integration: integration.map(|status| SyncStatusWithProgressNode {
-            started: status.started,
-            finished: status.finished,
-            total: status.total,
-            done: status.done,
-        }),
-        pull_central: pull_central.map(|status| SyncStatusWithProgressNode {
-            started: status.started,
-            finished: status.finished,
-            total: status.total,
-            done: status.done,
-        }),
-        pull_remote: pull_remote.map(|status| SyncStatusWithProgressNode {
-            started: status.started,
-            finished: status.finished,
-            total: status.total,
-            done: status.done,
-        }),
-        push: push.map(|status| SyncStatusWithProgressNode {
-            started: status.started,
-            finished: status.finished,
-            total: status.total,
-            done: status.done,
-        }),
-        last_successful_sync: last_successful_sync_status.map(|last_successful_sync_status| {
-            SyncStatusNode {
-                started: last_successful_sync_status.summary.started,
-                duration_in_seconds: last_successful_sync_status.summary.duration_in_seconds,
-                finished: last_successful_sync_status.summary.finished,
-            }
-        }),
-        pull_v6: pull_v6.map(|status| SyncStatusWithProgressNode {
-            started: status.started,
-            finished: status.finished,
-            total: status.total,
-            done: status.done,
-        }),
-        push_v6: push_v6.map(|status| SyncStatusWithProgressNode {
-            started: status.started,
-            finished: status.finished,
-            total: status.total,
-            done: status.done,
-        }),
-        warning_threshold: 1, // constant for now, may be some sort of pref later
-        error_threshold: 3,
-    };
-
-    Ok(Some(result))
+    Ok(Some(FullSyncStatusNode::from_sync_status(
+        sync_status,
+        last_successful_sync_status,
+    )))
 }
 
 pub fn number_of_records_in_push_queue(ctx: &Context<'_>) -> Result<u64> {

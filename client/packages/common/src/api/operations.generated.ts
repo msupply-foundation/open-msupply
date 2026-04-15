@@ -29,6 +29,19 @@ export type MigrationStatusQuery = {
   };
 };
 
+export type InitialisationStatusUpdatedSubscriptionVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type InitialisationStatusUpdatedSubscription = {
+  __typename: 'Subscriptions';
+  initialisationStatusUpdated: {
+    __typename: 'InitialisationStatusNode';
+    status: Types.InitialisationStatusType;
+    siteName?: string | null;
+  };
+};
+
 export const InitialisationStatusDocument = gql`
   query initialisationStatus {
     initialisationStatus {
@@ -42,6 +55,14 @@ export const MigrationStatusDocument = gql`
     migrationStatus {
       inProgress
       version
+    }
+  }
+`;
+export const InitialisationStatusUpdatedDocument = gql`
+  subscription initialisationStatusUpdated {
+    initialisationStatusUpdated {
+      status
+      siteName
     }
   }
 `;
@@ -98,6 +119,24 @@ export function getSdk(
           }),
         'migrationStatus',
         'query',
+        variables
+      );
+    },
+    initialisationStatusUpdated(
+      variables?: InitialisationStatusUpdatedSubscriptionVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InitialisationStatusUpdatedSubscription> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InitialisationStatusUpdatedSubscription>({
+            document: InitialisationStatusUpdatedDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'initialisationStatusUpdated',
+        'subscription',
         variables
       );
     },

@@ -95,6 +95,7 @@ pub mod stocktake;
 pub mod stocktake_line;
 pub mod store;
 pub mod store_preference;
+pub mod subscription;
 pub mod sync;
 pub mod temperature_excursion;
 pub mod token;
