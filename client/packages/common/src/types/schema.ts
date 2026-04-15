@@ -9617,6 +9617,14 @@ export type StringStorePrefInput = {
   value: Scalars['String']['input'];
 };
 
+export type Subscriptions = {
+  __typename: 'Subscriptions';
+  initialisationStatusUpdated: InitialisationStatusNode;
+  /** Simple subscription to verify WebSocket connectivity */
+  ping: Scalars['String']['output'];
+  syncInfoUpdated: SyncInfoUpdatedNode;
+};
+
 export type Success = {
   __typename: 'Success';
   success: Scalars['Boolean']['output'];
@@ -9745,6 +9753,12 @@ export type SyncFileReferenceNode = {
   mimeType?: Maybe<Scalars['String']['output']>;
   recordId: Scalars['String']['output'];
   tableName: Scalars['String']['output'];
+};
+
+export type SyncInfoUpdatedNode = {
+  __typename: 'SyncInfoUpdatedNode';
+  numberOfRecordsInPushQueue: Scalars['Int']['output'];
+  syncStatus?: Maybe<FullSyncStatusNode>;
 };
 
 export type SyncSettingsInput = {

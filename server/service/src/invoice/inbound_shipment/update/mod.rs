@@ -2229,7 +2229,19 @@ mod test {
         )
         .await;
 
-        // Insert location movement manually (not in MockData)
+        // Insert location movements manually (not in MockData)
+        // Previous movement (has exit_datetime - stock moved out of this location)
+        LocationMovementRowRepository::new(&connection)
+            .upsert_one(&LocationMovementRow {
+                id: "backdate_success_movement_prev".to_string(),
+                store_id: mock_store_a().id,
+                stock_line_id: stock_line().id.clone(),
+                location_id: None,
+                enter_datetime: Some(now.naive_utc()),
+                exit_datetime: Some(now.naive_utc()),
+            })
+            .unwrap();
+        // Current movement (no exit_datetime - stock still here)
         LocationMovementRowRepository::new(&connection)
             .upsert_one(&location_movement(&stock_line().id, now.naive_utc()))
             .unwrap();
@@ -2298,11 +2310,28 @@ mod test {
             )
             .unwrap();
 
-        assert_eq!(movements.len(), 1);
+        assert_eq!(movements.len(), 2);
+        for movement in &movements {
+            assert_eq!(
+                movement.location_movement_row.enter_datetime,
+                Some(three_days_ago.naive_utc())
+            );
+        }
+        // Previous movement: exit_datetime should also be backdated
+        let prev = movements
+            .iter()
+            .find(|m| m.location_movement_row.id == "backdate_success_movement_prev")
+            .unwrap();
         assert_eq!(
-            movements[0].location_movement_row.enter_datetime,
+            prev.location_movement_row.exit_datetime,
             Some(three_days_ago.naive_utc())
         );
+        // Current movement: exit_datetime should remain None
+        let current = movements
+            .iter()
+            .find(|m| m.location_movement_row.id == "backdate_success_movement")
+            .unwrap();
+        assert_eq!(current.location_movement_row.exit_datetime, None);
 
         // Check activity log entry was created for backdating
         use repository::activity_log::{ActivityLogFilter, ActivityLogRepository};
