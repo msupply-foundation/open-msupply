@@ -16,7 +16,7 @@ use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{
     attach_discovery_graphql_schema, attach_graphql_schema, GraphSchemaData, GraphqlSchema,
-    PluginExecuteGraphql,
+    OperationalStatus, PluginExecuteGraphql,
 };
 use log::info;
 use repository::{
@@ -37,6 +37,7 @@ use service::{
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
     standard_reports::StandardReports,
+    subscription::{SubscriptionTrigger, SubscriptionWorker},
     sync::{
         file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
@@ -107,7 +108,7 @@ pub async fn start_server(
     }
 
     // INITIALISE DATABASE AND CONNECTION
-    let connection_manager = get_storage_connection_manager(&settings.database);
+    let mut connection_manager = get_storage_connection_manager(&settings.database);
 
     if let Some(init_sql) = &settings.database.startup_sql() {
         connection_manager.execute(init_sql).unwrap();
@@ -135,6 +136,18 @@ pub async fn start_server(
     // INITIALISE CONTEXT
     info!("Initialising server context..");
     let (processors_trigger, processors) = Processors::init();
+    let (subscription_trigger, subscription_worker) = SubscriptionWorker::init();
+
+    // Wire transaction notifications to the subscription worker.
+    // Fired after outermost transaction commits.
+    let commit_trigger = subscription_trigger.clone();
+    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
+        match notification {
+            repository::TransactionNotification::ChangelogInsert => {
+                commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
+            }
+        }
+    }));
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
@@ -148,6 +161,7 @@ pub async fn start_server(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        subscription_trigger,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
     let certificates = Certificates::try_load(&settings.server).unwrap();
@@ -259,16 +273,21 @@ pub async fn start_server(
         .sync_status_service
         .is_initialised(&service_context)
         .unwrap();
+    let initial_status = if is_operational {
+        OperationalStatus::Operational
+    } else {
+        OperationalStatus::Initialising
+    };
     info!(
-        "Creating graphql schema in {} mode..",
-        match is_operational {
-            true => "operational",
-            false => "initialisation",
-        }
+        "Creating graphql schema in {:?} mode..",
+        initial_status
     );
 
     let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
     let validated_plugins = Data::new(Mutex::new(validated_plugins));
+
+    let (subscription_task_handle, subscription_broadcast) =
+        subscription_worker.spawn(service_provider.clone().into_inner());
 
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
@@ -278,15 +297,16 @@ pub async fn start_server(
             settings: Data::new(settings.clone()),
             auth: auth.clone(),
             validated_plugins: validated_plugins.clone(),
+            subscription_broadcast,
         },
-        is_operational,
+        initial_status,
     ));
     // Bind trigger to change schema when site is initialised
     if !is_operational {
         let graphql_schema = graphql_schema.clone();
         site_is_initialised_callback.on_trigger(async move {
             info!("Changing graphql schema to operational mode");
-            graphql_schema.clone().toggle_is_operational(true).await;
+            graphql_schema.clone().set_operational_status(OperationalStatus::Operational).await;
         });
     }
     info!("Creating graphql schema..done");
@@ -422,6 +442,7 @@ pub async fn start_server(
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
+        subscription_error = subscription_task_handle => unreachable!("Subscription task stopped unexpectedly: {:?}", subscription_error),
     };
 
     server_handle.stop(true).await;

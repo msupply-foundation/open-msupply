@@ -1,5 +1,7 @@
-use service::{service_provider::ServiceProvider, sync::CentralServerConfig};
-use std::{sync::Arc, time::Duration};
+use service::service_provider::ServiceProvider;
+use service::sync::CentralServerConfig;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::task::JoinHandle;
 
 pub fn spawn_scheduled_task_runner(
@@ -34,3 +36,4 @@ async fn scheduled_task_runner(service_provider: Arc<ServiceProvider>, interval_
         }
     }
 }
+
