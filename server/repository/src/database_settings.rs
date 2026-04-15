@@ -252,6 +252,7 @@ mod database_setting_test {
             database_path: None,
             connection_pool_max_connections: None,
             connection_pool_timeout_seconds: None,
+            connection_pool_min_idle: None,
         };
         assert_eq!(
             settings.connection_string(),
