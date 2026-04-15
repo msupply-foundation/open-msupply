@@ -1,6 +1,6 @@
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::{
-    connection::{ SimpleConnection},
+    connection::SimpleConnection,
     r2d2::{ConnectionManager, Pool},
 };
 use log::info;
@@ -15,7 +15,7 @@ const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
 #[cfg(not(feature = "postgres"))]
 const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
 
-const DEFUALT_CONNECTION_POOL_MAX_CONNECTIONS: u32 = 10;
+const DEFAULT_CONNECTION_POOL_MAX_CONNECTIONS: u32 = 10;
 const DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS: u64 = 30;
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -27,6 +27,7 @@ pub struct DatabaseSettings {
     pub database_name: String,
     pub database_path: Option<String>,
     pub connection_pool_max_connections: Option<u32>,
+    pub connection_pool_min_idle: Option<u32>,
     pub connection_pool_timeout_seconds: Option<u64>,
     /// SQL run once at startup. For example, to run pragma statements
     pub init_sql: Option<String>,
@@ -37,7 +38,7 @@ pub struct DatabaseSettings {
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!(
-            "postgres://{}:{}@{}:{}/{}",
+            "postgres://{}:{}@{}:{}/{}?application_name=open-msupply",
             self.username,
             urlencoding::encode(&self.password),
             self.host,
@@ -48,7 +49,7 @@ impl DatabaseSettings {
 
     pub fn connection_string_without_db(&self) -> String {
         format!(
-            "postgres://{}:{}@{}:{}",
+            "postgres://{}:{}@{}:{}?application_name=open-msupply-no-db",
             self.username,
             urlencoding::encode(&self.password),
             self.host,
@@ -177,8 +178,9 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         .max_size(
             settings
                 .connection_pool_max_connections
-                .unwrap_or(DEFUALT_CONNECTION_POOL_MAX_CONNECTIONS),
+                .unwrap_or(DEFAULT_CONNECTION_POOL_MAX_CONNECTIONS),
         )
+        .min_idle(settings.connection_pool_min_idle)
         .connection_timeout(Duration::from_secs(
             settings
                 .connection_pool_timeout_seconds
@@ -194,7 +196,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     info!("Connecting to database '{}'", settings.database_path());
     let db_path = settings.database_path();
-      let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path);
+    let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path);
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
@@ -202,8 +204,9 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         .max_size(
             settings
                 .connection_pool_max_connections
-                .unwrap_or(DEFUALT_CONNECTION_POOL_MAX_CONNECTIONS),
+                .unwrap_or(DEFAULT_CONNECTION_POOL_MAX_CONNECTIONS),
         )
+        .min_idle(settings.connection_pool_min_idle)
         .connection_timeout(Duration::from_secs(
             settings
                 .connection_pool_timeout_seconds
@@ -230,6 +233,7 @@ mod database_setting_test {
             init_sql: startup_sql,
             database_path: None,
             connection_pool_max_connections: None,
+            connection_pool_min_idle: None,
             connection_pool_timeout_seconds: None,
         }
     }
