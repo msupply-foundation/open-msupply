@@ -68,8 +68,8 @@ pub enum ReportOutputType {
 pub enum ReportDefinitionEntry {
     Manifest(Manifest),
     TeraTemplate(TeraTemplate),
-    /// Custom http query
-    GraphGLQuery(GraphQlQuery),
+    /// Custom GraphQL query
+    GraphQLQuery(GraphQlQuery),
     /// Use default predefined query
     DefaultQuery(DefaultQuery),
     SQLQuery(SQLQuery),

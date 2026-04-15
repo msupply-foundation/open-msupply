@@ -173,7 +173,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         index.query.push(query_gql.clone());
         entries.insert(
             query_gql.clone(),
-            ReportDefinitionEntry::GraphGLQuery(GraphQlQuery {
+            ReportDefinitionEntry::GraphQLQuery(GraphQlQuery {
                 query,
                 variables: None,
             }),

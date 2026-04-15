@@ -182,7 +182,7 @@ pub async fn generate_report_definition(
         .map_err(|err| StandardGraphqlError::BadUserInput(format!("{err}")).extend())?;
     let resolved_report = match service.resolve_report_definition(
         &service_context,
-        name.unwrap_or("report".to_string()),
+        name.unwrap_or_else(|| "report".to_string()),
         report_definition,
         excel_template_buffer,
     ) {
@@ -262,7 +262,7 @@ pub async fn generate_report_data(
         .map_err(|err| StandardGraphqlError::BadUserInput(format!("{}", err)).extend())?;
     let resolved_report = match service.resolve_report_definition(
         &service_context,
-        name.unwrap_or("report".to_string()),
+        name.unwrap_or_else(|| "report".to_string()),
         report_definition,
         None,
     ) {
@@ -298,7 +298,7 @@ pub async fn generate_report_data(
 
     Ok(ReportDataResponse::Response(ReportDataNode {
         data: report_data.to_string(),
-     }))
+    }))
 }
 
 enum FetchResult {

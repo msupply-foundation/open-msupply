@@ -1,19 +1,9 @@
 import React from 'react';
 import { Box, Typography } from '@openmsupply-client/common';
 import { BasicModal } from '@common/components';
+import { DetectedContext } from './detectContext';
 
-type DetectedContext =
-  | 'REQUISITION'
-  | 'INBOUND_SHIPMENT'
-  | 'OUTBOUND_SHIPMENT'
-  | 'PRESCRIPTION'
-  | 'STOCKTAKE'
-  | 'PURCHASE_ORDER'
-  | 'CUSTOMER_RETURN'
-  | 'SUPPLIER_RETURN'
-  | null;
-
-const contextOptions: { label: string; value: DetectedContext }[] = [
+const contextOptions: { label: string; value: NonNullable<DetectedContext> }[] = [
   { label: 'Requisition', value: 'REQUISITION' },
   { label: 'Inbound Shipment', value: 'INBOUND_SHIPMENT' },
   { label: 'Outbound Shipment', value: 'OUTBOUND_SHIPMENT' },
@@ -22,12 +12,13 @@ const contextOptions: { label: string; value: DetectedContext }[] = [
   { label: 'Purchase Order', value: 'PURCHASE_ORDER' },
   { label: 'Customer Return', value: 'CUSTOMER_RETURN' },
   { label: 'Supplier Return', value: 'SUPPLIER_RETURN' },
+  { label: 'Internal Order', value: 'INTERNAL_ORDER' },
 ];
 
 interface NewReportModalProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (context: DetectedContext) => void;
+  onSelect: (context: NonNullable<DetectedContext>) => void;
 }
 
 export const NewReportModal = ({ open, onClose, onSelect }: NewReportModalProps) => (

@@ -713,7 +713,7 @@ fn query_from_resolved_template(
     let mut sql_queries = Vec::<ResolvedReportQuery>::new();
 
     query_entries.into_iter().for_each(|entry| match entry {
-        ReportDefinitionEntry::GraphGLQuery(query) => {
+        ReportDefinitionEntry::GraphQLQuery(query) => {
             graphql_queries.push(ResolvedReportQuery::GraphQlQuery(query.clone()))
         }
         ReportDefinitionEntry::SQLQuery(query) => {
@@ -754,7 +754,7 @@ fn resources_from_resolved_template(
                 Some((name.clone(), value))
             }
             ReportDefinitionEntry::DefaultQuery(_)
-            | ReportDefinitionEntry::GraphGLQuery(_)
+            | ReportDefinitionEntry::GraphQLQuery(_)
             | ReportDefinitionEntry::Ref(_)
             | ReportDefinitionEntry::SQLQuery(_)
             | ReportDefinitionEntry::TeraTemplate(_) => None,

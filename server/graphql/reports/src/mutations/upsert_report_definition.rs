@@ -51,10 +51,27 @@ pub fn upsert_report_definition(
     let template_string = serde_json::to_string_pretty(&input.template)
         .map_err(|err| StandardGraphqlError::BadUserInput(format!("Invalid template: {err}")).extend())?;
 
+    let is_update = input.id.is_some();
     let id = input.id.unwrap_or_else(uuid);
-    let code = input.code.unwrap_or_else(|| format!("custom_report_{}", &id[..8]));
+    let id_prefix: String = id.chars().take(8).collect();
+    let code = input.code.unwrap_or_else(|| format!("custom_report_{id_prefix}"));
 
     let context_type: ContextType = ContextType::from(input.context);
+
+    // When updating an existing report, preserve its is_custom flag and version
+    // so that built-in reports (is_custom = false) are not silently reclassified.
+    let (is_custom, version) = if is_update {
+        let existing = ReportRowRepository::new(&service_context.connection)
+            .find_one_by_id(&id)
+            .ok()
+            .flatten();
+        match existing {
+            Some(existing_row) => (existing_row.is_custom, existing_row.version),
+            None => (true, String::from("1.0.0")),
+        }
+    } else {
+        (true, String::from("1.0.0"))
+    };
 
     let row = ReportRow {
         id: id.clone(),
@@ -64,8 +81,8 @@ pub fn upsert_report_definition(
         comment: input.comment,
         sub_context: None,
         argument_schema_id: None,
-        is_custom: true,
-        version: String::from("1.0.0"),
+        is_custom,
+        version,
         code,
         is_active: true,
         excel_template_buffer: None,
@@ -141,7 +158,8 @@ mod test {
         assert!(row.is_custom);
         assert!(row.is_active);
         assert_eq!(row.version, "1.0.0");
-        assert_eq!(row.code, format!("custom_report_{}", &id[..8]));
+        let id_prefix: String = id.chars().take(8).collect();
+        assert_eq!(row.code, format!("custom_report_{id_prefix}"));
 
         // Template should be the pretty-printed JSON of the input
         let reparsed: serde_json::Value =

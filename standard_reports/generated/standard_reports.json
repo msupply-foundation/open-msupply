@@ -17,7 +17,7 @@
         },
         "entries": {
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n    page: { first: 5000 }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -234,7 +234,7 @@
             "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: start;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container > table > thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-inline-end: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-inline-end: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-inline-end: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-inline-end: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n  white-space: nowrap;\n}"
           },
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -436,7 +436,7 @@
             }
           },
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query InboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: INBOUND_SHIPMENT }\n      status: { equalAny: [RECEIVED, VERIFIED] }\n      otherPartyId: { equalTo: $otherPartyId }\n      receivedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -555,7 +555,7 @@
             }
           },
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query ItemList(\n  $storeId: String!\n  $itemCode: String\n  $itemName: String\n  $masterListId: String\n  $isActive: Boolean\n) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: $isActive\n      type: { equalTo: STOCK }\n      masterListId: { equalTo: $masterListId }\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        venCategory\n        stats: stats(storeId: $storeId) {\n          stockOnHand\n        }\n        categories {\n          name\n        }\n        itemStoreProperties: itemStoreProperties(storeId: $storeId) {\n          defaultLocation {\n            code\n          }\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -794,7 +794,7 @@
             "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: start;\n  margin-top: 10;\n  margin-bottom: 15;\n  border-collapse: separate;\n}\n\n.container table td {\n  padding: 10px;\n  vertical-align: top;\n  border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n  border-bottom: none;\n}\n\n.container>table>thead {\n  position: -webkit-sticky;\n  position: sticky;\n  top: 0;\n  background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n  margin-top: 0px;\n  padding-top: 0px;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
           },
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query OutboundShipments(\n  $storeId: String\n  $otherPartyId: String\n  $before: String\n  $after: String\n) {\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalTo: OUTBOUND_SHIPMENT }\n      otherPartyId: { equalTo: $otherPartyId }\n      shippedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        otherPartyName\n        lines {\n          nodes {\n            id\n            item {\n              id\n              code\n              name\n            }\n            batch\n            expiryDate\n            numberOfPacks\n            packSize\n            costPricePerPack\n          }\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -909,7 +909,7 @@
             }
           },
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query InventoryAdjustments(\n  $storeId: String!\n  $adjustmentDateFrom: DateTime\n  $adjustmentDateTo: DateTime\n) {\n  # Query inventory adjustment invoices\n  invoices(\n    storeId: $storeId\n    filter: {\n      type: { equalAny: [INVENTORY_ADDITION, INVENTORY_REDUCTION] }\n      verifiedDatetime: {\n        afterOrEqualTo: $adjustmentDateFrom\n        beforeOrEqualTo: $adjustmentDateTo\n      }\n    }\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        invoiceNumber\n        type\n        verifiedDatetime\n        lines {\n          ... on InvoiceLineConnector {\n            nodes {\n              id\n              itemCode\n              itemName\n              batch\n              expiryDate\n              numberOfPacks\n              packSize\n              location {\n                id\n                code\n                name\n              }\n              stockLine {\n                id\n              }\n              inventoryAdjustmentReason {\n                id\n                reason\n              }\n              item {\n                id\n                code\n                name\n                unitName\n                masterLists(storeId: $storeId) {\n                  id\n                  name\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n  # Query finalised stocktakes that have inventory adjustments\n  stocktakes(\n    storeId: $storeId\n    filter: {\n      status: { equalTo: FINALISED }\n      finalisedDatetime: {\n        afterOrEqualTo: $adjustmentDateFrom\n        beforeOrEqualTo: $adjustmentDateTo\n      }\n    }\n  ) {\n    ... on StocktakeConnector {\n      nodes {\n        id\n        stocktakeNumber\n        finalisedDatetime\n        inventoryAdditionId\n        inventoryReductionId\n        lines {\n          ... on StocktakeLineConnector {\n            nodes {\n              id\n              snapshotNumberOfPacks\n              countedNumberOfPacks\n              stockLine {\n                id\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      id\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        address1\n        address2\n        code\n        email\n        phone\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -1176,7 +1176,7 @@
         },
         "entries": {
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query StockStatus($storeId: String, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -1356,7 +1356,7 @@
             }
           },
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        stats: stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n        AMC12Months: stats(storeId: $storeId, amcLookbackMonths: 12) {\n          averageMonthlyConsumption\n        }\n        AMC24Months: stats(storeId: $storeId, amcLookbackMonths: 24) {\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -1605,7 +1605,7 @@
             }
           },
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query ItemUsage($storeId: String!, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: {\n      code: { like: $itemCode }\n      name: { like: $itemName }\n      isVisibleOrOnHand: true\n      isActive: true\n    }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          stockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -1860,7 +1860,7 @@
             }
           },
           "query.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query StockDetail($storeId: String, $itemCodeOrName: String) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      hasPacksInStore: true\n      isActive: true\n    }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -2013,7 +2013,7 @@
             "data": "@page {\n    margin: 0;\n    size: A4 landscape;\n  }\n  \n  .container {\n    margin: auto;\n    padding: 10px;\n    font-size: 14px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n    color: #555;\n  }\n  \n  .container table {\n    width: 100%;\n    font-size: inherit;\n    font-family: inherit;\n    text-align: start;\n    margin-top: 10;\n    margin-bottom: 15;\n    border-collapse: separate;\n  }\n  \n  .container table td {\n    padding: 10px;\n    vertical-align: top;\n    border-top: 1px solid rgb(164, 163, 163);\n  }\n  \n  .container table tr:last-child td {\n    border-bottom: none;\n  }\n  \n  .container>table>thead {\n    position: -webkit-sticky;\n    position: sticky;\n    top: 0;\n    background-color: #f1f1f1;\n  }\n  \n  .container,\n  body,\n  .container>table {\n    margin-top: 0px;\n    padding-top: 0px;\n  }\n  \n  .container table tr.heading td {\n    font-weight: bold;\n    margin-bottom: 15px;\n  }\n  \n"
           },
           "encountersQuery.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query encountersQuery(\n  $storeId: String!\n  $programId: String!\n  $startDatetime: DatetimeFilterInput\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      programId: { equalTo: $programId }\n      status: { equalTo: \"PENDING\" }\n      startDatetime: $startDatetime\n    }\n    sort: { key: \"startDatetime\", desc: false }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        ... on EncounterNode {\n          id\n          startDatetime\n          type\n          patient {\n            firstName\n            lastName\n            dateOfBirth\n            phone\n            nextOfKinName\n          }\n          programEnrolment {\n            programEnrolmentId\n          }\n          previousEncounter {\n            startDatetime\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
               "variables": null
@@ -2099,7 +2099,7 @@
         },
         "entries": {
           "encountersQuery.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query encountersQuery(\n  $storeId: String!\n  $programId: String!\n  $after: DateTime\n  $before: DateTime\n) {\n  encounters(\n    storeId: $storeId\n    filter: {\n      programId: { equalTo: $programId }\n      status: { equalTo: \"PENDING\" }\n      startDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }\n    }\n    sort: { key: \"startDatetime\", desc: false }\n  ) {\n    ... on EncounterConnector {\n      nodes {\n        ... on EncounterNode {\n          id\n          startDatetime\n          type\n          patient {\n            firstName\n            lastName\n            dateOfBirth\n            phone\n            nextOfKinName\n          }\n          programEnrolment {\n            programEnrolmentId\n          }\n          previousEncounter {\n            startDatetime\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
               "variables": null

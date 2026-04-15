@@ -41,7 +41,7 @@
             }
           },
           "picklist.graphql": {
-            "type": "GraphGLQuery",
+            "type": "GraphQLQuery",
             "data": {
               "query": "query InvoiceQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  invoice(storeId: $storeId, id: $dataId) {\n    ... on InvoiceNode {\n      id\n      otherPartyId\n      invoiceNumber\n      createdDatetime\n      otherPartyName\n      otherParty(storeId: $storeId) {\n        id\n        code\n        address1\n        address2\n      }\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  invoiceLines(\n    storeId: $storeId\n    filter: { invoiceId: { equalTo: $dataId } }\n    reportSort: $sort\n  ) {\n    ... on InvoiceLineConnector {\n      nodes {\n        id\n        itemCode\n        itemName\n        item {\n          unitName\n        }\n        packSize\n        expiryDate\n        batch\n        numberOfPacks\n        packSize\n        location {\n          code\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        email\n        phone\n      }\n    }\n  }\n}",
               "variables": null

@@ -32,7 +32,7 @@ enum EditorTab {
 enum ReportEntryType {
   TeraTemplate = 'TeraTemplate',
   Resource = 'Resource',
-  GraphQlQuery = 'GraphGLQuery',
+  GraphQlQuery = 'GraphQLQuery',
 }
 
 type ReportDefinition = {
@@ -176,6 +176,15 @@ const parseReportDefinition = (
   return result;
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Sort descending, keep most recent 100, then re-sort ascending for display */
+const sortAndSlice = <T,>(items: T[], getNumber: (item: T) => number): T[] =>
+  [...items]
+    .sort((a, b) => getNumber(b) - getNumber(a))
+    .slice(0, 100)
+    .sort((a, b) => getNumber(a) - getNumber(b));
+
 // ─── Record picker hook ───────────────────────────────────────────────────────
 
 const useRecordOptions = (
@@ -228,47 +237,31 @@ const useRecordOptions = (
 
   const options = useMemo<RecordOption[]>(() => {
     if (isInvoiceContext && invoices) {
-      return [...invoices]
-        .sort((a, b) => b.invoiceNumber - a.invoiceNumber)
-        .slice(0, 100)
-        .sort((a, b) => a.invoiceNumber - b.invoiceNumber)
-        .map(r => ({
-          label: `#${r.invoiceNumber} — ${r.otherPartyName}`,
-          value: r.id,
-        }));
+      return sortAndSlice(invoices, r => r.invoiceNumber).map(r => ({
+        label: `#${r.invoiceNumber} — ${r.otherPartyName}`,
+        value: r.id,
+      }));
     }
     if (isRequisition && requisitions) {
-      return [...requisitions]
-        .sort((a, b) => b.requisitionNumber - a.requisitionNumber)
-        .slice(0, 100)
-        .sort((a, b) => a.requisitionNumber - b.requisitionNumber)
-        .map(r => ({
-          label: `#${r.requisitionNumber} — ${r.otherPartyName}`,
-          value: r.id,
-        }));
+      return sortAndSlice(requisitions, r => r.requisitionNumber).map(r => ({
+        label: `#${r.requisitionNumber} — ${r.otherPartyName}`,
+        value: r.id,
+      }));
     }
     if (isStocktake && stocktakes) {
-      return [...stocktakes]
-        .sort((a, b) => b.stocktakeNumber - a.stocktakeNumber)
-        .slice(0, 100)
-        .sort((a, b) => a.stocktakeNumber - b.stocktakeNumber)
-        .map(r => ({
-          label: `#${r.stocktakeNumber}${r.description ? ` — ${r.description}` : ''}`,
-          value: r.id,
-        }));
+      return sortAndSlice(stocktakes, r => r.stocktakeNumber).map(r => ({
+        label: `#${r.stocktakeNumber}${r.description ? ` — ${r.description}` : ''}`,
+        value: r.id,
+      }));
     }
     if (isPurchaseOrder && purchaseOrders) {
-      return [...purchaseOrders]
-        .sort((a, b) => b.number - a.number)
-        .slice(0, 100)
-        .sort((a, b) => a.number - b.number)
-        .map(r => ({
-          label: `#${r.number} — ${r.supplier?.name ?? 'Unknown supplier'}`,
-          value: r.id,
-        }));
+      return sortAndSlice(purchaseOrders, r => r.number).map(r => ({
+        label: `#${r.number} — ${r.supplier?.name ?? 'Unknown supplier'}`,
+        value: r.id,
+      }));
     }
     return [];
-  }, [context, invoices, requisitions, stocktakes, purchaseOrders]);
+  }, [isInvoiceContext, invoices, isRequisition, requisitions, isStocktake, stocktakes, isPurchaseOrder, purchaseOrders]);
 
   const isLoading =
     loadingInvoices ||
@@ -406,8 +399,8 @@ export const ReportBuilder: React.FC = () => {
     ['reportBuilder', 'savedReports', storeId],
     async () => {
       const nodes = await api.get.reportBuilderList(storeId, 'en');
-      return (nodes as any[]).map(
-        (r: any): SavedReportOption => ({
+      return nodes.map(
+        (r): SavedReportOption => ({
           label: r.name || r.code || r.id,
           value: r.id,
           template: r.template,
@@ -432,7 +425,7 @@ export const ReportBuilder: React.FC = () => {
       // the record is stale from a previous context
       if (selectedRecord && options.length === 0) return;
       const report = buildReport(template, header, style, query);
-      api.generateOneOffReport({ report, dataId: selectedRecord?.value ?? '', storeId, arguments: {} })
+      api.generateOneOffReport({ report, dataId: selectedRecord?.value ?? '', storeId, arguments: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone } })
         .then(result => {
           if (!result) return;
           if (result.__typename === 'PrintReportError') {
@@ -449,7 +442,7 @@ export const ReportBuilder: React.FC = () => {
         });
     }, 500);
     return () => clearTimeout(handler);
-  }, [template, header, style, query, selectedRecord, effectiveContext, options]);
+  }, [template, header, style, query, selectedRecord, effectiveContext, options, storeId]);
 
   // ── Load a saved report into the editors ──
   const handleLoadReport = useCallback(
@@ -517,7 +510,7 @@ export const ReportBuilder: React.FC = () => {
         queryClient.invalidateQueries(['reportBuilder', 'savedReports']);
       }
     } catch (e) {
-      notifyError(`Failed to save report: ${e}`)();
+      notifyError(`Failed to save report: ${e instanceof Error ? e.message : String(e)}`)();
     } finally {
       setIsSaving(false);
     }
@@ -528,9 +521,14 @@ export const ReportBuilder: React.FC = () => {
     style,
     query,
     detectedContext,
+    effectiveContext,
     canUpdate,
     loadedReportId,
     storeId,
+    api,
+    notifyError,
+    success,
+    queryClient,
   ]);
 
 
@@ -638,7 +636,6 @@ export const ReportBuilder: React.FC = () => {
         {/* Single textarea that swaps content based on active tab */}
         <Box flex={1} overflow="hidden" padding={1} sx={{ display: 'flex' }}>
           <textarea
-            key={currentTab}
             value={active.value}
             onChange={e => active.onChange(e.target.value)}
             placeholder={active.placeholder}
@@ -651,7 +648,7 @@ export const ReportBuilder: React.FC = () => {
               fontSize: '13px',
               backgroundColor: 'transparent',
               color: 'inherit',
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid rgba(128,128,128,0.3)',
               borderRadius: '4px',
               padding: '8px',
               outline: 'none',

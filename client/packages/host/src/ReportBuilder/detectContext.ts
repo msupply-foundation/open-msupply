@@ -15,7 +15,7 @@ export const detectContext = (query: string): DetectedContext => {
   const q = query.toLowerCase();
   if (q.includes('requisition(')) return 'REQUISITION';
   if (q.includes('stocktake(')) return 'STOCKTAKE';
-  if (q.includes('purchaseorder(')) return 'PURCHASE_ORDER';
+  if (q.includes('purchase_order(') || q.includes('purchaseorder(')) return 'PURCHASE_ORDER';
   if (q.includes('inbound_shipment') || q.includes('inboundshipment'))
     return 'INBOUND_SHIPMENT';
   if (q.includes('outbound_shipment') || q.includes('outboundshipment'))

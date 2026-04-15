@@ -26,39 +26,30 @@ export const getHostQueries = (sdk: Sdk) => ({
       const result = await sdk.labelPrinterSettings();
       return result.labelPrinterSettings;
     },
-reportBuilderInvoices: async (storeId: string, invoiceType: string) => {
-  const result = await sdk.reportBuilderRecords({ storeId, invoiceType });
-  const invoices = result?.invoices as any;
-  return invoices?.nodes ?? [];
-},
-reportBuilderRequisitions: async (storeId: string) => {
-  const result = await sdk.reportBuilderRequisitions({ storeId });
-  const requisitions = result?.requisitions as any;
-  return requisitions?.nodes ?? [];
-},
-reportBuilderStocktakes: async (storeId: string) => {
-  const result = await sdk.reportBuilderStocktakes({ storeId });
-  const stocktakes = result?.stocktakes as any;
-  return stocktakes?.nodes ?? [];
-},
-reportBuilderPurchaseOrders: async (storeId: string) => {
-  const result = await sdk.reportBuilderPurchaseOrders({ storeId });
-  const purchaseOrders = result?.purchaseOrders as any;
-  return purchaseOrders?.nodes ?? [];
-},
-reportBuilderList: async (
-  storeId: string,
-  userLanguage: string,
-  filter?: ReportBuilderListQueryVariables['filter']
-) => {
-  const result = await sdk.reportBuilderList({
-    storeId,
-    userLanguage,
-    filter,
-  });
-  const reports = result?.reports as any;
-  return reports?.nodes ?? [];
-},
+    reportBuilderInvoices: async (storeId: string, invoiceType: string) => {
+      const result = await sdk.reportBuilderRecords({ storeId, invoiceType });
+      return 'nodes' in result.invoices ? result.invoices.nodes : [];
+    },
+    reportBuilderRequisitions: async (storeId: string) => {
+      const result = await sdk.reportBuilderRequisitions({ storeId });
+      return 'nodes' in result.requisitions ? result.requisitions.nodes : [];
+    },
+    reportBuilderStocktakes: async (storeId: string) => {
+      const result = await sdk.reportBuilderStocktakes({ storeId });
+      return 'nodes' in result.stocktakes ? result.stocktakes.nodes : [];
+    },
+    reportBuilderPurchaseOrders: async (storeId: string) => {
+      const result = await sdk.reportBuilderPurchaseOrders({ storeId });
+      return 'nodes' in result.purchaseOrders ? result.purchaseOrders.nodes : [];
+    },
+    reportBuilderList: async (
+      storeId: string,
+      userLanguage: string,
+      filter?: ReportBuilderListQueryVariables['filter']
+    ) => {
+      const result = await sdk.reportBuilderList({ storeId, userLanguage, filter });
+      return 'nodes' in result.reports ? result.reports.nodes : [];
+    },
   },
 
   updateDisplaySettings: async (displaySettings: DisplaySettingsInput) => {
