@@ -1,9 +1,5 @@
-use super::*;
-use crate::{
-    diesel_macros::diesel_json_type, ChangeLogInsertRowV7, ChangelogTableName, RepositoryError,
-    StorageConnection,
-};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use crate::{diesel_macros::diesel_json_type, ChangelogTableName, RepositoryError};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
@@ -80,88 +76,12 @@ pub enum SyncRecordSerializeError {
     },
 }
 
-pub trait SyncRecord: Record + Serialize + DeserializeOwned {
-    fn table_name() -> &'static ChangelogTableName;
-    fn sync_type() -> &'static SyncType;
-    fn changelog_extra(
-        &self,
-        connection: &StorageConnection,
-    ) -> Result<Option<ChangeLogInsertRowV7>, RepositoryError>;
-}
-
-pub trait BoxableSyncRecord: Send + Sync {
-    fn serialize(
-        &self,
-        connection: &StorageConnection,
-        table_name: &ChangelogTableName,
-        id: &str,
-    ) -> Result<Option<serde_json::Value>, SyncRecordSerializeError>;
-
-    fn deserialize(&self, value: &serde_json::Value) -> Result<Box<dyn Upsert>, serde_json::Error>;
-
-    fn sync_type(&self) -> &'static SyncType;
-    fn table_name(&self) -> ChangelogTableName;
-}
-
-/// Macro to implement SyncRecord trait and Translator for central sync records
-///
-/// This macro generates:
-/// 1. SyncRecord trait implementation with Central sync type
-/// 2. A Translator struct implementing TranslatorTrait
-/// 3. A registration function using ctor to add the translator to global visitors
-///
-/// Usage:
-/// ```
-/// impl_central_sync_record!(MyRow, ChangelogTableName::MyTable);
-/// ```
-#[macro_export]
-macro_rules! impl_central_sync_record {
-    ($struct_name:ident, $table_name:expr) => {
-        impl $crate::syncv7::SyncRecord for $struct_name {
-            fn table_name() -> &'static $crate::ChangelogTableName {
-                &$table_name
-            }
-
-            fn sync_type() -> &'static $crate::syncv7::SyncType {
-                &$crate::syncv7::SyncType::Central
-            }
-
-            fn changelog_extra(
-                &self,
-                _connection: &$crate::StorageConnection,
-            ) -> Result<Option<$crate::ChangeLogInsertRowV7>, $crate::RepositoryError> {
-                Ok(None)
-            }
+impl From<serde_json::Error> for SyncRecordSerializeError {
+    fn from(e: serde_json::Error) -> Self {
+        SyncRecordSerializeError::SerdeError {
+            table_name: ChangelogTableName::default(),
+            id: String::new(),
+            e: e.to_string(),
         }
-
-        impl $crate::syncv7::AutoImplementUpsert for $struct_name {}
-    };
-}
-
-pub(crate) use impl_central_sync_record;
-
-impl<T> crate::Upsert for T
-where
-    T: AutoImplementUpsert,
-{
-    fn upsert(&self, connection: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        self.upsert_internal(connection)?;
-        let record_id = self.get_id().to_string();
-        let table_name = Self::table_name().clone();
-
-        ChangeLogInsertRowV7 {
-            table_name,
-            record_id,
-            ..Default::default()
-        }
-        .insert(connection)?;
-
-        Ok(None)
-    }
-
-    fn assert_upserted(&self, _: &StorageConnection) {
-        todo!()
     }
 }
-
-pub trait AutoImplementUpsert: SyncRecord + Record + std::fmt::Debug {}

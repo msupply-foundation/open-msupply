@@ -1,7 +1,4 @@
-use repository::{
-    syncv7::{SyncType, Upsert},
-    SyncBufferV7Row,
-};
+use repository::{syncv7::SyncType, SyncBufferV7Row};
 use thiserror::Error;
 
 use crate::sync::ActiveStoresOnSite;
@@ -22,11 +19,11 @@ pub enum ValidationError {
 
 pub(crate) fn validate_on_remote(
     sync_buffer_row: &SyncBufferV7Row,
-    upsert: &Box<dyn Upsert>,
+    sync_type: &SyncType,
     active_on_site: &ActiveStoresOnSite,
     is_initialising: bool,
 ) -> Result<(), ValidationError> {
-    match upsert.sync_type() {
+    match sync_type {
         SyncType::Central => {}
         SyncType::Remote => {
             let Some(store_id) = sync_buffer_row.store_id.clone() else {
@@ -62,10 +59,10 @@ pub(crate) fn validate_on_remote(
 
 pub(crate) fn validate_on_central(
     sync_buffer_row: &SyncBufferV7Row,
-    upsert: &Box<dyn Upsert>,
+    sync_type: &SyncType,
     active_on_site: &ActiveStoresOnSite,
 ) -> Result<(), ValidationError> {
-    match upsert.sync_type() {
+    match sync_type {
         SyncType::Central => return Err(ValidationError::CentralRecordEditsOnCentralOnly),
         SyncType::Remote => {
             let Some(store_id) = sync_buffer_row.store_id.clone() else {

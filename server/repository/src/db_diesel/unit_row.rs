@@ -1,5 +1,7 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
-use crate::{repository_error::RepositoryError, syncv7::*, Delete};
+use crate::{
+    repository_error::RepositoryError, ChangeLogInsertRowV7, ChangelogTableName, Delete, Upsert,
+};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +16,8 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize,
+    Deserialize,
 )]
 #[diesel(table_name = unit)]
 pub struct UnitRow {
@@ -23,28 +26,6 @@ pub struct UnitRow {
     pub description: Option<String>,
     pub index: i32,
     pub is_active: bool,
-}
-
-crate::impl_record! {
-    struct: UnitRow,
-    table: unit,
-    id_field: id
-}
-
-crate::impl_central_sync_record!(UnitRow, crate::ChangelogTableName::Unit);
-
-pub(crate) struct Translator;
-
-impl TranslatorTrait for Translator {
-    type Item = UnitRow;
-}
-
-impl Translator {
-    // Needs to be added to translators() in ..
-    #[deny(dead_code)]
-    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
-        Box::new(Self)
-    }
 }
 
 pub struct UnitRowRepository<'a> {
@@ -57,7 +38,28 @@ impl<'a> UnitRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
-        row.upsert_internal(&self.connection)
+        diesel::insert_into(unit)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn upsert_sync(
+        &self,
+        row: &UnitRow,
+        extra: ChangeLogInsertRowV7,
+    ) -> Result<(), RepositoryError> {
+        self.upsert_one(row)?;
+        ChangeLogInsertRowV7 {
+            table_name: ChangelogTableName::Unit,
+            record_id: row.id.clone(),
+            ..extra
+        }
+        .insert(self.connection)?;
+        Ok(())
     }
 
     pub async fn find_active_by_id(&self, unit_id: &str) -> Result<UnitRow, RepositoryError> {
@@ -68,7 +70,11 @@ impl<'a> UnitRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
-        UnitRow::find_by_id(self.connection, unit_id)
+        let result = unit
+            .filter(id.eq(unit_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
     }
 
     pub fn find_inactive_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
@@ -103,5 +109,20 @@ impl Delete for UnitRowDelete {
                 ..
             })) | Ok(None)
         ));
+    }
+}
+
+impl Upsert for UnitRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        UnitRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UnitRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

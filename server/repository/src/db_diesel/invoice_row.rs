@@ -4,11 +4,9 @@ use super::{
     StorageConnection,
 };
 use crate::{
-    changelog, repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogTableName, Delete, RowActionType, Upsert,
+    repository_error::RepositoryError, ChangeLogInsertRow, ChangeLogInsertRowV7,
+    ChangelogRepository, ChangelogTableName, Delete, RowActionType, Upsert,
 };
-use crate::{syncv7::*, ChangeLogInsertRowV7};
-
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
@@ -105,7 +103,7 @@ pub enum InvoiceStatus {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, Serialize, Deserialize, AsChangeset, Debug, PartialEq, Default,
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = invoice)]
@@ -151,49 +149,6 @@ pub struct InvoiceRow {
     pub goods_received_id: Option<String>,
 }
 
-impl_record! {
-    struct: InvoiceRow,
-    table: invoice,
-    id_field: id
-}
-
-impl SyncRecord for InvoiceRow {
-    fn table_name() -> &'static ChangelogTableName {
-        &ChangelogTableName::Invoice
-    }
-
-    fn sync_type() -> &'static SyncType {
-        &SyncType::Remote
-    }
-
-    fn changelog_extra(
-        &self,
-        _connection: &StorageConnection,
-    ) -> Result<Option<ChangeLogInsertRowV7>, RepositoryError> {
-        Ok(Some(changelog::ChangeLogInsertRowV7 {
-            store_id: Some(self.store_id.clone()),
-            name_link_id: Some(self.name_link_id.clone()),
-            ..Default::default()
-        }))
-    }
-}
-
-// Needs to be added to translators() in ..
-#[deny(dead_code)]
-pub(crate) struct Translator;
-
-impl TranslatorTrait for Translator {
-    type Item = InvoiceRow;
-}
-
-impl Translator {
-    // Needs to be added to translators() in ..
-    #[deny(dead_code)]
-    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
-        Box::new(Self)
-    }
-}
-
 pub struct InvoiceRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -211,6 +166,26 @@ impl<'a> InvoiceRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    pub fn upsert_sync(
+        &self,
+        row: &InvoiceRow,
+        extra: ChangeLogInsertRowV7,
+    ) -> Result<(), RepositoryError> {
+        diesel::insert_into(invoice)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        ChangeLogInsertRowV7 {
+            table_name: ChangelogTableName::Invoice,
+            record_id: row.id.clone(),
+            ..extra
+        }
+        .insert(self.connection)?;
+        Ok(())
     }
 
     fn insert_changelog(

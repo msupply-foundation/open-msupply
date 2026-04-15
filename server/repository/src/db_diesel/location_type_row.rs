@@ -1,9 +1,10 @@
 use super::StorageConnection;
 
-use crate::repository_error::RepositoryError;
+use crate::{
+    repository_error::RepositoryError, ChangeLogInsertRowV7, ChangelogTableName, Upsert,
+};
 
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
 
 table! {
     location_type (id) {
@@ -15,7 +16,8 @@ table! {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+    serde::Deserialize,
 )]
 #[diesel(table_name = location_type)]
 pub struct LocationTypeRow {
@@ -23,30 +25,6 @@ pub struct LocationTypeRow {
     pub name: String,
     pub min_temperature: f64,
     pub max_temperature: f64,
-}
-
-use crate::syncv7::*;
-
-crate::impl_record! {
-    struct: LocationTypeRow,
-    table: location_type,
-    id_field: id
-}
-
-crate::impl_central_sync_record!(LocationTypeRow, crate::ChangelogTableName::LocationType);
-
-pub(crate) struct Translator;
-
-impl TranslatorTrait for Translator {
-    type Item = LocationTypeRow;
-}
-
-impl Translator {
-    // Needs to be added to translators() in ..
-    #[deny(dead_code)]
-    pub(crate) fn boxed() -> Box<dyn BoxableSyncRecord> {
-        Box::new(Self)
-    }
 }
 
 pub struct LocationTypeRowRepository<'a> {
@@ -59,16 +37,56 @@ impl<'a> LocationTypeRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &LocationTypeRow) -> Result<(), RepositoryError> {
-        row.upsert_internal(&self.connection)
+        diesel::insert_into(location_type::table)
+            .values(row)
+            .on_conflict(location_type::id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn upsert_sync(
+        &self,
+        row: &LocationTypeRow,
+        extra: ChangeLogInsertRowV7,
+    ) -> Result<(), RepositoryError> {
+        self.upsert_one(row)?;
+        ChangeLogInsertRowV7 {
+            table_name: ChangelogTableName::LocationType,
+            record_id: row.id.clone(),
+            ..extra
+        }
+        .insert(self.connection)?;
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationTypeRow>, RepositoryError> {
-        LocationTypeRow::find_by_id(self.connection, id)
+        let result = location_type::table
+            .filter(location_type::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(location_type::table.filter(location_type::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+}
+
+impl Upsert for LocationTypeRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        LocationTypeRowRepository::new(con).upsert_one(self)?;
+        Ok(None)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            LocationTypeRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
