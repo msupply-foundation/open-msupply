@@ -1,8 +1,7 @@
 use anyhow::anyhow;
-use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
-use graphql::{Mutations, OperationalSchema, Queries};
+use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
 use report_builder::{
@@ -321,7 +320,7 @@ async fn main() -> anyhow::Result<()> {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
             let schema =
-                OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
+                OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
                     .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
