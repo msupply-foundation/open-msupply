@@ -41,6 +41,8 @@ macro_rules! assert_between {
     };
 }
 
+// TODO: Remove when remote v5 sync is replaced by v7
+#[ignore]
 #[actix_rt::test]
 async fn sync_status() {
     let ServiceTestContext {

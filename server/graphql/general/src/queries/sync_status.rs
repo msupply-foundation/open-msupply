@@ -197,7 +197,7 @@ fn latest_sync_status_from_sync_log_v7(
 ) -> Result<Option<FullSyncStatusNode>> {
     let sync_status = match service_provider
         .sync_status_service
-        .get_latest_sync_status_from_sync_log_v7(ctx)?
+        .get_latest_sync_status_v7(ctx)?
     {
         Some(sync_status) => sync_status,
         None => return Ok(None),

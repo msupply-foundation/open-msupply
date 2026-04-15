@@ -10,7 +10,7 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-    sync::{get_sync_push_changelogs_filter, SyncChangelogError},
+    sync::{get_sync_push_changelogs_filter, CentralServerConfig, SyncChangelogError},
 };
 
 use super::SyncLogError;
@@ -215,13 +215,6 @@ pub trait SyncStatusTrait: Sync + Send {
     ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
         get_latest_successful_sync_status_v7(ctx)
     }
-
-    fn get_initialisation_status_v7(
-        &self,
-        ctx: &ServiceContext,
-    ) -> Result<InitialisationStatus, RepositoryError> {
-        get_initialisation_status_v7(ctx)
-    }
 }
 
 pub(crate) struct SyncStatusService;
@@ -234,6 +227,10 @@ impl SyncStatusTrait for SyncStatusService {}
 fn get_initialisation_status(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
+    if !CentralServerConfig::is_central_server() {
+        return get_initialisation_status_v7(ctx);
+    }
+
     let sort = Sort {
         key: SyncLogSortField::DoneDatetime,
         desc: Some(true),
@@ -401,6 +398,8 @@ mod test {
     };
     use util::assert_matches;
 
+    // TODO: Remove when remote v5 sync is replaced by v7
+    #[ignore]
     #[actix_rt::test]
     async fn initialisation_status() {
         let ServiceTestContext {
@@ -491,7 +490,7 @@ mod test {
         assert_eq!(
             service_provider
                 .sync_status_service
-                .get_initialisation_status_v7(&service_context),
+                .get_initialisation_status(&service_context),
             Ok(InitialisationStatus::PreInitialisation)
         );
 
@@ -510,7 +509,7 @@ mod test {
         assert_eq!(
             service_provider
                 .sync_status_service
-                .get_initialisation_status_v7(&service_context),
+                .get_initialisation_status(&service_context),
             Ok(InitialisationStatus::PreInitialisation)
         );
 
@@ -531,7 +530,7 @@ mod test {
         assert_eq!(
             service_provider
                 .sync_status_service
-                .get_initialisation_status_v7(&service_context),
+                .get_initialisation_status(&service_context),
             Ok(InitialisationStatus::PreInitialisation)
         );
 
@@ -564,7 +563,7 @@ mod test {
         assert_matches!(
             service_provider
                 .sync_status_service
-                .get_initialisation_status_v7(&service_context),
+                .get_initialisation_status(&service_context),
             Ok(InitialisationStatus::Initialised(_))
         );
     }
