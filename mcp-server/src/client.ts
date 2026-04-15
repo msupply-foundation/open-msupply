@@ -34,9 +34,12 @@ function wrapConnectionError(error: unknown, url: string): Error {
     message.includes('ECONNREFUSED') ||
     cause.includes('ECONNREFUSED')
   ) {
+    const hint = (cause.includes('::1') || message.includes('::1'))
+      ? ` Try using 127.0.0.1 instead of localhost in OMSUPPLY_URL to force IPv4.`
+      : '';
     return new Error(
       `Cannot connect to Open mSupply server at ${url}. ` +
-        `Is the server running? (Original error: ${cause || message})`
+        `Is the server running?${hint} (Original error: ${cause || message})`
     );
   }
 
@@ -92,6 +95,20 @@ export class OmSupplyClient {
         }
       );
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      // Detect server still initialising (schema doesn't have authToken yet)
+      if (
+        message.includes('Unknown field') &&
+        message.includes('authToken')
+      ) {
+        throw new Error(
+          `Open mSupply server at ${this.graphqlUrl} is still initialising. ` +
+            `The server must complete its initialisation and sync before the MCP server can connect. ` +
+            `Check the server status at ${this.config.url} or try again shortly.`
+        );
+      }
+
       throw wrapConnectionError(error, this.graphqlUrl);
     }
 
