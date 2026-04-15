@@ -539,4 +539,191 @@ mod test {
             result
         );
     }
+
+    // Covers the three pure backdating gates in validate.rs:
+    //   - preference disabled  → BackdatingNotEnabled
+    //   - datetime in future   → CannotSetDateInFuture
+    //   - datetime exceeds max → ExceedsMaximumBackdatingDays
+    #[actix_rt::test]
+    async fn insert_inventory_adjustment_backdating_validation_errors() {
+        use chrono::{Duration, Utc};
+        use repository::{PreferenceRow, PreferenceRowRepository};
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_inventory_adjustment_backdating_validation_errors",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let one_day_ago = Utc::now() - Duration::days(1);
+
+        // Preference not set (defaults: inventory_adjustments_enabled = false)
+        // → BackdatingNotEnabled
+        assert_eq!(
+            service.insert_inventory_adjustment(
+                &context,
+                InsertInventoryAdjustment {
+                    stock_line_id: mock_stock_line_a().id,
+                    adjustment: 1.0,
+                    backdated_datetime: Some(one_day_ago),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::BackdatingNotEnabled)
+        );
+
+        // Preference enabled for shipments only
+        // → BackdatingNotEnabled (inventory adjustments still disabled)
+        let pref_repo = PreferenceRowRepository::new(&connection);
+        pref_repo
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#
+                    .to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        assert_eq!(
+            service.insert_inventory_adjustment(
+                &context,
+                InsertInventoryAdjustment {
+                    stock_line_id: mock_stock_line_a().id,
+                    adjustment: 1.0,
+                    backdated_datetime: Some(one_day_ago),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::BackdatingNotEnabled)
+        );
+
+        // Enable backdating for inventory adjustments, with a max of 1 day
+        pref_repo
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":1}"#
+                    .to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        // Future datetime → CannotSetDateInFuture
+        let future = Utc::now() + Duration::days(1);
+        assert_eq!(
+            service.insert_inventory_adjustment(
+                &context,
+                InsertInventoryAdjustment {
+                    stock_line_id: mock_stock_line_a().id,
+                    adjustment: 1.0,
+                    backdated_datetime: Some(future),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CannotSetDateInFuture)
+        );
+
+        // Older than max_days (1) → ExceedsMaximumBackdatingDays
+        let three_days_ago = Utc::now() - Duration::days(3);
+        assert_eq!(
+            service.insert_inventory_adjustment(
+                &context,
+                InsertInventoryAdjustment {
+                    stock_line_id: mock_stock_line_a().id,
+                    adjustment: 1.0,
+                    backdated_datetime: Some(three_days_ago),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::ExceedsMaximumBackdatingDays)
+        );
+    }
+
+    // Positive backdated adjustment: should bypass the ledger check entirely
+    // (only Reductions can drive the ledger below zero) and persist
+    // backdated_datetime + verified_datetime on the resulting invoice.
+    #[actix_rt::test]
+    async fn insert_inventory_adjustment_backdated_addition_success() {
+        use chrono::{Duration, Utc};
+        use repository::{PreferenceRow, PreferenceRowRepository};
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_inventory_adjustment_backdated_addition_success",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        // Enable backdating for inventory adjustments (no max_days cap)
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
+                    .to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let three_days_ago = Utc::now() - Duration::days(3);
+
+        let starting_available = mock_stock_line_a().available_number_of_packs;
+        let starting_total = mock_stock_line_a().total_number_of_packs;
+
+        let created_invoice = service
+            .insert_inventory_adjustment(
+                &context,
+                InsertInventoryAdjustment {
+                    stock_line_id: mock_stock_line_a().id,
+                    adjustment_type: AdjustmentType::Addition,
+                    adjustment: 3.0,
+                    backdated_datetime: Some(three_days_ago),
+                    ..Default::default()
+                },
+            )
+            .expect("Backdated addition should succeed regardless of ledger state");
+
+        // Stock line was incremented
+        let updated_stockline = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&mock_stock_line_a().id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            updated_stockline.available_number_of_packs,
+            starting_available + 3.0
+        );
+        assert_eq!(
+            updated_stockline.total_number_of_packs,
+            starting_total + 3.0
+        );
+
+        // Invoice persisted with backdated_datetime and verified at the
+        // backdated time (not "now")
+        let retrieved_invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&created_invoice.invoice_row.id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(retrieved_invoice.status, InvoiceStatus::Verified);
+        assert_eq!(
+            retrieved_invoice.backdated_datetime,
+            Some(three_days_ago.naive_utc())
+        );
+        assert_eq!(
+            retrieved_invoice.verified_datetime,
+            Some(three_days_ago.naive_utc())
+        );
+    }
 }

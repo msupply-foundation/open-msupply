@@ -312,6 +312,11 @@ mod query {
                 .available_number_of_packs,
             500.0
         );
+        // Total at 2020-01-01 was 1000 (differs from min available of 500)
+        assert_eq!(
+            stock_line_b.unwrap().stock_line_row.total_number_of_packs,
+            1000.0
+        );
 
         // +++ 2020-01-02
         let result = service_provider
@@ -473,6 +478,10 @@ mod query {
                 .unwrap()
                 .stock_line_row
                 .available_number_of_packs,
+            1000.0
+        );
+        assert_eq!(
+            stock_line_c.unwrap().stock_line_row.total_number_of_packs,
             1000.0
         );
     }
