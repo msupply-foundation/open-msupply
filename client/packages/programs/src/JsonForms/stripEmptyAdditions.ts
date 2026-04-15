@@ -1,10 +1,4 @@
-import {
-  isObject,
-  isArray,
-  isEqualWith,
-  includes,
-  omitBy,
-} from '@common/utils';
+import { isObject, isArray, omitBy } from '@common/utils';
 import { JsonData } from './common';
 
 /**
@@ -64,17 +58,18 @@ export const stripEmptyAdditions = (
       const o = oldObj[key];
       let n = newData[key];
       if (n === undefined) {
-        if (o !== undefined && objectOrArrayIsEmpty(o)) {
-          // keep existing empty object
-          object[key] = o;
-        }
+        // key absent from newData: user deleted it, do not keep
         continue;
       }
-      if (isObject(n)) {
+      if (isObject(n) || isArray(n)) {
+        const nIsArray = isArray(n);
         n = stripEmptyAdditions(o, n);
         if (objectOrArrayIsEmpty(n)) {
-          if (o && Object.keys(o).length === 0) {
-            object[key] = o;
+          if (o !== undefined && objectOrArrayIsEmpty(o)) {
+            // Both old and new are effectively empty: preserve the old
+            // structure. For arrays, keep the original array (arrays are not
+            // recursively stripped). For objects, keep the stripped result.
+            object[key] = nIsArray ? o : n;
           }
           continue;
         }
@@ -94,25 +89,34 @@ export const stripEmptyAdditions = (
   return newData;
 };
 
-// https://stackoverflow.com/questions/57874879
+// Recursively compares two values ignoring undefined properties in objects
 const isEqualIgnoreUndefined = (
   a: JsonData | undefined,
   b: JsonData | undefined
-) => {
-  const comparisonFunc = (a: JsonData | undefined, b: JsonData | undefined) => {
-    if (isArray(a) || isArray(b)) return;
-    if (!isObject(a) || !isObject(b)) return;
-
-    if (!includes(a, undefined) && !includes(b, undefined)) return;
-
-    // Call recursively, after filtering all undefined properties
-    return isEqualWith(
-      omitBy(a, value => value === undefined),
-      omitBy(b, value => value === undefined),
-      comparisonFunc
+): boolean => {
+  if (a === b) return true;
+  if (isArray(a) && isArray(b)) {
+    if (a.length !== b.length) return false;
+    return a.every((item, i) =>
+      isEqualIgnoreUndefined(item as JsonData, (b as JsonData[])[i] as JsonData)
     );
-  };
-  return isEqualWith(a, b, comparisonFunc);
+  }
+  if (isArray(a) || isArray(b)) return false;
+  if (isObject(a) && isObject(b)) {
+    const filteredA = omitBy(a, v => v === undefined);
+    const filteredB = omitBy(b, v => v === undefined);
+    const keysA = Object.keys(filteredA);
+    const keysB = Object.keys(filteredB);
+    if (keysA.length !== keysB.length) return false;
+    return keysA.every(key =>
+      isEqualIgnoreUndefined(
+        filteredA[key] as JsonData,
+        filteredB[key] as JsonData
+      )
+    );
+  }
+  if (isObject(a) || isObject(b)) return false;
+  return a === b;
 };
 
 export const isEqualIgnoreUndefinedAndEmpty = (
