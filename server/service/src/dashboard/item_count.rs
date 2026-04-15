@@ -169,11 +169,11 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let products_at_risk_of_being_out_of_stock = self
             .get_products_at_risk_of_being_out_of_stock_count(
                 &item_stats,
-                show_low_stock_alerts as f64,
+                show_low_stock_alerts,
             );
 
         let products_overstocked =
-            self.get_products_overstocked_count(&item_stats, show_over_stock_alerts as f64);
+            self.get_products_overstocked_count(&item_stats, show_over_stock_alerts);
 
         Ok(ItemCounts {
             total: total_count,

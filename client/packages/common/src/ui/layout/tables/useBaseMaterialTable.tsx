@@ -46,9 +46,12 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
     field: string;
     groupedByDefault?: boolean;
     label?: string;
+    /** Fires when the user toggles grouping on/off. */
+    onToggle?: (isGrouped: boolean) => void;
   };
   columns: ColumnDef<T>[];
-  noUrlFiltering?: boolean;
+  /** Keep sorting and filtering in local component state instead of syncing to URL query params. Use for tables in modals, popovers, or anywhere the table state shouldn't affect the URL. */
+  localStateOnly?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
   isMobile?: boolean;
@@ -67,7 +70,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   grouping: groupingInput,
   enableColumnResizing = true,
   manualFiltering = false,
-  noUrlFiltering = false,
+  localStateOnly = false,
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
@@ -93,15 +96,26 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   // Filter needs to be applied after columns are processed
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(
     columns,
-    noUrlFiltering
+    localStateOnly
   );
-  const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
+  const { sorting, onSortingChange } = useUrlSortManagement(
+    initialSort,
+    localStateOnly
+  );
 
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);
   const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
   const columnPinning = useColumnPinning(tableId, columns);
   const grouping = useColumnGrouping(tableId, groupingInput);
+
+  // Notify parent of the initial grouping state (read from localStorage)
+  // so it can enable the correct data query before the first toggle click.
+  React.useEffect(() => {
+    groupingInput?.onToggle?.(grouping.state.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const columnOrder = useColumnOrder(
     tableId,
     columns,
@@ -160,7 +174,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     hasColumnFilters,
     onRowClick,
     isGrouped: !!grouping.state.length,
-    toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
+    toggleGrouped: grouping.enabled
+      ? () => {
+          grouping.toggle();
+          groupingInput?.onToggle?.(!grouping.state.length);
+        }
+      : undefined,
     groupByLabel: groupingInput?.label,
     getIsPlaceholderRow,
     getIsRestrictedRow,

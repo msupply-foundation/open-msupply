@@ -37,7 +37,7 @@ pub struct UpdateStockInLine {
     pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub r#type: StockInType,
     pub item_variant_id: Option<NullableUpdate<String>>,
-    pub vvm_status_id: Option<String>,
+    pub vvm_status_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub manufacturer_id: Option<NullableUpdate<String>>,
     pub campaign_id: Option<NullableUpdate<String>>,
@@ -527,7 +527,9 @@ mod test {
             &context,
             UpdateStockInLine {
                 id: "delivered_invoice_line_with_vvm_status".to_string(),
-                vvm_status_id: Some(mock_vvm_status_b().id),
+                vvm_status_id: Some(NullableUpdate {
+                    value: Some(mock_vvm_status_b().id),
+                }),
                 r#type: StockInType::InboundShipment,
                 ..Default::default()
             },
