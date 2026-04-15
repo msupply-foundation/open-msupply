@@ -1,7 +1,8 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
-    SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
+    SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField, SyncLogV7Repository,
+    SyncLogV7Row,
 };
 
 use crate::{
@@ -198,6 +199,29 @@ pub trait SyncStatusTrait: Sync + Send {
     ) -> Result<Option<FullSyncStatus>, RepositoryError> {
         get_latest_successful_sync_status(ctx)
     }
+
+    // V7 sync status methods
+
+    fn get_latest_sync_status_v7(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
+        get_latest_sync_status_v7(ctx)
+    }
+
+    fn get_latest_successful_sync_status_v7(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
+        get_latest_successful_sync_status_v7(ctx)
+    }
+
+    fn get_initialisation_status_v7(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<InitialisationStatus, RepositoryError> {
+        get_initialisation_status_v7(ctx)
+    }
 }
 
 pub(crate) struct SyncStatusService;
@@ -336,6 +360,31 @@ impl SyncLogError {
             message: error_message.clone().unwrap_or_default(),
             code: error_code.clone(),
         })
+    }
+}
+
+// ---- V7 sync status functions ----
+
+fn get_latest_sync_status_v7(
+    ctx: &ServiceContext,
+) -> Result<Option<SyncLogV7Row>, RepositoryError> {
+    SyncLogV7Repository::new(&ctx.connection).latest()
+}
+
+fn get_latest_successful_sync_status_v7(
+    ctx: &ServiceContext,
+) -> Result<Option<SyncLogV7Row>, RepositoryError> {
+    SyncLogV7Repository::new(&ctx.connection).latest_successful()
+}
+
+fn get_initialisation_status_v7(
+    ctx: &ServiceContext,
+) -> Result<InitialisationStatus, RepositoryError> {
+    if SyncLogV7Repository::new(&ctx.connection).is_initialised()? {
+        let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
+        Ok(InitialisationStatus::Initialised(site_name))
+    } else {
+        Ok(InitialisationStatus::PreInitialisation)
     }
 }
 
