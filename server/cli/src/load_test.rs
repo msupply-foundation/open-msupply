@@ -478,6 +478,7 @@ impl LoadTest {
                 database_path: None,
                 connection_pool_max_connections: None,
                 connection_pool_timeout_seconds: None,
+                connection_retry_seconds: None,
                 init_sql: None,
             },
             logging: None,
@@ -566,6 +567,7 @@ impl LoadTest {
                     database_path: Some(database_path.to_string()),
                     connection_pool_max_connections: None,
                     connection_pool_timeout_seconds: None,
+                    connection_retry_seconds: None,
                     init_sql: None,
                 },
                 sync: Some(SyncSettings {

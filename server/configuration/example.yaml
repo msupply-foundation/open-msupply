@@ -32,6 +32,8 @@
 #   database_name: "omsupply-database"
 #   connection_pool_max_connections: 10
 #   connection_pool_timeout_seconds: 30
+#   # How long to retry initial Postgres connection before failing (0 = fail fast)
+#   connection_retry_seconds: 600
 # logging:
 ##   one of: All | Console | File
 #   mode: Console
@@ -57,4 +59,3 @@
 #   interval: 60 # in seconds
 # features:
 #   example_feature: true
-
