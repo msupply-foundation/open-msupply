@@ -1,0 +1,39 @@
+{
+  "postgres": {
+    "host": "localhost",
+    "port": 5432,
+    "user": "postgres",
+    "password": "postgres",
+    "database": "sync_buffer_bench"
+  },
+  "global": {
+    "insert_between_benches": "500K",
+    "insert_batch_size": "2K",
+    "insert_iterations": 20,
+    "query_iterations": 1,
+    "max_minutes_per_scenario": 180,
+    "max_total_records": "100M",
+    "target_pending_after_bench": "3M",
+    "table_names_count": 10,
+    "source_site_ids_count": 5
+  },
+  "scenarios": [
+    {
+      "name": "basic",
+      "type": "basic"
+    },
+    {
+      "name": "partitioned-both-indexed",
+      "type": "partitioned-indexed"
+    },
+    {
+      "name": "partitioned-pending-indexed-only",
+      "type": "partitioned-indexed-pending-only"
+    },
+    {
+      "name": "partitioned-done-cursor-10m",
+      "type": "partitioned-done-cursor",
+      "done_cursor_partition_size": "10M"
+    }
+  ]
+}
