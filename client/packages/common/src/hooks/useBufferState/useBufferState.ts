@@ -1,5 +1,10 @@
 import { useState, useRef, Dispatch, SetStateAction } from 'react';
 
+// Uses reference equality (Object.is) for most types, with special handling for
+// Dates. Callers passing object types that may be reconstructed with the same
+// data but a new reference (e.g. NameRowFragment, LocationTypeFragment) should
+// supply a custom isEqual to avoid unnecessary re-syncs — or an infinite loop
+// if the parent also re-renders on every state change.
 const defaultIsEqual = <T>(a: T, b: T): boolean => {
   if (Object.is(a, b)) return true;
   if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
