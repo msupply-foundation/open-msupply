@@ -229,7 +229,7 @@ fn latest_sync_status_from_sync_log_v7(
     } = sync_status;
 
     let result = FullSyncStatusNode {
-        is_syncing: finished_datetime.is_none(),
+        is_syncing: finished_datetime.is_none() && error.is_none(),
         error: error.map(SyncErrorNode::from_sync_log_error_v7),
         summary: SyncStatusNode {
             started: started_datetime,
