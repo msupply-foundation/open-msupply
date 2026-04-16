@@ -10,7 +10,6 @@ import {
   enUS as muiEnUS,
   faIR,
 } from '@mui/x-date-pickers/locales';
-
 import {
   AppFooterPortal,
   Box,
@@ -37,7 +36,9 @@ import {
   useIsCentralServerApi,
   useRootNavigationPath,
   useIntlUtils,
+  noOtherVariants,
 } from '@openmsupply-client/common';
+import type { SupportedLocales } from '@openmsupply-client/common';
 import { KBarProvider } from 'kbar';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { useInitPlugins } from './useInitPlugins';
@@ -62,6 +63,32 @@ import { EasterEggModalProvider } from './components';
 import { Help } from './Help/Help';
 import { SyncModalProvider } from './components/Sync';
 import { MobileNavBar } from './components/MobileNavBar';
+
+const getLocalisations = (locale: typeof frFR) =>
+  locale.components.MuiLocalizationProvider.defaultProps.localeText;
+
+const getDateLocalisations = (language: SupportedLocales) => {
+  switch (language) {
+    case 'fr':
+    case 'fr-DJ':
+      return getLocalisations(frFR);
+    case 'es':
+      return getLocalisations(esES);
+    case 'ru':
+      return getLocalisations(ruRU);
+    case 'pt':
+      return getLocalisations(ptPT);
+    case 'en':
+    case 'ar':
+    case 'tet':
+      return getLocalisations(muiEnUS);
+    case 'prs':
+    case 'ps':
+      return getLocalisations(faIR);
+    default:
+      noOtherVariants(language);
+  }
+};
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
@@ -96,36 +123,9 @@ export const Site: FC = () => {
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const rootNavigationPath = useRootNavigationPath();
   const isCentralServer = useIsCentralServerApi();
-  const { isRtl } = useIntlUtils();
+  const { isRtl, getLocale, currentLanguage } = useIntlUtils();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
-  const { getLocale, currentLanguage } = useIntlUtils();
-
-  const getLocalisations = (locale: typeof frFR) =>
-    locale.components.MuiLocalizationProvider.defaultProps.localeText;
-
-  const getDateLocalisations = () => {
-    switch (currentLanguage) {
-      case 'fr':
-      case 'fr-DJ':
-        return getLocalisations(frFR);
-      case 'es':
-        return getLocalisations(esES);
-      case 'ru':
-        return getLocalisations(ruRU);
-      case 'pt':
-        return getLocalisations(ptPT);
-      case 'en':
-      case 'ar':
-      case 'tet':
-        return getLocalisations(muiEnUS);
-      case 'prs':
-      case 'ps':
-        return getLocalisations(faIR);
-      default:
-        return undefined;
-    }
-  };
 
   useEffect(() => {
     setPageTitle(pageTitle);
@@ -158,7 +158,7 @@ export const Site: FC = () => {
     <LocalizationProvider
       dateAdapter={AdapterDateFns}
       adapterLocale={getLocale()}
-      localeText={getDateLocalisations()}
+      localeText={getDateLocalisations(currentLanguage)}
     >
     <RequireAuthentication>
       <Blocker />

@@ -11,7 +11,7 @@ import { GetBackendByNamespace } from './GetBackendByNamespace';
 import rootPkg from '../../../../../../package.json';
 const appVersion = rootPkg.version;
 
-// Created by webpack DefinePlugin see webpack.config.js
+// Created by vite DefinePlugin see vite.config.js
 // Only for web, otherwise default to app version
 declare const LANG_VERSION: string;
 

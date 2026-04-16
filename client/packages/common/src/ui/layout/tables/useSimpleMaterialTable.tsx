@@ -1,15 +1,14 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import type { MRT_RowData } from './mrtCompat';
 import type { Row } from '@tanstack/react-table';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 
-interface SimpleTableConfig<T extends MRT_RowData> extends BaseTableConfig<T> {
-  bottomToolbarContent?: React.ReactNode;
+interface SimpleTableConfig<T extends MRT_RowData> extends Omit<BaseTableConfig<T>, 'enableBottomToolbar'> {
+  bottomToolbarContent?: ReactNode;
 }
 
 export const useSimpleMaterialTable = <T extends MRT_RowData>({
   bottomToolbarContent,
-  enableBottomToolbar = true,
   ...tableOptions
 }: SimpleTableConfig<T>) => {
   const {
@@ -19,7 +18,7 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
 
   const table = useBaseMaterialTable<T>({
     enableRowSelection: false,
-    enableBottomToolbar,
+    enableBottomToolbar: true,
     enableTopToolbar: false,
     enableSorting: false,
     enableColumnResizing: false,

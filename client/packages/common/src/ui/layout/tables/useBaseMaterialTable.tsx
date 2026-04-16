@@ -201,8 +201,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     if (resetDefaults?.columnOrder) t.setColumnOrder(resetDefaults.columnOrder);
     else t.resetColumnOrder();
 
-    t.resetGrouping();
-
     t.setColumnVisibility(
       resetDefaults?.columnVisibility ?? columnVisibility.initial
     );

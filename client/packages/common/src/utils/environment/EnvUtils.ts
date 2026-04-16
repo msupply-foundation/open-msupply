@@ -123,6 +123,7 @@ const mapRoute = (route: string): RouteMapping => {
 };
 
 const getPlatform = () => {
+  if (typeof navigator === 'undefined') return Platform.Web;
   // 'Mozilla/5.0 (Linux; Android 8.1.0; Lenovo TB-X304L Build/OPM1.171019.026; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/102.0.5005.78 Safari/537.36'
   const userAgent = navigator.userAgent.toLowerCase();
   switch (true) {
@@ -136,6 +137,7 @@ const getPlatform = () => {
 };
 
 const getOS = () => {
+  if (typeof navigator === 'undefined') return 'Windows';
   const userAgent = navigator.userAgent.toLowerCase();
   if (/win/i.test(userAgent)) {
     return 'Windows';
@@ -159,6 +161,18 @@ const getOS = () => {
 // V7 of the Device plugin includes screen dimensions, so bundling it in here to
 // emulate that functionality
 const getDeviceInfo = async () => {
+  if (typeof navigator === 'undefined') {
+    return {
+      model: 'unknown',
+      platform: 'web' as const,
+      operatingSystem: 'unknown' as const,
+      osVersion: 'unknown',
+      manufacturer: 'unknown',
+      isVirtual: false,
+      webViewVersion: 'unknown',
+      screen: { width: 0, height: 0 },
+    };
+  }
   const deviceInfo = await Device.getInfo();
   return {
     ...deviceInfo,
