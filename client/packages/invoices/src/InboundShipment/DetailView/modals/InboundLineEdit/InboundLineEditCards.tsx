@@ -321,6 +321,9 @@ export const InboundLineEditCards = ({
                 '& .MuiSelect-select': {
                   py: 0.5,
                 },
+                '&::before, &::after': {
+                  display: 'none',
+                },
               }}
               onChange={e => {
                 updateDraftLine({
