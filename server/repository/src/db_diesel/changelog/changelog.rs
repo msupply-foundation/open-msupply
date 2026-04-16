@@ -1,7 +1,7 @@
 use crate::{
     db_diesel::store_row::store, diesel_macros::apply_equal_filter,
     name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
-    LockedConnection, RepositoryError, StorageConnection,
+    LockedConnection, RepositoryError, StorageConnection, TransactionNotification,
 };
 use diesel::{helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -443,6 +443,7 @@ impl<'a> ChangelogRepository<'a> {
             .pop()
             .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
 
+        self.connection.notify(TransactionNotification::ChangelogInsert);
         Ok(cursor_id)
     }
 
@@ -455,6 +456,7 @@ impl<'a> ChangelogRepository<'a> {
             .execute(self.connection.lock().connection())?;
         let cursor_id = diesel::select(last_insert_rowid())
             .get_result::<i64>(self.connection.lock().connection())?;
+        self.connection.notify(TransactionNotification::ChangelogInsert);
         Ok(cursor_id)
     }
 }

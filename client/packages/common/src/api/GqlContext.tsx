@@ -76,6 +76,7 @@ const handleResponseError = (errors: ResponseError[]) => {
 class GQLClient extends GraphQLClient {
   private emptyData: object;
   private skipRequest: SkipRequest;
+  private _url: string;
 
   constructor(
     url: string,
@@ -83,6 +84,7 @@ class GQLClient extends GraphQLClient {
     skipRequest?: SkipRequest
   ) {
     super(url, options);
+    this._url = url;
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
   }
@@ -129,6 +131,11 @@ class GQLClient extends GraphQLClient {
 
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
+  public getUrl = () => this._url;
+  public setUrl = (url: string) => {
+    this._url = url;
+    this.setEndpoint(url);
+  };
 }
 
 interface GqlControl {
@@ -165,7 +172,7 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
   };
 
   const setUrl = (url: string) => {
-    clientRef.current.setEndpoint(url);
+    clientRef.current.setUrl(url);
   };
 
   const val = {
