@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_base_population_to_demographic_projection;
+mod add_invoice_date_backdated_activity_log_type;
 mod add_sync_log_v7;
 
 pub(crate) struct V2_18_00;
@@ -17,6 +18,7 @@ impl Migration for V2_18_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_base_population_to_demographic_projection::Migrate),
+            Box::new(add_invoice_date_backdated_activity_log_type::Migrate),
             Box::new(add_sync_log_v7::Migrate),
         ]
     }

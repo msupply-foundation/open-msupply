@@ -50,7 +50,8 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
     onToggle?: (isGrouped: boolean) => void;
   };
   columns: ColumnDef<T>[];
-  noUrlFiltering?: boolean;
+  /** Keep sorting and filtering in local component state instead of syncing to URL query params. Use for tables in modals, popovers, or anywhere the table state shouldn't affect the URL. */
+  localStateOnly?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
   isMobile?: boolean;
@@ -69,7 +70,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   grouping: groupingInput,
   enableColumnResizing = true,
   manualFiltering = false,
-  noUrlFiltering = false,
+  localStateOnly = false,
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
@@ -95,9 +96,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   // Filter needs to be applied after columns are processed
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(
     columns,
-    noUrlFiltering
+    localStateOnly
   );
-  const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
+  const { sorting, onSortingChange } = useUrlSortManagement(
+    initialSort,
+    localStateOnly
+  );
 
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);

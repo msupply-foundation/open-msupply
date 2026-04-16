@@ -94,8 +94,6 @@ export const inboundParsers = {
       id: patch.id,
       colour: 'colour' in patch ? patch.colour : undefined,
       comment: 'comment' in patch ? patch.comment : undefined,
-      deliveredDatetime:
-        'deliveredDatetime' in patch ? patch.deliveredDatetime : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
@@ -117,6 +115,8 @@ export const inboundParsers = {
           : undefined,
       defaultDonor:
         'defaultDonorUpdate' in patch ? patch.defaultDonorUpdate : undefined,
+      receivedDatetime:
+        'receivedDatetime' in patch ? patch.receivedDatetime : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
