@@ -1,10 +1,10 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import type { MRT_RowData } from './mrtCompat';
 import type { Row } from '@tanstack/react-table';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 
 interface SimpleTableConfig<T extends MRT_RowData> extends Omit<BaseTableConfig<T>, 'enableBottomToolbar'> {
-  bottomToolbarContent?: React.ReactNode;
+  bottomToolbarContent?: ReactNode;
 }
 
 export const useSimpleMaterialTable = <T extends MRT_RowData>({
