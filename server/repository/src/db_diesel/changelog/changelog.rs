@@ -1,40 +1,50 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::apply_equal_filter,
+    db_diesel::store_row::store, diesel_macros::{apply_equal_filter, diesel_string_enum},
     name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
     LockedConnection, RepositoryError, StorageConnection,
 };
-use diesel::{helper_types::IntoBoxed, prelude::*};
+use diesel::{
+    backend::Backend,
+    deserialize::{self, FromSql},
+    helper_types::IntoBoxed,
+    prelude::*,
+    serialize::{self, Output, ToSql},
+    sql_types::Bool,
+};
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use strum::EnumIter;
 use strum::IntoEnumIterator;
 use ts_rs::TS;
 
-use diesel_derive_enum::DbEnum;
 
 table! {
     changelog (cursor) {
         cursor -> BigInt,
-        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
+        table_name -> Text,
         record_id -> Text,
-        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
+        row_action -> Bool,
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_id -> Nullable<Text>,
     }
 }
 
 table! {
     changelog_deduped (cursor) {
         cursor -> BigInt,
-        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
+        table_name -> Text,
         record_id -> Text,
-        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
+        row_action -> Bool,
         name_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_id -> Nullable<Text>,
     }
 }
 
@@ -45,86 +55,113 @@ define_sql_function!(
     fn last_insert_rowid() -> BigInt
 );
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+/// Row action stored as boolean in DB: true = Upsert, false = Delete.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS, AsExpression, FromSqlRow)]
+#[diesel(sql_type = Bool)]
 pub enum RowActionType {
     #[default]
     Upsert,
     Delete,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter, TS)]
-#[DbValueStyle = "snake_case"]
-pub enum ChangelogTableName {
-    BackendPlugin,
-    Number,
-    Location,
-    LocationMovement,
-    StockLine,
-    Invoice,
-    InvoiceLine,
-    Stocktake,
-    StocktakeLine,
-    Requisition,
-    RequisitionLine,
-    ActivityLog,
-    Barcode,
-    Clinician,
-    ClinicianStoreJoin,
-    Name,
-    NameStoreJoin,
-    Document,
-    Sensor,
-    TemperatureBreach,
-    TemperatureBreachConfig,
-    TemperatureLog,
-    PackVariant,
-    Currency,
-    AssetClass,
-    AssetCategory,
-    AssetCatalogueType,
-    AssetCatalogueItem,
-    AssetCatalogueItemProperty,
-    AssetCatalogueProperty,
-    AssetInternalLocation,
-    #[default]
-    SyncFileReference,
-    Asset,
-    AssetLog,
-    AssetLogReason,
-    AssetProperty,
-    Property,
-    NameProperty,
-    NameOmsFields,
-    RnrForm,
-    RnrFormLine,
-    Demographic,
-    VaccineCourse,
-    VaccineCourseItem,
-    VaccineCourseDose,
-    VaccineCourseStoreConfig,
-    Vaccination,
-    Encounter,
-    ItemVariant,
-    PackagingVariant,
-    IndicatorValue,
-    BundledItem,
-    Item,
-    ContactForm,
-    SystemLog,
-    InsuranceProvider,
-    FrontendPlugin,
-    NameInsuranceJoin,
-    Report,
-    FormSchema,
-    PluginData,
-    Preference,
-    VVMStatusLog,
-    Campaign,
-    SyncMessage,
-    PurchaseOrder,
-    PurchaseOrderLine,
-    MasterList,
+impl<DB: Backend> ToSql<Bool, DB> for RowActionType
+where
+    bool: ToSql<Bool, DB>,
+{
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, DB>) -> serialize::Result {
+        match self {
+            RowActionType::Upsert => true.to_sql(out),
+            RowActionType::Delete => false.to_sql(out),
+        }
+    }
+}
+
+impl<DB: Backend> FromSql<Bool, DB> for RowActionType
+where
+    bool: FromSql<Bool, DB>,
+{
+    fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
+        Ok(if bool::from_sql(bytes)? {
+            RowActionType::Upsert
+        } else {
+            RowActionType::Delete
+        })
+    }
+}
+
+diesel_string_enum! {
+    #[derive(Clone, Eq, Serialize, Deserialize, strum::EnumIter, TS)]
+    pub enum ChangelogTableName {
+        BackendPlugin,
+        Number,
+        Location,
+        LocationMovement,
+        StockLine,
+        Invoice,
+        InvoiceLine,
+        Stocktake,
+        StocktakeLine,
+        Requisition,
+        RequisitionLine,
+        ActivityLog,
+        Barcode,
+        Clinician,
+        ClinicianStoreJoin,
+        Name,
+        NameStoreJoin,
+        Document,
+        Sensor,
+        TemperatureBreach,
+        TemperatureBreachConfig,
+        TemperatureLog,
+        PackVariant,
+        Currency,
+        AssetClass,
+        AssetCategory,
+        AssetCatalogueType,
+        AssetCatalogueItem,
+        AssetCatalogueItemProperty,
+        AssetCatalogueProperty,
+        AssetInternalLocation,
+        #[default]
+        SyncFileReference,
+        Asset,
+        AssetLog,
+        AssetLogReason,
+        AssetProperty,
+        Property,
+        NameProperty,
+        NameOmsFields,
+        RnrForm,
+        RnrFormLine,
+        Demographic,
+        VaccineCourse,
+        VaccineCourseItem,
+        VaccineCourseDose,
+        VaccineCourseStoreConfig,
+        Vaccination,
+        Encounter,
+        ItemVariant,
+        PackagingVariant,
+        IndicatorValue,
+        BundledItem,
+        Item,
+        ContactForm,
+        SystemLog,
+        InsuranceProvider,
+        FrontendPlugin,
+        NameInsuranceJoin,
+        Report,
+        FormSchema,
+        PluginData,
+        Preference,
+        VVMStatusLog,
+        Campaign,
+        SyncMessage,
+        PurchaseOrder,
+        PurchaseOrderLine,
+        MasterList,
+    }
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -222,6 +259,8 @@ pub struct ChangeLogInsertRow {
     #[diesel(column_name = "name_link_id")]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
+    pub transfer_store_id: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS, Default)]
@@ -236,6 +275,8 @@ pub struct ChangelogRow {
     pub store_id: Option<String>,
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,
+    pub transfer_store_id: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 #[derive(Default, Clone, Serialize, Deserialize, Debug, TS)]
