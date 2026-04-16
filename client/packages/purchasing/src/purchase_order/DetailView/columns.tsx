@@ -125,21 +125,21 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
           );
         },
         Footer: ({ table }) => {
-          const total = table.getFilteredRowModel().rows.reduce((sum, row) => {
-            const { original } = row;
-            const units =
-              original.adjustedNumberOfUnits ??
-              original.requestedNumberOfUnits ??
-              0;
-            const packSize = original.requestedPackSize || 1;
-            return (
-              sum +
-              NumUtils.round(
-                (original.pricePerPackAfterDiscount ?? 0) * (units / packSize),
-                currencyOptions.precision
-              )
-            );
-          }, 0);
+          const total = NumUtils.round(
+            table.getFilteredRowModel().rows.reduce((sum, row) => {
+              const { original } = row;
+              const units =
+                original.adjustedNumberOfUnits ??
+                original.requestedNumberOfUnits ??
+                0;
+              const packSize = original.requestedPackSize || 1;
+              return (
+                sum +
+                (original.pricePerPackAfterDiscount ?? 0) * (units / packSize)
+              );
+            }, 0),
+            currencyOptions.precision
+          );
           return (
             <Box sx={{ textAlign: 'right', width: '100%' }}>
               {formatCurrency(total)}
