@@ -1,6 +1,9 @@
-use self::query::get_sites;
+use self::{
+    query::get_sites,
+    upsert::{upsert_site, UpsertSite},
+};
 use crate::{service_provider::ServiceContext, ListError, ListResult};
-use repository::{PaginationOption, SiteFilter, SiteRow, SiteSort};
+use repository::{PaginationOption, RepositoryError, SiteFilter, SiteRow, SiteSort};
 
 pub mod query;
 pub mod upsert;
@@ -14,6 +17,14 @@ pub trait SiteServiceTrait: Sync + Send {
         sort: Option<SiteSort>,
     ) -> Result<ListResult<SiteRow>, ListError> {
         get_sites(ctx, pagination, filter, sort)
+    }
+
+    fn upsert_site(
+        &self,
+        ctx: &ServiceContext,
+        input: UpsertSite,
+    ) -> Result<SiteRow, RepositoryError> {
+        upsert_site(ctx, input)
     }
 }
 
