@@ -6,6 +6,7 @@ pub mod db_diesel;
 pub mod diesel_extensions;
 pub(crate) mod diesel_helper_types;
 pub mod diesel_macros;
+pub mod dynamic_query;
 pub mod migrations;
 pub mod mock;
 mod repository_error;

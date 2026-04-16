@@ -1,4 +1,6 @@
-use crate::{syncv7::SyncError, RepositoryError, StorageConnection};
+use crate::{
+    dynamic_query::create_condition, syncv7::SyncError, RepositoryError, StorageConnection,
+};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -68,6 +70,23 @@ pub struct SyncLogV7Repository<'a> {
     connection: &'a StorageConnection,
 }
 
+type Source = sync_log_v7::table;
+
+create_condition!(
+    Source,
+    (
+        started_datetime,
+        NaiveDateTime,
+        sync_log_v7::started_datetime
+    ),
+    (
+        finished_datetime,
+        NaiveDateTime,
+        sync_log_v7::finished_datetime
+    ),
+    (error, string, sync_log_v7::error),
+);
+
 impl<'a> SyncLogV7Repository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         Self { connection }
@@ -82,34 +101,17 @@ impl<'a> SyncLogV7Repository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
     // Sorts by started_datetime descending
-    // TODO: replace with query_one and the dynamic query from prototype
-    pub fn latest(&self) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-        let result = sync_log_v7::table
+    pub fn query_one(
+        &self,
+        filter: Condition::Inner,
+    ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
+        let results = sync_log_v7::table
+            .filter(filter.to_boxed())
             .order(sync_log_v7::started_datetime.desc())
             .first::<SyncLogV7Row>(self.connection.lock().connection())
             .optional()?;
-        Ok(result)
-    }
-
-    pub fn is_initialised(&self) -> Result<bool, RepositoryError> {
-        let result = sync_log_v7::table
-            .filter(sync_log_v7::finished_datetime.is_not_null())
-            .filter(sync_log_v7::error.is_null())
-            .first::<SyncLogV7Row>(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
-    }
-
-    pub fn latest_successful(&self) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-        let result = sync_log_v7::table
-            .filter(sync_log_v7::finished_datetime.is_not_null())
-            .filter(sync_log_v7::error.is_null())
-            .order(sync_log_v7::started_datetime.desc())
-            .first::<SyncLogV7Row>(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+        Ok(results)
     }
 }
 
@@ -160,26 +162,42 @@ mod test {
 
         let repo = SyncLogV7Repository::new(&connection);
 
+        use super::Condition;
+        use crate::dynamic_query::FilterBuilder;
+
+        let is_initialised = || {
+            Condition::And(vec![
+                Condition::finished_datetime::is_not_null(),
+                Condition::error::is_null(),
+            ])
+        };
+
         // Empty table
-        assert_eq!(repo.latest().unwrap(), None);
-        assert_eq!(repo.is_initialised().unwrap(), false);
+        assert_eq!(repo.query_one(Condition::TRUE).unwrap(), None);
+        assert_eq!(repo.query_one(is_initialised()).unwrap(), None);
 
         // Not initialised: only incomplete and completed-with-error rows
         repo.upsert_one(&row_incomplete()).unwrap();
         repo.upsert_one(&row_completed_with_error()).unwrap();
-        assert_eq!(repo.is_initialised().unwrap(), false);
+        assert_eq!(repo.query_one(is_initialised()).unwrap(), None);
 
         // Latest returns most recent by started_datetime
-        assert_eq!(repo.latest().unwrap(), Some(row_completed_with_error()));
+        assert_eq!(
+            repo.query_one(Condition::TRUE).unwrap(),
+            Some(row_completed_with_error())
+        );
 
         // Initialised once a completed row without error exists
         repo.upsert_one(&row_completed_ok()).unwrap();
-        assert_eq!(repo.is_initialised().unwrap(), true);
+        assert_eq!(repo.query_one(is_initialised()).unwrap().is_some(), true);
 
         // Upsert overwrites existing row
         let mut updated = row_completed_with_error();
         updated.error = None;
         repo.upsert_one(&updated).unwrap();
-        assert_eq!(repo.latest().unwrap().unwrap().error, None);
+        assert_eq!(
+            repo.query_one(Condition::TRUE).unwrap().unwrap().error,
+            None
+        );
     }
 }
