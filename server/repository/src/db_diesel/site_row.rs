@@ -1,4 +1,4 @@
-use crate::{RepositoryError, StorageConnection};
+use crate::{RepositoryError, StorageConnection, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -61,6 +61,21 @@ impl<'a> SiteRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+}
+
+impl Upsert for SiteRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        SiteRowRepository::new(con).upsert(self)?;
+        Ok(None)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            SiteRowRepository::new(con).find_one_by_id(self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 
