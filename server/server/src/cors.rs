@@ -14,6 +14,10 @@ pub fn cors_policy(config_settings: &Settings) -> Cors {
                 header::ACCEPT,
                 header::CONTENT_TYPE,
                 header::CONTENT_DISPOSITION,
+                header::UPGRADE,
+                header::CONNECTION,
+                // Required for GraphQL subscriptions over WebSocket
+                header::HeaderName::from_static("sec-websocket-protocol"),
             ])
             .max_age(3600);
         for origin in config_settings.server.cors_origins.iter() {

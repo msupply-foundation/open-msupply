@@ -4,7 +4,7 @@ use crate::mutations::{
 };
 use async_graphql::*;
 
-use chrono::NaiveDate;
+use chrono::{DateTime, Utc};
 use graphql_core::generic_inputs::{InboundShipmentType, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
@@ -51,7 +51,7 @@ pub struct UpdateInput {
     pub charges_local_currency: Option<f64>,
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
-    pub delivered_datetime: Option<NaiveDate>,
+    pub received_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -131,7 +131,7 @@ impl UpdateInput {
             charges_local_currency,
             charges_foreign_currency,
             default_donor,
-            delivered_datetime,
+            received_datetime,
         } = self;
 
         ServiceInput {
@@ -153,7 +153,7 @@ impl UpdateInput {
                 donor_id: donor.donor_id,
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
-            delivered_datetime,
+            received_datetime,
         }
     }
 }
@@ -221,13 +221,15 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::NotAnInboundShipment
         | ServiceError::WrongInboundShipmentType
         | ServiceError::OtherPartyDoesNotExist
-        | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
-        | ServiceError::CannotPutDeliveredDateAfterReceivedDate
-        | ServiceError::CannotSetDeliveredDateInFuture
+        | ServiceError::BackdatingNotEnabled
+        | ServiceError::CanOnlyBackdateReceivedShipments
+        | ServiceError::CannotMoveReceivedDateForward
+        | ServiceError::ExceedsMaximumBackdatingDays
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment
         | ServiceError::CurrencyRateMustBePositive => {
             BadUserInput(formatted_error)
         }
+        ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -595,7 +597,7 @@ mod test {
                     charges_local_currency: None,
                     charges_foreign_currency: None,
                     default_donor: None,
-                    delivered_datetime: None,
+                    received_datetime: None,
                 }
             );
             Ok(Invoice {
