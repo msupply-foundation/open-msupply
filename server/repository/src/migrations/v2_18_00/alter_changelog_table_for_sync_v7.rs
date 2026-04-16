@@ -52,11 +52,13 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // Drop the old Postgres enum type
+        // Convert table_name from Postgres enum to TEXT; SQLite is already TEXT
         #[cfg(feature = "postgres")]
         sql!(
             connection,
             r#"
+                ALTER TABLE changelog ALTER COLUMN table_name TYPE TEXT USING table_name::TEXT;
+                DROP TYPE IF EXISTS changelog_table_name;
                 DROP TYPE IF EXISTS row_action_type;
             "#
         )?;
