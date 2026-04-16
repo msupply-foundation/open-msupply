@@ -1,9 +1,9 @@
 use anyhow::{bail, Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
     pub bench_interval: u64,
     pub bench_batch_size: u64,
@@ -19,7 +19,7 @@ pub struct Config {
     pub scenarios: Vec<Scenario>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct PgConfig {
     pub host: String,
@@ -64,7 +64,7 @@ impl PgConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NullProfile {
     pub store_id: f64,
     pub transfer_store_id: f64,
@@ -81,7 +81,7 @@ impl Default for NullProfile {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Scenario {
     pub name: String,
     #[serde(default)]

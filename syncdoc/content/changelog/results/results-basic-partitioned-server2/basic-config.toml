@@ -1,0 +1,67 @@
+# Basic changelog insert-rate benchmark config.
+#
+# Flow per scenario:
+#   1. Recreate the changelog table (empty DB).
+#   2. Create the indexes listed below.
+#   3. Repeat until the DB contains >= bench_max_size rows:
+#        a. INSERT bench_interval rows via generate_series.
+#        b. INSERT bench_batch_size rows, bench_batch_repeat times, timing each.
+#   4. Results are flushed to results.json after every measurement.
+# At the end a single chart is produced comparing scenarios.
+
+bench_interval = 500_000     # rows bulk-inserted between measurements
+bench_batch_size = 10_000    # rows per measured batch
+bench_batch_repeat = 10      # number of measured batches per interval
+bench_max_size = 100_000_000 # stop once the DB reaches this many rows
+
+# Maximum wall-clock minutes per scenario (omit for unlimited).
+max_scenario_minutes = 120
+
+output_dir = "results-basic-partitioned"
+
+[pg]
+host = "localhost"
+port = 5432
+user = "postgres"
+password = "postgres"
+database = "changelog_bench_basic"
+
+# Null probability per UUID column (0.0 = always populated, 1.0 = always NULL).
+[null_profiles.balanced]
+store_id = 0.9
+transfer_store_id = 0.3
+patient_id = 0.2
+
+[null_profiles.mostly_null]
+store_id = 0.9
+transfer_store_id = 0.9
+patient_id = 0.9
+
+# ── Scenarios ────────────────────────────────────────────────────────────────
+
+[[scenarios]]
+name = "pk_only"
+null_profile = "balanced"
+indexes = []
+
+[[scenarios]]
+name = "v7"
+null_profile = "balanced"
+indexes = [
+  "CREATE INDEX index_changelog_source_site_id ON changelog USING btree (source_site_id);",
+  "CREATE INDEX index_changelog_store_id ON changelog USING btree (store_id);",
+  "CREATE INDEX index_changelog_transfer_store_id ON changelog (transfer_store_id) WHERE transfer_store_id IS NOT NULL;",
+  "CREATE INDEX index_changelog_patient_id ON changelog (patient_id) WHERE patient_id IS NOT NULL;",
+]
+
+# Example: v7 indexes with cursor-range partitioning (100K rows per partition).
+[[scenarios]]
+name = "v7_partitioned"
+null_profile = "balanced"
+partition_size = 5_000_000
+indexes = [
+  "CREATE INDEX index_changelog_source_site_id ON changelog USING btree (source_site_id);",
+  "CREATE INDEX index_changelog_store_id ON changelog USING btree (store_id);",
+  "CREATE INDEX index_changelog_transfer_store_id ON changelog (transfer_store_id) WHERE transfer_store_id IS NOT NULL;",
+  "CREATE INDEX index_changelog_patient_id ON changelog (patient_id) WHERE patient_id IS NOT NULL;",
+]

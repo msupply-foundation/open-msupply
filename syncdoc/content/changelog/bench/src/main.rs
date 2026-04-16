@@ -10,7 +10,7 @@ use std::fs;
 use std::time::Instant;
 
 use config::Config;
-use types::{MeasurementPoint, save_results};
+use types::{MeasurementPoint, save_results, save_run_config, save_server_specs};
 
 #[derive(Parser)]
 #[command(name = "basic-bench")]
@@ -65,6 +65,17 @@ fn main() -> Result<()> {
     let mode_label = if cli.single_insert { "single-insert" } else { "batch" };
     let results_suffix = if cli.single_insert { Some("single") } else { None };
     let mut results: Vec<MeasurementPoint> = Vec::new();
+
+    save_run_config(
+        output_dir,
+        &config,
+        &serde_json::json!({
+            "config_file": cli.config,
+            "single_insert": cli.single_insert,
+            "top_pct": cli.top_pct,
+            "output_dir": output_dir,
+        }),
+    )?;
 
     for scenario in &config.scenarios {
         eprintln!("\n=== Scenario ({}): {} ===", mode_label, scenario.name);
@@ -201,6 +212,7 @@ fn main() -> Result<()> {
     eprintln!("\nGenerating charts...");
     chart::generate_charts(output_dir, &results, cli.top_pct, results_suffix)?;
 
+    save_server_specs(output_dir)?;
     eprintln!("\nDone. Results in {}/", output_dir);
     Ok(())
 }
