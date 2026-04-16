@@ -13,6 +13,7 @@ impl MigrationFragment for Migrate {
             r#"
             CREATE TABLE site (
                 id INTEGER PRIMARY KEY,
+                og_id TEXT,
                 name TEXT NOT NULL,
                 hashed_password TEXT NOT NULL DEFAULT '',
                 hardware_id TEXT,

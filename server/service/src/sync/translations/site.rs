@@ -6,7 +6,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Debug)]
 pub struct LegacySiteRow {
     #[serde(rename = "ID")]
-    pub id: i32,
+    pub id: String,
+    #[serde(rename = "site_ID")]
+    pub site_id: i32,
     pub name: String,
     #[serde(rename = "password")]
     pub hashed_password: String,
@@ -39,7 +41,8 @@ impl SyncTranslation for SiteTranslation {
         let data = serde_json::from_str::<LegacySiteRow>(&sync_record.data)?;
 
         let result = SiteRow {
-            id: data.id,
+            id: data.site_id,
+            og_id: Some(data.id),
             name: data.name,
             hashed_password: data.hashed_password,
             hardware_id: data.hardware_id,
