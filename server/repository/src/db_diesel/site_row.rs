@@ -63,3 +63,115 @@ impl<'a> SiteRowRepository<'a> {
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+
+    fn site_row_a() -> SiteRow {
+        SiteRow {
+            id: 1,
+            name: "site_a".to_string(),
+            hashed_password: "hash_a".to_string(),
+            hardware_id: Some("hw-id-a".to_string()),
+            token: None,
+        }
+    }
+
+    fn site_row_b() -> SiteRow {
+        SiteRow {
+            id: 2,
+            name: "site_b".to_string(),
+            hashed_password: "hash_b".to_string(),
+            hardware_id: None,
+            token: Some("token_b".to_string()),
+        }
+    }
+
+    #[actix_rt::test]
+    async fn site_row_repository_upsert_and_find_by_id() {
+        let (_, connection, _, _) = setup_all(
+            "site_row_repository_upsert_and_find_by_id",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SiteRowRepository::new(&connection);
+
+        repo.upsert(&site_row_a()).unwrap();
+        assert_eq!(repo.find_one_by_id(1).unwrap(), Some(site_row_a()));
+        assert_eq!(repo.find_one_by_id(999).unwrap(), None);
+
+        let updated = SiteRow {
+            hashed_password: "new_hash".to_string(),
+            token: Some("new_token".to_string()),
+            ..site_row_a()
+        };
+        repo.upsert(&updated).unwrap();
+        assert_eq!(repo.find_one_by_id(1).unwrap(), Some(updated));
+    }
+
+    #[actix_rt::test]
+    async fn site_row_repository_find_by_name_and_password() {
+        let (_, connection, _, _) = setup_all(
+            "site_row_repository_find_by_name_and_password",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SiteRowRepository::new(&connection);
+
+        repo.upsert(&site_row_a()).unwrap();
+        repo.upsert(&site_row_b()).unwrap();
+
+        assert_eq!(
+            repo.find_by_name_and_password("site_a", "hash_a").unwrap(),
+            Some(site_row_a())
+        );
+
+        // Wrong password
+        assert_eq!(
+            repo.find_by_name_and_password("site_a", "wrong_hash")
+                .unwrap(),
+            None
+        );
+
+        // Wrong name
+        assert_eq!(
+            repo.find_by_name_and_password("no_such_site", "hash_a")
+                .unwrap(),
+            None
+        );
+
+        // Site with no hardware_id and with a token
+        assert_eq!(
+            repo.find_by_name_and_password("site_b", "hash_b").unwrap(),
+            Some(site_row_b())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn site_row_repository_hardware_id_nullable() {
+        let (_, connection, _, _) = setup_all(
+            "site_row_repository_hardware_id_nullable",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SiteRowRepository::new(&connection);
+
+        repo.upsert(&site_row_b()).unwrap();
+        let found = repo.find_one_by_id(2).unwrap().unwrap();
+        assert_eq!(found.hardware_id, None);
+
+        let with_hw = SiteRow {
+            hardware_id: Some("hw-id-b".to_string()),
+            ..site_row_b()
+        };
+        repo.upsert(&with_hw).unwrap();
+        let found = repo.find_one_by_id(2).unwrap().unwrap();
+        assert_eq!(found.hardware_id, Some("hw-id-b".to_string()));
+
+        repo.upsert(&site_row_b()).unwrap();
+        let found = repo.find_one_by_id(2).unwrap().unwrap();
+        assert_eq!(found.hardware_id, None);
+    }
+}
