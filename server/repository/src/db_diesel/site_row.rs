@@ -1,4 +1,4 @@
-use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::{Delete, RepositoryError, StorageConnection, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -50,6 +50,12 @@ impl<'a> SiteRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn delete(&self, id: i32) -> Result<(), RepositoryError> {
+        diesel::delete(site::table.filter(site::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_by_name_and_password(
         &self,
         name: &str,
@@ -76,6 +82,25 @@ impl Upsert for SiteRow {
             SiteRowRepository::new(con).find_one_by_id(self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SiteRowDelete(pub String);
+impl Delete for SiteRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let id = self
+            .0
+            .parse::<i32>()
+            .map_err(|e| RepositoryError::as_db_error(&e.to_string(), ""))?;
+        SiteRowRepository::new(con).delete(id)?;
+        Ok(None)
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        let id = self.0.parse::<i32>().expect("valid site id");
+        assert_eq!(SiteRowRepository::new(con).find_one_by_id(id), Ok(None))
     }
 }
 

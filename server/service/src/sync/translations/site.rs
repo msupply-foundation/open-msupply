@@ -1,5 +1,5 @@
 use super::{PullTranslateResult, SyncTranslation};
-use repository::{SiteRow, StorageConnection, SyncBufferRow};
+use repository::{SiteRow, SiteRowDelete, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
 #[allow(non_snake_case)]
@@ -48,5 +48,15 @@ impl SyncTranslation for SiteTranslation {
         };
 
         Ok(PullTranslateResult::upsert(result))
+    }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(SiteRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
