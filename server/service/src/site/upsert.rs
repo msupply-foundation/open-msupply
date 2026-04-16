@@ -1,36 +1,53 @@
 use crate::service_provider::ServiceContext;
+use bcrypt::{hash, DEFAULT_COST};
 use repository::{RepositoryError, SiteRow, SiteRowRepository};
 
 pub struct UpsertSite {
     pub id: i32,
     pub name: String,
-    pub hashed_password: String,
+    pub password: Option<String>,
     // Can only be cleared in frontend. The hardware_id is set when a device
     // connects to a site.
     pub clear_hardware_id: bool,
 }
 
 pub fn upsert_site(ctx: &ServiceContext, input: UpsertSite) -> Result<SiteRow, RepositoryError> {
-    let repo = SiteRowRepository::new(&ctx.connection);
+    ctx.connection
+        .transaction_sync(|connection| {
+            let repo = SiteRowRepository::new(connection);
+            let existing = repo.find_one_by_id(input.id)?;
 
-    let existing_hardware_id = repo.find_one_by_id(input.id)?.and_then(|r| r.hardware_id);
+            let row = generate(input, existing);
+            repo.upsert(&row)?;
 
-    let row = generate(input, existing_hardware_id);
-    repo.upsert(&row)?;
-    Ok(row)
+            Ok(row)
+        })
+        .map_err(|e| e.to_inner_error())
 }
 
 fn generate(
     UpsertSite {
         id,
         name,
-        hashed_password,
         clear_hardware_id,
+        password,
     }: UpsertSite,
-    existing_hardware_id: Option<String>,
+    existing_site: Option<SiteRow>,
 ) -> SiteRow {
+    let existing_og_id = existing_site.as_ref().and_then(|s| s.og_id.clone());
+    let existing_hardware_id = existing_site.as_ref().and_then(|s| s.hardware_id.clone());
+
+    let hashed_password = match password {
+        Some(pw) => hash(pw, DEFAULT_COST).expect("bcrypt hash failed"), // This should never fail
+        None => existing_site
+            .as_ref()
+            .map(|s| s.hashed_password.clone())
+            .unwrap_or_default(),
+    };
+
     SiteRow {
         id,
+        og_id: existing_og_id,
         name,
         hashed_password,
         hardware_id: if clear_hardware_id {
