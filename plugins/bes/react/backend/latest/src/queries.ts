@@ -127,7 +127,7 @@ export const checkOutboundShipmentExistsQuery = (
       variables,
     }) as CheckInvoiceExistsQuery;
 
-    if (result.invoice.__typename === 'InvoiceNode' && result.invoice.id) {
+    if (result.invoice?.__typename === 'InvoiceNode' && result.invoice.id) {
       return {
         invoiceIdError: {
           success: false,
