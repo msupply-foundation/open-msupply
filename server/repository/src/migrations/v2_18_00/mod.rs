@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_base_population_to_demographic_projection;
+mod create_site_table;
 
 pub(crate) struct V2_18_00;
 impl Migration for V2_18_00 {
@@ -14,9 +15,10 @@ impl Migration for V2_18_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(
-            add_base_population_to_demographic_projection::Migrate,
-        )]
+        vec![
+            Box::new(add_base_population_to_demographic_projection::Migrate),
+            Box::new(create_site_table::Migrate),
+        ]
     }
 }
 
