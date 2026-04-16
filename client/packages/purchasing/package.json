@@ -4,9 +4,6 @@
   "sideEffects": false,
   "private": true,
   "main": "./src/index.ts",
-  "devDependencies": {
-    "lodash": "^4.17.21"
-  },
   "scripts": {
     "tsc": "tsc",
     "eslint": "eslint ./src"

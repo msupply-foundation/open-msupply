@@ -1,4 +1,4 @@
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DatePicker } from '@mui/x-date-pickers';
 import {
   DialogButton,
   InputWithLabelRow,

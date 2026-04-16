@@ -8,7 +8,7 @@ import {
 import { AuthError, getAuthCookie } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DocumentNode } from 'graphql';
-import { RequestConfig } from 'graphql-request/build/esm/types';
+type RequestConfig = ConstructorParameters<typeof GraphQLClient>[1];
 import { createRegisteredContext } from 'react-singleton-context';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;

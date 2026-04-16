@@ -1,7 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { SnackbarProvider } from 'notistack';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns, LocalizationProvider } from '@mui/x-date-pickers';
 import {
   frFR,
   ptPT,
