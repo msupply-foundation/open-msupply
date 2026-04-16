@@ -141,7 +141,7 @@ FROM dos_result
       store_id,
       sum(date - previous_date) as dos
     FROM with_lag
-    WHERE previous_no_stock is true
+    WHERE previous_no_stock is true AND no_stock is true
     GROUP BY 1,
       2
     ORDER BY store_id,

@@ -143,7 +143,7 @@ FROM dos_result -- binds: [["item_a"], "store_a", 2025-12-19T10:59:59.999999999,
       store_id,
       sum(date - previous_date)::DOUBLE PRECISION as dos
     FROM with_lag
-    WHERE previous_no_stock is true
+    WHERE previous_no_stock is true AND no_stock is true
     GROUP BY 1,
       2
     ORDER BY store_id,
