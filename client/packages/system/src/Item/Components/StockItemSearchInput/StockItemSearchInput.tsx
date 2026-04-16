@@ -20,7 +20,7 @@ import { getOptionLabel, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 const SEARCH_DEBOUNCE_TIMEOUT = 500;
-const PAGINATION_DEBOUNCE_TIMEOUT = 300;
+const PAGINATION_DEBOUNCE_TIMEOUT = 100;
 const ROWS_PER_PAGE = 100;
 
 export const StockItemSearchInput = ({
