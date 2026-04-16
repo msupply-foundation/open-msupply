@@ -1,5 +1,5 @@
 use crate::{
-    dynamic_query::create_condition, syncv7::SyncError, RepositoryError, StorageConnection,
+    dynamic_query_filter::create_condition, syncv7::SyncError, RepositoryError, StorageConnection,
 };
 
 use chrono::NaiveDateTime;
@@ -75,16 +75,16 @@ type Source = sync_log_v7::table;
 create_condition!(
     Source,
     (
-        started_datetime,
+        StartedDatetime,
         NaiveDateTime,
         sync_log_v7::started_datetime
     ),
     (
-        finished_datetime,
+        FinishedDatetime,
         NaiveDateTime,
         sync_log_v7::finished_datetime
     ),
-    (error, string, sync_log_v7::error),
+    (Error, string, sync_log_v7::error),
 );
 
 impl<'a> SyncLogV7Repository<'a> {
@@ -142,15 +142,6 @@ mod test {
         }
     }
 
-    pub fn row_completed_ok() -> SyncLogV7Row {
-        SyncLogV7Row {
-            id: "sync_3".to_string(),
-            started_datetime: NaiveDateTime::default() + Duration::seconds(180),
-            finished_datetime: Some(NaiveDateTime::default() + Duration::seconds(240)),
-            ..Default::default()
-        }
-    }
-
     #[actix_rt::test]
     async fn test_sync_log_v7() {
         let (_, connection, _, _) = test_db::setup_all_with_data(
@@ -163,12 +154,12 @@ mod test {
         let repo = SyncLogV7Repository::new(&connection);
 
         use super::Condition;
-        use crate::dynamic_query::FilterBuilder;
+        use crate::dynamic_query_filter::FilterBuilder;
 
         let is_initialised = || {
             Condition::And(vec![
-                Condition::finished_datetime::is_not_null(),
-                Condition::error::is_null(),
+                Condition::FinishedDatetime::is_not_null(),
+                Condition::Error::is_null(),
             ])
         };
 
@@ -187,10 +178,6 @@ mod test {
             Some(row_completed_with_error())
         );
 
-        // Initialised once a completed row without error exists
-        repo.upsert_one(&row_completed_ok()).unwrap();
-        assert_eq!(repo.query_one(is_initialised()).unwrap().is_some(), true);
-
         // Upsert overwrites existing row
         let mut updated = row_completed_with_error();
         updated.error = None;
@@ -199,5 +186,8 @@ mod test {
             repo.query_one(Condition::TRUE).unwrap().unwrap().error,
             None
         );
+
+        // Initialised once a completed row without error exists
+        assert!(repo.query_one(is_initialised()).unwrap().is_some());
     }
 }
