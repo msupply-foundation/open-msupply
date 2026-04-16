@@ -612,3 +612,86 @@ pub(crate) use apply_string_filter;
 pub(crate) use apply_string_filter_method;
 pub(crate) use apply_string_or_filter;
 pub(crate) use define_linked_tables;
+
+/// Defines an enum that is stored as plain `TEXT` in the database via `strum` serialization
+/// (`snake_case` by default). No database migration is needed when adding new variants.
+///
+/// Usage:
+/// ```ignore
+/// diesel_string_enum! {
+///     #[derive(Clone, Serialize, Deserialize)]
+///     pub enum MyEnum {
+///         #[default]
+///         VariantA,
+///         VariantB,
+///     }
+/// }
+/// ```
+macro_rules! diesel_string_enum {
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
+        }
+    ) => {
+        #[derive(
+            strum::AsRefStr,
+            strum::EnumString,
+            strum::Display,
+            Debug,
+            Default,
+            PartialEq,
+            diesel::expression::AsExpression,
+            diesel::deserialize::FromSqlRow,
+        )]
+        #[strum(serialize_all = "snake_case")]
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        $(#[$meta])*
+        $vis enum $name {
+            $(
+                $(#[$variant_meta])*
+                $variant
+            ),*
+        }
+
+        impl From<String> for $name {
+            fn from(value: String) -> Self {
+                use std::str::FromStr;
+                Self::from_str(&value).unwrap()
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType> for $name
+        where
+            str: diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, crate::DBType>,
+            ) -> diesel::serialize::Result {
+                <str as
+                 diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType>>::to_sql(
+                    self.as_ref(),
+                    out,
+                )
+            }
+        }
+
+        impl diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType> for $name
+        where
+            String: diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType>,
+        {
+            fn from_sql(
+                bytes: <crate::DBType as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                use std::str::FromStr;
+                let s = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType>>::from_sql(bytes)?;
+                Self::from_str(&s).map_err(|e| e.into())
+            }
+        }
+    };
+}
+pub(crate) use diesel_string_enum;
