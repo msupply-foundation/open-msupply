@@ -4,6 +4,7 @@ use diesel::prelude::*;
 table! {
     site (id) {
         id -> Integer,
+        og_id -> Nullable<Text>,
         name -> Text,
         hashed_password -> Text,
         hardware_id -> Nullable<Text>,
@@ -16,6 +17,7 @@ table! {
 #[diesel(treat_none_as_null = true)]
 pub struct SiteRow {
     pub id: i32,
+    pub og_id: Option<String>,
     pub name: String,
     pub hashed_password: String,
     pub hardware_id: Option<String>,
@@ -45,6 +47,14 @@ impl<'a> SiteRowRepository<'a> {
     pub fn find_one_by_id(&self, id: i32) -> Result<Option<SiteRow>, RepositoryError> {
         let result = site::table
             .filter(site::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_one_by_og_id(&self, og_id: &str) -> Result<Option<SiteRow>, RepositoryError> {
+        let result = site::table
+            .filter(site::og_id.eq(og_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -89,18 +99,19 @@ impl Upsert for SiteRow {
 pub struct SiteRowDelete(pub String);
 impl Delete for SiteRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let id = self
-            .0
-            .parse::<i32>()
-            .map_err(|e| RepositoryError::as_db_error(&e.to_string(), ""))?;
-        SiteRowRepository::new(con).delete(id)?;
+        let repo = SiteRowRepository::new(con);
+        if let Some(site) = repo.find_one_by_og_id(&self.0)? {
+            repo.delete(site.id)?;
+        }
         Ok(None)
     }
 
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
-        let id = self.0.parse::<i32>().expect("valid site id");
-        assert_eq!(SiteRowRepository::new(con).find_one_by_id(id), Ok(None))
+        assert_eq!(
+            SiteRowRepository::new(con).find_one_by_og_id(&self.0),
+            Ok(None)
+        )
     }
 }
 
@@ -112,6 +123,7 @@ mod tests {
     fn site_row_a() -> SiteRow {
         SiteRow {
             id: 1,
+            og_id: Some("og-1".to_string()),
             name: "site_a".to_string(),
             hashed_password: "hash_a".to_string(),
             hardware_id: Some("hw-id-a".to_string()),
@@ -122,6 +134,7 @@ mod tests {
     fn site_row_b() -> SiteRow {
         SiteRow {
             id: 2,
+            og_id: None,
             name: "site_b".to_string(),
             hashed_password: "hash_b".to_string(),
             hardware_id: None,
