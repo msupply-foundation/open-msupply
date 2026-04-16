@@ -173,6 +173,8 @@ pub enum Resource {
     QueryInboundShipmentExternal,
     AuthoriseInboundShipmentExternal,
     VerifyInboundShipmentExternal,
+
+    MutateSites,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -843,6 +845,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
         ]),
+    );
+
+    map.insert(
+        Resource::MutateSites,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
     map
