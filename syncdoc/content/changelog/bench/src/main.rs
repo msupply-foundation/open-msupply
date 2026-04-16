@@ -1,374 +1,206 @@
-mod bench;
+mod chart;
 mod config;
 mod db;
-mod plot;
-mod schema;
-mod seed;
+mod types;
 
 use anyhow::{Context, Result};
 use clap::Parser;
 use diesel::prelude::*;
-use diesel::sql_query;
-use std::time::Duration;
+use std::fs;
+use std::time::Instant;
 
-use bench::BenchResult;
 use config::Config;
+use types::{MeasurementPoint, save_results};
 
 #[derive(Parser)]
-#[command(name = "changelog-bench")]
-#[command(about = "Benchmark changelog insert performance under different indexing/partitioning strategies")]
+#[command(name = "basic-bench")]
+#[command(about = "Basic changelog insert-rate benchmark")]
 struct Cli {
-    /// Path to config.toml
-    #[arg(short, long, default_value = "config.toml")]
+    /// Path to the basic-config.toml file.
+    #[arg(short, long, default_value = "basic-config.toml")]
     config: String,
 
-    /// Run only this phase (1, 2, or 3)
+    /// Generate charts from existing results.json file(s). Multiple files are merged.
+    #[arg(long, num_args = 1..)]
+    generate_charts: Vec<String>,
+
+    /// Output directory for generated charts. Defaults to the directory of the
+    /// first --generate-charts file, or the config's output_dir during a bench run.
     #[arg(short, long)]
-    phase: Option<u8>,
+    output_dir: Option<String>,
 
-    /// Override: only run these scenarios (comma-separated names)
-    #[arg(short, long)]
-    scenarios: Option<String>,
+    /// Use the fastest N% of batch rates for each measurement point (default 50).
+    #[arg(long, default_value = "50")]
+    top_pct: f64,
 
-    /// Override: only test these N values (comma-separated)
-    #[arg(short, long)]
-    n_values: Option<String>,
-
-    /// Skip graph generation
+    /// Run single-insert mode: inserts rows one at a time instead of in batches.
+    /// Same config, same scenarios, same results format — only the insert method differs.
     #[arg(long)]
-    no_graphs: bool,
-
-    /// Only generate seeds, don't run benchmarks
-    #[arg(long)]
-    seed_only: bool,
-
-    /// Force regeneration of seed dumps even if they exist
-    #[arg(long)]
-    reseed: bool,
-
-    /// Generate graphs from an existing results.json (skip benchmarks)
-    #[arg(long)]
-    generate_graphs: Option<String>,
-}
-
-fn phase_results(all_results: &[BenchResult], phase: u8) -> Vec<BenchResult> {
-    all_results.iter().filter(|r| r.phase == phase).cloned().collect()
+    single_insert: bool,
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
+    // --generate-charts: merge file(s) and render charts, then exit.
+    if !cli.generate_charts.is_empty() {
+        let default_dir = std::path::Path::new(&cli.generate_charts[0])
+            .parent()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|| ".".to_string());
+        let output_dir = cli.output_dir.as_deref().unwrap_or(&default_dir);
+        fs::create_dir_all(output_dir)
+            .with_context(|| format!("failed to create {}", output_dir))?;
+        eprintln!("Generating charts into: {}", output_dir);
+        chart::generate_charts_from_files(&cli.generate_charts, output_dir, cli.top_pct)?;
+        eprintln!("Done!");
+        return Ok(());
+    }
+
     let config = Config::load(&cli.config)?;
+    let output_dir = cli.output_dir.as_deref().unwrap_or(&config.output_dir);
+    fs::create_dir_all(output_dir)
+        .with_context(|| format!("failed to create {}", output_dir))?;
 
-    // --generate-graphs: generate graphs from existing results.json and exit
-    if let Some(ref results_path) = cli.generate_graphs {
-        eprintln!("Generating graphs from: {}", results_path);
-        plot::generate_charts_from_file(results_path, &config.null_profiles)?;
-        eprintln!("\nDone!");
-        return Ok(());
-    }
+    let mode_label = if cli.single_insert { "single-insert" } else { "batch" };
+    let results_suffix = if cli.single_insert { Some("single") } else { None };
+    let mut results: Vec<MeasurementPoint> = Vec::new();
 
-    let mut config = config;
-
-    // Apply CLI overrides
-    if let Some(phase) = cli.phase {
-        config.filter_phase(phase);
-    }
-    if let Some(ref scenarios) = cli.scenarios {
-        let names: Vec<String> = scenarios.split(',').map(|s| s.trim().to_string()).collect();
-        config.filter_scenarios(&names);
-    }
-    if let Some(ref n_values) = cli.n_values {
-        let values: Vec<u64> = n_values
-            .split(',')
-            .map(|s| s.trim().parse::<u64>())
-            .collect::<std::result::Result<Vec<_>, _>>()
-            .context("Failed to parse n_values")?;
-        config.filter_n_values(&values);
-    }
-
-    if config.scenarios.is_empty() && !cli.seed_only {
-        eprintln!("No scenarios to run after applying filters.");
-        return Ok(());
-    }
-
-    // ── Step 1: Ensure seed dumps exist for all required N values ──
-    if cli.reseed {
-        eprintln!("\n{}", "=".repeat(60));
-        eprintln!("=== Reseed: dropping existing templates ===");
-        eprintln!("{}", "=".repeat(60));
-        for n in &config.n_values {
-            eprintln!("  Dropping template for N={}...", plot::format_n(*n));
-            seed::drop_template(*n, &config.pg)?;
-        }
-    }
-
-    seed::ensure_seeds(&config.n_values, &config.pg)?;
-
-    if cli.seed_only {
-        eprintln!("\nSeed generation complete. Exiting (--seed-only).");
-        return Ok(());
-    }
-
-    // ── Step 2: Run benchmarks using seed dumps ──
-    let timestamp = chrono::Local::now()
-        .format("%Y-%m-%d_%H-%M-%S")
-        .to_string();
-    eprintln!("Results will be saved to: {}/", config.output_dir);
-
-    eprintln!(
-        "\nRunning {} scenarios across {} N values",
-        config.scenarios.len(),
-        config.n_values.len()
-    );
-
-    let mut all_results: Vec<BenchResult> = Vec::new();
-
-    for phase in config.phases() {
-        let phase_scenarios = config.scenarios_for_phase(phase);
-        if phase_scenarios.is_empty() {
-            continue;
-        }
-
-        eprintln!("\n{}", "=".repeat(60));
+    for scenario in &config.scenarios {
+        eprintln!("\n=== Scenario ({}): {} ===", mode_label, scenario.name);
+        let profile = config.resolved_profile(scenario);
         eprintln!(
-            "=== Phase {} ({} scenarios) ===",
-            phase,
-            phase_scenarios.len()
+            "  null profile: store={:.2} transfer={:.2} patient={:.2}",
+            profile.store_id, profile.transfer_store_id, profile.patient_id
         );
-        eprintln!("{}", "=".repeat(60));
-
-        let phase_dir = format!(
-            "{}/{}_{}", config.output_dir, plot::phase_dir(phase), timestamp
-        );
-
-        if phase == 4 {
-            // Phase 4: grouped loop — for each (N, null_profile), UPDATE once, then cycle index types
-            // Group scenarios by null_profile
-            let mut profile_names: Vec<String> = phase_scenarios
-                .iter()
-                .filter_map(|s| s.null_profile.clone())
-                .collect();
-            profile_names.sort();
-            profile_names.dedup();
-
-            for n in &config.n_values {
-                for profile_name in &profile_names {
-                    let profile = config
-                        .null_profiles
-                        .get(profile_name)
-                        .expect("validated in config");
-
-                    let profile_scenarios: Vec<_> = phase_scenarios
-                        .iter()
-                        .filter(|s| s.null_profile.as_deref() == Some(profile_name))
-                        .collect();
-
-                    eprintln!(
-                        "\n--- Phase 4 | N: {} | Profile: {} ---",
-                        plot::format_n(*n),
-                        profile_name,
-                    );
-
-                    // Fresh DB from template
-                    eprintln!("  Creating database from seed template...");
-                    seed::create_from_template(*n, &config.pg)?;
-
-                    let mut conn = db::connect(&config.pg, Duration::from_secs(10))
-                        .context("Failed to connect to Postgres")?;
-
-                    if *n > 0 {
-                        seed::reset_sequence_after_restore(&mut conn, *n)?;
-                    }
-
-                    // Redistribute nulls (skip if balanced = 50% which matches seed default)
-                    let is_balanced = profile.store_id == 0.5
-                        && profile.transfer_store_id == 0.5
-                        && profile.patient_id == 0.5;
-                    if !is_balanced {
-                        eprintln!("  Redistributing NULL percentages...");
-                        bench::redistribute_nulls(&mut conn, profile)?;
-                    } else {
-                        eprintln!("  Skipping redistribution (balanced matches seed default)");
-                    }
-
-                    let base_cursor = *n;
-
-                    // Cycle index types within the same DB
-                    for scenario in &profile_scenarios {
-                        eprintln!("  --- Index: {} ---", scenario.name);
-
-                        // Create indexes
-                        eprintln!("    Creating indexes...");
-                        let index_stmts = schema::index_sql(&scenario.indexes);
-                        for stmt in &index_stmts {
-                            sql_query(stmt).execute(&mut conn).with_context(|| {
-                                format!("Failed index SQL: {}", &stmt[..stmt.len().min(100)])
-                            })?;
-                        }
-
-                        // ANALYZE
-                        eprintln!("    Running ANALYZE...");
-                        sql_query("ANALYZE changelog;").execute(&mut conn)?;
-
-                        // Measure
-                        eprintln!("    Measuring {} inserts...", config.batch_size);
-                        let mut latencies = bench::measure_inserts(
-                            &mut conn,
-                            config.batch_size,
-                            scenario,
-                            Some(profile),
-                        )?;
-
-                        let stats = bench::compute_stats(&mut latencies);
-                        eprintln!(
-                            "    Results: p50={}us p95={}us p99={}us max={}us",
-                            stats.p50_us, stats.p95_us, stats.p99_us, stats.max_us
-                        );
-
-                        all_results.push(BenchResult {
-                            scenario_name: scenario.name.clone(),
-                            phase: scenario.phase,
-                            n: *n,
-                            batch_size: config.batch_size,
-                            stats,
-                            null_profile: Some(profile_name.clone()),
-                        });
-
-                        // Save results incrementally
-                        plot::save_results_json(&phase_results(&all_results, phase), &phase_dir)?;
-
-                        // Drop indexes and delete measurement rows for next index type
-                        eprintln!("    Dropping indexes...");
-                        for stmt in &index_stmts {
-                            let idx_name = stmt
-                                .split_whitespace()
-                                .nth(2)
-                                .unwrap_or("unknown");
-                            let drop_sql = format!("DROP INDEX IF EXISTS {}", idx_name);
-                            let _ = sql_query(&drop_sql).execute(&mut conn);
-                        }
-
-                        // Delete measurement rows and reset sequence
-                        sql_query(&format!(
-                            "DELETE FROM changelog WHERE cursor > {}",
-                            base_cursor
-                        ))
-                        .execute(&mut conn)?;
-                        sql_query(&format!(
-                            "SELECT setval('changelog_cursor_seq', {}, true)",
-                            base_cursor + 1
-                        ))
-                        .execute(&mut conn)?;
-                    }
-                }
-            }
-        } else {
-            // Phases 1-3: one fresh DB per (scenario, N) pair
-            for scenario in &phase_scenarios {
-                for n in &config.n_values {
-                    eprintln!(
-                        "\n--- Scenario: {} | N: {} ---",
-                        scenario.name,
-                        plot::format_n(*n)
-                    );
-
-                    // Apply PG config overrides if specified
-                    if let Some(ref pg_config_file) = scenario.pg_config_file {
-                        eprintln!("  Applying PG config from {}...", pg_config_file);
-                        let mut maint_conn = db::connect_maintenance(&config.pg)?;
-                        db::apply_pg_config(&mut maint_conn, pg_config_file)?;
-                    }
-
-                    // Create benchmark DB from seed template (fast file-level copy)
-                    eprintln!("  Creating database from seed template...");
-                    seed::create_from_template(*n, &config.pg)?;
-
-                    let mut conn = db::connect(&config.pg, Duration::from_secs(10))
-                        .context("Failed to connect to Postgres")?;
-
-                    if *n > 0 {
-                        seed::reset_sequence_after_restore(&mut conn, *n)?;
-                    }
-
-                    // For partitioned scenarios: migrate data into partitioned structure
-                    if let Some(ref partition_file) = scenario.partition_file {
-                        eprintln!("  Migrating to partitioned table...");
-                        schema::migrate_to_partitioned(
-                            &mut conn,
-                            partition_file,
-                            *n,
-                            config.batch_size as u64,
-                        )?;
-                    }
-
-                    // Create indexes after data load
-                    eprintln!("  Creating indexes...");
-                    let index_stmts = schema::index_sql(&scenario.indexes);
-                    for stmt in &index_stmts {
-                        sql_query(stmt).execute(&mut conn).with_context(|| {
-                            format!("Failed index SQL: {}", &stmt[..stmt.len().min(100)])
-                        })?;
-                    }
-
-                    // Ensure extra partitions exist for measurement batch
-                    if let Some(ref partition_file) = scenario.partition_file {
-                        schema::ensure_extra_partitions(
-                            &mut conn,
-                            partition_file,
-                            *n,
-                            config.batch_size as u64 * 2,
-                        )?;
-                    }
-
-                    // ANALYZE after data load + index creation
-                    eprintln!("  Running ANALYZE...");
-                    sql_query("ANALYZE changelog;").execute(&mut conn)?;
-
-                    // Measure
-                    eprintln!("  Measuring {} inserts...", config.batch_size);
-                    let mut latencies =
-                        bench::measure_inserts(&mut conn, config.batch_size, scenario, None)?;
-
-                    let stats = bench::compute_stats(&mut latencies);
-                    eprintln!(
-                        "  Results: p50={}us p95={}us p99={}us max={}us",
-                        stats.p50_us, stats.p95_us, stats.p99_us, stats.max_us
-                    );
-
-                    all_results.push(BenchResult {
-                        scenario_name: scenario.name.clone(),
-                        phase: scenario.phase,
-                        n: *n,
-                        batch_size: config.batch_size,
-                        stats,
-                        null_profile: None,
-                    });
-
-                    // Save results incrementally
-                    plot::save_results_json(&phase_results(&all_results, phase), &phase_dir)?;
-
-                    // Reset PG config overrides if we applied any
-                    if scenario.pg_config_file.is_some() {
-                        eprintln!("  Resetting PG config...");
-                        drop(conn);
-                        let mut maint_conn = db::connect_maintenance(&config.pg)?;
-                        db::reset_pg_config(&mut maint_conn)?;
-                    }
-                }
-            }
+        if let Some(ps) = scenario.partition_size {
+            eprintln!("  partition_size: {}", ps);
         }
 
-        // Print phase summary
-        plot::print_phase_table(&all_results, phase);
+        let scenario_start = Instant::now();
 
-        // Generate phase graphs (results.json already saved incrementally)
-        if !cli.no_graphs {
-            eprintln!("\nGenerating Phase {} graphs...", phase);
-            plot::generate_charts(&phase_results(&all_results, phase), phase, &phase_dir, &config.null_profiles)?;
+        eprintln!("  resetting database...");
+        db::reset_database(&config.pg)?;
+        let mut conn = db::connect(&config.pg)?;
+        db::recreate_changelog(&mut conn, scenario.partition_size)?;
+
+        for idx_sql in &scenario.indexes {
+            eprintln!("  creating index: {}", idx_sql);
+            diesel::sql_query(idx_sql)
+                .execute(&mut conn)
+                .with_context(|| format!("failed to create index: {}", idx_sql))?;
+        }
+
+        let mut rows_in_db: u64 = 0;
+        while rows_in_db < config.bench_max_size {
+            // Check max scenario time.
+            if let Some(max_mins) = config.max_scenario_minutes {
+                if scenario_start.elapsed().as_secs() >= max_mins * 60 {
+                    eprintln!(
+                        "  max scenario time ({}m) reached, stopping",
+                        max_mins
+                    );
+                    break;
+                }
+            }
+
+            // ── fill ─────────────────────────────────────────────────────────
+            let fill_to = (rows_in_db + config.bench_interval).min(config.bench_max_size);
+            if fill_to > rows_in_db {
+                eprintln!(
+                    "  fill: generate_series {}..{} ({} rows)",
+                    rows_in_db + 1,
+                    fill_to,
+                    fill_to - rows_in_db
+                );
+                if let Some(ps) = scenario.partition_size {
+                    db::ensure_partitions(&mut conn, fill_to, ps)?;
+                }
+                db::insert_series(&mut conn, rows_in_db + 1, fill_to, &profile)?;
+                rows_in_db = fill_to;
+            }
+
+            if rows_in_db >= config.bench_max_size {
+                break;
+            }
+
+            // X-axis value: rows in the DB at the end of the bench_interval fill.
+            let x_value = rows_in_db;
+
+            eprintln!(
+                "  measure ({}): {} batches of {} rows at {} rows in DB",
+                mode_label, config.bench_batch_repeat, config.bench_batch_size, x_value
+            );
+
+            // Ensure partitions cover the upcoming measurement inserts.
+            if let Some(ps) = scenario.partition_size {
+                let max_cursor =
+                    rows_in_db + config.bench_batch_size * config.bench_batch_repeat as u64;
+                db::ensure_partitions(&mut conn, max_cursor, ps)?;
+            }
+
+            let mut durations = Vec::with_capacity(config.bench_batch_repeat as usize);
+            let mut rates = Vec::with_capacity(config.bench_batch_repeat as usize);
+
+            for _ in 0..config.bench_batch_repeat {
+                let from = rows_in_db + 1;
+                let to = rows_in_db + config.bench_batch_size;
+
+                if cli.single_insert {
+                    // Single-insert: pre-generate SQL, then execute one at a time,
+                    // timing the entire batch of sequential inserts.
+                    let sqls = db::prepare_single_row_sqls(from, config.bench_batch_size, &profile);
+
+                    let start = Instant::now();
+                    for sql in &sqls {
+                        db::execute_single_insert(&mut conn, sql)?;
+                    }
+                    let elapsed = start.elapsed();
+
+                    durations.push(elapsed.as_micros() as u64);
+                    rates.push(config.bench_batch_size as f64 / elapsed.as_secs_f64());
+                } else {
+                    // Batch: one generate_series statement for all rows.
+                    let start = Instant::now();
+                    db::insert_series(&mut conn, from, to, &profile)?;
+                    let elapsed = start.elapsed();
+
+                    durations.push(elapsed.as_micros() as u64);
+                    rates.push(config.bench_batch_size as f64 / elapsed.as_secs_f64());
+                }
+
+                rows_in_db = to;
+            }
+
+            let avg = rates.iter().sum::<f64>() / rates.len() as f64;
+            let min = rates.iter().cloned().fold(f64::INFINITY, f64::min);
+            let max = rates.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+            eprintln!(
+                "    rate (rows/sec): avg={:.0} min={:.0} max={:.0}",
+                avg, min, max
+            );
+
+            let scenario_label = if cli.single_insert {
+                format!("{}_single", scenario.name)
+            } else {
+                scenario.name.clone()
+            };
+
+            results.push(MeasurementPoint {
+                scenario: scenario_label,
+                records_in_db: x_value,
+                batch_durations_us: durations,
+                batch_rows_per_sec: rates,
+            });
+
+            // Flush after every measurement so partial runs are not lost.
+            save_results(output_dir, &results, results_suffix)?;
         }
     }
 
-    eprintln!("\nDone!");
+    eprintln!("\nGenerating charts...");
+    chart::generate_charts(output_dir, &results, cli.top_pct, results_suffix)?;
+
+    eprintln!("\nDone. Results in {}/", output_dir);
     Ok(())
 }

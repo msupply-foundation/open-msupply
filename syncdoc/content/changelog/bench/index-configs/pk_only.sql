@@ -1,1 +1,0 @@
--- No additional indexes beyond the primary key on cursor

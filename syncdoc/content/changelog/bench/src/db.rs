@@ -1,155 +1,206 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use diesel::prelude::*;
 use diesel::sql_query;
-use std::thread;
-use std::time::{Duration, Instant};
+use md5::{Md5, Digest};
+use rand::RngExt;
 
-use crate::config::PgConfig;
+use crate::config::{NullProfile, PgConfig};
+use crate::types::*;
 
-/// Connect to the benchmark database, retrying until it's available.
-pub fn connect(pg: &PgConfig, timeout: Duration) -> Result<PgConnection> {
+pub fn connect(pg: &PgConfig) -> Result<PgConnection> {
     let conn_str = pg.connection_string();
-    let start = Instant::now();
-    loop {
-        match PgConnection::establish(&conn_str) {
-            Ok(conn) => return Ok(conn),
-            Err(e) => {
-                if start.elapsed() > timeout {
-                    bail!(
-                        "Could not connect to Postgres at '{}' within {:?}: {}",
-                        conn_str,
-                        timeout,
-                        e
-                    );
-                }
-                thread::sleep(Duration::from_millis(500));
-            }
-        }
-    }
+    PgConnection::establish(&conn_str)
+        .with_context(|| format!("Failed to connect to {}", conn_str))
 }
 
-/// Connect to the `postgres` maintenance database.
-pub fn connect_maintenance(pg: &PgConfig) -> Result<PgConnection> {
-    let maint_str = pg.maintenance_connection_string();
-    PgConnection::establish(&maint_str)
-        .with_context(|| format!("Failed to connect to maintenance database at {}", maint_str))
-}
-
-/// Drop and recreate the benchmark database to get a clean slate.
-/// Connects to the `postgres` maintenance database to do this.
+/// Drop and recreate the benchmark database via the `postgres` maintenance DB.
 pub fn reset_database(pg: &PgConfig) -> Result<()> {
-    let maint_str = pg.maintenance_connection_string();
-    let mut conn = PgConnection::establish(&maint_str)
-        .with_context(|| format!("Failed to connect to maintenance database at {}", maint_str))?;
+    let maint = pg.maintenance_connection_string();
+    let mut conn = PgConnection::establish(&maint)
+        .with_context(|| format!("Failed to connect to maintenance DB at {}", maint))?;
 
-    // Terminate any existing connections to the benchmark database
     let _ = sql_query(&format!(
-        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{}' AND pid <> pg_backend_pid()",
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity \
+         WHERE datname = '{}' AND pid <> pg_backend_pid()",
         pg.database
     ))
     .execute(&mut conn);
 
-    // Drop and recreate
-    let _ = sql_query(&format!("DROP DATABASE IF EXISTS \"{}\"", pg.database)).execute(&mut conn);
+    let _ = sql_query(&format!("DROP DATABASE IF EXISTS \"{}\"", pg.database))
+        .execute(&mut conn);
     sql_query(&format!("CREATE DATABASE \"{}\"", pg.database))
         .execute(&mut conn)
         .with_context(|| format!("Failed to create database '{}'", pg.database))?;
-
     Ok(())
 }
 
-/// Parse a PG config .txt file (key = value per line, # comments) and apply
-/// each setting via ALTER SYSTEM, then reload with pg_reload_conf().
-pub fn apply_pg_config(conn: &mut PgConnection, pg_config_file: &str) -> Result<()> {
-    let content = std::fs::read_to_string(pg_config_file)
-        .with_context(|| format!("Failed to read pg_config_file '{}'", pg_config_file))?;
+/// Create the changelog table. If `partition_size` is Some, creates a partitioned table.
+pub fn recreate_changelog(
+    conn: &mut PgConnection,
+    partition_size: Option<u64>,
+) -> Result<()> {
+    let _ = sql_query("DROP TABLE IF EXISTS changelog CASCADE").execute(conn);
+    let _ = sql_query("DROP SEQUENCE IF EXISTS changelog_cursor_seq").execute(conn);
+    let _ = sql_query("DROP TYPE IF EXISTS row_action_type").execute(conn);
 
-    for line in content.lines() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        if let Some((key, value)) = line.split_once('=') {
-            let key = key.trim();
-            let value = value.trim();
-            let stmt = format!("ALTER SYSTEM SET {} = '{}';", key, value);
-            sql_query(&stmt)
-                .execute(conn)
-                .with_context(|| format!("Failed to apply PG config: {}", stmt))?;
-        }
-    }
-
-    sql_query("SELECT pg_reload_conf();")
+    sql_query(BASE_TYPE_SQL)
         .execute(conn)
-        .context("Failed to reload PG config")?;
+        .context("failed to create row_action_type")?;
+    sql_query(BASE_SEQ_SQL)
+        .execute(conn)
+        .context("failed to create changelog_cursor_seq")?;
 
-    // Brief pause for settings to take effect
-    std::thread::sleep(std::time::Duration::from_millis(200));
-
+    if partition_size.is_some() {
+        sql_query(PARTITIONED_TABLE_SQL)
+            .execute(conn)
+            .context("failed to create partitioned changelog table")?;
+    } else {
+        sql_query(BASE_TABLE_SQL)
+            .execute(conn)
+            .context("failed to create changelog table")?;
+    }
     Ok(())
 }
 
-/// Reset all ALTER SYSTEM overrides and reload config.
-pub fn reset_pg_config(conn: &mut PgConnection) -> Result<()> {
-    sql_query("ALTER SYSTEM RESET ALL;")
-        .execute(conn)
-        .context("Failed to reset PG config")?;
-    sql_query("SELECT pg_reload_conf();")
-        .execute(conn)
-        .context("Failed to reload PG config after reset")?;
-    std::thread::sleep(std::time::Duration::from_millis(200));
+/// Ensure range partitions exist to cover cursors up to `up_to` (inclusive).
+/// Each partition covers `partition_size` rows. Idempotent.
+pub fn ensure_partitions(
+    conn: &mut PgConnection,
+    up_to: u64,
+    partition_size: u64,
+) -> Result<()> {
+    let max_partition = up_to.saturating_sub(1) / partition_size;
+    for i in 0..=max_partition {
+        let from = i * partition_size + 1;
+        let to = (i + 1) * partition_size + 1;
+        let sql = format!(
+            "CREATE TABLE IF NOT EXISTS changelog_p{i} \
+             PARTITION OF changelog FOR VALUES FROM ({from}) TO ({to})"
+        );
+        let _ = sql_query(&sql).execute(conn);
+    }
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// Insert rows [from..=to] into changelog using `generate_series`.
+/// Nulls are applied probabilistically via `random()` to match the profile.
+pub fn insert_series(
+    conn: &mut PgConnection,
+    from: u64,
+    to: u64,
+    profile: &NullProfile,
+) -> Result<()> {
+    let enum_array = TABLE_NAME_VALUES
+        .iter()
+        .map(|v| format!("'{}'", v))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let enum_count = TABLE_NAME_VALUES.len();
 
-    #[test]
-    fn test_connect_invalid_host() {
-        let pg = PgConfig {
-            host: "nonexistent-host-12345".to_string(),
-            port: 5432,
-            user: "postgres".to_string(),
-            password: "pass".to_string(),
-            database: "bench".to_string(),
-        };
-        let result = connect(&pg, Duration::from_secs(1));
-        assert!(result.is_err());
-    }
+    let store_populated = 1.0 - profile.store_id;
+    let transfer_populated = 1.0 - profile.transfer_store_id;
+    let patient_populated = 1.0 - profile.patient_id;
 
-    #[test]
-    #[ignore] // Requires a running Postgres
-    fn test_reset_database() {
-        let pg = PgConfig::localhost("changelog_bench_test_reset");
+    let sql = format!(
+"INSERT INTO changelog (record_id, table_name, row_action, source_site_id, store_id, transfer_store_id, patient_id)
+SELECT
+    md5(g::text)::uuid,
+    (ARRAY[{enum_array}])[1 + (g % {enum_count})::int],
+    CASE WHEN random() < 0.05 THEN 'DELETE'::row_action_type ELSE 'UPSERT'::row_action_type END,
+    CASE WHEN random() < 0.25 THEN (1 + (g % 99)::int) ELSE NULL END,
+    CASE WHEN random() < {store_populated} THEN md5((g+1)::text)::uuid ELSE NULL END,
+    CASE WHEN random() < {transfer_populated} THEN md5((g+2)::text)::uuid ELSE NULL END,
+    CASE WHEN random() < {patient_populated} THEN md5((g+3)::text)::uuid ELSE NULL END
+FROM generate_series({from}, {to}) AS g;"
+    );
 
-        // Reset should create the database
-        reset_database(&pg).unwrap();
+    sql_query(&sql)
+        .execute(conn)
+        .with_context(|| format!("generate_series insert {}..{} failed", from, to))?;
+    Ok(())
+}
 
-        // Should be able to connect
-        let mut conn = connect(&pg, Duration::from_secs(5)).unwrap();
+/// Compute md5(value)::uuid the same way Postgres does: md5 hash → hex string → UUID.
+fn md5_uuid(value: &str) -> String {
+    let hash = Md5::digest(value.as_bytes());
+    let hex = format!("{:x}", hash);
+    // Format as UUID: 8-4-4-4-12
+    format!(
+        "{}-{}-{}-{}-{}",
+        &hex[0..8],
+        &hex[8..12],
+        &hex[12..16],
+        &hex[16..20],
+        &hex[20..32]
+    )
+}
 
-        // Verify it's empty
-        #[derive(diesel::QueryableByName)]
-        struct CountRow {
-            #[diesel(sql_type = diesel::sql_types::BigInt)]
-            cnt: i64,
-        }
+/// Pre-generate all single-row INSERT SQL strings with all values computed in Rust.
+/// Uses the same data generation logic as `insert_series`:
+/// - record_id: md5(g::text)::uuid
+/// - table_name: TABLE_NAME_VALUES[g % count]
+/// - row_action: 5% DELETE, 95% UPSERT
+/// - source_site_id: 25% chance of (1 + g % 99), else NULL
+/// - store_id/transfer_store_id/patient_id: md5-based UUID with null probability from profile
+///
+/// All randomness uses Rust's `rand` instead of Postgres `random()`.
+/// Call BEFORE the timing loop so generation doesn't affect latency.
+pub fn prepare_single_row_sqls(
+    g_from: u64,
+    count: u64,
+    profile: &NullProfile,
+) -> Vec<String> {
+    let enum_count = TABLE_NAME_VALUES.len();
+    let store_populated = 1.0 - profile.store_id;
+    let transfer_populated = 1.0 - profile.transfer_store_id;
+    let patient_populated = 1.0 - profile.patient_id;
 
-        let result: Vec<CountRow> = sql_query(
-            "SELECT count(*)::bigint AS cnt FROM information_schema.tables WHERE table_schema = 'public'"
-        )
-        .load(&mut conn)
-        .unwrap();
-        assert_eq!(result[0].cnt, 0);
+    let mut rng = rand::rng();
 
-        // Reset again — should work even with an existing database
-        reset_database(&pg).unwrap();
+    (0..count)
+        .map(|i| {
+            let g = g_from + i;
 
-        // Cleanup
-        let maint_str = pg.maintenance_connection_string();
-        let mut maint = PgConnection::establish(&maint_str).unwrap();
-        let _ = sql_query(&format!("DROP DATABASE IF EXISTS \"{}\"", pg.database))
-            .execute(&mut maint);
-    }
+            let record_id = md5_uuid(&g.to_string());
+            let table_name = TABLE_NAME_VALUES[(g as usize) % enum_count];
+            let row_action = if rng.random_bool(0.05) { "DELETE" } else { "UPSERT" };
+
+            let source_site_id = if rng.random_bool(0.25) {
+                format!("{}", 1 + (g % 99))
+            } else {
+                "NULL".to_string()
+            };
+
+            let store_id = if rng.random_bool(store_populated) {
+                format!("'{}'", md5_uuid(&(g + 1).to_string()))
+            } else {
+                "NULL".to_string()
+            };
+
+            let transfer_store_id = if rng.random_bool(transfer_populated) {
+                format!("'{}'", md5_uuid(&(g + 2).to_string()))
+            } else {
+                "NULL".to_string()
+            };
+
+            let patient_id = if rng.random_bool(patient_populated) {
+                format!("'{}'", md5_uuid(&(g + 3).to_string()))
+            } else {
+                "NULL".to_string()
+            };
+
+            format!(
+                "INSERT INTO changelog (record_id, table_name, row_action, source_site_id, store_id, transfer_store_id, patient_id) \
+                 VALUES ('{record_id}', '{table_name}', '{row_action}'::row_action_type, {source_site_id}, {store_id}, {transfer_store_id}, {patient_id})"
+            )
+        })
+        .collect()
+}
+
+/// Execute a pre-generated single-row INSERT SQL string.
+pub fn execute_single_insert(conn: &mut PgConnection, sql: &str) -> Result<()> {
+    sql_query(sql)
+        .execute(conn)
+        .context("single-row INSERT failed")?;
+    Ok(())
 }
