@@ -1,11 +1,14 @@
+use std::collections::{HashMap, HashSet};
+
 use repository::{
     requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use repository::{
-    ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorLineRow, IndicatorValueType,
-    MasterList, MasterListFilter, MasterListRepository, ProgramFilter,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
+    ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorColumnRowRepository,
+    IndicatorLineRow, IndicatorLineRowRepository, IndicatorValueType, MasterList, MasterListFilter,
+    MasterListRepository, ProgramFilter, ProgramIndicatorFilter, ProgramIndicatorRepository,
+    ProgramRepository, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
     RequisitionType,
 };
@@ -139,6 +142,100 @@ pub fn check_exceeded_max_orders_for_period(
     }
 }
 
+/// Expand `program_indicator_ids` to include indicators from all programs
+/// sharing the same `elmis_code`. Deployments can split a single
+/// logical program across multiple programs per facility level (customer vs
+/// district) sharing an `elmis_code`; indicators need to aggregate across
+/// them. Falls back to the input IDs when no `elmis_code` is set.
+pub(crate) fn related_program_indicator_ids(
+    connection: &StorageConnection,
+    program_indicator_ids: &[String],
+) -> Result<Vec<String>, RepositoryError> {
+    if program_indicator_ids.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let own_pis = ProgramIndicatorRepository::new(connection).query_by_filter(
+        ProgramIndicatorFilter::new().id(EqualFilter::equal_any(program_indicator_ids.to_vec())),
+    )?;
+    let program_ids: Vec<String> = own_pis
+        .iter()
+        .map(|pi| pi.program_id.clone())
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    let elmis_codes: Vec<String> = ProgramRepository::new(connection)
+        .query_by_filter(ProgramFilter::new().id(EqualFilter::equal_any(program_ids)))?
+        .into_iter()
+        .filter_map(|p| p.elmis_code.filter(|c| !c.is_empty()))
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    if elmis_codes.is_empty() {
+        return Ok(program_indicator_ids.to_vec());
+    }
+
+    let related_program_ids: Vec<String> = ProgramRepository::new(connection)
+        .query_by_filter(ProgramFilter::new().elmis_code(EqualFilter::equal_any(elmis_codes)))?
+        .into_iter()
+        .map(|p| p.id)
+        .collect();
+
+    let related_pi_ids: Vec<String> = ProgramIndicatorRepository::new(connection)
+        .query_by_filter(
+            ProgramIndicatorFilter::new().program_id(EqualFilter::equal_any(related_program_ids)),
+        )?
+        .into_iter()
+        .map(|pi| pi.id)
+        .collect();
+
+    Ok(if related_pi_ids.is_empty() {
+        program_indicator_ids.to_vec()
+    } else {
+        related_pi_ids
+    })
+}
+
+/// Lines and columns across all program indicators related (by `elmis_code`)
+/// to the given starting program_indicator_ids, with mappings from any matched
+/// row's `id` back to its identity key (`code` for lines, `(header, column_number)`
+/// for columns). Used to match customer indicator values across programs.
+pub(crate) struct RelatedIndicatorSchema {
+    pub lines: Vec<IndicatorLineRow>,
+    pub columns: Vec<IndicatorColumnRow>,
+    pub line_id_to_code: HashMap<String, String>,
+    pub column_id_to_key: HashMap<String, (String, i32)>,
+}
+
+pub(crate) fn related_indicator_schema(
+    connection: &StorageConnection,
+    program_indicator_ids: &[String],
+) -> Result<RelatedIndicatorSchema, RepositoryError> {
+    let expanded_pi_ids = related_program_indicator_ids(connection, program_indicator_ids)?;
+    let lines =
+        IndicatorLineRowRepository::new(connection).find_many_by_indicator_ids(&expanded_pi_ids)?;
+    let columns = IndicatorColumnRowRepository::new(connection)
+        .find_many_by_indicator_ids(&expanded_pi_ids)?;
+
+    let line_id_to_code = lines
+        .iter()
+        .map(|l| (l.id.clone(), l.code.clone()))
+        .collect();
+    let column_id_to_key = columns
+        .iter()
+        .map(|c| (c.id.clone(), (c.header.clone(), c.column_number)))
+        .collect();
+
+    Ok(RelatedIndicatorSchema {
+        lines,
+        columns,
+        line_id_to_code,
+        column_id_to_key,
+    })
+}
+
 pub(crate) fn indicator_value_type<'a>(
     line: &'a IndicatorLineRow,
     column: &'a IndicatorColumnRow,
@@ -190,4 +287,240 @@ pub(crate) fn get_indicative_price_pref(
             msg: "Could not load showIndicativePriceInRequisitions store preference".to_string(),
             extra: e.to_string(),
         })
+}
+
+#[cfg(test)]
+mod test_related_program_indicators {
+    use super::*;
+    use repository::{
+        mock::{context_program_a, MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        IndicatorColumnRow, IndicatorLineRow, ProgramIndicatorRow, ProgramRow,
+    };
+
+    // Two programs that share an elmis_code (e.g. CS + DISTRICT facility levels
+    // of the same logical program), each with its own program_indicator.
+    fn program_cs() -> ProgramRow {
+        ProgramRow {
+            id: "elmis_program_cs".to_string(),
+            master_list_id: None,
+            name: "elmis_program_cs".to_string(),
+            context_id: context_program_a().id,
+            is_immunisation: false,
+            elmis_code: Some("SHARED_ELMIS".to_string()),
+            deleted_datetime: None,
+        }
+    }
+    fn program_district() -> ProgramRow {
+        ProgramRow {
+            id: "elmis_program_district".to_string(),
+            master_list_id: None,
+            name: "elmis_program_district".to_string(),
+            context_id: context_program_a().id,
+            is_immunisation: false,
+            elmis_code: Some("SHARED_ELMIS".to_string()),
+            deleted_datetime: None,
+        }
+    }
+    fn program_unrelated() -> ProgramRow {
+        ProgramRow {
+            id: "elmis_program_unrelated".to_string(),
+            master_list_id: None,
+            name: "elmis_program_unrelated".to_string(),
+            context_id: context_program_a().id,
+            is_immunisation: false,
+            elmis_code: Some("OTHER_ELMIS".to_string()),
+            deleted_datetime: None,
+        }
+    }
+    fn pi_cs() -> ProgramIndicatorRow {
+        ProgramIndicatorRow {
+            id: "pi_cs".to_string(),
+            program_id: program_cs().id,
+            code: Some("pi_cs".to_string()),
+            is_active: true,
+        }
+    }
+    fn pi_district() -> ProgramIndicatorRow {
+        ProgramIndicatorRow {
+            id: "pi_district".to_string(),
+            program_id: program_district().id,
+            code: Some("pi_district".to_string()),
+            is_active: true,
+        }
+    }
+    fn pi_unrelated() -> ProgramIndicatorRow {
+        ProgramIndicatorRow {
+            id: "pi_unrelated".to_string(),
+            program_id: program_unrelated().id,
+            code: Some("pi_unrelated".to_string()),
+            is_active: true,
+        }
+    }
+    fn line_cs() -> IndicatorLineRow {
+        IndicatorLineRow {
+            id: "line_cs".to_string(),
+            code: "SHARED_CODE".to_string(),
+            program_indicator_id: pi_cs().id,
+            line_number: 0,
+            description: "CS line".to_string(),
+            value_type: Some(repository::IndicatorValueType::Number),
+            default_value: "0".to_string(),
+            is_required: false,
+            is_active: true,
+        }
+    }
+    fn line_district() -> IndicatorLineRow {
+        IndicatorLineRow {
+            id: "line_district".to_string(),
+            code: "SHARED_CODE".to_string(),
+            program_indicator_id: pi_district().id,
+            line_number: 0,
+            description: "District line".to_string(),
+            value_type: Some(repository::IndicatorValueType::Number),
+            default_value: "0".to_string(),
+            is_required: false,
+            is_active: true,
+        }
+    }
+    fn col_cs() -> IndicatorColumnRow {
+        IndicatorColumnRow {
+            id: "col_cs".to_string(),
+            program_indicator_id: pi_cs().id,
+            column_number: 0,
+            header: "SHARED_HEADER".to_string(),
+            value_type: Some(repository::IndicatorValueType::Number),
+            default_value: "0".to_string(),
+            is_active: true,
+        }
+    }
+    fn col_district() -> IndicatorColumnRow {
+        IndicatorColumnRow {
+            id: "col_district".to_string(),
+            program_indicator_id: pi_district().id,
+            column_number: 0,
+            header: "SHARED_HEADER".to_string(),
+            value_type: Some(repository::IndicatorValueType::Number),
+            default_value: "0".to_string(),
+            is_active: true,
+        }
+    }
+
+    fn test_mock_data() -> MockData {
+        MockData {
+            programs: vec![program_cs(), program_district(), program_unrelated()],
+            program_indicators: vec![pi_cs(), pi_district(), pi_unrelated()],
+            indicator_lines: vec![line_cs(), line_district()],
+            indicator_columns: vec![col_cs(), col_district()],
+            ..Default::default()
+        }
+    }
+
+    #[actix_rt::test]
+    async fn related_program_indicator_ids_empty_input() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "related_program_indicator_ids_empty_input",
+            MockDataInserts::none().contexts().programs(),
+            test_mock_data(),
+        )
+        .await;
+
+        let result = related_program_indicator_ids(&connection, &[]).unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[actix_rt::test]
+    async fn related_program_indicator_ids_expands_via_elmis_code() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "related_program_indicator_ids_expands_via_elmis_code",
+            MockDataInserts::none().contexts().programs(),
+            test_mock_data(),
+        )
+        .await;
+
+        let mut result =
+            related_program_indicator_ids(&connection, &[pi_cs().id]).unwrap();
+        result.sort();
+        assert_eq!(result, vec![pi_cs().id, pi_district().id]);
+
+        // Unrelated PI (different elmis_code) is not pulled in.
+        assert!(!result.contains(&pi_unrelated().id));
+    }
+
+    #[actix_rt::test]
+    async fn related_program_indicator_ids_no_elmis_code_fallback() {
+        // Program with no elmis_code should fall back to returning the input ids.
+        let bare_program = ProgramRow {
+            id: "bare_program".to_string(),
+            master_list_id: None,
+            name: "bare_program".to_string(),
+            context_id: context_program_a().id,
+            is_immunisation: false,
+            elmis_code: None,
+            deleted_datetime: None,
+        };
+        let bare_pi = ProgramIndicatorRow {
+            id: "bare_pi".to_string(),
+            program_id: bare_program.id.clone(),
+            code: None,
+            is_active: true,
+        };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "related_program_indicator_ids_no_elmis_code_fallback",
+            MockDataInserts::none().contexts().programs(),
+            MockData {
+                programs: vec![bare_program],
+                program_indicators: vec![bare_pi.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let result =
+            related_program_indicator_ids(&connection, &[bare_pi.id.clone()]).unwrap();
+        assert_eq!(result, vec![bare_pi.id]);
+    }
+
+    #[actix_rt::test]
+    async fn related_indicator_schema_returns_cross_program_rows_and_mappings() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "related_indicator_schema_returns_cross_program",
+            MockDataInserts::none().contexts().programs(),
+            test_mock_data(),
+        )
+        .await;
+
+        let schema = related_indicator_schema(&connection, &[pi_cs().id]).unwrap();
+
+        // Lines from both CS and DISTRICT PIs.
+        let mut line_ids: Vec<String> = schema.lines.iter().map(|l| l.id.clone()).collect();
+        line_ids.sort();
+        assert_eq!(line_ids, vec![line_cs().id, line_district().id]);
+
+        // Columns from both PIs.
+        let mut col_ids: Vec<String> = schema.columns.iter().map(|c| c.id.clone()).collect();
+        col_ids.sort();
+        assert_eq!(col_ids, vec![col_cs().id, col_district().id]);
+
+        // line_id → code mapping covers both programs; both share the same code.
+        assert_eq!(
+            schema.line_id_to_code.get(&line_cs().id),
+            Some(&"SHARED_CODE".to_string())
+        );
+        assert_eq!(
+            schema.line_id_to_code.get(&line_district().id),
+            Some(&"SHARED_CODE".to_string())
+        );
+
+        // column_id → (header, column_number) mapping covers both programs.
+        assert_eq!(
+            schema.column_id_to_key.get(&col_cs().id),
+            Some(&("SHARED_HEADER".to_string(), 0))
+        );
+        assert_eq!(
+            schema.column_id_to_key.get(&col_district().id),
+            Some(&("SHARED_HEADER".to_string(), 0))
+        );
+    }
 }
