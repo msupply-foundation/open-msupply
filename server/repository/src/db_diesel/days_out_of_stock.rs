@@ -84,7 +84,7 @@ impl<'a> DaysOutOfStockRepository<'a> {
         .as_dos_query()?;
 
         // Debug
-        // println!("{}", diesel::debug_query::<crate::DBType, _>(&dos_query));
+        println!("{}", diesel::debug_query::<crate::DBType, _>(&dos_query));
 
         Ok(dos_query.load::<DaysOutOfStockRow>(self.connection.lock().connection())?)
     }
