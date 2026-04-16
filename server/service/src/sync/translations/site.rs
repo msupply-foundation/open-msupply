@@ -10,7 +10,7 @@ pub struct LegacySiteRow {
     #[serde(rename = "site_ID")]
     pub site_id: i32,
     pub name: String,
-    #[serde(rename = "password")]
+    #[serde(rename = "password_hash")]
     pub hashed_password: String,
     #[serde(rename = "hardwareID")]
     pub hardware_id: Option<String>,
