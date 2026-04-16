@@ -32,19 +32,20 @@ export const useColumnOrder = <T extends MRT_RowData>(
 ) => {
   const globalDefaults = useGlobalTableDefaults(tableId);
   const initial = useMemo(() => {
+    const sorted = [...columns];
     for (const col of columns) {
       // if column has a custom columnIndex, remove it from its current position
       // and insert it at the specified index
       if (col.columnIndex !== undefined) {
-        const currentIndex = columns.indexOf(col);
+        const currentIndex = sorted.indexOf(col);
         if (currentIndex > -1) {
-          columns.splice(currentIndex, 1);
-          columns.splice(col.columnIndex, 0, col);
+          sorted.splice(currentIndex, 1);
+          sorted.splice(col.columnIndex, 0, col);
         }
       }
     }
 
-    return getDefaultColumnOrderIds(columns, enableRowSelection, enableExpanding);
+    return getDefaultColumnOrderIds(sorted, enableRowSelection, enableExpanding);
   }, [columns, enableRowSelection, enableExpanding]);
 
   const [state, setState] = useState<MRT_ColumnOrderState>(
