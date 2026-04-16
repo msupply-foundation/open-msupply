@@ -197,11 +197,24 @@ fn main() -> Result<()> {
                 scenario.name.clone()
             };
 
+            let index_size_mb = if scenario.capture_index_size {
+                match db::get_index_size(&mut conn) {
+                    Ok(bytes) => Some((bytes as f64 / 1_048_576.0 * 100.0).round() / 100.0),
+                    Err(e) => {
+                        eprintln!("    warning: failed to capture index size: {e}");
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+
             results.push(MeasurementPoint {
                 scenario: scenario_label,
                 records_in_db: x_value,
                 batch_durations_us: durations,
                 batch_rows_per_sec: rates,
+                index_size_mb,
             });
 
             // Flush after every measurement so partial runs are not lost.

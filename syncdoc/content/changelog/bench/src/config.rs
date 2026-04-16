@@ -89,6 +89,9 @@ pub struct Scenario {
     pub null_profile: Option<String>,
     /// If set, partition the changelog table by cursor range with this many rows per partition.
     pub partition_size: Option<u64>,
+    /// If true, capture pg_indexes_size for the table after each measurement point.
+    #[serde(default)]
+    pub capture_index_size: bool,
 }
 
 impl Config {

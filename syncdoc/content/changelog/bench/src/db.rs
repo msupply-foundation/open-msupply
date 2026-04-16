@@ -204,3 +204,16 @@ pub fn execute_single_insert(conn: &mut PgConnection, sql: &str) -> Result<()> {
         .context("single-row INSERT failed")?;
     Ok(())
 }
+
+/// Returns the total size of all indexes on the changelog table in bytes.
+pub fn get_index_size(conn: &mut PgConnection) -> Result<i64> {
+    #[derive(QueryableByName)]
+    struct Size {
+        #[diesel(sql_type = diesel::sql_types::BigInt)]
+        size: i64,
+    }
+    let result = sql_query("SELECT pg_indexes_size('changelog') AS size")
+        .get_result::<Size>(conn)
+        .context("failed to query pg_indexes_size")?;
+    Ok(result.size)
+}

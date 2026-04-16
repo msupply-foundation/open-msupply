@@ -58,6 +58,9 @@ pub struct MeasurementPoint {
     pub records_in_db: u64,
     pub batch_durations_us: Vec<u64>,
     pub batch_rows_per_sec: Vec<f64>,
+    /// Total size of indexes on the changelog table in MB (if capture_index_size is enabled).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index_size_mb: Option<f64>,
 }
 
 pub fn save_results(dir: &str, results: &[MeasurementPoint], suffix: Option<&str>) -> anyhow::Result<()> {
