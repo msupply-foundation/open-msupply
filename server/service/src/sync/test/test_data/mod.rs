@@ -67,6 +67,7 @@ pub(crate) mod rnr_form;
 pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
 pub(crate) mod shipping_method;
+pub(crate) mod site;
 pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
@@ -84,8 +85,8 @@ pub(crate) mod user_permission;
 pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
-pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vaccine_course_item;
+pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
@@ -116,6 +117,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut item_warning_join::test_pull_upsert_records());
     test_records.append(&mut clinician::test_pull_upsert_records());
     test_records.append(&mut shipping_method::test_pull_upsert_records());
+    test_records.append(&mut site::test_pull_upsert_records());
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
@@ -203,6 +205,7 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut master_list_name_join::test_pull_delete_records());
     test_records.append(&mut store::test_pull_delete_records());
     test_records.append(&mut unit::test_pull_delete_records());
+    test_records.append(&mut site::test_pull_delete_records());
 
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_delete_records());
