@@ -1,0 +1,14 @@
+{
+  "hostname": "NEW-INSTANCE",
+  "os": "Microsoft Windows Server 2025 Standard (10.0.26100 Build 26100)",
+  "processor": "Intel Xeon Processor (Cascadelake), 2694 MHz, 3 Core(s), 3 Logical Processor(s) (x2)",
+  "ram_installed_gb": 24.0,
+  "ram_total_gb": 24.0,
+  "ram_available_gb": 19.0,
+  "virtual_memory_gb": 27.9,
+  "virtual_memory_available_gb": 23.4,
+  "page_file_space_gb": 3.88,
+  "storage": "\\Device\\HarddiskVolume1",
+  "hypervisor": "OpenStack (detected)",
+  "virtualization_based_security": "Not enabled"
+}
