@@ -1837,7 +1837,7 @@
   "log.volume-per-pack-changed": "د هرې کڅوړې حجم بدل شوی",
   "log.zero-quantities-for-invoice-created-before-store": "د ټولو لینونو مقدار 0 ته ټاکل شوی لکه څنګه چې دا د پلورنځي دمخه رامینځته شوی و.",
   "login.body": "خلاص mSupply ته ښه راغلاست. ستاسو ملګری د روغتیا رسولو ځنځیرونو اداره کولو او د درملو شتون ښه کولو لپاره.",
-  "login.heading": "ساده.\\nځواکمن.\\nدرملتون\\nمدیریت.",
+  "login.heading": "ساده.\nځواکمن.\nدرملتون\nمدیریت.",
   "login.store-changed": "{{store}} پلورنځي ته ښه راغلاست",
   "logout": "وتل",
   "manage": "اداره کول",
