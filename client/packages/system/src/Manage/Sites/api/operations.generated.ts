@@ -21,8 +21,8 @@ export type SitesQuery = {
   __typename: 'Queries';
   centralServer: {
     __typename: 'CentralServerQueryNode';
-    general: {
-      __typename: 'CentralGeneralQueries';
+    site: {
+      __typename: 'CentralSiteQueries';
       sites: {
         __typename: 'SiteConnector';
         totalCount: number;
@@ -45,8 +45,8 @@ export type UpsertSiteMutation = {
   __typename: 'Mutations';
   centralServer: {
     __typename: 'CentralServerMutationNode';
-    general: {
-      __typename: 'CentralGeneralMutations';
+    site: {
+      __typename: 'CentralSiteMutations';
       upsertSite:
         | {
             __typename: 'SiteNode';
@@ -78,7 +78,7 @@ export const SitesDocument = gql`
     $filter: SiteFilterInput
   ) {
     centralServer {
-      general {
+      site {
         sites(
           sort: $sort
           page: { first: $first, offset: $offset }
@@ -101,7 +101,7 @@ export const SitesDocument = gql`
 export const UpsertSiteDocument = gql`
   mutation upsertSite($input: UpsertSiteInput!) {
     centralServer {
-      general {
+      site {
         upsertSite(input: $input) {
           __typename
           ... on SiteNode {

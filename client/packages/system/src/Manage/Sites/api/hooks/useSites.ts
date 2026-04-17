@@ -77,7 +77,7 @@ const useGetList = (queryParams?: ListParams) => {
       filter: filterBy,
     });
     const { nodes, totalCount } =
-      query?.centralServer?.general?.sites ?? { nodes: [], totalCount: 0 };
+      query?.centralServer?.site?.sites ?? { nodes: [], totalCount: 0 };
     return { nodes, totalCount };
   };
 
@@ -106,7 +106,7 @@ const useUpsertSite = () => {
         clearHardwareId: draft.clearHardwareId || undefined,
       },
     });
-    const upsertResult = result?.centralServer?.general?.upsertSite;
+    const upsertResult = result?.centralServer?.site?.upsertSite;
 
     if (upsertResult?.__typename === 'SiteNode') {
       return upsertResult;

@@ -1249,26 +1249,10 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface &
 export type CentralGeneralMutations = {
   __typename: 'CentralGeneralMutations';
   configureNameProperties: ConfigureNamePropertiesResponse;
-  upsertSite: UpsertSiteResponse;
 };
 
 export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
   input: Array<ConfigureNamePropertyInput>;
-};
-
-export type CentralGeneralMutationsUpsertSiteArgs = {
-  input: UpsertSiteInput;
-};
-
-export type CentralGeneralQueries = {
-  __typename: 'CentralGeneralQueries';
-  sites: SitesResponse;
-};
-
-export type CentralGeneralQueriesSitesArgs = {
-  filter?: InputMaybe<SiteFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<SiteSortInput>>;
 };
 
 export type CentralPatientNode = {
@@ -1346,13 +1330,34 @@ export type CentralServerMutationNode = {
   plugins: CentralPluginMutations;
   preferences: PreferenceMutations;
   reports: CentralReportMutations;
+  site: CentralSiteMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
-  general: CentralGeneralQueries;
   plugin: CentralPluginQueries;
+  site: CentralSiteQueries;
+};
+
+export type CentralSiteMutations = {
+  __typename: 'CentralSiteMutations';
+  upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsUpsertSiteArgs = {
+  input: UpsertSiteInput;
+};
+
+export type CentralSiteQueries = {
+  __typename: 'CentralSiteQueries';
+  sites: SitesResponse;
+};
+
+export type CentralSiteQueriesSitesArgs = {
+  filter?: InputMaybe<SiteFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SiteSortInput>>;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
