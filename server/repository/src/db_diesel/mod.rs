@@ -408,9 +408,47 @@ impl From<DieselError> for RepositoryError {
 fn get_connection(
     pool: &Pool<ConnectionManager<DBBackendConnection>>,
 ) -> Result<DBConnection, RepositoryError> {
-    pool.get().map_err(|error| RepositoryError::DBError {
-        msg: "Failed to open Connection".to_string(),
-        extra: format!("{:?}", error),
+    let state = pool.state();
+    let available = state.idle_connections;
+    let total = state.connections;
+    let max = pool.max_size();
+
+    if available == 0 {
+        log::warn!(
+            "DB pool exhausted: {}/{} connections in use, max={}",
+            total - available,
+            total,
+            max,
+        );
+    }
+
+    let start = std::time::Instant::now();
+    let result = pool.get();
+    let wait_ms = start.elapsed().as_millis();
+
+    if wait_ms > 500 {
+        log::warn!(
+            "DB pool: waited {}ms for connection (available={}, total={}, max={})",
+            wait_ms,
+            available,
+            total,
+            max,
+        );
+    }
+
+    result.map_err(|error| {
+        log::error!(
+            "DB pool: failed to get connection after {}ms (available={}, total={}, max={}): {:?}",
+            wait_ms,
+            available,
+            total,
+            max,
+            error,
+        );
+        RepositoryError::DBError {
+            msg: "Failed to open Connection".to_string(),
+            extra: format!("{:?}", error),
+        }
     })
 }
 
