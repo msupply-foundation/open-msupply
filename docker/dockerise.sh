@@ -73,6 +73,42 @@ else
   TARGET_DIR_FLAG=""
 fi
 
+# --- Check for existing tags ---
+
+check_existing_tag() {
+  local CURRENT_TAG="$1"
+  if docker image inspect "$CURRENT_TAG" > /dev/null 2>&1; then
+    echo "" >&2
+    echo "WARNING: Tag '$CURRENT_TAG' already exists locally." >&2
+    TIMESTAMP=$(date +%H-%M-%S)
+    ALT_TAG="${IMAGE}:v${VERSION}-${DATE}_${TIMESTAMP}-${DB}-${ARCH}"
+    if [[ "$CURRENT_TAG" == *-dev ]]; then
+      ALT_TAG="${ALT_TAG}-dev"
+    fi
+    echo "  [1] Continue & overwrite" >&2
+    echo "  [2] Stop script" >&2
+    echo "  [3] Use alternative tag (default: $ALT_TAG)" >&2
+    read -p "Choice [1/2/3]: " TAG_CHOICE
+    case "$TAG_CHOICE" in
+      1) ;; # continue with existing tag
+      2) echo "STOPPED" ; exit 0 ;;
+      3)
+        read -p "Tag name [$ALT_TAG]: " CUSTOM_TAG
+        CURRENT_TAG="${CUSTOM_TAG:-$ALT_TAG}"
+        ;;
+      *) echo "Invalid choice" >&2; exit 1 ;;
+    esac
+  fi
+  echo "$CURRENT_TAG"
+}
+
+TAG=$(check_existing_tag "$TAG")
+if [ "$TAG" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
+if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
+  TAG_DEV=$(check_existing_tag "$TAG_DEV")
+  if [ "$TAG_DEV" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
+fi
+
 echo ""
 echo "=== Build Configuration ==="
 echo "  Architecture: $ARCH"
