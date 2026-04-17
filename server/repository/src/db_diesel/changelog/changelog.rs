@@ -1,22 +1,15 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::{apply_equal_filter, diesel_string_enum},
-    name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
-    LockedConnection, RepositoryError, StorageConnection,
+    db_diesel::store_row::store,
+    diesel_macros::{apply_equal_filter, diesel_bool_enum, diesel_string_enum},
+    name_store_join::name_store_join,
+    vaccination_row::vaccination,
+    DBType, EqualFilter, LockedConnection, RepositoryError, StorageConnection,
 };
-use diesel::{
-    backend::Backend,
-    deserialize::{self, FromSql},
-    helper_types::IntoBoxed,
-    prelude::*,
-    serialize::{self, Output, ToSql},
-    sql_types::Bool,
-};
+use diesel::{helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
-use strum::EnumIter;
 use strum::IntoEnumIterator;
 use ts_rs::TS;
-
 
 table! {
     changelog (cursor) {
@@ -55,37 +48,12 @@ define_sql_function!(
     fn last_insert_rowid() -> BigInt
 );
 
-/// Row action stored as boolean in DB: true = Upsert, false = Delete.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS, AsExpression, FromSqlRow)]
-#[diesel(sql_type = Bool)]
-pub enum RowActionType {
-    #[default]
-    Upsert,
-    Delete,
-}
-
-impl<DB: Backend> ToSql<Bool, DB> for RowActionType
-where
-    bool: ToSql<Bool, DB>,
-{
-    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, DB>) -> serialize::Result {
-        match self {
-            RowActionType::Upsert => true.to_sql(out),
-            RowActionType::Delete => false.to_sql(out),
-        }
-    }
-}
-
-impl<DB: Backend> FromSql<Bool, DB> for RowActionType
-where
-    bool: FromSql<Bool, DB>,
-{
-    fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
-        Ok(if bool::from_sql(bytes)? {
-            RowActionType::Upsert
-        } else {
-            RowActionType::Delete
-        })
+diesel_bool_enum! {
+    #[derive(Clone, Serialize, Deserialize, TS)]
+    pub enum RowActionType {
+        #[default]
+        Upsert,
+        Delete,
     }
 }
 
