@@ -137,7 +137,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
     data: importRows,
     columns,
     enableRowSelection: false,
-    noUrlFiltering: true,
+    localStateOnly: true,
   });
 
   return (
