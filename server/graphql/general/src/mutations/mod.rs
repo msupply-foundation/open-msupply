@@ -1,6 +1,5 @@
 pub mod barcode;
 pub mod common;
-pub mod site;
 pub mod display_settings;
 pub mod initialise_site;
 pub mod insert_insurance;

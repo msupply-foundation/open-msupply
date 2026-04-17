@@ -16,10 +16,7 @@ use diagnosis::diagnoses_active;
 use graphql_core::{pagination::PaginationInput, ContextExt};
 use service::sync::CentralServerConfig;
 
-use crate::{
-    mutations::site::{upsert_site, UpsertSiteInput, UpsertSiteResponse},
-    store_preference::store_preferences,
-};
+use crate::store_preference::store_preferences;
 use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
     MasterListFilterInput, StorePreferenceNode,
@@ -45,7 +42,6 @@ use mutations::{
     },
     update_user,
 };
-use queries::site::{SiteFilterInput, SiteSortInput, SitesResponse};
 use queries::{
     abbreviation::AbbreviationFilterInput,
     currency::currencies,
@@ -721,32 +717,5 @@ impl CentralGeneralMutations {
         input: Vec<ConfigureNamePropertyInput>,
     ) -> Result<ConfigureNamePropertiesResponse> {
         configure_name_properties(ctx, input)
-    }
-
-    pub async fn upsert_site(
-        &self,
-        ctx: &Context<'_>,
-        input: UpsertSiteInput,
-    ) -> Result<UpsertSiteResponse> {
-        upsert_site(ctx, input)
-    }
-}
-
-// Central server only site queries
-#[derive(Default, Clone)]
-pub struct CentralGeneralQueries;
-
-#[Object]
-impl CentralGeneralQueries {
-    pub async fn sites(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<SiteFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated)")] sort: Option<
-            Vec<SiteSortInput>,
-        >,
-    ) -> Result<SitesResponse> {
-        sites(ctx, page, filter, sort)
     }
 }
