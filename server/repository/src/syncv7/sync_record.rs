@@ -8,7 +8,7 @@ diesel_json_type! {
     pub enum SyncError {
         #[error(transparent)]
         DatabaseError(#[from] RepositoryError),
-         #[error("Error while serializing sync record: {0}")]
+        #[error("Error while serializing sync record: {0}")]
         SyncRecordSerializeError(#[from] SyncRecordSerializeError),
         #[error("Record not found with id '{id}' in table '{table:?}'")]
         RecordNotFound {

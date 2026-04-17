@@ -78,7 +78,7 @@ export const Toolbar: FC = () => {
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReference}
+                  value={theirReference ?? ''}
                   onChange={event => {
                     update({ theirReference: event.target.value });
                   }}

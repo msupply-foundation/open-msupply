@@ -74,11 +74,13 @@ const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { logout } = useAuthContext();
   const data = useInitialisationStatus(false, true);
 
-  // Technically this should not fire before query is loaded because we are doing suspense
-  if (data?.data?.status == InitialisationStatusType.Initialised)
+  // Query still loading — don't render children yet, but don't logout either
+  if (!data?.data) return null;
+
+  if (data.data.status == InitialisationStatusType.Initialised)
     return children;
 
-  // Clear token
+  // Server is not initialised — clear token
   logout();
 
   return null;
@@ -184,7 +186,8 @@ const Host = () => (
                       </PreInit>
                       <ConfirmationModalProvider>
                         <AlertModalProvider>
-                          <RouterProvider router={router} />
+                          {/* eslint-disable-next-line camelcase */}
+                          <RouterProvider router={router} future={{ v7_startTransition: true }} />
                         </AlertModalProvider>
                       </ConfirmationModalProvider>
                     </AuthProvider>

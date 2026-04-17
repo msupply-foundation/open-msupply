@@ -5,9 +5,11 @@ import {
   ColumnType,
   CurrencyValueCell,
   Currencies,
+  NumUtils,
   PurchaseOrderLineStatusNode,
   getLinesFromRow,
   TextWithTooltipCell,
+  useCurrency,
   useFormatCurrency,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -19,6 +21,7 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
   const t = useTranslation();
   const currency = currencyCode as Currencies | undefined;
   const formatCurrency = useFormatCurrency(currency);
+  const { options: currencyOptions } = useCurrency(currency);
   const { getError } = usePurchaseOrderLineErrorContext();
   const lineStatusTranslator = useCallback(
     (status: PurchaseOrderLineStatusNode) =>
@@ -111,28 +114,32 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
         accessorKey: 'totalCost',
         header: t('label.line-cost'),
         columnType: ColumnType.Currency,
-        Cell: props => (
-          <CurrencyValueCell {...props} currencyCode={currency} />
-        ),
+        Cell: props => <CurrencyValueCell {...props} currencyCode={currency} />,
         accessorFn: row => {
           const units =
             row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits ?? 0;
           const packSize = row.requestedPackSize || 1;
-          return (row.pricePerPackAfterDiscount ?? 0) * (units / packSize);
+          return NumUtils.round(
+            (row.pricePerPackAfterDiscount ?? 0) * (units / packSize),
+            currencyOptions.precision
+          );
         },
         Footer: ({ table }) => {
-          const total = table.getFilteredRowModel().rows.reduce((sum, row) => {
-            const { original } = row;
-            const units =
-              original.adjustedNumberOfUnits ??
-              original.requestedNumberOfUnits ??
-              0;
-            const packSize = original.requestedPackSize || 1;
-            return (
-              sum +
-              (original.pricePerPackAfterDiscount ?? 0) * (units / packSize)
-            );
-          }, 0);
+          const total = NumUtils.round(
+            table.getFilteredRowModel().rows.reduce((sum, row) => {
+              const { original } = row;
+              const units =
+                original.adjustedNumberOfUnits ??
+                original.requestedNumberOfUnits ??
+                0;
+              const packSize = original.requestedPackSize || 1;
+              return (
+                sum +
+                (original.pricePerPackAfterDiscount ?? 0) * (units / packSize)
+              );
+            }, 0),
+            currencyOptions.precision
+          );
           return (
             <Box sx={{ textAlign: 'right', width: '100%' }}>
               {formatCurrency(total)}
@@ -152,5 +159,11 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
       },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getError, lineStatusTranslator, currencyCode, formatCurrency]);
+  }, [
+    getError,
+    lineStatusTranslator,
+    currencyCode,
+    formatCurrency,
+    currencyOptions,
+  ]);
 };

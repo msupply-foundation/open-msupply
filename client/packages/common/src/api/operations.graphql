@@ -11,3 +11,10 @@ query migrationStatus {
     version
   }
 }
+
+subscription initialisationStatusUpdated {
+  initialisationStatusUpdated {
+    status
+    siteName
+  }
+}
