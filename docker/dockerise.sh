@@ -1,4 +1,14 @@
 #!/bin/bash
+#
+# Interactive Docker image build script for Open mSupply.
+# Guides the user through building images for different architectures
+# (amd64/arm64) and database backends (SQLite/Postgres).
+#
+# Usage: yarn dockerise
+# Docs:  docs/content/docker/_index.md
+#
+# Authored by Claude Code (claude.ai/code)
+
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
