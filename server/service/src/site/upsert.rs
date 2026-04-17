@@ -40,11 +40,10 @@ impl From<RepositoryError> for UpsertSiteError {
 
 fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), UpsertSiteError> {
     match (&input.password, existing) {
-        (Some(pw), _) if pw.trim().is_empty() => return Err(UpsertSiteError::PasswordRequired),
-        (None, None) => return Err(UpsertSiteError::PasswordRequired),
-        _ => {}
+        (Some(pw), _) if pw.trim().is_empty() => Err(UpsertSiteError::PasswordRequired),
+        (None, None) => Err(UpsertSiteError::PasswordRequired),
+        _ => Ok(()),
     }
-    Ok(())
 }
 
 fn generate(
