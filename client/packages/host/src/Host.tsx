@@ -188,8 +188,7 @@ const Host = () => (
                       </PreInit>
                       <ConfirmationModalProvider>
                         <AlertModalProvider>
-                          {/* eslint-disable-next-line camelcase */}
-                          <RouterProvider router={router} future={{ v7_startTransition: true }} />
+                          <RouterProvider router={router} />
                         </AlertModalProvider>
                       </ConfirmationModalProvider>
                     </AuthProvider>
