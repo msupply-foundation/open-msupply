@@ -7,6 +7,7 @@ import {
   MaterialTable,
   ColumnDef,
 } from '@openmsupply-client/common';
+import { Toolbar } from './Toolbar';
 import {
   SiteRowFragment,
   DraftSite,
@@ -79,6 +80,7 @@ export const SitesList = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       <MaterialTable table={table} />
     </>
   );
