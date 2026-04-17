@@ -1,7 +1,47 @@
 use async_graphql::*;
-use graphql_core::generic_filters::{EqualFilterNumberInput, StringFilterInput};
-use repository::{EqualFilter, SiteFilter, SiteRow, SiteSort, SiteSortField, StringFilter};
-use service::ListResult;
+use graphql_core::{
+    generic_filters::{EqualFilterNumberInput, StringFilterInput},
+    pagination::PaginationInput,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
+use repository::{
+    EqualFilter, PaginationOption, SiteFilter, SiteRow, SiteSort, SiteSortField, StringFilter,
+};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    ListResult,
+};
+
+pub fn sites(
+    ctx: &Context<'_>,
+    page: Option<PaginationInput>,
+    filter: Option<SiteFilterInput>,
+    sort: Option<Vec<SiteSortInput>>,
+) -> Result<SitesResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateSites,
+            store_id: None,
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.basic_context()?;
+
+    let result = service_provider
+        .site_service
+        .get_sites(
+            &service_context,
+            page.map(PaginationOption::from),
+            filter.map(|f| f.into()),
+            sort.and_then(|mut s| s.pop()).map(|s| s.to_domain()),
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(SitesResponse::Response(SiteConnector::from_domain(result)))
+}
 
 pub struct SiteNode {
     pub site: SiteRow,
