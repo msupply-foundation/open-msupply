@@ -48,48 +48,41 @@ const StyledConnector = styled(StepConnector)(({ theme }) => ({
   },
 }));
 
-const Circle = (props: StepIconProps) => {
-  const { active, completed, ...rest } = props;
-  {
-    // Base colours for all uncompleted and non-active steps.
-    const colors = {
-      borderColor: 'gray.pale',
-      backgroundColor: 'gray.pale',
-    };
+const Circle = ({ active, completed }: StepIconProps) => {
+  // Base colours for all uncompleted and non-active steps.
+  const colors = {
+    borderColor: 'gray.pale',
+    backgroundColor: 'gray.pale',
+  };
 
-    // If the step is completed, then everything is light.
-    if (completed) {
-      colors.backgroundColor = 'secondary.light';
-      colors.borderColor = 'secondary.light';
-    }
-
-    // If the step is active, the center of the circle is white
-    if (active) {
-      colors.backgroundColor = 'white';
-    }
-
-    // 'error' isn't a valid attribute for a div component
-    delete rest.error;
-
-    return (
-      <Box
-        sx={{
-          border: 'solid',
-
-          // These numbers are arbitrary and are just what look good to me.
-          // our designs have the circle icon at 16px - with the border I
-          // believe this is 15px.. either 4px on the border or 13px on the
-          // dimensions and it looks a bit off.. maybe this isn't how it works.
-          borderWidth: '4px',
-          width: '16px',
-          height: '16px',
-          borderRadius: '16px',
-          ...colors,
-        }}
-        {...rest}
-      />
-    );
+  // If the step is completed, then everything is light.
+  if (completed) {
+    colors.backgroundColor = 'secondary.light';
+    colors.borderColor = 'secondary.light';
   }
+
+  // If the step is active, the center of the circle is white
+  if (active) {
+    colors.backgroundColor = 'white';
+  }
+
+  return (
+    <Box
+      sx={{
+        border: 'solid',
+
+        // These numbers are arbitrary and are just what look good to me.
+        // our designs have the circle icon at 16px - with the border I
+        // believe this is 15px.. either 4px on the border or 13px on the
+        // dimensions and it looks a bit off.. maybe this isn't how it works.
+        borderWidth: '4px',
+        width: '16px',
+        height: '16px',
+        borderRadius: '16px',
+        ...colors,
+      }}
+    />
+  );
 };
 
 export const VerticalStepper: FC<StepperProps> = ({ activeStep, steps }) => (
