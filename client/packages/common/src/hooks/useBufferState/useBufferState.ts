@@ -1,11 +1,17 @@
 import { useState, useRef, Dispatch, SetStateAction } from 'react';
 
+type HasId = { id: string } | null | undefined;
+
+const isHasId = (value: unknown): value is { id: string } =>
+  value != null && typeof value === 'object' && 'id' in value;
+
 // Uses Object.is for comparison — which checks by value for primitives
-// and by reference for objects, with special handling for Dates.
+// and by reference for objects, with special handling for Dates and { id } objects.
 const defaultIsEqual = <T>(a: T, b: T): boolean => {
   if (Object.is(a, b)) return true;
   if (a instanceof Date && b instanceof Date)
     return a.getTime() === b.getTime();
+  if (isHasId(a) && isHasId(b)) return a.id === b.id;
   return false;
 };
 
@@ -21,16 +27,20 @@ type IsEqual<T> = (a: T, b: T) => boolean;
 // was initially mounted with. If you can, try to avoid using this hook and find a different way
 // but if there isn't one, here you go!
 
-// isEqual is optional for primitives and Dates (defaultIsEqual handles these
-// safely). For object types, isEqual is required — omitting it would cause
+// isEqual is optional for primitives, Dates, and objects with an `id` field
+// (defaultIsEqual handles primitives/Dates; objectMatchById handles { id }).
+// For other object types, isEqual is required — omitting it would cause
 // reference-equality checks that lead to unnecessary re-syncs or infinite
 // loops when the parent re-renders.
 type OptionalIsEqual<T> = [isEqual?: IsEqual<T>];
 type RequiredIsEqual<T> = [isEqual: IsEqual<T>];
 
+export const objectMatchById = <T extends HasId>(a: T, b: T): boolean =>
+  a?.id === b?.id;
+
 export function useBufferState<T>(
   value: T,
-  ...[isEqual]: [T] extends [Primitive | Date]
+  ...[isEqual]: [T] extends [Primitive | Date | HasId]
     ? OptionalIsEqual<T>
     : RequiredIsEqual<T>
 ): [T, Dispatch<SetStateAction<T>>] {

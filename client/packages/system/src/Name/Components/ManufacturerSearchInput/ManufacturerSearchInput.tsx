@@ -27,7 +27,7 @@ export const ManufacturerSearchInput = ({
 }) => {
   const t = useTranslation();
   const { data, isLoading } = useName.document.manufacturers();
-  const [buffer, setBuffer] = useBufferState(value, (a, b) => a?.id === b?.id);
+  const [buffer, setBuffer] = useBufferState(value);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (

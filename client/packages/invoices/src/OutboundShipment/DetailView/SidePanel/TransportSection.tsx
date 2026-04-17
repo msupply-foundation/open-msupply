@@ -26,10 +26,8 @@ export const TransportSectionComponent = () => {
   const [referenceBuffer, setReferenceBuffer] = useBufferState(
     transportReference ?? ''
   );
-  const [shippingMethodBuffer, setShippingMethodBuffer] = useBufferState(
-    shippingMethod,
-    (a, b) => a?.id === b?.id
-  );
+  const [shippingMethodBuffer, setShippingMethodBuffer] =
+    useBufferState(shippingMethod);
 
   return (
     <DetailPanelSection title={t('heading.transport-details')}>
