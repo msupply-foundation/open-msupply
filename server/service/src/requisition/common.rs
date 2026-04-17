@@ -146,7 +146,8 @@ pub fn check_exceeded_max_orders_for_period(
 /// sharing the same `elmis_code`. Deployments can split a single
 /// logical program across multiple programs per facility level (customer vs
 /// district) sharing an `elmis_code`; indicators need to aggregate across
-/// them. Falls back to the input IDs when no `elmis_code` is set.
+/// them. Input PIs whose program has no `elmis_code` are preserved as-is
+/// (they can't be expanded, but we don't want to drop them).
 pub(crate) fn related_program_indicator_ids(
     connection: &StorageConnection,
     program_indicator_ids: &[String],
@@ -165,10 +166,12 @@ pub(crate) fn related_program_indicator_ids(
         .into_iter()
         .collect();
 
-    let elmis_codes: Vec<String> = ProgramRepository::new(connection)
-        .query_by_filter(ProgramFilter::new().id(EqualFilter::equal_any(program_ids)))?
-        .into_iter()
-        .filter_map(|p| p.elmis_code.filter(|c| !c.is_empty()))
+    let programs = ProgramRepository::new(connection)
+        .query_by_filter(ProgramFilter::new().id(EqualFilter::equal_any(program_ids)))?;
+
+    let elmis_codes: Vec<String> = programs
+        .iter()
+        .filter_map(|p| p.elmis_code.clone().filter(|c| !c.is_empty()))
         .collect::<HashSet<_>>()
         .into_iter()
         .collect();
@@ -177,24 +180,36 @@ pub(crate) fn related_program_indicator_ids(
         return Ok(program_indicator_ids.to_vec());
     }
 
+    let programs_without_elmis: HashSet<String> = programs
+        .iter()
+        .filter(|p| p.elmis_code.as_deref().unwrap_or("").is_empty())
+        .map(|p| p.id.clone())
+        .collect();
+    let preserved_input_pis: HashSet<String> = own_pis
+        .iter()
+        .filter(|pi| programs_without_elmis.contains(&pi.program_id))
+        .map(|pi| pi.id.clone())
+        .collect();
+
     let related_program_ids: Vec<String> = ProgramRepository::new(connection)
         .query_by_filter(ProgramFilter::new().elmis_code(EqualFilter::equal_any(elmis_codes)))?
         .into_iter()
         .map(|p| p.id)
         .collect();
 
-    let related_pi_ids: Vec<String> = ProgramIndicatorRepository::new(connection)
+    let mut related_pi_ids: HashSet<String> = ProgramIndicatorRepository::new(connection)
         .query_by_filter(
             ProgramIndicatorFilter::new().program_id(EqualFilter::equal_any(related_program_ids)),
         )?
         .into_iter()
         .map(|pi| pi.id)
         .collect();
+    related_pi_ids.extend(preserved_input_pis);
 
     Ok(if related_pi_ids.is_empty() {
         program_indicator_ids.to_vec()
     } else {
-        related_pi_ids
+        related_pi_ids.into_iter().collect()
     })
 }
 
@@ -445,6 +460,46 @@ mod test_related_program_indicators {
 
         // Unrelated PI (different elmis_code) is not pulled in.
         assert!(!result.contains(&pi_unrelated().id));
+    }
+
+    #[actix_rt::test]
+    async fn related_program_indicator_ids_mixed_preserves_non_elmis_input() {
+        // Input mixes a PI whose program has an elmis_code with one whose
+        // program doesn't. The non-elmis input must be preserved alongside
+        // the elmis_code expansion, not silently dropped.
+        let bare_program = ProgramRow {
+            id: "bare_program".to_string(),
+            master_list_id: None,
+            name: "bare_program".to_string(),
+            context_id: context_program_a().id,
+            is_immunisation: false,
+            elmis_code: None,
+            deleted_datetime: None,
+        };
+        let bare_pi = ProgramIndicatorRow {
+            id: "bare_pi".to_string(),
+            program_id: bare_program.id.clone(),
+            code: None,
+            is_active: true,
+        };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "related_program_indicator_ids_mixed_preserves_non_elmis_input",
+            MockDataInserts::none().contexts().programs(),
+            MockData {
+                programs: vec![program_cs(), program_district(), bare_program],
+                program_indicators: vec![pi_cs(), pi_district(), bare_pi.clone()],
+                indicator_lines: vec![line_cs(), line_district()],
+                indicator_columns: vec![col_cs(), col_district()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let mut result =
+            related_program_indicator_ids(&connection, &[pi_cs().id, bare_pi.id.clone()]).unwrap();
+        result.sort();
+        assert_eq!(result, vec![bare_pi.id, pi_cs().id, pi_district().id]);
     }
 
     #[actix_rt::test]

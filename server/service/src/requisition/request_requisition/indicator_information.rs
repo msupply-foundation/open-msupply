@@ -77,6 +77,10 @@ pub fn get_indicator_information(
     // Map (header, column_number) -> requested column_id. The frontend joins
     // column values by the requested (district) column_id, so values from
     // customer programs need to be remapped onto the requested IDs.
+    // Assumes (header, column_number) is unique within the requesting
+    // program's indicator columns — if duplicates exist, the HashMap insert
+    // will keep only one column id per key and remapped values will collapse
+    // onto the survivor.
     let own_pi_id_set: std::collections::HashSet<&str> =
         own_pi_ids.iter().map(String::as_str).collect();
     let requested_column_key_to_id: HashMap<(String, i32), String> = schema
