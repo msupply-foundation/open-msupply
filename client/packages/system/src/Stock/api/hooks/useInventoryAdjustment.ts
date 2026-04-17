@@ -38,6 +38,10 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
       return 'error.reduced-below-zero';
     }
 
+    if (adjustmentError.__typename === 'LedgerWouldGoBelowZero') {
+      return 'error.ledger-would-go-below-zero';
+    }
+
     if (adjustmentError.__typename === 'AdjustmentReasonNotProvided') {
       return 'error.provide-reason-stock-adjustment';
     }

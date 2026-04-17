@@ -41,7 +41,7 @@ pub enum InsertInventoryAdjustmentError {
     BackdatingNotEnabled,
     CannotSetDateInFuture,
     ExceedsMaximumBackdatingDays,
-    LedgerGoesBelowZero,
+    LedgerGoesBelowZero(StockLine),
     NewlyCreatedInvoiceDoesNotExist,
     PreferenceError(String),
     DatabaseError(RepositoryError),
@@ -508,7 +508,7 @@ mod test {
         // Min available across timeline with 5-pack reduction:
         // current=2, walk back: undo 8-pack outbound → 10, that's the historical value.
         // Min is min(2, 10) = 2. So 2 - 5 < 0 → LedgerGoesBelowZero
-        assert_eq!(
+        assert!(matches!(
             service.insert_inventory_adjustment(
                 &context,
                 InsertInventoryAdjustment {
@@ -519,8 +519,8 @@ mod test {
                     ..Default::default()
                 }
             ),
-            Err(ServiceError::LedgerGoesBelowZero)
-        );
+            Err(ServiceError::LedgerGoesBelowZero(_))
+        ));
 
         // With 1-pack reduction: min=2, 2 - 1 >= 0 → success
         let result = service.insert_inventory_adjustment(
