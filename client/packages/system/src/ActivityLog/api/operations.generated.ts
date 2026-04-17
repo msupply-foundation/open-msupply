@@ -16,6 +16,7 @@ export type ActivityLogRowFragment = {
 };
 
 export type ActivityLogsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   sort?: Types.InputMaybe<
@@ -59,12 +60,14 @@ export const ActivityLogRowFragmentDoc = gql`
 `;
 export const ActivityLogsDocument = gql`
   query activityLogs(
+    $storeId: String!
     $first: Int
     $offset: Int
     $sort: [ActivityLogSortInput!]
     $filter: ActivityLogFilterInput
   ) {
     activityLogs(
+      storeId: $storeId
       filter: $filter
       page: { first: $first, offset: $offset }
       sort: $sort

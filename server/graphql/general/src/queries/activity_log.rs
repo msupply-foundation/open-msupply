@@ -60,6 +60,7 @@ pub enum ActivityLogResponse {
 
 pub fn activity_logs(
     ctx: &Context<'_>,
+    store_id: String,
     page: Option<PaginationInput>,
     filter: Option<ActivityLogFilterInput>,
     sort: Option<Vec<ActivityLogSortInput>>,
@@ -68,7 +69,7 @@ pub fn activity_logs(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryLog,
-            store_id: None,
+            store_id: Some(store_id),
         },
     )?;
 
