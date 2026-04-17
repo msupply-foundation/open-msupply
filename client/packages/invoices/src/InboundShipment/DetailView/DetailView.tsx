@@ -17,7 +17,6 @@ import {
   NothingHere,
   MaterialTable,
   InvoiceLineStatusType,
-  Formatter,
   useAppTheme,
   useIsExtraSmallScreen,
   CardList,
@@ -401,22 +400,23 @@ const DetailViewInner = () => {
 
 export const useInvoiceLineStatusMap = () => {
   const theme = useAppTheme();
+  const t = useTranslation();
   return useMemo(
     () => ({
       [InvoiceLineStatusType.Passed]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Passed),
+        label: t('label.approved'),
         colour: theme.palette.invoiceLineStatus.passed,
       },
       [InvoiceLineStatusType.Pending]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Pending),
+        label: t('label.pending'),
         colour: theme.palette.invoiceLineStatus.pending,
       },
       [InvoiceLineStatusType.Rejected]: {
-        label: Formatter.enumCase(InvoiceLineStatusType.Rejected),
+        label: t('label.rejected'),
         colour: theme.palette.invoiceLineStatus.rejected,
       },
     }),
-    [theme]
+    [theme, t]
   );
 };
 
