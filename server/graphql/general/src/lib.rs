@@ -3,12 +3,14 @@ mod mutations;
 mod queries;
 mod subscriptions;
 mod sync_api_error;
+mod sync_v7;
 pub mod types;
 
 use std::collections::HashMap;
 
 pub use self::queries::sync_status::*;
 pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
+pub use self::sync_v7::sync_status::FullSyncStatusV7Node;
 use self::queries::*;
 
 use abbreviation::abbreviations;
@@ -292,6 +294,13 @@ impl GeneralQueries {
         ctx: &Context<'_>,
     ) -> Result<Option<FullSyncStatusNode>> {
         latest_sync_status(ctx, true)
+    }
+
+    pub async fn latest_sync_status_v7(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<FullSyncStatusV7Node>> {
+        sync_v7::sync_status::latest_sync_status_v7(ctx, true)
     }
 
     pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
@@ -648,6 +657,13 @@ impl InitialisationQueries {
         ctx: &Context<'_>,
     ) -> Result<Option<FullSyncStatusNode>> {
         latest_sync_status(ctx, false)
+    }
+
+    pub async fn latest_sync_status_v7(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<FullSyncStatusV7Node>> {
+        sync_v7::sync_status::latest_sync_status_v7(ctx, false)
     }
 
     /// Available without authorisation in all states

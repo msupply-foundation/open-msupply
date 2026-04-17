@@ -6,10 +6,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync::sync_status::{
-        status::{FullSyncStatus, SyncStatus, SyncStatusWithProgress},
-        SyncStatusLogError,
-    },
+    sync::sync_status::status::{FullSyncStatus, SyncStatus, SyncStatusWithProgress},
 };
 
 use crate::sync_api_error::SyncErrorNode;
@@ -73,10 +70,8 @@ pub struct FullSyncStatusNode {
     pull_central: Option<SyncStatusWithProgressNode>,
     pull_v6: Option<SyncStatusWithProgressNode>,
     pull_remote: Option<SyncStatusWithProgressNode>,
-    pull: Option<SyncStatusWithProgressNode>,
     push: Option<SyncStatusWithProgressNode>,
     push_v6: Option<SyncStatusWithProgressNode>,
-    waiting_for_integration: Option<SyncStatusNode>,
     last_successful_sync: Option<SyncStatusNode>,
     warning_threshold: i64,
     error_threshold: i64,
@@ -101,20 +96,15 @@ impl FullSyncStatusNode {
 
         FullSyncStatusNode {
             is_syncing: status.is_syncing,
-            error: status.error.map(|e| match e {
-                SyncStatusLogError::V5(e) => SyncErrorNode::from_sync_log_error(e),
-                SyncStatusLogError::V7(e) => SyncErrorNode::from_sync_log_error_v7(e),
-            }),
+            error: status.error.map(SyncErrorNode::from_sync_log_error),
             summary: to_node(status.summary),
             prepare_initial: status.prepare_initial.map(&to_node),
             integration: status.integration.map(&to_progress_node),
             pull_central: status.pull_central.map(&to_progress_node),
             pull_remote: status.pull_remote.map(&to_progress_node),
-            pull: status.pull.map(&to_progress_node),
             push: status.push.map(&to_progress_node),
             pull_v6: status.pull_v6.map(&to_progress_node),
             push_v6: status.push_v6.map(to_progress_node),
-            waiting_for_integration: status.waiting_for_integration.map(&to_node),
             last_successful_sync: last_successful_sync.map(|s| to_node(s.summary)),
             warning_threshold: 1,
             error_threshold: 3,
