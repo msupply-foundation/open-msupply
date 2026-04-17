@@ -1,4 +1,4 @@
-use repository::{syncv7::SyncError as SyncLogErrorV7, SyncApiErrorCode};
+use repository::SyncApiErrorCode;
 
 pub mod logger;
 pub mod status;
@@ -13,10 +13,4 @@ mod test;
 pub struct SyncLogError {
     pub message: String,
     pub code: Option<SyncApiErrorCode>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum SyncStatusLogError {
-    V5(SyncLogError),
-    V7(SyncLogErrorV7),
 }

@@ -1,8 +1,7 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    dynamic_query_filter::FilterBuilder, ChangelogRepository, Condition, DatetimeFilter,
-    EqualFilter, KeyType, Pagination, RepositoryError, Sort, SyncLogFilter, SyncLogRepository,
-    SyncLogRow, SyncLogSortField, SyncLogV7Repository, SyncLogV7Row,
+    ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
+    SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 
 use crate::{
@@ -11,9 +10,10 @@ use crate::{
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
     sync::{get_sync_push_changelogs_filter, CentralServerConfig, SyncChangelogError},
+    sync_v7::sync_status::status::{SyncStatusV7Service, SyncStatusV7Trait},
 };
 
-use super::{SyncLogError, SyncStatusLogError};
+use super::SyncLogError;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 
@@ -34,7 +34,7 @@ pub struct SyncStatusWithProgress {
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct FullSyncStatus {
     pub is_syncing: bool,
-    pub error: Option<SyncStatusLogError>,
+    pub error: Option<SyncLogError>,
     pub summary: SyncStatus,
     pub prepare_initial: Option<SyncStatus>,
     pub integration: Option<SyncStatusWithProgress>,
@@ -43,9 +43,6 @@ pub struct FullSyncStatus {
     pub pull_remote: Option<SyncStatusWithProgress>,
     pub push_v6: Option<SyncStatusWithProgress>,
     pub push: Option<SyncStatusWithProgress>,
-    // v7-only fields
-    pub pull: Option<SyncStatusWithProgress>,
-    pub waiting_for_integration: Option<SyncStatus>,
 }
 
 impl FullSyncStatus {
@@ -93,7 +90,7 @@ impl FullSyncStatus {
 
         FullSyncStatus {
             is_syncing: finished_datetime.is_none() && error.is_none(),
-            error: error.map(SyncStatusLogError::V5),
+            error,
             summary: SyncStatus {
                 started: started_datetime,
                 duration_in_seconds,
@@ -140,80 +137,6 @@ impl FullSyncStatus {
                 total: push_v6_progress_total.map(i32_to_u32),
                 done: push_v6_progress_done.map(i32_to_u32),
             }),
-            pull: None,
-            waiting_for_integration: None,
-        }
-    }
-
-    pub fn from_sync_log_v7_row(row: SyncLogV7Row) -> FullSyncStatus {
-        let SyncLogV7Row {
-            id: _,
-            started_datetime,
-            finished_datetime,
-            push_started_datetime,
-            push_finished_datetime,
-            push_progress_total,
-            push_progress_done,
-            wait_for_integration_started_datetime,
-            wait_for_integration_finished_datetime,
-            pull_started_datetime,
-            pull_finished_datetime,
-            pull_progress_total,
-            pull_progress_done,
-            integration_started_datetime,
-            integration_finished_datetime,
-            integration_progress_total,
-            integration_progress_done,
-            error,
-        } = row;
-
-        let error = error.map(SyncStatusLogError::V7);
-
-        FullSyncStatus {
-            is_syncing: finished_datetime.is_none() && error.is_none(),
-            error,
-            summary: SyncStatus {
-                started: started_datetime,
-                duration_in_seconds: finished_datetime
-                    .unwrap_or_else(|| Utc::now().naive_utc())
-                    .signed_duration_since(started_datetime)
-                    .num_seconds() as i32,
-                finished: finished_datetime,
-            },
-            integration: integration_started_datetime.map(|started| SyncStatusWithProgress {
-                started,
-                finished: integration_finished_datetime,
-                total: integration_progress_total.map(i32_to_u32),
-                done: integration_progress_done.map(i32_to_u32),
-            }),
-            waiting_for_integration: wait_for_integration_started_datetime.map(|started| {
-                SyncStatus {
-                    started,
-                    duration_in_seconds: wait_for_integration_finished_datetime
-                        .unwrap_or_else(|| Utc::now().naive_utc())
-                        .signed_duration_since(started)
-                        .num_seconds() as i32,
-                    finished: wait_for_integration_finished_datetime,
-                }
-            }),
-            pull: pull_started_datetime.map(|started| SyncStatusWithProgress {
-                started,
-                finished: pull_finished_datetime,
-                total: pull_progress_total.map(i32_to_u32),
-                done: pull_progress_done.map(i32_to_u32),
-            }),
-            push: push_started_datetime.map(|started| SyncStatusWithProgress {
-                started,
-                finished: push_finished_datetime,
-                total: push_progress_total.map(i32_to_u32),
-                done: push_progress_done.map(i32_to_u32),
-            }),
-            // v5-only fields not applicable to v7
-            prepare_initial: None,
-            pull_central: None,
-            pull_remote: None,
-            pull_v6: None,
-            push_v6: None,
         }
     }
 }
@@ -289,7 +212,7 @@ fn get_initialisation_status(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
     if !CentralServerConfig::is_central_server() {
-        return get_initialisation_status_v7(ctx);
+        return SyncStatusV7Service.get_initialisation_status_v7(ctx);
     }
 
     let sort = Sort {
@@ -329,11 +252,6 @@ fn is_sync_queue_initialised(ctx: &ServiceContext) -> Result<bool, RepositoryErr
 }
 
 fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>, RepositoryError> {
-    if !CentralServerConfig::is_central_server() {
-        return get_latest_sync_status_v7(ctx)
-            .map(|opt| opt.map(FullSyncStatus::from_sync_log_v7_row));
-    }
-
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
@@ -355,11 +273,6 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
 fn get_latest_successful_sync_status(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatus>, RepositoryError> {
-    if !CentralServerConfig::is_central_server() {
-        return get_latest_successful_sync_status_v7(ctx)
-            .map(|opt| opt.map(FullSyncStatus::from_sync_log_v7_row));
-    }
-
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
@@ -431,40 +344,6 @@ impl SyncLogError {
     }
 }
 
-// ---- V7 sync status functions ----
-
-fn get_latest_sync_status_v7(
-    ctx: &ServiceContext,
-) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-    SyncLogV7Repository::new(&ctx.connection).query_one(Condition::TRUE)
-}
-
-fn get_latest_successful_sync_status_v7(
-    ctx: &ServiceContext,
-) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-    SyncLogV7Repository::new(&ctx.connection).query_one(Condition::And(vec![
-        Condition::FinishedDatetime::is_not_null(),
-        Condition::Error::is_null(),
-    ]))
-}
-
-fn get_initialisation_status_v7(
-    ctx: &ServiceContext,
-) -> Result<InitialisationStatus, RepositoryError> {
-    let filter = Condition::And(vec![
-        Condition::FinishedDatetime::is_not_null(),
-        Condition::Error::is_null(),
-    ]);
-
-    match SyncLogV7Repository::new(&ctx.connection).query_one(filter)? {
-        Some(_) => {
-            let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
-            Ok(InitialisationStatus::Initialised(site_name))
-        }
-        None => Ok(InitialisationStatus::PreInitialisation),
-    }
-}
-
 #[cfg(test)]
 mod test {
     use crate::{
@@ -474,7 +353,7 @@ mod test {
     use chrono::Utc;
     use repository::{
         mock::{insert_extra_mock_data, MockData, MockDataInserts},
-        SyncLogRow, SyncLogRowRepository, SyncLogV7Row,
+        SyncLogRow, SyncLogRowRepository,
     };
     use util::assert_matches;
 
@@ -532,97 +411,6 @@ mod test {
                         ..Default::default()
                     },
                 ],
-                ..Default::default()
-            },
-        );
-
-        // Need to add sync settings so that Initialised returns site name
-        service_provider
-            .settings
-            .update_sync_settings(
-                &service_context,
-                &SyncSettings {
-                    username: "site_name".to_string(),
-                    url: "http://test.com".to_string(),
-                    ..SyncSettings::default()
-                },
-            )
-            .unwrap();
-
-        assert_matches!(
-            service_provider
-                .sync_status_service
-                .get_initialisation_status(&service_context),
-            Ok(InitialisationStatus::Initialised(_))
-        );
-    }
-
-    #[actix_rt::test]
-    async fn initialisation_status_v7() {
-        let ServiceTestContext {
-            connection,
-            service_provider,
-            service_context,
-            ..
-        } = setup_all_and_service_provider("initialisation_status_v7", MockDataInserts::none())
-            .await;
-
-        assert_eq!(
-            service_provider
-                .sync_status_service
-                .get_initialisation_status(&service_context),
-            Ok(InitialisationStatus::PreInitialisation)
-        );
-
-        // Incomplete sync — not initialised
-        insert_extra_mock_data(
-            &connection,
-            MockData {
-                sync_logs_v7: vec![SyncLogV7Row {
-                    id: "1".to_string(),
-                    ..Default::default()
-                }],
-                ..Default::default()
-            },
-        );
-
-        assert_eq!(
-            service_provider
-                .sync_status_service
-                .get_initialisation_status(&service_context),
-            Ok(InitialisationStatus::PreInitialisation)
-        );
-
-        // Completed sync with error — not initialised
-        insert_extra_mock_data(
-            &connection,
-            MockData {
-                sync_logs_v7: vec![SyncLogV7Row {
-                    id: "2".to_string(),
-                    finished_datetime: Some(Utc::now().naive_local()),
-                    error: Some(repository::syncv7::SyncError::Other("error".to_string())),
-                    ..Default::default()
-                }],
-                ..Default::default()
-            },
-        );
-
-        assert_eq!(
-            service_provider
-                .sync_status_service
-                .get_initialisation_status(&service_context),
-            Ok(InitialisationStatus::PreInitialisation)
-        );
-
-        // Completed sync without error — initialised
-        insert_extra_mock_data(
-            &connection,
-            MockData {
-                sync_logs_v7: vec![SyncLogV7Row {
-                    id: "3".to_string(),
-                    finished_datetime: Some(Utc::now().naive_local()),
-                    ..Default::default()
-                }],
                 ..Default::default()
             },
         );
