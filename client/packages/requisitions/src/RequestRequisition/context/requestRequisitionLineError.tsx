@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { PropsWithChildrenOnly, RecordWithId } from '@common/types';
 import { RequisitionReasonNotProvidedErrorFragment } from '../api';
 
@@ -16,34 +10,25 @@ const useRequestRequisitionLineErrors = () => {
     [RequestRequisitionLineId: string]: RequestRequisitionLineError | undefined;
   }>({});
 
-  const getError = useCallback(
-    ({
-      id,
-    }: RecordWithId): RequestRequisitionLineError | undefined => {
-      return errors[id];
-    },
-    [errors]
-  );
+  const getError = ({
+    id,
+  }: RecordWithId): RequestRequisitionLineError | undefined => {
+    return errors[id];
+  };
 
-  const setError = useCallback(
-    (id: string, error: RequestRequisitionLineError) => {
-      setErrors(errors => ({ ...errors, [id]: error }));
-    },
-    []
-  );
+  const setError = (id: string, error: RequestRequisitionLineError) => {
+    setErrors(errors => ({ ...errors, [id]: error }));
+  };
 
-  const unsetError = useCallback((id: string) => {
+  const unsetError = (id: string) => {
     setErrors(errors => ({ ...errors, [id]: undefined }));
-  }, []);
+  };
 
-  const unsetAll = useCallback(() => {
+  const unsetAll = () => {
     setErrors({});
-  }, []);
+  };
 
-  return useMemo(
-    () => ({ errors, setError, setErrors, getError, unsetError, unsetAll }),
-    [errors, setError, setErrors, getError, unsetError, unsetAll]
-  );
+  return { errors, setError, setErrors, getError, unsetError, unsetAll };
 };
 
 export type UseRequestRequisitionLineErrors = ReturnType<
