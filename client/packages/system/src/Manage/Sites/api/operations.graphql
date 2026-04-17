@@ -1,0 +1,55 @@
+fragment SiteRow on SiteNode {
+  __typename
+  id
+  name
+  hardwareId
+}
+
+query sites(
+  $sort: [SiteSortInput!]
+  $first: Int
+  $offset: Int
+  $filter: SiteFilterInput
+) {
+  centralServer {
+    general {
+      sites(
+        sort: $sort
+        page: { first: $first, offset: $offset }
+        filter: $filter
+      ) {
+        ... on SiteConnector {
+          __typename
+          totalCount
+          nodes {
+            __typename
+            ...SiteRow
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation upsertSite($input: UpsertSiteInput!) {
+  centralServer {
+    general {
+      upsertSite(input: $input) {
+        __typename
+        ... on SiteNode {
+          ...SiteRow
+        }
+        ... on UpsertSiteError {
+          __typename
+          error {
+            ... on PasswordRequired {
+              __typename
+              description
+            }
+            description
+          }
+        }
+      }
+    }
+  }
+}
