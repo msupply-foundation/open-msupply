@@ -17,7 +17,7 @@ use graphql_core::{pagination::PaginationInput, ContextExt};
 use service::sync::CentralServerConfig;
 
 use crate::{
-    mutations::site::{upsert_site, UpsertSiteInput},
+    mutations::site::{upsert_site, UpsertSiteInput, UpsertSiteResponse},
     store_preference::store_preferences,
 };
 use graphql_types::types::{
@@ -723,7 +723,11 @@ impl CentralGeneralMutations {
         configure_name_properties(ctx, input)
     }
 
-    pub async fn upsert_site(&self, ctx: &Context<'_>, input: UpsertSiteInput) -> Result<SiteNode> {
+    pub async fn upsert_site(
+        &self,
+        ctx: &Context<'_>,
+        input: UpsertSiteInput,
+    ) -> Result<UpsertSiteResponse> {
         upsert_site(ctx, input)
     }
 }

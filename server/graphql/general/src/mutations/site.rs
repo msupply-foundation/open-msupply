@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    site::upsert::UpsertSite,
+    site::upsert::{UpsertSite, UpsertSiteError as ServiceError},
 };
 
 #[derive(InputObject)]
@@ -17,7 +17,32 @@ pub struct UpsertSiteInput {
     pub clear_hardware_id: Option<bool>,
 }
 
-pub fn upsert_site(ctx: &Context<'_>, input: UpsertSiteInput) -> Result<SiteNode> {
+pub struct PasswordRequired;
+#[Object]
+impl PasswordRequired {
+    pub async fn description(&self) -> &str {
+        "Password is required"
+    }
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum UpsertSiteErrorInterface {
+    PasswordRequired(PasswordRequired),
+}
+
+#[derive(SimpleObject)]
+pub struct UpsertSiteError {
+    pub error: UpsertSiteErrorInterface,
+}
+
+#[derive(Union)]
+pub enum UpsertSiteResponse {
+    Error(UpsertSiteError),
+    Response(SiteNode),
+}
+
+pub fn upsert_site(ctx: &Context<'_>, input: UpsertSiteInput) -> Result<UpsertSiteResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -29,12 +54,31 @@ pub fn upsert_site(ctx: &Context<'_>, input: UpsertSiteInput) -> Result<SiteNode
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let result = service_provider
+    match service_provider
         .site_service
         .upsert_site(&service_context, input.to_domain())
-        .map_err(StandardGraphqlError::from)?;
+    {
+        Ok(site) => Ok(UpsertSiteResponse::Response(SiteNode { site })),
+        Err(error) => Ok(UpsertSiteResponse::Error(UpsertSiteError {
+            error: map_error(error)?,
+        })),
+    }
+}
 
-    Ok(SiteNode { site: result })
+fn map_error(error: ServiceError) -> Result<UpsertSiteErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{error:#?}");
+
+    let graphql_error = match error {
+        ServiceError::PasswordRequired => {
+            return Ok(UpsertSiteErrorInterface::PasswordRequired(
+                PasswordRequired,
+            ))
+        }
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
 
 impl UpsertSiteInput {

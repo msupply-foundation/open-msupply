@@ -2,6 +2,12 @@ use crate::service_provider::ServiceContext;
 use bcrypt::{hash, DEFAULT_COST};
 use repository::{RepositoryError, SiteRow, SiteRowRepository};
 
+#[derive(PartialEq, Debug)]
+pub enum UpsertSiteError {
+    PasswordRequired,
+    DatabaseError(RepositoryError),
+}
+
 pub struct UpsertSite {
     pub id: i32,
     pub name: String,
@@ -11,18 +17,34 @@ pub struct UpsertSite {
     pub clear_hardware_id: bool,
 }
 
-pub fn upsert_site(ctx: &ServiceContext, input: UpsertSite) -> Result<SiteRow, RepositoryError> {
+pub fn upsert_site(ctx: &ServiceContext, input: UpsertSite) -> Result<SiteRow, UpsertSiteError> {
     ctx.connection
         .transaction_sync(|connection| {
             let repo = SiteRowRepository::new(connection);
             let existing = repo.find_one_by_id(input.id)?;
 
+            validate(&input, &existing)?;
             let row = generate(input, existing);
             repo.upsert(&row)?;
 
             Ok(row)
         })
         .map_err(|e| e.to_inner_error())
+}
+
+impl From<RepositoryError> for UpsertSiteError {
+    fn from(error: RepositoryError) -> Self {
+        UpsertSiteError::DatabaseError(error)
+    }
+}
+
+fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), UpsertSiteError> {
+    match (&input.password, existing) {
+        (Some(pw), _) if pw.trim().is_empty() => return Err(UpsertSiteError::PasswordRequired),
+        (None, None) => return Err(UpsertSiteError::PasswordRequired),
+        _ => {}
+    }
+    Ok(())
 }
 
 fn generate(
@@ -38,7 +60,7 @@ fn generate(
     let existing_hardware_id = existing_site.as_ref().and_then(|s| s.hardware_id.clone());
 
     let hashed_password = match password {
-        Some(pw) => hash(pw, DEFAULT_COST).expect("bcrypt hash failed"), // This should never fail
+        Some(pw) => hash(pw, DEFAULT_COST).expect("bcrypt hash failed"),
         None => existing_site
             .as_ref()
             .map(|s| s.hashed_password.clone())
