@@ -24,7 +24,7 @@ use crate::{
             SyncPushResponseV6, SyncPushSuccessV6,
         },
         settings::{BatchSize, SyncSettings},
-        sync_status::{status::InitialisationStatus, SyncLogError},
+        sync_status::{status::InitialisationStatus, SyncLogError, SyncStatusLogError},
         synchroniser::{SyncError, Synchroniser},
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
@@ -562,7 +562,10 @@ fn get_push_and_error_sync_status_tester(
                 new_status.error.clone_from(&current_status.error);
 
                 assert_eq!(current_status, new_status);
-                util::assert_matches!(current_status.error, Some(SyncLogError { .. }));
+                util::assert_matches!(
+                    current_status.error,
+                    Some(SyncStatusLogError::V5(SyncLogError { .. }))
+                );
 
                 TestOutput {
                     new_status,
