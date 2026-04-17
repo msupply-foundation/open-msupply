@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Direction, ThemeOptions } from '@mui/material/styles';
 import { Theme } from '@mui/material';
 import { themeOptions, createTheme } from './theme';
@@ -10,11 +9,10 @@ export const useAppTheme = (): Theme => {
   const { isRtl } = useIntlUtils();
   const [customTheme] = useLocalStorage('/theme/custom');
   const direction: Direction = isRtl ? 'rtl' : 'ltr';
+  const rtlThemeOptions = { ...themeOptions, direction } as ThemeOptions;
+  const appTheme = customTheme
+    ? createTheme(merge(rtlThemeOptions, customTheme))
+    : createTheme(rtlThemeOptions);
 
-  return useMemo(() => {
-    const rtlThemeOptions = { ...themeOptions, direction } as ThemeOptions;
-    return customTheme
-      ? createTheme(merge(rtlThemeOptions, customTheme))
-      : createTheme(rtlThemeOptions);
-  }, [direction, customTheme]);
+  return appTheme;
 };
