@@ -6,7 +6,8 @@ describe('useBufferState', () => {
   describe('primitives', () => {
     it('initialises buffer with the provided value', () => {
       const { result } = renderHook(() => useBufferState('hello'));
-      expect(result.current[0]).toBe('hello');
+      const [buffer] = result.current;
+      expect(buffer).toBe('hello');
     });
 
     it('updates buffer when prop value changes', () => {
@@ -17,7 +18,8 @@ describe('useBufferState', () => {
 
       rerender({ value: 2 });
 
-      expect(result.current[0]).toBe(2);
+      const [buffer] = result.current;
+      expect(buffer).toBe(2);
     });
 
     it('does not reset buffer when prop stays the same', () => {
@@ -27,24 +29,25 @@ describe('useBufferState', () => {
       );
 
       // Locally update the buffer
-      act(() => {
-        result.current[1]('edited');
-      });
-      expect(result.current[0]).toBe('edited');
+      let [buffer, setBuffer] = result.current;
+      act(() => setBuffer('edited'));
+      [buffer, setBuffer] = result.current;
+      expect(buffer).toBe('edited');
 
       // Re-render with the same prop — should NOT overwrite local edit
       rerender({ value: 'stable' });
-      expect(result.current[0]).toBe('edited');
+      [buffer] = result.current;
+      expect(buffer).toBe('edited');
     });
 
     it('allows local updates via setBuffer', () => {
       const { result } = renderHook(() => useBufferState(0));
 
-      act(() => {
-        result.current[1](42);
-      });
+      const [_buffer, setBuffer] = result.current;
+      act(() => setBuffer(42));
 
-      expect(result.current[0]).toBe(42);
+      const [buffer] = result.current;
+      expect(buffer).toBe(42);
     });
   });
 
@@ -58,15 +61,16 @@ describe('useBufferState', () => {
       );
 
       // Locally update the buffer
-      act(() => {
-        result.current[1](new Date('2099-12-31'));
-      });
-      expect(result.current[0]).toEqual(new Date('2099-12-31'));
+      let [buffer, setBuffer] = result.current;
+      act(() => setBuffer(new Date('2099-12-31')));
+      [buffer, setBuffer] = result.current;
+      expect(buffer).toEqual(new Date('2099-12-31'));
 
       // Re-render with a new Date object that has the same original timestamp
       // — this is the scenario that previously caused an infinite loop
       rerender({ value: new Date(timestamp) });
-      expect(result.current[0]).toEqual(new Date('2099-12-31'));
+      [buffer] = result.current;
+      expect(buffer).toEqual(new Date('2099-12-31'));
     });
 
     it('re-syncs when the Date timestamp actually changes', () => {
@@ -77,7 +81,8 @@ describe('useBufferState', () => {
 
       rerender({ value: new Date('2025-06-15') });
 
-      expect(result.current[0]).toEqual(new Date('2025-06-15'));
+      const [buffer] = result.current;
+      expect(buffer).toEqual(new Date('2025-06-15'));
     });
 
     it('handles null Date values without error', () => {
@@ -86,13 +91,16 @@ describe('useBufferState', () => {
         { initialProps: { value: null as Date | null } }
       );
 
-      expect(result.current[0]).toBeNull();
+      let [buffer] = result.current;
+      expect(buffer).toBeNull();
 
       rerender({ value: new Date('2025-01-01') });
-      expect(result.current[0]).toEqual(new Date('2025-01-01'));
+      [buffer] = result.current;
+      expect(buffer).toEqual(new Date('2025-01-01'));
 
       rerender({ value: null });
-      expect(result.current[0]).toBeNull();
+      [buffer] = result.current;
+      expect(buffer).toBeNull();
     });
   });
 
@@ -115,14 +123,15 @@ describe('useBufferState', () => {
       );
 
       // Locally edit
-      act(() => {
-        result.current[1]({ id: '1', label: 'Edited' });
-      });
-      expect(result.current[0].label).toBe('Edited');
+      let [buffer, setBuffer] = result.current;
+      act(() => setBuffer({ id: '1', label: 'Edited' }));
+      [buffer, setBuffer] = result.current;
+      expect(buffer.label).toBe('Edited');
 
       // Re-render with same id but different label — should NOT overwrite
       rerender({ value: { id: '1', label: 'From server' } });
-      expect(result.current[0].label).toBe('Edited');
+      [buffer] = result.current;
+      expect(buffer.label).toBe('Edited');
     });
 
     it('re-syncs when custom comparator reports inequality', () => {
@@ -137,7 +146,8 @@ describe('useBufferState', () => {
 
       // Re-render with a different id — should overwrite
       rerender({ value: { id: '2', label: 'Second' } });
-      expect(result.current[0]).toEqual({ id: '2', label: 'Second' });
+      const [buffer] = result.current;
+      expect(buffer).toEqual({ id: '2', label: 'Second' });
     });
   });
 
@@ -157,7 +167,8 @@ describe('useBufferState', () => {
 
       // Buffer should already be 'b' — the setState-during-render pattern
       // means React re-renders synchronously, so we never observe the stale value
-      expect(result.current[0]).toBe('b');
+      const [buffer] = result.current;
+      expect(buffer).toBe('b');
       // Should cause at most 2 extra renders (one for the rerender, one for the
       // synchronous setState during render), not an unbounded loop
       expect(renderCount - rendersBeforeUpdate).toBeLessThanOrEqual(2);
