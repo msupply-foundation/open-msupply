@@ -13,7 +13,7 @@ use crate::{
     sync::{get_sync_push_changelogs_filter, CentralServerConfig, SyncChangelogError},
 };
 
-use super::SyncLogError;
+use super::{SyncLogError, SyncStatusLogError};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 
@@ -34,7 +34,7 @@ pub struct SyncStatusWithProgress {
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct FullSyncStatus {
     pub is_syncing: bool,
-    pub error: Option<SyncLogError>,
+    pub error: Option<SyncStatusLogError>,
     pub summary: SyncStatus,
     pub prepare_initial: Option<SyncStatus>,
     pub integration: Option<SyncStatusWithProgress>,
@@ -43,6 +43,9 @@ pub struct FullSyncStatus {
     pub pull_remote: Option<SyncStatusWithProgress>,
     pub push_v6: Option<SyncStatusWithProgress>,
     pub push: Option<SyncStatusWithProgress>,
+    // v7-only fields
+    pub pull: Option<SyncStatusWithProgress>,
+    pub waiting_for_integration: Option<SyncStatus>,
 }
 
 impl FullSyncStatus {
@@ -90,7 +93,7 @@ impl FullSyncStatus {
 
         FullSyncStatus {
             is_syncing: finished_datetime.is_none() && error.is_none(),
-            error,
+            error: error.map(SyncStatusLogError::V5),
             summary: SyncStatus {
                 started: started_datetime,
                 duration_in_seconds,
@@ -137,6 +140,80 @@ impl FullSyncStatus {
                 total: push_v6_progress_total.map(i32_to_u32),
                 done: push_v6_progress_done.map(i32_to_u32),
             }),
+            pull: None,
+            waiting_for_integration: None,
+        }
+    }
+
+    pub fn from_sync_log_v7_row(row: SyncLogV7Row) -> FullSyncStatus {
+        let SyncLogV7Row {
+            id: _,
+            started_datetime,
+            finished_datetime,
+            push_started_datetime,
+            push_finished_datetime,
+            push_progress_total,
+            push_progress_done,
+            wait_for_integration_started_datetime,
+            wait_for_integration_finished_datetime,
+            pull_started_datetime,
+            pull_finished_datetime,
+            pull_progress_total,
+            pull_progress_done,
+            integration_started_datetime,
+            integration_finished_datetime,
+            integration_progress_total,
+            integration_progress_done,
+            error,
+        } = row;
+
+        let error = error.map(SyncStatusLogError::V7);
+
+        FullSyncStatus {
+            is_syncing: finished_datetime.is_none() && error.is_none(),
+            error,
+            summary: SyncStatus {
+                started: started_datetime,
+                duration_in_seconds: finished_datetime
+                    .unwrap_or_else(|| Utc::now().naive_utc())
+                    .signed_duration_since(started_datetime)
+                    .num_seconds() as i32,
+                finished: finished_datetime,
+            },
+            integration: integration_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: integration_finished_datetime,
+                total: integration_progress_total.map(i32_to_u32),
+                done: integration_progress_done.map(i32_to_u32),
+            }),
+            waiting_for_integration: wait_for_integration_started_datetime.map(|started| {
+                SyncStatus {
+                    started,
+                    duration_in_seconds: wait_for_integration_finished_datetime
+                        .unwrap_or_else(|| Utc::now().naive_utc())
+                        .signed_duration_since(started)
+                        .num_seconds() as i32,
+                    finished: wait_for_integration_finished_datetime,
+                }
+            }),
+            pull: pull_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: pull_finished_datetime,
+                total: pull_progress_total.map(i32_to_u32),
+                done: pull_progress_done.map(i32_to_u32),
+            }),
+            push: push_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: push_finished_datetime,
+                total: push_progress_total.map(i32_to_u32),
+                done: push_progress_done.map(i32_to_u32),
+            }),
+            // v5-only fields not applicable to v7
+            prepare_initial: None,
+            pull_central: None,
+            pull_remote: None,
+            pull_v6: None,
+            push_v6: None,
         }
     }
 }
@@ -199,22 +276,6 @@ pub trait SyncStatusTrait: Sync + Send {
     ) -> Result<Option<FullSyncStatus>, RepositoryError> {
         get_latest_successful_sync_status(ctx)
     }
-
-    // V7 sync status methods
-
-    fn get_latest_sync_status_v7(
-        &self,
-        ctx: &ServiceContext,
-    ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-        get_latest_sync_status_v7(ctx)
-    }
-
-    fn get_latest_successful_sync_status_v7(
-        &self,
-        ctx: &ServiceContext,
-    ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-        get_latest_successful_sync_status_v7(ctx)
-    }
 }
 
 pub(crate) struct SyncStatusService;
@@ -268,6 +329,11 @@ fn is_sync_queue_initialised(ctx: &ServiceContext) -> Result<bool, RepositoryErr
 }
 
 fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>, RepositoryError> {
+    if !CentralServerConfig::is_central_server() {
+        return get_latest_sync_status_v7(ctx)
+            .map(|opt| opt.map(FullSyncStatus::from_sync_log_v7_row));
+    }
+
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
@@ -289,6 +355,11 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
 fn get_latest_successful_sync_status(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatus>, RepositoryError> {
+    if !CentralServerConfig::is_central_server() {
+        return get_latest_successful_sync_status_v7(ctx)
+            .map(|opt| opt.map(FullSyncStatus::from_sync_log_v7_row));
+    }
+
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
