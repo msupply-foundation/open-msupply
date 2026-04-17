@@ -28,7 +28,7 @@ export const SupplierSearchInput = ({
 }: SupplierSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useName.document.suppliers(external);
-  const [buffer, setBuffer] = useBufferState(value);
+  const [buffer, setBuffer] = useBufferState(value, (a, b) => a?.id === b?.id);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   // For use in JSON forms

@@ -1,17 +1,16 @@
 import { useState, useRef, Dispatch, SetStateAction } from 'react';
 
 // Uses Object.is for comparison — which checks by value for primitives
-// and by reference for objects, with special handling for Dates. Callers
-// passing object types that may be reconstructed with the same data but
-// a new reference (e.g. NameRowFragment, LocationTypeFragment) should
-// supply a custom isEqual to avoid unnecessary re-syncs — or an infinite
-// loop if the parent also re-renders on every state change.
+// and by reference for objects, with special handling for Dates.
 const defaultIsEqual = <T>(a: T, b: T): boolean => {
   if (Object.is(a, b)) return true;
   if (a instanceof Date && b instanceof Date)
     return a.getTime() === b.getTime();
   return false;
 };
+
+type Primitive = string | number | boolean | null | undefined;
+type IsEqual<T> = (a: T, b: T) => boolean;
 
 // It is generally discouraged to sync props and state. Generally, you should just use
 // props. Other times, you may want to seed some state with props (useState(props.value))
@@ -21,10 +20,21 @@ const defaultIsEqual = <T>(a: T, b: T): boolean => {
 // i.e. if a network request results in different values for some prop than what a component
 // was initially mounted with. If you can, try to avoid using this hook and find a different way
 // but if there isn't one, here you go!
-export const useBufferState = <T>(
+
+// isEqual is optional for primitives and Dates (defaultIsEqual handles these
+// safely). For object types, isEqual is required — omitting it would cause
+// reference-equality checks that lead to unnecessary re-syncs or infinite
+// loops when the parent re-renders.
+type OptionalIsEqual<T> = [isEqual?: IsEqual<T>];
+type RequiredIsEqual<T> = [isEqual: IsEqual<T>];
+
+export function useBufferState<T>(
   value: T,
-  isEqual: (a: T, b: T) => boolean = defaultIsEqual
-): [T, Dispatch<SetStateAction<T>>] => {
+  ...[isEqual]: [T] extends [Primitive | Date]
+    ? OptionalIsEqual<T>
+    : RequiredIsEqual<T>
+): [T, Dispatch<SetStateAction<T>>] {
+  isEqual ??= defaultIsEqual;
   const [buffer, setBuffer] = useState(value);
   const prevValueRef = useRef(value);
 
@@ -34,4 +44,4 @@ export const useBufferState = <T>(
   }
 
   return [buffer, setBuffer];
-};
+}

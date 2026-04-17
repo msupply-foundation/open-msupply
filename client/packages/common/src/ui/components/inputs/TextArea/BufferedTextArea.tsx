@@ -7,7 +7,7 @@ export const BufferedTextArea = React.forwardRef<
   HTMLDivElement,
   StandardTextFieldProps
 >(({ value, onChange, maxRows = 4, minRows = 4, slotProps, ...props }, ref) => {
-  const [buffer, setBuffer] = useBufferState(value);
+  const [buffer, setBuffer] = useBufferState(value as string | undefined);
 
   return (
     <BasicTextInput

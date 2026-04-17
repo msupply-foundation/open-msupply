@@ -31,7 +31,7 @@ export const LocationTypeInput = ({
   fullWidth = false,
 }: LocationTypeInputProps) => {
   const { data, isLoading } = useLocationTypes();
-  const [buffer, setBuffer] = useBufferState(value);
+  const [buffer, setBuffer] = useBufferState(value, (a, b) => a?.id === b?.id);
   const t = useTranslation();
 
   const getOptionLabel = (locationType: LocationTypeFragment) =>
