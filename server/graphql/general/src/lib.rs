@@ -16,12 +16,14 @@ use diagnosis::diagnoses_active;
 use graphql_core::{pagination::PaginationInput, ContextExt};
 use service::sync::CentralServerConfig;
 
-use crate::store_preference::store_preferences;
+use crate::{
+    mutations::site::{upsert_site, UpsertSiteInput},
+    store_preference::store_preferences,
+};
 use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
     MasterListFilterInput, StorePreferenceNode,
 };
-pub use mutations::site::CentralSiteMutations;
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
@@ -719,6 +721,10 @@ impl CentralGeneralMutations {
         input: Vec<ConfigureNamePropertyInput>,
     ) -> Result<ConfigureNamePropertiesResponse> {
         configure_name_properties(ctx, input)
+    }
+
+    pub async fn upsert_site(&self, ctx: &Context<'_>, input: UpsertSiteInput) -> Result<SiteNode> {
+        upsert_site(ctx, input)
     }
 }
 
