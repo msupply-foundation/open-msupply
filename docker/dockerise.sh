@@ -36,16 +36,19 @@ case "$DB_CHOICE" in
   *) echo "Invalid choice"; exit 1 ;;
 esac
 
-read -p "Build client? [Y/n] (default: Y): " BUILD_CLIENT
+echo ""
+echo "For Y/N prompts, the capitalised letter is the default."
+
+read -p "Build client? [Y/n]: " BUILD_CLIENT
 BUILD_CLIENT=${BUILD_CLIENT:-Y}
 
-read -p "Compile server? [Y/n] (default: Y): " BUILD_SERVER
+read -p "Compile server? [Y/n]: " BUILD_SERVER
 BUILD_SERVER=${BUILD_SERVER:-Y}
 
-read -p "Build dev image too? [y/N] (default: N): " BUILD_DEV
+read -p "Build dev image too? [y/N]: " BUILD_DEV
 BUILD_DEV=${BUILD_DEV:-N}
 
-read -p "Push to Docker Hub after build? [y/N] (default: N): " PUSH
+read -p "Push to Docker Hub after build? [y/N]: " PUSH
 PUSH=${PUSH:-N}
 
 # --- Derived values ---
