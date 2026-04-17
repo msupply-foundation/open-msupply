@@ -25,7 +25,7 @@ export const CustomerSearchInput = ({
 }: NameSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useName.document.customers(filterBy);
-  const [buffer, setBuffer] = useBufferState(value, (a, b) => a?.id === b?.id);
+  const [buffer, setBuffer] = useBufferState(value);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   // For use in JSON forms
