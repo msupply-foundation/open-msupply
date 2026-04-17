@@ -15,6 +15,8 @@ echo ""
 echo "Version: $VERSION"
 echo "Date: $DATE"
 echo ""
+echo "Press Enter at any prompt to accept the default option."
+echo ""
 
 # --- Prompts ---
 
