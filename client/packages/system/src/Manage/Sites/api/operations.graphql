@@ -12,7 +12,7 @@ query sites(
   $filter: SiteFilterInput
 ) {
   centralServer {
-    general {
+    site {
       sites(
         sort: $sort
         page: { first: $first, offset: $offset }
@@ -33,7 +33,7 @@ query sites(
 
 mutation upsertSite($input: UpsertSiteInput!) {
   centralServer {
-    general {
+    site {
       upsertSite(input: $input) {
         __typename
         ... on SiteNode {
