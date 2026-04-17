@@ -103,7 +103,7 @@ export function getSdk(
 ) {
   return {
     activityLogs(
-      variables?: ActivityLogsQueryVariables,
+      variables: ActivityLogsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
     ): Promise<ActivityLogsQuery> {
