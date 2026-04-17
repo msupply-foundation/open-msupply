@@ -8,7 +8,8 @@ use crate::{
     requisition::{
         common::{
             check_exceeded_max_orders_for_period, check_requisition_row_exists,
-            default_indicator_value, indicator_value_type, CheckExceededOrdersForPeriod,
+            default_indicator_value, indicator_value_type, related_indicator_schema,
+            CheckExceededOrdersForPeriod,
         },
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_supplier_program_requisition_settings,
@@ -23,8 +24,8 @@ use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
-    IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
-    NumberRowType, Pagination, PeriodRowRepository, PluginDataRowRepository,
+    IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter,
+    NameRepository, NumberRowType, Pagination, PeriodRowRepository, PluginDataRowRepository,
     ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
     Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
     StorageConnection, StoreFilter, StoreRepository,
@@ -314,30 +315,20 @@ fn generate_program_indicator_values(
         .map(|name| name.name_row.id)
         .collect();
 
-    let indicator_line_ids = program_indicators
+    let own_pi_ids: Vec<String> = program_indicators
         .iter()
-        .flat_map(|program_indicator| {
-            program_indicator
-                .lines
-                .iter()
-                .map(|line| line.line.id.clone())
-        })
-        .collect::<Vec<String>>();
-    let indicator_column_ids = program_indicators
-        .iter()
-        .flat_map(|program_indicator| {
-            program_indicator
-                .lines
-                .iter()
-                .flat_map(|line| line.columns.iter().map(|column| column.id.clone()))
-        })
-        .collect::<Vec<String>>();
+        .map(|pi| pi.program_indicator.id.clone())
+        .collect();
+    let schema = related_indicator_schema(connection, &own_pi_ids)?;
+    let expanded_line_ids: Vec<String> = schema.lines.iter().map(|l| l.id.clone()).collect();
+    let expanded_column_ids: Vec<String> = schema.columns.iter().map(|c| c.id.clone()).collect();
 
     let customer_values = IndicatorValueRepository::new(connection).query_by_filter(
         IndicatorValueFilter::new()
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
             .period_id(EqualFilter::equal_to(period_id.to_string()))
-            .indicator_line_id(EqualFilter::equal_any(indicator_line_ids))
-            .indicator_column_id(EqualFilter::equal_any(indicator_column_ids))
+            .indicator_line_id(EqualFilter::equal_any(expanded_line_ids))
+            .indicator_column_id(EqualFilter::equal_any(expanded_column_ids))
             .customer_name_id(EqualFilter::equal_any(customer_name_ids.clone())),
     )?;
 
@@ -353,11 +344,21 @@ fn generate_program_indicator_values(
                     && value_type == &Some(IndicatorValueType::Number)
                     && !customer_name_ids.is_empty()
                 {
+                    // Match customer values by code (lines) and header (columns)
+                    // instead of by ID, to support cross-program aggregation
                     customer_values
                         .iter()
                         .filter(|v| {
-                            v.indicator_value_row.indicator_line_id == line.line.id
-                                && v.indicator_value_row.indicator_column_id == column.id
+                            let code_matches = schema
+                                .line_id_to_code
+                                .get(&v.indicator_value_row.indicator_line_id)
+                                == Some(&line.line.code);
+                            let col_matches = schema
+                                .column_id_to_key
+                                .get(&v.indicator_value_row.indicator_column_id)
+                                .map(|(h, n)| h == &column.header && *n == column.column_number)
+                                .unwrap_or(false);
+                            code_matches && col_matches
                         })
                         .map(|v| {
                             v.indicator_value_row
