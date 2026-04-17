@@ -8,8 +8,8 @@ pub mod types;
 use std::collections::HashMap;
 
 pub use self::queries::sync_status::*;
-pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
 use self::queries::*;
+pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
 
 use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
@@ -21,6 +21,7 @@ use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
     MasterListFilterInput, StorePreferenceNode,
 };
+pub use mutations::site::CentralSiteMutations;
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
@@ -42,6 +43,7 @@ use mutations::{
     },
     update_user,
 };
+use queries::site::{SiteFilterInput, SiteSortInput, SitesResponse};
 use queries::{
     abbreviation::AbbreviationFilterInput,
     currency::currencies,
@@ -225,7 +227,9 @@ impl GeneralQueries {
         inbound_shipment_external_counts(ctx, store_id, timezone_offset)
     }
 
-    #[graphql(deprecation = "Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead")]
+    #[graphql(
+        deprecation = "Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead"
+    )]
     #[allow(deprecated)]
     pub async fn invoice_counts(
         &self,
@@ -715,5 +719,24 @@ impl CentralGeneralMutations {
         input: Vec<ConfigureNamePropertyInput>,
     ) -> Result<ConfigureNamePropertiesResponse> {
         configure_name_properties(ctx, input)
+    }
+}
+
+// Central server only site queries
+#[derive(Default, Clone)]
+pub struct CentralGeneralQueries;
+
+#[Object]
+impl CentralGeneralQueries {
+    pub async fn sites(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<SiteFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated)")] sort: Option<
+            Vec<SiteSortInput>,
+        >,
+    ) -> Result<SitesResponse> {
+        sites(ctx, page, filter, sort)
     }
 }
