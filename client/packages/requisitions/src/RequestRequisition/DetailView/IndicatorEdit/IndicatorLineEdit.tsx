@@ -135,7 +135,7 @@ export const IndicatorLineEdit = ({
   const showInfo =
     store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders &&
     store?.preferences?.extraFieldsInRequisition &&
-    !!currentLine?.customerIndicatorInfo;
+    !!currentLine?.customerIndicatorInfo?.length;
   const { width } = useWindowDimensions();
   const t = useTranslation();
 
