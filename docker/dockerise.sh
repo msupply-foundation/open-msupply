@@ -78,28 +78,32 @@ rust_image_for_db() {
   fi
 }
 
-binary_dir_for_db() {
-  if [ "$1" = "sqlite" ]; then
-    echo "server/target/release"
-  else
-    echo "server/target-postgres/release"
-  fi
-}
-
 cargo_features_for_db() {
   if [ "$1" = "postgres" ]; then
     echo "--no-default-features --features postgres"
   fi
 }
 
+# Each (db, arch) gets its own target directory to avoid cache conflicts
 target_dir_for() {
   local DB="$1" ARCH="$2"
-  if [ "$DB" = "postgres" ] && [ "$ARCH" = "arm64" ]; then
+  if [ "$DB" = "sqlite" ] && [ "$ARCH" = "arm64" ]; then
+    echo "target"
+  elif [ "$DB" = "sqlite" ] && [ "$ARCH" = "amd64" ]; then
+    echo "target-amd64"
+  elif [ "$DB" = "postgres" ] && [ "$ARCH" = "arm64" ]; then
     echo "target-postgres"
   elif [ "$DB" = "postgres" ] && [ "$ARCH" = "amd64" ]; then
     echo "target-postgres-amd64"
-  elif [ "$DB" = "sqlite" ] && [ "$ARCH" = "amd64" ]; then
-    echo "target-amd64"
+  fi
+}
+
+# Where the Dockerfile expects to find binaries
+dockerfile_binary_dir() {
+  if [ "$1" = "sqlite" ]; then
+    echo "server/target/release"
+  else
+    echo "server/target-postgres/release"
   fi
 }
 
@@ -123,7 +127,7 @@ make_tag() {
 }
 
 check_existing_tag() {
-  local CURRENT_TAG="$1" DB="$2" ARCH="$3"
+  local CURRENT_TAG="$1"
   if docker image inspect "$CURRENT_TAG" > /dev/null 2>&1; then
     echo "" >&2
     echo "WARNING: Tag '$CURRENT_TAG' already exists locally." >&2
@@ -146,9 +150,30 @@ check_existing_tag() {
   echo "$CURRENT_TAG"
 }
 
+# Stage binaries from arch-specific target dir into the path the Dockerfile expects
+stage_binaries() {
+  local DB="$1" ARCH="$2"
+  local TARGET_DIR=$(target_dir_for "$DB" "$ARCH")
+  local DEST_DIR=$(dockerfile_binary_dir "$DB")
+
+  if [ "$ARCH" = "arm64" ]; then
+    local SRC="server/${TARGET_DIR}/release"
+  else
+    local SRC="server/${TARGET_DIR}/x86_64-unknown-linux-gnu/release"
+  fi
+
+  # If source and dest are the same, nothing to do (sqlite arm64 case)
+  if [ "$SRC" = "$DEST_DIR" ]; then
+    return 0
+  fi
+
+  mkdir -p "$DEST_DIR"
+  cp "$SRC/remote_server" "$DEST_DIR/remote_server"
+  cp "$SRC/remote_server_cli" "$DEST_DIR/remote_server_cli"
+}
+
 # --- Build result tracking ---
 
-COMPILE_FAILED=""
 REPORT_LINES=""
 SUCCESSFUL_TAGS=""
 
@@ -168,31 +193,31 @@ record_result() {
   fi
 }
 
-# --- Check for existing tags and build tag list ---
+# --- Check for existing tags ---
 
 declare -a ALL_TAGS=()
-declare -a ALL_TARGETS=()
-declare -a ALL_ARCHS_FOR_TAG=()
-declare -a ALL_DBS_FOR_TAG=()
+declare -a ALL_DBS=()
+declare -a ALL_ARCHS=()
+declare -a ALL_VARIANTS=()
 
 for DB in "${DBS[@]}"; do
   for ARCH in "${ARCHS[@]}"; do
     TAG=$(make_tag "$DB" "$ARCH" "")
-    TAG=$(check_existing_tag "$TAG" "$DB" "$ARCH")
+    TAG=$(check_existing_tag "$TAG")
     if [ "$TAG" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
     ALL_TAGS+=("$TAG")
-    ALL_TARGETS+=("$(docker_target_for "$DB" "")")
-    ALL_ARCHS_FOR_TAG+=("$ARCH")
-    ALL_DBS_FOR_TAG+=("$DB")
+    ALL_DBS+=("$DB")
+    ALL_ARCHS+=("$ARCH")
+    ALL_VARIANTS+=("")
 
     if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
       TAG_DEV=$(make_tag "$DB" "$ARCH" "dev")
-      TAG_DEV=$(check_existing_tag "$TAG_DEV" "$DB" "$ARCH")
+      TAG_DEV=$(check_existing_tag "$TAG_DEV")
       if [ "$TAG_DEV" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
       ALL_TAGS+=("$TAG_DEV")
-      ALL_TARGETS+=("$(docker_target_for "$DB" "dev")")
-      ALL_ARCHS_FOR_TAG+=("$ARCH")
-      ALL_DBS_FOR_TAG+=("$DB")
+      ALL_DBS+=("$DB")
+      ALL_ARCHS+=("$ARCH")
+      ALL_VARIANTS+=("dev")
     fi
   done
 done
@@ -228,26 +253,27 @@ else
   echo "=== Skipping client build (using existing build in client/packages/host/dist) ==="
 fi
 
-# --- Compile server binaries ---
+# --- Compile, build, and push per (db, arch) combination ---
 
-if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
-  COMPILED=""
-  for DB in "${DBS[@]}"; do
-    for ARCH in "${ARCHS[@]}"; do
-      KEY="${DB}-${ARCH}"
-      if echo "$COMPILED" | grep -q "$KEY"; then continue; fi
-      COMPILED="$COMPILED $KEY"
+COMPILED=""
 
+for i in "${!ALL_TAGS[@]}"; do
+  TAG="${ALL_TAGS[$i]}"
+  DB="${ALL_DBS[$i]}"
+  ARCH="${ALL_ARCHS[$i]}"
+  VARIANT="${ALL_VARIANTS[$i]}"
+  KEY="${DB}-${ARCH}"
+
+  # --- Compile (once per db+arch, skip for dev since it shares the same binary) ---
+
+  if ! echo "$COMPILED" | grep -q "$KEY"; then
+    if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
       RUST_IMAGE=$(rust_image_for_db "$DB")
       CARGO_FEATURES=$(cargo_features_for_db "$DB")
+      TARGET_DIR=$(target_dir_for "$DB" "$ARCH")
+      TARGET_DIR_FLAG="--target-dir $TARGET_DIR"
 
       echo "=== Compiling server ($DB, $ARCH) ==="
-
-      TARGET_DIR=$(target_dir_for "$DB" "$ARCH")
-      TARGET_DIR_FLAG=""
-      if [ -n "$TARGET_DIR" ]; then
-        TARGET_DIR_FLAG="--target-dir $TARGET_DIR"
-      fi
 
       COMPILE_OK=true
       if [ "$ARCH" = "arm64" ]; then
@@ -259,68 +285,65 @@ if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
           COMPILE_OK=false
         fi
       else
-        RELEASE_DIR=$(binary_dir_for_db "$DB")
+        # Postgres cross-compile needs amd64 libpq-dev for linking
+        CROSS_EXTRA_DEPS=""
+        if [ "$DB" = "postgres" ]; then
+          CROSS_EXTRA_DEPS="&& dpkg --add-architecture amd64 && apt-get update && apt-get install -y libpq-dev:amd64"
+        fi
 
         if ! docker run --rm --platform linux/arm64 \
           -v "$PWD":/usr/src/omsupply \
           -w /usr/src/omsupply/server \
           "$RUST_IMAGE" bash -c "\
-            apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
+            apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross \
+            $CROSS_EXTRA_DEPS && \
             rustup target add x86_64-unknown-linux-gnu && \
             CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
+            PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig \
+            PQ_LIB_DIR=/usr/lib/x86_64-linux-gnu \
               cargo build --release --target x86_64-unknown-linux-gnu $TARGET_DIR_FLAG --bin remote_server --bin remote_server_cli $CARGO_FEATURES && \
-            mkdir -p $RELEASE_DIR && \
-            cp $TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server $RELEASE_DIR/remote_server && \
-            cp $TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server_cli $RELEASE_DIR/remote_server_cli && \
-            chown -R $(id -u):$(id -g) $RELEASE_DIR"; then
+            chown -R $(id -u):$(id -g) $TARGET_DIR"; then
           COMPILE_OK=false
         fi
       fi
 
       if [ "$COMPILE_OK" = false ]; then
         echo "WARNING: Compilation failed for $DB $ARCH — skipping this variant."
-        COMPILE_FAILED="$COMPILE_FAILED $KEY"
+        COMPILED="$COMPILED $KEY:FAIL"
+      else
+        COMPILED="$COMPILED $KEY:OK"
       fi
-    done
-  done
-else
-  # Validate all required binaries exist
-  for DB in "${DBS[@]}"; do
-    BINARY_DIR=$(binary_dir_for_db "$DB")
-    if [ ! -f "$BINARY_DIR/remote_server" ]; then
-      echo "WARNING: Server binary not found at $BINARY_DIR/remote_server — marking as failed."
-      for ARCH in "${ARCHS[@]}"; do
-        COMPILE_FAILED="$COMPILE_FAILED ${DB}-${ARCH}"
-      done
+    else
+      # Not compiling — check binary exists
+      BINARY_DIR=$(dockerfile_binary_dir "$DB")
+      if [ -f "$BINARY_DIR/remote_server" ]; then
+        COMPILED="$COMPILED $KEY:OK"
+      else
+        echo "WARNING: Server binary not found at $BINARY_DIR/remote_server — marking as failed."
+        COMPILED="$COMPILED $KEY:FAIL"
+      fi
     fi
-  done
-  if [ -z "$COMPILE_FAILED" ]; then
-    echo "=== Skipping server compile (using existing binaries) ==="
-  fi
-fi
-
-# --- Docker build ---
-
-echo "=== Building Docker images ==="
-
-for i in "${!ALL_TAGS[@]}"; do
-  TAG="${ALL_TAGS[$i]}"
-  TARGET="${ALL_TARGETS[$i]}"
-  ARCH="${ALL_ARCHS_FOR_TAG[$i]}"
-  DB="${ALL_DBS_FOR_TAG[$i]}"
-  KEY="${DB}-${ARCH}"
-
-  # Determine variant label for report
-  VARIANT=""
-  if [[ "$TAG" == *-dev ]]; then
-    VARIANT="dev"
   fi
 
-  # Skip if compilation failed for this combination
-  if echo "$COMPILE_FAILED" | grep -q "$KEY"; then
+  # --- Check if compilation succeeded for this combo ---
+
+  if echo "$COMPILED" | grep -q "$KEY:FAIL"; then
     echo "Skipping $TAG (compilation failed)"
     record_result "$DB" "$ARCH" "$VARIANT" "FAIL" "(compilation failed)"
     continue
+  fi
+
+  # --- Stage binaries and Docker build ---
+
+  echo "=== Building Docker image: $TAG ==="
+
+  # Copy binaries from arch-specific target dir to where Dockerfile expects them
+  if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
+    if ! stage_binaries "$DB" "$ARCH"; then
+      echo "WARNING: Failed to stage binaries for $TAG"
+      record_result "$DB" "$ARCH" "$VARIANT" "FAIL" "(staging failed)"
+      continue
+    fi
   fi
 
   PLATFORM_FLAG=""
@@ -328,37 +351,29 @@ for i in "${!ALL_TAGS[@]}"; do
     PLATFORM_FLAG="--platform linux/amd64"
   fi
 
+  DOCKER_TARGET=$(docker_target_for "$DB" "$VARIANT")
   TARGET_FLAG=""
-  if [ -n "$TARGET" ]; then
-    TARGET_FLAG="--target $TARGET"
+  if [ -n "$DOCKER_TARGET" ]; then
+    TARGET_FLAG="--target $DOCKER_TARGET"
   fi
 
   if docker build $PLATFORM_FLAG $TARGET_FLAG . -t "$TAG"; then
     echo "Built: $TAG"
     record_result "$DB" "$ARCH" "$VARIANT" "OK" "$TAG"
-  else
-    echo "WARNING: Docker build failed for $TAG"
-    record_result "$DB" "$ARCH" "$VARIANT" "FAIL" "(docker build failed)"
-  fi
-done
 
-# --- Push (only successful tags) ---
-
-if [[ "$PUSH" =~ ^[Yy] ]]; then
-  if [ -n "$SUCCESSFUL_TAGS" ]; then
-    echo "=== Pushing to Docker Hub ==="
-    docker login
-    for TAG in $SUCCESSFUL_TAGS; do
+    # Push immediately if requested
+    if [[ "$PUSH" =~ ^[Yy] ]]; then
       if docker push "$TAG"; then
         echo "Pushed: $TAG"
       else
         echo "WARNING: Failed to push $TAG"
       fi
-    done
+    fi
   else
-    echo "=== No successful builds to push ==="
+    echo "WARNING: Docker build failed for $TAG"
+    record_result "$DB" "$ARCH" "$VARIANT" "FAIL" "(docker build failed)"
   fi
-fi
+done
 
 # --- Build Report ---
 
