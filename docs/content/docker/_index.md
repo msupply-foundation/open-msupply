@@ -20,6 +20,16 @@ yarn dockerise
 
 It will prompt you for architecture (amd64/arm64), database (SQLite/Postgres), and which steps to run. Press Enter at each prompt to accept the defaults.
 
+<div class="alert alert-warning">
+<strong>Note:</strong> This script currently assumes it is being run on an ARM host (e.g. Apple Silicon Mac). Cross-compilation targets are set up accordingly. If you are running on a native amd64 Linux system, use the manual build instructions below instead.
+</div>
+
+<!--
+To-Do: if we find we need to run this script on a Linux machine, we should update the script to
+auto-detect the current system and modify cross-compilation instructions accordingly
+-->
+
+
 The rest of this page documents the manual steps if you need more control over the process.
 
 ## Manual build
