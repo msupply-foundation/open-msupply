@@ -420,7 +420,7 @@ mod test_related_program_indicators {
     async fn related_program_indicator_ids_empty_input() {
         let (_, connection, _, _) = setup_all_with_data(
             "related_program_indicator_ids_empty_input",
-            MockDataInserts::none().contexts().programs(),
+            MockDataInserts::none().contexts(),
             test_mock_data(),
         )
         .await;
@@ -433,7 +433,7 @@ mod test_related_program_indicators {
     async fn related_program_indicator_ids_expands_via_elmis_code() {
         let (_, connection, _, _) = setup_all_with_data(
             "related_program_indicator_ids_expands_via_elmis_code",
-            MockDataInserts::none().contexts().programs(),
+            MockDataInserts::none().contexts(),
             test_mock_data(),
         )
         .await;
@@ -468,7 +468,7 @@ mod test_related_program_indicators {
 
         let (_, connection, _, _) = setup_all_with_data(
             "related_program_indicator_ids_no_elmis_code_fallback",
-            MockDataInserts::none().contexts().programs(),
+            MockDataInserts::none().contexts(),
             MockData {
                 programs: vec![bare_program],
                 program_indicators: vec![bare_pi.clone()],
@@ -486,7 +486,7 @@ mod test_related_program_indicators {
     async fn related_indicator_schema_returns_cross_program_rows_and_mappings() {
         let (_, connection, _, _) = setup_all_with_data(
             "related_indicator_schema_returns_cross_program",
-            MockDataInserts::none().contexts().programs(),
+            MockDataInserts::none().contexts(),
             test_mock_data(),
         )
         .await;
