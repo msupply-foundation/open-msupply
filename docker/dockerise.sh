@@ -30,19 +30,21 @@ echo ""
 
 # --- Prompts ---
 
-read -p "Architecture [1] amd64 (default)  [2] arm64: " ARCH_CHOICE
+read -p "Architecture [1] amd64 (default)  [2] arm64  [3] both: " ARCH_CHOICE
 ARCH_CHOICE=${ARCH_CHOICE:-1}
 case "$ARCH_CHOICE" in
-  1) ARCH="amd64" ;;
-  2) ARCH="arm64" ;;
+  1) ARCHS=("amd64") ;;
+  2) ARCHS=("arm64") ;;
+  3) ARCHS=("amd64" "arm64") ;;
   *) echo "Invalid choice"; exit 1 ;;
 esac
 
-read -p "Database [1] SQLite (default)  [2] Postgres: " DB_CHOICE
+read -p "Database [1] SQLite (default)  [2] Postgres  [3] both: " DB_CHOICE
 DB_CHOICE=${DB_CHOICE:-1}
 case "$DB_CHOICE" in
-  1) DB="sqlite" ;;
-  2) DB="postgres" ;;
+  1) DBS=("sqlite") ;;
+  2) DBS=("postgres") ;;
+  3) DBS=("sqlite" "postgres") ;;
   *) echo "Invalid choice"; exit 1 ;;
 esac
 
@@ -61,40 +63,56 @@ BUILD_DEV=${BUILD_DEV:-N}
 read -p "Push to Docker Hub after build? [y/N]: " PUSH
 PUSH=${PUSH:-N}
 
-# --- Derived values ---
+# --- Helper functions ---
 
-TAG_BASE="v${VERSION}-${DATE}-${DB}-${ARCH}"
-TAG="${IMAGE}:${TAG_BASE}"
-TAG_DEV="${IMAGE}:${TAG_BASE}-dev"
+rust_image_for_db() {
+  if [ "$1" = "sqlite" ]; then
+    echo "rust:1.94-slim"
+  else
+    echo "rust:1.94"
+  fi
+}
 
-if [ "$DB" = "sqlite" ]; then
-  RUST_IMAGE="rust:1.94-slim"
-  BINARY_DIR="server/target/release"
-  DOCKER_TARGET=""
-  DOCKER_TARGET_DEV="dev"
-  CARGO_FEATURES=""
-  TARGET_DIR_FLAG=""
-else
-  RUST_IMAGE="rust:1.94"
-  BINARY_DIR="server/target-postgres/release"
-  DOCKER_TARGET="postgres"
-  DOCKER_TARGET_DEV="postgres-dev"
-  CARGO_FEATURES="--no-default-features --features postgres --target-dir target-postgres"
-  TARGET_DIR_FLAG=""
-fi
+binary_dir_for_db() {
+  if [ "$1" = "sqlite" ]; then
+    echo "server/target/release"
+  else
+    echo "server/target-postgres/release"
+  fi
+}
 
-# --- Check for existing tags ---
+cargo_features_for_db() {
+  if [ "$1" = "postgres" ]; then
+    echo "--no-default-features --features postgres --target-dir target-postgres"
+  fi
+}
+
+docker_target_for() {
+  local DB="$1" DEV="$2"
+  if [ "$DB" = "sqlite" ]; then
+    if [ "$DEV" = "dev" ]; then echo "dev"; else echo ""; fi
+  else
+    if [ "$DEV" = "dev" ]; then echo "postgres-dev"; else echo "postgres"; fi
+  fi
+}
+
+make_tag() {
+  local DB="$1" ARCH="$2" DEV="$3"
+  local TAG_BASE="v${VERSION}-${DATE}-${DB}-${ARCH}"
+  if [ "$DEV" = "dev" ]; then
+    echo "${IMAGE}:${TAG_BASE}-dev"
+  else
+    echo "${IMAGE}:${TAG_BASE}"
+  fi
+}
 
 check_existing_tag() {
-  local CURRENT_TAG="$1"
+  local CURRENT_TAG="$1" DB="$2" ARCH="$3"
   if docker image inspect "$CURRENT_TAG" > /dev/null 2>&1; then
     echo "" >&2
     echo "WARNING: Tag '$CURRENT_TAG' already exists locally." >&2
     TIMESTAMP=$(date +%H-%M-%S)
-    ALT_TAG="${IMAGE}:v${VERSION}-${DATE}_${TIMESTAMP}-${DB}-${ARCH}"
-    if [[ "$CURRENT_TAG" == *-dev ]]; then
-      ALT_TAG="${ALT_TAG}-dev"
-    fi
+    ALT_TAG=$(echo "$CURRENT_TAG" | sed "s/${DATE}/${DATE}_${TIMESTAMP}/")
     echo "  [1] Continue & overwrite" >&2
     echo "  [2] Stop script" >&2
     echo "  [3] Use alternative tag (default: $ALT_TAG)" >&2
@@ -112,22 +130,43 @@ check_existing_tag() {
   echo "$CURRENT_TAG"
 }
 
-TAG=$(check_existing_tag "$TAG")
-if [ "$TAG" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
-if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
-  TAG_DEV=$(check_existing_tag "$TAG_DEV")
-  if [ "$TAG_DEV" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
-fi
+# --- Check for existing tags and build tag list ---
+
+declare -a ALL_TAGS=()
+declare -a ALL_TARGETS=()
+declare -a ALL_ARCHS_FOR_TAG=()
+
+for DB in "${DBS[@]}"; do
+  for ARCH in "${ARCHS[@]}"; do
+    TAG=$(make_tag "$DB" "$ARCH" "")
+    TAG=$(check_existing_tag "$TAG" "$DB" "$ARCH")
+    if [ "$TAG" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
+    ALL_TAGS+=("$TAG")
+    ALL_TARGETS+=("$(docker_target_for "$DB" "")")
+    ALL_ARCHS_FOR_TAG+=("$ARCH")
+
+    if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
+      TAG_DEV=$(make_tag "$DB" "$ARCH" "dev")
+      TAG_DEV=$(check_existing_tag "$TAG_DEV" "$DB" "$ARCH")
+      if [ "$TAG_DEV" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
+      ALL_TAGS+=("$TAG_DEV")
+      ALL_TARGETS+=("$(docker_target_for "$DB" "dev")")
+      ALL_ARCHS_FOR_TAG+=("$ARCH")
+    fi
+  done
+done
+
+# --- Show build configuration ---
 
 echo ""
 echo "=== Build Configuration ==="
-echo "  Architecture: $ARCH"
-echo "  Database:     $DB"
-echo "  Tag:          $TAG"
-if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
-  echo "  Tag (dev):    $TAG_DEV"
-fi
-echo "  Push:         $PUSH"
+echo "  Architecture: ${ARCHS[*]}"
+echo "  Database:     ${DBS[*]}"
+echo "  Images to build:"
+for TAG in "${ALL_TAGS[@]}"; do
+  echo "    $TAG"
+done
+echo "  Push: $PUSH"
 echo ""
 
 # --- Build client ---
@@ -145,90 +184,101 @@ else
   echo "=== Skipping client build (using existing build in client/packages/host/dist) ==="
 fi
 
-# --- Compile server ---
+# --- Compile server binaries ---
 
 if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
-  echo "=== Compiling server ($DB, $ARCH) ==="
+  # Deduplicate: compile once per (db, arch) combination
+  COMPILED=""
+  for DB in "${DBS[@]}"; do
+    for ARCH in "${ARCHS[@]}"; do
+      KEY="${DB}-${ARCH}"
+      if echo "$COMPILED" | grep -q "$KEY"; then continue; fi
+      COMPILED="$COMPILED $KEY"
 
-  if [ "$ARCH" = "arm64" ]; then
-    # Native arm64 build
-    docker run --rm --user "$(id -u)":"$(id -g)" \
-      -v "$PWD":/usr/src/omsupply \
-      -w /usr/src/omsupply/server \
-      "$RUST_IMAGE" \
-      cargo build --release --bin remote_server --bin remote_server_cli $CARGO_FEATURES
+      RUST_IMAGE=$(rust_image_for_db "$DB")
+      CARGO_FEATURES=$(cargo_features_for_db "$DB")
 
-  else
-    # Cross-compile for amd64 from native ARM container
-    if [ "$DB" = "postgres" ]; then
-      CROSS_TARGET_DIR="target-postgres-amd64"
-      RELEASE_DIR="target-postgres/release"
-    else
-      CROSS_TARGET_DIR="target-amd64"
-      RELEASE_DIR="target/release"
-    fi
+      echo "=== Compiling server ($DB, $ARCH) ==="
 
-    docker run --rm --platform linux/arm64 \
-      -v "$PWD":/usr/src/omsupply \
-      -w /usr/src/omsupply/server \
-      "$RUST_IMAGE" bash -c "\
-        apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
-        rustup target add x86_64-unknown-linux-gnu && \
-        CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
-          cargo build --release --target x86_64-unknown-linux-gnu --target-dir $CROSS_TARGET_DIR --bin remote_server --bin remote_server_cli $CARGO_FEATURES && \
-        mkdir -p $RELEASE_DIR && \
-        cp $CROSS_TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server $RELEASE_DIR/remote_server && \
-        cp $CROSS_TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server_cli $RELEASE_DIR/remote_server_cli && \
-        chown -R $(id -u):$(id -g) $RELEASE_DIR"
-  fi
+      if [ "$ARCH" = "arm64" ]; then
+        docker run --rm --user "$(id -u)":"$(id -g)" \
+          -v "$PWD":/usr/src/omsupply \
+          -w /usr/src/omsupply/server \
+          "$RUST_IMAGE" \
+          cargo build --release --bin remote_server --bin remote_server_cli $CARGO_FEATURES
+      else
+        if [ "$DB" = "postgres" ]; then
+          CROSS_TARGET_DIR="target-postgres-amd64"
+          RELEASE_DIR="target-postgres/release"
+        else
+          CROSS_TARGET_DIR="target-amd64"
+          RELEASE_DIR="target/release"
+        fi
+
+        docker run --rm --platform linux/arm64 \
+          -v "$PWD":/usr/src/omsupply \
+          -w /usr/src/omsupply/server \
+          "$RUST_IMAGE" bash -c "\
+            apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
+            rustup target add x86_64-unknown-linux-gnu && \
+            CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
+              cargo build --release --target x86_64-unknown-linux-gnu --target-dir $CROSS_TARGET_DIR --bin remote_server --bin remote_server_cli $CARGO_FEATURES && \
+            mkdir -p $RELEASE_DIR && \
+            cp $CROSS_TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server $RELEASE_DIR/remote_server && \
+            cp $CROSS_TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server_cli $RELEASE_DIR/remote_server_cli && \
+            chown -R $(id -u):$(id -g) $RELEASE_DIR"
+      fi
+    done
+  done
 else
-  if [ ! -f "$BINARY_DIR/remote_server" ]; then
-    echo "ERROR: Server binary not found at $BINARY_DIR/remote_server"
-    echo "Compile the server first, or select 'Y' for Compile server."
-    exit 1
-  fi
-  echo "=== Skipping server compile (using existing binary in $BINARY_DIR) ==="
+  # Validate all required binaries exist
+  for DB in "${DBS[@]}"; do
+    BINARY_DIR=$(binary_dir_for_db "$DB")
+    if [ ! -f "$BINARY_DIR/remote_server" ]; then
+      echo "ERROR: Server binary not found at $BINARY_DIR/remote_server"
+      echo "Compile the server first, or select 'Y' for Compile server."
+      exit 1
+    fi
+  done
+  echo "=== Skipping server compile (using existing binaries) ==="
 fi
 
 # --- Docker build ---
 
-echo "=== Building Docker image ==="
+echo "=== Building Docker images ==="
 
-PLATFORM_FLAG=""
-if [ "$ARCH" = "amd64" ]; then
-  PLATFORM_FLAG="--platform linux/amd64"
-fi
+for i in "${!ALL_TAGS[@]}"; do
+  TAG="${ALL_TAGS[$i]}"
+  TARGET="${ALL_TARGETS[$i]}"
+  ARCH="${ALL_ARCHS_FOR_TAG[$i]}"
 
-TARGET_FLAG=""
-if [ -n "$DOCKER_TARGET" ]; then
-  TARGET_FLAG="--target $DOCKER_TARGET"
-fi
+  PLATFORM_FLAG=""
+  if [ "$ARCH" = "amd64" ]; then
+    PLATFORM_FLAG="--platform linux/amd64"
+  fi
 
-docker build $PLATFORM_FLAG $TARGET_FLAG . -t "$TAG"
-echo "Built: $TAG"
+  TARGET_FLAG=""
+  if [ -n "$TARGET" ]; then
+    TARGET_FLAG="--target $TARGET"
+  fi
 
-if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
-  docker build $PLATFORM_FLAG --target "$DOCKER_TARGET_DEV" . -t "$TAG_DEV"
-  echo "Built: $TAG_DEV"
-fi
+  docker build $PLATFORM_FLAG $TARGET_FLAG . -t "$TAG"
+  echo "Built: $TAG"
+done
 
 # --- Push ---
 
 if [[ "$PUSH" =~ ^[Yy] ]]; then
   echo "=== Pushing to Docker Hub ==="
   docker login
-  docker push "$TAG"
-  echo "Pushed: $TAG"
-
-  if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
-    docker push "$TAG_DEV"
-    echo "Pushed: $TAG_DEV"
-  fi
+  for TAG in "${ALL_TAGS[@]}"; do
+    docker push "$TAG"
+    echo "Pushed: $TAG"
+  done
 fi
 
 echo ""
 echo "=== Done ==="
-echo "Image: $TAG"
-if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
-  echo "Image: $TAG_DEV"
-fi
+for TAG in "${ALL_TAGS[@]}"; do
+  echo "Image: $TAG"
+done
