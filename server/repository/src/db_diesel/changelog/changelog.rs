@@ -1,6 +1,7 @@
 use crate::{
     db_diesel::store_row::store,
     diesel_macros::{apply_equal_filter, diesel_bool_enum, diesel_string_enum},
+    dynamic_query_filter::create_condition,
     name_store_join::name_store_join,
     vaccination_row::vaccination,
     DBType, EqualFilter, LockedConnection, RepositoryError, StorageConnection,
@@ -465,6 +466,19 @@ impl<'a> ChangelogRepository<'a> {
         Ok(cursor_id)
     }
 }
+
+// Dynamic query filter for changelog
+// Source type is the changelog table (for queries directly against the table)
+create_condition!(
+    changelog::table,
+    (cursor, i64, changelog::cursor),
+    (table_name, ChangelogTableName, changelog::table_name),
+    (record_id, string, changelog::record_id),
+    (store_id, string, changelog::store_id),
+    (source_site_id, i32, changelog::source_site_id),
+    (transfer_store_id, string, changelog::transfer_store_id),
+    (patient_id, string, changelog::patient_id),
+);
 
 type BoxedChangelogQuery = IntoBoxed<'static, changelog_deduped::table, DBType>;
 
