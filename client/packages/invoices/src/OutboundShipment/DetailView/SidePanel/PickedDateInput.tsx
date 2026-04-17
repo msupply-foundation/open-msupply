@@ -142,6 +142,7 @@ export const PickedDateInput = () => {
       maxDate={new Date()}
       minDate={minDate}
       actions={['cancel', 'accept']}
+      width={140}
     />
   );
 
