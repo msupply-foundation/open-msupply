@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::generic_errors::StockLineReducedBelowZero;
+use graphql_types::generic_errors::{LedgerWouldGoBelowZero, StockLineReducedBelowZero};
 use graphql_types::types::{AdjustmentReasonNotProvided, InvoiceNode};
 use service::invoice::inventory_adjustment::InsertInventoryAdjustmentError as ServiceError;
 use service::{
@@ -98,6 +98,7 @@ impl CreateInventoryAdjustmentInput {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
+    LedgerWouldGoBelowZero(LedgerWouldGoBelowZero),
     AdustmentReasonNotProvided(AdjustmentReasonNotProvided),
 }
 
@@ -109,6 +110,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::StockLineReducedBelowZero(line) => {
             return Ok(InsertErrorInterface::StockLineReducedBelowZero(
                 StockLineReducedBelowZero::from_domain(line),
+            ))
+        }
+
+        ServiceError::LedgerGoesBelowZero(line) => {
+            return Ok(InsertErrorInterface::LedgerWouldGoBelowZero(
+                LedgerWouldGoBelowZero::from_domain(line),
             ))
         }
 
@@ -125,8 +132,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::AdjustmentReasonNotValid
         | ServiceError::BackdatingNotEnabled
         | ServiceError::CannotSetDateInFuture
-        | ServiceError::ExceedsMaximumBackdatingDays
-        | ServiceError::LedgerGoesBelowZero => BadUserInput(formatted_error),
+        | ServiceError::ExceedsMaximumBackdatingDays => BadUserInput(formatted_error),
 
         ServiceError::NewlyCreatedInvoiceDoesNotExist
         | ServiceError::StockInLineInsertError(_)

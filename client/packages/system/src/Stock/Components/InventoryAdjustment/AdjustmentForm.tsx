@@ -34,9 +34,10 @@ export const AdjustmentForm = ({
   const isInventoryReduction =
     draft.adjustmentType === AdjustmentTypeInput.Reduction;
 
+  // +1 day buffer so the boundary date isn't rejected by server UTC check
   const minDate =
     backdating?.maxDays && backdating?.maxDays > 0
-      ? DateUtils.addDays(new Date(), -backdating?.maxDays)
+      ? DateUtils.addDays(new Date(), -backdating?.maxDays + 1)
       : undefined;
 
   return (
@@ -101,7 +102,8 @@ export const AdjustmentForm = ({
               onChange={date =>
                 setDraft(state => ({
                   ...state,
-                  backdatedDatetime: date ? date.toISOString() : null,
+                  backdatedDatetime:
+                    date && !DateUtils.isToday(date) ? date.toISOString() : null,
                 }))
               }
               maxDate={new Date()}

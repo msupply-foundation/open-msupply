@@ -4998,6 +4998,12 @@ export type LedgerSortInput = {
   key: LedgerSortFieldInput;
 };
 
+export type LedgerWouldGoBelowZero = InsertInventoryAdjustmentErrorInterface & {
+  __typename: 'LedgerWouldGoBelowZero';
+  description: Scalars['String']['output'];
+  stockLine: StockLineNode;
+};
+
 export type LineDeleteError = DeleteResponseRequisitionErrorInterface & {
   __typename: 'LineDeleteError';
   description: Scalars['String']['output'];

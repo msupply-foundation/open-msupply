@@ -72,7 +72,7 @@ pub fn validate(
             .map_err(|e| DatabaseError(e))?;
 
             if historical_available - input.adjustment < 0.0 {
-                return Err(LedgerGoesBelowZero);
+                return Err(LedgerGoesBelowZero(stock_line));
             }
         }
     }
