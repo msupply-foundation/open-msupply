@@ -73,7 +73,7 @@ fn map_status(status: &str) -> InvoiceStatus {
     }
 }
 
-fn is_finalised(status: &str) -> bool {
+pub(super) fn is_finalised(status: &str) -> bool {
     matches!(status, "fn" | "Fin" | "Finalised")
 }
 
@@ -105,6 +105,21 @@ impl SyncTranslation for GoodsReceivedTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data: LegacyGoodsReceivedRow = serde_json::from_str(&sync_record.data)?;
+
+        // Skip if an invoice with this ID already exists — the invoice may have been
+        // created in OMS (from an earlier non-finalised import) and pushed back to central
+        // as a transact record, then re-integrated here during re-init. Overwriting would
+        // clobber user edits. The finalised path modifies a different invoice (found via
+        // transact sync buffer lookup), so it isn't affected by this guard.
+        if InvoiceRowRepository::new(connection)
+            .find_one_by_id(&data.id)?
+            .is_some()
+        {
+            return Ok(PullTranslateResult::Ignored(format!(
+                "invoice {} already exists, skipping goods_received import",
+                data.id
+            )));
+        }
 
         let po_id = match &data.purchase_order_ID {
             Some(id) => id,

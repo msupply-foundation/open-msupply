@@ -1,7 +1,9 @@
 use super::{
-    goods_received::GoodsReceivedTranslation, invoice_line::InvoiceLineTranslation,
-    item::ItemTranslation, purchase_order_line::PurchaseOrderLineTranslation, PullTranslateResult,
-    SyncTranslation,
+    goods_received::{is_finalised, GoodsReceivedTranslation},
+    invoice_line::InvoiceLineTranslation,
+    item::ItemTranslation,
+    purchase_order_line::PurchaseOrderLineTranslation,
+    PullTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -54,10 +56,6 @@ struct TransLineGoodsReceivedLineId {
     goods_received_lines_ID: Option<String>,
 }
 
-fn is_finalised(status: &str) -> bool {
-    matches!(status, "fn" | "Fin" | "Finalised")
-}
-
 /// Find the invoice_line ID (trans_line record_id) that was created from a GR line,
 /// by searching trans_line sync_buffer records for goods_received_lines_ID matching the GR line's ID.
 fn find_linked_invoice_line_id(
@@ -108,11 +106,32 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data: LegacyGoodsReceivedLineRow = serde_json::from_str(&sync_record.data)?;
 
+        // Skip if an invoice_line with this ID already exists — the line may have been
+        // created in OMS (from an earlier non-finalised import) and pushed back to central
+        // as a trans_line, then re-integrated here during re-init. Overwriting would clobber
+        // user edits. The finalised path modifies a different invoice_line (found via
+        // trans_line sync buffer lookup), so it isn't affected by this guard.
+        if InvoiceLineRowRepository::new(connection)
+            .find_one_by_id(&data.id)?
+            .is_some()
+        {
+            return Ok(PullTranslateResult::Ignored(format!(
+                "invoice_line {} already exists, skipping goods_received_line import",
+                data.id
+            )));
+        }
+
         // Look up parent GR to check if finalized
         let gr_sync_row = match SyncBufferRowRepository::new(connection)
             .find_one_by_record_id(&data.goods_received_ID)?
         {
-            Some(row) => row,
+            Some(row) if row.table_name == GoodsReceivedTranslation.table_name() => row,
+            Some(_) => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "sync_buffer record {} is not a Goods_received record",
+                    data.goods_received_ID
+                )))
+            }
             None => {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "parent goods_received {} not found in sync_buffer",
