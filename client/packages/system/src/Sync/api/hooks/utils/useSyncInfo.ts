@@ -30,9 +30,6 @@ export const useSyncInfo = (
     () => api.get.syncInfo(token),
     {
       refetchInterval: isSubscribed ? false : refetchInterval,
-      // Everytime a new consumer mounts, they need to get the latest sync info, so we always want to refetch on mount
-      // Any updates, will be handled by the subscription if it's working, otherwise we'll just get the latest info on the next poll
-      refetchOnMount: 'always',
       enabled: isEnabled,
     }
   );
