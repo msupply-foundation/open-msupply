@@ -9,11 +9,16 @@
 #
 # Authored by Claude Code (claude.ai/code)
 
-set -e
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
+
+# Verify we're in the repo root
+if [ ! -f "package.json" ] || [ ! -f "Dockerfile" ]; then
+  echo "ERROR: Could not locate repo root. Expected package.json and Dockerfile in $REPO_ROOT"
+  echo "Run this script from the repository root with: yarn dockerise"
+  exit 1
+fi
 
 # Derive version tag from package.json + current date
 VERSION=$(node -p "require('./package.json').version")
@@ -141,11 +146,34 @@ check_existing_tag() {
   echo "$CURRENT_TAG"
 }
 
+# --- Build result tracking ---
+
+COMPILE_FAILED=""
+REPORT_LINES=""
+SUCCESSFUL_TAGS=""
+
+record_result() {
+  local DB="$1" ARCH="$2" VARIANT="$3" STATUS="$4" TAG="$5"
+  local LABEL
+  if [ -n "$VARIANT" ]; then
+    LABEL=$(printf "  %-10s %-10s %-6s" "$DB" "$ARCH" "$VARIANT")
+  else
+    LABEL=$(printf "  %-10s %-10s %-6s" "$DB" "$ARCH" "")
+  fi
+  if [ "$STATUS" = "OK" ]; then
+    REPORT_LINES="${REPORT_LINES}${LABEL} OK     ${TAG}\n"
+    SUCCESSFUL_TAGS="${SUCCESSFUL_TAGS} ${TAG}"
+  else
+    REPORT_LINES="${REPORT_LINES}${LABEL} FAIL   ${TAG}\n"
+  fi
+}
+
 # --- Check for existing tags and build tag list ---
 
 declare -a ALL_TAGS=()
 declare -a ALL_TARGETS=()
 declare -a ALL_ARCHS_FOR_TAG=()
+declare -a ALL_DBS_FOR_TAG=()
 
 for DB in "${DBS[@]}"; do
   for ARCH in "${ARCHS[@]}"; do
@@ -155,6 +183,7 @@ for DB in "${DBS[@]}"; do
     ALL_TAGS+=("$TAG")
     ALL_TARGETS+=("$(docker_target_for "$DB" "")")
     ALL_ARCHS_FOR_TAG+=("$ARCH")
+    ALL_DBS_FOR_TAG+=("$DB")
 
     if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
       TAG_DEV=$(make_tag "$DB" "$ARCH" "dev")
@@ -163,6 +192,7 @@ for DB in "${DBS[@]}"; do
       ALL_TAGS+=("$TAG_DEV")
       ALL_TARGETS+=("$(docker_target_for "$DB" "dev")")
       ALL_ARCHS_FOR_TAG+=("$ARCH")
+      ALL_DBS_FOR_TAG+=("$DB")
     fi
   done
 done
@@ -180,11 +210,14 @@ done
 echo "  Push: $PUSH"
 echo ""
 
-# --- Build client ---
+# --- Build client (fatal if fails — all variants depend on it) ---
 
 if [[ "$BUILD_CLIENT" =~ ^[Yy] ]]; then
   echo "=== Building client ==="
-  cd client && yarn && yarn build
+  if ! (cd client && yarn && yarn build); then
+    echo "ERROR: Client build failed. Aborting."
+    exit 1
+  fi
   cd "$REPO_ROOT"
 else
   if [ ! -d "client/packages/host/dist" ]; then
@@ -198,7 +231,6 @@ fi
 # --- Compile server binaries ---
 
 if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
-  # Deduplicate: compile once per (db, arch) combination
   COMPILED=""
   for DB in "${DBS[@]}"; do
     for ARCH in "${ARCHS[@]}"; do
@@ -217,16 +249,19 @@ if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
         TARGET_DIR_FLAG="--target-dir $TARGET_DIR"
       fi
 
+      COMPILE_OK=true
       if [ "$ARCH" = "arm64" ]; then
-        docker run --rm --user "$(id -u)":"$(id -g)" \
+        if ! docker run --rm --user "$(id -u)":"$(id -g)" \
           -v "$PWD":/usr/src/omsupply \
           -w /usr/src/omsupply/server \
           "$RUST_IMAGE" \
-          cargo build --release --bin remote_server --bin remote_server_cli $CARGO_FEATURES $TARGET_DIR_FLAG
+          cargo build --release --bin remote_server --bin remote_server_cli $CARGO_FEATURES $TARGET_DIR_FLAG; then
+          COMPILE_OK=false
+        fi
       else
         RELEASE_DIR=$(binary_dir_for_db "$DB")
 
-        docker run --rm --platform linux/arm64 \
+        if ! docker run --rm --platform linux/arm64 \
           -v "$PWD":/usr/src/omsupply \
           -w /usr/src/omsupply/server \
           "$RUST_IMAGE" bash -c "\
@@ -237,7 +272,14 @@ if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
             mkdir -p $RELEASE_DIR && \
             cp $TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server $RELEASE_DIR/remote_server && \
             cp $TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server_cli $RELEASE_DIR/remote_server_cli && \
-            chown -R $(id -u):$(id -g) $RELEASE_DIR"
+            chown -R $(id -u):$(id -g) $RELEASE_DIR"; then
+          COMPILE_OK=false
+        fi
+      fi
+
+      if [ "$COMPILE_OK" = false ]; then
+        echo "WARNING: Compilation failed for $DB $ARCH — skipping this variant."
+        COMPILE_FAILED="$COMPILE_FAILED $KEY"
       fi
     done
   done
@@ -246,12 +288,15 @@ else
   for DB in "${DBS[@]}"; do
     BINARY_DIR=$(binary_dir_for_db "$DB")
     if [ ! -f "$BINARY_DIR/remote_server" ]; then
-      echo "ERROR: Server binary not found at $BINARY_DIR/remote_server"
-      echo "Compile the server first, or select 'Y' for Compile server."
-      exit 1
+      echo "WARNING: Server binary not found at $BINARY_DIR/remote_server — marking as failed."
+      for ARCH in "${ARCHS[@]}"; do
+        COMPILE_FAILED="$COMPILE_FAILED ${DB}-${ARCH}"
+      done
     fi
   done
-  echo "=== Skipping server compile (using existing binaries) ==="
+  if [ -z "$COMPILE_FAILED" ]; then
+    echo "=== Skipping server compile (using existing binaries) ==="
+  fi
 fi
 
 # --- Docker build ---
@@ -262,6 +307,21 @@ for i in "${!ALL_TAGS[@]}"; do
   TAG="${ALL_TAGS[$i]}"
   TARGET="${ALL_TARGETS[$i]}"
   ARCH="${ALL_ARCHS_FOR_TAG[$i]}"
+  DB="${ALL_DBS_FOR_TAG[$i]}"
+  KEY="${DB}-${ARCH}"
+
+  # Determine variant label for report
+  VARIANT=""
+  if [[ "$TAG" == *-dev ]]; then
+    VARIANT="dev"
+  fi
+
+  # Skip if compilation failed for this combination
+  if echo "$COMPILE_FAILED" | grep -q "$KEY"; then
+    echo "Skipping $TAG (compilation failed)"
+    record_result "$DB" "$ARCH" "$VARIANT" "FAIL" "(compilation failed)"
+    continue
+  fi
 
   PLATFORM_FLAG=""
   if [ "$ARCH" = "amd64" ]; then
@@ -273,23 +333,48 @@ for i in "${!ALL_TAGS[@]}"; do
     TARGET_FLAG="--target $TARGET"
   fi
 
-  docker build $PLATFORM_FLAG $TARGET_FLAG . -t "$TAG"
-  echo "Built: $TAG"
+  if docker build $PLATFORM_FLAG $TARGET_FLAG . -t "$TAG"; then
+    echo "Built: $TAG"
+    record_result "$DB" "$ARCH" "$VARIANT" "OK" "$TAG"
+  else
+    echo "WARNING: Docker build failed for $TAG"
+    record_result "$DB" "$ARCH" "$VARIANT" "FAIL" "(docker build failed)"
+  fi
 done
 
-# --- Push ---
+# --- Push (only successful tags) ---
 
 if [[ "$PUSH" =~ ^[Yy] ]]; then
-  echo "=== Pushing to Docker Hub ==="
-  docker login
-  for TAG in "${ALL_TAGS[@]}"; do
-    docker push "$TAG"
-    echo "Pushed: $TAG"
-  done
+  if [ -n "$SUCCESSFUL_TAGS" ]; then
+    echo "=== Pushing to Docker Hub ==="
+    docker login
+    for TAG in $SUCCESSFUL_TAGS; do
+      if docker push "$TAG"; then
+        echo "Pushed: $TAG"
+      else
+        echo "WARNING: Failed to push $TAG"
+      fi
+    done
+  else
+    echo "=== No successful builds to push ==="
+  fi
 fi
 
+# --- Build Report ---
+
 echo ""
-echo "=== Done ==="
-for TAG in "${ALL_TAGS[@]}"; do
-  echo "Image: $TAG"
-done
+echo "=== Build Report ==="
+printf "$REPORT_LINES"
+
+if [ -n "$SUCCESSFUL_TAGS" ]; then
+  echo ""
+  echo "Successfully built images:"
+  for TAG in $SUCCESSFUL_TAGS; do
+    echo "  $TAG"
+  done
+  exit 0
+else
+  echo ""
+  echo "All builds failed."
+  exit 1
+fi
