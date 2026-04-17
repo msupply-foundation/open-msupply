@@ -1,4 +1,4 @@
-use crate::queries::site::SiteNode;
+use crate::queries::SiteNode;
 use async_graphql::*;
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
