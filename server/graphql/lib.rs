@@ -38,9 +38,9 @@ use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::{
-    CentralGeneralMutations, CentralGeneralQueries, DiscoveryQueries, GeneralMutations,
-    GeneralQueries, InitialisationMutations, InitialisationQueries, InitialisationSubscriptions,
-    MigrationQueries, SyncStatusSubscriptions,
+    CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
+    InitialisationMutations, InitialisationQueries, InitialisationSubscriptions, MigrationQueries,
+    SyncStatusSubscriptions,
 };
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
@@ -58,6 +58,7 @@ use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
+use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
@@ -130,6 +131,10 @@ impl CentralServerMutationNode {
     async fn reports(&self) -> CentralReportMutations {
         CentralReportMutations
     }
+
+    async fn site(&self) -> CentralSiteMutations {
+        CentralSiteMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -140,8 +145,8 @@ impl CentralServerQueryNode {
         CentralPluginQueries
     }
 
-    async fn general(&self) -> CentralGeneralQueries {
-        CentralGeneralQueries
+    async fn site(&self) -> CentralSiteQueries {
+        CentralSiteQueries
     }
 }
 
