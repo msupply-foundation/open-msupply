@@ -9,7 +9,7 @@ const SITE_1: (&str, &str) = (
     "ID": "1",
     "site_ID": 1,
     "name": "Site A",
-    "password": "hash_a",
+    "password_hash": "hash_a",
     "hardwareID": "hw-uuid-aaa"
     }"#,
 );
@@ -20,7 +20,7 @@ const SITE_2: (&str, &str) = (
     "ID": "2",
     "site_ID": 2,
     "name": "Site B",
-    "password": "hash_b",
+    "password_hash": "hash_b",
     "hardwareID": null
     }"#,
 );
