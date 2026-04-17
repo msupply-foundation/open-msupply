@@ -83,7 +83,18 @@ binary_dir_for_db() {
 
 cargo_features_for_db() {
   if [ "$1" = "postgres" ]; then
-    echo "--no-default-features --features postgres --target-dir target-postgres"
+    echo "--no-default-features --features postgres"
+  fi
+}
+
+target_dir_for() {
+  local DB="$1" ARCH="$2"
+  if [ "$DB" = "postgres" ] && [ "$ARCH" = "arm64" ]; then
+    echo "target-postgres"
+  elif [ "$DB" = "postgres" ] && [ "$ARCH" = "amd64" ]; then
+    echo "target-postgres-amd64"
+  elif [ "$DB" = "sqlite" ] && [ "$ARCH" = "amd64" ]; then
+    echo "target-amd64"
   fi
 }
 
@@ -200,20 +211,20 @@ if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
 
       echo "=== Compiling server ($DB, $ARCH) ==="
 
+      TARGET_DIR=$(target_dir_for "$DB" "$ARCH")
+      TARGET_DIR_FLAG=""
+      if [ -n "$TARGET_DIR" ]; then
+        TARGET_DIR_FLAG="--target-dir $TARGET_DIR"
+      fi
+
       if [ "$ARCH" = "arm64" ]; then
         docker run --rm --user "$(id -u)":"$(id -g)" \
           -v "$PWD":/usr/src/omsupply \
           -w /usr/src/omsupply/server \
           "$RUST_IMAGE" \
-          cargo build --release --bin remote_server --bin remote_server_cli $CARGO_FEATURES
+          cargo build --release --bin remote_server --bin remote_server_cli $CARGO_FEATURES $TARGET_DIR_FLAG
       else
-        if [ "$DB" = "postgres" ]; then
-          CROSS_TARGET_DIR="target-postgres-amd64"
-          RELEASE_DIR="target-postgres/release"
-        else
-          CROSS_TARGET_DIR="target-amd64"
-          RELEASE_DIR="target/release"
-        fi
+        RELEASE_DIR=$(binary_dir_for_db "$DB")
 
         docker run --rm --platform linux/arm64 \
           -v "$PWD":/usr/src/omsupply \
@@ -222,10 +233,10 @@ if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
             apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
             rustup target add x86_64-unknown-linux-gnu && \
             CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
-              cargo build --release --target x86_64-unknown-linux-gnu --target-dir $CROSS_TARGET_DIR --bin remote_server --bin remote_server_cli $CARGO_FEATURES && \
+              cargo build --release --target x86_64-unknown-linux-gnu $TARGET_DIR_FLAG --bin remote_server --bin remote_server_cli $CARGO_FEATURES && \
             mkdir -p $RELEASE_DIR && \
-            cp $CROSS_TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server $RELEASE_DIR/remote_server && \
-            cp $CROSS_TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server_cli $RELEASE_DIR/remote_server_cli && \
+            cp $TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server $RELEASE_DIR/remote_server && \
+            cp $TARGET_DIR/x86_64-unknown-linux-gnu/release/remote_server_cli $RELEASE_DIR/remote_server_cli && \
             chown -R $(id -u):$(id -g) $RELEASE_DIR"
       fi
     done
