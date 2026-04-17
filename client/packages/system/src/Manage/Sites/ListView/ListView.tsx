@@ -2,14 +2,19 @@ import React, { useMemo } from 'react';
 import {
   NothingHere,
   useUrlQueryParams,
+  useEditModal,
   useTranslation,
+  useNotification,
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
 } from '@openmsupply-client/common';
+import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
+import { SiteEditModal } from './SiteEditModal';
 import {
   SiteRowFragment,
+  defaultDraftSite,
   DraftSite,
   useSites,
 } from '../api';
@@ -27,9 +32,34 @@ export const SitesList = () => {
   const queryParams = { ...filter, sortBy, first, offset };
   const {
     query: { data, isError, isFetching },
+    upsert: { upsert },
+    draft,
     updateDraft,
   } = useSites(queryParams);
 
+  const { isOpen, onClose, onOpen } = useEditModal();
+  const { error, success } = useNotification();
+
+  const handleClose = () => {
+    onClose();
+    updateDraft(defaultDraftSite);
+  };
+
+  const handleCreate = () => {
+    const nextId = Math.max(0, ...(data?.nodes?.map(s => s.id) ?? [])) + 1;
+    updateDraft({ ...defaultDraftSite, id: nextId });
+    onOpen();
+  };
+
+  const save = async () => {
+    try {
+      await upsert();
+      success(t('messages.site-saved'))();
+      handleClose();
+    } catch (e) {
+      error(String(e))();
+    }
+  };
 
   const columns = useMemo(
     (): ColumnDef<SiteRowFragment>[] => [
@@ -62,6 +92,7 @@ export const SitesList = () => {
         hardwareId: selected.hardwareId,
         isNew: false,
       } as DraftSite);
+      onOpen();
     }
   };
 
@@ -73,15 +104,26 @@ export const SitesList = () => {
     isLoading: isFetching,
     isError,
     onRowClick,
+    enableRowSelection: false,
     noDataElement: (
-      <NothingHere body={t('error.no-sites')} />
+      <NothingHere body={t('error.no-sites')} onCreate={onOpen} />
     ),
   });
 
   return (
     <>
       <Toolbar filter={filter} />
+      <AppBarButtons onOpen={handleCreate} />
       <MaterialTable table={table} />
+      {isOpen && (
+        <SiteEditModal
+          isOpen={isOpen}
+          site={draft}
+          onClose={handleClose}
+          upsert={save}
+          updateDraft={updateDraft}
+        />
+      )}
     </>
   );
 };
