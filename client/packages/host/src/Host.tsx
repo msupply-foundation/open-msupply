@@ -182,7 +182,9 @@ const Host = () => (
                   <MigrationInfoProvider>
                     <AuthProvider>
                       <PreInit>
-                        <Init />
+                        <React.Suspense fallback={null}>
+                          <Init />
+                        </React.Suspense>
                       </PreInit>
                       <ConfirmationModalProvider>
                         <AlertModalProvider>
