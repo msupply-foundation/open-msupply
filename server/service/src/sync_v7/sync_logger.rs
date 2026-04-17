@@ -221,7 +221,7 @@ mod test {
         mock::{MockData, MockDataInserts},
         syncv7::SyncError,
         test_db::setup_all_with_data,
-        SyncLogV7Repository,
+        Condition, SyncLogV7Repository,
     };
 
     use super::*;
@@ -239,31 +239,31 @@ mod test {
 
         // Start creates a row
         let mut logger = SyncLogger::start(&connection).unwrap();
-        let row = repo.latest().unwrap().unwrap();
+        let row = repo.query_one(Condition::TRUE).unwrap().unwrap();
         assert!(row.finished_datetime.is_none());
         assert!(row.error.is_none());
 
         // Step through push with progress
         logger.start_step(SyncStep::Push).unwrap();
         logger.progress(10).unwrap();
-        let row = repo.latest().unwrap().unwrap();
+        let row = repo.query_one(Condition::TRUE).unwrap().unwrap();
         assert!(row.push_started_datetime.is_some());
         assert_eq!(row.push_progress_total, Some(10));
         assert_eq!(row.push_progress_done, Some(0));
 
         logger.progress(5).unwrap();
-        let row = repo.latest().unwrap().unwrap();
+        let row = repo.query_one(Condition::TRUE).unwrap().unwrap();
         assert_eq!(row.push_progress_done, Some(5));
 
         // Transition to pull finishes push
         logger.start_step(SyncStep::Pull).unwrap();
-        let row = repo.latest().unwrap().unwrap();
+        let row = repo.query_one(Condition::TRUE).unwrap().unwrap();
         assert!(row.push_finished_datetime.is_some());
         assert!(row.pull_started_datetime.is_some());
 
         // Finish records finished_datetime
         logger.finish().unwrap();
-        let row = repo.latest().unwrap().unwrap();
+        let row = repo.query_one(Condition::TRUE).unwrap().unwrap();
         assert!(row.finished_datetime.is_some());
         assert!(row.pull_finished_datetime.is_some());
 
@@ -272,7 +272,7 @@ mod test {
         logger2
             .error(&SyncError::Other("test error".to_string()))
             .unwrap();
-        let row = repo.latest().unwrap().unwrap();
+        let row = repo.query_one(Condition::TRUE).unwrap().unwrap();
         assert_eq!(row.error, Some(SyncError::Other("test error".to_string())));
     }
 }

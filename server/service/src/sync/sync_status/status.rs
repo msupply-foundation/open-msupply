@@ -1,12 +1,9 @@
-use std::sync::RwLock;
-
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
-    SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField, SyncLogV7Repository,
-    SyncLogV7Row,
+    dynamic_query_filter::FilterBuilder, ChangelogRepository, Condition, DatetimeFilter,
+    EqualFilter, KeyType, Pagination, RepositoryError, Sort, SyncLogFilter, SyncLogRepository,
+    SyncLogRow, SyncLogSortField, SyncLogV7Repository, SyncLogV7Row,
 };
-
 
 use crate::{
     cursor_controller::CursorController,
@@ -292,7 +289,6 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
 fn get_latest_successful_sync_status(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatus>, RepositoryError> {
-
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
@@ -318,7 +314,6 @@ fn get_latest_successful_sync_status(
 
     Ok(Some(result))
 }
-
 
 #[derive(Debug)]
 pub enum NumberOfRecordsInPushQueueError {
@@ -370,23 +365,32 @@ impl SyncLogError {
 fn get_latest_sync_status_v7(
     ctx: &ServiceContext,
 ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-    SyncLogV7Repository::new(&ctx.connection).latest()
+    SyncLogV7Repository::new(&ctx.connection).query_one(Condition::TRUE)
 }
 
 fn get_latest_successful_sync_status_v7(
     ctx: &ServiceContext,
 ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-    SyncLogV7Repository::new(&ctx.connection).latest_successful()
+    SyncLogV7Repository::new(&ctx.connection).query_one(Condition::And(vec![
+        Condition::FinishedDatetime::is_not_null(),
+        Condition::Error::is_null(),
+    ]))
 }
 
 fn get_initialisation_status_v7(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
-    if SyncLogV7Repository::new(&ctx.connection).is_initialised()? {
-        let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
-        Ok(InitialisationStatus::Initialised(site_name))
-    } else {
-        Ok(InitialisationStatus::PreInitialisation)
+    let filter = Condition::And(vec![
+        Condition::FinishedDatetime::is_not_null(),
+        Condition::Error::is_null(),
+    ]);
+
+    match SyncLogV7Repository::new(&ctx.connection).query_one(filter)? {
+        Some(_) => {
+            let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
+            Ok(InitialisationStatus::Initialised(site_name))
+        }
+        None => Ok(InitialisationStatus::PreInitialisation),
     }
 }
 
