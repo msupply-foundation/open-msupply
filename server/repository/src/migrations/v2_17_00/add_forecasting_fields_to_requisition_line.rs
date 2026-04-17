@@ -289,8 +289,9 @@ mod tests {
             .unwrap();
         assert_eq!(remaining_frontend_plugin_count, 0);
 
+        // Use raw string values because at this migration level,
+        // Postgres still has the changelog_table_name enum type (not yet converted to TEXT).
         let backend_plugin_changelog_count_after: i64 = changelog::changelog::table
-            .filter(changelog::changelog::table_name.eq(ChangelogTableName::BackendPlugin))
             .filter(changelog::changelog::record_id.eq("forecasting_plugin_id"))
             .count()
             .get_result(connection.lock().connection())
@@ -298,7 +299,6 @@ mod tests {
         assert_eq!(backend_plugin_changelog_count_after, 0);
 
         let frontend_plugin_changelog_count_after: i64 = changelog::changelog::table
-            .filter(changelog::changelog::table_name.eq(ChangelogTableName::FrontendPlugin))
             .filter(changelog::changelog::record_id.eq("forecasting_frontend_plugin_id"))
             .count()
             .get_result(connection.lock().connection())
