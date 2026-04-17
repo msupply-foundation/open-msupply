@@ -18,7 +18,7 @@ An interactive build script is available that handles the full pipeline (client 
 yarn dockerise
 ```
 
-It will prompt you for architecture (amd64/arm64), database (SQLite/Postgres), and which steps to run. Press Enter at each prompt to accept the defaults.
+It will prompt you for architecture (amd64/arm64/both), database (SQLite/Postgres/both), and which steps to run. Press Enter at each prompt to accept the defaults. Selecting "both" for architecture or database will compile all variants first, then build all Docker images.
 
 <div class="alert alert-warning">
 <strong>Note:</strong> This script currently assumes it is being run on an ARM host (e.g. Apple Silicon Mac). Cross-compilation targets are set up accordingly. If you are running on a native amd64 Linux system, use the manual build instructions below instead.
