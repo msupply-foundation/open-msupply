@@ -1,0 +1,22 @@
+# Rust build artifacts (can be 20GB+) — allow only the release binaries
+server/target/*
+!server/target/release
+server/target/release/*
+!server/target/release/remote_server
+!server/target/release/remote_server_cli
+
+server/target-postgres/*
+!server/target-postgres/release
+server/target-postgres/release/*
+!server/target-postgres/release/remote_server
+!server/target-postgres/release/remote_server_cli
+
+server/target-amd64
+server/target-postgres-amd64
+
+# Node modules
+client/node_modules
+node_modules
+
+# Git
+.git

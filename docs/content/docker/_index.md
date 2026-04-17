@@ -10,6 +10,20 @@ source = "code"
 
 # Open omSupply Docker
 
+## Quick start
+
+An interactive build script is available that handles the full pipeline (client build, server compile, Docker image build, and optional push):
+
+```bash
+yarn dockerise
+```
+
+It will prompt you for architecture (amd64/arm64), database (SQLite/Postgres), and which steps to run. Press Enter at each prompt to accept the defaults.
+
+The rest of this page documents the manual steps if you need more control over the process.
+
+## Manual build
+
 Dockerise github action is made to fire when a new tag is created, this tag needs to start with `v`, this action uses Dockerfile in root dir.
 
 Dockerfile has two pre-requisites:
