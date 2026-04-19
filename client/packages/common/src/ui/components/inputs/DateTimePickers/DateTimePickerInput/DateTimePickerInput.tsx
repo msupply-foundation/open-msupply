@@ -72,9 +72,14 @@ export const DateTimePickerInput = ({
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
+  const [currentView, setCurrentView] = useState<string | null>(null);
   const t = useTranslation();
   const format =
     props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
+
+  // Month/year selections are intermediate only when a day view exists.
+  // Default views always include 'day'; only explicit overrides (e.g. ExpiryDateInput) omit it.
+  const hasDayView = !props.views || (props.views as string[]).includes('day');
 
   const isDesktop = useMediaQuery('(pointer: fine)');
 
@@ -122,6 +127,15 @@ export const DateTimePickerInput = ({
             setInternalError(null);
           }
 
+          // Month/year picks should navigate, not set the date (unless there's no day view)
+          if (
+            date !== null &&
+            hasDayView &&
+            (currentView === 'month' || currentView === 'year')
+          ) {
+            return;
+          }
+
           handleDateInput(date);
         }}
         label={label}
@@ -134,9 +148,12 @@ export const DateTimePickerInput = ({
           },
           textField: {
             onBlur: () => {
+              if (props.disabled) return;
               setIsInitialEntry(false);
-              // Apply max/mins on blur if present
-              if (minDate || maxDate) {
+              // Apply max/mins on blur only if the user changed the value
+              // (e.g. by typing). Without this check, existing values
+              // outside the min/max range get clamped on every blur.
+              if ((minDate || maxDate) && value !== props.value) {
                 setInternalError(null);
                 handleDateInput(value);
               }
@@ -164,9 +181,13 @@ export const DateTimePickerInput = ({
         maxDate={maxDate}
         disableFuture={disableFuture}
         closeOnSelect={true}
-        onOpen={() => setIsOpen?.(true)}
-        onClose={() => setIsOpen?.(false)}
         {...props}
+        onViewChange={newView => setCurrentView(newView)}
+        onOpen={() => setIsOpen?.(true)}
+        onClose={() => {
+          setCurrentView(null);
+          setIsOpen?.(false);
+        }}
         value={value}
       />
       {required && (
