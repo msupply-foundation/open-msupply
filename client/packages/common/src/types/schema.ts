@@ -7603,6 +7603,7 @@ export type QueriesActivityLogsArgs = {
   filter?: InputMaybe<ActivityLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ActivityLogSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 export type QueriesAllReportVersionsArgs = {
