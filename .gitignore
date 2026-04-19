@@ -22,3 +22,4 @@ worktrees
 # Default path for backups
 backup/
 !docs/content/server/cli/backup/
+/client/packages
