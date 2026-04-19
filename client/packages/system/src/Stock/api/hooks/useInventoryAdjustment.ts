@@ -8,6 +8,7 @@ export type DraftInventoryAdjustment = {
   reason: ReasonOptionRowFragment | null;
   adjustment: number;
   adjustmentType: AdjustmentTypeInput;
+  backdatedDatetime?: string | null;
 };
 
 export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
@@ -37,6 +38,10 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
       return 'error.reduced-below-zero';
     }
 
+    if (adjustmentError.__typename === 'LedgerWouldGoBelowZero') {
+      return 'error.ledger-would-go-below-zero';
+    }
+
     if (adjustmentError.__typename === 'AdjustmentReasonNotProvided') {
       return 'error.provide-reason-stock-adjustment';
     }
@@ -57,6 +62,7 @@ const useCreate = (stockLineId: string) => {
       adjustment,
       adjustmentType,
       reason,
+      backdatedDatetime,
     }: DraftInventoryAdjustment) => {
       // TODO: error helper to handle structured/standard errors
       return await stockApi.createInventoryAdjustment({
@@ -66,6 +72,7 @@ const useCreate = (stockLineId: string) => {
           adjustmentType,
           stockLineId,
           reasonOptionId: reason?.id,
+          backdatedDatetime,
         },
       });
     },
