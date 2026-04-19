@@ -18,5 +18,9 @@ server/target-postgres-amd64
 client/node_modules
 node_modules
 
+# Platform-specific client packages (large build artifacts not needed in Docker)
+client/packages/android
+client/packages/electron
+
 # Git
 .git
