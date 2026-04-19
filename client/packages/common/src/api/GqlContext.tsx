@@ -13,6 +13,17 @@ import { createRegisteredContext } from 'react-singleton-context';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
+const RETRYABLE_STATUS_CODES = [408, 502, 503];
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1000;
+
+interface HttpErrorResponse {
+  response?: { status?: number };
+}
+
+const isHttpError = (reason: unknown): reason is HttpErrorResponse =>
+  typeof reason === 'object' && reason !== null && 'response' in reason;
+
 // these queries are allowed to fail silently with permission denied errors
 // as they are for background data fetches only; the user will be notified
 // by other, page-level, queries instead. Allowing the exceptions here
@@ -30,6 +41,19 @@ const permissionExceptions = [
 // they occur in the background and should not be used to determine
 // if the user has remained active
 const ignoredQueries = ['refreshToken', 'syncInfo', 'temperatureNotifications'];
+
+// background/non-critical queries that should not be retried on failure
+// to avoid adding unnecessary load when the server is under stress
+const noRetryQueries = [
+  'stockCounts',
+  'inboundCounts',
+  'outboundCounts',
+  'internalOrderCounts',
+  'requisitionCounts',
+  'itemCounts',
+  'syncInfo',
+  'temperatureNotifications',
+];
 
 interface ResponseError {
   message?: string;
@@ -83,6 +107,12 @@ const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
   return ignoredQueries.indexOf(operationNode.name?.value ?? '') !== -1;
 };
 
+const shouldSkipRetry = (documentNode?: DocumentNode) =>
+  documentNode?.definitions?.some(def => {
+    const op = def as OperationDefinitionNode;
+    return noRetryQueries.includes(op.name?.value ?? '');
+  }) ?? false;
+
 const shouldSaveRequestTime = (documentNode?: DocumentNode) =>
   documentNode && !documentNode?.definitions?.some(shouldIgnoreQuery);
 
@@ -104,6 +134,36 @@ class GQLClient extends GraphQLClient {
     this.lastRequestTime = new Date();
   }
 
+  private async requestWithRetry<T>(
+    makeRequest: () => Promise<T>,
+    retriesRemaining: number = MAX_RETRY_ATTEMPTS
+  ): Promise<T> {
+    try {
+      return await makeRequest();
+    } catch (reason: unknown) {
+      const status = isHttpError(reason) ? reason.response?.status : undefined;
+      const isRetryableStatus =
+        status !== undefined && RETRYABLE_STATUS_CODES.includes(status);
+      // "Failed to fetch" TypeErrors are typically caused by CORS-blocked
+      // error responses (e.g. a 408 without CORS headers), network
+      // interruptions, or DNS failures — all potentially transient.
+      const isNetworkError =
+        reason instanceof TypeError && reason.message === 'Failed to fetch';
+
+      if ((isRetryableStatus || isNetworkError) && retriesRemaining > 0) {
+        const label = isRetryableStatus ? `status ${status}` : 'network error';
+        console.warn(
+          `Request failed (${label}). Retrying... (${MAX_RETRY_ATTEMPTS - retriesRemaining + 1}/${MAX_RETRY_ATTEMPTS})`
+        );
+        const delay =
+          RETRY_DELAY_MS * (MAX_RETRY_ATTEMPTS - retriesRemaining + 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.requestWithRetry(makeRequest, retriesRemaining - 1);
+      }
+      throw reason;
+    }
+  }
+
   public request<T, V extends Variables | undefined>(
     documentOrOptions: RequestDocument | RequestOptions<Variables>,
     variables?: V,
@@ -123,16 +183,23 @@ class GQLClient extends GraphQLClient {
     if (shouldSaveRequestTime(document)) this.lastRequestTime = new Date();
 
     super.setHeader('Authorization', `Bearer ${getAuthCookie().token}`);
-    const response = options.document
-      ? super.request(options)
-      : super.request(
-          documentOrOptions as RequestDocument,
-          variables,
-          requestHeaders
-        );
+
+    const makeRequest = () =>
+      options.document
+        ? super.request<T>(options)
+        : super.request<T>(
+            documentOrOptions as RequestDocument,
+            variables,
+            requestHeaders
+          );
+
+    const request = shouldSkipRetry(document)
+      ? makeRequest()
+      : this.requestWithRetry(makeRequest);
+
     // returning an empty object in order to give the caller a stable reference
     // without it, the page will re-render continuously
-    return response.then(
+    return request.then(
       data => (data ?? this.emptyData) as T,
       reason => {
         const { response } = reason;
