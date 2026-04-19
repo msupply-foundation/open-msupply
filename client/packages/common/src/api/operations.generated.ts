@@ -16,9 +16,30 @@ export type InitialisationStatusQuery = {
   };
 };
 
+export type InitialisationStatusUpdatedSubscriptionVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type InitialisationStatusUpdatedSubscription = {
+  __typename: 'Subscriptions';
+  initialisationStatusUpdated: {
+    __typename: 'InitialisationStatusNode';
+    status: Types.InitialisationStatusType;
+    siteName?: string | null;
+  };
+};
+
 export const InitialisationStatusDocument = gql`
   query initialisationStatus {
     initialisationStatus {
+      status
+      siteName
+    }
+  }
+`;
+export const InitialisationStatusUpdatedDocument = gql`
+  subscription initialisationStatusUpdated {
+    initialisationStatusUpdated {
       status
       siteName
     }
@@ -59,6 +80,24 @@ export function getSdk(
           }),
         'initialisationStatus',
         'query',
+        variables
+      );
+    },
+    initialisationStatusUpdated(
+      variables?: InitialisationStatusUpdatedSubscriptionVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InitialisationStatusUpdatedSubscription> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InitialisationStatusUpdatedSubscription>({
+            document: InitialisationStatusUpdatedDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'initialisationStatusUpdated',
+        'subscription',
         variables
       );
     },

@@ -109,3 +109,12 @@ query syncStatus {
 mutation manualSync($fetchPatientId: String) {
   manualSync(fetchPatientId: $fetchPatientId)
 }
+
+subscription syncInfoUpdated {
+  syncInfoUpdated {
+    syncStatus {
+      ...FullSyncStatus
+    }
+    numberOfRecordsInPushQueue
+  }
+}

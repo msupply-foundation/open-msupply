@@ -3,6 +3,7 @@ use repository::{
     RepositoryError, StorageConnection, SyncApiErrorCode, SyncLogRow, SyncLogRowRepository,
 };
 use thiserror::Error;
+use crate::subscription::{SubscriptionTrigger, SubscriptionTriggerHandle};
 use util::format_error;
 
 use crate::sync::{
@@ -49,6 +50,7 @@ enum SyncApiErrorVariant<'a> {
 pub struct SyncLogger<'a> {
     sync_log_repo: SyncLogRowRepository<'a>,
     row: SyncLogRow,
+    subscription_trigger: Option<SubscriptionTriggerHandle>,
 }
 
 #[derive(Error, Debug)]
@@ -71,8 +73,28 @@ impl<'a> SyncLogger<'a> {
         };
 
         let sync_log_repo = SyncLogRowRepository::new(connection);
-        sync_log_repo.upsert_one(&row)?;
-        Ok(SyncLogger { sync_log_repo, row })
+        let logger = SyncLogger {
+            sync_log_repo,
+            row,
+            subscription_trigger: None,
+        };
+        logger.update()?;
+        Ok(logger)
+    }
+
+    /// Attach a subscription trigger handle for sending sync status updates
+    pub fn with_subscription_trigger(mut self, handle: SubscriptionTriggerHandle) -> Self {
+        self.subscription_trigger = Some(handle);
+        self
+    }
+
+    /// Persist current row to DB and notify subscribers
+    fn update(&self) -> Result<(), SyncLoggerError> {
+        self.sync_log_repo.upsert_one(&self.row)?;
+        if let Some(handle) = &self.subscription_trigger {
+            handle.send(SubscriptionTrigger::SyncStatus(self.row.clone()));
+        }
+        Ok(())
     }
 
     pub fn done(&mut self) -> Result<(), SyncLoggerError> {
@@ -83,7 +105,7 @@ impl<'a> SyncLogger<'a> {
             ..self.row.clone()
         };
 
-        self.sync_log_repo.upsert_one(&self.row)?;
+        self.update()?;
         info!("Sync finished");
         Ok(())
     }
@@ -123,7 +145,7 @@ impl<'a> SyncLogger<'a> {
         self.row.duration_in_seconds =
             (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
-        self.sync_log_repo.upsert_one(&self.row)?;
+        self.update()?;
         Ok(())
     }
 
@@ -193,7 +215,7 @@ impl<'a> SyncLogger<'a> {
         self.row.duration_in_seconds =
             (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
-        self.sync_log_repo.upsert_one(&self.row)?;
+        self.update()?;
         Ok(())
     }
 
@@ -210,7 +232,7 @@ impl<'a> SyncLogger<'a> {
             ..self.row.clone()
         };
 
-        self.sync_log_repo.upsert_one(&self.row)?;
+        self.update()?;
         Ok(())
     }
 
@@ -303,7 +325,7 @@ impl<'a> SyncLogger<'a> {
         self.row.duration_in_seconds =
             (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
-        self.sync_log_repo.upsert_one(&self.row)?;
+        self.update()?;
         Ok(())
     }
 }
