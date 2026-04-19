@@ -186,7 +186,7 @@ fn get_outgoing_invoice_lines(
 
         for stock_line in invoice_stock_lines.iter_mut() {
             if let Some(historic_quantity) = historic_quantities.get(&stock_line.id) {
-                stock_line.available_number_of_packs = *historic_quantity;
+                stock_line.available_number_of_packs = historic_quantity.min_available;
             }
         }
     }

@@ -5,7 +5,8 @@ pub struct Backdating;
 #[derive(Default, Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BackdatingData {
-    pub enabled: bool,
+    pub shipments_enabled: bool,
+    pub inventory_adjustments_enabled: bool,
     pub max_days: i32,
 }
 
