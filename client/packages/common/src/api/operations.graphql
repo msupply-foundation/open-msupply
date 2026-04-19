@@ -4,3 +4,10 @@ query initialisationStatus {
     siteName
   }
 }
+
+subscription initialisationStatusUpdated {
+  initialisationStatusUpdated {
+    status
+    siteName
+  }
+}
