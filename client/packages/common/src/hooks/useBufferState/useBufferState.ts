@@ -28,15 +28,12 @@ type IsEqual<T> = (a: T, b: T) => boolean;
 // but if there isn't one, here you go!
 
 // isEqual is optional for primitives, Dates, and objects with an `id` field
-// (defaultIsEqual handles primitives/Dates; objectMatchById handles { id }).
+// (defaultIsEqual handles primitives/Dates/ objects with ids.
 // For other object types, isEqual is required — omitting it would cause
 // reference-equality checks that lead to unnecessary re-syncs or infinite
 // loops when the parent re-renders.
 type OptionalIsEqual<T> = [isEqual?: IsEqual<T>];
 type RequiredIsEqual<T> = [isEqual: IsEqual<T>];
-
-export const objectMatchById = <T extends HasId>(a: T, b: T): boolean =>
-  a?.id === b?.id;
 
 export function useBufferState<T>(
   value: T,
