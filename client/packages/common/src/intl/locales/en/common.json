@@ -397,6 +397,7 @@
   "error.item-not-found": "Item not found",
   "error.json-bad-format-with-examples": "Incorrect format. Use: \"{{examples}}\"",
   "error.label-printer-not-configured": "There is no label printer configured. Please see the Settings > Devices section to configure a label printer.",
+  "error.ledger-would-go-below-zero": "This reduction would cause stock to go below zero at some point after the backdated date. Check for stock movements between the backdated date and now.",
   "error.line-combination-error": "Item and pack size combination already exists for item code: {{itemCode}}, and pack size: {{requestedPackSize}}",
   "error.login": "Invalid username or password",
   "error.login-support": "Please contact support@msupply.foundation if you are unable to login to your account",
@@ -965,7 +966,6 @@
   "label.currency": "Currency",
   "label.currency-rate": "Currency rate",
   "label.current": "Current",
-  "label.historical": "Historical",
   "label.current-num-of-packs": "Current no. of packs",
   "label.current-population": "Current population",
   "label.current-status": "Current Status",
@@ -1149,6 +1149,7 @@
   "label.high-stock-items_many": "Items with more than {{num}} months of stock",
   "label.high-stock-items_one": "Item with more than {{num}} months of stock",
   "label.high-stock-items_other": "Items with more than {{num}} months of stock",
+  "label.historical": "Historical",
   "label.history": "History",
   "label.hold": "Hold",
   "label.hot-consecutive": "Hot Consecutive",
@@ -2807,6 +2808,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "error.ledger-would-go-below-zero": "This reduction would cause stock to go below zero at some point after the backdated date. Check for stock movements between the backdated date and now."
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
