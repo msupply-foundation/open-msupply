@@ -1,3 +1,4 @@
+// Regarding dynamic queries, see: docs/content/server/repository/db_diesel/_index.md
 // This is from dynamic filtering repository [tutorial](https://github.com/andreievg/diesel-rs-dynamic-filters/tree/main)
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
