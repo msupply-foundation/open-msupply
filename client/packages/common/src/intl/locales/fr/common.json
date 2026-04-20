@@ -2857,5 +2857,6 @@
   "error.inbound-shipments-not-verified": "Impossible de finaliser le bon de commande : certaines livraisons entrantes externes ne sont pas vérifiées.",
   "label.group-by-po-line": "Grouper par ligne du BC",
   "report-code.customer-returns": "Retours clients",
-  "report-code.supplier-returns": "Retours fournisseurs"
+  "report-code.supplier-returns": "Retours fournisseurs",
+  "label.customer-return": "Bordereau de retour"
 }

@@ -2794,5 +2794,6 @@
   "warning.nothing-to-supply": "Nothing left to supply!",
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
   "report-code.customer-returns": "Customer Returns",
-  "report-code.supplier-returns": "Supplier Returns"
+  "report-code.supplier-returns": "Supplier Returns",
+  "label.customer-return": "Customer return"
 }
