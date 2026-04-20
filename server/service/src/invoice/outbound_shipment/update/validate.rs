@@ -53,7 +53,7 @@ pub fn validate(
     // Backdating validation: preference enabled, only New outbound shipments, no lines, not future, max days
     if let Some(backdated_datetime) = patch.backdated_datetime {
         let backdating = Backdating.load(connection, None)?;
-        if !backdating.enabled {
+        if !backdating.shipments_enabled {
             return Err(CantBackDate(
                 "Backdating of shipments is not enabled".to_string(),
             ));
