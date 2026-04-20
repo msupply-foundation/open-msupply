@@ -1,6 +1,6 @@
 use chrono::Utc;
 use repository::{
-    dynamic_query_filter::FilterBuilder, syncv7::SyncError, Condition, RepositoryError,
+    syncv7::SyncError, Condition, FilterBuilder, RepositoryError,
     SyncLogV7Repository, SyncLogV7Row,
 };
 
