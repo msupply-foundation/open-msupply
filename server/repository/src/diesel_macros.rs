@@ -682,6 +682,44 @@ macro_rules! diesel_string_enum {
     };
 }
 
+macro_rules! diesel_json_type {
+    (
+        $(#[$meta:meta])*
+        $vis:vis $kind:ident $name:ident $($body:tt)*
+    ) => {
+        #[derive(serde::Serialize, serde::Deserialize, diesel::expression::AsExpression, diesel::deserialize::FromSqlRow)]
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        $(#[$meta])*
+        $vis $kind $name $($body)*
+
+        impl diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType> for $name {
+            fn from_sql(bytes: <crate::DBType as diesel::backend::Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
+                let string_value = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType>>::from_sql(bytes)?;
+                let deserialized: $name = serde_json::from_str(&string_value)?;
+                Ok(deserialized)
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType> for $name {
+            fn to_sql<'b>(
+                &self,
+                out: &mut diesel::serialize::Output<'b, '_, crate::DBType>,
+            ) -> diesel::serialize::Result {
+               #[cfg(not(feature = "postgres"))]
+                {
+                    out.set_value(serde_json::to_string(self)?);
+                    Ok(diesel::serialize::IsNull::No)
+                }
+                #[cfg(feature = "postgres")]
+                <String as diesel::serialize::ToSql<
+                    diesel::sql_types::Text,
+                    crate::DBType,
+                >>::to_sql(&serde_json::to_string(self)?, &mut out.reborrow())
+            }
+        }
+    };
+}
+
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
@@ -694,4 +732,5 @@ pub(crate) use apply_string_filter;
 pub(crate) use apply_string_filter_method;
 pub(crate) use apply_string_or_filter;
 pub(crate) use define_linked_tables;
+pub(crate) use diesel_json_type;
 pub(crate) use diesel_string_enum;
