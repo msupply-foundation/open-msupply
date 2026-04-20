@@ -9,8 +9,7 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-    sync::{get_sync_push_changelogs_filter, CentralServerConfig, SyncChangelogError},
-    sync_v7::sync_status::status::{SyncStatusV7Service, SyncStatusV7Trait},
+    sync::{get_sync_push_changelogs_filter, SyncChangelogError},
 };
 
 use super::SyncLogError;
@@ -211,10 +210,6 @@ impl SyncStatusTrait for SyncStatusService {}
 fn get_initialisation_status(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
-    if !CentralServerConfig::is_central_server() {
-        return SyncStatusV7Service.get_initialisation_status_v7(ctx);
-    }
-
     let sort = Sort {
         key: SyncLogSortField::DoneDatetime,
         desc: Some(true),
@@ -357,8 +352,6 @@ mod test {
     };
     use util::assert_matches;
 
-    // TODO: Remove when remote v5 sync is replaced by v7
-    #[ignore]
     #[actix_rt::test]
     async fn initialisation_status() {
         let ServiceTestContext {

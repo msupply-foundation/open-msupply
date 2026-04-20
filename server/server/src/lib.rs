@@ -427,10 +427,20 @@ pub async fn start_server(
         (None, None) => false,
     };
 
-    if service_provider
-        .sync_status_service
-        .is_initialised(&service_context)
-        .unwrap()
+    let is_initialised = if CentralServerConfig::is_central_server() {
+        service_provider
+            .sync_status_service
+            .is_initialised(&service_context)
+            .unwrap()
+    } else {
+        service_provider
+            .sync_status_v7_service
+            .get_initialisation_status_v7(&service_context)
+            .map(|s| matches!(s, service::sync::sync_status::status::InitialisationStatus::Initialised(_)))
+            .unwrap_or(false)
+    };
+
+    if is_initialised
         || !force_trigger_sync_on_startup
     {
         graphql_schema

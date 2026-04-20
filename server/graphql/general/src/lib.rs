@@ -9,9 +9,9 @@ pub mod types;
 use std::collections::HashMap;
 
 pub use self::queries::sync_status::*;
-pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
-pub use self::sync_v7::sync_status::FullSyncStatusV7Node;
 use self::queries::*;
+pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
+use self::sync_v7::sync_status::FullSyncStatusV7Node;
 
 use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
@@ -227,7 +227,9 @@ impl GeneralQueries {
         inbound_shipment_external_counts(ctx, store_id, timezone_offset)
     }
 
-    #[graphql(deprecation = "Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead")]
+    #[graphql(
+        deprecation = "Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead"
+    )]
     #[allow(deprecated)]
     pub async fn invoice_counts(
         &self,

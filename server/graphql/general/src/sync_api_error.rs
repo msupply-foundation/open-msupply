@@ -130,7 +130,6 @@ impl SyncErrorNode {
 
         Self::from_variant(variant, message)
     }
-
 }
 
 #[cfg(test)]
