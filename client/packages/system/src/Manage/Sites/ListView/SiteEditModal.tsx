@@ -63,10 +63,7 @@ export const SiteEditModal = ({
               <NumericTextInput
                 sx={{ width: 250 }}
                 value={id || undefined}
-                disabled={isExisting}
-                onChange={value =>
-                  updateDraft({ id: value ?? 0 })
-                }
+                disabled
               />
             }
           />
