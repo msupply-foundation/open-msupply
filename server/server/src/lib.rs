@@ -140,7 +140,7 @@ pub async fn start_server(
             }
         },
     ));
-    let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
+    // let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init();
 
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
