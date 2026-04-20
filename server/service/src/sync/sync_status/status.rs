@@ -1,8 +1,11 @@
+use std::sync::RwLock;
+
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
+
 
 use crate::{
     cursor_controller::CursorController,
@@ -45,7 +48,7 @@ pub struct FullSyncStatus {
 }
 
 impl FullSyncStatus {
-    fn from_sync_log_row(sync_log_row: SyncLogRow) -> FullSyncStatus {
+    pub fn from_sync_log_row(sync_log_row: SyncLogRow) -> FullSyncStatus {
         let SyncLogRow {
             started_datetime,
             finished_datetime,
@@ -149,7 +152,7 @@ pub enum SyncStatusType {
     Integration,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum InitialisationStatus {
     /// Fully initialised (name)
     Initialised(String),
@@ -268,6 +271,7 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
 fn get_latest_successful_sync_status(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatus>, RepositoryError> {
+
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
@@ -289,10 +293,11 @@ fn get_latest_successful_sync_status(
         None => return Ok(None),
     };
 
-    let result = Some(FullSyncStatus::from_sync_log_row(sync_log.sync_log_row));
+    let result = FullSyncStatus::from_sync_log_row(sync_log.sync_log_row);
 
-    Ok(result)
+    Ok(Some(result))
 }
+
 
 #[derive(Debug)]
 pub enum NumberOfRecordsInPushQueueError {
@@ -321,7 +326,7 @@ fn number_of_records_in_push_queue(
 }
 
 impl SyncLogError {
-    fn from_sync_log_row(
+    pub fn from_sync_log_row(
         SyncLogRow {
             error_code,
             error_message,

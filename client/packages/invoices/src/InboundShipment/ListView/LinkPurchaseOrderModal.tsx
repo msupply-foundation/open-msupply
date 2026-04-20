@@ -73,7 +73,7 @@ export const LinkPurchaseOrderModal = ({
       data: data?.nodes,
       enableMultiRowSelection: false,
       enableColumnFilters: true,
-      noUrlFiltering: true,
+      localStateOnly: true,
       getRowId: row => row.id,
       muiTableBodyRowProps: ({ row }) => ({
         // add onClick to row to select upon clicking anywhere in the row
