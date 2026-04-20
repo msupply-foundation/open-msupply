@@ -1,10 +1,12 @@
 use self::{
+    delete::{delete_site, DeleteSiteError},
     query::get_sites,
     upsert::{upsert_site, UpsertSite, UpsertSiteError},
 };
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{PaginationOption, SiteFilter, SiteRow, SiteSort};
 
+pub mod delete;
 pub mod query;
 pub mod upsert;
 
@@ -25,6 +27,10 @@ pub trait SiteServiceTrait: Sync + Send {
         input: UpsertSite,
     ) -> Result<SiteRow, UpsertSiteError> {
         upsert_site(ctx, input)
+    }
+
+    fn delete_site(&self, ctx: &ServiceContext, site_id: i32) -> Result<i32, DeleteSiteError> {
+        delete_site(ctx, site_id)
     }
 }
 
