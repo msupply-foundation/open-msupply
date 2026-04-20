@@ -58,7 +58,7 @@ fn generate(
     existing_site: Option<SiteRow>,
 ) -> SiteRow {
     let existing_og_id = existing_site.as_ref().and_then(|s| s.og_id.clone());
-    let existing_code = existing_site.as_ref().and_then(|s| s.code.clone());
+    let existing_code = existing_site.as_ref().map(|s| s.code.clone());
     let existing_hardware_id = existing_site.as_ref().and_then(|s| s.hardware_id.clone());
 
     let hashed_password = match password {
@@ -72,7 +72,7 @@ fn generate(
     SiteRow {
         id,
         og_id: existing_og_id,
-        code: code.or(existing_code),
+        code: code.or(existing_code).unwrap_or_default(),
         name,
         hashed_password,
         hardware_id: if clear_hardware_id {
