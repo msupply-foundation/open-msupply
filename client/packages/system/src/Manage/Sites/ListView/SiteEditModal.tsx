@@ -88,6 +88,7 @@ export const SiteEditModal = ({
                 sx={{ width: 250 }}
                 value={name}
                 required={!isValidName}
+                autoComplete="off"
                 onChange={e => updateDraft({ name: e.target.value })}
                 onBlur={e => updateDraft({ name: e.target.value.trim() })}
               />
@@ -102,6 +103,7 @@ export const SiteEditModal = ({
                 value={password}
                 required={!isValidPassword}
                 placeholder={isExisting ? '••••••••' : undefined}
+                autoComplete="new-password"
                 onChange={e => updateDraft({ password: e.target.value })}
               />
             }
