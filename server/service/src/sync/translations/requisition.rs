@@ -327,6 +327,7 @@ impl SyncTranslation for RequisitionTranslation {
                 .clone()
                 .and_then(|f| f.created_from_requisition_id),
             destination_customer_id: data.oms_fields.and_then(|f| f.destination_customer_id),
+            ..Default::default()
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -375,6 +376,7 @@ impl SyncTranslation for RequisitionTranslation {
                     is_emergency,
                     created_from_requisition_id,
                     destination_customer_id,
+                    transfer_store_id: _,
                 },
             name_row,
             ..

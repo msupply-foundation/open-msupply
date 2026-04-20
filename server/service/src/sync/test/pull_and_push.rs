@@ -82,9 +82,24 @@ async fn test_sync_pull_and_push() {
     // let change_log_filter = get_sync_push_changelogs_filter(&connection).unwrap();
 
     // Records would have been inserted in test Pull Upsert and trigger should have inserted changelogs
-    let changelogs = ChangelogRepository::new(&connection)
+    let all_changelogs = ChangelogRepository::new(&connection)
         .changelogs(push_cursor, 100000, None /*change_log_filter*/)
         .unwrap();
+    // Deduplicate: keep only the latest (highest cursor) entry per record_id,
+    // since the changelog_deduped view was removed.
+    let changelogs = {
+        use std::collections::HashMap;
+        let mut latest: HashMap<String, repository::ChangelogRow> = HashMap::new();
+        for row in all_changelogs {
+            let entry = latest.entry(row.record_id.clone()).or_insert(row.clone());
+            if row.cursor > entry.cursor {
+                *entry = row;
+            }
+        }
+        let mut deduped: Vec<_> = latest.into_values().collect();
+        deduped.sort_by_key(|r| r.cursor);
+        deduped
+    };
     // Translate
     let mut translated = vec![translate_changelogs_to_sync_records(
         &connection,

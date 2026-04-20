@@ -1,6 +1,6 @@
 use chrono::Utc;
 use repository::{
-    syncv7::SyncError, Condition, FilterBuilder, RepositoryError,
+    sync_log_v7::Condition, syncv7::SyncError, FilterBuilder, RepositoryError,
     SyncLogV7Repository, SyncLogV7Row,
 };
 
