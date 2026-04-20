@@ -123,7 +123,8 @@ impl Synchroniser {
         _fetch_patient_id: Option<String>,
     ) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
-        let mut logger = SyncLogger::start(&ctx.connection)?;
+        let mut logger = SyncLogger::start(&ctx.connection)?
+            .with_subscription_trigger(self.service_provider.subscription_trigger.clone());
 
         let sync_result = self.sync_inner(&mut logger, &ctx).await;
 

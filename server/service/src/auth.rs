@@ -567,7 +567,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::QueryLog,
-        PermissionDSL::HasPermission(PermissionType::LogQuery),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::LogQuery),
+        ]),
     );
 
     map.insert(Resource::QueryClinician, PermissionDSL::HasStoreAccess);

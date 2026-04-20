@@ -1,7 +1,10 @@
 use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
-use crate::{preference::WarnWhenMissingRecentStocktakeData, service_provider::ServiceContext};
+use crate::{
+    preference::{BackdatingData, WarnWhenMissingRecentStocktakeData},
+    service_provider::ServiceContext,
+};
 use repository::{GenderType, InvoiceStatus, StorageConnection, TransactionError};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -29,8 +32,7 @@ pub struct UpsertPreferences {
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
-    pub allow_backdating_of_shipments: Option<bool>,
-    pub maximum_backdating_days: Option<i32>,
+    pub backdating: Option<BackdatingData>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -80,8 +82,7 @@ pub fn upsert_preferences(
         is_gaps: is_gaps_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
         global_table_configs: global_table_configs_input,
-        allow_backdating_of_shipments: allow_backdating_of_shipments_input,
-        maximum_backdating_days: maximum_backdating_days_input,
+        backdating: backdating_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -130,8 +131,7 @@ pub fn upsert_preferences(
         is_gaps,
         display_population_based_forecasting,
         global_table_configs,
-        allow_backdating_of_shipments,
-        maximum_backdating_days,
+        backdating,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -224,12 +224,8 @@ pub fn upsert_preferences(
                 global_table_configs.upsert(connection, input, None)?;
             }
 
-            if let Some(input) = allow_backdating_of_shipments_input {
-                allow_backdating_of_shipments.upsert(connection, input, None)?;
-            }
-
-            if let Some(input) = maximum_backdating_days_input {
-                maximum_backdating_days.upsert(connection, input, None)?;
+            if let Some(input) = backdating_input {
+                backdating.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
