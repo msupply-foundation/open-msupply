@@ -5,6 +5,7 @@ import {
   useEditModal,
   useTranslation,
   useNotification,
+  useConfirmationModal,
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
@@ -62,6 +63,20 @@ export const SitesList = () => {
       error(String(e))();
     }
   };
+
+  const confirmDelete = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-delete-sites', { count: 1 }),
+    onConfirm: async () => {
+      try {
+        await deleteSite(draft.id);
+        success(t('messages.deleted-sites', { count: 1 }))();
+        handleClose();
+      } catch (e) {
+        error(String(e))();
+      }
+    },
+  });
 
   const columns = useMemo(
     (): ColumnDef<SiteRowFragment>[] => [
@@ -128,6 +143,7 @@ export const SitesList = () => {
           site={draft}
           onClose={handleClose}
           upsert={save}
+          onDelete={confirmDelete}
           updateDraft={updateDraft}
         />
       )}

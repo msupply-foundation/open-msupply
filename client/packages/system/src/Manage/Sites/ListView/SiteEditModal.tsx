@@ -20,6 +20,7 @@ interface SiteEditModalProps {
   onClose: () => void;
   updateDraft: (patch: Partial<DraftSite>) => void;
   upsert: () => Promise<void>;
+  onDelete: () => void;
 }
 
 export const SiteEditModal = ({
@@ -28,6 +29,7 @@ export const SiteEditModal = ({
   onClose,
   updateDraft,
   upsert,
+  onDelete,
 }: SiteEditModalProps) => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
@@ -49,6 +51,11 @@ export const SiteEditModal = ({
       title={isExisting ? t('title.edit-site') : t('title.create-site')}
       cancelButton={
         <DialogButton variant="cancel" onClick={handleClose} />
+      }
+      deleteButton={
+        isExisting ? (
+          <DialogButton variant="delete" onClick={onDelete} />
+        ) : undefined
       }
       okButton={
         <DialogButton variant="ok" onClick={upsert} disabled={!canSave} />
