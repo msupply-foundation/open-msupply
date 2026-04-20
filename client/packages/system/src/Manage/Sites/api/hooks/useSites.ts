@@ -21,6 +21,7 @@ type ListParams = {
 
 export type DraftSite = {
   id: number;
+  code: string;
   name: string;
   password: string;
   clearHardwareId: boolean;
@@ -30,6 +31,7 @@ export type DraftSite = {
 
 export const defaultDraftSite: DraftSite = {
   id: 0,
+  code: '',
   name: '',
   password: '',
   clearHardwareId: false,
@@ -90,6 +92,7 @@ const toSortInput = (sortBy?: SortBy<SiteRowFragment>) => ({
 });
 
 enum UpsertSiteError {
+  CodeMustBeProvided = 'CodeMustBeProvided',
   PasswordRequired = 'PasswordRequired',
 }
 
@@ -101,6 +104,7 @@ const useUpsertSite = () => {
     const result = await siteApi.upsertSite({
       input: {
         id: draft.id,
+        code: draft.code || undefined,
         name: draft.name,
         password: draft.password || undefined,
         clearHardwareId: draft.clearHardwareId || undefined,
@@ -114,6 +118,12 @@ const useUpsertSite = () => {
 
     if (upsertResult?.__typename === 'UpsertSiteError') {
       switch (upsertResult.error.__typename) {
+        case UpsertSiteError.CodeMustBeProvided:
+          throw new Error(
+            t('error.field-must-be-specified', {
+              field: t('label.code'),
+            })
+          );
         case UpsertSiteError.PasswordRequired:
           throw new Error(
             t('error.field-must-be-specified', {
