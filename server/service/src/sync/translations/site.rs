@@ -47,7 +47,7 @@ impl SyncTranslation for SiteTranslation {
             name: data.name,
             hashed_password: data.hashed_password,
             hardware_id: data.hardware_id,
-            code: data.code,
+            code: data.code.unwrap_or_default(),
             // token is OMS-managed and never comes from OG
             token: None,
         };

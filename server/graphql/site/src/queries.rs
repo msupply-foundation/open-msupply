@@ -53,8 +53,8 @@ impl SiteNode {
         self.site.id
     }
 
-    pub async fn code(&self) -> Option<&str> {
-        self.site.code.as_deref()
+    pub async fn code(&self) -> &str {
+        &self.site.code
     }
 
     pub async fn name(&self) -> &str {
