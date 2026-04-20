@@ -53,6 +53,10 @@ impl SiteNode {
         self.site.id
     }
 
+    pub async fn code(&self) -> Option<&str> {
+        self.site.code.as_deref()
+    }
+
     pub async fn name(&self) -> &str {
         &self.site.name
     }
@@ -65,6 +69,7 @@ impl SiteNode {
 #[derive(InputObject, Clone)]
 pub struct SiteFilterInput {
     pub id: Option<EqualFilterNumberInput>,
+    pub code: Option<StringFilterInput>,
     pub name: Option<StringFilterInput>,
 }
 
@@ -72,6 +77,7 @@ impl From<SiteFilterInput> for SiteFilter {
     fn from(f: SiteFilterInput) -> Self {
         SiteFilter {
             id: f.id.map(EqualFilter::from),
+            code: f.code.map(StringFilter::from),
             name: f.name.map(StringFilter::from),
         }
     }
@@ -82,6 +88,7 @@ impl From<SiteFilterInput> for SiteFilter {
 #[graphql(remote = "repository::SiteSortField")]
 pub enum SiteSortFieldInput {
     Id,
+    Code,
     Name,
 }
 

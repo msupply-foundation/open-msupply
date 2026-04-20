@@ -9,12 +9,14 @@ use diesel::prelude::*;
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct SiteFilter {
     pub id: Option<EqualFilter<i32>>,
+    pub code: Option<StringFilter>,
     pub name: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum SiteSortField {
     Id,
+    Code,
     Name,
 }
 
@@ -47,6 +49,7 @@ impl<'a> SiteRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 SiteSortField::Id => apply_sort_no_case!(query, sort, site::id),
+                SiteSortField::Code => apply_sort_no_case!(query, sort, site::code),
                 SiteSortField::Name => apply_sort_no_case!(query, sort, site::name),
             }
         } else {
@@ -72,6 +75,11 @@ impl SiteFilter {
         self
     }
 
+    pub fn code(mut self, filter: StringFilter) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
     pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
@@ -85,6 +93,7 @@ fn create_filtered_query(filter: Option<SiteFilter>) -> BoxedSiteQuery {
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, site::id);
+        apply_string_filter!(query, filter.code, site::code);
         apply_string_filter!(query, filter.name, site::name);
     }
 
