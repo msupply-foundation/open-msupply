@@ -1,5 +1,6 @@
 pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
+pub(crate) mod ancillary_item;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_catalogue_type;
@@ -203,6 +204,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Item Variant
         item_variant::boxed(),
         packaging_variant::boxed(),
+        // Ancillary Item
+        ancillary_item::boxed(),
         // System log
         system_log::boxed(),
         // Plugins
