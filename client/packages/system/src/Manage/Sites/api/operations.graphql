@@ -47,6 +47,10 @@ mutation upsertSite($input: UpsertSiteInput!) {
               __typename
               description
             }
+            ... on NameNotProvided {
+              __typename
+              description
+            }
             ... on PasswordRequired {
               __typename
               description

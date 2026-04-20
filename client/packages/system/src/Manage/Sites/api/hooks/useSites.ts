@@ -93,6 +93,7 @@ const toSortInput = (sortBy?: SortBy<SiteRowFragment>) => ({
 
 enum UpsertSiteError {
   CodeMustBeProvided = 'CodeMustBeProvided',
+  NameNotProvided = 'NameNotProvided',
   PasswordRequired = 'PasswordRequired',
 }
 
@@ -122,6 +123,12 @@ const useUpsertSite = () => {
           throw new Error(
             t('error.field-must-be-specified', {
               field: t('label.code'),
+            })
+          );
+        case UpsertSiteError.NameNotProvided:
+          throw new Error(
+            t('error.field-must-be-specified', {
+              field: t('label.name'),
             })
           );
         case UpsertSiteError.PasswordRequired:

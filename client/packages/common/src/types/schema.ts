@@ -6190,6 +6190,11 @@ export type MutationsUseSuggestedQuantityArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type NameNotProvided = UpsertSiteErrorInterface & {
+  __typename: 'NameNotProvided';
+  description: Scalars['String']['output'];
+};
+
 export type NameConnector = {
   __typename: 'NameConnector';
   nodes: Array<NameNode>;
