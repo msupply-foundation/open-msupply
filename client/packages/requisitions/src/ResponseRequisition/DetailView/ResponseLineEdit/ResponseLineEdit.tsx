@@ -15,6 +15,7 @@ import {
   RepresentationValue,
 } from '@openmsupply-client/common';
 import {
+  ItemWithAvailableStockFragment,
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
   StockItemSearchInputWithStats,
@@ -28,7 +29,7 @@ import { ResponseNumInputRow } from './ResponseNumInputRow';
 interface ResponseLineEditProps {
   store?: UserStoreNodeFragment;
   requisition: ResponseFragment;
-  currentItem?: ItemWithStatsFragment;
+  currentItem?: ItemWithAvailableStockFragment;
   onChangeItem: (item: ItemWithStatsFragment) => void;
   lines: ResponseLineFragment[];
   draft?: DraftResponseLine | null;

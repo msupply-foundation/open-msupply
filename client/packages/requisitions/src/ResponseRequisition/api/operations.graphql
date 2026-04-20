@@ -93,7 +93,7 @@ fragment ResponseLine on RequisitionLineNode {
     averageMonthlyConsumption
   }
   item {
-    ...ItemWithStats
+    ...ItemWithAvailableStock
   }
   approvedQuantity
   approvalComment
