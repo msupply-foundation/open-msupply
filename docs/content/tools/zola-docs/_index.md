@@ -60,7 +60,7 @@ Zola v0.22.1 is recommended.
 
 **Option 1 - download binary:**
 
-1. Download `zola-v0.22.0-x86_64-apple-darwin.tar.gz` from the [v0.22.0 release](https://github.com/getzola/zola/releases/tag/v0.22.0)
+1. Download `zola-v0.22.1-x86_64-apple-darwin.tar.gz` from the [v0.22.1 release](https://github.com/getzola/zola/releases/tag/v0.22.1)
 2. Extract and move the `zola` binary to `/usr/local/bin/`
 3. In a terminal try run zola. macOS will flag it as unverified — approve it in **System Settings → Privacy & Security**
 4. Verify: `zola --version`
@@ -70,9 +70,20 @@ Zola v0.22.1 is recommended.
 ```bash
 git clone https://github.com/getzola/zola.git
 cd zola
-git checkout v0.22.0
+git checkout v0.22.1
 cargo install --path . --locked
 zola --version
+```
+
+### To upgrade Zola
+
+If you already have Zola built from source, pull the latest and rebuild:
+
+```bash
+cd your_path/zola
+git fetch
+git checkout v0.22.1
+cargo install --path . --locked
 ```
 
 ### Serve locally
