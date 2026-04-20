@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  AppFooterPortal,
-  DialogButton,
-  RouteBuilder,
-  useNavigate,
-  useParams,
-} from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
+import { Box, DialogButton } from '@openmsupply-client/common';
 import { IndicatorLineRowFragment } from '../../../RequestRequisition/api';
 
 interface FooterProps {
@@ -15,7 +7,7 @@ interface FooterProps {
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
-  requisitionId?: string;
+  onSelectLine: (id: string) => void;
   scrollIntoView: () => void;
 }
 
@@ -24,64 +16,37 @@ export const Footer = ({
   next,
   hasPrevious,
   previous,
-  requisitionId,
+  onSelectLine,
   scrollIntoView,
 }: FooterProps) => {
-  const navigate = useNavigate();
-  const { programIndicatorCode } = useParams();
+  const navigateToNext = () => {
+    if (next?.id) onSelectLine(next.id);
+    scrollIntoView();
+  };
+  const navigateToPrevious = () => {
+    if (previous?.id) onSelectLine(previous.id);
+    scrollIntoView();
+  };
 
   return (
-    <AppFooterPortal
-      Content={
-        <Box
-          gap={2}
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          height={64}
-        >
-          <Box
-            flex={1}
-            display="flex"
-            justifyContent="flex-end"
-            gap={2}
-            marginLeft="auto"
-          >
-            <DialogButton
-              variant="previous"
-              disabled={!hasPrevious}
-              onClick={() => {
-                navigate(
-                  RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.CustomerRequisition)
-                    .addPart(String(requisitionId))
-                    .addPart(AppRoute.Indicators)
-                    .addPart(String(programIndicatorCode))
-                    .addPart(String(previous?.id))
-                    .build()
-                );
-                scrollIntoView();
-              }}
-            />
-            <DialogButton
-              variant="next"
-              disabled={!hasNext}
-              onClick={() => {
-                navigate(
-                  RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.CustomerRequisition)
-                    .addPart(String(requisitionId))
-                    .addPart(AppRoute.Indicators)
-                    .addPart(String(programIndicatorCode))
-                    .addPart(String(next?.id))
-                    .build()
-                );
-                scrollIntoView();
-              }}
-            />
-          </Box>
-        </Box>
-      }
-    />
+    <Box
+      gap={2}
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      paddingY={1}
+      justifyContent="flex-end"
+    >
+      <DialogButton
+        variant="previous"
+        disabled={!hasPrevious}
+        onClick={navigateToPrevious}
+      />
+      <DialogButton
+        variant="next"
+        disabled={!hasNext}
+        onClick={navigateToNext}
+      />
+    </Box>
   );
 };

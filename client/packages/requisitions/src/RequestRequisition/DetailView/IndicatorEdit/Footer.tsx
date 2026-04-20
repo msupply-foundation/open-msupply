@@ -1,14 +1,13 @@
 import React from 'react';
-import { Box, AppFooterPortal, DialogButton } from '@openmsupply-client/common';
+import { Box, DialogButton } from '@openmsupply-client/common';
 import { IndicatorLineRowFragment } from '../../api';
-import { useIndicatorNavigation } from './hooks';
 
 interface FooterProps {
   hasNext: boolean;
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
-  requisitionId?: string;
+  onSelectLine: (id: string) => void;
   scrollIntoView: () => void;
 }
 
@@ -17,49 +16,37 @@ export const Footer = ({
   next,
   hasPrevious,
   previous,
-  requisitionId,
+  onSelectLine,
   scrollIntoView,
 }: FooterProps) => {
-  const navigateTo = useIndicatorNavigation(requisitionId);
   const navigateToNext = () => {
-    navigateTo(next?.id);
+    if (next?.id) onSelectLine(next.id);
     scrollIntoView();
   };
   const navigateToPrevious = () => {
-    navigateTo(previous?.id);
+    if (previous?.id) onSelectLine(previous.id);
     scrollIntoView();
   };
 
   return (
-    <AppFooterPortal
-      Content={
-        <Box
-          gap={2}
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          height={64}
-        >
-          <Box
-            flex={1}
-            display="flex"
-            justifyContent="flex-end"
-            gap={2}
-            marginLeft="auto"
-          >
-            <DialogButton
-              variant="previous"
-              disabled={!hasPrevious}
-              onClick={navigateToPrevious}
-            />
-            <DialogButton
-              variant="next"
-              disabled={!hasNext}
-              onClick={navigateToNext}
-            />
-          </Box>
-        </Box>
-      }
-    />
+    <Box
+      gap={2}
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      paddingY={1}
+      justifyContent="flex-end"
+    >
+      <DialogButton
+        variant="previous"
+        disabled={!hasPrevious}
+        onClick={navigateToPrevious}
+      />
+      <DialogButton
+        variant="next"
+        disabled={!hasNext}
+        onClick={navigateToNext}
+      />
+    </Box>
   );
 };

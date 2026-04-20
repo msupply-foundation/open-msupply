@@ -19,13 +19,13 @@ import {
 import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface IndicatorLineEditProps {
-  requisitionId: string;
   hasNext: boolean;
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
   disabled: boolean;
+  onSelectLine: (id: string) => void;
   scrollIntoView: () => void;
 }
 
@@ -114,13 +114,13 @@ const InputWithLabel = ({
 };
 
 export const IndicatorLineEdit = ({
-  requisitionId,
   hasNext,
   next,
   hasPrevious,
   previous,
   currentLine,
   disabled,
+  onSelectLine,
   scrollIntoView,
 }: IndicatorLineEditProps) => {
   const columns =
@@ -152,16 +152,14 @@ export const IndicatorLineEdit = ({
           </Typography>
         )}
       </Box>
-      <Box>
-        <Footer
-          hasNext={hasNext}
-          next={next}
-          hasPrevious={hasPrevious}
-          previous={previous}
-          requisitionId={requisitionId}
-          scrollIntoView={scrollIntoView}
-        />
-      </Box>
+      <Footer
+        hasNext={hasNext}
+        next={next}
+        hasPrevious={hasPrevious}
+        previous={previous}
+        onSelectLine={onSelectLine}
+        scrollIntoView={scrollIntoView}
+      />
     </>
   );
 };
