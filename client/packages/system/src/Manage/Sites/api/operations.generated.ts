@@ -6,6 +6,7 @@ type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type SiteRowFragment = {
   __typename: 'SiteNode';
   id: number;
+  code: string;
   name: string;
   hardwareId?: string | null;
 };
@@ -29,6 +30,7 @@ export type SitesQuery = {
         nodes: Array<{
           __typename: 'SiteNode';
           id: number;
+          code: string;
           name: string;
           hardwareId?: string | null;
         }>;
@@ -51,12 +53,15 @@ export type UpsertSiteMutation = {
         | {
             __typename: 'SiteNode';
             id: number;
+            code: string;
             name: string;
             hardwareId?: string | null;
           }
         | {
             __typename: 'UpsertSiteError';
-            error: { __typename: 'PasswordRequired'; description: string };
+            error:
+              | { __typename: 'CodeMustBeProvided'; description: string }
+              | { __typename: 'PasswordRequired'; description: string };
           };
     };
   };
@@ -66,6 +71,7 @@ export const SiteRowFragmentDoc = gql`
   fragment SiteRow on SiteNode {
     __typename
     id
+    code
     name
     hardwareId
   }
@@ -110,6 +116,10 @@ export const UpsertSiteDocument = gql`
           ... on UpsertSiteError {
             __typename
             error {
+              ... on CodeMustBeProvided {
+                __typename
+                description
+              }
               ... on PasswordRequired {
                 __typename
                 description

@@ -1,6 +1,7 @@
 fragment SiteRow on SiteNode {
   __typename
   id
+  code
   name
   hardwareId
 }
@@ -42,6 +43,10 @@ mutation upsertSite($input: UpsertSiteInput!) {
         ... on UpsertSiteError {
           __typename
           error {
+            ... on CodeMustBeProvided {
+              __typename
+              description
+            }
             ... on PasswordRequired {
               __typename
               description

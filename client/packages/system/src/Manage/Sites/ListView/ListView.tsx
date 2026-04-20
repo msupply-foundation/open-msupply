@@ -69,6 +69,11 @@ export const SitesList = () => {
         enableSorting: true,
       },
       {
+        accessorKey: 'code',
+        header: t('label.code'),
+        enableSorting: true,
+      },
+      {
         accessorKey: 'name',
         header: t('label.name'),
         enableSorting: true,
@@ -86,6 +91,7 @@ export const SitesList = () => {
     if (selected) {
       updateDraft({
         id: selected.id,
+        code: selected.code ?? '',
         name: selected.name,
         password: '',
         clearHardwareId: false,

@@ -32,11 +32,12 @@ export const SiteEditModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { id, name, password, clearHardwareId, hardwareId, isNew } = site;
+  const { id, code, name, password, clearHardwareId, hardwareId, isNew } = site;
   const isExisting = !isNew;
+  const isValidCode = code.trim().length > 0 || (isExisting && code === '');
   const isValidPassword =
     password.trim().length > 0 || (isExisting && password === '');
-  const canSave = name?.trim().length > 0 && isValidPassword;
+  const canSave = name?.trim().length > 0 && isValidCode && isValidPassword;
 
   const handleClose = () => {
     onClose();
@@ -65,6 +66,18 @@ export const SiteEditModal = ({
                 onChange={value =>
                   updateDraft({ id: value ?? 0 })
                 }
+              />
+            }
+          />
+          <InputWithLabelRow
+            key="code"
+            label={t('label.code')}
+            Input={
+              <BasicTextInput
+                sx={{ width: 250 }}
+                value={code}
+                onChange={e => updateDraft({ code: e.target.value })}
+                onBlur={e => updateDraft({ code: e.target.value.trim() })}
               />
             }
           />

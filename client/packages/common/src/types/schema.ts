@@ -1424,6 +1424,11 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
+export type CodeMustBeProvided = UpsertSiteErrorInterface & {
+  __typename: 'CodeMustBeProvided';
+  description: Scalars['String']['output'];
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -9218,18 +9223,21 @@ export type SiteConnector = {
 };
 
 export type SiteFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterNumberInput>;
   name?: InputMaybe<StringFilterInput>;
 };
 
 export type SiteNode = {
   __typename: 'SiteNode';
+  code: Scalars['String']['output'];
   hardwareId?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
 };
 
 export enum SiteSortFieldInput {
+  Code = 'code',
   Id = 'id',
   Name = 'name',
 }
@@ -11292,6 +11300,7 @@ export type UpsertSiteErrorInterface = {
 
 export type UpsertSiteInput = {
   clearHardwareId?: InputMaybe<Scalars['Boolean']['input']>;
+  code?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['Int']['input'];
   name: Scalars['String']['input'];
   password?: InputMaybe<Scalars['String']['input']>;
