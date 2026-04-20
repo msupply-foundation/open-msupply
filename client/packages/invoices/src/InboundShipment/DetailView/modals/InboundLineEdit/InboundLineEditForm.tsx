@@ -108,12 +108,9 @@ export const InboundLineEditForm = ({
                 disabled={disabled}
                 options={availablePOLines}
                 value={selectedPOLine}
-                getOptionLabel={(option: PurchaseOrderLineFragment) => {
-                  const qty =
-                    option.adjustedNumberOfUnits ??
-                    option.requestedNumberOfUnits;
-                  return `#${option.lineNumber} ${option.item.name} (${option.item.code}) - ${qty} units`;
-                }}
+                getOptionLabel={(option: PurchaseOrderLineFragment) =>
+                  `#${option.lineNumber} ${option.item.name} (${option.item.code}) - ${t('label.pack-size')} ${option.requestedPackSize}`
+                }
                 isOptionEqualToValue={(a, b) => a.id === b.id}
                 onChange={(_, line) => onChangePOLine(line ?? null)}
                 width="100%"
