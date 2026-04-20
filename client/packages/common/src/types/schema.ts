@@ -752,14 +752,16 @@ export type AvailableVolumeAtLocationTypeNode = {
 };
 
 export type BackdatingInput = {
-  enabled: Scalars['Boolean']['input'];
+  inventoryAdjustmentsEnabled: Scalars['Boolean']['input'];
   maxDays: Scalars['Int']['input'];
+  shipmentsEnabled: Scalars['Boolean']['input'];
 };
 
 export type BackdatingNode = {
   __typename: 'BackdatingNode';
-  enabled: Scalars['Boolean']['output'];
+  inventoryAdjustmentsEnabled: Scalars['Boolean']['output'];
   maxDays: Scalars['Int']['output'];
+  shipmentsEnabled: Scalars['Boolean']['output'];
 };
 
 export type BarcodeNode = {
@@ -1550,6 +1552,7 @@ export type CreateInventoryAdjustmentError = {
 export type CreateInventoryAdjustmentInput = {
   adjustment: Scalars['Float']['input'];
   adjustmentType: AdjustmentTypeInput;
+  backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
@@ -4995,6 +4998,12 @@ export type LedgerSortInput = {
   key: LedgerSortFieldInput;
 };
 
+export type LedgerWouldGoBelowZero = InsertInventoryAdjustmentErrorInterface & {
+  __typename: 'LedgerWouldGoBelowZero';
+  description: Scalars['String']['output'];
+  stockLine: StockLineNode;
+};
+
 export type LineDeleteError = DeleteResponseRequisitionErrorInterface & {
   __typename: 'LineDeleteError';
   description: Scalars['String']['output'];
@@ -7603,6 +7612,7 @@ export type QueriesActivityLogsArgs = {
   filter?: InputMaybe<ActivityLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ActivityLogSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 export type QueriesAllReportVersionsArgs = {
@@ -10337,6 +10347,7 @@ export type UpdateOutboundShipmentError = {
 };
 
 export type UpdateOutboundShipmentInput = {
+  backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;

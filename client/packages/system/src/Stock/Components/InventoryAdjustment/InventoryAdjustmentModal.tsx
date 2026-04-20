@@ -8,6 +8,7 @@ import {
   Alert,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
+import { useHistoricalStockLines } from '../../../Item/api/hooks/useHistoricalStockLines/useHistoricalStockLines';
 import { AdjustmentForm } from './AdjustmentForm';
 import { ItemDetailAndStats } from './AdjustmentStats';
 
@@ -26,6 +27,21 @@ export const InventoryAdjustmentModal = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
+
+  // Fetch historical stock when a backdated date is selected
+  const { data: historicalStockLines, isLoading: isLoadingHistorical } =
+    useHistoricalStockLines({
+    itemId: stockLine.itemId,
+    datetime: draft.backdatedDatetime ?? undefined,
+    enabled: !!draft.backdatedDatetime,
+  });
+
+  const historicalStockLine = historicalStockLines?.nodes?.find(
+    node => node.id === stockLine.id
+  );
+
+  const historicalAvailable = historicalStockLine?.availableNumberOfPacks;
+  const historicalTotal = historicalStockLine?.totalNumberOfPacks;
 
   const save = async () => {
     try {
@@ -50,7 +66,11 @@ export const InventoryAdjustmentModal = ({
       ? -draft.adjustment
       : draft.adjustment;
 
-  const belowZero = stockLine.availableNumberOfPacks + variation < 0;
+  const effectiveAvailable = draft.backdatedDatetime
+    ? (historicalAvailable ?? stockLine.availableNumberOfPacks)
+    : stockLine.availableNumberOfPacks;
+
+  const belowZero = effectiveAvailable + variation < 0;
 
   const saveDisabled = draft.adjustment === 0 || belowZero;
 
@@ -67,7 +87,17 @@ export const InventoryAdjustmentModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <>
-        <ItemDetailAndStats stockLine={stockLine} variation={variation} />
+        <ItemDetailAndStats
+          stockLine={stockLine}
+          variation={variation}
+          historicalAvailableNumberOfPacks={
+            draft.backdatedDatetime ? historicalAvailable : undefined
+          }
+          historicalTotalNumberOfPacks={
+            draft.backdatedDatetime ? historicalTotal : undefined
+          }
+          isLoading={isLoadingHistorical}
+        />
 
         <AdjustmentForm
           isVaccine={stockLine.item.isVaccine}
@@ -75,7 +105,7 @@ export const InventoryAdjustmentModal = ({
           setDraft={setDraft}
         />
 
-        {stockLine.availableNumberOfPacks + variation < 0 && (
+        {belowZero && (
           <Alert severity="error" sx={{ margin: '0 auto' }}>
             {t('error.reduced-below-zero')}
           </Alert>

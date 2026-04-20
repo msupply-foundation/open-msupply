@@ -15,6 +15,7 @@ export type OutboundFragment = {
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
+  backdatedDatetime?: string | null;
   invoiceNumber: number;
   colour?: string | null;
   onHold: boolean;
@@ -265,6 +266,7 @@ export type InvoiceQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
+        backdatedDatetime?: string | null;
         invoiceNumber: number;
         colour?: string | null;
         onHold: boolean;
@@ -420,6 +422,7 @@ export type OutboundByNumberQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
+        backdatedDatetime?: string | null;
         invoiceNumber: number;
         colour?: string | null;
         onHold: boolean;
@@ -1084,6 +1087,16 @@ export type InsertBarcodeMutation = {
   };
 };
 
+export type OutboundStocktakeCountAfterDateQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.StocktakeFilterInput>;
+}>;
+
+export type OutboundStocktakeCountAfterDateQuery = {
+  __typename: 'Queries';
+  stocktakes: { __typename: 'StocktakeConnector'; totalCount: number };
+};
+
 export const OutboundFragmentDoc = gql`
   fragment Outbound on InvoiceNode {
     __typename
@@ -1096,6 +1109,7 @@ export const OutboundFragmentDoc = gql`
     pickedDatetime
     shippedDatetime
     verifiedDatetime
+    backdatedDatetime
     invoiceNumber
     colour
     onHold
@@ -1942,6 +1956,18 @@ export const InsertBarcodeDocument = gql`
   }
   ${BarcodeFragmentDoc}
 `;
+export const OutboundStocktakeCountAfterDateDocument = gql`
+  query outboundStocktakeCountAfterDate(
+    $storeId: String!
+    $filter: StocktakeFilterInput
+  ) {
+    stocktakes(storeId: $storeId, filter: $filter) {
+      ... on StocktakeConnector {
+        totalCount
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2211,6 +2237,24 @@ export function getSdk(
           }),
         'insertBarcode',
         'mutation',
+        variables
+      );
+    },
+    outboundStocktakeCountAfterDate(
+      variables: OutboundStocktakeCountAfterDateQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<OutboundStocktakeCountAfterDateQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<OutboundStocktakeCountAfterDateQuery>({
+            document: OutboundStocktakeCountAfterDateDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'outboundStocktakeCountAfterDate',
+        'query',
         variables
       );
     },
