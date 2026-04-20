@@ -294,12 +294,15 @@ mod query {
                 get_midday(2020, 1, 1), // midday to check after the time the stock was introduced
             )
             .unwrap();
-        assert_eq!(result.rows.len(), 1);
+        // StockLine A is already excluded by `is_available(true)` in the base query
+        // (fully consumed at current date). StockLine C has 0 available on this date
+        // but is kept in the result so callers can show historical availability.
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-01
-        // | 2020-01-01 | (filtered)  | 500         | (filtered)  |
-        // # StockLine A has been all consumed — filtered out (0 available)
+        // | 2020-01-01 | (excluded)  | 500         | 0           |
+        // # StockLine A has been all consumed — not in base query (is_available = false)
         // # StockLine B had 1000 available stock at that date, but the lowest stock level we saw was 500
-        // # StockLine C doesn't exist yet — filtered out (0 available)
+        // # StockLine C doesn't exist yet — 0 available
         let stock_line_b = result
             .rows
             .iter()
@@ -317,6 +320,17 @@ mod query {
             stock_line_b.unwrap().stock_line_row.total_number_of_packs,
             1000.0
         );
+        let stock_line_c = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_C);
+        assert_eq!(
+            stock_line_c
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            0.0
+        );
 
         // +++ 2020-01-02
         let result = service_provider
@@ -328,12 +342,12 @@ mod query {
                 get_midday(2020, 1, 2), // midday to check after the time the stock was introduced
             )
             .unwrap();
-        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-02
-        // | 2020-01-02 | (filtered)  | 500         | (filtered)  |
-        // # StockLine A filtered out (0 available)
+        // | 2020-01-02 | (excluded)  | 500         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
         // # StockLine B had 500 available stock at that date
-        // # StockLine C filtered out (0 available)
+        // # StockLine C 0 available — doesn't exist yet
         let stock_line_b = result
             .rows
             .iter()
@@ -357,12 +371,12 @@ mod query {
                 get_midday(2020, 1, 3), // midday to check after the time the stock was introduced
             )
             .unwrap();
-        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-03
-        // | 2020-01-03 | (filtered)  | 500         | (filtered)  |
-        // # StockLine A filtered out (0 available)
+        // | 2020-01-03 | (excluded)  | 500         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
         // # StockLine B had 500 available stock at that date
-        // # StockLine C filtered out (0 available)
+        // # StockLine C 0 available — doesn't exist yet
         let stock_line_b = result
             .rows
             .iter()
@@ -386,12 +400,12 @@ mod query {
                 get_midday(2020, 1, 4), // midday to check after the time the stock was introduced
             )
             .unwrap();
-        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-04
-        // | 2020-01-04 | (filtered)  | 600         | (filtered)  |
-        // # StockLine A filtered out (0 available)
+        // | 2020-01-04 | (excluded)  | 600         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
         // # StockLine B had 600 available stock at that date (100 added at midnight)
-        // # StockLine C filtered out (0 available)
+        // # StockLine C 0 available — doesn't exist yet
 
         let stock_line_b = result
             .rows
@@ -417,12 +431,12 @@ mod query {
             )
             .unwrap();
 
-        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-05
-        // | 2020-01-05 | (filtered)  | 600         | (filtered)  |
-        // # StockLine A filtered out (0 available)
+        // | 2020-01-05 | (excluded)  | 600         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
         // # StockLine B had 600 available stock at that date
-        // # StockLine C filtered out (0 available)
+        // # StockLine C 0 available — doesn't exist yet
 
         let stock_line_b = result
             .rows
