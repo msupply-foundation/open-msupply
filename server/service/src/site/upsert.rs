@@ -92,3 +92,215 @@ fn generate(
         token: None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use repository::{mock::MockDataInserts, test_db::setup_all, SiteRowRepository};
+
+    use crate::service_provider::ServiceProvider;
+
+    use super::*;
+
+    #[actix_rt::test]
+    async fn upsert_site_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("upsert_site_errors", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        assert_eq!(
+            upsert_site(
+                &context,
+                UpsertSite {
+                    id: 1,
+                    code: None,
+                    name: "Site A".to_string(),
+                    password: Some("password".to_string()),
+                    clear_hardware_id: false,
+                },
+            ),
+            Err(UpsertSiteError::CodeMustBeProvided)
+        );
+
+        assert_eq!(
+            upsert_site(
+                &context,
+                UpsertSite {
+                    id: 1,
+                    code: Some("".to_string()),
+                    name: "Site A".to_string(),
+                    password: Some("password".to_string()),
+                    clear_hardware_id: false,
+                },
+            ),
+            Err(UpsertSiteError::CodeMustBeProvided)
+        );
+
+        // Whitespace-only code
+        assert_eq!(
+            upsert_site(
+                &context,
+                UpsertSite {
+                    id: 1,
+                    code: Some("  ".to_string()),
+                    name: "Site A".to_string(),
+                    password: Some("password".to_string()),
+                    clear_hardware_id: false,
+                },
+            ),
+            Err(UpsertSiteError::CodeMustBeProvided)
+        );
+
+        assert_eq!(
+            upsert_site(
+                &context,
+                UpsertSite {
+                    id: 1,
+                    code: Some("code1".to_string()),
+                    name: "Site A".to_string(),
+                    password: None,
+                    clear_hardware_id: false,
+                },
+            ),
+            Err(UpsertSiteError::PasswordRequired)
+        );
+
+        assert_eq!(
+            upsert_site(
+                &context,
+                UpsertSite {
+                    id: 1,
+                    code: Some("code1".to_string()),
+                    name: "Site A".to_string(),
+                    password: Some("".to_string()),
+                    clear_hardware_id: false,
+                },
+            ),
+            Err(UpsertSiteError::PasswordRequired)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn upsert_site_insert_success() {
+        let (_, _, connection_manager, _) =
+            setup_all("upsert_site_insert_success", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider.basic_context().unwrap();
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: Some("code1".to_string()),
+                name: "Site A".to_string(),
+                password: Some("password".to_string()),
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+
+        let connection = connection_manager.connection().unwrap();
+        let repo = SiteRowRepository::new(&connection);
+        let site = repo.find_one_by_id(1).unwrap().unwrap();
+        assert_eq!(site.code, "code1");
+        assert_eq!(site.name, "Site A");
+    }
+
+    #[actix_rt::test]
+    async fn upsert_site_update_success() {
+        let (_, _, connection_manager, _) =
+            setup_all("upsert_site_update_success", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider.basic_context().unwrap();
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: Some("code1".to_string()),
+                name: "Site A".to_string(),
+                password: Some("password".to_string()),
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+
+        let result = upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: None,
+                name: "Site A Updated".to_string(),
+                password: None,
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(result.name, "Site A Updated");
+        assert_eq!(result.code, "code1");
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: Some("new_code".to_string()),
+                name: "Site A Updated".to_string(),
+                password: None,
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+
+        let connection = connection_manager.connection().unwrap();
+        let repo = SiteRowRepository::new(&connection);
+        let site = repo.find_one_by_id(1).unwrap().unwrap();
+        assert_eq!(site.code, "new_code");
+        assert_eq!(site.name, "Site A Updated");
+    }
+
+    #[actix_rt::test]
+    async fn upsert_site_clear_hardware_id() {
+        let (_, _, connection_manager, _) =
+            setup_all("upsert_site_clear_hardware_id", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider.basic_context().unwrap();
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: Some("code1".to_string()),
+                name: "Site A".to_string(),
+                password: Some("password".to_string()),
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+
+        let connection = connection_manager.connection().unwrap();
+        let repo = SiteRowRepository::new(&connection);
+        let mut site = repo.find_one_by_id(1).unwrap().unwrap();
+        site.hardware_id = Some("hw-123".to_string());
+        repo.upsert(&site).unwrap();
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: None,
+                name: "Site A".to_string(),
+                password: None,
+                clear_hardware_id: true,
+            },
+        )
+        .unwrap();
+
+        let site = repo.find_one_by_id(1).unwrap().unwrap();
+        assert_eq!(site.hardware_id, None);
+    }
+}
