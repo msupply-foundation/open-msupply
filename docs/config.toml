@@ -18,8 +18,10 @@ search_placeholder = "Search docs..."
 internal_level = "warn"
 
 [markdown]
-highlight_code = true
 insert_anchor_links = "none"
+
+[markdown.highlighting]
+theme = "one-dark-pro"
 
 [search]
 include_title = true
