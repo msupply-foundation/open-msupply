@@ -2128,8 +2128,10 @@ mod test {
             Err(UpdateInboundShipmentError::CannotMoveReceivedDateForward)
         );
 
-        // Setting received before delivered should succeed and auto-adjust delivered
+        // Setting received before delivered should succeed; delivered is left untouched
+        // so the out-of-order dates signal the received date was backdated.
         let before_delivered = now - Duration::days(2);
+        let original_delivered = received_inbound(now).delivered_datetime;
         let result = service.update_inbound_shipment(
             &context,
             UpdateInboundShipment {
@@ -2145,11 +2147,7 @@ mod test {
             .find_one_by_id(&received_inbound(now).id)
             .unwrap()
             .unwrap();
-        // delivered_datetime should have been moved back to match received
-        assert_eq!(
-            updated.delivered_datetime,
-            Some(before_delivered.naive_utc())
-        );
+        assert_eq!(updated.delivered_datetime, original_delivered);
     }
 
     #[actix_rt::test]
@@ -2286,17 +2284,10 @@ mod test {
             Some(three_days_ago.naive_utc())
         );
 
-        // Check delivered_datetime was moved back
-        assert_eq!(
-            updated.delivered_datetime,
-            Some(three_days_ago.naive_utc())
-        );
-
-        // Check created_datetime was moved back
-        assert_eq!(
-            updated.created_datetime,
-            three_days_ago.naive_utc()
-        );
+        // delivered_datetime and created_datetime are intentionally left untouched
+        // so the resulting out-of-order dates make backdating visible.
+        assert_eq!(updated.delivered_datetime, Some(now.naive_utc()));
+        assert_eq!(updated.created_datetime, now.naive_utc());
 
         // Check location movement enter_datetime was updated
         let movements = LocationMovementRepository::new(&connection)

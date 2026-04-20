@@ -5,9 +5,10 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, InvoiceRowStatusError,
 };
+use crate::preference::{preferences::Backdating, Preference};
 use crate::validate::get_other_party;
 use crate::NullableUpdate;
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
     InvoiceStatus, InvoiceType, StorageConnection,
@@ -46,6 +47,35 @@ pub fn validate(
     {
         if !check_shipping_method_exists(connection, shipping_method_id)? {
             return Err(ShippingMethodDoesNotExist);
+        }
+    }
+
+    // Backdating validation: preference enabled, only New outbound shipments, no lines, not future, max days
+    if let Some(backdated_datetime) = patch.backdated_datetime {
+        let backdating = Backdating.load(connection, None)?;
+        if !backdating.shipments_enabled {
+            return Err(CantBackDate(
+                "Backdating of shipments is not enabled".to_string(),
+            ));
+        }
+
+        if invoice.status != InvoiceStatus::New {
+            return Err(CantBackDate(
+                "Can only backdate new outbound shipments".to_string(),
+            ));
+        }
+
+        if backdated_datetime > Utc::now() {
+            return Err(CantBackDate("Cannot set date in the future".to_string()));
+        }
+
+        // Lines are deleted atomically in generate if backdating with existing lines
+
+        if backdating.max_days > 0 {
+            let earliest_allowed = Utc::now() - Duration::days(backdating.max_days as i64);
+            if backdated_datetime < earliest_allowed {
+                return Err(ExceedsMaximumBackdatingDays);
+            }
         }
     }
 
