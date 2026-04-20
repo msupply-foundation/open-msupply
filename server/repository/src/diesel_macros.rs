@@ -682,82 +682,6 @@ macro_rules! diesel_string_enum {
     };
 }
 
-/// Defines a two-variant enum stored as `BOOLEAN` in the database.
-/// The first variant maps to `true`, the second to `false`.
-///
-/// Usage:
-/// ```
-/// diesel_bool_enum! {
-///     #[derive(Clone, Serialize, Deserialize)]
-///     pub enum RowActionType {
-///         #[default]
-///         Upsert,  // true
-///         Delete,  // false
-///     }
-/// }
-/// ```
-macro_rules! diesel_bool_enum {
-    (
-        $(#[$meta:meta])*
-        $vis:vis enum $name:ident {
-            $(#[$variant_meta1:meta])*
-            $variant_true:ident,
-            $(#[$variant_meta2:meta])*
-            $variant_false:ident $(,)?
-        }
-    ) => {
-        #[derive(
-            Debug,
-            Default,
-            PartialEq,
-            Eq,
-            diesel::expression::AsExpression,
-            diesel::deserialize::FromSqlRow,
-        )]
-        #[diesel(sql_type = diesel::sql_types::Bool)]
-        $(#[$meta])*
-        $vis enum $name {
-            $(#[$variant_meta1])*
-            $variant_true,
-            $(#[$variant_meta2])*
-            $variant_false,
-        }
-
-        impl diesel::serialize::ToSql<diesel::sql_types::Bool, crate::DBType> for $name
-        where
-            bool: diesel::serialize::ToSql<diesel::sql_types::Bool, crate::DBType>,
-        {
-            fn to_sql<'b>(
-                &'b self,
-                out: &mut diesel::serialize::Output<'b, '_, crate::DBType>,
-            ) -> diesel::serialize::Result {
-                use diesel::serialize::ToSql;
-                use diesel::sql_types::Bool;
-                match self {
-                    $name::$variant_true => <bool as ToSql<Bool, crate::DBType>>::to_sql(&true, out),
-                    $name::$variant_false => <bool as ToSql<Bool, crate::DBType>>::to_sql(&false, out),
-                }
-            }
-        }
-
-        impl diesel::deserialize::FromSql<diesel::sql_types::Bool, crate::DBType> for $name
-        where
-            bool: diesel::deserialize::FromSql<diesel::sql_types::Bool, crate::DBType>,
-        {
-            fn from_sql(
-                bytes: <crate::DBType as diesel::backend::Backend>::RawValue<'_>,
-            ) -> diesel::deserialize::Result<Self> {
-                use diesel::deserialize::FromSql;
-                use diesel::sql_types::Bool;
-                let val = <bool as FromSql<Bool, crate::DBType>>::from_sql(bytes)?;
-                Ok(if val { $name::$variant_true } else { $name::$variant_false })
-            }
-        }
-    };
-}
-
-// ── Re-exports ──────────────────────────────────────────────────────────────
-
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
@@ -770,5 +694,4 @@ pub(crate) use apply_string_filter;
 pub(crate) use apply_string_filter_method;
 pub(crate) use apply_string_or_filter;
 pub(crate) use define_linked_tables;
-pub(crate) use diesel_bool_enum;
 pub(crate) use diesel_string_enum;

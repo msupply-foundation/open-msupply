@@ -8,56 +8,29 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Add transfer_store_id and patient_id 
-        #[cfg(not(feature = "postgres"))]
         sql!(
             connection,
             r#"
+                -- Add transfer_store_id and patient_id 
                 ALTER TABLE changelog ADD COLUMN transfer_store_id TEXT;
                 ALTER TABLE changelog ADD COLUMN patient_id TEXT;
-            "#
-        )?;
-
-        #[cfg(feature = "postgres")]
-        sql!(
-            connection,
-            r#"
-                ALTER TABLE changelog ADD COLUMN transfer_store_id UUID;
-                ALTER TABLE changelog ADD COLUMN patient_id UUID;
-            "#
-        )?;
-
-        // Create partial indexes on transfer_store_id and patient_id
-        sql!(
-            connection,
-            r#"
+                
+                -- Create partial indexes on transfer_store_id and patient_id
                 CREATE INDEX index_changelog_transfer_store_id ON changelog (transfer_store_id) WHERE transfer_store_id IS NOT NULL;
                 CREATE INDEX index_changelog_patient_id ON changelog (patient_id) WHERE patient_id IS NOT NULL;
+                
+                -- Drop row_action index
+                DROP INDEX IF EXISTS index_changelog_row_action;
             "#
         )?;
 
-        // Convert row_action from text/enum to boolean (true = UPSERT, false = DELETE)
-        sql!(
-            connection,
-            r#"
-                ALTER TABLE changelog ADD COLUMN row_action_bool BOOLEAN NOT NULL DEFAULT TRUE;
-
-                UPDATE changelog SET row_action_bool = CASE
-                    WHEN row_action = 'UPSERT' THEN TRUE
-                    ELSE FALSE
-                END;
-
-                ALTER TABLE changelog DROP COLUMN row_action;
-                ALTER TABLE changelog RENAME COLUMN row_action_bool TO row_action;
-            "#
-        )?;
-
-        // Convert table_name from Postgres enum to TEXT; SQLite is already TEXT
         #[cfg(feature = "postgres")]
         sql!(
             connection,
             r#"
+                -- Convert table_name and row_action from Postgres enums to TEXT (SQLite is already TEXT)
                 ALTER TABLE changelog ALTER COLUMN table_name TYPE TEXT USING table_name::TEXT;
+                ALTER TABLE changelog ALTER COLUMN row_action TYPE TEXT USING row_action::TEXT;
                 DROP TYPE IF EXISTS changelog_table_name;
                 DROP TYPE IF EXISTS row_action_type;
             "#
