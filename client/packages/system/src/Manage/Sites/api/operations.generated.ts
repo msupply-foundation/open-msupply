@@ -61,9 +61,24 @@ export type UpsertSiteMutation = {
             __typename: 'UpsertSiteError';
             error:
               | { __typename: 'CodeMustBeProvided'; description: string }
-              | { __typename: 'NameNotProvided'; description: string }
+              | { __typename: 'NameMustBeProvided'; description: string }
               | { __typename: 'PasswordRequired'; description: string };
           };
+    };
+  };
+};
+
+export type DeleteSiteMutationVariables = Types.Exact<{
+  siteId: Types.Scalars['Int']['input'];
+}>;
+
+export type DeleteSiteMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    site: {
+      __typename: 'CentralSiteMutations';
+      deleteSite: { __typename: 'DeleteSiteNode'; id: number };
     };
   };
 };
@@ -121,7 +136,7 @@ export const UpsertSiteDocument = gql`
                 __typename
                 description
               }
-              ... on NameNotProvided {
+              ... on NameMustBeProvided {
                 __typename
                 description
               }
@@ -137,6 +152,17 @@ export const UpsertSiteDocument = gql`
     }
   }
   ${SiteRowFragmentDoc}
+`;
+export const DeleteSiteDocument = gql`
+  mutation deleteSite($siteId: Int!) {
+    centralServer {
+      site {
+        deleteSite(siteId: $siteId) {
+          id
+        }
+      }
+    }
+  }
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -190,6 +216,24 @@ export function getSdk(
             signal,
           }),
         'upsertSite',
+        'mutation',
+        variables
+      );
+    },
+    deleteSite(
+      variables: DeleteSiteMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteSiteMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteSiteMutation>({
+            document: DeleteSiteDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteSite',
         'mutation',
         variables
       );
