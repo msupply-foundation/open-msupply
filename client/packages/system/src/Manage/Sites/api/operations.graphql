@@ -47,7 +47,7 @@ mutation upsertSite($input: UpsertSiteInput!) {
               __typename
               description
             }
-            ... on NameNotProvided {
+            ... on NameMustBeProvided {
               __typename
               description
             }
@@ -58,6 +58,16 @@ mutation upsertSite($input: UpsertSiteInput!) {
             description
           }
         }
+      }
+    }
+  }
+}
+
+mutation deleteSite($siteId: Int!) {
+  centralServer {
+    site {
+      deleteSite(siteId: $siteId) {
+        id
       }
     }
   }

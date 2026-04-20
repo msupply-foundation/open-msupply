@@ -10,6 +10,7 @@ import {
   ColumnDef,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
+import { Footer } from './Footer';
 import { Toolbar } from './Toolbar';
 import { SiteEditModal } from './SiteEditModal';
 import {
@@ -33,6 +34,7 @@ export const SitesList = () => {
   const {
     query: { data, isError, isFetching },
     upsert: { upsert },
+    deleteSite: { deleteSite },
     draft,
     updateDraft,
   } = useSites(queryParams);
@@ -102,7 +104,7 @@ export const SitesList = () => {
     }
   };
 
-  const { table } = usePaginatedMaterialTable({
+  const { table, selectedRows } = usePaginatedMaterialTable({
     tableId: 'site-list',
     columns,
     data: data?.nodes,
@@ -110,7 +112,6 @@ export const SitesList = () => {
     isLoading: isFetching,
     isError,
     onRowClick,
-    enableRowSelection: false,
     noDataElement: (
       <NothingHere body={t('error.no-sites')} onCreate={onOpen} />
     ),
@@ -130,6 +131,11 @@ export const SitesList = () => {
           updateDraft={updateDraft}
         />
       )}
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+        deleteSite={deleteSite}
+      />
     </>
   );
 };
