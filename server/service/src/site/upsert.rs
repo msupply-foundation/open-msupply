@@ -4,6 +4,7 @@ use repository::{RepositoryError, SiteRow, SiteRowRepository};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertSiteError {
+    CodeMustBeProvided,
     PasswordRequired,
     DatabaseError(RepositoryError),
 }
@@ -40,6 +41,14 @@ impl From<RepositoryError> for UpsertSiteError {
 }
 
 fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), UpsertSiteError> {
+    match (&input.code, existing) {
+        (Some(code), _) if code.trim().is_empty() => {
+            return Err(UpsertSiteError::CodeMustBeProvided)
+        }
+        (None, None) => return Err(UpsertSiteError::CodeMustBeProvided),
+        _ => {}
+    }
+
     match (&input.password, existing) {
         (Some(pw), _) if pw.trim().is_empty() => Err(UpsertSiteError::PasswordRequired),
         (None, None) => Err(UpsertSiteError::PasswordRequired),
