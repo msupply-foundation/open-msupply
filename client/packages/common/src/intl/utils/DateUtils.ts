@@ -53,7 +53,16 @@ const URL_QUERY_DATE_TIME = 'yyyy-MM-dd HH:mm';
 
 const dateInputHandler = (date: Date | string | number): Date => {
   // Assume a string is an ISO date-time string
-  if (typeof date === 'string') return parseISO(date);
+  if (typeof date === 'string') {
+    // Any dates we receive from the server without timezone information are
+    // assumed to be in UTC time
+    const tIndex = date.indexOf('T');
+    const needsUtcSuffix =
+      tIndex !== -1 &&
+      !date.endsWith('Z') &&
+      !/[+-]/.test(date.substring(tIndex));
+    return parseISO(needsUtcSuffix ? date + 'Z' : date);
+  }
   // Assume a number is a UNIX timestamp
   if (typeof date === 'number') return fromUnixTime(date);
   return date as Date;

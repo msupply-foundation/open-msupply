@@ -27,7 +27,7 @@ export const PickedDateInput = () => {
     ]);
 
   const { backdating } = usePreferences();
-  const allowBackdatingOfShipments = backdating?.enabled;
+  const allowBackdatingOfShipments = backdating?.shipmentsEnabled;
   const maximumBackdatingDays = backdating?.maxDays;
 
   const isNew = status === InvoiceNodeStatus.New;
