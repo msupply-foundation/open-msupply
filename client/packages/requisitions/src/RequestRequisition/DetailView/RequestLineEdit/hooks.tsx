@@ -66,7 +66,7 @@ const createDraftFromRequestLine = (
 });
 
 export const useDraftRequisitionLine = (
-  item?: ItemWithAvailableStockFragment | null
+  item?: ItemWithAvailableStockFragment | ItemWithStatsFragment | null
 ) => {
   const t = useTranslation();
   const [isReasonsError, setIsReasonsError] = useState(false);
@@ -87,7 +87,7 @@ export const useDraftRequisitionLine = (
       if (existingLine) {
         setDraft(createDraftFromRequestLine(existingLine, data));
       } else if ('stats' in item) {
-        setDraft(createDraftFromItem(item as ItemWithStatsFragment, data));
+        setDraft(createDraftFromItem(item, data));
       }
     } else {
       setDraft(null);
