@@ -46,7 +46,6 @@ import { PatchDraftLineInput } from '../../../api';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { useInvoiceLineStatusMap } from '../../..';
-import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
 
 interface CardProps {
   lines: DraftInboundLine[];
@@ -108,29 +107,8 @@ export const InboundLineEditCards = ({
     hasAuthorisePermission,
     isExternal,
   } = useInboundShipment();
-  const purchaseOrderId = inboundData?.purchaseOrder?.id;
   const isManualShipment =
     !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
-  const { query: poQuery } = usePurchaseOrder(purchaseOrderId);
-
-  // Calculate outstanding packs for the current item from PO lines
-  // Outstanding = ordered packs - shipped packs, calculated per-line using requestedPackSize
-  const poOutstandingPacks = useMemo(() => {
-    if (!purchaseOrderId || !item?.id || !poQuery.data) return null;
-    let totalOutstandingPacks = 0;
-    for (const line of poQuery.data.lines.nodes) {
-      if (line.item.id === item.id) {
-        const orderedUnits =
-          line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
-        const shippedUnits = line.shippedNumberOfUnits ?? 0;
-        const packSize = line.requestedPackSize || 1;
-        const orderedPacks = Math.ceil(orderedUnits / packSize);
-        const shippedPacks = Math.ceil(shippedUnits / packSize);
-        totalOutstandingPacks += orderedPacks - shippedPacks;
-      }
-    }
-    return totalOutstandingPacks;
-  }, [purchaseOrderId, item?.id, poQuery.data]);
 
   const showLineStatus =
     lines.some(line => line.status != null) ||
@@ -227,15 +205,6 @@ export const InboundLineEditCards = ({
                   sx={{ mt: 0.5, display: 'block' }}
                 >
                   {`${t('label.shipped-number-of-packs')}: ${shippedPacks}`}
-                </Typography>
-              )}
-              {!!purchaseOrderId && poOutstandingPacks != null && (
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 0.5, display: 'block' }}
-                >
-                  {`${t('label.outstanding-packs')}: ${poOutstandingPacks}`}
                 </Typography>
               )}
             </Box>
@@ -788,7 +757,6 @@ export const InboundLineEditCards = ({
     isManualShipment,
     item?.isVaccine,
     pluralisedUnitName,
-    poOutstandingPacks,
     removeDraftLine,
     restrictedToLocationTypeId,
     setPackRoundingMessage,

@@ -1486,6 +1486,7 @@
   "label.rejected": "Rejected",
   "label.relationship": "Relationship",
   "label.remaining": "Remaining",
+  "label.remaining-quantity-to-receive": "Remaining quantity to receive: {{count}}",
   "label.remaining-to-supply": "Remaining",
   "label.remove": "Remove",
   "label.remove-all-filters": "Remove all filters",
