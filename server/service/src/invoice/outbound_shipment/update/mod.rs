@@ -839,7 +839,7 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"enabled":true,"maxDays":0}"#.to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -926,7 +926,7 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"enabled":true,"maxDays":0}"#.to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
                 store_id: None,
             })
             .unwrap();
