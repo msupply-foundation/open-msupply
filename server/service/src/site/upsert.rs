@@ -5,6 +5,7 @@ use repository::{RepositoryError, SiteRow, SiteRowRepository};
 #[derive(PartialEq, Debug)]
 pub enum UpsertSiteError {
     CodeMustBeProvided,
+    NameNotProvided,
     PasswordRequired,
     DatabaseError(RepositoryError),
 }
@@ -47,6 +48,10 @@ fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), Upsert
         }
         (None, None) => return Err(UpsertSiteError::CodeMustBeProvided),
         _ => {}
+    }
+
+    if input.name.trim().is_empty() {
+        return Err(UpsertSiteError::NameNotProvided);
     }
 
     match (&input.password, existing) {
@@ -150,6 +155,34 @@ mod tests {
                 },
             ),
             Err(UpsertSiteError::CodeMustBeProvided)
+        );
+
+        assert_eq!(
+            upsert_site(
+                &context,
+                UpsertSite {
+                    id: 1,
+                    code: Some("code1".to_string()),
+                    name: "".to_string(),
+                    password: Some("password".to_string()),
+                    clear_hardware_id: false,
+                },
+            ),
+            Err(UpsertSiteError::NameNotProvided)
+        );
+
+        assert_eq!(
+            upsert_site(
+                &context,
+                UpsertSite {
+                    id: 1,
+                    code: Some("code1".to_string()),
+                    name: "  ".to_string(),
+                    password: Some("password".to_string()),
+                    clear_hardware_id: false,
+                },
+            ),
+            Err(UpsertSiteError::NameNotProvided)
         );
 
         assert_eq!(
