@@ -1,8 +1,9 @@
 # Sync Buffer Benchmarks
 
 Scripts to benchmark `sync_buffer` table designs (plain table, LIST partitioned
-by `is_integrated`, further RANGE partitioned by `cursor`) across insert, query,
-and update workloads. Produces a CSV of timings that can be plotted.
+by `integrated_datetime IS NULL`, further RANGE partitioned by `cursor`) across
+insert, query, and update workloads. Produces a CSV of timings that can be
+plotted.
 
 ## Files
 
@@ -101,14 +102,25 @@ Get-Process python | Where-Object { $_.CommandLine -like "*bench_sync_buffer*" }
   },
   "global": {
     "insert_between_benches": "500K",
-    "insert_batch_size": "2K",
-    "insert_iterations": 20,
-    "query_iterations": 2,
-    "max_minutes_per_scenario": 30,
+    "insert_batch_size": "10K",
+    "insert_iterations": 3,
+    "query_iterations": 1,
+    "max_minutes_per_scenario": 240,
     "max_total_records": "100M",
-    "target_pending_after_bench": "3M",
-    "table_names_count": 10,
-    "source_site_ids_count": 10
+    "target_pending_after_bench": "5M",
+    "table_names_count": 100,
+    "source_site_ids_count": 1000,
+    "rankings": [
+      {"table": 5, "ranking": 60},
+      {"table": 80, "ranking": 20},
+      {"site": 2, "ranking": 100},
+      {"site": 33, "ranking": 40}
+    ],
+    "query_specs": [
+      {"table": 5, "site": 2},
+      {"table": 80, "site": 33},
+      {"table": 99, "site": 999}
+    ]
   },
   "scenarios": [ ... ]
 }
@@ -121,12 +133,14 @@ Get-Process python | Where-Object { $_.CommandLine -like "*bench_sync_buffer*" }
 | `insert_between_benches` | Rows bulk-inserted between each bench round (untimed, grows the table). Use K/M suffix. |
 | `insert_batch_size` | Rows per timed insert iteration. |
 | `insert_iterations` | Number of timed insert iterations per bench round. |
-| `query_iterations` | How many times to run the query sweep per bench round. Each sweep runs the query for every (table_name, source_site_id, is_upsert) combination. |
+| `query_iterations` | How many times to run the query sweep per bench round. Each sweep runs the query for every spec in `query_specs` (or all combinations if omitted) × 2 operation types. |
 | `max_minutes_per_scenario` | Wall-clock cap for each scenario. |
 | `max_total_records` | Stop a scenario once the table reaches this size. |
 | `target_pending_after_bench` | After each bench round, all pending rows are integrated except the newest N. |
 | `table_names_count` | Number of unique UUID-based `table_name` values to generate (e.g. `tbl_a3f8c1e2…`). Non-sequential to reflect real index distribution. |
 | `source_site_ids_count` | Number of unique `source_site_id` values (`1..N`). |
+| `rankings` | Array of objects controlling how likely a table or site is to appear in inserted data. Each object has either a `table` or `site` key (0-indexed) and a `ranking` value. Ranking is a relative weight — a table with ranking 5 gets 5× the rows of a ranking-1 table. Unmentioned tables/sites default to ranking 1. |
+| `query_specs` | Array of `{"table": N, "site": N}` objects (0-indexed) specifying which table/site pairs to query-bench. If omitted, all `table × site` combinations are tested. |
 
 Size values accept `1000`, `"1K"`, `"1.5M"`, etc.
 
@@ -139,24 +153,25 @@ shown below. The common column definition is:
 cursor               BIGINT GENERATED ALWAYS AS IDENTITY,
 record_id            TEXT NOT NULL,
 received_datetime    TIMESTAMP NOT NULL,
-integration_datetime TIMESTAMP,
+integrated_datetime  TIMESTAMP,
 integration_error    TEXT,
-is_integrated        BOOLEAN NOT NULL DEFAULT FALSE,
 table_name           TEXT NOT NULL,
-is_upsert            BOOLEAN NOT NULL,
+operation_type       TEXT NOT NULL,
 data                 TEXT NOT NULL,
 source_site_id       INTEGER NOT NULL
 ```
 
-All indexes use the same shape, matching the bench query:
+Pending rows are identified by `integrated_datetime IS NULL`. A partial index
+covers the bench query:
 
 ```sql
-(table_name, is_upsert, source_site_id, received_datetime DESC)
+(table_name, operation_type, source_site_id, cursor DESC)
+WHERE integrated_datetime IS NULL
 ```
 
 ### 1. `basic`
 
-Single table, single index. Baseline — no partitioning.
+Single table, partial index. Baseline — no partitioning.
 
 ```sql
 DROP TABLE IF EXISTS sync_buffer CASCADE;
@@ -164,57 +179,57 @@ CREATE TABLE sync_buffer (
     /* common columns */,
     PRIMARY KEY (cursor)
 );
-CREATE INDEX idx_sb_query ON sync_buffer
-    (table_name, is_upsert, source_site_id, received_datetime DESC);
+CREATE INDEX idx_sb_pending_query ON sync_buffer
+    (table_name, operation_type, source_site_id, cursor DESC)
+    WHERE integrated_datetime IS NULL;
 ```
 
 ### 2. `partitioned-indexed`
 
-LIST partitioned by `is_integrated`; both partitions indexed.
+LIST partitioned by `(integrated_datetime IS NULL)`; index defined on the
+parent table so it auto-propagates to all partitions.
 
 ```sql
 DROP TABLE IF EXISTS sync_buffer CASCADE;
 CREATE TABLE sync_buffer (
-    /* common columns */,
-    PRIMARY KEY (cursor, is_integrated)
-) PARTITION BY LIST (is_integrated);
+    /* common columns */
+) PARTITION BY LIST ((integrated_datetime IS NULL));
 
-CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (FALSE);
-CREATE TABLE sync_buffer_done    PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+CREATE TABLE sync_buffer_done    PARTITION OF sync_buffer FOR VALUES IN (FALSE);
 
-CREATE INDEX idx_sb_pending_query ON sync_buffer_pending
-    (table_name, is_upsert, source_site_id, received_datetime DESC);
-CREATE INDEX idx_sb_done_query    ON sync_buffer_done
-    (table_name, is_upsert, source_site_id, received_datetime DESC);
+CREATE INDEX idx_sb_query ON sync_buffer
+    (table_name, operation_type, source_site_id, cursor DESC)
+    WHERE integrated_datetime IS NULL;
 ```
 
 ### 3. `partitioned-indexed-pending-only`
 
-LIST partitioned by `is_integrated`; **only** the pending (FALSE) partition
-has an index. The query filters on `is_integrated = FALSE`, so partition
-pruning directs it to the indexed partition at plan time — the done partition
-is never scanned.
+LIST partitioned by `(integrated_datetime IS NULL)`; index defined **only** on
+the pending partition. The query filters on `integrated_datetime IS NULL`, so
+partition pruning directs it to the indexed partition at plan time — the done
+partition is never scanned.
 
 ```sql
 DROP TABLE IF EXISTS sync_buffer CASCADE;
 CREATE TABLE sync_buffer (
-    /* common columns */,
-    PRIMARY KEY (cursor, is_integrated)
-) PARTITION BY LIST (is_integrated);
+    /* common columns */
+) PARTITION BY LIST ((integrated_datetime IS NULL));
 
-CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (FALSE);
-CREATE TABLE sync_buffer_done    PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+CREATE TABLE sync_buffer_done    PARTITION OF sync_buffer FOR VALUES IN (FALSE);
 
 CREATE INDEX idx_sb_pending_query ON sync_buffer_pending
-    (table_name, is_upsert, source_site_id, received_datetime DESC);
+    (table_name, operation_type, source_site_id, cursor DESC)
+    WHERE integrated_datetime IS NULL;
 ```
 
 ### 4. `partitioned-done-cursor`
 
-LIST partitioned by `is_integrated`; the **done** partition is further
-sub-partitioned by `cursor` range. The pending partition stays small and hot;
-the done partition grows across many physical tables, each covering a cursor
-range.
+LIST partitioned by `(integrated_datetime IS NULL)`; the **done** partition is
+further sub-partitioned by `cursor` range. The pending partition stays small
+and hot; the done partition grows across many physical tables, each covering a
+cursor range. Index is defined on the parent and propagates to all partitions.
 
 Extra scenario knob:
 
@@ -228,19 +243,17 @@ Sub-partitions are pre-created up to `max_total_records + size`, plus a
 ```sql
 DROP TABLE IF EXISTS sync_buffer CASCADE;
 CREATE TABLE sync_buffer (
-    /* common columns */,
-    PRIMARY KEY (cursor, is_integrated)
-) PARTITION BY LIST (is_integrated);
+    /* common columns */
+) PARTITION BY LIST ((integrated_datetime IS NULL));
 
-CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (FALSE);
+CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (TRUE);
 CREATE TABLE sync_buffer_done PARTITION OF sync_buffer
-    FOR VALUES IN (TRUE)
+    FOR VALUES IN (FALSE)
     PARTITION BY RANGE (cursor);
 
-CREATE INDEX idx_sb_pending_query ON sync_buffer_pending
-    (table_name, is_upsert, source_site_id, received_datetime DESC);
-CREATE INDEX idx_sb_done_query    ON sync_buffer_done
-    (table_name, is_upsert, source_site_id, received_datetime DESC);
+CREATE INDEX idx_sb_query ON sync_buffer
+    (table_name, operation_type, source_site_id, cursor DESC)
+    WHERE integrated_datetime IS NULL;
 
 -- Pre-created sub-partitions (example with 10M cursor range, 100M max):
 CREATE TABLE sync_buffer_done_c_1_10000000
@@ -252,9 +265,6 @@ CREATE TABLE sync_buffer_done_overflow
     PARTITION OF sync_buffer_done DEFAULT;
 ```
 
-The index on `sync_buffer_done` propagates automatically to every cursor
-sub-partition.
-
 ## The benchmark query
 
 All query-speed measurements run this single statement via
@@ -264,15 +274,15 @@ timed — only the planning + execution cost inside postgres):
 ```sql
 SELECT *
 FROM sync_buffer
-WHERE is_integrated = FALSE
-  AND table_name    = $1
-  AND is_upsert     = $2
+WHERE integrated_datetime IS NULL
+  AND table_name     = $1
+  AND operation_type = $2
   AND source_site_id = $3
-ORDER BY received_datetime DESC;
+ORDER BY cursor DESC;
 ```
 
-On partitioned scenarios the `is_integrated = FALSE` filter triggers partition
-pruning at plan time — only `sync_buffer_pending` is touched.
+On partitioned scenarios the `integrated_datetime IS NULL` filter triggers
+partition pruning at plan time — only `sync_buffer_pending` is touched.
 
 ## Flow of each run
 
@@ -284,17 +294,20 @@ For each scenario in the config (in order):
    `max_total_records` is reached. Each round does:
 
    1. **Grow** — bulk insert `insert_between_benches` rows (single statement
-      using `generate_series`, *untimed* — just populates data).
+      using `generate_series`, *untimed* — just populates data). Rows are
+      distributed across tables and sites according to their rankings.
    2. **Insert bench** — `insert_iterations` timed inserts of
       `insert_batch_size` rows each. Each iteration writes one CSV row
       (`metric_group=insert`).
    3. **Query bench** — `query_iterations` sweeps. Each sweep runs the bench
-      query for every `(table_name, source_site_id, is_upsert)` combination,
+      query for every `(table, site)` pair in `query_specs` (or all
+      combinations if omitted) × both operation types (`UPSERT`, `DELETE`),
       writing one CSV row per query (`metric_group=query`).
    4. **Update bench** — one statement that integrates all pending rows
-      *except* the newest `target_pending_after_bench`, using a
-      `cursor <= cutoff` predicate (so it's a bulk range update, not
-      per-row). One CSV row (`metric_group=update`).
+      *except* the newest `target_pending_after_bench`, by setting
+      `integrated_datetime = clock_timestamp()` where
+      `integrated_datetime IS NULL AND cursor <= cutoff`. One CSV row
+      (`metric_group=update`).
 3. The CSV is flushed after every iteration so progress is preserved even if
    the run is killed.
 
@@ -310,7 +323,7 @@ Every row written to the results CSV has these columns:
 | `operation` | `insert_batch` \| `query_by_table_source` \| `set_integrated_true` |
 | `duration_ms` | all |
 | `query_execution_ms`, `query_planning_ms` | query only (from `EXPLAIN ANALYZE`) |
-| `table_name`, `source_site_id`, `is_upsert` | query only |
+| `table_name`, `source_site_id`, `operation_type` | query only |
 | `rows_at_bench_start` | all — size of `sync_buffer` at the start of this round |
 | `total_rows_current` | all — size after this iteration |
 | `rows_affected` | insert: batch size; update: rows integrated |
@@ -318,11 +331,13 @@ Every row written to the results CSV has these columns:
 ### Table data
 
 The bulk insert uses a single SQL statement driven by `generate_series`, so no
-row data travels over the Python↔PG wire. Rows are distributed evenly:
+row data travels over the Python↔PG wire. Rows are distributed according to
+rankings (weighted round-robin):
 
-- `table_name` cycles through the pre-generated UUID-based names
-- `source_site_id` cycles through `1..N`
-- `is_upsert` alternates between `TRUE` and `FALSE`
+- `table_name` cycles through a weighted list of the pre-generated UUID-based
+  names (tables with higher ranking appear proportionally more often)
+- `source_site_id` cycles through a weighted list of `1..N`
+- `operation_type` alternates between `'UPSERT'` and `'DELETE'`
 - `received_datetime` is `clock_timestamp() - (n % 600) seconds` to spread
   timestamps within a 10-minute window
 

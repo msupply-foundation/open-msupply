@@ -77,8 +77,10 @@ def load_rows(csv_paths: list[str]) -> list[dict]:
     return all_rows
 
 
-def aggregate_for_plot(rows: list[dict]) -> dict[str, dict[str, list[tuple[int, float]]]]:
-    # scenario -> metric_group -> [(rows_at_bench_start, median_duration_ms)]
+def aggregate_for_plot(
+    rows: list[dict], top_pct: int = 50
+) -> dict[str, dict[str, list[tuple[int, float, float]]]]:
+    # scenario -> metric_group -> [(rows_at_bench_start, fastest, avg_top_pct)]
     grouped_values: dict[str, dict[str, dict[tuple[int, int], list[float]]]] = defaultdict(
         lambda: defaultdict(lambda: defaultdict(list))
     )
@@ -100,12 +102,21 @@ def aggregate_for_plot(rows: list[dict]) -> dict[str, dict[str, list[tuple[int, 
             value = row["duration_ms"]
         grouped_values[scenario][metric][key].append(value)
 
-    aggregated: dict[str, dict[str, list[tuple[int, float]]]] = defaultdict(lambda: defaultdict(list))
+    aggregated: dict[str, dict[str, list[tuple[int, float, float]]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for scenario, metric_map in grouped_values.items():
         for metric, by_round in metric_map.items():
-            points: list[tuple[int, float]] = []
-            for (_round, rows_start), durations in by_round.items():
-                points.append((rows_start, statistics.median(durations)))
+            # For insert (rows/sec), "faster" = higher value.
+            # For query/update (ms), "faster" = lower value.
+            higher_is_better = metric == "insert"
+            points: list[tuple[int, float, float]] = []
+            for (_round, rows_start), values in by_round.items():
+                sorted_vals = sorted(values, reverse=higher_is_better)
+                best = sorted_vals[0]
+                n_top = max(1, len(sorted_vals) * top_pct // 100)
+                avg_top = statistics.mean(sorted_vals[:n_top])
+                points.append((rows_start, best, avg_top))
             points.sort(key=lambda p: p[0])
             aggregated[scenario][metric] = points
     return aggregated
@@ -113,18 +124,21 @@ def aggregate_for_plot(rows: list[dict]) -> dict[str, dict[str, list[tuple[int, 
 
 def plot_scenario_panels(
     scenario: str,
-    data: dict[str, list[tuple[int, float]]],
+    data: dict[str, list[tuple[int, float, float]]],
     out_path: str,
     log_scale: bool,
+    top_pct: int,
 ):
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5), squeeze=False)
+    fig, axes = plt.subplots(1, 3, figsize=(36, 5), squeeze=False)
     for idx, metric in enumerate(METRIC_GROUPS):
         ax = axes[0][idx]
         points = data.get(metric, [])
         if points:
             xs = [p[0] for p in points]
-            ys = [p[1] for p in points]
-            ax.plot(xs, ys, marker="o", linewidth=1.8, color="#1f77b4")
+            ys_fastest = [p[1] for p in points]
+            ys_avg_top = [p[2] for p in points]
+            ax.plot(xs, ys_fastest, linewidth=0.8, color="#1f77b4", label="Fastest")
+            ax.plot(xs, ys_avg_top, linewidth=1.8, color="#1f77b4", label=f"Avg top {top_pct}%")
         ax.set_title(GROUP_TITLES[metric], fontsize=11, fontweight="bold")
         ax.set_xlabel("Rows at Bench Start")
         ax.set_ylabel(GROUP_Y_LABELS[metric])
@@ -134,6 +148,8 @@ def plot_scenario_panels(
         if log_scale:
             ax.set_yscale("log")
         ax.grid(True, alpha=0.3)
+        if points:
+            ax.legend(fontsize=8)
 
     fig.suptitle(f"Scenario: {scenario}", fontsize=14, fontweight="bold")
     fig.tight_layout(rect=[0, 0, 1, 0.95])
@@ -142,11 +158,12 @@ def plot_scenario_panels(
 
 
 def plot_combined_panels(
-    aggregated: dict[str, dict[str, list[tuple[int, float]]]],
+    aggregated: dict[str, dict[str, list[tuple[int, float, float]]]],
     out_path: str,
     log_scale: bool,
+    top_pct: int,
 ):
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5), squeeze=False)
+    fig, axes = plt.subplots(1, 3, figsize=(36, 5), squeeze=False)
     colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2"]
 
     for idx, metric in enumerate(METRIC_GROUPS):
@@ -157,14 +174,13 @@ def plot_combined_panels(
             if not points:
                 continue
             xs = [p[0] for p in points]
-            ys = [p[1] for p in points]
+            ys_fastest = [p[1] for p in points]
+            ys_avg_top = [p[2] for p in points]
+            c = colors[color_i % len(colors)]
+            ax.plot(xs, ys_fastest, linewidth=0.8, color=c, label=f"{scenario} fastest")
             ax.plot(
-                xs,
-                ys,
-                marker="o",
-                linewidth=1.6,
-                color=colors[color_i % len(colors)],
-                label=scenario,
+                xs, ys_avg_top, linewidth=1.8, color=c,
+                label=f"{scenario} avg top {top_pct}%",
             )
             color_i += 1
 
@@ -190,6 +206,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("csv_files", nargs="+", help="One or more CSV files from bench_sync_buffer.py")
     p.add_argument("--output-dir", "-o", default="plots", help="Directory for generated charts")
     p.add_argument("--log", action="store_true", help="Use log scale for y-axis")
+    p.add_argument(
+        "--top-pct", type=int, default=50,
+        help="Average the fastest X%% of values per point (default: 50)",
+    )
     return p
 
 
@@ -202,18 +222,18 @@ def main():
         print("No rows found in CSV inputs.", file=sys.stderr)
         sys.exit(1)
 
-    aggregated = aggregate_for_plot(rows)
+    aggregated = aggregate_for_plot(rows, args.top_pct)
     if not aggregated:
         print("No plottable benchmark rows found.", file=sys.stderr)
         sys.exit(1)
 
     for scenario, metric_data in sorted(aggregated.items()):
         scenario_file = os.path.join(args.output_dir, f"scenario_{sanitize_name(scenario)}.png")
-        plot_scenario_panels(scenario, metric_data, scenario_file, args.log)
+        plot_scenario_panels(scenario, metric_data, scenario_file, args.log, args.top_pct)
         print(f"Saved {scenario_file}", file=sys.stderr)
 
     combined_file = os.path.join(args.output_dir, "combined_scenarios.png")
-    plot_combined_panels(aggregated, combined_file, args.log)
+    plot_combined_panels(aggregated, combined_file, args.log, args.top_pct)
     print(f"Saved {combined_file}", file=sys.stderr)
 
 

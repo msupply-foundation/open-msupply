@@ -8,14 +8,54 @@
   },
   "global": {
     "insert_between_benches": "500K",
-    "insert_batch_size": "2K",
-    "insert_iterations": 20,
+    "insert_batch_size": "10K",
+    "insert_iterations": 5,
     "query_iterations": 1,
-    "max_minutes_per_scenario": 180,
+    "max_minutes_per_scenario": 240,
     "max_total_records": "100M",
-    "target_pending_after_bench": "3M",
-    "table_names_count": 10,
-    "source_site_ids_count": 5
+    "target_pending_after_bench": "5M",
+    "table_names_count": 100,
+    "source_site_ids_count": 1000,
+    "rankings": [
+      {
+        "table": 5,
+        "ranking": 60
+      },
+      {
+        "table": 80,
+        "ranking": 20
+      },
+      {
+        "site": 2,
+        "ranking": 100
+      },
+      {
+        "site": 33,
+        "ranking": 40
+      }
+    ],
+    "query_specs": [
+      {
+        "table": 5,
+        "site": 2
+      },
+      {
+        "table": 80,
+        "site": 33
+      },
+      {
+        "table": 99,
+        "site": 999
+      },
+      {
+        "table": 80,
+        "site": 2
+      },
+      {
+        "table": 5,
+        "site": 33
+      }
+    ]
   },
   "scenarios": [
     {

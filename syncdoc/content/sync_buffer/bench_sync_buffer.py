@@ -43,6 +43,20 @@ def generate_source_site_ids(count: int) -> list[int]:
     return list(range(1, count + 1))
 
 
+def build_weighted_list(items: list, rankings: list[int]) -> list:
+    """Expand items by ranking weight for weighted insert distribution."""
+    weighted = []
+    for i, item in enumerate(items):
+        weighted.extend([item] * rankings[i])
+    return weighted
+
+
+@dataclass
+class QuerySpec:
+    table_index: int
+    site_index: int
+
+
 @dataclass
 class PostgresConfig:
     host: str
@@ -62,7 +76,10 @@ class GlobalConfig:
     max_total_records: int
     target_pending_after_bench: int
     table_names: list[str]
+    weighted_table_names: list[str]
     source_site_ids: list[int]
+    weighted_source_site_ids: list[int]
+    query_specs: list[QuerySpec] | None
 
 
 def parse_size(s: str) -> int:
@@ -105,6 +122,39 @@ def parse_config(path: str) -> tuple[PostgresConfig, GlobalConfig, list[dict]]:
     if source_site_ids_count <= 0:
         raise ValueError("global.source_site_ids_count must be > 0")
 
+    table_rankings = [1] * table_names_count
+    site_rankings = [1] * source_site_ids_count
+    for entry in global_raw.get("rankings", []):
+        rank = int(entry["ranking"])
+        if "table" in entry:
+            idx = int(entry["table"])
+            if idx < 0 or idx >= table_names_count:
+                raise ValueError(f"rankings table index {idx} out of range [0, {table_names_count})")
+            table_rankings[idx] = rank
+        if "site" in entry:
+            idx = int(entry["site"])
+            if idx < 0 or idx >= source_site_ids_count:
+                raise ValueError(f"rankings site index {idx} out of range [0, {source_site_ids_count})")
+            site_rankings[idx] = rank
+
+    table_names = generate_table_names(table_names_count)
+    weighted_table_names = build_weighted_list(table_names, table_rankings)
+    source_site_ids = generate_source_site_ids(source_site_ids_count)
+    weighted_source_site_ids = build_weighted_list(source_site_ids, site_rankings)
+
+    query_specs_raw = global_raw.get("query_specs", None)
+    query_specs = None
+    if query_specs_raw is not None:
+        query_specs = []
+        for qs in query_specs_raw:
+            ti = int(qs["table"])
+            si = int(qs["site"])
+            if ti < 0 or ti >= table_names_count:
+                raise ValueError(f"query_specs table index {ti} out of range [0, {table_names_count})")
+            if si < 0 or si >= source_site_ids_count:
+                raise ValueError(f"query_specs site index {si} out of range [0, {source_site_ids_count})")
+            query_specs.append(QuerySpec(table_index=ti, site_index=si))
+
     gc = GlobalConfig(
         insert_between_benches=parse_size(global_raw.get("insert_between_benches", 50_000)),
         insert_batch_size=parse_size(global_raw.get("insert_batch_size", 2_000)),
@@ -113,8 +163,11 @@ def parse_config(path: str) -> tuple[PostgresConfig, GlobalConfig, list[dict]]:
         max_minutes_per_scenario=float(global_raw.get("max_minutes_per_scenario", 5)),
         max_total_records=parse_size(global_raw.get("max_total_records", 1_000_000)),
         target_pending_after_bench=parse_size(global_raw.get("target_pending_after_bench", 5_000)),
-        table_names=generate_table_names(table_names_count),
-        source_site_ids=generate_source_site_ids(source_site_ids_count),
+        table_names=table_names,
+        weighted_table_names=weighted_table_names,
+        source_site_ids=source_site_ids,
+        weighted_source_site_ids=weighted_source_site_ids,
+        query_specs=query_specs,
     )
 
     if gc.insert_between_benches <= 0:
@@ -165,15 +218,15 @@ SYNC_BUFFER_COLUMNS = """
         cursor               BIGINT GENERATED ALWAYS AS IDENTITY,
         record_id            TEXT NOT NULL,
         received_datetime    TIMESTAMP NOT NULL,
-        integration_datetime TIMESTAMP,
+        integrated_datetime  TIMESTAMP,
         integration_error    TEXT,
-        is_integrated        BOOLEAN NOT NULL DEFAULT FALSE,
         table_name           TEXT NOT NULL,
-        is_upsert            BOOLEAN NOT NULL,
+        operation_type       TEXT NOT NULL,
         data                 TEXT NOT NULL,
         source_site_id       INTEGER NOT NULL"""
 
-QUERY_INDEX_COLS = "(table_name, is_upsert, source_site_id, received_datetime DESC)"
+QUERY_INDEX_COLS = "(table_name, operation_type, source_site_id, cursor DESC)"
+PARTIAL_INDEX_COND = "WHERE integrated_datetime IS NULL"
 
 
 def setup_scenario(conn, scenario: dict, global_cfg: GlobalConfig):
@@ -187,36 +240,36 @@ def setup_scenario(conn, scenario: dict, global_cfg: GlobalConfig):
                 PRIMARY KEY (cursor)
             );
 
-            CREATE INDEX idx_sb_query ON sync_buffer {QUERY_INDEX_COLS};
+            CREATE INDEX idx_sb_pending_query ON sync_buffer {QUERY_INDEX_COLS}
+                {PARTIAL_INDEX_COND};
         """)
 
     elif scenario_type == "partitioned-indexed":
         exec_sql(conn, f"""
             DROP TABLE IF EXISTS sync_buffer CASCADE;
             CREATE TABLE sync_buffer (
-                {SYNC_BUFFER_COLUMNS},
-                PRIMARY KEY (cursor, is_integrated)
-            ) PARTITION BY LIST (is_integrated);
+                {SYNC_BUFFER_COLUMNS}
+            ) PARTITION BY LIST ((integrated_datetime IS NULL));
 
-            CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (FALSE);
-            CREATE TABLE sync_buffer_done PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+            CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+            CREATE TABLE sync_buffer_done PARTITION OF sync_buffer FOR VALUES IN (FALSE);
 
-            CREATE INDEX idx_sb_pending_query ON sync_buffer_pending {QUERY_INDEX_COLS};
-            CREATE INDEX idx_sb_done_query ON sync_buffer_done {QUERY_INDEX_COLS};
+            CREATE INDEX idx_sb_query ON sync_buffer {QUERY_INDEX_COLS}
+                {PARTIAL_INDEX_COND};
         """)
 
     elif scenario_type == "partitioned-indexed-pending-only":
         exec_sql(conn, f"""
             DROP TABLE IF EXISTS sync_buffer CASCADE;
             CREATE TABLE sync_buffer (
-                {SYNC_BUFFER_COLUMNS},
-                PRIMARY KEY (cursor, is_integrated)
-            ) PARTITION BY LIST (is_integrated);
+                {SYNC_BUFFER_COLUMNS}
+            ) PARTITION BY LIST ((integrated_datetime IS NULL));
 
-            CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (FALSE);
-            CREATE TABLE sync_buffer_done PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+            CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+            CREATE TABLE sync_buffer_done PARTITION OF sync_buffer FOR VALUES IN (FALSE);
 
-            CREATE INDEX idx_sb_pending_query ON sync_buffer_pending {QUERY_INDEX_COLS};
+            CREATE INDEX idx_sb_pending_query ON sync_buffer_pending {QUERY_INDEX_COLS}
+                {PARTIAL_INDEX_COND};
         """)
 
     elif scenario_type == "partitioned-done-cursor":
@@ -227,17 +280,16 @@ def setup_scenario(conn, scenario: dict, global_cfg: GlobalConfig):
         exec_sql(conn, f"""
             DROP TABLE IF EXISTS sync_buffer CASCADE;
             CREATE TABLE sync_buffer (
-                {SYNC_BUFFER_COLUMNS},
-                PRIMARY KEY (cursor, is_integrated)
-            ) PARTITION BY LIST (is_integrated);
+                {SYNC_BUFFER_COLUMNS}
+            ) PARTITION BY LIST ((integrated_datetime IS NULL));
 
-            CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (FALSE);
+            CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (TRUE);
             CREATE TABLE sync_buffer_done PARTITION OF sync_buffer
-                FOR VALUES IN (TRUE)
+                FOR VALUES IN (FALSE)
                 PARTITION BY RANGE (cursor);
 
-            CREATE INDEX idx_sb_pending_query ON sync_buffer_pending {QUERY_INDEX_COLS};
-            CREATE INDEX idx_sb_done_query ON sync_buffer_done {QUERY_INDEX_COLS};
+            CREATE INDEX idx_sb_query ON sync_buffer {QUERY_INDEX_COLS}
+                {PARTIAL_INDEX_COND};
         """)
 
         upper_bound = global_cfg.max_total_records + span
@@ -275,11 +327,10 @@ def bulk_insert_with_generate_series(
     INSERT INTO sync_buffer (
         record_id,
         received_datetime,
-        integration_datetime,
+        integrated_datetime,
         integration_error,
-        is_integrated,
         table_name,
-        is_upsert,
+        operation_type,
         data,
         source_site_id
     )
@@ -288,9 +339,8 @@ def bulk_insert_with_generate_series(
         clock_timestamp() - ((n %% 600) * interval '1 second'),
         NULL,
         NULL,
-        FALSE,
         cfg.table_names[((n - 1) %% array_length(cfg.table_names, 1)) + 1],
-        (n %% 2 = 0),
+        CASE WHEN n %% 2 = 0 THEN 'UPSERT' ELSE 'DELETE' END,
         format('{""mock"":%%s}', n),
         cfg.source_ids[((n - 1) %% array_length(cfg.source_ids, 1)) + 1]
     FROM gs, cfg
@@ -300,19 +350,19 @@ def bulk_insert_with_generate_series(
     conn.commit()
 
 
-def query_speed_ms(conn, table_name: str, is_upsert: bool, source_site_id: int) -> tuple[float, int]:
+def query_speed_ms(conn, table_name: str, operation_type: str, source_site_id: int) -> tuple[float, int]:
     sql = """
     EXPLAIN (ANALYZE, FORMAT JSON)
     SELECT *
     FROM sync_buffer
-    WHERE is_integrated = FALSE
+    WHERE integrated_datetime IS NULL
       AND table_name = %s
-      AND is_upsert = %s
+      AND operation_type = %s
       AND source_site_id = %s
-    ORDER BY received_datetime DESC
+    ORDER BY cursor DESC
     """
     with conn.cursor() as cur:
-        cur.execute(sql, (table_name, is_upsert, source_site_id))
+        cur.execute(sql, (table_name, operation_type, source_site_id))
         plan_json = cur.fetchone()[0]
     plan_root = plan_json[0]
     execution_ms = float(plan_root.get("Execution Time", 0.0))
@@ -328,7 +378,7 @@ def set_integrated_leave_pending(conn, target_pending: int) -> int:
     # Find the cursor cutoff: the nth newest pending row
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT cursor FROM sync_buffer WHERE is_integrated = FALSE "
+            "SELECT cursor FROM sync_buffer WHERE integrated_datetime IS NULL "
             "ORDER BY cursor DESC OFFSET %s LIMIT 1",
             (target_pending,),
         )
@@ -340,8 +390,8 @@ def set_integrated_leave_pending(conn, target_pending: int) -> int:
 
     with conn.cursor() as cur:
         cur.execute(
-            "UPDATE sync_buffer SET is_integrated = TRUE, integration_datetime = clock_timestamp() "
-            "WHERE is_integrated = FALSE AND cursor <= %s",
+            "UPDATE sync_buffer SET integrated_datetime = clock_timestamp() "
+            "WHERE integrated_datetime IS NULL AND cursor <= %s",
             (cutoff_cursor,),
         )
         affected = cur.rowcount
@@ -396,7 +446,7 @@ def run_scenario(
 
         print(f"[round {bench_round}] Inserting {insert_between} rows to grow table...", file=sys.stderr)
         bulk_insert_with_generate_series(
-            conn, insert_between, global_cfg.table_names, global_cfg.source_site_ids
+            conn, insert_between, global_cfg.weighted_table_names, global_cfg.weighted_source_site_ids
         )
         total_before = current_total_rows(conn)
         print(f"[round {bench_round}] Table now has {total_before} rows", file=sys.stderr)
@@ -423,7 +473,7 @@ def run_scenario(
                 "iteration": insert_iter,
                 "table_name": "",
                 "source_site_id": "",
-                "is_upsert": "",
+                "operation_type": "",
                 "duration_ms": round(duration_ms, 4),
                 "query_execution_ms": "",
                 "query_planning_ms": "",
@@ -436,32 +486,43 @@ def run_scenario(
             if insert_iter % 5 == 0 or insert_iter == insert_iterations:
                 print(f"[round {bench_round}]   insert iter {insert_iter}/{insert_iterations}: {duration_ms:.1f}ms", file=sys.stderr)
 
-        print(f"[round {bench_round}] Query bench: {query_iterations} iterations x {len(global_cfg.table_names)} tables x {len(global_cfg.source_site_ids)} sites", file=sys.stderr)
+        if global_cfg.query_specs is not None:
+            queries_to_test = [
+                (global_cfg.table_names[qs.table_index], global_cfg.source_site_ids[qs.site_index])
+                for qs in global_cfg.query_specs
+            ]
+        else:
+            queries_to_test = [
+                (tbl, src)
+                for tbl in global_cfg.table_names
+                for src in global_cfg.source_site_ids
+            ]
+
+        print(f"[round {bench_round}] Query bench: {query_iterations} iterations x {len(queries_to_test)} queries x 2 ops", file=sys.stderr)
         for query_iter in range(1, query_iterations + 1):
-            for tbl in global_cfg.table_names:
-                for src in global_cfg.source_site_ids:
-                    for upsert_flag in (True, False):
-                        execution_ms, planning_ms = query_speed_ms(conn, tbl, upsert_flag, src)
-                        row = {
-                            "timestamp_utc": now_utc(),
-                            "scenario_name": scenario_name,
-                            "scenario_type": scenario_type,
-                            "bench_round": bench_round,
-                            "metric_group": "query",
-                            "operation": "query_by_table_source",
-                            "iteration": query_iter,
-                            "table_name": tbl,
-                            "source_site_id": src,
-                            "is_upsert": str(upsert_flag).lower(),
-                            "duration_ms": round(execution_ms, 4),
-                            "query_execution_ms": round(execution_ms, 4),
-                            "query_planning_ms": round(planning_ms, 4),
-                            "rows_at_bench_start": total_before,
-                            "total_rows_current": current_total_rows(conn),
-                            "rows_affected": "",
-                        }
-                        writer.writerow(row)
-                        out_handle.flush()
+            for tbl, src in queries_to_test:
+                for op_type in ('UPSERT', 'DELETE'):
+                    execution_ms, planning_ms = query_speed_ms(conn, tbl, op_type, src)
+                    row = {
+                        "timestamp_utc": now_utc(),
+                        "scenario_name": scenario_name,
+                        "scenario_type": scenario_type,
+                        "bench_round": bench_round,
+                        "metric_group": "query",
+                        "operation": "query_by_table_source",
+                        "iteration": query_iter,
+                        "table_name": tbl,
+                        "source_site_id": src,
+                        "operation_type": op_type,
+                        "duration_ms": round(execution_ms, 4),
+                        "query_execution_ms": round(execution_ms, 4),
+                        "query_planning_ms": round(planning_ms, 4),
+                        "rows_at_bench_start": total_before,
+                        "total_rows_current": current_total_rows(conn),
+                        "rows_affected": "",
+                    }
+                    writer.writerow(row)
+                    out_handle.flush()
             print(f"[round {bench_round}]   query iter {query_iter}/{query_iterations} done", file=sys.stderr)
 
         print(f"[round {bench_round}] Update bench: leaving {target_pending} pending...", file=sys.stderr)
@@ -480,7 +541,7 @@ def run_scenario(
                 "iteration": 1,
                 "table_name": "",
                 "source_site_id": "",
-                "is_upsert": "",
+                "operation_type": "",
                 "duration_ms": round(update_ms, 4),
                 "query_execution_ms": "",
                 "query_planning_ms": "",
@@ -551,7 +612,7 @@ def main():
         "iteration",
         "table_name",
         "source_site_id",
-        "is_upsert",
+        "operation_type",
         "duration_ms",
         "query_execution_ms",
         "query_planning_ms",
