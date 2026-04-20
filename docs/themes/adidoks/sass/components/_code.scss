@@ -12,9 +12,11 @@ code {
 }
 
 pre {
-  background: $beige;
-  color: $black;
   margin: 2rem 0;
+}
+
+pre.giallo {
+  color-scheme: light !important;
 }
 
 pre code {

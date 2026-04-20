@@ -39,6 +39,10 @@ include_content = true
 
 [markdown]
 
+[markdown.highlighting]
+light_theme = "github-light"
+dark_theme = "github-dark"
+
 [extra]
 # Put all your custom variables here
 author = "Aaran Xu"
