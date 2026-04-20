@@ -461,6 +461,18 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
+        AncillaryItemsByItemLinkIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AncillaryItemsByAncillaryLinkIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
         ProgramByIdLoader {
             connection_manager: connection_manager.clone(),
         },
