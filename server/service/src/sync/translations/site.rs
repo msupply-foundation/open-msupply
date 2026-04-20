@@ -14,6 +14,7 @@ pub struct LegacySiteRow {
     pub hashed_password: String,
     #[serde(rename = "hardwareID")]
     pub hardware_id: Option<String>,
+    pub code: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -46,6 +47,7 @@ impl SyncTranslation for SiteTranslation {
             name: data.name,
             hashed_password: data.hashed_password,
             hardware_id: data.hardware_id,
+            code: data.code,
             // token is OMS-managed and never comes from OG
             token: None,
         };

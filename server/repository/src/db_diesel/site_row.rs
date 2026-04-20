@@ -5,6 +5,7 @@ table! {
     site (id) {
         id -> Integer,
         og_id -> Nullable<Text>,
+        code -> Nullable<Text>,
         name -> Text,
         hashed_password -> Text,
         hardware_id -> Nullable<Text>,
@@ -18,6 +19,7 @@ table! {
 pub struct SiteRow {
     pub id: i32,
     pub og_id: Option<String>,
+    pub code: Option<String>,
     pub name: String,
     pub hashed_password: String,
     pub hardware_id: Option<String>,
@@ -65,19 +67,6 @@ impl<'a> SiteRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
-    pub fn find_by_name_and_password(
-        &self,
-        name: &str,
-        hashed_password: &str,
-    ) -> Result<Option<SiteRow>, RepositoryError> {
-        let result = site::table
-            .filter(site::name.eq(name))
-            .filter(site::hashed_password.eq(hashed_password))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
 }
 
 impl Upsert for SiteRow {
@@ -124,6 +113,7 @@ mod tests {
         SiteRow {
             id: 1,
             og_id: Some("og-1".to_string()),
+            code: Some("code1".to_string()),
             name: "site_a".to_string(),
             hashed_password: "hash_a".to_string(),
             hardware_id: Some("hw-id-a".to_string()),
@@ -135,6 +125,7 @@ mod tests {
         SiteRow {
             id: 2,
             og_id: None,
+            code: Some("code2".to_string()),
             name: "site_b".to_string(),
             hashed_password: "hash_b".to_string(),
             hardware_id: None,
@@ -162,44 +153,6 @@ mod tests {
         };
         repo.upsert(&updated).unwrap();
         assert_eq!(repo.find_one_by_id(1).unwrap(), Some(updated));
-    }
-
-    #[actix_rt::test]
-    async fn site_row_repository_find_by_name_and_password() {
-        let (_, connection, _, _) = setup_all(
-            "site_row_repository_find_by_name_and_password",
-            MockDataInserts::none(),
-        )
-        .await;
-        let repo = SiteRowRepository::new(&connection);
-
-        repo.upsert(&site_row_a()).unwrap();
-        repo.upsert(&site_row_b()).unwrap();
-
-        assert_eq!(
-            repo.find_by_name_and_password("site_a", "hash_a").unwrap(),
-            Some(site_row_a())
-        );
-
-        // Wrong password
-        assert_eq!(
-            repo.find_by_name_and_password("site_a", "wrong_hash")
-                .unwrap(),
-            None
-        );
-
-        // Wrong name
-        assert_eq!(
-            repo.find_by_name_and_password("no_such_site", "hash_a")
-                .unwrap(),
-            None
-        );
-
-        // Site with no hardware_id and with a token
-        assert_eq!(
-            repo.find_by_name_and_password("site_b", "hash_b").unwrap(),
-            Some(site_row_b())
-        );
     }
 
     #[actix_rt::test]
