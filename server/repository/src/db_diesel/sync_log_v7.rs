@@ -125,14 +125,14 @@ mod test {
 
     use chrono::{Duration, NaiveDateTime};
 
-    pub fn row_incomplete() -> SyncLogV7Row {
+    fn row_incomplete() -> SyncLogV7Row {
         SyncLogV7Row {
             id: "sync_1".to_string(),
             ..Default::default()
         }
     }
 
-    pub fn row_completed_with_error() -> SyncLogV7Row {
+    fn row_completed_with_error() -> SyncLogV7Row {
         SyncLogV7Row {
             id: "sync_2".to_string(),
             started_datetime: NaiveDateTime::default() + Duration::seconds(60),
