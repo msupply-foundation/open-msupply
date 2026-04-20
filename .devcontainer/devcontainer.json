@@ -1,0 +1,92 @@
+{
+  "name": "Sandbox",
+  "image": "mcr.microsoft.com/devcontainers/base:trixie",
+  "features": {
+    // sets up non root user
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installSsl": true,
+      "installZsh": false,
+      "upgradePackages": false,
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
+    // installs rust
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "1.88"
+    },
+    // installs node, npx, yarn
+    "ghcr.io/devcontainers/features/node:1": {},
+    // fish with persistent history
+    "ghcr.io/devcontainers-extra/features/fish-apt-get:1": {},
+    "ghcr.io/nikobockerman/devcontainer-features/fish-persistent-data:2": {},
+    // adds a restrictive firewall
+    "ghcr.io/w3cj/devcontainer-features/firewall:0.0.2": {
+      // don't run services on your host that could lead to a prompt injection
+      // (services on your host are available in the container)
+      // add any hosts you need to access here that aren't covered by the other options
+      // see other options [here](https://github.com/w3cj/devcontainer-features/blob/main/src/firewall/README.md)
+      "hosts": "host.docker.internal,static.rust-lang.org",
+      "allAiProviders": true,
+      "cratesIoRegistry": true,
+      "githubDomains": true,
+      "npmRegistry": true,
+      "vscodeMarketplace": true
+    }
+  },
+  "forwardPorts": [
+    3003,
+    8000
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // AI
+        "anthropic.claude-code",
+        // Rust
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        "tamasfe.even-better-toml",
+        // TypeScript/React
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        // GraphQL
+        "graphql.vscode-graphql",
+        "graphql.vscode-graphql-syntax",
+        // General
+        "streetsidesoftware.code-spell-checker",
+        "github.vscode-pull-request-github"
+      ],
+      "settings": {
+        "claudeCode.allowDangerouslySkipPermissions": true,
+        "terminal.integrated.defaultProfile.linux": "fish",
+        "dev.containers.experimentalMountGitWorktreeCommonDir": true
+      }
+    }
+  },
+  "mounts": [
+    {
+      "source": "${env:HOME}/.claude",
+      "target": "/home/vscode/.claude",
+      "type": "bind"
+    }
+  ],
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
+  },
+  "onCreateCommand": {
+    "chown-home": "sudo chown -R vscode:vscode /home/vscode",
+    "install-tools": "sudo apt update && sudo apt install -y libpq-dev gh nmap iputils-ping lsof git-filter-repo",
+    "machine-id": "sudo sh -c 'echo ${devcontainerId} > /etc/machine-id'"
+  },
+  // restrict sudo to only what's needed after install-time commands finish,
+  // and create firewall-or-die.sh which kills PID 1 (stops the container) if the firewall fails
+  "postCreateCommand": "sudo sh -c 'printf \"#!/bin/sh\\nif ! /usr/local/bin/init-firewall.sh; then\\n  echo FIREWALL FAILED - STOPPING CONTAINER >&2\\n  kill -9 1\\nfi\\n\" > /usr/local/bin/firewall-or-die.sh && chmod 0755 /usr/local/bin/firewall-or-die.sh && for f in /etc/sudoers /etc/sudoers.d/*; do sed -i \"/NOPASSWD.*ALL$/d\" \"$f\" 2>/dev/null || true; done && printf \"vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh, /usr/local/bin/firewall-or-die.sh\\n\" > /etc/sudoers.d/99-firewall-only && chmod 0440 /etc/sudoers.d/99-firewall-only'",
+  // on every container start, apply the firewall - kill the container if it fails
+  "postStartCommand": "sudo /usr/local/bin/firewall-or-die.sh",
+  // drop CAP_NET_RAW (raw sockets can bypass iptables OUTPUT rules)
+  // keep NET_ADMIN - required for iptables management by the firewall feature
+  "runArgs": [
+    "--cap-drop=NET_RAW"
+  ]
+}
