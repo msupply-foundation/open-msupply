@@ -27,3 +27,55 @@ impl From<RepositoryError> for DeleteSiteError {
         DeleteSiteError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use repository::{mock::MockDataInserts, test_db::setup_all, SiteRowRepository};
+
+    use crate::{
+        service_provider::ServiceProvider,
+        site::upsert::{upsert_site, UpsertSite},
+    };
+
+    use super::*;
+
+    #[actix_rt::test]
+    async fn delete_site_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("delete_site_errors", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        assert_eq!(
+            delete_site(&context, 999),
+            Err(DeleteSiteError::SiteDoesNotExist)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn delete_site_success() {
+        let (_, _, connection_manager, _) =
+            setup_all("delete_site_success", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider.basic_context().unwrap();
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: Some("code1".to_string()),
+                name: "Site A".to_string(),
+                password: Some("password".to_string()),
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+        delete_site(&context, 1).unwrap();
+
+        let connection = connection_manager.connection().unwrap();
+        let repo = SiteRowRepository::new(&connection);
+        assert_eq!(repo.find_one_by_id(1).unwrap(), None);
+    }
+}
