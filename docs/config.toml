@@ -20,6 +20,10 @@ internal_level = "warn"
 [markdown]
 insert_anchor_links = "none"
 
+[markdown.highlighting]
+light_theme = "github-light"
+dark_theme = "github-dark"
+
 [search]
 include_title = true
 include_description = false
