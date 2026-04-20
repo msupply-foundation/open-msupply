@@ -10,6 +10,7 @@ pub enum UpsertSiteError {
 
 pub struct UpsertSite {
     pub id: i32,
+    pub code: Option<String>,
     pub name: String,
     pub password: Option<String>,
     // Can only be cleared in frontend. The hardware_id is set when a device
@@ -49,6 +50,7 @@ fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), Upsert
 fn generate(
     UpsertSite {
         id,
+        code,
         name,
         clear_hardware_id,
         password,
@@ -56,6 +58,7 @@ fn generate(
     existing_site: Option<SiteRow>,
 ) -> SiteRow {
     let existing_og_id = existing_site.as_ref().and_then(|s| s.og_id.clone());
+    let existing_code = existing_site.as_ref().and_then(|s| s.code.clone());
     let existing_hardware_id = existing_site.as_ref().and_then(|s| s.hardware_id.clone());
 
     let hashed_password = match password {
@@ -69,6 +72,7 @@ fn generate(
     SiteRow {
         id,
         og_id: existing_og_id,
+        code: code.or(existing_code),
         name,
         hashed_password,
         hardware_id: if clear_hardware_id {

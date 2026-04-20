@@ -12,6 +12,7 @@ use service::{
 #[derive(InputObject)]
 pub struct UpsertSiteInput {
     pub id: i32,
+    pub code: Option<String>,
     pub name: String,
     pub password: Option<String>,
     pub clear_hardware_id: Option<bool>,
@@ -85,6 +86,7 @@ impl UpsertSiteInput {
     pub fn to_domain(self) -> UpsertSite {
         let UpsertSiteInput {
             id,
+            code,
             name,
             password,
             clear_hardware_id,
@@ -92,6 +94,7 @@ impl UpsertSiteInput {
 
         UpsertSite {
             id,
+            code,
             name,
             password,
             clear_hardware_id: clear_hardware_id.unwrap_or(false),
