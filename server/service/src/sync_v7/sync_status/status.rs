@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    dynamic_query_filter::FilterBuilder, Condition, RepositoryError, SyncLogV7Repository,
-    SyncLogV7Row, syncv7::SyncError,
+    dynamic_query_filter::FilterBuilder, syncv7::SyncError, Condition, RepositoryError,
+    SyncLogV7Repository, SyncLogV7Row,
 };
 
 use crate::{
@@ -45,10 +45,8 @@ impl FullSyncStatusV7 {
             error,
         } = row;
 
-        let is_syncing = finished_datetime.is_none() && error.is_none();
-
         FullSyncStatusV7 {
-            is_syncing,
+            is_syncing: finished_datetime.is_none() && error.is_none(),
             error,
             summary: SyncStatus {
                 started: started_datetime,
@@ -110,13 +108,6 @@ pub trait SyncStatusV7Trait: Sync + Send {
         ctx: &ServiceContext,
     ) -> Result<InitialisationStatus, RepositoryError> {
         get_initialisation_status_v7(ctx)
-    }
-
-    fn is_initialised_v7(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
-        Ok(matches!(
-            self.get_initialisation_status_v7(ctx)?,
-            InitialisationStatus::Initialised(_)
-        ))
     }
 }
 

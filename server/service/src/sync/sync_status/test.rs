@@ -41,8 +41,6 @@ macro_rules! assert_between {
     };
 }
 
-// TODO: Remove when remote v5 sync is replaced by v7
-#[ignore]
 #[actix_rt::test]
 async fn sync_status() {
     let ServiceTestContext {
@@ -562,10 +560,7 @@ fn get_push_and_error_sync_status_tester(
                 new_status.error.clone_from(&current_status.error);
 
                 assert_eq!(current_status, new_status);
-                util::assert_matches!(
-                    current_status.error,
-                    Some(SyncLogError { .. })
-                );
+                util::assert_matches!(current_status.error, Some(SyncLogError { .. }));
 
                 TestOutput {
                     new_status,

@@ -3,7 +3,10 @@ use async_graphql::*;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use service::sync::sync_status::status::InitialisationStatus;
 
-use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SyncErrorNode};
+use crate::{
+    queries::{initialisation_status::get_initialisation_status, sync_settings::SyncSettingsNode},
+    sync_api_error::SyncErrorNode,
+};
 
 use super::common::SyncSettingsInput;
 
@@ -20,9 +23,8 @@ pub async fn initialise_site(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let initialisation_status = service_provider
-        .sync_status_service
-        .get_initialisation_status(&service_context)?;
+    let initialisation_status =
+        get_initialisation_status(&service_provider, &service_context)?;
     if initialisation_status != InitialisationStatus::PreInitialisation {
         return Err(StandardGraphqlError::from_str_slice(
             "Cannot initialise after PreInitialisation sync state",
