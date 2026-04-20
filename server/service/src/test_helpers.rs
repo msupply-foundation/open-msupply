@@ -14,10 +14,6 @@ use crate::{
     settings::{DiscoveryMode, MailSettings, ServerSettings, Settings},
     subscription::SubscriptionTriggerHandle,
     sync::synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
-    sync::{
-        file_sync_driver::FileSyncDriver,
-        synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
-    },
 };
 
 pub(crate) struct ServiceTestContext {
