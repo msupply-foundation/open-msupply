@@ -120,29 +120,20 @@ export const InboundLineEditForm = ({
               />
             </Grid>
           </Box>
-          {selectedPOLine && (
-            <Box display="flex" alignItems="center" gap={1}>
-              <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-              <BasicTextInput
-                disabled
-                sx={{ width: 150 }}
-                value={
-                  selectedPOLine.unit ?? selectedPOLine.item.unitName ?? ''
-                }
-              />
-            </Box>
-          )}
         </Box>
-        {remainingUnits != null && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mt: 1, ml: 1 }}
-          >
-            {t('label.remaining-quantity-to-receive', {
-              count: remainingUnits,
-            })}
-          </Typography>
+        {selectedPOLine && (
+          <Box display="flex" justifyContent="space-between" sx={{ mt: 1, ml: 1 }}>
+            {remainingUnits != null && (
+              <Typography variant="body2" color="text.secondary">
+                {t('label.remaining-quantity-to-receive', {
+                  count: remainingUnits,
+                })}
+              </Typography>
+            )}
+            <Typography variant="body2" color="text.secondary">
+              {`${t('label.unit')}: ${selectedPOLine.unit ?? selectedPOLine.item.unitName ?? ''}`}
+            </Typography>
+          </Box>
         )}
       </>
     );
