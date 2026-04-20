@@ -1,3 +1,4 @@
+mod ancillary_item;
 mod asset;
 mod asset_catalogue_item;
 mod asset_category;
@@ -67,6 +68,7 @@ mod vvm_status;
 mod vvm_status_log;
 mod warning;
 
+pub use ancillary_item::*;
 pub use asset::*;
 pub use asset_catalogue_item::*;
 pub use asset_category::*;
