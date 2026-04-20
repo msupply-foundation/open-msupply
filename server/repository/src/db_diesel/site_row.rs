@@ -5,6 +5,7 @@ table! {
     site (id) {
         id -> Integer,
         og_id -> Nullable<Text>,
+        code -> Nullable<Text>,
         name -> Text,
         hashed_password -> Text,
         hardware_id -> Nullable<Text>,
@@ -18,6 +19,7 @@ table! {
 pub struct SiteRow {
     pub id: i32,
     pub og_id: Option<String>,
+    pub code: Option<String>,
     pub name: String,
     pub hashed_password: String,
     pub hardware_id: Option<String>,
@@ -111,6 +113,7 @@ mod tests {
         SiteRow {
             id: 1,
             og_id: Some("og-1".to_string()),
+            code: Some("code1".to_string()),
             name: "site_a".to_string(),
             hashed_password: "hash_a".to_string(),
             hardware_id: Some("hw-id-a".to_string()),
@@ -122,6 +125,7 @@ mod tests {
         SiteRow {
             id: 2,
             og_id: None,
+            code: Some("code2".to_string()),
             name: "site_b".to_string(),
             hashed_password: "hash_b".to_string(),
             hardware_id: None,
