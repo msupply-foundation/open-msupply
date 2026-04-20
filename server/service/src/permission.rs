@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use repository::{
-    EqualFilter, RepositoryError, StorageConnectionManager, StoreRow, StoreRowRepository,
+    EqualFilter, RepositoryError, StorageConnection, StoreRow, StoreRowRepository,
     UserPermissionFilter, UserPermissionRepository, UserPermissionRow,
 };
 
@@ -12,13 +12,12 @@ pub struct UserStorePermissions {
 }
 
 pub fn permissions(
-    connection_manager: &StorageConnectionManager,
+    connection: &StorageConnection,
     user_id: &str,
     store: Option<String>,
 ) -> Result<Vec<UserStorePermissions>, RepositoryError> {
-    let connection = connection_manager.connection()?;
-    let user_permission_repo = UserPermissionRepository::new(&connection);
-    let store_repo = StoreRowRepository::new(&connection);
+    let user_permission_repo = UserPermissionRepository::new(connection);
+    let store_repo = StoreRowRepository::new(connection);
 
     let mut filter =
         UserPermissionFilter::new().user_id(EqualFilter::equal_to(user_id.to_string()));
@@ -27,32 +26,39 @@ pub fn permissions(
     }
     let permissions = user_permission_repo.query_by_filter(filter)?;
 
-    let mut permissions_by_store = HashMap::new();
+    let mut permissions_by_store: HashMap<String, Vec<UserPermissionRow>> = HashMap::new();
+    let mut store_ids: HashSet<String> = HashSet::new();
     for permission in permissions {
         let store_id = match permission.store_id.clone() {
             Some(store_id) => store_id,
             None => continue,
         };
 
+        store_ids.insert(store_id.clone());
         permissions_by_store
             .entry(store_id)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(permission);
     }
 
-    let mut result = Vec::new();
-    for (store_id, permissions) in permissions_by_store {
-        let store = match store_repo.find_one_by_id(&store_id)? {
-            Some(store) => store,
-            None => continue,
-        };
+    let stores_by_id: HashMap<String, StoreRow> = store_repo
+        .find_many_by_id(&store_ids.into_iter().collect::<Vec<_>>())?
+        .into_iter()
+        .map(|store| (store.id.clone(), store))
+        .collect();
 
-        let user_store_permission = UserStorePermissions {
-            store_row: store,
-            permissions: permissions.clone(),
-        };
-        result.push(user_store_permission);
-    }
+    let result = permissions_by_store
+        .into_iter()
+        .filter_map(|(store_id, permissions)| {
+            stores_by_id
+                .get(&store_id)
+                .cloned()
+                .map(|store_row| UserStorePermissions {
+                    store_row,
+                    permissions,
+                })
+        })
+        .collect();
 
     Ok(result)
 }
