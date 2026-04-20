@@ -88,7 +88,7 @@ export const InboundLineEditForm = ({
 
   if (hasPurchaseOrder) {
     return (
-      <Box>
+      <>
         <Box display="flex" flexWrap="wrap" alignItems="center" gap={1}>
           <Box
             display="flex"
@@ -100,6 +100,7 @@ export const InboundLineEditForm = ({
             <ModalLabel
               label={t('label.purchase-order-line')}
               justifyContent="flex-end"
+              minWidth="fit-content"
             />
             <Grid flex={1}>
               <Autocomplete
@@ -143,7 +144,7 @@ export const InboundLineEditForm = ({
             })}
           </Typography>
         )}
-      </Box>
+      </>
     );
   }
 
