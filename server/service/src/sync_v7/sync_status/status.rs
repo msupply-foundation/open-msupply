@@ -115,6 +115,7 @@ pub(crate) struct SyncStatusV7Service;
 
 impl SyncStatusV7Trait for SyncStatusV7Service {}
 
+// Returns the most recent sync log row (sorted by started_datetime desc in the repository)
 fn get_latest_sync_status_v7(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
@@ -122,6 +123,7 @@ fn get_latest_sync_status_v7(
     Ok(row.map(FullSyncStatusV7::from_sync_log_v7_row))
 }
 
+// Returns the most recent successful sync log row (sorted by started_datetime desc in the repository)
 fn get_latest_successful_sync_status_v7(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatusV7>, RepositoryError> {

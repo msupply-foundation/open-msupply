@@ -40,6 +40,7 @@ use service::{
     },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
+    initialisation_status::get_initialisation_status,
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
@@ -47,6 +48,7 @@ use service::{
     settings::{is_develop, ServerSettings, Settings},
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
+    sync::sync_status::status::InitialisationStatus,
     sync::{
         file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
@@ -134,13 +136,13 @@ pub async fn start_server(
     // Wire transaction notifications to the subscription worker.
     // Fired after outermost transaction commits.
     let commit_trigger = subscription_trigger.clone();
-    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
-        match notification {
+    connection_manager.set_on_commit(std::sync::Arc::new(
+        move |notification| match notification {
             repository::TransactionNotification::ChangelogInsert => {
                 commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
             }
-        }
-    }));
+        },
+    ));
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
@@ -427,22 +429,12 @@ pub async fn start_server(
         (None, None) => false,
     };
 
-    let is_initialised = if CentralServerConfig::is_central_server() {
-        service_provider
-            .sync_status_service
-            .is_initialised(&service_context)
-            .unwrap()
-    } else {
-        service_provider
-            .sync_status_v7_service
-            .get_initialisation_status_v7(&service_context)
-            .map(|s| matches!(s, service::sync::sync_status::status::InitialisationStatus::Initialised(_)))
-            .unwrap_or(false)
-    };
+    let is_initialised = matches!(
+        get_initialisation_status(&service_provider, &service_context),
+        Ok(InitialisationStatus::Initialised(_))
+    );
 
-    if is_initialised
-        || !force_trigger_sync_on_startup
-    {
+    if is_initialised || !force_trigger_sync_on_startup {
         graphql_schema
             .set_operational_status(OperationalStatus::Operational)
             .await;
