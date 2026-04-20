@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::store_row::store,
-    diesel_macros::{apply_equal_filter, diesel_bool_enum, diesel_string_enum},
+    diesel_macros::{apply_equal_filter, diesel_string_enum},
     dynamic_query_filter::create_condition,
     name_store_join::name_store_join,
     vaccination_row::vaccination,
@@ -18,7 +18,7 @@ table! {
         cursor -> BigInt,
         table_name -> Text,
         record_id -> Text,
-        row_action -> Bool,
+        row_action -> Text,
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
@@ -33,7 +33,7 @@ table! {
         cursor -> BigInt,
         table_name -> Text,
         record_id -> Text,
-        row_action -> Bool,
+        row_action -> Text,
         name_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
@@ -50,8 +50,8 @@ define_sql_function!(
     fn last_insert_rowid() -> BigInt
 );
 
-diesel_bool_enum! {
-    #[derive(Clone, Serialize, Deserialize, TS)]
+diesel_string_enum! {
+    #[derive(Clone, Eq, Serialize, Deserialize, TS)]
     pub enum RowActionType {
         #[default]
         Upsert,
