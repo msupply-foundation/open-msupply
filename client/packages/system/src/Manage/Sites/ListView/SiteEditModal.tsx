@@ -35,9 +35,10 @@ export const SiteEditModal = ({
   const { id, code, name, password, clearHardwareId, hardwareId, isNew } = site;
   const isExisting = !isNew;
   const isValidCode = code.trim().length > 0 || (isExisting && code === '');
+  const isValidName = name.trim().length > 0;
   const isValidPassword =
     password.trim().length > 0 || (isExisting && password === '');
-  const canSave = name?.trim().length > 0 && isValidCode && isValidPassword;
+  const canSave = isValidName && isValidCode && isValidPassword;
 
   const handleClose = () => {
     onClose();
@@ -76,6 +77,7 @@ export const SiteEditModal = ({
               <BasicTextInput
                 sx={{ width: 250 }}
                 value={code}
+                required={!isValidCode}
                 onChange={e => updateDraft({ code: e.target.value })}
                 onBlur={e => updateDraft({ code: e.target.value.trim() })}
               />
@@ -88,6 +90,7 @@ export const SiteEditModal = ({
               <BasicTextInput
                 sx={{ width: 250 }}
                 value={name}
+                required={!isValidName}
                 onChange={e => updateDraft({ name: e.target.value })}
                 onBlur={e => updateDraft({ name: e.target.value.trim() })}
               />
@@ -100,6 +103,7 @@ export const SiteEditModal = ({
               <PasswordTextInput
                 sx={{ width: 250 }}
                 value={password}
+                required={!isValidPassword}
                 placeholder={isExisting ? '••••••••' : undefined}
                 onChange={e => updateDraft({ password: e.target.value })}
               />
