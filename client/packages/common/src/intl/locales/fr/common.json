@@ -2721,6 +2721,7 @@
   "report.ven-category": "Catégorie VEN",
   "label.delete-all-translations": "Supprimer toutes transactions",
   "messages.default-customer-return-reference": "Depuis la livraison sortante #{{invoiceNumber}}",
+  "messages.default-supplier-return-reference": "Depuis la livraison sortante #{{invoiceNumber}}",
   "messages.download-first-warning": "Veuillez d’abord télécharger vos traductions actuelles afin de ne pas les perdre.",
   "label.return-from": "Retour de",
   "messages.cant-change-line-status-on-received-invoice": "Impossible de modifier le statut de la ligne sur une facture reçue",

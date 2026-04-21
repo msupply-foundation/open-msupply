@@ -2069,7 +2069,7 @@
   "messages.customer-requisition-created-on": "Customer requisition created on {{date}}",
   "messages.customer-return-created-verified": "Customer Return successfully created as Verified",
   "messages.default-customer-return-reference": "From outbound shipment #{{invoiceNumber}}",
-  "messages.default-supplier-return-reference": "From inbound shipment #{{invoiceNumber}}",
+  "messages.default-supplier-return-reference": "From outbound shipment #{{invoiceNumber}}",
   "messages.delete-all-translations-confirm": "Are you sure you want to delete all custom translations?",
   "messages.delete-this-line": "Delete this line",
   "messages.deleted": "Deleted",
