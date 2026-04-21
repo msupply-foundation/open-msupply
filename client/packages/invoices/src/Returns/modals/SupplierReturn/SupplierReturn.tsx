@@ -23,8 +23,9 @@ interface SupplierReturnEditModalProps {
   returnId?: string;
   inboundShipment?: {
     id: string;
-    invoiceNumber: number;
     otherPartyName: string;
+    theirReference?: string | null;
+    linkedShipment?: { invoiceNumber: number } | null;
   };
   initialItemId?: string | null;
   loadNextItem?: () => void;
@@ -59,10 +60,14 @@ export const SupplierReturnEditModal = ({
     AlertColor | undefined
   >();
 
+  const sourceInvoiceNumber =
+    inboundShipment?.linkedShipment?.invoiceNumber ??
+    inboundShipment?.theirReference ??
+    null;
   const defaultReference =
-    isNewReturn && inboundShipment
+    isNewReturn && sourceInvoiceNumber !== null
       ? t('messages.default-supplier-return-reference', {
-          invoiceNumber: inboundShipment.invoiceNumber,
+          invoiceNumber: sourceInvoiceNumber,
         })
       : '';
   const [theirReference, setTheirReference] = useState(defaultReference);
