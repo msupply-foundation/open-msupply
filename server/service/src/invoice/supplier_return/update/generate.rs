@@ -92,10 +92,10 @@ fn set_new_status_datetime(
 
     let current_datetime = Utc::now().naive_utc();
 
-    // Status sequence for supplier return: New, Picked, Shipped
+    // Status sequence for supplier return: New, Picked, Shipped, Verified
     match (&supplier_return.status, new_status) {
-        // From Shipped to Any, ignore
-        (InvoiceStatus::Shipped, _) => {}
+        // From Verified to Any, ignore
+        (InvoiceStatus::Verified, _) => {}
 
         // From New to Picked
         (InvoiceStatus::New, UpdateSupplierReturnStatus::Picked) => {
@@ -112,6 +112,24 @@ fn set_new_status_datetime(
         (InvoiceStatus::Picked, UpdateSupplierReturnStatus::Shipped) => {
             supplier_return.shipped_datetime = Some(current_datetime)
         }
+
+        // From New to Verified (skipping Picked and Shipped)
+        (InvoiceStatus::New, UpdateSupplierReturnStatus::Verified) => {
+            supplier_return.picked_datetime = Some(current_datetime);
+            supplier_return.shipped_datetime = Some(current_datetime);
+            supplier_return.verified_datetime = Some(current_datetime);
+        }
+
+        // From Picked to Verified (skipping Shipped)
+        (InvoiceStatus::Picked, UpdateSupplierReturnStatus::Verified) => {
+            supplier_return.shipped_datetime = Some(current_datetime);
+            supplier_return.verified_datetime = Some(current_datetime);
+        }
+
+        // From Shipped to Verified
+        (InvoiceStatus::Shipped, UpdateSupplierReturnStatus::Verified) => {
+            supplier_return.verified_datetime = Some(current_datetime);
+        }
         _ => {}
     }
 }
@@ -127,9 +145,11 @@ fn should_update_stock_lines_total_number_of_packs(
 
     match (existing_status, new_status) {
         (
-            // From New to Picked, or New to Shipped
+            // From New to Picked, Shipped, or Verified
             InvoiceStatus::New,
-            UpdateSupplierReturnStatus::Picked | UpdateSupplierReturnStatus::Shipped,
+            UpdateSupplierReturnStatus::Picked
+            | UpdateSupplierReturnStatus::Shipped
+            | UpdateSupplierReturnStatus::Verified,
         ) => true,
         _ => false,
     }

@@ -102,7 +102,7 @@ export const SupplierReturnEditModal = ({
       !!supplierReturn &&
         supplierReturn?.originalShipment?.id &&
         isNewReturn &&
-        success(t('messages.supplier-return-created-shipped'))();
+        success(t('messages.supplier-return-created-verified'))();
       onClose();
     } catch (e) {
       const errorMessage =

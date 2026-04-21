@@ -19,6 +19,7 @@ use self::generate::GenerateResult;
 pub enum UpdateSupplierReturnStatus {
     Picked,
     Shipped,
+    Verified,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -100,6 +101,7 @@ impl UpdateSupplierReturnStatus {
         match self {
             UpdateSupplierReturnStatus::Picked => InvoiceStatus::Picked,
             UpdateSupplierReturnStatus::Shipped => InvoiceStatus::Shipped,
+            UpdateSupplierReturnStatus::Verified => InvoiceStatus::Verified,
         }
     }
 

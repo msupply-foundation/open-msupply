@@ -29,6 +29,7 @@ pub struct UpdateInput {
 pub enum UpdateSupplierReturnStatusInput {
     Picked,
     Shipped,
+    Verified,
 }
 
 #[derive(Union)]
@@ -112,6 +113,7 @@ impl UpdateSupplierReturnStatusInput {
         match self {
             UpdateSupplierReturnStatusInput::Picked => Picked,
             UpdateSupplierReturnStatusInput::Shipped => Shipped,
+            UpdateSupplierReturnStatusInput::Verified => Verified,
         }
     }
 }

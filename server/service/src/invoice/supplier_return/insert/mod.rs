@@ -103,7 +103,7 @@ pub fn insert_supplier_return(
                     ctx,
                     UpdateSupplierReturn {
                         supplier_return_id: supplier_return.id.clone(),
-                        status: Some(UpdateSupplierReturnStatus::Shipped),
+                        status: Some(UpdateSupplierReturnStatus::Verified),
                         ..Default::default()
                     },
                 )
@@ -451,7 +451,7 @@ mod test {
             u.name_id = supplier().id;
             u.user_id = Some(mock_user_account_a().id);
             u.original_shipment_id = Some(mock_inbound_shipment_a().id);
-            u.status = InvoiceStatus::Shipped;
+            u.status = InvoiceStatus::Verified;
             u
         });
 
