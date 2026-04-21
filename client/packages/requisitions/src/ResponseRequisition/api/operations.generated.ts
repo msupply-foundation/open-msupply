@@ -6,7 +6,7 @@ import {
   RequisitionReasonsNotProvidedErrorFragmentDoc,
   ProgramIndicatorFragmentDoc,
 } from '../../RequestRequisition/api/operations.generated';
-import { ItemWithStatsFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
+import { ItemWithAvailableStockFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
@@ -116,15 +116,6 @@ export type ResponseLineFragment = {
     isVaccine: boolean;
     doses: number;
     availableStockOnHand: number;
-    stats: {
-      __typename: 'ItemStatsNode';
-      averageMonthlyConsumption: number;
-      availableStockOnHand: number;
-      availableMonthsOfStockOnHand?: number | null;
-      totalConsumption: number;
-      stockOnHand: number;
-      monthsOfStockOnHand?: number | null;
-    };
   };
   linkedRequisitionLine?: {
     __typename: 'RequisitionLineNode';
@@ -255,15 +246,6 @@ export type ResponseFragment = {
         isVaccine: boolean;
         doses: number;
         availableStockOnHand: number;
-        stats: {
-          __typename: 'ItemStatsNode';
-          averageMonthlyConsumption: number;
-          availableStockOnHand: number;
-          availableMonthsOfStockOnHand?: number | null;
-          totalConsumption: number;
-          stockOnHand: number;
-          monthsOfStockOnHand?: number | null;
-        };
       };
       linkedRequisitionLine?: {
         __typename: 'RequisitionLineNode';
@@ -427,15 +409,6 @@ export type ResponseByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -607,15 +580,6 @@ export type ResponseByIdQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -1225,7 +1189,7 @@ export const ResponseLineFragmentDoc = gql`
       averageMonthlyConsumption
     }
     item {
-      ...ItemWithStats
+      ...ItemWithAvailableStock
     }
     approvedQuantity
     approvalComment
@@ -1246,7 +1210,7 @@ export const ResponseLineFragmentDoc = gql`
     forecastTotalDoses
     vaccineCourses
   }
-  ${ItemWithStatsFragmentDoc}
+  ${ItemWithAvailableStockFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
   ${AvailableVolumeAtLocationTypeFragmentDoc}
 `;

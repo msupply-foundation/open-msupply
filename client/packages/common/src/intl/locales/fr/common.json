@@ -80,7 +80,6 @@
   "button.export-to-excel": "Exporter vers excel",
   "button.go-to-stocktakes": "Aller aux Inventaires",
   "button.history": "Historique",
-  "button.hiv": "VIH",
   "button.import": "Importer",
   "button.import-fridge-tag": "Importer capteur température",
   "button.import-properties": "Propriétés d'importation",
@@ -121,7 +120,6 @@
   "button.re-initialise": "Réinitialiser",
   "button.reduce-lines-to-zero": "Réduire à 0",
   "button.refresh": "Rafraîchir",
-  "button.regimen": "Régime",
   "button.remove-file": "Supprimer le fichier",
   "button.repack": "Reconditionnement",
   "button.replenishment-return-lines": "Retourner les Lignes Sélectionnées",
@@ -2855,5 +2853,8 @@
   "messages.alert-invalid-pack-size": "Le conditionnement doit être de 1 ou plus pour les lignes retournées",
   "button.finalise-anyway": "Finaliser quand même",
   "error.inbound-shipments-not-verified": "Impossible de finaliser le bon de commande : certaines livraisons entrantes externes ne sont pas vérifiées.",
-  "label.group-by-po-line": "Grouper par ligne du BC"
+  "label.group-by-po-line": "Grouper par ligne du BC",
+  "report-code.customer-returns": "Retours clients",
+  "report-code.supplier-returns": "Retours fournisseurs",
+  "label.customer-return": "Bordereau de retour"
 }
