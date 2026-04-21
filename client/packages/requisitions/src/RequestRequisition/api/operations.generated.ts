@@ -97,6 +97,11 @@ export type RequestByNumberQuery = {
           margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        ancillaryState: {
+          __typename: 'AncillaryStateResponse';
+          state: Types.AncillaryStateNode;
+          count: number;
+        };
         documents: {
           __typename: 'SyncFileReferenceConnector';
           nodes: Array<{
@@ -257,6 +262,11 @@ export type RequestByIdQuery = {
           isOnHold: boolean;
           margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        };
+        ancillaryState: {
+          __typename: 'AncillaryStateResponse';
+          state: Types.AncillaryStateNode;
+          count: number;
         };
         documents: {
           __typename: 'SyncFileReferenceConnector';
@@ -486,6 +496,30 @@ export type RequestsQuery = {
       lines: { __typename: 'RequisitionLineConnector'; totalCount: number };
     }>;
   };
+};
+
+export type RefreshAncillaryItemsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.RefreshAncillaryItemsInput;
+}>;
+
+export type RefreshAncillaryItemsMutation = {
+  __typename: 'Mutations';
+  refreshAncillaryItems:
+    | {
+        __typename: 'RefreshAncillaryItemsError';
+        error:
+          | { __typename: 'CannotEditRequisition'; description: string }
+          | {
+              __typename: 'ForeignKeyError';
+              description: string;
+              key: Types.ForeignKey;
+            };
+      }
+    | {
+        __typename: 'RefreshAncillaryItemsSuccess';
+        lines: Array<{ __typename: 'RequisitionLineNode'; id: string }>;
+      };
 };
 
 export type InsertRequestLineMutationVariables = Types.Exact<{
@@ -1313,6 +1347,37 @@ export const RequestsDocument = gql`
   }
   ${RequestRowFragmentDoc}
 `;
+export const RefreshAncillaryItemsDocument = gql`
+  mutation refreshAncillaryItems(
+    $storeId: String!
+    $input: RefreshAncillaryItemsInput!
+  ) {
+    refreshAncillaryItems(storeId: $storeId, input: $input) {
+      __typename
+      ... on RefreshAncillaryItemsSuccess {
+        __typename
+        lines {
+          id
+        }
+      }
+      ... on RefreshAncillaryItemsError {
+        __typename
+        error {
+          description
+          ... on CannotEditRequisition {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+            key
+          }
+        }
+      }
+    }
+  }
+`;
 export const InsertRequestLineDocument = gql`
   mutation insertRequestLine(
     $storeId: String!
@@ -1773,6 +1838,24 @@ export function getSdk(
           }),
         'requests',
         'query',
+        variables
+      );
+    },
+    refreshAncillaryItems(
+      variables: RefreshAncillaryItemsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<RefreshAncillaryItemsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<RefreshAncillaryItemsMutation>({
+            document: RefreshAncillaryItemsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'refreshAncillaryItems',
+        'mutation',
         variables
       );
     },

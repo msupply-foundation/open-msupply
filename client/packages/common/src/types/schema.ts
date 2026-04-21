@@ -376,6 +376,24 @@ export type AncillaryItemNode = {
   itemQuantity: Scalars['Float']['output'];
 };
 
+/**
+ * Whether a request requisition has outstanding ancillary-item work to do.
+ * `NeedsAdd` takes priority over `NeedsUpdate`: once the user has added the
+ * missing lines, any remaining stale quantities surface as `NeedsUpdate`.
+ */
+export enum AncillaryStateNode {
+  NeedsAdd = 'NEEDS_ADD',
+  NeedsUpdate = 'NEEDS_UPDATE',
+  None = 'NONE',
+}
+
+export type AncillaryStateResponse = {
+  __typename: 'AncillaryStateResponse';
+  /** Number of ancillary items in the banner-worthy state. Zero when state is `None`. */
+  count: Scalars['Int']['output'];
+  state: AncillaryStateNode;
+};
+
 export enum ApplyToLinesInput {
   AssignIfNone = 'ASSIGN_IF_NONE',
   AssignToAll = 'ASSIGN_TO_ALL',
@@ -1233,6 +1251,7 @@ export type CannotEditRequisition = AddFromMasterListErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
+  RefreshAncillaryItemsErrorInterface &
   SupplyRequestedQuantityErrorInterface &
   UpdateRequestRequisitionErrorInterface &
   UpdateRequestRequisitionLineErrorInterface &
@@ -2926,6 +2945,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
   InsertPurchaseOrderLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
+  RefreshAncillaryItemsErrorInterface &
   SetPrescribedQuantityErrorInterface &
   UpdateInboundShipmentLineErrorInterface &
   UpdateInboundShipmentServiceLineErrorInterface &
@@ -5455,6 +5475,7 @@ export type Mutations = {
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  refreshAncillaryItems: RefreshAncillaryItemsResponse;
   responseAddFromMasterList: ResponseAddFromMasterListResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
@@ -5962,6 +5983,11 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MutationsRefreshAncillaryItemsArgs = {
+  input: RefreshAncillaryItemsInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type MutationsResponseAddFromMasterListArgs = {
@@ -8530,6 +8556,37 @@ export type RecordProgramCombinationAlreadyExists =
       description: Scalars['String']['output'];
     };
 
+export enum RefreshAncillaryItemsAction {
+  /** Insert lines for every ancillary item that's missing from the requisition. */
+  Add = 'ADD',
+  /** Overwrite the quantity on every existing ancillary line whose quantity is stale. */
+  Update = 'UPDATE',
+}
+
+export type RefreshAncillaryItemsError = {
+  __typename: 'RefreshAncillaryItemsError';
+  error: RefreshAncillaryItemsErrorInterface;
+};
+
+export type RefreshAncillaryItemsErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type RefreshAncillaryItemsInput = {
+  action: RefreshAncillaryItemsAction;
+  requisitionId: Scalars['String']['input'];
+};
+
+export type RefreshAncillaryItemsResponse =
+  | RefreshAncillaryItemsError
+  | RefreshAncillaryItemsSuccess;
+
+export type RefreshAncillaryItemsSuccess = {
+  __typename: 'RefreshAncillaryItemsSuccess';
+  /** Lines that were inserted (Add) or whose quantity was updated (Update). */
+  lines: Array<RequisitionLineNode>;
+};
+
 export type RefreshToken = {
   __typename: 'RefreshToken';
   /** New Bearer token */
@@ -8803,6 +8860,12 @@ export type RequisitionLineWithItemIdExists =
 
 export type RequisitionNode = {
   __typename: 'RequisitionNode';
+  /**
+   * Whether this request requisition has ancillary items that need adding
+   * or updating, so the client can render the "add"/"update" banner.
+   * Always returns `None` for non-request requisitions.
+   */
+  ancillaryState: AncillaryStateResponse;
   approvalStatus: RequisitionNodeApprovalStatus;
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;

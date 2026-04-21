@@ -2821,5 +2821,16 @@
   "error.failed-to-save-ancillary-item": "Failed to save ancillary supply",
   "error.failed-to-delete-ancillary-item": "Failed to delete ancillary supply",
   "error.ratio-format": "Ratio must be in the form x:y",
-  "error.ratio-non-positive": "Both sides of the ratio must be greater than 0"
+  "error.ratio-non-positive": "Both sides of the ratio must be greater than 0",
+  "messages.ancillary-items-available_one": "1 ancillary item available for this requisition",
+  "messages.ancillary-items-available_other": "{{count}} ancillary items available for this requisition",
+  "messages.ancillary-items-need-update_one": "1 ancillary item line needs updating",
+  "messages.ancillary-items-need-update_other": "{{count}} ancillary item lines need updating",
+  "messages.ancillary-items-added": "Ancillary items added to requisition",
+  "messages.ancillary-items-updated": "Ancillary item quantities updated",
+  "button.update": "Update",
+  "warning.confirm-send-ancillary-items-missing_one": "1 ancillary item has not been added to this order. Send anyway?",
+  "warning.confirm-send-ancillary-items-missing_other": "{{count}} ancillary items have not been added to this order. Send anyway?",
+  "warning.confirm-send-ancillary-items-stale_one": "1 ancillary item line has an outdated quantity. Send anyway?",
+  "warning.confirm-send-ancillary-items-stale_other": "{{count}} ancillary item lines have outdated quantities. Send anyway?"
 }
