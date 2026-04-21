@@ -2916,6 +2916,12 @@ export type FormSchemaSortInput = {
 export type FrontendPluginMetadataNode = {
   __typename: 'FrontendPluginMetadataNode';
   code: Scalars['String']['output'];
+  /**
+   * Hash of the plugin's bundled file contents — clients append this as a
+   * cache-busting URL token (?v=...) so the browser only refetches when the
+   * bundle's bytes change.
+   */
+  hash: Scalars['String']['output'];
   path: Scalars['String']['output'];
 };
 

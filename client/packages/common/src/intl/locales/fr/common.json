@@ -2853,5 +2853,8 @@
   "messages.alert-invalid-pack-size": "Le conditionnement doit être de 1 ou plus pour les lignes retournées",
   "button.finalise-anyway": "Finaliser quand même",
   "error.inbound-shipments-not-verified": "Impossible de finaliser le bon de commande : certaines livraisons entrantes externes ne sont pas vérifiées.",
-  "label.group-by-po-line": "Grouper par ligne du BC"
+  "label.group-by-po-line": "Grouper par ligne du BC",
+  "report-code.customer-returns": "Retours clients",
+  "report-code.supplier-returns": "Retours fournisseurs",
+  "label.customer-return": "Bordereau de retour"
 }
