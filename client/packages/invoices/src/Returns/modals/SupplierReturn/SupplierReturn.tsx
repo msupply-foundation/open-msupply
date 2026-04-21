@@ -21,7 +21,11 @@ interface SupplierReturnEditModalProps {
   onCreate?: () => void;
   supplierId: string;
   returnId?: string;
-  inboundShipmentId?: string;
+  inboundShipment?: {
+    id: string;
+    invoiceNumber: number;
+    otherPartyName: string;
+  };
   initialItemId?: string | null;
   loadNextItem?: () => void;
   hasNextItem?: boolean;
@@ -38,7 +42,7 @@ export const SupplierReturnEditModal = ({
   returnId,
   initialItemId,
   modalMode,
-  inboundShipmentId,
+  inboundShipment,
   loadNextItem,
   hasNextItem = false,
   isNewReturn = false,
@@ -55,6 +59,23 @@ export const SupplierReturnEditModal = ({
     AlertColor | undefined
   >();
 
+  const defaultReference =
+    isNewReturn && inboundShipment
+      ? t('messages.default-supplier-return-reference', {
+          invoiceNumber: inboundShipment.invoiceNumber,
+        })
+      : '';
+  const [theirReference, setTheirReference] = useState(defaultReference);
+
+  // For existing returns, initialise theirReference from the return data once
+  // loaded
+  const { data: returnData } = useReturns.document.supplierReturn();
+  useEffect(() => {
+    if (!isNewReturn && returnData?.theirReference !== undefined) {
+      setTheirReference(returnData.theirReference ?? '');
+    }
+  }, [returnData?.theirReference, isNewReturn]);
+
   // The inboundIsDisabled hook returns true when there is no data, so in the
   // case of a new return, we want to make sure it is *not* disabled
   const isDisabled = useReturns.utils.supplierIsDisabled() && !isNewReturn;
@@ -66,7 +87,7 @@ export const SupplierReturnEditModal = ({
     stockLineIds,
     returnId,
     itemId,
-    inboundShipmentId,
+    inboundShipmentId: inboundShipment?.id,
   });
 
   useEffect(() => {
@@ -76,7 +97,7 @@ export const SupplierReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      const supplierReturn = !isDisabled && (await save());
+      const supplierReturn = !isDisabled && (await save(theirReference));
       onCreate?.();
       !!supplierReturn &&
         supplierReturn?.originalShipment?.id &&
@@ -92,7 +113,7 @@ export const SupplierReturnEditModal = ({
 
   const handleNextItem = async () => {
     try {
-      !isDisabled && (await save());
+      !isDisabled && (await save(theirReference));
       loadNextItem && loadNextItem();
       onChangeTab(Tabs.Quantity);
     } catch (e) {
@@ -176,6 +197,10 @@ export const SupplierReturnEditModal = ({
             returnId={returnId}
             zeroQuantityAlert={zeroQuantityAlert}
             setZeroQuantityAlert={setZeroQuantityAlert}
+            theirReference={theirReference}
+            onTheirReferenceChange={setTheirReference}
+            isDisabled={isDisabled}
+            returnToName={inboundShipment?.otherPartyName}
           />
         )}
       </Box>
