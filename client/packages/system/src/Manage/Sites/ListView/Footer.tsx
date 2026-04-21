@@ -26,7 +26,7 @@ export const FooterComponent = ({
   deleteSite: (siteId: number) => Promise<unknown>;
 }) => {
   const t = useTranslation();
-  const { error, success } = useNotification();
+  const { success } = useNotification();
   const [deleteErrors, setDeleteErrors] = useState<DeleteError[]>([]);
 
   const deleteAction = async () => {
