@@ -2808,5 +2808,18 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
+  "title.ancillary-supplies": "Ancillary supplies",
+  "title.ancillary-supply": "Ancillary supply",
+  "label.ancillary-item": "Ancillary item",
+  "label.add-ancillary-item": "Add ancillary supply",
+  "description.ancillary-ratio": "Number of principal units per ancillary unit, entered as x:y (e.g. 100:1 for 1 safety box per 100 vaccines)",
+  "messages.no-ancillary-items": "No ancillary supplies configured",
+  "messages.ancillary-item-saved": "Ancillary supply saved",
+  "messages.deleted-ancillary-item": "Ancillary supply deleted",
+  "messages.confirm-delete-ancillary-item": "This will remove this ancillary supply link",
+  "error.failed-to-save-ancillary-item": "Failed to save ancillary supply",
+  "error.failed-to-delete-ancillary-item": "Failed to delete ancillary supply",
+  "error.ratio-format": "Ratio must be in the form x:y",
+  "error.ratio-non-positive": "Both sides of the ratio must be greater than 0"
 }

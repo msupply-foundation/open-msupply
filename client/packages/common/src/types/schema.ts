@@ -342,6 +342,40 @@ export type AllocateProgramNumberInput = {
 
 export type AllocateProgramNumberResponse = NumberNode;
 
+export type AncillaryItemMutations = {
+  __typename: 'AncillaryItemMutations';
+  deleteAncillaryItem: DeleteAncillaryItemResponse;
+  upsertAncillaryItem: UpsertAncillaryItemResponse;
+};
+
+export type AncillaryItemMutationsDeleteAncillaryItemArgs = {
+  input: DeleteAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemMutationsUpsertAncillaryItemArgs = {
+  input: UpsertAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemNode = {
+  __typename: 'AncillaryItemNode';
+  /** The ancillary item — the item to be added to the order as a supply for the principal. */
+  ancillaryItem?: Maybe<ItemNode>;
+  ancillaryItemLinkId: Scalars['String']['output'];
+  /** Right-hand side of the stored `x:y` ratio (ancillary count). */
+  ancillaryQuantity: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+  /**
+   * The principal item — the item this ancillary supply should be ordered alongside.
+   * Resolved via `item_link_id`, which matches `item.id` in the common (unmerged) case.
+   */
+  item?: Maybe<ItemNode>;
+  itemLinkId: Scalars['String']['output'];
+  /** Left-hand side of the stored `x:y` ratio (principal count). */
+  itemQuantity: Scalars['Float']['output'];
+};
+
 export enum ApplyToLinesInput {
   AssignIfNone = 'ASSIGN_IF_NONE',
   AssignToAll = 'ASSIGN_TO_ALL',
@@ -523,7 +557,7 @@ export type AssetLogNode = {
   comment?: Maybe<Scalars['String']['output']>;
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
-  logDatetime: Scalars['NaiveDateTime']['output'];
+  logDatetime: Scalars['DateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
   type?: Maybe<Scalars['String']['output']>;
@@ -616,7 +650,7 @@ export type AssetNode = {
   catalogProperties?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   donorNameId?: Maybe<Scalars['String']['output']>;
@@ -624,7 +658,7 @@ export type AssetNode = {
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   lockedFields: LockedAssetFieldsNode;
-  modifiedDatetime: Scalars['NaiveDateTime']['output'];
+  modifiedDatetime: Scalars['DateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"} */
@@ -1322,6 +1356,7 @@ export type CentralReportMutationsInstallUploadedReportsArgs = {
 
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
+  ancillaryItem: AncillaryItemMutations;
   assetCatalogue: AssetCatalogueMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
@@ -1700,6 +1735,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertAncillaryItemErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -1729,6 +1765,12 @@ export type DatetimeFilterInput = {
   beforeOrEqualTo?: InputMaybe<Scalars['DateTime']['input']>;
   equalTo?: InputMaybe<Scalars['DateTime']['input']>;
 };
+
+export type DeleteAncillaryItemInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteAncillaryItemResponse = DeleteResponse;
 
 export type DeleteAssetCatalogueItemError = {
   __typename: 'DeleteAssetCatalogueItemError';
@@ -4192,6 +4234,7 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertAncillaryItemErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -4745,6 +4788,16 @@ export type ItemLedgerResponse = ItemLedgerConnector;
 
 export type ItemNode = {
   __typename: 'ItemNode';
+  /**
+   * Ancillary item links where this item is the ancillary supply for some
+   * other (principal) item.
+   */
+  ancillaryFor: Array<AncillaryItemNode>;
+  /**
+   * Ancillary items configured against this item — i.e. items that should be
+   * ordered alongside it (e.g. syringes that go with a vaccine).
+   */
+  ancillaryItems: Array<AncillaryItemNode>;
   atcCategory: Scalars['String']['output'];
   availableBatches: StockLineConnector;
   availableStockOnHand: Scalars['Int']['output'];
@@ -9754,7 +9807,7 @@ export type SyncFileReferenceConnector = {
 
 export type SyncFileReferenceNode = {
   __typename: 'SyncFileReferenceNode';
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   fileName: Scalars['String']['output'];
   id: Scalars['String']['output'];
   mimeType?: Maybe<Scalars['String']['output']>;
@@ -11106,6 +11159,29 @@ export enum UploadedPluginErrorVariant {
 }
 
 export type UploadedPluginInfoResponse = PluginInfoNode | UploadedPluginError;
+
+export type UpsertAncillaryItemError = {
+  __typename: 'UpsertAncillaryItemError';
+  error: UpsertAncillaryItemErrorInterface;
+};
+
+export type UpsertAncillaryItemErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertAncillaryItemInput = {
+  ancillaryItemLinkId: Scalars['String']['input'];
+  /** Right-hand side of the user-entered `x:y` ratio (ancillary count). */
+  ancillaryQuantity: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
+  itemLinkId: Scalars['String']['input'];
+  /** Left-hand side of the user-entered `x:y` ratio (principal count). */
+  itemQuantity: Scalars['Float']['input'];
+};
+
+export type UpsertAncillaryItemResponse =
+  | AncillaryItemNode
+  | UpsertAncillaryItemError;
 
 export type UpsertBundledItemError = {
   __typename: 'UpsertBundledItemError';
