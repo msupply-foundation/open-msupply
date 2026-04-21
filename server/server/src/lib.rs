@@ -48,7 +48,6 @@ use service::{
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
     sync::{
-        file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
         CentralServerConfig,
     },
@@ -134,15 +133,16 @@ pub async fn start_server(
     // Wire transaction notifications to the subscription worker.
     // Fired after outermost transaction commits.
     let commit_trigger = subscription_trigger.clone();
-    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
-        match notification {
+    connection_manager.set_on_commit(std::sync::Arc::new(
+        move |notification| match notification {
             repository::TransactionNotification::ChangelogInsert => {
                 commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
             }
-        }
-    }));
-    let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
-    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
+        },
+    ));
+    // let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
+    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init();
+
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();
@@ -280,7 +280,6 @@ pub async fn start_server(
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());
     let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
-    let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
@@ -465,7 +464,6 @@ pub async fn start_server(
             status_log.log("Server received request to stop with off switch");
         },
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
-        _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
         result = schedule_plugin_task => unreachable!("Schedule plugin runner terminated ({:?})", result),
