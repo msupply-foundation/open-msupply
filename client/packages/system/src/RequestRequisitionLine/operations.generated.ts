@@ -106,6 +106,11 @@ export type RequestFragment = {
   programName?: string | null;
   orderType?: string | null;
   isEmergency: boolean;
+  ancillaryState: {
+    __typename: 'AncillaryStateResponse';
+    state: Types.AncillaryStateNode;
+    count: number;
+  };
   documents: {
     __typename: 'SyncFileReferenceConnector';
     nodes: Array<{
@@ -316,6 +321,10 @@ export const RequestFragmentDoc = gql`
     createdDatetime
     sentDatetime
     finalisedDatetime
+    ancillaryState {
+      state
+      count
+    }
     requisitionNumber
     colour
     theirReference
