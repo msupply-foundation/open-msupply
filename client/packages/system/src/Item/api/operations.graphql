@@ -159,6 +159,29 @@ fragment BundledItem on BundledItemNode {
   }
 }
 
+fragment AncillaryItemRow on ItemNode {
+  __typename
+  id
+  name
+  code
+  unitName
+}
+
+fragment AncillaryItem on AncillaryItemNode {
+  __typename
+  id
+  itemQuantity
+  ancillaryQuantity
+  itemLinkId
+  ancillaryItemLinkId
+  item {
+    ...AncillaryItemRow
+  }
+  ancillaryItem {
+    ...AncillaryItemRow
+  }
+}
+
 fragment ItemVariant on ItemVariantNode {
   __typename
   id
@@ -234,6 +257,9 @@ fragment Item on ItemNode {
   }
   variants {
     ...ItemVariant
+  }
+  ancillaryItems {
+    ...AncillaryItem
   }
   itemDirections {
     ...ItemDirection
@@ -495,6 +521,39 @@ mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
   centralServer {
     bundledItem {
       deleteBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation upsertAncillaryItem(
+  $storeId: String!
+  $input: UpsertAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      upsertAncillaryItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on AncillaryItemNode {
+          ...AncillaryItem
+        }
+      }
+    }
+  }
+}
+
+mutation deleteAncillaryItem(
+  $storeId: String!
+  $input: DeleteAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      deleteAncillaryItem(storeId: $storeId, input: $input) {
         __typename
         ... on DeleteResponse {
           __typename
