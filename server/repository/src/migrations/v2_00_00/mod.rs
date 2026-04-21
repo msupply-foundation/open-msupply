@@ -61,12 +61,29 @@ impl Migration for V2_00_00 {
 }
 
 #[cfg(test)]
+diesel::table! {
+    changelog (cursor) {
+        cursor -> BigInt,
+    }
+}
+
+#[cfg(test)]
+fn latest_changelog_cursor(connection: &StorageConnection) -> i64 {
+    use diesel::prelude::*;
+
+    changelog::table
+        .select(diesel::dsl::max(changelog::cursor))
+        .first::<Option<i64>>(connection.lock().connection())
+        .unwrap()
+        .unwrap_or(0)
+}
+
+#[cfg(test)]
 #[actix_rt::test]
 async fn migration_2_00_00() {
     use crate::migrations::v1_07_00::V1_07_00;
     use crate::migrations::*;
     use crate::test_db::*;
-    use crate::ChangelogRepository;
 
     let previous_version = V1_07_00.version();
     let version = V2_00_00.version();
@@ -80,13 +97,12 @@ async fn migration_2_00_00() {
     .await;
 
     insert_merge_test_data(&connection);
-    let changelog_repo = ChangelogRepository::new(&connection);
-    let cursor_before = changelog_repo.latest_cursor().unwrap();
+    let cursor_before = latest_changelog_cursor(&connection);
 
     migrate(&connection, Some(version.clone())).unwrap();
     assert_eq!(get_database_version(&connection), version);
 
-    let cursor_after = changelog_repo.latest_cursor().unwrap();
+    let cursor_after = latest_changelog_cursor(&connection);
 
     assert_eq!(cursor_before, cursor_after);
 }
