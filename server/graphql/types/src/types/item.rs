@@ -1,6 +1,6 @@
 use super::{
-    ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
-    WarningNode,
+    AncillaryItemNode, ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode,
+    StockLineConnector, WarningNode,
 };
 use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode};
 
@@ -9,6 +9,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
+        AncillaryItemsByAncillaryLinkIdLoader, AncillaryItemsByItemLinkIdLoader,
         ItemCategoryLoader, ItemDirectionsByItemIdLoader, ItemStatsLoaderInput,
         ItemStoreJoinLoader, ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader,
         ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
@@ -172,6 +173,30 @@ impl ItemNode {
             .unwrap_or_default();
 
         Ok(ItemVariantNode::from_vec(result))
+    }
+
+    /// Ancillary items configured against this item — i.e. items that should be
+    /// ordered alongside it (e.g. syringes that go with a vaccine).
+    pub async fn ancillary_items(&self, ctx: &Context<'_>) -> Result<Vec<AncillaryItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByItemLinkIdLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(AncillaryItemNode::from_vec(result))
+    }
+
+    /// Ancillary item links where this item is the ancillary supply for some
+    /// other (principal) item.
+    pub async fn ancillary_for(&self, ctx: &Context<'_>) -> Result<Vec<AncillaryItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByAncillaryLinkIdLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(AncillaryItemNode::from_vec(result))
     }
 
     pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {

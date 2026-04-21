@@ -43,6 +43,7 @@ use graphql_general::{
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
+use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -95,6 +96,9 @@ impl CentralServerMutationNode {
     }
     async fn bundled_item(&self) -> BundledItemMutations {
         BundledItemMutations
+    }
+    async fn ancillary_item(&self) -> AncillaryItemMutations {
+        AncillaryItemMutations
     }
     async fn asset_catalogue(&self) -> AssetCatalogueMutations {
         AssetCatalogueMutations
