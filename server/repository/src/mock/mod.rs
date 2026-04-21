@@ -219,6 +219,7 @@ pub struct MockData {
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
     pub sync_logs: Vec<SyncLogRow>,
+    pub sync_logs_v7: Vec<SyncLogV7Row>,
     pub name_tags: Vec<NameTagRow>,
     pub name_tag_joins: Vec<NameTagJoinRow>,
     pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
@@ -314,6 +315,7 @@ pub struct MockDataInserts {
     pub key_value_store_rows: bool,
     pub activity_logs: bool,
     pub sync_logs: bool,
+    pub sync_logs_v7: bool,
     pub barcodes: bool,
     pub programs: bool,
     pub program_requisition_settings: bool,
@@ -398,6 +400,7 @@ impl MockDataInserts {
             key_value_store_rows: true,
             activity_logs: true,
             sync_logs: true,
+            sync_logs_v7: true,
             barcodes: true,
             programs: true,
             program_requisition_settings: true,
@@ -620,6 +623,11 @@ impl MockDataInserts {
 
     pub fn sync_logs(mut self) -> Self {
         self.sync_logs = true;
+        self
+    }
+
+    pub fn sync_logs_v7(mut self) -> Self {
+        self.sync_logs_v7 = true;
         self
     }
 
@@ -1279,6 +1287,13 @@ pub fn insert_mock_data(
             }
         }
 
+        if inserts.sync_logs_v7 {
+            for row in &mock_data.sync_logs_v7 {
+                let repo = SyncLogV7Repository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
         if inserts.programs {
             for row in &mock_data.programs {
                 let repo = ProgramRowRepository::new(connection);
@@ -1572,6 +1587,7 @@ impl MockData {
             mut key_value_store_rows,
             mut activity_logs,
             mut sync_logs,
+            mut sync_logs_v7,
             mut name_tag_joins,
             mut program_requisition_settings,
             mut programs,
@@ -1651,6 +1667,7 @@ impl MockData {
         self.key_value_store_rows.append(&mut key_value_store_rows);
         self.activity_logs.append(&mut activity_logs);
         self.sync_logs.append(&mut sync_logs);
+        self.sync_logs_v7.append(&mut sync_logs_v7);
         self.name_tag_joins.append(&mut name_tag_joins);
         self.program_requisition_settings
             .append(&mut program_requisition_settings);
