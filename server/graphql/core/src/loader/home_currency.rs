@@ -16,18 +16,18 @@ impl Loader<()> for HomeCurrencyLoader {
     type Value = String;
     type Error = RepositoryError;
 
-    async fn load(&self, keys: &[()]) -> Result<HashMap<(), Self::Value>, Self::Error> {
-        let mut result = HashMap::new();
-        if keys.is_empty() {
-            return Ok(result);
-        }
-
+    async fn load(&self, _keys: &[()]) -> Result<HashMap<(), Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
         let repo = CurrencyRepository::new(&connection);
         let home_currency = repo
-            .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+            .query_by_filter(
+                CurrencyFilter::new()
+                    .is_home_currency(true)
+                    .is_active(true),
+            )?
             .pop();
 
+        let mut result = HashMap::new();
         if let Some(home_currency) = home_currency {
             result.insert((), home_currency.currency_row.code);
         }
