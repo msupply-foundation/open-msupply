@@ -11,6 +11,7 @@ import {
   PasswordTextInput,
   IconButton,
   XCircleIcon,
+  Typography,
 } from '@openmsupply-client/common';
 import { DraftSite } from '../api';
 
@@ -68,7 +69,7 @@ export const SiteEditModal = ({
             label={t('label.settings-site-id')}
             Input={
               <NumericTextInput
-                sx={{ width: 250 }}
+                fullWidth
                 value={id || undefined}
                 disabled
               />
@@ -79,7 +80,7 @@ export const SiteEditModal = ({
             label={t('label.code')}
             Input={
               <BasicTextInput
-                sx={{ width: 250 }}
+                fullWidth
                 value={code}
                 required={!isValidCode}
                 onChange={e => updateDraft({ code: e.target.value })}
@@ -92,7 +93,7 @@ export const SiteEditModal = ({
             label={t('label.name')}
             Input={
               <BasicTextInput
-                sx={{ width: 250 }}
+                fullWidth
                 value={name}
                 required={!isValidName}
                 autoComplete="off"
@@ -106,7 +107,7 @@ export const SiteEditModal = ({
             label={t('label.settings-password')}
             Input={
               <PasswordTextInput
-                sx={{ width: 250 }}
+                fullWidth
                 value={password}
                 required={!isValidPassword}
                 placeholder={isExisting ? '••••••••' : undefined}
@@ -120,24 +121,24 @@ export const SiteEditModal = ({
               key="hardware-id"
               label={t('label.hardware-id')}
               Input={
-                <BasicTextInput
-                  sx={{ width: 250 }}
-                  value={clearHardwareId ? '' : hardwareId ?? ''}
-                  disabled
-                  slotProps={{
-                    input: {
-                      endAdornment: (
-                        <IconButton
-                          icon={<XCircleIcon fontSize="small" />}
-                          label={t('label.clear-hardware-id')}
-                          onClick={() =>
-                            updateDraft({ clearHardwareId: true })
-                          }
-                        />
-                      ),
-                    },
-                  }}
-                />
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={0.5}
+                >
+                  <Typography
+                    flex={1}
+                  >
+                    {clearHardwareId ? '' : hardwareId ?? ''}
+                  </Typography>
+                  {!clearHardwareId && !!hardwareId && (
+                    <IconButton
+                      icon={<XCircleIcon fontSize="small" />}
+                      label={t('label.clear-hardware-id')}
+                      onClick={() => updateDraft({ clearHardwareId: true })}
+                    />
+                  )}
+                </Box>
               }
             />
           )}
