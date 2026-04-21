@@ -15,6 +15,7 @@ import {
   noOtherVariants,
   mapKeys,
   mapValues,
+  AncillaryStateNode,
 } from '@openmsupply-client/common';
 import {
   getNextRequisitionStatus,
@@ -77,12 +78,14 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { id, status, comment, lines } = useRequest.document.fields([
-    'id',
-    'status',
-    'comment',
-    'lines',
-  ]);
+  const { id, status, comment, lines, ancillaryState } =
+    useRequest.document.fields([
+      'id',
+      'status',
+      'comment',
+      'lines',
+      'ancillaryState',
+    ]);
   const t = useTranslation();
   const { mutateAsync: update } = useRequest.document.update();
   const { success, error } = useNotification();
@@ -181,6 +184,23 @@ const useStatusChangeButton = () => {
     }
   };
 
+  // When sending, warn the user if there are still outstanding ancillary items
+  // they haven't added or refreshed — the order is about to be locked in so
+  // missing supplies would go out with it.
+  const isSending = selectedOption?.value === RequisitionNodeStatus.Sent;
+  const ancillaryWarning =
+    isSending && ancillaryState
+      ? ancillaryState.state === AncillaryStateNode.NeedsAdd
+        ? t('warning.confirm-send-ancillary-items-missing', {
+            count: ancillaryState.count,
+          })
+        : ancillaryState.state === AncillaryStateNode.NeedsUpdate
+          ? t('warning.confirm-send-ancillary-items-stale', {
+              count: ancillaryState.count,
+            })
+          : undefined
+      : undefined;
+
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-status-as', {
@@ -188,6 +208,8 @@ const useStatusChangeButton = () => {
         ? getStatusTranslation(selectedOption?.value)
         : '',
     }),
+    info: ancillaryWarning,
+    iconType: ancillaryWarning ? 'alert' : 'help',
     onConfirm: onConfirmStatusChange,
   });
 
