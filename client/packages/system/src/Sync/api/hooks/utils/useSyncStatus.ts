@@ -1,4 +1,8 @@
-import { useMutation, useQuery, useSubscription } from '@openmsupply-client/common';
+import {
+  useMutation,
+  useQuery,
+  useSubscription,
+} from '@openmsupply-client/common';
 import { useSyncApi } from './useSyncApi';
 import {
   SyncInfoUpdatedDocument,
