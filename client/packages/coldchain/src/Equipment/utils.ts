@@ -19,9 +19,6 @@ export const useIsColdRoom = (): boolean => {
   return data?.assetCategory?.id === COLD_ROOMS_AND_FREEZER_ROOMS_CATEGORY_ID;
 };
 
-// DB value for the log type field — must match the backend constant
-export const TEMPERATURE_MAPPING_TYPE = 'Temperature Mapping';
-
 const statusTranslation: Record<AssetLogStatusNodeType, LocaleKey> = {
   [AssetLogStatusNodeType.Decommissioned]: 'status.decommissioned',
   [AssetLogStatusNodeType.Functioning]: 'status.functioning',

@@ -6,6 +6,7 @@ mod add_cold_room_mapping_properties;
 mod add_created_datetime_to_asset_log;
 mod add_date_property_value_type;
 mod add_invoice_date_backdated_activity_log_type;
+mod change_asset_log_type_to_enum;
 
 pub(crate) struct V2_18_00;
 impl Migration for V2_18_00 {
@@ -23,6 +24,7 @@ impl Migration for V2_18_00 {
             Box::new(add_date_property_value_type::Migrate),
             Box::new(add_cold_room_mapping_properties::Migrate),
             Box::new(add_created_datetime_to_asset_log::Migrate),
+            Box::new(change_asset_log_type_to_enum::Migrate),
             Box::new(add_invoice_date_backdated_activity_log_type::Migrate),
         ]
     }

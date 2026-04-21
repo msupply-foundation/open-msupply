@@ -24,11 +24,8 @@ import {
 } from '@common/intl';
 import { ColdchainAssetLogFragment, useAssets } from '../../api';
 import { FileList } from '../../Components';
-import {
-  statusColourMap,
-  TEMPERATURE_MAPPING_TYPE,
-  useIsColdRoom,
-} from '../../utils';
+import { statusColourMap, useIsColdRoom } from '../../utils';
+import { AssetLogTypeNodeType } from '@openmsupply-client/common';
 
 const Divider = () => (
   <Box
@@ -199,13 +196,9 @@ const StatusLog = ({
                 colour={status.colour}
               />
             )}
-            {log.type && (
+            {log.type === AssetLogTypeNodeType.TemperatureMapping && (
               <StatusChip
-                label={
-                  log.type === TEMPERATURE_MAPPING_TYPE
-                    ? t('label.temperature-mapping')
-                    : log.type
-                }
+                label={t('label.temperature-mapping')}
                 colour="gray.main"
               />
             )}
@@ -370,7 +363,9 @@ export const StatusLogs = ({ assetId }: { assetId: string }) => {
         equalAny: Object.values(AssetLogStatusNodeType),
       };
     } else {
-      additionalFilter.type = { equalTo: TEMPERATURE_MAPPING_TYPE };
+      additionalFilter.type = {
+        equalTo: AssetLogTypeNodeType.TemperatureMapping,
+      };
     }
   }
 
