@@ -3,6 +3,11 @@ use repository::{CurrencyFilter, CurrencyRepository, RepositoryError, StorageCon
 use async_graphql::dataloader::*;
 use std::collections::HashMap;
 
+// Caches the home currency for the lifetime of a single GraphQL request.
+// `UserStoreNode::home_currency_code` resolves the same global value for every
+// store in the response — without this loader a user with N stores issues N
+// independent currency queries (each acquiring its own pool connection),
+// which was a significant source of pool saturation on the `me` query.
 pub struct HomeCurrencyLoader {
     pub connection_manager: StorageConnectionManager,
 }
