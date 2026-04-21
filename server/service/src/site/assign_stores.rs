@@ -54,3 +54,104 @@ impl From<RepositoryError> for AssignStoresToSiteError {
         AssignStoresToSiteError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use repository::{
+        mock::{mock_store_a, mock_store_b, MockDataInserts},
+        test_db::setup_all,
+        StoreRowRepository,
+    };
+
+    use crate::{
+        service_provider::ServiceProvider,
+        site::upsert::{upsert_site, UpsertSite},
+    };
+
+    use super::*;
+
+    fn new_site(id: i32) -> UpsertSite {
+        UpsertSite {
+            id,
+            code: Some(format!("code{id}")),
+            name: format!("Site {id}"),
+            password: Some("password".to_string()),
+            clear_hardware_id: false,
+        }
+    }
+
+    #[actix_rt::test]
+    async fn assign_stores_to_site_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("assign_stores_to_site_errors", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        assert_eq!(
+            assign_stores_to_site(
+                &context,
+                AssignStoresToSite {
+                    site_id: 999,
+                    store_ids: vec!["store_a".to_string()],
+                },
+            ),
+            Err(AssignStoresToSiteError::SiteDoesNotExist)
+        );
+
+        upsert_site(&context, new_site(2)).unwrap();
+        assert_eq!(
+            assign_stores_to_site(
+                &context,
+                AssignStoresToSite {
+                    site_id: 2,
+                    store_ids: vec!["missing".to_string()],
+                },
+            ),
+            Err(AssignStoresToSiteError::StoreDoesNotExist(vec![
+                "missing".to_string(),
+            ]))
+        );
+    }
+
+    #[actix_rt::test]
+    async fn assign_stores_to_site_success() {
+        let (_, _, connection_manager, _) = setup_all(
+            "assign_stores_to_site_success",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider.basic_context().unwrap();
+
+        upsert_site(&context, new_site(7)).unwrap();
+        assign_stores_to_site(
+            &context,
+            AssignStoresToSite {
+                site_id: 7,
+                store_ids: vec![mock_store_a().id, mock_store_b().id],
+            },
+        )
+        .unwrap();
+
+        let connection = connection_manager.connection().unwrap();
+        let store_repo = StoreRowRepository::new(&connection);
+        assert_eq!(
+            store_repo
+                .find_one_by_id(&mock_store_a().id)
+                .unwrap()
+                .unwrap()
+                .site_id,
+            7
+        );
+        assert_eq!(
+            store_repo
+                .find_one_by_id(&mock_store_b().id)
+                .unwrap()
+                .unwrap()
+                .site_id,
+            7
+        );
+    }
+}
