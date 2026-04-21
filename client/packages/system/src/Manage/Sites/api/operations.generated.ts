@@ -11,6 +11,14 @@ export type SiteRowFragment = {
   hardwareId?: string | null;
 };
 
+export type SiteStoreRowFragment = {
+  __typename: 'StoreNode';
+  id: string;
+  code: string;
+  storeName: string;
+  siteId: number;
+};
+
 export type SitesQueryVariables = Types.Exact<{
   sort?: Types.InputMaybe<Array<Types.SiteSortInput> | Types.SiteSortInput>;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -83,6 +91,44 @@ export type DeleteSiteMutation = {
   };
 };
 
+export type AssignStoresToSiteMutationVariables = Types.Exact<{
+  input: Types.AssignStoresToSiteInput;
+}>;
+
+export type AssignStoresToSiteMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    site: {
+      __typename: 'CentralSiteMutations';
+      assignStoresToSite: {
+        __typename: 'AssignStoresToSiteNode';
+        siteId: number;
+        storeIds: Array<string>;
+      };
+    };
+  };
+};
+
+export type StoresBySiteQueryVariables = Types.Exact<{
+  siteId: Types.Scalars['Int']['input'];
+}>;
+
+export type StoresBySiteQuery = {
+  __typename: 'Queries';
+  stores: {
+    __typename: 'StoreConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      storeName: string;
+      siteId: number;
+    }>;
+  };
+};
+
 export const SiteRowFragmentDoc = gql`
   fragment SiteRow on SiteNode {
     __typename
@@ -90,6 +136,15 @@ export const SiteRowFragmentDoc = gql`
     code
     name
     hardwareId
+  }
+`;
+export const SiteStoreRowFragmentDoc = gql`
+  fragment SiteStoreRow on StoreNode {
+    __typename
+    id
+    code
+    storeName
+    siteId
   }
 `;
 export const SitesDocument = gql`
@@ -164,6 +219,32 @@ export const DeleteSiteDocument = gql`
     }
   }
 `;
+export const AssignStoresToSiteDocument = gql`
+  mutation assignStoresToSite($input: AssignStoresToSiteInput!) {
+    centralServer {
+      site {
+        assignStoresToSite(input: $input) {
+          siteId
+          storeIds
+        }
+      }
+    }
+  }
+`;
+export const StoresBySiteDocument = gql`
+  query storesBySite($siteId: Int!) {
+    stores(filter: { siteId: { equalTo: $siteId } }, page: { first: 1000 }) {
+      ... on StoreConnector {
+        __typename
+        totalCount
+        nodes {
+          ...SiteStoreRow
+        }
+      }
+    }
+  }
+  ${SiteStoreRowFragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -235,6 +316,42 @@ export function getSdk(
           }),
         'deleteSite',
         'mutation',
+        variables
+      );
+    },
+    assignStoresToSite(
+      variables: AssignStoresToSiteMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<AssignStoresToSiteMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<AssignStoresToSiteMutation>({
+            document: AssignStoresToSiteDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'assignStoresToSite',
+        'mutation',
+        variables
+      );
+    },
+    storesBySite(
+      variables: StoresBySiteQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<StoresBySiteQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StoresBySiteQuery>({
+            document: StoresBySiteDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'storesBySite',
+        'query',
         variables
       );
     },
