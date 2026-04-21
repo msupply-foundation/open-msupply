@@ -366,4 +366,105 @@ mod test {
             original_stock_line.total_number_of_packs // total has not changed (no stock movements after PICKED status)
         );
     }
+
+    #[actix_rt::test]
+    async fn test_update_supplier_return_success_new_to_verified() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "test_update_supplier_return_success_new_to_verified",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        let stock_line_row_repo = StockLineRowRepository::new(&connection);
+        let stock_line_id = mock_supplier_return_b_invoice_line_a()
+            .stock_line_id
+            .unwrap();
+
+        let original_stock_line = stock_line_row_repo
+            .find_one_by_id(&stock_line_id)
+            .unwrap()
+            .unwrap();
+
+        let result = service_provider
+            .invoice_service
+            .update_supplier_return(
+                &context,
+                UpdateSupplierReturn {
+                    supplier_return_id: mock_supplier_return_b().id, // is NEW status
+                    status: Some(UpdateSupplierReturnStatus::Verified),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.invoice_row.status, InvoiceStatus::Verified);
+        assert!(result.invoice_row.picked_datetime.is_some());
+        assert!(result.invoice_row.shipped_datetime.is_some());
+        assert!(result.invoice_row.verified_datetime.is_some());
+
+        let updated_stock_line = stock_line_row_repo
+            .find_one_by_id(&stock_line_id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            updated_stock_line.total_number_of_packs,
+            original_stock_line.total_number_of_packs - 5.0 // stock has been reduced by the num of packs in the supplier return line
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_update_supplier_return_success_picked_to_verified() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "test_update_supplier_return_success_picked_to_verified",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        let stock_line_row_repo = StockLineRowRepository::new(&connection);
+        let stock_line_id = mock_supplier_return_a_invoice_line_a()
+            .stock_line_id
+            .unwrap();
+
+        let original_stock_line = stock_line_row_repo
+            .find_one_by_id(&stock_line_id)
+            .unwrap()
+            .unwrap();
+
+        let result = service_provider
+            .invoice_service
+            .update_supplier_return(
+                &context,
+                UpdateSupplierReturn {
+                    supplier_return_id: mock_supplier_return_a().id, // is PICKED status
+                    status: Some(UpdateSupplierReturnStatus::Verified),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.invoice_row.status, InvoiceStatus::Verified);
+        assert!(result.invoice_row.shipped_datetime.is_some());
+        assert!(result.invoice_row.verified_datetime.is_some());
+
+        let updated_stock_line = stock_line_row_repo
+            .find_one_by_id(&stock_line_id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            updated_stock_line.total_number_of_packs,
+            original_stock_line.total_number_of_packs // total has not changed (no stock movements after PICKED status)
+        );
+    }
 }
