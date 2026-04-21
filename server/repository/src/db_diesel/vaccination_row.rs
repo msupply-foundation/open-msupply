@@ -131,6 +131,7 @@ impl<'a> VaccinationRowRepository<'a> {
             row_action: action,
             store_id: None,
             name_id: Some(row.patient_id),
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

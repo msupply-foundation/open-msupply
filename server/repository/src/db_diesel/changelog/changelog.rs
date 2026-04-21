@@ -1,40 +1,45 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::apply_equal_filter,
-    name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
-    LockedConnection, RepositoryError, StorageConnection, TransactionNotification,
+    db_diesel::store_row::store,
+    diesel_macros::{apply_equal_filter, diesel_string_enum},
+    dynamic_query_filter::create_condition,
+    name_store_join::name_store_join,
+    vaccination_row::vaccination,
+    DBType, EqualFilter, LockedConnection, RepositoryError, StorageConnection,
+    TransactionNotification,
 };
 use diesel::{helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
-use strum::EnumIter;
 use strum::IntoEnumIterator;
 use ts_rs::TS;
-
-use diesel_derive_enum::DbEnum;
 
 table! {
     changelog (cursor) {
         cursor -> BigInt,
-        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
+        table_name -> Text,
         record_id -> Text,
-        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
+        row_action -> Text,
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_id -> Nullable<Text>,
     }
 }
 
 table! {
     changelog_deduped (cursor) {
         cursor -> BigInt,
-        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
+        table_name -> Text,
         record_id -> Text,
-        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
+        row_action -> Text,
         name_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_id -> Nullable<Text>,
     }
 }
 
@@ -45,86 +50,88 @@ define_sql_function!(
     fn last_insert_rowid() -> BigInt
 );
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum RowActionType {
-    #[default]
-    Upsert,
-    Delete,
+diesel_string_enum! {
+    #[derive(Clone, Eq, Serialize, Deserialize, TS)]
+    pub enum RowActionType {
+        #[default]
+        Upsert,
+        Delete,
+    }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter, TS)]
-#[DbValueStyle = "snake_case"]
-pub enum ChangelogTableName {
-    BackendPlugin,
-    Number,
-    Location,
-    LocationMovement,
-    StockLine,
-    Invoice,
-    InvoiceLine,
-    Stocktake,
-    StocktakeLine,
-    Requisition,
-    RequisitionLine,
-    ActivityLog,
-    Barcode,
-    Clinician,
-    ClinicianStoreJoin,
-    Name,
-    NameStoreJoin,
-    Document,
-    Sensor,
-    TemperatureBreach,
-    TemperatureBreachConfig,
-    TemperatureLog,
-    PackVariant,
-    Currency,
-    AssetClass,
-    AssetCategory,
-    AssetCatalogueType,
-    AssetCatalogueItem,
-    AssetCatalogueItemProperty,
-    AssetCatalogueProperty,
-    AssetInternalLocation,
-    #[default]
-    SyncFileReference,
-    Asset,
-    AssetLog,
-    AssetLogReason,
-    AssetProperty,
-    Property,
-    NameProperty,
-    NameOmsFields,
-    RnrForm,
-    RnrFormLine,
-    Demographic,
-    VaccineCourse,
-    VaccineCourseItem,
-    VaccineCourseDose,
-    VaccineCourseStoreConfig,
-    Vaccination,
-    Encounter,
-    ItemVariant,
-    PackagingVariant,
-    IndicatorValue,
-    BundledItem,
-    Item,
-    ContactForm,
-    SystemLog,
-    InsuranceProvider,
-    FrontendPlugin,
-    NameInsuranceJoin,
-    Report,
-    FormSchema,
-    PluginData,
-    Preference,
-    VVMStatusLog,
-    Campaign,
-    SyncMessage,
-    PurchaseOrder,
-    PurchaseOrderLine,
-    MasterList,
+diesel_string_enum! {
+    #[derive(Clone, Eq, Serialize, Deserialize, strum::EnumIter, TS)]
+    pub enum ChangelogTableName {
+        BackendPlugin,
+        Number,
+        Location,
+        LocationMovement,
+        StockLine,
+        Invoice,
+        InvoiceLine,
+        Stocktake,
+        StocktakeLine,
+        Requisition,
+        RequisitionLine,
+        ActivityLog,
+        Barcode,
+        Clinician,
+        ClinicianStoreJoin,
+        Name,
+        NameStoreJoin,
+        Document,
+        Sensor,
+        TemperatureBreach,
+        TemperatureBreachConfig,
+        TemperatureLog,
+        PackVariant,
+        Currency,
+        AssetClass,
+        AssetCategory,
+        AssetCatalogueType,
+        AssetCatalogueItem,
+        AssetCatalogueItemProperty,
+        AssetCatalogueProperty,
+        AssetInternalLocation,
+        #[default]
+        SyncFileReference,
+        Asset,
+        AssetLog,
+        AssetLogReason,
+        AssetProperty,
+        Property,
+        NameProperty,
+        NameOmsFields,
+        RnrForm,
+        RnrFormLine,
+        Demographic,
+        VaccineCourse,
+        VaccineCourseItem,
+        VaccineCourseDose,
+        VaccineCourseStoreConfig,
+        Vaccination,
+        Encounter,
+        ItemVariant,
+        PackagingVariant,
+        IndicatorValue,
+        BundledItem,
+        Item,
+        ContactForm,
+        SystemLog,
+        InsuranceProvider,
+        FrontendPlugin,
+        NameInsuranceJoin,
+        Report,
+        FormSchema,
+        PluginData,
+        Preference,
+        VVMStatusLog,
+        Campaign,
+        SyncMessage,
+        PurchaseOrder,
+        PurchaseOrderLine,
+        MasterList,
+    }
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -222,6 +229,8 @@ pub struct ChangeLogInsertRow {
     #[diesel(column_name = "name_link_id")]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
+    pub transfer_store_id: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS, Default)]
@@ -236,6 +245,8 @@ pub struct ChangelogRow {
     pub store_id: Option<String>,
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,
+    pub transfer_store_id: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 #[derive(Default, Clone, Serialize, Deserialize, Debug, TS)]
@@ -441,7 +452,8 @@ impl<'a> ChangelogRepository<'a> {
             .pop()
             .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
 
-        self.connection.notify(TransactionNotification::ChangelogInsert);
+        self.connection
+            .notify(TransactionNotification::ChangelogInsert);
         Ok(cursor_id)
     }
 
@@ -454,10 +466,24 @@ impl<'a> ChangelogRepository<'a> {
             .execute(self.connection.lock().connection())?;
         let cursor_id = diesel::select(last_insert_rowid())
             .get_result::<i64>(self.connection.lock().connection())?;
-        self.connection.notify(TransactionNotification::ChangelogInsert);
+        self.connection
+            .notify(TransactionNotification::ChangelogInsert);
         Ok(cursor_id)
     }
 }
+
+// Dynamic query filter for changelog
+// Source type is the changelog table (for queries directly against the table)
+create_condition!(
+    changelog::table,
+    (cursor, i64, changelog::cursor),
+    (table_name, ChangelogTableName, changelog::table_name),
+    (record_id, string, changelog::record_id),
+    (store_id, string, changelog::store_id),
+    (source_site_id, i32, changelog::source_site_id),
+    (transfer_store_id, string, changelog::transfer_store_id),
+    (patient_id, string, changelog::patient_id),
+);
 
 type BoxedChangelogQuery = IntoBoxed<'static, changelog_deduped::table, DBType>;
 
