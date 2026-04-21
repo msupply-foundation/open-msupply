@@ -727,6 +727,17 @@ export type AssetTypesResponse = AssetTypeConnector;
 
 export type AssetsResponse = AssetConnector;
 
+export type AssignStoresToSiteInput = {
+  siteId: Scalars['Int']['input'];
+  storeIds: Array<Scalars['String']['input']>;
+};
+
+export type AssignStoresToSiteNode = {
+  __typename: 'AssignStoresToSiteNode';
+  siteId: Scalars['Int']['output'];
+  storeIds: Array<Scalars['String']['output']>;
+};
+
 export type AuthToken = {
   __typename: 'AuthToken';
   /** Bearer token */
@@ -1342,8 +1353,13 @@ export type CentralServerQueryNode = {
 
 export type CentralSiteMutations = {
   __typename: 'CentralSiteMutations';
+  assignStoresToSite: AssignStoresToSiteNode;
   deleteSite: DeleteSiteNode;
   upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsAssignStoresToSiteArgs = {
+  input: AssignStoresToSiteInput;
 };
 
 export type CentralSiteMutationsDeleteSiteArgs = {
