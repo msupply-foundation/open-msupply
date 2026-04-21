@@ -47,6 +47,9 @@ diesel_string_enum! {
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, strum::EnumIter, TS)]
     pub enum ChangelogTableName {
+        Unit,
+        Store,
+        LocationType,
         BackendPlugin,
         Number,
         Location,
@@ -133,6 +136,9 @@ pub(crate) enum ChangeLogSyncStyle {
 impl ChangelogTableName {
     pub(crate) fn sync_style(&self) -> ChangeLogSyncStyle {
         match self {
+            ChangelogTableName::Unit => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Store => ChangeLogSyncStyle::Central,
+            ChangelogTableName::LocationType => ChangeLogSyncStyle::Central,
             ChangelogTableName::BackendPlugin => ChangeLogSyncStyle::Central,
             ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
@@ -214,6 +220,7 @@ pub struct ChangeLogInsertRow {
     #[diesel(column_name = "name_link_id")]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
+    pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
     pub patient_id: Option<String>,
 }
