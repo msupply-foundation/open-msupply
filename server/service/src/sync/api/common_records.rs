@@ -103,6 +103,7 @@ impl CommonSyncRecord {
             integration_datetime: None,
             integration_error: None,
             source_site_id,
+            ..Default::default()
         })
     }
 

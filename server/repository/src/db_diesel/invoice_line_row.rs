@@ -91,7 +91,7 @@ allow_tables_to_appear_in_same_query!(invoice_line_stats, reason_option);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, item);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineType {
     #[default]
@@ -101,7 +101,7 @@ pub enum InvoiceLineType {
     Service,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineStatus {
     Pending,
@@ -109,7 +109,7 @@ pub enum InvoiceLineStatus {
     Rejected,
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = invoice_line)]
 pub struct InvoiceLineRow {
     pub id: String,
@@ -152,6 +152,15 @@ pub struct InvoiceLineRow {
     pub manufacturer_id: Option<String>,
 }
 
+impl InvoiceLineRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::InvoiceLine
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
+}
+
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
 #[diesel(table_name = invoice_line_stats)]
 pub struct InvoiceLineStatsRow {
@@ -184,8 +193,8 @@ impl<'a> InvoiceLineRowRepository<'a> {
         };
 
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::InvoiceLine,
-            record_id: row.id.clone(),
+            table_name: InvoiceLineRow::table_name(),
+            record_id: row.record_id(),
             row_action: action,
             store_id: Some(invoice.store_id.clone()),
             name_id: Some(invoice.name_id.clone()),
@@ -268,6 +277,14 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
+    fn _delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(
+            invoice_line_with_links::table.filter(invoice_line_with_links::id.eq(invoice_line_id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn delete(&self, invoice_line_id: &str) -> Result<Option<i64>, RepositoryError> {
         let old_row = self.find_one_by_id(invoice_line_id)?;
         let change_log_id = match old_row {
@@ -277,10 +294,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
             }
         };
 
-        diesel::delete(
-            invoice_line_with_links::table.filter(invoice_line_with_links::id.eq(invoice_line_id)),
-        )
-        .execute(self.connection.lock().connection())?;
+        self._delete(invoice_line_id)?;
         Ok(Some(change_log_id))
     }
 
@@ -331,6 +345,15 @@ impl Delete for InvoiceLineRowDelete {
         let change_log_id = InvoiceLineRowRepository::new(con).delete(&self.0)?;
         Ok(change_log_id)
     }
+    fn delete_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        InvoiceLineRowRepository::new(con)._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
@@ -345,7 +368,15 @@ impl Upsert for InvoiceLineRow {
         let change_log_id = InvoiceLineRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        InvoiceLineRowRepository::new(con)._upsert(self)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
