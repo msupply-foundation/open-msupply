@@ -22,7 +22,7 @@ use repository::EqualFilter;
 use repository::{DatetimeFilter, StringFilter};
 use service::ListResult;
 
-use repository::asset_log_row::AssetLogStatus;
+use repository::asset_log_row::{AssetLogStatus, AssetLogType};
 use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -35,6 +35,14 @@ pub enum AssetLogStatusNodeType {
     NotFunctioning,
     Decommissioned,
     Unserviceable,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[graphql(remote = "repository::db_diesel::assets::asset_log_row
+::AssetLogType")]
+pub enum AssetLogTypeNodeType {
+    StatusUpdate,
+    TemperatureMapping,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -63,7 +71,7 @@ pub struct AssetLogFilterInput {
     pub log_datetime: Option<DatetimeFilterInput>,
     pub user: Option<StringFilterInput>,
     pub reason_id: Option<EqualFilterStringInput>,
-    pub r#type: Option<StringFilterInput>,
+    pub r#type: Option<EqualFilterAssetLogTypeInput>,
 }
 
 impl From<AssetLogFilterInput> for AssetLogFilter {
@@ -75,7 +83,7 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
             reason_id: f.reason_id.map(EqualFilter::from),
-            r#type: f.r#type.map(StringFilter::from),
+            r#type: f.r#type.map(|s| map_filter!(s, AssetLogType::from)),
         }
     }
 }
@@ -86,6 +94,14 @@ pub struct EqualFilterStatusInput {
     pub equal_any: Option<Vec<AssetLogStatusNodeType>>,
     pub not_equal_to: Option<AssetLogStatusNodeType>,
     pub not_equal_all: Option<Vec<AssetLogStatusNodeType>>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterAssetLogTypeInput {
+    pub equal_to: Option<AssetLogTypeNodeType>,
+    pub equal_any: Option<Vec<AssetLogTypeNodeType>>,
+    pub not_equal_to: Option<AssetLogTypeNodeType>,
+    pub not_equal_all: Option<Vec<AssetLogTypeNodeType>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -126,8 +142,9 @@ impl AssetLogNode {
         &self.row().comment
     }
 
-    pub async fn r#type(&self) -> &Option<String> {
-        &self.row().r#type
+    pub async fn r#type(&self) -> AssetLogTypeNodeType {
+        // Historical rows may store NULL — expose those as the default StatusUpdate.
+        AssetLogTypeNodeType::from(self.row().r#type.clone().unwrap_or_default())
     }
 
     pub async fn reason(&self, ctx: &Context<'_>) -> Result<Option<AssetLogReasonNode>> {

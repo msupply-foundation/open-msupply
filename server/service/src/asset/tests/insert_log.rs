@@ -2,14 +2,14 @@
 mod query {
     use crate::{
         asset::{
-            insert_log::{InsertAssetLog, InsertAssetLogError, TEMPERATURE_MAPPING_TYPE},
+            insert_log::{InsertAssetLog, InsertAssetLogError},
             insert_log_reason::InsertAssetLogReason,
         },
         service_provider::ServiceProvider,
     };
     use chrono::{Duration, Utc};
     use repository::{
-        asset_log_row::AssetLogStatus,
+        asset_log_row::{AssetLogStatus, AssetLogType},
         assets::asset_row::AssetRowRepository,
         mock::{mock_asset_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
@@ -359,7 +359,7 @@ mod query {
                     asset_id: mock_asset_a().id,
                     status: None,
                     comment: None,
-                    r#type: Some(TEMPERATURE_MAPPING_TYPE.to_string()),
+                    r#type: Some(AssetLogType::TemperatureMapping),
                     reason_id: None,
                     log_datetime: Some(Utc::now() - Duration::hours(1)),
                 },
@@ -367,7 +367,7 @@ mod query {
             .unwrap();
 
         assert_eq!(asset_log.id, "event_type_log");
-        assert_eq!(asset_log.r#type.as_deref(), Some(TEMPERATURE_MAPPING_TYPE));
+        assert_eq!(asset_log.r#type, Some(AssetLogType::TemperatureMapping));
         assert_eq!(asset_log.status, None);
     }
 
@@ -398,7 +398,7 @@ mod query {
                     asset_id: asset_id.clone(),
                     status: None,
                     comment: None,
-                    r#type: Some(TEMPERATURE_MAPPING_TYPE.to_string()),
+                    r#type: Some(AssetLogType::TemperatureMapping),
                     reason_id: None,
                     log_datetime: Some(earlier_date),
                 },
@@ -432,7 +432,7 @@ mod query {
                     asset_id: asset_id.clone(),
                     status: None,
                     comment: None,
-                    r#type: Some(TEMPERATURE_MAPPING_TYPE.to_string()),
+                    r#type: Some(AssetLogType::TemperatureMapping),
                     reason_id: None,
                     log_datetime: Some(later_date),
                 },
