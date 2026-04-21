@@ -14,7 +14,7 @@ Open mSupply is an open source logistic management system for medicine distribut
 
 # Image flavours
 
-Image comes with two flavours base, and dev (with -dev prefix). Dev image comes with client folder ready for development, with dependencies pre-installed
+Image comes with two flavours base, and dev (with -dev suffix). Dev image comes with client folder ready for development, with dependencies pre-installed
 
 # How to use this image
 
