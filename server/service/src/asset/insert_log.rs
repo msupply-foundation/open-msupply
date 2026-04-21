@@ -11,16 +11,15 @@ use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
 use chrono::Utc;
-pub const TEMPERATURE_MAPPING_TYPE: &str = "Temperature Mapping";
 
 use repository::{
-    asset_log_row::AssetLogStatus,
+    asset_log_row::{AssetLogStatus, AssetLogType},
     assets::{
         asset_log::AssetLogFilter,
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::AssetRowRepository,
     },
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -42,7 +41,7 @@ pub struct InsertAssetLog {
     pub asset_id: String,
     pub status: Option<AssetLogStatus>,
     pub comment: Option<String>,
-    pub r#type: Option<String>,
+    pub r#type: Option<AssetLogType>,
     pub reason_id: Option<String>,
     pub log_datetime: Option<chrono::DateTime<chrono::Utc>>,
 }
@@ -58,7 +57,7 @@ pub fn insert_asset_log(
             let new_asset_log = generate(ctx, input);
             AssetLogRowRepository::new(connection).upsert_one(&new_asset_log)?;
 
-            if new_asset_log.r#type.as_deref() == Some(TEMPERATURE_MAPPING_TYPE) {
+            if new_asset_log.r#type == Some(AssetLogType::TemperatureMapping) {
                 recalculate_mapping_dates(connection, &new_asset_log.asset_id)?;
             }
 
@@ -103,8 +102,10 @@ pub fn validate(
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }
 
-    // Status is required unless a type is provided (e.g., Temperature Mapping events)
-    if input.status.is_none() && input.r#type.is_none() {
+    // StatusUpdate logs require a status; event-type logs (e.g. TemperatureMapping) don't.
+    // A missing type defaults to StatusUpdate.
+    let effective_type = input.r#type.clone().unwrap_or_default();
+    if effective_type == AssetLogType::StatusUpdate && input.status.is_none() {
         return Err(InsertAssetLogError::StatusNotProvided);
     }
 
@@ -151,7 +152,7 @@ pub fn generate(
         user_id: ctx.user_id.clone(),
         status,
         comment,
-        r#type,
+        r#type: Some(r#type.unwrap_or_default()),
         reason_id,
         log_datetime: log_datetime.map(|d| d.naive_utc()).unwrap_or(now),
         created_datetime: now,
@@ -167,7 +168,7 @@ pub fn recalculate_mapping_dates(
     let logs = AssetLogRepository::new(connection).query_by_filter(
         AssetLogFilter::new()
             .asset_id(EqualFilter::equal_to(asset_id.to_string()))
-            .r#type(StringFilter::equal_to(TEMPERATURE_MAPPING_TYPE)),
+            .r#type(AssetLogType::TemperatureMapping.equal_to()),
     )?;
 
     let min_date = logs.iter().map(|l| l.log_datetime).min();

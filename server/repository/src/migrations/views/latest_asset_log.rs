@@ -16,6 +16,10 @@ impl ViewMigrationFragment for ViewMigration {
     }
 
     fn rebuild_view(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Only status-update entries are considered the "latest" for an asset —
+        // TemperatureMapping and other event-type logs leave status NULL. Filtering on
+        // status rather than type keeps the predicate correct for pre-enum historical
+        // rows where type is still NULL.
         sql!(
             connection,
             r#"
@@ -37,7 +41,7 @@ impl ViewMigrationFragment for ViewMigration {
     ) grouped
     INNER JOIN asset_log al
       ON al.asset_id = grouped.asset_id AND al.log_datetime = grouped.latest_log_datetime
-      AND al.status IS NOT NULL;    
+      AND al.status IS NOT NULL;
             "#
         )?;
 

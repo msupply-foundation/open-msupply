@@ -1,4 +1,4 @@
-use crate::types::AssetLogStatusNodeType;
+use crate::types::{AssetLogStatusNodeType, AssetLogTypeNodeType};
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
@@ -51,7 +51,7 @@ pub struct InsertAssetLogInput {
     pub status: Option<AssetLogStatusNodeType>,
     pub reason_id: Option<String>,
     pub comment: Option<String>,
-    pub r#type: Option<String>,
+    pub r#type: Option<AssetLogTypeNodeType>,
     pub log_datetime: Option<chrono::DateTime<chrono::Utc>>,
 }
 
@@ -73,7 +73,7 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             status: status.map(|s| s.into()),
             reason_id,
             comment,
-            r#type,
+            r#type: r#type.map(|t| t.into()),
             log_datetime,
         }
     }

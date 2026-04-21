@@ -15,16 +15,16 @@ import {
   DateUtils,
   BasicTextInput,
   useDebounceCallback,
+  AssetLogTypeNodeType,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
-import { TEMPERATURE_MAPPING_TYPE } from '../utils';
 
 type Draft = Partial<InsertAssetLogInput> & { files?: File[] };
 
 const getEmptyDraft = (assetId: string): Draft => ({
   id: FnUtils.generateUUID(),
   assetId,
-  type: TEMPERATURE_MAPPING_TYPE,
+  type: AssetLogTypeNodeType.TemperatureMapping,
   logDatetime: new Date().toISOString(),
 });
 

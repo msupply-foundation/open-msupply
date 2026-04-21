@@ -1,4 +1,7 @@
-use repository::{asset_log_row::AssetLogStatus, db_diesel::assets::asset_log_row::AssetLogRow};
+use repository::{
+    asset_log_row::{AssetLogStatus, AssetLogType},
+    db_diesel::assets::asset_log_row::AssetLogRow,
+};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -15,7 +18,8 @@ const ASSET_LOG1: (&str, &str) = (
         "comment": "test_comment",
         "reason_id": null,
         "log_datetime": "2020-01-22T15:16:00",
-        "created_datetime": "2020-01-22T15:16:00"
+        "created_datetime": "2020-01-22T15:16:00",
+        "type": "STATUS_UPDATE"
     }"#,
 );
 fn asset_log1() -> AssetLogRow {
@@ -34,7 +38,7 @@ fn asset_log1() -> AssetLogRow {
             .unwrap()
             .and_hms_opt(15, 16, 0)
             .unwrap(),
-        r#type: None,
+        r#type: Some(AssetLogType::StatusUpdate),
     }
 }
 
