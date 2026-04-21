@@ -76,6 +76,7 @@ export type PurchaseOrderFragment = {
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
+      lineTotal: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
@@ -162,6 +163,7 @@ export type PurchaseOrderLineFragment = {
   adjustedNumberOfUnits?: number | null;
   pricePerPackAfterDiscount: number;
   pricePerPackBeforeDiscount: number;
+  lineTotal: number;
   note?: string | null;
   unit?: string | null;
   comment?: string | null;
@@ -305,6 +307,7 @@ export type PurchaseOrderByIdQuery = {
             adjustedNumberOfUnits?: number | null;
             pricePerPackAfterDiscount: number;
             pricePerPackBeforeDiscount: number;
+            lineTotal: number;
             note?: string | null;
             unit?: string | null;
             comment?: string | null;
@@ -479,6 +482,7 @@ export type PurchaseOrderLinesQuery = {
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
+      lineTotal: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
@@ -557,6 +561,7 @@ export type PurchaseOrderLineQuery = {
       adjustedNumberOfUnits?: number | null;
       pricePerPackAfterDiscount: number;
       pricePerPackBeforeDiscount: number;
+      lineTotal: number;
       note?: string | null;
       unit?: string | null;
       comment?: string | null;
@@ -784,6 +789,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
     adjustedNumberOfUnits
     pricePerPackAfterDiscount
     pricePerPackBeforeDiscount
+    lineTotal
     manufacturer(storeId: $storeId) {
       ...NameRow
     }

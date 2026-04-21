@@ -47,13 +47,21 @@ pub fn add_from_purchase_order(
         let purchase_order_line_stats = purchase_order_line.purchase_order_line_stats_row;
         let purchase_order_line = purchase_order_line.purchase_order_line_row;
 
-        let purchase_order_number_of_units = purchase_order_line
+        let total_units = purchase_order_line
             .adjusted_number_of_units
             .unwrap_or(purchase_order_line.requested_number_of_units);
         let shipped_number_of_units = purchase_order_line_stats.shipped_number_of_units;
         let pack_size = purchase_order_line.requested_pack_size;
-        let remaining_units = (purchase_order_number_of_units - shipped_number_of_units).max(0.0);
+        let remaining_units = (total_units - shipped_number_of_units).max(0.0);
         let number_of_packs = remaining_units / pack_size;
+
+        // Use stored total from the PO line, pro-rated for remaining units
+        let remaining_ratio = if total_units > 0.0 {
+            remaining_units / total_units
+        } else {
+            0.0
+        };
+        let foreign_total = purchase_order_line.line_total * remaining_ratio;
 
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
@@ -67,23 +75,17 @@ pub fn add_from_purchase_order(
             expiry_date: None,
             manufacture_date: None,
             purchase_order_line_id: Some(purchase_order_line.id.clone()),
-            pack_size: pack_size,
+            pack_size,
             cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
             sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
-            total_before_tax: purchase_order_line.price_per_pack_after_discount
-                * exchange_rate
-                * number_of_packs,
-            total_after_tax: purchase_order_line.price_per_pack_after_discount
-                * exchange_rate
-                * number_of_packs,
+            total_before_tax: foreign_total * exchange_rate,
+            total_after_tax: foreign_total * exchange_rate,
             tax_percentage: None,
             r#type: InvoiceLineType::StockIn,
             number_of_packs,
             prescribed_quantity: None,
             note: None,
-            foreign_currency_price_before_tax: Some(
-                purchase_order_line.price_per_pack_after_discount * number_of_packs,
-            ),
+            foreign_currency_price_before_tax: Some(foreign_total),
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,

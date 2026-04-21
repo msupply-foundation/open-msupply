@@ -118,6 +118,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
   adjustedNumberOfUnits
   pricePerPackAfterDiscount
   pricePerPackBeforeDiscount
+  lineTotal
   manufacturer(storeId: $storeId) {
     ...NameRow
   }

@@ -115,28 +115,11 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
         header: t('label.line-cost'),
         columnType: ColumnType.Currency,
         Cell: props => <CurrencyValueCell {...props} currencyCode={currency} />,
-        accessorFn: row => {
-          const units =
-            row.adjustedNumberOfUnits ?? row.requestedNumberOfUnits ?? 0;
-          const packSize = row.requestedPackSize || 1;
-          return NumUtils.round(
-            (row.pricePerPackAfterDiscount ?? 0) * (units / packSize),
-            currencyOptions.precision
-          );
-        },
+        accessorFn: row => row.lineTotal ?? 0,
         Footer: ({ table }) => {
           const total = NumUtils.round(
             table.getFilteredRowModel().rows.reduce((sum, row) => {
-              const { original } = row;
-              const units =
-                original.adjustedNumberOfUnits ??
-                original.requestedNumberOfUnits ??
-                0;
-              const packSize = original.requestedPackSize || 1;
-              return (
-                sum +
-                (original.pricePerPackAfterDiscount ?? 0) * (units / packSize)
-              );
+              return sum + (row.original.lineTotal ?? 0);
             }, 0),
             currencyOptions.precision
           );

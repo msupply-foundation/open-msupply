@@ -49,6 +49,7 @@ export const getImportHelpers = (
     errorMessage: '',
     warningMessage: '',
     discountPercentage: 0,
+    lineTotal: 0,
     unitsOrderedInOthers: 0,
     receivedNumberOfUnits: 0,
     numberOfPacks: 0,

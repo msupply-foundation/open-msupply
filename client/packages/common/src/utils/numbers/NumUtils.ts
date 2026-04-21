@@ -9,7 +9,7 @@ const isNearlyInteger = (value: number): boolean => {
   const rounded = Math.round(value);
   const delta = Math.abs(value - rounded);
   const tolerance = Math.max(1e-8, Number.EPSILON * Math.abs(value) * 10);
-  return delta < tolerance;
+  return delta <= tolerance;
 };
 
 export const NumUtils = {
