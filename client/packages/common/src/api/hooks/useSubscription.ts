@@ -59,6 +59,7 @@ export const useSubscription = <TSubscription, TData>({
   useEffect(() => {
     if (!enabled || (requireAuth && !token)) {
       setIsSubscribed(false);
+      setData(undefined);
       return;
     }
 
@@ -105,6 +106,7 @@ export const useSubscription = <TSubscription, TData>({
     return () => {
       disposed = true;
       setIsSubscribed(false);
+      setData(undefined);
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
         unsubscribeRef.current = null;
