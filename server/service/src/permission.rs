@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use repository::{
     EqualFilter, RepositoryError, StorageConnection, StoreRow, StoreRowRepository,
@@ -27,22 +27,21 @@ pub fn permissions(
     let permissions = user_permission_repo.query_by_filter(filter)?;
 
     let mut permissions_by_store: HashMap<String, Vec<UserPermissionRow>> = HashMap::new();
-    let mut store_ids: HashSet<String> = HashSet::new();
     for permission in permissions {
         let store_id = match permission.store_id.clone() {
             Some(store_id) => store_id,
             None => continue,
         };
 
-        store_ids.insert(store_id.clone());
         permissions_by_store
             .entry(store_id)
             .or_default()
             .push(permission);
     }
 
+    let store_ids: Vec<String> = permissions_by_store.keys().cloned().collect();
     let stores_by_id: HashMap<String, StoreRow> = store_repo
-        .find_many_by_id(&store_ids.into_iter().collect::<Vec<_>>())?
+        .find_many_by_id(&store_ids)?
         .into_iter()
         .map(|store| (store.id.clone(), store))
         .collect();
