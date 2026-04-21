@@ -9,7 +9,7 @@ query SupplierReturns(
     filter: {
       type: { equalTo: SUPPLIER_RETURN }
       otherPartyId: { equalTo: $otherPartyId }
-      verifiedDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }
+      createdDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }
     }
   ) {
     ... on InvoiceConnector {

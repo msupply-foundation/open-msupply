@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.17.2",
+  "version": "2.17.3",
   "code": "customer-returns",
   "context": "REPORT",
   "sub_context": "Distribution",
