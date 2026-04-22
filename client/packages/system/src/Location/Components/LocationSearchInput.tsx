@@ -230,6 +230,9 @@ export const LocationSearchInput = ({
       slots={{
         paper: paperSlot,
       }}
+      slotProps={{
+        listbox: { style: { maxHeight: '35vh' } },
+      }}
     />
   );
 };
