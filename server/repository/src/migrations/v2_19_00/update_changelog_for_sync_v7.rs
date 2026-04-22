@@ -101,7 +101,7 @@ impl MigrationFragment for Migrate {
 #[cfg(test)]
 mod tests {
     use crate::{
-        migrations::{v2_17_00::V2_17_00, v2_18_00::V2_18_00, *},
+        migrations::{v2_18_00::V2_18_00, v2_19_00::V2_19_00, *},
         test_db::*,
     };
     use diesel::{prelude::*, sql_query, RunQueryDsl};
@@ -207,8 +207,8 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_changelog_backfill_transfer_store_id_and_patient_id() {
-        let previous_version = V2_17_00.version();
-        let version = V2_18_00.version();
+        let previous_version = V2_18_00.version();
+        let version = V2_19_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: "migration_changelog_backfill",

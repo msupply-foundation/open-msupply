@@ -22,7 +22,7 @@ impl MigrationFragment for Migrate {
                 CREATE INDEX index_changelog_transfer_store_id ON changelog (transfer_store_id) WHERE transfer_store_id IS NOT NULL;
                 CREATE INDEX index_changelog_patient_id ON changelog (patient_id) WHERE patient_id IS NOT NULL;
 
-                -- Drop row_action index (will be stored as text, low cardinality = useless btree)
+                -- Drop row_action index
                 DROP INDEX IF EXISTS index_changelog_row_action;
 
                 -- Add transfer_store_id to requisition and invoice
