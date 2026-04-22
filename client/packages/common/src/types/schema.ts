@@ -1445,8 +1445,8 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
-export type CodeMustBeProvided = UpsertSiteErrorInterface & {
-  __typename: 'CodeMustBeProvided';
+export type CodeRequired = UpsertSiteErrorInterface & {
+  __typename: 'CodeRequired';
   description: Scalars['String']['output'];
 };
 
@@ -6260,11 +6260,6 @@ export type NameFilterInput = {
   type?: InputMaybe<EqualFilterTypeInput>;
 };
 
-export type NameMustBeProvided = UpsertSiteErrorInterface & {
-  __typename: 'NameMustBeProvided';
-  description: Scalars['String']['output'];
-};
-
 export type NameNode = {
   __typename: 'NameNode';
   address1?: Maybe<Scalars['String']['output']>;
@@ -6323,6 +6318,11 @@ export type NamePropertyNode = {
 };
 
 export type NamePropertyResponse = NamePropertyConnector;
+
+export type NameRequired = UpsertSiteErrorInterface & {
+  __typename: 'NameRequired';
+  description: Scalars['String']['output'];
+};
 
 export enum NameSortFieldInput {
   Code = 'code',
