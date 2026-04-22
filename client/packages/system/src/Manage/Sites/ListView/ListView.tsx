@@ -82,11 +82,6 @@ export const SitesList = () => {
   const columns = useMemo(
     (): ColumnDef<SiteRowFragment>[] => [
       {
-        accessorKey: 'id',
-        header: t('label.settings-site-id'),
-        enableSorting: true,
-      },
-      {
         accessorKey: 'code',
         header: t('label.code'),
         enableSorting: true,

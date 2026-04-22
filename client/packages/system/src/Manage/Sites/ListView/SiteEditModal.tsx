@@ -8,7 +8,6 @@ import {
   Divider,
   InputWithLabelRow,
   BasicTextInput,
-  NumericTextInput,
   PasswordTextInput,
   IconButton,
   XCircleIcon,
@@ -72,17 +71,6 @@ export const SiteEditModal = ({
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" gap={2}>
-          <InputWithLabelRow
-            key="id"
-            label={t('label.settings-site-id')}
-            Input={
-              <NumericTextInput
-                fullWidth
-                value={id || undefined}
-                disabled
-              />
-            }
-          />
           <InputWithLabelRow
             key="code"
             label={t('label.code')}
