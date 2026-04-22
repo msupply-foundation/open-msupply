@@ -76,6 +76,7 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
+    sync_v7::sync_status::status::{SyncStatusV7Service, SyncStatusV7Trait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
@@ -146,6 +147,7 @@ pub struct ServiceProvider {
     // Sync
     pub site_info_service: Box<dyn SiteInfoTrait>,
     pub sync_status_service: Box<dyn SyncStatusTrait>,
+    pub sync_status_v7_service: Box<dyn SyncStatusV7Trait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
@@ -277,6 +279,7 @@ impl ServiceProvider {
             app_data_service: Box::new(AppDataService {}),
             site_info_service: Box::new(SiteInfoService),
             sync_status_service: Box::new(SyncStatusService),
+            sync_status_v7_service: Box::new(SyncStatusV7Service),
             processors_trigger,
             sync_trigger,
             site_is_initialised_trigger,

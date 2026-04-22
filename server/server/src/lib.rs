@@ -40,6 +40,7 @@ use service::{
     },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
+    initialisation_status::get_initialisation_status,
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
@@ -47,6 +48,7 @@ use service::{
     settings::{is_develop, ServerSettings, Settings},
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
+    sync::sync_status::status::InitialisationStatus,
     sync::{
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
         CentralServerConfig,
@@ -426,12 +428,12 @@ pub async fn start_server(
         (None, None) => false,
     };
 
-    if service_provider
-        .sync_status_service
-        .is_initialised(&service_context)
-        .unwrap()
-        || !force_trigger_sync_on_startup
-    {
+    let is_initialised = matches!(
+        get_initialisation_status(&service_provider, &service_context),
+        Ok(InitialisationStatus::Initialised(_))
+    );
+
+    if is_initialised || !force_trigger_sync_on_startup {
         graphql_schema
             .set_operational_status(OperationalStatus::Operational)
             .await;
