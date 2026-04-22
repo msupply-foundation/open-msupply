@@ -35,7 +35,7 @@ export const LocationListView = () => {
   });
   const queryParams = { sortBy, first, offset, filterBy };
   const {
-    query: { data, isError, isLoading, isFetching },
+    query: { data, isError, isFetching },
   } = useLocationList(queryParams);
   const t = useTranslation();
 
@@ -139,11 +139,7 @@ export const LocationListView = () => {
           location={entity}
         />
       )}
-      <AppBarButtons
-        onCreate={() => onOpen()}
-        locations={data?.nodes}
-        reportIsLoading={isLoading}
-      />
+      <AppBarButtons onCreate={() => onOpen()} sortBy={sortBy} />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows}
