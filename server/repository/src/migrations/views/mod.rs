@@ -26,6 +26,7 @@ mod stock_line_ledger_discrepancy;
 mod stock_movement;
 mod stock_on_hand;
 mod store_items;
+mod store_stock_on_hand;
 mod vaccination_card;
 mod vaccination_course;
 
@@ -52,6 +53,7 @@ fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
         Box::new(consumption::ViewMigration),
         Box::new(store_items::ViewMigration),
         Box::new(stock_on_hand::ViewMigration),
+        Box::new(store_stock_on_hand::ViewMigration),
         Box::new(changelog_deduped::ViewMigration),
         Box::new(latest_document::ViewMigration),
         Box::new(latest_asset_log::ViewMigration),

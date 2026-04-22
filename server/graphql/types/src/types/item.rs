@@ -152,14 +152,7 @@ impl ItemNode {
         let result = loader
             .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
             .await?
-            .ok_or(
-                StandardGraphqlError::InternalError(format!(
-                    "Cannot calculate stock on hand for item {} at store {}",
-                    &self.row().id,
-                    store_id
-                ))
-                .extend(),
-            )?;
+            .unwrap_or(0);
 
         Ok(result)
     }
