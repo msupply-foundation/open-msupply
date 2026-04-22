@@ -6,6 +6,24 @@ on:
       - "v*"
 
 jobs:
+  check-tag:
+    name: Check Tag Type
+    runs-on: ubuntu-latest
+    outputs:
+      is_release: ${{ steps.check.outputs.is_release }}
+    steps:
+      - name: Determine if release tag
+        id: check
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_release=true" >> $GITHUB_OUTPUT
+            echo "Tag '$TAG' is a release tag"
+          else
+            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "Tag '$TAG' is NOT a release tag (skipping arm64 and dev builds)"
+          fi
+
   build-client:
     name: Build Client
     runs-on: ubuntu-latest
@@ -38,7 +56,8 @@ jobs:
 
   build-server:
     name: Build server (${{ matrix.db }}, ${{ matrix.arch }})
-    needs: build-client
+    needs: [build-client, check-tag]
+    if: matrix.arch != 'arm64' || needs.check-tag.outputs.is_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 300
     strategy:
@@ -88,7 +107,10 @@ jobs:
 
   dockerise:
     name: Dockerise (${{ matrix.db }}, ${{ matrix.arch }})
-    needs: [build-server]
+    needs: [build-server, check-tag]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (matrix.arch != 'arm64' || needs.check-tag.outputs.is_release == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -148,7 +170,7 @@ jobs:
             msupplyfoundation/omsupply:${{ env.VERSION }}-${{ matrix.db }}-${{ matrix.arch }}
 
       - name: Build and Push Docker Image Dev
-        if: matrix.arch == 'amd64'
+        if: matrix.arch == 'amd64' && needs.check-tag.outputs.is_release == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -160,7 +182,10 @@ jobs:
 
   trigger-plugin-tests:
     name: Trigger Plugin Tests
-    needs: dockerise
+    needs: [dockerise, check-tag]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      needs.check-tag.outputs.is_release == 'true'
     uses: ./.github/workflows/trigger-plugin-tests.yaml
     with:
       image_tag: ${{ needs.dockerise.outputs.image_tag }}-dev
