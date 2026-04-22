@@ -1,9 +1,9 @@
 name: Dockerise
 
 on:
- push:
-  tags: 
-   - 'v*'
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build-client:
@@ -40,7 +40,7 @@ jobs:
     name: Build server (${{ matrix.db }}, ${{ matrix.arch }})
     needs: build-client
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 300
     strategy:
       matrix:
         db: [sqlite, postgres]
