@@ -974,6 +974,7 @@
   "label.customer-months-of-stock": "Customer MOS",
   "label.customer-name": "Customer Name",
   "label.customer-ref": "Customer Reference",
+  "label.customer-return": "Customer return",
   "label.customer-soh": "Their avail. stock",
   "label.date": "Date",
   "label.date-created": "Date Created",
@@ -2502,6 +2503,7 @@
   "reason.stored": "Stored",
   "reason.unknown": "Unknown",
   "replenishment": "Replenishment",
+  "report-code.customer-returns": "Customer Returns",
   "report-code.encounters": "Encounters",
   "report-code.expiring-items": "Expiring Items",
   "report-code.inbound": "Inbound Shipment",
@@ -2524,6 +2526,7 @@
   "report-code.stock-take-variance": "Stocktake Variance",
   "report-code.stock-take-with-quantity": "Stocktake with snapshot quantity",
   "report-code.stock-take-without-quantity": "Stocktake without snapshot quantity",
+  "report-code.supplier-returns": "Supplier Returns",
   "report.actual": "Actual",
   "report.actual-stock": "Actual stock",
   "report.adjustment-down": "Wastage (adjustment -)",
@@ -2810,8 +2813,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "report-code.customer-returns": "Customer Returns",
-  "report-code.supplier-returns": "Supplier Returns",
-  "label.customer-return": "Customer return"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
