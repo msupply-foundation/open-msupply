@@ -367,7 +367,7 @@ const DetailViewInner = () => {
               stockLineIds={stockLineIds || []}
               supplierId={data.otherParty.id}
               modalMode={returnModalMode}
-              inboundShipmentId={data.id}
+              inboundShipment={data}
               isNewReturn
             />
           )}
