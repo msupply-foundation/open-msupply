@@ -5,9 +5,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    site::assign_stores::{
-        AssignStoresToSite, AssignStoresToSiteError as ServiceError,
-    },
+    site::assign_stores::{AssignStoresToSite, AssignStoresToSiteError as ServiceError},
 };
 
 #[derive(InputObject)]
@@ -43,16 +41,13 @@ pub fn assign_stores_to_site(
         .assign_stores_to_site(
             &service_context,
             AssignStoresToSite {
-                site_id: input.site_id,
+                site_id,
                 store_ids: input.store_ids,
             },
         )
         .map_err(map_error)?;
 
-    Ok(AssignStoresToSiteNode {
-        site_id,
-        store_ids,
-    })
+    Ok(AssignStoresToSiteNode { site_id, store_ids })
 }
 
 fn map_error(error: ServiceError) -> async_graphql::Error {
