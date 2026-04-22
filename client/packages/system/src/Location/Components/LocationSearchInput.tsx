@@ -1,7 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Autocomplete,
-  CloseIcon,
   MenuItem,
   useTheme,
   useTranslation,
@@ -27,8 +26,6 @@ interface LocationSearchInputProps {
   enableAPI?: boolean;
   originalSelectedLocation?: LocationRowFragment | null;
   clearable?: boolean;
-  /** Alternative to `clearable`, ideal for tables where the X takes up valuable real estate */
-  includeRemoveOption?: boolean;
   placeholder?: string;
 }
 
@@ -87,8 +84,7 @@ export const LocationSearchInput = ({
   volumeRequired,
   enableAPI = true,
   originalSelectedLocation = null,
-  clearable = false,
-  includeRemoveOption = !clearable,
+  clearable = true,
   placeholder,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
@@ -97,37 +93,7 @@ export const LocationSearchInput = ({
 
   const [filter, setFilter] = useState<LocationFilter>(LocationFilter.All);
 
-  // Refs let the memoised Paper slot read fresh values without
-  // changing the component identity (which would remount the slot).
-  const filterRef = useRef(filter);
-  filterRef.current = filter;
-  const setFilterRef = useRef(setFilter);
-  setFilterRef.current = setFilter;
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-
   const hasVolumeFilter = typeof volumeRequired === 'number';
-
-  const paperSlot = useMemo(() => {
-    if (!hasVolumeFilter && !includeRemoveOption) return undefined;
-    return ({
-      children,
-      ...paperProps
-    }: React.ComponentProps<typeof Paper> & { children?: React.ReactNode }) => (
-      <Paper {...paperProps} sx={{ minWidth: '300px' }}>
-        {hasVolumeFilter && (
-          <LocationFilters
-            filter={filterRef.current}
-            setFilter={setFilterRef.current}
-          />
-        )}
-        {children}
-        {includeRemoveOption && (
-          <StickyRemoveButton onChangeRef={onChangeRef} />
-        )}
-      </Paper>
-    );
-  }, [hasVolumeFilter, includeRemoveOption]);
 
   const {
     query: { data, isLoading },
@@ -227,12 +193,12 @@ export const LocationSearchInput = ({
       getOptionLabel={getOptionLabel}
       placeholder={placeholder}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
-      slots={{
-        paper: paperSlot,
-      }}
-      slotProps={{
-        listbox: { style: { maxHeight: '35vh' } },
-      }}
+      slots={hasVolumeFilter ? { paper: PaperSlot as never } : undefined}
+      slotProps={
+        hasVolumeFilter
+          ? { paper: { filter, setFilter } as never }
+          : undefined
+      }
     />
   );
 };
@@ -242,37 +208,21 @@ export const formatLocationLabel = (location: LocationRowFragment) => {
   return `${name}${locationType ? ` (${locationType.name})` : ''}`;
 };
 
-const StickyRemoveButton = ({
-  onChangeRef,
-}: {
-  onChangeRef: React.RefObject<(location: LocationRowFragment | null) => void>;
-}) => {
-  const t = useTranslation();
-
-  return (
-    <MenuItem
-      onMouseDown={e => {
-        e.stopPropagation();
-        e.preventDefault();
-        onChangeRef.current?.(null);
-      }}
-      sx={{
-        display: 'inline-flex',
-        flex: 1,
-        width: '100%',
-        borderTop: '1px solid',
-        borderTopColor: 'divider',
-        position: 'sticky',
-        bottom: 0,
-        backgroundColor: 'background.paper',
-        zIndex: 1,
-      }}
-    >
-      <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{t('label.remove')}</span>
-      <CloseIcon sx={{ color: 'gray.dark' }} />
-    </MenuItem>
-  );
-};
+const PaperSlot = ({
+  children,
+  filter,
+  setFilter,
+  ...paperProps
+}: React.ComponentProps<typeof Paper> & {
+  children?: React.ReactNode;
+  filter: LocationFilter;
+  setFilter: (filter: LocationFilter) => void;
+}) => (
+  <Paper {...paperProps} sx={{ minWidth: '300px' }}>
+    <LocationFilters filter={filter} setFilter={setFilter} />
+    {children}
+  </Paper>
+);
 
 const LocationFilters = ({
   filter,
@@ -298,10 +248,6 @@ const LocationFilters = ({
         p: 1,
         borderBottom: '1px solid',
         borderColor: 'divider',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1,
-        backgroundColor: 'background.paper',
       }}
     >
       <ButtonGroup variant="outlined" size="small" fullWidth>
