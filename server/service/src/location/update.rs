@@ -53,7 +53,7 @@ pub fn validate(
         None => return Err(UpdateLocationError::LocationDoesNotExist),
     };
 
-    if !check_location_code_is_unique(&input.id, input.code.clone(), connection)? {
+    if !check_location_code_is_unique(&input.id, input.code.clone(), store_id, connection)? {
         return Err(UpdateLocationError::CodeAlreadyExists);
     }
 

@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
-        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueViolation,
+        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -97,9 +97,18 @@ fn map_error(error: ServiceError) -> Result<InsertLocationErrorInterface> {
     let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
+        // Structured Errors
+        ServiceError::LocationAlreadyExists => {
+            return Ok(InsertLocationErrorInterface::LocationAlreadyExists(
+                RecordAlreadyExist,
+            ))
+        }
+        ServiceError::LocationWithCodeAlreadyExists => {
+            return Ok(InsertLocationErrorInterface::UniqueValueViolation(
+                UniqueValueViolation(UniqueValueKey::Code),
+            ))
+        }
         // Standard Graphql Errors
-        ServiceError::LocationAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::LocationWithCodeAlreadyExists => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
