@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{ChangelogTableName, SyncAction as SyncActionRepo, SyncBufferRow};
+use repository::{ChangelogTableName, SyncAction as SyncActionRepo, SyncBufferRow, SyncRecordData};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
@@ -84,7 +84,7 @@ impl CommonSyncRecord {
                 // causing errors as the merge is applied to record that never got upserted first.
                 uuid()
             }
-            _ if table_name == *"name_oms_fields" => {
+            _ if table_name == "name_oms_fields" => {
                 // append table name to record_id to avoid name overwrite
                 format!("{}{:#?}", record_id, ChangelogTableName::NameOmsFields)
             }
@@ -95,10 +95,7 @@ impl CommonSyncRecord {
             table_name,
             record_id,
             action: action.to_row_action(),
-            data: serde_json::to_string(&data).map_err(|e| ParsingSyncRecordError {
-                source: e,
-                record: data.clone(),
-            })?,
+            data: SyncRecordData(data),
             received_datetime: Utc::now().naive_utc(),
             integration_datetime: None,
             integration_error: None,
@@ -127,7 +124,7 @@ impl RemoteSyncBatchV5 {
 impl CommonSyncRecord {
     pub(crate) fn test() -> Self {
         Self {
-            table_name: "test".to_string(),
+            table_name: "item".to_string(),
             record_id: "test".to_string(),
             action: SyncAction::Delete,
             record_data: json!({}),
@@ -147,17 +144,17 @@ mod tests {
     #[test]
     fn test_insert_to_upsert_mapping() {
         let record = CommonSyncRecord {
-            table_name: "test".to_string(),
+            table_name: "item".to_string(),
             record_id: "test".to_string(),
             action: SyncAction::Insert,
             record_data: json!({}),
         };
 
         let row = record.to_buffer_row(None).unwrap();
-        assert_eq!(row.table_name, "test");
+        assert_eq!(row.table_name, "item");
         assert_eq!(row.record_id, "test");
         assert_eq!(row.action, SyncActionRepo::Upsert);
-        assert_eq!(row.data, "{}");
+        assert_eq!(row.data, SyncRecordData(json!({})));
     }
 
     #[actix_rt::test]
@@ -248,7 +245,7 @@ mod tests {
         assert_eq!(
             rows.iter()
                 .filter(|r| r.action == SyncActionRepo::Merge
-                    && serde_json::from_str::<ItemMergeMessage>(&r.data)
+                    && serde_json::from_value::<ItemMergeMessage>(r.data.0.clone())
                         .unwrap()
                         .merge_id_to_keep
                         == "itemA")

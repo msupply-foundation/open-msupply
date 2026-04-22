@@ -52,7 +52,7 @@ impl SyncTranslation for ContactTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyContactRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyContactRow>(sync_record.data.0.clone())?;
         let result = ContactRow {
             id: data.ID,
             name_id: data.name_ID,

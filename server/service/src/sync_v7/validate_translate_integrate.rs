@@ -61,20 +61,20 @@ fn sync_type(table_name: &ChangelogTableName) -> &'static SyncType {
     }
 }
 
-fn translate(table_name: &ChangelogTableName, data: &str) -> Result<Box<dyn Upsert>, Error> {
+fn translate(table_name: &ChangelogTableName, data: &serde_json::Value) -> Result<Box<dyn Upsert>, Error> {
     let upsert: Box<dyn Upsert> = match table_name {
-        ChangelogTableName::Unit => Box::new(serde_json::from_str::<UnitRow>(data)?),
-        ChangelogTableName::Currency => Box::new(serde_json::from_str::<CurrencyRow>(data)?),
-        ChangelogTableName::Name => Box::new(serde_json::from_str::<NameRow>(data)?),
-        ChangelogTableName::Store => Box::new(serde_json::from_str::<StoreRow>(data)?),
+        ChangelogTableName::Unit => Box::new(serde_json::from_value::<UnitRow>(data.clone())?),
+        ChangelogTableName::Currency => Box::new(serde_json::from_value::<CurrencyRow>(data.clone())?),
+        ChangelogTableName::Name => Box::new(serde_json::from_value::<NameRow>(data.clone())?),
+        ChangelogTableName::Store => Box::new(serde_json::from_value::<StoreRow>(data.clone())?),
         ChangelogTableName::LocationType => {
-            Box::new(serde_json::from_str::<LocationTypeRow>(data)?)
+            Box::new(serde_json::from_value::<LocationTypeRow>(data.clone())?)
         }
-        ChangelogTableName::Item => Box::new(serde_json::from_str::<ItemRow>(data)?),
-        ChangelogTableName::StockLine => Box::new(serde_json::from_str::<StockLineRow>(data)?),
-        ChangelogTableName::Invoice => Box::new(serde_json::from_str::<InvoiceRow>(data)?),
+        ChangelogTableName::Item => Box::new(serde_json::from_value::<ItemRow>(data.clone())?),
+        ChangelogTableName::StockLine => Box::new(serde_json::from_value::<StockLineRow>(data.clone())?),
+        ChangelogTableName::Invoice => Box::new(serde_json::from_value::<InvoiceRow>(data.clone())?),
         ChangelogTableName::InvoiceLine => {
-            Box::new(serde_json::from_str::<InvoiceLineRow>(data)?)
+            Box::new(serde_json::from_value::<InvoiceLineRow>(data.clone())?)
         }
         _ => {
             return Err(Error::TranslationError(serde_json::Error::custom(format!(

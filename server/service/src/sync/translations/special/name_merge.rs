@@ -36,7 +36,7 @@ impl SyncTranslation for NameMergeTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<NameMergeMessage>(&sync_record.data)?;
+        let data = serde_json::from_value::<NameMergeMessage>(sync_record.data.0.clone())?;
 
         let name_link_repo = NameLinkRowRepository::new(connection);
         let name_links = name_link_repo.find_many_by_name_id(&data.merge_id_to_delete)?;
@@ -161,7 +161,9 @@ mod tests {
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
+        SyncRecordData,
     };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_name_merge() {
@@ -170,22 +172,20 @@ mod tests {
                 record_id: "name_b".to_string(),
                 table_name: "name".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                        "mergeIdToKeep": "name_b",
-                        "mergeIdToDelete": "name_a"
-                    }"#
-                .to_string(),
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "name_b",
+                    "mergeIdToDelete": "name_a"
+                })),
                 ..SyncBufferRow::default()
             },
             SyncBufferRow {
                 record_id: "name_c".to_string(),
                 table_name: "name".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                      "mergeIdToKeep": "name_c",
-                      "mergeIdToDelete": "name_b"
-                    }"#
-                .to_string(),
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "name_c",
+                    "mergeIdToDelete": "name_b"
+                })),
                 ..SyncBufferRow::default()
             },
         ];
@@ -279,22 +279,20 @@ mod tests {
                 record_id: "name3_merge".to_string(),
                 table_name: "name".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                        "mergeIdToKeep": "name2",
-                        "mergeIdToDelete": "name3"
-                    }"#
-                .to_string(),
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "name2",
+                    "mergeIdToDelete": "name3"
+                })),
                 ..SyncBufferRow::default()
             },
             SyncBufferRow {
                 record_id: "name2_merge".to_string(),
                 table_name: "name".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                      "mergeIdToKeep": "name_a",
-                      "mergeIdToDelete": "name2"
-                    }"#
-                .to_string(),
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "name_a",
+                    "mergeIdToDelete": "name2"
+                })),
                 ..SyncBufferRow::default()
             },
             SyncBufferRow {
@@ -302,11 +300,10 @@ mod tests {
                 record_id: "name_a_merge".to_string(),
                 table_name: "name".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                      "mergeIdToKeep": "name_store_a",
-                      "mergeIdToDelete": "name_a"
-                    }"#
-                .to_string(),
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "name_store_a",
+                    "mergeIdToDelete": "name_a"
+                })),
                 ..SyncBufferRow::default()
             },
         ];
