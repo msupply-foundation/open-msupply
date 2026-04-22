@@ -1,3 +1,4 @@
+// Test commit to trigger CI workflow — safe to revert
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
