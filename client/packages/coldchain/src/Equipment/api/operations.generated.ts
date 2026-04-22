@@ -132,10 +132,11 @@ export type AssetFragment = {
 export type ColdchainAssetLogFragment = {
   __typename: 'AssetLogNode';
   comment?: string | null;
+  createdDatetime: string;
   id: string;
   logDatetime: string;
   status?: Types.AssetLogStatusNodeType | null;
-  type?: string | null;
+  type: Types.AssetLogTypeNodeType;
   reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
   user?: {
     __typename: 'UserNode';
@@ -425,10 +426,11 @@ export type AssetLogsQuery = {
     nodes: Array<{
       __typename: 'AssetLogNode';
       comment?: string | null;
+      createdDatetime: string;
       id: string;
       logDatetime: string;
       status?: Types.AssetLogStatusNodeType | null;
-      type?: string | null;
+      type: Types.AssetLogTypeNodeType;
       reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
       user?: {
         __typename: 'UserNode';
@@ -672,6 +674,7 @@ export const AssetFragmentDoc = gql`
 export const ColdchainAssetLogFragmentDoc = gql`
   fragment ColdchainAssetLog on AssetLogNode {
     comment
+    createdDatetime
     id
     logDatetime
     reason {
