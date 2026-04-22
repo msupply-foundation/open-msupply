@@ -103,6 +103,22 @@ const plugins: BackendPlugins = {
     for (let itemIter = 0; itemIter < aggregatedItems.length; itemIter++) {
       const item = aggregatedItems[itemIter];
 
+      if (
+        item.itemCode === undefined ||
+        item.itemCode === null ||
+        typeof item.itemCode !== 'string' ||
+        item.itemCode.trim() === ''
+      ) {
+        itemsResponses.push({
+          itemCode: item.itemCode,
+          success: false,
+          message: "param 'itemCode' is empty or invalid",
+        });
+        updateToShipped = false;
+        rollbackOperation = true;
+        continue;
+      }
+
       if (item.numberOfUnits === 0) {
         itemsResponses.push({
           itemCode: item.itemCode,
