@@ -68,8 +68,8 @@ export type UpsertSiteMutation = {
         | {
             __typename: 'UpsertSiteError';
             error:
-              | { __typename: 'CodeMustBeProvided'; description: string }
-              | { __typename: 'NameMustBeProvided'; description: string }
+              | { __typename: 'CodeRequired'; description: string }
+              | { __typename: 'NameRequired'; description: string }
               | { __typename: 'PasswordRequired'; description: string };
           };
     };
@@ -187,11 +187,11 @@ export const UpsertSiteDocument = gql`
           ... on UpsertSiteError {
             __typename
             error {
-              ... on CodeMustBeProvided {
+              ... on CodeRequired {
                 __typename
                 description
               }
-              ... on NameMustBeProvided {
+              ... on NameRequired {
                 __typename
                 description
               }

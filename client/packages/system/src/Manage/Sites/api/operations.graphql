@@ -51,11 +51,11 @@ mutation upsertSite($input: UpsertSiteInput!) {
         ... on UpsertSiteError {
           __typename
           error {
-            ... on CodeMustBeProvided {
+            ... on CodeRequired {
               __typename
               description
             }
-            ... on NameMustBeProvided {
+            ... on NameRequired {
               __typename
               description
             }
