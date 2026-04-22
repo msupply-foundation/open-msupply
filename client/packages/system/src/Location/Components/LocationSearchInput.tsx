@@ -67,7 +67,7 @@ const optionRenderer = (
   ) : (
     <MenuItem
       {...props}
-      key={location.label}
+      key={location.value}
       sx={{ justifyContent: 'space-between !important' }}
     >
       <span
