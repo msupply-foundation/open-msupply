@@ -83,7 +83,7 @@ export const ServerSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            <LogFileModal onClose={hideLog} isOpen={isLogShown} />
+            {isLogShown && <LogFileModal onClose={hideLog} isOpen={isLogShown} />}
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
         }
@@ -136,7 +136,7 @@ export const ServerSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            <LogFileModal onClose={hideLog} isOpen={isLogShown} />
+            {isLogShown && <LogFileModal onClose={hideLog} isOpen={isLogShown} />}
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
         }

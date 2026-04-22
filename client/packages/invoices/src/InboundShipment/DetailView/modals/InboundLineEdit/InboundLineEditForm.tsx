@@ -4,6 +4,7 @@ import {
   ModalLabel,
   Grid,
   Box,
+  Typography,
   useTranslation,
   BasicTextInput,
   PurchaseOrderLineStatusNode,
@@ -78,50 +79,60 @@ export const InboundLineEditForm = ({
     );
   }, [query.data, data, selectedPOLine?.id, hasPurchaseOrder]);
 
+  const remainingUnits =
+    hasPurchaseOrder && selectedPOLine
+      ? (selectedPOLine.adjustedNumberOfUnits ??
+          selectedPOLine.requestedNumberOfUnits) -
+        (selectedPOLine.shippedNumberOfUnits ?? 0)
+      : null;
+
   if (hasPurchaseOrder) {
     return (
-      <Box display="flex" flexWrap="wrap" alignItems="center" gap={1}>
-        <Box
-          display="flex"
-          alignItems="center"
-          flex={1}
-          minWidth={300}
-          gap={1}
-        >
-          <ModalLabel
-            label={t('label.purchase-order-line')}
-            justifyContent="flex-end"
-          />
-          <Grid flex={1}>
-            <Autocomplete
-              autoFocus={!selectedPOLine}
-              disabled={disabled}
-              options={availablePOLines}
-              value={selectedPOLine}
-              getOptionLabel={(option: PurchaseOrderLineFragment) => {
-                const qty =
-                  option.adjustedNumberOfUnits ?? option.requestedNumberOfUnits;
-                return `#${option.lineNumber} ${option.item.name} (${option.item.code}) - ${qty} units`;
-              }}
-              isOptionEqualToValue={(a, b) => a.id === b.id}
-              onChange={(_, line) => onChangePOLine(line ?? null)}
-              width="100%"
+      <>
+        <Box display="flex" flexWrap="wrap" alignItems="center" gap={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            flex={1}
+            minWidth={300}
+            gap={1}
+          >
+            <ModalLabel
+              label={t('label.purchase-order-line')}
+              justifyContent="flex-end"
+              minWidth="fit-content"
             />
-          </Grid>
+            <Grid flex={1}>
+              <Autocomplete
+                autoFocus={!selectedPOLine}
+                disabled={disabled}
+                options={availablePOLines}
+                value={selectedPOLine}
+                getOptionLabel={(option: PurchaseOrderLineFragment) =>
+                  `#${option.lineNumber} ${option.item.name} (${option.item.code}) - ${t('label.pack-size')} ${option.requestedPackSize}`
+                }
+                isOptionEqualToValue={(a, b) => a.id === b.id}
+                onChange={(_, line) => onChangePOLine(line ?? null)}
+                width="100%"
+              />
+            </Grid>
+          </Box>
         </Box>
         {selectedPOLine && (
-          <Box display="flex" alignItems="center" gap={1}>
-            <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-            <BasicTextInput
-              disabled
-              sx={{ width: 150 }}
-              value={
-                selectedPOLine.unit ?? selectedPOLine.item.unitName ?? ''
-              }
-            />
+          <Box display="flex" justifyContent="space-between" sx={{ mt: 1, ml: 1 }}>
+            {remainingUnits != null && (
+              <Typography variant="body2" color="text.secondary">
+                {t('label.remaining-quantity-to-receive', {
+                  count: remainingUnits,
+                })}
+              </Typography>
+            )}
+            <Typography variant="body2" color="text.secondary">
+              {`${t('label.unit')}: ${selectedPOLine.unit ?? selectedPOLine.item.unitName ?? ''}`}
+            </Typography>
           </Box>
         )}
-      </Box>
+      </>
     );
   }
 

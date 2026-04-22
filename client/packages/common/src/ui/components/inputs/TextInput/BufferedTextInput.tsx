@@ -17,7 +17,7 @@ export const BufferedTextInput: FC<BufferedTextInputProps> = ({
   onChange,
   ...rest
 }) => {
-  const [buffer, setBuffer] = useBufferState(value);
+  const [buffer, setBuffer] = useBufferState(value as string | undefined);
 
   return (
     <BasicTextInput
