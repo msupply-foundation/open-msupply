@@ -54,9 +54,10 @@ export const SitesList = () => {
     onOpen();
   };
 
-  const save = async () => {
+  const save = async (saveStoreAssignments: () => Promise<void>) => {
     try {
       await upsert();
+      await saveStoreAssignments();
       success(t('messages.site-saved'))();
       handleClose();
     } catch (e) {

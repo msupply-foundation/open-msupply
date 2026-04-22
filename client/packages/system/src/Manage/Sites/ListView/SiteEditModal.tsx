@@ -5,6 +5,7 @@ import {
   Box,
   useDialog,
   DialogButton,
+  Divider,
   InputWithLabelRow,
   BasicTextInput,
   NumericTextInput,
@@ -13,14 +14,15 @@ import {
   XCircleIcon,
   Typography,
 } from '@openmsupply-client/common';
-import { DraftSite } from '../api';
+import { DraftSite, useSiteStoresDraft } from '../api';
+import { SiteStoresSection } from './SiteStoresSection';
 
 interface SiteEditModalProps {
   site: DraftSite;
   isOpen: boolean;
   onClose: () => void;
   updateDraft: (patch: Partial<DraftSite>) => void;
-  upsert: () => Promise<void>;
+  upsert: (afterUpsert: () => Promise<void>) => Promise<void>;
   onDelete: () => void;
 }
 
@@ -43,8 +45,14 @@ export const SiteEditModal = ({
     password.trim().length > 0 || (isExisting && password === '');
   const canSave = isValidName && isValidCode && isValidPassword;
 
+  const storesDraft = useSiteStoresDraft(id, isNew);
+
   const handleClose = () => {
     onClose();
+  };
+
+  const handleOk = async () => {
+    await upsert(storesDraft.save);
   };
 
   return (
@@ -59,7 +67,7 @@ export const SiteEditModal = ({
         ) : undefined
       }
       okButton={
-        <DialogButton variant="ok" onClick={upsert} disabled={!canSave} />
+        <DialogButton variant="ok" onClick={handleOk} disabled={!canSave} />
       }
     >
       <DetailContainer>
@@ -142,6 +150,14 @@ export const SiteEditModal = ({
               }
             />
           )}
+          <Divider />
+          <SiteStoresSection
+            siteId={id}
+            stores={storesDraft.stores}
+            isFetching={storesDraft.isFetching}
+            onAddStore={storesDraft.addStore}
+            onRemoveStore={storesDraft.removeStore}
+          />
         </Box>
       </DetailContainer>
     </Modal>
