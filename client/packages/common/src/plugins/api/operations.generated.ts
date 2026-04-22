@@ -13,6 +13,7 @@ export type FrontendPluginMetadataQuery = {
     __typename: 'FrontendPluginMetadataNode';
     code: string;
     path: string;
+    hash: string;
   }>;
 };
 
@@ -32,6 +33,7 @@ export const FrontendPluginMetadataDocument = gql`
     frontendPluginMetadata {
       code
       path
+      hash
     }
   }
 `;

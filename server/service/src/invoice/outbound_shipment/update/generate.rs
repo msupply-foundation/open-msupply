@@ -16,6 +16,7 @@ use crate::{
             calculate_foreign_currency_total, calculate_total_after_tax,
             generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
         },
+        invoice_date_utils::handle_new_backdated_datetime,
         stock_effect::{stock_effects, StockEffect},
     },
     store_preference::get_store_preferences,
@@ -48,6 +49,7 @@ pub(crate) fn generate(
         currency_rate: input_currency_rate,
         expected_delivery_date: input_expected_delivery_date,
         shipping_method_id,
+        backdated_datetime: input_backdated_datetime,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
@@ -83,6 +85,15 @@ pub(crate) fn generate(
         update_invoice.status = status.full_status()
     }
 
+    // Already validated in validate
+    if let Some(backdated_datetime) = input_backdated_datetime {
+        handle_new_backdated_datetime(
+            &mut update_invoice,
+            backdated_datetime.naive_utc(),
+            Utc::now().naive_utc(),
+        );
+    }
+
     let expected_delivery_date = calculate_expected_delivery_date(
         &update_invoice,
         input_expected_delivery_date,
@@ -114,7 +125,7 @@ pub(crate) fn generate(
         None
     };
 
-    let update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
+    let mut update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
         Some(generate_update_for_lines(
             connection,
             &update_invoice.id,
@@ -126,7 +137,25 @@ pub(crate) fn generate(
         None
     };
 
-    let lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
+    let mut lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
+
+    // When backdating, delete all existing lines (they need re-allocation at the new date)
+    // and clear update_lines so deleted lines don't get re-inserted
+    if input_backdated_datetime.is_some() {
+        update_lines = None;
+        let all_lines = InvoiceLineRepository::new(connection).query_by_filter(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(existing_invoice.id.clone())),
+        )?;
+        if !all_lines.is_empty() {
+            let backdate_lines: Vec<InvoiceLineRow> =
+                all_lines.into_iter().map(|l| l.invoice_line_row).collect();
+            match &mut lines_to_trim {
+                Some(existing) => existing.extend(backdate_lines),
+                None => lines_to_trim = Some(backdate_lines),
+            }
+        }
+    }
 
     Ok(GenerateResult {
         batches_to_update,

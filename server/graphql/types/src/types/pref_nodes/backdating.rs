@@ -7,8 +7,11 @@ pub struct BackdatingNode {
 
 #[Object]
 impl BackdatingNode {
-    pub async fn enabled(&self) -> Result<bool> {
-        Ok(self.data.enabled)
+    pub async fn shipments_enabled(&self) -> Result<bool> {
+        Ok(self.data.shipments_enabled)
+    }
+    pub async fn inventory_adjustments_enabled(&self) -> Result<bool> {
+        Ok(self.data.inventory_adjustments_enabled)
     }
     pub async fn max_days(&self) -> Result<i32> {
         Ok(self.data.max_days)
