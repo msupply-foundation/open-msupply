@@ -120,11 +120,11 @@ export const SiteEditModal = ({
                 <Box
                   display="flex"
                   alignItems="center"
+                  justifyContent="flex-end"
                   gap={0.5}
+                  flex={1}
                 >
-                  <Typography
-                    flex={1}
-                  >
+                  <Typography textAlign="right">
                     {clearHardwareId ? '' : hardwareId ?? ''}
                   </Typography>
                   {!clearHardwareId && !!hardwareId && (
