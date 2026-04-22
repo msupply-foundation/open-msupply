@@ -196,13 +196,18 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Err(InsertLocationError::LocationAlreadyExists)
         }));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
+        let expected = json!({
+            "insertLocation": {
+                "error": {
+                    "__typename": "RecordAlreadyExist"
+                }
+            }
+        });
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
-            &expected_message,
-            None,
+            &expected,
             Some(service_provider(test_service, &connection_manager))
         );
 
@@ -225,13 +230,19 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Err(InsertLocationError::LocationWithCodeAlreadyExists)
         }));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
+        let expected = json!({
+            "insertLocation": {
+                "error": {
+                    "__typename": "UniqueValueViolation",
+                    "field": "CODE"
+                }
+            }
+        });
+        assert_graphql_query!(
             &settings,
             mutation,
             &variables,
-            &expected_message,
-            None,
+            &expected,
             Some(service_provider(test_service, &connection_manager))
         );
 
