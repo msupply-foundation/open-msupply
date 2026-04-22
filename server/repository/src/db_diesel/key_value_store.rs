@@ -6,11 +6,11 @@ use std::sync::RwLock;
 use super::StorageConnection;
 use crate::repository_error::RepositoryError;
 
-use diesel_derive_enum::DbEnum;
+use crate::diesel_macros::diesel_string_enum;
 
 table! {
     key_value_store (id) {
-        id -> crate::db_diesel::key_value_store::KeyTypeMapping,
+        id -> Text,
         value_string -> Nullable<Text>,
         value_int-> Nullable<Integer>,
         value_bigint-> Nullable<BigInt>,
@@ -19,51 +19,53 @@ table! {
     }
 }
 
-// Snippet for adding new, including migration : https://github.com/msupply-foundation/open-msupply/wiki/Snippets "New Key Type for KeyValueStore"
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Hash)]
-#[cfg_attr(test, derive(strum::EnumIter))]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum KeyType {
-    #[default]
-    CentralSyncPullCursor,
-    SyncPullCursorV6,
-    SyncPushCursorV6,
-    SyncPullCursorV7,
-    SyncPushCursorV7,
-    RemoteSyncPushCursor,
-    ShipmentTransferProcessorCursor,
-    RequisitionTransferProcessorCursor,
-    ContactFormProcessorCursor,
-    LoadPluginProcessorCursor,
-    AssignRequisitionNumberProcessorCursor,
-    AddCentralPatientVisibilityProcessorCursor,
-    RequisitionAutoFinaliseProcessorCursor,
-    // Nested key value store to store dynamic cursor values as JSON text
-    DynamicCursor,
+// New variants can be added without a database migration (stored as TEXT via diesel_string_enum)
+diesel_string_enum! {
+    "SCREAMING_SNAKE_CASE",
+    #[derive(Clone, Eq, Hash)]
+    #[cfg_attr(test, derive(strum::EnumIter))]
+    pub enum KeyType {
+        #[default]
+        CentralSyncPullCursor,
+        SyncPullCursorV6,
+        SyncPushCursorV6,
+        SyncPullCursorV7,
+        SyncPushCursorV7,
+        RemoteSyncPushCursor,
+        ShipmentTransferProcessorCursor,
+        RequisitionTransferProcessorCursor,
+        ContactFormProcessorCursor,
+        LoadPluginProcessorCursor,
+        AssignRequisitionNumberProcessorCursor,
+        AddCentralPatientVisibilityProcessorCursor,
+        RequisitionAutoFinaliseProcessorCursor,
+        // Nested key value store to store dynamic cursor values as JSON text
+        DynamicCursor,
 
-    SettingsSyncUrl,
-    SettingsSyncUsername,
-    SettingsSyncPasswordSha256,
-    SettingsSyncIntervalSeconds,
-    SettingsSyncCentralServerSiteId,
-    SettingsSyncSiteId,
-    SettingsSyncSiteUuid,
-    SettingsSyncIsDisabled,
-    SettingsTokenSecret,
+        SettingsSyncUrl,
+        SettingsSyncUsername,
+        SettingsSyncPasswordSha256,
+        SettingsSyncIntervalSeconds,
+        SettingsSyncCentralServerSiteId,
+        SettingsSyncSiteId,
+        SettingsSyncSiteUuid,
+        SettingsSyncIsDisabled,
+        SettingsTokenSecret,
 
-    DatabaseVersion,
+        DatabaseVersion,
 
-    SettingsDisplayCustomLogo,
-    SettingsDisplayCustomLogoHash,
-    SettingsDisplayCustomTheme,
-    SettingsDisplayCustomThemeHash,
-    SettingsLabelPrinter,
+        SettingsDisplayCustomLogo,
+        SettingsDisplayCustomLogoHash,
+        SettingsDisplayCustomTheme,
+        SettingsDisplayCustomThemeHash,
+        SettingsLabelPrinter,
 
-    LogLevel,
-    LogDirectory,
-    LogFileName,
+        LogLevel,
+        LogDirectory,
+        LogFileName,
 
-    LastLedgerFixRun,
+        LastLedgerFixRun,
+    }
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -127,9 +129,11 @@ impl<'a> KeyValueStoreRepository<'a> {
         if let Some(cached) = get_cached_row(&key) {
             return Ok(Some(cached));
         }
+        let query = key_value_store::table
+            .filter(key_value_store::id.eq(key));
+        println!("{}", diesel::debug_query::<crate::DBType, _>(&query).to_string());
 
-        let result: Option<KeyValueStoreRow> = key_value_store::table
-            .filter(key_value_store::id.eq(key))
+        let result: Option<KeyValueStoreRow> = query
             .first(self.connection.lock().connection())
             .optional()?;
 

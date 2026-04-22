@@ -302,13 +302,38 @@ pub fn migrate(
 }
 
 fn get_database_version(connection: &StorageConnection) -> Version {
-    match KeyValueStoreRepository::new(connection).get_string(KeyType::DatabaseVersion) {
-        Ok(Some(version_str)) => Version::from_str(&version_str),
-        // Rust migrations start at "1.0.3"
-        // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
-        // is in 1.1.0 (there is an intentional gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
-        _ => Version::from_str("1.0.3"),
+    // This fails when rust code expects db type to be TEXT for KeyType but Postgres still uses enum
+    // This happens before the convert_key_value_store_to_text (v2_19) migration runs 
+    if let Ok(Some(version_str)) =
+        KeyValueStoreRepository::new(connection).get_string(KeyType::DatabaseVersion)
+    {
+        return Version::from_str(&version_str);
     }
+
+    // Fallback to raw SQL for when the column is still a Postgres enum
+    // (before the convert_key_value_store_to_text migration runs)
+    use diesel::{prelude::*, sql_query};
+    #[derive(diesel::QueryableByName)]
+    struct VersionRow {
+        #[diesel(sql_type = diesel::sql_types::Nullable<diesel::sql_types::Text>)]
+        value_string: Option<String>,
+    }
+    if let Ok(rows) = sql_query(
+        "SELECT value_string FROM key_value_store WHERE id = 'DATABASE_VERSION'",
+    )
+    .load::<VersionRow>(connection.lock().connection())
+    {
+        if let Some(row) = rows.first() {
+            if let Some(ref v) = row.value_string {
+                return Version::from_str(v);
+            }
+        }
+    }
+
+    // Rust migrations start at "1.0.3"
+    // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
+    // is in 1.1.0 (there is an intentional gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
+    Version::from_str("1.0.3")
 }
 
 fn create_migration_fragment_table(connection: &StorageConnection) -> Result<(), RepositoryError> {
@@ -330,8 +355,28 @@ fn set_database_version(
     connection: &StorageConnection,
     new_version: &Version,
 ) -> Result<(), RepositoryError> {
-    KeyValueStoreRepository::new(connection)
+    // This fails when rust code expects db type to be TEXT for KeyType but Postgres still uses enum
+    // This happens before the convert_key_value_store_to_text (v2_19) migration runs 
+    if KeyValueStoreRepository::new(connection)
         .set_string(KeyType::DatabaseVersion, Some(new_version.to_string()))
+        .is_ok()
+    {
+        return Ok(());
+    }
+
+    // Fallback to raw SQL for when the column is still a Postgres enum
+    // (before the convert_key_value_store_to_text migration runs at v2.19.0)
+    use diesel::connection::SimpleConnection;
+    connection
+        .lock()
+        .connection()
+        .batch_execute(&format!(
+            "INSERT INTO key_value_store (id, value_string) \
+             VALUES ('DATABASE_VERSION', '{version}') \
+             ON CONFLICT (id) DO UPDATE SET value_string = '{version}'",
+            version = new_version,
+        ))
+        .map_err(RepositoryError::from)
 }
 
 #[derive(Error, Debug)]
