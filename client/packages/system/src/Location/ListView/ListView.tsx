@@ -28,6 +28,9 @@ export const LocationListView = () => {
         key: 'name',
       },
       {
+        key: 'code',
+      },
+      {
         key: 'onHold',
         condition: '=',
       },
@@ -49,6 +52,7 @@ export const LocationListView = () => {
         accessorKey: 'code',
         header: t('label.code'),
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'name',
