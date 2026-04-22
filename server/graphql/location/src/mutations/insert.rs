@@ -234,7 +234,7 @@ mod test {
             "insertLocation": {
                 "error": {
                     "__typename": "UniqueValueViolation",
-                    "field": "CODE"
+                    "field": "code"
                 }
             }
         });
