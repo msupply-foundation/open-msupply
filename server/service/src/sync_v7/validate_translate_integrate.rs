@@ -4,11 +4,12 @@ use crate::{
 };
 
 use super::{validate::*, write_sync_buffer_error};
+use repository::syncv7::INTEGRATION_ORDER;
 use repository::{
-    ChangeLogInsertRow, ChangelogTableName, CurrencyRow, DatetimeFilter,
+    ChangeLogInsertRow, ChangelogTableName, CurrencyRow, DatetimeFilter, EqualFilter,
     InvoiceLineRow, InvoiceRow, ItemRow, LocationTypeRow, NameRow, RepositoryError, RowActionType,
     StockLineRow, StorageConnection, StoreRow, SyncBufferFilter, SyncBufferRepository,
-    SyncBufferRow, Upsert, UnitRow,
+    SyncBufferRow, UnitRow, Upsert,
 };
 use serde::de::Error as _;
 use thiserror::Error;
@@ -73,9 +74,7 @@ fn translate(table_name: &ChangelogTableName, data: &str) -> Result<Box<dyn Upse
         ChangelogTableName::Item => Box::new(serde_json::from_str::<ItemRow>(data)?),
         ChangelogTableName::StockLine => Box::new(serde_json::from_str::<StockLineRow>(data)?),
         ChangelogTableName::Invoice => Box::new(serde_json::from_str::<InvoiceRow>(data)?),
-        ChangelogTableName::InvoiceLine => {
-            Box::new(serde_json::from_str::<InvoiceLineRow>(data)?)
-        }
+        ChangelogTableName::InvoiceLine => Box::new(serde_json::from_str::<InvoiceLineRow>(data)?),
         _ => {
             return Err(Error::TranslationError(serde_json::Error::custom(format!(
                 "No translator for table {:?}",
@@ -153,7 +152,7 @@ pub fn validate_translate_integrate<'a>(
         None => base_filter,
     };
 
-    let rows = SyncBufferRepository::new(connection).query(Some(filter))?;
+    let rows = SyncBufferRepository::new(connection).query(Some(filter.clone()))?;
     let mut total = rows.len() as i64;
     let mut last_progress = total / PROGRESS_INTERVAL;
 
@@ -163,32 +162,45 @@ pub fn validate_translate_integrate<'a>(
 
     let mut had_store_records = false;
 
-    for row in &rows {
-        match validate_translate_integrate_one(connection, row, &sync_context) {
-            Ok(()) => write_sync_buffer_success(&row.record_id, connection)?,
-            Err(e) => {
-                write_sync_buffer_error(&row.record_id, connection, &e)?;
+    // Process tables in FK order so parents integrate before children.
+    for table in INTEGRATION_ORDER {
+        let per_table_filter = filter
+            .clone()
+            .table_name(EqualFilter::equal_to(table.to_string()));
+
+        let rows = SyncBufferRepository::new(connection).query(Some(per_table_filter))?;
+
+        if *table == ChangelogTableName::Store && !rows.is_empty() {
+            had_store_records = true;
+        }
+
+        for row in &rows {
+            match validate_translate_integrate_one(connection, row, &sync_context) {
+                Ok(()) => write_sync_buffer_success(&row.record_id, connection)?,
+                Err(e) => {
+                    write_sync_buffer_error(&row.record_id, connection, &e)?;
+                }
+            }
+
+            total -= 1;
+
+            if let Some(logger) = logger.as_mut() {
+                if total / PROGRESS_INTERVAL <= last_progress {
+                    logger.progress(total)?;
+                    last_progress -= 1;
+                }
             }
         }
 
-        // Refresh active stores after store records are integrated
-        // so that subsequent remote records can validate against them
-        if row.table_name == "store" {
+        // Refresh active stores after the Store batch so downstream Remote
+        // records validate against fresh state.
+        if *table == ChangelogTableName::Store && had_store_records {
             if let SyncContext::Remote {
                 is_initialising: _,
                 active_stores,
             } = &mut sync_context
             {
                 *active_stores = ActiveStoresOnSite::get(connection).unwrap();
-            }
-        }
-
-        total -= 1;
-
-        if let Some(logger) = logger.as_mut() {
-            if total / PROGRESS_INTERVAL <= last_progress {
-                logger.progress(total)?;
-                last_progress -= 1;
             }
         }
     }
