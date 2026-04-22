@@ -129,11 +129,8 @@ impl<'a> KeyValueStoreRepository<'a> {
         if let Some(cached) = get_cached_row(&key) {
             return Ok(Some(cached));
         }
-        let query = key_value_store::table
-            .filter(key_value_store::id.eq(key));
-        println!("{}", diesel::debug_query::<crate::DBType, _>(&query).to_string());
-
-        let result: Option<KeyValueStoreRow> = query
+        let result: Option<KeyValueStoreRow> = key_value_store::table
+            .filter(key_value_store::id.eq(key))
             .first(self.connection.lock().connection())
             .optional()?;
 
