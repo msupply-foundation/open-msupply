@@ -156,12 +156,10 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 
             let invoice_line_id = match find_linked_invoice_line_id(connection, &data.id)? {
                 Some(id) => id,
-                None => {
-                    return Ok(PullTranslateResult::Ignored(format!(
-                        "no trans_line with goods_received_lines_ID found for goods_received_line {}",
-                        data.id
-                    )))
-                }
+                None => return Ok(PullTranslateResult::Ignored(format!(
+                    "no trans_line with goods_received_lines_ID found for goods_received_line {}",
+                    data.id
+                ))),
             };
 
             return match InvoiceLineRowRepository::new(connection)

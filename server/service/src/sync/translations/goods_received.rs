@@ -29,8 +29,6 @@ struct LegacyGoodsReceivedRow {
     user_id_created: Option<String>,
     #[serde(deserialize_with = "zero_date_as_option")]
     entry_date: Option<NaiveDate>,
-    #[serde(deserialize_with = "zero_date_as_option")]
-    received_date: Option<NaiveDate>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     donor_id: Option<String>,
 }
@@ -51,8 +49,8 @@ fn find_linked_invoice_id(
     goods_received_id: &str,
 ) -> Result<Option<String>, anyhow::Error> {
     let pattern = format!("%\"goods_received_ID\"%\"{goods_received_id}\"%");
-    let rows =
-        SyncBufferRowRepository::new(connection).find_by_table_and_data_like("transact", &pattern)?;
+    let rows = SyncBufferRowRepository::new(connection)
+        .find_by_table_and_data_like("transact", &pattern)?;
 
     // Verify the match by parsing JSON (LIKE can produce false positives)
     for row in rows {
@@ -188,7 +186,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
-            received_datetime: data.received_date.and_then(|d| d.and_hms_opt(0, 0, 0)),
+            received_datetime: None,
             verified_datetime: None,
             cancelled_datetime: None,
             colour: None,
@@ -228,11 +226,8 @@ mod tests {
         use crate::sync::test::test_data::goods_received as test_data;
         let translator = GoodsReceivedTranslation {};
 
-        let (_, connection, _, _) = setup_all(
-            "test_goods_received_translation",
-            MockDataInserts::all(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_goods_received_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             record.insert_extra_data(&connection).await;
