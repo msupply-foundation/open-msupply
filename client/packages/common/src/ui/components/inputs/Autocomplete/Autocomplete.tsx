@@ -239,10 +239,14 @@ export function Autocomplete<T>({
       slotProps={{
         ...restOfAutocompleteProps.slotProps,
         popper: popperMinWidth
-          ? { placement: 'bottom-start', style: { minWidth: popperMinWidth, width: 'auto' } }
+          ? {
+              placement: 'bottom-start',
+              style: { minWidth: popperMinWidth, width: 'auto' },
+            }
           : undefined,
       }}
       sx={{
+        width,
         ...restOfAutocompleteProps.sx,
       }}
     />

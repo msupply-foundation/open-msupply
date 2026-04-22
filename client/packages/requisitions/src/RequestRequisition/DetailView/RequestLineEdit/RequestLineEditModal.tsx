@@ -11,7 +11,10 @@ import {
   RepresentationValue,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import {
+  ItemWithAvailableStockFragment,
+  ItemWithStatsFragment,
+} from '@openmsupply-client/system';
 import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
 import { isRequestDisabled, shouldDeleteLine } from '../../../utils';
@@ -47,9 +50,9 @@ export const RequestLineEditModal = ({
     [requisition?.lines.nodes]
   );
 
-  const [currentItem, setCurrentItem] = useState(
-    lines?.find(line => line.item.id === itemId)?.item
-  );
+  const [currentItem, setCurrentItem] = useState<
+    ItemWithAvailableStockFragment | ItemWithStatsFragment | undefined
+  >(lines?.find(line => line.item.id === itemId)?.item);
   const getDefaultRepresentation = (
     item?: { isVaccine?: boolean; doses?: number } | null
   ): RepresentationValue => {
@@ -59,8 +62,9 @@ export const RequestLineEditModal = ({
     return Representation.UNITS;
   };
 
-  const [representation, setRepresentation] =
-    useState<RepresentationValue>(getDefaultRepresentation(currentItem));
+  const [representation, setRepresentation] = useState<RepresentationValue>(
+    getDefaultRepresentation(currentItem)
+  );
 
   const { draft, save, update, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);

@@ -18,5 +18,3 @@ type WithOrWithoutPlural<K> = TypeOptions['jsonFormat'] extends 'v4'
   : K;
 
 export type LocaleKey = WithOrWithoutPlural<keyof typeof common>;
-
-export const localeKeySet = new Set(Object.keys(common));

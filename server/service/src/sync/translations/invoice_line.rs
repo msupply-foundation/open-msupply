@@ -51,6 +51,8 @@ pub struct TransLineRowOmsFields {
     pub status: Option<String>,
     #[serde(default)]
     pub manufacture_date: Option<NaiveDate>,
+    #[serde(default)]
+    pub purchase_order_line_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -300,6 +302,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             program_id,
             status,
             manufacture_date,
+            purchase_order_line_id,
         } = oms_fields.unwrap_or_default();
 
         let result = InvoiceLineRow {
@@ -335,7 +338,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             volume_per_pack,
             shipped_pack_size,
             manufacture_date,
-            purchase_order_line_id: None,
+            purchase_order_line_id,
             status: match status.as_deref() {
                 Some("PENDING") => Some(repository::InvoiceLineStatus::Pending),
                 Some("PASSED") => Some(repository::InvoiceLineStatus::Passed),
@@ -408,7 +411,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     shipped_pack_size,
                     status,
                     manufacture_date,
-                    purchase_order_line_id: _,
+                    purchase_order_line_id,
                 },
             item_row,
             ..
@@ -424,6 +427,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 None => None,
             },
             manufacture_date,
+            purchase_order_line_id,
         });
 
         let legacy_row = LegacyTransLineRow {

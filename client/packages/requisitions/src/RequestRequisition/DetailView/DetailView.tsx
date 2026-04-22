@@ -30,7 +30,6 @@ import { SidePanel } from './SidePanel';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
 import { IndicatorsTab } from './IndicatorsTab';
-import { buildIndicatorEditRoute } from './utils';
 import { RequestLineEditModal } from './RequestLineEdit';
 import { useRequestColumns } from './columns';
 import { isRequestLinePlaceholderRow } from '../../utils';
@@ -77,25 +76,6 @@ export const DetailView = () => {
   const onRowClick = useCallback(
     (line: RequestLineFragment) => onOpen(line.item.id),
     [onOpen]
-  );
-
-  const onProgramIndicatorClick = useCallback(
-    (
-      requisitionId?: string,
-      programIndicatorCode?: string,
-      indicatorId?: string
-    ) => {
-      if (!requisitionId || !programIndicatorCode || !indicatorId) return;
-
-      navigate(
-        buildIndicatorEditRoute(
-          requisitionId,
-          programIndicatorCode,
-          indicatorId
-        )
-      );
-    },
-    [navigate]
   );
 
   useEffect(() => {
@@ -204,10 +184,9 @@ export const DetailView = () => {
     tabs.push({
       Component: (
         <IndicatorsTab
-          onClick={onProgramIndicatorClick}
           isLoading={isLoading || isProgramIndicatorsLoading}
-          request={data}
           indicators={programIndicators?.nodes}
+          disabled={isDisabled}
         />
       ),
       value: t('label.indicators'),
