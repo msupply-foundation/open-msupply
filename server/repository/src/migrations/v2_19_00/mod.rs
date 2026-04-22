@@ -5,6 +5,7 @@ mod add_sync_log_v7;
 mod alter_changelog_table_for_sync_v7;
 mod alter_sync_buffer_for_sync_v7;
 mod changelog_related_changes_for_sync_v7;
+mod convert_key_value_store_to_text;
 
 pub(crate) struct V2_19_00;
 impl Migration for V2_19_00 {
@@ -18,6 +19,7 @@ impl Migration for V2_19_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
+            Box::new(convert_key_value_store_to_text::Migrate),
             Box::new(alter_changelog_table_for_sync_v7::Migrate),
             Box::new(alter_sync_buffer_for_sync_v7::Migrate),
             Box::new(add_sync_log_v7::Migrate),
