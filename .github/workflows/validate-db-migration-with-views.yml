@@ -38,6 +38,8 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Drop existing database
+        run: rm -f validate_views
       - name: Initialize database with base branch code
         working-directory: server
         run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli -- initialise-database
@@ -67,6 +69,8 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Drop existing database
+        run: dropdb --if-exists validate_views
       - name: Initialize database with base branch code
         working-directory: server
         run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli --features postgres -- initialise-database
