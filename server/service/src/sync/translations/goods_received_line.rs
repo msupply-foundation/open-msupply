@@ -7,8 +7,8 @@ use super::{
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemLinkRowRepository,
-    ItemRowRepository, StorageConnection, SyncBufferRow, SyncBufferRowRepository,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
+    StorageConnection, SyncBufferRow, SyncBufferRowRepository,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -179,18 +179,6 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         }
 
         // Non-finalized GR: create invoice line
-        let item_links =
-            ItemLinkRowRepository::new(connection).find_many_by_item_id(&data.item_ID)?;
-        let item_link = match item_links.first() {
-            Some(link) => link,
-            None => {
-                return Ok(PullTranslateResult::Ignored(format!(
-                    "item_link not found for item {} on goods_received_line {}",
-                    data.item_ID, data.id
-                )))
-            }
-        };
-
         let item_code = ItemRowRepository::new(connection)
             .find_one_by_id(&data.item_ID)?
             .map(|item| item.code)
@@ -201,9 +189,10 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         let line = InvoiceLineRow {
             id: data.id,
             invoice_id: data.goods_received_ID,
-            item_link_id: item_link.id.clone(),
+            item_link_id: data.item_ID,
             item_name: data.item_name,
             item_code,
+            stock_line_id: None,
             location_id: data.location_ID,
             batch: data.batch_received,
             expiry_date: data.expiry_date,
@@ -212,12 +201,26 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             sell_price_per_pack: data.cost_price,
             total_before_tax: total,
             total_after_tax: total,
+            tax_percentage: None,
             r#type: InvoiceLineType::StockIn,
             number_of_packs: data.quantity_received,
+            prescribed_quantity: None,
             note: data.comment,
+            foreign_currency_price_before_tax: None,
+            item_variant_id: None,
+            linked_invoice_id: None,
+            vvm_status_id: None,
+            reason_option_id: None,
+            campaign_id: None,
+            program_id: None,
+            shipped_number_of_packs: None,
             volume_per_pack: data.volume_per_pack,
+            shipped_pack_size: None,
+            status: None,
+            manufacture_date: None,
             purchase_order_line_id: data.order_line_ID,
-            ..Default::default()
+            donor_id: None,
+            manufacturer_id: None,
         };
 
         Ok(PullTranslateResult::upsert(line))

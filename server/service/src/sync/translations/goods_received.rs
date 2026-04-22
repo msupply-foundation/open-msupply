@@ -66,15 +66,8 @@ fn find_linked_invoice_id(
     Ok(None)
 }
 
-fn map_status(status: &str) -> InvoiceStatus {
-    match status {
-        "fn" | "Fin" | "Finalised" => InvoiceStatus::Verified,
-        _ => InvoiceStatus::New,
-    }
-}
-
 pub(super) fn is_finalised(status: &str) -> bool {
-    matches!(status, "fn" | "Fin" | "Finalised")
+    status == "fn"
 }
 
 #[deny(dead_code)]
@@ -180,22 +173,45 @@ impl SyncTranslation for GoodsReceivedTranslation {
         let invoice = InvoiceRow {
             id: data.id,
             name_id: po.supplier_name_id,
+            name_store_id: None,
             store_id: data.store_ID,
             user_id: data.user_id_created,
             invoice_number: data.serial_number,
             r#type: InvoiceType::InboundShipment,
-            status: map_status(&data.status),
+            status: InvoiceStatus::New,
             on_hold: false,
             comment: data.comment,
             their_reference: data.supplier_reference,
+            transport_reference: None,
             created_datetime,
+            allocated_datetime: None,
+            picked_datetime: None,
+            shipped_datetime: None,
+            delivered_datetime: None,
             received_datetime: data.received_date.and_then(|d| d.and_hms_opt(0, 0, 0)),
+            verified_datetime: None,
+            cancelled_datetime: None,
+            colour: None,
+            requisition_id: None,
+            linked_invoice_id: None,
+            tax_percentage: None,
             currency_id: po.currency_id,
             currency_rate: po.foreign_exchange_rate,
+            clinician_link_id: None,
+            original_shipment_id: None,
+            backdated_datetime: None,
+            diagnosis_id: None,
+            program_id: None,
+            name_insurance_join_id: None,
+            insurance_discount_amount: None,
+            insurance_discount_percentage: None,
             is_cancellation: false,
+            expected_delivery_date: None,
             purchase_order_id: data.purchase_order_ID,
+            shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
             default_donor_id: data.donor_id,
-            ..Default::default()
         };
 
         Ok(PullTranslateResult::upsert(invoice))
