@@ -1,4 +1,4 @@
-fragment ItemWithStats on ItemNode {
+fragment ItemWithAvailableStock on ItemNode {
   id
   name
   code
@@ -7,6 +7,10 @@ fragment ItemWithStats on ItemNode {
   isVaccine
   doses
   availableStockOnHand(storeId: $storeId)
+}
+
+fragment ItemWithStats on ItemNode {
+  ...ItemWithAvailableStock
   stats(storeId: $storeId) {
     averageMonthlyConsumption
     availableStockOnHand
@@ -15,7 +19,6 @@ fragment ItemWithStats on ItemNode {
     stockOnHand
     monthsOfStockOnHand
   }
-  isVaccine
 }
 
 fragment RequestLine on RequisitionLineNode {
@@ -46,7 +49,7 @@ fragment RequestLine on RequisitionLineNode {
     approvalComment
   }
   item {
-    ...ItemWithStats
+    ...ItemWithAvailableStock
   }
   reason {
     ...ReasonOptionRow

@@ -5,8 +5,6 @@ import {
   useRequest,
 } from '../../api';
 import { useDebounceCallback, useNotification } from '@common/hooks';
-import { useNavigate, useParams } from '@openmsupply-client/common';
-import { buildIndicatorEditRoute } from '../utils';
 
 export const usePreviousNextIndicatorLine = (
   lines?: IndicatorLineRowFragment[],
@@ -63,19 +61,3 @@ export const useDraftIndicatorValue = (
   return { draft, isLoading, update };
 };
 
-export const useIndicatorNavigation = (requisitionId?: string) => {
-  const navigate = useNavigate();
-  const { programIndicatorCode } = useParams();
-
-  return (indicatorId: string | undefined) => {
-    if (!requisitionId || !programIndicatorCode || !indicatorId) return;
-
-    navigate(
-      buildIndicatorEditRoute(
-        requisitionId,
-        programIndicatorCode,
-        indicatorId
-      )
-    );
-  };
-};
