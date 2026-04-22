@@ -4,7 +4,7 @@
   "code": "stock-take-with-quantity",
   "context": "STOCKTAKE",
   "sub_context": "picklist",
-  "name": "Stocktake with Quantity",
+  "name": "Stocktake with snapshot quantity",
   "queries": {},
   "arguments": {},
   "header": "header.html",

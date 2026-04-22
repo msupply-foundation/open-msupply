@@ -156,15 +156,6 @@ export type RequestByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             reason?: {
               __typename: 'ReasonOptionNode';
@@ -317,15 +308,6 @@ export type RequestByIdQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             reason?: {
               __typename: 'ReasonOptionNode';
