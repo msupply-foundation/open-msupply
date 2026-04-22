@@ -107,22 +107,32 @@ mod tests {
     async fn integration_order_is_up_to_date() {
         // Completeness check.
         let in_order: HashSet<String> = INTEGRATION_ORDER.iter().map(|t| t.to_string()).collect();
-        let skipped: HashSet<String> = NOT_YET_IN_V7.iter().map(|t| t.to_string()).collect();
         let all: HashSet<String> = ChangelogTableName::iter().map(|t| t.to_string()).collect();
 
-        let overlap: Vec<&String> = in_order.intersection(&skipped).collect();
+        let mut seen: HashSet<String> = HashSet::new();
+        let mut duplicates: Vec<String> = Vec::new();
+        for table in INTEGRATION_ORDER {
+            let name = table.to_string();
+            if !seen.insert(name.clone()) {
+                duplicates.push(name);
+            }
+        }
         assert!(
-            overlap.is_empty(),
-            "Tables in both INTEGRATION_ORDER and NOT_YET_IN_V7: {:?}",
-            overlap,
+            duplicates.is_empty(),
+            "Duplicate entries in INTEGRATION_ORDER: {:?}",
+            duplicates,
         );
 
+        // TODO: remove NOT_YET_IN_V7 handling once the list is empty.
+        // Remove variables 'skipped, 'covered' and 'missing' -> use the commented out 'missing' at this stage
+        let skipped: HashSet<String> = NOT_YET_IN_V7.iter().map(|t| t.to_string()).collect();
         let covered: HashSet<String> = in_order.union(&skipped).cloned().collect();
-        let uncovered: Vec<&String> = all.difference(&covered).collect();
+        let missing: Vec<&String> = all.difference(&covered).collect();
+        // let missing: Vec<&String> = all.difference(&in_order).collect();
         assert!(
-            uncovered.is_empty(),
-            "ChangelogTableName variants missing from both lists: {:?}",
-            uncovered,
+            missing.is_empty(),
+            "ChangelogTableName variants missing from INTEGRATION_ORDER: {:?}",
+            missing,
         );
 
         // FK ordering check.
@@ -192,6 +202,9 @@ mod tests {
             .cloned()
             .collect();
 
+        // Early return on the happy path so the topological sort below
+        // only runs when we actually need the suggested-order message —
+        // assert! would eagerly evaluate its format args on every run.
         if violations.is_empty() {
             return;
         }
