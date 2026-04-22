@@ -72,7 +72,7 @@ export const ResponseLineEdit = ({
   const isDisabled = disabled || !!requisition.linkedRequisition;
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
-    draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
+    draft?.requestedQuantity === draft?.suggestedQuantity || isDisabled;
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
