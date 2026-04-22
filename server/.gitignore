@@ -52,4 +52,4 @@ report_builder/config.yaml
 sensor_*.txt
 
 # Load test artifacts
-load_test/
+load_test/rust-output/

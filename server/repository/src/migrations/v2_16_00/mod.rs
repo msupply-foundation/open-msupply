@@ -7,6 +7,7 @@ mod add_migration_and_server_status_to_system_log_type_enums;
 mod add_shipping_method_id_to_invoice;
 mod add_universal_code_to_item;
 mod add_version_to_plugins;
+mod add_changelog_indexes;
 mod available_volume_on_requisition_line_and_volume_per_pack_on_item;
 
 pub(crate) struct V2_16_00;
@@ -28,6 +29,7 @@ impl Migration for V2_16_00 {
             Box::new(available_volume_on_requisition_line_and_volume_per_pack_on_item::Migrate),
             Box::new(add_universal_code_to_item::Migrate),
             Box::new(add_comments_required_to_asset_log_reason::Migrate),
+            Box::new(add_changelog_indexes::Migrate),
         ]
     }
 }

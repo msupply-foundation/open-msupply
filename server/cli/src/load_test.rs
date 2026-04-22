@@ -31,7 +31,7 @@ pub struct LoadTest {
     pub oms_central_url: String,
 
     /// The output directory for test results
-    #[clap(short, long, default_value = "load_test")]
+    #[clap(short, long, default_value = "load_test/rust-output")]
     pub output_dir: PathBuf,
 
     /// The site name of the initial test site that th cli will use to access the API
