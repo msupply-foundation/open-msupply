@@ -1,3 +1,5 @@
+<!-- Trivial edit to trigger the migration CI workflow for PR #11367 demo — do not merge -->
+
 # Database Migrations
 
 Rust (manual) migrations were introduced in version 1.1.0 of omSupply, as per [this KDD](../../../../decisions/migrations.md). Diesel migrations in /server/repository/migrations directory were kept, but any further migrations should follow pattern described in this readme. As of v2.16.0 the diesel migrations have been removed and the database is initialised from a database dump.
