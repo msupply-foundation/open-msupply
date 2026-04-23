@@ -61,7 +61,7 @@ export const ServerSettings = () => {
         component={
           <>
             <Switch
-              label={t('label.client')}
+              label={t('label.connect')}
               onChange={toggleNativeMode}
               checked={nativeMode === NativeMode.Server}
             />
@@ -74,7 +74,7 @@ export const ServerSettings = () => {
                 paddingLeft: 1,
               }}
             >
-              {t('label.server')}
+              {t('label.local')}
             </Typography>
           </>
         }
