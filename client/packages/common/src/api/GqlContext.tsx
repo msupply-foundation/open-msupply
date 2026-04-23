@@ -92,6 +92,7 @@ class GQLClient extends GraphQLClient {
   private emptyData: object;
   private skipRequest: SkipRequest;
   private lastRequestTime: Date;
+  private _url: string;
 
   constructor(
     url: string,
@@ -99,6 +100,7 @@ class GQLClient extends GraphQLClient {
     skipRequest?: SkipRequest
   ) {
     super(url, options);
+    this._url = url;
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
     this.lastRequestTime = new Date();
@@ -149,6 +151,11 @@ class GQLClient extends GraphQLClient {
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
   public getLastRequestTime = () => this.lastRequestTime;
+  public getUrl = () => this._url;
+  public setUrl = (url: string) => {
+    this._url = url;
+    this.setEndpoint(url);
+  };
 }
 
 interface GqlControl {
@@ -185,7 +192,7 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
   };
 
   const setUrl = (url: string) => {
-    clientRef.current.setEndpoint(url);
+    clientRef.current.setUrl(url);
   };
 
   const val = {
