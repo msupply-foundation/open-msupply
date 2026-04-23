@@ -181,6 +181,13 @@ impl<'a> SyncBufferRepository<'a> {
         SyncBufferRepository { connection }
     }
 
+    pub fn count(&self, filter: SyncBufferFilter) -> Result<i64, RepositoryError> {
+        let count = create_filtered_query(Some(filter))
+            .count()
+            .get_result(self.connection.lock().connection())?;
+        Ok(count)
+    }
+
     pub fn query_by_filter(
         &self,
         filter: SyncBufferFilter,

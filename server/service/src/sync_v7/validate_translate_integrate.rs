@@ -152,8 +152,7 @@ pub fn validate_translate_integrate<'a>(
         None => base_filter,
     };
 
-    let rows = SyncBufferRepository::new(connection).query(Some(filter.clone()))?;
-    let mut total = rows.len() as i64;
+    let mut total = SyncBufferRepository::new(connection).count(filter.clone())?;
     let mut last_progress = total / PROGRESS_INTERVAL;
 
     if let Some(logger) = logger.as_mut() {
