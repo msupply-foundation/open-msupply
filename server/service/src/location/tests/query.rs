@@ -227,7 +227,7 @@ mod query {
             store_id: "store_a".to_string(),
             ..Default::default()
         };
-        location_with_no_stock_lines.upsert(&connection).unwrap();
+        location_with_no_stock_lines.upsert(&connection, None).unwrap();
 
         // Confirm handles location with no stock lines
         let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();
@@ -240,7 +240,7 @@ mod query {
             location_id: Some(location_with_no_stock_lines.id.clone()),
             ..stock_line_with_volume() // total volume is 1000.0
         }
-        .upsert(&connection)
+        .upsert(&connection, None)
         .unwrap();
         StockLineRow {
             id: "line2".to_string(),
@@ -248,7 +248,7 @@ mod query {
             total_volume: 500.0,
             ..stock_line_with_volume()
         }
-        .upsert(&connection)
+        .upsert(&connection, None)
         .unwrap();
 
         // Adds volumes correctly

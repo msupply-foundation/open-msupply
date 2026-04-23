@@ -1,5 +1,6 @@
 use super::{item_link, item_row::item, warning_row::warning};
 use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::ChangeLogInsertRow;
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -63,7 +64,7 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
 }
 
 impl Upsert for ItemWarningJoinRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         ItemWarningJoinRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

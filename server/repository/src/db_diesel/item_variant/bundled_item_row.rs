@@ -86,7 +86,7 @@ impl<'a> BundledItemRowRepository<'a> {
 }
 
 impl Upsert for BundledItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = BundledItemRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }

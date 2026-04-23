@@ -1,5 +1,6 @@
 use super::item_link_row::item_link;
 use crate::{item_row::item, repository_error::RepositoryError, Delete, StorageConnection, Upsert};
+use crate::ChangeLogInsertRow;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
@@ -67,7 +68,7 @@ impl<'a> CategoryRowRepository<'a> {
 }
 
 impl Upsert for CategoryRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         CategoryRowRepository::new(con).upsert_one(self)?;
         // Not in changelog
         Ok(None)

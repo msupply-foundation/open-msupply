@@ -307,7 +307,7 @@ mod stocktake_line_test {
             ..Default::default()
         };
 
-        stocktake_line.upsert(&context.connection).unwrap();
+        stocktake_line.upsert(&context.connection, None).unwrap();
 
         let error = service
             .update_stocktake_line(

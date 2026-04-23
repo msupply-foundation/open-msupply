@@ -2,7 +2,7 @@ use super::period_row::period::dsl::*;
 
 use crate::{
     period_schedule_row::period_schedule,
-    repository_error::RepositoryError, StorageConnection, Upsert,
+    repository_error::RepositoryError, ChangeLogInsertRow, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -71,7 +71,7 @@ impl<'a> PeriodRowRepository<'a> {
 }
 
 impl Upsert for PeriodRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         PeriodRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

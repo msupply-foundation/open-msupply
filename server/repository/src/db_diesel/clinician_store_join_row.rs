@@ -84,7 +84,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
 }
 
 impl Upsert for ClinicianStoreJoinRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Clinician store joins not in Changelog/not synced out
     }

@@ -1,6 +1,7 @@
 use super::program_requisition_settings_row::program_requisition_settings;
 
 use crate::{repository_error::RepositoryError, StorageConnection};
+use crate::ChangeLogInsertRow;
 
 use diesel::prelude::*;
 
@@ -117,7 +118,7 @@ impl Delete for ProgramRequisitionOrderTypeRowDelete {
 }
 
 impl Upsert for ProgramRequisitionOrderTypeRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

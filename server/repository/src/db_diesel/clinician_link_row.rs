@@ -3,6 +3,7 @@ use super::{
     program_row::program, store_row::store, StorageConnection,
 };
 use crate::{repository_error::RepositoryError, Upsert};
+use crate::ChangeLogInsertRow;
 
 use diesel::prelude::*;
 
@@ -102,7 +103,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
 }
 
 impl Upsert for ClinicianLinkRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         ClinicianLinkRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }
