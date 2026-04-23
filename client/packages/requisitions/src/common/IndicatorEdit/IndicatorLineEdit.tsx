@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { Footer } from './Footer';
 import {
   BasicTextInput,
   Box,
@@ -8,18 +7,16 @@ import {
   InputWithLabelRow,
   NumericTextInput,
   Typography,
-  useAuthContext,
   useNotification,
   useTranslation,
-  useWindowDimensions,
 } from '@openmsupply-client/common';
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
-} from '../../api';
-import { useDraftIndicatorValue } from './hooks';
-import { CustomerIndicatorInfoView } from './CustomerIndicatorInfo';
-import { indicatorColumnNameToLocal } from '../../../utils';
+} from '../../RequestRequisition/api';
+import { Footer } from './Footer';
+import { UseUpdateIndicatorValue, useDraftIndicatorValue } from './hooks';
+import { indicatorColumnNameToLocal } from '../../utils';
 
 interface IndicatorLineEditProps {
   hasNext: boolean;
@@ -30,6 +27,12 @@ interface IndicatorLineEditProps {
   disabled: boolean;
   onSelectLine: (id: string) => void;
   scrollIntoView: () => void;
+  useUpdateIndicatorValue: UseUpdateIndicatorValue;
+  // Request renders a customer-info panel below the inputs; Response doesn't.
+  belowInputs?: (
+    columns: IndicatorColumnNode[],
+    currentLine: IndicatorLineWithColumnsFragment
+  ) => React.ReactNode;
 }
 
 const INPUT_WIDTH = 185;
@@ -39,15 +42,14 @@ interface InputWithLabelProps {
   autoFocus: boolean;
   data: IndicatorColumnNode;
   disabled: boolean;
-  isColumnInactive?: boolean;
-  isLineInactive?: boolean;
+  useUpdateIndicatorValue: UseUpdateIndicatorValue;
 }
 
 const InputWithLabel = ({
   autoFocus,
   data,
   disabled,
-  isColumnInactive: _, // Inactive columns are not implemented in OG yet. Because old code defaults to false, we have to ignore the disabled status for columns.
+  useUpdateIndicatorValue,
 }: InputWithLabelProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -57,7 +59,8 @@ const InputWithLabel = ({
       __typename: 'IndicatorValueNode',
       id: '',
       value: '',
-    }
+    },
+    useUpdateIndicatorValue
   );
 
   const errorHandler = useCallback(
@@ -126,17 +129,13 @@ export const IndicatorLineEdit = ({
   disabled,
   onSelectLine,
   scrollIntoView,
+  useUpdateIndicatorValue,
+  belowInputs,
 }: IndicatorLineEditProps) => {
-  const columns =
-    currentLine?.columns
-      .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
-      .sort((a, b) => a.columnNumber - b.columnNumber) || [];
-  const { store } = useAuthContext();
-  const showInfo =
-    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders &&
-    store?.preferences?.extraFieldsInRequisition &&
-    !!currentLine?.customerIndicatorInfo?.length;
-  const { width } = useWindowDimensions();
+  // Columns may be added to a program after the requisition was made; hide
+  // those (no stored value). Column order is set by mergeIndicatorLines (base
+  // indicator's columns first, HIV's last) so no re-sort here.
+  const columns = currentLine?.columns.filter(c => c.value) || [];
   const t = useTranslation();
 
   const isIndicatorInactive = !currentLine?.line.isActive;
@@ -152,7 +151,7 @@ export const IndicatorLineEdit = ({
                 data={column}
                 disabled={disabled || isIndicatorInactive}
                 autoFocus={i === 0}
-                isColumnInactive={!column.isActive}
+                useUpdateIndicatorValue={useUpdateIndicatorValue}
               />
             )
         )}
@@ -162,14 +161,7 @@ export const IndicatorLineEdit = ({
           </Typography>
         )}
       </Box>
-      {showInfo && (
-        <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
-          <CustomerIndicatorInfoView
-            columns={columns}
-            customerInfos={currentLine?.customerIndicatorInfo}
-          />
-        </Box>
-      )}
+      {currentLine && belowInputs?.(columns, currentLine)}
       <Footer
         hasNext={hasNext}
         next={next}
