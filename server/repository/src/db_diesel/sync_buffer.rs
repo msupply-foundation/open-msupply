@@ -27,6 +27,9 @@ table! {
         action -> crate::SyncActionMapping,
         data -> Text,
         source_site_id -> Nullable<Integer>,
+        store_id -> Nullable<Text>,
+        transfer_store_id -> Nullable<Text>,
+        patient_id -> Nullable<Text>,
     }
 }
 
@@ -44,6 +47,9 @@ pub struct SyncBufferRow {
     pub action: SyncAction,
     pub data: String,
     pub source_site_id: Option<i32>,
+    pub store_id: Option<String>,
+    pub transfer_store_id: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 pub struct SyncBufferRowRepository<'a> {
@@ -91,6 +97,21 @@ impl<'a> SyncBufferRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    /// Updates only integration_datetime and integration_error for a sync buffer record.
+    pub fn set_integration_result(
+        &self,
+        record_id: &str,
+        integration_error: Option<&str>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(sync_buffer::table.filter(sync_buffer::record_id.eq(record_id)))
+            .set((
+                sync_buffer::integration_datetime.eq(Some(chrono::Utc::now().naive_utc())),
+                sync_buffer::integration_error.eq(integration_error),
+            ))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }
 

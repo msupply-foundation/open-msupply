@@ -115,7 +115,7 @@ pub enum InvoiceStatus {
     Cancelled,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = invoice)]
 pub struct InvoiceRow {
@@ -165,6 +165,15 @@ pub struct InvoiceRow {
     pub default_donor_id: Option<String>,
 }
 
+impl InvoiceRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Invoice
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
+}
+
 pub struct InvoiceRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -185,8 +194,8 @@ impl<'a> InvoiceRowRepository<'a> {
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Invoice,
-            record_id: row.id.clone(),
+            table_name: InvoiceRow::table_name(),
+            record_id: row.record_id(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
             name_id: Some(row.name_id.clone()),
@@ -194,6 +203,12 @@ impl<'a> InvoiceRowRepository<'a> {
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
+    }
+
+    fn _delete(&self, invoice_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(invoice_with_links::table.filter(invoice_with_links::id.eq(invoice_id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn delete(&self, invoice_id: &str) -> Result<Option<i64>, RepositoryError> {
@@ -205,8 +220,7 @@ impl<'a> InvoiceRowRepository<'a> {
             }
         };
 
-        diesel::delete(invoice_with_links::table.filter(invoice_with_links::id.eq(invoice_id)))
-            .execute(self.connection.lock().connection())?;
+        self._delete(invoice_id)?;
         Ok(Some(change_log_id))
     }
 
@@ -245,6 +259,15 @@ impl Delete for InvoiceRowDelete {
         let change_log_id = InvoiceRowRepository::new(con).delete(&self.0)?;
         Ok(change_log_id)
     }
+    fn delete_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        InvoiceRowRepository::new(con)._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
@@ -259,7 +282,15 @@ impl Upsert for InvoiceRow {
         let change_log_id = InvoiceRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        InvoiceRowRepository::new(con)._upsert(self)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
