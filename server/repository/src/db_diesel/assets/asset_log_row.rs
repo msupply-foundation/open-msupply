@@ -19,9 +19,10 @@ table! {
         user_id -> Text,
         status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
         comment -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogTypeMapping>,
         reason_id -> Nullable<Text>,
         log_datetime -> Timestamp,
+        created_datetime -> Timestamp,
     }
 }
 
@@ -32,9 +33,10 @@ table! {
         user_id -> Text,
         status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
         comment -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogTypeMapping>,
         reason_id -> Nullable<Text>,
         log_datetime -> Timestamp,
+        created_datetime -> Timestamp,
     }
 }
 
@@ -53,6 +55,15 @@ pub enum AssetLogStatus {
     Unserviceable,
 }
 
+#[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum AssetLogType {
+    #[default]
+    StatusUpdate,
+    TemperatureMapping,
+}
+
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
 )]
@@ -65,9 +76,12 @@ pub struct AssetLogRow {
     pub status: Option<AssetLogStatus>,
     pub comment: Option<String>,
     #[diesel(column_name = "type_")]
-    pub r#type: Option<String>,
+    #[serde(default)]
+    pub r#type: Option<AssetLogType>,
     pub reason_id: Option<String>,
     pub log_datetime: NaiveDateTime,
+    #[serde(default)]
+    pub created_datetime: NaiveDateTime,
 }
 
 pub struct AssetLogRowRepository<'a> {
