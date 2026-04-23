@@ -103,8 +103,7 @@ export const FinancialTab = () => {
         columnType: ColumnType.Currency,
         includeColumn: isForeignCurrency,
         accessorFn: (row: InboundLineFragment) =>
-          (row.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0) *
-          row.numberOfPacks,
+          row.foreignCurrencyPriceBeforeTax ?? 0,
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={poCurrencyCode} />
         ),
@@ -113,10 +112,7 @@ export const FinancialTab = () => {
             .getFilteredRowModel()
             .rows.reduce(
               (sum, row) =>
-                sum +
-                (row.original.purchaseOrderLine?.pricePerPackAfterDiscount ??
-                  0) *
-                  row.original.numberOfPacks,
+                sum + (row.original.foreignCurrencyPriceBeforeTax ?? 0),
               0
             );
           return (
@@ -131,13 +127,7 @@ export const FinancialTab = () => {
         header: `${t('label.line-total')} (${storeCurrencyCode ?? ''})`,
         description: t('description.line-total-in-local-currency'),
         columnType: ColumnType.Currency,
-        accessorFn: (row: InboundLineFragment) =>
-          Math.round(
-            (row.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0) *
-              row.numberOfPacks *
-              currencyRate *
-              100
-          ) / 100,
+        accessorFn: (row: InboundLineFragment) => row.totalBeforeTax,
         Cell: ({ cell }) => (
           <CurrencyValueCell cell={cell} currencyCode={storeCurrencyCode} />
         ),
@@ -145,12 +135,7 @@ export const FinancialTab = () => {
           const total = table
             .getFilteredRowModel()
             .rows.reduce(
-              (sum, row) =>
-                sum +
-                (row.original.purchaseOrderLine?.pricePerPackAfterDiscount ??
-                  0) *
-                  row.original.numberOfPacks *
-                  currencyRate,
+              (sum, row) => sum + row.original.totalBeforeTax,
               0
             );
           return (

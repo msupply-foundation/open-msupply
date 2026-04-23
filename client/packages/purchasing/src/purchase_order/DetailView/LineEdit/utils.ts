@@ -47,6 +47,7 @@ export const createDraftPurchaseOrderLine = (
     numberOfPacks: 0,
     receivedNumberOfUnits: 0,
     status: PurchaseOrderLineStatusNode.New,
+    lineTotal: 0,
     unitsOrderedInOthers: 0,
   };
 };

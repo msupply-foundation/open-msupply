@@ -523,7 +523,7 @@ export type AssetLogNode = {
   comment?: Maybe<Scalars['String']['output']>;
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
-  logDatetime: Scalars['NaiveDateTime']['output'];
+  logDatetime: Scalars['DateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
   type?: Maybe<Scalars['String']['output']>;
@@ -616,7 +616,7 @@ export type AssetNode = {
   catalogProperties?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   donorNameId?: Maybe<Scalars['String']['output']>;
@@ -624,7 +624,7 @@ export type AssetNode = {
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   lockedFields: LockedAssetFieldsNode;
-  modifiedDatetime: Scalars['NaiveDateTime']['output'];
+  modifiedDatetime: Scalars['DateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"} */
@@ -7282,6 +7282,7 @@ export type PurchaseOrderLineNode = {
   status: PurchaseOrderLineStatusNode;
   stockOnHandInUnits: Scalars['Float']['output'];
   supplierItemCode?: Maybe<Scalars['String']['output']>;
+  lineTotal: Scalars['Float']['output'];
   unit?: Maybe<Scalars['String']['output']>;
   unitsOrderedInOthers: Scalars['Float']['output'];
 };
@@ -9760,7 +9761,7 @@ export type SyncFileReferenceConnector = {
 
 export type SyncFileReferenceNode = {
   __typename: 'SyncFileReferenceNode';
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   fileName: Scalars['String']['output'];
   id: Scalars['String']['output'];
   mimeType?: Maybe<Scalars['String']['output']>;

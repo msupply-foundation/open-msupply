@@ -125,13 +125,15 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
-            price_extension_expected: _,
+            price_extension_expected,
             comment,
             manufacturer_id,
             note,
             unit,
             oms_fields,
         } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
+
+        let line_total = price_extension_expected;
 
         let result = PurchaseOrderLineRow {
             id,
@@ -149,8 +151,9 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
+            line_total,
             comment,
-            manufacturer_id: manufacturer_id,
+            manufacturer_id,
             note,
             unit,
             status: oms_fields.map_or(PurchaseOrderLineStatus::New, |f| f.status),
@@ -189,6 +192,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
+            line_total,
             comment,
             manufacturer_id: manufacturer_link_id,
             note,
@@ -198,15 +202,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             .find_one_by_id(&changelog.record_id)?
             .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
 
-        // Total Cost calculated in Front End: price_per_pack_after_discount * number_of_packs
-        // Number of packs = (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
-        let price_extension_expected = if requested_pack_size > 0.0 {
-            price_per_pack_after_discount
-                * (adjusted_number_of_units.unwrap_or(requested_number_of_units)
-                    / requested_pack_size)
-        } else {
-            0.0
-        };
+        // Use the stored line_total for the legacy price_extension_expected field
+        let price_extension_expected = line_total;
 
         let legacy_row = LegacyPurchaseOrderLineRow {
             id,
@@ -247,7 +244,6 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
         Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
-
 #[cfg(test)]
 mod tests {
     use crate::sync::translations::ToSyncRecordTranslationType;

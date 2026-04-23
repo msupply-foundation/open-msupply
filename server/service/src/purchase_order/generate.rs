@@ -51,6 +51,7 @@ pub fn generate_empty_purchase_order_lines(
                     supplier_item_code: None,
                     price_per_pack_before_discount: 0.0,
                     price_per_pack_after_discount: 0.0,
+                    line_total: 0.0,
                     comment: None,
                     manufacturer_id: None,
                     note: None,
