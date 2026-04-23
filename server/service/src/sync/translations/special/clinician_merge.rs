@@ -33,7 +33,7 @@ impl SyncTranslation for ClinicianMergeTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<ClinicianMergeMessage>(&sync_record.data)?;
+        let data = serde_json::from_value::<ClinicianMergeMessage>(sync_record.data.0.clone())?;
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(connection);
         let clinician_links =
@@ -75,7 +75,9 @@ mod tests {
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
+        SyncRecordData,
     };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_clinician_merge() {
@@ -84,22 +86,20 @@ mod tests {
                 record_id: "clinician_b_merge".to_string(),
                 table_name: "clinician".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                        "mergeIdToKeep": "clinician_b",
-                        "mergeIdToDelete": "clinician_a"
-                    }"#
-                .to_string(),
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "clinician_b",
+                    "mergeIdToDelete": "clinician_a"
+                })),
                 ..SyncBufferRow::default()
             },
             SyncBufferRow {
                 record_id: "clinician_c_merge".to_string(),
                 table_name: "clinician".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                      "mergeIdToKeep": "clinician_c",
-                      "mergeIdToDelete": "clinician_b"
-                    }"#
-                .to_string(),
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "clinician_c",
+                    "mergeIdToDelete": "clinician_b"
+                })),
                 ..SyncBufferRow::default()
             },
         ];

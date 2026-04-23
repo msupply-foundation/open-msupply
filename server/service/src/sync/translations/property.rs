@@ -29,7 +29,7 @@ impl SyncTranslation for PropertyTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let data = sync_record.data.0.clone();
 
         // Properties are synced out from legacy mSupply central, but we only support Open mSupply properties
         if data.get("ID").is_some() {
@@ -38,9 +38,9 @@ impl SyncTranslation for PropertyTranslation {
             ));
         };
 
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
             PropertyRow,
-        >(&sync_record.data)?))
+        >(sync_record.data.0.clone())?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

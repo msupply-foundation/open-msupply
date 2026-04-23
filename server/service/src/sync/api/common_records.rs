@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{ChangelogTableName, SyncAction as SyncActionRepo, SyncBufferRow};
+use repository::{ChangelogTableName, SyncAction as SyncActionRepo, SyncBufferRow, SyncRecordData};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
@@ -95,10 +95,7 @@ impl CommonSyncRecord {
             table_name,
             record_id,
             action: action.to_row_action(),
-            data: serde_json::to_string(&data).map_err(|e| ParsingSyncRecordError {
-                source: e,
-                record: data.clone(),
-            })?,
+            data: SyncRecordData(data),
             received_datetime: Utc::now().naive_utc(),
             integration_datetime: None,
             integration_error: None,
@@ -157,7 +154,7 @@ mod tests {
         assert_eq!(row.table_name, "test");
         assert_eq!(row.record_id, "test");
         assert_eq!(row.action, SyncActionRepo::Upsert);
-        assert_eq!(row.data, "{}");
+        assert_eq!(row.data, SyncRecordData(json!({})));
     }
 
     #[actix_rt::test]
@@ -248,7 +245,7 @@ mod tests {
         assert_eq!(
             rows.iter()
                 .filter(|r| r.action == SyncActionRepo::Merge
-                    && serde_json::from_str::<ItemMergeMessage>(&r.data)
+                    && serde_json::from_value::<ItemMergeMessage>(r.data.0.clone())
                         .unwrap()
                         .merge_id_to_keep
                         == "itemA")

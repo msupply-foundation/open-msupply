@@ -135,7 +135,7 @@ impl SyncTranslation for StockLineTranslation {
             oms_fields,
             total_volume,
             volume_per_pack,
-        } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyStockLineRow>(sync_record.data.0.clone())?;
 
         let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
         let location_id = clear_invalid_location_id(connection, location_ID)?;
