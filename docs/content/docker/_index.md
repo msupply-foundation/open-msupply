@@ -30,15 +30,60 @@ auto-detect the current system and modify cross-compilation instructions accordi
 -->
 
 
-The rest of this page documents the manual steps if you need more control over the process.
+The rest of this page documents the CI pipeline and manual steps if you need more control over the process.
+
+## CI/CD (GitHub Actions)
+
+The `dockerise.yaml` workflow fires automatically when a tag starting with `v` is pushed:
+
+```bash
+git tag v2.8.0
+git push origin v2.8.0
+```
+
+It builds Docker images for all combinations of database (SQLite/Postgres) and architecture (amd64/arm64), then pushes them to Docker Hub.
+
+### How it works
+
+1. **Build client** — installs Node dependencies and runs `yarn build`
+2. **Build server** (4 parallel jobs) — compiles `remote_server` and `remote_server_cli` for each (db, arch) combination:
+   - **amd64** builds run natively on the amd64 GitHub runner
+   - **arm64** builds use cross-compilation (`gcc-aarch64-linux-gnu`) from the amd64 runner, which is much faster than QEMU emulation
+   - **Postgres** builds use `rust:1.94` (includes `libpq-dev`), SQLite builds use `rust:1.94-slim`
+3. **Dockerise** (4 parallel jobs) — builds and pushes Docker images using the compiled binaries
+4. **Trigger plugin tests** — runs downstream plugin test suite against the new images
+
+### Image tags
+
+Images are pushed to `msupplyfoundation/omsupply` with the naming convention:
+
+| Tag | Example |
+| --- | ------- |
+| `v{version}-{db}-{arch}` | `v2.8.0-sqlite-amd64` |
+| `v{version}-{db}-{arch}-dev` | `v2.8.0-sqlite-amd64-dev` |
+
+Dev images (which include Node/Yarn and the client source for frontend development) are only built for amd64.
+
+### Requirements
+
+- Docker Hub credentials must be configured as repository secrets: `DOCKER_USERNAME` and `DOCKER_TOKEN`
+- The `ORG_WORKFLOW_TOKEN` secret is needed for triggering downstream plugin tests
+
+### Testing the workflow
+
+To test without creating a real release, push a test tag and delete it afterwards:
+
+```bash
+git tag v0.0.0-test
+git push origin v0.0.0-test
+# After verifying the workflow runs correctly:
+git tag -d v0.0.0-test
+git push origin :refs/tags/v0.0.0-test
+```
 
 ## Manual build
 
-Dockerise github action is made to fire when a new tag is created, this tag needs to start with `v`, this action uses Dockerfile in root dir.
-
-Dockerfile has two pre-requisites:
-
-`remote_server` and `remote_server_cli` built in release mode (after building client).
+The Dockerfile has two pre-requisites: `remote_server` and `remote_server_cli` built in release mode (after building the client).
 
 If building on a non-Linux host (e.g. macOS), use a Docker container to cross-compile a Linux binary. The `-v` flag mounts your source code into the container and the compiled binary is written back to your host filesystem.
 
@@ -80,8 +125,6 @@ cd server && cargo build --release --bin remote_server --bin remote_server_cli -
 
 `entry-postgres.sh` starts an embedded PostgreSQL instance, optionally imports a dump file, then hands off to `entry.sh`.
 
-Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DOCKER_TOKEN` (from docker hub)
-
 ## Docker targets
 
 | Target         | Database | Description                                                            |
@@ -90,19 +133,6 @@ Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DO
 | `dev`          | SQLite   | Includes client with Node/Yarn for frontend development                |
 | `postgres`     | Postgres | Runtime image with embedded PostgreSQL server                          |
 | `postgres-dev` | Postgres | Embedded PostgreSQL with client and Node/Yarn for frontend development |
-
-## Build steps (as per dockerise.yaml github action workflow)
-
-* Build client
-* Build server in rust:1.94-slim image container (uses built client)
-* Build client in rust:1.94-slim image container with yarn pre installed
-* Build docker image
-   * copy binaries
-   * set hardware id
-   * copy entrypoint
-   * in dev target add dependencies for yarn
-   * copy client and run yarn install
-* Tag docker images and push to dockerhub
 
 ## Building image locally
 

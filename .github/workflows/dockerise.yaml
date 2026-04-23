@@ -59,7 +59,7 @@ jobs:
     needs: [build-client, check-tag]
     if: matrix.arch != 'arm64' || needs.check-tag.outputs.is_release == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 120
     strategy:
       matrix:
         db: [sqlite, postgres]
@@ -67,12 +67,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        if: matrix.arch == 'arm64'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
 
       - name: Load client artifacts
         uses: actions/download-artifact@v4
@@ -84,15 +78,45 @@ jobs:
         run: |
           RUST_IMAGE="rust:1.94-slim"
           CARGO_FLAGS=""
+          TARGET_DIR="target"
           if [ "${{ matrix.db }}" = "postgres" ]; then
             RUST_IMAGE="rust:1.94"
-            CARGO_FLAGS="--no-default-features --features postgres --target-dir target-postgres"
+            CARGO_FLAGS="--no-default-features --features postgres"
+            TARGET_DIR="target-postgres"
           fi
-          PLATFORM_FLAG=""
-          if [ "${{ matrix.arch }}" = "arm64" ]; then
-            PLATFORM_FLAG="--platform linux/arm64"
+
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            # Native build on amd64 runner
+            docker run --rm --user "$(id -u)":"$(id -g)" \
+              -v "$PWD":/usr/src/omsupply \
+              -w /usr/src/omsupply/server \
+              $RUST_IMAGE \
+              cargo build --release --target-dir $TARGET_DIR \
+                --bin remote_server --bin remote_server_cli $CARGO_FLAGS
+          else
+            # Cross-compile for arm64 (much faster than QEMU emulation)
+            CROSS_EXTRA=""
+            if [ "${{ matrix.db }}" = "postgres" ]; then
+              CROSS_EXTRA="&& dpkg --add-architecture arm64 && apt-get update && apt-get install -y libpq-dev:arm64"
+            fi
+
+            docker run --rm \
+              -v "$PWD":/usr/src/omsupply \
+              -w /usr/src/omsupply/server \
+              $RUST_IMAGE bash -c "\
+                apt-get update && apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+                $CROSS_EXTRA && \
+                rustup target add aarch64-unknown-linux-gnu && \
+                CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
+                PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig \
+                PQ_LIB_DIR=/usr/lib/aarch64-linux-gnu \
+                  cargo build --release --target aarch64-unknown-linux-gnu \
+                    --target-dir $TARGET_DIR --bin remote_server --bin remote_server_cli $CARGO_FLAGS && \
+                mkdir -p $TARGET_DIR/release && \
+                cp $TARGET_DIR/aarch64-unknown-linux-gnu/release/remote_server $TARGET_DIR/release/remote_server && \
+                cp $TARGET_DIR/aarch64-unknown-linux-gnu/release/remote_server_cli $TARGET_DIR/release/remote_server_cli && \
+                chown -R $(id -u):$(id -g) $TARGET_DIR"
           fi
-          docker run --rm $PLATFORM_FLAG --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server $RUST_IMAGE cargo build --release --bin remote_server --bin remote_server_cli $CARGO_FLAGS
 
       - name: Save server executable artifacts
         uses: actions/upload-artifact@v4
