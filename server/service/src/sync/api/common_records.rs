@@ -84,7 +84,7 @@ impl CommonSyncRecord {
                 // causing errors as the merge is applied to record that never got upserted first.
                 uuid()
             }
-            _ if table_name == "name_oms_fields" => {
+            _ if table_name == *"name_oms_fields" => {
                 // append table name to record_id to avoid name overwrite
                 format!("{}{:#?}", record_id, ChangelogTableName::NameOmsFields)
             }
@@ -124,7 +124,7 @@ impl RemoteSyncBatchV5 {
 impl CommonSyncRecord {
     pub(crate) fn test() -> Self {
         Self {
-            table_name: "item".to_string(),
+            table_name: "test".to_string(),
             record_id: "test".to_string(),
             action: SyncAction::Delete,
             record_data: json!({}),
@@ -144,14 +144,14 @@ mod tests {
     #[test]
     fn test_insert_to_upsert_mapping() {
         let record = CommonSyncRecord {
-            table_name: "item".to_string(),
+            table_name: "test".to_string(),
             record_id: "test".to_string(),
             action: SyncAction::Insert,
             record_data: json!({}),
         };
 
         let row = record.to_buffer_row(None).unwrap();
-        assert_eq!(row.table_name, "item");
+        assert_eq!(row.table_name, "test");
         assert_eq!(row.record_id, "test");
         assert_eq!(row.action, SyncActionRepo::Upsert);
         assert_eq!(row.data, SyncRecordData(json!({})));
