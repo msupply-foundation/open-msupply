@@ -34,8 +34,8 @@ impl SyncTranslation for NameOmsFieldsTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let upsert_record = PullTranslateResult::upsert(serde_json::from_str::<NameOmsFieldsRow>(
-            &sync_record.data,
+        let upsert_record = PullTranslateResult::upsert(serde_json::from_value::<NameOmsFieldsRow>(
+            sync_record.data.0.clone(),
         )?);
         Ok(upsert_record)
     }

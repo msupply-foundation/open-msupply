@@ -1,20 +1,39 @@
+use std::ops::Deref;
+
 use super::StorageConnection;
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter},
+    diesel_macros::{
+        apply_date_time_filter, apply_equal_filter, diesel_json_type, diesel_string_enum,
+    },
     repository_error::RepositoryError,
     DBType, DatetimeFilter, EqualFilter,
 };
 use chrono::NaiveDateTime;
 use diesel::{dsl::IntoBoxed, prelude::*};
-use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum SyncAction {
-    #[default]
-    Upsert,
-    Delete,
-    Merge,
+diesel_string_enum! {
+    #[derive(Clone, Serialize, Deserialize, Eq)]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+    pub enum SyncAction {
+        #[default]
+        Upsert,
+        Delete,
+        Merge,
+    }
+}
+
+diesel_json_type! {
+    #[derive(Clone, Debug, Default, PartialEq)]
+    pub struct SyncRecordData(pub serde_json::Value);
+}
+
+impl Deref for SyncRecordData {
+    type Target = serde_json::Value;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 table! {
@@ -24,7 +43,7 @@ table! {
         integration_datetime -> Nullable<Timestamp>,
         integration_error -> Nullable<Text>,
         table_name -> Text,
-        action -> crate::SyncActionMapping,
+        action -> Text,
         data -> Text,
         source_site_id -> Nullable<Integer>,
         store_id -> Nullable<Text>,
@@ -34,7 +53,7 @@ table! {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, Serialize, Deserialize, Debug, AsChangeset, PartialEq, Eq, Default,
+    Clone, Queryable, Insertable, Serialize, Deserialize, Debug, AsChangeset, PartialEq, Default,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sync_buffer)]
@@ -45,7 +64,7 @@ pub struct SyncBufferRow {
     pub integration_error: Option<String>,
     pub table_name: String,
     pub action: SyncAction,
-    pub data: String,
+    pub data: SyncRecordData,
     pub source_site_id: Option<i32>,
     pub store_id: Option<String>,
     pub transfer_store_id: Option<String>,
@@ -55,8 +74,6 @@ pub struct SyncBufferRow {
 pub struct SyncBufferRowRepository<'a> {
     connection: &'a StorageConnection,
 }
-
-use serde::{Deserialize, Serialize};
 
 impl<'a> SyncBufferRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -236,14 +253,16 @@ mod test {
     use crate::{
         mock::{MockData, MockDataInserts},
         test_db, DatetimeFilter, EqualFilter, SyncAction, SyncBufferFilter, SyncBufferRepository,
-        SyncBufferRow, SyncBufferRowRepository,
+        SyncBufferRow, SyncBufferRowRepository, SyncRecordData,
     };
 
     pub fn row_a() -> SyncBufferRow {
         SyncBufferRow {
             record_id: "store_a".to_string(),
             integration_datetime: Some(Default::default()),
+            table_name: "store".to_string(),
             action: SyncAction::Upsert,
+            data: SyncRecordData(serde_json::json!({})),
             ..Default::default()
         }
     }
@@ -252,7 +271,9 @@ mod test {
         SyncBufferRow {
             record_id: "store_b".to_string(),
             integration_error: Some("error".to_string()),
+            table_name: "store".to_string(),
             action: SyncAction::Delete,
+            data: SyncRecordData(serde_json::json!({})),
             ..Default::default()
         }
     }
@@ -260,7 +281,9 @@ mod test {
     pub fn row_c() -> SyncBufferRow {
         SyncBufferRow {
             record_id: "store_c".to_string(),
+            table_name: "store".to_string(),
             action: SyncAction::Upsert,
+            data: SyncRecordData(serde_json::json!({})),
             ..Default::default()
         }
     }

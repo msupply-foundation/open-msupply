@@ -39,7 +39,7 @@ impl SyncTranslation for MasterListNameJoinTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyListMasterNameJoinRow>(sync_record.data.0.clone())?;
         if data.name_ID.is_empty() {
             return Ok(PullTranslateResult::Ignored("Missing name id".to_string()));
         }
