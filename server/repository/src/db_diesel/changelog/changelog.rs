@@ -37,6 +37,7 @@ define_sql_function!(
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, TS)]
+    #[strum(serialize_all = "snake_case")]
     pub enum RowActionType {
         #[default]
         Upsert,
@@ -46,6 +47,7 @@ diesel_string_enum! {
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, strum::EnumIter, TS)]
+    #[strum(serialize_all = "snake_case")]
     pub enum ChangelogTableName {
         Unit,
         Store,

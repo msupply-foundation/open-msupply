@@ -2,7 +2,9 @@ use std::ops::Deref;
 
 use super::StorageConnection;
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, diesel_json_type, diesel_string_enum},
+    diesel_macros::{
+        apply_date_time_filter, apply_equal_filter, diesel_json_type, diesel_string_enum,
+    },
     repository_error::RepositoryError,
     DBType, DatetimeFilter, EqualFilter,
 };
@@ -11,8 +13,8 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
 
 diesel_string_enum! {
-    "SCREAMING_SNAKE_CASE",
     #[derive(Clone, Serialize, Deserialize, Eq)]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum SyncAction {
         #[default]
         Upsert,
@@ -250,8 +252,8 @@ mod test {
 
     use crate::{
         mock::{MockData, MockDataInserts},
-        test_db, DatetimeFilter, EqualFilter, SyncAction, SyncBufferFilter,
-        SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository, SyncRecordData,
+        test_db, DatetimeFilter, EqualFilter, SyncAction, SyncBufferFilter, SyncBufferRepository,
+        SyncBufferRow, SyncBufferRowRepository, SyncRecordData,
     };
 
     pub fn row_a() -> SyncBufferRow {
