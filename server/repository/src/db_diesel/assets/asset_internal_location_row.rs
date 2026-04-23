@@ -71,6 +71,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
             row_action: action,
             store_id: store_id_location.or_else(|| store_id_asset),
             name_id: None,
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
