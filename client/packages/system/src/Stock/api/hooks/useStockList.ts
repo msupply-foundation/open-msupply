@@ -68,7 +68,7 @@ const toSortField = (
     name: StockLineSortFieldInput.ItemName,
     packSize: StockLineSortFieldInput.PackSize,
     supplierName: StockLineSortFieldInput.SupplierName,
-    numberOfPacks: StockLineSortFieldInput.NumberOfPacks,
+    totalNumberOfPacks: StockLineSortFieldInput.NumberOfPacks,
     location: StockLineSortFieldInput.LocationCode,
     costPricePerPack: StockLineSortFieldInput.CostPricePerPack,
     expiryDate: StockLineSortFieldInput.ExpiryDate,
