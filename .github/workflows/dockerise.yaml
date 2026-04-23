@@ -1,3 +1,17 @@
+# Build and push Docker images to Docker Hub when a version tag is pushed.
+#
+# Release tags (e.g. v2.19.1) build all variants:
+#   - 4 images: (sqlite|postgres) x (amd64|arm64)
+#   - 2 dev images: (sqlite|postgres) x amd64 only
+#   - triggers downstream plugin tests
+#
+# Non-release tags (e.g. v2.18.00-develop-04160443, v2.17.03-RC-04161543)
+# build a reduced set:
+#   - 2 images: (sqlite|postgres) x amd64 only
+#   - no dev images, no plugin tests
+#
+# Images are pushed to: msupplyfoundation/omsupply:<tag>-<db>-<arch>[-dev]
+
 name: Dockerise
 
 on:
