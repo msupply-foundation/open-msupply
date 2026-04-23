@@ -119,6 +119,7 @@ pub enum ActivityLogType {
     PurchaseOrderLineStatusChangedFromSentToNew,
     PatientUpdated,
     PatientCreated,
+    InvoiceMigratedFromLegacy,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]

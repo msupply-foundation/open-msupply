@@ -111,6 +111,8 @@ pub enum ActivityLogNodeType {
     // Patients
     PatientCreated,
     PatientUpdated,
+    // Migration
+    InvoiceMigratedFromLegacy,
 }
 
 #[Object]

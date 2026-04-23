@@ -2796,5 +2796,6 @@
   "report-code.customer-returns": "Customer Returns",
   "report-code.supplier-returns": "Supplier Returns",
   "label.customer-return": "Customer return",
-  "label.area-amc": "Area AMC"
+  "label.area-amc": "Area AMC",
+  "log.invoice-migrated-from-legacy": "Migrated from legacy mSupply"
 }

@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_invoice_migrated_from_legacy_log_type;
 mod reintegrate_goods_received;
 
 pub(crate) struct V2_17_03;
@@ -14,7 +15,10 @@ impl Migration for V2_17_03 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(reintegrate_goods_received::Migrate)]
+        vec![
+            Box::new(reintegrate_goods_received::Migrate),
+            Box::new(add_invoice_migrated_from_legacy_log_type::Migrate),
+        ]
     }
 }
 
