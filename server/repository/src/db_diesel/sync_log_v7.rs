@@ -73,6 +73,7 @@ pub struct SyncLogV7Repository<'a> {
 type Source = sync_log_v7::table;
 
 create_condition!(
+    SyncLogV7Condition,
     Source,
     (
         StartedDatetime,
@@ -104,7 +105,7 @@ impl<'a> SyncLogV7Repository<'a> {
     // Sorts by started_datetime descending
     pub fn query_one(
         &self,
-        filter: Condition::Inner,
+        filter: SyncLogV7Condition::Inner,
     ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
         let results = sync_log_v7::table
             .filter(filter.to_boxed())
@@ -153,7 +154,7 @@ mod test {
 
         let repo = SyncLogV7Repository::new(&connection);
 
-        use super::Condition;
+        use super::SyncLogV7Condition as Condition;
         use crate::dynamic_query_filter::FilterBuilder;
 
         let is_initialised = || {
