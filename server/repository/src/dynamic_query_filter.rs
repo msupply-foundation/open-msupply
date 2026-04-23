@@ -1,3 +1,4 @@
+// Regarding dynamic queries, see: docs/content/server/repository/db_diesel/_index.md
 // This is from dynamic filtering repository [tutorial](https://github.com/andreievg/diesel-rs-dynamic-filters/tree/main)
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
@@ -75,9 +76,9 @@ pub trait FilterBuilder<T: Clone + serde::Serialize + serde::de::DeserializeOwne
 }
 
 macro_rules! create_condition {
-    ($source:ty, $(($variant:ident, $filter_kind:ident, $dsl_expr:expr)),+ $(,)?) => {
-        #[allow(non_snake_case)]
-        pub mod Condition {
+    ($mod_name:ident, $source:ty, $(($variant:ident, $filter_kind:ident, $dsl_expr:expr)),+ $(,)?) => {
+        #[allow(non_snake_case, non_camel_case_types)]
+        pub mod $mod_name {
             use super::*;
 
             #[derive(Clone, serde::Serialize, serde::Deserialize)]
