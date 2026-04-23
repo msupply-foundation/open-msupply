@@ -1,9 +1,8 @@
 use anyhow::anyhow;
-use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
 use colored::Colorize;
-use graphql::{Mutations, OperationalSchema, Queries};
+use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
 use report_builder::{
@@ -334,7 +333,7 @@ async fn main() -> anyhow::Result<()> {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
             let schema =
-                OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
+                OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
                     .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
@@ -571,14 +570,14 @@ async fn main() -> anyhow::Result<()> {
                 None => vec![standard_reports_dir, standard_forms_dir],
             };
 
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
             for file_path in file_list {
                 let json_file = fs::File::open(file_path.clone())
                     .unwrap_or_else(|_| panic!("{} not found for report", file_path.display()));
                 let reports_data: ReportsData = serde_json::from_reader(json_file)
                     .expect("json incorrectly formatted for report");
-
-                let connection_manager = get_storage_connection_manager(&settings.database);
-                let con = connection_manager.connection()?;
 
                 StandardReports::upsert_reports(reports_data, &con, overwrite)?;
             }
