@@ -810,6 +810,7 @@
   "label.approved": "Approved",
   "label.approved-packs": "Approved packs",
   "label.approved-quantity": "Approved units",
+  "label.area-amc": "Area AMC",
   "label.asset-notes": "Notes",
   "label.asset-number": "Asset Number",
   "label.asset-properties": "Asset Properties",
@@ -1623,8 +1624,8 @@
   "label.target-stock": "Target stock (AMC)",
   "label.target-stock-population": "Target stock (population)",
   "label.tax": "Tax",
-  "label.temperature-mapping": "Temperature Mapping",
   "label.temperature": "Temperature",
+  "label.temperature-mapping": "Temperature Mapping",
   "label.tertiary": "Tertiary",
   "label.tertiary-3": "Tertiary (3)",
   "label.this-delivery": "This delivery",
@@ -2816,9 +2817,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "report-code.customer-returns": "Customer Returns",
-  "report-code.supplier-returns": "Supplier Returns",
-  "label.customer-return": "Customer return",
-  "label.area-amc": "Area AMC"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
