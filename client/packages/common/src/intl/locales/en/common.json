@@ -1510,6 +1510,7 @@
   "label.reset-pinned-columns": "Reset pinned columns",
   "label.reset-table-defaults": "Reset table to defaults",
   "label.return-from": "Return from",
+  "label.return-to": "Return to",
   "label.revert-existing-transaction": "Revert existing stock transaction",
   "label.review": "Review",
   "label.rnr-adjustments": "Adjustments +/-",
@@ -1578,6 +1579,7 @@
   "label.start-date": "Start date",
   "label.start-datetime": "Start date / time",
   "label.status": "Status",
+  "label.status-change": "Status Change",
   "label.status-given": "Given",
   "label.status-late": "Overdue",
   "label.status-not-given": "Not given",
@@ -1621,6 +1623,7 @@
   "label.target-stock": "Target stock (AMC)",
   "label.target-stock-population": "Target stock (population)",
   "label.tax": "Tax",
+  "label.temperature-mapping": "Temperature Mapping",
   "label.temperature": "Temperature",
   "label.tertiary": "Tertiary",
   "label.tertiary-3": "Tertiary (3)",
@@ -2077,6 +2080,7 @@
   "messages.customer-requisition-created-on": "Customer requisition created on {{date}}",
   "messages.customer-return-created-verified": "Customer Return successfully created as Verified",
   "messages.default-customer-return-reference": "From outbound shipment #{{invoiceNumber}}",
+  "messages.default-supplier-return-reference": "From outbound shipment #{{invoiceNumber}}",
   "messages.delete-all-translations-confirm": "Are you sure you want to delete all custom translations?",
   "messages.delete-this-line": "Delete this line",
   "messages.deleted": "Deleted",
@@ -2812,5 +2816,9 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
+  "report-code.customer-returns": "Customer Returns",
+  "report-code.supplier-returns": "Supplier Returns",
+  "label.customer-return": "Customer return",
+  "label.area-amc": "Area AMC"
 }
