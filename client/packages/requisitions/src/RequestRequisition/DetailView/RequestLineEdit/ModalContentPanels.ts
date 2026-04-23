@@ -8,7 +8,7 @@ import { DraftRequestLine } from '.';
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,
   draft?: DraftRequestLine | null,
-  showZoneAmc?: boolean
+  showAsAreaAmc?: boolean
 ): ValueInfo[] => {
   const base: ValueInfo[] = [
     {
@@ -16,7 +16,7 @@ export const getLeftPanel = (
       value: draft?.itemStats.availableStockOnHand,
     },
     {
-      label: t(showZoneAmc ? 'label.amc-zone' : 'label.amc/amd'),
+      label: t(showAsAreaAmc ? 'label.area-amc' : 'label.amc/amd'),
       value: draft?.itemStats.averageMonthlyConsumption,
     },
   ];

@@ -2796,5 +2796,5 @@
   "report-code.customer-returns": "Customer Returns",
   "report-code.supplier-returns": "Supplier Returns",
   "label.customer-return": "Customer return",
-  "label.amc-zone": "AMC Zone"
+  "label.area-amc": "Area AMC"
 }

@@ -2858,5 +2858,5 @@
   "report-code.customer-returns": "Retours clients",
   "report-code.supplier-returns": "Retours fournisseurs",
   "label.customer-return": "Bordereau de retour",
-  "label.amc-zone": "CMM Zone"
+  "label.area-amc": "CMM Zone"
 }
