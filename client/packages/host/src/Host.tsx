@@ -202,7 +202,7 @@ const Host = () => {
                     <AuthProvider>
                       <PreInit />
                       {/* eslint-disable-next-line camelcase */}
-                      <RouterProvider router={router} future={{ v7_startTransition: true }} />
+                      <RouterProvider router={router} />
                     </AuthProvider>
                   </MigrationInfoProvider>
                   {/* <ReactQueryDevtools initialIsOpen /> */}
