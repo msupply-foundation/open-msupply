@@ -137,6 +137,7 @@ mod tests {
             store_id: None,
             is_sync_update: false,
             source_site_id: None,
+            ..Default::default()
         };
 
         let translator = ContactFormTranslation {};

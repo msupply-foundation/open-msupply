@@ -189,6 +189,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
             row_action: action,
             store_id: Some(invoice.store_id.clone()),
             name_id: Some(invoice.name_id.clone()),
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
