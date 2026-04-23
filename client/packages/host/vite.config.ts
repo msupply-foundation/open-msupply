@@ -383,6 +383,30 @@ export default defineConfig(({ mode, isSsrBuild }) => {
           target: 'http://localhost:8000',
           changeOrigin: true,
         },
+        '/files': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+        '/sync_files': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+        '/plugins': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+        '/fridge-tag': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+        '/print': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+        '/upload': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
       },
     },
 

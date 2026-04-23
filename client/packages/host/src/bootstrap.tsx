@@ -22,13 +22,15 @@ async function bootstrap() {
 
   const container = document.getElementById('root')!;
 
-  // If the container already has children the page was pre-rendered at build
-  // time.  Use hydrateRoot so React reconciles against the existing DOM
-  // instead of wiping and re-mounting it — this preserves the pre-rendered
-  // LCP element so Lighthouse records its paint time at initial load.
-  if (container.firstChild) {
+  // The pre-rendered shell is the login page, only valid at the root path.
+  // If the user navigates directly to any other route (e.g. /reports/...) the
+  // SSR HTML won't match what React would render, causing hydration errors
+  // #418 / #423. In that case, wipe the stale shell and do a clean mount.
+  const isLoginRoute = window.location.pathname === '/';
+  if (container.firstChild && isLoginRoute) {
     hydrateRoot(container, <App />);
   } else {
+    container.innerHTML = '';
     createRoot(container).render(<App />);
   }
 }
