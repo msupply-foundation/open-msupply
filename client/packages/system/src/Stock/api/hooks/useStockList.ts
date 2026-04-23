@@ -68,12 +68,12 @@ const toSortField = (
 ): StockLineSortFieldInput => {
   const sortFieldMap: Record<string, StockLineSortFieldInput> = {
     batch: StockLineSortFieldInput.Batch,
-    itemCode: StockLineSortFieldInput.ItemCode,
+    code: StockLineSortFieldInput.ItemCode,
     name: StockLineSortFieldInput.ItemName,
     packSize: StockLineSortFieldInput.PackSize,
     supplierName: StockLineSortFieldInput.SupplierName,
-    numberOfPacks: StockLineSortFieldInput.NumberOfPacks,
-    location: StockLineSortFieldInput.LocationCode,
+    totalNumberOfPacks: StockLineSortFieldInput.NumberOfPacks,
+    'location.code': StockLineSortFieldInput.LocationCode,
     costPricePerPack: StockLineSortFieldInput.CostPricePerPack,
     expiryDate: StockLineSortFieldInput.ExpiryDate,
     manufactureDate: StockLineSortFieldInput.ManufactureDate,
