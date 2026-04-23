@@ -1,15 +1,33 @@
 use super::{
     currency::CurrencyTranslation, invoice::InvoiceTranslation, name::NameTranslation,
-    purchase_order::PurchaseOrderTranslation, store::StoreTranslation, PullTranslateResult,
-    SyncTranslation,
+    purchase_order::PurchaseOrderTranslation, store::StoreTranslation, IntegrationOperation,
+    PullTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, PurchaseOrderRowRepository,
-    StorageConnection, SyncBufferRow, SyncBufferRowRepository,
+    ActivityLogRow, ActivityLogType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
+    PurchaseOrderRowRepository, StorageConnection, SyncBufferRow, SyncBufferRowRepository,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
+
+/// Build an "invoice migrated from legacy" activity log row for a GR-derived
+/// invoice. The id is deterministic so re-integration of the same sync record
+/// idempotently overwrites the log rather than creating duplicates. The
+/// datetime reuses the invoice's created_datetime (from OG entry_date) so the
+/// log sits next to the invoice creation on the audit trail.
+fn migration_log(invoice: &InvoiceRow) -> ActivityLogRow {
+    ActivityLogRow {
+        id: format!("{}_migrated_from_legacy", invoice.id),
+        r#type: ActivityLogType::InvoiceMigratedFromLegacy,
+        user_id: invoice.user_id.clone(),
+        store_id: Some(invoice.store_id.clone()),
+        record_id: Some(invoice.id.clone()),
+        datetime: invoice.created_datetime,
+        changed_to: None,
+        changed_from: None,
+    }
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -141,7 +159,17 @@ impl SyncTranslation for GoodsReceivedTranslation {
                     match InvoiceRowRepository::new(connection).find_one_by_id(&invoice_id)? {
                         Some(mut invoice) => {
                             invoice.purchase_order_id = data.purchase_order_ID;
-                            Ok(PullTranslateResult::upsert(invoice))
+                            // Clear the hold flag carried over from legacy transact.hold —
+                            // OMS has its own approval workflow on external inbounds, and a
+                            // finalised GR in OG means the goods have been received.
+                            // Leaving on_hold=true would prevent the user from advancing the
+                            // status of an already-finalised migrated shipment (#11378).
+                            invoice.on_hold = false;
+                            let log = migration_log(&invoice);
+                            Ok(PullTranslateResult::IntegrationOperations(vec![
+                                IntegrationOperation::upsert(invoice),
+                                IntegrationOperation::upsert(log),
+                            ]))
                         }
                         None => Ok(PullTranslateResult::Ignored(format!(
                             "linked invoice {invoice_id} not found for goods_received {}",
@@ -212,7 +240,11 @@ impl SyncTranslation for GoodsReceivedTranslation {
             default_donor_id: data.donor_id,
         };
 
-        Ok(PullTranslateResult::upsert(invoice))
+        let log = migration_log(&invoice);
+        Ok(PullTranslateResult::IntegrationOperations(vec![
+            IntegrationOperation::upsert(invoice),
+            IntegrationOperation::upsert(log),
+        ]))
     }
 }
 

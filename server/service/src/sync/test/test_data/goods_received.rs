@@ -1,6 +1,20 @@
 use crate::sync::test::TestSyncIncomingRecord;
+use crate::sync::translations::{IntegrationOperation, PullTranslateResult};
 use repository::mock::MockData;
 use repository::*;
+
+fn migration_log_for(invoice: &InvoiceRow) -> ActivityLogRow {
+    ActivityLogRow {
+        id: format!("{}_migrated_from_legacy", invoice.id),
+        r#type: ActivityLogType::InvoiceMigratedFromLegacy,
+        user_id: invoice.user_id.clone(),
+        store_id: Some(invoice.store_id.clone()),
+        record_id: Some(invoice.id.clone()),
+        datetime: invoice.created_datetime,
+        changed_to: None,
+        changed_from: None,
+    }
+}
 
 const TABLE_NAME: &str = "Goods_received";
 
@@ -41,28 +55,40 @@ const GR_FINALISED: (&str, &str) = (
 );
 
 fn gr_non_finalised_pull_record() -> TestSyncIncomingRecord {
-    TestSyncIncomingRecord::new_pull_upsert(
-        TABLE_NAME,
-        GR_NON_FINALISED,
-        InvoiceRow {
-            id: "gr_non_finalised_test".to_string(),
-            name_id: "name_a".to_string(),
-            store_id: "store_a".to_string(),
-            user_id: Some("user_account_a".to_string()),
-            invoice_number: 42,
-            r#type: InvoiceType::InboundShipment,
-            status: InvoiceStatus::New,
-            on_hold: false,
-            comment: Some("test comment".to_string()),
-            their_reference: Some("sup ref".to_string()),
-            created_datetime: chrono::NaiveDate::from_ymd_opt(2024, 3, 15)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap(),
-            purchase_order_id: Some("test_purchase_order_a".to_string()),
+    let expected_invoice = InvoiceRow {
+        id: "gr_non_finalised_test".to_string(),
+        name_id: "name_a".to_string(),
+        store_id: "store_a".to_string(),
+        user_id: Some("user_account_a".to_string()),
+        invoice_number: 42,
+        r#type: InvoiceType::InboundShipment,
+        status: InvoiceStatus::New,
+        on_hold: false,
+        comment: Some("test comment".to_string()),
+        their_reference: Some("sup ref".to_string()),
+        created_datetime: chrono::NaiveDate::from_ymd_opt(2024, 3, 15)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        purchase_order_id: Some("test_purchase_order_a".to_string()),
+        ..Default::default()
+    };
+    let expected_log = migration_log_for(&expected_invoice);
+
+    TestSyncIncomingRecord {
+        translated_record: PullTranslateResult::IntegrationOperations(vec![
+            IntegrationOperation::upsert(expected_invoice),
+            IntegrationOperation::upsert(expected_log),
+        ]),
+        sync_buffer_row: SyncBufferRow {
+            table_name: TABLE_NAME.to_string(),
+            record_id: GR_NON_FINALISED.0.to_string(),
+            data: GR_NON_FINALISED.1.to_string(),
+            action: SyncAction::Upsert,
             ..Default::default()
         },
-    )
+        extra_data: None,
+    }
 }
 
 fn gr_finalised_pull_record() -> TestSyncIncomingRecord {
@@ -73,6 +99,10 @@ fn gr_finalised_pull_record() -> TestSyncIncomingRecord {
         invoice_number: 99,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::Verified,
+        // Simulate the legacy transact.hold=true flag the invoice translator
+        // would have carried over. The GR translator should clear this on
+        // migrated finalised shipments (#11378).
+        on_hold: true,
         created_datetime: chrono::NaiveDate::from_ymd_opt(2024, 3, 10)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -82,9 +112,23 @@ fn gr_finalised_pull_record() -> TestSyncIncomingRecord {
 
     let mut expected_invoice = existing_invoice.clone();
     expected_invoice.purchase_order_id = Some("test_purchase_order_a".to_string());
+    expected_invoice.on_hold = false;
+    let expected_log = migration_log_for(&expected_invoice);
 
-    let mut record =
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, GR_FINALISED, expected_invoice);
+    let mut record = TestSyncIncomingRecord {
+        translated_record: PullTranslateResult::IntegrationOperations(vec![
+            IntegrationOperation::upsert(expected_invoice),
+            IntegrationOperation::upsert(expected_log),
+        ]),
+        sync_buffer_row: SyncBufferRow {
+            table_name: TABLE_NAME.to_string(),
+            record_id: GR_FINALISED.0.to_string(),
+            data: GR_FINALISED.1.to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        },
+        extra_data: None,
+    };
     record.extra_data = Some(MockData {
         invoices: vec![existing_invoice],
         // Transact sync_buffer record with goods_received_ID pointing to this GR.
