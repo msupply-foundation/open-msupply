@@ -2857,5 +2857,6 @@
   "label.group-by-po-line": "Grouper par ligne du BC",
   "report-code.customer-returns": "Retours clients",
   "report-code.supplier-returns": "Retours fournisseurs",
-  "label.customer-return": "Bordereau de retour"
+  "label.customer-return": "Bordereau de retour",
+  "label.area-amc": "CMM Zone"
 }

@@ -2795,5 +2795,6 @@
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
   "report-code.customer-returns": "Customer Returns",
   "report-code.supplier-returns": "Supplier Returns",
-  "label.customer-return": "Customer return"
+  "label.customer-return": "Customer return",
+  "label.area-amc": "Area AMC"
 }
