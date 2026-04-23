@@ -158,7 +158,7 @@ impl<'a> AssetRowRepository<'a> {
 }
 
 impl Upsert for AssetRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = AssetRowRepository::new(con).upsert_one(self, None)?;
         Ok(Some(cursor_id))
     }

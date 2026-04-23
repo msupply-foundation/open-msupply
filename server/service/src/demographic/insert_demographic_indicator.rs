@@ -56,7 +56,7 @@ pub fn insert_demographic_indicator(
                         name: demographic_name.clone(),
                         population_percentage: input.population_percentage.unwrap_or_default(),
                     };
-                    new_demographic.upsert(connection)?;
+                    new_demographic.upsert(connection, None)?;
                     // TODO add activity log entry
                     new_demographic
                 }

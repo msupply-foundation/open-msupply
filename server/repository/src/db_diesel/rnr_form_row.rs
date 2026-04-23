@@ -153,7 +153,7 @@ impl Delete for RnRFormDelete {
 }
 
 impl Upsert for RnRFormRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = RnRFormRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }

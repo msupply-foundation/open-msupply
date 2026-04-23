@@ -1,4 +1,5 @@
 use crate::db_diesel::name_row::name;
+use crate::ChangeLogInsertRow;
 use crate::{
     diesel_macros::define_linked_tables,
     Delete, RepositoryError, StorageConnection, Upsert,
@@ -116,7 +117,7 @@ impl<'a> ContactRowRepository<'a> {
 }
 
 impl Upsert for ContactRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         ContactRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

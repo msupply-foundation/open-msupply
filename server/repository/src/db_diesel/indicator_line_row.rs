@@ -1,6 +1,7 @@
 use super::StorageConnection;
 
 use crate::{repository_error::RepositoryError, Upsert};
+use crate::ChangeLogInsertRow;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -86,7 +87,7 @@ impl<'a> IndicatorLineRowRepository<'a> {
 }
 
 impl Upsert for IndicatorLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         IndicatorLineRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

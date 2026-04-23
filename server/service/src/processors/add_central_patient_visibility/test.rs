@@ -80,7 +80,7 @@ async fn requests_link_patient_to_oms_central_store() {
 
     // Insert, to emulate receiving this record via push from remote site
     nsj_non_visible_patient_remote
-        .upsert(&ctx.connection)
+        .upsert(&ctx.connection, None)
         .unwrap();
 
     // manually trigger because insert doesn't trigger the processor

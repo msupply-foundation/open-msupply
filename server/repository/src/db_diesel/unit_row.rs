@@ -114,18 +114,15 @@ impl Delete for UnitRowDelete {
 }
 
 impl Upsert for UnitRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         UnitRowRepository::new(con).upsert_one(self)?;
-        Ok(None)
-    }
-    fn upsert_v7(
-        &self,
-        con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
-    ) -> Result<(), RepositoryError> {
-        UnitRowRepository::new(con).upsert_one(self)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
+        match changelog {
+            Some(changelog) => {
+                let cursor_id = ChangelogRepository::new(con).insert(&changelog)?;
+                Ok(Some(cursor_id))
+            }
+            None => Ok(None),
+        }
     }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {

@@ -3,6 +3,7 @@ use super::{
     location_type_row::location_type, StorageConnection,
 };
 use crate::{repository_error::RepositoryError, Upsert};
+use crate::ChangeLogInsertRow;
 
 use diesel::prelude::*;
 
@@ -101,7 +102,7 @@ impl<'a> ItemLinkRowRepository<'a> {
 }
 
 impl Upsert for ItemLinkRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         ItemLinkRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

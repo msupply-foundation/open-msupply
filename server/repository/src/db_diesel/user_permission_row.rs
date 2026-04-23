@@ -1,6 +1,7 @@
 use super::StorageConnection;
 
 use crate::repository_error::RepositoryError;
+use crate::ChangeLogInsertRow;
 use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
@@ -174,7 +175,7 @@ impl Delete for UserPermissionRowDelete {
 }
 
 impl Upsert for UserPermissionRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         UserPermissionRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

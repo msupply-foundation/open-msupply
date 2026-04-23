@@ -1,4 +1,5 @@
 use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::ChangeLogInsertRow;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -52,7 +53,7 @@ impl<'a> ShippingMethodRowRepository<'a> {
 }
 
 impl Upsert for ShippingMethodRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         ShippingMethodRowRepository::new(con).upsert_one(self)?;
         // Not in changelog
         Ok(None)

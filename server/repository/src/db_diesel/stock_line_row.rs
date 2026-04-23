@@ -200,18 +200,20 @@ impl Delete for StockLineRowDelete {
 }
 
 impl Upsert for StockLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = StockLineRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
-    }
-    fn upsert_v7(
-        &self,
-        con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
-    ) -> Result<(), RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         StockLineRowRepository::new(con)._upsert(self)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
+
+        let changelog = changelog.unwrap_or_else(|| ChangeLogInsertRow {
+            table_name: StockLineRow::table_name(),
+            record_id: self.record_id(),
+            row_action: RowActionType::Upsert,
+            store_id: Some(self.store_id.clone()),
+            name_id: None,
+            ..Default::default()
+        });
+
+        let cursor_id = ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(Some(cursor_id))
     }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {

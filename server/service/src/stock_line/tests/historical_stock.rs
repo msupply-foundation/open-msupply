@@ -88,7 +88,7 @@ mod query {
             ..Default::default()
         };
 
-        invoice.upsert(&ctx.connection).unwrap();
+        invoice.upsert(&ctx.connection, None).unwrap();
 
         let stock_line = StockLineRow {
             id: stock_line_id.clone(),
@@ -101,7 +101,7 @@ mod query {
             ..old_stock_line
         };
 
-        stock_line.upsert(&ctx.connection).unwrap();
+        stock_line.upsert(&ctx.connection, None).unwrap();
 
         let invoice_line = InvoiceLineRow {
             id: format!("invoice_line_{invoice_number}"),
@@ -115,7 +115,7 @@ mod query {
             ..Default::default()
         };
 
-        invoice_line.upsert(&ctx.connection).unwrap();
+        invoice_line.upsert(&ctx.connection, None).unwrap();
     }
 
     struct TestStockAdjustment {

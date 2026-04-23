@@ -120,7 +120,7 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
 }
 
 impl Upsert for VaccineCourseDoseRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = VaccineCourseDoseRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }

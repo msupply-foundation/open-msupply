@@ -627,7 +627,7 @@ async fn test_changelog_outgoing_sync_records() {
         id: asset_class_id.clone(),
         ..Default::default()
     };
-    let _result = row.upsert(&connection).unwrap();
+    let _result = row.upsert(&connection, None).unwrap();
 
     let outgoing_results = repo
         .outgoing_sync_records_from_central(0, 1000, 1, true)
@@ -645,7 +645,7 @@ async fn test_changelog_outgoing_sync_records() {
         ..Default::default()
     };
 
-    let cursor_id = row.upsert(&connection).unwrap().unwrap();
+    let cursor_id = row.upsert(&connection, None).unwrap().unwrap();
 
     // Set the source_site_id (usually this happens during integration step in sync)
     repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
@@ -698,7 +698,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
         ..Default::default()
     };
 
-    let cursor = vaccination.upsert(&connection).unwrap().unwrap();
+    let cursor = vaccination.upsert(&connection, None).unwrap().unwrap();
 
     // store A (on site1) has name_store_join for patient2
 

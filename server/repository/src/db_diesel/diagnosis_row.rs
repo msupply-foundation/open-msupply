@@ -1,5 +1,6 @@
 use super::diagnosis_row::diagnosis::dsl::*;
 use crate::RepositoryError;
+use crate::ChangeLogInsertRow;
 use crate::StorageConnection;
 use crate::Upsert;
 use chrono::NaiveDate;
@@ -72,7 +73,7 @@ impl<'a> DiagnosisRowRepository<'a> {
 }
 
 impl Upsert for DiagnosisRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         DiagnosisRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

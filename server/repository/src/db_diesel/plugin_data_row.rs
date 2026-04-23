@@ -85,7 +85,7 @@ impl<'a> PluginDataRowRepository<'a> {
 }
 
 impl Upsert for PluginDataRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         let change_log = PluginDataRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log))
     }

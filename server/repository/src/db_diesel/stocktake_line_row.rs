@@ -182,7 +182,7 @@ impl Delete for StocktakeLineRowDelete {
 }
 
 impl Upsert for StocktakeLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         let change_log_id = StocktakeLineRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }

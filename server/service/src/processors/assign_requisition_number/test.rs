@@ -65,7 +65,7 @@ async fn assigns_requisition_number_to_response_requisitions() {
     };
 
     log::debug!("insert");
-    response.upsert(&ctx.connection).unwrap();
+    response.upsert(&ctx.connection, None).unwrap();
 
     // manually trigger because inserting the requisition doesn't trigger the processor
     ctx.processors_trigger

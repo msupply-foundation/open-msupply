@@ -131,18 +131,23 @@ impl Delete for CurrencyRowDelete {
 }
 
 impl Upsert for CurrencyRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = CurrencyRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
-    }
-    fn upsert_v7(
+    fn upsert(
         &self,
         con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
-    ) -> Result<(), RepositoryError> {
-        CurrencyRowRepository::new(con)._upsert_one(self)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
+        changelog: Option<ChangeLogInsertRow>,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let repo = CurrencyRowRepository::new(con);
+        repo._upsert_one(self)?;
+
+        let changelog = changelog.unwrap_or_else(|| ChangeLogInsertRow {
+            table_name: CurrencyRow::table_name(),
+            record_id: self.record_id(),
+            row_action: RowActionType::Upsert,
+            ..Default::default()
+        });
+
+        let cursor_id = ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(Some(cursor_id))
     }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {

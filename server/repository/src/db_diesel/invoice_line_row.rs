@@ -364,18 +364,31 @@ impl Delete for InvoiceLineRowDelete {
 }
 
 impl Upsert for InvoiceLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = InvoiceLineRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
-    }
-    fn upsert_v7(
-        &self,
-        con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
-    ) -> Result<(), RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         InvoiceLineRowRepository::new(con)._upsert(self)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
+
+        let changelog = match changelog {
+            Some(changelog) => changelog,
+            None => {
+                let invoice = InvoiceRowRepository::new(con).find_one_by_id(&self.invoice_id)?;
+                let invoice = match invoice {
+                    Some(invoice) => invoice,
+                    None => return Err(RepositoryError::NotFound),
+                };
+
+                ChangeLogInsertRow {
+                    table_name: InvoiceLineRow::table_name(),
+                    record_id: self.record_id(),
+                    row_action: RowActionType::Upsert,
+                    store_id: Some(invoice.store_id.clone()),
+                    name_id: Some(invoice.name_id.clone()),
+                    ..Default::default()
+                }
+            }
+        };
+
+        let cursor_id = ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(Some(cursor_id))
     }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
