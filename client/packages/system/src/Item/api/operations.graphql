@@ -516,6 +516,7 @@ fragment ItemLedger on ItemLedgerNode {
   invoiceId
   invoiceStatus
   invoiceType
+  isExternal
   name
   packSize
   movementInUnits

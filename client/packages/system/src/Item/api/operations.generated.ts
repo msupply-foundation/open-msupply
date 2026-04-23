@@ -1463,6 +1463,7 @@ export type ItemLedgerFragment = {
   invoiceId: string;
   invoiceStatus: Types.InvoiceNodeStatus;
   invoiceType: Types.InvoiceNodeType;
+  isExternal: boolean;
   name: string;
   packSize: number;
   movementInUnits: number;
@@ -1497,6 +1498,7 @@ export type ItemLedgerQuery = {
       invoiceId: string;
       invoiceStatus: Types.InvoiceNodeStatus;
       invoiceType: Types.InvoiceNodeType;
+      isExternal: boolean;
       name: string;
       packSize: number;
       movementInUnits: number;
@@ -1820,6 +1822,7 @@ export const ItemLedgerFragmentDoc = gql`
     invoiceId
     invoiceStatus
     invoiceType
+    isExternal
     name
     packSize
     movementInUnits
