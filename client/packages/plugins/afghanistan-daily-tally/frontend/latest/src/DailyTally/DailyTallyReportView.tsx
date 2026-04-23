@@ -142,7 +142,7 @@ const parseCoverageEntries = (note?: string | null): CoverageEntry[] => {
   if (!note) return [];
 
   try {
-    const parsed = JSON.parse(note) as Partial<CoveragePayloadV1 & CoveragePayloadV2>;
+    const parsed = JSON.parse(note) as Partial<CoveragePayloadV1 | CoveragePayloadV2>;
     if (!parsed.itemId || !parsed.itemName) return [];
 
     if (parsed.version === 'DT_COVERAGE_V2') {
@@ -164,9 +164,9 @@ const parseCoverageEntries = (note?: string | null): CoverageEntry[] => {
 
     return [
       {
-        itemId: parsed.itemId,
-        itemName: parsed.itemName,
-        itemDisplayName: parsed.itemName,
+        itemId: parsed.itemId as string,
+        itemName: parsed.itemName as string,
+        itemDisplayName: parsed.itemName as string,
         child: normaliseChildGroups(parsed.child as Array<Partial<CoverageChildGroup>>),
         women: normaliseWomenGroups(parsed.women as Array<Partial<CoverageWomenGroup>>),
       },

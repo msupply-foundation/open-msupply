@@ -37,6 +37,8 @@ import {
   useTranslation,
   ItemNodeType,
   useGql,
+  RewindIcon,
+  ShrinkableBaseButton,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -57,11 +59,13 @@ import {
   isChild011Bucket,
   isChild1223Bucket,
   isChild25Bucket,
-  isWomenNonPregnantBucket,
-  isWomenPregnantBucket,
   resolveDemographicBuckets,
 } from './demographicBuckets';
-import { buildPrintableHtml, downloadPdfFromHtml, printHtml } from './printHelpers';
+import {
+  buildPrintableHtml,
+  downloadPdfFromHtml,
+  printHtml,
+} from './printHelpers';
 
 type TallyStockLine = {
   id: string;
@@ -193,7 +197,9 @@ const createEmptySessionTallyDraft = (): VaccineSessionTallyDraft => ({
   },
 });
 
-const sessionTallyVaccineTotal = (draft: VaccineSessionTallyDraft | undefined) => {
+const sessionTallyVaccineTotal = (
+  draft: VaccineSessionTallyDraft | undefined
+) => {
   if (!draft) return 0;
 
   return tallyAgeGroups.reduce(
@@ -273,19 +279,20 @@ const womenCoverageLabel = (
       .replace(/\b(non\s*pregnant|pregnant)\b/i, '')
       .trim();
 
-  const base = stripQualifier(nonPregnantGroup?.label ?? '') || stripQualifier(pregnantGroup?.label ?? '');
+  const base =
+    stripQualifier(nonPregnantGroup?.label ?? '') ||
+    stripQualifier(pregnantGroup?.label ?? '');
   return base || nonPregnantGroup?.label || pregnantGroup?.label || 'Women';
 };
 
 const resolveWomenCoverageGroups = (groups: WomenCoverageAgeGroup[]) => {
   const nonPregnantGroup =
-    groups.find(isNonPregnantWomenGroup) || groups.find(group => !isPregnantWomenGroup(group));
+    groups.find(isNonPregnantWomenGroup) ||
+    groups.find(group => !isPregnantWomenGroup(group));
 
   const pregnantGroup =
     groups.find(
-      group =>
-        isPregnantWomenGroup(group) &&
-        group.id !== nonPregnantGroup?.id
+      group => isPregnantWomenGroup(group) && group.id !== nonPregnantGroup?.id
     ) || groups.find(group => group.id !== nonPregnantGroup?.id);
 
   return { nonPregnantGroup, pregnantGroup };
@@ -329,12 +336,18 @@ const mapFixedDemographicGroups = (
   demographics: DemographicNodeLite[] | undefined
 ): Pick<VaccineCoverageDraft, 'childAgeGroups' | 'womenAgeGroups'> => {
   const compareByName = (a: DemographicNodeLite, b: DemographicNodeLite) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
+    a.name.localeCompare(b.name, undefined, {
+      sensitivity: 'base',
+      numeric: true,
+    });
 
   const configured = (demographics ?? []).filter(group => {
     const normalizedName = group.name.trim().toLowerCase();
     const normalizedId = group.id.trim().toLowerCase();
-    return normalizedName !== 'general population' && normalizedId !== 'general-population';
+    return (
+      normalizedName !== 'general population' &&
+      normalizedId !== 'general-population'
+    );
   });
 
   if (!configured.length) {
@@ -407,7 +420,8 @@ const toNumeric = (value: number | string | null | undefined) => {
 const normaliseReason = (value: string | null | undefined) =>
   (value ?? '').trim().toLowerCase();
 
-const round = (value: number) => Math.round((value + Number.EPSILON) * 1000) / 1000;
+const round = (value: number) =>
+  Math.round((value + Number.EPSILON) * 1000) / 1000;
 
 const defaultDailyTallyReference = () => {
   const now = new Date();
@@ -501,18 +515,18 @@ const getWomenCoverageTotals = (coverage: VaccineCoverageDraft | undefined) => {
   };
 };
 
-const getCoverageUsedTotal = (coverage: VaccineCoverageDraft | undefined) => {
-  if (!coverage) return 0;
+// const getCoverageUsedTotal = (coverage: VaccineCoverageDraft | undefined) => {
+//   if (!coverage) return 0;
 
-  const childTotal = coverage.childAgeGroups.reduce(
-    (total, ageGroup) => total + ageGroup.male + ageGroup.female,
-    0
-  );
-  const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
-  const womenTotal = nonPregnant + pregnant;
+//   const childTotal = coverage.childAgeGroups.reduce(
+//     (total, ageGroup) => total + ageGroup.male + ageGroup.female,
+//     0
+//   );
+//   const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
+//   const womenTotal = nonPregnant + pregnant;
 
-  return childTotal + womenTotal;
-};
+//   return childTotal + womenTotal;
+// };
 
 const getVisibleCoverageUsedTotal = (
   coverage: VaccineCoverageDraft | undefined,
@@ -544,7 +558,9 @@ const hasVisibleCoverageValues = (
   if (!coverage) return false;
 
   const childValues = visibility.showChild
-    ? coverage.childAgeGroups.some(ageGroup => ageGroup.male > 0 || ageGroup.female > 0)
+    ? coverage.childAgeGroups.some(
+        ageGroup => ageGroup.male > 0 || ageGroup.female > 0
+      )
     : false;
 
   const womenValues = visibility.showWomen
@@ -557,17 +573,17 @@ const hasVisibleCoverageValues = (
   return childValues || womenValues;
 };
 
-const hasCoverageValues = (coverage: VaccineCoverageDraft | undefined) => {
-  if (!coverage) return false;
+// const hasCoverageValues = (coverage: VaccineCoverageDraft | undefined) => {
+//   if (!coverage) return false;
 
-  const childValues = coverage.childAgeGroups.some(
-    ageGroup => ageGroup.male > 0 || ageGroup.female > 0
-  );
-  const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
-  const womenValues = nonPregnant > 0 || pregnant > 0;
+//   const childValues = coverage.childAgeGroups.some(
+//     ageGroup => ageGroup.male > 0 || ageGroup.female > 0
+//   );
+//   const { nonPregnant, pregnant } = getWomenCoverageTotals(coverage);
+//   const womenValues = nonPregnant > 0 || pregnant > 0;
 
-  return childValues || womenValues;
-};
+//   return childValues || womenValues;
+// };
 
 const coverageSummaryText = (
   vaccineRows: DailyTallyRow[],
@@ -710,7 +726,10 @@ const buildCoverageSummaryRows = (
         const perDoseRows = rowDoses
           .map(dose => {
             const doseCoverage = perDoseCoverageByItem[row.itemId]?.[dose.id];
-            if (!doseCoverage || !hasVisibleCoverageValues(doseCoverage, visibility)) {
+            if (
+              !doseCoverage ||
+              !hasVisibleCoverageValues(doseCoverage, visibility)
+            ) {
               return null;
             }
             return summariseCoverage(row, doseCoverage, visibility, dose.label);
@@ -720,7 +739,8 @@ const buildCoverageSummaryRows = (
         if (perDoseRows.length > 0) return perDoseRows;
       }
 
-      if (!coverage || !hasVisibleCoverageValues(coverage, visibility)) return [];
+      if (!coverage || !hasVisibleCoverageValues(coverage, visibility))
+        return [];
       return [summariseCoverage(row, coverage, visibility)];
     })
     .sort((a, b) => a.itemDisplayName.localeCompare(b.itemDisplayName));
@@ -730,7 +750,11 @@ const dailyTallyLineNote = (
   row: DailyTallyRow,
   coverage: VaccineCoverageDraft | undefined,
   visibility: CoverageFieldVisibility,
-  perDoseCoverages?: Array<{ doseId: string; doseLabel: string; coverage: VaccineCoverageDraft }>
+  perDoseCoverages?: Array<{
+    doseId: string;
+    doseLabel: string;
+    coverage: VaccineCoverageDraft;
+  }>
 ) => {
   if (!row.isVaccine) return `Daily tally issued (${row.item})`;
 
@@ -900,14 +924,15 @@ export const DailyTallyView = () => {
   const isLaptopLayout = useMediaQuery(theme.breakpoints.up('lg'));
   const isPortraitOrientation = useMediaQuery('(orientation: portrait)');
   const isTabletOrSmaller = useMediaQuery(theme.breakpoints.down('md'));
-  const keepTopRightButtonTextVisible = isTabletOrSmaller && isPortraitOrientation;
+  const keepTopRightButtonTextVisible =
+    isTabletOrSmaller && isPortraitOrientation;
   const useDesktopCoverageSummaryLayout =
     isLaptopLayout || EnvUtils.platform === Platform.Android;
   const isSimplifiedTabletUI = useSimplifiedTabletUI();
   const preferences = usePreferences();
   const { useSimplifiedMobileUi = false } = preferences;
   const isSessionTallyStepEnabled = Boolean(
-    (preferences as Record<string, unknown>).enableDailyTallySessionTallyStep
+    (preferences as Record<string, unknown>)['enableDailyTallySessionTallyStep']
   );
   const isSimplifiedMode = isSimplifiedTabletUI || useSimplifiedMobileUi;
   const { error, success } = useNotification();
@@ -924,10 +949,14 @@ export const DailyTallyView = () => {
     useReasonOptions();
 
   const [selectedPatientId, setSelectedPatientId] = useState('');
-  const [filterText, setFilterText] = useState('');
-  const [referenceText, setReferenceText] = useState(defaultDailyTallyReference);
+  // const [filterText] = useState('');
+  const [referenceText, setReferenceText] = useState(
+    defaultDailyTallyReference
+  );
   const [draftByItem, setDraftByItem] = useState<Record<string, RowDraft>>({});
-  const [expandedByItem, setExpandedByItem] = useState<Record<string, boolean>>({});
+  const [expandedByItem, setExpandedByItem] = useState<Record<string, boolean>>(
+    {}
+  );
   const [confirmSummaryOpen, setConfirmSummaryOpen] = useState(false);
   const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false);
   const [confirmSummaryRows, setConfirmSummaryRows] = useState<
@@ -941,19 +970,26 @@ export const DailyTallyView = () => {
   const [perDoseCoverageByItem, setPerDoseCoverageByItem] = useState<
     Record<string, Record<string, VaccineCoverageDraft>>
   >({});
-  const perDoseCoverageByItemRef = useRef<Record<string, Record<string, VaccineCoverageDraft>>>({});
-  const [selectedDoseIdByItem, setSelectedDoseIdByItem] = useState<Record<string, string>>({});
-  const [expandedStepOneVaccineItemIds, setExpandedStepOneVaccineItemIds] = useState<
-    Record<string, boolean>
+  const perDoseCoverageByItemRef = useRef<
+    Record<string, Record<string, VaccineCoverageDraft>>
   >({});
+  const [selectedDoseIdByItem, setSelectedDoseIdByItem] = useState<
+    Record<string, string>
+  >({});
+  const [expandedStepOneVaccineItemIds, setExpandedStepOneVaccineItemIds] =
+    useState<Record<string, boolean>>({});
   const [expandedNonVaccineItemIds, setExpandedNonVaccineItemIds] = useState<
     Record<string, boolean>
   >({});
   const [sessionTallyByItem, setSessionTallyByItem] = useState<
     Record<string, VaccineSessionTallyDraft>
   >({});
-  const [selectedTallyItemId, setSelectedTallyItemId] = useState<string | null>(null);
-  const [expandedCoverageItemIds, setExpandedCoverageItemIds] = useState<Record<string, boolean>>({});
+  const [selectedTallyItemId, setSelectedTallyItemId] = useState<string | null>(
+    null
+  );
+  const [expandedCoverageItemIds, setExpandedCoverageItemIds] = useState<
+    Record<string, boolean>
+  >({});
   const [isSaving, setIsSaving] = useState(false);
   const [workflowStep, setWorkflowStep] = useState<WorkflowStep>(
     isSessionTallyStepEnabled
@@ -1017,8 +1053,8 @@ export const DailyTallyView = () => {
 
   const selectedPatientLabel = useMemo(() => {
     return (
-      patientOptions.find(option => option.value === selectedPatientId)?.label ||
-      'Not selected'
+      patientOptions.find(option => option.value === selectedPatientId)
+        ?.label || 'Not selected'
     );
   }, [patientOptions, selectedPatientId]);
   const sameDayTalliesForSelectedPatient = useMemo(
@@ -1135,14 +1171,17 @@ export const DailyTallyView = () => {
   const { data: dosesForItemId } = useQuery({
     queryKey: ['daily-tally', 'vaccine-course-doses'],
     queryFn: async () => {
-      const result = await gqlClient.request<{
-        vaccineCourses: {
-          nodes: Array<{
-            vaccineCourseItems?: Array<{ itemId: string }> | null;
-            vaccineCourseDoses?: Array<{ id: string; label: string }> | null;
-          }>;
-        };
-      }, Record<string, never>>(`
+      const result = await gqlClient.request<
+        {
+          vaccineCourses: {
+            nodes: Array<{
+              vaccineCourseItems?: Array<{ itemId: string }> | null;
+              vaccineCourseDoses?: Array<{ id: string; label: string }> | null;
+            }>;
+          };
+        },
+        Record<string, never>
+      >(`
         query dailyTallyVaccineCourses {
           vaccineCourses(
             sort: { key: name }
@@ -1303,14 +1342,17 @@ export const DailyTallyView = () => {
             openVialWastage: false,
             batchDraftById:
               item.stockLines.length > 1
-                ? item.stockLines.reduce<Record<string, BatchDraft>>((acc, line) => {
-                    acc[line.id] = {
-                      used: 0,
-                      wastage: 0,
-                      openVialWastage: false,
-                    };
-                    return acc;
-                  }, {})
+                ? item.stockLines.reduce<Record<string, BatchDraft>>(
+                    (acc, line) => {
+                      acc[line.id] = {
+                        used: 0,
+                        wastage: 0,
+                        openVialWastage: false,
+                      };
+                      return acc;
+                    },
+                    {}
+                  )
                 : undefined,
           };
         } else if (item.stockLines.length > 1) {
@@ -1340,7 +1382,9 @@ export const DailyTallyView = () => {
           next[item.itemId] = {
             used: currentDraft.used,
             wastage: currentDraft.wastage,
-            openVialWastage: item.isVaccine ? currentDraft.openVialWastage : false,
+            openVialWastage: item.isVaccine
+              ? currentDraft.openVialWastage
+              : false,
             batchDraftById: merged,
           };
         }
@@ -1372,7 +1416,11 @@ export const DailyTallyView = () => {
         openVialWastage: false,
       };
       const isMultiBatch = item.stockLines.length > 1;
-      const sohDisplay = toDisplayUnits(item.sohPacks, item.isVaccine, item.doses);
+      const sohDisplay = toDisplayUnits(
+        item.sohPacks,
+        item.isVaccine,
+        item.doses
+      );
       const batchWastage = sumBatchDraft(draft.batchDraftById, 'wastage');
       const effectiveWastage = isMultiBatch
         ? batchWastage > 0
@@ -1399,35 +1447,41 @@ export const DailyTallyView = () => {
   }, [draftByItem, groupedItems, t]);
 
   const vaccineRows = useMemo(() => rows.filter(row => row.isVaccine), [rows]);
-  const nonVaccineRows = useMemo(() => rows.filter(row => !row.isVaccine), [rows]);
+  const nonVaccineRows = useMemo(
+    () => rows.filter(row => !row.isVaccine),
+    [rows]
+  );
   const hasAnyIssuedVaccineRows = useMemo(
     () => vaccineRows.some(row => row.used > 0),
     [vaccineRows]
   );
-  const coverageFieldVisibilityByItem = useMemo(
-    () => {
-      const childItemIds = new Set(coverageMasterListMembership?.childItemIds ?? []);
-      const womenItemIds = new Set(coverageMasterListMembership?.womenItemIds ?? []);
+  const coverageFieldVisibilityByItem = useMemo(() => {
+    const childItemIds = new Set(
+      coverageMasterListMembership?.childItemIds ?? []
+    );
+    const womenItemIds = new Set(
+      coverageMasterListMembership?.womenItemIds ?? []
+    );
 
-      return Object.fromEntries(
-        vaccineRows.map(row => [
-          row.itemId,
-          {
-            showChild: childItemIds.has(row.itemId),
-            showWomen: womenItemIds.has(row.itemId),
-          },
-        ])
-      ) as Record<string, CoverageFieldVisibility>;
-    },
-    [vaccineRows, coverageMasterListMembership]
-  );
-  const normalizedFilterText = filterText.trim().toLowerCase();
+    return Object.fromEntries(
+      vaccineRows.map(row => [
+        row.itemId,
+        {
+          showChild: childItemIds.has(row.itemId),
+          showWomen: womenItemIds.has(row.itemId),
+        },
+      ])
+    ) as Record<string, CoverageFieldVisibility>;
+  }, [vaccineRows, coverageMasterListMembership]);
+  // const normalizedFilterText = filterText.trim().toLowerCase();
   const filteredVaccineRows = vaccineRows;
 
   useEffect(() => {
     if (!selectedTallyItemId) return;
 
-    const selectedExists = vaccineRows.some(row => row.itemId === selectedTallyItemId);
+    const selectedExists = vaccineRows.some(
+      row => row.itemId === selectedTallyItemId
+    );
     if (!selectedExists) {
       setSelectedTallyItemId(null);
     }
@@ -1446,7 +1500,12 @@ export const DailyTallyView = () => {
               }
             )
           ),
-    [isSimplifiedMode, filteredVaccineRows, coverageByItem, coverageFieldVisibilityByItem]
+    [
+      isSimplifiedMode,
+      filteredVaccineRows,
+      coverageByItem,
+      coverageFieldVisibilityByItem,
+    ]
   );
   const allocationNonVaccineRows = nonVaccineRows;
   const hasNonVaccineItems = allocationNonVaccineRows.length > 0;
@@ -1492,14 +1551,19 @@ export const DailyTallyView = () => {
     !hasAnyCoverageValues &&
     (workflowStep === 'coverage' || workflowStep === 'non-vaccine');
   const workflowDisplayStepSequence = workflowStepSequence.filter(step => {
-    if (shouldCollapseAllocationStepInTitle && step === 'allocation') return false;
+    if (shouldCollapseAllocationStepInTitle && step === 'allocation')
+      return false;
     if (isBaseThreeStepFlow && !hasAnyIssuedVaccineRows && step === 'wastage')
       return false;
-    if (shouldCollapseWastageStepInFourStepTitle && step === 'wastage') return false;
+    if (shouldCollapseWastageStepInFourStepTitle && step === 'wastage')
+      return false;
     return true;
   });
 
-  const workflowStepIndex = Math.max(workflowDisplayStepSequence.indexOf(workflowStep), 0);
+  const workflowStepIndex = Math.max(
+    workflowDisplayStepSequence.indexOf(workflowStep),
+    0
+  );
   const workflowStepTotal = workflowDisplayStepSequence.length;
   const workflowStepTitleByKey: Record<WorkflowStep, string> = {
     tally: 'Vaccine Session Tally',
@@ -1520,10 +1584,10 @@ export const DailyTallyView = () => {
       : workflowStep === 'allocation'
         ? allocationStepRows
         : workflowStep === 'wastage'
-        ? useSimplifiedMobileUi
-          ? allocationVaccineRows.filter(row => row.used > 0)
-          : allocationVaccineRows
-        : [];
+          ? useSimplifiedMobileUi
+            ? allocationVaccineRows.filter(row => row.used > 0)
+            : allocationVaccineRows
+          : [];
 
   useEffect(() => {
     if (!workflowStepSequence.includes(workflowStep)) {
@@ -1539,9 +1603,13 @@ export const DailyTallyView = () => {
             showChild: false,
             showWomen: false,
           };
-          if (!coverage || !hasVisibleCoverageValues(coverage, visibility)) return null;
+          if (!coverage || !hasVisibleCoverageValues(coverage, visibility))
+            return null;
 
-          const coverageTotal = getVisibleCoverageUsedTotal(coverage, visibility);
+          const coverageTotal = getVisibleCoverageUsedTotal(
+            coverage,
+            visibility
+          );
           if (coverageTotal - row.soh <= 0.0001) return null;
 
           return {
@@ -1554,8 +1622,12 @@ export const DailyTallyView = () => {
         .filter(
           (
             row
-          ): row is { itemId: string; item: string; coverageTotal: number; soh: number } =>
-            row !== null
+          ): row is {
+            itemId: string;
+            item: string;
+            coverageTotal: number;
+            soh: number;
+          } => row !== null
         ),
     [vaccineRows, coverageByItem, coverageFieldVisibilityByItem]
   );
@@ -1624,7 +1696,8 @@ export const DailyTallyView = () => {
     if (isSimplifiedMode) return;
 
     const currentCoverage =
-      coverageByItemRef.current[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate);
+      coverageByItemRef.current[row.itemId] ??
+      defaultVaccineCoverageDraft(coverageTemplate);
 
     const nextCoverage: VaccineCoverageDraft = {
       ...currentCoverage,
@@ -1667,7 +1740,8 @@ export const DailyTallyView = () => {
     delta: 1 | -1
   ) => {
     setSessionTallyByItem(previous => {
-      const currentDraft = previous[row.itemId] ?? createEmptySessionTallyDraft();
+      const currentDraft =
+        previous[row.itemId] ?? createEmptySessionTallyDraft();
       const currentValue = currentDraft.counts[ageKey][genderKey] ?? 0;
       const nextValue = Math.max(0, currentValue + delta);
 
@@ -1698,7 +1772,9 @@ export const DailyTallyView = () => {
 
     if (!hasValues) return;
 
-    const confirmed = window.confirm('Reset all vaccine session tally counts for this day?');
+    const confirmed = window.confirm(
+      'Reset all vaccine session tally counts for this day?'
+    );
     if (!confirmed) return;
 
     const nextTallyByItem: Record<string, VaccineSessionTallyDraft> = {};
@@ -1732,10 +1808,14 @@ export const DailyTallyView = () => {
     if (!hasAnyCoverageValues) {
       const allocationIndex = workflowStepSequence.indexOf('allocation');
       const stepAfterAllocation =
-        allocationIndex >= 0 ? workflowStepSequence[allocationIndex + 1] : undefined;
+        allocationIndex >= 0
+          ? workflowStepSequence[allocationIndex + 1]
+          : undefined;
       const wastageIndex = workflowStepSequence.indexOf('wastage');
       const stepAfterVaccineSteps =
-        wastageIndex >= 0 ? workflowStepSequence[wastageIndex + 1] : stepAfterAllocation;
+        wastageIndex >= 0
+          ? workflowStepSequence[wastageIndex + 1]
+          : stepAfterAllocation;
 
       if (stepAfterVaccineSteps === 'non-vaccine') {
         moveToNonVaccineStep();
@@ -1833,7 +1913,9 @@ export const DailyTallyView = () => {
   const ensureSimplifiedMobileIssuedWithinSoh = () => {
     if (!useSimplifiedMobileUi || workflowStep !== 'allocation') return true;
 
-    const invalidRows = allocationVaccineRows.filter(row => row.used - row.soh > 0.0001);
+    const invalidRows = allocationVaccineRows.filter(
+      row => row.used - row.soh > 0.0001
+    );
     if (invalidRows.length === 0) return true;
 
     const summary = invalidRows
@@ -2016,7 +2098,8 @@ export const DailyTallyView = () => {
               stockLine.id,
               {
                 ...existing,
-                openVialWastage: existing.used > 0 ? existing.openVialWastage : false,
+                openVialWastage:
+                  existing.used > 0 ? existing.openVialWastage : false,
                 wastage: existing.wastage,
               },
             ];
@@ -2046,7 +2129,7 @@ export const DailyTallyView = () => {
     updateDraft(row.itemId, {
       used: nextUsed,
       openVialWastage: nextOpenVialWastage,
-      wastage: nextUsed > 0 ? row.wastage : suggested ?? 0,
+      wastage: nextUsed > 0 ? row.wastage : (suggested ?? 0),
     });
   };
 
@@ -2059,7 +2142,8 @@ export const DailyTallyView = () => {
     updater: (current: VaccineCoverageDraft) => VaccineCoverageDraft
   ) => {
     const currentCoverage =
-      coverageByItemRef.current[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate);
+      coverageByItemRef.current[row.itemId] ??
+      defaultVaccineCoverageDraft(coverageTemplate);
     const nextCoverage = updater(currentCoverage);
 
     coverageByItemRef.current = {
@@ -2099,7 +2183,10 @@ export const DailyTallyView = () => {
       ...perDoseCoverageByItemRef.current,
       [row.itemId]: nextItemDoses,
     };
-    setPerDoseCoverageByItem(prev => ({ ...prev, [row.itemId]: nextItemDoses }));
+    setPerDoseCoverageByItem(prev => ({
+      ...prev,
+      [row.itemId]: nextItemDoses,
+    }));
 
     const aggregate = computeAggregateCoverage(
       nextItemDoses,
@@ -2135,7 +2222,11 @@ export const DailyTallyView = () => {
     });
   };
 
-  const batchSuggestion = (row: DailyTallyRow, stockOnHand: number, used: number) => {
+  const batchSuggestion = (
+    row: DailyTallyRow,
+    stockOnHand: number,
+    used: number
+  ) => {
     if (!row.isVaccine || row.doses <= 0 || used <= 0) return 0;
 
     return getSuggestedOpenVialWastageAmount({
@@ -2155,7 +2246,11 @@ export const DailyTallyView = () => {
     if (used <= 0) return 0;
     return batchSuggestion(
       row,
-      toDisplayUnits(stockLine.availableNumberOfPacks, row.isVaccine, row.doses),
+      toDisplayUnits(
+        stockLine.availableNumberOfPacks,
+        row.isVaccine,
+        row.doses
+      ),
       used
     );
   };
@@ -2192,11 +2287,16 @@ export const DailyTallyView = () => {
         openVialWastage: false,
       };
 
-      const nextOpenVialWastage = used > 0 ? currentBatchDraft.openVialWastage : false;
+      const nextOpenVialWastage =
+        used > 0 ? currentBatchDraft.openVialWastage : false;
       const suggested = nextOpenVialWastage
         ? batchSuggestion(
             row,
-            toDisplayUnits(stockLine.availableNumberOfPacks, row.isVaccine, row.doses),
+            toDisplayUnits(
+              stockLine.availableNumberOfPacks,
+              row.isVaccine,
+              row.doses
+            ),
             used
           )
         : 0;
@@ -2207,7 +2307,7 @@ export const DailyTallyView = () => {
           ...currentBatchDraft,
           used,
           openVialWastage: nextOpenVialWastage,
-          wastage: used > 0 ? currentBatchDraft.wastage : suggested ?? 0,
+          wastage: used > 0 ? currentBatchDraft.wastage : (suggested ?? 0),
         },
       };
 
@@ -2241,11 +2341,16 @@ export const DailyTallyView = () => {
         openVialWastage: false,
       };
 
-      const nextChecked = row.isVaccine && currentBatchDraft.used > 0 ? checked : false;
+      const nextChecked =
+        row.isVaccine && currentBatchDraft.used > 0 ? checked : false;
       const nextWastage = nextChecked
         ? batchSuggestion(
             row,
-            toDisplayUnits(stockLine.availableNumberOfPacks, row.isVaccine, row.doses),
+            toDisplayUnits(
+              stockLine.availableNumberOfPacks,
+              row.isVaccine,
+              row.doses
+            ),
             currentBatchDraft.used
           )
         : 0;
@@ -2332,7 +2437,7 @@ export const DailyTallyView = () => {
           const isOpen = batchDraftById[stockLine.id]?.openVialWastage ?? false;
           const batchWastage = row.isVaccine
             ? batchCalculatedWastage(row, stockLine, batchUsed, isOpen)
-            : batchDraftById[stockLine.id]?.wastage ?? 0;
+            : (batchDraftById[stockLine.id]?.wastage ?? 0);
           if (batchUsed <= 0 && batchWastage <= 0) continue;
 
           summaryRows.push({
@@ -2368,7 +2473,8 @@ export const DailyTallyView = () => {
         const issuedPacks =
           usedAllocations.find(a => a.stockLine.id === stockLineId)?.packs ?? 0;
         const wastedPacks =
-          wastageAllocations.find(a => a.stockLine.id === stockLineId)?.packs ?? 0;
+          wastageAllocations.find(a => a.stockLine.id === stockLineId)?.packs ??
+          0;
 
         const issued = toDisplayUnits(issuedPacks, row.isVaccine, row.doses);
         const wasted = toDisplayUnits(wastedPacks, row.isVaccine, row.doses);
@@ -2387,7 +2493,10 @@ export const DailyTallyView = () => {
     return summaryRows;
   };
 
-  const onConfirm = async (skipSummaryDialog = false, skipDuplicateWarning = false) => {
+  const onConfirm = async (
+    skipSummaryDialog = false,
+    skipDuplicateWarning = false
+  ) => {
     let createdPrescriptionId: string | undefined;
     let createdStocktakeId: string | undefined;
 
@@ -2402,7 +2511,9 @@ export const DailyTallyView = () => {
         row => row.used + row.wastage > row.soh || row.remainingStock < 0
       );
       if (invalid) {
-        error(`Invalid input for ${invalid.item}: Issued + Wastage must be <= SOH`)();
+        error(
+          `Invalid input for ${invalid.item}: Issued + Wastage must be <= SOH`
+        )();
         return;
       }
 
@@ -2421,11 +2532,15 @@ export const DailyTallyView = () => {
         row => toPacks(row.used, row.isVaccine, row.doses) <= 0
       );
       if (tooSmallUsedRow) {
-        error(`Issued value for ${tooSmallUsedRow.item} is too small to allocate stock lines.`)();
+        error(
+          `Issued value for ${tooSmallUsedRow.item} is too small to allocate stock lines.`
+        )();
         return;
       }
 
-      const missingStockLineRow = usedRows.find(row => row.stockLines.length === 0);
+      const missingStockLineRow = usedRows.find(
+        row => row.stockLines.length === 0
+      );
       if (missingStockLineRow) {
         error(`No stock lines available for ${missingStockLineRow.item}.`)();
         return;
@@ -2502,7 +2617,8 @@ export const DailyTallyView = () => {
         };
         return visibility.showChild || visibility.showWomen;
       });
-      const hasCoverageEligibleVaccineUse = coverageEligibleVaccineRows.length > 0;
+      const hasCoverageEligibleVaccineUse =
+        coverageEligibleVaccineRows.length > 0;
 
       if (hasCoverageEligibleVaccineUse && !isSimplifiedMode) {
         const missingCoverageRow = coverageEligibleVaccineRows.find(
@@ -2520,19 +2636,21 @@ export const DailyTallyView = () => {
           return;
         }
 
-        const mismatchedCoverageRows = coverageEligibleVaccineRows.filter(row => {
-          const coverage = coverageByItem[row.itemId];
-          if (!coverage) return true;
+        const mismatchedCoverageRows = coverageEligibleVaccineRows.filter(
+          row => {
+            const coverage = coverageByItem[row.itemId];
+            if (!coverage) return true;
 
-          const coverageTotal = getVisibleCoverageUsedTotal(
-            coverage,
-            coverageFieldVisibilityByItem[row.itemId] ?? {
-              showChild: false,
-              showWomen: false,
-            }
-          );
-          return Math.abs(coverageTotal - row.used) > 0.0001;
-        });
+            const coverageTotal = getVisibleCoverageUsedTotal(
+              coverage,
+              coverageFieldVisibilityByItem[row.itemId] ?? {
+                showChild: false,
+                showWomen: false,
+              }
+            );
+            return Math.abs(coverageTotal - row.used) > 0.0001;
+          }
+        );
 
         if (mismatchedCoverageRows.length > 0) {
           const summary = mismatchedCoverageRows
@@ -2602,7 +2720,9 @@ export const DailyTallyView = () => {
           const perDoseCoverages = rowDoses?.map(dose => ({
             doseId: dose.id,
             doseLabel: dose.label,
-            coverage: perDoseCoverageByItem[row.itemId]?.[dose.id] ?? defaultVaccineCoverageDraft(coverageTemplate),
+            coverage:
+              perDoseCoverageByItem[row.itemId]?.[dose.id] ??
+              defaultVaccineCoverageDraft(coverageTemplate),
           }));
           const lineNote = dailyTallyLineNote(
             row,
@@ -2615,7 +2735,8 @@ export const DailyTallyView = () => {
           );
 
           if (row.stockLines.length > 1) {
-            const batchDraftById = draftByItem[row.itemId]?.batchDraftById ?? {};
+            const batchDraftById =
+              draftByItem[row.itemId]?.batchDraftById ?? {};
 
             return row.stockLines.flatMap(stockLine => {
               const batchUsed = batchDraftById[stockLine.id]?.used ?? 0;
@@ -2664,7 +2785,9 @@ export const DailyTallyView = () => {
             const perDoseCoverages = rowDoses?.map(dose => ({
               doseId: dose.id,
               doseLabel: dose.label,
-              coverage: perDoseCoverageByItem[row.itemId]?.[dose.id] ?? defaultVaccineCoverageDraft(coverageTemplate),
+              coverage:
+                perDoseCoverageByItem[row.itemId]?.[dose.id] ??
+                defaultVaccineCoverageDraft(coverageTemplate),
             }));
             const lineNote = dailyTallyLineNote(
               row,
@@ -2715,26 +2838,36 @@ export const DailyTallyView = () => {
             ],
           },
         });
-
       }
 
       if (wastageRows.length > 0) {
         const usedPacksByStockLineId = usedRows.reduce<Record<string, number>>(
           (acc, row) => {
             if (row.stockLines.length > 1) {
-              const batchDraftById = draftByItem[row.itemId]?.batchDraftById ?? {};
+              const batchDraftById =
+                draftByItem[row.itemId]?.batchDraftById ?? {};
               const batchUsedTotal = sumBatchDraft(batchDraftById, 'used');
 
               if (batchUsedTotal > 0) {
                 for (const stockLine of row.stockLines) {
                   const batchUsed = batchDraftById[stockLine.id]?.used ?? 0;
                   if (batchUsed <= 0) continue;
-                  const usedPacks = toPacks(batchUsed, row.isVaccine, row.doses);
-                  acc[stockLine.id] = round((acc[stockLine.id] ?? 0) + usedPacks);
+                  const usedPacks = toPacks(
+                    batchUsed,
+                    row.isVaccine,
+                    row.doses
+                  );
+                  acc[stockLine.id] = round(
+                    (acc[stockLine.id] ?? 0) + usedPacks
+                  );
                 }
               } else {
                 // Fallback to the same allocation logic used for prescription lines
-                const requiredPacks = toPacks(row.used, row.isVaccine, row.doses);
+                const requiredPacks = toPacks(
+                  row.used,
+                  row.isVaccine,
+                  row.doses
+                );
                 const { allocations } = allocateAcrossStockLines(
                   row.stockLines,
                   requiredPacks
@@ -2748,7 +2881,10 @@ export const DailyTallyView = () => {
             }
 
             const requiredPacks = toPacks(row.used, row.isVaccine, row.doses);
-            const { allocations } = allocateAcrossStockLines(row.stockLines, requiredPacks);
+            const { allocations } = allocateAcrossStockLines(
+              row.stockLines,
+              requiredPacks
+            );
             for (const { stockLine, packs } of allocations) {
               acc[stockLine.id] = round((acc[stockLine.id] ?? 0) + packs);
             }
@@ -2769,7 +2905,8 @@ export const DailyTallyView = () => {
 
         const stocktakeLineDrafts = wastageRows.flatMap(row => {
           if (row.stockLines.length > 1) {
-            const batchDraftById = draftByItem[row.itemId]?.batchDraftById ?? {};
+            const batchDraftById =
+              draftByItem[row.itemId]?.batchDraftById ?? {};
             const batchWastageTotal = sumBatchDraft(batchDraftById, 'wastage');
 
             if (batchWastageTotal > 0) {
@@ -2791,16 +2928,18 @@ export const DailyTallyView = () => {
                   reasonOptionId: row.isVaccine
                     ? openVialWastageReason?.id
                     : damagedReason?.id,
-                  comment: row.isVaccine
-                    ? 'Open vial wastage'
-                    : 'Damaged',
+                  comment: row.isVaccine ? 'Open vial wastage' : 'Damaged',
                 };
               });
             }
 
             if (row.wastage <= 0) return [];
 
-            const requiredPacks = toPacks(row.wastage, row.isVaccine, row.doses);
+            const requiredPacks = toPacks(
+              row.wastage,
+              row.isVaccine,
+              row.doses
+            );
             const adjustedStockLines = row.stockLines.map(stockLine => ({
               ...stockLine,
               availableNumberOfPacks: availableAfterUse(stockLine),
@@ -2817,7 +2956,9 @@ export const DailyTallyView = () => {
             return allocations.map(({ stockLine, packs }) => ({
               stockLineId: stockLine.id,
               snapshotNumberOfPacks: stockLine.availableNumberOfPacks,
-              countedNumberOfPacks: round(stockLine.availableNumberOfPacks - packs),
+              countedNumberOfPacks: round(
+                stockLine.availableNumberOfPacks - packs
+              ),
               packSize: stockLine.packSize,
               reasonOptionId: row.isVaccine
                 ? openVialWastageReason?.id
@@ -2843,7 +2984,9 @@ export const DailyTallyView = () => {
           return allocations.map(({ stockLine, packs }) => ({
             stockLineId: stockLine.id,
             snapshotNumberOfPacks: stockLine.availableNumberOfPacks,
-            countedNumberOfPacks: round(stockLine.availableNumberOfPacks - packs),
+            countedNumberOfPacks: round(
+              stockLine.availableNumberOfPacks - packs
+            ),
             packSize: stockLine.packSize,
             reasonOptionId: row.isVaccine
               ? openVialWastageReason?.id
@@ -2893,10 +3036,14 @@ export const DailyTallyView = () => {
             response => response.response.__typename === 'StocktakeLineNode'
           ).length;
           const insertErrorResponse = insertResponses.find(
-            response => response.response.__typename === 'InsertStocktakeLineError'
+            response =>
+              response.response.__typename === 'InsertStocktakeLineError'
           )?.response;
 
-          if (insertErrorResponse?.__typename === 'InsertStocktakeLineError' || insertedCount === 0) {
+          if (
+            insertErrorResponse?.__typename === 'InsertStocktakeLineError' ||
+            insertedCount === 0
+          ) {
             await deleteDraftStocktake();
             throw new Error(
               (insertErrorResponse?.__typename === 'InsertStocktakeLineError'
@@ -2997,7 +3144,8 @@ export const DailyTallyView = () => {
       return Number.isFinite(parsed) ? parsed : 0;
     };
 
-    const asCount = (value: unknown) => parseNumeric(value as string | number | null | undefined);
+    const asCount = (value: unknown) =>
+      parseNumeric(value as string | number | null | undefined);
 
     const summaryRowsHtml = confirmSummaryRows
       .map(
@@ -3044,16 +3192,19 @@ export const DailyTallyView = () => {
       })
       .join('');
 
-    const childCoverageGrandTotal = childCoverageSummaryRows.reduce((sum, row) => {
-      const childTotal =
-        asCount(row.childUnderOneMale) +
-        asCount(row.childUnderOneFemale) +
-        asCount(row.childOneToTwoMale) +
-        asCount(row.childOneToTwoFemale) +
-        asCount(row.childTwoToFiveMale) +
-        asCount(row.childTwoToFiveFemale);
-      return sum + childTotal;
-    }, 0);
+    const childCoverageGrandTotal = childCoverageSummaryRows.reduce(
+      (sum, row) => {
+        const childTotal =
+          asCount(row.childUnderOneMale) +
+          asCount(row.childUnderOneFemale) +
+          asCount(row.childOneToTwoMale) +
+          asCount(row.childOneToTwoFemale) +
+          asCount(row.childTwoToFiveMale) +
+          asCount(row.childTwoToFiveFemale);
+        return sum + childTotal;
+      },
+      0
+    );
 
     const womenRowsHtml = womenCoverageSummaryRows
       .map(row => {
@@ -3074,7 +3225,8 @@ export const DailyTallyView = () => {
       .join('');
 
     const womenCoverageGrandTotal = womenCoverageSummaryRows.reduce(
-      (sum, row) => sum + asCount(row.womenPregnant) + asCount(row.womenNonPregnant),
+      (sum, row) =>
+        sum + asCount(row.womenPregnant) + asCount(row.womenNonPregnant),
       0
     );
 
@@ -3185,7 +3337,9 @@ export const DailyTallyView = () => {
           </table>
         </div>
 
-        ${childCoverageSummaryRows.length > 0 ? `
+        ${
+          childCoverageSummaryRows.length > 0
+            ? `
           <div class="print-section">
             <h2>Coverage Summary (Children vaccination)</h2>
             <table>
@@ -3227,9 +3381,13 @@ export const DailyTallyView = () => {
               </tfoot>
             </table>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
 
-        ${womenCoverageSummaryRows.length > 0 ? `
+        ${
+          womenCoverageSummaryRows.length > 0
+            ? `
           <div class="print-section">
             <h2>Coverage Summary (Women vaccination)</h2>
             <table>
@@ -3261,7 +3419,9 @@ export const DailyTallyView = () => {
               </tfoot>
             </table>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
     `;
   }, [
@@ -3289,10 +3449,14 @@ export const DailyTallyView = () => {
   };
 
   const previousWorkflowStep =
-    workflowDisplayStepSequence[workflowDisplayStepSequence.indexOf(workflowStep) - 1];
+    workflowDisplayStepSequence[
+      workflowDisplayStepSequence.indexOf(workflowStep) - 1
+    ];
   const hasPreviousWorkflowStep = Boolean(previousWorkflowStep);
   const nextWorkflowStep =
-    workflowDisplayStepSequence[workflowDisplayStepSequence.indexOf(workflowStep) + 1];
+    workflowDisplayStepSequence[
+      workflowDisplayStepSequence.indexOf(workflowStep) + 1
+    ];
 
   const backButtonLabelByStep: Record<WorkflowStep, string> = {
     tally: 'Back',
@@ -3312,8 +3476,8 @@ export const DailyTallyView = () => {
         ? 'Back to Open Vial Wastage'
         : 'Back to Vaccines'
       : workflowStep === 'wastage' && previousWorkflowStep === 'coverage'
-      ? 'Back to Coverage'
-      : backButtonLabelByStep[workflowStep]
+        ? 'Back to Coverage'
+        : backButtonLabelByStep[workflowStep]
     : 'Back';
   const continueButtonLabel =
     workflowStep === 'tally'
@@ -3331,10 +3495,10 @@ export const DailyTallyView = () => {
             ? 'Continue to Non-vaccine'
             : 'Continue to Open Vial Wastage'
           : workflowStep === 'wastage'
-          ? nextWorkflowStep === 'non-vaccine'
-            ? 'Continue to Non-vaccine'
-            : 'Confirm'
-          : 'Confirm';
+            ? nextWorkflowStep === 'non-vaccine'
+              ? 'Continue to Non-vaccine'
+              : 'Confirm'
+            : 'Confirm';
 
   const continueButtonIsFinal = !nextWorkflowStep;
   const backButtonLabelForDisplay = keepTopRightButtonTextVisible
@@ -3348,28 +3512,38 @@ export const DailyTallyView = () => {
         : 'Next'
     : continueButtonLabel;
 
-  const sessionGrandTotals = sessionTallyGenderTotals(sessionTallyByItem, vaccineRows);
+  const sessionGrandTotals = sessionTallyGenderTotals(
+    sessionTallyByItem,
+    vaccineRows
+  );
   const selectedTallyRow = selectedTallyItemId
-    ? vaccineRows.find(row => row.itemId === selectedTallyItemId) ?? null
+    ? (vaccineRows.find(row => row.itemId === selectedTallyItemId) ?? null)
     : null;
   const selectedTallyDraft = selectedTallyRow
-    ? sessionTallyByItem[selectedTallyRow.itemId] ?? createEmptySessionTallyDraft()
+    ? (sessionTallyByItem[selectedTallyRow.itemId] ??
+      createEmptySessionTallyDraft())
     : null;
 
-  const childCoverageModalGrandTotal = childCoverageSummaryRows.reduce((sum, coverageRow) => {
-    const total =
-      coverageRow.childUnderOneMale +
-      coverageRow.childUnderOneFemale +
-      coverageRow.childOneToTwoMale +
-      coverageRow.childOneToTwoFemale +
-      coverageRow.childTwoToFiveMale +
-      coverageRow.childTwoToFiveFemale;
-    return sum + total;
-  }, 0);
+  const childCoverageModalGrandTotal = childCoverageSummaryRows.reduce(
+    (sum, coverageRow) => {
+      const total =
+        coverageRow.childUnderOneMale +
+        coverageRow.childUnderOneFemale +
+        coverageRow.childOneToTwoMale +
+        coverageRow.childOneToTwoFemale +
+        coverageRow.childTwoToFiveMale +
+        coverageRow.childTwoToFiveFemale;
+      return sum + total;
+    },
+    0
+  );
 
-  const womenCoverageModalGrandTotal = womenCoverageSummaryRows.reduce((sum, coverageRow) => {
-    return sum + coverageRow.womenPregnant + coverageRow.womenNonPregnant;
-  }, 0);
+  const womenCoverageModalGrandTotal = womenCoverageSummaryRows.reduce(
+    (sum, coverageRow) => {
+      return sum + coverageRow.womenPregnant + coverageRow.womenNonPregnant;
+    },
+    0
+  );
 
   return (
     <>
@@ -3524,7 +3698,9 @@ export const DailyTallyView = () => {
                       {summaryRow.batch}
                     </Typography>
                     <Typography variant="body2">{summaryRow.issued}</Typography>
-                    <Typography variant="body2">{summaryRow.wastage}</Typography>
+                    <Typography variant="body2">
+                      {summaryRow.wastage}
+                    </Typography>
                   </Box>
                 ))}
               </Box>
@@ -3553,7 +3729,11 @@ export const DailyTallyView = () => {
                 <>
                   <Typography
                     variant="caption"
-                    sx={{ fontWeight: 700, display: 'block', marginBottom: 0.5 }}
+                    sx={{
+                      fontWeight: 700,
+                      display: 'block',
+                      marginBottom: 0.5,
+                    }}
                   >
                     Children vaccination
                   </Typography>
@@ -3576,7 +3756,8 @@ export const DailyTallyView = () => {
                           columnGap={1}
                           alignItems="center"
                           sx={{
-                            gridTemplateColumns: childCoverageGridTemplateColumns,
+                            gridTemplateColumns:
+                              childCoverageGridTemplateColumns,
                             paddingX: 1.25,
                             paddingY: 0.75,
                           }}
@@ -3620,7 +3801,8 @@ export const DailyTallyView = () => {
                           columnGap={1}
                           alignItems="center"
                           sx={{
-                            gridTemplateColumns: childCoverageGridTemplateColumns,
+                            gridTemplateColumns:
+                              childCoverageGridTemplateColumns,
                             paddingX: 1.25,
                             paddingY: 0.85,
                             borderTop: '1px solid rgba(0,0,0,0.08)',
@@ -3632,25 +3814,46 @@ export const DailyTallyView = () => {
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>
                             Vaccine
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
                             Male
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
                             Female
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
                             Male
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
                             Female
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
                             Male
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
                             Female
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
                             Total
                           </Typography>
                         </Box>
@@ -3671,38 +3874,66 @@ export const DailyTallyView = () => {
                             columnGap={1}
                             alignItems="center"
                             sx={{
-                              gridTemplateColumns: childCoverageGridTemplateColumns,
+                              gridTemplateColumns:
+                                childCoverageGridTemplateColumns,
                               paddingX: 1.25,
                               paddingY: 0.75,
                               backgroundColor:
-                                index % 2 === 0 ? 'background.white' : 'background.menu',
+                                index % 2 === 0
+                                  ? 'background.white'
+                                  : 'background.menu',
                               borderBottom:
                                 index === childCoverageSummaryRows.length - 1
                                   ? 'none'
                                   : '1px solid rgba(0,0,0,0.08)',
                             }}
                           >
-                            <Typography variant="body2">{coverageRow.doseLabel ?? '-'}</Typography>
-                            <Typography variant="body2">{coverageRow.itemDisplayName}</Typography>
-                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                            <Typography variant="body2">
+                              {coverageRow.doseLabel ?? '-'}
+                            </Typography>
+                            <Typography variant="body2">
+                              {coverageRow.itemDisplayName}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ textAlign: 'center' }}
+                            >
                               {coverageRow.childUnderOneMale}
                             </Typography>
-                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ textAlign: 'center' }}
+                            >
                               {coverageRow.childUnderOneFemale}
                             </Typography>
-                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ textAlign: 'center' }}
+                            >
                               {coverageRow.childOneToTwoMale}
                             </Typography>
-                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ textAlign: 'center' }}
+                            >
                               {coverageRow.childOneToTwoFemale}
                             </Typography>
-                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ textAlign: 'center' }}
+                            >
                               {coverageRow.childTwoToFiveMale}
                             </Typography>
-                            <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ textAlign: 'center' }}
+                            >
                               {coverageRow.childTwoToFiveFemale}
                             </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 700, textAlign: 'center' }}
+                            >
                               {total}
                             </Typography>
                           </Box>
@@ -3714,7 +3945,8 @@ export const DailyTallyView = () => {
                           columnGap={1}
                           alignItems="center"
                           sx={{
-                            gridTemplateColumns: childCoverageGridTemplateColumns,
+                            gridTemplateColumns:
+                              childCoverageGridTemplateColumns,
                             paddingX: 1.25,
                             paddingY: 0.85,
                             backgroundColor: 'background.menu',
@@ -3731,7 +3963,10 @@ export const DailyTallyView = () => {
                           <Box />
                           <Box />
                           <Box />
-                          <Typography variant="body2" sx={{ fontWeight: 800, textAlign: 'center' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 800, textAlign: 'center' }}
+                          >
                             {childCoverageModalGrandTotal}
                           </Typography>
                         </Box>
@@ -3740,147 +3975,194 @@ export const DailyTallyView = () => {
                   </Box>
 
                   {womenCoverageSummaryRows.length > 0 ? (
-                  <>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontWeight: 700,
-                        display: 'block',
-                        marginTop: 1.25,
-                        marginBottom: 0.5,
-                      }}
-                    >
-                      Women vaccination
-                    </Typography>
-                    <Box
-                      sx={{
-                        border: '1px solid rgba(0,0,0,0.12)',
-                        borderRadius: 1,
-                        overflowX: 'auto',
-                      }}
-                    >
-                      <Box sx={{ minWidth: '100%' }}>
-                        <Box
-                          sx={{
-                            backgroundColor: 'background.menu',
-                            borderBottom: '1px solid rgba(0,0,0,0.12)',
-                          }}
-                        >
+                    <>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 700,
+                          display: 'block',
+                          marginTop: 1.25,
+                          marginBottom: 0.5,
+                        }}
+                      >
+                        Women vaccination
+                      </Typography>
+                      <Box
+                        sx={{
+                          border: '1px solid rgba(0,0,0,0.12)',
+                          borderRadius: 1,
+                          overflowX: 'auto',
+                        }}
+                      >
+                        <Box sx={{ minWidth: '100%' }}>
                           <Box
-                            display="grid"
-                            columnGap={1}
-                            alignItems="center"
                             sx={{
-                              gridTemplateColumns: womenCoverageGridTemplateColumns,
-                              paddingX: 1.25,
-                              paddingY: 0.75,
+                              backgroundColor: 'background.menu',
+                              borderBottom: '1px solid rgba(0,0,0,0.12)',
                             }}
                           >
-                            <Box />
-                            <Box />
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                gridColumn: '3 / span 2',
-                              }}
-                            >
-                              Women 15 to 49 years
-                            </Typography>
-                            <Box />
-                          </Box>
-                          <Box
-                            display="grid"
-                            columnGap={1}
-                            alignItems="center"
-                            sx={{
-                              gridTemplateColumns: womenCoverageGridTemplateColumns,
-                              paddingX: 1.25,
-                              paddingY: 0.85,
-                              borderTop: '1px solid rgba(0,0,0,0.08)',
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                              Dose
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                              Vaccine
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
-                              Pregnant
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
-                              Non pregnant
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
-                              Total
-                            </Typography>
-                          </Box>
-                        </Box>
-                        {womenCoverageSummaryRows.map((coverageRow, index) => {
-                          const total =
-                            coverageRow.womenPregnant + coverageRow.womenNonPregnant;
-
-                          return (
                             <Box
-                              key={`women-${coverageRow.itemId}-${coverageRow.doseLabel ?? 'aggregate'}-${index}`}
                               display="grid"
                               columnGap={1}
                               alignItems="center"
                               sx={{
-                                gridTemplateColumns: womenCoverageGridTemplateColumns,
+                                gridTemplateColumns:
+                                  womenCoverageGridTemplateColumns,
                                 paddingX: 1.25,
                                 paddingY: 0.75,
-                                backgroundColor:
-                                  index % 2 === 0 ? 'background.white' : 'background.menu',
-                                borderBottom:
-                                  index === womenCoverageSummaryRows.length - 1
-                                    ? 'none'
-                                    : '1px solid rgba(0,0,0,0.08)',
                               }}
                             >
-                              <Typography variant="body2">{coverageRow.doseLabel ?? '-'}</Typography>
-                              <Typography variant="body2">{coverageRow.itemDisplayName}</Typography>
-                              <Typography variant="body2" sx={{ textAlign: 'center' }}>
-                                {coverageRow.womenPregnant}
+                              <Box />
+                              <Box />
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: 700,
+                                  textAlign: 'center',
+                                  gridColumn: '3 / span 2',
+                                }}
+                              >
+                                Women 15 to 49 years
                               </Typography>
-                              <Typography variant="body2" sx={{ textAlign: 'center' }}>
-                                {coverageRow.womenNonPregnant}
+                              <Box />
+                            </Box>
+                            <Box
+                              display="grid"
+                              columnGap={1}
+                              alignItems="center"
+                              sx={{
+                                gridTemplateColumns:
+                                  womenCoverageGridTemplateColumns,
+                                paddingX: 1.25,
+                                paddingY: 0.85,
+                                borderTop: '1px solid rgba(0,0,0,0.08)',
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 700 }}
+                              >
+                                Dose
                               </Typography>
-                              <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
-                                {total}
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 700 }}
+                              >
+                                Vaccine
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 700, textAlign: 'center' }}
+                              >
+                                Pregnant
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 700, textAlign: 'center' }}
+                              >
+                                Non pregnant
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 700, textAlign: 'center' }}
+                              >
+                                Total
                               </Typography>
                             </Box>
-                          );
-                        })}
-                        {womenCoverageSummaryRows.length > 0 ? (
-                          <Box
-                            display="grid"
-                            columnGap={1}
-                            alignItems="center"
-                            sx={{
-                              gridTemplateColumns: womenCoverageGridTemplateColumns,
-                              paddingX: 1.25,
-                              paddingY: 0.85,
-                              backgroundColor: 'background.menu',
-                              borderTop: '1px solid rgba(0,0,0,0.12)',
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                              Grand total
-                            </Typography>
-                            <Box />
-                            <Box />
-                            <Box />
-                            <Typography variant="body2" sx={{ fontWeight: 800, textAlign: 'center' }}>
-                              {womenCoverageModalGrandTotal}
-                            </Typography>
                           </Box>
-                        ) : null}
+                          {womenCoverageSummaryRows.map(
+                            (coverageRow, index) => {
+                              const total =
+                                coverageRow.womenPregnant +
+                                coverageRow.womenNonPregnant;
+
+                              return (
+                                <Box
+                                  key={`women-${coverageRow.itemId}-${coverageRow.doseLabel ?? 'aggregate'}-${index}`}
+                                  display="grid"
+                                  columnGap={1}
+                                  alignItems="center"
+                                  sx={{
+                                    gridTemplateColumns:
+                                      womenCoverageGridTemplateColumns,
+                                    paddingX: 1.25,
+                                    paddingY: 0.75,
+                                    backgroundColor:
+                                      index % 2 === 0
+                                        ? 'background.white'
+                                        : 'background.menu',
+                                    borderBottom:
+                                      index ===
+                                      womenCoverageSummaryRows.length - 1
+                                        ? 'none'
+                                        : '1px solid rgba(0,0,0,0.08)',
+                                  }}
+                                >
+                                  <Typography variant="body2">
+                                    {coverageRow.doseLabel ?? '-'}
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    {coverageRow.itemDisplayName}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ textAlign: 'center' }}
+                                  >
+                                    {coverageRow.womenPregnant}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ textAlign: 'center' }}
+                                  >
+                                    {coverageRow.womenNonPregnant}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      fontWeight: 700,
+                                      textAlign: 'center',
+                                    }}
+                                  >
+                                    {total}
+                                  </Typography>
+                                </Box>
+                              );
+                            }
+                          )}
+                          {womenCoverageSummaryRows.length > 0 ? (
+                            <Box
+                              display="grid"
+                              columnGap={1}
+                              alignItems="center"
+                              sx={{
+                                gridTemplateColumns:
+                                  womenCoverageGridTemplateColumns,
+                                paddingX: 1.25,
+                                paddingY: 0.85,
+                                backgroundColor: 'background.menu',
+                                borderTop: '1px solid rgba(0,0,0,0.12)',
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 700 }}
+                              >
+                                Grand total
+                              </Typography>
+                              <Box />
+                              <Box />
+                              <Box />
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 800, textAlign: 'center' }}
+                              >
+                                {womenCoverageModalGrandTotal}
+                              </Typography>
+                            </Box>
+                          ) : null}
+                        </Box>
                       </Box>
-                    </Box>
-                  </>
+                    </>
                   ) : null}
                 </>
               ) : (
@@ -3910,7 +4192,10 @@ export const DailyTallyView = () => {
                           backgroundColor: 'background.white',
                         }}
                       >
-                        <Typography variant="body2" sx={{ fontWeight: 700, marginBottom: 0.75 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 700, marginBottom: 0.75 }}
+                        >
                           {coverageRow.itemDisplayName}
                         </Typography>
                         <Box
@@ -3919,41 +4204,124 @@ export const DailyTallyView = () => {
                           columnGap={1}
                           rowGap={0.5}
                         >
-                          <Typography variant="caption" color="text.secondary">Dose</Typography>
-                          <Typography variant="body2" textAlign="right">{coverageRow.doseLabel ?? '-'}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Dose
+                          </Typography>
+                          <Typography variant="body2" textAlign="right">
+                            {coverageRow.doseLabel ?? '-'}
+                          </Typography>
                           {showChild ? (
                             <>
-                          <Typography variant="caption" color="text.secondary">U1 M</Typography>
-                          <Typography variant="body2" textAlign="right">{coverageRow.childUnderOneMale}</Typography>
-                          <Typography variant="caption" color="text.secondary">U1 F</Typography>
-                          <Typography variant="body2" textAlign="right">{coverageRow.childUnderOneFemale}</Typography>
-                          <Typography variant="caption" color="text.secondary">1-2 M</Typography>
-                          <Typography variant="body2" textAlign="right">{coverageRow.childOneToTwoMale}</Typography>
-                          <Typography variant="caption" color="text.secondary">1-2 F</Typography>
-                          <Typography variant="body2" textAlign="right">{coverageRow.childOneToTwoFemale}</Typography>
-                          <Typography variant="caption" color="text.secondary">2-5 M</Typography>
-                          <Typography variant="body2" textAlign="right">{coverageRow.childTwoToFiveMale}</Typography>
-                          <Typography variant="caption" color="text.secondary">2-5 F</Typography>
-                          <Typography variant="body2" textAlign="right">{coverageRow.childTwoToFiveFemale}</Typography>
-                          <Typography variant="caption" color="text.secondary">Child Total</Typography>
-                          <Typography variant="body2" textAlign="right" sx={{ fontWeight: 700 }}>{childTotal}</Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                U1 M
+                              </Typography>
+                              <Typography variant="body2" textAlign="right">
+                                {coverageRow.childUnderOneMale}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                U1 F
+                              </Typography>
+                              <Typography variant="body2" textAlign="right">
+                                {coverageRow.childUnderOneFemale}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                1-2 M
+                              </Typography>
+                              <Typography variant="body2" textAlign="right">
+                                {coverageRow.childOneToTwoMale}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                1-2 F
+                              </Typography>
+                              <Typography variant="body2" textAlign="right">
+                                {coverageRow.childOneToTwoFemale}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                2-5 M
+                              </Typography>
+                              <Typography variant="body2" textAlign="right">
+                                {coverageRow.childTwoToFiveMale}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                2-5 F
+                              </Typography>
+                              <Typography variant="body2" textAlign="right">
+                                {coverageRow.childTwoToFiveFemale}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                Child Total
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                textAlign="right"
+                                sx={{ fontWeight: 700 }}
+                              >
+                                {childTotal}
+                              </Typography>
                             </>
                           ) : null}
                           {showWomen ? (
-                          <>
-                            <Typography variant="caption" color="text.secondary">Pregnant</Typography>
-                            <Typography variant="body2" textAlign="right">{coverageRow.womenPregnant}</Typography>
-                            <Typography variant="caption" color="text.secondary">Non pregnant</Typography>
-                            <Typography variant="body2" textAlign="right">{coverageRow.womenNonPregnant}</Typography>
-                            <Typography variant="caption" color="text.secondary">Women Total</Typography>
-                            <Typography variant="body2" textAlign="right" sx={{ fontWeight: 700 }}>{womenTotal}</Typography>
-                          </>
+                            <>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                Pregnant
+                              </Typography>
+                              <Typography variant="body2" textAlign="right">
+                                {coverageRow.womenPregnant}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                Non pregnant
+                              </Typography>
+                              <Typography variant="body2" textAlign="right">
+                                {coverageRow.womenNonPregnant}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                Women Total
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                textAlign="right"
+                                sx={{ fontWeight: 700 }}
+                              >
+                                {womenTotal}
+                              </Typography>
+                            </>
                           ) : null}
                         </Box>
                       </Box>
                     );
                   })}
-                  {(childCoverageModalGrandTotal > 0 || womenCoverageModalGrandTotal > 0) ? (
+                  {childCoverageModalGrandTotal > 0 ||
+                  womenCoverageModalGrandTotal > 0 ? (
                     <Box
                       sx={{
                         border: '1px solid rgba(0,0,0,0.12)',
@@ -3962,16 +4330,35 @@ export const DailyTallyView = () => {
                         backgroundColor: 'background.menu',
                       }}
                     >
-                      <Typography variant="body2" sx={{ fontWeight: 700, marginBottom: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, marginBottom: 0.5 }}
+                      >
                         Grand totals
                       </Typography>
-                      <Box display="grid" gridTemplateColumns="repeat(2,minmax(0,1fr))" rowGap={0.35}>
-                        <Typography variant="caption" color="text.secondary">Children</Typography>
-                        <Typography variant="body2" textAlign="right" sx={{ fontWeight: 700 }}>
+                      <Box
+                        display="grid"
+                        gridTemplateColumns="repeat(2,minmax(0,1fr))"
+                        rowGap={0.35}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          Children
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          textAlign="right"
+                          sx={{ fontWeight: 700 }}
+                        >
                           {childCoverageModalGrandTotal}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">Women</Typography>
-                        <Typography variant="body2" textAlign="right" sx={{ fontWeight: 700 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Women
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          textAlign="right"
+                          sx={{ fontWeight: 700 }}
+                        >
                           {womenCoverageModalGrandTotal}
                         </Typography>
                       </Box>
@@ -4051,7 +4438,8 @@ export const DailyTallyView = () => {
             on this date.
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Creating another tally for the same day may duplicate submitted activity.
+            Creating another tally for the same day may duplicate submitted
+            activity.
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Do you want to continue and create another daily tally anyway?
@@ -4075,7 +4463,9 @@ export const DailyTallyView = () => {
           <Box sx={{ width: { xs: '100%', sm: 260 } }}>
             <Select
               value={selectedPatientId}
-              onChange={event => setSelectedPatientId(String(event.target.value || ''))}
+              onChange={event =>
+                setSelectedPatientId(String(event.target.value || ''))
+              }
               options={patientOptions}
               disabled={isPatientsLoading}
               slotProps={{
@@ -4117,24 +4507,14 @@ export const DailyTallyView = () => {
           />
         ) : null}
         <LoadingButton
-          startIcon={
-            continueButtonIsFinal
-              ? <SaveIcon />
-              : undefined
-          }
-          endIcon={
-            !continueButtonIsFinal
-              ? <ArrowRightIcon />
-              : undefined
-          }
+          startIcon={continueButtonIsFinal ? <SaveIcon /> : undefined}
+          endIcon={!continueButtonIsFinal ? <ArrowRightIcon /> : undefined}
           label={continueButtonLabelForDisplay}
           color="secondary"
           variant="contained"
           shouldShrink={!keepTopRightButtonTextVisible}
           onClick={moveToNextWorkflowStep}
-          isLoading={
-            continueButtonIsFinal ? isSaving : false
-          }
+          isLoading={continueButtonIsFinal ? isSaving : false}
         />
       </AppBarButtonsPortal>
 
@@ -4174,24 +4554,43 @@ export const DailyTallyView = () => {
                   >
                     <Box
                       display="grid"
-                      gridTemplateColumns={{ xs: 'repeat(2,minmax(0,1fr))', md: 'repeat(4,minmax(0,1fr))' }}
+                      gridTemplateColumns={{
+                        xs: 'repeat(2,minmax(0,1fr))',
+                        md: 'repeat(4,minmax(0,1fr))',
+                      }}
                       gap={1}
                     >
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Male</Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{sessionGrandTotals.male}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Male
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                          {sessionGrandTotals.male}
+                        </Typography>
                       </Box>
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Female</Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{sessionGrandTotals.female}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Female
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                          {sessionGrandTotals.female}
+                        </Typography>
                       </Box>
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Other</Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{sessionGrandTotals.other}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Other
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                          {sessionGrandTotals.other}
+                        </Typography>
                       </Box>
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Total</Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{sessionGrandTotals.total}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Total
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                          {sessionGrandTotals.total}
+                        </Typography>
                       </Box>
                     </Box>
                   </Box>
@@ -4205,14 +4604,20 @@ export const DailyTallyView = () => {
                         marginBottom: 1.25,
                       }}
                     >
-                      <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        gap={1}
+                      >
                         <ButtonWithIcon
                           Icon={<ArrowLeftIcon />}
                           label="Back to Vaccine List"
                           onClick={() => setSelectedTallyItemId(null)}
                         />
                         <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                          Total for {selectedTallyRow.item}: {sessionTallyVaccineTotal(selectedTallyDraft)}
+                          Total for {selectedTallyRow.item}:{' '}
+                          {sessionTallyVaccineTotal(selectedTallyDraft)}
                         </Typography>
                       </Box>
 
@@ -4232,23 +4637,58 @@ export const DailyTallyView = () => {
                           alignItems="center"
                           sx={{ padding: 1.25 }}
                         >
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>Age</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Male</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Female</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Other</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Total</Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: 700 }}
+                          >
+                            Age
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
+                            Male
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
+                            Female
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
+                            Other
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: 700, textAlign: 'center' }}
+                          >
+                            Total
+                          </Typography>
 
                           {tallyAgeGroups.map(({ key, label }) => {
-                            const maleCount = selectedTallyDraft.counts[key].male;
-                            const femaleCount = selectedTallyDraft.counts[key].female;
-                            const otherCount = selectedTallyDraft.counts[key].other;
-                            const rowTotal = maleCount + femaleCount + otherCount;
+                            const maleCount =
+                              selectedTallyDraft.counts[key].male;
+                            const femaleCount =
+                              selectedTallyDraft.counts[key].female;
+                            const otherCount =
+                              selectedTallyDraft.counts[key].other;
+                            const rowTotal =
+                              maleCount + femaleCount + otherCount;
 
                             return (
                               <React.Fragment key={key}>
-                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{label}</Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 700 }}
+                                >
+                                  {label}
+                                </Typography>
                                 {tallyGenderGroups.map(({ key: genderKey }) => {
-                                  const value = selectedTallyDraft.counts[key][genderKey];
+                                  const value =
+                                    selectedTallyDraft.counts[key][genderKey];
                                   return (
                                     <Box
                                       key={`${key}-${genderKey}`}
@@ -4257,7 +4697,7 @@ export const DailyTallyView = () => {
                                       justifyContent="center"
                                       gap={0.5}
                                     >
-                                      <ButtonWithIcon
+                                      <ShrinkableBaseButton
                                         label="-1"
                                         onClick={() =>
                                           updateSessionTallyCell(
@@ -4267,9 +4707,15 @@ export const DailyTallyView = () => {
                                             -1
                                           )
                                         }
-                                        sx={{ minWidth: 44, height: 44, paddingX: 0.75 }}
+                                        sx={{
+                                          minWidth: 44,
+                                          height: 44,
+                                          paddingX: 0.75,
+                                        }}
+                                        shouldShrink={false}
+                                        shrinkThreshold={'sm'}
                                       />
-                                      <ButtonWithIcon
+                                      <ShrinkableBaseButton
                                         label={value > 0 ? `${value} +1` : '+1'}
                                         onClick={() =>
                                           updateSessionTallyCell(
@@ -4284,14 +4730,24 @@ export const DailyTallyView = () => {
                                           height: 50,
                                           paddingX: 1,
                                           backgroundColor:
-                                            value > 0 ? 'rgba(25,118,210,0.12)' : undefined,
-                                          border: value > 0 ? '1px solid rgba(25,118,210,0.35)' : undefined,
+                                            value > 0
+                                              ? 'rgba(25,118,210,0.12)'
+                                              : undefined,
+                                          border:
+                                            value > 0
+                                              ? '1px solid rgba(25,118,210,0.35)'
+                                              : undefined,
                                         }}
+                                        shouldShrink={false}
+                                        shrinkThreshold={'sm'}
                                       />
                                     </Box>
                                   );
                                 })}
-                                <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700 }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ textAlign: 'center', fontWeight: 700 }}
+                                >
                                   {rowTotal}
                                 </Typography>
                               </React.Fragment>
@@ -4302,11 +4758,23 @@ export const DailyTallyView = () => {
                     </Box>
                   ) : (
                     <>
-                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ marginY: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        sx={{ marginY: 1 }}
+                      >
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 800, color: 'text.primary' }}
+                        >
                           Vaccines
                         </Typography>
-                        <ButtonWithIcon label="Reset day" onClick={resetSessionTally} />
+                        <ButtonWithIcon
+                          label="Reset day"
+                          onClick={resetSessionTally}
+                          Icon={<RewindIcon />}
+                        />
                       </Box>
 
                       <Box
@@ -4320,7 +4788,9 @@ export const DailyTallyView = () => {
                         sx={{ width: '100%' }}
                       >
                         {vaccineRows.map(row => {
-                          const total = sessionTallyVaccineTotal(sessionTallyByItem[row.itemId]);
+                          const total = sessionTallyVaccineTotal(
+                            sessionTallyByItem[row.itemId]
+                          );
 
                           return (
                             <Box
@@ -4328,11 +4798,14 @@ export const DailyTallyView = () => {
                               role="button"
                               onClick={() => setSelectedTallyItemId(row.itemId)}
                               sx={{
-                                border: total > 0
-                                  ? '1px solid rgba(25,118,210,0.38)'
-                                  : '1px solid rgba(0,0,0,0.12)',
+                                border:
+                                  total > 0
+                                    ? '1px solid rgba(25,118,210,0.38)'
+                                    : '1px solid rgba(0,0,0,0.12)',
                                 backgroundColor:
-                                  total > 0 ? 'rgba(25,118,210,0.10)' : 'background.white',
+                                  total > 0
+                                    ? 'rgba(25,118,210,0.10)'
+                                    : 'background.white',
                                 borderRadius: 1,
                                 paddingX: 1.25,
                                 paddingY: 1,
@@ -4342,10 +4815,21 @@ export const DailyTallyView = () => {
                                 cursor: 'pointer',
                               }}
                             >
-                              <Typography variant="body1" sx={{ fontWeight: selectedTallyItemId === row.itemId ? 700 : 'normal' }}>
+                              <Typography
+                                variant="body1"
+                                sx={{
+                                  fontWeight:
+                                    selectedTallyItemId === row.itemId
+                                      ? 700
+                                      : 'normal',
+                                }}
+                              >
                                 {row.item}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
                                 Daily total: {total}
                               </Typography>
                             </Box>
@@ -4359,41 +4843,86 @@ export const DailyTallyView = () => {
 
               {workflowStep === 'coverage' ? (
                 <>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary', marginY: 1 }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 800, color: 'text.primary', marginY: 1 }}
+                  >
                     Vaccine coverage
                   </Typography>
                   {filteredVaccineRows
                     .filter(row => {
-                      const v = coverageFieldVisibilityByItem[row.itemId] ?? { showChild: false, showWomen: false };
+                      const v = coverageFieldVisibilityByItem[row.itemId] ?? {
+                        showChild: false,
+                        showWomen: false,
+                      };
                       return v.showChild || v.showWomen;
                     })
                     .map(row => {
-                      const coverage = coverageByItem[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate);
-                      const coverageVisibility = coverageFieldVisibilityByItem[row.itemId] ?? { showChild: false, showWomen: false };
-                      const hasCoverage = hasVisibleCoverageValues(coverage, coverageVisibility);
-                      const isExpanded = expandedCoverageItemIds[row.itemId] ?? false;
-                      const coverageSohWarning = coverageExceedsSohByItem[row.itemId];
+                      const coverage =
+                        coverageByItem[row.itemId] ??
+                        defaultVaccineCoverageDraft(coverageTemplate);
+                      const coverageVisibility = coverageFieldVisibilityByItem[
+                        row.itemId
+                      ] ?? { showChild: false, showWomen: false };
+                      const hasCoverage = hasVisibleCoverageValues(
+                        coverage,
+                        coverageVisibility
+                      );
+                      const isExpanded =
+                        expandedCoverageItemIds[row.itemId] ?? false;
+                      const coverageSohWarning =
+                        coverageExceedsSohByItem[row.itemId];
                       const itemDoses = dosesForItemId?.[row.itemId] ?? [];
-                      const selectedDoseId = selectedDoseIdByItem[row.itemId] ?? itemDoses[0]?.id ?? '';
-                      const activeCoverage = itemDoses.length > 0
-                        ? (perDoseCoverageByItem[row.itemId]?.[selectedDoseId] ?? defaultVaccineCoverageDraft(coverageTemplate))
-                        : coverage;
-                      const updateActiveCoverage = (updater: (current: VaccineCoverageDraft) => VaccineCoverageDraft) => {
+                      const selectedDoseId =
+                        selectedDoseIdByItem[row.itemId] ??
+                        itemDoses[0]?.id ??
+                        '';
+                      const activeCoverage =
+                        itemDoses.length > 0
+                          ? (perDoseCoverageByItem[row.itemId]?.[
+                              selectedDoseId
+                            ] ?? defaultVaccineCoverageDraft(coverageTemplate))
+                          : coverage;
+                      const updateActiveCoverage = (
+                        updater: (
+                          current: VaccineCoverageDraft
+                        ) => VaccineCoverageDraft
+                      ) => {
                         if (itemDoses.length > 0 && selectedDoseId) {
-                          updateDoseCoverageForRow(row, selectedDoseId, updater);
+                          updateDoseCoverageForRow(
+                            row,
+                            selectedDoseId,
+                            updater
+                          );
                         } else {
                           updateCoverageForRow(row, updater);
                         }
                       };
 
                       return (
-                        <Box key={`coverage-expand-${row.itemId}`} sx={{ marginBottom: 1.25, width: '100%', boxSizing: 'border-box' }}>
+                        <Box
+                          key={`coverage-expand-${row.itemId}`}
+                          sx={{
+                            marginBottom: 1.25,
+                            width: '100%',
+                            boxSizing: 'border-box',
+                          }}
+                        >
                           <Box
                             role="button"
-                            onClick={() => setExpandedCoverageItemIds(prev => ({ ...prev, [row.itemId]: !prev[row.itemId] }))}
+                            onClick={() =>
+                              setExpandedCoverageItemIds(prev => ({
+                                ...prev,
+                                [row.itemId]: !prev[row.itemId],
+                              }))
+                            }
                             sx={{
-                              border: hasCoverage ? '1px solid rgba(25,118,210,0.38)' : '1px solid rgba(0,0,0,0.12)',
-                              backgroundColor: hasCoverage ? 'rgba(25,118,210,0.10)' : 'background.white',
+                              border: hasCoverage
+                                ? '1px solid rgba(25,118,210,0.38)'
+                                : '1px solid rgba(0,0,0,0.12)',
+                              backgroundColor: hasCoverage
+                                ? 'rgba(25,118,210,0.10)'
+                                : 'background.white',
                               borderRadius: isExpanded ? '4px 4px 0 0' : 1,
                               paddingX: 1.25,
                               paddingY: 1,
@@ -4402,13 +4931,28 @@ export const DailyTallyView = () => {
                               cursor: 'pointer',
                             }}
                           >
-                            <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="space-between"
+                              gap={1}
+                            >
                               <Box>
-                                <Typography variant="body1" sx={{ fontWeight: isExpanded ? 700 : 'normal' }}>
+                                <Typography
+                                  variant="body1"
+                                  sx={{
+                                    fontWeight: isExpanded ? 700 : 'normal',
+                                  }}
+                                >
                                   {row.item}
                                 </Typography>
                               </Box>
-                              <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                gap={1}
+                                flexShrink={0}
+                              >
                                 {hasCoverage ? (
                                   <Box
                                     sx={{
@@ -4421,14 +4965,23 @@ export const DailyTallyView = () => {
                                       backgroundColor: 'rgba(0,0,0,0.03)',
                                     }}
                                   >
-                                    <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.76rem', lineHeight: 1.2 }}>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontWeight: 700,
+                                        fontSize: '0.76rem',
+                                        lineHeight: 1.2,
+                                      }}
+                                    >
                                       Issued doses: {row.used}
                                     </Typography>
                                   </Box>
                                 ) : null}
                                 <ChevronDownIcon
                                   sx={{
-                                    transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                    transform: isExpanded
+                                      ? 'rotate(180deg)'
+                                      : 'rotate(0deg)',
                                     transition: 'transform 0.2s ease',
                                     color: 'text.secondary',
                                   }}
@@ -4440,7 +4993,9 @@ export const DailyTallyView = () => {
                           {isExpanded ? (
                             <Box
                               sx={{
-                                border: hasCoverage ? '1px solid rgba(25,118,210,0.38)' : '1px solid rgba(0,0,0,0.12)',
+                                border: hasCoverage
+                                  ? '1px solid rgba(25,118,210,0.38)'
+                                  : '1px solid rgba(0,0,0,0.12)',
                                 borderTop: 'none',
                                 borderRadius: '0 0 4px 4px',
                                 paddingX: 2,
@@ -4451,9 +5006,16 @@ export const DailyTallyView = () => {
                                 <Typography
                                   variant="caption"
                                   color="error.main"
-                                  sx={{ display: 'block', marginBottom: 0.75, fontWeight: 700 }}
+                                  sx={{
+                                    display: 'block',
+                                    marginBottom: 0.75,
+                                    fontWeight: 700,
+                                  }}
                                 >
-                                  Coverage total ({coverageSohWarning.coverageTotal}) exceeds SOH ({coverageSohWarning.soh}). Reduce coverage to continue.
+                                  Coverage total (
+                                  {coverageSohWarning.coverageTotal}) exceeds
+                                  SOH ({coverageSohWarning.soh}). Reduce
+                                  coverage to continue.
                                 </Typography>
                               ) : null}
                               <Box
@@ -4461,7 +5023,8 @@ export const DailyTallyView = () => {
                                 gap={1.5}
                                 alignItems={
                                   itemDoses.length > 0 &&
-                                  (coverageVisibility.showChild || coverageVisibility.showWomen)
+                                  (coverageVisibility.showChild ||
+                                    coverageVisibility.showWomen)
                                     ? 'stretch'
                                     : 'flex-start'
                                 }
@@ -4477,7 +5040,8 @@ export const DailyTallyView = () => {
                                     }}
                                   >
                                     {itemDoses.map(dose => {
-                                      const isSelected = selectedDoseId === dose.id;
+                                      const isSelected =
+                                        selectedDoseId === dose.id;
                                       return (
                                         <Box
                                           key={dose.id}
@@ -4505,7 +5069,8 @@ export const DailyTallyView = () => {
                                             zIndex: isSelected ? 2 : 1,
                                             cursor: 'pointer',
                                             textAlign: 'center',
-                                            transition: 'border 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            transition:
+                                              'border 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                                             '&::after': isSelected
                                               ? {
                                                   content: '""',
@@ -4515,11 +5080,14 @@ export const DailyTallyView = () => {
                                                   transform: 'translateY(-50%)',
                                                   width: 6,
                                                   height: 2,
-                                                  backgroundColor: 'rgba(237,108,2,0.78)',
+                                                  backgroundColor:
+                                                    'rgba(237,108,2,0.78)',
                                                   borderRadius: 999,
-                                                  boxShadow: '0 0 6px rgba(237,108,2,0.18)',
+                                                  boxShadow:
+                                                    '0 0 6px rgba(237,108,2,0.18)',
                                                   pointerEvents: 'none',
-                                                  transition: 'opacity 0.4s ease-in-out',
+                                                  transition:
+                                                    'opacity 0.4s ease-in-out',
                                                 }
                                               : undefined,
                                           }}
@@ -4527,9 +5095,13 @@ export const DailyTallyView = () => {
                                           <Typography
                                             variant="caption"
                                             sx={{
-                                              fontWeight: isSelected ? 700 : 400,
+                                              fontWeight: isSelected
+                                                ? 700
+                                                : 400,
                                               fontSize: '0.72rem',
-                                              color: isSelected ? '#8A3C00' : 'inherit',
+                                              color: isSelected
+                                                ? '#8A3C00'
+                                                : 'inherit',
                                             }}
                                           >
                                             {dose.label}
@@ -4544,7 +5116,8 @@ export const DailyTallyView = () => {
                                   minWidth={0}
                                   sx={
                                     itemDoses.length > 0 &&
-                                    (coverageVisibility.showChild || coverageVisibility.showWomen)
+                                    (coverageVisibility.showChild ||
+                                      coverageVisibility.showWomen)
                                       ? {
                                           display: 'flex',
                                           flexDirection: 'column',
@@ -4552,198 +5125,360 @@ export const DailyTallyView = () => {
                                       : undefined
                                   }
                                 >
-                              {coverageVisibility.showChild ? (
-                                <Box
-                                  key={selectedDoseId}
-                                  sx={{
-                                    border:
-                                      itemDoses.length > 0
-                                        ? '1px solid rgba(237,108,2,0.75)'
-                                        : '1px solid rgba(0,0,0,0.12)',
-                                    boxShadow:
-                                      itemDoses.length > 0
-                                        ? '0 3px 10px rgba(237,108,2,0.16)'
-                                        : 'none',
-                                    borderRadius: 1,
-                                    padding: 1,
-                                    position: 'relative',
-                                    zIndex: itemDoses.length > 0 ? 2 : 1,
-                                    flex: itemDoses.length > 0 ? 1 : undefined,
-                                    transition: 'border 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    animation: 'fadeInRefresh 0.5s ease-in-out',
-                                    '@keyframes fadeInRefresh': {
-                                      from: { opacity: 0.5 },
-                                      to: { opacity: 1 },
-                                    },
-                                  }}
-                                >
-                                  <Box
-                                    display="grid"
-                                    gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
-                                    columnGap={1.25}
-                                    rowGap={0.75}
-                                    alignItems="center"
-                                  >
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Child coverage</Typography>
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Male</Typography>
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Female</Typography>
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Total</Typography>
-                                    {activeCoverage.childAgeGroups.map(ageGroup => (
-                                      <React.Fragment key={ageGroup.id}>
-                                        <Typography variant="body2">{ageGroup.label}</Typography>
-                                        <BasicTextInput
-                                          type="text"
-                                          size="small"
-                                          inputMode={numericInputMode}
-                                          inputProps={numericHtmlInputProps}
-                                          sx={compactNumberInputSx}
-                                          value={String(ageGroup.male)}
-                                          onFocus={selectZeroValueOnFocus}
-                                          onChange={event =>
-                                            updateActiveCoverage(current => ({
-                                              ...current,
-                                              childAgeGroups: current.childAgeGroups.map(group =>
-                                                group.id === ageGroup.id
-                                                  ? { ...group, male: parseWholeNumber(event.target.value) }
-                                                  : group
-                                              ),
-                                            }))
-                                          }
-                                        />
-                                        <BasicTextInput
-                                          type="text"
-                                          size="small"
-                                          inputMode={numericInputMode}
-                                          inputProps={numericHtmlInputProps}
-                                          sx={compactNumberInputSx}
-                                          value={String(ageGroup.female)}
-                                          onFocus={selectZeroValueOnFocus}
-                                          onChange={event =>
-                                            updateActiveCoverage(current => ({
-                                              ...current,
-                                              childAgeGroups: current.childAgeGroups.map(group =>
-                                                group.id === ageGroup.id
-                                                  ? { ...group, female: parseWholeNumber(event.target.value) }
-                                                  : group
-                                              ),
-                                            }))
-                                          }
-                                        />
-                                        <Typography variant="body2" color="text.secondary">
-                                          {ageGroup.male + ageGroup.female}
+                                  {coverageVisibility.showChild ? (
+                                    <Box
+                                      key={selectedDoseId}
+                                      sx={{
+                                        border:
+                                          itemDoses.length > 0
+                                            ? '1px solid rgba(237,108,2,0.75)'
+                                            : '1px solid rgba(0,0,0,0.12)',
+                                        boxShadow:
+                                          itemDoses.length > 0
+                                            ? '0 3px 10px rgba(237,108,2,0.16)'
+                                            : 'none',
+                                        borderRadius: 1,
+                                        padding: 1,
+                                        position: 'relative',
+                                        zIndex: itemDoses.length > 0 ? 2 : 1,
+                                        flex:
+                                          itemDoses.length > 0 ? 1 : undefined,
+                                        transition:
+                                          'border 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        animation:
+                                          'fadeInRefresh 0.5s ease-in-out',
+                                        '@keyframes fadeInRefresh': {
+                                          from: { opacity: 0.5 },
+                                          to: { opacity: 1 },
+                                        },
+                                      }}
+                                    >
+                                      <Box
+                                        display="grid"
+                                        gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                                        columnGap={1.25}
+                                        rowGap={0.75}
+                                        alignItems="center"
+                                      >
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Child coverage
                                         </Typography>
-                                      </React.Fragment>
-                                    ))}
-                                  </Box>
-                                </Box>
-                              ) : null}
-                              {coverageVisibility.showWomen ? (
-                                <Box
-                                  key={selectedDoseId}
-                                  sx={{
-                                    marginTop: coverageVisibility.showChild ? 1.25 : 0,
-                                    border:
-                                      itemDoses.length > 0
-                                        ? '1px solid rgba(237,108,2,0.75)'
-                                        : '1px solid rgba(0,0,0,0.12)',
-                                    boxShadow:
-                                      itemDoses.length > 0
-                                        ? '0 3px 10px rgba(237,108,2,0.16)'
-                                        : 'none',
-                                    borderRadius: 1,
-                                    padding: 1,
-                                    position: 'relative',
-                                    zIndex: itemDoses.length > 0 ? 2 : 1,
-                                    flex:
-                                      !coverageVisibility.showChild && itemDoses.length > 0
-                                        ? 1
-                                        : undefined,
-                                    transition: 'border 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    animation: 'fadeInRefresh 0.5s ease-in-out',
-                                    '@keyframes fadeInRefresh': {
-                                      from: { opacity: 0.5 },
-                                      to: { opacity: 1 },
-                                    },
-                                  }}
-                                >
-                                  <Box
-                                    display="grid"
-                                    gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
-                                    columnGap={1.25}
-                                    rowGap={0.75}
-                                    alignItems="center"
-                                  >
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Women coverage</Typography>
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Non pregnant</Typography>
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Pregnant</Typography>
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Total</Typography>
-                                    {(() => {
-                                      const { nonPregnantGroup, pregnantGroup } = resolveWomenCoverageGroups(activeCoverage.womenAgeGroups);
-                                      const womenBaseLabel = womenCoverageLabel(nonPregnantGroup, pregnantGroup);
-                                      const nonPregnant = nonPregnantGroup?.count ?? 0;
-                                      const pregnant = pregnantGroup?.count ?? 0;
-                                      return (
-                                        <>
-                                          <Typography variant="body2">{womenBaseLabel}</Typography>
-                                          <BasicTextInput
-                                            type="text"
-                                            size="small"
-                                            inputMode={numericInputMode}
-                                            inputProps={numericHtmlInputProps}
-                                            sx={compactNumberInputSx}
-                                            value={String(nonPregnant)}
-                                            onFocus={selectZeroValueOnFocus}
-                                            onChange={event =>
-                                              updateActiveCoverage(current => ({
-                                                ...current,
-                                                womenAgeGroups: (() => {
-                                                  const nextCount = parseWholeNumber(event.target.value);
-                                                  if (nonPregnantGroup?.id) {
-                                                    return current.womenAgeGroups.map(group =>
-                                                      group.id === nonPregnantGroup.id ? { ...group, count: nextCount } : group
-                                                    );
-                                                  }
-                                                  const fallbackId = pregnantGroup?.id ? `${pregnantGroup.id}-non-pregnant` : 'women-non-pregnant';
-                                                  const fallbackLabel = womenBaseLabel === 'Women' ? 'Women - Non pregnant' : `${womenBaseLabel} - Non pregnant`;
-                                                  return [...current.womenAgeGroups, { id: fallbackId, label: fallbackLabel, count: nextCount }];
-                                                })(),
-                                              }))
-                                            }
-                                          />
-                                          <BasicTextInput
-                                            type="text"
-                                            size="small"
-                                            inputMode={numericInputMode}
-                                            inputProps={numericHtmlInputProps}
-                                            sx={compactNumberInputSx}
-                                            value={String(pregnant)}
-                                            onFocus={selectZeroValueOnFocus}
-                                            onChange={event =>
-                                              updateActiveCoverage(current => ({
-                                                ...current,
-                                                womenAgeGroups: (() => {
-                                                  const nextCount = parseWholeNumber(event.target.value);
-                                                  if (pregnantGroup?.id) {
-                                                    return current.womenAgeGroups.map(group =>
-                                                      group.id === pregnantGroup.id ? { ...group, count: nextCount } : group
-                                                    );
-                                                  }
-                                                  const fallbackId = nonPregnantGroup?.id ? `${nonPregnantGroup.id}-pregnant` : 'women-pregnant';
-                                                  const fallbackLabel = womenBaseLabel === 'Women' ? 'Women - Pregnant' : `${womenBaseLabel} - Pregnant`;
-                                                  return [...current.womenAgeGroups, { id: fallbackId, label: fallbackLabel, count: nextCount }];
-                                                })(),
-                                              }))
-                                            }
-                                          />
-                                          <Typography variant="body2" color="text.secondary">
-                                            {nonPregnant + pregnant}
-                                          </Typography>
-                                        </>
-                                      );
-                                    })()}
-                                  </Box>
-                                </Box>
-                              ) : null}
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Male
+                                        </Typography>
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Female
+                                        </Typography>
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Total
+                                        </Typography>
+                                        {activeCoverage.childAgeGroups.map(
+                                          ageGroup => (
+                                            <React.Fragment key={ageGroup.id}>
+                                              <Typography variant="body2">
+                                                {ageGroup.label}
+                                              </Typography>
+                                              <BasicTextInput
+                                                type="text"
+                                                size="small"
+                                                inputMode={numericInputMode}
+                                                inputProps={
+                                                  numericHtmlInputProps
+                                                }
+                                                sx={compactNumberInputSx}
+                                                value={String(ageGroup.male)}
+                                                onFocus={selectZeroValueOnFocus}
+                                                onChange={event =>
+                                                  updateActiveCoverage(
+                                                    current => ({
+                                                      ...current,
+                                                      childAgeGroups:
+                                                        current.childAgeGroups.map(
+                                                          group =>
+                                                            group.id ===
+                                                            ageGroup.id
+                                                              ? {
+                                                                  ...group,
+                                                                  male: parseWholeNumber(
+                                                                    event.target
+                                                                      .value
+                                                                  ),
+                                                                }
+                                                              : group
+                                                        ),
+                                                    })
+                                                  )
+                                                }
+                                              />
+                                              <BasicTextInput
+                                                type="text"
+                                                size="small"
+                                                inputMode={numericInputMode}
+                                                inputProps={
+                                                  numericHtmlInputProps
+                                                }
+                                                sx={compactNumberInputSx}
+                                                value={String(ageGroup.female)}
+                                                onFocus={selectZeroValueOnFocus}
+                                                onChange={event =>
+                                                  updateActiveCoverage(
+                                                    current => ({
+                                                      ...current,
+                                                      childAgeGroups:
+                                                        current.childAgeGroups.map(
+                                                          group =>
+                                                            group.id ===
+                                                            ageGroup.id
+                                                              ? {
+                                                                  ...group,
+                                                                  female:
+                                                                    parseWholeNumber(
+                                                                      event
+                                                                        .target
+                                                                        .value
+                                                                    ),
+                                                                }
+                                                              : group
+                                                        ),
+                                                    })
+                                                  )
+                                                }
+                                              />
+                                              <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                              >
+                                                {ageGroup.male +
+                                                  ageGroup.female}
+                                              </Typography>
+                                            </React.Fragment>
+                                          )
+                                        )}
+                                      </Box>
+                                    </Box>
+                                  ) : null}
+                                  {coverageVisibility.showWomen ? (
+                                    <Box
+                                      key={selectedDoseId}
+                                      sx={{
+                                        marginTop: coverageVisibility.showChild
+                                          ? 1.25
+                                          : 0,
+                                        border:
+                                          itemDoses.length > 0
+                                            ? '1px solid rgba(237,108,2,0.75)'
+                                            : '1px solid rgba(0,0,0,0.12)',
+                                        boxShadow:
+                                          itemDoses.length > 0
+                                            ? '0 3px 10px rgba(237,108,2,0.16)'
+                                            : 'none',
+                                        borderRadius: 1,
+                                        padding: 1,
+                                        position: 'relative',
+                                        zIndex: itemDoses.length > 0 ? 2 : 1,
+                                        flex:
+                                          !coverageVisibility.showChild &&
+                                          itemDoses.length > 0
+                                            ? 1
+                                            : undefined,
+                                        transition:
+                                          'border 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        animation:
+                                          'fadeInRefresh 0.5s ease-in-out',
+                                        '@keyframes fadeInRefresh': {
+                                          from: { opacity: 0.5 },
+                                          to: { opacity: 1 },
+                                        },
+                                      }}
+                                    >
+                                      <Box
+                                        display="grid"
+                                        gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                                        columnGap={1.25}
+                                        rowGap={0.75}
+                                        alignItems="center"
+                                      >
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Women coverage
+                                        </Typography>
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Non pregnant
+                                        </Typography>
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Pregnant
+                                        </Typography>
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Total
+                                        </Typography>
+                                        {(() => {
+                                          const {
+                                            nonPregnantGroup,
+                                            pregnantGroup,
+                                          } = resolveWomenCoverageGroups(
+                                            activeCoverage.womenAgeGroups
+                                          );
+                                          const womenBaseLabel =
+                                            womenCoverageLabel(
+                                              nonPregnantGroup,
+                                              pregnantGroup
+                                            );
+                                          const nonPregnant =
+                                            nonPregnantGroup?.count ?? 0;
+                                          const pregnant =
+                                            pregnantGroup?.count ?? 0;
+                                          return (
+                                            <>
+                                              <Typography variant="body2">
+                                                {womenBaseLabel}
+                                              </Typography>
+                                              <BasicTextInput
+                                                type="text"
+                                                size="small"
+                                                inputMode={numericInputMode}
+                                                inputProps={
+                                                  numericHtmlInputProps
+                                                }
+                                                sx={compactNumberInputSx}
+                                                value={String(nonPregnant)}
+                                                onFocus={selectZeroValueOnFocus}
+                                                onChange={event =>
+                                                  updateActiveCoverage(
+                                                    current => ({
+                                                      ...current,
+                                                      womenAgeGroups: (() => {
+                                                        const nextCount =
+                                                          parseWholeNumber(
+                                                            event.target.value
+                                                          );
+                                                        if (
+                                                          nonPregnantGroup?.id
+                                                        ) {
+                                                          return current.womenAgeGroups.map(
+                                                            group =>
+                                                              group.id ===
+                                                              nonPregnantGroup.id
+                                                                ? {
+                                                                    ...group,
+                                                                    count:
+                                                                      nextCount,
+                                                                  }
+                                                                : group
+                                                          );
+                                                        }
+                                                        const fallbackId =
+                                                          pregnantGroup?.id
+                                                            ? `${pregnantGroup.id}-non-pregnant`
+                                                            : 'women-non-pregnant';
+                                                        const fallbackLabel =
+                                                          womenBaseLabel ===
+                                                          'Women'
+                                                            ? 'Women - Non pregnant'
+                                                            : `${womenBaseLabel} - Non pregnant`;
+                                                        return [
+                                                          ...current.womenAgeGroups,
+                                                          {
+                                                            id: fallbackId,
+                                                            label:
+                                                              fallbackLabel,
+                                                            count: nextCount,
+                                                          },
+                                                        ];
+                                                      })(),
+                                                    })
+                                                  )
+                                                }
+                                              />
+                                              <BasicTextInput
+                                                type="text"
+                                                size="small"
+                                                inputMode={numericInputMode}
+                                                inputProps={
+                                                  numericHtmlInputProps
+                                                }
+                                                sx={compactNumberInputSx}
+                                                value={String(pregnant)}
+                                                onFocus={selectZeroValueOnFocus}
+                                                onChange={event =>
+                                                  updateActiveCoverage(
+                                                    current => ({
+                                                      ...current,
+                                                      womenAgeGroups: (() => {
+                                                        const nextCount =
+                                                          parseWholeNumber(
+                                                            event.target.value
+                                                          );
+                                                        if (pregnantGroup?.id) {
+                                                          return current.womenAgeGroups.map(
+                                                            group =>
+                                                              group.id ===
+                                                              pregnantGroup.id
+                                                                ? {
+                                                                    ...group,
+                                                                    count:
+                                                                      nextCount,
+                                                                  }
+                                                                : group
+                                                          );
+                                                        }
+                                                        const fallbackId =
+                                                          nonPregnantGroup?.id
+                                                            ? `${nonPregnantGroup.id}-pregnant`
+                                                            : 'women-pregnant';
+                                                        const fallbackLabel =
+                                                          womenBaseLabel ===
+                                                          'Women'
+                                                            ? 'Women - Pregnant'
+                                                            : `${womenBaseLabel} - Pregnant`;
+                                                        return [
+                                                          ...current.womenAgeGroups,
+                                                          {
+                                                            id: fallbackId,
+                                                            label:
+                                                              fallbackLabel,
+                                                            count: nextCount,
+                                                          },
+                                                        ];
+                                                      })(),
+                                                    })
+                                                  )
+                                                }
+                                              />
+                                              <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                              >
+                                                {nonPregnant + pregnant}
+                                              </Typography>
+                                            </>
+                                          );
+                                        })()}
+                                      </Box>
+                                    </Box>
+                                  ) : null}
                                 </Box>
                               </Box>
                             </Box>
@@ -4756,7 +5491,10 @@ export const DailyTallyView = () => {
 
               {displayedVaccineRows.length > 0 ? (
                 <Box display="flex" alignItems="center" sx={{ marginY: 1 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 800, color: 'text.primary' }}
+                  >
                     {workflowStep === 'allocation' && !isThreeStepFlow
                       ? 'Vaccine batch allocation'
                       : workflowStep === 'wastage'
@@ -4769,30 +5507,43 @@ export const DailyTallyView = () => {
               {isVaccineBucketOpen
                 ? displayedVaccineRows.map(row => {
                     const coverage =
-                      coverageByItem[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate);
-                    const coverageVisibility = coverageFieldVisibilityByItem[row.itemId] ?? {
+                      coverageByItem[row.itemId] ??
+                      defaultVaccineCoverageDraft(coverageTemplate);
+                    const coverageVisibility = coverageFieldVisibilityByItem[
+                      row.itemId
+                    ] ?? {
                       showChild: false,
                       showWomen: false,
                     };
-                    const coverageSohWarning = coverageExceedsSohByItem[row.itemId];
+                    const coverageSohWarning =
+                      coverageExceedsSohByItem[row.itemId];
                     const batchOptions = row.stockLines.map(stockLine => ({
                       value: stockLine.id,
                       label: batchLabel(stockLine),
                     }));
-                    const batchUsedTotal = sumBatchDraft(row.batchDraftById, 'used');
-                    const hasBatchIssuedMismatch = Math.abs(batchUsedTotal - row.used) > 0.0001;
+                    const batchUsedTotal = sumBatchDraft(
+                      row.batchDraftById,
+                      'used'
+                    );
+                    const hasBatchIssuedMismatch =
+                      Math.abs(batchUsedTotal - row.used) > 0.0001;
                     const isAllocationStep = workflowStep === 'allocation';
                     const isWastageStep = workflowStep === 'wastage';
                     const itemDoses = dosesForItemId?.[row.itemId] ?? [];
                     const selectedDoseId =
-                      selectedDoseIdByItem[row.itemId] ?? itemDoses[0]?.id ?? '';
+                      selectedDoseIdByItem[row.itemId] ??
+                      itemDoses[0]?.id ??
+                      '';
                     const activeCoverage =
                       itemDoses.length > 0
-                        ? (perDoseCoverageByItem[row.itemId]?.[selectedDoseId] ??
-                          defaultVaccineCoverageDraft(coverageTemplate))
+                        ? (perDoseCoverageByItem[row.itemId]?.[
+                            selectedDoseId
+                          ] ?? defaultVaccineCoverageDraft(coverageTemplate))
                         : coverage;
                     const updateActiveCoverage = (
-                      updater: (current: VaccineCoverageDraft) => VaccineCoverageDraft
+                      updater: (
+                        current: VaccineCoverageDraft
+                      ) => VaccineCoverageDraft
                     ) => {
                       if (itemDoses.length > 0 && selectedDoseId) {
                         updateDoseCoverageForRow(row, selectedDoseId, updater);
@@ -4835,14 +5586,18 @@ export const DailyTallyView = () => {
                           alignItems="center"
                           justifyContent="space-between"
                           gap={1}
-                          role={isThreeStepStepOneAllocation ? 'button' : undefined}
+                          role={
+                            isThreeStepStepOneAllocation ? 'button' : undefined
+                          }
                           onClick={
                             isThreeStepStepOneAllocation
                               ? () =>
-                                  setExpandedStepOneVaccineItemIds(previous => ({
-                                    ...previous,
-                                    [row.itemId]: !previous[row.itemId],
-                                  }))
+                                  setExpandedStepOneVaccineItemIds(
+                                    previous => ({
+                                      ...previous,
+                                      [row.itemId]: !previous[row.itemId],
+                                    })
+                                  )
                               : undefined
                           }
                           sx={
@@ -4868,7 +5623,11 @@ export const DailyTallyView = () => {
                         >
                           <Typography
                             variant="body1"
-                            sx={{ fontWeight: isStepOneVaccineExpanded ? 700 : 'normal' }}
+                            sx={{
+                              fontWeight: isStepOneVaccineExpanded
+                                ? 700
+                                : 'normal',
+                            }}
                           >
                             {row.item}
                           </Typography>
@@ -4879,7 +5638,8 @@ export const DailyTallyView = () => {
                             gap={1}
                             flexWrap="wrap"
                           >
-                            {(workflowStep !== 'allocation' && workflowStep !== 'wastage') ||
+                            {(workflowStep !== 'allocation' &&
+                              workflowStep !== 'wastage') ||
                             (isThreeStepStepOneAllocation && hasIssuedDoses) ? (
                               <Box
                                 sx={{
@@ -4894,7 +5654,11 @@ export const DailyTallyView = () => {
                               >
                                 <Typography
                                   variant="body2"
-                                  sx={{ fontWeight: 700, fontSize: '0.76rem', lineHeight: 1.2 }}
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.76rem',
+                                    lineHeight: 1.2,
+                                  }}
                                 >
                                   Issued doses: {row.used}
                                 </Typography>
@@ -4928,559 +5692,149 @@ export const DailyTallyView = () => {
                                 : undefined
                             }
                           >
-                        {workflowStep === 'coverage' && coverageSohWarning ? (
-                          <Typography
-                            variant="caption"
-                            color="error.main"
-                            sx={{ display: 'block', marginTop: 0.75, fontWeight: 700 }}
-                          >
-                            Coverage total ({coverageSohWarning.coverageTotal}) exceeds SOH ({coverageSohWarning.soh}).
-                            Reduce coverage to continue.
-                          </Typography>
-                        ) : null}
-
-                        {isAllocationStep || isWastageStep ? (
-                          <Box
-                            display="grid"
-                            gridTemplateColumns={
-                              isAllocationStep
-                                ? 'repeat(4,minmax(0,1fr))'
-                                : 'repeat(7,minmax(0,1fr))'
-                            }
-                            columnGap={0.75}
-                            rowGap={0.75}
-                            alignItems="center"
-                            marginTop={0.75}
-                          >
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            SOH
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Batch
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Units
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Issued
-                          </Typography>
-                          {isWastageStep ? (
-                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                              Open vial wastage
-                            </Typography>
-                          ) : null}
-                          {isWastageStep ? (
-                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                              Wasted
-                            </Typography>
-                          ) : null}
-                          {isWastageStep ? (
-                            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                              Remaining
-                            </Typography>
-                          ) : null}
-
-                          {isWastageStep && row.stockLines.length > 1 ? (
-                            <>
-                              {row.stockLines.map(stockLine => {
-                                const batchDraft = row.batchDraftById?.[stockLine.id] ?? {
-                                  used: 0,
-                                  wastage: 0,
-                                  openVialWastage: row.isVaccine,
-                                };
-                                const batchSoh = toDisplayUnits(
-                                  stockLine.availableNumberOfPacks,
-                                  row.isVaccine,
-                                  row.doses
-                                );
-                                const batchRemaining = round(
-                                  Math.max(0, batchSoh - batchDraft.used - batchDraft.wastage)
-                                );
-
-                                return (
-                                  <React.Fragment key={`wastage-grid-${row.itemId}-${stockLine.id}`}>
-                                    <Typography variant="body2">{batchSoh}</Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                      {batchLabel(stockLine)}
-                                    </Typography>
-                                    <Typography variant="body2">{row.units}</Typography>
-                                    <Typography
-                                      variant="body2"
-                                      sx={
-                                        hasBatchIssuedMismatch
-                                          ? { fontWeight: 700, color: 'error.main' }
-                                          : undefined
-                                      }
-                                    >
-                                      {batchDraft.used}
-                                    </Typography>
-                                    <Box
-                                      display="flex"
-                                      justifyContent="center"
-                                      alignItems="center"
-                                      sx={{ justifySelf: 'center' }}
-                                    >
-                                      <Switch
-                                        checked={batchDraft.openVialWastage}
-                                        disabled={batchDraft.used <= 0}
-                                        onChange={(_, checked) =>
-                                          updateBatchOpenVialWastage(row, stockLine, checked)
-                                        }
-                                        sx={{ margin: 0 }}
-                                      />
-                                    </Box>
-                                    <BasicTextInput
-                                      type="text"
-                                      size="small"
-                                      inputMode={numericInputMode}
-                                      inputProps={numericHtmlInputProps}
-                                      sx={compactNumberInputSx}
-                                      value={String(batchDraft.wastage)}
-                                      onFocus={selectZeroValueOnFocus}
-                                      onChange={event =>
-                                        updateBatchWastage(row, stockLine, event.target.value)
-                                      }
-                                    />
-                                    <Typography variant="body2">{batchRemaining}</Typography>
-                                  </React.Fragment>
-                                );
-                              })}
-                            </>
-                          ) : (
-                            <>
-                              <Typography variant="body2">{row.soh}</Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {row.stockLines.length > 1
-                                  ? 'Needs allocation'
-                                  : row.stockLines[0]
-                                    ? batchLabel(row.stockLines[0])
-                                    : '-'}
-                              </Typography>
-                              <Typography variant="body2">{row.units}</Typography>
-                              {isSimplifiedMode &&
-                              !(isWastageStep && row.stockLines.length > 1) &&
-                              !(useSimplifiedMobileUi && isWastageStep) ? (
-                                <BasicTextInput
-                                  type="text"
-                                  size="small"
-                                  inputMode={numericInputMode}
-                                  inputProps={numericHtmlInputProps}
-                                  slotProps={
-                                    row.stockLines.length > 1 && hasBatchIssuedMismatch
-                                      ? highlightedIssuedInputSlotProps
-                                      : undefined
-                                  }
-                                  sx={
-                                    shouldHighlightUpperIssuedValue
-                                      ? {
-                                          ...compactNumberInputSx,
-                                          '& input': {
-                                            fontWeight: 700,
-                                            color: 'error.main',
-                                          },
-                                        }
-                                      : compactNumberInputSx
-                                  }
-                                  value={String(row.used)}
-                                  onFocus={selectZeroValueOnFocus}
-                                  onChange={event => updateUsed(row, event.target.value)}
-                                />
-                              ) : (
-                                <Typography
-                                  variant="body2"
-                                  sx={
-                                    shouldHighlightUpperIssuedValue
-                                      ? { fontWeight: 700, color: 'error.main' }
-                                      : undefined
-                                  }
-                                >
-                                  {row.used}
-                                </Typography>
-                              )}
-                              {isWastageStep ? (
-                                <Box
-                                  display="flex"
-                                  justifyContent="center"
-                                  alignItems="center"
-                                  sx={{ justifySelf: 'center' }}
-                                >
-                                  <Switch
-                                    checked={row.openVialWastage}
-                                    onChange={(_, checked) => updateOpenVialWastage(row, checked)}
-                                    sx={{ margin: 0 }}
-                                  />
-                                </Box>
-                              ) : null}
-                              {isWastageStep ? (
-                                <BasicTextInput
-                                  type="text"
-                                  size="small"
-                                  inputMode={numericInputMode}
-                                  inputProps={numericHtmlInputProps}
-                                  sx={compactNumberInputSx}
-                                  value={String(row.wastage)}
-                                  onFocus={selectZeroValueOnFocus}
-                                  onChange={event =>
-                                    updateDraft(row.itemId, {
-                                      wastage: parseInput(event.target.value),
-                                    })
-                                  }
-                                />
-                              ) : null}
-                              {isWastageStep ? (
-                                <Typography variant="body2">{row.remainingStock}</Typography>
-                              ) : null}
-                            </>
-                          )}
-                          </Box>
-                        ) : null}
-
-                        {workflowStep === 'coverage' ? (
-                          <Box sx={{ marginTop: 1 }}>
-                            {coverageVisibility.showChild ? (
-                            <Box
-                              sx={{
-                                border:
-                                  itemDoses.length > 0
-                                    ? '1px solid rgba(237,108,2,0.75)'
-                                    : '1px solid rgba(0,0,0,0.12)',
-                                boxShadow:
-                                  itemDoses.length > 0
-                                    ? '0 3px 10px rgba(237,108,2,0.16)'
-                                    : 'none',
-                                borderRadius: 1,
-                                padding: 1,
-                              }}
-                            >
-                              <Box
-                                display="grid"
-                                gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
-                                columnGap={1.25}
-                                rowGap={0.75}
-                                alignItems="center"
-                              >
-                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                  Child coverage
-                                </Typography>
-                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                  Male
-                                </Typography>
-                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                  Female
-                                </Typography>
-                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                  Total
-                                </Typography>
-
-                                {activeCoverage.childAgeGroups.map(ageGroup => (
-                                  <React.Fragment key={ageGroup.id}>
-                                    <Typography variant="body2">{ageGroup.label}</Typography>
-                                    <BasicTextInput
-                                      type="text"
-                                      size="small"
-                                      inputMode={numericInputMode}
-                                      inputProps={numericHtmlInputProps}
-                                      sx={compactNumberInputSx}
-                                      value={String(ageGroup.male)}
-                                      onFocus={selectZeroValueOnFocus}
-                                      onChange={event =>
-                                        updateActiveCoverage(current => ({
-                                          ...current,
-                                          childAgeGroups: current.childAgeGroups.map(group =>
-                                            group.id === ageGroup.id
-                                              ? {
-                                                  ...group,
-                                                  male: parseWholeNumber(event.target.value),
-                                                }
-                                              : group
-                                          ),
-                                        }))
-                                      }
-                                    />
-                                    <BasicTextInput
-                                      type="text"
-                                      size="small"
-                                      inputMode={numericInputMode}
-                                      inputProps={numericHtmlInputProps}
-                                      sx={compactNumberInputSx}
-                                      value={String(ageGroup.female)}
-                                      onFocus={selectZeroValueOnFocus}
-                                      onChange={event =>
-                                        updateActiveCoverage(current => ({
-                                          ...current,
-                                          childAgeGroups: current.childAgeGroups.map(group =>
-                                            group.id === ageGroup.id
-                                              ? {
-                                                  ...group,
-                                                  female: parseWholeNumber(event.target.value),
-                                                }
-                                              : group
-                                          ),
-                                        }))
-                                      }
-                                    />
-                                    <Typography variant="body2" color="text.secondary">
-                                      {ageGroup.male + ageGroup.female}
-                                    </Typography>
-                                  </React.Fragment>
-                                ))}
-                              </Box>
-                            </Box>
-                            ) : null}
-
-                            {coverageVisibility.showWomen ? (
-                            <Box
-                              sx={{
-                                marginTop: coverageVisibility.showChild ? 1.25 : 0,
-                                border: '1px solid rgba(0,0,0,0.12)',
-                                borderRadius: 1,
-                                padding: 1,
-                              }}
-                            >
-                              <Box
-                                display="grid"
-                                gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
-                                columnGap={1.25}
-                                rowGap={0.75}
-                                alignItems="center"
-                              >
-                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                  Women coverage
-                                </Typography>
-                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                  Non pregnant
-                                </Typography>
-                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                  Pregnant
-                                </Typography>
-                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                  Total
-                                </Typography>
-
-                                {(() => {
-                                  const { nonPregnantGroup, pregnantGroup } =
-                                    resolveWomenCoverageGroups(activeCoverage.womenAgeGroups);
-                                  const womenBaseLabel = womenCoverageLabel(
-                                    nonPregnantGroup,
-                                    pregnantGroup
-                                  );
-
-                                  const nonPregnant = nonPregnantGroup?.count ?? 0;
-                                  const pregnant = pregnantGroup?.count ?? 0;
-
-                                  return (
-                                    <>
-                                      <Typography variant="body2">
-                                        {womenBaseLabel}
-                                      </Typography>
-                                    <BasicTextInput
-                                      type="text"
-                                      size="small"
-                                      inputMode={numericInputMode}
-                                      inputProps={numericHtmlInputProps}
-                                      sx={compactNumberInputSx}
-                                      value={String(nonPregnant)}
-                                      onFocus={selectZeroValueOnFocus}
-                                      onChange={event =>
-                                        updateActiveCoverage(current => ({
-                                          ...current,
-                                          womenAgeGroups: (() => {
-                                            const nextCount = parseWholeNumber(
-                                              event.target.value
-                                            );
-
-                                            if (nonPregnantGroup?.id) {
-                                              return current.womenAgeGroups.map(group =>
-                                                group.id === nonPregnantGroup.id
-                                                  ? { ...group, count: nextCount }
-                                                  : group
-                                              );
-                                            }
-
-                                            const fallbackId =
-                                              pregnantGroup?.id
-                                                ? `${pregnantGroup.id}-non-pregnant`
-                                                : 'women-non-pregnant';
-                                            const fallbackLabel =
-                                              womenBaseLabel === 'Women'
-                                                ? 'Women - Non pregnant'
-                                                : `${womenBaseLabel} - Non pregnant`;
-
-                                            return [
-                                              ...current.womenAgeGroups,
-                                              {
-                                                id: fallbackId,
-                                                label: fallbackLabel,
-                                                count: nextCount,
-                                              },
-                                            ];
-                                          })(),
-                                        }))
-                                      }
-                                    />
-                                      <BasicTextInput
-                                        type="text"
-                                        size="small"
-                                        inputMode={numericInputMode}
-                                        inputProps={numericHtmlInputProps}
-                                        sx={compactNumberInputSx}
-                                        value={String(pregnant)}
-                                        onFocus={selectZeroValueOnFocus}
-                                        onChange={event =>
-                                          updateActiveCoverage(current => ({
-                                            ...current,
-                                            womenAgeGroups: (() => {
-                                              const nextCount = parseWholeNumber(
-                                                event.target.value
-                                              );
-
-                                              if (pregnantGroup?.id) {
-                                                return current.womenAgeGroups.map(group =>
-                                                  group.id === pregnantGroup.id
-                                                    ? { ...group, count: nextCount }
-                                                    : group
-                                                );
-                                              }
-
-                                              const fallbackId =
-                                                nonPregnantGroup?.id
-                                                  ? `${nonPregnantGroup.id}-pregnant`
-                                                  : 'women-pregnant';
-                                              const fallbackLabel =
-                                                womenBaseLabel === 'Women'
-                                                  ? 'Women - Pregnant'
-                                                  : `${womenBaseLabel} - Pregnant`;
-
-                                              return [
-                                                ...current.womenAgeGroups,
-                                                {
-                                                  id: fallbackId,
-                                                  label: fallbackLabel,
-                                                  count: nextCount,
-                                                },
-                                              ];
-                                            })(),
-                                          }))
-                                        }
-                                      />
-                                      <Typography variant="body2" color="text.secondary">
-                                        {nonPregnant + pregnant}
-                                      </Typography>
-                                    </>
-                                  );
-                                })()}
-                              </Box>
-                            </Box>
-                            ) : null}
-                          </Box>
-                        ) : null}
-
-                        {isAllocationStep && row.stockLines.length > 1 ? (
-                          <Box sx={{ marginTop: 0.75 }}>
-                            {row.used <= 0 ? (
+                            {workflowStep === 'coverage' &&
+                            coverageSohWarning ? (
                               <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ fontWeight: 600 }}
+                                variant="caption"
+                                color="error.main"
+                                sx={{
+                                  display: 'block',
+                                  marginTop: 0.75,
+                                  fontWeight: 700,
+                                }}
                               >
-                                {isSimplifiedMode
-                                  ? 'Enter issued to allocate batches'
-                                  : 'Enter coverage to allocate batches'}
+                                Coverage total (
+                                {coverageSohWarning.coverageTotal}) exceeds SOH
+                                ({coverageSohWarning.soh}). Reduce coverage to
+                                continue.
                               </Typography>
                             ) : null}
 
-                            {row.used > 0 ? (
-                              <>
-                                <Box
-                                  display="grid"
-                                  gridTemplateColumns={
-                                    workflowStep === 'allocation'
-                                      ? 'minmax(220px,2fr) minmax(0,1fr)'
-                                      : 'minmax(220px,2fr) repeat(3,minmax(0,1fr))'
-                                  }
-                                  columnGap={1.25}
-                                  rowGap={0.75}
-                                  alignItems="center"
-                                  sx={{
-                                    marginTop: 0.75,
-                                    border: '1px solid rgba(0,0,0,0.12)',
-                                    borderRadius: 1,
-                                    padding: 1,
-                                  }}
+                            {isAllocationStep || isWastageStep ? (
+                              <Box
+                                display="grid"
+                                gridTemplateColumns={
+                                  isAllocationStep
+                                    ? 'repeat(4,minmax(0,1fr))'
+                                    : 'repeat(7,minmax(0,1fr))'
+                                }
+                                columnGap={0.75}
+                                rowGap={0.75}
+                                alignItems="center"
+                                marginTop={0.75}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontWeight: 700 }}
                                 >
-                                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                    Batch
+                                  SOH
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontWeight: 700 }}
+                                >
+                                  Batch
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontWeight: 700 }}
+                                >
+                                  Units
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ fontWeight: 700 }}
+                                >
+                                  Issued
+                                </Typography>
+                                {isWastageStep ? (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ fontWeight: 700 }}
+                                  >
+                                    Open vial wastage
                                   </Typography>
-                                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                    Issued
+                                ) : null}
+                                {isWastageStep ? (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ fontWeight: 700 }}
+                                  >
+                                    Wasted
                                   </Typography>
-                                  {workflowStep === 'wastage' ? (
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                      Open vial wastage
-                                    </Typography>
-                                  ) : null}
-                                  {workflowStep === 'wastage' ? (
-                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                                      Wasted
-                                    </Typography>
-                                  ) : null}
+                                ) : null}
+                                {isWastageStep ? (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ fontWeight: 700 }}
+                                  >
+                                    Remaining
+                                  </Typography>
+                                ) : null}
 
-                                  {row.stockLines.map(stockLine => {
-                                    const batchDraft = row.batchDraftById?.[stockLine.id] ?? {
-                                      used: 0,
-                                      wastage: 0,
-                                      openVialWastage: row.isVaccine,
-                                    };
+                                {isWastageStep && row.stockLines.length > 1 ? (
+                                  <>
+                                    {row.stockLines.map(stockLine => {
+                                      const batchDraft = row.batchDraftById?.[
+                                        stockLine.id
+                                      ] ?? {
+                                        used: 0,
+                                        wastage: 0,
+                                        openVialWastage: row.isVaccine,
+                                      };
+                                      const batchSoh = toDisplayUnits(
+                                        stockLine.availableNumberOfPacks,
+                                        row.isVaccine,
+                                        row.doses
+                                      );
+                                      const batchRemaining = round(
+                                        Math.max(
+                                          0,
+                                          batchSoh -
+                                            batchDraft.used -
+                                            batchDraft.wastage
+                                        )
+                                      );
 
-                                    return (
-                                      <React.Fragment key={stockLine.id}>
-                                        <Select
-                                          size="small"
-                                          value={stockLine.id}
-                                          disabled
-                                          options={batchOptions}
-                                        />
-                                        {isWastageStep ? (
+                                      return (
+                                        <React.Fragment
+                                          key={`wastage-grid-${row.itemId}-${stockLine.id}`}
+                                        >
+                                          <Typography variant="body2">
+                                            {batchSoh}
+                                          </Typography>
                                           <Typography
                                             variant="body2"
-                                            sx={{
-                                              alignSelf: 'center',
-                                              justifySelf: 'start',
-                                              fontWeight: hasBatchIssuedMismatch ? 700 : undefined,
-                                              color: hasBatchIssuedMismatch
-                                                ? 'error.main'
-                                                : 'text.primary',
-                                            }}
+                                            color="text.secondary"
+                                          >
+                                            {batchLabel(stockLine)}
+                                          </Typography>
+                                          <Typography variant="body2">
+                                            {row.units}
+                                          </Typography>
+                                          <Typography
+                                            variant="body2"
+                                            sx={
+                                              hasBatchIssuedMismatch
+                                                ? {
+                                                    fontWeight: 700,
+                                                    color: 'error.main',
+                                                  }
+                                                : undefined
+                                            }
                                           >
                                             {batchDraft.used}
                                           </Typography>
-                                        ) : (
-                                          <BasicTextInput
-                                            type="text"
-                                            size="small"
-                                            inputMode={numericInputMode}
-                                            inputProps={numericHtmlInputProps}
-                                            slotProps={
-                                              hasBatchIssuedMismatch
-                                                ? highlightedIssuedInputSlotProps
-                                                : undefined
-                                            }
-                                            sx={compactNumberInputSx}
-                                            value={String(batchDraft.used)}
-                                            onFocus={selectZeroValueOnFocus}
-                                            onChange={event =>
-                                              updateBatchUsed(row, stockLine, event.target.value)
-                                            }
-                                          />
-                                        )}
-                                        {workflowStep === 'wastage' ? (
                                           <Box
                                             display="flex"
                                             justifyContent="center"
                                             alignItems="center"
+                                            sx={{ justifySelf: 'center' }}
                                           >
                                             <Switch
-                                              checked={batchDraft.openVialWastage}
+                                              checked={
+                                                batchDraft.openVialWastage
+                                              }
                                               disabled={batchDraft.used <= 0}
                                               onChange={(_, checked) =>
                                                 updateBatchOpenVialWastage(
@@ -5489,10 +5843,9 @@ export const DailyTallyView = () => {
                                                   checked
                                                 )
                                               }
+                                              // sx={{ margin: 0 }}
                                             />
                                           </Box>
-                                        ) : null}
-                                        {workflowStep === 'wastage' ? (
                                           <BasicTextInput
                                             type="text"
                                             size="small"
@@ -5509,61 +5862,676 @@ export const DailyTallyView = () => {
                                               )
                                             }
                                           />
-                                        ) : null}
-                                      </React.Fragment>
-                                    );
-                                  })}
-                                </Box>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ display: 'block', marginTop: 0.75 }}
-                                >
-                                  Batch issued total: {batchUsedTotal} / Item issued:{' '}
-                                  <Typography
-                                    component="span"
-                                    variant="caption"
-                                    sx={
-                                      hasBatchIssuedMismatch
-                                        ? { fontWeight: 700, color: 'error.main' }
-                                        : undefined
-                                    }
-                                  >
-                                    {row.used}
-                                  </Typography>
-                                </Typography>
-                                {hasBatchIssuedMismatch ? (
-                                  <Typography
-                                    variant="caption"
-                                    color="error.main"
-                                    sx={{ display: 'block' }}
-                                  >
-                                    Batch issued total must exactly match item issued.
-                                  </Typography>
-                                ) : null}
-                                {row.stockLines.some(stockLine => {
-                                  const batchUsed =
-                                    row.batchDraftById?.[stockLine.id]?.used ?? 0;
-                                  const availableDisplay = toDisplayUnits(
-                                    stockLine.availableNumberOfPacks,
-                                    row.isVaccine,
-                                    row.doses
-                                  );
-
-                                  return batchUsed - availableDisplay > 0.0001;
-                                }) ? (
-                                  <Typography
-                                    variant="caption"
-                                    color="error.main"
-                                    sx={{ display: 'block' }}
-                                  >
-                                    One or more batch Issued values exceed that batch stock.
-                                  </Typography>
-                                ) : null}
-                              </>
+                                          <Typography variant="body2">
+                                            {batchRemaining}
+                                          </Typography>
+                                        </React.Fragment>
+                                      );
+                                    })}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Typography variant="body2">
+                                      {row.soh}
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      {row.stockLines.length > 1
+                                        ? 'Needs allocation'
+                                        : row.stockLines[0]
+                                          ? batchLabel(row.stockLines[0])
+                                          : '-'}
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {row.units}
+                                    </Typography>
+                                    {isSimplifiedMode &&
+                                    !(
+                                      isWastageStep && row.stockLines.length > 1
+                                    ) &&
+                                    !(
+                                      useSimplifiedMobileUi && isWastageStep
+                                    ) ? (
+                                      <BasicTextInput
+                                        type="text"
+                                        size="small"
+                                        inputMode={numericInputMode}
+                                        inputProps={numericHtmlInputProps}
+                                        slotProps={
+                                          row.stockLines.length > 1 &&
+                                          hasBatchIssuedMismatch
+                                            ? highlightedIssuedInputSlotProps
+                                            : undefined
+                                        }
+                                        sx={
+                                          shouldHighlightUpperIssuedValue
+                                            ? {
+                                                ...compactNumberInputSx,
+                                                '& input': {
+                                                  fontWeight: 700,
+                                                  color: 'error.main',
+                                                },
+                                              }
+                                            : compactNumberInputSx
+                                        }
+                                        value={String(row.used)}
+                                        onFocus={selectZeroValueOnFocus}
+                                        onChange={event =>
+                                          updateUsed(row, event.target.value)
+                                        }
+                                      />
+                                    ) : (
+                                      <Typography
+                                        variant="body2"
+                                        sx={
+                                          shouldHighlightUpperIssuedValue
+                                            ? {
+                                                fontWeight: 700,
+                                                color: 'error.main',
+                                              }
+                                            : undefined
+                                        }
+                                      >
+                                        {row.used}
+                                      </Typography>
+                                    )}
+                                    {isWastageStep ? (
+                                      <Box
+                                        display="flex"
+                                        justifyContent="center"
+                                        alignItems="center"
+                                        sx={{ justifySelf: 'center' }}
+                                      >
+                                        <Switch
+                                          checked={row.openVialWastage}
+                                          onChange={(_, checked) =>
+                                            updateOpenVialWastage(row, checked)
+                                          }
+                                          // sx={{ margin: 0 }}
+                                        />
+                                      </Box>
+                                    ) : null}
+                                    {isWastageStep ? (
+                                      <BasicTextInput
+                                        type="text"
+                                        size="small"
+                                        inputMode={numericInputMode}
+                                        inputProps={numericHtmlInputProps}
+                                        sx={compactNumberInputSx}
+                                        value={String(row.wastage)}
+                                        onFocus={selectZeroValueOnFocus}
+                                        onChange={event =>
+                                          updateDraft(row.itemId, {
+                                            wastage: parseInput(
+                                              event.target.value
+                                            ),
+                                          })
+                                        }
+                                      />
+                                    ) : null}
+                                    {isWastageStep ? (
+                                      <Typography variant="body2">
+                                        {row.remainingStock}
+                                      </Typography>
+                                    ) : null}
+                                  </>
+                                )}
+                              </Box>
                             ) : null}
-                          </Box>
-                        ) : null}
+
+                            {workflowStep === 'coverage' ? (
+                              <Box sx={{ marginTop: 1 }}>
+                                {coverageVisibility.showChild ? (
+                                  <Box
+                                    sx={{
+                                      border:
+                                        itemDoses.length > 0
+                                          ? '1px solid rgba(237,108,2,0.75)'
+                                          : '1px solid rgba(0,0,0,0.12)',
+                                      boxShadow:
+                                        itemDoses.length > 0
+                                          ? '0 3px 10px rgba(237,108,2,0.16)'
+                                          : 'none',
+                                      borderRadius: 1,
+                                      padding: 1,
+                                    }}
+                                  >
+                                    <Box
+                                      display="grid"
+                                      gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                                      columnGap={1.25}
+                                      rowGap={0.75}
+                                      alignItems="center"
+                                    >
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Child coverage
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Male
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Female
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Total
+                                      </Typography>
+
+                                      {activeCoverage.childAgeGroups.map(
+                                        ageGroup => (
+                                          <React.Fragment key={ageGroup.id}>
+                                            <Typography variant="body2">
+                                              {ageGroup.label}
+                                            </Typography>
+                                            <BasicTextInput
+                                              type="text"
+                                              size="small"
+                                              inputMode={numericInputMode}
+                                              inputProps={numericHtmlInputProps}
+                                              sx={compactNumberInputSx}
+                                              value={String(ageGroup.male)}
+                                              onFocus={selectZeroValueOnFocus}
+                                              onChange={event =>
+                                                updateActiveCoverage(
+                                                  current => ({
+                                                    ...current,
+                                                    childAgeGroups:
+                                                      current.childAgeGroups.map(
+                                                        group =>
+                                                          group.id ===
+                                                          ageGroup.id
+                                                            ? {
+                                                                ...group,
+                                                                male: parseWholeNumber(
+                                                                  event.target
+                                                                    .value
+                                                                ),
+                                                              }
+                                                            : group
+                                                      ),
+                                                  })
+                                                )
+                                              }
+                                            />
+                                            <BasicTextInput
+                                              type="text"
+                                              size="small"
+                                              inputMode={numericInputMode}
+                                              inputProps={numericHtmlInputProps}
+                                              sx={compactNumberInputSx}
+                                              value={String(ageGroup.female)}
+                                              onFocus={selectZeroValueOnFocus}
+                                              onChange={event =>
+                                                updateActiveCoverage(
+                                                  current => ({
+                                                    ...current,
+                                                    childAgeGroups:
+                                                      current.childAgeGroups.map(
+                                                        group =>
+                                                          group.id ===
+                                                          ageGroup.id
+                                                            ? {
+                                                                ...group,
+                                                                female:
+                                                                  parseWholeNumber(
+                                                                    event.target
+                                                                      .value
+                                                                  ),
+                                                              }
+                                                            : group
+                                                      ),
+                                                  })
+                                                )
+                                              }
+                                            />
+                                            <Typography
+                                              variant="body2"
+                                              color="text.secondary"
+                                            >
+                                              {ageGroup.male + ageGroup.female}
+                                            </Typography>
+                                          </React.Fragment>
+                                        )
+                                      )}
+                                    </Box>
+                                  </Box>
+                                ) : null}
+
+                                {coverageVisibility.showWomen ? (
+                                  <Box
+                                    sx={{
+                                      marginTop: coverageVisibility.showChild
+                                        ? 1.25
+                                        : 0,
+                                      border: '1px solid rgba(0,0,0,0.12)',
+                                      borderRadius: 1,
+                                      padding: 1,
+                                    }}
+                                  >
+                                    <Box
+                                      display="grid"
+                                      gridTemplateColumns="minmax(220px,2fr) repeat(3,minmax(0,1fr))"
+                                      columnGap={1.25}
+                                      rowGap={0.75}
+                                      alignItems="center"
+                                    >
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Women coverage
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Non pregnant
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Pregnant
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Total
+                                      </Typography>
+
+                                      {(() => {
+                                        const {
+                                          nonPregnantGroup,
+                                          pregnantGroup,
+                                        } = resolveWomenCoverageGroups(
+                                          activeCoverage.womenAgeGroups
+                                        );
+                                        const womenBaseLabel =
+                                          womenCoverageLabel(
+                                            nonPregnantGroup,
+                                            pregnantGroup
+                                          );
+
+                                        const nonPregnant =
+                                          nonPregnantGroup?.count ?? 0;
+                                        const pregnant =
+                                          pregnantGroup?.count ?? 0;
+
+                                        return (
+                                          <>
+                                            <Typography variant="body2">
+                                              {womenBaseLabel}
+                                            </Typography>
+                                            <BasicTextInput
+                                              type="text"
+                                              size="small"
+                                              inputMode={numericInputMode}
+                                              inputProps={numericHtmlInputProps}
+                                              sx={compactNumberInputSx}
+                                              value={String(nonPregnant)}
+                                              onFocus={selectZeroValueOnFocus}
+                                              onChange={event =>
+                                                updateActiveCoverage(
+                                                  current => ({
+                                                    ...current,
+                                                    womenAgeGroups: (() => {
+                                                      const nextCount =
+                                                        parseWholeNumber(
+                                                          event.target.value
+                                                        );
+
+                                                      if (
+                                                        nonPregnantGroup?.id
+                                                      ) {
+                                                        return current.womenAgeGroups.map(
+                                                          group =>
+                                                            group.id ===
+                                                            nonPregnantGroup.id
+                                                              ? {
+                                                                  ...group,
+                                                                  count:
+                                                                    nextCount,
+                                                                }
+                                                              : group
+                                                        );
+                                                      }
+
+                                                      const fallbackId =
+                                                        pregnantGroup?.id
+                                                          ? `${pregnantGroup.id}-non-pregnant`
+                                                          : 'women-non-pregnant';
+                                                      const fallbackLabel =
+                                                        womenBaseLabel ===
+                                                        'Women'
+                                                          ? 'Women - Non pregnant'
+                                                          : `${womenBaseLabel} - Non pregnant`;
+
+                                                      return [
+                                                        ...current.womenAgeGroups,
+                                                        {
+                                                          id: fallbackId,
+                                                          label: fallbackLabel,
+                                                          count: nextCount,
+                                                        },
+                                                      ];
+                                                    })(),
+                                                  })
+                                                )
+                                              }
+                                            />
+                                            <BasicTextInput
+                                              type="text"
+                                              size="small"
+                                              inputMode={numericInputMode}
+                                              inputProps={numericHtmlInputProps}
+                                              sx={compactNumberInputSx}
+                                              value={String(pregnant)}
+                                              onFocus={selectZeroValueOnFocus}
+                                              onChange={event =>
+                                                updateActiveCoverage(
+                                                  current => ({
+                                                    ...current,
+                                                    womenAgeGroups: (() => {
+                                                      const nextCount =
+                                                        parseWholeNumber(
+                                                          event.target.value
+                                                        );
+
+                                                      if (pregnantGroup?.id) {
+                                                        return current.womenAgeGroups.map(
+                                                          group =>
+                                                            group.id ===
+                                                            pregnantGroup.id
+                                                              ? {
+                                                                  ...group,
+                                                                  count:
+                                                                    nextCount,
+                                                                }
+                                                              : group
+                                                        );
+                                                      }
+
+                                                      const fallbackId =
+                                                        nonPregnantGroup?.id
+                                                          ? `${nonPregnantGroup.id}-pregnant`
+                                                          : 'women-pregnant';
+                                                      const fallbackLabel =
+                                                        womenBaseLabel ===
+                                                        'Women'
+                                                          ? 'Women - Pregnant'
+                                                          : `${womenBaseLabel} - Pregnant`;
+
+                                                      return [
+                                                        ...current.womenAgeGroups,
+                                                        {
+                                                          id: fallbackId,
+                                                          label: fallbackLabel,
+                                                          count: nextCount,
+                                                        },
+                                                      ];
+                                                    })(),
+                                                  })
+                                                )
+                                              }
+                                            />
+                                            <Typography
+                                              variant="body2"
+                                              color="text.secondary"
+                                            >
+                                              {nonPregnant + pregnant}
+                                            </Typography>
+                                          </>
+                                        );
+                                      })()}
+                                    </Box>
+                                  </Box>
+                                ) : null}
+                              </Box>
+                            ) : null}
+
+                            {isAllocationStep && row.stockLines.length > 1 ? (
+                              <Box sx={{ marginTop: 0.75 }}>
+                                {row.used <= 0 ? (
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{ fontWeight: 600 }}
+                                  >
+                                    {isSimplifiedMode
+                                      ? 'Enter issued to allocate batches'
+                                      : 'Enter coverage to allocate batches'}
+                                  </Typography>
+                                ) : null}
+
+                                {row.used > 0 ? (
+                                  <>
+                                    <Box
+                                      display="grid"
+                                      gridTemplateColumns={
+                                        workflowStep === 'allocation'
+                                          ? 'minmax(220px,2fr) minmax(0,1fr)'
+                                          : 'minmax(220px,2fr) repeat(3,minmax(0,1fr))'
+                                      }
+                                      columnGap={1.25}
+                                      rowGap={0.75}
+                                      alignItems="center"
+                                      sx={{
+                                        marginTop: 0.75,
+                                        border: '1px solid rgba(0,0,0,0.12)',
+                                        borderRadius: 1,
+                                        padding: 1,
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Batch
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
+                                        Issued
+                                      </Typography>
+                                      {/* {workflowStep === 'wastage' ? (
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Open vial wastage
+                                        </Typography>
+                                      ) : null}
+                                      {workflowStep === 'wastage' ? (
+                                        <Typography
+                                          variant="caption"
+                                          sx={{ fontWeight: 700 }}
+                                        >
+                                          Wasted
+                                        </Typography>
+                                      ) : null} */}
+
+                                      {row.stockLines.map(stockLine => {
+                                        const batchDraft = row.batchDraftById?.[
+                                          stockLine.id
+                                        ] ?? {
+                                          used: 0,
+                                          wastage: 0,
+                                          openVialWastage: row.isVaccine,
+                                        };
+
+                                        return (
+                                          <React.Fragment key={stockLine.id}>
+                                            <Select
+                                              size="small"
+                                              value={stockLine.id}
+                                              disabled
+                                              options={batchOptions}
+                                            />
+                                            {isWastageStep ? (
+                                              <Typography
+                                                variant="body2"
+                                                sx={{
+                                                  alignSelf: 'center',
+                                                  justifySelf: 'start',
+                                                  fontWeight:
+                                                    hasBatchIssuedMismatch
+                                                      ? 700
+                                                      : undefined,
+                                                  color: hasBatchIssuedMismatch
+                                                    ? 'error.main'
+                                                    : 'text.primary',
+                                                }}
+                                              >
+                                                {batchDraft.used}
+                                              </Typography>
+                                            ) : (
+                                              <BasicTextInput
+                                                type="text"
+                                                size="small"
+                                                inputMode={numericInputMode}
+                                                inputProps={
+                                                  numericHtmlInputProps
+                                                }
+                                                slotProps={
+                                                  hasBatchIssuedMismatch
+                                                    ? highlightedIssuedInputSlotProps
+                                                    : undefined
+                                                }
+                                                sx={compactNumberInputSx}
+                                                value={String(batchDraft.used)}
+                                                onFocus={selectZeroValueOnFocus}
+                                                onChange={event =>
+                                                  updateBatchUsed(
+                                                    row,
+                                                    stockLine,
+                                                    event.target.value
+                                                  )
+                                                }
+                                              />
+                                            )}
+                                            {/* {workflowStep === 'wastage' ? (
+                                              <Box
+                                                display="flex"
+                                                justifyContent="center"
+                                                alignItems="center"
+                                              >
+                                                <Switch
+                                                  checked={
+                                                    batchDraft.openVialWastage
+                                                  }
+                                                  disabled={
+                                                    batchDraft.used <= 0
+                                                  }
+                                                  onChange={(_, checked) =>
+                                                    updateBatchOpenVialWastage(
+                                                      row,
+                                                      stockLine,
+                                                      checked
+                                                    )
+                                                  }
+                                                />
+                                              </Box>
+                                            ) : null} */}
+                                            {/* {workflowStep === 'wastage' ? (
+                                              <BasicTextInput
+                                                type="text"
+                                                size="small"
+                                                inputMode={numericInputMode}
+                                                inputProps={
+                                                  numericHtmlInputProps
+                                                }
+                                                sx={compactNumberInputSx}
+                                                value={String(
+                                                  batchDraft.wastage
+                                                )}
+                                                onFocus={selectZeroValueOnFocus}
+                                                onChange={event =>
+                                                  updateBatchWastage(
+                                                    row,
+                                                    stockLine,
+                                                    event.target.value
+                                                  )
+                                                }
+                                              />
+                                            ) : null} */}
+                                          </React.Fragment>
+                                        );
+                                      })}
+                                    </Box>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{ display: 'block', marginTop: 0.75 }}
+                                    >
+                                      Batch issued total: {batchUsedTotal} /
+                                      Item issued:{' '}
+                                      <Typography
+                                        component="span"
+                                        variant="caption"
+                                        sx={
+                                          hasBatchIssuedMismatch
+                                            ? {
+                                                fontWeight: 700,
+                                                color: 'error.main',
+                                              }
+                                            : undefined
+                                        }
+                                      >
+                                        {row.used}
+                                      </Typography>
+                                    </Typography>
+                                    {hasBatchIssuedMismatch ? (
+                                      <Typography
+                                        variant="caption"
+                                        color="error.main"
+                                        sx={{ display: 'block' }}
+                                      >
+                                        Batch issued total must exactly match
+                                        item issued.
+                                      </Typography>
+                                    ) : null}
+                                    {row.stockLines.some(stockLine => {
+                                      const batchUsed =
+                                        row.batchDraftById?.[stockLine.id]
+                                          ?.used ?? 0;
+                                      const availableDisplay = toDisplayUnits(
+                                        stockLine.availableNumberOfPacks,
+                                        row.isVaccine,
+                                        row.doses
+                                      );
+
+                                      return (
+                                        batchUsed - availableDisplay > 0.0001
+                                      );
+                                    }) ? (
+                                      <Typography
+                                        variant="caption"
+                                        color="error.main"
+                                        sx={{ display: 'block' }}
+                                      >
+                                        One or more batch Issued values exceed
+                                        that batch stock.
+                                      </Typography>
+                                    ) : null}
+                                  </>
+                                ) : null}
+                              </Box>
+                            ) : null}
                           </Box>
                         ) : null}
                       </Box>
@@ -5571,9 +6539,18 @@ export const DailyTallyView = () => {
                   })
                 : null}
 
-              {workflowStep === 'non-vaccine' && allocationNonVaccineRows.length > 0 ? (
-                <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ marginY: 1 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
+              {workflowStep === 'non-vaccine' &&
+              allocationNonVaccineRows.length > 0 ? (
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ marginY: 1 }}
+                >
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 800, color: 'text.primary' }}
+                  >
                     Non-vaccine items
                   </Typography>
                 </Box>
@@ -5585,10 +6562,15 @@ export const DailyTallyView = () => {
                       value: stockLine.id,
                       label: batchLabel(stockLine),
                     }));
-                    const batchUsedTotal = sumBatchDraft(row.batchDraftById, 'used');
+                    const batchUsedTotal = sumBatchDraft(
+                      row.batchDraftById,
+                      'used'
+                    );
                     const nonVaccineSohWarning =
-                      row.used + row.wastage > row.soh || row.remainingStock < 0;
-                    const isExpanded = expandedNonVaccineItemIds[row.itemId] ?? false;
+                      row.used + row.wastage > row.soh ||
+                      row.remainingStock < 0;
+                    const isExpanded =
+                      expandedNonVaccineItemIds[row.itemId] ?? false;
                     const hasValues = row.used > 0 || row.wastage > 0;
 
                     return (
@@ -5621,13 +6603,26 @@ export const DailyTallyView = () => {
                             cursor: 'pointer',
                           }}
                         >
-                          <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            gap={1}
+                          >
                             <Box>
-                              <Typography variant="body1" sx={{ fontWeight: isExpanded ? 700 : 'normal' }}>
+                              <Typography
+                                variant="body1"
+                                sx={{ fontWeight: isExpanded ? 700 : 'normal' }}
+                              >
                                 {row.item}
                               </Typography>
                             </Box>
-                            <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                              flexShrink={0}
+                            >
                               {hasValues ? (
                                 <Box
                                   sx={{
@@ -5642,7 +6637,11 @@ export const DailyTallyView = () => {
                                 >
                                   <Typography
                                     variant="body2"
-                                    sx={{ fontWeight: 700, fontSize: '0.76rem', lineHeight: 1.2 }}
+                                    sx={{
+                                      fontWeight: 700,
+                                      fontSize: '0.76rem',
+                                      lineHeight: 1.2,
+                                    }}
                                   >
                                     Issued: {row.used} | Wasted: {row.wastage}
                                   </Typography>
@@ -5650,7 +6649,9 @@ export const DailyTallyView = () => {
                               ) : null}
                               <ChevronDownIcon
                                 sx={{
-                                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                  transform: isExpanded
+                                    ? 'rotate(180deg)'
+                                    : 'rotate(0deg)',
                                   transition: 'transform 0.2s ease',
                                   color: 'text.secondary',
                                 }}
@@ -5677,34 +6678,57 @@ export const DailyTallyView = () => {
                               alignItems="center"
                               marginTop={0.25}
                             >
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 700 }}
+                              >
                                 SOH
                               </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 700 }}
+                              >
                                 Batch
                               </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 700 }}
+                              >
                                 Units
                               </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 700 }}
+                              >
                                 Issued
                               </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 700 }}
+                              >
                                 Wasted
                               </Typography>
-                              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 700 }}
+                              >
                                 Remaining
                               </Typography>
 
                               <Typography variant="body2">{row.soh}</Typography>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
                                 {row.stockLines.length > 1
                                   ? 'Needs allocation'
                                   : row.stockLines[0]
                                     ? batchLabel(row.stockLines[0])
                                     : '-'}
                               </Typography>
-                              <Typography variant="body2">{row.units}</Typography>
+                              <Typography variant="body2">
+                                {row.units}
+                              </Typography>
                               <BasicTextInput
                                 type="text"
                                 size="small"
@@ -5713,7 +6737,9 @@ export const DailyTallyView = () => {
                                 sx={compactNumberInputSx}
                                 value={String(row.used)}
                                 onFocus={selectZeroValueOnFocus}
-                                onChange={event => updateUsed(row, event.target.value)}
+                                onChange={event =>
+                                  updateUsed(row, event.target.value)
+                                }
                               />
                               <BasicTextInput
                                 type="text"
@@ -5729,16 +6755,24 @@ export const DailyTallyView = () => {
                                   })
                                 }
                               />
-                              <Typography variant="body2">{row.remainingStock}</Typography>
+                              <Typography variant="body2">
+                                {row.remainingStock}
+                              </Typography>
                             </Box>
 
                             {nonVaccineSohWarning ? (
                               <Typography
                                 variant="caption"
                                 color="error.main"
-                                sx={{ display: 'block', marginTop: 0.75, fontWeight: 700 }}
+                                sx={{
+                                  display: 'block',
+                                  marginTop: 0.75,
+                                  fontWeight: 700,
+                                }}
                               >
-                                Issued + Wasted exceeds SOH for this item. Reduce the totals so they are less than or equal to SOH.
+                                Issued + Wasted exceeds SOH for this item.
+                                Reduce the totals so they are less than or equal
+                                to SOH.
                               </Typography>
                             ) : null}
 
@@ -5782,7 +6816,8 @@ export const DailyTallyView = () => {
                                   color="text.secondary"
                                   sx={{ display: 'block', marginTop: 0.25 }}
                                 >
-                                  {issuedBatchSummary(row) || 'No batches selected yet'}
+                                  {issuedBatchSummary(row) ||
+                                    'No batches selected yet'}
                                 </Typography>
 
                                 {expandedByItem[row.itemId] && row.used > 0 ? (
@@ -5795,18 +6830,29 @@ export const DailyTallyView = () => {
                                       alignItems="center"
                                       marginTop={0.75}
                                     >
-                                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
                                         Batch
                                       </Typography>
-                                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
                                         Issued
                                       </Typography>
-                                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700 }}
+                                      >
                                         Wasted
                                       </Typography>
 
                                       {row.stockLines.map(stockLine => {
-                                        const batchDraft = row.batchDraftById?.[stockLine.id] ?? {
+                                        const batchDraft = row.batchDraftById?.[
+                                          stockLine.id
+                                        ] ?? {
                                           used: 0,
                                           wastage: 0,
                                           openVialWastage: false,
@@ -5829,7 +6875,11 @@ export const DailyTallyView = () => {
                                               value={String(batchDraft.used)}
                                               onFocus={selectZeroValueOnFocus}
                                               onChange={event =>
-                                                updateBatchUsed(row, stockLine, event.target.value)
+                                                updateBatchUsed(
+                                                  row,
+                                                  stockLine,
+                                                  event.target.value
+                                                )
                                               }
                                             />
                                             <BasicTextInput
@@ -5841,7 +6891,11 @@ export const DailyTallyView = () => {
                                               value={String(batchDraft.wastage)}
                                               onFocus={selectZeroValueOnFocus}
                                               onChange={event =>
-                                                updateBatchWastage(row, stockLine, event.target.value)
+                                                updateBatchWastage(
+                                                  row,
+                                                  stockLine,
+                                                  event.target.value
+                                                )
                                               }
                                             />
                                           </React.Fragment>
@@ -5853,34 +6907,41 @@ export const DailyTallyView = () => {
                                       color="text.secondary"
                                       sx={{ display: 'block', marginTop: 0.75 }}
                                     >
-                                      Batch issued total: {batchUsedTotal} / Item issued: {row.used}
+                                      Batch issued total: {batchUsedTotal} /
+                                      Item issued: {row.used}
                                     </Typography>
-                                    {Math.abs(batchUsedTotal - row.used) > 0.0001 ? (
+                                    {Math.abs(batchUsedTotal - row.used) >
+                                    0.0001 ? (
                                       <Typography
                                         variant="caption"
                                         color="error.main"
                                         sx={{ display: 'block' }}
                                       >
-                                        Batch issued total must exactly match item issued.
+                                        Batch issued total must exactly match
+                                        item issued.
                                       </Typography>
                                     ) : null}
                                     {row.stockLines.some(stockLine => {
                                       const batchUsed =
-                                        row.batchDraftById?.[stockLine.id]?.used ?? 0;
+                                        row.batchDraftById?.[stockLine.id]
+                                          ?.used ?? 0;
                                       const availableDisplay = toDisplayUnits(
                                         stockLine.availableNumberOfPacks,
                                         row.isVaccine,
                                         row.doses
                                       );
 
-                                      return batchUsed - availableDisplay > 0.0001;
+                                      return (
+                                        batchUsed - availableDisplay > 0.0001
+                                      );
                                     }) ? (
                                       <Typography
                                         variant="caption"
                                         color="error.main"
                                         sx={{ display: 'block' }}
                                       >
-                                        One or more batch Issued values exceed that batch stock.
+                                        One or more batch Issued values exceed
+                                        that batch stock.
                                       </Typography>
                                     ) : null}
                                   </>
