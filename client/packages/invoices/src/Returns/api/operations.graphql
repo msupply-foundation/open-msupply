@@ -78,6 +78,7 @@ fragment SupplierReturn on InvoiceNode {
   originalShipment {
     id
     invoiceNumber
+    purchaseOrderId
     createdDatetime
     user {
       username

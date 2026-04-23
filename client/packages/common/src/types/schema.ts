@@ -4474,6 +4474,7 @@ export type InvoiceNode = {
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
   purchaseOrder?: Maybe<PurchaseOrderNode>;
+  purchaseOrderId?: Maybe<Scalars['String']['output']>;
   receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
