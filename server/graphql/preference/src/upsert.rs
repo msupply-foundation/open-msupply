@@ -38,7 +38,8 @@ pub struct StringStorePrefInput {
 
 #[derive(InputObject)]
 pub struct BackdatingInput {
-    pub enabled: bool,
+    pub shipments_enabled: bool,
+    pub inventory_adjustments_enabled: bool,
     pub max_days: i32,
 }
 
@@ -198,11 +199,10 @@ impl UpsertPreferencesInput {
             display_population_based_forecasting: *display_population_based_forecasting,
 
             global_table_configs: global_table_configs.clone(),
-            backdating: backdating.as_ref().map(|b| {
-                BackdatingData {
-                    enabled: b.enabled,
-                    max_days: b.max_days,
-                }
+            backdating: backdating.as_ref().map(|b| BackdatingData {
+                shipments_enabled: b.shipments_enabled,
+                inventory_adjustments_enabled: b.inventory_adjustments_enabled,
+                max_days: b.max_days,
             }),
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses

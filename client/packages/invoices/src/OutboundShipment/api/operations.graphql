@@ -9,6 +9,7 @@ fragment Outbound on InvoiceNode {
   pickedDatetime
   shippedDatetime
   verifiedDatetime
+  backdatedDatetime
   invoiceNumber
   colour
   onHold
@@ -836,6 +837,17 @@ mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
   insertBarcode(input: $input, storeId: $storeId) {
     ... on BarcodeNode {
       ...Barcode
+    }
+  }
+}
+
+query outboundStocktakeCountAfterDate(
+  $storeId: String!
+  $filter: StocktakeFilterInput
+) {
+  stocktakes(storeId: $storeId, filter: $filter) {
+    ... on StocktakeConnector {
+      totalCount
     }
   }
 }

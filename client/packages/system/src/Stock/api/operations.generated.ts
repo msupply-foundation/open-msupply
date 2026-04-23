@@ -848,6 +848,7 @@ export type CreateInventoryAdjustmentMutation = {
         __typename: 'CreateInventoryAdjustmentError';
         error:
           | { __typename: 'AdjustmentReasonNotProvided'; description: string }
+          | { __typename: 'LedgerWouldGoBelowZero'; description: string }
           | { __typename: 'StockLineReducedBelowZero'; description: string };
       }
     | {
@@ -1532,6 +1533,10 @@ export const CreateInventoryAdjustmentDocument = gql`
           __typename
           description
           ... on StockLineReducedBelowZero {
+            __typename
+            description
+          }
+          ... on LedgerWouldGoBelowZero {
             __typename
             description
           }

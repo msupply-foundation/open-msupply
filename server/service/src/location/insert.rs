@@ -30,7 +30,7 @@ pub fn insert_location(
     let location = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, connection)?;
+            validate(&input, &ctx.store_id, connection)?;
             let new_location = generate(&ctx.store_id, input);
             LocationRowRepository::new(connection).upsert_one(&new_location)?;
 
@@ -42,12 +42,13 @@ pub fn insert_location(
 
 pub fn validate(
     input: &InsertLocation,
+    store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(), InsertLocationError> {
     if !check_location_does_not_exist(&input.id, connection)? {
         return Err(InsertLocationError::LocationAlreadyExists);
     }
-    if !check_location_code_is_unique(&input.id, Some(input.code.clone()), connection)? {
+    if !check_location_code_is_unique(&input.id, Some(input.code.clone()), store_id, connection)? {
         return Err(InsertLocationError::LocationWithCodeAlreadyExists);
     }
 

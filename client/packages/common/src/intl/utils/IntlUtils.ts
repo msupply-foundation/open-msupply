@@ -22,7 +22,6 @@ import { pt } from 'date-fns/locale/pt';
 import { faIR as fa } from 'date-fns/locale/fa-IR';
 
 import pluralize from 'pluralize';
-import { localeKeySet } from '../locales';
 export { splitTranslatedLines } from './ReactUtils';
 
 // Map locale string (from i18n) to locale object (from date-fns)
@@ -149,13 +148,7 @@ export const useIntlUtils = () => {
     return t(localeKey, Formatter.fromCamelCase(serverKey));
   };
 
-  const translateDynamicKey = (key: string, fallback: string) => {
-    return isLocaleKey(key) ? t(key) : fallback;
-  };
 
-  const isLocaleKey = (key: string): key is LocaleKey => {
-    return localeKeySet.has(key);
-  };
 
   const invalidateCustomTranslations = () => {
     // Clear from local storage cache
@@ -191,8 +184,6 @@ export const useIntlUtils = () => {
     getLocalisedFullName,
     getPlural,
     translateServerError,
-    isLocaleKey,
-    translateDynamicKey,
     invalidateCustomTranslations,
   };
 };
