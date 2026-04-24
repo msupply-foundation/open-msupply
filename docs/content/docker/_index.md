@@ -10,11 +10,107 @@ source = "code"
 
 # Open omSupply Docker
 
-Dockerise github action is made to fire when a new tag is created, this tag needs to start with `v`, this action uses Dockerfile in root dir.
+## Quick start
 
-Dockerfile has two pre-requisites:
+An interactive build script is available that handles the full pipeline (client build, server compile, Docker image build, and optional push):
 
-`remote_server` and `remote_server_cli` built in release mode (after building client).
+```bash
+yarn dockerise
+```
+
+It will prompt you for architecture (amd64/arm64/both), database (SQLite/Postgres/both), and which steps to run. Press Enter at each prompt to accept the defaults. Selecting "both" for architecture or database will compile all variants first, then build all Docker images.
+
+<div class="alert alert-warning">
+<strong>Note:</strong> This script currently assumes it is being run on an ARM host (e.g. Apple Silicon Mac). Cross-compilation targets are set up accordingly. If you are running on a native amd64 Linux system, use the manual build instructions below instead.
+</div>
+
+<!--
+To-Do: if we find we need to run this script on a Linux machine, we should update the script to
+auto-detect the current system and modify cross-compilation instructions accordingly
+-->
+
+
+The rest of this page documents the CI pipeline and manual steps if you need more control over the process.
+
+## CI/CD (GitHub Actions)
+
+The `dockerise.yaml` workflow fires automatically when a tag starting with `v` is pushed:
+
+```bash
+git tag v2.8.0
+git push origin v2.8.0
+```
+
+The workflow distinguishes between **release tags** and **non-release tags**:
+
+| Tag type | Pattern | Examples | What gets built |
+| --- | --- | --- | --- |
+| Release | `v{major}.{minor}.{patch}` (strict semver) | `v2.19.1`, `v2.8.0` | All variants: amd64 + arm64, dev images, plugin tests |
+| Non-release | Anything else starting with `v` | `v2.18.00-develop-04160443`, `v2.17.03-RC-04161543`, `v2.18.00-test` | amd64 only, no dev images, no plugin tests |
+
+Non-release tags are typically created automatically by the nightly build process for develop and RC branches. Since these images are primarily used for testing on amd64 servers, skipping arm64 and dev builds saves significant CI time.
+
+### How it works
+
+1. **Check tag** — determines if the tag is a release or non-release
+2. **Build client** — installs Node dependencies and runs `yarn build`
+3. **Build server** (2 or 4 parallel jobs) — compiles `remote_server` and `remote_server_cli` for each (db, arch) combination:
+   - **amd64** builds run natively on the amd64 GitHub runner
+   - **arm64** builds use cross-compilation (`gcc-aarch64-linux-gnu`) from the amd64 runner, which is much faster than QEMU emulation (release tags only)
+   - **Postgres** builds use `rust:1.94` (includes `libpq-dev`), SQLite builds use `rust:1.94-slim`
+4. **Dockerise** (2 or 4 parallel jobs) — builds and pushes Docker images using the compiled binaries
+5. **Trigger plugin tests** — runs downstream plugin test suite against the new dev images (release tags only)
+
+### Image tags
+
+Images are pushed to `msupplyfoundation/omsupply` with the naming convention:
+
+| Tag | Example | When built |
+| --- | ------- | ---------- |
+| `v{version}-{db}-{arch}` | `v2.8.0-sqlite-amd64` | All tags |
+| `v{version}-{db}-{arch}-dev` | `v2.8.0-sqlite-amd64-dev` | Release tags only |
+
+Dev images (which include Node/Yarn and the client source for frontend development) are only built for amd64 on release tags.
+
+### Docker Hub cleanup
+
+A separate `cleanup-docker-tags.yaml` workflow runs nightly to remove old non-release images from Docker Hub. Release images are always kept. Non-release images older than 30 days (configurable) are deleted.
+
+The cleanup script can also be run locally:
+
+```bash
+export DOCKER_USERNAME=myuser
+export DOCKER_TOKEN=mytoken
+# Preview what would be deleted (no actual deletions)
+bash .github/scripts/cleanup-docker-tags.sh --dry-run
+# Delete non-release tags older than 14 days
+bash .github/scripts/cleanup-docker-tags.sh --max-age-days 14
+```
+
+Run `bash .github/scripts/cleanup-docker-tags.sh --help` for all options.
+
+### Requirements
+
+- Docker Hub credentials must be configured as repository secrets: `DOCKER_USERNAME` and `DOCKER_TOKEN`
+- The `ORG_WORKFLOW_TOKEN` secret is needed for triggering downstream plugin tests
+
+### Testing the workflow
+
+To test without creating a real release, push a test tag and delete it afterwards:
+
+```bash
+git tag v0.0.0-test
+git push origin v0.0.0-test
+# After verifying the workflow runs correctly:
+git tag -d v0.0.0-test
+git push origin :refs/tags/v0.0.0-test
+```
+
+Since `v0.0.0-test` is a non-release tag, this will only build the amd64 variants (no arm64, no dev images).
+
+## Manual build
+
+The Dockerfile has two pre-requisites: `remote_server` and `remote_server_cli` built in release mode (after building the client).
 
 If building on a non-Linux host (e.g. macOS), use a Docker container to cross-compile a Linux binary. The `-v` flag mounts your source code into the container and the compiled binary is written back to your host filesystem.
 
@@ -56,8 +152,6 @@ cd server && cargo build --release --bin remote_server --bin remote_server_cli -
 
 `entry-postgres.sh` starts an embedded PostgreSQL instance, optionally imports a dump file, then hands off to `entry.sh`.
 
-Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DOCKER_TOKEN` (from docker hub)
-
 ## Docker targets
 
 | Target         | Database | Description                                                            |
@@ -66,19 +160,6 @@ Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DO
 | `dev`          | SQLite   | Includes client with Node/Yarn for frontend development                |
 | `postgres`     | Postgres | Runtime image with embedded PostgreSQL server                          |
 | `postgres-dev` | Postgres | Embedded PostgreSQL with client and Node/Yarn for frontend development |
-
-## Build steps (as per dockerise.yaml github action workflow)
-
-* Build client
-* Build server in rust:1.94-slim image container (uses built client)
-* Build client in rust:1.94-slim image container with yarn pre installed
-* Build docker image
-   * copy binaries
-   * set hardware id
-   * copy entrypoint
-   * in dev target add dependencies for yarn
-   * copy client and run yarn install
-* Tag docker images and push to dockerhub
 
 ## Building image locally
 

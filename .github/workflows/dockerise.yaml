@@ -1,11 +1,43 @@
+# Build and push Docker images to Docker Hub when a version tag is pushed.
+#
+# Release tags (e.g. v2.19.1) build all variants:
+#   - 4 images: (sqlite|postgres) x (amd64|arm64)
+#   - 2 dev images: (sqlite|postgres) x amd64 only
+#   - triggers downstream plugin tests
+#
+# Non-release tags (e.g. v2.18.00-develop-04160443, v2.17.03-RC-04161543)
+# build a reduced set:
+#   - 2 images: (sqlite|postgres) x amd64 only
+#   - no dev images, no plugin tests
+#
+# Images are pushed to: msupplyfoundation/omsupply:<tag>-<db>-<arch>[-dev]
+
 name: Dockerise
 
 on:
- push:
-  tags: 
-   - 'v*'
+  push:
+    tags:
+      - "v*"
 
 jobs:
+  check-tag:
+    name: Check Tag Type
+    runs-on: ubuntu-latest
+    outputs:
+      is_release: ${{ steps.check.outputs.is_release }}
+    steps:
+      - name: Determine if release tag
+        id: check
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_release=true" >> $GITHUB_OUTPUT
+            echo "Tag '$TAG' is a release tag"
+          else
+            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "Tag '$TAG' is NOT a release tag (skipping arm64 and dev builds)"
+          fi
+
   build-client:
     name: Build Client
     runs-on: ubuntu-latest
@@ -36,11 +68,16 @@ jobs:
           path: client/packages/host/dist
           retention-days: 1
 
-  build-server-sqlite:
-    name: Build server (SQLite)
-    needs: build-client
+  build-server:
+    name: Build server (${{ matrix.db }}, ${{ matrix.arch }})
+    needs: [build-client, check-tag]
+    if: matrix.arch != 'arm64' || needs.check-tag.outputs.is_release == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
+    strategy:
+      matrix:
+        db: [sqlite, postgres]
+        arch: [amd64, arm64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,66 +89,89 @@ jobs:
           path: client/packages/host/dist
 
       - name: Build server
-        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
+        run: |
+          RUST_IMAGE="rust:1.94-slim"
+          CARGO_FLAGS=""
+          TARGET_DIR="target"
+          if [ "${{ matrix.db }}" = "postgres" ]; then
+            RUST_IMAGE="rust:1.94"
+            CARGO_FLAGS="--no-default-features --features postgres"
+            TARGET_DIR="target-postgres"
+          fi
+
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            # Native build on amd64 runner
+            docker run --rm --user "$(id -u)":"$(id -g)" \
+              -v "$PWD":/usr/src/omsupply \
+              -w /usr/src/omsupply/server \
+              $RUST_IMAGE \
+              cargo build --release --target-dir $TARGET_DIR \
+                --bin remote_server --bin remote_server_cli $CARGO_FLAGS
+          else
+            # Cross-compile for arm64 (much faster than QEMU emulation)
+            CROSS_EXTRA=""
+            if [ "${{ matrix.db }}" = "postgres" ]; then
+              CROSS_EXTRA="&& dpkg --add-architecture arm64 && apt-get update && apt-get install -y libpq-dev:arm64"
+            fi
+
+            docker run --rm \
+              -v "$PWD":/usr/src/omsupply \
+              -w /usr/src/omsupply/server \
+              $RUST_IMAGE bash -c "\
+                apt-get update && apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+                $CROSS_EXTRA && \
+                rustup target add aarch64-unknown-linux-gnu && \
+                CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
+                PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig \
+                PQ_LIB_DIR=/usr/lib/aarch64-linux-gnu \
+                  cargo build --release --target aarch64-unknown-linux-gnu \
+                    --target-dir $TARGET_DIR --bin remote_server --bin remote_server_cli $CARGO_FLAGS && \
+                mkdir -p $TARGET_DIR/release && \
+                cp $TARGET_DIR/aarch64-unknown-linux-gnu/release/remote_server $TARGET_DIR/release/remote_server && \
+                cp $TARGET_DIR/aarch64-unknown-linux-gnu/release/remote_server_cli $TARGET_DIR/release/remote_server_cli && \
+                chown -R $(id -u):$(id -g) $TARGET_DIR"
+          fi
 
       - name: Save server executable artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: server-executables-sqlite
+          name: server-executables-${{ matrix.db }}-${{ matrix.arch }}
           path: |
             server/target/release/remote_server
             server/target/release/remote_server_cli
-          retention-days: 1
-
-  build-server-postgres:
-    name: Build server (Postgres)
-    needs: build-client
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Load client artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: client-dist
-          path: client/packages/host/dist
-
-      - name: Build server
-        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
-
-      - name: Save server executable artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-executables-postgres
-          path: |
             server/target-postgres/release/remote_server
             server/target-postgres/release/remote_server_cli
           retention-days: 1
 
   dockerise:
-    name: Dockerise
-    needs: [build-server-sqlite, build-server-postgres]
+    name: Dockerise (${{ matrix.db }}, ${{ matrix.arch }})
+    needs: [build-server, check-tag]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (matrix.arch != 'arm64' || needs.check-tag.outputs.is_release == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      matrix:
+        db: [sqlite, postgres]
+        arch: [amd64, arm64]
     outputs:
       image_tag: ${{ env.VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load SQLite server artifacts
+      - name: Load server artifacts
         uses: actions/download-artifact@v4
         with:
-          name: server-executables-sqlite
-          path: server/target/release/
+          name: server-executables-${{ matrix.db }}-${{ matrix.arch }}
+          path: server/
 
-      - name: Load Postgres server artifacts
-        uses: actions/download-artifact@v4
+      - name: Set up QEMU
+        if: matrix.arch == 'arm64'
+        uses: docker/setup-qemu-action@v3
         with:
-          name: server-executables-postgres
-          path: server/target-postgres/release/
+          platforms: arm64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -126,45 +186,44 @@ jobs:
         id: tag
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
+      - name: Set build variables
+        id: vars
+        run: |
+          if [ "${{ matrix.db }}" = "sqlite" ]; then
+            echo "target=sqlite" >> $GITHUB_OUTPUT
+            echo "target_dev=dev" >> $GITHUB_OUTPUT
+          else
+            echo "target=postgres" >> $GITHUB_OUTPUT
+            echo "target_dev=postgres-dev" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
-          target: sqlite
+          target: ${{ steps.vars.outputs.target }}
+          platforms: linux/${{ matrix.arch }}
           push: true
           tags: |
-            msupplyfoundation/omsupply:${{ env.VERSION }}
+            msupplyfoundation/omsupply:${{ env.VERSION }}-${{ matrix.db }}-${{ matrix.arch }}
 
       - name: Build and Push Docker Image Dev
+        if: matrix.arch == 'amd64' && needs.check-tag.outputs.is_release == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
-          target: dev
+          target: ${{ steps.vars.outputs.target_dev }}
+          platforms: linux/${{ matrix.arch }}
           push: true
           tags: |
-            msupplyfoundation/omsupply:${{ env.VERSION }}-dev
-
-      - name: Build and Push Docker Image Postgres
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          target: postgres
-          push: true
-          tags: |
-            msupplyfoundation/omsupply:${{ env.VERSION }}-postgres
-
-      - name: Build and Push Docker Image Postgres Dev
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          target: postgres-dev
-          push: true
-          tags: |
-            msupplyfoundation/omsupply:${{ env.VERSION }}-postgres-dev
+            msupplyfoundation/omsupply:${{ env.VERSION }}-${{ matrix.db }}-${{ matrix.arch }}-dev
 
   trigger-plugin-tests:
     name: Trigger Plugin Tests
-    needs: dockerise
+    needs: [dockerise, check-tag]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      needs.check-tag.outputs.is_release == 'true'
     uses: ./.github/workflows/trigger-plugin-tests.yaml
     with:
       image_tag: ${{ needs.dockerise.outputs.image_tag }}-dev
