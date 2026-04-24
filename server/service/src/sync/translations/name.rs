@@ -272,7 +272,7 @@ impl SyncTranslation for NameTranslation {
             margin,
             freight_factor,
             currency_id,
-        } = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyNameRow>(sync_record.data.0.clone())?;
 
         // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
         let r#type = legacy_type.to_name_type();

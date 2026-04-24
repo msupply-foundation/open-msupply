@@ -56,7 +56,7 @@ impl SyncTranslation for StoreTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyStoreRow>(sync_record.data.0.clone())?;
 
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
         // HIS -> Hospital Information System (no name_id)

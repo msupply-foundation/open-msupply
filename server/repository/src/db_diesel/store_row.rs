@@ -1,7 +1,10 @@
 use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
 use crate::{
-    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
+    db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
+    diesel_macros::define_linked_tables,
+    repository_error::RepositoryError,
+    ChangelogTableName, Delete, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -68,6 +71,15 @@ pub struct StoreRow {
     pub name_id: String,
 }
 
+impl StoreRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Store
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
+}
+
 pub struct StoreRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -131,7 +143,16 @@ pub struct StoreRowDelete(pub String);
 impl Delete for StoreRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         StoreRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+        Ok(None)
+    }
+    fn delete_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        StoreRowRepository::new(con).delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -145,9 +166,17 @@ impl Delete for StoreRowDelete {
 impl Upsert for StoreRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         StoreRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(None)
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        StoreRowRepository::new(con)._upsert(self)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

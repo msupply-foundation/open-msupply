@@ -51,7 +51,7 @@ impl SyncTranslation for ItemStoreJoinTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyItemStoreJoinRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyItemStoreJoinRow>(sync_record.data.0.clone())?;
 
         let default_location_id = clear_invalid_location_id(connection, data.default_location_id)?;
 
