@@ -1580,7 +1580,7 @@ export const DailyTallyView = () => {
     : allocationVaccineRows.filter(row => row.stockLines.length > 1);
   const displayedVaccineRows =
     workflowStep === 'coverage'
-      ? []
+      ? filteredVaccineRows
       : workflowStep === 'allocation'
         ? allocationStepRows
         : workflowStep === 'wastage'
@@ -1588,7 +1588,6 @@ export const DailyTallyView = () => {
             ? allocationVaccineRows.filter(row => row.used > 0)
             : allocationVaccineRows
           : [];
-
   useEffect(() => {
     if (!workflowStepSequence.includes(workflowStep)) {
       setWorkflowStep(workflowStepSequence[0] ?? 'allocation');
@@ -5639,7 +5638,8 @@ export const DailyTallyView = () => {
                             flexWrap="wrap"
                           >
                             {(workflowStep !== 'allocation' &&
-                              workflowStep !== 'wastage') ||
+                              workflowStep !== 'wastage' &&
+                              workflowStep !== 'coverage') ||
                             (isThreeStepStepOneAllocation && hasIssuedDoses) ? (
                               <Box
                                 sx={{
@@ -5710,11 +5710,13 @@ export const DailyTallyView = () => {
                               </Typography>
                             ) : null}
 
-                            {isAllocationStep || isWastageStep ? (
+                            {isAllocationStep ||
+                            isWastageStep ||
+                            workflowStep === 'coverage' ? (
                               <Box
                                 display="grid"
                                 gridTemplateColumns={
-                                  isAllocationStep
+                                  isAllocationStep || workflowStep === 'coverage'
                                     ? 'repeat(4,minmax(0,1fr))'
                                     : 'repeat(7,minmax(0,1fr))'
                                 }
@@ -5887,7 +5889,8 @@ export const DailyTallyView = () => {
                                     <Typography variant="body2">
                                       {row.units}
                                     </Typography>
-                                    {isSimplifiedMode &&
+                                    {(isSimplifiedMode ||
+                                      workflowStep === 'coverage') &&
                                     !(
                                       isWastageStep && row.stockLines.length > 1
                                     ) &&
@@ -5981,7 +5984,36 @@ export const DailyTallyView = () => {
                               </Box>
                             ) : null}
 
-                            {workflowStep === 'coverage' ? (
+                            {!isSimplifiedMode && isAllocationStep ? (
+                              <ButtonWithIcon
+                                Icon={
+                                  <ChevronDownIcon
+                                    sx={{
+                                      transform: coverage.isOpen
+                                        ? 'rotate(180deg)'
+                                        : 'rotate(0deg)',
+                                      transition: 'transform 0.2s ease',
+                                    }}
+                                  />
+                                }
+                                label={
+                                  coverage.isOpen
+                                    ? 'Hide coverage'
+                                    : 'Show coverage'
+                                }
+                                onClick={() =>
+                                  updateCoverageForRow(row, current => ({
+                                    ...current,
+                                    isOpen: !current.isOpen,
+                                  }))
+                                }
+                              />
+                            ) : null}
+
+                            {workflowStep === 'coverage' ||
+                            (!isSimplifiedMode &&
+                              isAllocationStep &&
+                              coverage.isOpen) ? (
                               <Box sx={{ marginTop: 1 }}>
                                 {coverageVisibility.showChild ? (
                                   <Box
