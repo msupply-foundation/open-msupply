@@ -16,6 +16,7 @@ import {
   Typography,
   useNavigate,
   useBreadcrumbs,
+  useFormatDateTime,
   usePaginatedMaterialTable,
   useTranslation,
   useUrlQueryParams,
@@ -25,6 +26,7 @@ import { usePrescriptionList } from '@openmsupply-client/invoices/src/Prescripti
 import { PrescriptionRowFragment } from '@openmsupply-client/invoices/src/Prescriptions/api/operations.generated';
 import { usePrescriptionGraphQL } from '@openmsupply-client/invoices/src/Prescriptions/api/usePrescriptionGraphQL';
 import { useStocktakeList } from '@openmsupply-client/inventory/src/Stocktake/api/hooks/useStocktakeList';
+import { usePatient } from '@openmsupply-client/system';
 
 const DAILY_TALLY_REFERENCE_PREFIX = 'Daily tally -';
 
@@ -63,7 +65,10 @@ const getDailyTallyDraftStorageKey = (storeId: string) =>
 type DailyTallyPersistedDraft = {
   version: number;
   savedAt: string;
-  payload: unknown;
+  payload: {
+    selectedPatientId?: string;
+    referenceText?: string;
+  };
 };
 
 const formatPatientName = (value?: string | null) => {
@@ -76,7 +81,7 @@ const formatPatientName = (value?: string | null) => {
       .map(part => part.trim())
       .filter(Boolean);
     const firstName = firstParts.join(' ');
-    if (firstName && lastName) return `${firstName}, ${lastName}`;
+    if (firstName && lastName) return `${firstName} ${lastName}`;
   }
 
   return normalized;
@@ -87,17 +92,35 @@ export const DailyTallyListView = () => {
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { storeId } = usePrescriptionGraphQL();
+  const { localisedDate } = useFormatDateTime();
   const theme = useTheme();
   const isPortraitOrientation = useMediaQuery('(orientation: portrait)');
   const isTabletOrSmaller = useMediaQuery(theme.breakpoints.down('md'));
   const useCompactAddButtonLabel = isTabletOrSmaller && isPortraitOrientation;
   const [hasSavedDraft, setHasSavedDraft] = React.useState(false);
   const [savedDraftAt, setSavedDraftAt] = React.useState<string | null>(null);
+  const [savedDraftReference, setSavedDraftReference] = React.useState('');
+  const [savedDraftPatientId, setSavedDraftPatientId] = React.useState('');
+
+  const { data: patientData } = usePatient.document.list({
+    first: 2000,
+    sortBy: { key: 'name', direction: 'asc' },
+  });
+
+  const patientNameById = useMemo(
+    () =>
+      Object.fromEntries(
+        (patientData?.nodes ?? []).map(patient => [patient.id, patient.name ?? ''])
+      ) as Record<string, string>,
+    [patientData?.nodes]
+  );
 
   useEffect(() => {
     if (!storeId) {
       setHasSavedDraft(false);
       setSavedDraftAt(null);
+      setSavedDraftReference('');
+      setSavedDraftPatientId('');
       return;
     }
 
@@ -106,6 +129,8 @@ export const DailyTallyListView = () => {
     if (!rawDraft) {
       setHasSavedDraft(false);
       setSavedDraftAt(null);
+      setSavedDraftReference('');
+      setSavedDraftPatientId('');
       return;
     }
 
@@ -119,6 +144,8 @@ export const DailyTallyListView = () => {
         localStorage.removeItem(draftStorageKey);
         setHasSavedDraft(false);
         setSavedDraftAt(null);
+        setSavedDraftReference('');
+        setSavedDraftPatientId('');
         return;
       }
 
@@ -127,15 +154,21 @@ export const DailyTallyListView = () => {
         localStorage.removeItem(draftStorageKey);
         setHasSavedDraft(false);
         setSavedDraftAt(null);
+        setSavedDraftReference('');
+        setSavedDraftPatientId('');
         return;
       }
 
       setHasSavedDraft(true);
       setSavedDraftAt(parsed.savedAt);
+      setSavedDraftReference(parsed.payload?.referenceText ?? '');
+      setSavedDraftPatientId(parsed.payload?.selectedPatientId ?? '');
     } catch {
       localStorage.removeItem(draftStorageKey);
       setHasSavedDraft(false);
       setSavedDraftAt(null);
+      setSavedDraftReference('');
+      setSavedDraftPatientId('');
     }
   }, [storeId]);
 
@@ -290,8 +323,9 @@ export const DailyTallyListView = () => {
       }),
       id: '__daily_tally_saved_draft__',
       isDraftRow: true,
-      theirReference: 'Resume draft tally sheet',
-      otherPartyName: 'Unsaved counter draft',
+      theirReference:
+        savedDraftReference || `Daily tally - ${new Date(savedDraftAt ?? new Date()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, ' ')}`,
+      otherPartyName: patientNameById[savedDraftPatientId] ?? '',
       invoiceNumber: null,
       stocktakeId: undefined,
       stocktakeNumber: undefined,
@@ -300,7 +334,15 @@ export const DailyTallyListView = () => {
     } as DailyTallyListRow;
 
     return [draftRow, ...mappedRows];
-  }, [data?.nodes, hasSavedDraft, savedDraftAt, stocktakeData?.nodes]);
+  }, [
+    data?.nodes,
+    hasSavedDraft,
+    patientNameById,
+    savedDraftAt,
+    savedDraftPatientId,
+    savedDraftReference,
+    stocktakeData?.nodes,
+  ]);
 
   const columns = useMemo(
     (): ColumnDef<DailyTallyListRow>[] => [
@@ -316,7 +358,7 @@ export const DailyTallyListView = () => {
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              fontWeight: row.original.isDraftRow ? 700 : undefined,
+              fontWeight: row.original.isDraftRow ? 600 : undefined,
               color: row.original.isDraftRow ? 'secondary.main' : undefined,
             }}
             title={row.original.theirReference ?? ''}
@@ -337,12 +379,12 @@ export const DailyTallyListView = () => {
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              color: row.original.isDraftRow ? 'secondary.main' : undefined,
+              fontWeight: row.original.isDraftRow ? 600 : undefined,
             }}
             title={formatPatientName(row.original.otherPartyName)}
           >
-            {row.original.isDraftRow
-              ? 'Tap row to continue'
-              : formatPatientName(row.original.otherPartyName)}
+            {formatPatientName(row.original.otherPartyName)}
           </Typography>
         ),
       },
@@ -355,7 +397,7 @@ export const DailyTallyListView = () => {
         Cell: ({ row }) => (
           row.original.isDraftRow ? (
             <Typography color="secondary" sx={{ fontWeight: 700 }}>
-              Resume
+              Tap to resume
             </Typography>
           ) : (
           <Typography
@@ -378,7 +420,12 @@ export const DailyTallyListView = () => {
         enableSorting: false,
         size: 90,
         Cell: ({ row }) => {
-          if (row.original.isDraftRow) return <Typography color="text.secondary">-</Typography>;
+          if (row.original.isDraftRow)
+            return (
+              <Typography color="secondary" sx={{ fontWeight: 700 }}>
+                Tap to resume
+              </Typography>
+            );
           const stocktakeId = row.original.stocktakeId;
           const stocktakeNumber = row.original.stocktakeNumber;
           if (!stocktakeId || !stocktakeNumber) return <Typography>-</Typography>;
@@ -405,9 +452,21 @@ export const DailyTallyListView = () => {
         accessorFn: (row: DailyTallyListRow) =>
           row.prescriptionDate || row.createdDatetime,
         size: 120,
+        Cell: ({ row }) => (
+          <Typography
+            sx={{
+              color: row.original.isDraftRow ? 'secondary.main' : undefined,
+              fontWeight: row.original.isDraftRow ? 600 : undefined,
+            }}
+          >
+            {localisedDate(
+              String(row.original.prescriptionDate || row.original.createdDatetime || '')
+            )}
+          </Typography>
+        ),
       },
     ],
-    [navigate, t]
+    [localisedDate, navigate, t]
   );
 
   const { table } = usePaginatedMaterialTable({
@@ -428,9 +487,9 @@ export const DailyTallyListView = () => {
       (row.original as DailyTallyListRow).isDraftRow
         ? {
             sx: {
-              backgroundColor: 'rgba(237,108,2,0.10)',
+              backgroundColor: 'rgba(25,118,210,0.06)',
               '& td': {
-                borderBottom: '1px solid rgba(237,108,2,0.30)',
+                borderBottom: '1px solid rgba(25,118,210,0.22)',
               },
             },
           }
