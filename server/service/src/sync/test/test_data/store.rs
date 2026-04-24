@@ -1,6 +1,6 @@
 use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
 use chrono::NaiveDate;
-use repository::{StoreRow, StoreRowDelete, SyncBufferRow};
+use repository::{sync_buffer::SyncRecordData, StoreRow, StoreRowDelete, SyncBufferRow};
 
 const TABLE_NAME: &str = "store";
 
@@ -117,7 +117,7 @@ fn store_2() -> TestSyncIncomingRecord {
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_2.0.to_string(),
-            data: STORE_2.1.to_string(),
+            data: SyncRecordData(serde_json::from_str(STORE_2.1).unwrap()),
             ..Default::default()
         },
         extra_data: None,
@@ -176,7 +176,7 @@ fn store_3() -> TestSyncIncomingRecord {
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_3.0.to_string(),
-            data: STORE_3.1.to_string(),
+            data: SyncRecordData(serde_json::from_str(STORE_3.1).unwrap()),
             ..Default::default()
         },
         extra_data: None,
@@ -235,7 +235,7 @@ fn store_4() -> TestSyncIncomingRecord {
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_4.0.to_string(),
-            data: STORE_4.1.to_string(),
+            data: SyncRecordData(serde_json::from_str(STORE_4.1).unwrap()),
             ..Default::default()
         },
         extra_data: None,

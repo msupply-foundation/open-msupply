@@ -1,7 +1,6 @@
 use crate::StorageConnection;
 
 mod adjustments;
-mod changelog_deduped;
 mod consumption;
 mod contact_trace_name_link_view;
 mod inbound_shipment_stock_movement;
@@ -55,7 +54,6 @@ fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
         Box::new(consumption::ViewMigration),
         Box::new(store_items::ViewMigration),
         Box::new(stock_on_hand::ViewMigration),
-        Box::new(changelog_deduped::ViewMigration),
         Box::new(latest_document::ViewMigration),
         Box::new(latest_asset_log::ViewMigration),
         Box::new(report_document::ViewMigration),

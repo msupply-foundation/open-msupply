@@ -18,7 +18,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = currency)]
 pub struct CurrencyRow {
@@ -30,6 +30,15 @@ pub struct CurrencyRow {
     pub is_active: bool,
 }
 
+impl CurrencyRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Currency
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
+}
+
 pub struct CurrencyRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -39,31 +48,34 @@ impl<'a> CurrencyRowRepository<'a> {
         CurrencyRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         diesel::insert_into(currency::table)
             .values(row)
             .on_conflict(currency::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
         self.insert_changelog(&row.id, RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
-        record_id: &String,
+        record_id: &str,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Currency,
-            record_id: record_id.clone(),
+        let changelog = ChangeLogInsertRow {
+            table_name: CurrencyRow::table_name(),
+            record_id: record_id.to_string(),
             row_action: action,
-            store_id: None,
-            name_id: None,
             ..Default::default()
         };
 
-        ChangelogRepository::new(self.connection).insert(&row)
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -77,12 +89,16 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {
+    fn _delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
         diesel::update(currency::table.filter(currency::id.eq(currency_id)))
             .set(currency::is_active.eq(false))
             .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 
-        self.insert_changelog(&currency_id.to_string(), RowActionType::Delete)
+    pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {
+        self._delete(currency_id)?;
+        self.insert_changelog(currency_id, RowActionType::Delete)
     }
 }
 
@@ -93,7 +109,16 @@ impl Delete for CurrencyRowDelete {
         let change_log_id = CurrencyRowRepository::new(con).delete(&self.0)?;
         Ok(Some(change_log_id))
     }
-
+    fn delete_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        CurrencyRowRepository::new(con)._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+    // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
             CurrencyRowRepository::new(con).find_one_by_id(&self.0),
@@ -110,7 +135,15 @@ impl Upsert for CurrencyRow {
         let change_log_id = CurrencyRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        CurrencyRowRepository::new(con)._upsert_one(self)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

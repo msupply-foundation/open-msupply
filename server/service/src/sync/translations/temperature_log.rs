@@ -72,7 +72,7 @@ impl SyncTranslation for TemperatureLogTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyTemperatureLogRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyTemperatureLogRow>(sync_record.data.0.clone())?;
 
         let LegacyTemperatureLogRow {
             id,

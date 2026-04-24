@@ -85,7 +85,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
             record_id: r.sync_buffer_row.record_id.clone(),
             table_name: r.sync_buffer_row.table_name.clone(),
             push_data: json!(
-                serde_json::from_str::<LegacyIndicatorValue>(&r.sync_buffer_row.data).unwrap()
+                serde_json::from_value::<LegacyIndicatorValue>(r.sync_buffer_row.data.0.clone()).unwrap()
             ),
         })
         .collect()

@@ -54,7 +54,7 @@ impl SyncTranslation for MasterListLineTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyListMasterLineRow>(sync_record.data.0.clone())?;
         let master_list =
             MasterListRowRepository::new(connection).find_one_by_id(&data.item_master_ID)?;
         if master_list.is_none() {

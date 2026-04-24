@@ -45,7 +45,7 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<PartialLegacyNameRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<PartialLegacyNameRow>(sync_record.data.0.clone())?;
 
         let name_store_joins = NameStoreJoinRepository::new(connection).query_by_filter(
             NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(data.ID.to_owned())),

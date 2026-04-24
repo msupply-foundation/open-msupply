@@ -243,7 +243,7 @@ impl SyncTranslation for RequisitionTranslation {
         conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let json_data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let json_data = serde_json::from_value::<serde_json::Value>(sync_record.data.0.clone())?;
         let sanitised_data = sanitize_legacy_record(json_data);
         let data = serde_json::from_value::<LegacyRequisitionRow>(sanitised_data)?;
         let r#type = match from_legacy_type(&data.r#type) {
@@ -327,6 +327,7 @@ impl SyncTranslation for RequisitionTranslation {
                 .clone()
                 .and_then(|f| f.created_from_requisition_id),
             destination_customer_id: data.oms_fields.and_then(|f| f.destination_customer_id),
+            ..Default::default()
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -375,6 +376,7 @@ impl SyncTranslation for RequisitionTranslation {
                     is_emergency,
                     created_from_requisition_id,
                     destination_customer_id,
+                    transfer_store_id: _,
                 },
             name_row,
             ..
@@ -633,7 +635,7 @@ mod tests {
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-        SyncAction, SyncBufferRow,
+        SyncAction, SyncBufferRow, SyncRecordData,
     };
     use serde_json::json;
     use util::assert_variant;
@@ -714,7 +716,7 @@ mod tests {
         let sync_buffer_row = SyncBufferRow {
             table_name: "requisition".to_string(),
             record_id: "WP_TEST_RECORD_ID".to_string(),
-            data: wp_imprest_json.to_string(),
+            data: SyncRecordData(serde_json::from_str(wp_imprest_json).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };
@@ -775,8 +777,7 @@ mod tests {
         let (_, connection, _, _) = setup_all("test_sanitise", MockDataInserts::none()).await;
 
         let sync_record = SyncBufferRow {
-            data: r#"
-            {
+            data: SyncRecordData(json!({
                 "//": "Status is set to sent, should be changed to draft",
                 "om_status": "SENT",
 
@@ -810,8 +811,7 @@ mod tests {
                 "thresholdMOS": 0,
                 "type": "response",
                 "user_ID": ""
-            }
-            "#.to_string(),
+            })),
             ..Default::default()
         };
 
