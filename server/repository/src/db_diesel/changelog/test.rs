@@ -226,6 +226,7 @@ async fn test_changelog_filter() {
         store_id: Some("store1".to_string()),
         is_sync_update: false,
         source_site_id: None,
+        ..Default::default()
     };
 
     let log2 = ChangelogRow {
@@ -237,6 +238,7 @@ async fn test_changelog_filter() {
         store_id: Some("store2".to_string()),
         is_sync_update: false,
         source_site_id: None,
+        ..Default::default()
     };
 
     let log3 = ChangelogRow {
@@ -248,6 +250,7 @@ async fn test_changelog_filter() {
         store_id: Some("store3".to_string()),
         is_sync_update: false,
         source_site_id: None,
+        ..Default::default()
     };
 
     let log4 = ChangelogRow {
@@ -259,6 +262,7 @@ async fn test_changelog_filter() {
         store_id: None,
         is_sync_update: false,
         source_site_id: None,
+        ..Default::default()
     };
 
     for log in [&log1, &log2, &log3, &log4] {
