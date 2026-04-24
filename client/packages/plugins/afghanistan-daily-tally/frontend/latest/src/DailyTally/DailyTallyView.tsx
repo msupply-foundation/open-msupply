@@ -4684,6 +4684,7 @@ export const DailyTallyView = () => {
                       sx={{
                         border: '1px solid rgba(0,0,0,0.12)',
                         borderRadius: 1,
+                        marginTop: 0.75,
                         padding: 1.5,
                         marginBottom: 1.25,
                         width: '100%',
@@ -4736,7 +4737,7 @@ export const DailyTallyView = () => {
                             })}
                           </Box>
                           {selectedTallyDoses.length > 0 ? (
-                            <Box sx={{ marginTop: 1.25 }}>
+                            <Box sx={{ marginTop: 2.25 }}>
                               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
                                 DOSE
                               </Typography>
@@ -4783,11 +4784,8 @@ export const DailyTallyView = () => {
 
                       <Box
                         sx={{
-                          marginTop: 1.25,
-                          border: '1px solid rgba(0,0,0,0.12)',
-                          borderRadius: 1,
-                          padding: { xs: 1.25, sm: 1.75 },
-                          backgroundColor: 'background.default',
+                          marginTop: 2.25,
+                          padding: 0,
                           width: '100%',
                           maxWidth: '100%',
                           minWidth: 0,
@@ -4869,7 +4867,7 @@ export const DailyTallyView = () => {
 
                             <Box
                               sx={{
-                                marginTop: isSelectedTallyWomenOnly ? 0 : 2,
+                                marginTop: isSelectedTallyWomenOnly ? 0 : 2.25,
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'flex-start',
@@ -4882,7 +4880,7 @@ export const DailyTallyView = () => {
                               {isSelectedTallyWomenOnly ? (
                                 <Box
                                   sx={{
-                                    marginTop: 0.25,
+                                    marginTop: 0.75,
                                     border: '1px solid rgba(237,108,2,0.9)',
                                     backgroundColor: 'rgba(237,108,2,0.14)',
                                     color: 'text.primary',
@@ -4893,7 +4891,7 @@ export const DailyTallyView = () => {
                                     paddingY: 0.75,
                                     fontWeight: 700,
                                     fontSize: 15,
-                                    lineHeight: 1.2,
+                                    lineHeight: 'normal',
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                   }}
@@ -4905,7 +4903,7 @@ export const DailyTallyView = () => {
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
-                                  sx={{ marginTop: 0.75, fontWeight: 700 }}
+                                  sx={{ marginTop: 2.25, fontWeight: 700 }}
                                 >
                                   PREGNANCY STATUS
                                 </Typography>
@@ -4915,7 +4913,7 @@ export const DailyTallyView = () => {
                                   display: 'grid',
                                   gridTemplateColumns: 'max-content',
                                   gap: 0.75,
-                                  marginTop: isSelectedTallyWomenOnly ? 0.4 : 0.5,
+                                  marginTop: 0.75,
                                 }}
                               >
                                 {selectedTallyCategoryOptions.map(({ key, label }) => {
