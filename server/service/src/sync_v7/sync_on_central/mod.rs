@@ -11,7 +11,7 @@ use repository::{
     SiteRow, SiteRowRepository, StorageConnection, StringFilter,
 };
 
-/// TODO: revisit token format — UUID v4 for now.
+/// TODO: revisit token format — UUID v7 for now.
 pub fn get_site_info(
     service_provider: &ServiceProvider,
     input: SiteInfoInput,
