@@ -38,7 +38,7 @@ impl SyncTranslation for WarningTranslation {
             id,
             warning_text,
             code,
-        } = sync_record.deserialize::<LegacyWarningRow>()?;
+        } = sync_record.deserialize()?;
 
         let result = WarningRow {
             id,
