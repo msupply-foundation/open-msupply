@@ -1682,8 +1682,8 @@ export const DailyTallyView = () => {
   const workflowStepIndex = Math.max(workflowDisplayStepSequence.indexOf(workflowStep), 0);
   const workflowStepTotal = workflowDisplayStepSequence.length;
   const workflowStepTitleByKey: Record<WorkflowStep, string> = {
-    tally: 'Live Counter',
-    coverage: 'Coverage',
+    tally: 'Coverage counter',
+    coverage: 'Coverage summary',
     'course-items': 'Course Items',
     allocation: keepTopRightButtonTextVisible
       ? 'Vaccine batches'
@@ -3703,7 +3703,7 @@ export const DailyTallyView = () => {
     'course-items': 'Back to Coverage',
     allocation: 'Back to Coverage',
     wastage: 'Back to Batches',
-    'non-vaccine': 'Back to Vaccines',
+    'non-vaccine': 'Back to Coverage',
   };
   const isThreeStepFlow =
     workflowStepSequence.length === 3 &&
@@ -3714,7 +3714,7 @@ export const DailyTallyView = () => {
     ? workflowStep === 'non-vaccine' && isThreeStepFlow
       ? hasAnyIssuedVaccineRows
         ? 'Back to Open Vial Wastage'
-        : 'Back to Vaccines'
+        : 'Back to Coverage'
       : workflowStep === 'allocation' && previousWorkflowStep === 'course-items'
       ? 'Back to Item Selection'
       : workflowStep === 'wastage' && previousWorkflowStep === 'coverage'
@@ -3724,7 +3724,7 @@ export const DailyTallyView = () => {
   const continueButtonLabel =
     workflowStep === 'tally'
       ? nextWorkflowStep === 'coverage'
-        ? 'Continue to Coverage'
+        ? 'Continue to Summary'
         : 'Continue to Batches'
       : workflowStep === 'coverage'
         ? hasAnyCoverageValues

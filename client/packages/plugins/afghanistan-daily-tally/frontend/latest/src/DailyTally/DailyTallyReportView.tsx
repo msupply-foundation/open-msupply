@@ -16,6 +16,8 @@ import {
   Typography,
   useBreadcrumbs,
   usePaginatedMaterialTable,
+  useFormatDateTime,
+  useUrlQuery,
   useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
@@ -179,6 +181,8 @@ const parseCoverageEntries = (note?: string | null): CoverageEntry[] => {
 export const DailyTallyReportView = () => {
   const t = useTranslation();
   const theme = useTheme();
+  const { customDate, urlQueryDateTime } = useFormatDateTime();
+  const { urlQuery, updateQuery } = useUrlQuery();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
@@ -219,6 +223,81 @@ export const DailyTallyReportView = () => {
     offset,
     filterBy,
   });
+
+  const monthQuickRanges = useMemo(() => {
+    const now = new Date();
+
+    return [0, 1, 2, 3, 4, 5].map(monthOffset => {
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth() - monthOffset,
+        1,
+        0,
+        0,
+        0,
+        0
+      );
+      const end =
+        monthOffset === 0
+          ? now
+          : new Date(
+              now.getFullYear(),
+              now.getMonth() - monthOffset + 1,
+              0,
+              23,
+              59,
+              59,
+              999
+            );
+
+      return {
+        value: monthOffset === 0 ? 'this-month-so-far' : `previous-month-${monthOffset}`,
+        label:
+          monthOffset === 0
+            ? 'This month so far'
+            : start.toLocaleString(undefined, { month: 'long', year: 'numeric' }),
+        from: customDate(start, urlQueryDateTime),
+        to: customDate(end, urlQueryDateTime),
+      };
+    });
+  }, [customDate, urlQueryDateTime]);
+
+  const monthPresetOptions = useMemo(
+    () => monthQuickRanges.map(range => ({ value: range.value, label: range.label })),
+    [monthQuickRanges]
+  );
+
+  const selectedDateRange =
+    (urlQuery['createdOrBackdatedDatetime'] as { from?: string; to?: string }) ?? {};
+  const selectedMonthPreset = (urlQuery['monthPreset'] as string | undefined) ?? '';
+
+  useEffect(() => {
+    if (!selectedMonthPreset) return;
+
+    const selectedPreset = monthQuickRanges.find(
+      range => range.value === selectedMonthPreset
+    );
+    if (!selectedPreset) return;
+
+    const isAlreadySelectedRange =
+      selectedDateRange.from === selectedPreset.from &&
+      selectedDateRange.to === selectedPreset.to;
+
+    if (isAlreadySelectedRange) return;
+
+    updateQuery({
+      createdOrBackdatedDatetime: {
+        from: selectedPreset.from,
+        to: selectedPreset.to,
+      },
+    });
+  }, [
+    monthQuickRanges,
+    selectedDateRange.from,
+    selectedDateRange.to,
+    selectedMonthPreset,
+    updateQuery,
+  ]);
 
   const demographicBuckets = useMemo(
     () => resolveDemographicBuckets(demographicData?.nodes),
@@ -830,13 +909,14 @@ export const DailyTallyReportView = () => {
           gap: 2,
         }}
       >
-        <Box display="flex" gap={1} alignItems="center">
+        <Box display="flex" gap={1.25} alignItems="center" flexWrap="wrap">
           <FilterMenu
             filters={[
               {
-                type: 'text',
-                name: t('label.reference'),
-                urlParameter: 'theirReference',
+                type: 'enum',
+                name: 'Month preset',
+                urlParameter: 'monthPreset',
+                options: monthPresetOptions,
                 isDefault: true,
               },
               {
@@ -858,6 +938,12 @@ export const DailyTallyReportView = () => {
                     isDefault: true,
                   },
                 ],
+              },
+              {
+                type: 'text',
+                name: t('label.reference'),
+                urlParameter: 'theirReference',
+                isDefault: true,
               },
             ]}
           />
