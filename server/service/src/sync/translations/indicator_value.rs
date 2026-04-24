@@ -58,7 +58,7 @@ impl SyncTranslation for IndicatorValue {
             indicator_line_id,
             store_id,
             value,
-        } = serde_json::from_str::<LegacyIndicatorValue>(&sync_record.data)?;
+        } = sync_record.deserialize::<LegacyIndicatorValue>()?;
         let customer_name_id = StoreRepository::new(connection)
             .query_one(StoreFilter::new().id(EqualFilter::equal_to(customer_store_id.to_string())))?
             .ok_or(anyhow::anyhow!(

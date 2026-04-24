@@ -71,7 +71,7 @@ impl SyncTranslation for SensorTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacySensorRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacySensorRow>()?;
 
         let LegacySensorRow {
             id,

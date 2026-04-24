@@ -103,7 +103,7 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             policyNumberPerson,
             policyType,
             oms_fields,
-        } = serde_json::from_str::<LegacyNameInsuranceJoinRow>(&sync_record.data)?;
+        } = sync_record.deserialize::<LegacyNameInsuranceJoinRow>()?;
 
         let result = NameInsuranceJoinRow {
             id: ID,

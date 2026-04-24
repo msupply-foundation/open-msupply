@@ -61,7 +61,7 @@ impl SyncTranslation for UserPermissionTranslation {
             store_id,
             permission,
             context,
-        } = serde_json::from_str::<LegacyUserPermissionTable>(&sync_record.data)?;
+        } = sync_record.deserialize::<LegacyUserPermissionTable>()?;
 
         let user_permission = match permission {
             LegacyPermission::DocumentQuery => PermissionType::DocumentQuery,

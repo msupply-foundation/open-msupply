@@ -40,7 +40,7 @@ impl SyncTranslation for FormSchemaTranslation {
             r#type,
             json_schema,
             ui_schema,
-        } = serde_json::from_str::<LegacyFormSchemaRow>(&sync_record.data)?;
+        } = sync_record.deserialize::<LegacyFormSchemaRow>()?;
 
         let result = FormSchemaJson {
             id,
