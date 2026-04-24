@@ -37,7 +37,7 @@ impl SyncTranslation for DiagnosisTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyDiagnosisRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyDiagnosisRow>(sync_record.data.0.clone())?;
         let result = DiagnosisRow {
             id: data.ID,
             code: data.ICD_CODE,

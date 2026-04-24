@@ -90,7 +90,7 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyListMasterRow>(sync_record.data.0.clone())?;
 
         let program_repo = ProgramRowRepository::new(connection);
 

@@ -605,7 +605,6 @@ macro_rules! define_linked_tables {
 ///
 /// Usage:
 /// ```
-/// // Default snake_case serialization:
 /// diesel_string_enum! {
 ///     #[derive(Clone, Serialize, Deserialize)]
 ///     pub enum MyEnum {
@@ -614,32 +613,8 @@ macro_rules! define_linked_tables {
 ///         VariantB,
 ///     }
 /// }
-///
-/// // Custom serialization (e.g. for existing SCREAMING_SNAKE_CASE data):
-/// diesel_string_enum! {
-///     "SCREAMING_SNAKE_CASE",
-///     #[derive(Clone)]
-///     pub enum KeyType {
-///         #[default]
-///         SomeKey,
-///     }
-/// }
 /// ```
 macro_rules! diesel_string_enum {
-    // With explicit serialization format
-    (
-        $serialize_all:literal,
-        $(#[$meta:meta])*
-        $vis:vis enum $name:ident {
-            $(
-                $(#[$variant_meta:meta])*
-                $variant:ident
-            ),* $(,)?
-        }
-    ) => {
-        diesel_string_enum!(@inner $serialize_all, $(#[$meta])* $vis enum $name { $($(#[$variant_meta])* $variant),* });
-    };
-    // Default snake_case
     (
         $(#[$meta:meta])*
         $vis:vis enum $name:ident {
@@ -647,19 +622,6 @@ macro_rules! diesel_string_enum {
                 $(#[$variant_meta:meta])*
                 $variant:ident
             ),* $(,)?
-        }
-    ) => {
-        diesel_string_enum!(@inner "snake_case", $(#[$meta])* $vis enum $name { $($(#[$variant_meta])* $variant),* });
-    };
-    // Inner implementation
-    (
-        @inner $serialize_all:literal,
-        $(#[$meta:meta])*
-        $vis:vis enum $name:ident {
-            $(
-                $(#[$variant_meta:meta])*
-                $variant:ident
-            ),*
         }
     ) => {
         #[derive(
@@ -672,7 +634,6 @@ macro_rules! diesel_string_enum {
             diesel::expression::AsExpression,
             diesel::deserialize::FromSqlRow,
         )]
-        #[strum(serialize_all = $serialize_all)]
         #[diesel(sql_type = diesel::sql_types::Text)]
         $(#[$meta])*
         $vis enum $name {
