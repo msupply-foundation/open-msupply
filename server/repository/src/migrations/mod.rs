@@ -47,14 +47,14 @@ mod views;
 pub(crate) use self::types::*;
 
 pub(crate) mod helpers;
-mod key_value_store;
 mod templates;
 
 pub use self::version::*;
 
 use crate::{
     migrations::base_migration::{initialize_earliest_db, initialize_latest_db, is_empty_db},
-    KeyType, MigrationFragmentLogRepository, RepositoryError, StorageConnection,
+    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError,
+    StorageConnection,
 };
 use chrono::{NaiveDateTime, Utc};
 use diesel::connection::SimpleConnection;
@@ -302,16 +302,13 @@ pub fn migrate(
 }
 
 fn get_database_version(connection: &StorageConnection) -> Version {
-    if let Ok(Some(version_str)) =
-        key_value_store::get_string(connection, KeyType::DatabaseVersion)
-    {
-        return Version::from_str(&version_str);
+    match KeyValueStoreRepository::new(connection).get_string(KeyType::DatabaseVersion) {
+        Ok(Some(version_str)) => Version::from_str(&version_str),
+        // Rust migrations start at "1.0.3"
+        // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
+        // is in 1.1.0 (there is an intentional gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
+        _ => Version::from_str("1.0.3"),
     }
-
-    // Rust migrations start at "1.0.3"
-    // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
-    // is in 1.1.0 (there is an intentional gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
-    Version::from_str("1.0.3")
 }
 
 fn create_migration_fragment_table(connection: &StorageConnection) -> Result<(), RepositoryError> {
@@ -333,11 +330,8 @@ fn set_database_version(
     connection: &StorageConnection,
     new_version: &Version,
 ) -> Result<(), RepositoryError> {
-    key_value_store::set_string(
-        connection,
-        KeyType::DatabaseVersion,
-        Some(new_version.to_string()),
-    )
+    KeyValueStoreRepository::new(connection)
+        .set_string(KeyType::DatabaseVersion, Some(new_version.to_string()))
 }
 
 #[derive(Error, Debug)]
