@@ -36,7 +36,7 @@ impl SyncTranslation for NameMergeTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<NameMergeMessage>(&sync_record.data)?;
+        let data = sync_record.deserialize::<NameMergeMessage>()?;
 
         let name_link_repo = NameLinkRowRepository::new(connection);
         let name_links = name_link_repo.find_many_by_name_id(&data.merge_id_to_delete)?;

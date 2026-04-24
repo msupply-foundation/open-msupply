@@ -100,7 +100,7 @@ impl SyncTranslation for StorePreferenceTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyPrefRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyPrefRow>()?;
 
         let LegacyPrefRow { id, r#type, data } = data;
 

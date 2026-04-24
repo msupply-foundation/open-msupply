@@ -32,7 +32,7 @@ impl SyncTranslation for NameTagTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameTagRow { ID, description } =
-            serde_json::from_str::<LegacyNameTagRow>(&sync_record.data)?;
+            sync_record.deserialize::<LegacyNameTagRow>()?;
 
         let result = NameTagRow {
             id: ID,

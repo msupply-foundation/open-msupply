@@ -40,7 +40,7 @@ impl SyncTranslation for ShippingMethodTranslation {
             id,
             method,
             is_active,
-        } = serde_json::from_str(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let deleted_datetime = if is_active {
             None

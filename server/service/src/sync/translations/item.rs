@@ -120,7 +120,7 @@ impl SyncTranslation for ItemTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyItemRow>()?;
 
         let mut integration_operations = Vec::new();
 

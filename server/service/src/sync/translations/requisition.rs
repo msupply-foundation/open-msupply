@@ -243,7 +243,7 @@ impl SyncTranslation for RequisitionTranslation {
         conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let json_data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let json_data = sync_record.deserialize::<serde_json::Value>()?;
         let sanitised_data = sanitize_legacy_record(json_data);
         let data = serde_json::from_value::<LegacyRequisitionRow>(sanitised_data)?;
         let r#type = match from_legacy_type(&data.r#type) {

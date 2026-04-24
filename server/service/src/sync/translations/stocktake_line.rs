@@ -146,7 +146,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             volume_per_pack,
             manufacturer_id,
             oms_fields,
-        } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
+        } = sync_record.deserialize::<LegacyStocktakeLineRow>()?;
 
         // TODO is this correct?
         let counted_number_of_packs = if is_edited {
