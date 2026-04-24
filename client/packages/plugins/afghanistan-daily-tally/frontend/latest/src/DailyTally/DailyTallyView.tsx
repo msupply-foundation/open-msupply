@@ -12,12 +12,10 @@ import {
   DateUtils,
   DownloadIcon,
   DialogButton,
-  EnvUtils,
   Formatter,
   FnUtils,
   LoadingButton,
   NothingHere,
-  Platform,
   PrinterIcon,
   RouteBuilder,
   SaveIcon,
@@ -945,12 +943,10 @@ export const DailyTallyView = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const theme = useTheme();
-  const isLaptopLayout = useMediaQuery(theme.breakpoints.up('lg'));
   const isPortraitOrientation = useMediaQuery('(orientation: portrait)');
   const isTabletOrSmaller = useMediaQuery(theme.breakpoints.down('md'));
   const keepTopRightButtonTextVisible = isTabletOrSmaller && isPortraitOrientation;
-  const useDesktopCoverageSummaryLayout =
-    isLaptopLayout || EnvUtils.platform === Platform.Android;
+  const useDesktopCoverageSummaryLayout = true;
   const isSimplifiedTabletUI = useSimplifiedTabletUI();
   const preferences = usePreferences();
   const { useSimplifiedMobileUi = false } = preferences;
