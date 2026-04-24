@@ -4724,10 +4724,13 @@ export const DailyTallyView = () => {
                                       : 'background.paper',
                                     color: 'text.primary',
                                     borderRadius: 1,
+                                    width: 'auto',
+                                    textAlign: 'left',
                                     paddingX: 1.25,
-                                    paddingY: 0.7,
+                                    paddingY: 0.75,
                                     fontWeight: 700,
-                                    fontSize: 14,
+                                    fontSize: 15,
+                                    lineHeight: 'normal',
                                     cursor: 'pointer',
                                   }}
                                 >
@@ -4765,10 +4768,13 @@ export const DailyTallyView = () => {
                                           : 'background.paper',
                                         color: 'text.primary',
                                         borderRadius: 1,
-                                        paddingX: 1.1,
-                                        paddingY: 0.6,
+                                        width: 'auto',
+                                        textAlign: 'left',
+                                        paddingX: 1.25,
+                                        paddingY: 0.75,
                                         fontWeight: 700,
-                                        fontSize: 13,
+                                        fontSize: 15,
+                                        lineHeight: 'normal',
                                         cursor: 'pointer',
                                       }}
                                     >
