@@ -76,7 +76,7 @@ impl SyncTranslation for LocationMovementTranslation {
             enter_time,
             exit_date,
             exit_time,
-        } = serde_json::from_str::<LegacyLocationMovementRow>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyLocationMovementRow>(sync_record.data.0.clone())?;
 
         let result = LocationMovementRow {
             id,

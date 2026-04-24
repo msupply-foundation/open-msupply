@@ -4,7 +4,7 @@ use chrono::Utc;
 use repository::{
     syncv7::{SiteLockError, SyncError},
     ChangelogTableName, KeyType, RowActionType, StorageConnection, SyncAction, SyncBufferRow,
-    SyncBufferRowRepository,
+    SyncBufferRowRepository, SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
 
@@ -58,7 +58,7 @@ pub(crate) fn sync_record_to_buffer_row(
             RowActionType::Upsert => SyncAction::Upsert,
             RowActionType::Delete => SyncAction::Delete,
         },
-        data: record.data.to_string(),
+        data: SyncRecordData(record.data),
         source_site_id: Some(source_site_id),
         store_id: record.store_id,
         transfer_store_id: record.transfer_store_id,

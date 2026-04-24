@@ -17,6 +17,16 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
+        #[cfg(feature = "postgres")]
+        sql!(
+            connection,
+            r#"
+                -- Convert action from Postgres enum to TEXT (SQLite is already TEXT)
+                ALTER TABLE sync_buffer ALTER COLUMN action TYPE TEXT USING action::TEXT;
+                DROP TYPE IF EXISTS sync_action;
+            "#
+        )?;
+
         Ok(())
     }
 }
