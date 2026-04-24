@@ -46,7 +46,7 @@ impl SyncTranslation for PeriodTranslation {
             start_date,
             end_date,
             name,
-        } = serde_json::from_str::<LegacyPeriodRow>(&sync_record.data)?;
+        } = sync_record.deserialize::<LegacyPeriodRow>()?;
 
         let result = PeriodRow {
             id,

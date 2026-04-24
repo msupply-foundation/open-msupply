@@ -46,6 +46,14 @@ pub struct SyncBufferRow {
     pub source_site_id: Option<i32>,
 }
 
+impl SyncBufferRow {
+    pub fn deserialize<'de, T: serde::de::Deserialize<'de>>(
+        &'de self,
+    ) -> Result<T, serde_json::Error> {
+        serde_json::from_str(&self.data)
+    }
+}
+
 pub struct SyncBufferRowRepository<'a> {
     connection: &'a StorageConnection,
 }

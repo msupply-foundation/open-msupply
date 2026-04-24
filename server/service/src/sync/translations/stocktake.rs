@@ -113,7 +113,7 @@ impl SyncTranslation for StocktakeTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyStocktakeRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyStocktakeRow>()?;
         let (created_datetime, finalised_datetime) = match data.created_datetime {
             Some(created_datetime) => {
                 // use new om_* fields

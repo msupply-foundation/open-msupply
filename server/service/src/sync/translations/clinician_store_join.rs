@@ -51,7 +51,7 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             id,
             store_id,
             prescriber_id,
-        } = serde_json::from_str::<LegacyClinicianStoreJoinRow>(&sync_record.data)?;
+        } = sync_record.deserialize::<LegacyClinicianStoreJoinRow>()?;
 
         let result = ClinicianStoreJoinRow {
             id,

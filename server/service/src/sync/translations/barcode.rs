@@ -53,7 +53,7 @@ impl SyncTranslation for BarcodeTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyBarcodeRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyBarcodeRow>()?;
 
         let LegacyBarcodeRow {
             id,

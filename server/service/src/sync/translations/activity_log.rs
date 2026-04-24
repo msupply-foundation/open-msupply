@@ -52,7 +52,7 @@ impl SyncTranslation for ActivityLogTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyActivityLogRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyActivityLogRow>()?;
 
         let result = ActivityLogRow {
             id: data.id.to_string(),

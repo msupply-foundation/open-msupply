@@ -76,7 +76,7 @@ impl SyncTranslation for VVMStatusLogTranslation {
             created_by,
             invoice_line_id,
             store_id,
-        } = serde_json::from_str::<LegacyVVMStatusLogRow>(&sync_record.data)?;
+        } = sync_record.deserialize::<LegacyVVMStatusLogRow>()?;
 
         let created_datetime = NaiveDateTime::new(date, time);
 

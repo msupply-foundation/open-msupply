@@ -32,7 +32,7 @@ impl SyncTranslation for ItemMergeTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<ItemMergeMessage>(&sync_record.data)?;
+        let data = sync_record.deserialize::<ItemMergeMessage>()?;
 
         let item_link_repo = ItemLinkRowRepository::new(connection);
         let item_links = item_link_repo.find_many_by_item_id(&data.merge_id_to_delete)?;

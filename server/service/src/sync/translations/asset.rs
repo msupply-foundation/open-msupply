@@ -42,7 +42,7 @@ impl SyncTranslation for AssetTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(
-            serde_json::from_str::<AssetRow>(&sync_record.data)?,
+            sync_record.deserialize::<AssetRow>()?,
         ))
     }
 

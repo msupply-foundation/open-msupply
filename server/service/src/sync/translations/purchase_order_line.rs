@@ -131,7 +131,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             note,
             unit,
             oms_fields,
-        } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
+        } = sync_record.deserialize::<LegacyPurchaseOrderLineRow>()?;
 
         let result = PurchaseOrderLineRow {
             id,
