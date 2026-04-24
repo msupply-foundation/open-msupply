@@ -38,7 +38,7 @@ impl SyncTranslation for ProgramIndicatorTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyProgramIndicator>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyProgramIndicator>(sync_record.data.0.clone())?;
 
         let result = ProgramIndicatorRow {
             id: data.id,
