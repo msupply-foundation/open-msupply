@@ -121,6 +121,7 @@ diesel_string_enum! {
         PurchaseOrder,
         PurchaseOrderLine,
         MasterList,
+        Site,
     }
 }
 
@@ -209,6 +210,7 @@ impl ChangelogTableName {
             ChangelogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::MasterList => ChangeLogSyncStyle::ProcessorOnly,
+            ChangelogTableName::Site => ChangeLogSyncStyle::Central,
         }
     }
 }

@@ -13,7 +13,9 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
-use async_graphql::{EmptyMutation, EmptySubscription, MergedSubscription, Object, Schema, Subscription};
+use async_graphql::{
+    EmptyMutation, EmptySubscription, MergedSubscription, Object, Schema, Subscription,
+};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
 
@@ -56,6 +58,7 @@ use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
+use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
@@ -70,11 +73,11 @@ use futures::stream::Stream;
 use tokio::sync::broadcast;
 
 use service::auth_data::AuthData;
-use service::subscription::ResolvedSubscription;
 use service::boajs::utils::{ExecuteGraphQlError, ExecuteGraphql};
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
+use service::subscription::ResolvedSubscription;
 use service::sync::CentralServerConfig;
 
 pub type OperationalSchema = async_graphql::Schema<Queries, Mutations, Subscriptions>;
@@ -128,6 +131,10 @@ impl CentralServerMutationNode {
     async fn reports(&self) -> CentralReportMutations {
         CentralReportMutations
     }
+
+    async fn site(&self) -> CentralSiteMutations {
+        CentralSiteMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -136,6 +143,10 @@ pub struct CentralServerQueryNode;
 impl CentralServerQueryNode {
     async fn plugin(&self) -> CentralPluginQueries {
         CentralPluginQueries
+    }
+
+    async fn site(&self) -> CentralSiteQueries {
+        CentralSiteQueries
     }
 }
 
@@ -473,16 +484,12 @@ async fn graphql_ws(
     };
 
     match &*schema.operational_status.read().await {
-        OperationalStatus::Operational => {
-            GraphQLSubscription::new(schema.operational.clone())
-                .on_connection_init(on_connection_init)
-                .start(&req, payload)
-        }
-        OperationalStatus::Initialising => {
-            GraphQLSubscription::new(schema.initialisation.clone())
-                .on_connection_init(on_connection_init)
-                .start(&req, payload)
-        }
+        OperationalStatus::Operational => GraphQLSubscription::new(schema.operational.clone())
+            .on_connection_init(on_connection_init)
+            .start(&req, payload),
+        OperationalStatus::Initialising => GraphQLSubscription::new(schema.initialisation.clone())
+            .on_connection_init(on_connection_init)
+            .start(&req, payload),
         OperationalStatus::MigratingDatabase => {
             //TODO: add migration status subscription and route to that instead of returning an error here
             Err(actix_web::error::ErrorServiceUnavailable(

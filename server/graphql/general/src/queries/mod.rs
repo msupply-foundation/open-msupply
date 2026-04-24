@@ -77,6 +77,5 @@ pub mod diagnosis;
 pub mod insurance_policies;
 pub mod insurance_providers;
 pub mod shipping_method;
-
 #[cfg(test)]
 mod tests;

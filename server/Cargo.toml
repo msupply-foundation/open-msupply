@@ -92,6 +92,7 @@ members = [
   "graphql/stock_line",
   "graphql/stocktake",
   "graphql/stocktake_line",
+  "graphql/site",
   "graphql/types",
   "graphql/vaccine_course",
   "cli",
