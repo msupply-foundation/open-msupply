@@ -76,6 +76,7 @@ type ItemGroup = {
   isVaccine: boolean;
   doses: number;
   sohPacks: number;
+  monthlyTargetDoses: number;
   stockLines: TallyStockLine[];
 };
 
@@ -467,6 +468,24 @@ const normaliseReason = (value: string | null | undefined) =>
   (value ?? '').trim().toLowerCase();
 
 const round = (value: number) => Math.round((value + Number.EPSILON) * 1000) / 1000;
+
+const markerLabelTranslatePercent = (markerPercent: number): number => {
+  // Clamp to 0-100 range
+  const clamped = Math.max(0, Math.min(100, markerPercent));
+
+  // Zone 1 (0-20%): transition from left (0%) to center (-50%)
+  if (clamped <= 20) {
+    return 0 - (50 * (clamped / 20));
+  }
+
+  // Zone 2 (20-80%): stay centered (-50%)
+  if (clamped < 80) {
+    return -50;
+  }
+
+  // Zone 3 (80-100%): transition from center (-50%) to right (-100%)
+  return -50 - (50 * ((clamped - 80) / 20));
+};
 
 const defaultDailyTallyReference = () => {
   const now = new Date();
@@ -1454,18 +1473,61 @@ export const DailyTallyView = () => {
   });
 
   const { data: vaccineCourseLookup } = useQuery({
-    queryKey: ['daily-tally', 'vaccine-course-doses'],
+    queryKey: ['daily-tally', 'vaccine-course-doses', storeId],
     queryFn: async () => {
       const result = await gqlClient.request<{
+        store?: {
+          id: string;
+          name?: {
+            properties?: string | null;
+          } | null;
+        } | null;
+        demographicIndicators?: {
+          nodes?: Array<{
+            id: string;
+            name?: string | null;
+            populationPercentage?: number | null;
+          }>;
+        } | null;
         vaccineCourses: {
           nodes: Array<{
             name?: string | null;
+            demographicId?: string | null;
+            demographic?: { name?: string | null } | null;
+            coverageRate?: number | null;
+            wastageRate?: number | null;
+            storeConfigs?: Array<{
+              storeId?: string | null;
+              coverageRate?: number | null;
+              wastageRate?: number | null;
+            }> | null;
             vaccineCourseItems?: Array<{ itemId: string }> | null;
             vaccineCourseDoses?: Array<{ id: string; label: string }> | null;
           }>;
         };
-      }, Record<string, never>>(`
-        query dailyTallyVaccineCourses {
+      }, { storeId: string }>(`
+        query dailyTallyVaccineCourses($storeId: String!) {
+          store(id: $storeId) {
+            ... on StoreNode {
+              id
+              name(storeId: $storeId) {
+                properties
+              }
+            }
+          }
+          demographicIndicators(
+            storeId: $storeId
+            page: { first: 5000 }
+            sort: { key: name }
+          ) {
+            ... on DemographicIndicatorConnector {
+              nodes {
+                id
+                name
+                populationPercentage
+              }
+            }
+          }
           vaccineCourses(
             sort: { key: name }
             page: { first: 1000 }
@@ -1473,19 +1535,116 @@ export const DailyTallyView = () => {
             ... on VaccineCourseConnector {
               nodes {
                 name
+                demographicId
+                demographic { name }
+                coverageRate
+                wastageRate
+                storeConfigs {
+                  storeId
+                  coverageRate
+                  wastageRate
+                }
                 vaccineCourseItems { itemId }
                 vaccineCourseDoses { id label }
               }
             }
           }
         }
-      `);
+      `, { storeId });
       const courses = result.vaccineCourses?.nodes ?? [];
       const dosesByItemId: Record<string, VaccineCourseDose[]> = {};
       const courseNameByItemId: Record<string, string> = {};
+      const populationTargetDosesByItemId: Record<string, number> = {};
+
+      const populationPercentageById: Record<string, number> = {};
+      const populationPercentageByName: Record<string, number> = {};
+      for (const indicator of result.demographicIndicators?.nodes ?? []) {
+        const populationPercentage = Math.max(
+          0,
+          toNumeric(indicator.populationPercentage)
+        );
+        populationPercentageById[indicator.id] = populationPercentage;
+        const indicatorName = indicator.name?.trim().toLowerCase();
+        if (indicatorName) {
+          populationPercentageByName[indicatorName] = populationPercentage;
+        }
+      }
+
+      let storeProperties: Record<string, unknown> = {};
+      try {
+        const rawStoreProperties = result.store?.name?.properties;
+        if (rawStoreProperties) {
+          storeProperties = JSON.parse(rawStoreProperties);
+        }
+      } catch {
+        storeProperties = {};
+      }
+
+      const populationServed = Math.max(
+        0,
+        toNumeric(storeProperties['population_served'] as number | string | undefined)
+      );
+      const supplyInterval = Math.max(
+        0,
+        toNumeric(storeProperties['supply_interval'] as number | string | undefined)
+      );
+      const bufferStock = Math.max(
+        0,
+        toNumeric(storeProperties['buffer_stock'] as number | string | undefined)
+      );
+      const planningMonths = Math.max(1, supplyInterval + bufferStock);
+
       for (const course of courses) {
         const items = course.vaccineCourseItems ?? [];
         const doses = (course.vaccineCourseDoses ?? []).filter(d => d.label);
+
+        let coverageRate =
+          course.coverageRate != null ? toNumeric(course.coverageRate) : 100;
+        let wastageRate =
+          course.wastageRate != null ? toNumeric(course.wastageRate) : 0;
+        for (const storeConfig of course.storeConfigs ?? []) {
+          if (storeConfig?.storeId !== storeId) continue;
+          if (storeConfig.coverageRate != null) {
+            coverageRate = toNumeric(storeConfig.coverageRate);
+          }
+          if (storeConfig.wastageRate != null) {
+            wastageRate = toNumeric(storeConfig.wastageRate);
+          }
+          break;
+        }
+
+        const demographicName = course.demographic?.name?.trim().toLowerCase();
+        const populationPercentage =
+          (course.demographicId
+            ? populationPercentageById[course.demographicId]
+            : undefined) ??
+          (demographicName
+            ? populationPercentageByName[demographicName]
+            : undefined) ??
+          0;
+
+        const numberOfCourseDoses = Math.max(
+          1,
+          (course.vaccineCourseDoses ?? []).length
+        );
+        const targetPopulation = populationServed * (populationPercentage / 100);
+        const wastageDenominator = 1 - wastageRate / 100;
+
+        let targetStockDoses = 0;
+        if (
+          targetPopulation > 0 &&
+          coverageRate > 0 &&
+          wastageDenominator > 0
+        ) {
+          const annualTargetDoses =
+            targetPopulation *
+            numberOfCourseDoses *
+            (coverageRate / 100) *
+            (1 / wastageDenominator);
+          const monthlyTargetDoses = annualTargetDoses / 12;
+          targetStockDoses = round(monthlyTargetDoses * planningMonths);
+        }
+
         for (const item of items) {
           if (doses.length > 0 && !dosesByItemId[item.itemId]) {
             dosesByItemId[item.itemId] = doses;
@@ -1493,11 +1652,15 @@ export const DailyTallyView = () => {
           if (!courseNameByItemId[item.itemId] && course.name) {
             courseNameByItemId[item.itemId] = course.name;
           }
+          populationTargetDosesByItemId[item.itemId] = round(
+            (populationTargetDosesByItemId[item.itemId] ?? 0) + targetStockDoses
+          );
         }
       }
       return {
         dosesByItemId,
         courseNameByItemId,
+        populationTargetDosesByItemId,
       };
     },
     keepPreviousData: true,
@@ -1505,6 +1668,8 @@ export const DailyTallyView = () => {
 
   const dosesForItemId = vaccineCourseLookup?.dosesByItemId;
   const courseNameByItemId = vaccineCourseLookup?.courseNameByItemId;
+  const populationTargetDosesByItemId =
+    vaccineCourseLookup?.populationTargetDosesByItemId;
 
   const groupedItems = useMemo((): ItemGroup[] => {
     return (data?.nodes ?? [])
@@ -1521,6 +1686,9 @@ export const DailyTallyView = () => {
           (total, stockLine) => total + stockLine.availableNumberOfPacks,
           0
         );
+        const monthlyTargetDoses = round(
+          populationTargetDosesByItemId?.[item.id] ?? 0
+        );
 
         return {
           itemId: item.id,
@@ -1529,11 +1697,12 @@ export const DailyTallyView = () => {
           isVaccine: item.isVaccine,
           doses: item.doses,
           sohPacks,
+          monthlyTargetDoses,
           stockLines,
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data?.nodes]);
+  }, [data?.nodes, populationTargetDosesByItemId]);
 
   const coverageTemplate = useMemo(
     () => mapFixedDemographicGroups(demographicData?.nodes),
@@ -2703,6 +2872,151 @@ export const DailyTallyView = () => {
     applyUsedValue(row, parseInput(rawValue));
   };
 
+  const syncSessionTallyFromCoverage = (
+    row: DailyTallyRow,
+    coverage: VaccineCoverageDraft,
+    doseId?: string
+  ) => {
+    const visibility = coverageFieldVisibilityByItem[row.itemId] ?? {
+      showChild: false,
+      showWomen: false,
+    };
+    const isWomenOnly = visibility.showWomen && !visibility.showChild;
+
+    setSessionTallyByItem(previous => {
+      const baseSessionKey = getSessionTallyKey(row.itemId);
+      const doseSessionKey = doseId
+        ? getSessionTallyKey(row.itemId, doseId)
+        : undefined;
+      const primarySessionKey = doseSessionKey ?? baseSessionKey;
+      const currentDraft =
+        previous[primarySessionKey] ??
+        previous[baseSessionKey] ??
+        createEmptySessionTallyDraft();
+      const nextDraft: VaccineSessionTallyDraft = {
+        counts: {
+          under1: { ...currentDraft.counts.under1 },
+          oneToTwo: { ...currentDraft.counts.oneToTwo },
+          twoToFive: { ...currentDraft.counts.twoToFive },
+        },
+      };
+
+      if (isWomenOnly) {
+        const womenNonPregnant = coverage.womenAgeGroups.reduce(
+          (total, group) =>
+            isWomenNonPregnantBucket(group.id, group.label) ? total + group.count : total,
+          0
+        );
+        const womenPregnant = coverage.womenAgeGroups.reduce(
+          (total, group) =>
+            isWomenPregnantBucket(group.id, group.label) ? total + group.count : total,
+          0
+        );
+
+        nextDraft.counts[womenNonPregnantTallyKey] = {
+          male: 0,
+          female: womenNonPregnant,
+        };
+        nextDraft.counts[womenPregnantTallyKey] = {
+          male: 0,
+          female: womenPregnant,
+        };
+      } else {
+        const childUnderOne = coverage.childAgeGroups.reduce(
+          (totals, group) =>
+            isChild011Bucket(group.id, group.label)
+              ? {
+                  male: totals.male + group.male,
+                  female: totals.female + group.female,
+                }
+              : totals,
+          { male: 0, female: 0 }
+        );
+        const childOneToTwo = coverage.childAgeGroups.reduce(
+          (totals, group) =>
+            isChild1223Bucket(group.id, group.label)
+              ? {
+                  male: totals.male + group.male,
+                  female: totals.female + group.female,
+                }
+              : totals,
+          { male: 0, female: 0 }
+        );
+        const childTwoToFive = coverage.childAgeGroups.reduce(
+          (totals, group) =>
+            isChild25Bucket(group.id, group.label)
+              ? {
+                  male: totals.male + group.male,
+                  female: totals.female + group.female,
+                }
+              : totals,
+          { male: 0, female: 0 }
+        );
+
+        nextDraft.counts.under1 = {
+          male: childUnderOne.male,
+          female: childUnderOne.female,
+        };
+        nextDraft.counts.oneToTwo = {
+          male: childOneToTwo.male,
+          female: childOneToTwo.female,
+        };
+        nextDraft.counts.twoToFive = {
+          male: childTwoToFive.male,
+          female: childTwoToFive.female,
+        };
+      }
+
+      const existingBaseDraft = previous[baseSessionKey] ?? createEmptySessionTallyDraft();
+      const existingDoseDraft = doseSessionKey
+        ? previous[doseSessionKey] ?? createEmptySessionTallyDraft()
+        : existingBaseDraft;
+
+      const isSameAsBase =
+        existingBaseDraft.counts.under1.male === nextDraft.counts.under1.male &&
+        existingBaseDraft.counts.under1.female === nextDraft.counts.under1.female &&
+        existingBaseDraft.counts.oneToTwo.male === nextDraft.counts.oneToTwo.male &&
+        existingBaseDraft.counts.oneToTwo.female === nextDraft.counts.oneToTwo.female &&
+        existingBaseDraft.counts.twoToFive.male === nextDraft.counts.twoToFive.male &&
+        existingBaseDraft.counts.twoToFive.female === nextDraft.counts.twoToFive.female;
+      const isSameAsDose =
+        existingDoseDraft.counts.under1.male === nextDraft.counts.under1.male &&
+        existingDoseDraft.counts.under1.female === nextDraft.counts.under1.female &&
+        existingDoseDraft.counts.oneToTwo.male === nextDraft.counts.oneToTwo.male &&
+        existingDoseDraft.counts.oneToTwo.female === nextDraft.counts.oneToTwo.female &&
+        existingDoseDraft.counts.twoToFive.male === nextDraft.counts.twoToFive.male &&
+        existingDoseDraft.counts.twoToFive.female === nextDraft.counts.twoToFive.female;
+
+      if (isSameAsBase && isSameAsDose) {
+        return previous;
+      }
+
+      if (doseSessionKey) {
+        return {
+          ...previous,
+          [baseSessionKey]: nextDraft,
+          [doseSessionKey]: nextDraft,
+        };
+      }
+
+      if (
+        currentDraft.counts.under1.male === nextDraft.counts.under1.male &&
+        currentDraft.counts.under1.female === nextDraft.counts.under1.female &&
+        currentDraft.counts.oneToTwo.male === nextDraft.counts.oneToTwo.male &&
+        currentDraft.counts.oneToTwo.female === nextDraft.counts.oneToTwo.female &&
+        currentDraft.counts.twoToFive.male === nextDraft.counts.twoToFive.male &&
+        currentDraft.counts.twoToFive.female === nextDraft.counts.twoToFive.female
+      ) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        [baseSessionKey]: nextDraft,
+      };
+    });
+  };
+
   const updateCoverageForRow = (
     row: DailyTallyRow,
     updater: (current: VaccineCoverageDraft) => VaccineCoverageDraft
@@ -2731,6 +3045,8 @@ export const DailyTallyView = () => {
         }
       )
     );
+
+    syncSessionTallyFromCoverage(row, nextCoverage);
   };
 
   const updateDoseCoverageForRow = (
@@ -2771,6 +3087,8 @@ export const DailyTallyView = () => {
         }
       )
     );
+
+    syncSessionTallyFromCoverage(row, nextDoseCoverage, doseId);
   };
 
   const updateOpenVialWastage = (row: DailyTallyRow, checked: boolean) => {
@@ -4047,8 +4365,14 @@ export const DailyTallyView = () => {
       ? getSessionTallyKey(selectedTallyRow.itemId, selectedTallyDoseId)
       : getSessionTallyKey(selectedTallyRow.itemId)
     : null;
+  const selectedTallyBaseSessionKey = selectedTallyRow
+    ? getSessionTallyKey(selectedTallyRow.itemId)
+    : null;
   const selectedTallyDraft = selectedTallySessionKey
-    ? sessionTallyByItem[selectedTallySessionKey] ?? createEmptySessionTallyDraft()
+    ? sessionTallyByItem[selectedTallySessionKey] ??
+      (selectedTallyBaseSessionKey
+        ? sessionTallyByItem[selectedTallyBaseSessionKey] ?? createEmptySessionTallyDraft()
+        : createEmptySessionTallyDraft())
     : null;
   const tallyCourseOptions = useMemo(() => {
     const optionsByCourseName: Record<string, { courseName: string; itemId: string }> = {};
@@ -4065,6 +4389,70 @@ export const DailyTallyView = () => {
       a.courseName.localeCompare(b.courseName)
     );
   }, [courseNameByItemId, vaccineRows]);
+  const monthlyTargetDosesByItemId = useMemo(
+    () =>
+      Object.fromEntries(
+        groupedItems.map(item => [item.itemId, item.monthlyTargetDoses])
+      ) as Record<string, number>,
+    [groupedItems]
+  );
+  const selectedTallyCourseName = selectedTallyRow
+    ? courseNameByItemId?.[selectedTallyRow.itemId] ?? selectedTallyRow.item
+    : '';
+  const courseCounterStockIndicators = useMemo(() => {
+    return tallyCourseOptions.map(option => {
+      const courseRows = vaccineRows.filter(row => {
+        const courseName = courseNameByItemId?.[row.itemId] ?? row.item;
+        return courseName === option.courseName;
+      });
+
+      const targetDoses = round(
+        courseRows.reduce(
+          (sum, row) => sum + (monthlyTargetDosesByItemId[row.itemId] ?? 0),
+          0
+        )
+      );
+      const currentStockDoses = round(
+        courseRows.reduce((sum, row) => sum + row.soh, 0)
+      );
+      const countedDoses = round(
+        courseRows.reduce(
+          (sum, row) =>
+            sum +
+            getSessionTallyVaccineTotalForItem(
+              sessionTallyByItem,
+              row,
+              dosesForItemId?.[row.itemId] ?? []
+            ),
+          0
+        )
+      );
+
+      const remainingDoses = Math.max(0, currentStockDoses - countedDoses);
+      const markerPercent =
+        targetDoses > 0
+          ? Math.max(0, Math.min(100, (remainingDoses / targetDoses) * 100))
+          : 0;
+
+      return {
+        courseName: option.courseName,
+        targetDoses,
+        remainingDoses,
+        markerPercent,
+      };
+    });
+  }, [
+    courseNameByItemId,
+    dosesForItemId,
+    monthlyTargetDosesByItemId,
+    sessionTallyByItem,
+    tallyCourseOptions,
+    vaccineRows,
+  ]);
+  const selectedCourseCounterStockIndicator =
+    courseCounterStockIndicators.find(
+      indicator => indicator.courseName === selectedTallyCourseName
+    ) ?? null;
   const canUndoFocusedTally = selectedTallyRow
     ? tallyTapHistory.some(
         action =>
@@ -4989,6 +5377,142 @@ export const DailyTallyView = () => {
                         }}
                       >
                         <Box>
+                          <Box sx={{ marginBottom: 1.6 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontWeight: 700,
+                                color: 'text.secondary',
+                                display: 'block',
+                                marginBottom: 0.5,
+                              }}
+                            >
+                              AVAILABLE STOCK
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1,
+                              }}
+                            >
+                              {selectedCourseCounterStockIndicator ? (
+                                <Box
+                                  sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'auto minmax(180px, 1fr) auto',
+                                    alignItems: 'center',
+                                    columnGap: 1,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{
+                                      fontSize: 10,
+                                      minWidth: 10,
+                                      textAlign: 'right',
+                                    }}
+                                  >
+                                    0
+                                  </Typography>
+
+                                  <Box
+                                    sx={{
+                                      position: 'relative',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      height: 30,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        width: '100%',
+                                        height: 3,
+                                        borderRadius: 1,
+                                        backgroundColor: 'rgba(0,0,0,0.2)',
+                                      }}
+                                    />
+                                    <Box
+                                      sx={{
+                                        position: 'absolute',
+                                        left: 0,
+                                        width: `${selectedCourseCounterStockIndicator.markerPercent}%`,
+                                        height: 3,
+                                        borderRadius: 1,
+                                        backgroundColor: '#eb6d27',
+                                      }}
+                                    />
+                                    <Box
+                                      sx={{
+                                        position: 'absolute',
+                                        left: `${selectedCourseCounterStockIndicator.markerPercent}%`,
+                                        top: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        width: 9,
+                                        height: 9,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#eb6d27',
+                                        border: '1px solid #fff',
+                                        boxShadow: '0 0 0 1px rgba(0,0,0,0.15)',
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        position: 'absolute',
+                                        left: `${selectedCourseCounterStockIndicator.markerPercent}%`,
+                                        top: 0,
+                                        transform: `translate(${markerLabelTranslatePercent(
+                                          selectedCourseCounterStockIndicator.markerPercent
+                                        )}%, -2px)`,
+                                        fontWeight: 700,
+                                        color: '#eb6d27',
+                                        fontSize: 10,
+                                        lineHeight: 1,
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {selectedCourseCounterStockIndicator.remainingDoses} doses
+                                    </Typography>
+                                  </Box>
+
+                                  <Box
+                                    sx={{
+                                      minWidth: 124,
+                                      position: 'relative',
+                                      height: 30,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{ fontSize: 10, fontWeight: 700 }}
+                                    >
+                                      {selectedCourseCounterStockIndicator.targetDoses}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{
+                                        fontSize: 10,
+                                        position: 'absolute',
+                                        left: 0,
+                                        top: '50%',
+                                        transform: 'translateY(-120%)',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      Monthly target
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              ) : null}
+                            </Box>
+                          </Box>
+
                           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
                             VACCINE COURSE
                           </Typography>
@@ -5253,6 +5777,7 @@ export const DailyTallyView = () => {
                               width: '100%',
                               position: 'relative',
                               paddingBottom: { xs: 7, md: 0 },
+                              transform: { xs: 'translateY(-30px)', md: 'translateY(-28px)' },
                             }}
                           >
                             {showTallyTapHint ? (

@@ -235,7 +235,14 @@ export const isChild1223Bucket = (
   buckets?: DemographicBuckets
 ) => {
   if (buckets?.child12 && groupId === buckets.child12.id) return true;
-  return groupId === 'child-12-23' || ageRangeMatch(groupName, 12, 23);
+  return (
+    groupId === 'child-12-23' ||
+    groupId === 'child-1-2' ||
+    ageRangeMatch(groupName, 12, 23) ||
+    ageRangeMatch(groupName, 1, 2) ||
+    normalize(groupName).includes('under 3') ||
+    normalize(groupName).includes('under three')
+  );
 };
 
 export const isChild25Bucket = (
