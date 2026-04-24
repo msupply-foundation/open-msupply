@@ -64,7 +64,7 @@ impl SyncTranslation for LocationTranslation {
             store_id,
             location_type_id,
             volume,
-        } = serde_json::from_str::<LegacyLocationRow>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyLocationRow>(sync_record.data.0.clone())?;
 
         let result = LocationRow {
             id,

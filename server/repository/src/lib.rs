@@ -27,6 +27,13 @@ define_sql_function!(fn lower(x: Text) -> Text);
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
+    fn delete_v7(
+        &self,
+        _con: &StorageConnection,
+        _changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        unimplemented!("delete_v7 not implemented for this type")
+    }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection);
 }
@@ -34,6 +41,13 @@ pub trait Delete: DebugTrait {
 pub trait Upsert: DebugTrait {
     // Upsert returns a changelog id if the table is tracked in changelog
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
+    fn upsert_v7(
+        &self,
+        _con: &StorageConnection,
+        _changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        unimplemented!("upsert_v7 not implemented for this type")
+    }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection);

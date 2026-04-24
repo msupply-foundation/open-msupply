@@ -363,7 +363,7 @@ impl SyncTranslation for InvoiceTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let data = serde_json::from_value::<serde_json::Value>(sync_record.data.0.clone())?;
         let data = sanitize_legacy_record(data);
         let data = serde_json::from_value::<LegacyTransactRow>(data)?;
         // For owner records, only integrate if it's an insert operation, to happen only during initialisation,
@@ -473,6 +473,7 @@ impl SyncTranslation for InvoiceTranslation {
             shipping_method_id: data.shipping_method_id,
             charges_local_currency: oms_fields.charges_local_currency,
             charges_foreign_currency: oms_fields.charges_foreign_currency,
+            ..Default::default()
         };
 
         // HACK...
@@ -565,6 +566,7 @@ impl SyncTranslation for InvoiceTranslation {
                     shipping_method_id,
                     charges_local_currency,
                     charges_foreign_currency,
+                    transfer_store_id: _,
                 },
             name_row,
             clinician_row,

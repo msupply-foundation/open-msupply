@@ -179,6 +179,7 @@ fn generate(
         finalised_datetime: None,
         linked_requisition_id: None,
         destination_customer_id: None,
+        ..Default::default()
     };
 
     // Response requisition that still need to be supplied (supply < requested)

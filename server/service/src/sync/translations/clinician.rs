@@ -95,7 +95,7 @@ impl SyncTranslation for ClinicianTranslation {
             is_active,
             store_id,
             oms_fields,
-        } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyClinicianRow>(sync_record.data.0.clone())?;
 
         let gender = if let Some(fields) = oms_fields {
             fields.gender

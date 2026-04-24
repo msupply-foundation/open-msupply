@@ -38,7 +38,7 @@ impl SyncTranslation for WarningTranslation {
             id,
             warning_text,
             code,
-        } = serde_json::from_str::<LegacyWarningRow>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyWarningRow>(sync_record.data.0.clone())?;
 
         let result = WarningRow {
             id,
