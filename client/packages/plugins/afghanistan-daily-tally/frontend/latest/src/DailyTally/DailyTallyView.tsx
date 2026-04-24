@@ -188,6 +188,33 @@ type CourseItemSelectionCandidate = {
   }>;
 };
 
+type DailyTallyPersistedDraftPayload = {
+  selectedPatientId: string;
+  referenceText: string;
+  draftByItem: Record<string, RowDraft>;
+  coverageByItem: Record<string, VaccineCoverageDraft>;
+  perDoseCoverageByItem: Record<string, Record<string, VaccineCoverageDraft>>;
+  selectedDoseIdByItem: Record<string, string>;
+  expandedStepOneVaccineItemIds: Record<string, boolean>;
+  expandedNonVaccineItemIds: Record<string, boolean>;
+  sessionTallyByItem: Record<string, VaccineSessionTallyDraft>;
+  selectedTallyItemId: string | null;
+  activeTallyGender: TallyGenderKey;
+  activeTallyAge: TallyAgeKey;
+  tallyTapHistory: TallyTapAction[];
+  selectedCourseItemIdsByCourse: Record<string, string[]>;
+  expandedCoverageItemIds: Record<string, boolean>;
+  expandedByItem: Record<string, boolean>;
+  workflowStep: WorkflowStep;
+  showTallyTapHint: boolean;
+};
+
+type DailyTallyPersistedDraft = {
+  version: number;
+  savedAt: string;
+  payload: DailyTallyPersistedDraftPayload;
+};
+
 const tallyAgeGroups: Array<{ key: TallyAgeKey; label: string }> = [
   { key: 'under1', label: '0 to 11 months' },
   { key: 'oneToTwo', label: '1 to 2 years' },
@@ -935,6 +962,33 @@ const batchLabel = (stockLine: TallyStockLine) => {
   return batch || stockLine.expiryDate || 'No batch';
 };
 
+const DAILY_TALLY_DRAFT_VERSION = 1;
+const DAILY_TALLY_DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+const DAILY_TALLY_DRAFT_SAVE_DEBOUNCE_MS = 400;
+
+const getDailyTallyDraftStorageKey = (storeId: string) =>
+  `@openmsupply-client/daily-tally/draft/${storeId}`;
+
+const hasRowDraftValues = (draftByItem: Record<string, RowDraft>) =>
+  Object.values(draftByItem).some(draft => {
+    if (draft.used > 0 || draft.wastage > 0 || draft.openVialWastage) return true;
+
+    return Object.values(draft.batchDraftById ?? {}).some(
+      batch => batch.used > 0 || batch.wastage > 0 || batch.openVialWastage
+    );
+  });
+
+const hasPerDoseCoverageValues = (
+  perDoseCoverageByItem: Record<string, Record<string, VaccineCoverageDraft>>
+) =>
+  Object.values(perDoseCoverageByItem).some(perDoseCoverage =>
+    Object.values(perDoseCoverage).some(hasCoverageValues)
+  );
+
+const hasSessionTallyValues = (
+  sessionTallyByItem: Record<string, VaccineSessionTallyDraft>
+) => Object.values(sessionTallyByItem).some(sessionDraft => sessionTallyVaccineTotal(sessionDraft) > 0);
+
 const dailyTallyListPath = RouteBuilder.create(AppRoute.Dispensary)
   .addPart('daily-tally')
   .build();
@@ -1005,13 +1059,17 @@ export const DailyTallyView = () => {
   const contentContainerRef = useRef<HTMLDivElement | null>(null);
   const [showTallyTapHint, setShowTallyTapHint] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [workflowStep, setWorkflowStep] = useState<WorkflowStep>(
+  const [resumeDraftOpen, setResumeDraftOpen] = useState(false);
+  const [pendingDraftPayload, setPendingDraftPayload] =
+    useState<DailyTallyPersistedDraftPayload | null>(null);
+  const hasCheckedStoredDraftRef = useRef(false);
+  const initialWorkflowStep: WorkflowStep =
     isSessionTallyStepEnabled
       ? 'tally'
       : isSimplifiedMode
         ? 'allocation'
-        : 'coverage'
-  );
+        : 'coverage';
+  const [workflowStep, setWorkflowStep] = useState<WorkflowStep>(initialWorkflowStep);
 
   const { Modal: ConfirmSummaryModal } = useDialog({
     isOpen: confirmSummaryOpen,
@@ -1022,6 +1080,12 @@ export const DailyTallyView = () => {
   const { Modal: DuplicateWarningModal } = useDialog({
     isOpen: duplicateWarningOpen,
     onClose: () => setDuplicateWarningOpen(false),
+    disableBackdrop: true,
+  });
+
+  const { Modal: ResumeDraftModal } = useDialog({
+    isOpen: resumeDraftOpen,
+    onClose: () => setResumeDraftOpen(false),
     disableBackdrop: true,
   });
 
@@ -1049,6 +1113,188 @@ export const DailyTallyView = () => {
       target.style.overflowY = previousOverflowY;
     };
   }, []);
+
+  const draftStorageKey = useMemo(
+    () => (storeId ? getDailyTallyDraftStorageKey(storeId) : null),
+    [storeId]
+  );
+  const shouldAutoResumeFromListAction = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('resumeDraft') === '1';
+  }, []);
+
+  const applyPersistedCounterDraft = (payload: DailyTallyPersistedDraftPayload) => {
+    setSelectedPatientId(payload.selectedPatientId);
+    setReferenceText(payload.referenceText);
+    setDraftByItem(payload.draftByItem);
+    setCoverageByItem(payload.coverageByItem);
+    setPerDoseCoverageByItem(payload.perDoseCoverageByItem);
+    setSelectedDoseIdByItem(payload.selectedDoseIdByItem);
+    setExpandedStepOneVaccineItemIds(payload.expandedStepOneVaccineItemIds);
+    setExpandedNonVaccineItemIds(payload.expandedNonVaccineItemIds);
+    setSessionTallyByItem(payload.sessionTallyByItem);
+    setSelectedTallyItemId(payload.selectedTallyItemId);
+    setActiveTallyGender(payload.activeTallyGender);
+    setActiveTallyAge(payload.activeTallyAge);
+    setTallyTapHistory(payload.tallyTapHistory);
+    setSelectedCourseItemIdsByCourse(payload.selectedCourseItemIdsByCourse);
+    setExpandedCoverageItemIds(payload.expandedCoverageItemIds);
+    setExpandedByItem(payload.expandedByItem);
+    setWorkflowStep(payload.workflowStep);
+    setShowTallyTapHint(payload.showTallyTapHint);
+  };
+
+  const clearPersistedCounterDraft = () => {
+    if (!draftStorageKey) return;
+    localStorage.removeItem(draftStorageKey);
+  };
+
+  const isCounterDraftDirty = useMemo(() => {
+    const hasCoverageByItemValues = Object.values(coverageByItem).some(hasCoverageValues);
+
+    return (
+      Boolean(selectedPatientId) ||
+      hasRowDraftValues(draftByItem) ||
+      hasCoverageByItemValues ||
+      hasPerDoseCoverageValues(perDoseCoverageByItem) ||
+      hasSessionTallyValues(sessionTallyByItem) ||
+      Object.keys(selectedDoseIdByItem).length > 0 ||
+      Object.keys(selectedCourseItemIdsByCourse).length > 0 ||
+      tallyTapHistory.length > 0 ||
+      workflowStep !== initialWorkflowStep
+    );
+  }, [
+    coverageByItem,
+    draftByItem,
+    initialWorkflowStep,
+    perDoseCoverageByItem,
+    selectedCourseItemIdsByCourse,
+    selectedDoseIdByItem,
+    selectedPatientId,
+    sessionTallyByItem,
+    tallyTapHistory,
+    workflowStep,
+  ]);
+
+  useEffect(() => {
+    if (!draftStorageKey || hasCheckedStoredDraftRef.current) return;
+
+    hasCheckedStoredDraftRef.current = true;
+
+    const rawDraft = localStorage.getItem(draftStorageKey);
+    if (!rawDraft) return;
+
+    try {
+      const parsed = JSON.parse(rawDraft) as DailyTallyPersistedDraft;
+      if (
+        parsed.version !== DAILY_TALLY_DRAFT_VERSION ||
+        !parsed.savedAt ||
+        !parsed.payload
+      ) {
+        localStorage.removeItem(draftStorageKey);
+        return;
+      }
+
+      const savedAt = new Date(parsed.savedAt).getTime();
+      if (!Number.isFinite(savedAt) || Date.now() - savedAt > DAILY_TALLY_DRAFT_TTL_MS) {
+        localStorage.removeItem(draftStorageKey);
+        return;
+      }
+
+      if (shouldAutoResumeFromListAction) {
+        applyPersistedCounterDraft(parsed.payload);
+        const params = new URLSearchParams(window.location.search);
+        params.delete('resumeDraft');
+        const queryString = params.toString();
+        window.history.replaceState(
+          {},
+          document.title,
+          `${window.location.pathname}${queryString ? `?${queryString}` : ''}`
+        );
+        return;
+      }
+
+      setPendingDraftPayload(parsed.payload);
+      setResumeDraftOpen(true);
+    } catch {
+      localStorage.removeItem(draftStorageKey);
+    }
+  }, [draftStorageKey, shouldAutoResumeFromListAction]);
+
+  useEffect(() => {
+    if (!draftStorageKey) return;
+
+    if (!isCounterDraftDirty) {
+      localStorage.removeItem(draftStorageKey);
+      return;
+    }
+
+    const payload: DailyTallyPersistedDraftPayload = {
+      selectedPatientId,
+      referenceText,
+      draftByItem,
+      coverageByItem,
+      perDoseCoverageByItem,
+      selectedDoseIdByItem,
+      expandedStepOneVaccineItemIds,
+      expandedNonVaccineItemIds,
+      sessionTallyByItem,
+      selectedTallyItemId,
+      activeTallyGender,
+      activeTallyAge,
+      tallyTapHistory,
+      selectedCourseItemIdsByCourse,
+      expandedCoverageItemIds,
+      expandedByItem,
+      workflowStep,
+      showTallyTapHint,
+    };
+
+    const timeout = window.setTimeout(() => {
+      const persistedDraft: DailyTallyPersistedDraft = {
+        version: DAILY_TALLY_DRAFT_VERSION,
+        savedAt: new Date().toISOString(),
+        payload,
+      };
+
+      localStorage.setItem(draftStorageKey, JSON.stringify(persistedDraft));
+    }, DAILY_TALLY_DRAFT_SAVE_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    activeTallyAge,
+    activeTallyGender,
+    coverageByItem,
+    draftByItem,
+    draftStorageKey,
+    expandedByItem,
+    expandedCoverageItemIds,
+    expandedNonVaccineItemIds,
+    expandedStepOneVaccineItemIds,
+    isCounterDraftDirty,
+    perDoseCoverageByItem,
+    referenceText,
+    selectedCourseItemIdsByCourse,
+    selectedDoseIdByItem,
+    selectedPatientId,
+    selectedTallyItemId,
+    sessionTallyByItem,
+    showTallyTapHint,
+    tallyTapHistory,
+    workflowStep,
+  ]);
+
+  useEffect(() => {
+    if (!isCounterDraftDirty) return;
+
+    const handler = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isCounterDraftDirty]);
 
   const duplicateDayRange = useMemo(() => {
     const now = new Date();
@@ -3334,6 +3580,7 @@ export const DailyTallyView = () => {
       success(
         `Daily tally confirmed (Issued: ${totalUsed}, Wastage: ${totalWastage})`
       )();
+      clearPersistedCounterDraft();
       setConfirmSummaryOpen(false);
       setDuplicateWarningOpen(false);
       window.location.assign(dailyTallyListPath);
@@ -3881,6 +4128,45 @@ export const DailyTallyView = () => {
 
   return (
     <>
+      <ResumeDraftModal
+        title={'Resume draft'}
+        width={540}
+        height={220}
+        okButton={
+          <DialogButton
+            variant="ok"
+            customLabel="Resume"
+            onClick={() => {
+              if (!pendingDraftPayload) {
+                setResumeDraftOpen(false);
+                return;
+              }
+
+              applyPersistedCounterDraft(pendingDraftPayload);
+
+              setPendingDraftPayload(null);
+              setResumeDraftOpen(false);
+            }}
+          />
+        }
+        cancelButton={
+          <DialogButton
+            variant="cancel"
+            customLabel="Discard"
+            onClick={() => {
+              clearPersistedCounterDraft();
+              setPendingDraftPayload(null);
+              setResumeDraftOpen(false);
+            }}
+          />
+        }
+      >
+        <Typography variant="body1" color="text.secondary">
+          We found an unsaved Daily Tally counter draft for this store. Resume where you
+          left off, or discard the draft and start fresh.
+        </Typography>
+      </ResumeDraftModal>
+
       <ConfirmSummaryModal
         title={'Confirm daily tally'}
         width={5000}
