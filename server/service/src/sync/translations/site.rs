@@ -1,4 +1,5 @@
 use super::{PullTranslateResult, SyncTranslation};
+use crate::sync::CentralServerConfig;
 use repository::{SiteRow, SiteRowDelete, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
@@ -32,6 +33,11 @@ impl SyncTranslation for SiteTranslation {
 
     fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
+    }
+
+    fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
+        // Site rows are only integrated on the central server
+        row.table_name == self.table_name() && CentralServerConfig::is_central_server()
     }
 
     fn try_translate_from_upsert_sync_record(
@@ -69,6 +75,7 @@ impl SyncTranslation for SiteTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::sync::test_util_set_is_central_server;
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
@@ -78,6 +85,14 @@ mod tests {
 
         let (_, connection, _, _) =
             setup_all("test_site_translation", MockDataInserts::none()).await;
+
+        // Should not translate on non-central sites
+        test_util_set_is_central_server(false);
+        for record in test_data::test_pull_upsert_records() {
+            assert!(!translator.should_translate_from_sync_record(&record.sync_buffer_row));
+        }
+
+        test_util_set_is_central_server(true);
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
