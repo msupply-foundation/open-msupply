@@ -41,7 +41,7 @@ impl SyncTranslation for NameTagJoinTranslation {
             ID,
             name_ID,
             name_tag_ID,
-        } = sync_record.deserialize::<LegacyNameTagJoinRow>()?;
+        } = sync_record.deserialize()?;
         if name_ID.is_empty() {
             return Ok(PullTranslateResult::Ignored("Name id is empty".to_string()));
         }

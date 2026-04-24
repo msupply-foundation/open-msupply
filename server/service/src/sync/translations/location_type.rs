@@ -44,7 +44,7 @@ impl SyncTranslation for LocationTypeTranslation {
             description,
             temperature_min,
             temperature_max,
-        } = sync_record.deserialize::<LegacyLocationTypeRow>()?;
+        } = sync_record.deserialize()?;
 
         let result = LocationTypeRow {
             id,

@@ -91,7 +91,7 @@ impl SyncTranslation for DocumentTranslation {
             status,
             owner_name_id,
             context_id,
-        } = sync_record.deserialize::<LegacyDocumentRow>()?;
+        } = sync_record.deserialize()?;
         let result = Document {
             id,
             name,

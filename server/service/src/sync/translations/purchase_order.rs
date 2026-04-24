@@ -227,7 +227,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             order_total_before_discount,
             order_total_after_discount: _, // Not used, we calculate from the sum of the lines instead
             is_authorised: _,
-        } = sync_record.deserialize::<LegacyPurchaseOrderRow>()?;
+        } = sync_record.deserialize()?;
 
         let created_datetime = match oms_fields.clone() {
             Some(oms) => oms.created_datetime,

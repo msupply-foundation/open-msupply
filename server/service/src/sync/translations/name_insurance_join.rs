@@ -103,7 +103,7 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             policyNumberPerson,
             policyType,
             oms_fields,
-        } = sync_record.deserialize::<LegacyNameInsuranceJoinRow>()?;
+        } = sync_record.deserialize()?;
 
         let result = NameInsuranceJoinRow {
             id: ID,

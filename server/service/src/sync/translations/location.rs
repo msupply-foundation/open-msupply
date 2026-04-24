@@ -64,7 +64,7 @@ impl SyncTranslation for LocationTranslation {
             store_id,
             location_type_id,
             volume,
-        } = sync_record.deserialize::<LegacyLocationRow>()?;
+        } = sync_record.deserialize()?;
 
         let result = LocationRow {
             id,

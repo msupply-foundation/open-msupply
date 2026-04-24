@@ -135,7 +135,7 @@ impl SyncTranslation for StockLineTranslation {
             oms_fields,
             total_volume,
             volume_per_pack,
-        } = sync_record.deserialize::<LegacyStockLineRow>()?;
+        } = sync_record.deserialize()?;
 
         let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
         let location_id = clear_invalid_location_id(connection, location_ID)?;

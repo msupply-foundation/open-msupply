@@ -46,7 +46,7 @@ impl SyncTranslation for PeriodTranslation {
             start_date,
             end_date,
             name,
-        } = sync_record.deserialize::<LegacyPeriodRow>()?;
+        } = sync_record.deserialize()?;
 
         let result = PeriodRow {
             id,

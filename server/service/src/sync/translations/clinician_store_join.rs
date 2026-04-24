@@ -51,7 +51,7 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             id,
             store_id,
             prescriber_id,
-        } = sync_record.deserialize::<LegacyClinicianStoreJoinRow>()?;
+        } = sync_record.deserialize()?;
 
         let result = ClinicianStoreJoinRow {
             id,

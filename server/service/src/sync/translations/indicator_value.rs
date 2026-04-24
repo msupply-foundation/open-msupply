@@ -58,7 +58,7 @@ impl SyncTranslation for IndicatorValue {
             indicator_line_id,
             store_id,
             value,
-        } = sync_record.deserialize::<LegacyIndicatorValue>()?;
+        } = sync_record.deserialize()?;
         let customer_name_id = StoreRepository::new(connection)
             .query_one(StoreFilter::new().id(EqualFilter::equal_to(customer_store_id.to_string())))?
             .ok_or(anyhow::anyhow!(
