@@ -46,6 +46,7 @@ pub mod diagnosis;
 pub mod display_settings_service;
 pub mod document;
 pub mod email;
+pub mod initialisation_status;
 pub mod insurance;
 pub mod insurance_provider;
 pub mod invoice;

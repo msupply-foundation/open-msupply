@@ -11,7 +11,7 @@ use std::collections::HashMap;
 pub use self::queries::sync_status::*;
 use self::queries::*;
 pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
-use self::sync_v7::sync_status::FullSyncStatusV7Node;
+use self::sync_v7::sync_status::{latest_sync_status_v7, FullSyncStatusV7Node};
 
 use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
@@ -302,7 +302,7 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<FullSyncStatusV7Node>> {
-        sync_v7::sync_status::latest_sync_status_v7(ctx, true)
+        latest_sync_status_v7(ctx, true)
     }
 
     pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
@@ -665,7 +665,7 @@ impl InitialisationQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<FullSyncStatusV7Node>> {
-        sync_v7::sync_status::latest_sync_status_v7(ctx, false)
+        latest_sync_status_v7(ctx, false)
     }
 
     /// Available without authorisation in all states

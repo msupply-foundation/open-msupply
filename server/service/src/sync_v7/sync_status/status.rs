@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    sync_log_v7::Condition, syncv7::SyncError, FilterBuilder, RepositoryError,
-    SyncLogV7Repository, SyncLogV7Row,
+    syncv7::SyncError, FilterBuilder, RepositoryError, SyncLogV7Condition, SyncLogV7Repository,
+    SyncLogV7Row,
 };
 
 use crate::{
@@ -115,29 +115,32 @@ pub(crate) struct SyncStatusV7Service;
 
 impl SyncStatusV7Trait for SyncStatusV7Service {}
 
+// Returns the most recent sync log row (sorted by started_datetime desc in the repository)
 fn get_latest_sync_status_v7(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
-    let row = SyncLogV7Repository::new(&ctx.connection).query_one(Condition::TRUE)?;
+    let row = SyncLogV7Repository::new(&ctx.connection).query_one(SyncLogV7Condition::TRUE)?;
     Ok(row.map(FullSyncStatusV7::from_sync_log_v7_row))
 }
 
+// Returns the most recent successful sync log row (sorted by started_datetime desc in the repository)
 fn get_latest_successful_sync_status_v7(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
-    let row = SyncLogV7Repository::new(&ctx.connection).query_one(Condition::And(vec![
-        Condition::FinishedDatetime::is_not_null(),
-        Condition::Error::is_null(),
-    ]))?;
+    let row =
+        SyncLogV7Repository::new(&ctx.connection).query_one(SyncLogV7Condition::And(vec![
+            SyncLogV7Condition::FinishedDatetime::is_not_null(),
+            SyncLogV7Condition::Error::is_null(),
+        ]))?;
     Ok(row.map(FullSyncStatusV7::from_sync_log_v7_row))
 }
 
 fn get_initialisation_status_v7(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
-    let filter = Condition::And(vec![
-        Condition::FinishedDatetime::is_not_null(),
-        Condition::Error::is_null(),
+    let filter = SyncLogV7Condition::And(vec![
+        SyncLogV7Condition::FinishedDatetime::is_not_null(),
+        SyncLogV7Condition::Error::is_null(),
     ]);
 
     match SyncLogV7Repository::new(&ctx.connection).query_one(filter)? {

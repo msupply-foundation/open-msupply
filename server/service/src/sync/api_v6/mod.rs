@@ -1,23 +1,13 @@
-mod core;
-pub mod download_file;
-pub mod upload_file;
 use repository::RepositoryError;
-use reqwest::{Response, Url};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use util::format_error;
 
-use crate::i64_to_u64;
-
-pub use self::core::*;
-
 use super::{
-    api::{
-        CommonSyncRecord, ParsedError, ParsingResponseError, SyncApiError, SyncApiErrorVariantV5,
-        SyncApiSettings,
-    },
+    api::{CommonSyncRecord, ParsedError, SyncApiError, SyncApiErrorVariantV5, SyncApiSettings},
     translations::PushSyncRecord,
 };
+use crate::i64_to_u64;
 use crate::sync::api::ParsingSyncRecordError;
 
 #[derive(Deserialize, Debug, Error, Serialize)]
@@ -107,31 +97,20 @@ pub enum SiteStatusResponseV6 {
     Error(SyncParsedErrorV6),
 }
 
-#[derive(Error, Debug)]
-#[error("Sync api error, url: '{url}', route: '{route}'")]
-pub struct SyncApiErrorV6 {
-    pub source: SyncApiErrorVariantV6,
-    pub(crate) url: Url,
-    pub(crate) route: String,
-}
-
-#[derive(Error, Debug)]
-pub enum SyncApiErrorVariantV6 {
-    #[error("Connection problem")]
-    ConnectionError(#[from] reqwest::Error),
-    #[error("Could not parse response")]
-    ParsedError(#[from] SyncParsedErrorV6),
-    #[error("Could not parse response")]
-    ParsingResponseError(#[from] ParsingResponseError),
-    #[error("Unknown api error")]
-    Other(#[from] anyhow::Error),
-}
-
 #[derive(Deserialize, Debug, Serialize)]
 pub(crate) struct SyncRecordV6 {
     pub(crate) cursor: u64,
     pub(crate) record: CommonSyncRecord,
 }
+impl From<PushSyncRecord> for SyncRecordV6 {
+    fn from(PushSyncRecord { cursor, record }: PushSyncRecord) -> Self {
+        SyncRecordV6 {
+            cursor: i64_to_u64(cursor),
+            record,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Default, Serialize)]
 pub struct SyncBatchV6 {
     // Latest changelog cursor in the 'records'
@@ -142,15 +121,6 @@ pub struct SyncBatchV6 {
     pub(crate) total_records: u64,
     pub(crate) records: Vec<SyncRecordV6>,
     pub(crate) is_last_batch: bool,
-}
-
-impl From<PushSyncRecord> for SyncRecordV6 {
-    fn from(PushSyncRecord { cursor, record }: PushSyncRecord) -> Self {
-        SyncRecordV6 {
-            cursor: i64_to_u64(cursor),
-            record,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -223,34 +193,4 @@ pub struct SyncUploadFileRequestV6 {
 pub enum SyncUploadFileResponseV6 {
     Data(()),
     Error(SyncParsedErrorV6),
-}
-
-async fn response_or_err<T: DeserializeOwned>(
-    result: Result<Response, reqwest::Error>,
-) -> Result<T, SyncApiErrorVariantV6> {
-    let response = match result {
-        Ok(result) => result,
-        Err(error) => {
-            if error.is_connect() {
-                return Err(SyncApiErrorVariantV6::ConnectionError(error));
-            } else {
-                return Err(SyncApiErrorVariantV6::Other(error.into()));
-            }
-        }
-    };
-
-    // Not checking for status, expecting 200 only, even if there is error
-    let response_text = response
-        .text()
-        .await
-        .map_err(ParsingResponseError::CannotGetTextResponse)?;
-
-    let result = serde_json::from_str(&response_text).map_err(|source| {
-        ParsingResponseError::ParseError {
-            source,
-            response_text,
-        }
-    })?;
-
-    Ok(result)
 }
