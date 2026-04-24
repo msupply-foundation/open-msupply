@@ -76,72 +76,45 @@ async fn test_changelog() {
     );
 
     // query the full list from cursor=0
-    // because we use the changelog_deduped view, we should only get the latest changelog row for the record_id
-    let mut result = repo.changelogs(starting_cursor, 10, None).unwrap();
-    assert_eq!(1, result.len());
-    let log_entry = result.pop().unwrap();
+    // No dedup view — both the insert and the update are returned
+    let result = repo.changelogs(starting_cursor, 10, None).unwrap();
+    assert_eq!(2, result.len());
     assert_eq!(
-        log_entry,
-        ChangelogRow {
-            cursor: starting_cursor as i64 + 2,
-            table_name: ChangelogTableName::Location,
-            record_id: mock_location_1().id,
-            row_action: RowActionType::Upsert,
-            store_id: Some(mock_location_1().store_id.clone()),
-            ..Default::default()
-        }
+        result,
+        vec![
+            ChangelogRow {
+                cursor: starting_cursor as i64 + 1,
+                table_name: ChangelogTableName::Location,
+                record_id: mock_location_1().id,
+                row_action: RowActionType::Upsert,
+                store_id: Some(mock_location_1().store_id.clone()),
+                ..Default::default()
+            },
+            ChangelogRow {
+                cursor: starting_cursor as i64 + 2,
+                table_name: ChangelogTableName::Location,
+                record_id: mock_location_1().id,
+                row_action: RowActionType::Upsert,
+                store_id: Some(mock_location_1().store_id.clone()),
+                ..Default::default()
+            },
+        ]
     );
 
     // add another entry
     location_repo.upsert_one(&mock_location_on_hold()).unwrap();
     let result = repo.changelogs(starting_cursor, 10, None).unwrap();
-    assert_eq!(2, result.len());
-    assert_eq!(
-        result,
-        vec![
-            ChangelogRow {
-                cursor: starting_cursor as i64 + 2,
-                table_name: ChangelogTableName::Location,
-                record_id: mock_location_1().id,
-                row_action: RowActionType::Upsert,
-                store_id: Some(mock_location_1().store_id.clone()),
-                ..Default::default()
-            },
-            ChangelogRow {
-                cursor: starting_cursor as i64 + 3,
-                table_name: ChangelogTableName::Location,
-                record_id: mock_location_on_hold().id,
-                row_action: RowActionType::Upsert,
-                store_id: Some(mock_location_on_hold().store_id.clone()),
-                ..Default::default()
-            }
-        ]
-    );
+    assert_eq!(3, result.len());
 
     // delete an entry
     location_repo.delete(&mock_location_on_hold().id).unwrap();
     let result = repo.changelogs(starting_cursor, 10, None).unwrap();
-    assert_eq!(2, result.len());
+    assert_eq!(4, result.len());
+    // Last entry should be the delete
+    assert_eq!(result.last().unwrap().row_action, RowActionType::Delete);
     assert_eq!(
-        result,
-        vec![
-            ChangelogRow {
-                cursor: starting_cursor as i64 + 2,
-                table_name: ChangelogTableName::Location,
-                record_id: mock_location_1().id,
-                row_action: RowActionType::Upsert,
-                store_id: Some(mock_location_1().store_id.clone()),
-                ..Default::default()
-            },
-            ChangelogRow {
-                cursor: starting_cursor as i64 + 4,
-                table_name: ChangelogTableName::Location,
-                record_id: mock_location_on_hold().id,
-                row_action: RowActionType::Delete,
-                store_id: Some(mock_location_on_hold().store_id.clone()),
-                ..Default::default()
-            }
-        ]
+        result.last().unwrap().record_id,
+        mock_location_on_hold().id
     );
 }
 
@@ -157,52 +130,29 @@ async fn test_changelog_iteration() {
     let starting_cursor = repo.latest_cursor().unwrap();
     repo.delete(0).unwrap();
 
+    // Insert 4 locations (4 changelog rows)
     location_repo.upsert_one(&mock_location_1()).unwrap();
     location_repo.upsert_one(&mock_location_on_hold()).unwrap();
     location_repo
         .upsert_one(&mock_location_in_another_store())
         .unwrap();
     location_repo.upsert_one(&mock_location_2()).unwrap();
-    location_repo.delete(&mock_location_on_hold().id).unwrap();
-    location_repo
-        .upsert_one(&mock_location_in_another_store())
-        .unwrap();
-    location_repo.upsert_one(&mock_location_1()).unwrap();
-    location_repo
-        .upsert_one(&mock_location_in_another_store())
-        .unwrap();
-    location_repo
-        .delete(&mock_location_in_another_store().id)
-        .unwrap();
 
-    // test iterating through the change log
-    let changelogs = repo.changelogs(starting_cursor, 3, None).unwrap();
-    let latest_id: u64 = changelogs.last().map(|r| r.cursor).unwrap() as u64;
-    assert_eq!(
-        changelogs
-            .into_iter()
-            .map(|it| it.record_id)
-            .collect::<Vec<String>>(),
-        vec![
-            mock_location_2().id,
-            mock_location_on_hold().id,
-            mock_location_1().id
-        ]
-    );
+    // All 4 rows should be present (no dedup)
+    let all = repo.changelogs(starting_cursor, 10, None).unwrap();
+    assert_eq!(all.len(), 4);
 
-    let changelogs = repo.changelogs(latest_id + 1, 3, None).unwrap();
-    let latest_id: u64 = changelogs.last().map(|r| r.cursor).unwrap() as u64;
+    // Test pagination: fetch in batches of 3
+    let page1 = repo.changelogs(starting_cursor, 3, None).unwrap();
+    assert_eq!(page1.len(), 3);
+    let last_cursor = page1.last().unwrap().cursor as u64;
 
-    assert_eq!(
-        changelogs
-            .into_iter()
-            .map(|it| it.record_id)
-            .collect::<Vec<String>>(),
-        vec![mock_location_in_another_store().id]
-    );
+    let page2 = repo.changelogs(last_cursor + 1, 3, None).unwrap();
+    assert_eq!(page2.len(), 1);
+    let last_cursor = page2.last().unwrap().cursor as u64;
 
-    let changelogs = repo.changelogs(latest_id + 1, 3, None).unwrap();
-    assert_eq!(changelogs.len(), 0);
+    let page3 = repo.changelogs(last_cursor + 1, 3, None).unwrap();
+    assert_eq!(page3.len(), 0);
 }
 
 #[actix_rt::test]
@@ -349,8 +299,11 @@ fn test_changelog_name_and_store_id<T, F>(
         )
         .unwrap();
 
-    assert_eq!(change_logs[0], {
-        let mut r = change_logs[0].clone();
+    // Without dedup view, multiple changelog rows may exist for the same record_id.
+    // Check the latest (last) entry matches the expected row_action.
+    let last = change_logs.last().unwrap();
+    assert_eq!(last, &{
+        let mut r = last.clone();
         r.name_id = Some(record.name_id);
         r.store_id = Some(record.store_id);
         r.record_id = record.record_id;

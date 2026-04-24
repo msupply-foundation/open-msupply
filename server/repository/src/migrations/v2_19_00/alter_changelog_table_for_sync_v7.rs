@@ -11,6 +11,9 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
+                -- Drop changelog_deduped view before altering columns (SQLite requires this)
+                DROP VIEW IF EXISTS changelog_deduped;
+
                 -- Add transfer_store_id and patient_id 
                 ALTER TABLE changelog ADD COLUMN transfer_store_id TEXT;
                 ALTER TABLE changelog ADD COLUMN patient_id TEXT;

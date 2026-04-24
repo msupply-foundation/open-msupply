@@ -80,14 +80,23 @@ async fn migration_2_01_00() {
 
 #[cfg(test)]
 fn check_item_needs_translation(connection: &StorageConnection) -> bool {
-    use crate::SyncBufferRowRepository;
+    use chrono::NaiveDateTime;
+    use diesel::prelude::*;
 
-    let sync_buffer_row = SyncBufferRowRepository::new(connection)
-        .find_one_by_record_id("F078B01C94DF4A5BA1EC0408CDD46B55")
-        .unwrap()
+    diesel::table! {
+        sync_buffer (record_id) {
+            record_id -> Text,
+            integration_datetime -> Nullable<Timestamp>,
+        }
+    }
+
+    let integration_datetime: Option<NaiveDateTime> = sync_buffer::table
+        .filter(sync_buffer::record_id.eq("F078B01C94DF4A5BA1EC0408CDD46B55"))
+        .select(sync_buffer::integration_datetime)
+        .first(connection.lock().connection())
         .unwrap();
 
-    sync_buffer_row.integration_datetime.is_none()
+    integration_datetime.is_none()
 }
 
 #[cfg(test)]

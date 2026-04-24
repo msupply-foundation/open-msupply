@@ -41,7 +41,7 @@ impl SyncTranslation for NameTagJoinTranslation {
             ID,
             name_ID,
             name_tag_ID,
-        } = serde_json::from_str::<LegacyNameTagJoinRow>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyNameTagJoinRow>(sync_record.data.0.clone())?;
         if name_ID.is_empty() {
             return Ok(PullTranslateResult::Ignored("Name id is empty".to_string()));
         }

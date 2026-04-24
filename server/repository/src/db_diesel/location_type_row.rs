@@ -1,6 +1,10 @@
 use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{
+    db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
+    repository_error::RepositoryError,
+    ChangelogTableName, Delete, Upsert,
+};
 
 use diesel::prelude::*;
 
@@ -14,7 +18,7 @@ table! {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize,
 )]
 #[diesel(table_name = location_type)]
 pub struct LocationTypeRow {
@@ -22,6 +26,15 @@ pub struct LocationTypeRow {
     pub name: String,
     pub min_temperature: f64,
     pub max_temperature: f64,
+}
+
+impl LocationTypeRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::LocationType
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
 }
 
 pub struct LocationTypeRowRepository<'a> {
@@ -58,12 +71,45 @@ impl<'a> LocationTypeRowRepository<'a> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct LocationTypeRowDelete(pub String);
+impl Delete for LocationTypeRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        LocationTypeRowRepository::new(con).delete(&self.0)?;
+        Ok(None)
+    }
+    fn delete_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        LocationTypeRowRepository::new(con).delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            LocationTypeRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
 impl Upsert for LocationTypeRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         LocationTypeRowRepository::new(con).upsert_one(self)?;
         Ok(None)
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        LocationTypeRowRepository::new(con).upsert_one(self)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
