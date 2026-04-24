@@ -243,6 +243,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
           disabled={!row.getCanSelect()}
           indeterminate={row.getIsSomeSelected()}
           onChange={row.getToggleSelectedHandler()}
+          onClick={e => e.stopPropagation()}
         />
       ),
     }),
