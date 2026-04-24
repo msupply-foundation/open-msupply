@@ -8,7 +8,7 @@ use crate::{
     },
     sync_v7::api::{
         self as api_v7,
-        site_info::{self as site_info_v7, get_site_info, SiteInfoInput, SiteInfoOutput},
+        site_info::{get_site_info, SiteInfoInput, SiteInfoOutput},
         status::Output,
         VERSION as V7_VERSION,
     },
