@@ -4,7 +4,7 @@ mod pull_integration {
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
         ChangelogRow, ChangelogTableName, CurrencyRow, EqualFilter, ItemRow, KeyType,
-        KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StoreRow,
+        KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection, StoreRow,
         SyncBufferRowRepository, UnitRow, Upsert,
     };
     use repository::{SyncAction, SyncBufferRow};
@@ -87,6 +87,45 @@ mod pull_integration {
         ]
     }
 
+    fn fk_order_test_records() -> Vec<Box<dyn Upsert>> {
+        vec![Box::new(unit()), Box::new(name()), Box::new(store())]
+    }
+
+    // ---- Mock pull responses ----
+
+    fn pull_response_in_fk_order() -> serde_json::Value {
+        json!({
+            "Ok": {
+                "siteId": 1,
+                "maxCursor": 6,
+                "records": [
+                    { "cursor": 1, "recordId": "unit_test_1",       "tableName": "Unit",       "action": "Upsert", "data": unit(),       "storeId": null,            "transferStoreId": null, "patientId": null },
+                    { "cursor": 2, "recordId": "currency_test_1",   "tableName": "Currency",   "action": "Upsert", "data": currency(),   "storeId": null,            "transferStoreId": null, "patientId": null },
+                    { "cursor": 3, "recordId": "name_test_1",       "tableName": "Name",       "action": "Upsert", "data": name(),       "storeId": null,            "transferStoreId": null, "patientId": null },
+                    { "cursor": 4, "recordId": "item_test_1",       "tableName": "Item",       "action": "Upsert", "data": item(),       "storeId": null,            "transferStoreId": null, "patientId": null },
+                    { "cursor": 5, "recordId": "store_test_1",      "tableName": "Store",      "action": "Upsert", "data": store(),      "storeId": null,            "transferStoreId": null, "patientId": null },
+                    { "cursor": 6, "recordId": "stock_line_test_1", "tableName": "StockLine",  "action": "Upsert", "data": stock_line(), "storeId": "store_test_1",  "transferStoreId": null, "patientId": null },
+                ]
+            }
+        })
+    }
+
+    /// Children before parents. Store has an FK to Name (via name_link);
+    /// integration must reorder or it hits a DB-level FK violation.
+    fn pull_response_reversed() -> serde_json::Value {
+        json!({
+            "Ok": {
+                "siteId": 1,
+                "maxCursor": 3,
+                "records": [
+                    { "cursor": 1, "recordId": "store_test_1", "tableName": "Store", "action": "Upsert", "data": store(), "storeId": null, "transferStoreId": null, "patientId": null },
+                    { "cursor": 2, "recordId": "name_test_1",  "tableName": "Name",  "action": "Upsert", "data": name(),  "storeId": null, "transferStoreId": null, "patientId": null },
+                    { "cursor": 3, "recordId": "unit_test_1",  "tableName": "Unit",  "action": "Upsert", "data": unit(),  "storeId": null, "transferStoreId": null, "patientId": null },
+                ]
+            }
+        })
+    }
+
     // ---- Mock server handlers ----
 
     async fn site_status() -> actix_web::HttpResponse {
@@ -99,90 +138,28 @@ mod pull_integration {
         actix_web::HttpResponse::Ok().json(json!({ "Ok": 0 }))
     }
 
-    async fn pull() -> actix_web::HttpResponse {
-        actix_web::HttpResponse::Ok().json(json!({
-            "Ok": {
-                "siteId": 1,
-                "maxCursor": 6,
-                "records": [
-                    {
-                        "cursor": 1,
-                        "recordId": "unit_test_1",
-                        "tableName": "Unit",
-                        "action": "Upsert",
-                        "data": unit(),
-                        "storeId": null,
-                        "transferStoreId": null,
-                        "patientId": null
-                    },
-                    {
-                        "cursor": 2,
-                        "recordId": "currency_test_1",
-                        "tableName": "Currency",
-                        "action": "Upsert",
-                        "data": currency(),
-                        "storeId": null,
-                        "transferStoreId": null,
-                        "patientId": null
-                    },
-                    {
-                        "cursor": 3,
-                        "recordId": "name_test_1",
-                        "tableName": "Name",
-                        "action": "Upsert",
-                        "data": name(),
-                        "storeId": null,
-                        "transferStoreId": null,
-                        "patientId": null
-                    },
-                    {
-                        "cursor": 4,
-                        "recordId": "item_test_1",
-                        "tableName": "Item",
-                        "action": "Upsert",
-                        "data": item(),
-                        "storeId": null,
-                        "transferStoreId": null,
-                        "patientId": null
-                    },
-                    {
-                        "cursor": 5,
-                        "recordId": "store_test_1",
-                        "tableName": "Store",
-                        "action": "Upsert",
-                        "data": store(),
-                        "storeId": null,
-                        "transferStoreId": null,
-                        "patientId": null
-                    },
-                    {
-                        "cursor": 6,
-                        "recordId": "stock_line_test_1",
-                        "tableName": "StockLine",
-                        "action": "Upsert",
-                        "data": stock_line(),
-                        "storeId": "store_test_1",
-                        "transferStoreId": null,
-                        "patientId": null
-                    }
-                ]
-            }
-        }))
+    async fn pull(data: web::Data<serde_json::Value>) -> actix_web::HttpResponse {
+        actix_web::HttpResponse::Ok().json(data.get_ref())
     }
 
-    // ---- Test ----
+    // ---- Shared test setup ----
 
-    #[actix_rt::test]
-    async fn test_sync_v7_pull_and_integrate() {
-        let (_, connection, _, _) =
-            setup_all("test_sync_v7_pull_and_integrate", MockDataInserts::none()).await;
+    /// Runs sync_v7 against a mock central with the given pull response.
+    /// Returns the connection for per-test assertions.
+    async fn run_sync_v7_test(
+        db_name: &str,
+        pull_response: serde_json::Value,
+    ) -> StorageConnection {
+        let (_, connection, _, _) = setup_all(db_name, MockDataInserts::none()).await;
 
-        let kvs = KeyValueStoreRepository::new(&connection);
-        kvs.set_i32(KeyType::SettingsSyncSiteId, Some(1)).unwrap();
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(1))
+            .unwrap();
 
-        // Start mock server
-        let server = HttpServer::new(|| {
+        let pull_data = web::Data::new(pull_response);
+        let server = HttpServer::new(move || {
             App::new()
+                .app_data(pull_data.clone())
                 .route("/central/sync_v7/site_status", web::post().to(site_status))
                 .route("/central/sync_v7/push", web::post().to(push))
                 .route("/central/sync_v7/pull", web::post().to(pull))
@@ -195,7 +172,6 @@ mod pull_integration {
         let handle = server_handle.handle();
         tokio::spawn(server_handle);
 
-        // Run sync
         let result = sync_v7(
             &connection,
             SyncSettings {
@@ -210,6 +186,19 @@ mod pull_integration {
         .await;
         assert!(result.is_ok(), "sync_v7 failed: {:?}", result.err());
         handle.stop(true).await;
+
+        connection
+    }
+
+    // ---- Test ----
+
+    #[actix_rt::test]
+    async fn test_sync_v7_pull_and_integrate() {
+        let connection = run_sync_v7_test(
+            "test_sync_v7_pull_and_integrate",
+            pull_response_in_fk_order(),
+        )
+        .await;
 
         // Assert: all records were integrated into their tables
         for record in test_records() {
@@ -353,7 +342,42 @@ mod pull_integration {
         );
 
         // Assert: pull cursor was updated
-        let cursor = kvs.get_i32(KeyType::SyncPullCursorV7).unwrap();
+        let cursor = KeyValueStoreRepository::new(&connection)
+            .get_i32(KeyType::SyncPullCursorV7)
+            .unwrap();
         assert_eq!(cursor, Some(7), "Pull cursor should be maxCursor + 1");
+    }
+
+    /// Records arriving children-before-parents still all integrate because
+    /// the loop iterates INTEGRATION_ORDER, not sync_buffer arrival order.
+    #[actix_rt::test]
+    async fn test_sync_v7_integrates_records_out_of_fk_order() {
+        let connection = run_sync_v7_test(
+            "test_sync_v7_integrates_records_out_of_fk_order",
+            pull_response_reversed(),
+        )
+        .await;
+
+        // FK violations would surface via integration_error.
+        let buffers = SyncBufferRowRepository::new(&connection).get_all().unwrap();
+        assert_eq!(buffers.len(), 3);
+        for buf in &buffers {
+            assert_eq!(
+                buf.integration_error, None,
+                "record {} ({}) failed to integrate",
+                buf.record_id, buf.table_name,
+            );
+            assert!(
+                buf.integration_datetime.is_some(),
+                "record {} ({}) was never integrated",
+                buf.record_id,
+                buf.table_name,
+            );
+        }
+
+        // Assert: all records were integrated into their tables
+        for record in fk_order_test_records() {
+            record.assert_upserted(&connection);
+        }
     }
 }
