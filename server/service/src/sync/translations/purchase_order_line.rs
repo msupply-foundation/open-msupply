@@ -131,7 +131,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             note,
             unit,
             oms_fields,
-        } = sync_record.deserialize::<LegacyPurchaseOrderLineRow>()?;
+        } = sync_record.deserialize()?;
 
         let result = PurchaseOrderLineRow {
             id,

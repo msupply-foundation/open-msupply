@@ -70,7 +70,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
             name,
             form_schema_id,
             config,
-        } = sync_record.deserialize::<LegacyDocumentRegistryRow>()?;
+        } = sync_record.deserialize()?;
 
         let config_str = match config {
             Some(config) => Some(serde_json::to_string(&config)?),

@@ -81,7 +81,7 @@ impl SyncTranslation for IndicatorAttribute {
             axis,
             is_active,
             default_value,
-        } = sync_record.deserialize::<LegacyIndicatorAttribute>()?;
+        } = sync_record.deserialize()?;
         Ok(match axis {
             LegacyAxis::Column => PullTranslateResult::upsert(IndicatorColumnRow {
                 id,

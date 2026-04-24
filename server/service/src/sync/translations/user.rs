@@ -59,7 +59,7 @@ impl SyncTranslation for UserTranslation {
             last_name,
             phone_number,
             job_title,
-        } = sync_record.deserialize::<LegacyUserTable>()?;
+        } = sync_record.deserialize()?;
 
         let user_account = UserAccountRowRepository::new(connection).find_one_by_id(&id)?;
 

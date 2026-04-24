@@ -46,7 +46,7 @@ impl SyncTranslation for ItemWarningJoinTranslation {
             item_link_id,
             warning_id,
             priority,
-        } = sync_record.deserialize::<LegacyItemWarningJoinRow>()?;
+        } = sync_record.deserialize()?;
 
         let result = ItemWarningJoinRow {
             id,

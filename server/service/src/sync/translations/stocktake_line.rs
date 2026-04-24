@@ -146,7 +146,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             volume_per_pack,
             manufacturer_id,
             oms_fields,
-        } = sync_record.deserialize::<LegacyStocktakeLineRow>()?;
+        } = sync_record.deserialize()?;
 
         // TODO is this correct?
         let counted_number_of_packs = if is_edited {

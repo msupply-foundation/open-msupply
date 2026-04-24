@@ -95,7 +95,7 @@ impl SyncTranslation for ClinicianTranslation {
             is_active,
             store_id,
             oms_fields,
-        } = sync_record.deserialize::<LegacyClinicianRow>()?;
+        } = sync_record.deserialize()?;
 
         let gender = if let Some(fields) = oms_fields {
             fields.gender

@@ -76,7 +76,7 @@ impl SyncTranslation for LocationMovementTranslation {
             enter_time,
             exit_date,
             exit_time,
-        } = sync_record.deserialize::<LegacyLocationMovementRow>()?;
+        } = sync_record.deserialize()?;
 
         let result = LocationMovementRow {
             id,
