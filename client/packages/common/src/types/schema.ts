@@ -727,6 +727,17 @@ export type AssetTypesResponse = AssetTypeConnector;
 
 export type AssetsResponse = AssetConnector;
 
+export type AssignStoresToSiteInput = {
+  siteId: Scalars['Int']['input'];
+  storeIds: Array<Scalars['String']['input']>;
+};
+
+export type AssignStoresToSiteNode = {
+  __typename: 'AssignStoresToSiteNode';
+  siteId: Scalars['Int']['output'];
+  storeIds: Array<Scalars['String']['output']>;
+};
+
 export type AuthToken = {
   __typename: 'AuthToken';
   /** Bearer token */
@@ -1342,8 +1353,13 @@ export type CentralServerQueryNode = {
 
 export type CentralSiteMutations = {
   __typename: 'CentralSiteMutations';
+  assignStoresToSite: AssignStoresToSiteNode;
   deleteSite: DeleteSiteNode;
   upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsAssignStoresToSiteArgs = {
+  input: AssignStoresToSiteInput;
 };
 
 export type CentralSiteMutationsDeleteSiteArgs = {
@@ -1429,8 +1445,8 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
-export type CodeMustBeProvided = UpsertSiteErrorInterface & {
-  __typename: 'CodeMustBeProvided';
+export type CodeRequired = UpsertSiteErrorInterface & {
+  __typename: 'CodeRequired';
   description: Scalars['String']['output'];
 };
 
@@ -6244,11 +6260,6 @@ export type NameFilterInput = {
   type?: InputMaybe<EqualFilterTypeInput>;
 };
 
-export type NameMustBeProvided = UpsertSiteErrorInterface & {
-  __typename: 'NameMustBeProvided';
-  description: Scalars['String']['output'];
-};
-
 export type NameNode = {
   __typename: 'NameNode';
   address1?: Maybe<Scalars['String']['output']>;
@@ -6307,6 +6318,11 @@ export type NamePropertyNode = {
 };
 
 export type NamePropertyResponse = NamePropertyConnector;
+
+export type NameRequired = UpsertSiteErrorInterface & {
+  __typename: 'NameRequired';
+  description: Scalars['String']['output'];
+};
 
 export enum NameSortFieldInput {
   Code = 'code',
