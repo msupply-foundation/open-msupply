@@ -1,5 +1,5 @@
 use actix_web::web;
-use sync::sync_on_central;
+use sync::{sync_on_central, sync_v7_on_central};
 
 use crate::central_server_only;
 
@@ -12,6 +12,7 @@ pub fn config_central(cfg: &mut web::ServiceConfig) {
         web::scope("central")
             .wrap(central_server_only())
             .service(sync_on_central())
+            .service(sync_v7_on_central())
             .service(patient_name_store_join),
     );
 }

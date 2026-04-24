@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{
     dev::HttpServiceFactory,
@@ -8,7 +6,6 @@ use actix_web::{
     web::{self, Data, Json},
     HttpRequest, Responder, ResponseError,
 };
-
 use service::{
     service_provider::ServiceProvider,
     settings::Settings,
@@ -21,7 +18,11 @@ use service::{
         },
         sync_on_central,
     },
+    sync_v7::{
+        api::site_info as v7_get_site_info_api, sync_on_central as sync_v7_on_central_service,
+    },
 };
+use std::fmt::Display;
 
 pub fn sync_on_central() -> impl HttpServiceFactory {
     web::scope("sync")
@@ -134,6 +135,22 @@ async fn download_file(
 pub struct SyncUploadFileMultipartRequestV6 {
     pub file_part: TempFile,
     pub json_part: actix_multipart::form::json::Json<SyncUploadFileRequestV6>,
+}
+
+// === SYNC V7 ===
+pub fn sync_v7_on_central() -> impl HttpServiceFactory {
+    web::scope("sync_v7").service(v7_get_site_info)
+}
+
+#[post("/get_site_info")]
+async fn v7_get_site_info(
+    request: Json<v7_get_site_info_api::Request>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response: v7_get_site_info_api::Response =
+        sync_v7_on_central_service::get_site_info(&service_provider, request.into_inner());
+
+    Ok(web::Json(response))
 }
 
 #[put("/upload_file")]
