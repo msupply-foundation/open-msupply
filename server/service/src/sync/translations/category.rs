@@ -42,7 +42,7 @@ impl SyncTranslation for CategoryTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyItemCategoryRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyItemCategoryRow>(sync_record.data.0.clone())?;
 
         let category_row = CategoryRow {
             id: data.ID,

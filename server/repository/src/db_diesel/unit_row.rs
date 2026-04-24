@@ -1,5 +1,9 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
+    repository_error::RepositoryError,
+    ChangelogTableName, Delete, Upsert,
+};
 use diesel::prelude::*;
 
 table! {
@@ -12,7 +16,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = unit)]
 pub struct UnitRow {
     pub id: String,
@@ -20,6 +24,15 @@ pub struct UnitRow {
     pub description: Option<String>,
     pub index: i32,
     pub is_active: bool,
+}
+
+impl UnitRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Unit
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
 }
 
 pub struct UnitRowRepository<'a> {
@@ -77,7 +90,16 @@ pub struct UnitRowDelete(pub String);
 impl Delete for UnitRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         UnitRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+        Ok(None)
+    }
+    fn delete_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        UnitRowRepository::new(con).delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -94,9 +116,17 @@ impl Delete for UnitRowDelete {
 impl Upsert for UnitRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         UnitRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(None)
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        UnitRowRepository::new(con).upsert_one(self)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

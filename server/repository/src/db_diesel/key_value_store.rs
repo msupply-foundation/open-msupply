@@ -28,6 +28,8 @@ pub enum KeyType {
     CentralSyncPullCursor,
     SyncPullCursorV6,
     SyncPushCursorV6,
+    SyncPullCursorV7,
+    SyncPushCursorV7,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,

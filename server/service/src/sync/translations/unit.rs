@@ -33,7 +33,7 @@ impl SyncTranslation for UnitTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyUnitRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyUnitRow>(sync_record.data.0.clone())?;
         let mut result = UnitRow {
             id: data.ID,
             name: data.units,

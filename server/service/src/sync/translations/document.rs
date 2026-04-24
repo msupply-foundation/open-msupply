@@ -91,7 +91,7 @@ impl SyncTranslation for DocumentTranslation {
             status,
             owner_name_id,
             context_id,
-        } = serde_json::from_str::<LegacyDocumentRow>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyDocumentRow>(sync_record.data.0.clone())?;
         let result = Document {
             id,
             name,
