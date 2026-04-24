@@ -4,6 +4,7 @@ use crate::ChangelogTableName;
 /// table's sync_buffer rows before moving to the next, so FK parents
 /// are always integrated before their children.
 pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
+    ChangelogTableName::Site,
     ChangelogTableName::Unit,
     ChangelogTableName::Currency,
     ChangelogTableName::Name,
