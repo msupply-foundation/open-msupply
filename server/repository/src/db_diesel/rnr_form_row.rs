@@ -102,6 +102,7 @@ impl<'a> RnRFormRowRepository<'a> {
             row_action: action,
             store_id: Some(row.store_id),
             name_id: Some(row.name_id),
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

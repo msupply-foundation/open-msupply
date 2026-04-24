@@ -100,6 +100,7 @@ impl<'a> EncounterRowRepository<'a> {
             row_action: action,
             store_id: row.store_id,
             name_id: Some(row.patient_id),
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&changelog_row)
