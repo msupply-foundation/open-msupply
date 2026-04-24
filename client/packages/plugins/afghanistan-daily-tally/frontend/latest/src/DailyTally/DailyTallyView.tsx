@@ -158,14 +158,22 @@ type CoverageFieldVisibility = {
 type WorkflowStep =
   | 'tally'
   | 'coverage'
+  | 'course-items'
   | 'allocation'
   | 'wastage'
   | 'non-vaccine';
 type TallyAgeKey = 'under1' | 'oneToTwo' | 'twoToFive';
-type TallyGenderKey = 'male' | 'female' | 'other';
+type TallyGenderKey = 'male' | 'female';
 
 type VaccineSessionTallyDraft = {
   counts: Record<TallyAgeKey, Record<TallyGenderKey, number>>;
+};
+
+type TallyTapAction = {
+  itemId: string;
+  ageKey: TallyAgeKey;
+  genderKey: TallyGenderKey;
+  doseId?: string;
 };
 
 type VaccineCourseDose = {
@@ -173,23 +181,34 @@ type VaccineCourseDose = {
   label: string;
 };
 
+type CourseItemSelectionCandidate = {
+  courseName: string;
+  items: Array<{
+    itemId: string;
+    itemName: string;
+    soh: number;
+  }>;
+};
+
 const tallyAgeGroups: Array<{ key: TallyAgeKey; label: string }> = [
-  { key: 'under1', label: 'Under 1 year' },
-  { key: 'oneToTwo', label: '1 - 2 years' },
-  { key: 'twoToFive', label: '2 - 5 years' },
+  { key: 'under1', label: '0 to 11 months' },
+  { key: 'oneToTwo', label: '1 to 2 years' },
+  { key: 'twoToFive', label: '2 to 5 years' },
 ];
+const tallyAgeKeyByIndex: TallyAgeKey[] = ['under1', 'oneToTwo', 'twoToFive'];
+const womenNonPregnantTallyKey: TallyAgeKey = 'under1';
+const womenPregnantTallyKey: TallyAgeKey = 'oneToTwo';
 
 const tallyGenderGroups: Array<{ key: TallyGenderKey; label: string }> = [
   { key: 'male', label: 'Male' },
   { key: 'female', label: 'Female' },
-  { key: 'other', label: 'Other' },
 ];
 
 const createEmptySessionTallyDraft = (): VaccineSessionTallyDraft => ({
   counts: {
-    under1: { male: 0, female: 0, other: 0 },
-    oneToTwo: { male: 0, female: 0, other: 0 },
-    twoToFive: { male: 0, female: 0, other: 0 },
+    under1: { male: 0, female: 0 },
+    oneToTwo: { male: 0, female: 0 },
+    twoToFive: { male: 0, female: 0 },
   },
 });
 
@@ -204,6 +223,33 @@ const sessionTallyVaccineTotal = (draft: VaccineSessionTallyDraft | undefined) =
           genderTotal + (draft.counts[ageKey]?.[genderKey] ?? 0),
         0
       ),
+    0
+  );
+};
+
+const getSessionTallyKey = (itemId: string, doseId?: string) =>
+  doseId ? `${itemId}::${doseId}` : itemId;
+
+const getSessionTallyVaccineTotalForItem = (
+  tallyByKey: Record<string, VaccineSessionTallyDraft>,
+  row: DailyTallyRow,
+  itemDoses: VaccineCourseDose[]
+) => {
+  if (itemDoses.length === 0) {
+    return sessionTallyVaccineTotal(tallyByKey[getSessionTallyKey(row.itemId)]);
+  }
+
+  const hasDoseScopedDraft = itemDoses.some(dose =>
+    Boolean(tallyByKey[getSessionTallyKey(row.itemId, dose.id)])
+  );
+
+  if (!hasDoseScopedDraft) {
+    return sessionTallyVaccineTotal(tallyByKey[getSessionTallyKey(row.itemId)]);
+  }
+
+  return itemDoses.reduce(
+    (total, dose) =>
+      total + sessionTallyVaccineTotal(tallyByKey[getSessionTallyKey(row.itemId, dose.id)]),
     0
   );
 };
@@ -234,22 +280,10 @@ const sessionTallyGenderTotals = (
     );
   }, 0);
 
-  const other = vaccineRows.reduce((total, row) => {
-    const draft = tallyByItem[row.itemId];
-    return (
-      total +
-      tallyAgeGroups.reduce(
-        (ageTotal, { key }) => ageTotal + (draft?.counts[key]?.other ?? 0),
-        0
-      )
-    );
-  }, 0);
-
   return {
     male,
     female,
-    other,
-    total: male + female + other,
+    total: male + female,
   };
 };
 
@@ -790,7 +824,21 @@ const computeAggregateCoverage = (
     return { ...templateGroup, male, female };
   });
 
-  const womenAgeGroups = template.womenAgeGroups.map(templateGroup => {
+  const womenTemplateAndDraftGroups = new Map<string, WomenCoverageAgeGroup>();
+
+  for (const group of template.womenAgeGroups) {
+    womenTemplateAndDraftGroups.set(group.id, group);
+  }
+
+  for (const draft of allDrafts) {
+    for (const group of draft.womenAgeGroups) {
+      if (!womenTemplateAndDraftGroups.has(group.id)) {
+        womenTemplateAndDraftGroups.set(group.id, group);
+      }
+    }
+  }
+
+  const womenAgeGroups = Array.from(womenTemplateAndDraftGroups.values()).map(templateGroup => {
     const count = allDrafts.reduce((sum, draft) => {
       const group = draft.womenAgeGroups.find(g => g.id === templateGroup.id);
       return sum + (group?.count ?? 0);
@@ -906,9 +954,7 @@ export const DailyTallyView = () => {
   const isSimplifiedTabletUI = useSimplifiedTabletUI();
   const preferences = usePreferences();
   const { useSimplifiedMobileUi = false } = preferences;
-  const isSessionTallyStepEnabled = Boolean(
-    (preferences as Record<string, unknown>).enableDailyTallySessionTallyStep
-  );
+  const isSessionTallyStepEnabled = true;
   const isSimplifiedMode = isSimplifiedTabletUI || useSimplifiedMobileUi;
   const { error, success } = useNotification();
   const {
@@ -953,7 +999,15 @@ export const DailyTallyView = () => {
     Record<string, VaccineSessionTallyDraft>
   >({});
   const [selectedTallyItemId, setSelectedTallyItemId] = useState<string | null>(null);
+  const [activeTallyGender, setActiveTallyGender] = useState<TallyGenderKey>('male');
+  const [activeTallyAge, setActiveTallyAge] = useState<TallyAgeKey>('under1');
+  const [tallyTapHistory, setTallyTapHistory] = useState<TallyTapAction[]>([]);
+  const [selectedCourseItemIdsByCourse, setSelectedCourseItemIdsByCourse] = useState<
+    Record<string, string[]>
+  >({});
   const [expandedCoverageItemIds, setExpandedCoverageItemIds] = useState<Record<string, boolean>>({});
+  const contentContainerRef = useRef<HTMLDivElement | null>(null);
+  const [showTallyTapHint, setShowTallyTapHint] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [workflowStep, setWorkflowStep] = useState<WorkflowStep>(
     isSessionTallyStepEnabled
@@ -974,6 +1028,31 @@ export const DailyTallyView = () => {
     onClose: () => setDuplicateWarningOpen(false),
     disableBackdrop: true,
   });
+
+  useEffect(() => {
+    const root = contentContainerRef.current;
+    let scrollContainer: HTMLElement | null = root;
+
+    while (scrollContainer && scrollContainer !== document.body) {
+      const overflowY = window.getComputedStyle(scrollContainer).overflowY;
+      if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+        break;
+      }
+      scrollContainer = scrollContainer.parentElement;
+    }
+
+    const target = scrollContainer ?? document.documentElement;
+    const previousScrollbarGutter = target.style.scrollbarGutter;
+    const previousOverflowY = target.style.overflowY;
+
+    target.style.scrollbarGutter = 'stable both-edges';
+    target.style.overflowY = 'scroll';
+
+    return () => {
+      target.style.scrollbarGutter = previousScrollbarGutter;
+      target.style.overflowY = previousOverflowY;
+    };
+  }, []);
 
   const duplicateDayRange = useMemo(() => {
     const now = new Date();
@@ -1132,12 +1211,13 @@ export const DailyTallyView = () => {
     keepPreviousData: true,
   });
 
-  const { data: dosesForItemId } = useQuery({
+  const { data: vaccineCourseLookup } = useQuery({
     queryKey: ['daily-tally', 'vaccine-course-doses'],
     queryFn: async () => {
       const result = await gqlClient.request<{
         vaccineCourses: {
           nodes: Array<{
+            name?: string | null;
             vaccineCourseItems?: Array<{ itemId: string }> | null;
             vaccineCourseDoses?: Array<{ id: string; label: string }> | null;
           }>;
@@ -1150,6 +1230,7 @@ export const DailyTallyView = () => {
           ) {
             ... on VaccineCourseConnector {
               nodes {
+                name
                 vaccineCourseItems { itemId }
                 vaccineCourseDoses { id label }
               }
@@ -1159,20 +1240,29 @@ export const DailyTallyView = () => {
       `);
       const courses = result.vaccineCourses?.nodes ?? [];
       const dosesByItemId: Record<string, VaccineCourseDose[]> = {};
+      const courseNameByItemId: Record<string, string> = {};
       for (const course of courses) {
         const items = course.vaccineCourseItems ?? [];
         const doses = (course.vaccineCourseDoses ?? []).filter(d => d.label);
-        if (doses.length === 0) continue;
         for (const item of items) {
-          if (!dosesByItemId[item.itemId]) {
+          if (doses.length > 0 && !dosesByItemId[item.itemId]) {
             dosesByItemId[item.itemId] = doses;
+          }
+          if (!courseNameByItemId[item.itemId] && course.name) {
+            courseNameByItemId[item.itemId] = course.name;
           }
         }
       }
-      return dosesByItemId;
+      return {
+        dosesByItemId,
+        courseNameByItemId,
+      };
     },
     keepPreviousData: true,
   });
+
+  const dosesForItemId = vaccineCourseLookup?.dosesByItemId;
+  const courseNameByItemId = vaccineCourseLookup?.courseNameByItemId;
 
   const groupedItems = useMemo((): ItemGroup[] => {
     return (data?.nodes ?? [])
@@ -1424,16 +1514,87 @@ export const DailyTallyView = () => {
   const normalizedFilterText = filterText.trim().toLowerCase();
   const filteredVaccineRows = vaccineRows;
 
+  const courseItemSelectionCandidates = useMemo((): CourseItemSelectionCandidate[] => {
+    const groupedByCourse: Record<string, CourseItemSelectionCandidate> = {};
+
+    for (const row of vaccineRows) {
+      if (row.soh <= 0) continue;
+      const courseName = courseNameByItemId?.[row.itemId] ?? row.item;
+      if (!groupedByCourse[courseName]) {
+        groupedByCourse[courseName] = {
+          courseName,
+          items: [],
+        };
+      }
+      groupedByCourse[courseName].items.push({
+        itemId: row.itemId,
+        itemName: row.item,
+        soh: row.soh,
+      });
+    }
+
+    return Object.values(groupedByCourse)
+      .filter(group => group.items.length > 1)
+      .sort((a, b) => a.courseName.localeCompare(b.courseName));
+  }, [courseNameByItemId, vaccineRows]);
+
+  const hasCourseItemSelectionStep =
+    !isSimplifiedMode && courseItemSelectionCandidates.length > 0;
+
+  const courseItemSelectionCandidateByCourseName = useMemo(
+    () =>
+      Object.fromEntries(
+        courseItemSelectionCandidates.map(candidate => [
+          candidate.courseName,
+          candidate,
+        ])
+      ) as Record<string, CourseItemSelectionCandidate>,
+    [courseItemSelectionCandidates]
+  );
+
+  const hasValidCourseItemSelections = useMemo(
+    () =>
+      courseItemSelectionCandidates.every(candidate => {
+        const selectedItemIds = selectedCourseItemIdsByCourse[candidate.courseName] ?? [];
+        return selectedItemIds.length > 0;
+      }),
+    [courseItemSelectionCandidates, selectedCourseItemIdsByCourse]
+  );
+
   useEffect(() => {
-    if (!selectedTallyItemId) return;
+    const firstVaccineRow = vaccineRows[0];
+    if (vaccineRows.length === 0) {
+      if (selectedTallyItemId !== null) setSelectedTallyItemId(null);
+      return;
+    }
+
+    if (!firstVaccineRow) return;
+
+    if (!selectedTallyItemId) {
+      setSelectedTallyItemId(firstVaccineRow.itemId);
+      return;
+    }
 
     const selectedExists = vaccineRows.some(row => row.itemId === selectedTallyItemId);
     if (!selectedExists) {
-      setSelectedTallyItemId(null);
+      setSelectedTallyItemId(firstVaccineRow.itemId);
     }
   }, [selectedTallyItemId, vaccineRows]);
 
-  const allocationVaccineRows = useMemo(
+  useEffect(() => {
+    setSelectedCourseItemIdsByCourse(previous => {
+      const next: Record<string, string[]> = {};
+      for (const candidate of courseItemSelectionCandidates) {
+        const validItemIds = new Set(candidate.items.map(item => item.itemId));
+        next[candidate.courseName] = (previous[candidate.courseName] ?? []).filter(
+          itemId => validItemIds.has(itemId)
+        );
+      }
+      return next;
+    });
+  }, [courseItemSelectionCandidates]);
+
+  const baseAllocationVaccineRows = useMemo(
     () =>
       isSimplifiedMode
         ? filteredVaccineRows
@@ -1448,6 +1609,23 @@ export const DailyTallyView = () => {
           ),
     [isSimplifiedMode, filteredVaccineRows, coverageByItem, coverageFieldVisibilityByItem]
   );
+  const allocationVaccineRows = useMemo(() => {
+    if (!hasCourseItemSelectionStep) return baseAllocationVaccineRows;
+
+    return baseAllocationVaccineRows.filter(row => {
+      const courseName = courseNameByItemId?.[row.itemId] ?? row.item;
+      const candidate = courseItemSelectionCandidateByCourseName[courseName];
+      if (!candidate) return true;
+      const selectedItemIds = selectedCourseItemIdsByCourse[courseName] ?? [];
+      return selectedItemIds.includes(row.itemId);
+    });
+  }, [
+    baseAllocationVaccineRows,
+    hasCourseItemSelectionStep,
+    courseNameByItemId,
+    courseItemSelectionCandidateByCourseName,
+    selectedCourseItemIdsByCourse,
+  ]);
   const allocationNonVaccineRows = nonVaccineRows;
   const hasNonVaccineItems = allocationNonVaccineRows.length > 0;
   const isBaseThreeStepFlow =
@@ -1456,11 +1634,17 @@ export const DailyTallyView = () => {
     const sequence: WorkflowStep[] = [];
     if (isSessionTallyStepEnabled) sequence.push('tally');
     if (!isSimplifiedMode) sequence.push('coverage');
+    if (hasCourseItemSelectionStep) sequence.push('course-items');
     sequence.push('allocation');
     sequence.push('wastage');
     if (hasNonVaccineItems) sequence.push('non-vaccine');
     return sequence;
-  }, [hasNonVaccineItems, isSessionTallyStepEnabled, isSimplifiedMode]);
+  }, [
+    hasNonVaccineItems,
+    hasCourseItemSelectionStep,
+    isSessionTallyStepEnabled,
+    isSimplifiedMode,
+  ]);
 
   const hasAnyCoveredMultiBatchVaccines = vaccineRows.some(
     row =>
@@ -1502,8 +1686,9 @@ export const DailyTallyView = () => {
   const workflowStepIndex = Math.max(workflowDisplayStepSequence.indexOf(workflowStep), 0);
   const workflowStepTotal = workflowDisplayStepSequence.length;
   const workflowStepTitleByKey: Record<WorkflowStep, string> = {
-    tally: 'Vaccine Session Tally',
+    tally: 'Live Counter',
     coverage: 'Coverage',
+    'course-items': 'Course Items',
     allocation: keepTopRightButtonTextVisible
       ? 'Vaccine batches'
       : 'Vaccine Batch Allocation',
@@ -1619,23 +1804,44 @@ export const DailyTallyView = () => {
 
   const syncCoverageFromSessionTally = (
     row: DailyTallyRow,
-    draft: VaccineSessionTallyDraft
+    draft: VaccineSessionTallyDraft,
+    doseId?: string
   ) => {
     if (isSimplifiedMode) return;
 
     const currentCoverage =
       coverageByItemRef.current[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate);
+    const visibility = coverageFieldVisibilityByItem[row.itemId] ?? {
+      showChild: false,
+      showWomen: false,
+    };
+    const isWomenOnly = visibility.showWomen && !visibility.showChild;
+    const womenTotals = {
+      nonPregnant:
+        draft.counts[womenNonPregnantTallyKey].male +
+        draft.counts[womenNonPregnantTallyKey].female,
+      pregnant:
+        draft.counts[womenPregnantTallyKey].male +
+        draft.counts[womenPregnantTallyKey].female,
+    };
+    const { nonPregnantGroup, pregnantGroup } = resolveWomenCoverageGroups(
+      currentCoverage.womenAgeGroups
+    );
+    const womenBaseLabel = womenCoverageLabel(nonPregnantGroup, pregnantGroup);
 
     const nextCoverage: VaccineCoverageDraft = {
       ...currentCoverage,
       childAgeGroups: currentCoverage.childAgeGroups.map((group, index) => {
-        const mapKeyByIndex: Record<number, TallyAgeKey> = {
-          0: 'under1',
-          1: 'oneToTwo',
-          2: 'twoToFive',
-        };
-        const mappedAgeKey = mapKeyByIndex[index];
+        const mappedAgeKey = tallyAgeKeyByIndex[index];
         if (!mappedAgeKey) return group;
+
+        if (!visibility.showChild || isWomenOnly) {
+          return {
+            ...group,
+            male: 0,
+            female: 0,
+          };
+        }
 
         return {
           ...group,
@@ -1643,11 +1849,89 @@ export const DailyTallyView = () => {
           female: draft.counts[mappedAgeKey].female,
         };
       }),
-      womenAgeGroups: currentCoverage.womenAgeGroups.map(group => ({
-        ...group,
-        count: 0,
-      })),
+      womenAgeGroups: (() => {
+        if (!isWomenOnly) {
+          return currentCoverage.womenAgeGroups.map(group => ({
+            ...group,
+            count: 0,
+          }));
+        }
+
+        const nextGroups = currentCoverage.womenAgeGroups.map(group => {
+          if (group.id === nonPregnantGroup?.id) {
+            return { ...group, count: womenTotals.nonPregnant };
+          }
+          if (group.id === pregnantGroup?.id) {
+            return { ...group, count: womenTotals.pregnant };
+          }
+          return { ...group, count: 0 };
+        });
+
+        if (!nonPregnantGroup && womenTotals.nonPregnant > 0) {
+          nextGroups.push({
+            id: pregnantGroup?.id
+              ? `${pregnantGroup.id}-non-pregnant`
+              : 'women-non-pregnant',
+            label:
+              womenBaseLabel === 'Women'
+                ? 'Women - Non pregnant'
+                : `${womenBaseLabel} - Non pregnant`,
+            count: womenTotals.nonPregnant,
+          });
+        }
+
+        if (!pregnantGroup && womenTotals.pregnant > 0) {
+          nextGroups.push({
+            id: nonPregnantGroup?.id
+              ? `${nonPregnantGroup.id}-pregnant`
+              : 'women-pregnant',
+            label:
+              womenBaseLabel === 'Women'
+                ? 'Women - Pregnant'
+                : `${womenBaseLabel} - Pregnant`,
+            count: womenTotals.pregnant,
+          });
+        }
+
+        return nextGroups;
+      })(),
     };
+
+    const itemDoses = dosesForItemId?.[row.itemId] ?? [];
+    const isDoseScoped = Boolean(doseId) && itemDoses.length > 0;
+
+    if (isDoseScoped && doseId) {
+      const currentPerDose = perDoseCoverageByItemRef.current[row.itemId] ?? {};
+      const nextPerDose = {
+        ...currentPerDose,
+        [doseId]: nextCoverage,
+      };
+
+      perDoseCoverageByItemRef.current = {
+        ...perDoseCoverageByItemRef.current,
+        [row.itemId]: nextPerDose,
+      };
+      setPerDoseCoverageByItem(previous => ({
+        ...previous,
+        [row.itemId]: nextPerDose,
+      }));
+
+      const aggregateCoverage = computeAggregateCoverage(
+        nextPerDose,
+        defaultVaccineCoverageDraft(coverageTemplate)
+      );
+
+      coverageByItemRef.current = {
+        ...coverageByItemRef.current,
+        [row.itemId]: aggregateCoverage,
+      };
+
+      setCoverageByItem(previous => ({
+        ...previous,
+        [row.itemId]: aggregateCoverage,
+      }));
+      return;
+    }
 
     coverageByItemRef.current = {
       ...coverageByItemRef.current,
@@ -1664,10 +1948,16 @@ export const DailyTallyView = () => {
     row: DailyTallyRow,
     ageKey: TallyAgeKey,
     genderKey: TallyGenderKey,
-    delta: 1 | -1
+    delta: 1 | -1,
+    selectedDoseId?: string
   ) => {
     setSessionTallyByItem(previous => {
-      const currentDraft = previous[row.itemId] ?? createEmptySessionTallyDraft();
+      const itemDoses = dosesForItemId?.[row.itemId] ?? [];
+      const sessionKey =
+        itemDoses.length > 0
+          ? getSessionTallyKey(row.itemId, selectedDoseId)
+          : getSessionTallyKey(row.itemId);
+      const currentDraft = previous[sessionKey] ?? createEmptySessionTallyDraft();
       const currentValue = currentDraft.counts[ageKey][genderKey] ?? 0;
       const nextValue = Math.max(0, currentValue + delta);
 
@@ -1681,44 +1971,152 @@ export const DailyTallyView = () => {
         },
       };
 
-      applyUsedValue(row, sessionTallyVaccineTotal(nextDraft));
-      syncCoverageFromSessionTally(row, nextDraft);
+      const nextSessionTallyByKey = {
+        ...previous,
+        [sessionKey]: nextDraft,
+      };
 
+      applyUsedValue(
+        row,
+        getSessionTallyVaccineTotalForItem(nextSessionTallyByKey, row, itemDoses)
+      );
+      syncCoverageFromSessionTally(row, nextDraft, selectedDoseId);
+
+      return nextSessionTallyByKey;
+    });
+  };
+
+  const getTallyCategoryOptionsForRow = (
+    row: DailyTallyRow
+  ): Array<{ key: TallyAgeKey; label: string }> => {
+    const visibility = coverageFieldVisibilityByItem[row.itemId] ?? {
+      showChild: false,
+      showWomen: false,
+    };
+    const isWomenOnly = visibility.showWomen && !visibility.showChild;
+
+    if (!isWomenOnly) return tallyAgeGroups;
+
+    return [
+      {
+        key: womenNonPregnantTallyKey,
+        label: 'Non-pregnant',
+      },
+      {
+        key: womenPregnantTallyKey,
+        label: 'Pregnant',
+      },
+    ];
+  };
+
+  const getWomenBaseLabelForRow = (row: DailyTallyRow) => {
+    const womenGroups =
+      (coverageByItem[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate)).womenAgeGroups;
+    const { nonPregnantGroup, pregnantGroup } = resolveWomenCoverageGroups(womenGroups);
+
+    return womenCoverageLabel(nonPregnantGroup, pregnantGroup);
+  };
+
+  const getEffectiveTallySelectionForRow = (row: DailyTallyRow) => {
+    const visibility = coverageFieldVisibilityByItem[row.itemId] ?? {
+      showChild: false,
+      showWomen: false,
+    };
+    const isWomenOnly = visibility.showWomen && !visibility.showChild;
+    const categoryOptions = getTallyCategoryOptionsForRow(row);
+    const hasActiveAge = categoryOptions.some(option => option.key === activeTallyAge);
+    const effectiveAgeKey = hasActiveAge
+      ? activeTallyAge
+      : (categoryOptions[0]?.key ?? 'under1');
+
+    return {
+      isWomenOnly,
+      categoryOptions,
+      effectiveAgeKey,
+      effectiveGenderKey: isWomenOnly ? ('female' as const) : activeTallyGender,
+    };
+  };
+
+  const incrementFocusedTallyCell = (row: DailyTallyRow) => {
+    const { effectiveAgeKey, effectiveGenderKey } = getEffectiveTallySelectionForRow(row);
+
+    if (showTallyTapHint) setShowTallyTapHint(false);
+    updateSessionTallyCell(
+      row,
+      effectiveAgeKey,
+      effectiveGenderKey,
+      1,
+      selectedDoseIdByItem[row.itemId]
+    );
+    setTallyTapHistory(previous => [
+      ...previous,
+      {
+        itemId: row.itemId,
+        ageKey: effectiveAgeKey,
+        genderKey: effectiveGenderKey,
+        doseId: selectedDoseIdByItem[row.itemId],
+      },
+    ]);
+  };
+
+  const undoLastTallyTap = (row: DailyTallyRow) => {
+    const { effectiveAgeKey, effectiveGenderKey } = getEffectiveTallySelectionForRow(row);
+
+    const matchingActionIndex = tallyTapHistory
+      .map((action, index) => ({ action, index }))
+      .reverse()
+      .find(
+        ({ action }) =>
+          action.itemId === row.itemId &&
+          action.ageKey === effectiveAgeKey &&
+          action.genderKey === effectiveGenderKey &&
+          (action.doseId ?? '') === (selectedDoseIdByItem[row.itemId] ?? '')
+      )?.index;
+
+    if (matchingActionIndex === undefined) return;
+
+    const matchingAction = tallyTapHistory[matchingActionIndex];
+    if (!matchingAction) return;
+
+    const currentValue =
+      sessionTallyByItem[
+        getSessionTallyKey(row.itemId, matchingAction.doseId)
+      ]?.counts[matchingAction.ageKey]?.[
+        matchingAction.genderKey
+      ] ?? 0;
+    if (currentValue <= 0) {
+      setTallyTapHistory(previous =>
+        previous.filter((_, index) => index !== matchingActionIndex)
+      );
+      return;
+    }
+
+    updateSessionTallyCell(
+      row,
+      matchingAction.ageKey,
+      matchingAction.genderKey,
+      -1,
+      matchingAction.doseId
+    );
+    setTallyTapHistory(previous =>
+      previous.filter((_, index) => index !== matchingActionIndex)
+    );
+  };
+
+  const toggleCourseItemSelection = (courseName: string, itemId: string) => {
+    setSelectedCourseItemIdsByCourse(previous => {
+      const selected = previous[courseName] ?? [];
+      const isSelected = selected.includes(itemId);
       return {
         ...previous,
-        [row.itemId]: nextDraft,
+        [courseName]: isSelected
+          ? selected.filter(currentItemId => currentItemId !== itemId)
+          : [...selected, itemId],
       };
     });
   };
 
-  const resetSessionTally = () => {
-    const hasValues = vaccineRows.some(
-      row => sessionTallyVaccineTotal(sessionTallyByItem[row.itemId]) > 0
-    );
-
-    if (!hasValues) return;
-
-    const confirmed = window.confirm('Reset all vaccine session tally counts for this day?');
-    if (!confirmed) return;
-
-    const nextTallyByItem: Record<string, VaccineSessionTallyDraft> = {};
-    for (const row of vaccineRows) {
-      const emptyDraft = createEmptySessionTallyDraft();
-      nextTallyByItem[row.itemId] = emptyDraft;
-      applyUsedValue(row, 0);
-      syncCoverageFromSessionTally(row, emptyDraft);
-    }
-
-    setSessionTallyByItem(nextTallyByItem);
-    setSelectedTallyItemId(null);
-  };
-
   const moveToAllocationStep = () => {
-    if (!selectedPatientId) {
-      error('Select Daily Tally (patient) before continuing to Batches.')();
-      return;
-    }
-
     // If coverage is entirely empty (all zeros), skip allocation and wastage.
     const hasAnyCoverageValues = vaccineRows.some(row =>
       hasVisibleCoverageValues(
@@ -1781,7 +2179,7 @@ export const DailyTallyView = () => {
       return;
     }
 
-    setWorkflowStep('allocation');
+    setWorkflowStep(hasCourseItemSelectionStep ? 'course-items' : 'allocation');
   };
 
   const ensureMultiBatchAllocationIsValid = () => {
@@ -1878,6 +2276,15 @@ export const DailyTallyView = () => {
 
     if (workflowStep === 'coverage') {
       moveToAllocationStep();
+      return;
+    }
+
+    if (workflowStep === 'course-items') {
+      if (!hasValidCourseItemSelections) {
+        error('Select at least one item for each vaccine course before continuing to Batches.')();
+        return;
+      }
+      setWorkflowStep('allocation');
       return;
     }
 
@@ -3296,7 +3703,8 @@ export const DailyTallyView = () => {
 
   const backButtonLabelByStep: Record<WorkflowStep, string> = {
     tally: 'Back',
-    coverage: 'Back to Session Tally',
+    coverage: 'Back to Counter',
+    'course-items': 'Back to Coverage',
     allocation: 'Back to Coverage',
     wastage: 'Back to Batches',
     'non-vaccine': 'Back to Vaccines',
@@ -3311,6 +3719,8 @@ export const DailyTallyView = () => {
       ? hasAnyIssuedVaccineRows
         ? 'Back to Open Vial Wastage'
         : 'Back to Vaccines'
+      : workflowStep === 'allocation' && previousWorkflowStep === 'course-items'
+      ? 'Back to Item Selection'
       : workflowStep === 'wastage' && previousWorkflowStep === 'coverage'
       ? 'Back to Coverage'
       : backButtonLabelByStep[workflowStep]
@@ -3323,9 +3733,13 @@ export const DailyTallyView = () => {
       : workflowStep === 'coverage'
         ? hasAnyCoverageValues
           ? hasAnyCoveredMultiBatchVaccines
-            ? 'Continue to Batches'
+            ? hasCourseItemSelectionStep
+              ? 'Continue to Item Selection'
+              : 'Continue to Batches'
             : 'Continue to Open Vial Wastage'
           : 'Continue to Non-vaccine'
+        : workflowStep === 'course-items'
+          ? 'Continue to Batches'
         : workflowStep === 'allocation'
           ? isBaseThreeStepFlow && !hasAnyIssuedVaccineRows
             ? 'Continue to Non-vaccine'
@@ -3348,13 +3762,111 @@ export const DailyTallyView = () => {
         : 'Next'
     : continueButtonLabel;
 
-  const sessionGrandTotals = sessionTallyGenderTotals(sessionTallyByItem, vaccineRows);
   const selectedTallyRow = selectedTallyItemId
     ? vaccineRows.find(row => row.itemId === selectedTallyItemId) ?? null
     : null;
-  const selectedTallyDraft = selectedTallyRow
-    ? sessionTallyByItem[selectedTallyRow.itemId] ?? createEmptySessionTallyDraft()
+  const selectedTallyDoses = selectedTallyRow
+    ? dosesForItemId?.[selectedTallyRow.itemId] ?? []
+    : [];
+  const selectedTallyDoseId = selectedTallyRow
+    ? selectedDoseIdByItem[selectedTallyRow.itemId] ?? selectedTallyDoses[0]?.id ?? ''
+    : '';
+  const selectedTallyDoseLabel =
+    selectedTallyDoses.find(dose => dose.id === selectedTallyDoseId)?.label ?? '';
+  const selectedTallyVisibility = selectedTallyRow
+    ? (coverageFieldVisibilityByItem[selectedTallyRow.itemId] ?? {
+        showChild: false,
+        showWomen: false,
+      })
+    : {
+        showChild: false,
+        showWomen: false,
+      };
+  const isSelectedTallyWomenOnly =
+    selectedTallyVisibility.showWomen && !selectedTallyVisibility.showChild;
+  const selectedTallyCategoryOptions = selectedTallyRow
+    ? getTallyCategoryOptionsForRow(selectedTallyRow)
+    : tallyAgeGroups;
+  const selectedTallyWomenBaseLabel =
+    selectedTallyRow && isSelectedTallyWomenOnly
+      ? getWomenBaseLabelForRow(selectedTallyRow)
+      : '';
+  const selectedTallyEffectiveAgeKey = selectedTallyCategoryOptions.some(
+    option => option.key === activeTallyAge
+  )
+    ? activeTallyAge
+    : (selectedTallyCategoryOptions[0]?.key ?? 'under1');
+  const selectedTallyEffectiveGenderKey = isSelectedTallyWomenOnly
+    ? ('female' as const)
+    : activeTallyGender;
+  const selectedTallySessionKey = selectedTallyRow
+    ? selectedTallyDoses.length > 0
+      ? getSessionTallyKey(selectedTallyRow.itemId, selectedTallyDoseId)
+      : getSessionTallyKey(selectedTallyRow.itemId)
     : null;
+  const selectedTallyDraft = selectedTallySessionKey
+    ? sessionTallyByItem[selectedTallySessionKey] ?? createEmptySessionTallyDraft()
+    : null;
+  const tallyCourseOptions = useMemo(() => {
+    const optionsByCourseName: Record<string, { courseName: string; itemId: string }> = {};
+    for (const row of vaccineRows) {
+      const courseName = courseNameByItemId?.[row.itemId] ?? row.item;
+      if (!optionsByCourseName[courseName]) {
+        optionsByCourseName[courseName] = {
+          courseName,
+          itemId: row.itemId,
+        };
+      }
+    }
+    return Object.values(optionsByCourseName).sort((a, b) =>
+      a.courseName.localeCompare(b.courseName)
+    );
+  }, [courseNameByItemId, vaccineRows]);
+  const canUndoFocusedTally = selectedTallyRow
+    ? tallyTapHistory.some(
+        action =>
+          action.itemId === selectedTallyRow.itemId &&
+          action.ageKey === selectedTallyEffectiveAgeKey &&
+          action.genderKey === selectedTallyEffectiveGenderKey &&
+          (action.doseId ?? '') === selectedTallyDoseId
+      )
+    : false;
+
+  useEffect(() => {
+    if (!selectedTallyRow) return;
+    if (selectedTallyDoses.length === 0) return;
+
+    const currentSelectedDoseId = selectedDoseIdByItem[selectedTallyRow.itemId];
+    const doseExists = selectedTallyDoses.some(dose => dose.id === currentSelectedDoseId);
+
+    if (!currentSelectedDoseId || !doseExists) {
+      const firstDose = selectedTallyDoses[0];
+      if (!firstDose) return;
+      setSelectedDoseIdByItem(previous => ({
+        ...previous,
+        [selectedTallyRow.itemId]: firstDose.id,
+      }));
+    }
+  }, [selectedDoseIdByItem, selectedTallyDoses, selectedTallyRow]);
+
+  useEffect(() => {
+    if (!selectedTallyRow) return;
+
+    if (!selectedTallyCategoryOptions.some(option => option.key === activeTallyAge)) {
+      const firstCategory = selectedTallyCategoryOptions[0];
+      if (firstCategory) setActiveTallyAge(firstCategory.key);
+    }
+
+    if (isSelectedTallyWomenOnly && activeTallyGender !== 'female') {
+      setActiveTallyGender('female');
+    }
+  }, [
+    activeTallyAge,
+    activeTallyGender,
+    isSelectedTallyWomenOnly,
+    selectedTallyCategoryOptions,
+    selectedTallyRow,
+  ]);
 
   const childCoverageModalGrandTotal = childCoverageSummaryRows.reduce((sum, coverageRow) => {
     const total =
@@ -4138,7 +4650,15 @@ export const DailyTallyView = () => {
         />
       </AppBarButtonsPortal>
 
-      <Box paddingBottom={2}>
+      <Box
+        ref={contentContainerRef}
+        paddingBottom={2}
+        sx={{
+          width: '100%',
+          minWidth: 0,
+          boxSizing: 'border-box',
+        }}
+      >
         <Box
           sx={{
             paddingX: { xs: 1, sm: 1.5, md: 2 },
@@ -4162,40 +4682,7 @@ export const DailyTallyView = () => {
           ) : (
             <>
               {workflowStep === 'tally' ? (
-                <>
-                  <Box
-                    sx={{
-                      border: '1px solid rgba(0,0,0,0.12)',
-                      borderRadius: 1,
-                      padding: 1.25,
-                      marginBottom: 1.25,
-                      backgroundColor: 'background.menu',
-                    }}
-                  >
-                    <Box
-                      display="grid"
-                      gridTemplateColumns={{ xs: 'repeat(2,minmax(0,1fr))', md: 'repeat(4,minmax(0,1fr))' }}
-                      gap={1}
-                    >
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Male</Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{sessionGrandTotals.male}</Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Female</Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{sessionGrandTotals.female}</Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Other</Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{sessionGrandTotals.other}</Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Total</Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{sessionGrandTotals.total}</Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-
+                <Box sx={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
                   {selectedTallyRow && selectedTallyDraft ? (
                     <Box
                       sx={{
@@ -4203,17 +4690,99 @@ export const DailyTallyView = () => {
                         borderRadius: 1,
                         padding: 1.5,
                         marginBottom: 1.25,
+                        width: '100%',
+                        maxWidth: '100%',
+                        minWidth: 0,
+                        boxSizing: 'border-box',
                       }}
                     >
-                      <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
-                        <ButtonWithIcon
-                          Icon={<ArrowLeftIcon />}
-                          label="Back to Vaccine List"
-                          onClick={() => setSelectedTallyItemId(null)}
-                        />
-                        <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                          Total for {selectedTallyRow.item}: {sessionTallyVaccineTotal(selectedTallyDraft)}
-                        </Typography>
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr',
+                          rowGap: 1,
+                          width: '100%',
+                          minWidth: 0,
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                            VACCINE COURSE
+                          </Typography>
+                          <Box display="flex" gap={0.75} marginTop={0.5} flexWrap="wrap">
+                            {tallyCourseOptions.map(option => {
+                              const isSelected = option.itemId === selectedTallyRow.itemId;
+                              return (
+                                <Box
+                                  key={`course-option-${option.courseName}`}
+                                  component="button"
+                                  type="button"
+                                  onClick={() => setSelectedTallyItemId(option.itemId)}
+                                  sx={{
+                                    border: isSelected
+                                      ? '1px solid rgba(237,108,2,0.9)'
+                                      : '1px solid rgba(0,0,0,0.2)',
+                                    backgroundColor: isSelected
+                                      ? 'rgba(237,108,2,0.14)'
+                                      : 'background.paper',
+                                    color: 'text.primary',
+                                    borderRadius: 1,
+                                    paddingX: 1.25,
+                                    paddingY: 0.7,
+                                    fontWeight: 700,
+                                    fontSize: 14,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {option.courseName}
+                                </Box>
+                              );
+                            })}
+                          </Box>
+                          {selectedTallyDoses.length > 0 ? (
+                            <Box sx={{ marginTop: 1.25 }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                                DOSE
+                              </Typography>
+                              <Box display="flex" gap={0.75} marginTop={0.5} flexWrap="wrap">
+                                {selectedTallyDoses.map(dose => {
+                                  const isSelectedDose = selectedTallyDoseId === dose.id;
+
+                                  return (
+                                    <Box
+                                      key={`tally-dose-option-${dose.id}`}
+                                      component="button"
+                                      type="button"
+                                      onClick={() =>
+                                        setSelectedDoseIdByItem(previous => ({
+                                          ...previous,
+                                          [selectedTallyRow.itemId]: dose.id,
+                                        }))
+                                      }
+                                      sx={{
+                                        border: isSelectedDose
+                                          ? '1px solid rgba(237,108,2,0.9)'
+                                          : '1px solid rgba(0,0,0,0.2)',
+                                        backgroundColor: isSelectedDose
+                                          ? 'rgba(237,108,2,0.14)'
+                                          : 'background.paper',
+                                        color: 'text.primary',
+                                        borderRadius: 1,
+                                        paddingX: 1.1,
+                                        paddingY: 0.6,
+                                        fontWeight: 700,
+                                        fontSize: 13,
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      {dose.label}
+                                    </Box>
+                                  );
+                                })}
+                              </Box>
+                            </Box>
+                          ) : null}
+                        </Box>
                       </Box>
 
                       <Box
@@ -4221,140 +4790,332 @@ export const DailyTallyView = () => {
                           marginTop: 1.25,
                           border: '1px solid rgba(0,0,0,0.12)',
                           borderRadius: 1,
-                          overflowX: 'auto',
+                          padding: { xs: 1.25, sm: 1.75 },
+                          backgroundColor: 'background.default',
+                          width: '100%',
+                          maxWidth: '100%',
+                          minWidth: 0,
+                          boxSizing: 'border-box',
                         }}
                       >
                         <Box
-                          display="grid"
-                          gridTemplateColumns="minmax(140px,1.8fr) repeat(3,minmax(0,1fr)) minmax(96px,0.9fr)"
-                          columnGap={0.75}
-                          rowGap={0.75}
-                          alignItems="center"
-                          sx={{ padding: 1.25 }}
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', md: 'minmax(260px, 360px) minmax(0, 1fr)' },
+                            gap: 2,
+                            alignItems: 'stretch',
+                            width: '100%',
+                            minWidth: 0,
+                          }}
                         >
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>Age</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Male</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Female</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Other</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, textAlign: 'center' }}>Total</Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              minWidth: 0,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'flex-start',
+                                width: 'max-content',
+                              }}
+                            >
+                              {!isSelectedTallyWomenOnly ? (
+                                <>
+                                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                                    GENDER
+                                  </Typography>
+                                  <Box
+                                    sx={{
+                                      display: 'grid',
+                                      gridTemplateColumns: 'max-content',
+                                      gap: 0.75,
+                                      marginTop: 0.5,
+                                    }}
+                                  >
+                                    {tallyGenderGroups.map(({ key, label }) => {
+                                      const isSelected = selectedTallyEffectiveGenderKey === key;
+                                      return (
+                                        <Box
+                                          key={key}
+                                          component="button"
+                                          type="button"
+                                          onClick={() => setActiveTallyGender(key)}
+                                          sx={{
+                                            border: isSelected
+                                              ? '1px solid rgba(237,108,2,0.9)'
+                                              : '1px solid rgba(0,0,0,0.2)',
+                                            backgroundColor: isSelected
+                                              ? 'rgba(237,108,2,0.14)'
+                                              : 'background.paper',
+                                            color: 'text.primary',
+                                            borderRadius: 1,
+                                            width: 'auto',
+                                            textAlign: 'left',
+                                            paddingX: 1.25,
+                                            paddingY: 0.75,
+                                            fontWeight: 700,
+                                            fontSize: 15,
+                                            cursor: 'pointer',
+                                          }}
+                                        >
+                                          {label}
+                                        </Box>
+                                      );
+                                    })}
+                                  </Box>
+                                </>
+                              ) : null}
+                            </Box>
 
-                          {tallyAgeGroups.map(({ key, label }) => {
-                            const maleCount = selectedTallyDraft.counts[key].male;
-                            const femaleCount = selectedTallyDraft.counts[key].female;
-                            const otherCount = selectedTallyDraft.counts[key].other;
-                            const rowTotal = maleCount + femaleCount + otherCount;
-
-                            return (
-                              <React.Fragment key={key}>
-                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{label}</Typography>
-                                {tallyGenderGroups.map(({ key: genderKey }) => {
-                                  const value = selectedTallyDraft.counts[key][genderKey];
+                            <Box
+                              sx={{
+                                marginTop: isSelectedTallyWomenOnly ? 0 : 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'flex-start',
+                                width: 'max-content',
+                              }}
+                            >
+                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                                {isSelectedTallyWomenOnly ? 'WOMEN 15-49 YEARS' : 'AGE GROUP'}
+                              </Typography>
+                              {isSelectedTallyWomenOnly ? (
+                                <Box
+                                  sx={{
+                                    marginTop: 0.25,
+                                    border: '1px solid rgba(237,108,2,0.9)',
+                                    backgroundColor: 'rgba(237,108,2,0.14)',
+                                    color: 'text.primary',
+                                    borderRadius: 1,
+                                    width: 'auto',
+                                    textAlign: 'left',
+                                    paddingX: 1.25,
+                                    paddingY: 0.75,
+                                    fontWeight: 700,
+                                    fontSize: 15,
+                                    lineHeight: 1.2,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  {selectedTallyWomenBaseLabel}
+                                </Box>
+                              ) : null}
+                              {isSelectedTallyWomenOnly ? (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ marginTop: 0.75, fontWeight: 700 }}
+                                >
+                                  PREGNANCY STATUS
+                                </Typography>
+                              ) : null}
+                              <Box
+                                sx={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'max-content',
+                                  gap: 0.75,
+                                  marginTop: isSelectedTallyWomenOnly ? 0.4 : 0.5,
+                                }}
+                              >
+                                {selectedTallyCategoryOptions.map(({ key, label }) => {
+                                  const isSelected = selectedTallyEffectiveAgeKey === key;
                                   return (
                                     <Box
-                                      key={`${key}-${genderKey}`}
-                                      display="flex"
-                                      alignItems="center"
-                                      justifyContent="center"
-                                      gap={0.5}
+                                      key={key}
+                                      component="button"
+                                      type="button"
+                                      onClick={() => setActiveTallyAge(key)}
+                                      sx={{
+                                        border: isSelected
+                                          ? '1px solid rgba(237,108,2,0.9)'
+                                          : '1px solid rgba(0,0,0,0.2)',
+                                        backgroundColor: isSelected
+                                          ? 'rgba(237,108,2,0.14)'
+                                          : 'background.paper',
+                                        color: 'text.primary',
+                                        borderRadius: 1,
+                                        width: 'auto',
+                                        textAlign: 'left',
+                                        paddingX: 1.25,
+                                        paddingY: 0.75,
+                                        fontWeight: 700,
+                                        fontSize: 15,
+                                        cursor: 'pointer',
+                                      }}
                                     >
-                                      <ButtonWithIcon
-                                        label="-1"
-                                        onClick={() =>
-                                          updateSessionTallyCell(
-                                            selectedTallyRow,
-                                            key,
-                                            genderKey,
-                                            -1
-                                          )
-                                        }
-                                        sx={{ minWidth: 44, height: 44, paddingX: 0.75 }}
-                                      />
-                                      <ButtonWithIcon
-                                        label={value > 0 ? `${value} +1` : '+1'}
-                                        onClick={() =>
-                                          updateSessionTallyCell(
-                                            selectedTallyRow,
-                                            key,
-                                            genderKey,
-                                            1
-                                          )
-                                        }
-                                        sx={{
-                                          minWidth: 72,
-                                          height: 50,
-                                          paddingX: 1,
-                                          backgroundColor:
-                                            value > 0 ? 'rgba(25,118,210,0.12)' : undefined,
-                                          border: value > 0 ? '1px solid rgba(25,118,210,0.35)' : undefined,
-                                        }}
-                                      />
+                                      {label}
                                     </Box>
                                   );
                                 })}
-                                <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700 }}>
-                                  {rowTotal}
+                              </Box>
+                            </Box>
+
+                          </Box>
+
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              minWidth: 0,
+                              width: '100%',
+                              position: 'relative',
+                              paddingBottom: { xs: 7, md: 0 },
+                            }}
+                          >
+                            {showTallyTapHint ? (
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  top: '50%',
+                                  left: { xs: -28, sm: -48, md: -68 },
+                                  transform: 'translateY(-50%)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  zIndex: 1,
+                                  pointerEvents: 'none',
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: 'rgba(0,0,0,0.33)',
+                                    letterSpacing: 0.1,
+                                    whiteSpace: 'nowrap',
+                                    fontSize: { xs: 15, sm: 17 },
+                                  }}
+                                >
+                                  Tap to add 1{' '}
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      fontSize: { xs: 21, sm: 24 },
+                                      lineHeight: 0,
+                                      verticalAlign: 'middle',
+                                      color: 'rgba(0,0,0,0.36)',
+                                    }}
+                                  >
+                                    →
+                                  </Box>
                                 </Typography>
-                              </React.Fragment>
-                            );
-                          })}
+                              </Box>
+                            ) : null}
+                            <Box
+                              component="button"
+                              type="button"
+                              onClick={() => incrementFocusedTallyCell(selectedTallyRow)}
+                              sx={{
+                                width: { xs: 240, sm: 320, lg: 380 },
+                                height: { xs: 240, sm: 320, lg: 380 },
+                                maxWidth: '100%',
+                                borderRadius: '50%',
+                                border: 'none',
+                                cursor: 'pointer',
+                                backgroundColor: '#eb6d27',
+                                color: '#fff',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 8px 24px rgba(235, 109, 39, 0.25)',
+                              }}
+                            >
+                              {selectedTallyDoseLabel ? (
+                                <Typography
+                                  variant="body1"
+                                  sx={{
+                                    marginBottom: 0.5,
+                                    fontWeight: 800,
+                                    letterSpacing: 0.4,
+                                    color: 'rgba(255,255,255,0.95)',
+                                    textAlign: 'center',
+                                    fontSize: { xs: 18, sm: 20 },
+                                  }}
+                                >
+                                  {selectedTallyDoseLabel}
+                                </Typography>
+                              ) : null}
+                              <Typography variant="h1" sx={{ fontSize: { xs: 72, sm: 92, lg: 112 }, fontWeight: 800, lineHeight: 1 }}>
+                                {
+                                  selectedTallyDraft.counts[selectedTallyEffectiveAgeKey][
+                                    selectedTallyEffectiveGenderKey
+                                  ]
+                                }
+                              </Typography>
+                              {!isSelectedTallyWomenOnly ? (
+                                <Typography
+                                  variant="h5"
+                                  sx={{ fontWeight: 800, letterSpacing: 1, color: '#fff', fontSize: { xs: 28, sm: 32 } }}
+                                >
+                                  {selectedTallyEffectiveGenderKey.toUpperCase()}
+                                </Typography>
+                              ) : null}
+                              <Typography
+                                variant="body1"
+                                sx={{
+                                  marginTop: 0.25,
+                                  fontWeight: 700,
+                                  color: 'rgba(255,255,255,0.95)',
+                                  textAlign: 'center',
+                                  fontSize: { xs: 18, sm: 20 },
+                                }}
+                              >
+                                {
+                                  selectedTallyCategoryOptions.find(
+                                    ({ key }) => key === selectedTallyEffectiveAgeKey
+                                  )?.label ?? ''
+                                }
+                              </Typography>
+                            </Box>
+
+                            <Box
+                              component="button"
+                              type="button"
+                              onClick={() => undoLastTallyTap(selectedTallyRow)}
+                              disabled={!canUndoFocusedTally}
+                              sx={{
+                                position: 'absolute',
+                                right: { xs: '50%', md: 12 },
+                                bottom: { xs: 0, md: 12 },
+                                transform: { xs: 'translateX(50%)', md: 'none' },
+                                width: 84,
+                                height: 84,
+                                borderRadius: '50%',
+                                border: '2px solid rgba(245, 158, 11, 0.45)',
+                                backgroundColor: 'rgba(245, 158, 11, 0.14)',
+                                color: '#8A4B00',
+                                fontWeight: 700,
+                                fontSize: 14,
+                                lineHeight: 1.2,
+                                textAlign: 'center',
+                                boxShadow: '0 10px 24px rgba(245, 158, 11, 0.18)',
+                                cursor: 'pointer',
+                                padding: 1,
+                                '&:disabled': {
+                                  opacity: 0.5,
+                                  backgroundColor: 'rgba(0,0,0,0.04)',
+                                  color: 'text.secondary',
+                                  border: '1px solid rgba(0,0,0,0.16)',
+                                  cursor: 'not-allowed',
+                                  boxShadow: '0 6px 14px rgba(0,0,0,0.06)',
+                                },
+                              }}
+                            >
+                              Undo last
+                            </Box>
+                          </Box>
                         </Box>
                       </Box>
                     </Box>
-                  ) : (
-                    <>
-                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ marginY: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                          Vaccines
-                        </Typography>
-                        <ButtonWithIcon label="Reset day" onClick={resetSessionTally} />
-                      </Box>
-
-                      <Box
-                        display="grid"
-                        gridTemplateColumns={{
-                          xs: '1fr',
-                          sm: 'repeat(auto-fit,minmax(240px,1fr))',
-                          lg: 'repeat(auto-fit,minmax(280px,1fr))',
-                        }}
-                        columnGap={1.25}
-                        sx={{ width: '100%' }}
-                      >
-                        {vaccineRows.map(row => {
-                          const total = sessionTallyVaccineTotal(sessionTallyByItem[row.itemId]);
-
-                          return (
-                            <Box
-                              key={`tally-card-${row.itemId}`}
-                              role="button"
-                              onClick={() => setSelectedTallyItemId(row.itemId)}
-                              sx={{
-                                border: total > 0
-                                  ? '1px solid rgba(25,118,210,0.38)'
-                                  : '1px solid rgba(0,0,0,0.12)',
-                                backgroundColor:
-                                  total > 0 ? 'rgba(25,118,210,0.10)' : 'background.white',
-                                borderRadius: 1,
-                                paddingX: 1.25,
-                                paddingY: 1,
-                                marginBottom: 1,
-                                width: '100%',
-                                boxSizing: 'border-box',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <Typography variant="body1" sx={{ fontWeight: selectedTallyItemId === row.itemId ? 700 : 'normal' }}>
-                                {row.item}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                Daily total: {total}
-                              </Typography>
-                            </Box>
-                          );
-                        })}
-                      </Box>
-                    </>
-                  )}
-                </>
+                  ) : null}
+                </Box>
               ) : null}
 
               {workflowStep === 'coverage' ? (
@@ -4362,18 +5123,43 @@ export const DailyTallyView = () => {
                   <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary', marginY: 1 }}>
                     Vaccine coverage
                   </Typography>
-                  {filteredVaccineRows
-                    .filter(row => {
-                      const v = coverageFieldVisibilityByItem[row.itemId] ?? { showChild: false, showWomen: false };
-                      return v.showChild || v.showWomen;
-                    })
-                    .map(row => {
+                  <Box
+                    sx={{
+                      width: { xs: '100%', md: '75%' },
+                      minWidth: 0,
+                      display: 'block',
+                    }}
+                  >
+                    {filteredVaccineRows
+                      .filter(row => {
+                        const v = coverageFieldVisibilityByItem[row.itemId] ?? {
+                          showChild: false,
+                          showWomen: false,
+                        };
+                        return v.showChild || v.showWomen;
+                      })
+                      .map(row => {
                       const coverage = coverageByItem[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate);
+                      const coverageDisplayName = courseNameByItemId?.[row.itemId] ?? row.item;
                       const coverageVisibility = coverageFieldVisibilityByItem[row.itemId] ?? { showChild: false, showWomen: false };
-                      const hasCoverage = hasVisibleCoverageValues(coverage, coverageVisibility);
+                      const itemDoses = dosesForItemId?.[row.itemId] ?? [];
+                      const combinedCoverage =
+                        itemDoses.length > 0
+                          ? computeAggregateCoverage(
+                              perDoseCoverageByItem[row.itemId] ?? {},
+                              defaultVaccineCoverageDraft(coverageTemplate)
+                            )
+                          : coverage;
+                      const issuedDosesTotal = getVisibleCoverageUsedTotal(
+                        combinedCoverage,
+                        coverageVisibility
+                      );
+                      const hasCoverage = hasVisibleCoverageValues(
+                        combinedCoverage,
+                        coverageVisibility
+                      );
                       const isExpanded = expandedCoverageItemIds[row.itemId] ?? false;
                       const coverageSohWarning = coverageExceedsSohByItem[row.itemId];
-                      const itemDoses = dosesForItemId?.[row.itemId] ?? [];
                       const selectedDoseId = selectedDoseIdByItem[row.itemId] ?? itemDoses[0]?.id ?? '';
                       const activeCoverage = itemDoses.length > 0
                         ? (perDoseCoverageByItem[row.itemId]?.[selectedDoseId] ?? defaultVaccineCoverageDraft(coverageTemplate))
@@ -4387,7 +5173,16 @@ export const DailyTallyView = () => {
                       };
 
                       return (
-                        <Box key={`coverage-expand-${row.itemId}`} sx={{ marginBottom: 1.25, width: '100%', boxSizing: 'border-box' }}>
+                        <Box
+                          key={`coverage-expand-${row.itemId}`}
+                          sx={{
+                            marginBottom: 1.25,
+                            width: '100%',
+                            minWidth: '100%',
+                            display: 'block',
+                            boxSizing: 'border-box',
+                          }}
+                        >
                           <Box
                             role="button"
                             onClick={() => setExpandedCoverageItemIds(prev => ({ ...prev, [row.itemId]: !prev[row.itemId] }))}
@@ -4405,7 +5200,7 @@ export const DailyTallyView = () => {
                             <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
                               <Box>
                                 <Typography variant="body1" sx={{ fontWeight: isExpanded ? 700 : 'normal' }}>
-                                  {row.item}
+                                  {coverageDisplayName}
                                 </Typography>
                               </Box>
                               <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
@@ -4422,7 +5217,7 @@ export const DailyTallyView = () => {
                                     }}
                                   >
                                     <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.76rem', lineHeight: 1.2 }}>
-                                      Issued doses: {row.used}
+                                      Issued doses: {issuedDosesTotal}
                                     </Typography>
                                   </Box>
                                 ) : null}
@@ -4443,8 +5238,10 @@ export const DailyTallyView = () => {
                                 border: hasCoverage ? '1px solid rgba(25,118,210,0.38)' : '1px solid rgba(0,0,0,0.12)',
                                 borderTop: 'none',
                                 borderRadius: '0 0 4px 4px',
-                                paddingX: 2,
+                                paddingX: 1.25,
                                 paddingY: 1.5,
+                                width: '100%',
+                                boxSizing: 'border-box',
                               }}
                             >
                               {coverageSohWarning ? (
@@ -4751,6 +5548,91 @@ export const DailyTallyView = () => {
                         </Box>
                       );
                     })}
+                  </Box>
+                </>
+              ) : null}
+
+              {workflowStep === 'course-items' ? (
+                <>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary', marginY: 1 }}>
+                    Select Items Used Per Vaccine Course
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ marginBottom: 1.25 }}>
+                    For each course below, select one or more in-stock items that were used.
+                  </Typography>
+
+                  {courseItemSelectionCandidates.map(candidate => {
+                    const selectedItemIds = selectedCourseItemIdsByCourse[candidate.courseName] ?? [];
+                    const hasSelection = selectedItemIds.length > 0;
+
+                    return (
+                      <Box
+                        key={`course-item-select-${candidate.courseName}`}
+                        sx={{
+                          border: hasSelection
+                            ? '1px solid rgba(25,118,210,0.35)'
+                            : '1px solid rgba(0,0,0,0.12)',
+                          backgroundColor: hasSelection
+                            ? 'rgba(25,118,210,0.08)'
+                            : 'background.white',
+                          borderRadius: 1,
+                          padding: 1.25,
+                          marginBottom: 1.25,
+                          width: '100%',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                          {candidate.courseName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', marginTop: 0.25 }}>
+                          Select at least one item.
+                        </Typography>
+
+                        <Box
+                          display="grid"
+                          gridTemplateColumns={{ xs: '1fr', sm: 'repeat(auto-fit,minmax(260px,1fr))' }}
+                          gap={0.75}
+                          sx={{ marginTop: 0.9 }}
+                        >
+                          {candidate.items.map(item => {
+                            const isSelected = selectedItemIds.includes(item.itemId);
+
+                            return (
+                              <Box
+                                key={`course-item-option-${candidate.courseName}-${item.itemId}`}
+                                component="button"
+                                type="button"
+                                onClick={() =>
+                                  toggleCourseItemSelection(candidate.courseName, item.itemId)
+                                }
+                                sx={{
+                                  border: isSelected
+                                    ? '1px solid rgba(237,108,2,0.9)'
+                                    : '1px solid rgba(0,0,0,0.2)',
+                                  backgroundColor: isSelected
+                                    ? 'rgba(237,108,2,0.14)'
+                                    : 'background.paper',
+                                  borderRadius: 1,
+                                  paddingX: 1,
+                                  paddingY: 0.75,
+                                  cursor: 'pointer',
+                                  textAlign: 'left',
+                                }}
+                              >
+                                <Typography variant="body2" sx={{ fontWeight: isSelected ? 700 : 500 }}>
+                                  {item.itemName}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  SOH: {item.soh}
+                                </Typography>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    );
+                  })}
                 </>
               ) : null}
 
@@ -4770,6 +5652,10 @@ export const DailyTallyView = () => {
                 ? displayedVaccineRows.map(row => {
                     const coverage =
                       coverageByItem[row.itemId] ?? defaultVaccineCoverageDraft(coverageTemplate);
+                    const rowDisplayName =
+                      workflowStep === 'coverage'
+                        ? courseNameByItemId?.[row.itemId] ?? row.item
+                        : row.item;
                     const coverageVisibility = coverageFieldVisibilityByItem[row.itemId] ?? {
                       showChild: false,
                       showWomen: false,
@@ -4784,6 +5670,17 @@ export const DailyTallyView = () => {
                     const isAllocationStep = workflowStep === 'allocation';
                     const isWastageStep = workflowStep === 'wastage';
                     const itemDoses = dosesForItemId?.[row.itemId] ?? [];
+                    const combinedCoverage =
+                      itemDoses.length > 0
+                        ? computeAggregateCoverage(
+                            perDoseCoverageByItem[row.itemId] ?? {},
+                            defaultVaccineCoverageDraft(coverageTemplate)
+                          )
+                        : coverage;
+                    const issuedDosesTotal = getVisibleCoverageUsedTotal(
+                      combinedCoverage,
+                      coverageVisibility
+                    );
                     const selectedDoseId =
                       selectedDoseIdByItem[row.itemId] ?? itemDoses[0]?.id ?? '';
                     const activeCoverage =
@@ -4802,7 +5699,7 @@ export const DailyTallyView = () => {
                     };
                     const isThreeStepStepOneAllocation =
                       isAllocationStep && isBaseThreeStepFlow;
-                    const hasIssuedDoses = row.used > 0;
+                    const hasIssuedDoses = issuedDosesTotal > 0;
                     const isStepOneVaccineExpanded =
                       expandedStepOneVaccineItemIds[row.itemId] ?? false;
                     const showExpandedVaccineContent =
@@ -4870,7 +5767,7 @@ export const DailyTallyView = () => {
                             variant="body1"
                             sx={{ fontWeight: isStepOneVaccineExpanded ? 700 : 'normal' }}
                           >
-                            {row.item}
+                            {rowDisplayName}
                           </Typography>
                           <Box
                             display="flex"
@@ -4896,7 +5793,7 @@ export const DailyTallyView = () => {
                                   variant="body2"
                                   sx={{ fontWeight: 700, fontSize: '0.76rem', lineHeight: 1.2 }}
                                 >
-                                  Issued doses: {row.used}
+                                  Issued doses: {issuedDosesTotal}
                                 </Typography>
                               </Box>
                             ) : null}
