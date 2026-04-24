@@ -25,8 +25,6 @@ pub(crate) mod document_registry;
 pub(crate) mod encounter_legacy;
 pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
-pub(crate) mod goods_received;
-pub(crate) mod goods_received_line;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -89,10 +87,10 @@ pub(crate) mod vaccination_legacy;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_dose_legacy;
+pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod vaccine_course_item_legacy;
 pub(crate) mod vaccine_course_legacy;
-pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
@@ -222,9 +220,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         purchase_order_line::boxed(),
         // Shipping Method
         shipping_method::boxed(),
-        // Goods Received (legacy OG → InboundShipment)
-        goods_received::boxed(),
-        goods_received_line::boxed(),
     ]
 }
 

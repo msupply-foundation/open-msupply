@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, DialogButton } from '@openmsupply-client/common';
-import { IndicatorLineRowFragment } from '../../RequestRequisition/api';
+import { IndicatorLineRowFragment } from '../../api';
 
 interface FooterProps {
   hasNext: boolean;
