@@ -59,7 +59,7 @@ impl SyncTranslation for UserTranslation {
             last_name,
             phone_number,
             job_title,
-        } = serde_json::from_str::<LegacyUserTable>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyUserTable>(sync_record.data.0.clone())?;
 
         let user_account = UserAccountRowRepository::new(connection).find_one_by_id(&id)?;
 

@@ -98,7 +98,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyTemperatureBreachRow>(&sync_record.data)?;
+        let data = serde_json::from_value::<LegacyTemperatureBreachRow>(sync_record.data.0.clone())?;
         let LegacyTemperatureBreachRow {
             id,
             duration_milliseconds,

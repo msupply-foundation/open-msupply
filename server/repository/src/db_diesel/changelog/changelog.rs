@@ -28,22 +28,7 @@ table! {
     }
 }
 
-table! {
-    changelog_deduped (cursor) {
-        cursor -> BigInt,
-        table_name -> Text,
-        record_id -> Text,
-        row_action -> Text,
-        name_id -> Nullable<Text>,
-        store_id -> Nullable<Text>,
-        is_sync_update -> Bool,
-        source_site_id -> Nullable<Integer>,
-        transfer_store_id -> Nullable<Text>,
-        patient_id -> Nullable<Text>,
-    }
-}
-
-allow_tables_to_appear_in_same_query!(changelog_deduped, vaccination);
+allow_tables_to_appear_in_same_query!(changelog, vaccination);
 
 #[cfg(not(feature = "postgres"))]
 define_sql_function!(
@@ -52,6 +37,7 @@ define_sql_function!(
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, TS)]
+    #[strum(serialize_all = "snake_case")]
     pub enum RowActionType {
         #[default]
         Upsert,
@@ -61,7 +47,11 @@ diesel_string_enum! {
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, strum::EnumIter, TS)]
+    #[strum(serialize_all = "snake_case")]
     pub enum ChangelogTableName {
+        Unit,
+        Store,
+        LocationType,
         BackendPlugin,
         Number,
         Location,
@@ -148,6 +138,9 @@ pub(crate) enum ChangeLogSyncStyle {
 impl ChangelogTableName {
     pub(crate) fn sync_style(&self) -> ChangeLogSyncStyle {
         match self {
+            ChangelogTableName::Unit => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Store => ChangeLogSyncStyle::Central,
+            ChangelogTableName::LocationType => ChangeLogSyncStyle::Central,
             ChangelogTableName::BackendPlugin => ChangeLogSyncStyle::Central,
             ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
@@ -229,6 +222,7 @@ pub struct ChangeLogInsertRow {
     #[diesel(column_name = "name_link_id")]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
+    pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
     pub patient_id: Option<String>,
 }
@@ -291,7 +285,7 @@ impl<'a> ChangelogRepository<'a> {
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
         let result = with_locked_changelog_table(self.connection, |locked_con| {
             let query = create_filtered_query(earliest, filter)
-                .order(changelog_deduped::dsl::cursor.asc())
+                .order(changelog::dsl::cursor.asc())
                 .limit(limit.into());
 
             // // Debug diesel query
@@ -326,7 +320,7 @@ impl<'a> ChangelogRepository<'a> {
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
         let result = with_locked_changelog_table(self.connection, |locked_con| {
             let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
-                .order(changelog_deduped::cursor.asc())
+                .order(changelog::cursor.asc())
                 .limit(batch_size.into());
 
             // Debug diesel query
@@ -354,7 +348,7 @@ impl<'a> ChangelogRepository<'a> {
                 sync_site_id,
                 fetch_patient_id,
             )
-            .order(changelog_deduped::cursor.asc())
+            .order(changelog::cursor.asc())
             .limit(batch_size.into());
 
             // Debug diesel query
@@ -486,11 +480,11 @@ create_condition!(
     (patient_id, string, changelog::patient_id),
 );
 
-type BoxedChangelogQuery = IntoBoxed<'static, changelog_deduped::table, DBType>;
+type BoxedChangelogQuery = IntoBoxed<'static, changelog::table, DBType>;
 
 fn create_base_query(earliest: u64) -> BoxedChangelogQuery {
-    changelog_deduped::table
-        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
+    changelog::table
+        .filter(changelog::cursor.ge(earliest.try_into().unwrap_or(0)))
         .into_boxed()
 }
 
@@ -508,13 +502,13 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
             source_site_id,
         } = f;
 
-        apply_equal_filter!(query, table_name, changelog_deduped::table_name);
-        apply_equal_filter!(query, name_id, changelog_deduped::name_id);
-        apply_equal_filter!(query, store_id, changelog_deduped::store_id);
-        apply_equal_filter!(query, record_id, changelog_deduped::record_id);
-        apply_equal_filter!(query, action, changelog_deduped::row_action);
-        apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
-        apply_equal_filter!(query, source_site_id, changelog_deduped::source_site_id);
+        apply_equal_filter!(query, table_name, changelog::table_name);
+        apply_equal_filter!(query, name_id, changelog::name_link_id);
+        apply_equal_filter!(query, store_id, changelog::store_id);
+        apply_equal_filter!(query, record_id, changelog::record_id);
+        apply_equal_filter!(query, action, changelog::row_action);
+        apply_equal_filter!(query, is_sync_update, changelog::is_sync_update);
+        apply_equal_filter!(query, source_site_id, changelog::source_site_id);
     }
 
     query
@@ -549,9 +543,9 @@ fn create_filtered_outgoing_sync_query(
     // The rest of the time we want to exclude any records that were created by the site
     if is_initialized {
         query = query.filter(
-            changelog_deduped::source_site_id
+            changelog::source_site_id
                 .ne(Some(sync_site_id))
-                .or(changelog_deduped::source_site_id.is_null()),
+                .or(changelog::source_site_id.is_null()),
         )
     }
 
@@ -586,20 +580,20 @@ fn create_filtered_outgoing_sync_query(
 
     // Filter the query for the matching records for each type
     query = query.filter(
-        changelog_deduped::table_name
+        changelog::table_name
             .eq_any(central_sync_table_names)
-            .or(changelog_deduped::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
-            .or(changelog_deduped::table_name
+            .or(changelog::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
+            .or(changelog::table_name
                 .eq_any(remote_sync_table_names)
-                .and(changelog_deduped::store_id.eq_any(active_stores_for_site.into_boxed())))
-            .or(changelog_deduped::table_name
+                .and(changelog::store_id.eq_any(active_stores_for_site.into_boxed())))
+            .or(changelog::table_name
                 .eq_any(central_by_empty_store_id)
-                .and(changelog_deduped::store_id.is_null()))
+                .and(changelog::store_id.is_null()))
             // Special case: patient Vaccination records
             // where patient is visible, regardless of the store_id in the changelog
-            .or(changelog_deduped::table_name
+            .or(changelog::table_name
                 .eq(ChangelogTableName::Vaccination)
-                .and(changelog_deduped::name_id.eq_any(patient_names_visible_on_site))),
+                .and(changelog::name_link_id.eq_any(patient_names_visible_on_site))),
         // Any other special cases could be handled here...
     );
 
@@ -637,8 +631,8 @@ fn create_filtered_outgoing_patient_sync_query(
         patient_names_visible_on_site(sync_site_id).select(name_store_join::name_id.nullable());
 
     query = query
-        .filter(changelog_deduped::name_id.eq(fetch_patient_id.clone()))
-        .filter(changelog_deduped::name_id.eq_any(patient_names_visible_on_site));
+        .filter(changelog::name_link_id.eq(fetch_patient_id.clone()))
+        .filter(changelog::name_link_id.eq_any(patient_names_visible_on_site));
 
     query
 }

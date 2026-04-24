@@ -33,7 +33,7 @@ impl SyncTranslation for PeriodScheduleTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyPeriodScheduleRow { id, name } =
-            serde_json::from_str::<LegacyPeriodScheduleRow>(&sync_record.data)?;
+            serde_json::from_value::<LegacyPeriodScheduleRow>(sync_record.data.0.clone())?;
 
         let result = PeriodScheduleRow { id, name };
 
