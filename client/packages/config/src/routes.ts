@@ -48,6 +48,7 @@ export enum AppRoute {
   Stores = 'stores',
   GlobalPreferences = 'global-preferences',
   Campaigns = 'campaigns',
+  Sites = 'sites',
 
   Tools = 'tools',
 

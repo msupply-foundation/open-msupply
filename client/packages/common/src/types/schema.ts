@@ -1330,12 +1330,34 @@ export type CentralServerMutationNode = {
   plugins: CentralPluginMutations;
   preferences: PreferenceMutations;
   reports: CentralReportMutations;
+  site: CentralSiteMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
   plugin: CentralPluginQueries;
+  site: CentralSiteQueries;
+};
+
+export type CentralSiteMutations = {
+  __typename: 'CentralSiteMutations';
+  upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsUpsertSiteArgs = {
+  input: UpsertSiteInput;
+};
+
+export type CentralSiteQueries = {
+  __typename: 'CentralSiteQueries';
+  sites: SitesResponse;
+};
+
+export type CentralSiteQueriesSitesArgs = {
+  filter?: InputMaybe<SiteFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SiteSortInput>>;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
@@ -1401,6 +1423,11 @@ export type ClinicianSortInput = {
 };
 
 export type CliniciansResponse = ClinicianConnector;
+
+export type CodeMustBeProvided = UpsertSiteErrorInterface & {
+  __typename: 'CodeMustBeProvided';
+  description: Scalars['String']['output'];
+};
 
 export type ConfigureNamePropertiesResponse = Success;
 
@@ -6163,6 +6190,11 @@ export type MutationsUseSuggestedQuantityArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type NameNotProvided = UpsertSiteErrorInterface & {
+  __typename: 'NameNotProvided';
+  description: Scalars['String']['output'];
+};
+
 export type NameConnector = {
   __typename: 'NameConnector';
   nodes: Array<NameNode>;
@@ -6523,6 +6555,11 @@ export type PaginationInput = {
   first?: InputMaybe<Scalars['Int']['input']>;
   /** First returned item is at the `offset` position in the full list */
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type PasswordRequired = UpsertSiteErrorInterface & {
+  __typename: 'PasswordRequired';
+  description: Scalars['String']['output'];
 };
 
 export type PatientConnector = {
@@ -9184,6 +9221,39 @@ export type ShippingMethodNode = {
 
 export type ShippingMethodsResponse = ShippingMethodConnector;
 
+export type SiteConnector = {
+  __typename: 'SiteConnector';
+  nodes: Array<SiteNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SiteFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterNumberInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type SiteNode = {
+  __typename: 'SiteNode';
+  code: Scalars['String']['output'];
+  hardwareId?: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+};
+
+export enum SiteSortFieldInput {
+  Code = 'code',
+  Id = 'id',
+  Name = 'name',
+}
+
+export type SiteSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: SiteSortFieldInput;
+};
+
+export type SitesResponse = SiteConnector;
+
 export type SnapshotCountCurrentCountMismatch =
   UpdateStocktakeErrorInterface & {
     __typename: 'SnapshotCountCurrentCountMismatch';
@@ -11223,6 +11293,25 @@ export type UpsertPreferencesInput = {
   >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
+
+export type UpsertSiteError = {
+  __typename: 'UpsertSiteError';
+  error: UpsertSiteErrorInterface;
+};
+
+export type UpsertSiteErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertSiteInput = {
+  clearHardwareId?: InputMaybe<Scalars['Boolean']['input']>;
+  code?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  password?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpsertSiteResponse = SiteNode | UpsertSiteError;
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;
