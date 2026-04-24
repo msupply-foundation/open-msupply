@@ -10,8 +10,8 @@ import {
 import {
   CustomerIndicatorInfoFragment,
   IndicatorColumnFragment,
-} from '../api';
-import { indicatorColumnNameToLocal } from '../../utils';
+} from '../../api';
+import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface CustomerIndicatorInfoProps {
   columns: IndicatorColumnFragment[];

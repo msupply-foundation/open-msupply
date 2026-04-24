@@ -148,7 +148,6 @@ fragment Inbound on InvoiceNode {
   linkedShipment {
     __typename
     id
-    invoiceNumber
   }
 
   user {

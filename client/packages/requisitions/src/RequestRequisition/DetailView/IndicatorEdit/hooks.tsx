@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useDebounceCallback, useNotification } from '@common/hooks';
 import {
   IndicatorLineRowFragment,
   IndicatorValueFragment,
-} from '../../RequestRequisition/api';
+  useRequest,
+} from '../../api';
+import { useDebounceCallback, useNotification } from '@common/hooks';
 
 export const usePreviousNextIndicatorLine = (
   lines?: IndicatorLineRowFragment[],
@@ -38,18 +39,10 @@ export const usePreviousNextIndicatorLine = (
   return state;
 };
 
-// Request and Response each provide their own mutation hook — the shape is
-// identical, so the shared draft hook just accepts one and calls it.
-export type UseUpdateIndicatorValue = () => {
-  mutateAsync: (input: IndicatorValueFragment) => Promise<unknown>;
-  isLoading: boolean;
-};
-
 export const useDraftIndicatorValue = (
-  indicatorValue: IndicatorValueFragment,
-  useUpdate: UseUpdateIndicatorValue
+  indicatorValue: IndicatorValueFragment
 ) => {
-  const { mutateAsync, isLoading } = useUpdate();
+  const { mutateAsync, isLoading } = useRequest.document.updateIndicatorValue();
   const { error } = useNotification();
   const [draft, setDraft] = useState<IndicatorValueFragment>(indicatorValue);
   const save = useDebounceCallback(
@@ -67,3 +60,4 @@ export const useDraftIndicatorValue = (
 
   return { draft, isLoading, update };
 };
+

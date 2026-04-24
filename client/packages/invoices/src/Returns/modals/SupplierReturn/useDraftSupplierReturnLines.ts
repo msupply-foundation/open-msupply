@@ -52,7 +52,7 @@ export const useDraftSupplierReturnLines = ({
   const { mutateAsync: insert } = useReturns.document.insertSupplierReturn();
   const { mutateAsync: updateLines } = useReturns.lines.updateSupplierLines();
 
-  const save = async (theirReference?: string) => {
+  const save = async () => {
     const supplierReturnLines: SupplierReturnLineInput[] = draftLines.map(
       line => {
         const { id, reasonOption, numberOfPacksToReturn, stockLineId, note } =
@@ -72,7 +72,6 @@ export const useDraftSupplierReturnLines = ({
           id: FnUtils.generateUUID(),
           supplierId,
           inboundShipmentId,
-          theirReference,
           supplierReturnLines,
         })
       : await updateLines({

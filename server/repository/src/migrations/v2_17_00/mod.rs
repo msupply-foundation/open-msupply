@@ -10,6 +10,7 @@ mod add_manufacturer_link_id_to_lines;
 mod add_purchase_order_id_to_invoice;
 mod add_purchase_order_line_id_to_invoice_line;
 mod add_stock_line_edit_activity_log_type;
+mod import_goods_received;
 mod invoice_line_add_status;
 mod item_category_join_add_item_link_id;
 mod item_store_join_add_default_location_id;
@@ -39,6 +40,7 @@ impl Migration for V2_17_00 {
             Box::new(add_manufacturer_link_id_to_lines::Migrate),
             Box::new(add_manufacture_date_to_stock_and_invoice_lines::Migrate),
             Box::new(item_store_join_add_default_location_id::Migrate),
+            Box::new(import_goods_received::Migrate),
             Box::new(add_purchase_order_line_id_to_invoice_line::Migrate),
             Box::new(add_inbound_shipment_external_verify_permission::Migrate),
             Box::new(vaccine_course_store_config::Migrate),

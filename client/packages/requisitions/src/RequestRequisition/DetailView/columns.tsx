@@ -88,7 +88,7 @@ export const useRequestColumns = () => {
       },
       {
         accessorKey: 'itemStats.averageMonthlyConsumption',
-        header: t(showExtraColumns ? 'label.area-amc' : 'label.amc'),
+        header: t('label.amc'),
         description: t('description.average-monthly-consumption'),
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,

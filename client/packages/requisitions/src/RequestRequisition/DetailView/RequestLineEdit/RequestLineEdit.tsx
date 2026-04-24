@@ -271,7 +271,7 @@ export const RequestLineEdit = ({
                   value={currentItem?.doses}
                 />
               ) : null}
-              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {renderValueInfoRows(getLeftPanel(t, draft))}
               <InfoRow
                 label={t('label.months-of-stock')}
                 value={draft?.itemStats?.availableMonthsOfStockOnHand}

@@ -92,22 +92,6 @@ impl<'a> SyncBufferRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
-
-    /// Find sync_buffer records by table_name where the JSON data column contains the given pattern.
-    pub fn find_by_table_and_data_like(
-        &self,
-        table_name: &str,
-        data_pattern: &str,
-    ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        let result = sync_buffer::table
-            .filter(
-                sync_buffer::table_name
-                    .eq(table_name)
-                    .and(sync_buffer::data.like(data_pattern)),
-            )
-            .load(self.connection.lock().connection())?;
-        Ok(result)
-    }
 }
 
 #[derive(Clone, Default)]

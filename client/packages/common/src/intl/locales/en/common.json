@@ -1508,7 +1508,6 @@
   "label.reset-pinned-columns": "Reset pinned columns",
   "label.reset-table-defaults": "Reset table to defaults",
   "label.return-from": "Return from",
-  "label.return-to": "Return to",
   "label.revert-existing-transaction": "Revert existing stock transaction",
   "label.review": "Review",
   "label.rnr-adjustments": "Adjustments +/-",
@@ -2079,7 +2078,6 @@
   "messages.customer-requisition-created-on": "Customer requisition created on {{date}}",
   "messages.customer-return-created-verified": "Customer Return successfully created as Verified",
   "messages.default-customer-return-reference": "From outbound shipment #{{invoiceNumber}}",
-  "messages.default-supplier-return-reference": "From outbound shipment #{{invoiceNumber}}",
   "messages.delete-all-translations-confirm": "Are you sure you want to delete all custom translations?",
   "messages.delete-this-line": "Delete this line",
   "messages.deleted": "Deleted",
@@ -2816,6 +2814,5 @@
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
   "report-code.customer-returns": "Customer Returns",
   "report-code.supplier-returns": "Supplier Returns",
-  "label.customer-return": "Customer return",
-  "label.area-amc": "Area AMC"
+  "label.customer-return": "Customer return"
 }
