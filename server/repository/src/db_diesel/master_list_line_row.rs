@@ -3,6 +3,7 @@ use super::{
     master_list_row::master_list, StorageConnection,
 };
 use crate::repository_error::RepositoryError;
+use crate::ChangeLogInsertRow;
 use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
@@ -67,7 +68,7 @@ impl<'a> MasterListLineRowRepository<'a> {
 }
 
 impl Upsert for MasterListLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         MasterListLineRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

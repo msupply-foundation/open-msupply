@@ -4,6 +4,7 @@ use crate::db_diesel::{
     item_variant::item_variant_row::item_variant, location_row::location,
     name_row::name, stock_line_row::stock_line,
 };
+use crate::ChangeLogInsertRow;
 use crate::Delete;
 use crate::RepositoryError;
 use crate::StorageConnection;
@@ -99,7 +100,7 @@ impl<'a> VVMStatusRowRepository<'a> {
 }
 
 impl Upsert for VVMStatusRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         VVMStatusRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

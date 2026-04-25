@@ -40,14 +40,13 @@ pub trait Delete: DebugTrait {
 
 pub trait Upsert: DebugTrait {
     // Upsert returns a changelog id if the table is tracked in changelog
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
-    fn upsert_v7(
+    // When changelog is Some, uses the provided changelog (v7 sync path)
+    // When changelog is None, builds changelog internally (v5/v6 path)
+    fn upsert(
         &self,
-        _con: &StorageConnection,
-        _changelog: ChangeLogInsertRow,
-    ) -> Result<(), RepositoryError> {
-        unimplemented!("upsert_v7 not implemented for this type")
-    }
+        con: &StorageConnection,
+        changelog: Option<ChangeLogInsertRow>,
+    ) -> Result<Option<i64>, RepositoryError>;
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection);

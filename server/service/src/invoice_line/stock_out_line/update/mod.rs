@@ -630,7 +630,7 @@ mod test {
             ..Default::default()
         };
 
-        earlier_stock_in_invoice.upsert(&connection).unwrap();
+        earlier_stock_in_invoice.upsert(&connection, None).unwrap();
 
         // Current invoice (1 minute ago)
         let datetime = chrono::Utc::now().naive_utc() - chrono::Duration::minutes(1);
@@ -648,7 +648,7 @@ mod test {
             ..Default::default()
         };
 
-        current_invoice.upsert(&context.connection).unwrap();
+        current_invoice.upsert(&context.connection, None).unwrap();
 
         // Create a stock line for the item
         let stock_line_id = "stock_line_id".to_string();
@@ -663,7 +663,7 @@ mod test {
             ..Default::default()
         };
 
-        stock_line.upsert(&context.connection).unwrap();
+        stock_line.upsert(&context.connection, None).unwrap();
 
         // Add the invoice lines (each invoice introduces 10 packs)
 
@@ -680,7 +680,7 @@ mod test {
             ..Default::default()
         };
 
-        invoice_line.upsert(&context.connection).unwrap();
+        invoice_line.upsert(&context.connection, None).unwrap();
 
         // Current invoice
         let invoice_line = InvoiceLineRow {
@@ -695,7 +695,7 @@ mod test {
             ..Default::default()
         };
 
-        invoice_line.upsert(&context.connection).unwrap();
+        invoice_line.upsert(&context.connection, None).unwrap();
 
         // Create a backdated prescription (2 days ago)
         let prescription_id = "prescription_id".to_string();
@@ -715,7 +715,7 @@ mod test {
             ..Default::default()
         };
 
-        prescription_invoice.upsert(&context.connection).unwrap();
+        prescription_invoice.upsert(&context.connection, None).unwrap();
 
         // Add a stock out line to the prescription (using half available stock)
         invoice_line_service
@@ -826,7 +826,7 @@ mod test {
             ..Default::default()
         };
 
-        prescription.upsert(&context.connection).unwrap();
+        prescription.upsert(&context.connection, None).unwrap();
 
         // insert a stock out line to the prescription
         let stock_out_line = InsertStockOutLine {
@@ -883,7 +883,7 @@ mod test {
             ..Default::default()
         };
 
-        outbound1.upsert(&context.connection).unwrap();
+        outbound1.upsert(&context.connection, None).unwrap();
 
         let stock_out_line = InsertStockOutLine {
             id: "outbound_invoice-1-1".to_string(),
@@ -917,7 +917,7 @@ mod test {
             ..Default::default()
         };
 
-        prescription1.upsert(&context.connection).unwrap();
+        prescription1.upsert(&context.connection, None).unwrap();
 
         let stock_out_line = InsertStockOutLine {
             id: "prescription_invoice-1-1".to_string(),
@@ -967,7 +967,7 @@ mod test {
             ..Default::default()
         };
 
-        prescription.upsert(&context.connection).unwrap();
+        prescription.upsert(&context.connection, None).unwrap();
 
         // insert a stock out line to the prescription
         let stock_out_line = InsertStockOutLine {

@@ -105,7 +105,7 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
 }
 
 impl Upsert for AssetCatalogueItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         let changelog_id = AssetCatalogueItemRowRepository::new(con).upsert_one(self)?;
         Ok(Some(changelog_id))
     }

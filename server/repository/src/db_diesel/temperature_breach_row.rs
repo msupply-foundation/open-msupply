@@ -149,7 +149,7 @@ impl<'a> TemperatureBreachRowRepository<'a> {
 }
 
 impl Upsert for TemperatureBreachRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         let change_log_id = TemperatureBreachRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }

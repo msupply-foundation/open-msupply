@@ -113,7 +113,7 @@ impl<'a> SystemLogRowRepository<'a> {
 }
 
 impl Upsert for SystemLogRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         let change_log_id = SystemLogRowRepository::new(con).insert_one(self)?;
         Ok(Some(change_log_id))
     }

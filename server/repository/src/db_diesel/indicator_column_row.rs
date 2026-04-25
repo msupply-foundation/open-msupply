@@ -1,5 +1,6 @@
 use super::{IndicatorValueType, StorageConnection};
 use crate::{repository_error::RepositoryError, Upsert};
+use crate::ChangeLogInsertRow;
 use diesel::prelude::*;
 
 table! {
@@ -72,7 +73,7 @@ impl<'a> IndicatorColumnRowRepository<'a> {
     }
 }
 impl Upsert for IndicatorColumnRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         IndicatorColumnRowRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }

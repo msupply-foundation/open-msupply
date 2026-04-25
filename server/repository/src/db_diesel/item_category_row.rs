@@ -1,5 +1,6 @@
 use super::{category_row::category, item_link_row::item_link, item_row::item, StorageConnection};
 use crate::{repository_error::RepositoryError, Upsert};
+use crate::ChangeLogInsertRow;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -72,7 +73,7 @@ impl<'a> ItemCategoryJoinRowRepository<'a> {
 }
 
 impl Upsert for ItemCategoryJoinRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         ItemCategoryJoinRowRepository::new(con).upsert_one(self)?;
         // Not in changelog
         Ok(None)

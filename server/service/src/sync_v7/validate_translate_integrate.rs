@@ -114,7 +114,7 @@ fn integrate(
         ..Default::default()
     };
 
-    upsert.upsert_v7(connection, changelog)?;
+    upsert.upsert(connection, Some(changelog))?;
 
     Ok(())
 }

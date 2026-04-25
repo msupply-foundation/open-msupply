@@ -192,7 +192,7 @@ impl IntegrationOperation {
     ) -> Result<(), RepositoryError> {
         match self {
             IntegrationOperation::Upsert(upsert) => {
-                let cursor_id = upsert.upsert(connection)?;
+                let cursor_id = upsert.upsert(connection, None)?;
 
                 // Update the change log if we get a cursor id
                 if let Some(cursor_id) = cursor_id {

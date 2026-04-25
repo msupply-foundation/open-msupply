@@ -1,5 +1,6 @@
 use super::{name_oms_fields, name_tag_row::name_tag, StorageConnection};
 use crate::diesel_macros::define_linked_tables;
+use crate::ChangeLogInsertRow;
 use crate::name_row::name;
 use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
@@ -78,7 +79,7 @@ impl Delete for NameTagJoinRowDelete {
 }
 
 impl Upsert for NameTagJoinRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
         NameTagJoinRepository::new(con).upsert_one(self)?;
         Ok(None) // Table not in Changelog
     }
