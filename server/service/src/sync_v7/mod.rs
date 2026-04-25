@@ -6,6 +6,7 @@ pub mod prepare;
 pub mod serde;
 pub mod sync;
 pub mod sync_logger;
+pub mod sync_on_central;
 pub mod sync_status;
 pub mod validate;
 pub mod validate_translate_integrate;

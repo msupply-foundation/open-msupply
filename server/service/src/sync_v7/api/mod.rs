@@ -5,6 +5,7 @@ use util::{format_error, with_retries, RetrySeconds};
 
 pub mod pull;
 pub mod push;
+pub mod site_info;
 pub mod status;
 
 pub(crate) static VERSION: u32 = 1;
@@ -74,7 +75,7 @@ impl SyncApiV7 {
     }
 }
 
-async fn response_or_err<T: DeserializeOwned>(
+pub(super) async fn response_or_err<T: DeserializeOwned>(
     result: Result<Response, reqwest::Error>,
     url: reqwest::Url,
 ) -> Result<T, SyncError> {
