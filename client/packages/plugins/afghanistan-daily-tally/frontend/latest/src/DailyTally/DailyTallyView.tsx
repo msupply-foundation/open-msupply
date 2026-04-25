@@ -464,8 +464,21 @@ const toNumeric = (value: number | string | null | undefined) => {
   return Number.isFinite(numeric) ? numeric : 0;
 };
 
+const normalisePercentScale = (value: number) => {
+  if (!Number.isFinite(value)) return 0;
+  // Some datasets store percentage values in 0-1 range (e.g. 0.25 for 25%).
+  // Treat values <= 1 as fractional percentages for compatibility.
+  return value <= 1 ? value * 100 : value;
+};
+
 const normaliseReason = (value: string | null | undefined) =>
   (value ?? '').trim().toLowerCase();
+
+const normaliseLookupKey = (value: string | null | undefined) =>
+  (value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 
 const round = (value: number) => Math.round((value + Number.EPSILON) * 1000) / 1000;
 
@@ -719,6 +732,7 @@ const buildCoverageSummaryRows = (
   coverageByItem: Record<string, VaccineCoverageDraft>,
   demographics: DemographicNodeLite[] | undefined,
   coverageFieldVisibilityByItem: Record<string, CoverageFieldVisibility>,
+  courseNameByItemId?: Record<string, string>,
   perDoseCoverageByItem?: Record<string, Record<string, VaccineCoverageDraft>>,
   dosesForItemId?: Record<string, VaccineCourseDose[]>
 ): CoverageSummaryRow[] => {
@@ -730,10 +744,11 @@ const buildCoverageSummaryRows = (
     visibility: CoverageFieldVisibility,
     doseLabel?: string
   ): CoverageSummaryRow => {
+    const courseName = courseNameByItemId?.[row.itemId] ?? row.item;
     const summary: CoverageSummaryRow = {
       itemId: row.itemId,
-      itemName: row.item,
-      itemDisplayName: row.item,
+      itemName: courseName,
+      itemDisplayName: courseName,
       doseLabel,
       childUnderOneMale: 0,
       childUnderOneFemale: 0,
@@ -1082,6 +1097,7 @@ export const DailyTallyView = () => {
   const [pendingDraftPayload, setPendingDraftPayload] =
     useState<DailyTallyPersistedDraftPayload | null>(null);
   const hasCheckedStoredDraftRef = useRef(false);
+  const hasAutoExpandedCoverageOnEntryRef = useRef(false);
   const initialWorkflowStep: WorkflowStep =
     isSessionTallyStepEnabled
       ? 'tally'
@@ -1106,6 +1122,7 @@ export const DailyTallyView = () => {
     isOpen: resumeDraftOpen,
     onClose: () => setResumeDraftOpen(false),
     disableBackdrop: true,
+    disableMobileFullScreen: true,
   });
 
   useEffect(() => {
@@ -1486,6 +1503,7 @@ export const DailyTallyView = () => {
           nodes?: Array<{
             id: string;
             name?: string | null;
+            basePopulation?: number | null;
             populationPercentage?: number | null;
           }>;
         } | null;
@@ -1524,6 +1542,7 @@ export const DailyTallyView = () => {
               nodes {
                 id
                 name
+                basePopulation
                 populationPercentage
               }
             }
@@ -1554,19 +1573,32 @@ export const DailyTallyView = () => {
       const courses = result.vaccineCourses?.nodes ?? [];
       const dosesByItemId: Record<string, VaccineCourseDose[]> = {};
       const courseNameByItemId: Record<string, string> = {};
-      const populationTargetDosesByItemId: Record<string, number> = {};
+      const populationTargetDosesByCourseName: Record<string, number> = {};
 
       const populationPercentageById: Record<string, number> = {};
       const populationPercentageByName: Record<string, number> = {};
+      const populationPercentageByLookupKey: Record<string, number> = {};
+      const basePopulationByLookupKey: Record<string, number> = {};
+      let fallbackPopulationServedFromDemographics = 0;
       for (const indicator of result.demographicIndicators?.nodes ?? []) {
         const populationPercentage = Math.max(
           0,
-          toNumeric(indicator.populationPercentage)
+          normalisePercentScale(toNumeric(indicator.populationPercentage))
+        );
+        const basePopulation = Math.max(0, toNumeric(indicator.basePopulation));
+        fallbackPopulationServedFromDemographics = Math.max(
+          fallbackPopulationServedFromDemographics,
+          basePopulation
         );
         populationPercentageById[indicator.id] = populationPercentage;
         const indicatorName = indicator.name?.trim().toLowerCase();
+        const indicatorLookupKey = normaliseLookupKey(indicator.name);
         if (indicatorName) {
           populationPercentageByName[indicatorName] = populationPercentage;
+        }
+        if (indicatorLookupKey) {
+          populationPercentageByLookupKey[indicatorLookupKey] = populationPercentage;
+          basePopulationByLookupKey[indicatorLookupKey] = basePopulation;
         }
       }
 
@@ -1580,10 +1612,14 @@ export const DailyTallyView = () => {
         storeProperties = {};
       }
 
-      const populationServed = Math.max(
+      const configuredPopulationServed = Math.max(
         0,
         toNumeric(storeProperties['population_served'] as number | string | undefined)
       );
+      const populationServed =
+        configuredPopulationServed > 0
+          ? configuredPopulationServed
+          : fallbackPopulationServedFromDemographics;
       const supplyInterval = Math.max(
         0,
         toNumeric(storeProperties['supply_interval'] as number | string | undefined)
@@ -1599,29 +1635,48 @@ export const DailyTallyView = () => {
         const doses = (course.vaccineCourseDoses ?? []).filter(d => d.label);
 
         let coverageRate =
-          course.coverageRate != null ? toNumeric(course.coverageRate) : 100;
+          course.coverageRate != null
+            ? normalisePercentScale(toNumeric(course.coverageRate))
+            : 100;
         let wastageRate =
-          course.wastageRate != null ? toNumeric(course.wastageRate) : 0;
+          course.wastageRate != null
+            ? normalisePercentScale(toNumeric(course.wastageRate))
+            : 0;
         for (const storeConfig of course.storeConfigs ?? []) {
           if (storeConfig?.storeId !== storeId) continue;
           if (storeConfig.coverageRate != null) {
-            coverageRate = toNumeric(storeConfig.coverageRate);
+            coverageRate = normalisePercentScale(toNumeric(storeConfig.coverageRate));
           }
           if (storeConfig.wastageRate != null) {
-            wastageRate = toNumeric(storeConfig.wastageRate);
+            wastageRate = normalisePercentScale(toNumeric(storeConfig.wastageRate));
           }
           break;
         }
 
         const demographicName = course.demographic?.name?.trim().toLowerCase();
-        const populationPercentage =
+        const demographicLookupKey = normaliseLookupKey(course.demographic?.name);
+        let populationPercentage =
           (course.demographicId
             ? populationPercentageById[course.demographicId]
             : undefined) ??
           (demographicName
             ? populationPercentageByName[demographicName]
             : undefined) ??
+          (demographicLookupKey
+            ? populationPercentageByLookupKey[demographicLookupKey]
+            : undefined) ??
           0;
+
+        if (
+          populationPercentage <= 0 &&
+          demographicLookupKey &&
+          populationServed > 0
+        ) {
+          const matchedBasePopulation = basePopulationByLookupKey[demographicLookupKey] ?? 0;
+          if (matchedBasePopulation > 0) {
+            populationPercentage = round((matchedBasePopulation / populationServed) * 100);
+          }
+        }
 
         const numberOfCourseDoses = Math.max(
           1,
@@ -1645,6 +1700,13 @@ export const DailyTallyView = () => {
           targetStockDoses = round(monthlyTargetDoses * planningMonths);
         }
 
+        if (course.name) {
+          populationTargetDosesByCourseName[course.name] = round(
+            (populationTargetDosesByCourseName[course.name] ?? 0) +
+              targetStockDoses
+          );
+        }
+
         for (const item of items) {
           if (doses.length > 0 && !dosesByItemId[item.itemId]) {
             dosesByItemId[item.itemId] = doses;
@@ -1652,15 +1714,12 @@ export const DailyTallyView = () => {
           if (!courseNameByItemId[item.itemId] && course.name) {
             courseNameByItemId[item.itemId] = course.name;
           }
-          populationTargetDosesByItemId[item.itemId] = round(
-            (populationTargetDosesByItemId[item.itemId] ?? 0) + targetStockDoses
-          );
         }
       }
       return {
         dosesByItemId,
         courseNameByItemId,
-        populationTargetDosesByItemId,
+        populationTargetDosesByCourseName,
       };
     },
     keepPreviousData: true,
@@ -1668,8 +1727,8 @@ export const DailyTallyView = () => {
 
   const dosesForItemId = vaccineCourseLookup?.dosesByItemId;
   const courseNameByItemId = vaccineCourseLookup?.courseNameByItemId;
-  const populationTargetDosesByItemId =
-    vaccineCourseLookup?.populationTargetDosesByItemId;
+  const populationTargetDosesByCourseName =
+    vaccineCourseLookup?.populationTargetDosesByCourseName;
 
   const groupedItems = useMemo((): ItemGroup[] => {
     return (data?.nodes ?? [])
@@ -1686,8 +1745,9 @@ export const DailyTallyView = () => {
           (total, stockLine) => total + stockLine.availableNumberOfPacks,
           0
         );
+        const courseName = courseNameByItemId?.[item.id] ?? item.name;
         const monthlyTargetDoses = round(
-          populationTargetDosesByItemId?.[item.id] ?? 0
+          populationTargetDosesByCourseName?.[courseName] ?? 0
         );
 
         return {
@@ -1702,7 +1762,7 @@ export const DailyTallyView = () => {
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data?.nodes, populationTargetDosesByItemId]);
+  }, [courseNameByItemId, data?.nodes, populationTargetDosesByCourseName]);
 
   const coverageTemplate = useMemo(
     () => mapFixedDemographicGroups(demographicData?.nodes),
@@ -1924,6 +1984,33 @@ export const DailyTallyView = () => {
   );
   const normalizedFilterText = filterText.trim().toLowerCase();
   const filteredVaccineRows = vaccineRows;
+
+  useEffect(() => {
+    if (workflowStep !== 'coverage') return;
+    if (hasAutoExpandedCoverageOnEntryRef.current) return;
+
+    const coverageRowIds = filteredVaccineRows
+      .filter(row => {
+        const visibility = coverageFieldVisibilityByItem[row.itemId] ?? {
+          showChild: false,
+          showWomen: false,
+        };
+        return visibility.showChild || visibility.showWomen;
+      })
+      .map(row => row.itemId);
+
+    if (coverageRowIds.length === 0) return;
+
+    setExpandedCoverageItemIds(previous => {
+      const next = { ...previous };
+      for (const itemId of coverageRowIds) {
+        next[itemId] = true;
+      }
+      return next;
+    });
+
+    hasAutoExpandedCoverageOnEntryRef.current = true;
+  }, [workflowStep, filteredVaccineRows, coverageFieldVisibilityByItem]);
 
   const courseItemSelectionCandidates = useMemo((): CourseItemSelectionCandidate[] => {
     const groupedByCourse: Record<string, CourseItemSelectionCandidate> = {};
@@ -2172,6 +2259,7 @@ export const DailyTallyView = () => {
         coverageByItem,
         demographicData?.nodes,
         coverageFieldVisibilityByItem,
+        courseNameByItemId,
         perDoseCoverageByItem,
         dosesForItemId
       ),
@@ -2180,6 +2268,7 @@ export const DailyTallyView = () => {
       coverageByItem,
       demographicData?.nodes,
       coverageFieldVisibilityByItem,
+      courseNameByItemId,
       perDoseCoverageByItem,
       dosesForItemId,
     ]
@@ -4389,12 +4478,15 @@ export const DailyTallyView = () => {
       a.courseName.localeCompare(b.courseName)
     );
   }, [courseNameByItemId, vaccineRows]);
-  const monthlyTargetDosesByItemId = useMemo(
+  const monthlyTargetDosesByCourseName = useMemo(
     () =>
       Object.fromEntries(
-        groupedItems.map(item => [item.itemId, item.monthlyTargetDoses])
+        tallyCourseOptions.map(option => [
+          option.courseName,
+          round(populationTargetDosesByCourseName?.[option.courseName] ?? 0),
+        ])
       ) as Record<string, number>,
-    [groupedItems]
+    [populationTargetDosesByCourseName, tallyCourseOptions]
   );
   const selectedTallyCourseName = selectedTallyRow
     ? courseNameByItemId?.[selectedTallyRow.itemId] ?? selectedTallyRow.item
@@ -4406,12 +4498,8 @@ export const DailyTallyView = () => {
         return courseName === option.courseName;
       });
 
-      const targetDoses = round(
-        courseRows.reduce(
-          (sum, row) => sum + (monthlyTargetDosesByItemId[row.itemId] ?? 0),
-          0
-        )
-      );
+      const targetDoses =
+        monthlyTargetDosesByCourseName[option.courseName] ?? 0;
       const currentStockDoses = round(
         courseRows.reduce((sum, row) => sum + row.soh, 0)
       );
@@ -4444,7 +4532,7 @@ export const DailyTallyView = () => {
   }, [
     courseNameByItemId,
     dosesForItemId,
-    monthlyTargetDosesByItemId,
+    monthlyTargetDosesByCourseName,
     sessionTallyByItem,
     tallyCourseOptions,
     vaccineRows,
@@ -4523,7 +4611,8 @@ export const DailyTallyView = () => {
         okButton={
           <DialogButton
             variant="ok"
-            customLabel="Resume"
+            customLabel="Resume draft"
+            shouldShrink={false}
             onClick={() => {
               if (!pendingDraftPayload) {
                 setResumeDraftOpen(false);
@@ -4540,7 +4629,8 @@ export const DailyTallyView = () => {
         cancelButton={
           <DialogButton
             variant="cancel"
-            customLabel="Discard"
+            customLabel="Discard draft"
+            shouldShrink={false}
             onClick={() => {
               clearPersistedCounterDraft();
               setPendingDraftPayload(null);
@@ -4809,11 +4899,11 @@ export const DailyTallyView = () => {
                           }}
                         >
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            Dose
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
                             Vaccine
                           </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              Dose
+                            </Typography>
                           <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
                             Male
                           </Typography>
@@ -4864,8 +4954,8 @@ export const DailyTallyView = () => {
                                   : '1px solid rgba(0,0,0,0.08)',
                             }}
                           >
-                            <Typography variant="body2">{coverageRow.doseLabel ?? '-'}</Typography>
                             <Typography variant="body2">{coverageRow.itemDisplayName}</Typography>
+                            <Typography variant="body2">{coverageRow.doseLabel ?? '-'}</Typography>
                             <Typography variant="body2" sx={{ textAlign: 'center' }}>
                               {coverageRow.childUnderOneMale}
                             </Typography>
@@ -4984,10 +5074,10 @@ export const DailyTallyView = () => {
                             }}
                           >
                             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                              Dose
+                              Vaccine
                             </Typography>
                             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                              Vaccine
+                              Dose
                             </Typography>
                             <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'center' }}>
                               Pregnant
@@ -5022,8 +5112,8 @@ export const DailyTallyView = () => {
                                     : '1px solid rgba(0,0,0,0.08)',
                               }}
                             >
-                              <Typography variant="body2">{coverageRow.doseLabel ?? '-'}</Typography>
                               <Typography variant="body2">{coverageRow.itemDisplayName}</Typography>
+                              <Typography variant="body2">{coverageRow.doseLabel ?? '-'}</Typography>
                               <Typography variant="body2" sx={{ textAlign: 'center' }}>
                                 {coverageRow.womenPregnant}
                               </Typography>
@@ -5356,7 +5446,7 @@ export const DailyTallyView = () => {
                   {selectedTallyRow && selectedTallyDraft ? (
                     <Box
                       sx={{
-                        border: '1px solid rgba(0,0,0,0.12)',
+                        border: 'none',
                         borderRadius: 1,
                         marginTop: 0.75,
                         padding: 1.5,
@@ -5785,7 +5875,7 @@ export const DailyTallyView = () => {
                                 sx={{
                                   position: 'absolute',
                                   top: '50%',
-                                  left: { xs: -28, sm: -48, md: -68 },
+                                  left: { xs: 4, sm: 10, md: -68 },
                                   transform: 'translateY(-50%)',
                                   display: 'flex',
                                   alignItems: 'center',
@@ -5819,25 +5909,63 @@ export const DailyTallyView = () => {
                               </Box>
                             ) : null}
                             <Box
-                              component="button"
-                              type="button"
-                              onClick={() => incrementFocusedTallyCell(selectedTallyRow)}
                               sx={{
+                                position: 'relative',
                                 width: { xs: 240, sm: 320, lg: 380 },
                                 height: { xs: 240, sm: 320, lg: 380 },
                                 maxWidth: '100%',
-                                borderRadius: '50%',
-                                border: 'none',
-                                cursor: 'pointer',
-                                backgroundColor: '#eb6d27',
-                                color: '#fff',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: '0 8px 24px rgba(235, 109, 39, 0.25)',
                               }}
                             >
+                              <Box
+                                component="button"
+                                type="button"
+                                onClick={() => incrementFocusedTallyCell(selectedTallyRow)}
+                                sx={{
+                                  width: '100%',
+                                  height: '100%',
+                                  borderRadius: '50%',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  backgroundColor: '#eb6d27',
+                                  color: '#fff',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                  overflow: 'hidden',
+                                  boxShadow: '0 8px 24px rgba(235, 109, 39, 0.25)',
+                                  transition:
+                                    'transform 120ms ease, box-shadow 160ms ease, filter 120ms ease',
+                                  WebkitTapHighlightColor: 'transparent',
+                                  outline: 'none',
+                                  userSelect: 'none',
+                                  '&::after': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    inset: 0,
+                                    borderRadius: '50%',
+                                    background:
+                                      'radial-gradient(circle, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 62%)',
+                                    opacity: 0,
+                                    transform: 'scale(0.86)',
+                                    transition: 'opacity 140ms ease, transform 140ms ease',
+                                    pointerEvents: 'none',
+                                  },
+                                  '&:focus, &:focus-visible, &:active': {
+                                    outline: 'none',
+                                  },
+                                  '&:active': {
+                                    transform: 'scale(0.97)',
+                                    filter: 'brightness(0.98)',
+                                    boxShadow: '0 5px 16px rgba(235, 109, 39, 0.2)',
+                                  },
+                                  '&:active::after': {
+                                    opacity: 1,
+                                    transform: 'scale(1.08)',
+                                  },
+                                }}
+                              >
                               {selectedTallyDoseLabel ? (
                                 <Typography
                                   variant="body1"
@@ -5884,42 +6012,72 @@ export const DailyTallyView = () => {
                                   )?.label ?? ''
                                 }
                               </Typography>
-                            </Box>
+                              </Box>
 
-                            <Box
-                              component="button"
-                              type="button"
-                              onClick={() => undoLastTallyTap(selectedTallyRow)}
-                              disabled={!canUndoFocusedTally}
-                              sx={{
-                                position: 'absolute',
-                                right: { xs: '50%', md: 6 },
-                                bottom: { xs: 0, md: 8 },
-                                transform: { xs: 'translateX(50%)', md: 'none' },
-                                width: 84,
-                                height: 84,
-                                borderRadius: '50%',
-                                border: '2px solid rgba(245, 158, 11, 0.72)',
-                                backgroundColor: 'rgba(255, 247, 230, 0.96)',
-                                color: '#6F3B00',
-                                fontWeight: 700,
-                                fontSize: 14,
-                                lineHeight: 1.2,
-                                textAlign: 'center',
-                                boxShadow: '0 10px 24px rgba(245, 158, 11, 0.24)',
-                                cursor: 'pointer',
-                                padding: 1,
-                                '&:disabled': {
-                                  opacity: 0.62,
-                                  backgroundColor: 'rgba(255,255,255,0.92)',
-                                  color: 'rgba(0,0,0,0.55)',
-                                  border: '1px solid rgba(0,0,0,0.2)',
-                                  cursor: 'not-allowed',
-                                  boxShadow: '0 6px 14px rgba(0,0,0,0.06)',
-                                },
-                              }}
-                            >
-                              Undo last
+                              <Box
+                                component="button"
+                                type="button"
+                                onClick={() => undoLastTallyTap(selectedTallyRow)}
+                                disabled={!canUndoFocusedTally}
+                                sx={{
+                                  position: 'absolute',
+                                  right: { xs: -6, sm: -8, lg: -10 },
+                                  bottom: { xs: 10, sm: 12, lg: 16 },
+                                  width: 84,
+                                  height: 84,
+                                  borderRadius: '50%',
+                                  border: '2px solid rgba(245, 158, 11, 0.72)',
+                                  backgroundColor: 'rgba(255, 247, 230, 0.96)',
+                                  color: '#6F3B00',
+                                  fontWeight: 700,
+                                  fontSize: 14,
+                                  lineHeight: 1.2,
+                                  textAlign: 'center',
+                                  overflow: 'hidden',
+                                  boxShadow: '0 10px 24px rgba(245, 158, 11, 0.24)',
+                                  cursor: 'pointer',
+                                  padding: 1,
+                                  transition:
+                                    'transform 120ms ease, box-shadow 160ms ease, filter 120ms ease',
+                                  WebkitTapHighlightColor: 'transparent',
+                                  outline: 'none',
+                                  userSelect: 'none',
+                                  zIndex: 2,
+                                  '&::after': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    inset: 0,
+                                    borderRadius: '50%',
+                                    background:
+                                      'radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 62%)',
+                                    opacity: 0,
+                                    transform: 'scale(0.86)',
+                                    transition: 'opacity 140ms ease, transform 140ms ease',
+                                    pointerEvents: 'none',
+                                  },
+                                  '&:focus, &:focus-visible, &:active': {
+                                    outline: 'none',
+                                  },
+                                  '&:not(:disabled):active': {
+                                    filter: 'brightness(0.98)',
+                                    boxShadow: '0 6px 16px rgba(245, 158, 11, 0.2)',
+                                  },
+                                  '&:not(:disabled):active::after': {
+                                    opacity: 1,
+                                    transform: 'scale(1.08)',
+                                  },
+                                  '&:disabled': {
+                                    opacity: 0.62,
+                                    backgroundColor: 'rgba(255,255,255,0.92)',
+                                    color: 'rgba(0,0,0,0.55)',
+                                    border: '1px solid rgba(0,0,0,0.2)',
+                                    cursor: 'not-allowed',
+                                    boxShadow: '0 6px 14px rgba(0,0,0,0.06)',
+                                  },
+                                }}
+                              >
+                                Undo last
+                              </Box>
                             </Box>
                           </Box>
                         </Box>
