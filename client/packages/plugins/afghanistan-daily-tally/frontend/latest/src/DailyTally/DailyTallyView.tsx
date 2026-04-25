@@ -5870,16 +5870,39 @@ export const DailyTallyView = () => {
                               transform: { xs: 'translateY(-30px)', md: 'translateY(-28px)' },
                             }}
                           >
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                width: '100%',
+                              }}
+                            >
+                            <Box
+                              sx={{
+                                position: 'relative',
+                                width: { xs: 240, sm: 320, lg: 380 },
+                                height: { xs: 240, sm: 320, lg: 380 },
+                                maxWidth: '100%',
+                                flexShrink: 0,
+                              }}
+                            >
                             {showTallyTapHint ? (
                               <Box
                                 sx={{
                                   position: 'absolute',
-                                  top: '50%',
-                                  left: { xs: 4, sm: 10, md: -68 },
-                                  transform: 'translateY(-50%)',
+                                  top: isPortraitOrientation ? 0 : '50%',
+                                  left: isPortraitOrientation ? '50%' : undefined,
+                                  right: isPortraitOrientation ? undefined : '100%',
+                                  transform: isPortraitOrientation
+                                    ? 'translate(-50%, calc(-100% - 8px))'
+                                    : 'translateY(-50%)',
                                   display: 'flex',
+                                  flexDirection: isPortraitOrientation ? 'column' : 'row',
                                   alignItems: 'center',
-                                  zIndex: 1,
+                                  justifyContent: 'center',
+                                  gap: isPortraitOrientation ? 0.25 : 1,
+                                  pr: isPortraitOrientation ? 0 : 4,
                                   pointerEvents: 'none',
                                 }}
                               >
@@ -5890,32 +5913,25 @@ export const DailyTallyView = () => {
                                     color: 'rgba(0,0,0,0.33)',
                                     letterSpacing: 0.1,
                                     whiteSpace: 'nowrap',
-                                    fontSize: { xs: 15, sm: 17 },
+                                    fontSize: { xs: 22, sm: 26 },
+                                    lineHeight: 1,
                                   }}
                                 >
-                                  Tap to add 1{' '}
-                                  <Box
-                                    component="span"
-                                    sx={{
-                                      fontSize: { xs: 21, sm: 24 },
-                                      lineHeight: 0,
-                                      verticalAlign: 'middle',
-                                      color: 'rgba(0,0,0,0.36)',
-                                    }}
-                                  >
-                                    →
-                                  </Box>
+                                  Tap to add 1
                                 </Typography>
+                                <ArrowRightIcon
+                                  sx={{
+                                    color: 'rgba(0,0,0,0.36)',
+                                    fontSize: { xs: 30, sm: 36 },
+                                    display: 'block',
+                                    flexShrink: 0,
+                                    transform: isPortraitOrientation
+                                      ? 'rotate(90deg)'
+                                      : 'none',
+                                  }}
+                                />
                               </Box>
                             ) : null}
-                            <Box
-                              sx={{
-                                position: 'relative',
-                                width: { xs: 240, sm: 320, lg: 380 },
-                                height: { xs: 240, sm: 320, lg: 380 },
-                                maxWidth: '100%',
-                              }}
-                            >
                               <Box
                                 component="button"
                                 type="button"
@@ -6078,6 +6094,7 @@ export const DailyTallyView = () => {
                               >
                                 Undo last
                               </Box>
+                            </Box>
                             </Box>
                           </Box>
                         </Box>
