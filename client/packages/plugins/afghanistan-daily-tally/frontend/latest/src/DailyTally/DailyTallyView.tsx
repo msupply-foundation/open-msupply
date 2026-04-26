@@ -474,6 +474,9 @@ const normalisePercentScale = (value: number) => {
 const normaliseReason = (value: string | null | undefined) =>
   (value ?? '').trim().toLowerCase();
 
+const isDiluentItemName = (value: string | null | undefined) =>
+  (value ?? '').toLowerCase().includes('diluent');
+
 const normaliseLookupKey = (value: string | null | undefined) =>
   (value ?? '')
     .toLowerCase()
@@ -4481,12 +4484,19 @@ export const DailyTallyView = () => {
   const monthlyTargetDosesByCourseName = useMemo(
     () =>
       Object.fromEntries(
-        tallyCourseOptions.map(option => [
-          option.courseName,
-          round(populationTargetDosesByCourseName?.[option.courseName] ?? 0),
-        ])
+        tallyCourseOptions.map(option => {
+          const courseRows = vaccineRows.filter(row => {
+            const courseName = courseNameByItemId?.[row.itemId] ?? row.item;
+            return courseName === option.courseName && !isDiluentItemName(row.item);
+          });
+
+          return [
+            option.courseName,
+            round(courseRows.reduce((sum, row) => sum + row.soh, 0)),
+          ];
+        })
       ) as Record<string, number>,
-    [populationTargetDosesByCourseName, tallyCourseOptions]
+    [courseNameByItemId, tallyCourseOptions, vaccineRows]
   );
   const selectedTallyCourseName = selectedTallyRow
     ? courseNameByItemId?.[selectedTallyRow.itemId] ?? selectedTallyRow.item
