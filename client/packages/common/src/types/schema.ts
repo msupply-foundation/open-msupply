@@ -4509,6 +4509,7 @@ export type InvoiceNode = {
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
   purchaseOrder?: Maybe<PurchaseOrderNode>;
+  purchaseOrderId?: Maybe<Scalars['String']['output']>;
   receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
@@ -4750,6 +4751,13 @@ export type ItemLedgerNode = {
   invoiceNumber: Scalars['Int']['output'];
   invoiceStatus: InvoiceNodeStatus;
   invoiceType: InvoiceNodeType;
+  /**
+   * True when the invoice is an external inbound shipment (i.e. linked to a
+   * purchase order). The client uses this to route to the correct detail
+   * page, since internal and external inbound shipments live on separate
+   * routes.
+   */
+  isExternal: Scalars['Boolean']['output'];
   itemId: Scalars['String']['output'];
   movementInUnits: Scalars['Float']['output'];
   name: Scalars['String']['output'];
