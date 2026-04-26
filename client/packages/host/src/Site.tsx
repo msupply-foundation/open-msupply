@@ -162,11 +162,11 @@ export const Site: FC = () => {
     >
     <RequireAuthentication>
       <Blocker />
-      <ConfirmationModalProvider>
-      <AlertModalProvider>
       <EasterEggModalProvider>
         <SyncModalProvider>
           <KBarProvider actions={[]}>
+            <ConfirmationModalProvider>
+            <AlertModalProvider>
             <CommandK>
             <SnackbarProvider
               maxSnack={3}
@@ -322,11 +322,11 @@ export const Site: FC = () => {
               </BarcodeScannerProvider>
             </SnackbarProvider>
             </CommandK>
+            </AlertModalProvider>
+            </ConfirmationModalProvider>
           </KBarProvider>
         </SyncModalProvider>
       </EasterEggModalProvider>
-      </AlertModalProvider>
-      </ConfirmationModalProvider>
     </RequireAuthentication>
     </LocalizationProvider>
   );
