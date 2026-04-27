@@ -204,6 +204,15 @@ pub struct NameRow {
     pub currency_id: Option<String>,
 }
 
+impl NameRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Name
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
+}
+
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
 )]
@@ -242,20 +251,25 @@ impl<'a> NameRowRepository<'a> {
             .do_update()
             .set(name_row)
             .execute(self.connection.lock().connection())?;
+        insert_or_ignore_name_link(self.connection, name_row)?;
         Ok(())
     }
 
     pub fn upsert_one(&self, row: &NameRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        insert_or_ignore_name_link(self.connection, row)?;
 
         self.insert_changelog(row.id.clone(), RowActionType::Upsert)
     }
 
-    pub fn mark_deleted(&self, name_id: &str) -> Result<i64, RepositoryError> {
+    fn _mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
         diesel::update(name::table.filter(name::id.eq(name_id)))
             .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn mark_deleted(&self, name_id: &str) -> Result<i64, RepositoryError> {
+        self._mark_deleted(name_id)?;
         self.insert_changelog(name_id.to_string(), RowActionType::Delete)
     }
 
@@ -319,7 +333,7 @@ impl<'a> NameRowRepository<'a> {
         row_action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Name,
+            table_name: NameRow::table_name(),
             record_id,
             row_action,
             ..Default::default()
@@ -373,6 +387,15 @@ impl Delete for NameRowDelete {
         let change_log_id = NameRowRepository::new(con).mark_deleted(&self.0)?;
         Ok(Some(change_log_id))
     }
+    fn delete_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        NameRowRepository::new(con)._mark_deleted(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
@@ -387,7 +410,15 @@ impl Upsert for NameRow {
         let cursor_id = NameRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        NameRowRepository::new(con)._upsert_one(self)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
@@ -403,7 +434,16 @@ impl Upsert for NameOmsFieldsRow {
             NameRowRepository::new(con).update_properties(&self.id, &self.properties)?;
         Ok(Some(cursor_id))
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        // TODO: raw update_properties without changelog
+        let _ = NameRowRepository::new(con).update_properties(&self.id, &self.properties)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

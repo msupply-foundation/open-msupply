@@ -80,6 +80,7 @@ pub fn generate(
         shipping_method_id: None,
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,
+        ..Default::default()
     };
 
     let lines_with_packs: Vec<&SupplierReturnLineInput> = supplier_return_lines

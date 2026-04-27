@@ -127,6 +127,7 @@ fn generate(
         is_emergency: false,
         created_from_requisition_id: None,
         destination_customer_id: None,
+        ..Default::default()
     };
 
     Ok(result)

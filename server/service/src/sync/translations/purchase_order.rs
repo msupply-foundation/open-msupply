@@ -1,8 +1,6 @@
-use crate::sync::{
-    translations::{
-        name::NameTranslation, store::StoreTranslation, PullTranslateResult, PushTranslateResult,
-        SyncTranslation,
-    },
+use crate::sync::translations::{
+    name::NameTranslation, store::StoreTranslation, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{

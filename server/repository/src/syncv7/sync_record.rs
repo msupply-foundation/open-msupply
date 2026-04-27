@@ -61,14 +61,8 @@ pub enum SiteLockError {
 pub enum SyncRecordSerializeError {
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
-    #[error(
-        "Serialization error while processing sync record: {table_name:?}, with id: {id}, error: {e}"
-    )]
-    SerdeError {
-        table_name: ChangelogTableName,
-        id: String,
-        e: String,
-    },
+    #[error("Serialization error: {0}")]
+    SerdeError(String),
     #[error("Record with id '{id}' not found in table '{table:?}'")]
     RecordNotFound {
         id: String,

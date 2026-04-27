@@ -292,6 +292,7 @@ fn generate_response_requisition(
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,
+        ..Default::default()
     };
 
     Ok(result)

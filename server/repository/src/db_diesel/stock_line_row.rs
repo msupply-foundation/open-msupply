@@ -92,6 +92,15 @@ pub struct StockLineRow {
     pub manufacturer_id: Option<String>,
 }
 
+impl StockLineRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::StockLine
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
+}
+
 pub struct StockLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -112,8 +121,8 @@ impl<'a> StockLineRowRepository<'a> {
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::StockLine,
-            record_id: row.id.clone(),
+            table_name: StockLineRow::table_name(),
+            record_id: row.record_id(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
             name_id: None,
@@ -121,6 +130,12 @@ impl<'a> StockLineRowRepository<'a> {
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
+    }
+
+    fn _delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(stock_line_with_links::table.filter(stock_line_with_links::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
@@ -132,8 +147,7 @@ impl<'a> StockLineRowRepository<'a> {
             }
         };
 
-        diesel::delete(stock_line_with_links::table.filter(stock_line_with_links::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
+        self._delete(id)?;
         Ok(Some(change_log_id))
     }
 
@@ -167,6 +181,15 @@ impl Delete for StockLineRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         StockLineRowRepository::new(con).delete(&self.0)
     }
+    fn delete_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        StockLineRowRepository::new(con)._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
@@ -181,7 +204,15 @@ impl Upsert for StockLineRow {
         let change_log_id = StockLineRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        StockLineRowRepository::new(con)._upsert(self)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

@@ -1,4 +1,7 @@
-use crate::{Delete, Upsert};
+use crate::{
+    db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
+    ChangelogTableName, Delete, Upsert,
+};
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
@@ -53,7 +56,7 @@ pub enum ItemType {
     NonStock,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum VENCategory {
     V,
@@ -63,7 +66,7 @@ pub enum VENCategory {
     NotAssigned,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = item)]
 pub struct ItemRow {
@@ -84,6 +87,15 @@ pub struct ItemRow {
     pub restricted_location_type_id: Option<String>,
     pub volume_per_pack: f64,
     pub universal_code: Option<String>,
+}
+
+impl ItemRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Item
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
 }
 
 impl Default for ItemRow {
@@ -221,7 +233,16 @@ pub struct ItemRowDelete(pub String);
 impl Delete for ItemRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ItemRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+        Ok(None)
+    }
+    fn delete_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        ItemRowRepository::new(con).delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -238,9 +259,17 @@ impl Delete for ItemRowDelete {
 impl Upsert for ItemRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ItemRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(None)
     }
-
+    fn upsert_v7(
+        &self,
+        con: &StorageConnection,
+        changelog: ChangeLogInsertRow,
+    ) -> Result<(), RepositoryError> {
+        ItemRowRepository::new(con).upsert_one(self)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

@@ -45,6 +45,7 @@ define_linked_tables! {
         order_type -> Nullable<Text>,
         is_emergency -> Bool,
         created_from_requisition_id -> Nullable<Text>,
+        transfer_store_id -> Nullable<Text>,
     },
     links: {
         name_link_id -> name_id,
@@ -123,6 +124,7 @@ pub struct RequisitionRow {
     pub order_type: Option<String>,
     pub is_emergency: bool,
     pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
+    pub transfer_store_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
     pub destination_customer_id: Option<String>,

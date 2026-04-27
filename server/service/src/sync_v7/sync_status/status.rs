@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    syncv7::SyncError, FilterBuilder, RepositoryError, SyncLogV7Condition,
-    SyncLogV7Repository, SyncLogV7Row,
+    syncv7::SyncError, FilterBuilder, RepositoryError, SyncLogV7Condition, SyncLogV7Repository,
+    SyncLogV7Row,
 };
 
 use crate::{
@@ -127,10 +127,11 @@ fn get_latest_sync_status_v7(
 fn get_latest_successful_sync_status_v7(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
-    let row = SyncLogV7Repository::new(&ctx.connection).query_one(SyncLogV7Condition::And(vec![
-        SyncLogV7Condition::FinishedDatetime::is_not_null(),
-        SyncLogV7Condition::Error::is_null(),
-    ]))?;
+    let row =
+        SyncLogV7Repository::new(&ctx.connection).query_one(SyncLogV7Condition::And(vec![
+            SyncLogV7Condition::FinishedDatetime::is_not_null(),
+            SyncLogV7Condition::Error::is_null(),
+        ]))?;
     Ok(row.map(FullSyncStatusV7::from_sync_log_v7_row))
 }
 
