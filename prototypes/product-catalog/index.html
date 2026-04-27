@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Open mSupply Product Catalog (prototype)</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">oMS</div>
+          <div class="brand-text">
+            <div class="brand-title">Open mSupply</div>
+            <div class="brand-sub">Product Catalog</div>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="#/items" data-nav="items">Items</a>
+          <a href="#/properties" data-nav="properties">Properties</a>
+          <a href="#/users" data-nav="users">Users</a>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="btn btn-ghost" id="reset-btn" title="Reset to seed data">Reset prototype</button>
+          <div class="prototype-tag">prototype · localStorage</div>
+        </div>
+      </aside>
+      <main class="main">
+        <header class="topbar">
+          <div class="breadcrumbs" id="breadcrumbs"></div>
+          <div class="acting-as">
+            <label for="acting-as">Acting as:</label>
+            <select id="acting-as"></select>
+          </div>
+        </header>
+        <section class="page" id="page"></section>
+      </main>
+    </div>
+
+    <div id="modal-root"></div>
+
+    <script src="js/store.js"></script>
+    <script src="js/seed.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/pages/itemsList.js"></script>
+    <script src="js/pages/tabGeneral.js"></script>
+    <script src="js/pages/tabVariants.js"></script>
+    <script src="js/pages/tabProperties.js"></script>
+    <script src="js/pages/itemDetail.js"></script>
+    <script src="js/pages/propertiesAdmin.js"></script>
+    <script src="js/pages/usersAdmin.js"></script>
+    <script src="js/router.js"></script>
+  </body>
+</html>

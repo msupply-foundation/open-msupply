@@ -1,0 +1,78 @@
+:root {
+  /* Brand */
+  --primary: #e95c30;
+  --primary-light: #ed7d59;
+  --primary-dark: #c43c11;
+  --primary-contrast: #fff;
+
+  --secondary: #3e7bfa;
+  --secondary-light: #5b8def;
+  --secondary-dark: #3568d4;
+
+  /* Status palette (item lifecycle) */
+  --status-draft-bg: #e2e2e9;
+  --status-draft-fg: #555770;
+  --status-forapproval-bg: #e8f1fe;
+  --status-forapproval-fg: #3568d4;
+  --status-active-bg: #e6f4d9;
+  --status-active-fg: #4a7e07;
+  --status-disabled-bg: #fff1d6;
+  --status-disabled-fg: #a06a00;
+  --status-deleted-bg: #ffcdce;
+  --status-deleted-fg: #b62024;
+
+  /* Surfaces */
+  --bg-page: #fff;
+  --bg-row: #fafafc;
+  --bg-toolbar: #fafafc;
+  --bg-drawer: #f2f2f5;
+  --bg-input: #f2f2f5;
+  --bg-input-disabled: #fafafc;
+  --bg-success: rgb(237, 247, 237);
+  --bg-error: #ffcdce;
+
+  /* Text */
+  --fg-body: #1c1c28;
+  --fg-muted: #555770;
+  --fg-faint: #8f90a6;
+  --fg-label: #28293d;
+  --fg-error: #e63535;
+
+  /* Borders */
+  --border: #e4e4eb;
+  --border-strong: #cbced4;
+  --divider: #eaeaea;
+
+  /* Typography */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --fs-body: 14px;
+  --fs-small: 12px;
+  --fs-h1: 22px;
+  --fs-h2: 18px;
+  --fs-th: 14px;
+  --lh-body: 1.71;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-pill: 24px;
+
+  /* Shadows (from theme.ts) */
+  --shadow-1: 0 0.5px 2px 0 rgba(96, 97, 112, 0.16),
+    0 0 1px 0 rgba(40, 41, 61, 0.08);
+  --shadow-2: 0 4px 8px 0 rgba(96, 97, 112, 0.16),
+    0 0 2px 0 rgba(40, 41, 61, 0.04);
+  --shadow-3: 0 8px 16px 0 rgba(96, 97, 112, 0.16),
+    0 2px 4px 0 rgba(40, 41, 61, 0.04);
+  --shadow-4: 0 12px 24px 0 rgba(96, 97, 112, 0.16),
+    0 4px 8px 0 rgba(40, 41, 61, 0.30);
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+}
