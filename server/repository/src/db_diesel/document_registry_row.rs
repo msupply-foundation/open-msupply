@@ -1,7 +1,6 @@
 use super::StorageConnection;
 
-use crate::{db_diesel::form_schema_row::form_schema, RepositoryError, Upsert};
-use crate::ChangeLogInsertRow;
+use crate::{db_diesel::form_schema_row::form_schema, RepositoryError, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -91,9 +90,9 @@ impl<'a> DocumentRegistryRowRepository<'a> {
 }
 
 impl Upsert for DocumentRegistryRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         DocumentRegistryRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
+    RepositoryError, RowActionType, StorageConnection, ChangelogSyncType, Upsert,
 };
 
 use super::{
@@ -59,6 +59,25 @@ pub enum ContactType {
     Support,
 }
 
+impl ContactFormRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::ContactForm,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct ContactFormRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -80,24 +99,8 @@ impl<'a> ContactFormRowRepository<'a> {
 
     pub fn upsert_one(&self, contact_form_row: &ContactFormRow) -> Result<i64, RepositoryError> {
         self._upsert_one(contact_form_row)?;
-        self.insert_changelog(contact_form_row.to_owned(), RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: ContactFormRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::ContactForm,
-            record_id: row.id,
-            row_action: action,
-            store_id: Some(row.store_id),
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = contact_form_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -113,9 +116,16 @@ impl<'a> ContactFormRowRepository<'a> {
 }
 
 impl Upsert for ContactFormRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = ContactFormRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        ContactFormRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

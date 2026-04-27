@@ -1,6 +1,6 @@
 use super::{
     name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    RowActionType, StorageConnection,
+    KeyValueStoreRepository, RowActionType, StorageConnection,
 };
 
 use crate::{
@@ -10,6 +10,7 @@ use crate::{
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+use crate::ChangelogSyncType;
 
 pub enum NameInsuranceJoinSortField {
     ExpiryDate,
@@ -74,6 +75,25 @@ pub struct NameInsuranceJoinRow {
     pub name_id: String,
 }
 
+impl NameInsuranceJoinRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::NameInsuranceJoin,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct NameInsuranceJoinRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -132,27 +152,24 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameInsuranceJoinRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        self.insert_changelog(&row.id, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameInsuranceJoin,
-            record_id: uid.to_string(),
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for NameInsuranceJoinRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let change_log = NameInsuranceJoinRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        NameInsuranceJoinRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

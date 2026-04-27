@@ -1,9 +1,8 @@
 use super::abbreviation_row::abbreviation::dsl::*;
 use crate::Delete;
-use crate::ChangeLogInsertRow;
 use crate::RepositoryError;
 use crate::StorageConnection;
-use crate::Upsert;
+use crate::{ChangelogSyncType, Upsert};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -69,9 +68,9 @@ impl<'a> AbbreviationRowRepository<'a> {
 }
 
 impl Upsert for AbbreviationRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         AbbreviationRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

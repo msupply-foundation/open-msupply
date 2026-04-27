@@ -38,15 +38,18 @@ pub trait Delete: DebugTrait {
     fn assert_deleted(&self, con: &StorageConnection);
 }
 
+#[derive(Debug)]
+pub enum ChangelogSyncType {
+    SyncTypeV5V6 { source_site_id: Option<i32> },
+    SyncTypeV7 { changelog_row: ChangeLogInsertRow },
+}
+
 pub trait Upsert: DebugTrait {
-    // Upsert returns a changelog id if the table is tracked in changelog
-    // When changelog is Some, uses the provided changelog (v7 sync path)
-    // When changelog is None, builds changelog internally (v5/v6 path)
-    fn upsert(
+    fn upsert_sync(
         &self,
         con: &StorageConnection,
-        changelog: Option<ChangeLogInsertRow>,
-    ) -> Result<Option<i64>, RepositoryError>;
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError>;
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection);

@@ -1,8 +1,8 @@
 use super::vvm_status_log_row::vvm_status_log::dsl::*;
 use crate::{
     db_diesel::{invoice_line_row::invoice_line, stock_line_row::stock_line, store_row::store},
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RowActionType, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, KeyValueStoreRepository,
+    RepositoryError, RowActionType, StorageConnection, ChangelogSyncType, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -41,6 +41,25 @@ pub struct VVMStatusLogRow {
     pub store_id: String,
 }
 
+impl VVMStatusLogRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::VVMStatusLog,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct VVMStatusLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -69,44 +88,32 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &VVMStatusLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(vvm_status_log::table)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn delete(&self, log_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(log_id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
+        let old_row = match self.find_one_by_id(log_id)? {
+            Some(row) => row,
+            None => return Ok(None),
         };
+        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(vvm_status_log.filter(id.eq(log_id)))
             .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &VVMStatusLogRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::VVMStatusLog,
-            record_id: row.id.to_string(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
     }
 }
 
@@ -127,9 +134,18 @@ impl Delete for VVMStatusLogRowDelete {
 }
 
 impl Upsert for VVMStatusLogRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let change_log = VVMStatusLogRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        VVMStatusLogRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test Only

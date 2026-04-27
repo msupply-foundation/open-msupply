@@ -5,7 +5,7 @@ use crate::{
 
 use super::{validate::*, write_sync_buffer_error};
 use repository::{
-    ChangeLogInsertRow, ChangelogTableName, CurrencyRow, DatetimeFilter,
+    ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRow, DatetimeFilter,
     InvoiceLineRow, InvoiceRow, ItemRow, LocationTypeRow, NameRow, RepositoryError, RowActionType,
     StockLineRow, StorageConnection, StoreRow, SyncBufferFilter, SyncBufferRepository,
     SyncBufferRow, Upsert, UnitRow,
@@ -104,7 +104,7 @@ fn integrate(
         ..Default::default()
     };
 
-    upsert.upsert(connection, Some(changelog))?;
+    upsert.upsert_sync(connection, ChangelogSyncType::SyncTypeV7 { changelog_row: changelog })?;
 
     Ok(())
 }

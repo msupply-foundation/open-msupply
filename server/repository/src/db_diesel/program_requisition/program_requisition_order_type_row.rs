@@ -1,7 +1,6 @@
 use super::program_requisition_settings_row::program_requisition_settings;
 
 use crate::{repository_error::RepositoryError, StorageConnection};
-use crate::ChangeLogInsertRow;
 
 use diesel::prelude::*;
 
@@ -17,7 +16,7 @@ table! {
         max_items_in_emergency_order -> Integer,
     }
 }
-use crate::{Delete, Upsert};
+use crate::{Delete, ChangelogSyncType, Upsert};
 
 joinable!(program_requisition_order_type -> program_requisition_settings (program_requisition_settings_id));
 
@@ -118,9 +117,9 @@ impl Delete for ProgramRequisitionOrderTypeRowDelete {
 }
 
 impl Upsert for ProgramRequisitionOrderTypeRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

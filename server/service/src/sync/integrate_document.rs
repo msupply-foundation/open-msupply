@@ -1,5 +1,5 @@
 use repository::{
-    ChangeLogInsertRow, Document, DocumentRegistryCategory, DocumentRegistryFilter,
+    ChangelogSyncType, Document, DocumentRegistryCategory, DocumentRegistryFilter,
     DocumentRegistryRepository, DocumentRepository, EncounterFilter, EncounterRepository,
     EqualFilter, ProgramFilter, ProgramRepository, RepositoryError, StorageConnection, Upsert,
 };
@@ -20,9 +20,9 @@ use crate::{
 pub(crate) struct DocumentUpsert(pub(crate) Document);
 
 impl Upsert for DocumentUpsert {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = sync_upsert_document(con, &self.0)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        sync_upsert_document(con, &self.0)?;
+        Ok(())
     }
 
     fn assert_upserted(&self, con: &StorageConnection) {

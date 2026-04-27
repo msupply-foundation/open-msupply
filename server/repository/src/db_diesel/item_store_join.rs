@@ -1,7 +1,6 @@
 use diesel::prelude::*;
 
-use crate::{item_link, RepositoryError, StorageConnection, Upsert};
-use crate::ChangeLogInsertRow;
+use crate::{item_link, RepositoryError, StorageConnection, ChangelogSyncType, Upsert};
 
 table! {
   item_store_join (id) {
@@ -85,9 +84,9 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
 }
 
 impl Upsert for ItemStoreJoinRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ItemStoreJoinRowRepository::new(con).upsert_one(self)?;
-        Ok(None)
+        Ok(())
     }
 
     // Test only

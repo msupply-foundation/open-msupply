@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
+    RepositoryError, RowActionType, StorageConnection, ChangelogSyncType, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -29,6 +29,24 @@ pub struct BundledItemRow {
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
+impl BundledItemRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::BundledItem,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct BundledItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -38,30 +56,20 @@ impl<'a> BundledItemRowRepository<'a> {
         BundledItemRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &BundledItemRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &BundledItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(bundled_item::table)
             .values(row)
             .on_conflict(bundled_item::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::BundledItem,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &BundledItemRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -81,14 +89,25 @@ impl<'a> BundledItemRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(bundled_item_id.to_string(), RowActionType::Upsert)
+        let changelog = BundledItemRow { id: bundled_item_id.to_string(), ..Default::default() }
+            .changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for BundledItemRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = BundledItemRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        BundledItemRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

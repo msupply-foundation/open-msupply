@@ -2,9 +2,9 @@ use super::program_row::program;
 
 use crate::{
     db_diesel::name_tag_row::name_tag, period_schedule_row::period_schedule,
-    repository_error::RepositoryError, ChangeLogInsertRow, StorageConnection,
+    repository_error::RepositoryError, StorageConnection,
 };
-use crate::{name_oms_fields, Delete, Upsert};
+use crate::{name_oms_fields, Delete, ChangelogSyncType, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -97,9 +97,9 @@ impl Delete for ProgramRequisitionSettingsRowDelete {
 }
 
 impl Upsert for ProgramRequisitionSettingsRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ProgramRequisitionSettingsRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

@@ -1,9 +1,9 @@
 use super::{
-    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
-    StorageConnection,
+    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    KeyValueStoreRepository, RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -37,6 +37,25 @@ pub struct PluginDataRow {
     pub data: String,
 }
 
+impl PluginDataRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::PluginData,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: self.store_id.clone(),
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct PluginDataRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -46,14 +65,20 @@ impl<'a> PluginDataRowRepository<'a> {
         PluginDataRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &PluginDataRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::insert_into(plugin_data::table)
             .values(row)
             .on_conflict(plugin_data::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id, row.store_id.clone(), RowActionType::Upsert)
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &PluginDataRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<PluginDataRow>, RepositoryError> {
@@ -64,30 +89,21 @@ impl<'a> PluginDataRowRepository<'a> {
 
         Ok(result)
     }
-
-    fn insert_changelog(
-        &self,
-        uid: &str,
-        store_id: Option<String>,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::PluginData,
-            record_id: uid.to_string(),
-            row_action: action,
-            store_id,
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
-    }
 }
 
 impl Upsert for PluginDataRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let change_log = PluginDataRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        PluginDataRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

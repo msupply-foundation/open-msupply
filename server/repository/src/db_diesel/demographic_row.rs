@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
+    RepositoryError, RowActionType, ChangelogSyncType, Upsert,
 };
 
 use diesel::prelude::*;
@@ -26,6 +26,24 @@ pub struct DemographicRow {
     pub population_percentage: f64,
 }
 
+impl DemographicRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::Demographic,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct DemographicRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -35,30 +53,20 @@ impl<'a> DemographicRowRepository<'a> {
         DemographicRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &DemographicRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &DemographicRow) -> Result<(), RepositoryError> {
         diesel::insert_into(demographic::table)
             .values(row)
             .on_conflict(demographic::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Demographic,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &DemographicRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -85,9 +93,16 @@ impl<'a> DemographicRowRepository<'a> {
 }
 
 impl Upsert for DemographicRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = DemographicRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        DemographicRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

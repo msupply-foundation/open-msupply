@@ -3,7 +3,7 @@ use crate::{
 };
 use repository::{
     ActivityLogType, DemographicIndicatorRow, DemographicIndicatorRowRepository, DemographicRow,
-    RepositoryError, StorageConnection, Upsert,
+    DemographicRowRepository, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -56,7 +56,7 @@ pub fn insert_demographic_indicator(
                         name: demographic_name.clone(),
                         population_percentage: input.population_percentage.unwrap_or_default(),
                     };
-                    new_demographic.upsert(connection, None)?;
+                    DemographicRowRepository::new(connection).upsert_one(&new_demographic)?;
                     // TODO add activity log entry
                     new_demographic
                 }
