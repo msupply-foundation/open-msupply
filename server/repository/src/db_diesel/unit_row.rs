@@ -2,7 +2,7 @@ use super::{unit_row::unit::dsl::*, StorageConnection};
 use crate::{
     db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
     repository_error::RepositoryError,
-    ChangelogTableName, Delete, Upsert,
+    ChangelogSyncType, ChangelogTableName, Delete, Upsert,
 };
 use diesel::prelude::*;
 
@@ -114,14 +114,14 @@ impl Delete for UnitRowDelete {
 }
 
 impl Upsert for UnitRow {
-    fn upsert(&self, con: &StorageConnection, changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         UnitRowRepository::new(con).upsert_one(self)?;
-        match changelog {
-            Some(changelog) => {
-                let cursor_id = ChangelogRepository::new(con).insert(&changelog)?;
-                Ok(Some(cursor_id))
+        match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { .. } => Ok(()),
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => {
+                ChangelogRepository::new(con).insert(&changelog_row)?;
+                Ok(())
             }
-            None => Ok(None),
         }
     }
     // Test only

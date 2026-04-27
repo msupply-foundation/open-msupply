@@ -1,8 +1,8 @@
 use super::{
-    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
-    StorageConnection,
+    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    KeyValueStoreRepository, RowActionType, StorageConnection,
 };
-use crate::{RepositoryError, Upsert};
+use crate::{RepositoryError, ChangelogSyncType, Upsert};
 use ts_rs::TS;
 
 use chrono::NaiveDateTime;
@@ -75,6 +75,25 @@ pub struct SyncMessageRow {
     pub error_message: Option<String>,
 }
 
+impl SyncMessageRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::SyncMessage,
+            record_id: self.id.clone(),
+            row_action: action,
+            name_id: None,
+            store_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct SyncMessageRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -84,14 +103,20 @@ impl<'a> SyncMessageRowRepository<'a> {
         SyncMessageRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &SyncMessageRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &SyncMessageRow) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_message::table)
             .values(row.clone())
             .on_conflict(sync_message::id)
             .do_update()
             .set(row.clone())
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id)
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &SyncMessageRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncMessageRow>, RepositoryError> {
@@ -101,25 +126,21 @@ impl<'a> SyncMessageRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
-
-    fn insert_changelog(&self, id: &str) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::SyncMessage,
-            record_id: id.to_string(),
-            row_action: RowActionType::Upsert,
-            name_id: None,
-            store_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
-    }
 }
 
 impl Upsert for SyncMessageRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = SyncMessageRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        SyncMessageRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

@@ -1,7 +1,6 @@
 use crate::{repository_error::RepositoryError, StorageConnection};
-use crate::ChangeLogInsertRow;
 
-use crate::Upsert;
+use crate::{ChangelogSyncType, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -58,9 +57,9 @@ impl<'a> PeriodScheduleRowRepository<'a> {
 }
 
 impl Upsert for PeriodScheduleRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         PeriodScheduleRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

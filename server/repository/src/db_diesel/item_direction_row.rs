@@ -2,10 +2,9 @@ use super::item_direction_row::item_direction::dsl::*;
 use super::item_link;
 use super::item_row::item;
 use crate::Delete;
-use crate::ChangeLogInsertRow;
 use crate::RepositoryError;
 use crate::StorageConnection;
-use crate::Upsert;
+use crate::{ChangelogSyncType, Upsert};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -77,9 +76,9 @@ impl<'a> ItemDirectionRowRepository<'a> {
 }
 
 impl Upsert for ItemDirectionRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ItemDirectionRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

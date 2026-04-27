@@ -1,8 +1,9 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
+    RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -26,6 +27,25 @@ pub struct InsuranceProviderRow {
     pub is_active: bool,
     pub prescription_validity_days: Option<i32>,
     pub comment: Option<String>,
+}
+
+impl InsuranceProviderRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::InsuranceProvider,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
 }
 
 pub struct InsuranceProviderRowRepository<'a> {
@@ -70,34 +90,34 @@ impl<'a> InsuranceProviderRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: &InsuranceProviderRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &InsuranceProviderRow) -> Result<(), RepositoryError> {
         diesel::insert_into(insurance_provider::table)
             .values(row)
             .on_conflict(insurance_provider::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::InsuranceProvider,
-            record_id: uid.to_string(),
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &InsuranceProviderRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for InsuranceProviderRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let change_log = InsuranceProviderRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        InsuranceProviderRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

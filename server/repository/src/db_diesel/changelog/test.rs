@@ -2,8 +2,8 @@ use super::changelog::changelog;
 use diesel::prelude::*;
 
 use crate::{
-    asset_class_row::AssetClassRow,
-    asset_row::AssetRow,
+    asset_class_row::{AssetClassRow, AssetClassRowRepository},
+    asset_row::{AssetRow, AssetRowRepository},
     mock::{
         mock_item_a, mock_location_1, mock_location_2, mock_location_in_another_store,
         mock_location_on_hold, mock_store_a, mock_store_b, MockData, MockDataInserts,
@@ -12,8 +12,8 @@ use crate::{
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, CurrencyRow,
     EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
     LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow, Upsert,
-    VaccinationRow,
+    RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow,
+    VaccinationRow, VaccinationRowRepository,
 };
 
 #[actix_rt::test]
@@ -627,7 +627,7 @@ async fn test_changelog_outgoing_sync_records() {
         id: asset_class_id.clone(),
         ..Default::default()
     };
-    let _result = row.upsert(&connection, None).unwrap();
+    AssetClassRowRepository::new(&connection).upsert_one(&row).unwrap();
 
     let outgoing_results = repo
         .outgoing_sync_records_from_central(0, 1000, 1, true)
@@ -645,7 +645,7 @@ async fn test_changelog_outgoing_sync_records() {
         ..Default::default()
     };
 
-    let cursor_id = row.upsert(&connection, None).unwrap().unwrap();
+    let cursor_id = AssetRowRepository::new(&connection).upsert_one(&row, None).unwrap();
 
     // Set the source_site_id (usually this happens during integration step in sync)
     repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
@@ -698,7 +698,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
         ..Default::default()
     };
 
-    let cursor = vaccination.upsert(&connection, None).unwrap().unwrap();
+    let cursor = VaccinationRowRepository::new(&connection).upsert_one(&vaccination).unwrap();
 
     // store A (on site1) has name_store_join for patient2
 

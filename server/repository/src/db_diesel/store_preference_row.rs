@@ -1,7 +1,6 @@
 use super::{user_store_join_row::user_store_join, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Upsert};
-use crate::ChangeLogInsertRow;
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
 
 use super::{store_row::store, user_row::user_account};
 use diesel::prelude::*;
@@ -144,9 +143,9 @@ impl<'a> StorePreferenceRowRepository<'a> {
 }
 
 impl Upsert for StorePreferenceRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         StorePreferenceRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

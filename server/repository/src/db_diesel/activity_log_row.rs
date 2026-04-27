@@ -1,9 +1,9 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::store_row::store, repository_error::RepositoryError, user_account, Delete, Upsert,
+    db_diesel::store_row::store, repository_error::RepositoryError, user_account, Delete, ChangelogSyncType, Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -137,6 +137,25 @@ pub struct ActivityLogRow {
     pub changed_from: Option<String>,
 }
 
+impl ActivityLogRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::ActivityLog,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: self.store_id.clone(),
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct ActivityLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -146,28 +165,17 @@ impl<'a> ActivityLogRowRepository<'a> {
         ActivityLogRowRepository { connection }
     }
 
-    pub fn insert_one(&self, row: &ActivityLogRow) -> Result<i64, RepositoryError> {
+    pub fn _insert_one(&self, row: &ActivityLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(activity_log::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: &ActivityLogRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::ActivityLog,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: row.store_id.clone(),
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn insert_one(&self, row: &ActivityLogRow) -> Result<i64, RepositoryError> {
+        self._insert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<ActivityLogRow>, RepositoryError> {
@@ -187,9 +195,18 @@ impl<'a> ActivityLogRowRepository<'a> {
 }
 
 impl Upsert for ActivityLogRow {
-    fn upsert(&self, con: &StorageConnection, _changelog: Option<ChangeLogInsertRow>) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = ActivityLogRowRepository::new(con).insert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        ActivityLogRowRepository::new(con)._insert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
