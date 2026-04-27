@@ -1,10 +1,10 @@
 use super::{version::Version, Migration};
 use crate::StorageConnection;
 
-pub(crate) struct V2_17_04;
-impl Migration for V2_17_04 {
+pub(crate) struct V2_17_05;
+impl Migration for V2_17_05 {
     fn version(&self) -> Version {
-        Version::from_str("2.17.4")
+        Version::from_str("2.17.5")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -15,14 +15,14 @@ impl Migration for V2_17_04 {
 #[cfg(test)]
 mod test {
     #[actix_rt::test]
-    async fn migration_2_17_04() {
+    async fn migration_2_17_05() {
         use crate::migrations::*;
         use crate::test_db::*;
         use v2_17_03::V2_17_03;
-        use v2_17_04::V2_17_04;
+        use v2_17_05::V2_17_05;
 
         let previous_version = V2_17_03.version();
-        let version = V2_17_04.version();
+        let version = V2_17_05.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!("migration_{version}"),
