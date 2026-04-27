@@ -10,7 +10,7 @@ use crate::{
 };
 use chrono::NaiveDateTime;
 use diesel::{dsl::IntoBoxed, prelude::*};
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 diesel_string_enum! {
     #[derive(Clone, Serialize, Deserialize, Eq)]
@@ -72,10 +72,8 @@ pub struct SyncBufferRow {
 }
 
 impl SyncBufferRow {
-    pub fn deserialize<'de, T: serde::de::Deserialize<'de>>(
-        &'de self,
-    ) -> Result<T, serde_json::Error> {
-        serde_json::from_str(&self.data)
+    pub fn deserialize<T: DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
+        serde_json::from_value(self.data.0.clone())
     }
 }
 
