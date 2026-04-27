@@ -473,6 +473,7 @@ impl SyncTranslation for InvoiceTranslation {
             shipping_method_id: data.shipping_method_id,
             charges_local_currency: oms_fields.charges_local_currency,
             charges_foreign_currency: oms_fields.charges_foreign_currency,
+            ..Default::default()
         };
 
         // HACK...
@@ -565,6 +566,7 @@ impl SyncTranslation for InvoiceTranslation {
                     shipping_method_id,
                     charges_local_currency,
                     charges_foreign_currency,
+                    transfer_store_id: _,
                 },
             name_row,
             clinician_row,

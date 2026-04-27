@@ -31,8 +31,7 @@ impl SyncTranslation for NameTagTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let LegacyNameTagRow { ID, description } =
-            sync_record.deserialize::<LegacyNameTagRow>()?;
+        let LegacyNameTagRow { ID, description } = sync_record.deserialize::<LegacyNameTagRow>()?;
 
         let result = NameTagRow {
             id: ID,

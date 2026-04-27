@@ -134,7 +134,7 @@ impl SyncTranslation for ItemTranslation {
             code: data.code,
             unit_id: data.unit_ID,
             r#type: to_item_type(data.type_of),
-            legacy_record: ordered_simple_json(&sync_record.data)?,
+            legacy_record: ordered_simple_json(&serde_json::to_string(&sync_record.data.0)?)?,
             default_pack_size: data.default_pack_size,
             is_active: true,
             is_vaccine: data.is_vaccine,

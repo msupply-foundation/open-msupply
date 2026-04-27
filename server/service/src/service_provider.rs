@@ -66,6 +66,7 @@ use crate::{
     settings::MailSettings,
     settings_service::{SettingsService, SettingsServiceTrait},
     shipping_method::{ShippingMethodService, ShippingMethodServiceTrait},
+    site::{SiteService, SiteServiceTrait},
     standard_reports::StandardReports,
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
@@ -96,6 +97,7 @@ pub struct ServiceProvider {
     pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+    pub site_service: Box<dyn SiteServiceTrait>,
 
     // Cold chain
     pub sensor_service: Box<dyn SensorServiceTrait>,
@@ -248,6 +250,7 @@ impl ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
+            site_service: Box::new(SiteService {}),
             sensor_service: Box::new(SensorService {}),
             cold_chain_service: Box::new(ColdChainService {}),
             master_list_service: Box::new(MasterListService {}),

@@ -84,9 +84,10 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
         .map(|r| TestSyncOutgoingRecord {
             record_id: r.sync_buffer_row.record_id.clone(),
             table_name: r.sync_buffer_row.table_name.clone(),
-            push_data: json!(
-                r.sync_buffer_row.deserialize::<LegacyIndicatorValue>().unwrap()
-            ),
+            push_data: json!(r
+                .sync_buffer_row
+                .deserialize::<LegacyIndicatorValue>()
+                .unwrap()),
         })
         .collect()
 }

@@ -69,7 +69,9 @@ mod tests {
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
+        SyncRecordData,
     };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_item_merge() {
@@ -79,22 +81,20 @@ mod tests {
                 record_id: "item_b_merge".to_string(),
                 table_name: "item".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                        "mergeIdToKeep": "item_b",
-                        "mergeIdToDelete": "item_a"
-                    }"#
-                .to_string(),
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "item_b",
+                    "mergeIdToDelete": "item_a"
+                })),
                 ..SyncBufferRow::default()
             },
             SyncBufferRow {
                 record_id: "item_c_merge".to_string(),
                 table_name: "item".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                      "mergeIdToKeep": "item_c",
-                      "mergeIdToDelete": "item_b"
-                    }"#
-                .to_string(),
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "item_c",
+                    "mergeIdToDelete": "item_b"
+                })),
                 ..SyncBufferRow::default()
             },
         ];
