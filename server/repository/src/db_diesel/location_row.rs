@@ -131,7 +131,11 @@ impl Delete for LocationRowDelete {
 }
 
 impl Upsert for LocationRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         LocationRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
