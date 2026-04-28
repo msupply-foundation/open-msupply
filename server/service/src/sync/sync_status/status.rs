@@ -1,5 +1,3 @@
-use std::sync::RwLock;
-
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
