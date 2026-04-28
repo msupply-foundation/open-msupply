@@ -9,10 +9,11 @@ mod patient_name_store_join;
 
 pub use patient_name_store_join::{add_patient_name_store_join, NameStoreJoinParams};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct SiteAuth {
-    pub username: String,
-    pub password_sha256: String,
+    pub token: String,
+    pub hardware_id: String,
+    pub app_version: u32,
 }
 
 #[derive(Deserialize, Debug, Error, Serialize)]
