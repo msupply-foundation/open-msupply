@@ -51,9 +51,9 @@ type Source = LeftJoinQuerySource<
         store::table,
         diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog::store_id>,
     >,
-    diesel::query_source::Alias<TransferStores>,
+    transfer_stores,
     diesel::dsl::Eq<
-        diesel::dsl::Nullable<diesel::query_source::AliasedField<TransferStores, store::id>>,
+        diesel::dsl::Nullable<diesel::dsl::Field<transfer_stores, store::id>>,
         changelog::transfer_store_id,
     >,
 >;
