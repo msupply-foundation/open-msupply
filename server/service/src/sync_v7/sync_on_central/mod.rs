@@ -14,8 +14,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError},
     sync_v7::{
-        api::{pull, push, status, Common},
-        get_current_site_id,
+        api::{pull, push, Common},
         sync::{sync_record_to_buffer_row, SyncBatchV7},
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
@@ -80,22 +79,6 @@ pub async fn push(
     spawn_integration(service_provider, site_id);
 
     Ok(records_in_this_batch)
-}
-
-/// Report the central's view of the calling site (mostly used by the remote to
-/// confirm connectivity and learn the central site id).
-pub async fn site_status(
-    service_provider: &ServiceProvider,
-    request: status::Request,
-) -> status::Response {
-    let (site_id, ctx) = validate(service_provider, request.common)?;
-
-    let central_site_id = get_current_site_id(&ctx.connection)?;
-
-    Ok(status::Output {
-        site_id,
-        central_site_id,
-    })
 }
 
 fn validate(
@@ -225,25 +208,6 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn site_status_returns_central_site_id() {
-        let ServiceTestContext {
-            service_provider, ..
-        } = setup("sync_v7_site_status").await;
-
-        let output = site_status(
-            &service_provider,
-            status::Request {
-                common: common(),
-                input: (),
-            },
-        )
-        .await
-        .unwrap();
-
-        assert_eq!(output.central_site_id, CENTRAL_SITE_ID);
-    }
-
-    #[actix_rt::test]
     async fn pull_returns_empty_batch_when_no_changelog() {
         let ServiceTestContext {
             service_provider, ..
@@ -296,14 +260,18 @@ mod test {
             service_provider, ..
         } = setup("sync_v7_version_mismatch").await;
 
-        let response = site_status(
+        let response = pull(
             &service_provider,
-            status::Request {
+            pull::Request {
                 common: Common {
                     version: MAX_VERSION + 1,
                     ..common()
                 },
-                input: (),
+                input: pull::Input {
+                    cursor: 0,
+                    batch_size: 100,
+                    is_initialising: true,
+                },
             },
         )
         .await;
