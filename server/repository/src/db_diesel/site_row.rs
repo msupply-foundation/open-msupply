@@ -1,4 +1,4 @@
-use crate::{Delete, RepositoryError, StorageConnection, Upsert};
+use crate::{ChangelogSyncType, Delete, RepositoryError, StorageConnection, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -70,9 +70,9 @@ impl<'a> SiteRowRepository<'a> {
 }
 
 impl Upsert for SiteRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         SiteRowRepository::new(con).upsert(self)?;
-        Ok(None)
+        Ok(())
     }
 
     // Test only
