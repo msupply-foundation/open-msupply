@@ -68,7 +68,9 @@ fn find_linked_invoice_line_id(
 
     // Verify the match by parsing JSON (LIKE can produce false positives)
     for row in rows {
-        if let Ok(parsed) = serde_json::from_str::<TransLineGoodsReceivedLineId>(&row.data) {
+        if let Ok(parsed) =
+            serde_json::from_value::<TransLineGoodsReceivedLineId>(row.data.0.clone())
+        {
             if parsed.goods_received_lines_ID.as_deref() == Some(goods_received_line_id) {
                 return Ok(Some(row.record_id));
             }
@@ -104,7 +106,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data: LegacyGoodsReceivedLineRow = serde_json::from_str(&sync_record.data)?;
+        let data: LegacyGoodsReceivedLineRow = serde_json::from_value(sync_record.data.0.clone())?;
 
         // Skip if an invoice_line with this ID already exists — the line may have been
         // created in OMS (from an earlier non-finalised import) and pushed back to central
@@ -140,7 +142,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             }
         };
 
-        let gr_status: GoodsReceivedStatus = serde_json::from_str(&gr_sync_row.data)?;
+        let gr_status: GoodsReceivedStatus = serde_json::from_value(gr_sync_row.data.0.clone())?;
 
         // Finalized GR: update the existing invoice line with the PO line link
         if is_finalised(&gr_status.status) {
