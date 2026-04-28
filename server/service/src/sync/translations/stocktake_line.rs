@@ -154,19 +154,16 @@ impl SyncTranslation for StocktakeLineTranslation {
         };
 
         // omSupply should be generating the stocktake line with valid stock lines.
-        // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
-        let is_stock_line_valid = match item_line_ID {
-            Some(ref stock_line_id) => StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)?
-                .is_some(),
-            None => true,
-        };
-
-        if !is_stock_line_valid {
-            log::warn!(
-                "Stock line is not valid, stocktake_line_id: {ID}, stock_line_id: {item_line_ID:?}"
-            );
-        }
+        // Currently a uuid is assigned by central for the stock_line id which causes a foreign
+        // key constraint violation; clear_invalid_fk handles the validation + null + system_log.
+        let stock_line_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "stock_line_id",
+            item_line_ID,
+            |c, id| StockLineRowRepository::new(c).find_one_by_id(id),
+        )?;
 
         let (campaign_id, program_id) = oms_fields
             .map(|fields| (fields.campaign_id, fields.program_id))
@@ -217,10 +214,7 @@ impl SyncTranslation for StocktakeLineTranslation {
         let result = StocktakeLineRow {
             id: ID,
             stocktake_id: stock_take_ID,
-            stock_line_id: match is_stock_line_valid {
-                true => item_line_ID,
-                false => None,
-            },
+            stock_line_id,
             location_id,
             comment,
             snapshot_number_of_packs: snapshot_qty,

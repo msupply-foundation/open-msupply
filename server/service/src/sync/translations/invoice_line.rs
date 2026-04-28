@@ -6,10 +6,12 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineType,
-    InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
-    StorageConnection, SyncBufferRow,
+    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
+    vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceLineRowDelete, InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository,
+    ProgramRowRepository, ReasonOptionRowRepository, StockLineRowRepository, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -278,19 +280,62 @@ impl SyncTranslation for InvoiceLineTranslation {
         };
         let location_id = clear_invalid_location_id(connection, "invoice_line", &id, location_id)?;
 
+        let item_variant_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "item_variant_id",
+            item_variant_id,
+            |c, id| ItemVariantRowRepository::new(c).find_one_by_id(id),
+        )?;
+        let vvm_status_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "vvm_status_id",
+            vvm_status_id,
+            |c, id| VVMStatusRowRepository::new(c).find_one_by_id(id),
+        )?;
+
+        // "0" is a sentinel value used by OG for "no option set" — treat it as None before
+        // the FK validation so we don't write a system_log entry for the sentinel.
         let reason_option_id = reason_option_id.and_then(|reason_option_id| {
             if reason_option_id == "0" {
-                // This is not a valid optionID
                 None
             } else {
                 Some(reason_option_id)
             }
         });
+        let reason_option_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "reason_option_id",
+            reason_option_id,
+            |c, id| ReasonOptionRowRepository::new(c).find_one_by_id(id),
+        )?;
 
         let TransLineRowOmsFields {
             campaign_id,
             program_id,
         } = oms_fields.unwrap_or_default();
+
+        let campaign_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "campaign_id",
+            campaign_id,
+            |c, id| CampaignRowRepository::new(c).find_one_by_id(id),
+        )?;
+        let program_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "program_id",
+            program_id,
+            |c, id| ProgramRowRepository::new(c).find_one_by_id(id),
+        )?;
 
         let result = InvoiceLineRow {
             id,
@@ -489,11 +534,15 @@ mod tests {
     };
 
     use super::*;
+    use chrono::NaiveDateTime;
     use repository::{
-        mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
+        campaign_row::CampaignRow,
+        item_variant::item_variant_row::ItemVariantRow,
+        mock::{mock_item_a, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow, SyncAction,
+        ChangelogFilter, ChangelogRepository, ContextRow, KeyType, KeyValueStoreRow, ProgramRow,
+        SyncAction,
     };
     use serde_json::json;
 
@@ -514,6 +563,35 @@ mod tests {
                 .currencies(),
             MockData {
                 invoices: vec![mock_outbound_shipment_a()],
+                contexts: vec![ContextRow {
+                    id: "test_ctx".to_string(),
+                    name: "test ctx".to_string(),
+                }],
+                programs: vec![ProgramRow {
+                    id: "program_a".to_string(),
+                    master_list_id: None,
+                    name: "program_a".to_string(),
+                    context_id: "test_ctx".to_string(),
+                    is_immunisation: false,
+                    elmis_code: None,
+                    deleted_datetime: None,
+                }],
+                campaigns: vec![CampaignRow {
+                    id: "campaign_a".to_string(),
+                    name: "Campaign A".to_string(),
+                    ..Default::default()
+                }],
+                item_variants: vec![ItemVariantRow {
+                    id: "5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string(),
+                    name: "test variant".to_string(),
+                    item_link_id: mock_item_a().id,
+                    location_type_id: None,
+                    manufacturer_link_id: None,
+                    deleted_datetime: None,
+                    vvm_type: None,
+                    created_datetime: NaiveDateTime::default(),
+                    created_by: None,
+                }],
                 key_value_store_rows: vec![KeyValueStoreRow {
                     id: KeyType::SettingsSyncSiteId,
                     value_int: Some(mock_store_b().site_id),
@@ -583,15 +661,14 @@ mod tests {
         }
     }
 
-    /// When stock_line_id references a record that doesn't exist, the translator should
-    /// null it on the translated row AND write a `system_log` row of type
-    /// `SyncTranslationFkError`. The active-on-site gate is a separate concern and is
-    /// covered by the existing `test_invoice_line_translation` happy path.
+    /// When optional FKs reference records that don't exist, the translator should
+    /// null each one and write a `system_log` row per missing FK. The active-on-site
+    /// gate (which can also null `stock_line_id`) is exercised by the happy-path test.
     #[actix_rt::test]
-    async fn test_invoice_line_clears_invalid_stock_line_id_and_writes_system_log() {
+    async fn test_invoice_line_clears_invalid_optional_fks_and_writes_system_log() {
         let translator = InvoiceLineTranslation {};
         let (_, connection, _, _) = setup_all_with_data(
-            "test_invoice_line_clears_invalid_stock_line_id_and_writes_system_log",
+            "test_invoice_line_clears_invalid_optional_fks_and_writes_system_log",
             MockDataInserts::none()
                 .units()
                 .items()
@@ -600,7 +677,7 @@ mod tests {
                 .currencies(),
             // mock_outbound_shipment_a is on store_b, and we tell the test that this site IS
             // store_b's site, so is_active_record_on_site returns true. That isolates the FK
-            // validation as the only reason stock_line_id would get cleared.
+            // validation as the only reason these FKs would get cleared.
             MockData {
                 invoices: vec![mock_outbound_shipment_a()],
                 key_value_store_rows: vec![KeyValueStoreRow {
@@ -632,16 +709,19 @@ mod tests {
                 "barcodeID": "",
                 "location_ID": "",
                 "note": "",
-                "optionID": "",
-                "vaccine_vial_monitor_status_ID": "",
-                "om_item_variant_id": "",
+                "optionID": "does_not_exist_reason",
+                "vaccine_vial_monitor_status_ID": "does_not_exist_vvm",
+                "om_item_variant_id": "does_not_exist_item_variant",
                 "donor_id": "",
                 "linked_trans_line_ID": "",
                 "linked_transact_id": "",
                 "volume_per_pack": 0,
                 "foreign_currency_price": 0,
                 "is_from_inventory_adjustment": true,
-                "oms_fields": ""
+                "oms_fields": {
+                    "campaign_id": "does_not_exist_campaign",
+                    "program_id": "does_not_exist_program"
+                }
             }"#
             .to_string(),
             action: SyncAction::Upsert,
@@ -653,17 +733,26 @@ mod tests {
             .unwrap();
 
         let PullTranslateResult::IntegrationOperations(ops) = result else {
-            panic!("expected IntegrationOperations, got {result:?}");
+            panic!("{}", format!("expected IntegrationOperations, got {result:?}"));
         };
-        // Look at the Debug repr to assert stock_line_id was cleared without depending on
-        // every other field of InvoiceLineRow being stable across unrelated edits.
         let debug = format!("{ops:?}");
-        assert!(
-            debug.contains("stock_line_id: None"),
-            "{}",
-            format!("expected stock_line_id to be cleared; got:\n{debug}")
-        );
+        for (field, _id) in [
+            ("stock_line_id", "does_not_exist_stock_line"),
+            ("item_variant_id", "does_not_exist_item_variant"),
+            ("vvm_status_id", "does_not_exist_vvm"),
+            ("reason_option_id", "does_not_exist_reason"),
+            ("campaign_id", "does_not_exist_campaign"),
+            ("program_id", "does_not_exist_program"),
+        ] {
+            let needle = format!("{field}: None");
+            assert!(
+                debug.contains(&needle),
+                "{}",
+                format!("expected {field} to be cleared; got:\n{debug}")
+            );
+        }
 
+        // One system_log entry per invalid FK
         let logs = SystemLogRowRepository::new(&connection)
             .find_all()
             .unwrap();
@@ -671,22 +760,30 @@ mod tests {
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
             .collect();
-        assert_eq!(fk_errors.len(), 1, "got {fk_errors:?}");
-        let message = fk_errors[0].message.as_deref().unwrap_or("");
-        assert!(
-            message.contains("stock_line_id"),
-            "{}",
-            format!("expected message to mention stock_line_id; got:\n{message}")
-        );
-        assert!(
-            message.contains("TRANS_LINE_FK_INVALID"),
-            "{}",
-            format!("expected message to mention the record id; got:\n{message}")
-        );
-        assert!(
-            message.contains("does_not_exist_stock_line"),
-            "{}",
-            format!("expected message to mention the offending FK id; got:\n{message}")
-        );
+        assert_eq!(fk_errors.len(), 6, "got {fk_errors:?}");
+
+        let messages: String = fk_errors
+            .iter()
+            .filter_map(|l| l.message.as_deref())
+            .collect::<Vec<_>>()
+            .join("\n");
+        for fk_field in [
+            "stock_line_id",
+            "item_variant_id",
+            "vvm_status_id",
+            "reason_option_id",
+            "campaign_id",
+            "program_id",
+        ] {
+            assert!(
+                messages.contains(fk_field),
+                "{}",
+                format!("expected message to mention {fk_field}; got:\n{messages}")
+            );
+            assert!(
+                messages.contains("TRANS_LINE_FK_INVALID"),
+                "expected message to mention the record id"
+            );
+        }
     }
 }
