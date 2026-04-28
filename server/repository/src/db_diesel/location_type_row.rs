@@ -1,7 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
+    db_diesel::changelog::ChangelogRepository,
     repository_error::RepositoryError,
     ChangelogSyncType, ChangelogTableName, Delete, Upsert,
 };
