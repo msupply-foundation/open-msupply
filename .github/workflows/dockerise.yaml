@@ -68,16 +68,28 @@ jobs:
           path: client/packages/host/dist
           retention-days: 1
 
+  generate-matrix:
+    name: Generate Build Matrix
+    runs-on: ubuntu-latest
+    needs: check-tag
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [ "${{ needs.check-tag.outputs.is_release }}" = "true" ]; then
+            echo 'matrix={"db":["sqlite","postgres"],"arch":["amd64","arm64"]}' >> $GITHUB_OUTPUT
+          else
+            echo 'matrix={"db":["sqlite","postgres"],"arch":["amd64"]}' >> $GITHUB_OUTPUT
+          fi
+
   build-server:
     name: Build server (${{ matrix.db }}, ${{ matrix.arch }})
-    needs: [build-client, check-tag]
-    if: matrix.arch != 'arm64' || needs.check-tag.outputs.is_release == 'true'
+    needs: [build-client, check-tag, generate-matrix]
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
-      matrix:
-        db: [sqlite, postgres]
-        arch: [amd64, arm64]
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -149,16 +161,12 @@ jobs:
 
   dockerise:
     name: Dockerise (${{ matrix.db }}, ${{ matrix.arch }})
-    needs: [build-server, check-tag]
-    if: >-
-      always() && !failure() && !cancelled() &&
-      (matrix.arch != 'arm64' || needs.check-tag.outputs.is_release == 'true')
+    needs: [build-server, check-tag, generate-matrix]
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
-      matrix:
-        db: [sqlite, postgres]
-        arch: [amd64, arm64]
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     outputs:
       image_tag: ${{ env.VERSION }}
     steps:
