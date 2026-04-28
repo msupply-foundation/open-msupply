@@ -126,6 +126,17 @@ async fn request_and_set_site_info_v7(
 ) -> Result<SiteInfo, RequestAndSetSiteInfoError> {
     use RequestAndSetSiteInfoError as Error;
 
+    if let (Some(_token), Some(site_id), Some(central_site_id)) = (
+        repo.get_string(KeyType::SettingsSyncTokenV7)?,
+        repo.get_i32(KeyType::SettingsSyncSiteId)?,
+        repo.get_i32(KeyType::SettingsSyncCentralServerSiteId)?,
+    ) {
+        return Ok(SiteInfo::V7(Output {
+            site_id,
+            central_site_id,
+        }));
+    }
+
     let hardware_id = service_provider
         .app_data_service
         .get_hardware_id()
