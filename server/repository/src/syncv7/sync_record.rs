@@ -21,6 +21,16 @@ diesel_json_type! {
         NotACentralServer,
         #[error("Could not authenticate")]
         Authentication,
+        #[error("Site not found with name '{0}'")]
+        SiteNotFound(String),
+        #[error("Site password does not match")]
+        IncorrectPassword,
+        #[error("Site already has a token allocated; admin must clear it before re-init")]
+        TokenAlreadyAllocated,
+        #[error("Token not found")]
+        TokenNotFound,
+        #[error("Hardware id does not match the one stored on the site")]
+        HardwareIdMismatch,
         #[error(transparent)]
         SiteLockError(#[from] SiteLockError),
         #[error("Could not connect to server {url} {e}")]
