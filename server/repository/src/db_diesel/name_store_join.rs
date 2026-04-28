@@ -4,8 +4,8 @@ use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
     NameRow,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{Delete, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository, RowActionType};
+use crate::{Delete, ChangelogSyncType, Upsert};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -54,6 +54,25 @@ pub struct NameStoreJoinFilter {
     pub store_id: Option<EqualFilter<String>>,
 }
 
+impl NameStoreJoinRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::NameStoreJoin,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            name_id: Some(self.name_id.clone()),
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct NameStoreJoinRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -65,7 +84,8 @@ impl<'a> NameStoreJoinRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn upsert_one_without_changelog(
@@ -73,23 +93,6 @@ impl<'a> NameStoreJoinRepository<'a> {
         row: &NameStoreJoinRow,
     ) -> Result<(), RepositoryError> {
         self._upsert(row)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &NameStoreJoinRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameStoreJoin,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: Some(row.name_id.clone()),
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameStoreJoinRow>, RepositoryError> {
@@ -103,7 +106,10 @@ impl<'a> NameStoreJoinRepository<'a> {
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
         let old_row = self.find_one_by_id(id)?;
         let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            Some(old_row) => {
+                let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+                ChangelogRepository::new(self.connection).insert(&changelog)?
+            }
             None => {
                 return Ok(None);
             }
@@ -203,9 +209,18 @@ impl Delete for NameStoreJoinRowDelete {
 }
 
 impl Upsert for NameStoreJoinRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = NameStoreJoinRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        NameStoreJoinRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

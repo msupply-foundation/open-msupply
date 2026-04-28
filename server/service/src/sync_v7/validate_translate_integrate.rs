@@ -6,10 +6,10 @@ use crate::{
 use super::{validate::*, write_sync_buffer_error};
 use repository::syncv7::INTEGRATION_ORDER;
 use repository::{
-    ChangeLogInsertRow, ChangelogTableName, CurrencyRow, DatetimeFilter, EqualFilter,
-    InvoiceLineRow, InvoiceRow, ItemRow, LocationTypeRow, NameRow, RepositoryError, RowActionType,
-    StockLineRow, StorageConnection, StoreRow, SyncBufferFilter, SyncBufferRepository,
-    SyncBufferRow, UnitRow, Upsert,
+    ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRow, DatetimeFilter,
+    EqualFilter, InvoiceLineRow, InvoiceRow, ItemRow, LocationTypeRow, NameRow, RepositoryError,
+    RowActionType, StockLineRow, StorageConnection, StoreRow, SyncBufferFilter,
+    SyncBufferRepository, SyncBufferRow, UnitRow, Upsert,
 };
 use serde::de::Error as _;
 use thiserror::Error;
@@ -114,7 +114,12 @@ fn integrate(
         ..Default::default()
     };
 
-    upsert.upsert_v7(connection, changelog)?;
+    upsert.upsert_sync(
+        connection,
+        ChangelogSyncType::SyncTypeV7 {
+            changelog_row: changelog,
+        },
+    )?;
 
     Ok(())
 }

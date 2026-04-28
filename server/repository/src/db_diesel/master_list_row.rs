@@ -5,7 +5,7 @@ use super::{
 
 use crate::{
     repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    RowActionType, Upsert,
+    KeyValueStoreRepository, RowActionType, ChangelogSyncType, Upsert,
 };
 
 use diesel::prelude::*;
@@ -36,6 +36,23 @@ pub struct MasterListRow {
 
 allow_tables_to_appear_in_same_query!(master_list, item_link);
 
+impl MasterListRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::MasterList,
+            record_id: self.id.clone(),
+            row_action: action,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct MasterListRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -45,14 +62,20 @@ impl<'a> MasterListRowRepository<'a> {
         MasterListRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &MasterListRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row)
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &MasterListRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -65,23 +88,21 @@ impl<'a> MasterListRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
-
-    fn insert_changelog(&self, row: &MasterListRow) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::MasterList,
-            record_id: row.id.clone(),
-            row_action: RowActionType::Upsert,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
-    }
 }
 
 impl Upsert for MasterListRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = MasterListRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        MasterListRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
