@@ -60,6 +60,12 @@ export const useSites = (queryParams?: ListParams) => {
     error: deleteError,
   } = useDeleteSite();
 
+  const {
+    mutateAsync: clearSyncTokenMutation,
+    isLoading: isClearingSyncToken,
+    error: clearSyncTokenError,
+  } = useClearSiteToken();
+
   const upsert = async () => {
     return await upsertMutation(draft);
   };
@@ -68,10 +74,19 @@ export const useSites = (queryParams?: ListParams) => {
     return await deleteMutation(siteId);
   };
 
+  const clearSyncToken = async (siteId: number) => {
+    return await clearSyncTokenMutation(siteId);
+  };
+
   return {
     query: { data, isFetching, isError },
     upsert: { upsert, isUpserting, upsertError },
     deleteSite: { deleteSite, isDeleting, deleteError },
+    clearSyncToken: {
+      clearSyncToken,
+      isClearingSyncToken,
+      clearSyncTokenError,
+    },
     draft,
     updateDraft,
   };
@@ -173,6 +188,25 @@ const useDeleteSite = () => {
   const mutationFn = async (siteId: number) => {
     const result = await siteApi.deleteSite({ siteId });
     return result?.centralServer?.site?.deleteSite;
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([SITE]);
+    },
+    onError: (e: unknown) => {
+      console.error(e);
+    },
+  });
+};
+
+const useClearSiteToken = () => {
+  const { siteApi, queryClient } = useSiteGraphQL();
+
+  const mutationFn = async (siteId: number) => {
+    const result = await siteApi.clearSiteToken({ siteId });
+    return result?.centralServer?.site?.clearSiteToken;
   };
 
   return useMutation({

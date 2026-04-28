@@ -92,6 +92,16 @@ mutation assignStoresToSite($input: AssignStoresToSiteInput!) {
   }
 }
 
+mutation clearSiteToken($siteId: Int!) {
+  centralServer {
+    site {
+      clearSiteToken(siteId: $siteId) {
+        id
+      }
+    }
+  }
+}
+
 query storesBySite($siteId: Int!) {
   stores(filter: { siteId: { equalTo: $siteId } }, page: { first: 1000 }) {
     ... on StoreConnector {

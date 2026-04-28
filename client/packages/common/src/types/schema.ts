@@ -1354,12 +1354,17 @@ export type CentralServerQueryNode = {
 export type CentralSiteMutations = {
   __typename: 'CentralSiteMutations';
   assignStoresToSite: AssignStoresToSiteNode;
+  clearSiteToken: ClearSiteTokenNode;
   deleteSite: DeleteSiteNode;
   upsertSite: UpsertSiteResponse;
 };
 
 export type CentralSiteMutationsAssignStoresToSiteArgs = {
   input: AssignStoresToSiteInput;
+};
+
+export type CentralSiteMutationsClearSiteTokenArgs = {
+  siteId: Scalars['Int']['input'];
 };
 
 export type CentralSiteMutationsDeleteSiteArgs = {
@@ -1384,6 +1389,11 @@ export type CentralSiteQueriesSitesArgs = {
 export type CentralSyncRequired = AuthTokenErrorInterface & {
   __typename: 'CentralSyncRequired';
   description: Scalars['String']['output'];
+};
+
+export type ClearSiteTokenNode = {
+  __typename: 'ClearSiteTokenNode';
+  id: Scalars['Int']['output'];
 };
 
 export type ClinicianConnector = {
@@ -3003,6 +3013,20 @@ export type FullSyncStatusNode = {
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  warningThreshold: Scalars['Int']['output'];
+};
+
+export type FullSyncStatusV7Node = {
+  __typename: 'FullSyncStatusV7Node';
+  error?: Maybe<SyncErrorV7Node>;
+  errorThreshold: Scalars['Int']['output'];
+  integration?: Maybe<SyncStatusWithProgressV7Node>;
+  isSyncing: Scalars['Boolean']['output'];
+  lastSuccessfulSync?: Maybe<SyncStatusV7Node>;
+  pull?: Maybe<SyncStatusWithProgressV7Node>;
+  push?: Maybe<SyncStatusWithProgressV7Node>;
+  summary: SyncStatusV7Node;
+  waitingForIntegration?: Maybe<SyncStatusV7Node>;
   warningThreshold: Scalars['Int']['output'];
 };
 
@@ -7555,6 +7579,7 @@ export type Queries = {
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
+  latestSyncStatusV7?: Maybe<FullSyncStatusV7Node>;
   ledger: LedgerResponse;
   /** Query omSupply "location_type" entries */
   locationTypes: LocationTypesResponse;
@@ -9815,6 +9840,12 @@ export type SyncErrorNode = {
   variant: SyncErrorVariant;
 };
 
+export type SyncErrorV7Node = {
+  __typename: 'SyncErrorV7Node';
+  fullError: Scalars['String']['output'];
+  variant: SyncErrorVariantV7;
+};
+
 export enum SyncErrorVariant {
   ApiVersionIncompatible = 'API_VERSION_INCOMPATIBLE',
   CentralV6NotConfigured = 'CENTRAL_V6_NOT_CONFIGURED',
@@ -9830,6 +9861,23 @@ export enum SyncErrorVariant {
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
   Unknown = 'UNKNOWN',
   V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE',
+}
+
+export enum SyncErrorVariantV7 {
+  Authentication = 'AUTHENTICATION',
+  ConnectionError = 'CONNECTION_ERROR',
+  DatabaseError = 'DATABASE_ERROR',
+  GetCurrentSiteIdError = 'GET_CURRENT_SITE_ID_ERROR',
+  IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
+  NotACentralServer = 'NOT_A_CENTRAL_SERVER',
+  Other = 'OTHER',
+  ParsingError = 'PARSING_ERROR',
+  RecordNotFound = 'RECORD_NOT_FOUND',
+  SiteIdMismatch = 'SITE_ID_MISMATCH',
+  SiteIdNotSet = 'SITE_ID_NOT_SET',
+  SiteLockError = 'SITE_LOCK_ERROR',
+  SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
+  SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
 }
 
 export type SyncFileReferenceConnector = {
@@ -9880,8 +9928,23 @@ export type SyncStatusNode = {
   started: Scalars['DateTime']['output'];
 };
 
+export type SyncStatusV7Node = {
+  __typename: 'SyncStatusV7Node';
+  durationInSeconds: Scalars['Int']['output'];
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+};
+
 export type SyncStatusWithProgressNode = {
   __typename: 'SyncStatusWithProgressNode';
+  done?: Maybe<Scalars['Int']['output']>;
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+  total?: Maybe<Scalars['Int']['output']>;
+};
+
+export type SyncStatusWithProgressV7Node = {
+  __typename: 'SyncStatusWithProgressV7Node';
   done?: Maybe<Scalars['Int']['output']>;
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
