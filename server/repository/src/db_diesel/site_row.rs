@@ -87,12 +87,12 @@ impl Upsert for SiteRow {
 #[derive(Debug, Clone)]
 pub struct SiteRowDelete(pub String);
 impl Delete for SiteRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         let repo = SiteRowRepository::new(con);
         if let Some(site) = repo.find_one_by_og_id(&self.0)? {
             repo.delete(site.id)?;
         }
-        Ok(None)
+        Ok(())
     }
 
     // Test only
