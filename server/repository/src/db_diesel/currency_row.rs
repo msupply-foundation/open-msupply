@@ -48,6 +48,19 @@ impl CurrencyRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = CurrencyRow {
+            id: id.to_string(),
+            ..Default::default()
+        };
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct CurrencyRowRepository<'a> {
@@ -95,11 +108,7 @@ impl<'a> CurrencyRowRepository<'a> {
 
     pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {
         self._delete(currency_id)?;
-        let row = CurrencyRow {
-            id: currency_id.to_string(),
-            ..Default::default()
-        };
-        let changelog = row.changelog(self.connection, RowActionType::Delete, None)?;
+        let changelog = CurrencyRow::delete_changelog(currency_id, self.connection, RowActionType::Delete, None)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
@@ -107,16 +116,21 @@ impl<'a> CurrencyRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct CurrencyRowDelete(pub String);
 impl Delete for CurrencyRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = CurrencyRowRepository::new(con).delete(&self.0)?;
-        Ok(Some(change_log_id))
-    }
-    fn delete_v7(
+    fn delete_sync(
         &self,
         con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
+        sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
-        CurrencyRowRepository::new(con)._delete(&self.0)?;
+        let repo = CurrencyRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                CurrencyRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }

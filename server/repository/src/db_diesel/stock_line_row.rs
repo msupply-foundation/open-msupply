@@ -112,6 +112,18 @@ impl StockLineRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = StockLineRowRepository::new(con)
+            .find_one_by_id(id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct StockLineRowRepository<'a> {
@@ -136,12 +148,7 @@ impl<'a> StockLineRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = match self.find_one_by_id(id)? {
-            Some(row) => row,
-            None => return Ok(None),
-        };
-
-        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+        let changelog = StockLineRow::delete_changelog(id, self.connection, RowActionType::Delete, None)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         self._delete(id)?;
         Ok(Some(change_log_id))
@@ -174,14 +181,18 @@ impl<'a> StockLineRowRepository<'a> {
 pub struct StockLineRowDelete(pub String);
 // For tests only
 impl Delete for StockLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StockLineRowRepository::new(con).delete(&self.0)
-    }
-    fn delete_v7(
+    fn delete_sync(
         &self,
         con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
+        sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                StockLineRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
         StockLineRowRepository::new(con)._delete(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())

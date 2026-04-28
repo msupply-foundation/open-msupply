@@ -118,6 +118,18 @@ impl StocktakeLineRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = StocktakeLineRowRepository::new(con)
+            .find_one_by_id(id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct StocktakeLineRowRepository<'a> {
@@ -136,12 +148,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = match self.find_one_by_id(id)? {
-            Some(row) => row,
-            None => return Ok(None),
-        };
-
-        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+        let changelog = StocktakeLineRow::delete_changelog(id, self.connection, RowActionType::Delete, None)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(id)))
             .execute(self.connection.lock().connection())?;
@@ -171,8 +178,22 @@ impl<'a> StocktakeLineRowRepository<'a> {
 pub struct StocktakeLineRowDelete(pub String);
 // For tests only
 impl Delete for StocktakeLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StocktakeLineRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                StocktakeLineRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(&self.0)))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

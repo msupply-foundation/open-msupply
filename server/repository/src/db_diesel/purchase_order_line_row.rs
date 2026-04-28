@@ -268,10 +268,50 @@ impl Upsert for PurchaseOrderLineRow {
 
 #[derive(Debug, Clone)]
 pub struct PurchaseOrderLineDelete(pub String);
+
+impl PurchaseOrderLineDelete {
+    /// Fetches the line and its parent PO, inserts a PO upsert changelog,
+    /// and returns the line's delete changelog.
+    fn delete_changelog_with_po_update(
+        &self,
+        con: &StorageConnection,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let old_row = PurchaseOrderLineRowRepository::new(con)
+            .find_one_by_id(&self.0)?
+            .ok_or(RepositoryError::NotFound)?;
+
+        let purchase_order = PurchaseOrderRowRepository::new(con)
+            .find_one_by_id(&old_row.purchase_order_id)?
+            .ok_or(RepositoryError::NotFound)?;
+
+        let po_changelog = purchase_order.changelog(con, RowActionType::Upsert, source_site_id)?;
+        ChangelogRepository::new(con).insert(&po_changelog)?;
+
+        old_row.changelog(con, RowActionType::Delete, source_site_id)
+    }
+}
+
 impl Delete for PurchaseOrderLineDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = PurchaseOrderLineRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.delete_changelog_with_po_update(con, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(
+            purchase_order_line_with_links::table
+                .filter(purchase_order_line_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

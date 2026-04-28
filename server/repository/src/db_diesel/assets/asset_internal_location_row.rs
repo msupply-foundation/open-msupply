@@ -55,6 +55,18 @@ impl AssetInternalLocationRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        row_id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = AssetInternalLocationRowRepository::new(con)
+            .find_one_by_id(row_id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct AssetInternalLocationRowRepository<'a> {
@@ -120,13 +132,13 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     }
 
     pub fn delete(&self, asset_internal_location_id: &str) -> Result<i64, RepositoryError> {
-        let ail = match self.find_one_by_id(asset_internal_location_id)? {
-            Some(ail) => ail,
-            None => {
+        let changelog = match AssetInternalLocationRow::delete_changelog(asset_internal_location_id, self.connection, RowActionType::Delete, None) {
+            Ok(changelog) => changelog,
+            Err(RepositoryError::NotFound) => {
                 return Ok(0); // already deleted?
             }
+            Err(e) => return Err(e),
         };
-        let changelog = ail.changelog(self.connection, RowActionType::Delete, None)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(asset_internal_location)
             .filter(id.eq(asset_internal_location_id))
@@ -171,9 +183,22 @@ impl Upsert for AssetInternalLocationRow {
 #[derive(Debug, Clone)]
 pub struct AssetInternalLocationRowDelete(pub String);
 impl Delete for AssetInternalLocationRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = AssetInternalLocationRowRepository::new(con).delete(&self.0)?;
-        Ok(Some(cursor_id))
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                AssetInternalLocationRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(asset_internal_location.filter(id.eq(&self.0)))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

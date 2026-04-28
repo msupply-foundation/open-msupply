@@ -132,9 +132,9 @@ impl Upsert for ContactRow {
 #[derive(Debug, Clone)]
 pub struct ContactRowDelete(pub String);
 impl Delete for ContactRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ContactRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

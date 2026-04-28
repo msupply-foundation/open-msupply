@@ -94,6 +94,18 @@ impl RnRFormRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = RnRFormRowRepository::new(con)
+            .find_one_by_id(id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct RnRFormRowRepository<'a> {
@@ -125,16 +137,12 @@ impl<'a> RnRFormRowRepository<'a> {
     }
 
     pub fn delete(&self, rnr_form_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(rnr_form_id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => {
-                let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
-                ChangelogRepository::new(self.connection).insert(&changelog)?
-            }
-            None => {
-                return Ok(None);
-            }
+        let changelog = match RnRFormRow::delete_changelog(rnr_form_id, self.connection, RowActionType::Delete, None) {
+            Ok(changelog) => changelog,
+            Err(RepositoryError::NotFound) => return Ok(None),
+            Err(e) => return Err(e),
         };
+        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(rnr_form_with_links::table.filter(rnr_form_with_links::id.eq(rnr_form_id)))
             .execute(self.connection.lock().connection())?;
@@ -146,8 +154,22 @@ impl<'a> RnRFormRowRepository<'a> {
 pub struct RnRFormDelete(pub String);
 // For tests only
 impl Delete for RnRFormDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        RnRFormRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                RnRFormRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(rnr_form_with_links::table.filter(rnr_form_with_links::id.eq(&self.0)))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

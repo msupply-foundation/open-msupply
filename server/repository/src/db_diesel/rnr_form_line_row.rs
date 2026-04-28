@@ -116,6 +116,18 @@ impl RnRFormLineRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        row_id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = RnRFormLineRowRepository::new(con)
+            .find_one_by_id(row_id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct RnRFormLineRowRepository<'a> {
@@ -197,12 +209,11 @@ impl<'a> RnRFormLineRowRepository<'a> {
     }
 
     pub fn delete(&self, rnr_form_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = match self.find_one_by_id(rnr_form_line_id)? {
-            Some(row) => row,
-            None => return Ok(None),
+        let changelog = match RnRFormLineRow::delete_changelog(rnr_form_line_id, self.connection, RowActionType::Delete, None) {
+            Ok(changelog) => changelog,
+            Err(RepositoryError::NotFound) => return Ok(None),
+            Err(e) => return Err(e),
         };
-
-        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(rnr_form_line.filter(id.eq(rnr_form_line_id)))
@@ -215,8 +226,22 @@ impl<'a> RnRFormLineRowRepository<'a> {
 pub struct RnRFormLineDelete(pub String);
 // For tests only
 impl Delete for RnRFormLineDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        RnRFormLineRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                RnRFormLineRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(rnr_form_line.filter(id.eq(&self.0)))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

@@ -420,21 +420,6 @@ impl<'a> ChangelogRepository<'a> {
         Ok(())
     }
 
-    pub fn set_source_site_id_and_is_sync_update(
-        &self,
-        cursor_id: i64,
-        source_site_id: Option<i32>,
-    ) -> Result<(), RepositoryError> {
-        diesel::update(changelog::table)
-            .set((
-                changelog::source_site_id.eq(source_site_id),
-                changelog::is_sync_update.eq(true),
-            ))
-            .filter(changelog::cursor.eq(cursor_id))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
     /// Inserts a changelog record, and returns the cursor of the inserted record
     #[cfg(feature = "postgres")]
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {

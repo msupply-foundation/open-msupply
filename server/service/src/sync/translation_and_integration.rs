@@ -200,13 +200,7 @@ impl IntegrationOperation {
             }
 
             IntegrationOperation::Delete(delete) => {
-                let cursor_id = delete.delete(connection)?;
-
-                // Update the change log if we get a cursor id
-                if let Some(cursor_id) = cursor_id {
-                    ChangelogRepository::new(connection)
-                        .set_source_site_id_and_is_sync_update(cursor_id, source_site_id)?;
-                }
+                delete.delete_sync(connection, ChangelogSyncType::SyncTypeV5V6 { source_site_id })?;
                 Ok(())
             }
         }
