@@ -219,6 +219,19 @@ impl NameRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = NameRow {
+            id: id.to_string(),
+            ..Default::default()
+        };
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 impl NameOmsFieldsRow {
@@ -295,11 +308,7 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn mark_deleted(&self, name_id: &str) -> Result<i64, RepositoryError> {
         self._mark_deleted(name_id)?;
-        let row = NameRow {
-            id: name_id.to_string(),
-            ..Default::default()
-        };
-        let changelog = row.changelog(self.connection, RowActionType::Delete, None)?;
+        let changelog = NameRow::delete_changelog(name_id, self.connection, RowActionType::Delete, None)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -390,15 +399,18 @@ impl From<NameRowType> for NameType {
 pub struct NameRowDelete(pub String);
 // TODO soft delete
 impl Delete for NameRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = NameRowRepository::new(con).mark_deleted(&self.0)?;
-        Ok(Some(change_log_id))
-    }
-    fn delete_v7(
+    fn delete_sync(
         &self,
         con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
+        sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                NameRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
         NameRowRepository::new(con)._mark_deleted(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())

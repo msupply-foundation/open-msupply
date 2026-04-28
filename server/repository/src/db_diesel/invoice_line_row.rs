@@ -175,6 +175,18 @@ impl InvoiceLineRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        record_id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = InvoiceLineRowRepository::new(con)
+            .find_one_by_id(record_id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
@@ -280,12 +292,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn delete(&self, invoice_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = match self.find_one_by_id(invoice_line_id)? {
-            Some(row) => row,
-            None => return Ok(None),
-        };
-
-        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+        let changelog = InvoiceLineRow::delete_changelog(invoice_line_id, self.connection, RowActionType::Delete, None)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         self._delete(invoice_line_id)?;
         Ok(Some(change_log_id))
@@ -334,16 +341,21 @@ impl<'a> InvoiceLineRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct InvoiceLineRowDelete(pub String);
 impl Delete for InvoiceLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = InvoiceLineRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
-    }
-    fn delete_v7(
+    fn delete_sync(
         &self,
         con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
+        sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
-        InvoiceLineRowRepository::new(con)._delete(&self.0)?;
+        let repo = InvoiceLineRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                InvoiceLineRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }

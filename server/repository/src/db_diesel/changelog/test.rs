@@ -645,11 +645,9 @@ async fn test_changelog_outgoing_sync_records() {
         ..Default::default()
     };
 
-    let cursor_id = AssetRowRepository::new(&connection).upsert_one(&row, None).unwrap();
-
-    // Set the source_site_id (usually this happens during integration step in sync)
-    repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
-        .unwrap();
+    AssetRowRepository::new(&connection)._upsert_one(&row).unwrap();
+    let changelog = row.changelog(&connection, RowActionType::Upsert, Some(site1_id)).unwrap();
+    ChangelogRepository::new(&connection).insert(&changelog).unwrap();
 
     // Now we should have two records to send to site 1 the remote site on initialisation
     // The asset class and the asset

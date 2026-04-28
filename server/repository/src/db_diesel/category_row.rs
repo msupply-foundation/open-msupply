@@ -84,9 +84,9 @@ impl Upsert for CategoryRow {
 #[derive(Debug, Clone)]
 pub struct CategoryRowDelete(pub String);
 impl Delete for CategoryRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         CategoryRowRepository::new(con).mark_deleted(&self.0)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

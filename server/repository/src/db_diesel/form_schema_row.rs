@@ -53,6 +53,18 @@ impl FormSchemaJson {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = FormSchemaRowRepository::new(con)
+            .find_one_by_id(id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct FormSchemaRowRepository<'a> {
@@ -176,9 +188,21 @@ impl Upsert for FormSchemaJson {
 #[derive(Debug, Clone)]
 pub struct FormSchemaRowDelete(pub String);
 impl Delete for FormSchemaRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                FormSchemaJson::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
         FormSchemaRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(

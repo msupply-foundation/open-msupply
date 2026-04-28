@@ -85,9 +85,9 @@ impl Upsert for AbbreviationRow {
 #[derive(Debug, Clone)]
 pub struct AbbreviationRowDelete(pub String);
 impl Delete for AbbreviationRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         AbbreviationRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

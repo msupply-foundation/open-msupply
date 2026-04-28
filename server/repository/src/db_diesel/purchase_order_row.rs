@@ -148,6 +148,18 @@ impl PurchaseOrderRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = PurchaseOrderRowRepository::new(con)
+            .find_one_by_id(id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct PurchaseOrderRowRepository<'a> {
@@ -185,12 +197,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
     }
 
     pub fn delete(&self, purchase_order_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = match self.find_one_by_id(purchase_order_id)? {
-            Some(row) => row,
-            None => return Ok(None),
-        };
-
-        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+        let changelog = PurchaseOrderRow::delete_changelog(purchase_order_id, self.connection, RowActionType::Delete, None)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(purchase_order_with_links::table)
@@ -238,9 +245,23 @@ impl Upsert for PurchaseOrderRow {
 #[derive(Debug, Clone)]
 pub struct PurchaseOrderDelete(pub String);
 impl Delete for PurchaseOrderDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = PurchaseOrderRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                PurchaseOrderRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(purchase_order_with_links::table)
+            .filter(purchase_order_with_links::id.eq(&self.0))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

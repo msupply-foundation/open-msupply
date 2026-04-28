@@ -61,6 +61,18 @@ impl IndicatorValueRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = IndicatorValueRowRepository::new(con)
+            .find_one_by_id(id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct IndicatorValueRowRepository<'a> {
@@ -79,16 +91,8 @@ impl<'a> IndicatorValueRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => {
-                let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
-                ChangelogRepository::new(self.connection).insert(&changelog)?
-            }
-            None => {
-                return Ok(None);
-            }
-        };
+        let changelog = IndicatorValueRow::delete_changelog(id, self.connection, RowActionType::Delete, None)?;
+        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(id)))
             .execute(self.connection.lock().connection())?;
@@ -110,9 +114,22 @@ impl<'a> IndicatorValueRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct IndicatorValueRowDelete(pub String);
 impl Delete for IndicatorValueRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = IndicatorValueRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                IndicatorValueRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(&self.0)))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

@@ -150,6 +150,18 @@ impl RequisitionRow {
             ..Default::default()
         })
     }
+
+    pub fn delete_changelog(
+        id: &str,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = RequisitionRowRepository::new(con)
+            .find_one_by_id(id)?
+            .ok_or(RepositoryError::NotFound)?;
+        row.changelog(con, action, source_site_id)
+    }
 }
 
 pub struct RequisitionRowRepository<'a> {
@@ -168,12 +180,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     pub fn delete(&self, requisition_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let requisition = match self.find_one_by_id(requisition_id)? {
-            Some(requisition) => requisition,
-            None => return Ok(None),
-        };
-
-        let changelog = requisition.changelog(self.connection, RowActionType::Delete, None)?;
+        let changelog = RequisitionRow::delete_changelog(requisition_id, self.connection, RowActionType::Delete, None)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(
@@ -212,8 +219,24 @@ impl<'a> RequisitionRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct RequisitionRowDelete(pub String);
 impl Delete for RequisitionRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        RequisitionRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                RequisitionRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(
+            requisition_with_links::table.filter(requisition_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

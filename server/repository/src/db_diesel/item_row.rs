@@ -231,17 +231,15 @@ impl<'a> ItemRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ItemRowDelete(pub String);
 impl Delete for ItemRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
-    }
-    fn delete_v7(
+    fn delete_sync(
         &self,
         con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
+        sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         ItemRowRepository::new(con).delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
+        if let ChangelogSyncType::SyncTypeV7 { changelog_row } = sync_type {
+            ChangelogRepository::new(con).insert(&changelog_row)?;
+        }
         Ok(())
     }
     // Test only

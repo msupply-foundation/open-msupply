@@ -74,17 +74,15 @@ impl<'a> LocationTypeRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct LocationTypeRowDelete(pub String);
 impl Delete for LocationTypeRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        LocationTypeRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
-    }
-    fn delete_v7(
+    fn delete_sync(
         &self,
         con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
+        sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         LocationTypeRowRepository::new(con).delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
+        if let ChangelogSyncType::SyncTypeV7 { changelog_row } = sync_type {
+            ChangelogRepository::new(con).insert(&changelog_row)?;
+        }
         Ok(())
     }
     // Test only

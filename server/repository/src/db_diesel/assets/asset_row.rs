@@ -83,6 +83,20 @@ impl AssetRow {
             ..Default::default()
         })
     }
+
+    pub fn soft_delete_and_get_changelog(
+        row_id: &str,
+        con: &StorageConnection,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = AssetRowRepository::new(con)
+            .find_one_by_id(row_id)?
+            .ok_or(RepositoryError::NotFound)?;
+        diesel::update(asset.filter(id.eq(row_id)))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(con.lock().connection())?;
+        row.changelog(con, RowActionType::Upsert, source_site_id)
+    }
 }
 
 pub struct AssetRowRepository<'a> {
@@ -140,13 +154,7 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     pub fn mark_deleted(&self, asset_id_param: &str) -> Result<i64, RepositoryError> {
-        diesel::update(asset.filter(id.eq(asset_id_param)))
-            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(self.connection.lock().connection())?;
-
-        let asset_row = self.find_one_by_id(asset_id_param)?
-            .ok_or(RepositoryError::NotFound)?;
-        let changelog = asset_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = AssetRow::soft_delete_and_get_changelog(asset_id_param, self.connection, None)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
@@ -176,9 +184,25 @@ impl Upsert for AssetRow {
 #[derive(Debug, Clone)]
 pub struct AssetRowDelete(pub String);
 impl Delete for AssetRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = AssetRowRepository::new(con).mark_deleted(&self.0)?;
-        Ok(Some(cursor_id))
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                AssetRow::soft_delete_and_get_changelog(&self.0, con, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => {
+                diesel::update(asset.filter(id.eq(&self.0)))
+                    .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+                    .execute(con.lock().connection())?;
+                changelog_row
+            }
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

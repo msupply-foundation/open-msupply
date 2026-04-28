@@ -117,9 +117,9 @@ impl Upsert for ClinicianStoreJoinRow {
 #[derive(Debug, Clone)]
 pub struct ClinicianStoreJoinRowDelete(pub String);
 impl Delete for ClinicianStoreJoinRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Clinician store joins not in Changelog/not synced out
+        Ok(()) // Clinician store joins not in Changelog/not synced out
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
