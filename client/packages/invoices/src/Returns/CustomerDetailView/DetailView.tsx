@@ -57,7 +57,7 @@ export const CustomerReturnDetailView = () => {
       noDataElement: (
         <NothingHere
           body={t('error.no-customer-return-items')}
-          onCreate={isDisabled ? undefined : () => onOpen}
+          onCreate={isDisabled ? undefined : () => onOpen()}
           buttonText={t('button.add-item')}
         />
       ),
