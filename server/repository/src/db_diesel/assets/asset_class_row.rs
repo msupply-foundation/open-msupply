@@ -28,14 +28,14 @@ pub struct AssetClassRow {
 
 impl AssetClassRow {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetClass,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
@@ -66,7 +66,12 @@ impl<'a> AssetClassRowRepository<'a> {
 
     pub fn upsert_one(&self, asset_class_row: &AssetClassRow) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_class_row)?;
-        let changelog = asset_class_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = AssetClassRow::changelog(
+            asset_class_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -99,7 +104,7 @@ impl Upsert for AssetClassRow {
         AssetClassRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

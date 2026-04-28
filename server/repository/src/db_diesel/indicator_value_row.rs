@@ -46,32 +46,20 @@ pub struct IndicatorValueRow {
 
 impl IndicatorValueRow {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::IndicatorValue,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
             source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
             ..Default::default()
         })
-    }
-
-    pub fn delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: Option<i32>,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = IndicatorValueRowRepository::new(con)
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
     }
 }
 
@@ -86,12 +74,22 @@ impl<'a> IndicatorValueRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &IndicatorValueRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = IndicatorValueRow::changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = IndicatorValueRow::delete_changelog(id, self.connection, RowActionType::Delete, None)?;
+        let changelog = IndicatorValueRow::changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            None,
+        )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(id)))
@@ -120,9 +118,12 @@ impl Delete for IndicatorValueRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                IndicatorValueRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => IndicatorValueRow::changelog(
+                self.0.clone(),
+                con,
+                RowActionType::Delete,
+                source_site_id,
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
@@ -146,7 +147,7 @@ impl Upsert for IndicatorValueRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

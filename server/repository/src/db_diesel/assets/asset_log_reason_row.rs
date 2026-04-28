@@ -38,14 +38,14 @@ pub struct AssetLogReasonRow {
 
 impl AssetLogReasonRow {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetLogReason,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
@@ -82,7 +82,12 @@ impl<'a> AssetLogReasonRowRepository<'a> {
         asset_log_reason_row: &AssetLogReasonRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_log_reason_row)?;
-        let changelog = asset_log_reason_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = AssetLogReasonRow::changelog(
+            asset_log_reason_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -107,8 +112,12 @@ impl<'a> AssetLogReasonRowRepository<'a> {
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
 
-        let changelog = AssetLogReasonRow { id: asset_log_reason_id.to_string(), ..Default::default() }
-            .changelog(self.connection, RowActionType::Delete, None)?;
+        let changelog = AssetLogReasonRow::changelog(
+            asset_log_reason_id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
     }
@@ -119,7 +128,7 @@ impl Upsert for AssetLogReasonRow {
         AssetLogReasonRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

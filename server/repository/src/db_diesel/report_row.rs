@@ -90,32 +90,20 @@ pub struct ReportMetaDataRow {
 
 impl ReportRow {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Report,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
             source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
             ..Default::default()
         })
-    }
-
-    pub fn delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: Option<i32>,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = ReportRowRepository::new(con)
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
     }
 }
 
@@ -148,7 +136,12 @@ impl<'a> ReportRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &ReportRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = ReportRow::changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -169,7 +162,7 @@ impl Delete for ReportRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                ReportRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+                ReportRow::changelog(self.0.clone(), con, RowActionType::Delete, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -193,7 +186,7 @@ impl Upsert for ReportRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

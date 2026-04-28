@@ -38,32 +38,20 @@ pub struct FormSchemaJson {
 
 impl FormSchemaJson {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::FormSchema,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
             source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
             ..Default::default()
         })
-    }
-
-    pub fn delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: Option<i32>,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = FormSchemaRowRepository::new(con)
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
     }
 }
 
@@ -127,7 +115,12 @@ impl<'a> FormSchemaRowRepository<'a> {
 
     pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<i64, RepositoryError> {
         self._upsert_one(schema)?;
-        let changelog = schema.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = FormSchemaJson::changelog(
+            schema.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -168,7 +161,7 @@ impl Upsert for FormSchemaJson {
         FormSchemaRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -194,9 +187,12 @@ impl Delete for FormSchemaRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                FormSchemaJson::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FormSchemaJson::changelog(
+                self.0.clone(),
+                con,
+                RowActionType::Delete,
+                source_site_id,
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

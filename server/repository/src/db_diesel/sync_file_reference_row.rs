@@ -88,14 +88,14 @@ pub struct SyncFileReferenceRow {
 
 impl SyncFileReferenceRow {
     pub fn changelog(
-        &self,
+        changelog_record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncFileReference,
-            record_id: self.id.clone(),
+            record_id: changelog_record_id,
             row_action: action,
             source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
             ..Default::default()
@@ -130,7 +130,12 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
-        let changelog = sync_file_reference_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = SyncFileReferenceRow::changelog(
+            sync_file_reference_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -149,10 +154,12 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        let row = self.find_one_by_id(sync_file_reference_id)?.ok_or(
-            RepositoryError::NotFound,
+        let changelog = SyncFileReferenceRow::changelog(
+            sync_file_reference_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
         )?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
     }
@@ -191,7 +198,7 @@ impl Upsert for SyncFileReferenceRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

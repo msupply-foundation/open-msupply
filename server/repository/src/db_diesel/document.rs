@@ -219,7 +219,12 @@ impl<'a> DocumentRepository<'a> {
     /// Inserts a document
     pub fn insert(&self, doc: &Document) -> Result<i64, RepositoryError> {
         self._upsert(&doc.to_row()?)?;
-        let changelog = doc.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = Document::changelog(
+            doc.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -379,14 +384,14 @@ fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
 
 impl Document {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Document,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,

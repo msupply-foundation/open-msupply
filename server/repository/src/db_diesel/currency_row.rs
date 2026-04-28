@@ -35,31 +35,18 @@ pub struct CurrencyRow {
 
 impl CurrencyRow {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Currency,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
             ..Default::default()
         })
-    }
-
-    pub fn delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: Option<i32>,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = CurrencyRow {
-            id: id.to_string(),
-            ..Default::default()
-        };
-        row.changelog(con, action, source_site_id)
     }
 }
 
@@ -84,7 +71,12 @@ impl<'a> CurrencyRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &CurrencyRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = CurrencyRow::changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -108,7 +100,12 @@ impl<'a> CurrencyRowRepository<'a> {
 
     pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {
         self._delete(currency_id)?;
-        let changelog = CurrencyRow::delete_changelog(currency_id, self.connection, RowActionType::Delete, None)?;
+        let changelog = CurrencyRow::changelog(
+            currency_id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
@@ -125,7 +122,7 @@ impl Delete for CurrencyRowDelete {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                CurrencyRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+                CurrencyRow::changelog(self.0.clone(), con, RowActionType::Delete, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -156,7 +153,7 @@ impl Upsert for CurrencyRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

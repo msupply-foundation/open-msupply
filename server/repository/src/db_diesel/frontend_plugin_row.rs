@@ -83,32 +83,20 @@ pub struct FrontendPluginRow {
 
 impl FrontendPluginRow {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::FrontendPlugin,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
             source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
             ..Default::default()
         })
-    }
-
-    pub fn delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: Option<i32>,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = FrontendPluginRowRepository::new(con)
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
     }
 }
 
@@ -149,12 +137,22 @@ impl<'a> FrontendPluginRowRepository<'a> {
 
     pub fn upsert_one(&self, row: FrontendPluginRow) -> Result<i64, RepositoryError> {
         self._upsert_one(&row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = FrontendPluginRow::changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = FrontendPluginRow::delete_changelog(id, self.connection, RowActionType::Delete, None)?;
+        let changelog = FrontendPluginRow::changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            None,
+        )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(frontend_plugin::table.filter(frontend_plugin::id.eq(id)))
@@ -168,7 +166,7 @@ impl Upsert for FrontendPluginRow {
         FrontendPluginRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -197,7 +195,7 @@ impl Delete for FrontendPluginRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                FrontendPluginRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+                FrontendPluginRow::changelog(self.0.clone(), con, RowActionType::Delete, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

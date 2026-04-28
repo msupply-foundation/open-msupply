@@ -28,14 +28,14 @@ pub struct DemographicRow {
 
 impl DemographicRow {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Demographic,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
@@ -65,7 +65,12 @@ impl<'a> DemographicRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &DemographicRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = DemographicRow::changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -97,7 +102,7 @@ impl Upsert for DemographicRow {
         DemographicRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
