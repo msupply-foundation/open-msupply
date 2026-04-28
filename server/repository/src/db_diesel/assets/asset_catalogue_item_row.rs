@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use crate::KeyValueStoreRepository;
 use crate::RepositoryError;
 use crate::StorageConnection;
-use crate::{ChangelogSyncType, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -48,14 +48,14 @@ pub struct AssetCatalogueItemRow {
 
 impl AssetCatalogueItemRow {
     pub fn changelog(
-        &self,
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetCatalogueItem,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
@@ -92,7 +92,12 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         asset_catalogue_item_row: &AssetCatalogueItemRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_catalogue_item_row)?;
-        let changelog = asset_catalogue_item_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = AssetCatalogueItemRow::changelog(
+            asset_catalogue_item_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -116,21 +121,26 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         diesel::update(asset_catalogue_item.filter(id.eq(asset_catalogue_item_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        let changelog = AssetCatalogueItemRow {
-            id: asset_catalogue_item_id.to_string(),
-            ..Default::default()
-        }
-        .changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = AssetCatalogueItemRow::changelog(
+            asset_catalogue_item_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            None,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for AssetCatalogueItemRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         AssetCatalogueItemRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
