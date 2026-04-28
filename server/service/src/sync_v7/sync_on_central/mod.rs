@@ -32,19 +32,20 @@ pub fn get_site_info(
         .basic_context()
         .map_err(|e| SyncError::Other(e.to_string()))?;
 
-    let site = get_site_by_name(&ctx.connection, &input.name)?.ok_or(SyncError::Authentication)?;
+    let site = get_site_by_name(&ctx.connection, &input.name)?
+        .ok_or_else(|| SyncError::SiteNotFound(input.name.clone()))?;
 
     if site.hashed_password != input.password_sha256 {
-        return Err(SyncError::Authentication);
+        return Err(SyncError::IncorrectPassword);
     }
 
     if site.token.is_some() {
-        return Err(SyncError::Authentication);
+        return Err(SyncError::TokenAlreadyAllocated);
     }
 
     let hardware_id = match &site.hardware_id {
         Some(existing) if existing != &input.hardware_id => {
-            return Err(SyncError::Authentication);
+            return Err(SyncError::HardwareIdMismatch);
         }
         _ => input.hardware_id.clone(),
     };
@@ -119,11 +120,11 @@ pub fn authenticate_site(
         .basic_context()
         .map_err(|e| SyncError::Other(e.to_string()))?;
 
-    let site = get_site_by_token(&ctx.connection, token)?.ok_or(SyncError::Authentication)?;
+    let site = get_site_by_token(&ctx.connection, token)?.ok_or(SyncError::TokenNotFound)?;
 
     match site.hardware_id.as_deref() {
         Some(stored) if stored == hardware_id => {}
-        _ => return Err(SyncError::Authentication),
+        _ => return Err(SyncError::HardwareIdMismatch),
     }
 
     Ok(site)
@@ -214,17 +215,23 @@ mod tests {
         test_util_set_is_central_server(true);
         let service_provider = ServiceProvider::new(connection_manager);
 
+        // Site not found
+        let mut unknown = input();
+        unknown.name = "nonexistent".to_string();
+        let err = super::get_site_info(&service_provider, unknown).unwrap_err();
+        assert!(matches!(err, SyncError::SiteNotFound(_)));
+
         // Bad password
         test_site(&connection, None);
         let mut bad = input();
         bad.password_sha256 = "wrong".to_string();
         let err = super::get_site_info(&service_provider, bad).unwrap_err();
-        assert!(matches!(err, SyncError::Authentication));
+        assert!(matches!(err, SyncError::IncorrectPassword));
 
         // Token already set
         test_site(&connection, Some("existing_token".to_string()));
         let err = super::get_site_info(&service_provider, input()).unwrap_err();
-        assert!(matches!(err, SyncError::Authentication));
+        assert!(matches!(err, SyncError::TokenAlreadyAllocated));
     }
 
     #[actix_rt::test]
@@ -245,11 +252,11 @@ mod tests {
 
         // Wrong token
         let err = authenticate_site(&sp, "wrong_token", HARDWARE_ID, VERSION).unwrap_err();
-        assert!(matches!(err, SyncError::Authentication));
+        assert!(matches!(err, SyncError::TokenNotFound));
 
         // Wrong hardware id
         let err = authenticate_site(&sp, &allocated.token, "wrong_hw", VERSION).unwrap_err();
-        assert!(matches!(err, SyncError::Authentication));
+        assert!(matches!(err, SyncError::HardwareIdMismatch));
 
         // Wrong app version
         let err = authenticate_site(&sp, &allocated.token, HARDWARE_ID, VERSION + 1).unwrap_err();
