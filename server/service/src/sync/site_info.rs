@@ -71,11 +71,13 @@ impl SiteInfoTrait for SiteInfoService {
         let ctx = service_provider.basic_context()?;
         let repo = KeyValueStoreRepository::new(&ctx.connection);
 
-        if CentralServerConfig::is_central_server() {
-            request_and_set_site_info_v5(service_provider, settings, &repo).await
-        } else {
-            request_and_set_site_info_v7(service_provider, settings, &repo).await
-        }
+        // TODO: restore the v5/v7 once v7 pull/push is implemented
+        // if CentralServerConfig::is_central_server() {
+        //     request_and_set_site_info_v5(service_provider, settings, &repo).await
+        // } else {
+        //     request_and_set_site_info_v7(service_provider, settings, &repo).await
+        // }
+        request_and_set_site_info_v5(service_provider, settings, &repo).await
     }
 
     fn get_site_id(&self, ctx: &ServiceContext) -> Result<Option<i32>, RepositoryError> {
@@ -115,8 +117,46 @@ async fn request_and_set_site_info_v5(
         Some(site_info.site_id),
     )?;
 
+    // TODO: remove once v7 pull/push is implemented
+    allocate_v7_token(service_provider, settings, repo, &site_info).await?;
+
     info!("Received site info (v5)");
     Ok(SiteInfo::V5(site_info))
+}
+
+/// TODO: remove together with the call site above once v7 is implemented
+async fn allocate_v7_token(
+    service_provider: &ServiceProvider,
+    settings: &SyncSettings,
+    repo: &KeyValueStoreRepository<'_>,
+    site_info: &SiteInfoV5,
+) -> Result<(), RequestAndSetSiteInfoError> {
+    use RequestAndSetSiteInfoError as Error;
+
+    let hardware_id = service_provider
+        .app_data_service
+        .get_hardware_id()
+        .map_err(|e| Error::HardwareIdError(format_error(&e)))?;
+
+    // OG returns the COMS URL in `central_server_url`; v7 token lives on COMS.
+    let coms_url = site_info
+        .central_server_url
+        .parse::<reqwest::Url>()
+        .map_err(|e| Error::InvalidUrl(format_error(&e)))?;
+
+    let output = get_site_info(
+        &coms_url,
+        SiteInfoInput {
+            version: V7_VERSION,
+            name: settings.username.clone(),
+            password_sha256: settings.password_sha256.clone(),
+            hardware_id,
+        },
+    )
+    .await?;
+
+    save_v7_token_to_key_value(repo, &output)?;
+    Ok(())
 }
 
 async fn request_and_set_site_info_v7(
