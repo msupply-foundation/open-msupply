@@ -117,7 +117,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_value::<LegacyRequisitionLineRow>(sync_record.data.0.clone())?;
+        let data = sync_record.deserialize::<LegacyRequisitionLineRow>()?;
 
         let (
             price_per_unit,
