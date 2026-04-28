@@ -2,6 +2,7 @@ use super::api_on_central::{NameStoreJoinParams, SiteAuth};
 use crate::service_provider::ServiceProvider;
 use crate::sync_v7::api::VERSION;
 use repository::{KeyType, KeyValueStoreRepository};
+use reqwest::StatusCode;
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION},
     Url,
