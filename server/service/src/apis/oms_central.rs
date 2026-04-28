@@ -1,4 +1,7 @@
 use super::api_on_central::{NameStoreJoinParams, SiteAuth};
+use crate::service_provider::ServiceProvider;
+use crate::sync_v7::api::VERSION;
+use repository::{KeyType, KeyValueStoreRepository};
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION},
     Url,
@@ -31,6 +34,32 @@ pub enum OmsCentralApiError {
     AuthenticationFailed,
     ConnectionError(reqwest::Error),
     InternalError(String),
+}
+
+pub fn load_site_auth(service_provider: &ServiceProvider) -> Result<SiteAuth, OmsCentralApiError> {
+    let ctx = service_provider
+        .basic_context()
+        .map_err(|e| OmsCentralApiError::InternalError(format!("{e:?}")))?;
+
+    let token = KeyValueStoreRepository::new(&ctx.connection)
+        .get_string(KeyType::SettingsSyncTokenV7)
+        .map_err(|e| OmsCentralApiError::InternalError(format!("{e:?}")))?
+        .ok_or_else(|| {
+            OmsCentralApiError::InternalError(
+                "Sync v7 token not set — site must initialise first".to_string(),
+            )
+        })?;
+
+    let hardware_id = service_provider
+        .app_data_service
+        .get_hardware_id()
+        .map_err(|e| OmsCentralApiError::InternalError(format!("{e:?}")))?;
+
+    Ok(SiteAuth {
+        token,
+        hardware_id,
+        app_version: VERSION,
+    })
 }
 
 pub fn build_auth_headers(auth: &SiteAuth) -> Result<HeaderMap, OmsCentralApiError> {
