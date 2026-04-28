@@ -139,7 +139,7 @@ mod tests {
     use super::*;
     use repository::{
         mock::{MockData, MockDataInserts},
-        test_db::{setup_all, setup_all_with_data},
+        test_db::setup_all_with_data,
         LocationTypeRow,
     };
 
