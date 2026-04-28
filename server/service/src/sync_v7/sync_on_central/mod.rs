@@ -35,7 +35,9 @@ pub fn get_site_info(
     let site = get_site_by_name(&ctx.connection, &input.name)?
         .ok_or_else(|| SyncError::SiteNotFound(input.name.clone()))?;
 
-    if site.hashed_password != input.password_sha256 {
+    let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
+        .map_err(|e| SyncError::Other(e.to_string()))?;
+    if !valid {
         return Err(SyncError::IncorrectPassword);
     }
 
@@ -148,7 +150,7 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     const SITE_NAME: &str = "test_site";
-    const PASSWORD: &str = "hashed_password_value";
+    const PASSWORD_SHA256: &str = "hashed_password_value";
     const HARDWARE_ID: &str = "hw-id-test";
     const CENTRAL_SITE_ID: i32 = 42;
 
@@ -158,7 +160,7 @@ mod tests {
             og_id: None,
             code: "test_code".to_string(),
             name: SITE_NAME.to_string(),
-            hashed_password: PASSWORD.to_string(),
+            hashed_password: bcrypt::hash(PASSWORD_SHA256, bcrypt::DEFAULT_COST).unwrap(),
             hardware_id: None,
             token,
         };
@@ -176,7 +178,7 @@ mod tests {
         SiteInfoInput {
             version: VERSION,
             name: SITE_NAME.to_string(),
-            password_sha256: PASSWORD.to_string(),
+            password_sha256: PASSWORD_SHA256.to_string(),
             hardware_id: HARDWARE_ID.to_string(),
         }
     }
