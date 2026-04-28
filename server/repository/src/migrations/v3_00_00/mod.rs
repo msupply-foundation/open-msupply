@@ -6,9 +6,10 @@ mod add_sync_v7_cursor_pg_enum;
 mod alter_changelog_table_for_sync_v7;
 mod alter_sync_buffer_for_sync_v7;
 mod changelog_related_changes_for_sync_v7;
+mod create_site_table;
 
-pub(crate) struct V2_19_00;
-impl Migration for V2_19_00 {
+pub(crate) struct V3_00_00;
+impl Migration for V3_00_00 {
     fn version(&self) -> Version {
         Version::from_str("2.19.0")
     }
@@ -24,6 +25,7 @@ impl Migration for V2_19_00 {
             Box::new(alter_sync_buffer_for_sync_v7::Migrate),
             Box::new(add_sync_log_v7::Migrate),
             Box::new(changelog_related_changes_for_sync_v7::Migrate),
+            Box::new(create_site_table::Migrate),
         ]
     }
 }
@@ -31,14 +33,14 @@ impl Migration for V2_19_00 {
 #[cfg(test)]
 mod test {
     #[actix_rt::test]
-    async fn migration_2_19_00() {
+    async fn migration_3_00_00() {
         use crate::migrations::*;
         use crate::test_db::*;
         use v2_18_00::V2_18_00;
-        use v2_19_00::V2_19_00;
+        use v3_00_00::V3_00_00;
 
         let previous_version = V2_18_00.version();
-        let version = V2_19_00.version();
+        let version = V3_00_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!("migration_{version}"),

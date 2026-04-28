@@ -76,9 +76,9 @@ pub trait FilterBuilder<T: Clone + serde::Serialize + serde::de::DeserializeOwne
 }
 
 macro_rules! create_condition {
-    ($source:ty, $(($variant:ident, $filter_kind:ident, $dsl_expr:expr)),+ $(,)?) => {
+    ($mod_name:ident, $source:ty, $(($variant:ident, $filter_kind:ident, $dsl_expr:expr)),+ $(,)?) => {
         #[allow(non_snake_case, non_camel_case_types)]
-        pub mod Condition {
+        pub mod $mod_name {
             use super::*;
 
             #[derive(Clone, serde::Serialize, serde::Deserialize)]
