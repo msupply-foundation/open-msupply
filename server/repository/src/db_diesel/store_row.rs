@@ -1,7 +1,7 @@
 use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
 use crate::{
-    db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
+    db_diesel::changelog::ChangelogRepository,
     diesel_macros::define_linked_tables,
     repository_error::RepositoryError,
     ChangelogSyncType, ChangelogTableName, Delete, Upsert,

@@ -1,5 +1,5 @@
 use crate::{
-    db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
+    db_diesel::changelog::ChangelogRepository,
     ChangelogSyncType, ChangelogTableName, Delete, Upsert,
 };
 
