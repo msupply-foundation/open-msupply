@@ -1,12 +1,13 @@
 use crate::sync::translations::{
     goods_received::GoodsReceivedTranslation, item::ItemTranslation, location::LocationTranslation,
-    name::NameTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
+    name::NameTranslation, purchase_order::PurchaseOrderTranslation, utils::clear_invalid_fk,
+    PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, GoodsReceivedLineDelete, GoodsReceivedLineRow,
-    GoodsReceivedLineRowRepository, GoodsReceivedLineStatus, StorageConnection, SyncBufferRow,
+    GoodsReceivedLineRowRepository, GoodsReceivedLineStatus, LocationRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -68,10 +69,20 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let legacy_row = serde_json::from_str::<LegacyGoodsReceivedLineRow>(&sync_record.data)?;
+
+        let location_id = clear_invalid_fk(
+            connection,
+            "goods_received_line",
+            &legacy_row.ID,
+            "location_id",
+            legacy_row.location_ID,
+            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+        )?;
+
         let result = GoodsReceivedLineRow {
             id: legacy_row.ID,
             goods_received_id: legacy_row.goods_received_ID,
@@ -84,7 +95,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             line_number: legacy_row.line_number,
             item_link_id: legacy_row.item_ID,
             item_name: legacy_row.item_name,
-            location_id: legacy_row.location_ID,
+            location_id,
             volume_per_pack: legacy_row.volume_per_pack,
             manufacturer_link_id: legacy_row.manufacturer_ID,
             status: match legacy_row.is_authorised {
@@ -162,16 +173,34 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 mod tests {
 
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_store_a, MockData, MockDataInserts},
+        test_db::{setup_all, setup_all_with_data},
+        LocationRow,
+    };
 
     #[actix_rt::test]
     async fn test_goods_received_line_translation() {
         use crate::sync::test::test_data::goods_received_line as test_data;
         let translator = GoodsReceivedLineTranslation {};
 
-        let (_, connection, _, _) = setup_all(
+        // FK validation requires the referenced location to exist; piggyback on an
+        // existing store mock so we don't have to re-create the name_link chain here.
+        let (_, connection, _, _) = setup_all_with_data(
             "test_goods_received_line_translation",
-            MockDataInserts::none(),
+            MockDataInserts::none().names().stores(),
+            MockData {
+                locations: vec![LocationRow {
+                    id: "cf5812e0c33911eb9757779d39ae2bdb".to_string(),
+                    store_id: mock_store_a().id,
+                    name: "test loc".to_string(),
+                    code: "test".to_string(),
+                    on_hold: false,
+                    location_type_id: None,
+                    volume: 0.0,
+                }],
+                ..Default::default()
+            },
         )
         .await;
 
