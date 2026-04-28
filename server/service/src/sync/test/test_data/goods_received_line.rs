@@ -74,7 +74,7 @@ fn gr_line_non_finalised_pull_record() -> TestSyncIncomingRecord {
         sync_buffer_rows: vec![SyncBufferRow {
             record_id: "gr_non_finalised_test".to_string(),
             table_name: "Goods_received".to_string(),
-            data: r#"{"status": "nw"}"#.to_string(),
+            data: SyncRecordData(serde_json::json!({"status": "nw"})),
             action: SyncAction::Upsert,
             ..Default::default()
         }],
@@ -127,7 +127,7 @@ fn gr_line_finalised_pull_record() -> TestSyncIncomingRecord {
             SyncBufferRow {
                 record_id: "gr_finalised_test".to_string(),
                 table_name: "Goods_received".to_string(),
-                data: r#"{"status": "fn"}"#.to_string(),
+                data: SyncRecordData(serde_json::json!({"status": "fn"})),
                 action: SyncAction::Upsert,
                 ..Default::default()
             },
@@ -135,7 +135,9 @@ fn gr_line_finalised_pull_record() -> TestSyncIncomingRecord {
             SyncBufferRow {
                 record_id: "gr_existing_line".to_string(),
                 table_name: "trans_line".to_string(),
-                data: r#"{"goods_received_lines_ID": "gr_line_finalised_test"}"#.to_string(),
+                data: SyncRecordData(
+                    serde_json::json!({"goods_received_lines_ID": "gr_line_finalised_test"}),
+                ),
                 action: SyncAction::Upsert,
                 integration_datetime: Some(
                     chrono::NaiveDate::from_ymd_opt(2024, 1, 1)

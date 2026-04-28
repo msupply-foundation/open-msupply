@@ -93,7 +93,7 @@ fn gr_finalised_pull_record() -> TestSyncIncomingRecord {
         sync_buffer_rows: vec![SyncBufferRow {
             record_id: "gr_existing_si".to_string(),
             table_name: "transact".to_string(),
-            data: r#"{"goods_received_ID": "gr_finalised_test"}"#.to_string(),
+            data: SyncRecordData(serde_json::json!({"goods_received_ID": "gr_finalised_test"})),
             action: SyncAction::Upsert,
             integration_datetime: Some(
                 chrono::NaiveDate::from_ymd_opt(2024, 1, 1)

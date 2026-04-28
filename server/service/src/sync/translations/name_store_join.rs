@@ -88,7 +88,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_value::<LegacyNameStoreJoinRow>(sync_record.data.0.clone())?;
+        let data = sync_record.deserialize::<LegacyNameStoreJoinRow>()?;
 
         // in mSupply the inactive flag is used for soft-deletes.
         // given that we don't handle soft deletes, translate to a hard-delete
