@@ -2,8 +2,8 @@ use super::asset_row::asset::dsl::*;
 use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RowActionType, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, KeyValueStoreRepository,
+    RepositoryError, RowActionType, StorageConnection, ChangelogSyncType, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -67,6 +67,24 @@ pub struct AssetRow {
     pub locked_fields_json: Option<String>,
 }
 
+impl AssetRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::Asset,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: self.store_id.clone(),
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct AssetRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -92,39 +110,18 @@ impl<'a> AssetRowRepository<'a> {
         original_store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_row)?;
-        let changelog_id = self.insert_changelog(
-            asset_row.id.to_string(),
-            RowActionType::Upsert,
-            asset_row.store_id.clone(),
-        )?;
+        let changelog = asset_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         if let Some(original_store) = original_store_id {
             // Insert upsert changelog for original store
             // if store is on different site it should be synced there
             // with new store_id, making it invisible in that store
-            self.insert_changelog(
-                asset_row.id.to_string(),
-                RowActionType::Upsert,
-                Some(original_store),
-            )?;
+            let mut original_changelog = asset_row.changelog(self.connection, RowActionType::Upsert, None)?;
+            original_changelog.store_id = Some(original_store);
+            ChangelogRepository::new(self.connection).insert(&original_changelog)?;
         }
         Ok(changelog_id)
-    }
-
-    fn insert_changelog(
-        &self,
-        asset_id: String,
-        action: RowActionType,
-        asset_store_id: Option<String>,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Asset,
-            record_id: asset_id,
-            row_action: action,
-            store_id: asset_store_id,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetRow>, RepositoryError> {
@@ -142,25 +139,29 @@ impl<'a> AssetRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, asset_id: &str) -> Result<i64, RepositoryError> {
-        diesel::update(asset.filter(id.eq(asset_id)))
+    pub fn mark_deleted(&self, asset_id_param: &str) -> Result<i64, RepositoryError> {
+        diesel::update(asset.filter(id.eq(asset_id_param)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
 
-        let asset_row = AssetRowRepository::find_one_by_id(self, asset_id)?;
-
-        self.insert_changelog(
-            asset_id.to_string(),
-            RowActionType::Upsert,
-            asset_row.and_then(|row| row.store_id),
-        )
+        let asset_row = self.find_one_by_id(asset_id_param)?
+            .ok_or(RepositoryError::NotFound)?;
+        let changelog = asset_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for AssetRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = AssetRowRepository::new(con).upsert_one(self, None)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        AssetRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

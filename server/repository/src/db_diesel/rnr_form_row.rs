@@ -5,8 +5,8 @@ use super::{
 };
 use crate::{
     diesel_macros::define_linked_tables,
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RowActionType, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, ChangelogSyncType, Delete,
+    KeyValueStoreRepository, RepositoryError, RowActionType, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -77,6 +77,25 @@ pub enum RnRFormStatus {
     Finalised,
 }
 
+impl RnRFormRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::RnrForm,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            name_id: Some(self.name_id.clone()),
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct RnRFormRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -88,24 +107,8 @@ impl<'a> RnRFormRowRepository<'a> {
 
     pub fn upsert_one(&self, rnr_form_row: &RnRFormRow) -> Result<i64, RepositoryError> {
         self._upsert(rnr_form_row)?;
-        self.insert_changelog(rnr_form_row.to_owned(), RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: RnRFormRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::RnrForm,
-            record_id: row.id,
-            row_action: action,
-            store_id: Some(row.store_id),
-            name_id: Some(row.name_id),
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = rnr_form_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_all(&self) -> Result<Vec<RnRFormRow>, RepositoryError> {
@@ -124,7 +127,10 @@ impl<'a> RnRFormRowRepository<'a> {
     pub fn delete(&self, rnr_form_id: &str) -> Result<Option<i64>, RepositoryError> {
         let old_row = self.find_one_by_id(rnr_form_id)?;
         let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(old_row, RowActionType::Delete)?,
+            Some(old_row) => {
+                let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+                ChangelogRepository::new(self.connection).insert(&changelog)?
+            }
             None => {
                 return Ok(None);
             }
@@ -153,9 +159,18 @@ impl Delete for RnRFormDelete {
 }
 
 impl Upsert for RnRFormRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = RnRFormRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        RnRFormRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

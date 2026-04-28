@@ -26,6 +26,7 @@ pub struct InsertSupplierReturn {
     pub id: String,
     pub other_party_id: String,
     pub inbound_shipment_id: Option<String>,
+    pub their_reference: Option<String>,
     pub supplier_return_lines: Vec<SupplierReturnLineInput>,
 }
 

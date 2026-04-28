@@ -7,7 +7,7 @@ use crate::{
         master_list_row::master_list,
     },
     repository_error::RepositoryError,
-    StorageConnection, Upsert,
+    StorageConnection, ChangelogSyncType, Upsert,
 };
 
 use diesel::prelude::*;
@@ -79,9 +79,9 @@ impl<'a> ProgramRowRepository<'a> {
 }
 
 impl Upsert for ProgramRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ProgramRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only
