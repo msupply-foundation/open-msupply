@@ -2,9 +2,12 @@ use super::StorageConnection;
 
 use crate::{
     clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType, RepositoryError,
-    Upsert,
+    ChangelogSyncType, Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
+    RowActionType,
+};
 
 use diesel::prelude::*;
 
@@ -47,6 +50,25 @@ pub struct ClinicianRow {
 
 allow_tables_to_appear_in_same_query!(clinician, clinician_link);
 
+impl ClinicianRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::Clinician,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 fn insert_or_ignore_clinician_link(
     connection: &StorageConnection,
     row: &ClinicianRow,
@@ -86,7 +108,8 @@ impl<'a> ClinicianRowRepositoryTrait<'a> for ClinicianRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         insert_or_ignore_clinician_link(self.connection, row)?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
@@ -101,30 +124,31 @@ impl<'a> ClinicianRowRepository<'a> {
         ClinicianRowRepository { connection }
     }
 
-    fn insert_changelog(
-        &self,
-        row: &ClinicianRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Clinician,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn _upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(clinician::dsl::clinician)
+            .values(row)
+            .on_conflict(clinician::dsl::id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        insert_or_ignore_clinician_link(self.connection, row)?;
+        Ok(())
     }
 }
 
 pub struct ClinicianRowDelete(pub String);
 
 impl Upsert for ClinicianRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = ClinicianRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        ClinicianRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

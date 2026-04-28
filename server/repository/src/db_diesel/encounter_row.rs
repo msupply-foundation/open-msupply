@@ -6,7 +6,7 @@ use super::{
 use crate::diesel_macros::define_linked_tables;
 use crate::{
     repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    RowActionType,
+    KeyValueStoreRepository, RowActionType,
 };
 
 use diesel::prelude::*;
@@ -75,6 +75,25 @@ pub struct EncounterRow {
     pub patient_id: String,
 }
 
+impl EncounterRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::Encounter,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: self.store_id.clone(),
+            name_id: Some(self.patient_id.clone()),
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct EncounterRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -86,24 +105,8 @@ impl<'a> EncounterRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &EncounterRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        self.insert_changelog(row.clone(), RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: EncounterRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let changelog_row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Encounter,
-            record_id: row.id,
-            row_action: action,
-            store_id: row.store_id,
-            name_id: Some(row.patient_id),
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&changelog_row)
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<EncounterRow>, RepositoryError> {

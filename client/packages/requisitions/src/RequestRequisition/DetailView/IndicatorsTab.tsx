@@ -1,77 +1,48 @@
 import React from 'react';
 import {
   Box,
-  ButtonWithIcon,
-  TableSkeleton,
-  LocaleKey,
-  NothingHere,
-  PlusCircleIcon,
-  useTranslation,
+  useAuthContext,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
-import { ProgramIndicatorFragment, RequestFragment } from '../api';
+import { IndicatorsTab as SharedIndicatorsTab } from '../../common/IndicatorEdit';
+import { ProgramIndicatorFragment, useRequest } from '../api';
+import { CustomerIndicatorInfoView } from './CustomerIndicatorInfo';
 
 interface IndicatorTabProps {
-  onClick: (
-    requisitionId?: string,
-    programIndicatorCode?: string,
-    indicatorId?: string
-  ) => void;
   isLoading: boolean;
-  request?: RequestFragment;
   indicators?: ProgramIndicatorFragment[];
+  disabled: boolean;
 }
 
-export const IndicatorsTab = ({
-  onClick,
-  isLoading,
-  request,
-  indicators,
-}: IndicatorTabProps) => {
-  const t = useTranslation();
-  if (isLoading) {
-    return <TableSkeleton />;
-  }
-  if (!indicators || indicators.length === 0) {
-    return <NothingHere body={t('error.no-indicators')} />;
-  }
-
-  const indicatorGroups = indicators.reduce(
-    (
-      acc: Record<string, ProgramIndicatorFragment[]>,
-      indicator: ProgramIndicatorFragment
-    ) => {
-      if (indicator?.code) {
-        if (!acc[indicator.code]) {
-          acc[indicator.code] = [];
-        }
-        acc[indicator.code]?.push(indicator);
-      }
-      return acc;
-    },
-    {}
-  );
+export const IndicatorsTab = (props: IndicatorTabProps) => {
+  const { store } = useAuthContext();
+  const { width } = useWindowDimensions();
+  const showCustomerInfo =
+    !!store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders &&
+    !!store?.preferences?.extraFieldsInRequisition;
 
   return (
-    <Box display="flex" flexDirection="column" padding={2} gap={2}>
-      {Object.entries(indicatorGroups).map(([code, groupIndicators]) => {
-        const firstLine = groupIndicators[0]?.lineAndColumns.sort(
-          (a, b) => a.line.lineNumber - b.line.lineNumber
-        )[0]?.line;
-        return (
-          <ButtonWithIcon
-            key={code}
-            label={t(`button.${code.toLowerCase()}` as LocaleKey)}
-            Icon={<PlusCircleIcon />}
-            onClick={() =>
-              onClick(
-                request?.id,
-                groupIndicators[0]?.code ?? undefined,
-                firstLine?.id
-              )
-            }
-          />
-        );
-      })}
-    </Box>
+    <SharedIndicatorsTab
+      {...props}
+      useUpdateIndicatorValue={useRequest.document.updateIndicatorValue}
+      belowInputs={
+        showCustomerInfo
+          ? (columns, currentLine) =>
+              currentLine.customerIndicatorInfo?.length ? (
+                <Box
+                  paddingTop={1}
+                  maxHeight={200}
+                  width={width * 0.48}
+                  display="flex"
+                >
+                  <CustomerIndicatorInfoView
+                    columns={columns}
+                    customerInfos={currentLine.customerIndicatorInfo}
+                  />
+                </Box>
+              ) : null
+          : undefined
+      }
+    />
   );
 };

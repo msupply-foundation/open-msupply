@@ -218,6 +218,16 @@ impl<'a> KeyValueStoreRepository<'a> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_bool))
     }
+
+    pub fn get_source_site_id(
+        &self,
+        source_site_id: Option<i32>,
+    ) -> Result<Option<i32>, RepositoryError> {
+        match source_site_id {
+            Some(id) => Ok(Some(id)),
+            None => Ok(self.get_i32(KeyType::SettingsSyncSiteId)?),
+        }
+    }
 }
 
 #[cfg(test)]

@@ -252,6 +252,7 @@ pub struct ChangeLogInsertRow {
     #[diesel(column_name = "name_link_id")]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
+    pub is_sync_update: Option<bool>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
     pub patient_id: Option<String>,

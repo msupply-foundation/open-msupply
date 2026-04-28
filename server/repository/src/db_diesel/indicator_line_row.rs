@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -74,6 +74,16 @@ impl<'a> IndicatorLineRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_ids(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<IndicatorLineRow>, RepositoryError> {
+        let result = indicator_line::table
+            .filter(indicator_line::id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn find_many_by_indicator_ids(
         &self,
         ids: &[String],
@@ -86,9 +96,9 @@ impl<'a> IndicatorLineRowRepository<'a> {
 }
 
 impl Upsert for IndicatorLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         IndicatorLineRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

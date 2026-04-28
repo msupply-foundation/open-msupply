@@ -90,7 +90,7 @@ mod stocktake_line_test {
         test_db::setup_all_with_data,
         EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ReasonOptionRow,
         ReasonOptionRowRepository, ReasonOptionType, StockLineFilter, StockLineRepository,
-        StocktakeLineRow, Upsert,
+        StocktakeLineRow, StocktakeLineRowRepository,
     };
 
     use crate::{
@@ -307,7 +307,7 @@ mod stocktake_line_test {
             ..Default::default()
         };
 
-        stocktake_line.upsert(&context.connection).unwrap();
+        StocktakeLineRowRepository::new(&context.connection).upsert_one(&stocktake_line).unwrap();
 
         let error = service
             .update_stocktake_line(
