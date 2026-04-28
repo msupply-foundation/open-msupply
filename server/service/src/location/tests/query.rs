@@ -4,7 +4,7 @@ mod query {
         location::{LocationFilter, LocationSortField},
         mock::{mock_asset_b, mock_location_1, stock_line_with_volume, MockDataInserts},
         test_db::setup_all,
-        LocationRow, StockLineRow, Upsert,
+        LocationRow, LocationRowRepository, StockLineRow, StockLineRowRepository,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
 
@@ -227,7 +227,7 @@ mod query {
             store_id: "store_a".to_string(),
             ..Default::default()
         };
-        location_with_no_stock_lines.upsert(&connection).unwrap();
+        LocationRowRepository::new(&connection).upsert_one(&location_with_no_stock_lines).unwrap();
 
         // Confirm handles location with no stock lines
         let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();
@@ -235,20 +235,18 @@ mod query {
         assert_eq!(result.to_bits(), 0.0f64.to_bits());
 
         // Insert some stock lines for the location
-        StockLineRow {
+        StockLineRowRepository::new(&connection).upsert_one(&StockLineRow {
             id: "line1".to_string(),
             location_id: Some(location_with_no_stock_lines.id.clone()),
             ..stock_line_with_volume() // total volume is 1000.0
-        }
-        .upsert(&connection)
+        })
         .unwrap();
-        StockLineRow {
+        StockLineRowRepository::new(&connection).upsert_one(&StockLineRow {
             id: "line2".to_string(),
             location_id: Some(location_with_no_stock_lines.id.clone()),
             total_volume: 500.0,
             ..stock_line_with_volume()
-        }
-        .upsert(&connection)
+        })
         .unwrap();
 
         // Adds volumes correctly
