@@ -44,7 +44,7 @@ impl SyncTranslation for LocationTypeTranslation {
             description,
             temperature_min,
             temperature_max,
-        } = serde_json::from_value::<LegacyLocationTypeRow>(sync_record.data.0.clone())?;
+        } = sync_record.deserialize()?;
 
         let result = LocationTypeRow {
             id,
