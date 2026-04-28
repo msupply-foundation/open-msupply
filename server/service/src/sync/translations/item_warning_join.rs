@@ -46,7 +46,7 @@ impl SyncTranslation for ItemWarningJoinTranslation {
             item_link_id,
             warning_id,
             priority,
-        } = serde_json::from_value::<LegacyItemWarningJoinRow>(sync_record.data.0.clone())?;
+        } = sync_record.deserialize()?;
 
         let result = ItemWarningJoinRow {
             id,
