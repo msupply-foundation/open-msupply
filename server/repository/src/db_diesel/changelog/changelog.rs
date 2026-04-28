@@ -121,6 +121,7 @@ diesel_string_enum! {
         PurchaseOrder,
         PurchaseOrderLine,
         MasterList,
+        Site,
     }
 }
 
@@ -209,6 +210,7 @@ impl ChangelogTableName {
             ChangelogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::MasterList => ChangeLogSyncStyle::ProcessorOnly,
+            ChangelogTableName::Site => ChangeLogSyncStyle::Central,
         }
     }
 }
@@ -455,6 +457,7 @@ impl<'a> ChangelogRepository<'a> {
 // Dynamic query filter for changelog
 // Source type is the changelog table (for queries directly against the table)
 create_condition!(
+    ChangelogCondition,
     changelog::table,
     (cursor, i64, changelog::cursor),
     (table_name, ChangelogTableName, changelog::table_name),
