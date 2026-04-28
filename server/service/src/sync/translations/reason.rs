@@ -56,7 +56,7 @@ impl SyncTranslation for ReasonTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_value::<LegacyOptionsRow>(sync_record.data.0.clone())?;
+        let data = sync_record.deserialize::<LegacyOptionsRow>()?;
 
         let reason_option_type = match data.r#type {
             LegacyOptionsType::NegativeInventoryAdjustment => {

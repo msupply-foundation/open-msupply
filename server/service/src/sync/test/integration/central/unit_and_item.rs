@@ -146,8 +146,8 @@ impl SyncRecordTester for UnitAndItemTester {
 }
 
 fn extend_base(value: serde_json::Value) -> serde_json::Value {
-    let mut base =
-        serde_json::from_str(&test_pull_upsert_records()[0].sync_buffer_row.data).unwrap();
+    let mut base: serde_json::Value =
+        test_pull_upsert_records()[0].sync_buffer_row.deserialize().unwrap();
     merge_json(&mut base, &value);
     base
 }

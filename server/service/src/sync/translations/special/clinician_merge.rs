@@ -33,7 +33,7 @@ impl SyncTranslation for ClinicianMergeTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_value::<ClinicianMergeMessage>(sync_record.data.0.clone())?;
+        let data = sync_record.deserialize::<ClinicianMergeMessage>()?;
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(connection);
         let clinician_links =

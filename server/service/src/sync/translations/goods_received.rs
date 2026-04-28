@@ -54,7 +54,7 @@ fn find_linked_invoice_id(
 
     // Verify the match by parsing JSON (LIKE can produce false positives)
     for row in rows {
-        if let Ok(parsed) = serde_json::from_str::<TransactGoodsReceivedId>(&row.data) {
+        if let Ok(parsed) = row.deserialize::<TransactGoodsReceivedId>() {
             if parsed.goods_received_ID.as_deref() == Some(goods_received_id) {
                 return Ok(Some(row.record_id));
             }
@@ -95,7 +95,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data: LegacyGoodsReceivedRow = serde_json::from_str(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyGoodsReceivedRow>()?;
 
         // Skip if an invoice with this ID already exists — the invoice may have been
         // created in OMS (from an earlier non-finalised import) and pushed back to central
@@ -209,6 +209,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            transfer_store_id: None,
             default_donor_id: data.donor_id,
         };
 
