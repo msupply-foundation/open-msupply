@@ -51,10 +51,13 @@ jobs:
           name: client-dist
           path: client/packages/host/dist
 
+      # Workaround for async-graphql DataLoader freeze when built via GitHub
+      # Actions docker (upstream issue async-graphql/async-graphql#1716,
+      # filed by andreievg). Fixed upstream in #1780 (≥7.1.0) but a separate
+      # spec regression (#1816) blocks bumping. See docker/async-dataloader.patch.
       - name: Apply async-dataloader patch
-        run: |
-          git apply docker/async-dataloader.patch
-          
+        run: git apply docker/async-dataloader.patch
+
       - name: Build server
         run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.88-slim cargo build --release --bin remote_server --bin remote_server_cli
 
