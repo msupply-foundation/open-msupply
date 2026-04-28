@@ -7,7 +7,7 @@ use crate::{
     DBType, EqualFilter, LockedConnection, RepositoryError, StorageConnection,
     TransactionNotification,
 };
-use diesel::{helper_types::IntoBoxed, prelude::*};
+use diesel::{dsl::LeftJoinQuerySource, helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use strum::IntoEnumIterator;
@@ -29,6 +29,34 @@ table! {
 }
 
 allow_tables_to_appear_in_same_query!(changelog, vaccination);
+allow_tables_to_appear_in_same_query!(changelog, store);
+
+diesel::alias!(store as transfer_stores: TransferStores);
+
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    changelog::table
+        .left_join(store::table.on(store::id.nullable().eq(changelog::store_id)))
+        .left_join(
+            transfer_stores.on(transfer_stores
+                .field(store::id)
+                .nullable()
+                .eq(changelog::transfer_store_id)),
+        )
+}
+
+type Source = LeftJoinQuerySource<
+    LeftJoinQuerySource<
+        changelog::table,
+        store::table,
+        diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog::store_id>,
+    >,
+    diesel::query_source::Alias<TransferStores>,
+    diesel::dsl::Eq<
+        diesel::dsl::Nullable<diesel::query_source::AliasedField<TransferStores, store::id>>,
+        changelog::transfer_store_id,
+    >,
+>;
 
 #[cfg(not(feature = "postgres"))]
 define_sql_function!(
@@ -472,14 +500,17 @@ impl<'a> ChangelogRepository<'a> {
 // Source type is the changelog table (for queries directly against the table)
 create_condition!(
     ChangelogCondition,
-    changelog::table,
+    Source,
     (cursor, i64, changelog::cursor),
+    (site_id, i32, store::site_id),
+    (action, RowActionType, changelog::row_action),
     (table_name, ChangelogTableName, changelog::table_name),
     (record_id, string, changelog::record_id),
     (store_id, string, changelog::store_id),
     (source_site_id, i32, changelog::source_site_id),
     (transfer_store_id, string, changelog::transfer_store_id),
     (patient_id, string, changelog::patient_id),
+    (transfer_site_id, i32, transfer_stores.field(store::site_id)),
 );
 
 type BoxedChangelogQuery = IntoBoxed<'static, changelog::table, DBType>;
@@ -749,6 +780,108 @@ impl RowActionType {
             ..Default::default()
         }
     }
+}
+
+use crate::dynamic_query_filter::*;
+
+pub struct CursorAndLimit {
+    pub cursor: i64,
+    pub limit: i64,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum SyncType {
+    Central,
+    Remote,
+}
+
+pub enum Site {
+    SiteId(i32),
+    StoreIds(Vec<String>),
+}
+
+fn central_data() -> ChangelogCondition::Inner {
+    let table_names = get_table_names_for_sync_types(&[SyncType::Central]);
+    ChangelogCondition::table_name::any(table_names)
+}
+
+impl Site {
+    pub fn remote_data_for_site(&self) -> ChangelogCondition::Inner {
+        let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
+        ChangelogCondition::And(vec![
+            ChangelogCondition::table_name::any(table_names),
+            match self {
+                Site::SiteId(site_id) => ChangelogCondition::site_id::equal(*site_id),
+                Site::StoreIds(ids) => ChangelogCondition::store_id::any(ids.clone()),
+            },
+        ])
+    }
+
+    pub fn all_data_for_site(&self, is_initialising: bool) -> ChangelogCondition::Inner {
+        let mut or_conditions = vec![self.transfer_data_for_site(), central_data()];
+        if is_initialising {
+            or_conditions.push(self.remote_data_for_site());
+        }
+
+        let filter = ChangelogCondition::Or(or_conditions);
+        if is_initialising {
+            ChangelogCondition::And(vec![
+                filter,
+                ChangelogCondition::action::not_equal(RowActionType::Delete),
+            ])
+        } else {
+            filter
+        }
+    }
+
+    fn transfer_data_for_site(&self) -> ChangelogCondition::Inner {
+        let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
+        ChangelogCondition::And(vec![
+            ChangelogCondition::table_name::any(table_names),
+            match self {
+                Site::SiteId(site_id) => ChangelogCondition::transfer_site_id::equal(*site_id),
+                Site::StoreIds(ids) => ChangelogCondition::transfer_store_id::any(ids.clone()),
+            },
+        ])
+    }
+}
+
+pub fn get_table_names_for_sync_types(sync_types: &[SyncType]) -> Vec<ChangelogTableName> {
+    let all: &[(ChangelogTableName, SyncType)] = &[
+        (ChangelogTableName::Unit, SyncType::Central),
+        (ChangelogTableName::Currency, SyncType::Central),
+        (ChangelogTableName::Name, SyncType::Central),
+        (ChangelogTableName::Store, SyncType::Central),
+        (ChangelogTableName::LocationType, SyncType::Central),
+        (ChangelogTableName::Item, SyncType::Central),
+        (ChangelogTableName::StockLine, SyncType::Remote),
+        (ChangelogTableName::Invoice, SyncType::Remote),
+        (ChangelogTableName::InvoiceLine, SyncType::Remote),
+    ];
+    all.iter()
+        .filter(|(_, st)| sync_types.contains(st))
+        .map(|(tn, _)| tn.clone())
+        .collect()
+}
+
+pub fn get_changelogs(
+    connection: &StorageConnection,
+    filter: ChangelogCondition::Inner,
+    CursorAndLimit { cursor, limit }: CursorAndLimit,
+) -> Result<Vec<ChangelogRow>, RepositoryError> {
+    let filter = ChangelogCondition::And(vec![
+        filter,
+        ChangelogCondition::cursor::greater_than(cursor),
+    ]);
+
+    let result: Vec<ChangelogRow> = query()
+        .filter(filter.to_boxed())
+        .order(changelog::cursor.asc())
+        .limit(limit)
+        .select(changelog::all_columns)
+        .load(connection.lock().connection())?;
+
+    Ok(result)
 }
 
 #[cfg(test)]
