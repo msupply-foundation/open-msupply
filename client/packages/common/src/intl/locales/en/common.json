@@ -903,6 +903,7 @@
   "label.clear-filter": "Clear filter",
   "label.clear-hardware-id": "Clear Hardware ID",
   "label.clear-selection": "Clear selection",
+  "label.clear-sync-token": "Clear Sync Token",
   "label.click-to-sort": "Click to sort by ",
   "label.click-to-view": "Click to view details",
   "label.client": "Client",
