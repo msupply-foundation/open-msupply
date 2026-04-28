@@ -18,8 +18,9 @@ use util::sync_serde::{
 };
 
 use super::{
-    is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck,
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
+    is_active_record_on_site,
+    utils::{clear_invalid_fk, clear_invalid_location_id},
+    ActiveRecordCheck, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -257,32 +258,25 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
         )?;
 
-        // TODO: remove the stock_line_is_valid check once central server does not generate the inbound shipment
+        // TODO: remove the stock_line FK validation once central server does not generate the inbound shipment
         // omSupply should be generating the inbound, with valid stock lines.
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
-        let is_stock_line_valid = stock_line_id.as_ref().is_some_and(|stock_line_id| {
-            StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)
-                .is_ok_and(|stock_line| stock_line.is_some())
-        });
-
-        if !is_stock_line_valid {
-            log::warn!(
-                "Stock line is not valid, invoice_line_id: {}, stock_line_id: {:?}",
-                id,
-                stock_line_id
-            );
-        }
-
-        // When invoice lines are coming from another site, we don't get stock line and location
-        // so foreign key constraint is violated, thus we want to set them to None if it's foreign site record.
-        // If the invoice is an auto generated inbound shipment, then the stock_lines are not valid either.
-        let stock_line_id = if is_record_active_on_site && is_stock_line_valid {
+        let stock_line_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "stock_line_id",
+            stock_line_id,
+            |c, id| StockLineRowRepository::new(c).find_one_by_id(id),
+        )?;
+        // When invoice lines are coming from another site we don't own the referenced stock line or
+        // location, so even when they exist locally we don't want to link to them.
+        let stock_line_id = if is_record_active_on_site {
             stock_line_id
         } else {
             None
         };
-        let location_id = clear_invalid_location_id(connection, location_id)?;
+        let location_id = clear_invalid_location_id(connection, "invoice_line", &id, location_id)?;
 
         let reason_option_id = reason_option_id.and_then(|reason_option_id| {
             if reason_option_id == "0" {
@@ -497,8 +491,9 @@ mod tests {
     use super::*;
     use repository::{
         mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
+        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow, SyncAction,
     };
     use serde_json::json;
 
@@ -586,5 +581,112 @@ mod tests {
 
             assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
         }
+    }
+
+    /// When stock_line_id references a record that doesn't exist, the translator should
+    /// null it on the translated row AND write a `system_log` row of type
+    /// `SyncTranslationFkError`. The active-on-site gate is a separate concern and is
+    /// covered by the existing `test_invoice_line_translation` happy path.
+    #[actix_rt::test]
+    async fn test_invoice_line_clears_invalid_stock_line_id_and_writes_system_log() {
+        let translator = InvoiceLineTranslation {};
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_invoice_line_clears_invalid_stock_line_id_and_writes_system_log",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .currencies(),
+            // mock_outbound_shipment_a is on store_b, and we tell the test that this site IS
+            // store_b's site, so is_active_record_on_site returns true. That isolates the FK
+            // validation as the only reason stock_line_id would get cleared.
+            MockData {
+                invoices: vec![mock_outbound_shipment_a()],
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_b().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "trans_line".to_string(),
+            record_id: "TRANS_LINE_FK_INVALID".to_string(),
+            data: r#"{
+                "ID": "TRANS_LINE_FK_INVALID",
+                "transaction_ID": "outbound_shipment_a",
+                "item_ID": "item_a",
+                "item_name": "Item A",
+                "item_line_ID": "does_not_exist_stock_line",
+                "batch": "",
+                "expiry_date": "0000-00-00",
+                "pack_size": 1,
+                "cost_price": 10,
+                "sell_price": 0,
+                "quantity": 1,
+                "type": "stock_in",
+                "barcodeID": "",
+                "location_ID": "",
+                "note": "",
+                "optionID": "",
+                "vaccine_vial_monitor_status_ID": "",
+                "om_item_variant_id": "",
+                "donor_id": "",
+                "linked_trans_line_ID": "",
+                "linked_transact_id": "",
+                "volume_per_pack": 0,
+                "foreign_currency_price": 0,
+                "is_from_inventory_adjustment": true,
+                "oms_fields": ""
+            }"#
+            .to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+
+        let PullTranslateResult::IntegrationOperations(ops) = result else {
+            panic!("expected IntegrationOperations, got {result:?}");
+        };
+        // Look at the Debug repr to assert stock_line_id was cleared without depending on
+        // every other field of InvoiceLineRow being stable across unrelated edits.
+        let debug = format!("{ops:?}");
+        assert!(
+            debug.contains("stock_line_id: None"),
+            "{}",
+            format!("expected stock_line_id to be cleared; got:\n{debug}")
+        );
+
+        let logs = SystemLogRowRepository::new(&connection)
+            .find_all()
+            .unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        assert_eq!(fk_errors.len(), 1, "got {fk_errors:?}");
+        let message = fk_errors[0].message.as_deref().unwrap_or("");
+        assert!(
+            message.contains("stock_line_id"),
+            "{}",
+            format!("expected message to mention stock_line_id; got:\n{message}")
+        );
+        assert!(
+            message.contains("TRANS_LINE_FK_INVALID"),
+            "{}",
+            format!("expected message to mention the record id; got:\n{message}")
+        );
+        assert!(
+            message.contains("does_not_exist_stock_line"),
+            "{}",
+            format!("expected message to mention the offending FK id; got:\n{message}")
+        );
     }
 }
