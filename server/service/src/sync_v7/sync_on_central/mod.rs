@@ -7,8 +7,8 @@ use crate::{
     },
 };
 use repository::{
-    syncv7::SyncError, KeyType, KeyValueStoreRepository, Pagination, SiteFilter, SiteRepository,
-    SiteRow, SiteRowRepository, StorageConnection, StringFilter,
+    syncv7::SyncError, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, SiteFilter,
+    SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter,
 };
 
 /// TODO: revisit token format — UUID v7 for now.
@@ -81,6 +81,52 @@ fn get_site_by_name(
         )
         .map_err(SyncError::DatabaseError)?;
     Ok(rows.into_iter().next())
+}
+
+fn get_site_by_token(
+    connection: &StorageConnection,
+    token: &str,
+) -> Result<Option<SiteRow>, SyncError> {
+    let rows = SiteRepository::new(connection)
+        .query(
+            Pagination::one(),
+            Some(SiteFilter::new().token(EqualFilter::equal_to(token.to_string()))),
+            None,
+        )
+        .map_err(SyncError::DatabaseError)?;
+    Ok(rows.into_iter().next())
+}
+
+pub fn authenticate_site(
+    service_provider: &ServiceProvider,
+    token: &str,
+    hardware_id: &str,
+    app_version: u32,
+) -> Result<SiteRow, SyncError> {
+    if !CentralServerConfig::is_central_server() {
+        return Err(SyncError::NotACentralServer);
+    }
+
+    if app_version != VERSION {
+        return Err(SyncError::SyncVersionMismatch(
+            VERSION,
+            VERSION,
+            app_version,
+        ));
+    }
+
+    let ctx = service_provider
+        .basic_context()
+        .map_err(|e| SyncError::Other(e.to_string()))?;
+
+    let site = get_site_by_token(&ctx.connection, token)?.ok_or(SyncError::Authentication)?;
+
+    match site.hardware_id.as_deref() {
+        Some(stored) if stored == hardware_id => {}
+        _ => return Err(SyncError::Authentication),
+    }
+
+    Ok(site)
 }
 
 fn get_central_site_id(connection: &StorageConnection) -> Result<i32, SyncError> {
@@ -179,5 +225,34 @@ mod tests {
         test_site(&connection, Some("existing_token".to_string()));
         let err = super::get_site_info(&service_provider, input()).unwrap_err();
         assert!(matches!(err, SyncError::Authentication));
+    }
+
+    #[actix_rt::test]
+    async fn authenticate_site_validates_token_and_hardware_id() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "authenticate_site_validates_token_and_hardware_id",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        test_site(&connection, None);
+        let sp = ServiceProvider::new(connection_manager);
+
+        let allocated = get_site_info(&sp, input()).unwrap();
+
+        let site = authenticate_site(&sp, &allocated.token, HARDWARE_ID, VERSION).unwrap();
+        assert_eq!(site.id, 1);
+
+        // Wrong token
+        let err = authenticate_site(&sp, "wrong_token", HARDWARE_ID, VERSION).unwrap_err();
+        assert!(matches!(err, SyncError::Authentication));
+
+        // Wrong hardware id
+        let err = authenticate_site(&sp, &allocated.token, "wrong_hw", VERSION).unwrap_err();
+        assert!(matches!(err, SyncError::Authentication));
+
+        // Wrong app version
+        let err = authenticate_site(&sp, &allocated.token, HARDWARE_ID, VERSION + 1).unwrap_err();
+        assert!(matches!(err, SyncError::SyncVersionMismatch(_, _, _)));
     }
 }
