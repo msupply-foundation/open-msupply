@@ -1,8 +1,9 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
+    RowActionType, StorageConnection,
 };
 
-use crate::{Delete, RepositoryError, Upsert};
+use crate::{Delete, RepositoryError, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -33,6 +34,25 @@ pub struct FormSchemaJson {
     pub r#type: String,
     pub json_schema: serde_json::Value,
     pub ui_schema: serde_json::Value,
+}
+
+impl FormSchemaJson {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::FormSchema,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
 }
 
 pub struct FormSchemaRowRepository<'a> {
@@ -82,7 +102,7 @@ impl<'a> FormSchemaRowRepository<'a> {
         FormSchemaRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::insert_into(form_schema::dsl::form_schema)
             .values(&row)
@@ -90,19 +110,13 @@ impl<'a> FormSchemaRowRepository<'a> {
             .do_update()
             .set(&row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::FormSchema,
-            record_id: uid.to_string(),
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<i64, RepositoryError> {
+        self._upsert_one(schema)?;
+        let changelog = schema.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -138,9 +152,16 @@ impl<'a> FormSchemaRowRepository<'a> {
 }
 
 impl Upsert for FormSchemaJson {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log = FormSchemaRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        FormSchemaRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

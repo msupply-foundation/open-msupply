@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{lower, repository_error::RepositoryError, Upsert};
+use crate::{lower, repository_error::RepositoryError, ChangelogSyncType, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -127,9 +127,9 @@ impl<'a> UserAccountRowRepository<'a> {
 }
 
 impl Upsert for UserAccountRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         UserAccountRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

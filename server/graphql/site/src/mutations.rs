@@ -26,6 +26,14 @@ impl CodeMustBeProvided {
     }
 }
 
+pub struct NameNotProvided;
+#[Object]
+impl NameNotProvided {
+    pub async fn description(&self) -> &str {
+        "Name must be provided"
+    }
+}
+
 pub struct PasswordRequired;
 #[Object]
 impl PasswordRequired {
@@ -38,6 +46,7 @@ impl PasswordRequired {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpsertSiteErrorInterface {
     CodeMustBeProvided(CodeMustBeProvided),
+    NameNotProvided(NameNotProvided),
     PasswordRequired(PasswordRequired),
 }
 
@@ -84,6 +93,9 @@ fn map_error(error: ServiceError) -> Result<UpsertSiteErrorInterface> {
             return Ok(UpsertSiteErrorInterface::CodeMustBeProvided(
                 CodeMustBeProvided,
             ))
+        }
+        ServiceError::NameNotProvided => {
+            return Ok(UpsertSiteErrorInterface::NameNotProvided(NameNotProvided))
         }
         ServiceError::PasswordRequired => {
             return Ok(UpsertSiteErrorInterface::PasswordRequired(

@@ -17,7 +17,6 @@ export const PREFERENCE_GROUP_CONFIG: Partial<
   'label.backdating': [PreferenceKey.Backdating],
 };
 
-
 export const isAnyAmcPrefOn = (
   preferences: AdminPreferenceFragment[]
 ): boolean => {

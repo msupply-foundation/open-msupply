@@ -3,7 +3,7 @@ use crate::db_diesel::item_link_row::item_link;
 use crate::db_diesel::item_row::item;
 use crate::RepositoryError;
 use crate::StorageConnection;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository, RowActionType, ChangelogSyncType, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -35,6 +35,24 @@ pub struct VaccineCourseItemRow {
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
+impl VaccineCourseItemRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::VaccineCourseItem,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct VaccineCourseItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -44,36 +62,26 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         VaccineCourseItemRowRepository { connection }
     }
 
-    pub fn upsert_one(
+    pub fn _upsert_one(
         &self,
         vaccine_course_item_row: &VaccineCourseItemRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         diesel::insert_into(vaccine_course_item)
             .values(vaccine_course_item_row)
             .on_conflict(id)
             .do_update()
             .set(vaccine_course_item_row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(
-            vaccine_course_item_row.id.to_string(),
-            RowActionType::Upsert,
-        )
+        Ok(())
     }
 
-    fn insert_changelog(
+    pub fn upsert_one(
         &self,
-        row_id: String,
-        action: RowActionType,
+        vaccine_course_item_row: &VaccineCourseItemRow,
     ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::VaccineCourseItem,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+        self._upsert_one(vaccine_course_item_row)?;
+        let changelog = vaccine_course_item_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<VaccineCourseItemRow>, RepositoryError> {
@@ -98,14 +106,25 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(vaccine_course_item_id.to_string(), RowActionType::Upsert)
+        let changelog = VaccineCourseItemRow { id: vaccine_course_item_id.to_string(), ..Default::default() }
+            .changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for VaccineCourseItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = VaccineCourseItemRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        VaccineCourseItemRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

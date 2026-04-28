@@ -280,7 +280,8 @@ export type PreferencesQuery = {
     };
     backdating: {
       __typename: 'BackdatingNode';
-      enabled: boolean;
+      shipmentsEnabled: boolean;
+      inventoryAdjustmentsEnabled: boolean;
       maxDays: number;
     };
   };
@@ -544,7 +545,8 @@ export const PreferencesDocument = gql`
       isGaps
       globalTableConfigs
       backdating {
-        enabled
+        shipmentsEnabled
+        inventoryAdjustmentsEnabled
         maxDays
       }
     }

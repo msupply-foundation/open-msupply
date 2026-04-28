@@ -192,13 +192,10 @@ impl IntegrationOperation {
     ) -> Result<(), RepositoryError> {
         match self {
             IntegrationOperation::Upsert(upsert) => {
-                let cursor_id = upsert.upsert(connection)?;
-
-                // Update the change log if we get a cursor id
-                if let Some(cursor_id) = cursor_id {
-                    ChangelogRepository::new(connection)
-                        .set_source_site_id_and_is_sync_update(cursor_id, source_site_id)?;
-                }
+                upsert.upsert_sync(
+                    connection,
+                    ChangelogSyncType::SyncTypeV5V6 { source_site_id },
+                )?;
                 Ok(())
             }
 

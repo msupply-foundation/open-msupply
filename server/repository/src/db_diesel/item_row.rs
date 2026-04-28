@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
-    ChangelogTableName, Delete, Upsert,
+    ChangelogSyncType, ChangelogTableName, Delete, Upsert,
 };
 
 use super::{
@@ -257,18 +257,15 @@ impl Delete for ItemRowDelete {
 }
 
 impl Upsert for ItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ItemRowRepository::new(con).upsert_one(self)?;
-        Ok(None)
-    }
-    fn upsert_v7(
-        &self,
-        con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
-    ) -> Result<(), RepositoryError> {
-        ItemRowRepository::new(con).upsert_one(self)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
+        match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { .. } => Ok(()),
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => {
+                ChangelogRepository::new(con).insert(&changelog_row)?;
+                Ok(())
+            }
+        }
     }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
