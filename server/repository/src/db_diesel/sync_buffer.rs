@@ -128,6 +128,7 @@ impl<'a> SyncBufferRowRepository<'a> {
             ))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
 
     /// Find sync_buffer records by table_name where the JSON data column contains the given pattern.
     pub fn find_by_table_and_data_like(
