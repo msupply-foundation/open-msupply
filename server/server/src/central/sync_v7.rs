@@ -7,10 +7,7 @@ use actix_web::{
 
 use service::{
     service_provider::ServiceProvider,
-    sync_v7::{
-        api::{pull as pull_api, push as push_api, status as status_api},
-        sync_on_central as handlers,
-    },
+    sync_v7::{api, sync_on_central as handlers},
 };
 
 pub fn sync_v7_on_central() -> impl HttpServiceFactory {
@@ -19,7 +16,7 @@ pub fn sync_v7_on_central() -> impl HttpServiceFactory {
 
 #[post("/pull")]
 async fn pull(
-    request: Json<pull_api::Request>,
+    request: Json<api::pull::Request>,
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     Ok(web::Json(
@@ -29,7 +26,7 @@ async fn pull(
 
 #[post("/push")]
 async fn push(
-    request: Json<push_api::Request>,
+    request: Json<api::push::Request>,
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     Ok(web::Json(
