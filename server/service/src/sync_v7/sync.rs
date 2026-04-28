@@ -2,17 +2,20 @@ use std::time::{Duration, SystemTime};
 
 use chrono::Utc;
 use repository::{
+    get_changelogs,
     syncv7::{SiteLockError, SyncError},
-    ChangelogTableName, KeyType, RowActionType, StorageConnection, SyncAction, SyncBufferRow,
-    SyncBufferRowRepository, SyncRecordData,
+    ChangelogCondition, ChangelogTableName, CursorAndLimit, KeyType, RowActionType,
+    StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository, SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{
     cursor_controller::CursorController,
-    sync::settings::SyncSettings,
+    sync::{settings::SyncSettings, ActiveStoresOnSite},
     sync_v7::{
         api::{self, SyncApiV7, VERSION},
+        get_current_site_id,
+        prepare::prepare,
         sync_logger::{SyncLogger, SyncStep},
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
@@ -41,6 +44,39 @@ pub struct SyncBatchV7 {
     pub site_id: i32,
     pub max_cursor: i64,
     pub records: Vec<SyncRecordV7>,
+}
+
+impl SyncBatchV7 {
+    pub fn generate(
+        connection: &StorageConnection,
+        filter: ChangelogCondition::Inner,
+        cursor: i64,
+        batch_size: u32,
+    ) -> Result<SyncBatchV7, SyncError> {
+        let site_id = get_current_site_id(connection)?;
+
+        let changelogs = get_changelogs(
+            connection,
+            filter,
+            CursorAndLimit {
+                cursor,
+                limit: batch_size as i64,
+            },
+        )?;
+
+        let records = changelogs
+            .into_iter()
+            .map(|changelog| prepare(connection, changelog))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let max_cursor = records.iter().map(|r| r.cursor).max().unwrap_or(cursor);
+
+        Ok(SyncBatchV7 {
+            site_id,
+            max_cursor,
+            records,
+        })
+    }
 }
 
 /// Convert a SyncRecordV7 (API shape) into a SyncBufferRow (DB shape) for storage
@@ -218,8 +254,6 @@ impl<'a> SyncV7<'a> {
         logger: &mut SyncLogger<'b>,
         is_initialising: bool,
     ) -> Result<(), SyncError> {
-        use crate::sync::ActiveStoresOnSite;
-
         let active_stores = ActiveStoresOnSite::get(self.connection)
             .map_err(|e| SyncError::Other(e.to_string()))?;
 
