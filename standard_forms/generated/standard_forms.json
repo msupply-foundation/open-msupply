@@ -1,6 +1,59 @@
 {
   "reports": [
     {
+      "id": "customer-return_2_17_2_false",
+      "name": "Customer Return",
+      "description": null,
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": null,
+          "query": [
+            "query.graphql"
+          ],
+          "convert_data": null,
+          "convert_data_type": "Extism"
+        },
+        "entries": {
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "{% macro dateOrNA(datetime) %}\n{% if datetime %}{{ datetime | date(format=\"%d/%m/%Y\", timezone=arguments.timezone) }}{% else\n%}{{t(k=\"messages.not-applicable\", f=\"N/A\")}}{% endif %}\n{% endmacro input %}\n\n<table class=\"header_image_section\" style=\"width: 100%;height: 98%;\">\n    <tr>\n        {% if data.store.logo %}\n        <th style=\"text-align:left;width:10%;height:70%;\">\n            <img class=\"logo\" src=\"{{ data.store.logo }}\" />\n        </th>\n        {% endif %}\n        <th style=\"text-align:left;width:20%;\">\n            <span\n                style=\"font-weight:bold;\"\n                excel-cell=\"E1\"\n                excel-type=\"bold\"\n            >{{ data.store.storeName }}</span><br>\n            <span style=\"font-size:6pt;\">{{ data.store.name.address1 }}</span><br>\n            <span style=\"font-size:6pt;\">{{ data.store.name.address2 }}</span><br>\n            <span style=\"font-size:6pt;\">\n                {{t(k=\"label.phone\",f=\"Telephone\")}}: {{ data.store.name.phone }}\n            </span><br>\n            <span style=\"font-size:6pt;\">\n                {{t(k=\"label.email\",f=\"Email\")}}: {{ data.store.name.email }}\n            </span>\n            <br>\n            <br>\n        </th>\n        <th style=\"text-align:right;width:70%;font-size:28pt;\" excel-cell=\"A1\" excel-type=\"title\">\n            {{ t(k=\"label.customer-return\", f=\"Customer return\") }}<br>\n        </th>\n    </tr>\n</table>\n\n<div class=\"header_supplied_section\" style=\"display: flex; flex-direction: column;\">\n    <div class=\"header-space-between\">\n        <span excel-cell=\"A3\">{{ t(k=\"label.customer\", f=\"Customer\") }}:</span>\n        <span excel-cell=\"E3\">{{ t(k=\"label.number\", f=\"Number\") }}: {{ data.invoice.invoiceNumber }}</span>\n    </div>\n    <div class=\"header-space-between\">\n        <span excel-cell=\"B3\">{{ data.invoice.otherParty.name }}</span>\n        <span excel-cell=\"E4\">{{ t(k=\"report.their-ref\", f=\"Their ref\") }}: {{ data.invoice.theirReference }}</span>\n    </div>\n    <div class=\"header-space-between\">\n        <span>{{ data.invoice.otherParty.code }}</span>\n        <span id=\"date\">\n            {{t(k=\"report.printed-date\", f=\"Printed date\") }}: {{self::dateOrNA(datetime=now())}}\n        </span>\n    </div>\n    <div class=\"header-space-between\">\n        <span>\n            {{data.invoice.otherParty.address1 }}{% if data.invoice.otherParty.address2 %},\n            {{data.invoice.otherParty.address2 }} {% endif %}\n        </span>\n        <span>{{t(k=\"report.shipped-date\",f=\"Shipped date\")}}: {{self::dateOrNA(datetime=data.invoice.shippedDatetime)}}</span>\n    </div>\n</div>"
+            }
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query InvoiceQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  invoice(storeId: $storeId, id: $dataId) {\n    ... on InvoiceNode {\n      id\n      otherPartyId\n      invoiceNumber\n      theirReference\n      shippedDatetime\n      otherPartyName\n      pricing {\n        totalAfterTax\n        totalBeforeTax\n        taxPercentage\n      }\n      otherParty(storeId: $storeId) {\n        name\n        id\n        code\n        address1\n        address2\n      }\n      user {\n        username\n      }\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  invoiceLines(\n    storeId: $storeId\n    filter: { invoiceId: { equalTo: $dataId } }\n    reportSort: $sort\n  ) {\n    ... on InvoiceLineConnector {\n      nodes {\n        id\n        itemId\n        itemCode\n        itemName\n        item {\n          unitName\n        }\n        packSize\n        expiryDate\n        batch\n        numberOfPacks\n        packSize\n        sellPricePerPack\n        costPricePerPack\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        code\n        email\n        phone\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@media print {\n  @page {\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.header_date_section,\n.body_section,\n.body_total_section {\n  margin-left: 8px;\n  width: 100%;\n}\n\n.header_supplied_section {\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header-space-between {\n  display: flex;\n  justify-content: space-between;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n  font-family: Tahoma;\n}\n\n.header_date_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_section_field_right {\n  text-align: right;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_section_field_left {\n  text-align: left;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.line_number,\n.quantity,\n.pack,\n.expiry,\n.sell_price,\n.cost_price,\n.total_quantity,\n.total_extension {\n  text-align: right;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.item_code,\n.item_name,\n.batch {\n  text-align: left;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_section,\n.body_total_section {\n  width: 100%;\n  font-family: Tahoma;\n}\n\n.body_total_section {\n  font-weight: bold;\n}\n\n.body_section tr.body_column_label th {\n  border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n  border-bottom: 0.5px solid black;\n}\n\nhr {\n  width: 100%;\n  margin-left: 8px;\n  border: 0.1px solid black;\n}\n\n.batch-wrap {\n  word-break: break-word;\n}\n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n{% macro dateOrNA(datetime) %}\n{% if datetime %}{{ datetime | date(format=\"%d/%m/%Y\", timezone=arguments.timezone) }}{% else %}{{t(k=\"messages.not-applicable\", f=\"N/A\")}}{% endif %}\n{% endmacro input %}\n\n{% macro formatCurrency(amount) %}\n  {% if amount %}\n    {{ amount | round(precision=2) }}\n  {% else %}\n    0.00\n  {% endif %}\n{% endmacro %}\n\n<body>\n    <table class=\"body_section\" cellpadding=\"2\" cellspacing=\"0\">\n        <thead>\n            <tr class=\"body_column_label\">\n                <th class=\"item_code\" style=\"width: 80px;\">{{t(k=\"report.item-code\",f=\"Item code\")}}</th>\n                <th class=\"item_name\" style=\"width: 500px;\">{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n                <th class=\"quantity\" style=\"width: 50px;\">{{t(k=\"label.quantity\",f=\"Quantity\")}}</th>\n                <th class=\"pack\" style=\"width: 50px;\">{{t(k=\"report.pack-size\",f=\"Pack size\")}}</th>\n                <th class=\"batch\" style=\"width: 60px;\">{{t(k=\"label.batch\", f=\"Batch\")}}</th>\n                <th class=\"expiry\" style=\"width: 80px;\">{{t(k=\"label.expiry\",f=\"Expiry\")}}</th>\n                <th class=\"cost_price\" style=\"width: 60px;\">{{t(k=\"label.cost-price\",f=\"Cost Price\")}}</th>\n                <th class=\"total_extension\" style=\"width: 70px;\">{{t(k=\"report.extension\",f=\"Extension\")}}</th>\n            </tr>\n        </thead>\n        {% for line in data.invoiceLines.nodes -%}\n        <tr class=\"body_value\">\n            <td class=\"item_code\" style=\"width: 80px;\">{{ line.itemCode }}</td>\n            <td class=\"item_name\" style=\"width: 500px;\">{{ line.itemName }}</td>\n            <td class=\"quantity\" style=\"width: 50px;\">{{ line.numberOfPacks }}</td>\n            <td class=\"pack\" style=\"width: 50px;\">{{ line.packSize }}</td>\n            <td class=\"batch batch-wrap\" style=\"width: 60px;\">{{ line.batch }}</td>\n            <td class=\"expiry\" style=\"width: 80px;\">{{self::dateOrNA(datetime=line.expiryDate)}}</td>\n            <td class=\"cost_price\" style=\"width: 60px;\">{{self::formatCurrency(amount=line.costPricePerPack)}}</td>\n            <td class=\"total_extension\" style=\"width: 70px;\">{{self::formatCurrency(amount=line.numberOfPacks * line.costPricePerPack)}}</td>\n        </tr>\n        {%- endfor %}\n    </table>\n</body>"
+            }
+          }
+        }
+      },
+      "context": "CUSTOMER_RETURN",
+      "sub_context": null,
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "2.17.2",
+      "code": "customer-return",
+      "form_schema": null,
+      "excel_template_buffer": null
+    },
+    {
       "id": "inbound_2_5_2_false",
       "name": "Inbound",
       "description": null,
@@ -1168,7 +1221,7 @@
     },
     {
       "id": "stock-take-with-quantity_2_6_4_false",
-      "name": "Stocktake with Quantity",
+      "name": "Stocktake with snapshot quantity",
       "description": null,
       "template": {
         "index": {
@@ -1186,7 +1239,7 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<table class=\"header_image_section\" style=\"width: 100%;height: 98%;\">\n  <tr>\n      {% if data.store.logo %}\n      <th style=\"text-align:start;width:10%;height:70%;\">\n          <img class=\"logo\" src=\"{{ data.store.logo }}\" />\n      </th>\n      {% endif %}\n      <th style=\"text-align:start;width:20%;\">\n          <span style=\"font-weight:bold;\">{{ data.store.storeName }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address1 }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address2 }}</span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.phone\",f=\"Telephone\")}}: {{ data.store.name.phone }}\n          </span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.email\",f=\"Email\")}}: {{ data.store.name.email }}\n          </span>\n          <br>\n          <br>\n      </th>\n      <th style=\"text-align:end;width:70%;font-size:28pt;\">\n          {{t(k=\"report.stocktake-with-quantity\", f=\"Stocktake with Quantity\")}}\n      </th>\n  </tr>\n</table>\n\n<div class=\"header_supplied_section\" style=\"display: flex; flex-direction:\ncolumn; padding-bottom: 1em;\">\n  <div style=\"display: flex; justify-content: flex-end;\">\n      <span>{{ t(k=\"label.number\", f=\"Number\") }}: {{ data.stocktake.stocktakeNumber }}</span>\n  </div>\n</div>"
+              "template": "<table class=\"header_image_section\" style=\"width: 100%;height: 98%;\">\n  <tr>\n      {% if data.store.logo %}\n      <th style=\"text-align:start;width:10%;height:70%;\">\n          <img class=\"logo\" src=\"{{ data.store.logo }}\" />\n      </th>\n      {% endif %}\n      <th style=\"text-align:start;width:20%;\">\n          <span style=\"font-weight:bold;\">{{ data.store.storeName }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address1 }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address2 }}</span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.phone\",f=\"Telephone\")}}: {{ data.store.name.phone }}\n          </span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.email\",f=\"Email\")}}: {{ data.store.name.email }}\n          </span>\n          <br>\n          <br>\n      </th>\n      <th style=\"text-align:end;width:70%;font-size:28pt;\">\n          {{t(k=\"report.stocktake-with-quantity\", f=\"Stocktake with snapshot quantity\")}}\n      </th>\n  </tr>\n</table>\n\n<div class=\"header_supplied_section\" style=\"display: flex; flex-direction:\ncolumn; padding-bottom: 1em;\">\n  <div style=\"display: flex; justify-content: flex-end;\">\n      <span>{{ t(k=\"label.number\", f=\"Number\") }}: {{ data.stocktake.stocktakeNumber }}</span>\n  </div>\n</div>"
             }
           },
           "query_default": {
@@ -1201,7 +1254,7 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n    <thead>\n        <tr class=\"body_column_label\">\n            <th>{{t(k=\"label.location\", f=\"Location\")}}</th>\n            <th>{{t(k=\"label.code\", f=\"Code\")}}</th>\n            <th>{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n            <th>{{t(k=\"label.batch\", f=\"batch\")}}</th>\n            <th>{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n            <th>{{t(k=\"report.pack-size\",f=\"Pack size\")}}</th>\n            <th>{{t(k=\"report.quan\",f=\"Quan\")}}</th>\n            <th>{{t(k=\"report.actual-stock\",f=\"Actual Stock\")}}</th>\n        </tr>\n    </thead>\n    {% for line in data.stocktakeLines.nodes -%}\n    <tr class=\"body_value\">\n        <td>{{ line.location.code | default(value='') }}</td>\n        <td>{{ line.item.code }}</td>\n        <td>{{ line.item.name }}</td>\n        <td class=\"batch\">{{ line.batch }}</td>\n        <td>\n            {% if line.expiryDate %}\n            {{ line.expiryDate | date(format=\"%d/%m/%Y\") }}\n            {% endif %}\n        </td>\n        <td>{{ line.packSize }}</td>\n        <td>{{ line.countedNumberOfPacks }}</td>\n        <td>.....................</td>\n    </tr>\n    {%- endfor %}\n</table>\n"
+              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n    <thead>\n        <tr class=\"body_column_label\">\n            <th>{{t(k=\"label.location\", f=\"Location\")}}</th>\n            <th>{{t(k=\"label.code\", f=\"Code\")}}</th>\n            <th>{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n            <th>{{t(k=\"label.batch\", f=\"batch\")}}</th>\n            <th>{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n            <th>{{t(k=\"report.pack-size\",f=\"Pack size\")}}</th>\n            <th>{{t(k=\"report.quan\",f=\"Quan\")}}</th>\n            <th>{{t(k=\"report.actual-stock\",f=\"Actual Stock\")}}</th>\n        </tr>\n    </thead>\n    {% for line in data.stocktakeLines.nodes -%}\n    <tr class=\"body_value\">\n        <td>{{ line.location.code | default(value='') }}</td>\n        <td>{{ line.item.code }}</td>\n        <td>{{ line.item.name }}</td>\n        <td class=\"batch\">{{ line.batch }}</td>\n        <td>\n            {% if line.expiryDate %}\n            {{ line.expiryDate | date(format=\"%d/%m/%Y\") }}\n            {% endif %}\n        </td>\n        <td>{{ line.packSize }}</td>\n        <td>{{ line.snapshotNumberOfPacks | round(precision=2) }}</td>\n        <td>.....................</td>\n    </tr>\n    {%- endfor %}\n</table>\n"
             }
           }
         }
@@ -1275,7 +1328,7 @@
     },
     {
       "id": "stock-take-without-quantity_2_6_4_false",
-      "name": "Stocktake without Quantity",
+      "name": "Stocktake without snapshot quantity",
       "description": null,
       "template": {
         "index": {
@@ -1293,7 +1346,7 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<table class=\"header_image_section\" style=\"width: 100%;height: 98%;\">\n  <tr>\n      {% if data.store.logo %}\n      <th style=\"text-align:start;width:10%;height:70%;\">\n          <img class=\"logo\" src=\"{{ data.store.logo }}\" />\n      </th>\n      {% endif %}\n      <th style=\"text-align:start;width:20%;\">\n          <span style=\"font-weight:bold;\">{{ data.store.storeName }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address1 }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address2 }}</span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.phone\",f=\"Telephone\")}}: {{ data.store.name.phone }}\n          </span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.email\",f=\"Email\")}}: {{ data.store.name.email }}\n          </span>\n          <br>\n          <br>\n      </th>\n      <th style=\"text-align:end;width:70%;font-size:28pt;\">\n          {{t(k=\"report.stocktake-without-quantity\", f=\"Stocktake without Quantity\")}}\n      </th>\n  </tr>\n</table>\n\n<div class=\"header_supplied_section\" style=\"display: flex; flex-direction:\ncolumn; padding-bottom: 1em;\">\n  <div style=\"display: flex; justify-content: flex-end;\">\n      <span>{{ t(k=\"label.number\", f=\"Number\") }}: {{ data.stocktake.stocktakeNumber }}</span>\n  </div>\n</div>"
+              "template": "<table class=\"header_image_section\" style=\"width: 100%;height: 98%;\">\n  <tr>\n      {% if data.store.logo %}\n      <th style=\"text-align:start;width:10%;height:70%;\">\n          <img class=\"logo\" src=\"{{ data.store.logo }}\" />\n      </th>\n      {% endif %}\n      <th style=\"text-align:start;width:20%;\">\n          <span style=\"font-weight:bold;\">{{ data.store.storeName }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address1 }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address2 }}</span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.phone\",f=\"Telephone\")}}: {{ data.store.name.phone }}\n          </span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.email\",f=\"Email\")}}: {{ data.store.name.email }}\n          </span>\n          <br>\n          <br>\n      </th>\n      <th style=\"text-align:end;width:70%;font-size:28pt;\">\n          {{t(k=\"report.stocktake-without-quantity\", f=\"Stocktake without snapshot quantity\")}}\n      </th>\n  </tr>\n</table>\n\n<div class=\"header_supplied_section\" style=\"display: flex; flex-direction:\ncolumn; padding-bottom: 1em;\">\n  <div style=\"display: flex; justify-content: flex-end;\">\n      <span>{{ t(k=\"label.number\", f=\"Number\") }}: {{ data.stocktake.stocktakeNumber }}</span>\n  </div>\n</div>"
             }
           },
           "query_default": {
