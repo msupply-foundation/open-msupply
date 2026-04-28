@@ -38,6 +38,7 @@ export const SitesList = () => {
     query: { data, isError, isFetching },
     // upsert: { upsert },
     // deleteSite: { deleteSite },
+    clearSyncToken: { clearSyncToken, isClearingSyncToken },
     draft,
     updateDraft,
   } = useSites(queryParams);
@@ -140,6 +141,8 @@ export const SitesList = () => {
           site={draft}
           onClose={handleClose}
           updateDraft={updateDraft}
+          clearSyncToken={clearSyncToken}
+          isClearingSyncToken={isClearingSyncToken}
         />
       )}
       {/* <Footer
