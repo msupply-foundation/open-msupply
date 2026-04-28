@@ -1,12 +1,10 @@
 use async_graphql::*;
 
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use service::initialisation_status::get_initialisation_status;
 use service::sync::sync_status::status::InitialisationStatus;
 
-use crate::{
-    queries::{initialisation_status::get_initialisation_status, sync_settings::SyncSettingsNode},
-    sync_api_error::SyncErrorNode,
-};
+use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SyncErrorNode};
 
 use super::common::SyncSettingsInput;
 
