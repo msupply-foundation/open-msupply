@@ -95,7 +95,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             &id,
             "location_id",
             location_id,
-            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
         )?;
         let temperature_breach_id = clear_invalid_fk(
             connection,
@@ -103,7 +103,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             &id,
             "temperature_breach_id",
             temperature_breach_id,
-            |c, id| TemperatureBreachRowRepository::new(c).find_one_by_id(id),
+            |c, id| TemperatureBreachRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let result = TemperatureLogRow {

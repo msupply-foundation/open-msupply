@@ -101,7 +101,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             &legacy.id,
             "purchase_order_id",
             legacy.purchase_order_id,
-            |c, id| PurchaseOrderRowRepository::new(c).find_one_by_id(id),
+            |c, id| PurchaseOrderRowRepository::new(c).check_exists_by_id(id),
         )?;
         let inbound_shipment_id = clear_invalid_fk(
             connection,
@@ -109,7 +109,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             &legacy.id,
             "inbound_shipment_id",
             legacy.inbound_shipment_id,
-            |c, id| InvoiceRowRepository::new(c).find_one_by_id(id),
+            |c, id| InvoiceRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let result = GoodsReceivedRow {

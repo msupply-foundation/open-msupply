@@ -72,7 +72,7 @@ impl SyncTranslation for LocationTranslation {
             &id,
             "location_type_id",
             location_type_id,
-            |c, id| LocationTypeRowRepository::new(c).find_one_by_id(id),
+            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let result = LocationRow {

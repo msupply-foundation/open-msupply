@@ -13,22 +13,22 @@ use util::uuid::uuid;
 ///  - returns `Ok(None)` so the translated row can still be inserted
 ///
 /// If the FK is `None` or the referenced record exists, the input is returned unchanged.
-pub(crate) fn clear_invalid_fk<F, T>(
+pub(crate) fn clear_invalid_fk<F>(
     connection: &StorageConnection,
     record_table: &str,
     record_id: &str,
     fk_field: &str,
     fk_id: Option<String>,
-    lookup: F,
+    check_exists: F,
 ) -> Result<Option<String>, RepositoryError>
 where
-    F: FnOnce(&StorageConnection, &str) -> Result<Option<T>, RepositoryError>,
+    F: FnOnce(&StorageConnection, &str) -> Result<bool, RepositoryError>,
 {
     let Some(id) = fk_id else {
         return Ok(None);
     };
 
-    if lookup(connection, &id)?.is_some() {
+    if check_exists(connection, &id)? {
         return Ok(Some(id));
     }
 

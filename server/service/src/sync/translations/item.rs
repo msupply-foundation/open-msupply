@@ -134,7 +134,7 @@ impl SyncTranslation for ItemTranslation {
             &data.ID,
             "unit_id",
             data.unit_ID,
-            |c, id| UnitRowRepository::new(c).find_one_by_id(id),
+            |c, id| UnitRowRepository::new(c).check_exists_by_id(id),
         )?;
         let restricted_location_type_id = clear_invalid_fk(
             connection,
@@ -142,7 +142,7 @@ impl SyncTranslation for ItemTranslation {
             &data.ID,
             "restricted_location_type_id",
             data.restricted_location_type_ID,
-            |c, id| LocationTypeRowRepository::new(c).find_one_by_id(id),
+            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         // Translate the item row

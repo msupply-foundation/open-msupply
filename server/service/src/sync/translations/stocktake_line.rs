@@ -159,7 +159,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             &ID,
             "stock_line_id",
             item_line_ID,
-            |c, id| StockLineRowRepository::new(c).find_one_by_id(id),
+            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let (campaign_id, program_id) = oms_fields
@@ -172,7 +172,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             &ID,
             "location_id",
             location_id,
-            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
         )?;
         let item_variant_id = clear_invalid_fk(
             connection,
@@ -180,7 +180,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             &ID,
             "item_variant_id",
             item_variant_id,
-            |c, id| ItemVariantRowRepository::new(c).find_one_by_id(id),
+            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
         )?;
         let vvm_status_id = clear_invalid_fk(
             connection,
@@ -188,7 +188,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             &ID,
             "vvm_status_id",
             vvm_status_id,
-            |c, id| VVMStatusRowRepository::new(c).find_one_by_id(id),
+            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
         )?;
         let reason_option_id = clear_invalid_fk(
             connection,
@@ -196,7 +196,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             &ID,
             "reason_option_id",
             reason_option_id,
-            |c, id| ReasonOptionRowRepository::new(c).find_one_by_id(id),
+            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
         )?;
         let campaign_id = clear_invalid_fk(
             connection,
@@ -204,7 +204,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             &ID,
             "campaign_id",
             campaign_id,
-            |c, id| CampaignRowRepository::new(c).find_one_by_id(id),
+            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
         )?;
         let program_id = clear_invalid_fk(
             connection,
@@ -212,7 +212,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             &ID,
             "program_id",
             program_id,
-            |c, id| ProgramRowRepository::new(c).find_one_by_id(id),
+            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let result = StocktakeLineRow {
