@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{StorageConnection, StoreMode, StoreRow, StoreRowDelete, SyncBufferRow};
+use repository::{NameLinkRowRepository, StorageConnection, StoreMode, StoreRow, StoreRowDelete, SyncBufferRow};
 
 use crate::sync::translations::name::NameTranslation;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -53,7 +53,7 @@ impl SyncTranslation for StoreTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)?;
@@ -61,12 +61,9 @@ impl SyncTranslation for StoreTranslation {
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
         // HIS -> Hospital Information System (no name_id)
         // SM -> Supervisor Store
-        // DRG -> Drug Registration (name_id exists but no name with that id)
-        // TODO: Ideally we want another state, `Ignored`
-        // (i.e. return type) Translation Not Matches, Translation Ignored (with message ?) and Translated records
-        if let "HIS" | "DRG" | "SM" = &data.code[..] {
+        if let "HIS" | "SM" = &data.code[..] {
             return Ok(PullTranslateResult::Ignored(
-                "System names not implemented".to_string(),
+                "System store not implemented".to_string(),
             ));
         }
 
@@ -74,6 +71,19 @@ impl SyncTranslation for StoreTranslation {
             return Ok(PullTranslateResult::Ignored(
                 "Store has no name".to_string(),
             ));
+        }
+
+        // Check the name_link exists before attempting upsert — if the name was not integrated
+        // (e.g. ignored or not synced), the FK constraint would cause a costly savepoint rollback
+        // in PostgreSQL for every affected store record.
+        if NameLinkRowRepository::new(connection)
+            .find_one_by_id(&data.name_id)?
+            .is_none()
+        {
+            return Ok(PullTranslateResult::Ignored(format!(
+                "Name link not found for name_id {} linked to store_id {} ({})",
+                data.name_id, data.id, data.code
+            )));
         }
 
         let store_mode = match data.store_mode {
