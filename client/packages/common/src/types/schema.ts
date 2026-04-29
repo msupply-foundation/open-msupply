@@ -514,6 +514,7 @@ export type AssetLogFilterInput = {
   logDatetime?: InputMaybe<DatetimeFilterInput>;
   reasonId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStatusInput>;
+  type?: InputMaybe<EqualFilterAssetLogTypeInput>;
   user?: InputMaybe<StringFilterInput>;
 };
 
@@ -521,12 +522,13 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['NaiveDateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
-  type?: Maybe<Scalars['String']['output']>;
+  type: AssetLogTypeNodeType;
   user?: Maybe<UserNode>;
 };
 
@@ -602,6 +604,11 @@ export enum AssetLogStatusNodeType {
   NotFunctioning = 'NOT_FUNCTIONING',
   NotInUse = 'NOT_IN_USE',
   Unserviceable = 'UNSERVICEABLE',
+}
+
+export enum AssetLogTypeNodeType {
+  StatusUpdate = 'STATUS_UPDATE',
+  TemperatureMapping = 'TEMPERATURE_MAPPING',
 }
 
 export type AssetLogsResponse = AssetLogConnector;
@@ -763,14 +770,16 @@ export type AvailableVolumeAtLocationTypeNode = {
 };
 
 export type BackdatingInput = {
-  enabled: Scalars['Boolean']['input'];
+  inventoryAdjustmentsEnabled: Scalars['Boolean']['input'];
   maxDays: Scalars['Int']['input'];
+  shipmentsEnabled: Scalars['Boolean']['input'];
 };
 
 export type BackdatingNode = {
   __typename: 'BackdatingNode';
-  enabled: Scalars['Boolean']['output'];
+  inventoryAdjustmentsEnabled: Scalars['Boolean']['output'];
   maxDays: Scalars['Int']['output'];
+  shipmentsEnabled: Scalars['Boolean']['output'];
 };
 
 export type BarcodeNode = {
@@ -1598,6 +1607,7 @@ export type CreateInventoryAdjustmentError = {
 export type CreateInventoryAdjustmentInput = {
   adjustment: Scalars['Float']['input'];
   adjustmentType: AdjustmentTypeInput;
+  backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
@@ -2717,6 +2727,13 @@ export type EqualFilterActivityLogTypeInput = {
   notEqualTo?: InputMaybe<ActivityLogNodeType>;
 };
 
+export type EqualFilterAssetLogTypeInput = {
+  equalAny?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  equalTo?: InputMaybe<AssetLogTypeNodeType>;
+  notEqualAll?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  notEqualTo?: InputMaybe<AssetLogTypeNodeType>;
+};
+
 export type EqualFilterBigFloatingNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
   equalAnyOrNull?: InputMaybe<Array<Scalars['Float']['input']>>;
@@ -2986,6 +3003,12 @@ export type FormSchemaSortInput = {
 export type FrontendPluginMetadataNode = {
   __typename: 'FrontendPluginMetadataNode';
   code: Scalars['String']['output'];
+  /**
+   * Hash of the plugin's bundled file contents — clients append this as a
+   * cache-busting URL token (?v=...) so the browser only refetches when the
+   * bundle's bytes change.
+   */
+  hash: Scalars['String']['output'];
   path: Scalars['String']['output'];
 };
 
@@ -3208,9 +3231,10 @@ export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  logDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   reasonId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<AssetLogStatusNodeType>;
-  type?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<AssetLogTypeNodeType>;
 };
 
 export type InsertAssetLogReasonError = {
@@ -5046,6 +5070,12 @@ export type LedgerSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: LedgerSortFieldInput;
+};
+
+export type LedgerWouldGoBelowZero = InsertInventoryAdjustmentErrorInterface & {
+  __typename: 'LedgerWouldGoBelowZero';
+  description: Scalars['String']['output'];
+  stockLine: StockLineNode;
 };
 
 export type LineDeleteError = DeleteResponseRequisitionErrorInterface & {
@@ -7259,6 +7289,7 @@ export type PropertyNode = {
 
 export enum PropertyNodeValueType {
   Boolean = 'BOOLEAN',
+  Date = 'DATE',
   Float = 'FLOAT',
   Integer = 'INTEGER',
   String = 'STRING',
@@ -7666,6 +7697,7 @@ export type QueriesActivityLogsArgs = {
   filter?: InputMaybe<ActivityLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ActivityLogSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 export type QueriesAllReportVersionsArgs = {
@@ -9758,6 +9790,7 @@ export type SupplierReturnInput = {
   inboundShipmentId?: InputMaybe<Scalars['String']['input']>;
   supplierId: Scalars['String']['input'];
   supplierReturnLines: Array<SupplierReturnLineInput>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SupplierReturnLineConnector = {
@@ -10433,6 +10466,7 @@ export type UpdateOutboundShipmentError = {
 };
 
 export type UpdateOutboundShipmentInput = {
+  backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;

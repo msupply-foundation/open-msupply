@@ -1,4 +1,4 @@
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository, RowActionType, ChangelogSyncType, Upsert};
 use crate::{RepositoryError, StorageConnection};
 
 use chrono::NaiveDateTime;
@@ -57,6 +57,25 @@ pub struct SystemLogRow {
     pub is_error: bool,
 }
 
+impl SystemLogRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::SystemLog,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct SystemLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -66,28 +85,17 @@ impl<'a> SystemLogRowRepository<'a> {
         SystemLogRowRepository { connection }
     }
 
-    pub fn insert_one(&self, row: &SystemLogRow) -> Result<i64, RepositoryError> {
+    pub fn _insert_one(&self, row: &SystemLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(system_log::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: &SystemLogRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::SystemLog,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn insert_one(&self, row: &SystemLogRow) -> Result<i64, RepositoryError> {
+        self._insert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<SystemLogRow>, RepositoryError> {
@@ -113,9 +121,18 @@ impl<'a> SystemLogRowRepository<'a> {
 }
 
 impl Upsert for SystemLogRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = SystemLogRowRepository::new(con).insert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        SystemLogRowRepository::new(con)._insert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

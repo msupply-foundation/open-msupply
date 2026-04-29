@@ -8,8 +8,11 @@ use crate::db_diesel::{
 use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{Delete, Upsert};
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
+    RowActionType,
+};
+use crate::{ChangelogSyncType, Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -130,6 +133,25 @@ pub struct RequisitionRow {
     pub destination_customer_id: Option<String>,
 }
 
+impl RequisitionRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::Requisition,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            name_id: Some(self.name_id.clone()),
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct RequisitionRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -141,34 +163,18 @@ impl<'a> RequisitionRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &RequisitionRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        self.insert_changelog(row, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &RequisitionRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Requisition,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: Some(row.name_id.clone()),
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn delete(&self, requisition_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let requisition = self.find_one_by_id(requisition_id)?;
-        let requisition = match requisition {
+        let requisition = match self.find_one_by_id(requisition_id)? {
             Some(requisition) => requisition,
             None => return Ok(None),
         };
 
-        let change_log_id = self.insert_changelog(&requisition, RowActionType::Delete)?;
+        let changelog = requisition.changelog(self.connection, RowActionType::Delete, None)?;
+        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(
             requisition_with_links::table.filter(requisition_with_links::id.eq(requisition_id)),
@@ -219,9 +225,18 @@ impl Delete for RequisitionRowDelete {
 }
 
 impl Upsert for RequisitionRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = RequisitionRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        RequisitionRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

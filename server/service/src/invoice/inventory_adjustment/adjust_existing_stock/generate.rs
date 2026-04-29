@@ -35,6 +35,7 @@ pub fn generate(
         adjustment,
         adjustment_type,
         reason_option_id,
+        backdated_datetime: _, // Handled in insert.rs after generate
     }: InsertInventoryAdjustment,
     stock_line: StockLine,
 ) -> Result<GenerateResult, RepositoryError> {
