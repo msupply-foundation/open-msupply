@@ -10,8 +10,8 @@ use repository::{
     vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowDelete, InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository,
-    ProgramRowRepository, ReasonOptionRowRepository, StockLineRowRepository, StorageConnection,
-    SyncBufferRow,
+    LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository, StockLineRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -20,9 +20,8 @@ use util::sync_serde::{
 };
 
 use super::{
-    is_active_record_on_site,
-    utils::{clear_invalid_fk, clear_invalid_location_id},
-    ActiveRecordCheck, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    is_active_record_on_site, utils::clear_invalid_fk, ActiveRecordCheck, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -278,7 +277,14 @@ impl SyncTranslation for InvoiceLineTranslation {
         } else {
             None
         };
-        let location_id = clear_invalid_location_id(connection, "invoice_line", &id, location_id)?;
+        let location_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "location_id",
+            location_id,
+            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+        )?;
 
         let item_variant_id = clear_invalid_fk(
             connection,

@@ -9,9 +9,9 @@ use chrono::NaiveDate;
 use repository::{
     campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
     vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, ProgramRowRepository, ReasonOptionRowRepository, StockLineRowRepository,
-    StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
-    StorageConnection, SyncBufferRow,
+    EqualFilter, LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository,
+    StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+    StocktakeLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -19,10 +19,7 @@ use util::sync_serde::{
     zero_date_as_option,
 };
 
-use super::{
-    utils::{clear_invalid_fk, clear_invalid_location_id},
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
-};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 const RECORD_TABLE: &str = "stocktake_line";
 
@@ -169,7 +166,14 @@ impl SyncTranslation for StocktakeLineTranslation {
             .map(|fields| (fields.campaign_id, fields.program_id))
             .unwrap_or((None, None));
 
-        let location_id = clear_invalid_location_id(connection, RECORD_TABLE, &ID, location_id)?;
+        let location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "location_id",
+            location_id,
+            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+        )?;
         let item_variant_id = clear_invalid_fk(
             connection,
             RECORD_TABLE,

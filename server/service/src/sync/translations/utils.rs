@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
-    BarcodeRowRepository, LocationRowRepository, RepositoryError, StorageConnection,
+    RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -48,38 +48,4 @@ where
     })?;
 
     Ok(None)
-}
-
-/// Some datafiles contain links to non-existing barcode references.
-pub(crate) fn clear_invalid_barcode_id(
-    connection: &StorageConnection,
-    record_table: &str,
-    record_id: &str,
-    barcode_id: Option<String>,
-) -> Result<Option<String>, RepositoryError> {
-    clear_invalid_fk(
-        connection,
-        record_table,
-        record_id,
-        "barcode_id",
-        barcode_id,
-        |c, id| BarcodeRowRepository::new(c).find_one_by_id(id),
-    )
-}
-
-/// Some datafiles contain links to non-existing location references.
-pub(crate) fn clear_invalid_location_id(
-    connection: &StorageConnection,
-    record_table: &str,
-    record_id: &str,
-    location_id: Option<String>,
-) -> Result<Option<String>, RepositoryError> {
-    clear_invalid_fk(
-        connection,
-        record_table,
-        record_id,
-        "location_id",
-        location_id,
-        |c, id| LocationRowRepository::new(c).find_one_by_id(id),
-    )
 }
