@@ -1,4 +1,6 @@
-use crate::{diesel_macros::diesel_json_type, ChangelogTableName, RepositoryError};
+use crate::{
+    diesel_macros::diesel_json_type, migrations::Version, ChangelogTableName, RepositoryError,
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
@@ -15,8 +17,8 @@ diesel_json_type! {
             id: String,
             table: ChangelogTableName
         },
-        #[error("Sync V7 API version not compatible, minVersion: {0}, maxVersion: {1}, received: {2}")]
-        SyncVersionMismatch(u32, u32, u32),
+        #[error("Sync V7 version mismatch, central: {central}, remote: {remote}")]
+        SyncVersionMismatch { central: Version, remote: Version },
         #[error("Not a central server")]
         NotACentralServer,
         #[error("Could not authenticate")]

@@ -10,12 +10,13 @@ use crate::{
         self as api_v7,
         site_info::{get_site_info, SiteInfoInput, SiteInfoOutput},
         status::Output,
-        VERSION as V7_VERSION,
     },
 };
 use async_trait::async_trait;
 use log::info;
-use repository::{syncv7::SyncError, KeyType, KeyValueStoreRepository, RepositoryError};
+use repository::{
+    migrations::Version, syncv7::SyncError, KeyType, KeyValueStoreRepository, RepositoryError,
+};
 use thiserror::Error;
 use util::format_error;
 
@@ -147,7 +148,7 @@ async fn allocate_v7_token(
     let output = get_site_info(
         &coms_url,
         SiteInfoInput {
-            version: V7_VERSION,
+            version: Version::from_package_json(),
             name: settings.username.clone(),
             password_sha256: settings.password_sha256.clone(),
             hardware_id,
@@ -191,7 +192,7 @@ async fn request_and_set_site_info_v7(
     let output = get_site_info(
         &base_url,
         SiteInfoInput {
-            version: V7_VERSION,
+            version: Version::from_package_json(),
             name: settings.username.clone(),
             password_sha256: settings.password_sha256.clone(),
             hardware_id,

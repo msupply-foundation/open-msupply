@@ -39,7 +39,7 @@ impl SyncErrorV7Node {
             SyncError::DatabaseError(_) => SyncErrorVariantV7::DatabaseError,
             SyncError::SyncRecordSerializeError(_) => SyncErrorVariantV7::SyncRecordSerializeError,
             SyncError::RecordNotFound { .. } => SyncErrorVariantV7::RecordNotFound,
-            SyncError::SyncVersionMismatch(_, _, _) => SyncErrorVariantV7::SyncVersionMismatch,
+            SyncError::SyncVersionMismatch { .. } => SyncErrorVariantV7::SyncVersionMismatch,
             SyncError::NotACentralServer => SyncErrorVariantV7::NotACentralServer,
             SyncError::Authentication => SyncErrorVariantV7::Authentication,
             SyncError::SiteNotFound(_) => SyncErrorVariantV7::SiteNotFound,

@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
 use super::{response_or_err, ApiResponse};
-use repository::syncv7::SyncError;
+use repository::{migrations::Version, syncv7::SyncError};
 use util::{with_retries, RetrySeconds};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SiteInfoInput {
-    pub version: u32,
+    pub version: Version,
     pub name: String,
     pub password_sha256: String,
     pub hardware_id: String,
