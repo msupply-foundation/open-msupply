@@ -5,6 +5,7 @@ use std::{
 
 use rust_embed::RustEmbed;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 #[derive(RustEmbed)]
 // Relative to repository/Cargo.toml
@@ -30,7 +31,7 @@ impl PackageJsonAsset {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TS)]
 pub struct Version {
     pub major: i16,
     pub minor: i16,

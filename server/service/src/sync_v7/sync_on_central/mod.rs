@@ -4,6 +4,7 @@ use std::{
 };
 
 use repository::{
+    migrations::Version,
     syncv7::{SiteLockError, SyncError},
     EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError, Site, SiteFilter,
     SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter, SyncBufferFilter,
@@ -19,7 +20,7 @@ use crate::{
         api::{
             pull, push,
             site_info::{SiteInfoInput, SiteInfoOutput},
-            Common, VERSION,
+            Common,
         },
         sync::{sync_record_to_buffer_row, SyncBatchV7},
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
@@ -35,12 +36,12 @@ pub fn get_site_info(
         return Err(SyncError::NotACentralServer);
     }
 
-    if input.version != VERSION {
-        return Err(SyncError::SyncVersionMismatch(
-            VERSION,
-            VERSION,
-            input.version,
-        ));
+    let central_version = Version::from_package_json();
+    if input.version > central_version {
+        return Err(SyncError::SyncVersionMismatch {
+            central: central_version,
+            remote: input.version,
+        });
     }
 
     let ctx = service_provider
@@ -119,18 +120,18 @@ pub fn authenticate_site(
     service_provider: &ServiceProvider,
     token: &str,
     hardware_id: &str,
-    app_version: u32,
+    app_version: Version,
 ) -> Result<SiteRow, SyncError> {
     if !CentralServerConfig::is_central_server() {
         return Err(SyncError::NotACentralServer);
     }
 
-    if app_version != VERSION {
-        return Err(SyncError::SyncVersionMismatch(
-            VERSION,
-            VERSION,
-            app_version,
-        ));
+    let central_version = Version::from_package_json();
+    if app_version > central_version {
+        return Err(SyncError::SyncVersionMismatch {
+            central: central_version,
+            remote: app_version,
+        });
     }
 
     let ctx = service_provider
@@ -222,15 +223,14 @@ fn validate(
 
     // TODO(11139.5-auth): replace with
     //   authenticate_site(service_provider, &common.token, &common.hardware_id, common.version)?.id
-    let _ = &common;
     let site_id = 1;
 
-    if common.version != VERSION {
-        return Err(SyncError::SyncVersionMismatch(
-            VERSION,
-            VERSION,
-            common.version,
-        ));
+    let central_version = Version::from_package_json();
+    if common.version > central_version {
+        return Err(SyncError::SyncVersionMismatch {
+            central: central_version,
+            remote: common.version,
+        });
     }
 
     if let Some(lock) = check_site_lock(site_id) {
@@ -315,7 +315,7 @@ mod tests {
         sync::test_util_set_is_central_server,
         test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{migrations::Version, mock::MockDataInserts, test_db::setup_all};
 
     const SITE_NAME: &str = "test_site";
     const PASSWORD_SHA256: &str = "hashed_password_value";
@@ -344,7 +344,7 @@ mod tests {
 
     fn input() -> SiteInfoInput {
         SiteInfoInput {
-            version: VERSION,
+            version: Version::from_package_json(),
             name: SITE_NAME.to_string(),
             password_sha256: PASSWORD_SHA256.to_string(),
             hardware_id: HARDWARE_ID.to_string(),
@@ -353,9 +353,8 @@ mod tests {
 
     fn common() -> Common {
         Common {
-            version: VERSION,
-            username: "anyone".to_string(),
-            password: "anything".to_string(),
+            version: Version::from_package_json(),
+            hardware_id: HARDWARE_ID.to_string(),
         }
     }
 
@@ -434,20 +433,44 @@ mod tests {
 
         let allocated = get_site_info(&sp, input()).unwrap();
 
-        let site = authenticate_site(&sp, &allocated.token, HARDWARE_ID, VERSION).unwrap();
+        let site = authenticate_site(
+            &sp,
+            &allocated.token,
+            HARDWARE_ID,
+            Version::from_package_json(),
+        )
+        .unwrap();
         assert_eq!(site.id, 1);
 
         // Wrong token
-        let err = authenticate_site(&sp, "wrong_token", HARDWARE_ID, VERSION).unwrap_err();
+        let err = authenticate_site(
+            &sp,
+            "wrong_token",
+            HARDWARE_ID,
+            Version::from_package_json(),
+        )
+        .unwrap_err();
         assert!(matches!(err, SyncError::TokenNotFound));
 
         // Wrong hardware id
-        let err = authenticate_site(&sp, &allocated.token, "wrong_hw", VERSION).unwrap_err();
+        let err = authenticate_site(
+            &sp,
+            &allocated.token,
+            "wrong_hw",
+            Version::from_package_json(),
+        )
+        .unwrap_err();
         assert!(matches!(err, SyncError::HardwareIdMismatch));
 
-        // Wrong app version
-        let err = authenticate_site(&sp, &allocated.token, HARDWARE_ID, VERSION + 1).unwrap_err();
-        assert!(matches!(err, SyncError::SyncVersionMismatch(_, _, _)));
+        // Newer app version than central
+        let err = authenticate_site(
+            &sp,
+            &allocated.token,
+            HARDWARE_ID,
+            Version::from_str("99.99.99"),
+        )
+        .unwrap_err();
+        assert!(matches!(err, SyncError::SyncVersionMismatch { .. }));
     }
 
     #[actix_rt::test]
@@ -507,7 +530,7 @@ mod tests {
             &service_provider,
             pull::Request {
                 common: Common {
-                    version: VERSION + 1,
+                    version: Version::from_str("99.99.99"),
                     ..common()
                 },
                 input: pull::Input {
@@ -521,7 +544,7 @@ mod tests {
 
         assert!(matches!(
             response,
-            Err(SyncError::SyncVersionMismatch(_, _, _))
+            Err(SyncError::SyncVersionMismatch { .. })
         ));
     }
 }
