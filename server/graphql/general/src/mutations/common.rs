@@ -20,6 +20,7 @@ impl SyncSettingsInput {
             password_sha256: sha256(&self.password),
             interval_seconds: self.interval_seconds,
             batch_size: Default::default(),
+            use_integration_transaction: true,
         }
     }
 }

@@ -24,6 +24,9 @@
 #     remote_push: 1024
 #     remote_pull: 500
 #     central_pull: 500
+#   # Set to false to disable the outer transaction during integration. This can prevent PostgreSQL
+#   # from exhausting max_locks_per_transaction during large store migrations. Use with caution.
+#   use_integration_transaction: true
 # database:
 #   host: "localhost"
 #   port: 5432

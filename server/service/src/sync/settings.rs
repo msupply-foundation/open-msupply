@@ -4,6 +4,10 @@ use serde::{Deserialize, Serialize};
 pub(crate) static SYNC_V5_VERSION: u32 = 14; // bumped for v2.13.0 OG version 8.06
 pub(crate) static SYNC_V6_VERSION: u32 = 5; // bumped for 2.9.02 (adding new types to system log)
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
 pub struct SyncSettings {
     pub url: String,
@@ -14,6 +18,10 @@ pub struct SyncSettings {
     // Number of records to pull or push in one API call
     #[serde(default)]
     pub batch_size: BatchSize,
+    /// Wrap integration in a single outer transaction. Disable if PostgreSQL runs out of shared
+    /// memory (max_locks_per_transaction) during large initial syncs.
+    #[serde(default = "default_true")]
+    pub use_integration_transaction: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
