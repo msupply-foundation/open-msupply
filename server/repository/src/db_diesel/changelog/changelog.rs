@@ -506,7 +506,6 @@ create_condition!(
     (site_id, i32, store::site_id),
     (action, RowActionType, changelog::row_action),
     (table_name, ChangelogTableName, changelog::table_name),
-    (record_id, string, changelog::record_id),
     (store_id, string, changelog::store_id),
     (source_site_id, i32, changelog::source_site_id),
     (transfer_store_id, string, changelog::transfer_store_id),
@@ -807,6 +806,9 @@ fn central_data() -> ChangelogCondition::Inner {
 }
 
 impl Site {
+    // TODO once all V7 changelog queries are created, think of a better abstraction that is more readable
+    // for example we would need to sync store related data when it's moved, and probably want transfer and
+    // remote data to be in one place instead of split into transfer_data_for_site and remote_data_for_site
     pub fn remote_data_for_site(&self) -> ChangelogCondition::Inner {
         let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
         ChangelogCondition::And(vec![
@@ -848,6 +850,7 @@ impl Site {
 }
 
 pub fn get_table_names_for_sync_types(sync_types: &[SyncType]) -> Vec<ChangelogTableName> {
+    // TODO should come from main SyncType mapping for the changelog like "sync_style" method
     let all: &[(ChangelogTableName, SyncType)] = &[
         (ChangelogTableName::Unit, SyncType::Central),
         (ChangelogTableName::Currency, SyncType::Central),
