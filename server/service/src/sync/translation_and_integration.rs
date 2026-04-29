@@ -174,6 +174,11 @@ impl<'a> TranslationAndIntegration<'a> {
 
             if number_of_records_integrated % PROGRESS_STEP_LEN == 0 {
                 record_progress(total_to_integrate - number_of_records_integrated)?;
+                log::info!(
+                    "Integration progress: {}/{}",
+                    number_of_records_integrated,
+                    total_to_integrate
+                );
             }
         }
 

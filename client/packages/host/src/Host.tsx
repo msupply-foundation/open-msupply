@@ -6,7 +6,6 @@ import {
   Box,
   AppThemeProvider,
   QueryClient,
-  // ReactQueryDevtools,
   QueryClientProvider,
   RouteBuilder,
   ErrorBoundary,
@@ -31,6 +30,7 @@ import {
   InitialisationStatusType,
   useAuthContext,
 } from '@openmsupply-client/common';
+// import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
 import { Site } from './Site';
@@ -46,10 +46,8 @@ const appVersion = require('../../../../package.json').version; // eslint-disabl
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // These are disabled during development because they're
-      // annoying to have constantly refetching.
-      refetchOnWindowFocus: EnvUtils.isProduction(),
-      retry: EnvUtils.isProduction(),
+      // Creates unnecessary requests
+      refetchOnWindowFocus: false,
       // This is the default in v4 which is currently in alpha as it is
       // what most users think the default is.
       // This will subscribe components of a query only to the data they
@@ -186,7 +184,7 @@ const Host = () => (
                       </AlertModalProvider>
                     </ConfirmationModalProvider>
                   </AuthProvider>
-                  {/* <ReactQueryDevtools initialIsOpen /> */}
+                  {/* <ReactQueryDevtools initialIsOpen={false} /> */}
                 </GqlProvider>
               </QueryClientProvider>
             </ErrorBoundary>
