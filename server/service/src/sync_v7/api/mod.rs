@@ -36,6 +36,7 @@ pub type ApiResponse<O> = Result<O, SyncError>;
 pub(crate) struct SyncApiV7 {
     pub(crate) url: reqwest::Url,
     pub(crate) hardware_id: String,
+    pub(crate) auth_headers: HeaderMap,
 }
 
 impl SyncApiV7 {
@@ -46,7 +47,11 @@ impl SyncApiV7 {
         // For get_site_info route, this won't be present for api call that deals with initial login
         use_token: bool,
     ) -> Result<O, SyncError> {
-        let Self { url, hardware_id } = self.clone();
+        let Self {
+            url,
+            hardware_id,
+            auth_headers,
+        } = self.clone();
 
         let url = url.join("central/sync_v7/").unwrap().join(route).unwrap();
 
@@ -57,10 +62,12 @@ impl SyncApiV7 {
                 hardware_id,
             },
         };
-        // Adding header if use_token is true
-        let _ = use_token;
         let result = with_retries(RetrySeconds::default(), |client| {
-            client.post(url.clone()).json(&request)
+            let mut builder = client.post(url.clone());
+            if use_token {
+                builder = builder.headers(auth_headers.clone());
+            }
+            builder.json(&request)
         })
         .await;
 

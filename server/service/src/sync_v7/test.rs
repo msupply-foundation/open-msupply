@@ -188,6 +188,9 @@ mod pull_integration {
         KeyValueStoreRepository::new(&connection)
             .set_i32(KeyType::SettingsSyncSiteId, Some(1))
             .unwrap();
+        KeyValueStoreRepository::new(&connection)
+            .set_string(KeyType::SettingsSyncTokenV7, Some("test_token".to_string()))
+            .unwrap();
 
         let pull_data = web::Data::new(pull_response);
         let server = HttpServer::new(move || {
