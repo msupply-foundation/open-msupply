@@ -1,7 +1,7 @@
 use repository::{
     mock::{MockData, MockDataInserts},
     KeyType, KeyValueStoreRow, NameRow, RequisitionRow, RequisitionRowRepository, RequisitionType,
-    StoreRow, Upsert,
+    StoreRow,
 };
 use util::uuid::uuid;
 
@@ -65,7 +65,7 @@ async fn assigns_requisition_number_to_response_requisitions() {
     };
 
     log::debug!("insert");
-    response.upsert(&ctx.connection).unwrap();
+    RequisitionRowRepository::new(&ctx.connection).upsert_one(&response).unwrap();
 
     // manually trigger because inserting the requisition doesn't trigger the processor
     ctx.processors_trigger
