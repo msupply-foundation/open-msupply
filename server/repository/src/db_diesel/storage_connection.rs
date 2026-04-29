@@ -1,4 +1,5 @@
-use std::sync::{Mutex, MutexGuard};
+use std::collections::HashSet;
+use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 
 use super::{get_connection, DBBackendConnection, DBConnection};
 
@@ -57,14 +58,44 @@ impl<'a> LockedConnection<'a> {
     }
 }
 
+#[derive(Clone, Hash, Eq, PartialEq)]
+pub enum TransactionNotification {
+    ChangelogInsert,
+}
+
 pub struct StorageConnection {
     raw_connection: Mutex<DBConnection>,
+    on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
+    pending_notifications: RwLock<HashSet<TransactionNotification>>,
 }
 
 impl StorageConnection {
     pub fn lock(&self) -> LockedConnection<'_> {
         LockedConnection {
             raw_connection: self.raw_connection.lock().unwrap(),
+        }
+    }
+
+    /// Queue a notification to be fired after the transaction commits.
+    pub fn notify(&self, notification: TransactionNotification) {
+        if self.on_commit.is_some() {
+            self.pending_notifications
+                .write()
+                .unwrap()
+                .insert(notification);
+        }
+    }
+
+    /// Fire all pending notifications. Called after outermost transaction commits.
+    fn flush_notifications(&self) {
+        let notifications: HashSet<_> = {
+            let mut pending = self.pending_notifications.write().unwrap();
+            std::mem::take(&mut *pending)
+        };
+        if let Some(on_commit) = &self.on_commit {
+            for notification in &notifications {
+                on_commit(notification);
+            }
         }
     }
 }
@@ -109,7 +140,17 @@ impl StorageConnection {
     pub fn new(connection: DBConnection) -> StorageConnection {
         StorageConnection {
             raw_connection: Mutex::new(connection),
+            on_commit: None,
+            pending_notifications: RwLock::new(HashSet::new()),
         }
+    }
+
+    pub fn with_on_commit(
+        mut self,
+        callback: Arc<dyn Fn(&TransactionNotification) + Send + Sync>,
+    ) -> Self {
+        self.on_commit = Some(callback);
+        self
     }
 
     /// Executes operations in transaction. A new transaction is only started if not already in a
@@ -168,6 +209,10 @@ impl StorageConnection {
                         level: current_level + 1,
                     }
                 })?;
+                // Fire pending notifications after outermost transaction commits
+                if current_level == 0 {
+                    self.flush_notifications();
+                }
                 Ok(value)
             }
             Err(e) => {
@@ -200,15 +245,27 @@ fn map_begin_transaction_error<T>(
 #[derive(Clone)]
 pub struct StorageConnectionManager {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
+    on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
 }
 
 impl StorageConnectionManager {
     pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
-        StorageConnectionManager { pool }
+        StorageConnectionManager {
+            pool,
+            on_commit: None,
+        }
+    }
+
+    pub fn set_on_commit(&mut self, callback: Arc<dyn Fn(&TransactionNotification) + Send + Sync>) {
+        self.on_commit = Some(callback);
     }
 
     pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
-        Ok(StorageConnection::new(get_connection(&self.pool)?))
+        let conn = StorageConnection::new(get_connection(&self.pool)?);
+        match &self.on_commit {
+            Some(callback) => Ok(conn.with_on_commit(callback.clone())),
+            None => Ok(conn),
+        }
     }
 
     // Note, this method is only needed for an Android workaround to avoid adding a diesel

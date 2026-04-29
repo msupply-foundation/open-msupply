@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useTranslation,
   NothingHere,
@@ -19,6 +19,7 @@ import {
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
+import { useGroupedStockList } from '../api/hooks/useGroupedStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
 import { Toolbar } from './Toolbar';
 
@@ -29,8 +30,11 @@ export const StockListView = () => {
   const { manageVvmStatusForStock } = usePreferences();
   const { isOpen, onClose, onOpen } = useEditModal();
 
+  const [isGrouped, setIsGrouped] = useState<boolean | null>(null);
+
   const {
     queryParams: { sortBy, first, offset, filterBy },
+    updateFilterQuery,
   } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
     filters: [
@@ -54,6 +58,28 @@ export const StockListView = () => {
       },
     ],
   });
+
+  // Stock-line-specific filters don't apply in grouped mode (and vice versa
+  // there are no grouped-only filters yet). Clear them on toggle so stale URL
+  // params don't silently affect the ungrouped query when the user switches back.
+  const stockLineFilterKeys = [
+    'location.code',
+    'masterList.name',
+    'expiryDate',
+    'vvmStatusId',
+  ];
+  const initialRender = useRef(true);
+  useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
+    if (isGrouped) {
+      stockLineFilterKeys.forEach(key => updateFilterQuery(key, ''));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGrouped]);
+
   const queryParams = {
     filterBy: { ...filterBy },
     offset,
@@ -61,7 +87,19 @@ export const StockListView = () => {
     first,
   };
 
-  const { data, isFetching, isError } = useStockList(queryParams);
+  // Both hooks are always called (React rules), but only one is active
+  const ungroupedResult = useStockList(queryParams, {
+    enabled: isGrouped === false,
+  });
+  const groupedResult = useGroupedStockList(queryParams, {
+    enabled: isGrouped === true,
+  });
+
+  const data = isGrouped ? groupedResult.data : ungroupedResult.data;
+  const isFetching = isGrouped
+    ? groupedResult.isFetching
+    : ungroupedResult.isFetching;
+  const isError = isGrouped ? groupedResult.isError : ungroupedResult.isError;
 
   const mrtColumns = useMemo(
     (): ColumnDef<StockLineRowFragment>[] => [
@@ -173,6 +211,7 @@ export const StockListView = () => {
         description: t('description.soh'),
         accessorFn: row => row.totalNumberOfPacks * row.packSize,
         Cell: UnitsAndDosesCell,
+        aggregationFn: 'sum',
         align: 'right',
         size: 100,
         enableSorting: false,
@@ -184,6 +223,7 @@ export const StockListView = () => {
         description: t('description.available-soh'),
         accessorFn: row => row.availableNumberOfPacks * row.packSize,
         Cell: UnitsAndDosesCell,
+        aggregationFn: 'sum',
         align: 'right',
         size: 125,
         enableSorting: false,
@@ -204,6 +244,7 @@ export const StockListView = () => {
         description: t('description.total-cost'),
         accessorFn: row => row.totalNumberOfPacks * row.costPricePerPack,
         columnType: ColumnType.Currency,
+        aggregationFn: 'sum',
         enableSorting: false,
         size: 100,
         defaultHideOnMobile: true,
@@ -240,6 +281,10 @@ export const StockListView = () => {
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
     enableRowSelection: false,
+    grouping: {
+      field: 'code',
+      onToggle: setIsGrouped,
+    },
     noDataElement: (
       <NothingHere
         body={t('error.no-stock')}
@@ -251,7 +296,7 @@ export const StockListView = () => {
 
   return (
     <>
-      <Toolbar />
+      <Toolbar isGrouped={!!isGrouped} />
       <AppBarButtons exportFilter={filterBy} />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />

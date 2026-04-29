@@ -1,5 +1,6 @@
 use actix_web::{
     error, get,
+    http::header,
     web::{self, Data},
     Error, HttpResponse,
 };
@@ -24,6 +25,11 @@ impl error::ResponseError for DatabaseError {}
 struct FetchFileError(FrontendPluginFileRequestError);
 impl error::ResponseError for FetchFileError {}
 
+// The client appends ?v=<plugin_hash> to the URL — when the bundle changes the
+// hash changes, producing a new URL and a fresh cache entry. The bytes at any
+// given URL are therefore safe to mark immutable.
+const CACHE_CONTROL_VALUE: &str = "public, max-age=31536000, immutable";
+
 #[get(r#"/frontend_plugins/{plugin_code}/{filename:.*\..+$}"#)]
 async fn serve(
     service_provider: Data<ServiceProvider>,
@@ -38,5 +44,6 @@ async fn serve(
 
     Ok(HttpResponse::Ok()
         .content_type("application/javascript; charset=utf-8")
+        .insert_header((header::CACHE_CONTROL, CACHE_CONTROL_VALUE))
         .body(file_content))
 }

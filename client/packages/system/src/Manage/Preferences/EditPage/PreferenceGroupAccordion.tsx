@@ -55,6 +55,7 @@ export const PreferenceGroupAccordion = ({
               preference={pref}
               update={value => update({ [pref.key]: value })}
               isLast={isLast}
+              disabled={false}
             />
           );
         })}

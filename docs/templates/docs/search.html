@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block body %}
+  {% set page_class = "docs list" %}
+{% endblock body %}
+
+{% block header %}
+  {% set current_section = "" %}
+  {{ macros_header::header(current_section=current_section) }}
+{% endblock header %}
+
+{% block content %}
+<div class="wrap container" role="document">
+  <div class="content">
+    <div class="row flex-xl-nowrap">
+
+      {{ macros_sidebar::docs_sidebar(current_section=current_section, current_url=current_url) }}
+
+      <div class="docs-content flex-grow-1">
+        <h1 id="search-heading">Search results</h1>
+        <div id="search-results">
+          <p class="search-loading">Loading search index…</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script defer src="{{ get_url(path='plugins/elasticlunr.min.js') | safe }}"></script>
+<script defer src="{{ get_url(path='search_index.en.js') | safe }}"></script>
+<script defer src="{{ get_url(path='js/search-page.js') | safe }}"></script>
+{% endblock content %}

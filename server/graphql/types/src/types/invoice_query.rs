@@ -383,6 +383,14 @@ impl InvoiceNode {
         &self.row().currency_rate
     }
 
+    pub async fn charges_local_currency(&self) -> &f64 {
+        &self.row().charges_local_currency
+    }
+
+    pub async fn charges_foreign_currency(&self) -> &f64 {
+        &self.row().charges_foreign_currency
+    }
+
     /// Inbound Shipment that is the origin of this Supplier Return
     /// OR Outbound Shipment that is the origin of this Customer Return
     pub async fn original_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {

@@ -187,7 +187,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
         apply_equal_filter!(query, status, purchase_order_line::status);
         if let Some(true) = received_less_than_adjusted {
             query = query.filter(
-                purchase_order_line_stats::shipped_number_of_units
+                purchase_order_line_stats::received_number_of_units
                     .nullable()
                     .lt(double_coalesce::coalesce(
                         purchase_order_line::adjusted_number_of_units,

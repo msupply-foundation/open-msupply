@@ -13,10 +13,7 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { ItemStockOnHandFragment } from '@openmsupply-client/system';
-import {
-  PurchaseOrderFragment,
-  usePurchaseOrderLine,
-} from '../../api';
+import { PurchaseOrderFragment, usePurchaseOrderLine } from '../../api';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { createDraftPurchaseOrderLine } from './utils';
 

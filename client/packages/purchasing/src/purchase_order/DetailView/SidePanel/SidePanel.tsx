@@ -90,8 +90,8 @@ export const SidePanel = (): ReactElement => {
       />
       <OtherSection
         draft={draft}
-        onUpdate={handleUpdate}
         onChange={handleChange}
+        disabled={disabled}
       />
       <DateSection draft={draft} onUpdate={handleUpdate} />
     </DetailPanelPortal>

@@ -112,12 +112,13 @@ where
 mod test {
     use repository::{
         mock::{
-            currency_a, mock_inbound_shipment_c, mock_name_a, mock_name_linked_to_store_join,
-            mock_name_not_linked_to_store, mock_store_a, mock_store_linked_to_name,
-            mock_user_account_a, MockData, MockDataInserts,
+            currency_a, currency_b, mock_inbound_shipment_c, mock_name_a,
+            mock_name_linked_to_store_join, mock_name_not_linked_to_store, mock_store_a,
+            mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceRowRepository, NameRow, NameStoreJoinRow,
+        InvoiceRow, InvoiceRowRepository, NameRow, NameStoreJoinRow, PurchaseOrderRow,
+        PurchaseOrderRowRepository,
     };
 
     use crate::{
@@ -365,5 +366,115 @@ mod test {
             .unwrap();
 
         assert_eq!(invoice.name_store_id, None);
+    }
+
+    #[actix_rt::test]
+    async fn insert_inbound_shipment_uses_po_currency() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "po_currency_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "po_currency_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn po_with_foreign_currency() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "po_with_foreign_currency".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: supplier().id,
+                currency_id: Some(currency_b().id), // EUR
+                foreign_exchange_rate: 0.9,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_inbound_shipment_uses_po_currency",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&po_with_foreign_currency())
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // When linked to a PO with a foreign currency, the invoice should use the PO's currency
+        service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "test_po_currency".to_string(),
+                    other_party_id: supplier().id,
+                    purchase_order_id: Some(po_with_foreign_currency().id),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("test_po_currency")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            invoice.currency_id,
+            Some(currency_b().id),
+            "Invoice should use the PO's currency (EUR), not the home currency"
+        );
+        assert_eq!(
+            invoice.currency_rate,
+            currency_b().rate,
+            "Invoice currency_rate should match the latest rate from the currency table"
+        );
+
+        // Without a PO, should still default to home currency
+        service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "test_no_po_currency".to_string(),
+                    other_party_id: supplier().id,
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("test_no_po_currency")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            invoice.currency_id,
+            Some(currency_a().id),
+            "Invoice without PO should use home currency"
+        );
+        assert_eq!(
+            invoice.currency_rate, 1.0,
+            "Invoice without PO should have currency_rate 1.0"
+        );
     }
 }

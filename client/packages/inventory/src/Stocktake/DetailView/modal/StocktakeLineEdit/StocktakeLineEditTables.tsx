@@ -58,11 +58,12 @@ export const BatchTable = ({
   isInitialStocktake: boolean;
 }) => {
   const t = useTranslation();
-  const { manageVvmStatusForStock } = usePreferences();
+  const { manageVvmStatusForStock, manageVaccinesInDoses } = usePreferences();
   const { errors } = useStocktakeLineErrorContext();
 
   const showVVMStatusColumn =
     (manageVvmStatusForStock && isVaccineItem) ?? false;
+  const showDosesCountedColumn = !!(manageVaccinesInDoses && isVaccineItem);
 
   const columns = useMemo(
     (): ColumnDef<DraftStocktakeLine>[] => [
@@ -193,6 +194,18 @@ export const BatchTable = ({
         ),
       },
       {
+        id: 'dosesCounted',
+        header: t('label.doses-counted'),
+        columnType: ColumnType.Number,
+        size: 100,
+        includeColumn: showDosesCountedColumn,
+        accessorFn: row => {
+          const counted = row.countedNumberOfPacks;
+          if (counted === null || counted === undefined) return null;
+          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+        },
+      },
+      {
         accessorKey: 'volumePerPack',
         header: t('label.volume-per-pack'),
         size: 100,
@@ -224,7 +237,7 @@ export const BatchTable = ({
         ),
       },
     ],
-    [showVVMStatusColumn, errors]
+    [showVVMStatusColumn, showDosesCountedColumn, errors]
   );
 
   const table = useSimpleMaterialTable({

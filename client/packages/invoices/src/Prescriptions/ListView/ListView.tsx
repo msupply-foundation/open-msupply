@@ -90,7 +90,8 @@ export const PrescriptionListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
+        description: t('description.invoice-number'),
         enableSorting: true,
         enableColumnFilter: true,
         size: 110,

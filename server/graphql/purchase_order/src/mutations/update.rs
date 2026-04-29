@@ -233,7 +233,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::PurchaseOrderDoesNotExist
         | ServiceError::NotASupplier
         | ServiceError::DonorDoesNotExist
-        | ServiceError::UserUnableToAuthorisePurchaseOrder => BadUserInput(formatted_error),
+        | ServiceError::UserUnableToAuthorisePurchaseOrder
+        | ServiceError::CannotEditSentPurchaseOrder => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)
         }

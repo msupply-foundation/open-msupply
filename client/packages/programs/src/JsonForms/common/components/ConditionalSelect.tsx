@@ -8,6 +8,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
+import { formatErrors } from '../formatErrors';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { extractProperty } from '@common/utils';
@@ -89,7 +90,7 @@ const UIComponent = (props: ControlProps) => {
           clearable={!props.config?.required}
           inputProps={{
             error: !!zErrors || !!props.errors,
-            helperText: zErrors || props.errors,
+            helperText: formatErrors(zErrors || props.errors),
           }}
           isOptionEqualToValue={option => option.label === data}
           disabled={!props.enabled}

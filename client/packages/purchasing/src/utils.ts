@@ -74,7 +74,10 @@ export const getDeliveryStatusTranslator =
 export const isPurchaseOrderDisabled = (
   purchaseOrder: PurchaseOrderFragment | PurchaseOrderRowFragment
 ): boolean => {
-  return purchaseOrder.status === PurchaseOrderNodeStatus.Finalised;
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
+  );
 };
 
 export const canAddNewLines = (

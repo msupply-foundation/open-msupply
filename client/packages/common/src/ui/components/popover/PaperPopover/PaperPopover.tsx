@@ -1,5 +1,6 @@
 import React, { PropsWithChildren } from 'react';
 import { Box, PaperProps, Popover, PopoverOrigin } from '@mui/material';
+import { useIntlUtils } from '@common/intl';
 
 export interface PopoverProps {
   mode: 'hover' | 'click';
@@ -23,6 +24,7 @@ export const PaperPopover: React.FC<PropsWithChildren<PopoverProps>> = ({
   anchorEl: anchorElProp,
   onAnchorElChange,
 }) => {
+  const { isRtl } = useIntlUtils();
   const [internalAnchorEl, setInternalAnchorEl] =
     React.useState<HTMLElement | null>(null);
 
@@ -68,6 +70,7 @@ export const PaperPopover: React.FC<PropsWithChildren<PopoverProps>> = ({
         disableRestoreFocus
         slotProps={{
           paper: {
+            dir: isRtl ? 'rtl' : 'ltr',
             style: {
               height: height ? `${height}px` : 'auto',
               width: width ? `${width}px` : 'auto',

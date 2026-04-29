@@ -68,6 +68,8 @@ pub enum RequisitionType {
     #[default]
     Request,
     Response,
+    Imprest,
+    StockHistory,
 }
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

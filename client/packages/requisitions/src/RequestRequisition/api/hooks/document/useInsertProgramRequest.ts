@@ -27,6 +27,10 @@ export const useInsertProgramRequest = () => {
           error(t('error.max-orders-reached-for-period'))();
           break;
         }
+        case 'SupplierNotValid': {
+          error(t('error.program-not-valid-for-supplier'))();
+          break;
+        }
         default:
           error(t('error.unable-to-create-requisition'))();
       }

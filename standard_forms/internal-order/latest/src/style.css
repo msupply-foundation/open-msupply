@@ -49,7 +49,7 @@ body > table {
 }
 .body_column_label th {
   border-bottom: 0.5px solid black;
-  text-align: left;
+  text-align: start;
 }
 
 .body_column_label th,

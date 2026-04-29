@@ -9,9 +9,9 @@ export const CurrencyValueCell = <T extends MRT_RowData>({
   currencyCode,
 }: {
   cell: MRT_Cell<T>;
-  currencyCode?: string;
+  currencyCode?: Currencies;
 }) => {
-  const { c } = useCurrency(currencyCode as Currencies);
+  const { c } = useCurrency(currencyCode);
 
   if (cell.getValue() == null) {
     return <span>{UNDEFINED_STRING_VALUE}</span>;

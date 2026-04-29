@@ -1,4 +1,5 @@
 export * from './useExportStockList';
+export * from './useGroupedStockList';
 export * from './useInventoryAdjustment';
 export * from './useRepack';
 export * from './useStockLedger';

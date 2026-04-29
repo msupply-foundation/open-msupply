@@ -58,14 +58,14 @@ pub fn generate(
         item_variant_id: item_variant_id
             .map(|v| v.value)
             .unwrap_or(existing_line.item_variant_id),
-        donor_id: donor_id
-            .map(|d| d.value)
-            .unwrap_or(existing_line.donor_id),
+        donor_id: donor_id.map(|d| d.value).unwrap_or(existing_line.donor_id),
         manufacturer_id: manufacturer_id
             .map(|m| m.value)
             .unwrap_or(existing_line.manufacturer_id),
         reason_option_id: reason_option_id.or(existing_line.reason_option_id),
-        vvm_status_id: vvm_status_id.or(existing_line.vvm_status_id),
+        vvm_status_id: vvm_status_id
+            .map(|v| v.value)
+            .unwrap_or(existing_line.vvm_status_id),
         volume_per_pack: volume_per_pack.unwrap_or(existing_line.volume_per_pack),
         campaign_id: campaign_id
             .map(|c| c.value)

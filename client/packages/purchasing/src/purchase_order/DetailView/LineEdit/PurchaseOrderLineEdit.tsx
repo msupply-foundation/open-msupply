@@ -13,7 +13,6 @@ import {
   useAuthContext,
   UserPermission,
   useTranslation,
-  NumUtils,
   NumInputRow,
   TextInput,
   MultilineTextInput,
@@ -29,6 +28,9 @@ import {
   StockItemSearchInput,
 } from '@openmsupply-client/system/src';
 import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
+
+const PRICE_DECIMAL_LIMIT = 6;
+
 import {
   calculatePricesAndDiscount,
   calculateUnitQuantities,
@@ -67,11 +69,6 @@ export const PurchaseOrderLineEdit = ({
     UserPermission.PurchaseOrderAuthorise
   );
 
-  const getCurrencyValue = (value: number | null | undefined) => {
-    if (value == null) return undefined;
-    return NumUtils.round(value, options.precision);
-  };
-
   // Disable input components. Individual inputs can override this
   const disabled =
     isDisabled || draft?.status === PurchaseOrderLineStatusNode.Closed;
@@ -101,7 +98,9 @@ export const PurchaseOrderLineEdit = ({
             label={t('label.status')}
             Input={
               <Select
-                disabled={isFieldDisabled(status, StatusGroup.ExceptSent)}
+                disabled={
+                  disabled || isFieldDisabled(status, StatusGroup.ExceptSent)
+                }
                 sx={{
                   width: 200,
                 }}
@@ -151,15 +150,18 @@ export const PurchaseOrderLineEdit = ({
                 onChange={(value?: string) =>
                   update({ supplierItemCode: value })
                 }
-                disabled={disabled}
+                disabled={
+                  disabled ||
+                  isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                }
               />
               <InputWithLabelRow
                 Input={
                   <ManufacturerSearchInput
-                    disabled={isFieldDisabled(
-                      status,
-                      StatusGroup.AfterConfirmed
-                    )}
+                    disabled={
+                      disabled ||
+                      isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                    }
                     value={draft?.manufacturer ?? null}
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
@@ -198,7 +200,9 @@ export const PurchaseOrderLineEdit = ({
               )}
               value={draft?.numberOfPacks ?? 0}
               disabled={
-                isDisabled || (!canEditRequestedQuantity && !userIsAuthorised)
+                draft?.status === PurchaseOrderLineStatusNode.Closed ||
+                status === PurchaseOrderNodeStatus.Finalised ||
+                (!canEditRequestedQuantity && !userIsAuthorised)
               }
               onChange={(value: number | undefined) => {
                 // Adjust the requested and adjusted number of units based
@@ -245,7 +249,7 @@ export const PurchaseOrderLineEdit = ({
 
             <NumInputRow
               label={t('label.price-per-pack-before-discount')}
-              value={getCurrencyValue(draft?.pricePerPackBeforeDiscount)}
+              value={draft?.pricePerPackBeforeDiscount}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -256,7 +260,7 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={options.precision}
+              decimalLimit={PRICE_DECIMAL_LIMIT}
               endAdornment={options.symbol}
             />
             <NumInputRow
@@ -278,7 +282,7 @@ export const PurchaseOrderLineEdit = ({
             />
             <NumInputRow
               label={t('label.price-per-pack-after-discount')}
-              value={getCurrencyValue(draft?.pricePerPackAfterDiscount) || 0}
+              value={draft?.pricePerPackAfterDiscount ?? 0}
               disabled={
                 disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
               }
@@ -289,17 +293,15 @@ export const PurchaseOrderLineEdit = ({
                 );
                 update(adjustedPatch);
               }}
-              decimalLimit={options.precision}
+              decimalLimit={PRICE_DECIMAL_LIMIT}
               endAdornment={options.symbol}
             />
             <NumInputRow
               label={t('label.total-cost')}
               value={
                 draft
-                  ? getCurrencyValue(
-                      (draft.pricePerPackAfterDiscount ?? 0) *
-                        (draft.numberOfPacks ?? 0)
-                    ) || 0
+                  ? (draft.pricePerPackAfterDiscount ?? 0) *
+                      (draft.numberOfPacks ?? 0) || 0
                   : 0
               }
               decimalLimit={options.precision}
@@ -316,11 +318,17 @@ export const PurchaseOrderLineEdit = ({
               label={t('label.requested-delivery-date')}
               value={draft?.requestedDeliveryDate}
               disabled={
-                disabled || isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                disabled || isFieldDisabled(status, StatusGroup.AfterSent)
               }
-              onChange={(value: string | null) =>
-                update({ requestedDeliveryDate: value })
-              }
+              onChange={(value: string | null) => {
+                const patch: Partial<DraftPurchaseOrderLine> = {
+                  requestedDeliveryDate: value,
+                };
+                if (!draft?.expectedDeliveryDate && value) {
+                  patch['expectedDeliveryDate'] = value;
+                }
+                update(patch);
+              }}
             />
             <DateInput
               label={t('label.expected-delivery-date')}
@@ -333,15 +341,21 @@ export const PurchaseOrderLineEdit = ({
               }
             />
             <MultilineTextInput
-              label={t('label.comment')}
+              label={t('label.comment-for-supplier')}
               value={draft?.comment || ''}
-              disabled={disabled}
+              disabled={
+                draft?.status === PurchaseOrderLineStatusNode.Closed ||
+                status === PurchaseOrderNodeStatus.Finalised
+              }
               onChange={(value?: string) => update({ comment: value })}
             />
             <MultilineTextInput
-              label={t('label.notes')}
+              label={t('label.note-internal')}
               value={draft?.note || ''}
-              disabled={disabled}
+              disabled={
+                draft?.status === PurchaseOrderLineStatusNode.Closed ||
+                status === PurchaseOrderNodeStatus.Finalised
+              }
               onChange={(value?: string) => update({ note: value })}
             />
           </>

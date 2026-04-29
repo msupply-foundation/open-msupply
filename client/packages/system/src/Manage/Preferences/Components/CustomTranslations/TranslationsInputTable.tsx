@@ -92,11 +92,11 @@ export const TranslationsTable = ({
               sx={{
                 ...(showInvalid
                   ? {
-                      borderColor: theme => theme.palette.error.main,
-                      borderWidth: '2px',
-                      borderStyle: 'solid',
-                      borderRadius: '8px',
-                    }
+                    borderColor: theme => theme.palette.error.main,
+                    borderWidth: '2px',
+                    borderStyle: 'solid',
+                    borderRadius: '8px',
+                  }
                   : undefined),
               }}
             />

@@ -25,7 +25,7 @@ import {
 } from '@openmsupply-client/invoices/src/utils';
 import { inboundParsers } from '../../api';
 import { useInboundDelete } from './useInboundDelete';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 export const useInboundShipment = (id?: string) => {
   const { invoiceId: paramInvoiceId = '' } = useParams();
@@ -48,8 +48,11 @@ export const useInboundShipment = (id?: string) => {
   const hasMutatePermission = isExternal
     ? userHasPermission(UserPermission.InboundShipmentExternalMutate)
     : userHasPermission(UserPermission.InboundShipmentMutate);
-  const hasVerifyPermission = isExternal
+  const hasAuthorisePermission = isExternal
     ? userHasPermission(UserPermission.InboundShipmentExternalAuthorise)
+    : false;
+  const hasVerifyPermission = isExternal
+    ? userHasPermission(UserPermission.InboundShipmentExternalVerify)
     : userHasPermission(UserPermission.InboundShipmentVerify);
   const isDisabled = isInboundDisabled(data) || !hasMutatePermission;
   const isStatusChangeDisabled = isInboundStatusChangeDisabled(data);
@@ -60,7 +63,7 @@ export const useInboundShipment = (id?: string) => {
   }, [data]);
 
   // UPDATE
-  const { patch, updatePatch, resetDraft, isDirty } =
+  const { patch, patchRef, updatePatch, resetDraft, isDirty } =
     usePatchState<InboundFragment>(data ?? {});
 
   const {
@@ -84,6 +87,36 @@ export const useInboundShipment = (id?: string) => {
     else await updateMutation({ ...patch, id: data.id });
     resetDraft();
   };
+
+  // Save using the ref so we always have the latest pending changes,
+  // regardless of React's render cycle. Don't resetDraft here — the
+  // mutation triggers a refetch via invalidateQueries, and clearing the
+  // patch before the refetch completes would briefly revert the UI to
+  // stale query data. The patch values become harmless once the refetch
+  // lands (they'll match the new data, so isDirty becomes false).
+  const saveDraft = useCallback(async () => {
+    if (!data?.id) return;
+    const changes = patchRef.current;
+    if (Object.keys(changes).length === 0) return;
+    const hasChanges = Object.entries(changes).some(
+      ([key, value]) => data[key as keyof InboundFragment] !== value
+    );
+    if (!hasChanges) return;
+    patchRef.current = {};
+    try {
+      await updateMutation({ ...changes, id: data.id });
+    } catch (e) {
+      // Restore changes so they aren't silently lost on failure;
+      // spread order ensures edits made during the await take precedence
+      patchRef.current = { ...changes, ...patchRef.current };
+      throw e;
+    }
+  }, [data, patchRef, updateMutation]);
+
+  const draft = useMemo(
+    () => (data ? { ...data, ...patch } : data),
+    [data, patch]
+  );
 
   // CREATE
   const {
@@ -120,13 +153,15 @@ export const useInboundShipment = (id?: string) => {
 
   return {
     query: { data, loading, error },
+    draft,
     isExternal,
     isDisabled,
     hasMutatePermission,
     isHoldable,
     isStatusChangeDisabled,
+    hasAuthorisePermission,
     hasVerifyPermission,
-    update: { update, isUpdating, updateError },
+    update: { update, saveDraft, isUpdating, updateError },
     create: { create, isCreating, createError },
     delete: { deleteInbound, isDeleting, deleteError },
     isDirty,

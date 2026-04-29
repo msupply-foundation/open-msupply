@@ -68,13 +68,15 @@ export const Toolbar = () => {
                 label={t('label.customer-ref')}
                 Input={
                   <Tooltip title={theirReference} placement="bottom-start">
-                    <BufferedTextInput
-                      disabled={isDisabled}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={theirReference}
-                      onChange={e => update({ theirReference: e.target.value })}
-                    />
+                    <Box>
+                      <BufferedTextInput
+                        disabled={isDisabled}
+                        size="small"
+                        sx={{ width: 250 }}
+                        value={theirReference}
+                        onChange={e => update({ theirReference: e.target.value })}
+                      />
+                    </Box>
                   </Tooltip>
                 }
               />

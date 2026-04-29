@@ -1,76 +1,175 @@
 #!/bin/bash
 set -euo pipefail
 
-readonly TODAY=$(date +%m%d)
 readonly DATE_DISPLAY=$(date +%Y-%m-%d)
 
-branch_exists() {
-    local branch=$1
-    git show-ref --verify --quiet "refs/remotes/origin/$branch"
-}
+HAS_UNRESOLVED_CONFLICTS=false
+CONFLICTED_FILE_COUNT=0
+CONFLICTED_FILES=""
 
-create_merge_branch() {
-    local RC_BRANCH=$1
-    local MERGE_BRANCH=$2
-    
-    echo "Creating new merge branch: $MERGE_BRANCH from $RC_BRANCH"
-    git fetch origin
-    git checkout "origin/$RC_BRANCH"
-    git checkout -b "$MERGE_BRANCH"
+merge_develop_into_branch() {
+    local MERGE_BRANCH=$1
+    HAS_UNRESOLVED_CONFLICTS=false
+    CONFLICTED_FILE_COUNT=0
+    CONFLICTED_FILES=""
 
     echo "Merging develop into $MERGE_BRANCH to detect conflicts"
-    if git merge origin/develop --no-commit --no-ff; then
+    if git merge origin/develop --no-commit --no-ff 2>/dev/null; then
         echo "Clean merge - no conflicts detected"
-        git commit -m "Merge develop into $MERGE_BRANCH"
-    else 
+        if git diff --cached --quiet; then
+            echo "Nothing to commit - develop is already up to date"
+            git merge --abort 2>/dev/null || true
+        else
+            git commit -m "Merge develop into $MERGE_BRANCH"
+        fi
+    else
         echo "Merge conflicts detected"
-        if git status --porcelain | grep -q "package.json"; then 
+        if git status --porcelain | grep -q "package.json"; then
             echo "Conflicts in package.json detected, auto-resolving"
             git checkout --theirs package.json
             git add package.json
-        fi 
+        fi
 
         if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
             echo "There are unresolved conflicts that need manual resolution"
-            echo "Please resolve conflicts in $MERGE_BRANCH and commit manually"
+            CONFLICTED_FILE_COUNT=$(git status --porcelain | grep -cE "^(UU|AA|DD)")
+            CONFLICTED_FILES=$(git status --porcelain | grep -E "^(UU|AA|DD)" | awk '{print $2}')
             git merge --abort
+            HAS_UNRESOLVED_CONFLICTS=true
         else
             git commit -m "Merge develop into $MERGE_BRANCH"
         fi
     fi
-
-    git push -u origin "$MERGE_BRANCH"
-    echo "Created merge branch $MERGE_BRANCH"
 }
 
-create_pull_request() {
+comment_on_pr_if_conflicts() {
+    local PR_NUMBER=$1
+    local RC_BRANCH=$2
+
+    if [[ "$HAS_UNRESOLVED_CONFLICTS" == "true" ]]; then
+        echo "Adding conflict notification comment to PR #$PR_NUMBER"
+        gh pr comment "$PR_NUMBER" --body "⚠️ **Merge conflicts detected** between \`$RC_BRANCH\` and \`develop\` on $DATE_DISPLAY — $CONFLICTED_FILE_COUNT conflicted file(s).
+
+These conflicts need manual resolution. The merge was aborted so this branch contains only the RC changes without the develop merge."
+    fi
+}
+
+generate_pr_body() {
+    local RC_BRANCH=$1
+
+    local conflict_section="✅ No merge conflicts"
+    if [[ "$HAS_UNRESOLVED_CONFLICTS" == "true" ]]; then
+        local file_list=""
+        for f in $CONFLICTED_FILES; do
+            file_list="${file_list}
+- \`$f\`"
+        done
+        conflict_section="⚠️ **$CONFLICTED_FILE_COUNT file(s) with merge conflicts** — manual resolution required
+${file_list}"
+    fi
+
+    echo "# 👩🏻‍💻 What does this PR do?
+
+Automated merge of \`$RC_BRANCH\` into \`develop\`.
+- $UNMERGED_COMMITS unmerged commit(s) detected on $DATE_DISPLAY
+- Source: This branch is based on \`$RC_BRANCH\`
+
+$conflict_section
+
+This PR was created automatically by the RC to develop integration workflow.
+
+## 💌 Any notes for the reviewer?
+
+Please review the merge commit and ensure no conflicts were incorrectly resolved.
+
+# 🧪 Testing
+
+- [ ] CI passes on this branch
+
+# 📃 Documentation
+
+- [x] **No documentation required**: no user facing changes
+
+# 📃 Reviewer Checklist
+
+**Breaking Changes**
+- [ ] No Breaking Changes in the Graphql API
+
+**Issue Review**
+- [ ] All requirements in original issue have been covered
+
+**Tests Pass**
+- [ ] Postgres
+- [ ] SQLite
+- [ ] Frontend"
+}
+
+create_new_pull_request() {
     local RC_BRANCH=$1
     local MERGE_BRANCH=$2
-    
-    local pr_title="Merge $RC_BRANCH to develop - fresh commit on $TODAY"
-    local pr_body="**Details:**
-    - Fresh commit detected on: $DATE_DISPLAY
-    - Source: This branch is based on $RC_BRANCH
 
-This PR was created automatically by the daily RC integration workflow.
-⚠️ **Note**: Any merge conflicts will be visible in this PR and need manual resolution."
+    echo "Creating new merge branch: $MERGE_BRANCH from $RC_BRANCH"
+    git checkout "origin/$RC_BRANCH"
+    git checkout -b "$MERGE_BRANCH"
+    merge_develop_into_branch "$MERGE_BRANCH"
+    git push -u origin "$MERGE_BRANCH"
+
+    local pr_title="Merge $RC_BRANCH to develop"
+    local pr_body
+    pr_body=$(generate_pr_body "$RC_BRANCH")
 
     echo "Creating pull request for $MERGE_BRANCH -> develop"
-    
-    if gh pr create \
+    local pr_url
+    if pr_url=$(gh pr create \
         --title "$pr_title" \
         --body "$pr_body" \
         --base develop \
-        --head "$MERGE_BRANCH"; then
+        --head "$MERGE_BRANCH"); then
         echo "PR created successfully for $MERGE_BRANCH"
+        local pr_number
+        pr_number=$(echo "$pr_url" | grep -oE '[0-9]+$')
+        comment_on_pr_if_conflicts "$pr_number" "$RC_BRANCH"
     else
         echo "ERROR: Failed to create PR for $MERGE_BRANCH"
         return 1
     fi
 }
 
+update_existing_pull_request() {
+    local RC_BRANCH=$1
+    local MERGE_BRANCH=$2
+    local PR_NUMBER=$3
+
+ echo "Updating PR #$PR_NUMBER: merging latest $RC_BRANCH into $MERGE_BRANCH"
+    git checkout -B "$MERGE_BRANCH" "origin/$MERGE_BRANCH"
+
+    if git merge "origin/$RC_BRANCH" --no-edit; then
+        echo "Merged latest $RC_BRANCH into $MERGE_BRANCH"
+    else
+        echo "Conflicts merging $RC_BRANCH into $MERGE_BRANCH, aborting"
+        git merge --abort
+        gh pr comment "$PR_NUMBER" --body "⚠️ **Failed to merge latest \`$RC_BRANCH\` commits into this branch** on $DATE_DISPLAY.
+
+New commits on \`$RC_BRANCH\` conflict with this branch (likely with previous conflict resolutions). This branch was **not updated** with the latest RC changes.
+
+Please manually merge \`$RC_BRANCH\` into \`$MERGE_BRANCH\` and re-resolve conflicts."
+    fi
+
+    merge_develop_into_branch "$MERGE_BRANCH"
+    git push --force-with-lease origin "$MERGE_BRANCH"
+
+    local pr_body
+    pr_body=$(generate_pr_body "$RC_BRANCH")
+    gh pr edit "$PR_NUMBER" --body "$pr_body"
+
+    comment_on_pr_if_conflicts "$PR_NUMBER" "$RC_BRANCH"
+    echo "PR #$PR_NUMBER updated with latest changes from $RC_BRANCH"
+}
+
 # Main execution
-echo "Checking RC branches for fresh commits on $DATE_DISPLAY"
+echo "Checking RC branches for unmerged commits"
+
+git fetch origin
 
 RC_BRANCHES=$(git branch -r | grep -E 'origin/v[0-9.]+-(R|r)(C|c)' | sed 's|.*origin/||')
 
@@ -82,32 +181,25 @@ fi
 for RC_BRANCH in $RC_BRANCHES; do 
     echo "Checking branch: $RC_BRANCH"
 
-    COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d "origin/$RC_BRANCH" 2>/dev/null || echo "")
-    
-    if [[ "$COMMIT_DATE" != "$TODAY" ]]; then
-        echo "No fresh commit found on $RC_BRANCH (commit date: $COMMIT_DATE)"
+    UNMERGED_COMMITS=$(git log --oneline "origin/develop..origin/$RC_BRANCH" 2>/dev/null | wc -l | tr -d ' ')
+
+    if [[ "$UNMERGED_COMMITS" -eq 0 ]]; then
+        echo "No unmerged commits on $RC_BRANCH"
         continue
     fi
 
-    echo "Found fresh commit on $RC_BRANCH"
+    echo "Found $UNMERGED_COMMITS unmerged commit(s) on $RC_BRANCH"
 
-    EXISTING_OPEN_PR=$(gh pr list --base develop --state open --json headRefName,number --jq ".[] | select(.headRefName | startswith(\"merge-${RC_BRANCH}-to-develop-\")) | .number" 2>/dev/null | head -1 || echo "")
-    
+    EXISTING_OPEN_PR_INFO=$(gh pr list --base develop --state open --json headRefName,number --jq ".[] | select(.headRefName | startswith(\"merge-${RC_BRANCH}-to-develop\"))" 2>/dev/null | head -1 || echo "")
+    EXISTING_OPEN_PR=$(echo "$EXISTING_OPEN_PR_INFO" | jq -r '.number // empty' 2>/dev/null || echo "")
+    EXISTING_MERGE_BRANCH=$(echo "$EXISTING_OPEN_PR_INFO" | jq -r '.headRefName // empty' 2>/dev/null || echo "")
+
     if [[ -n "$EXISTING_OPEN_PR" ]]; then
-        echo "Open PR already exists for $RC_BRANCH (PR #$EXISTING_OPEN_PR), skipping"
-        continue
-    fi
-    
-    MERGE_BRANCH="merge-${RC_BRANCH}-to-develop-${TODAY}"
-
-    if branch_exists "$MERGE_BRANCH" && [[ -z "$EXISTING_OPEN_PR" ]]; then 
-        echo "Merge branch $MERGE_BRANCH already exists, but no PR found. Will create PR."
-        git checkout "$MERGE_BRANCH"
+        update_existing_pull_request "$RC_BRANCH" "$EXISTING_MERGE_BRANCH" "$EXISTING_OPEN_PR"
     else
-        create_merge_branch "$RC_BRANCH" "$MERGE_BRANCH"
+        MERGE_BRANCH="merge-${RC_BRANCH}-to-develop"
+        create_new_pull_request "$RC_BRANCH" "$MERGE_BRANCH"
     fi
-
-    create_pull_request "$RC_BRANCH" "$MERGE_BRANCH"
 done
 
 echo "RC integration check completed"

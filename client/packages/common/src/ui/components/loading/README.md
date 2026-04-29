@@ -1,13 +1,4 @@
-## common/ui/components/loading
+# common/ui/components/loading
 
-### Overview
-
-Components for loading states!
-
-### Intentions
-
-Colocation of components to use when things are loading.
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://dev-docs.msupply.foundation/client/packages/common/ui/components/loading/
+- **Source**: [docs/content/client/packages/common/ui/components/loading/_index.md](../../../../../../../docs/content/client/packages/common/ui/components/loading/_index.md)

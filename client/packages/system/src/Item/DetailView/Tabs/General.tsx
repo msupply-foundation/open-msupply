@@ -46,12 +46,12 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
 
           <DetailInputWithLabelRow
             label={t('label.unit')}
-            inputProps={{ value: item?.unitName, disabled: isDisabled }}
+            inputProps={{ value: item?.unitName ?? '', disabled: isDisabled }}
           />
 
           <DetailInputWithLabelRow
             label={t('label.strength')}
-            inputProps={{ value: item?.strength, disabled: isDisabled }}
+            inputProps={{ value: item?.strength ?? '', disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
             label={t('label.ddd')}

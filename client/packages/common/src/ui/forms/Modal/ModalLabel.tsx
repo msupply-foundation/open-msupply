@@ -5,6 +5,7 @@ import { Property } from 'csstype';
 export interface ModalLabelProps {
   label: string;
   justifyContent?: Property.JustifyContent;
+  minWidth?: string;
 }
 
 const labelStyle = {
@@ -15,6 +16,7 @@ const labelStyle = {
 export const ModalLabel: React.FC<ModalLabelProps> = ({
   label,
   justifyContent = 'flex-start',
+  minWidth = '80px',
 }) => (
   <Grid
     item
@@ -24,7 +26,7 @@ export const ModalLabel: React.FC<ModalLabelProps> = ({
     sx={{
       alignItems: 'center',
       display: 'flex',
-      minWidth: '80px',
+      minWidth,
       '&.MuiGrid-root': { flexBasis: 0 },
     }}
   >

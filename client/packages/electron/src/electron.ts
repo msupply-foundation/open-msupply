@@ -5,6 +5,7 @@ import {
   ipcMain,
   Menu,
   MenuItemConstructorOptions,
+  session,
   shell,
   webContents,
 } from 'electron';
@@ -321,6 +322,23 @@ const start = (): void => {
       isLocal: ip === getIpAddress() || isLoopback(ip),
       hardwareId,
     });
+  });
+
+  // Clear auth state when the window is closed
+  // so the user must log in again on next launch.
+  // This runs while the app is still fully alive, which is more reliable
+  // than clearing during the will-quit phase.
+  let isClosing = false;
+  window.on('close', event => {
+    if (!isClosing) {
+      isClosing = true;
+      event.preventDefault();
+      session.defaultSession
+        .clearStorageData({ storages: ['cookies'] })
+        .finally(() => {
+          window.destroy();
+        });
+    }
   });
 
   window.webContents.on(

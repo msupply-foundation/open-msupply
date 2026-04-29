@@ -33,7 +33,7 @@ export const TransportSectionComponent: FC = () => {
             setBufferedState({ transportReference });
             debouncedUpdate({ id, transportReference });
           }}
-          value={transportReference}
+          value={transportReference ?? ''}
           slotProps={{
             input: {
               style: {

@@ -4,7 +4,7 @@ use crate::mutations::{
 };
 use async_graphql::*;
 
-use chrono::NaiveDate;
+use chrono::{DateTime, Utc};
 use graphql_core::generic_inputs::{InboundShipmentType, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
@@ -48,8 +48,10 @@ pub struct UpdateInput {
     pub tax: Option<TaxInput>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub charges_local_currency: Option<f64>,
+    pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
-    pub delivered_datetime: Option<NaiveDate>,
+    pub received_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -86,6 +88,8 @@ pub fn update(
             store_id: Some(store_id.to_string()),
         },
     )?;
+
+    super::validate_shipment_verify_authorisation(ctx, store_id, &r#type, &input.status)?;
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
@@ -124,8 +128,10 @@ impl UpdateInput {
             tax,
             currency_id,
             currency_rate,
+            charges_local_currency,
+            charges_foreign_currency,
             default_donor,
-            delivered_datetime,
+            received_datetime,
         } = self;
 
         ServiceInput {
@@ -141,11 +147,13 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
+            charges_local_currency,
+            charges_foreign_currency,
             default_donor: default_donor.map(|donor| UpdateDefaultDonor {
                 donor_id: donor.donor_id,
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
-            delivered_datetime,
+            received_datetime,
         }
     }
 }
@@ -213,12 +221,15 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::NotAnInboundShipment
         | ServiceError::WrongInboundShipmentType
         | ServiceError::OtherPartyDoesNotExist
-        | ServiceError::CanOnlyChangeDateOfExternalInboundShipments
-        | ServiceError::CannotPutDeliveredDateAfterReceivedDate
-        | ServiceError::CannotSetDeliveredDateInFuture
-        | ServiceError::CannotSetShippedStatusOnManualInboundShipment => {
+        | ServiceError::BackdatingNotEnabled
+        | ServiceError::CanOnlyBackdateReceivedShipments
+        | ServiceError::CannotMoveReceivedDateForward
+        | ServiceError::ExceedsMaximumBackdatingDays
+        | ServiceError::CannotSetShippedStatusOnManualInboundShipment
+        | ServiceError::CurrencyRateMustBePositive => {
             BadUserInput(formatted_error)
         }
+        ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -583,8 +594,10 @@ mod test {
                     tax: None,
                     currency_id: None,
                     currency_rate: None,
+                    charges_local_currency: None,
+                    charges_foreign_currency: None,
                     default_donor: None,
-                    delivered_datetime: None,
+                    received_datetime: None,
                 }
             );
             Ok(Invoice {
