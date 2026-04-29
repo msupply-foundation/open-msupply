@@ -74,8 +74,7 @@ export const useTableKeyboardNavigation = <T extends MRT_RowData>(
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setFocusedRowIndex(prev => {
-          const next =
-            prev === null ? rowCount - 1 : Math.max(prev - 1, 0);
+          const next = prev === null ? rowCount - 1 : Math.max(prev - 1, 0);
           scrollRowIntoView(next);
           return next;
         });
