@@ -4,8 +4,9 @@ use chrono::Utc;
 use repository::{
     get_changelogs,
     syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogTableName, CursorAndLimit, KeyType, RowActionType,
-    StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository, SyncRecordData,
+    ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, KeyType,
+    RowActionType, StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository,
+    SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
 
@@ -42,7 +43,7 @@ pub struct SyncRecordV7 {
 #[serde(rename_all = "camelCase")]
 pub struct SyncBatchV7 {
     pub site_id: i32,
-    pub max_cursor: i64,
+    pub max_cursor: u64,
     pub records: Vec<SyncRecordV7>,
 }
 
@@ -69,7 +70,7 @@ impl SyncBatchV7 {
             .map(|changelog| prepare(connection, changelog))
             .collect::<Result<Vec<_>, _>>()?;
 
-        let max_cursor = records.iter().map(|r| r.cursor).max().unwrap_or(cursor);
+        let max_cursor = ChangelogRepository::new(connection).latest_cursor()?;
 
         Ok(SyncBatchV7 {
             site_id,
