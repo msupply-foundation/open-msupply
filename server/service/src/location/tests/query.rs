@@ -171,35 +171,36 @@ mod query {
 
         // Insert three locations with the same name but different codes,
         // in an order that wouldn't sort correctly by chance (id or insertion order)
-        LocationRow {
-            id: "loc_a".to_string(),
-            name: "Same Name".to_string(),
-            code: "code_c".to_string(),
-            store_id: "store_a".to_string(),
-            ..Default::default()
-        }
-        .upsert(&connection)
-        .unwrap();
+        let location_repo = LocationRowRepository::new(&connection);
+        location_repo
+            .upsert_one(&LocationRow {
+                id: "loc_a".to_string(),
+                name: "Same Name".to_string(),
+                code: "code_c".to_string(),
+                store_id: "store_a".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
 
-        LocationRow {
-            id: "loc_b".to_string(),
-            name: "Same Name".to_string(),
-            code: "code_a".to_string(),
-            store_id: "store_a".to_string(),
-            ..Default::default()
-        }
-        .upsert(&connection)
-        .unwrap();
+        location_repo
+            .upsert_one(&LocationRow {
+                id: "loc_b".to_string(),
+                name: "Same Name".to_string(),
+                code: "code_a".to_string(),
+                store_id: "store_a".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
 
-        LocationRow {
-            id: "loc_c".to_string(),
-            name: "Same Name".to_string(),
-            code: "code_b".to_string(),
-            store_id: "store_a".to_string(),
-            ..Default::default()
-        }
-        .upsert(&connection)
-        .unwrap();
+        location_repo
+            .upsert_one(&LocationRow {
+                id: "loc_c".to_string(),
+                name: "Same Name".to_string(),
+                code: "code_b".to_string(),
+                store_id: "store_a".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
@@ -293,7 +294,9 @@ mod query {
             store_id: "store_a".to_string(),
             ..Default::default()
         };
-        LocationRowRepository::new(&connection).upsert_one(&location_with_no_stock_lines).unwrap();
+        LocationRowRepository::new(&connection)
+            .upsert_one(&location_with_no_stock_lines)
+            .unwrap();
 
         // Confirm handles location with no stock lines
         let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();
@@ -301,19 +304,21 @@ mod query {
         assert_eq!(result.to_bits(), 0.0f64.to_bits());
 
         // Insert some stock lines for the location
-        StockLineRowRepository::new(&connection).upsert_one(&StockLineRow {
-            id: "line1".to_string(),
-            location_id: Some(location_with_no_stock_lines.id.clone()),
-            ..stock_line_with_volume() // total volume is 1000.0
-        })
-        .unwrap();
-        StockLineRowRepository::new(&connection).upsert_one(&StockLineRow {
-            id: "line2".to_string(),
-            location_id: Some(location_with_no_stock_lines.id.clone()),
-            total_volume: 500.0,
-            ..stock_line_with_volume()
-        })
-        .unwrap();
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&StockLineRow {
+                id: "line1".to_string(),
+                location_id: Some(location_with_no_stock_lines.id.clone()),
+                ..stock_line_with_volume() // total volume is 1000.0
+            })
+            .unwrap();
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&StockLineRow {
+                id: "line2".to_string(),
+                location_id: Some(location_with_no_stock_lines.id.clone()),
+                total_volume: 500.0,
+                ..stock_line_with_volume()
+            })
+            .unwrap();
 
         // Adds volumes correctly
         let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();

@@ -71,7 +71,7 @@ impl SyncTranslation for MessageTranslation {
             status,
             r#type,
             error_message,
-        } = serde_json::from_value(sync_record.data.0.clone())?;
+        } = sync_record.deserialize()?;
 
         let status = match status {
             LegacySyncMessageStatus::New => SyncMessageRowStatus::New,
