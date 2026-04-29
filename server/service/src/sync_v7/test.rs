@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod pull_integration {
     use actix_web::{web, App, HttpServer};
+    use assert_json_diff::assert_json_include;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        migrations::Version, mock::MockDataInserts, ChangelogFilter, ChangelogRepository,
         ChangelogRow, ChangelogTableName, CurrencyRow, EqualFilter, ItemRow, KeyType,
         KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection, StoreRow,
         SyncBufferRowRepository, UnitRow, Upsert,
@@ -12,6 +13,7 @@ mod pull_integration {
 
     use crate::sync::settings::SyncSettings;
     use crate::sync_v7::sync::sync_v7;
+    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
 
     // ---- Test data: expected rows after integration ----
 
@@ -128,17 +130,44 @@ mod pull_integration {
 
     // ---- Mock server handlers ----
 
-    async fn site_status() -> actix_web::HttpResponse {
+    async fn site_status(req: web::Json<serde_json::Value>) -> actix_web::HttpResponse {
+        assert_json_include!(
+            actual: req.into_inner(),
+            expected: json!({
+                "version": Version::from_package_json(),
+            })
+        );
         actix_web::HttpResponse::Ok().json(json!({
             "Ok": { "site_id": 1, "central_site_id": 0 }
         }))
     }
 
-    async fn push() -> actix_web::HttpResponse {
+    async fn push(req: web::Json<serde_json::Value>) -> actix_web::HttpResponse {
+        assert_json_include!(
+            actual: req.into_inner(),
+            expected: json!({
+                "version": Version::from_package_json(),
+                "siteId": 1,
+                "maxCursor": 0,
+                "records": [],
+            })
+        );
         actix_web::HttpResponse::Ok().json(json!({ "Ok": 0 }))
     }
 
-    async fn pull(data: web::Data<serde_json::Value>) -> actix_web::HttpResponse {
+    async fn pull(
+        data: web::Data<serde_json::Value>,
+        req: web::Json<serde_json::Value>,
+    ) -> actix_web::HttpResponse {
+        assert_json_include!(
+            actual: req.into_inner(),
+            expected: json!({
+                "version": Version::from_package_json(),
+                "cursor": 0,
+                "batchSize": 5000,
+                "isInitialising": true,
+            })
+        );
         actix_web::HttpResponse::Ok().json(data.get_ref())
     }
 
@@ -150,7 +179,11 @@ mod pull_integration {
         db_name: &str,
         pull_response: serde_json::Value,
     ) -> StorageConnection {
-        let (_, connection, _, _) = setup_all(db_name, MockDataInserts::none()).await;
+        let ServiceTestContext {
+            service_provider,
+            connection,
+            ..
+        } = setup_all_and_service_provider(db_name, MockDataInserts::none()).await;
 
         KeyValueStoreRepository::new(&connection)
             .set_i32(KeyType::SettingsSyncSiteId, Some(1))
@@ -173,6 +206,7 @@ mod pull_integration {
         tokio::spawn(server_handle);
 
         let result = sync_v7(
+            &service_provider,
             &connection,
             SyncSettings {
                 url: format!("http://{}/", addr),
