@@ -259,21 +259,23 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
         )?;
 
-        // TODO: remove the stock_line FK validation once central server does not generate the inbound shipment
-        // omSupply should be generating the inbound, with valid stock lines.
-        // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
-        let stock_line_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "stock_line_id",
-            stock_line_id,
-            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
-        )?;
-        // When invoice lines are coming from another site we don't own the referenced stock line or
-        // location, so even when they exist locally we don't want to link to them.
+        // When invoice lines are coming from another site we don't own the referenced stock
+        // line, so even when it exists locally we don't want to link to it. Skipping the FK
+        // check in that case also avoids a misleading SyncTranslationFkError system_log row
+        // for an FK the operator can't fix.
+        // TODO: remove the stock_line FK validation once central server does not generate the
+        // inbound shipment — omSupply should be generating the inbound with valid stock lines.
+        // Currently a uuid is assigned by central for the stock_line id which causes a foreign
+        // key constraint violation, so we still need this for active-on-site records.
         let stock_line_id = if is_record_active_on_site {
-            stock_line_id
+            clear_invalid_fk(
+                connection,
+                "invoice_line",
+                &id,
+                "stock_line_id",
+                stock_line_id,
+                |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
+            )?
         } else {
             None
         };
