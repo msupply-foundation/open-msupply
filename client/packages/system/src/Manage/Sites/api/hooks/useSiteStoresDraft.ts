@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SiteStoreRowFragment } from '../operations.generated';
 import { useAssignStoresToSite, useStoresForSite } from './useSiteStores';
+import { useSyncSettings } from '../../../../Sync/api/hooks/settings/useSyncSettings';
 
-const UNASSIGNED_SITE_ID = 1;
+const DEFAULT_UNASSIGNED_SITE_ID = 1;
 
 export type SiteStoreDraftRow = Pick<
   SiteStoreRowFragment,
@@ -13,6 +14,9 @@ export const useSiteStoresDraft = (siteId: number, isNew = false) => {
   const { data, isFetching } = useStoresForSite(siteId, !isNew);
   const { mutateAsync: assign, isLoading: isAssigning } =
     useAssignStoresToSite();
+  const { data: syncSettings } = useSyncSettings();
+  const unassignedSiteId =
+    syncSettings?.centralServerSiteId ?? DEFAULT_UNASSIGNED_SITE_ID;
 
   const originalStores: SiteStoreDraftRow[] = useMemo(
     () => (isNew ? [] : (data?.nodes ?? [])),
@@ -54,13 +58,13 @@ export const useSiteStoresDraft = (siteId: number, isNew = false) => {
     if (diff.addedIds.length > 0) {
       await assign({ siteId, storeIds: diff.addedIds });
     }
-    if (diff.removedIds.length > 0 && siteId !== UNASSIGNED_SITE_ID) {
+    if (diff.removedIds.length > 0 && siteId !== unassignedSiteId) {
       await assign({
-        siteId: UNASSIGNED_SITE_ID,
+        siteId: unassignedSiteId,
         storeIds: diff.removedIds,
       });
     }
-  }, [assign, diff, siteId]);
+  }, [assign, diff, siteId, unassignedSiteId]);
 
   return {
     stores: draft ?? originalStores,

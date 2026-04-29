@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RowActionType, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, KeyValueStoreRepository,
+    RepositoryError, RowActionType, StorageConnection, ChangelogSyncType, Upsert,
 };
 
 use super::preference_row::preference::dsl::*;
@@ -28,6 +28,25 @@ pub struct PreferenceRow {
     pub store_id: Option<String>,
 }
 
+impl PreferenceRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::Preference,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: self.store_id.clone(),
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct PreferenceRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -37,31 +56,20 @@ impl<'a> PreferenceRowRepository<'a> {
         PreferenceRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, preference_row: &PreferenceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(preference::table)
             .values(preference_row)
             .on_conflict(id)
             .do_update()
             .set(preference_row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(preference_row.to_owned(), RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: PreferenceRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Preference,
-            record_id: row.id,
-            row_action: action,
-            store_id: row.store_id.clone(),
-            name_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(preference_row)?;
+        let changelog = preference_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_key(
@@ -89,7 +97,10 @@ impl<'a> PreferenceRowRepository<'a> {
     pub fn delete(&self, preference_id: &str) -> Result<Option<i64>, RepositoryError> {
         let old_row = self.find_one_by_id(preference_id)?;
         let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(old_row, RowActionType::Delete)?,
+            Some(old_row) => {
+                let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+                ChangelogRepository::new(self.connection).insert(&changelog)?
+            }
             None => {
                 return Ok(None);
             }
@@ -102,9 +113,18 @@ impl<'a> PreferenceRowRepository<'a> {
 }
 
 impl Upsert for PreferenceRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = PreferenceRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        PreferenceRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

@@ -10,7 +10,7 @@ use crate::{
 };
 use chrono::NaiveDateTime;
 use diesel::{dsl::IntoBoxed, prelude::*};
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 diesel_string_enum! {
     #[derive(Clone, Serialize, Deserialize, Eq)]
@@ -71,6 +71,12 @@ pub struct SyncBufferRow {
     pub patient_id: Option<String>,
 }
 
+impl SyncBufferRow {
+    pub fn deserialize<T: DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
+        serde_json::from_value(self.data.0.clone())
+    }
+}
+
 pub struct SyncBufferRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -115,7 +121,6 @@ impl<'a> SyncBufferRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
-
     /// Updates only integration_datetime and integration_error for a sync buffer record.
     pub fn set_integration_result(
         &self,
@@ -129,6 +134,22 @@ impl<'a> SyncBufferRowRepository<'a> {
             ))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    /// Find sync_buffer records by table_name where the JSON data column contains the given pattern.
+    pub fn find_by_table_and_data_like(
+        &self,
+        table_name: &str,
+        data_pattern: &str,
+    ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
+        let result = sync_buffer::table
+            .filter(
+                sync_buffer::table_name
+                    .eq(table_name)
+                    .and(sync_buffer::data.like(data_pattern)),
+            )
+            .load(self.connection.lock().connection())?;
+        Ok(result)
     }
 }
 

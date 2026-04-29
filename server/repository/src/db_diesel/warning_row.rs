@@ -1,5 +1,5 @@
 use super::{item_link, item_row::item, StorageConnection};
-use crate::{RepositoryError, Upsert};
+use crate::{RepositoryError, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -52,9 +52,9 @@ impl<'a> WarningRowRepository<'a> {
 }
 
 impl Upsert for WarningRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         WarningRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

@@ -81,7 +81,7 @@ impl SyncTranslation for IndicatorAttribute {
             axis,
             is_active,
             default_value,
-        } = serde_json::from_value::<LegacyIndicatorAttribute>(sync_record.data.0.clone())?;
+        } = sync_record.deserialize()?;
         Ok(match axis {
             LegacyAxis::Column => PullTranslateResult::upsert(IndicatorColumnRow {
                 id,

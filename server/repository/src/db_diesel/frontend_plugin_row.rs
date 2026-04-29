@@ -1,8 +1,9 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
+    RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{repository_error::RepositoryError, Delete, ChangelogSyncType, Upsert};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -80,6 +81,25 @@ pub struct FrontendPluginRow {
     pub files: FrontendPluginFiles,
 }
 
+impl FrontendPluginRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::FrontendPlugin,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct FrontendPluginRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -105,34 +125,29 @@ impl<'a> FrontendPluginRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: FrontendPluginRow) -> Result<i64, RepositoryError> {
-        let id = row.id.clone();
+    pub fn _upsert_one(&self, row: &FrontendPluginRow) -> Result<(), RepositoryError> {
         diesel::insert_into(frontend_plugin::table)
             .values(row.clone())
             .on_conflict(frontend_plugin::id)
             .do_update()
-            .set(row)
+            .set(row.clone())
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&id, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::FrontendPlugin,
-            record_id: uid.to_string(),
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: FrontendPluginRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(&row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
         let old_row = self.find_one_by_id(id)?;
         let change_log_id = match old_row {
-            Some(_) => self.insert_changelog(id, RowActionType::Delete)?,
+            Some(old_row) => {
+                let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+                ChangelogRepository::new(self.connection).insert(&changelog)?
+            }
             None => {
                 return Ok(None);
             }
@@ -145,9 +160,16 @@ impl<'a> FrontendPluginRowRepository<'a> {
 }
 
 impl Upsert for FrontendPluginRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log = FrontendPluginRowRepository::new(con).upsert_one(self.clone())?;
-        Ok(Some(change_log))
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        FrontendPluginRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

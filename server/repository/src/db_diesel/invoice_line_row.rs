@@ -9,9 +9,9 @@ use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, InvoiceRowRepository,
-    RowActionType,
+    KeyValueStoreRepository, RowActionType,
 };
-use crate::{Delete, Upsert};
+use crate::{ChangelogSyncType, Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -153,11 +153,27 @@ pub struct InvoiceLineRow {
 }
 
 impl InvoiceLineRow {
-    pub fn table_name() -> ChangelogTableName {
-        ChangelogTableName::InvoiceLine
-    }
-    pub fn record_id(&self) -> String {
-        self.id.clone()
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let invoice = InvoiceRowRepository::new(con).find_one_by_id(&self.invoice_id)?;
+        let invoice = match invoice {
+            Some(invoice) => invoice,
+            None => return Err(RepositoryError::NotFound),
+        };
+
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::InvoiceLine,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(invoice.store_id.clone()),
+            name_id: Some(invoice.name_id.clone()),
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
     }
 }
 
@@ -178,30 +194,8 @@ impl<'a> InvoiceLineRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        self.insert_changelog(row, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &InvoiceLineRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let invoice = InvoiceRowRepository::new(self.connection).find_one_by_id(&row.invoice_id)?;
-        let invoice = match invoice {
-            Some(invoice) => invoice,
-            None => return Err(RepositoryError::NotFound),
-        };
-
-        let row = ChangeLogInsertRow {
-            table_name: InvoiceLineRow::table_name(),
-            record_id: row.record_id(),
-            row_action: action,
-            store_id: Some(invoice.store_id.clone()),
-            name_id: Some(invoice.name_id.clone()),
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn update_reason_option_id(
@@ -286,14 +280,13 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn delete(&self, invoice_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(invoice_line_id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
+        let old_row = match self.find_one_by_id(invoice_line_id)? {
+            Some(row) => row,
+            None => return Ok(None),
         };
 
+        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         self._delete(invoice_line_id)?;
         Ok(Some(change_log_id))
     }
@@ -364,16 +357,16 @@ impl Delete for InvoiceLineRowDelete {
 }
 
 impl Upsert for InvoiceLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = InvoiceLineRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
-    }
-    fn upsert_v7(
-        &self,
-        con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
-    ) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         InvoiceLineRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }

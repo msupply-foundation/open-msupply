@@ -2,8 +2,11 @@ use super::{
     assets::asset_internal_location_row::asset_internal_location, item_link_row::item_link,
     store_row::store, RepositoryError, StorageConnection,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{Delete, Upsert};
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
+    RowActionType,
+};
+use crate::{ChangelogSyncType, Delete, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -35,6 +38,25 @@ pub struct LocationRow {
     pub volume: f64,
 }
 
+impl LocationRow {
+    pub fn changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: Option<i32>,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::Location,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            name_id: None,
+            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            ..Default::default()
+        })
+    }
+}
+
 pub struct LocationRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -44,31 +66,20 @@ impl<'a> LocationRowRepository<'a> {
         LocationRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &LocationRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
         diesel::insert_into(location::table)
             .values(row)
             .on_conflict(location::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: &LocationRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Location,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &LocationRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
         match location::table
@@ -88,13 +99,13 @@ impl<'a> LocationRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
+        let old_row = match self.find_one_by_id(id)? {
+            Some(row) => row,
+            None => return Ok(None),
         };
+
+        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
+        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(location::table.filter(location::id.eq(id)))
             .execute(self.connection.lock().connection())?;
@@ -120,9 +131,22 @@ impl Delete for LocationRowDelete {
 }
 
 impl Upsert for LocationRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = LocationRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        LocationRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                self.changelog(con, RowActionType::Upsert, source_site_id)?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
