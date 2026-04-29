@@ -14,6 +14,10 @@ export const useStockCounts = (daysTillExpired: number) => {
       }),
     {
       retry: false,
+      // Silent on error — the dashboard widget shows its own empty state
+      // when the user lacks permission; the page-level query has already
+      // informed them.
+      onError: () => {},
     }
   );
 

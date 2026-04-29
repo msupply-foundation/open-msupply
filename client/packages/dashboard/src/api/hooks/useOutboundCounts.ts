@@ -13,6 +13,7 @@ export const useOutboundCounts = () => {
       }),
     {
       retry: false,
+      onError: () => {},
     }
   );
 

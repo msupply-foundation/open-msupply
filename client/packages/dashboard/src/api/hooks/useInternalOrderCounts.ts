@@ -13,6 +13,7 @@ export const useInternalOrderCounts = () => {
       }),
     {
       retry: false,
+      onError: () => {},
     }
   );
 

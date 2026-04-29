@@ -14,6 +14,7 @@ export const useInboundExternalCounts = (enabled = true) => {
     {
       retry: false,
       enabled,
+      onError: () => {},
     }
   );
 

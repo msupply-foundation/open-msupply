@@ -53,6 +53,7 @@ export const ReportSelector = ({
     context,
     subContext,
     queryParams,
+    silentOnPermissionDenied: true,
   });
 
   const { printAsync, isPrinting } = usePrintReport();

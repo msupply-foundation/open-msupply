@@ -50,7 +50,7 @@ export const PurchaseOrderListView = () => {
     filterBy,
   };
   const {
-    query: { data, isFetching },
+    query: { data, isFetching, isError },
   } = usePurchaseOrderList(listParams);
 
   const columns = useMemo(
@@ -156,6 +156,7 @@ export const PurchaseOrderListView = () => {
     usePaginatedMaterialTable<PurchaseOrderRowFragment>({
       tableId: 'purchase-order-list-view',
       isLoading: isFetching,
+      isError,
       onRowClick: row => navigate(row.id),
       columns,
       data: data?.nodes ?? [],

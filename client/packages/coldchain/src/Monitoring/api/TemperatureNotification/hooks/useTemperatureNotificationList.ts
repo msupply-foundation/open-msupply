@@ -54,6 +54,7 @@ export const useTemperatureNotificationList = (queryParams?: ListParams) => {
     refetchInterval: POLLING_INTERVAL_MS,
     staleTime: STALE_TIME_MS,
     enabled: !!storeId && canViewSensorDetails,
+    onError: () => {},
   });
 
   return query;
