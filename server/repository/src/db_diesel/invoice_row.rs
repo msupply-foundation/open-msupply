@@ -116,7 +116,9 @@ pub enum InvoiceStatus {
     Cancelled,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = invoice)]
 pub struct InvoiceRow {
@@ -166,34 +168,34 @@ pub struct InvoiceRow {
     pub default_donor_id: Option<String>,
 }
 
+pub enum RowOrId<'a> {
+    Row(&'a InvoiceRow),
+    Id(&'a str),
+}
+
 impl InvoiceRow {
-    pub fn changelog(
-        &self,
+    pub fn generate_changelog(
+        row_or_id: RowOrId,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: Option<i32>,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(id) => InvoiceRowRepository::new(con)
+                .find_one_by_id(id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Invoice,
-            record_id: self.id.clone(),
+            record_id: row.id.clone(),
             row_action: action,
-            store_id: Some(self.store_id.clone()),
-            name_id: Some(self.name_id.clone()),
+            store_id: Some(row.store_id.clone()),
+            name_id: Some(row.name_id.clone()),
             source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
             ..Default::default()
         })
-    }
-
-    pub fn delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: Option<i32>,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = InvoiceRowRepository::new(con)
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
     }
 }
 
@@ -219,7 +221,12 @@ impl<'a> InvoiceRowRepository<'a> {
     }
 
     pub fn delete(&self, invoice_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = InvoiceRow::delete_changelog(invoice_id, self.connection, RowActionType::Delete, None)?;
+        let changelog = InvoiceRow::generate_changelog(
+            RowOrId::Id(invoice_id),
+            self.connection,
+            RowActionType::Delete,
+            None,
+        )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         self._delete(invoice_id)?;
         Ok(Some(change_log_id))
@@ -264,9 +271,12 @@ impl Delete for InvoiceRowDelete {
         let repo = InvoiceRowRepository::new(con);
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                InvoiceRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => InvoiceRow::generate_changelog(
+                RowOrId::Id(self.0.clone()),
+                con,
+                RowActionType::Delete,
+                source_site_id,
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
@@ -284,7 +294,11 @@ impl Delete for InvoiceRowDelete {
 }
 
 impl Upsert for InvoiceRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         InvoiceRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
