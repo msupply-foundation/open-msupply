@@ -137,7 +137,7 @@ impl SyncTranslation for StockLineTranslation {
             &ID,
             "barcode_id",
             barcode_id,
-            |c, id| BarcodeRowRepository::new(c).find_one_by_id(id),
+            |c, id| BarcodeRowRepository::new(c).check_exists_by_id(id),
         )?;
         let location_id = clear_invalid_fk(
             connection,
@@ -145,7 +145,7 @@ impl SyncTranslation for StockLineTranslation {
             &ID,
             "location_id",
             location_ID,
-            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
         )?;
         let item_variant_id = clear_invalid_fk(
             connection,
@@ -153,7 +153,7 @@ impl SyncTranslation for StockLineTranslation {
             &ID,
             "item_variant_id",
             item_variant_id,
-            |c, id| ItemVariantRowRepository::new(c).find_one_by_id(id),
+            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
         )?;
         let vvm_status_id = clear_invalid_fk(
             connection,
@@ -161,7 +161,7 @@ impl SyncTranslation for StockLineTranslation {
             &ID,
             "vvm_status_id",
             vvm_status_id,
-            |c, id| VVMStatusRowRepository::new(c).find_one_by_id(id),
+            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let StockLineRowOmsFields {
@@ -175,7 +175,7 @@ impl SyncTranslation for StockLineTranslation {
             &ID,
             "campaign_id",
             campaign_id,
-            |c, id| CampaignRowRepository::new(c).find_one_by_id(id),
+            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
         )?;
         let program_id = clear_invalid_fk(
             connection,
@@ -183,7 +183,7 @@ impl SyncTranslation for StockLineTranslation {
             &ID,
             "program_id",
             program_id,
-            |c, id| ProgramRowRepository::new(c).find_one_by_id(id),
+            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let result = StockLineRow {

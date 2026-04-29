@@ -80,7 +80,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             &legacy_row.ID,
             "location_id",
             legacy_row.location_ID,
-            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let result = GoodsReceivedLineRow {

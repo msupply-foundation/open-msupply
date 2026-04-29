@@ -128,7 +128,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             &id,
             "location_id",
             location_id,
-            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let r#type = from_legacy_breach_type(&r#type);

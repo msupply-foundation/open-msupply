@@ -268,7 +268,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             &id,
             "stock_line_id",
             stock_line_id,
-            |c, id| StockLineRowRepository::new(c).find_one_by_id(id),
+            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
         )?;
         // When invoice lines are coming from another site we don't own the referenced stock line or
         // location, so even when they exist locally we don't want to link to them.
@@ -283,7 +283,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             &id,
             "location_id",
             location_id,
-            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let item_variant_id = clear_invalid_fk(
@@ -292,7 +292,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             &id,
             "item_variant_id",
             item_variant_id,
-            |c, id| ItemVariantRowRepository::new(c).find_one_by_id(id),
+            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
         )?;
         let vvm_status_id = clear_invalid_fk(
             connection,
@@ -300,7 +300,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             &id,
             "vvm_status_id",
             vvm_status_id,
-            |c, id| VVMStatusRowRepository::new(c).find_one_by_id(id),
+            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         // "0" is a sentinel value used by OG for "no option set" — treat it as None before
@@ -318,7 +318,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             &id,
             "reason_option_id",
             reason_option_id,
-            |c, id| ReasonOptionRowRepository::new(c).find_one_by_id(id),
+            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let TransLineRowOmsFields {
@@ -332,7 +332,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             &id,
             "campaign_id",
             campaign_id,
-            |c, id| CampaignRowRepository::new(c).find_one_by_id(id),
+            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
         )?;
         let program_id = clear_invalid_fk(
             connection,
@@ -340,7 +340,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             &id,
             "program_id",
             program_id,
-            |c, id| ProgramRowRepository::new(c).find_one_by_id(id),
+            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let result = InvoiceLineRow {

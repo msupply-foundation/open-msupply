@@ -99,7 +99,7 @@ impl SyncTranslation for DocumentTranslation {
             &id,
             "form_schema_id",
             form_schema_id,
-            |c, id| FormSchemaRowRepository::new(c).find_one_by_id(id),
+            |c, id| FormSchemaRowRepository::new(c).check_exists_by_id(id),
         )?;
 
         let result = Document {
