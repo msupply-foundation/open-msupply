@@ -1,5 +1,5 @@
 use super::{item_link, item_row::item, warning_row::warning};
-use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::{RepositoryError, StorageConnection, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -63,9 +63,9 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
 }
 
 impl Upsert for ItemWarningJoinRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ItemWarningJoinRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

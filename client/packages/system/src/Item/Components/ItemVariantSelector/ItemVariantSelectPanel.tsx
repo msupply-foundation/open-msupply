@@ -5,6 +5,7 @@ import {
   SlidePanel,
   Box,
   Typography,
+  DialogButton,
 } from '@openmsupply-client/common';
 import { ItemVariantFragment, useItemVariants } from '../../api';
 
@@ -86,6 +87,7 @@ export const ItemVariantSelectPanel = ({
       open={open}
       onClose={onClose}
       title={t('label.select-item-variant')}
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <Box display="flex" flexDirection="column" gap={2} padding={2}>
         <VariantCard onClick={onManual ?? onClose}>

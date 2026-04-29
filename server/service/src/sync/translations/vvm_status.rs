@@ -43,7 +43,7 @@ impl SyncTranslation for VVMStatusTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_value::<LegacyVVMStatusRow>(sync_record.data.0.clone())?;
+        let data = sync_record.deserialize::<LegacyVVMStatusRow>()?;
         let result = VVMStatusRow {
             id: data.ID,
             description: data.description,
