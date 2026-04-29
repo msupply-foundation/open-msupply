@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use repository::SyncLogRow;
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::{broadcast, mpsc, watch};
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
@@ -34,22 +34,41 @@ pub enum ResolvedSubscription {
     InitialisationStatus(InitialisationStatus),
 }
 
+// SyncStatus triggers use a watch channel so rapid progress updates coalesce:
+// the worker always processes the latest row rather than queuing every update.
+// PushQueueChanged uses a small mpsc channel; the worker's debounce logic
+// already ensures at most one is in flight at a time.
 #[derive(Clone)]
 pub struct SubscriptionTriggerHandle {
-    sender: mpsc::Sender<SubscriptionTrigger>,
+    sync_status_sender: Arc<watch::Sender<Option<SyncLogRow>>>,
+    push_queue_sender: mpsc::Sender<()>,
 }
 
 impl SubscriptionTriggerHandle {
     pub fn send(&self, trigger: SubscriptionTrigger) {
-        if let Err(error) = self.sender.try_send(trigger) {
-            log::error!("Problem sending subscription trigger: {error:#?}");
+        match trigger {
+            SubscriptionTrigger::SyncStatus(row) => {
+                // watch::send only fails if all receivers are dropped — safe to ignore
+                let _ = self.sync_status_sender.send(Some(row));
+            }
+            SubscriptionTrigger::PushQueueChanged => {
+                if let Err(e) = self.push_queue_sender.try_send(()) {
+                    // Full is expected — the debounce means at most one is queued at a time
+                    if matches!(e, mpsc::error::TrySendError::Closed(_)) {
+                        log::error!("Subscription push queue channel closed: {e:#?}");
+                    }
+                }
+            }
         }
     }
 
     /// Empty handle for tests/CLI that don't use subscriptions
     pub fn new_void() -> Self {
+        let (sync_status_sender, _) = watch::channel(None);
+        let (push_queue_sender, _) = mpsc::channel(1);
         Self {
-            sender: mpsc::channel(1).0,
+            sync_status_sender: Arc::new(sync_status_sender),
+            push_queue_sender,
         }
     }
 }
@@ -57,15 +76,23 @@ impl SubscriptionTriggerHandle {
 // ── Worker (receives triggers, resolves, broadcasts) ──
 
 pub struct SubscriptionWorker {
-    receiver: mpsc::Receiver<SubscriptionTrigger>,
+    sync_status_receiver: watch::Receiver<Option<SyncLogRow>>,
+    push_queue_receiver: mpsc::Receiver<()>,
 }
 
 impl SubscriptionWorker {
     pub fn init() -> (SubscriptionTriggerHandle, SubscriptionWorker) {
-        let (sender, receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
+        let (sync_status_sender, sync_status_receiver) = watch::channel(None);
+        let (push_queue_sender, push_queue_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
         (
-            SubscriptionTriggerHandle { sender },
-            SubscriptionWorker { receiver },
+            SubscriptionTriggerHandle {
+                sync_status_sender: Arc::new(sync_status_sender),
+                push_queue_sender,
+            },
+            SubscriptionWorker {
+                sync_status_receiver,
+                push_queue_receiver,
+            },
         )
     }
 
@@ -77,7 +104,13 @@ impl SubscriptionWorker {
         let tx = broadcast_tx.clone();
 
         let handle = tokio::spawn(async move {
-            subscription_worker_loop(self.receiver, tx, service_provider).await;
+            subscription_worker_loop(
+                self.sync_status_receiver,
+                self.push_queue_receiver,
+                tx,
+                service_provider,
+            )
+            .await;
         });
 
         (handle, broadcast_tx)
@@ -85,7 +118,8 @@ impl SubscriptionWorker {
 }
 
 async fn subscription_worker_loop(
-    mut rx: mpsc::Receiver<SubscriptionTrigger>,
+    mut sync_status_receiver: watch::Receiver<Option<SyncLogRow>>,
+    mut push_queue_receiver: mpsc::Receiver<()>,
     tx: broadcast::Sender<ResolvedSubscription>,
     service_provider: Arc<ServiceProvider>,
 ) {
@@ -111,12 +145,15 @@ async fn subscription_worker_loop(
     let trigger_handle = service_provider.subscription_trigger.clone();
 
     loop {
-        let Some(trigger) = rx.recv().await else {
-            break;
-        };
+        tokio::select! {
+            result = sync_status_receiver.changed() => {
+                if result.is_err() { break; } // all senders dropped
 
-        match trigger {
-            SubscriptionTrigger::SyncStatus(row) => {
+                let row = match sync_status_receiver.borrow_and_update().clone() {
+                    Some(row) => row,
+                    None => continue,
+                };
+
                 let status = FullSyncStatus::from_sync_log_row(row.clone());
 
                 if status.summary.finished.is_some() && status.error.is_none() {
@@ -155,7 +192,9 @@ async fn subscription_worker_loop(
                 }
             }
 
-            SubscriptionTrigger::PushQueueChanged => {
+            result = push_queue_receiver.recv() => {
+                if result.is_none() { break; } // all senders dropped
+
                 if last_push_query.elapsed() >= PUSH_QUEUE_DEBOUNCE {
                     // Outside debounce window — query immediately
                     push_queue_queued = false;
