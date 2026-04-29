@@ -1,5 +1,9 @@
-use repository::syncv7::SyncError;
-use reqwest::Response;
+use crate::{apis::api_on_central::SiteAuth, service_provider::ServiceProvider};
+use repository::{syncv7::SyncError, KeyType, KeyValueStoreRepository};
+use reqwest::{
+    header::{HeaderMap, HeaderValue, AUTHORIZATION},
+    Response,
+};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use util::{format_error, with_retries, RetrySeconds};
 
@@ -72,6 +76,48 @@ impl SyncApiV7 {
         };
 
         Err(error)
+    }
+
+    pub fn load_site_auth(service_provider: &ServiceProvider) -> Result<SiteAuth, SyncError> {
+        let ctx = service_provider
+            .basic_context()
+            .map_err(|e| SyncError::Other(format_error(&e)))?;
+
+        let token = KeyValueStoreRepository::new(&ctx.connection)
+            .get_string(KeyType::SettingsSyncTokenV7)
+            .map_err(SyncError::DatabaseError)?
+            .ok_or_else(|| {
+                SyncError::Other("Sync v7 token not set — site must initialise first".to_string())
+            })?;
+
+        let hardware_id = service_provider
+            .app_data_service
+            .get_hardware_id()
+            .map_err(|e| SyncError::Other(format_error(&e)))?;
+
+        Ok(SiteAuth {
+            token,
+            hardware_id,
+            app_version: VERSION,
+        })
+    }
+
+    pub fn build_auth_headers(auth: &SiteAuth) -> Result<HeaderMap, SyncError> {
+        let mut headers = HeaderMap::new();
+
+        let bearer = HeaderValue::from_str(&format!("Bearer {}", auth.token))
+            .map_err(|e| SyncError::Other(e.to_string()))?;
+        headers.insert(AUTHORIZATION, bearer);
+
+        let hardware_id = HeaderValue::from_str(&auth.hardware_id)
+            .map_err(|e| SyncError::Other(e.to_string()))?;
+        headers.insert("HardwareId", hardware_id);
+
+        let app_version = HeaderValue::from_str(&auth.app_version.to_string())
+            .map_err(|e| SyncError::Other(e.to_string()))?;
+        headers.insert("appVersion", app_version);
+
+        Ok(headers)
     }
 }
 
