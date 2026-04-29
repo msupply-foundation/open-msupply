@@ -12,9 +12,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     cursor_controller::CursorController,
+    service_provider::ServiceProvider,
     sync::{settings::SyncSettings, ActiveStoresOnSite},
     sync_v7::{
-        api::{self, SyncApiV7, VERSION},
+        api::{self, SyncApiV7},
         get_current_site_id,
         prepare::prepare,
         sync_logger::{SyncLogger, SyncStep},
@@ -104,13 +105,21 @@ pub(crate) fn sync_record_to_buffer_row(
 }
 
 pub(crate) async fn sync_v7(
+    service_provider: &ServiceProvider,
     connection: &StorageConnection,
     settings: SyncSettings,
     is_initialising: bool,
 ) -> Result<(), anyhow::Error> {
     let mut logger = SyncLogger::start(connection)?;
 
-    let sync_result = sync_inner(&mut logger, connection, settings, is_initialising).await;
+    let sync_result = sync_inner(
+        &mut logger,
+        service_provider,
+        connection,
+        settings,
+        is_initialising,
+    )
+    .await;
 
     if let Err(error) = &sync_result {
         logger.error(error)?;
@@ -124,6 +133,7 @@ pub(crate) async fn sync_v7(
 
 async fn sync_inner<'a>(
     logger: &mut SyncLogger<'a>,
+    service_provider: &ServiceProvider,
     connection: &StorageConnection,
     settings: SyncSettings,
     is_initialising: bool,
@@ -132,9 +142,10 @@ async fn sync_inner<'a>(
         connection,
         sync_api_v7: SyncApiV7 {
             url: settings.url.parse().unwrap(),
-            version: VERSION,
-            username: settings.username,
-            password: settings.password_sha256,
+            hardware_id: service_provider
+                .app_data_service
+                .get_hardware_id()
+                .map_err(|_| SyncError::FailedToGetHardwareId)?,
         },
         batch_size: 5000,
     };

@@ -1,5 +1,5 @@
 use crate::{apis::api_on_central::SiteAuth, service_provider::ServiceProvider};
-use repository::{syncv7::SyncError, KeyType, KeyValueStoreRepository};
+use repository::{migrations::Version, syncv7::SyncError, KeyType, KeyValueStoreRepository};
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION},
     Response,
@@ -17,15 +17,16 @@ pub(crate) static VERSION: u32 = 1;
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Common {
-    pub(crate) version: u32,
-    pub(crate) username: String,
-    pub(crate) password: String,
+    pub(crate) version: Version,
+    pub(crate) hardware_id: String,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Request<I> {
+    #[serde(flatten)]
     pub(crate) common: Common,
+    #[serde(flatten)]
     pub(crate) input: I,
 }
 
@@ -34,9 +35,7 @@ pub type ApiResponse<O> = Result<O, SyncError>;
 #[derive(Clone)]
 pub(crate) struct SyncApiV7 {
     pub(crate) url: reqwest::Url,
-    pub(crate) version: u32,
-    pub(crate) username: String,
-    pub(crate) password: String,
+    pub(crate) hardware_id: String,
 }
 
 impl SyncApiV7 {
@@ -44,25 +43,22 @@ impl SyncApiV7 {
         &self,
         route: &str,
         input: I,
+        // For get_site_info route, this won't be present for api call that deals with initial login
+        use_token: bool,
     ) -> Result<O, SyncError> {
-        let Self {
-            url,
-            version,
-            username,
-            password,
-        } = self.clone();
+        let Self { url, hardware_id } = self.clone();
 
         let url = url.join("central/sync_v7/").unwrap().join(route).unwrap();
 
         let request = Request {
             input,
             common: Common {
-                version,
-                username,
-                password,
+                version: Version::from_package_json(),
+                hardware_id,
             },
         };
-
+        // Adding header if use_token is true
+        let _ = use_token;
         let result = with_retries(RetrySeconds::default(), |client| {
             client.post(url.clone()).json(&request)
         })
@@ -121,7 +117,7 @@ impl SyncApiV7 {
     }
 }
 
-pub(super) async fn response_or_err<T: DeserializeOwned>(
+async fn response_or_err<T: DeserializeOwned>(
     result: Result<Response, reqwest::Error>,
     url: reqwest::Url,
 ) -> Result<T, SyncError> {
