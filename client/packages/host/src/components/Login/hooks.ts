@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { create } from 'zustand';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -45,6 +45,8 @@ export const useLoginForm = (
   const { mostRecentUsername, login, isLoggingIn } = useAuthContext();
   const { password, setPassword, setUsername, username, error, setError } =
     state;
+  const [showStoreModal, setShowStoreModal] = useState(false);
+  const [loginRedirectFrom, setLoginRedirectFrom] = useState('/');
 
   const onLogin = async () => {
     setError();
@@ -54,12 +56,17 @@ export const useLoginForm = (
     if (!token) return;
 
     if (navigateOnSuccess) {
-      // Always navigate to root - let the Site component handle the redirect based on preferences
-      const state = location.state as State | undefined;
-      const from = state?.from?.pathname || `/`;
-      navigate(from, { replace: true });
+      const locationState = location.state as State | undefined;
+      const from = locationState?.from?.pathname || `/`;
+      setLoginRedirectFrom(from);
+      setShowStoreModal(true);
     }
   };
+
+  const dismissStoreModal = useCallback(() => {
+    setShowStoreModal(false);
+    navigate(loginRedirectFrom, { replace: true });
+  }, [navigate, loginRedirectFrom]);
 
   const isValid = !!username && !!password;
 
@@ -81,6 +88,8 @@ export const useLoginForm = (
     isValid,
     onLogin,
     isLoggingIn,
+    showStoreModal,
+    dismissStoreModal,
     ...state,
     error,
     siteName: initStatus?.siteName,

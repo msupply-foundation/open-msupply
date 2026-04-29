@@ -14,6 +14,7 @@ import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
 import { LoginLayout } from './LoginLayout';
 import { SiteInfo } from '../SiteInfo';
+import { StoreSelectionModal } from './StoreSelectionModal';
 import { useHost } from '../../api';
 
 export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
@@ -34,6 +35,8 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     setUsername,
     isLoggingIn,
     onLogin,
+    showStoreModal,
+    dismissStoreModal,
     error,
     siteName,
   } = useLoginForm(passwordRef, fullSize);
@@ -151,6 +154,12 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   }, [setPageTitle, t, fullSize]);
 
   return (
+    <>
+    <StoreSelectionModal
+      open={showStoreModal}
+      onClose={dismissStoreModal}
+      username={username}
+    />
     <LoginLayout
       UsernameInput={
         <LoginTextInput
@@ -212,5 +221,6 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
       SiteInfo={<SiteInfo siteName={siteName} />}
       fullSize={fullSize}
     />
+    </>
   );
 };

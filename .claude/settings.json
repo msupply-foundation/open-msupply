@@ -1,8 +1,4 @@
 {
-  "enabledPlugins": {
-    "rust-analyzer-lsp@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true
-  },
   "permissions": {
     "allow": [
       "Bash(cargo build*)",
@@ -32,8 +28,13 @@
       "Bash(git pull*)",
       "Bash(git add*)",
       "Bash(git commit*)",
-      "Bash(ls *)"
+      "Bash(ls *)",
+      "Bash(yarn tsc *)"
     ],
     "deny": []
+  },
+  "enabledPlugins": {
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
   }
 }
