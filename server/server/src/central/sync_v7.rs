@@ -11,7 +11,21 @@ use service::{
 };
 
 pub fn sync_v7_on_central() -> impl HttpServiceFactory {
-    web::scope("sync_v7").service(pull).service(push)
+    web::scope("sync_v7")
+        .service(get_site_info)
+        .service(pull)
+        .service(push)
+}
+
+#[post("/get_site_info")]
+async fn get_site_info(
+    request: Json<api::site_info::Request>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response: api::site_info::Response =
+        handlers::get_site_info(&service_provider, request.into_inner());
+
+    Ok(web::Json(response))
 }
 
 #[post("/pull")]
@@ -33,4 +47,3 @@ async fn push(
         handlers::push(service_provider.into_inner(), request.into_inner()).await,
     ))
 }
-
