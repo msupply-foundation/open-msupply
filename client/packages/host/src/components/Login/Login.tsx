@@ -139,7 +139,6 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   useEffect(() => {
     if (fullSize) {
       logout();
-      LocalStorage.removeItem('/error/auth');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

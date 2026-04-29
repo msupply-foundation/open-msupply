@@ -1,8 +1,6 @@
 import {
-  AuthError,
   InternalServerError,
   LocaleKey,
-  LocalStorage,
   NetworkError,
   TypedTFunction,
 } from '../..';
@@ -102,19 +100,13 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
       return result.isCentralServer;
     },
     me: async (token?: string) => {
-      try {
-        const result = await sdk.me(
-          {},
-          {
-            Authorization: `Bearer ${token}`,
-          }
-        );
-        return result.me;
-      } catch (e) {
-        console.error(e);
-        LocalStorage.setItem('/error/auth', AuthError.ServerError);
-        LocalStorage.setItem('/error/server', (e as Error).message);
-      }
+      const result = await sdk.me(
+        {},
+        {
+          Authorization: `Bearer ${token}`,
+        }
+      );
+      return result.me;
     },
     permissions: async ({
       storeId,

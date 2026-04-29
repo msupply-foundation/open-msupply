@@ -7,8 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { getSdk } from '../operations.generated';
 
-/** Fields undefined until query has loaded */
-export const usePreferences = (): Partial<PreferencesNode> => {
+export const usePreferences = (enabled = true): Partial<PreferencesNode> => {
   const { client } = useGql();
   const { storeId } = useAuthContext();
   const sdk = getSdk(client);
@@ -24,7 +23,7 @@ export const usePreferences = (): Partial<PreferencesNode> => {
     cacheTime: Infinity,
     staleTime: Infinity,
     suspense: true,
-    enabled: !!storeId,
+    enabled: enabled && !!storeId,
   });
 
   return data ?? {};

@@ -3,20 +3,20 @@ import Bugsnag from '@bugsnag/js';
 import { useNotification } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
-  AuthError,
   BadUserInputError,
   InternalServerError,
   NetworkError,
   PermissionDeniedError,
   UnauthenticatedError,
-  useLocalStorage,
+  useAlertModal,
+  useAuthOverlay,
   useLocation,
   useQueryClient,
 } from '@openmsupply-client/common';
 
-// Background queries (mostly dashboard widgets) that should not raise a
-// toast or modal when permission is denied — the user is already informed
-// by the page-level query that landed them on the page in the first place.
+// Background queries on the dashboard that should not raise a toast when
+// permission is denied; the user is already informed by the page-level
+// query that landed them on the page in the first place.
 //
 // TODO: replace with `meta: { silent: true }` opt-in on each hook.
 const SILENT_PERMISSION_DENIED_PATHS = new Set([
@@ -44,18 +44,24 @@ export const QueryErrorHandler = () => {
   const t = useTranslation();
   const [pending, setPending] = useState<RoutedToast>({ kind: 'none' });
   const location = useLocation();
-  const [authError, setAuthError] = useLocalStorage('/error/auth');
+  const { show: showAuthOverlay, reason: overlayReason } = useAuthOverlay();
+  const showPermissionDenied = useAlertModal({
+    title: t('auth.alert-title'),
+    message: t('auth.permission-denied'),
+  });
 
   useEffect(() => {
     if (pending.kind === 'none') return;
-    if (authError === AuthError.Unauthenticated) return;
+    // Don't pile a toast on top of the re-auth modal — once it's open the
+    // user is mid-relogin and the toast would just be noise.
+    if (overlayReason) return;
     if (pending.kind === 'detail') {
       errorWithDetail(pending.message)();
     } else {
       error(pending.message)();
     }
     setPending({ kind: 'none' });
-  }, [pending, authError]);
+  }, [pending, overlayReason]);
 
   useEffect(() => {
     setPending({ kind: 'none' });
@@ -67,18 +73,18 @@ export const QueryErrorHandler = () => {
       // error states; do not toast.
       if (e instanceof NetworkError) return { kind: 'none' };
 
-      // Auth and permission still drive the existing ErrorAlert modal via
-      // the `/error/auth` localStorage flag for now. A follow-up PR
-      // replaces both with an imperative AuthOverlay (re-auth without
-      // losing form state) and a dedicated permission-denied modal.
       if (e instanceof UnauthenticatedError) {
-        setAuthError(AuthError.Unauthenticated);
+        showAuthOverlay('unauthenticated');
         return { kind: 'none' };
       }
 
       if (e instanceof PermissionDeniedError) {
         if (isSilentPermissionDenied(e)) return { kind: 'none' };
-        setAuthError(AuthError.PermissionDenied);
+        // Use a modal rather than a toast — permission denied usually
+        // means a whole page can't be used, not a single transient
+        // failure, so it deserves a more attention-getting surface.
+        // TODO: replace with per-page inline UI as part of bucket 3.
+        showPermissionDenied();
         return { kind: 'none' };
       }
 

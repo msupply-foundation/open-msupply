@@ -1,35 +1,29 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import { UserPermission } from '../../types/schema';
-import { AuthError, useAuthContext } from '../AuthContext';
-import { useLocalStorage } from '../../localStorage';
+import { useAuthContext } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { RouteBuilder } from '../../utils/navigation';
 
+/**
+ * Redirects the user away from a page they don't have permission to view.
+ * Previously this set a global localStorage flag that drove a modal; now
+ * it just navigates, since the user can't usefully recover from missing
+ * permissions in-place.
+ */
 export const usePermissionCheck = (
   permission: UserPermission,
   onPermissionDenied?: () => void
 ) => {
   const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();
-  const [error, setError] = useLocalStorage('/error/auth');
-  const previous = useRef(error);
 
   useEffect(() => {
-    if (!userHasPermission(permission)) {
-      setError(AuthError.PermissionDenied);
-    }
-  }, []);
-
-  useEffect(() => {
-    previous.current = error;
-  }, [error]);
-
-  if (previous.current === AuthError.PermissionDenied && !error) {
+    if (userHasPermission(permission)) return;
     if (onPermissionDenied) {
       onPermissionDenied();
-    } else {
-      navigate(RouteBuilder.create(AppRoute.Dashboard).build());
+      return;
     }
-  }
+    navigate(RouteBuilder.create(AppRoute.Dashboard).build());
+  }, []);
 };

@@ -1,12 +1,10 @@
-import { AuthCookie, AuthError, setAuthCookie } from '../../AuthContext';
+import { AuthCookie, setAuthCookie } from '../../AuthContext';
 import { useGetAuthToken } from './useGetAuthToken';
 import {
   AuthenticationCredentials,
-  LocalStorage,
   useAuthApi,
   useGetUserDetails,
   useGetUserPermissions,
-  useGql,
   useLocalStorage,
   useQueryClient,
   LanguageTypeNode,
@@ -14,31 +12,15 @@ import {
   UserStoreNodeFragment,
   useIntlUtils,
 } from '@openmsupply-client/common';
-import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
+import { DefinitionNode, OperationDefinitionNode } from 'graphql';
 
 const authNameQueries = ['authToken', 'me'];
-const isAuthRequest = (definitionNode: DefinitionNode) => {
+export const isAuthRequest = (definitionNode: DefinitionNode) => {
   const operationNode = definitionNode as OperationDefinitionNode;
   if (!operationNode) return false;
   if (operationNode.operation !== 'query') return false;
 
   return authNameQueries.indexOf(operationNode.name?.value ?? '') !== -1;
-};
-
-const skipNoStoreRequests = (documentNode?: DocumentNode) => {
-  if (!documentNode) return false;
-
-  if (documentNode.definitions.some(isAuthRequest)) return false;
-
-  switch (LocalStorage.getItem('/error/auth')) {
-    case AuthError.NoStoreAssigned:
-    case AuthError.Unauthenticated:
-    case AuthError.Timeout:
-    case AuthError.ServerError:
-      return true;
-    default:
-      return false;
-  }
 };
 
 // mostly this is as a migration fix - previous format is a single object, not an array
@@ -87,15 +69,12 @@ export const useLogin = (
 ) => {
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
   const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
-  const { setSkipRequest } = useGql();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
   const queryClient = useQueryClient();
   const api = useAuthApi();
   const [mostRecentlyUsedCredentials, setMRUCredentials] =
     useLocalStorage('/mru/credentials');
   const getUserPermissions = useGetUserPermissions();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_error, setError, removeError] = useLocalStorage('/error/auth');
   const mostRecentCredentials = getMostRecentCredentials(
     mostRecentlyUsedCredentials
   );
@@ -112,32 +91,18 @@ export const useLogin = (
     setMRUCredentials(newMRU);
   };
 
-  const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
-    if (LocalStorage.getItem('/error/auth') === AuthError.ServerError) return;
-
-    switch (true) {
-      case isLoggedIn && hasValidStore: {
-        removeError();
-        break;
-      }
-      case !isLoggedIn: {
-        setError(AuthError.Unauthenticated);
-        break;
-      }
-      case !hasValidStore: {
-        setError(AuthError.NoStoreAssigned);
-        break;
-      }
-    }
-  };
-
   const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
+    // The server rejects auth (NoSiteAccess, InvalidCredentials, etc.) by
+    // returning an AuthTokenError with no token. Bail before any authed
+    // calls — `me` with an empty Bearer header would throw
+    // UnauthenticatedError and trip the global error handler.
+    if (!token) return { token, error };
+
     const userDetails = await getUserDetails(token);
     queryClient.setQueryData(api.keys.me(token), userDetails);
     const store = await getStore(userDetails, mostRecentCredentials);
     const permissions = await getUserPermissions(token, store);
-    setSkipRequest(skipNoStoreRequests);
 
     const authCookie = {
       store,
@@ -154,21 +119,13 @@ export const useLogin = (
       },
     };
 
-    if (token) {
-      const userLocale = getUserLocale(username);
-      if (userLocale === undefined) {
-        changeLanguage(
-          getLocaleCode(userDetails?.language as LanguageTypeNode)
-        );
-      }
-      upsertMostRecentCredential(username, store);
-      setAuthCookie(authCookie);
-      setCookie(authCookie);
+    const userLocale = getUserLocale(username);
+    if (userLocale === undefined) {
+      changeLanguage(getLocaleCode(userDetails?.language as LanguageTypeNode));
     }
-    setLoginError(!!token, !!store);
-    setSkipRequest(
-      () => LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned
-    );
+    upsertMostRecentCredential(username, store);
+    setAuthCookie(authCookie);
+    setCookie(authCookie);
 
     return { token, error };
   };
