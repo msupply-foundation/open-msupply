@@ -1351,7 +1351,12 @@ export type CentralServerQueryNode = {
 
 export type CentralSiteMutations = {
   __typename: 'CentralSiteMutations';
+  deleteSite: DeleteSiteNode;
   upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsDeleteSiteArgs = {
+  siteId: Scalars['Int']['input'];
 };
 
 export type CentralSiteMutationsUpsertSiteArgs = {
@@ -2196,6 +2201,11 @@ export type DeleteRnRFormInput = {
 };
 
 export type DeleteRnRFormResponse = DeleteResponse;
+
+export type DeleteSiteNode = {
+  __typename: 'DeleteSiteNode';
+  id: Scalars['Int']['output'];
+};
 
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
@@ -6220,11 +6230,6 @@ export type MutationsUseSuggestedQuantityArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type NameNotProvided = UpsertSiteErrorInterface & {
-  __typename: 'NameNotProvided';
-  description: Scalars['String']['output'];
-};
-
 export type NameConnector = {
   __typename: 'NameConnector';
   nodes: Array<NameNode>;
@@ -6267,6 +6272,11 @@ export type NameFilterInput = {
   supplyingStoreId?: InputMaybe<EqualFilterStringInput>;
   /** Filter by the name type */
   type?: InputMaybe<EqualFilterTypeInput>;
+};
+
+export type NameMustBeProvided = UpsertSiteErrorInterface & {
+  __typename: 'NameMustBeProvided';
+  description: Scalars['String']['output'];
 };
 
 export type NameNode = {

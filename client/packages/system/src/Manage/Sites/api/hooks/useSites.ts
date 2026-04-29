@@ -54,13 +54,24 @@ export const useSites = (queryParams?: ListParams) => {
     error: upsertError,
   } = useUpsertSite();
 
+  const {
+    mutateAsync: deleteMutation,
+    isLoading: isDeleting,
+    error: deleteError,
+  } = useDeleteSite();
+
   const upsert = async () => {
     return await upsertMutation(draft);
+  };
+
+  const deleteSite = async (siteId: number) => {
+    return await deleteMutation(siteId);
   };
 
   return {
     query: { data, isFetching, isError },
     upsert: { upsert, isUpserting, upsertError },
+    deleteSite: { deleteSite, isDeleting, deleteError },
     draft,
     updateDraft,
   };
@@ -93,7 +104,7 @@ const toSortInput = (sortBy?: SortBy<SiteRowFragment>) => ({
 
 enum UpsertSiteError {
   CodeMustBeProvided = 'CodeMustBeProvided',
-  NameNotProvided = 'NameNotProvided',
+  NameMustBeProvided = 'NameMustBeProvided',
   PasswordRequired = 'PasswordRequired',
 }
 
@@ -125,7 +136,7 @@ const useUpsertSite = () => {
               field: t('label.code'),
             })
           );
-        case UpsertSiteError.NameNotProvided:
+        case UpsertSiteError.NameMustBeProvided:
           throw new Error(
             t('error.field-must-be-specified', {
               field: t('label.name'),
@@ -143,6 +154,25 @@ const useUpsertSite = () => {
     }
 
     throw new Error(t('error.unable-to-save-site'));
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([SITE]);
+    },
+    onError: (e: unknown) => {
+      console.error(e);
+    },
+  });
+};
+
+const useDeleteSite = () => {
+  const { siteApi, queryClient } = useSiteGraphQL();
+
+  const mutationFn = async (siteId: number) => {
+    const result = await siteApi.deleteSite({ siteId });
+    return result?.centralServer?.site?.deleteSite;
   };
 
   return useMutation({

@@ -5,11 +5,13 @@ import {
   useEditModal,
   useTranslation,
   useNotification,
+  useConfirmationModal,
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
+import { Footer } from './Footer';
 import { Toolbar } from './Toolbar';
 import { SiteEditModal } from './SiteEditModal';
 import {
@@ -33,6 +35,7 @@ export const SitesList = () => {
   const {
     query: { data, isError, isFetching },
     upsert: { upsert },
+    deleteSite: { deleteSite },
     draft,
     updateDraft,
   } = useSites(queryParams);
@@ -60,6 +63,20 @@ export const SitesList = () => {
       error(String(e))();
     }
   };
+
+  const confirmDelete = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-delete-sites', { count: 1 }),
+    onConfirm: async () => {
+      try {
+        await deleteSite(draft.id);
+        success(t('messages.deleted-sites', { count: 1 }))();
+        handleClose();
+      } catch (e) {
+        error(String(e))();
+      }
+    },
+  });
 
   const columns = useMemo(
     (): ColumnDef<SiteRowFragment>[] => [
@@ -102,7 +119,7 @@ export const SitesList = () => {
     }
   };
 
-  const { table } = usePaginatedMaterialTable({
+  const { table, selectedRows } = usePaginatedMaterialTable({
     tableId: 'site-list',
     columns,
     data: data?.nodes,
@@ -110,7 +127,6 @@ export const SitesList = () => {
     isLoading: isFetching,
     isError,
     onRowClick,
-    enableRowSelection: false,
     noDataElement: (
       <NothingHere body={t('error.no-sites')} onCreate={onOpen} />
     ),
@@ -127,9 +143,15 @@ export const SitesList = () => {
           site={draft}
           onClose={handleClose}
           upsert={save}
+          onDelete={confirmDelete}
           updateDraft={updateDraft}
         />
       )}
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+        deleteSite={deleteSite}
+      />
     </>
   );
 };
