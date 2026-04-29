@@ -54,6 +54,7 @@ impl SyncErrorV7Node {
             SyncError::GetCurrentSiteIdError(_) => SyncErrorVariantV7::GetCurrentSiteIdError,
             SyncError::SiteIdMismatch { .. } => SyncErrorVariantV7::SiteIdMismatch,
             SyncError::Other(_) => SyncErrorVariantV7::Other,
+            SyncError::FailedToGetHardwareId => todo!(),
         };
 
         Self {

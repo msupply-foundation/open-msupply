@@ -48,6 +48,8 @@ diesel_json_type! {
         GetCurrentSiteIdError(#[from] GetCurrentSiteIdError),
         #[error("Site id mismatch, expected: {expected}, found: {found}")]
         SiteIdMismatch { expected: i32, found: i32 },
+        #[error("Failed to get hardware id")]
+        FailedToGetHardwareId,
         #[error("Unmatched error {0}")]
         Other(String),
     }

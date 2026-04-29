@@ -15,6 +15,6 @@ static ROUTE: &str = "site_status";
 
 impl SyncApiV7 {
     pub async fn site_status(&self, input: Input) -> Response {
-        self.op(ROUTE, input).await
+        self.op(ROUTE, input, true).await
     }
 }
