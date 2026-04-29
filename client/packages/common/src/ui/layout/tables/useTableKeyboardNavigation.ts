@@ -7,28 +7,40 @@ export const useTableKeyboardNavigation = <T extends MRT_RowData>(
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // useLayoutEffect runs synchronously after React commits the DOM (refs set,
-  // old DOM removed), so document.activeElement is already in its final state
-  // for most navigations. Only skip focus if the user is actively typing.
-  // Exception: navigating via cmd+k leaves the search input as the active
-  // element at layout time (the modal closes asynchronously). In that case,
-  // schedule a retry so we focus after the modal unmounts.
+  // Auto-focus the table container so keyboard navigation works immediately.
+  // Two async cases require retries:
+  //   1. cmd+k navigation: the search input is still active at layout time
+  //      (the modal closes asynchronously after the route commits)
+  //   2. Loading state: some pages don't render the table container immediately,
+  //      so containerRef.current is null until data arrives
+  // In either case, retry every 100ms (up to 10 times / ~1s) until the
+  // container is available and no text input holds focus.
   useLayoutEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    let attempts = 0;
+    const maxAttempts = 10;
+
     const tryFocus = () => {
       const active = document.activeElement;
       const isTextInput = active?.matches('input, select, textarea');
-      if (!isTextInput && containerRef.current) {
+      if (isTextInput) return;
+
+      if (containerRef.current) {
         containerRef.current.focus();
+      } else if (attempts < maxAttempts) {
+        attempts++;
+        timer = setTimeout(tryFocus, 100);
       }
     };
 
-    const active = document.activeElement;
-    if (active?.matches('input, select, textarea')) {
-      const timer = setTimeout(tryFocus, 100);
-      return () => clearTimeout(timer);
+    if (document.activeElement?.matches('input, select, textarea')) {
+      attempts = 1;
+      timer = setTimeout(tryFocus, 100);
     } else {
       tryFocus();
     }
+
+    return () => clearTimeout(timer);
   }, []);
 
   const scrollRowIntoView = useCallback((index: number) => {
@@ -62,7 +74,8 @@ export const useTableKeyboardNavigation = <T extends MRT_RowData>(
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setFocusedRowIndex(prev => {
-          const next = prev === null ? rowCount - 1 : Math.max(prev - 1, 0);
+          const next =
+            prev === null ? rowCount - 1 : Math.max(prev - 1, 0);
           scrollRowIntoView(next);
           return next;
         });
