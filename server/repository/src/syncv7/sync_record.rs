@@ -31,6 +31,8 @@ diesel_json_type! {
         TokenNotFound,
         #[error("Hardware id does not match the one stored on the site")]
         HardwareIdMismatch,
+        #[error("Failed to get hardware id")]
+        FailedToGetHardwareId,
         #[error(transparent)]
         SiteLockError(#[from] SiteLockError),
         #[error("Could not connect to server {url} {e}")]

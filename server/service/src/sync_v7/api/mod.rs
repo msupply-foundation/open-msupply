@@ -93,7 +93,7 @@ impl SyncApiV7 {
         let hardware_id = service_provider
             .app_data_service
             .get_hardware_id()
-            .map_err(|e| SyncError::Other(format_error(&e)))?;
+            .map_err(|_| SyncError::FailedToGetHardwareId)?;
 
         Ok(SiteAuth {
             token,
