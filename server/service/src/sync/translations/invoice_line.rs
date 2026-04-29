@@ -195,7 +195,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             volume_per_pack,
             shipped_pack_size,
             manufacturer_id,
-        } = serde_json::from_value::<LegacyTransLineRow>(sync_record.data.0.clone())?;
+        } = sync_record.deserialize()?;
 
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
