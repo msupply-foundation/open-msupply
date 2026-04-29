@@ -138,9 +138,15 @@ export type InboundFragment = {
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
   currencyRate: number;
+  chargesLocalCurrency: number;
+  chargesForeignCurrency: number;
   inboundType: Types.InboundNodeType;
   defaultDonor?: { __typename: 'NameNode'; id: string; name: string } | null;
-  linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+  linkedShipment?: {
+    __typename: 'InvoiceNode';
+    id: string;
+    invoiceNumber: number;
+  } | null;
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -319,6 +325,7 @@ export type InboundFragment = {
     id: string;
     number: number;
     reference?: string | null;
+    orderTotalAfterDiscount: number;
     currency?: {
       __typename: 'CurrencyNode';
       id: string;
@@ -326,6 +333,14 @@ export type InboundFragment = {
       rate: number;
       isHomeCurrency: boolean;
     } | null;
+    lines: {
+      __typename: 'PurchaseOrderLineConnector';
+      nodes: Array<{
+        __typename: 'PurchaseOrderLineNode';
+        id: string;
+        item: { __typename: 'ItemNode'; id: string };
+      }>;
+    };
   } | null;
 };
 
@@ -464,13 +479,19 @@ export type InvoiceQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
         inboundType: Types.InboundNodeType;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
           name: string;
         } | null;
-        linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+        linkedShipment?: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        } | null;
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -657,6 +678,7 @@ export type InvoiceQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -664,6 +686,14 @@ export type InvoiceQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -709,13 +739,19 @@ export type InboundByNumberQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
         inboundType: Types.InboundNodeType;
         defaultDonor?: {
           __typename: 'NameNode';
           id: string;
           name: string;
         } | null;
-        linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+        linkedShipment?: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        } | null;
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -902,6 +938,7 @@ export type InboundByNumberQuery = {
           id: string;
           number: number;
           reference?: string | null;
+          orderTotalAfterDiscount: number;
           currency?: {
             __typename: 'CurrencyNode';
             id: string;
@@ -909,6 +946,14 @@ export type InboundByNumberQuery = {
             rate: number;
             isHomeCurrency: boolean;
           } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
         } | null;
       }
     | {
@@ -1694,6 +1739,16 @@ export type PurchaseOrdersQuery = {
   };
 };
 
+export type StocktakeCountAfterDateQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.StocktakeFilterInput>;
+}>;
+
+export type StocktakeCountAfterDateQuery = {
+  __typename: 'Queries';
+  stocktakes: { __typename: 'StocktakeConnector'; totalCount: number };
+};
+
 export const InboundLineFragmentDoc = gql`
   fragment InboundLine on InvoiceLineNode {
     __typename
@@ -1837,6 +1892,7 @@ export const InboundFragmentDoc = gql`
     linkedShipment {
       __typename
       id
+      invoiceNumber
     }
     user {
       __typename
@@ -1892,6 +1948,8 @@ export const InboundFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+    chargesLocalCurrency
+    chargesForeignCurrency
     documents {
       __typename
       nodes {
@@ -1906,11 +1964,20 @@ export const InboundFragmentDoc = gql`
       id
       number
       reference
+      orderTotalAfterDiscount
       currency {
         id
         code
         rate
         isHomeCurrency
+      }
+      lines {
+        nodes {
+          id
+          item {
+            id
+          }
+        }
       }
     }
     inboundType
@@ -3058,6 +3125,18 @@ export const PurchaseOrdersDocument = gql`
   }
   ${InboundShipmentPurchaseOrderLineFragmentDoc}
 `;
+export const StocktakeCountAfterDateDocument = gql`
+  query stocktakeCountAfterDate(
+    $storeId: String!
+    $filter: StocktakeFilterInput
+  ) {
+    stocktakes(storeId: $storeId, filter: $filter) {
+      ... on StocktakeConnector {
+        totalCount
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -3416,6 +3495,24 @@ export function getSdk(
             signal,
           }),
         'purchaseOrders',
+        'query',
+        variables
+      );
+    },
+    stocktakeCountAfterDate(
+      variables: StocktakeCountAfterDateQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<StocktakeCountAfterDateQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StocktakeCountAfterDateQuery>({
+            document: StocktakeCountAfterDateDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stocktakeCountAfterDate',
         'query',
         variables
       );

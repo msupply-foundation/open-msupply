@@ -14,6 +14,7 @@ import {
   Box,
   Tooltip,
   TextWithTooltipCell,
+  Currencies,
   CurrencyValueCell,
   ExpiryDateCell,
   NumberInputCell,
@@ -133,7 +134,6 @@ export const useOutboundLineEditColumns = ({
             onChange={vvmStatus => setVvmStatus(row.original.id, vvmStatus)}
             selected={row.original.vvmStatus ?? null}
             disabled={getIsDisabled(row.original)}
-            clearable
           />
         ),
       },
@@ -175,7 +175,7 @@ export const useOutboundLineEditColumns = ({
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
         Cell: props => (
-          <CurrencyValueCell {...props} currencyCode={currency?.code} />
+          <CurrencyValueCell {...props} currencyCode={currency?.code as Currencies} />
         ),
         accessorFn: rowData =>
           currency ? rowData.sellPricePerPack / currency.rate : undefined,

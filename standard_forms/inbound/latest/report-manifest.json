@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.6.6",
+  "version": "2.6.7",
   "code": "inbound",
   "context": "INBOUND_SHIPMENT",
   "name": "Inbound Shipment",

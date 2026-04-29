@@ -266,6 +266,7 @@ export type PreferencesQuery = {
     expiredStockIssueThreshold: number;
     displayPopulationBasedForecasting: boolean;
     warningForExcessRequest: boolean;
+    externalInboundShipmentLinesMustBeAuthorised: boolean;
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
@@ -276,6 +277,12 @@ export type PreferencesQuery = {
       enabled: boolean;
       maxAge: number;
       minItems: number;
+    };
+    backdating: {
+      __typename: 'BackdatingNode';
+      shipmentsEnabled: boolean;
+      inventoryAdjustmentsEnabled: boolean;
+      maxDays: number;
     };
   };
 };
@@ -531,11 +538,17 @@ export const PreferencesDocument = gql`
         minItems
       }
       warningForExcessRequest
+      externalInboundShipmentLinesMustBeAuthorised
       invoiceStatusOptions
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
       isGaps
       globalTableConfigs
+      backdating {
+        shipmentsEnabled
+        inventoryAdjustmentsEnabled
+        maxDays
+      }
     }
   }
 `;

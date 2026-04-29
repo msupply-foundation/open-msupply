@@ -16,19 +16,18 @@ import {
   ArrowRightIcon,
   useEditModal,
   useNotification,
+  useDisabledNotificationToast,
   usePreferences,
   useIsExtraSmallScreen,
   CheckIcon,
   CloseIcon,
+  ClockIcon,
   InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
 import { getStatusTranslator, getInboundShipmentType } from '../../../utils';
 import { createStatusLog, getStatusSequence } from '../../../statuses';
-import {
-  InboundLineFragment,
-  useInboundShipment,
-} from '../../api';
+import { InboundLineFragment, useInboundShipment } from '../../api';
 import {
   useInboundDeleteSelectedLines,
   useZeroInboundLinesQuantity,
@@ -62,7 +61,11 @@ export const FooterComponent = ({
     query: { data },
     isDisabled,
     isExternal,
+    hasAuthorisePermission,
   } = useInboundShipment();
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
   const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
     resetRowSelection
@@ -88,9 +91,9 @@ export const FooterComponent = ({
     }
   };
 
-  const changeLineStatus = (approve: 'approve' | 'reject') => {
+  const changeLineStatus = (status: 'approve' | 'reject' | 'pending') => {
     if (!selectedRows.length) {
-      const selectLinesSnack = info(t(`messages.select-rows-to-${approve}`));
+      const selectLinesSnack = info(t(`messages.select-rows-to-${status}`));
       selectLinesSnack();
       return;
     }
@@ -100,7 +103,14 @@ export const FooterComponent = ({
       return;
     }
 
-    onChangeLineStatus(approve);
+    if (
+      (status === 'approve' || status === 'reject') &&
+      !hasAuthorisePermission
+    ) {
+      return permissionDeniedNotification();
+    }
+
+    onChangeLineStatus(status);
   };
 
   let actions: Action[] = [
@@ -139,6 +149,11 @@ export const FooterComponent = ({
         label: t('button.reject'),
         icon: <CloseIcon />,
         onClick: () => changeLineStatus('reject'),
+      },
+      {
+        label: t('button.pending'),
+        icon: <ClockIcon />,
+        onClick: () => changeLineStatus('pending'),
       },
     ]);
   }

@@ -5,6 +5,7 @@ import {
   ActivityLogSortFieldInput,
   ActivityLogNodeType,
   isEnumValue,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { ActivityLogRowFragment } from '../operations.generated';
 import { useActivityLogGraphQL } from '../useActivityLogGraphQL';
@@ -12,10 +13,12 @@ import { ACTIVITY_LOG } from './keys';
 
 export function useActivityLog(
   recordId: string,
+  enabled: boolean = true,
   logType?: ActivityLogNodeType,
   sortBy?: SortBy<ActivityLogRowFragment>
 ) {
   const { activityLogApi } = useActivityLogGraphQL();
+  const { storeId } = useAuthContext();
 
   const queryKey = [ACTIVITY_LOG, recordId, sortBy];
   const queryFn = async (): Promise<{
@@ -28,6 +31,7 @@ export function useActivityLog(
     };
 
     const query = await activityLogApi.activityLogs({
+      storeId,
       offset: 0,
       first: 1000,
       sort: sortBy ? getSortInput(sortBy) : undefined,
@@ -37,7 +41,11 @@ export function useActivityLog(
     return { nodes, totalCount };
   };
 
-  const query = useQuery({ queryKey, queryFn });
+  const query = useQuery({
+    queryKey,
+    queryFn,
+    enabled,
+  });
   return query;
 }
 

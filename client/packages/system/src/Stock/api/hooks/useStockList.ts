@@ -15,7 +15,10 @@ export type StockListParams = {
   filterBy?: StockLineFilterInput;
 };
 
-export const useStockList = (queryParams: StockListParams) => {
+export const useStockList = (
+  queryParams: StockListParams,
+  options?: { enabled?: boolean }
+) => {
   const { stockApi, storeId } = useStockGraphQL();
 
   const {
@@ -55,6 +58,7 @@ export const useStockList = (queryParams: StockListParams) => {
     queryFn,
 
     keepPreviousData: true,
+    enabled: options?.enabled,
   });
   return query;
 };
@@ -64,12 +68,12 @@ const toSortField = (
 ): StockLineSortFieldInput => {
   const sortFieldMap: Record<string, StockLineSortFieldInput> = {
     batch: StockLineSortFieldInput.Batch,
-    itemCode: StockLineSortFieldInput.ItemCode,
+    code: StockLineSortFieldInput.ItemCode,
     name: StockLineSortFieldInput.ItemName,
     packSize: StockLineSortFieldInput.PackSize,
     supplierName: StockLineSortFieldInput.SupplierName,
-    numberOfPacks: StockLineSortFieldInput.NumberOfPacks,
-    location: StockLineSortFieldInput.LocationCode,
+    totalNumberOfPacks: StockLineSortFieldInput.NumberOfPacks,
+    'location.code': StockLineSortFieldInput.LocationCode,
     costPricePerPack: StockLineSortFieldInput.CostPricePerPack,
     expiryDate: StockLineSortFieldInput.ExpiryDate,
     manufactureDate: StockLineSortFieldInput.ManufactureDate,

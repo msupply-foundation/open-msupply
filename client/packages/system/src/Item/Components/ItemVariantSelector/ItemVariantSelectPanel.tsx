@@ -5,6 +5,7 @@ import {
   SlidePanel,
   Box,
   Typography,
+  DialogButton,
 } from '@openmsupply-client/common';
 import { ItemVariantFragment, useItemVariants } from '../../api';
 
@@ -34,9 +35,13 @@ const VariantCard = ({
       background: 'none',
       textAlign: 'left',
       width: '100%',
-      '&:hover': {
+      '&:hover, &:focus-visible': {
         borderColor: theme.palette.secondary.main,
         backgroundColor: theme.palette.background.toolbar,
+      },
+      '&:focus-visible': {
+        outline: `${theme.palette.secondary.main}`,
+        outlineOffset: -2,
       },
     })}
   >
@@ -82,6 +87,7 @@ export const ItemVariantSelectPanel = ({
       open={open}
       onClose={onClose}
       title={t('label.select-item-variant')}
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <Box display="flex" flexDirection="column" gap={2} padding={2}>
         <VariantCard onClick={onManual ?? onClose}>

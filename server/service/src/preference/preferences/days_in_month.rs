@@ -14,6 +14,6 @@ impl Preference for DaysInMonth {
     }
 
     fn value_type(&self) -> PreferenceValueType {
-        PreferenceValueType::Integer
+        PreferenceValueType::Float
     }
 }

@@ -1,7 +1,8 @@
 use crate::sync::{
     test::TestSyncIncomingRecord,
     translations::invoice::{
-        LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
+        LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType,
+        TransactMode, TransactRowOmsFields,
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
@@ -97,7 +98,8 @@ const TRANSACT_1: (&str, &str) = (
       "om_verified_datetime": "",
       "om_created_datetime": "",
       "om_transport_reference": "",
-      "om_expected_delivery_date": ""
+      "om_expected_delivery_date": "",
+      "oms_fields": {"charges_local_currency": 15.5, "charges_foreign_currency": 20.0}
   }"#,
 );
 
@@ -158,6 +160,8 @@ fn transact_1_pull_row() -> InvoiceRow {
         default_donor_id: Some("donor_a".to_string()),
         purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
+        charges_local_currency: 15.5,
+        charges_foreign_currency: 20.0,
     }
 }
 
@@ -232,6 +236,10 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         goods_received_ID: None,
         purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
+        oms_fields: Some(TransactRowOmsFields {
+            charges_local_currency: 15.5,
+            charges_foreign_currency: 20.0,
+        }),
     }
 }
 
@@ -373,6 +381,8 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -435,6 +445,10 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -608,6 +622,8 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -699,6 +715,10 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -847,6 +867,8 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -915,6 +937,10 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -1063,6 +1089,8 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -1130,6 +1158,10 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -1275,6 +1307,8 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -1342,6 +1376,10 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -1493,6 +1531,8 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -1565,6 +1605,10 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }

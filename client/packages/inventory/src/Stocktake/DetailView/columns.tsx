@@ -120,6 +120,20 @@ export const useStocktakeColumns = () => {
         getIsError: row => getIsError('StockLineReducedBelowZero', row),
       },
       {
+        id: 'dosesCounted',
+        header: t('label.doses-counted'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        aggregationFn: 'sum',
+        includeColumn: manageVaccinesInDoses,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          const counted = row.countedNumberOfPacks;
+          if (counted === null || counted === undefined) return null;
+          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+        },
+      },
+      {
         id: 'difference',
         accessorFn: row =>
           (row.countedNumberOfPacks ?? row.snapshotNumberOfPacks) -

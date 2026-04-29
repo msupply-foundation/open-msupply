@@ -20,6 +20,7 @@ pub fn generate(
         id,
         other_party_id,
         inbound_shipment_id,
+        their_reference,
         supplier_return_lines,
     }: InsertSupplierReturn,
     other_party: Name,
@@ -54,7 +55,7 @@ pub fn generate(
         on_hold: false,
         colour: None,
         comment: None,
-        their_reference: None,
+        their_reference,
         tax_percentage: None,
         transport_reference: None,
         allocated_datetime: None,
@@ -78,6 +79,8 @@ pub fn generate(
         default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     let lines_with_packs: Vec<&SupplierReturnLineInput> = supplier_return_lines

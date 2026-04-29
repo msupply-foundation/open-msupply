@@ -111,11 +111,10 @@ pub fn generate(
             .map(|stats| stats.order_total_before_discount)
             .unwrap_or(0.0);
 
-        updated_order.supplier_discount_percentage = if total_before_tax > 0.0 {
-            Some((supplier_discount_amount / total_before_tax) * 100.0)
-        } else {
-            Some(0.0)
-        };
+        if total_before_tax > 0.0 {
+            updated_order.supplier_discount_percentage =
+                Some((supplier_discount_amount / total_before_tax) * 100.0);
+        }
     }
 
     let requested_delivery_date_value = nullable_update(

@@ -156,15 +156,6 @@ export type RequestByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             reason?: {
               __typename: 'ReasonOptionNode';
@@ -317,15 +308,6 @@ export type RequestByIdQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             reason?: {
               __typename: 'ReasonOptionNode';
@@ -633,7 +615,9 @@ export type InsertProgramRequestMutation = {
   insertProgramRequestRequisition:
     | {
         __typename: 'InsertProgramRequestRequisitionError';
-        error: { __typename: 'MaxOrdersReachedForPeriod'; description: string };
+        error:
+          | { __typename: 'MaxOrdersReachedForPeriod'; description: string }
+          | { __typename: 'SupplierNotValid'; description: string };
       }
     | { __typename: 'RequisitionNode'; id: string };
 };
@@ -1515,6 +1499,10 @@ export const InsertProgramRequestDocument = gql`
         error {
           description
           ... on MaxOrdersReachedForPeriod {
+            __typename
+            description
+          }
+          ... on SupplierNotValid {
             __typename
             description
           }

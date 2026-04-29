@@ -153,8 +153,9 @@ mod test {
             mock_immunisation_program_a, mock_inbound_shipment_a, mock_inbound_shipment_c,
             mock_inbound_shipment_e, mock_item_a, mock_item_restricted_location_type_b,
             mock_location_with_restricted_location_type_a, mock_name_customer_a, mock_name_store_b,
-            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
-            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
+            mock_outbound_shipment_e, mock_purchase_order_a, mock_purchase_order_a_line_1,
+            mock_store_a, mock_store_b, mock_user_account_a, mock_vaccine_item_a,
+            mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::{
@@ -162,8 +163,8 @@ mod test {
             vvm_status_log_row::VVMStatusLogRow,
         },
         EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow,
-        StorePreferenceRowRepository,
+        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, PreferenceRow,
+        StorePreferenceRow, StorePreferenceRowRepository,
     };
 
     use crate::{
@@ -728,5 +729,71 @@ mod test {
             store_id: mock_store_a().id,
         };
         assert_eq!(log, &expected_vvm_log);
+    }
+
+    #[actix_rt::test]
+    async fn insert_external_inbound_line_no_stock_line_when_auth_preference_enabled() {
+        // Negative test: when ExternalInboundShipmentLinesMustBeAuthorised is enabled,
+        // inserting a line on an external inbound shipment (has purchase_order_id) should
+        // NOT create a stock line, even if the invoice status would normally allow it.
+        fn external_inbound_shipment() -> InvoiceRow {
+            InvoiceRow {
+                id: "external_inbound_auth_test".to_string(),
+                name_id: mock_name_store_b().id,
+                store_id: mock_store_a().id,
+                invoice_number: 999,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Delivered,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_external_inbound_no_stock_line_auth_pref",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![external_inbound_shipment()],
+                preferences: vec![PreferenceRow {
+                    id: "ext_auth_pref_insert_test".to_string(),
+                    key: "external_inbound_shipment_lines_must_be_authorised".to_string(),
+                    value: "true".to_string(),
+                    store_id: Some(mock_store_a().id),
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "ext_inbound_line_auth_test".to_string(),
+                invoice_id: external_inbound_shipment().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                r#type: StockInType::InboundShipment,
+                purchase_order_line_id: Some(mock_purchase_order_a_line_1().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let invoice_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("ext_inbound_line_auth_test")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            invoice_line.stock_line_id, None,
+            "Stock line should NOT be created for external inbound shipment when authorisation preference is enabled"
+        );
     }
 }

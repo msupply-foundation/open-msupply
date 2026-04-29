@@ -52,12 +52,17 @@ const defaultPurchaseOrderLine: DraftPurchaseOrderLine = {
     id: '',
     code: '',
     name: '',
+    defaultPackSize: 1,
+    isVaccine: false,
+    doses: 0,
+    restrictedLocationTypeId: null,
     stats: {
       __typename: 'ItemStatsNode',
       stockOnHand: 0,
     },
   },
   unitsOrderedInOthers: 0,
+  receivedNumberOfUnits: 0,
   status: PurchaseOrderLineStatusNode.New,
   discountPercentage: 0,
   // These values not actually saved to DB

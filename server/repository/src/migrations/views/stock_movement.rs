@@ -53,7 +53,8 @@ impl ViewMigrationFragment for ViewMigration {
         invoice.status AS invoice_status,
         invoice_line_stock_movement.total_before_tax AS total_before_tax,
         invoice_line_stock_movement.pack_size as pack_size,
-        invoice_line_stock_movement.number_of_packs as number_of_packs
+        invoice_line_stock_movement.number_of_packs as number_of_packs,
+        invoice.user_id as user_id
     FROM
         invoice_line_stock_movement
         LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id

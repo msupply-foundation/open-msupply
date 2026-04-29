@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block body %}
+  {% set page_class = "docs landing" %}
+{% endblock body %}
+
+{% block header %}
+  {% set current_section = "" %}
+  {{ macros_header::header(current_section=current_section) }}
+{% endblock header %}
+
+{% block content %}
+<div class="wrap container" role="document">
+  <div class="content">
+    <article class="landing-page">
+      {{ section.content | safe }}
+
+      <div class="landing-columns">
+        {% for l1_path in section.subsections %}
+          {% set l1 = get_section(path=l1_path) %}
+
+          <div class="landing-block">
+            <h2><a href="{{ l1.permalink }}">{{ l1.title }}</a></h2>
+
+            {# L2 subsections with nested children #}
+            {% for l2_path in l1.subsections %}
+              {% set l2 = get_section(path=l2_path) %}
+              <h4><a href="{{ l2.permalink }}">{{ l2.title }}</a></h4>
+              <ul class="list-unstyled">
+                {% for page in l2.pages %}
+                  <li><a href="{{ page.permalink }}">{{ page.title }}</a></li>
+                {% endfor %}
+                {% for l3_path in l2.subsections %}
+                  {% set l3 = get_section(path=l3_path) %}
+                  <li>
+                    <strong><a href="{{ l3.permalink }}">{{ l3.title }}</a></strong>
+                    {% if l3.subsections %}
+                      <ul class="list-unstyled ms-3">
+                        {% for l4_path in l3.subsections %}
+                          {% set l4 = get_section(path=l4_path) %}
+                          <li><a href="{{ l4.permalink }}">{{ l4.title }}</a></li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endfor %}
+
+            {# L1 pages (not under a subsection) #}
+            {% if l1.pages %}
+              <ul class="list-unstyled">
+                {% for page in l1.pages %}
+                  <li><a href="{{ page.permalink }}">{{ page.title }}</a></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </article>
+  </div>
+</div>
+{% endblock content %}

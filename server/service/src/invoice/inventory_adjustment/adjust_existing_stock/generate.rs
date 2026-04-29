@@ -35,6 +35,7 @@ pub fn generate(
         adjustment,
         adjustment_type,
         reason_option_id,
+        backdated_datetime: _, // Handled in insert.rs after generate
     }: InsertInventoryAdjustment,
     stock_line: StockLine,
 ) -> Result<GenerateResult, RepositoryError> {
@@ -97,6 +98,8 @@ pub fn generate(
         default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     let StockLineRow {

@@ -49,6 +49,11 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
    * (e.g. "Batch abc", "2 Packs Received"). */
   cardSummary?: (row: T) => React.ReactNode;
 
+  /** Sort order for card summary items. Lower numbers appear first (left).
+   * Columns without this property are ordered after those with it,
+   * in their original definition order. */
+  cardSummaryOrder?: number;
+
   /** Number of grid columns to span in card view. Defaults to 1. */
   cardSpan?: number;
 };
