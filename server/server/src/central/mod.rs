@@ -5,7 +5,6 @@ use sync_v7::sync_v7_on_central;
 use crate::central_server_only;
 
 mod name_store_join;
-mod site_auth;
 mod sync;
 mod sync_v7;
 use name_store_join::patient_name_store_join;
