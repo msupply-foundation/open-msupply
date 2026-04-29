@@ -5,7 +5,7 @@ use repository::{
     get_changelogs,
     syncv7::{SiteLockError, SyncError},
     ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, KeyType,
-    RowActionType, StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository,
+    RowActionType, Site, StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository,
     SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
@@ -128,19 +128,19 @@ async fn sync_inner<'a>(
     settings: SyncSettings,
     is_initialising: bool,
 ) -> Result<(), SyncError> {
-    let sync_v7 = SyncV7 {
+    let sync_v7 = SyncV7::new(
         connection,
-        sync_api_v7: SyncApiV7 {
+        SyncApiV7 {
             url: settings.url.parse().unwrap(),
             version: VERSION,
             username: settings.username,
             password: settings.password_sha256,
         },
-        batch_size: 5000,
-    };
+        5000,
+    );
 
     logger.start_step(SyncStep::Push)?;
-    sync_v7.push(logger).await?;
+    sync_v7.push(logger, is_initialising).await?;
 
     logger.start_step(SyncStep::WaitForIntegration)?;
     sync_v7
@@ -158,17 +158,66 @@ async fn sync_inner<'a>(
     Ok(())
 }
 
-struct SyncV7<'a> {
+pub(crate) struct SyncV7<'a> {
     connection: &'a StorageConnection,
     sync_api_v7: SyncApiV7,
     batch_size: u32,
 }
 
 impl<'a> SyncV7<'a> {
-    pub(crate) async fn push<'b>(&self, logger: &mut SyncLogger<'b>) -> Result<(), SyncError> {
-        // TODO: implement push using changelog query
-        // For now, push is a no-op placeholder
+    pub(crate) fn new(
+        connection: &'a StorageConnection,
+        sync_api_v7: SyncApiV7,
+        batch_size: u32,
+    ) -> SyncV7<'a> {
+        SyncV7 {
+            connection,
+            sync_api_v7,
+            batch_size,
+        }
+    }
+}
+
+impl<'a> SyncV7<'a> {
+    pub(crate) async fn push<'b>(
+        &self,
+        logger: &mut SyncLogger<'b>,
+        is_initialising: bool,
+    ) -> Result<(), SyncError> {
+        if is_initialising {
+            logger.progress(0)?;
+            return Ok(());
+        }
+
+        let cursor_controller = CursorController::new(KeyType::SyncPushCursorV7);
+        let site_id = get_current_site_id(self.connection)?;
+
+        let filter = Site::SiteId(site_id).remote_data_for_site();
+
+        loop {
+            let cursor = cursor_controller.get(self.connection)? as i64;
+
+            let batch =
+                SyncBatchV7::generate(self.connection, filter.clone(), cursor, self.batch_size)?;
+
+            let record_count = batch.records.len();
+            logger.progress(record_count as i64)?;
+
+            let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
+                break;
+            };
+
+            self.sync_api_v7.push(batch).await?;
+
+            cursor_controller.update(self.connection, batch_max_cursor as u64)?;
+
+            if record_count < self.batch_size as usize {
+                break;
+            }
+        }
+
         logger.progress(0)?;
+
         Ok(())
     }
 
@@ -220,12 +269,10 @@ impl<'a> SyncV7<'a> {
             let record_count = batch.records.len();
             logger.progress(record_count as i64)?;
 
-            if record_count == 0 {
-                break;
-            }
-
             let site_id = batch.site_id;
-            let max_cursor = batch.max_cursor;
+            let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
+                break;
+            };
 
             let sync_buffer_rows: Vec<SyncBufferRow> = batch
                 .records
@@ -236,7 +283,7 @@ impl<'a> SyncV7<'a> {
             self.connection
                 .transaction_sync(|t_con| {
                     SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)?;
-                    cursor_controller.update(self.connection, max_cursor as u64 + 1)
+                    cursor_controller.update(self.connection, batch_max_cursor as u64)
                 })
                 .map_err(|e| e.to_inner_error())?;
 
@@ -250,7 +297,7 @@ impl<'a> SyncV7<'a> {
         Ok(())
     }
 
-    async fn integrate<'b>(
+    pub(crate) async fn integrate<'b>(
         &self,
         logger: &mut SyncLogger<'b>,
         is_initialising: bool,
