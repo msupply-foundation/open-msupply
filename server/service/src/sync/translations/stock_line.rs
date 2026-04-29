@@ -7,9 +7,9 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
-    vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, ProgramRowRepository, StockLine, StockLineFilter, StockLineRepository,
-    StockLineRow, StorageConnection, SyncBufferRow,
+    vvm_status::vvm_status_row::VVMStatusRowRepository, BarcodeRowRepository, ChangelogRow,
+    ChangelogTableName, EqualFilter, LocationRowRepository, ProgramRowRepository, StockLine,
+    StockLineFilter, StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -17,10 +17,7 @@ use util::sync_serde::{
     zero_date_as_option,
 };
 
-use super::{
-    utils::{clear_invalid_barcode_id, clear_invalid_fk, clear_invalid_location_id},
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
-};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 const RECORD_TABLE: &str = "stock_line";
 
@@ -134,8 +131,22 @@ impl SyncTranslation for StockLineTranslation {
             volume_per_pack,
         } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
 
-        let barcode_id = clear_invalid_barcode_id(connection, RECORD_TABLE, &ID, barcode_id)?;
-        let location_id = clear_invalid_location_id(connection, RECORD_TABLE, &ID, location_ID)?;
+        let barcode_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "barcode_id",
+            barcode_id,
+            |c, id| BarcodeRowRepository::new(c).find_one_by_id(id),
+        )?;
+        let location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "location_id",
+            location_ID,
+            |c, id| LocationRowRepository::new(c).find_one_by_id(id),
+        )?;
         let item_variant_id = clear_invalid_fk(
             connection,
             RECORD_TABLE,
