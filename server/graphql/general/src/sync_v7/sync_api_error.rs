@@ -17,8 +17,7 @@ pub enum SyncErrorVariantV7 {
     SyncVersionMismatch,
     NotACentralServer,
     Authentication,
-    SiteNotFound,
-    IncorrectPassword,
+    InvalidSiteNameOrPassword,
     TokenAlreadyAllocated,
     TokenNotFound,
     HardwareIdMismatch,
@@ -42,8 +41,9 @@ impl SyncErrorV7Node {
             SyncError::SyncVersionMismatch { .. } => SyncErrorVariantV7::SyncVersionMismatch,
             SyncError::NotACentralServer => SyncErrorVariantV7::NotACentralServer,
             SyncError::Authentication => SyncErrorVariantV7::Authentication,
-            SyncError::SiteNotFound(_) => SyncErrorVariantV7::SiteNotFound,
-            SyncError::IncorrectPassword => SyncErrorVariantV7::IncorrectPassword,
+            SyncError::InvalidSiteNameOrPassword => {
+                SyncErrorVariantV7::InvalidSiteNameOrPassword
+            }
             SyncError::TokenAlreadyAllocated => SyncErrorVariantV7::TokenAlreadyAllocated,
             SyncError::TokenNotFound => SyncErrorVariantV7::TokenNotFound,
             SyncError::HardwareIdMismatch => SyncErrorVariantV7::HardwareIdMismatch,
