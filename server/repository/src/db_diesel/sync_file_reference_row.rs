@@ -8,7 +8,8 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository, RowActionType, ChangelogSyncType, Upsert};
+use crate::SourceSiteIdForChangelog;
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, ChangelogSyncType, Upsert};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -91,13 +92,13 @@ impl SyncFileReferenceRow {
         changelog_record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncFileReference,
             record_id: changelog_record_id,
             row_action: action,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -134,7 +135,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             sync_file_reference_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -158,7 +159,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             sync_file_reference_id.to_string(),
             self.connection,
             RowActionType::Upsert,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
@@ -197,9 +198,12 @@ impl Upsert for SyncFileReferenceRow {
         SyncFileReferenceRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

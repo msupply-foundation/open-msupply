@@ -4,8 +4,8 @@ use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
     NameRow,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository, RowActionType};
-use crate::{Delete, ChangelogSyncType, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{Delete, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -59,7 +59,7 @@ impl NameStoreJoinRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::NameStoreJoin,
@@ -67,7 +67,7 @@ impl NameStoreJoinRow {
             row_action: action,
             store_id: Some(self.store_id.clone()),
             name_id: Some(self.name_id.clone()),
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -76,7 +76,7 @@ impl NameStoreJoinRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = NameStoreJoinRepository::new(con)
             .find_one_by_id(id)?
@@ -96,7 +96,11 @@ impl<'a> NameStoreJoinRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = row.changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -116,7 +120,12 @@ impl<'a> NameStoreJoinRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = NameStoreJoinRow::delete_changelog(id, self.connection, RowActionType::Delete, None)?;
+        let changelog = NameStoreJoinRow::delete_changelog(
+            id,
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(
             name_store_join_with_links::table.filter(name_store_join_with_links::id.eq(id)),
@@ -207,7 +216,12 @@ impl Delete for NameStoreJoinRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                NameStoreJoinRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+                NameStoreJoinRow::delete_changelog(
+                    &self.0,
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -233,9 +247,11 @@ impl Upsert for NameStoreJoinRow {
         NameStoreJoinRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

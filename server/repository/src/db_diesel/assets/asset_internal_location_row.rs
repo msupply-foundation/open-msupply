@@ -4,9 +4,10 @@ use crate::asset_row::AssetRowRepository;
 use crate::Delete;
 use crate::LocationRowRepository;
 use crate::RepositoryError;
+use crate::SourceSiteIdForChangelog;
 use crate::StorageConnection;
 use crate::{ChangelogSyncType, Upsert};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository, RowActionType};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -35,7 +36,7 @@ impl AssetInternalLocationRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let store_id_location = LocationRowRepository::new(con)
             .find_one_by_id(&self.location_id)?
@@ -51,7 +52,7 @@ impl AssetInternalLocationRow {
             row_action: action,
             store_id: store_id_location.or(store_id_asset),
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -60,7 +61,7 @@ impl AssetInternalLocationRow {
         row_id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = AssetInternalLocationRowRepository::new(con)
             .find_one_by_id(row_id)?
@@ -96,7 +97,11 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         asset_internal_location_row: &AssetInternalLocationRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_internal_location_row)?;
-        let changelog = asset_internal_location_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = asset_internal_location_row.changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -132,7 +137,12 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     }
 
     pub fn delete(&self, asset_internal_location_id: &str) -> Result<i64, RepositoryError> {
-        let changelog = match AssetInternalLocationRow::delete_changelog(asset_internal_location_id, self.connection, RowActionType::Delete, None) {
+        let changelog = match AssetInternalLocationRow::delete_changelog(
+            asset_internal_location_id,
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        ) {
             Ok(changelog) => changelog,
             Err(RepositoryError::NotFound) => {
                 return Ok(0); // already deleted?
@@ -162,9 +172,11 @@ impl Upsert for AssetInternalLocationRow {
     fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         AssetInternalLocationRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
         ChangelogRepository::new(con).insert(&changelog)?;
@@ -190,7 +202,12 @@ impl Delete for AssetInternalLocationRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                AssetInternalLocationRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+                AssetInternalLocationRow::delete_changelog(
+                    &self.0,
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

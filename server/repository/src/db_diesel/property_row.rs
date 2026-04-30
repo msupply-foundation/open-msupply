@@ -6,9 +6,9 @@ use crate::types::PropertyValueType;
 use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
 use crate::ChangelogTableName;
-use crate::KeyValueStoreRepository;
 use crate::RepositoryError;
 use crate::RowActionType;
+use crate::SourceSiteIdForChangelog;
 use crate::StorageConnection;
 use crate::{ChangelogSyncType, Upsert};
 
@@ -42,7 +42,7 @@ impl PropertyRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Property,
@@ -50,7 +50,7 @@ impl PropertyRow {
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -81,7 +81,7 @@ impl<'a> PropertyRowRepository<'a> {
             property_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -116,7 +116,7 @@ impl Upsert for PropertyRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

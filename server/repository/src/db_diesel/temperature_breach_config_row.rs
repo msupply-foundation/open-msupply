@@ -4,9 +4,9 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
+use crate::SourceSiteIdForChangelog;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RowActionType,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
 };
 
 use diesel::prelude::*;
@@ -48,7 +48,7 @@ impl TemperatureBreachConfigRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::TemperatureBreachConfig,
@@ -56,7 +56,7 @@ impl TemperatureBreachConfigRow {
             row_action: action,
             store_id: Some(self.store_id.clone()),
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -78,7 +78,11 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = row.changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 

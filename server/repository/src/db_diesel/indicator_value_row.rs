@@ -1,6 +1,6 @@
 use super::{
     name_row::name, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogTableName, KeyValueStoreRepository, RowActionType, StorageConnection,
+    ChangelogTableName, RowActionType, StorageConnection,
 };
 use crate::{
     diesel_macros::define_linked_tables,
@@ -8,6 +8,7 @@ use crate::{
 };
 use diesel::prelude::*;
 use crate::ChangelogSyncType;
+use crate::SourceSiteIdForChangelog;
 
 define_linked_tables! {
     view: indicator_value = "indicator_value_view",
@@ -49,7 +50,7 @@ impl IndicatorValueRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::IndicatorValue,
@@ -57,7 +58,7 @@ impl IndicatorValueRow {
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -78,7 +79,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -88,7 +89,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
             id.to_string(),
             self.connection,
             RowActionType::Delete,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
@@ -122,7 +123,7 @@ impl Delete for IndicatorValueRowDelete {
                 self.0.clone(),
                 con,
                 RowActionType::Delete,
-                source_site_id,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -146,9 +147,12 @@ impl Upsert for IndicatorValueRow {
         IndicatorValueRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

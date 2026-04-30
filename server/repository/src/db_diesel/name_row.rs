@@ -6,10 +6,10 @@ use super::{
 };
 use crate::{
     item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
-    ChangelogRepository, ChangelogTableName, EqualFilter, KeyValueStoreRepository, NameLinkRow,
-    NameLinkRowRepository, RowActionType,
+    ChangelogRepository, ChangelogTableName, EqualFilter, NameLinkRow, NameLinkRowRepository,
+    RowActionType,
 };
-use crate::{ChangelogSyncType, Delete, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -209,13 +209,13 @@ impl NameRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Name,
             record_id,
             row_action: action,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -226,13 +226,13 @@ impl NameOmsFieldsRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::NameOmsFields,
             record_id,
             row_action: action,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -282,8 +282,12 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog =
-            NameRow::changelog(row.id.clone(), self.connection, RowActionType::Upsert, None)?;
+        let changelog = NameRow::changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -300,7 +304,7 @@ impl<'a> NameRowRepository<'a> {
             name_id.to_string(),
             self.connection,
             RowActionType::Delete,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -360,7 +364,7 @@ impl<'a> NameRowRepository<'a> {
             name_id.to_string(),
             self.connection,
             RowActionType::Upsert,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -400,7 +404,7 @@ impl Delete for NameRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                NameRow::changelog(self.0.clone(), con, RowActionType::Delete, source_site_id)?
+                NameRow::changelog(self.0.clone(), con, RowActionType::Delete, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -424,7 +428,7 @@ impl Upsert for NameRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -449,7 +453,7 @@ impl Upsert for NameOmsFieldsRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

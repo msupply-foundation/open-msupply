@@ -4,9 +4,10 @@ use super::{
 };
 
 use crate::diesel_macros::define_linked_tables;
+use crate::SourceSiteIdForChangelog;
 use crate::{
     repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    KeyValueStoreRepository, RowActionType,
+    RowActionType,
 };
 
 use diesel::prelude::*;
@@ -80,7 +81,7 @@ impl EncounterRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Encounter,
@@ -88,7 +89,7 @@ impl EncounterRow {
             row_action: action,
             store_id: self.store_id.clone(),
             name_id: Some(self.patient_id.clone()),
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -105,7 +106,11 @@ impl<'a> EncounterRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &EncounterRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = row.changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 

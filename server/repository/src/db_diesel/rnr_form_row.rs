@@ -5,8 +5,8 @@ use super::{
 };
 use crate::{
     diesel_macros::define_linked_tables,
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, ChangelogSyncType, Delete,
-    KeyValueStoreRepository, RepositoryError, RowActionType, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    RepositoryError, RowActionType, SourceSiteIdForChangelog, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -82,7 +82,7 @@ impl RnRFormRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::RnrForm,
@@ -90,7 +90,7 @@ impl RnRFormRow {
             row_action: action,
             store_id: Some(self.store_id.clone()),
             name_id: Some(self.name_id.clone()),
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -99,7 +99,7 @@ impl RnRFormRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = RnRFormRowRepository::new(con)
             .find_one_by_id(id)?
@@ -119,7 +119,11 @@ impl<'a> RnRFormRowRepository<'a> {
 
     pub fn upsert_one(&self, rnr_form_row: &RnRFormRow) -> Result<i64, RepositoryError> {
         self._upsert(rnr_form_row)?;
-        let changelog = rnr_form_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = rnr_form_row.changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -137,7 +141,12 @@ impl<'a> RnRFormRowRepository<'a> {
     }
 
     pub fn delete(&self, rnr_form_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = match RnRFormRow::delete_changelog(rnr_form_id, self.connection, RowActionType::Delete, None) {
+        let changelog = match RnRFormRow::delete_changelog(
+            rnr_form_id,
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        ) {
             Ok(changelog) => changelog,
             Err(RepositoryError::NotFound) => return Ok(None),
             Err(e) => return Err(e),
@@ -160,9 +169,12 @@ impl Delete for RnRFormDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                RnRFormRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormRow::delete_changelog(
+                &self.0,
+                con,
+                RowActionType::Delete,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
@@ -185,9 +197,11 @@ impl Upsert for RnRFormRow {
         RnRFormRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

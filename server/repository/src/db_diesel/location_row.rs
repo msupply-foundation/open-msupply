@@ -2,11 +2,8 @@ use super::{
     assets::asset_internal_location_row::asset_internal_location, item_link_row::item_link,
     store_row::store, RepositoryError, StorageConnection,
 };
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RowActionType,
-};
-use crate::{ChangelogSyncType, Delete, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -43,7 +40,7 @@ impl LocationRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Location,
@@ -51,7 +48,7 @@ impl LocationRow {
             row_action: action,
             store_id: Some(self.store_id.clone()),
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -60,7 +57,7 @@ impl LocationRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = LocationRowRepository::new(con)
             .find_one_by_id(id)?
@@ -90,7 +87,7 @@ impl<'a> LocationRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &LocationRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, SourceSiteIdForChangelog::CurrentSiteId)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
@@ -111,7 +108,7 @@ impl<'a> LocationRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = LocationRow::delete_changelog(id, self.connection, RowActionType::Delete, None)?;
+        let changelog = LocationRow::delete_changelog(id, self.connection, RowActionType::Delete, SourceSiteIdForChangelog::CurrentSiteId)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(location::table.filter(location::id.eq(id)))
@@ -132,7 +129,7 @@ impl Delete for LocationRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                LocationRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+                LocationRow::delete_changelog(&self.0, con, RowActionType::Delete, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -157,7 +154,7 @@ impl Upsert for LocationRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                self.changelog(con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
