@@ -174,13 +174,12 @@ impl InvoiceLineRow {
     pub(crate) fn delete_changelog(
         record_id: &str,
         con: &StorageConnection,
-        action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = InvoiceLineRowRepository::new(con)
             .find_one_by_id(record_id)?
             .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
+        row.changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -294,7 +293,6 @@ impl<'a> InvoiceLineRowRepository<'a> {
         let changelog = InvoiceLineRow::delete_changelog(
             invoice_line_id,
             self.connection,
-            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
@@ -356,7 +354,6 @@ impl Delete for InvoiceLineRowDelete {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => InvoiceLineRow::delete_changelog(
                 &self.0,
                 con,
-                RowActionType::Delete,
                 SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,

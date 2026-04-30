@@ -49,13 +49,12 @@ impl PreferenceRow {
     pub(crate) fn delete_changelog(
         record_id: &str,
         con: &StorageConnection,
-        action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = PreferenceRowRepository::new(con)
             .find_one_by_id(record_id)?
             .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
+        row.changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -114,7 +113,6 @@ impl<'a> PreferenceRowRepository<'a> {
         let changelog = PreferenceRow::delete_changelog(
             preference_id,
             self.connection,
-            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
@@ -167,7 +165,6 @@ impl Delete for PreferenceRowDelete {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => PreferenceRow::delete_changelog(
                 &self.0,
                 con,
-                RowActionType::Delete,
                 SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,

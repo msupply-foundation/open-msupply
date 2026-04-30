@@ -163,10 +163,14 @@ impl RequisitionRow {
     pub(crate) fn delete_changelog(
         id: &str,
         con: &StorageConnection,
-        action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Self::changelog(RequisitionRowOrId::Id(id), con, action, source_site_id)
+        Self::changelog(
+            RequisitionRowOrId::Id(id),
+            con,
+            RowActionType::Delete,
+            source_site_id,
+        )
     }
 }
 
@@ -194,7 +198,6 @@ impl<'a> RequisitionRowRepository<'a> {
         let changelog = RequisitionRow::delete_changelog(
             requisition_id,
             self.connection,
-            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
@@ -244,7 +247,6 @@ impl Delete for RequisitionRowDelete {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::delete_changelog(
                 &self.0,
                 con,
-                RowActionType::Delete,
                 SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,

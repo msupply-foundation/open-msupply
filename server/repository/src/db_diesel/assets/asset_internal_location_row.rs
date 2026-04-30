@@ -60,13 +60,12 @@ impl AssetInternalLocationRow {
     pub(crate) fn delete_changelog(
         row_id: &str,
         con: &StorageConnection,
-        action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = AssetInternalLocationRowRepository::new(con)
             .find_one_by_id(row_id)?
             .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
+        row.changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -140,7 +139,6 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         let changelog = match AssetInternalLocationRow::delete_changelog(
             asset_internal_location_id,
             self.connection,
-            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         ) {
             Ok(changelog) => changelog,
@@ -209,7 +207,6 @@ impl Delete for AssetInternalLocationRowDelete {
                 AssetInternalLocationRow::delete_changelog(
                     &self.0,
                     con,
-                    RowActionType::Delete,
                     SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
