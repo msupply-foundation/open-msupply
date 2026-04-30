@@ -150,15 +150,22 @@ export const AppDrawer: React.FC = () => {
     if (drawer.hasUserSet) return;
     if (isMediumScreen && drawer.isOpen) drawer.close();
     if (!isMediumScreen && !drawer.isOpen) drawer.open();
-  }, [isMediumScreen]);
+  }, [isMediumScreen]); // Not including drawer here as it runs this affect when the draw is opened or closed, which prevents it opening.
 
   const onHoverOut = () => {
     // Hover events not applicable on mobile devices
     if (EnvUtils.isTouchScreen) return;
     if (!drawer.hoverOpen) return;
 
-    drawer.close();
-    drawer.setHoverOpen(false);
+    // the onMouseLeave is triggered when the menu component resizes after the drawer is opened
+    // due to a mouse hover event. the hoverOut then triggers the drawer to close again,
+    // triggering a hoverOpen again if the mouse is still over the drawer area.
+    // To prevent this loop we add a delay before closing the drawer
+    // which allows time for any hoverOpen event to be triggered first
+    setTimeout(() => {
+      drawer.close();
+      drawer.setHoverOpen(false);
+    }, 500);
   };
 
   const onHoverOver = () => {
@@ -179,9 +186,11 @@ export const AppDrawer: React.FC = () => {
     >
       <ToolbarIconContainer>
         <IconButton
-          label={t(
-            drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
-          )}
+          label={
+            drawer.isOpen
+              ? t('button.close-the-menu')
+              : t('button.open-the-menu')
+          }
           onClick={drawer.toggle}
           icon={<AppDrawerIcon />}
           sx={{ '&:hover': { backgroundColor: 'inherit' } }}

@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   RangeObject,
   useUrlQuery,
@@ -16,6 +16,7 @@ export interface NumberFilterDefinition extends FilterDefinitionCommon {
   minValue?: number;
   maxValue?: number;
   decimalLimit?: number;
+  wide?: boolean;
 }
 
 export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
@@ -28,12 +29,17 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
     minValue = -Infinity,
     maxValue = Infinity,
     decimalLimit,
+    wide = false,
   } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
   const urlValue = urlQuery[urlParameter] as number;
   const [value, setValue] = useState(
     getNumberFromUrl(urlValue, range) as number | undefined
   );
+
+  useEffect(() => {
+    setValue(getNumberFromUrl(urlValue, range) as number | undefined);
+  }, [urlValue, range]);
 
   const debouncedOnChange = useDebouncedValueCallback(
     val => {
@@ -59,7 +65,7 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
   return (
     <NumericTextInput
       label={name}
-      width={FILTER_WIDTH / 2}
+      width={wide ? FILTER_WIDTH : FILTER_WIDTH / 2}
       sx={FilterLabelSx}
       onChange={handleChange}
       value={value}

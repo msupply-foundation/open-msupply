@@ -2,3 +2,28 @@
 # yarn lockfile v1
 
 
+"@playwright/test@^1.58.2":
+  version "1.58.2"
+  resolved "https://registry.npmjs.org/@playwright/test/-/test-1.58.2.tgz"
+  integrity sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==
+  dependencies:
+    playwright "1.58.2"
+
+playwright-core@1.58.2:
+  version "1.58.2"
+  resolved "https://registry.npmjs.org/playwright-core/-/playwright-core-1.58.2.tgz"
+  integrity sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==
+
+playwright@1.58.2:
+  version "1.58.2"
+  resolved "https://registry.npmjs.org/playwright/-/playwright-1.58.2.tgz"
+  integrity sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==
+  dependencies:
+    playwright-core "1.58.2"
+  optionalDependencies:
+    fsevents "2.3.2"
+
+typescript@^5.9.2:
+  version "5.9.3"
+  resolved "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz"
+  integrity sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==

@@ -22,6 +22,7 @@ pub struct InsertAssetLogReason {
     pub id: String,
     pub asset_log_status: AssetLogStatus,
     pub reason: String,
+    pub comments_required: bool,
 }
 
 pub fn insert_asset_log_reason(
@@ -66,6 +67,7 @@ pub fn generate(
         id,
         asset_log_status,
         reason,
+        comments_required,
     }: InsertAssetLogReason,
 ) -> AssetLogReasonRow {
     AssetLogReasonRow {
@@ -73,6 +75,7 @@ pub fn generate(
         asset_log_status,
         reason,
         deleted_datetime: None,
+        comments_required,
     }
 }
 

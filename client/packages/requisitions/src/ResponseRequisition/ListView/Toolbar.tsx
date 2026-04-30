@@ -1,16 +1,13 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
-  FilterController,
   FilterMenu,
   Box,
   useTranslation,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = () => {
+const ToolbarComponent = () => {
   const t = useTranslation();
 
   return (
@@ -30,6 +27,12 @@ export const Toolbar: FC<{
               name: t('label.name'),
               urlParameter: 'otherPartyName',
               placeholder: t('placeholder.search-by-name'),
+            },
+            {
+              type: 'number',
+              name: t('label.requisition-number'),
+              urlParameter: 'requisitionNumber',
+              wide: true,
             },
             {
               type: 'enum',
@@ -59,3 +62,5 @@ export const Toolbar: FC<{
     </AppBarContentPortal>
   );
 };
+
+export const Toolbar = React.memo(ToolbarComponent);

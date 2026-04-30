@@ -34,7 +34,7 @@ pub fn get_stocktake_lines(
     }
     let filter = filter
         .unwrap_or_default()
-        .stocktake_id(EqualFilter::equal_to(stocktake_id));
+        .stocktake_id(EqualFilter::equal_to(stocktake_id.to_string()));
     let pagination =
         get_pagination_or_default(pagination).map_err(GetStocktakeLinesError::ListError)?;
     let repository = StocktakeLineRepository::new(&ctx.connection);
@@ -58,7 +58,7 @@ pub fn get_stocktake_line(
     let repository = StocktakeLineRepository::new(&ctx.connection);
     Ok(repository
         .query_by_filter(
-            StocktakeLineFilter::new().id(EqualFilter::equal_to(&id)),
+            StocktakeLineFilter::new().id(EqualFilter::equal_to(id.to_string())),
             Some(store_id.to_string()),
         )?
         .pop())

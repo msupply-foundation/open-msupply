@@ -20,7 +20,7 @@ pub fn mock_request_draft_requisition() -> RequisitionRow {
     RequisitionRow {
         id: "mock_request_draft_requisition".to_string(),
         requisition_number: 1,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: "store_a".to_string(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -38,7 +38,7 @@ pub fn mock_request_draft_requisition2() -> RequisitionRow {
     RequisitionRow {
         id: "mock_request_draft_requisition2".to_string(),
         requisition_number: 2,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: "store_a".to_string(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -56,7 +56,7 @@ pub fn mock_request_draft_requisition3() -> RequisitionRow {
     RequisitionRow {
         id: "mock_request_draft_requisition3".to_string(),
         requisition_number: 2,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: "store_b".to_string(),
         ..Default::default()
     }
@@ -66,7 +66,7 @@ pub fn mock_program_request_draft_requisition() -> RequisitionRow {
     RequisitionRow {
         id: "mock_program_request_draft_requisition".to_string(),
         requisition_number: 1,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: "store_a".to_string(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -87,7 +87,7 @@ pub fn new_response_requisition() -> RequisitionRow {
     RequisitionRow {
         id: "new response requisition id".to_string(),
         store_id: mock_store_a().id,
-        name_link_id: mock_name_b().id,
+        name_id: mock_name_b().id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
         ..Default::default()

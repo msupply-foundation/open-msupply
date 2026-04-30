@@ -12,7 +12,6 @@ mod test {
         requisition::RequisitionServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
     };
-    
 
     use crate::RequisitionQueries;
 

@@ -24,7 +24,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
             let value: serde_json::Value =
                 serde_json::to_value(&preferences).map_err(std_error_to_js_error)?;
             // We return the moved variable as a `JsValue`.
-            Ok(JsValue::from_json(&value, ctx)?)
+            JsValue::from_json(&value, ctx)
         }),
     )?;
     Ok(())

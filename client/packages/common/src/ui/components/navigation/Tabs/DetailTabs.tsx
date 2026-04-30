@@ -6,6 +6,7 @@ import {
   UrlQuerySort,
   useDetailPanelStore,
   useDrawer,
+  useIsExtraSmallScreen,
 } from '@common/hooks';
 import { LocaleKey, useTranslation } from '@common/intl';
 import { AppBarTabsPortal } from '../../portals';
@@ -103,6 +104,44 @@ export const DetailTabs: FC<DetailTabsProps> = ({
     }
   }, [isValidTab, urlQuery]);
 
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
+  const tabList = (
+    <Box flex={1}>
+      <ShortTabList value={currentTab} centered onChange={onChange}>
+        {tabs.map(({ value }, index) => (
+          <Tab
+            key={value}
+            value={value}
+            label={t(`label.${value.toLowerCase()}` as LocaleKey, {
+              defaultValue: value,
+            })}
+            tabIndex={index === 0 ? -1 : undefined}
+          />
+        ))}
+      </ShortTabList>
+    </Box>
+  );
+
+  const tabPanels = tabs.map(({ Component, value }) => (
+    <DetailTab value={value} key={value}>
+      {Component}
+    </DetailTab>
+  ));
+
+  if (isExtraSmallScreen) {
+    // On mobile, render tabs inline (AppBarTabsPortal has no target)
+    // and wrap in a column-flex container so tabs sit above the content
+    return (
+      <TabContext value={currentTab}>
+        <Box display="flex" flexDirection="column" flex={1} width="100%">
+          {tabList}
+          {tabPanels}
+        </Box>
+      </TabContext>
+    );
+  }
+
   return (
     <TabContext value={currentTab}>
       <AppBarTabsPortal
@@ -112,26 +151,9 @@ export const DetailTabs: FC<DetailTabsProps> = ({
           justifyContent: 'center',
         }}
       >
-        <Box flex={1}>
-          <ShortTabList value={currentTab} centered onChange={onChange}>
-            {tabs.map(({ value }, index) => (
-              <Tab
-                key={value}
-                value={value}
-                label={t(`label.${value.toLowerCase()}` as LocaleKey, {
-                  defaultValue: value,
-                })}
-                tabIndex={index === 0 ? -1 : undefined}
-              />
-            ))}
-          </ShortTabList>
-        </Box>
+        {tabList}
       </AppBarTabsPortal>
-      {tabs.map(({ Component, value }) => (
-        <DetailTab value={value} key={value}>
-          {Component}
-        </DetailTab>
-      ))}
+      {tabPanels}
     </TabContext>
   );
 };

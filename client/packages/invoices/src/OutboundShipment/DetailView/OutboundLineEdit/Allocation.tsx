@@ -42,7 +42,12 @@ export const Allocation = ({
 }: AllocationProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
-  const { manageVaccinesInDoses, sortByVvmStatusThenExpiry } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    sortByVvmStatusThenExpiry,
+    expiredStockPreventIssue,
+    expiredStockIssueThreshold,
+  } = usePreferences();
 
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
@@ -86,6 +91,9 @@ export const Allocation = ({
             manageVaccinesInDoses && data.item.isVaccine
               ? { type: AllocateInType.Doses }
               : allocateInPacksize,
+          expiryThresholdDays: expiredStockPreventIssue
+            ? (expiredStockIssueThreshold ?? 0)
+            : 0,
         },
         format,
         t

@@ -1,4 +1,4 @@
-use crate::types::AssetLogStatusNodeType;
+use crate::types::{AssetLogStatusNodeType, AssetLogTypeNodeType};
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
@@ -22,7 +22,7 @@ pub fn insert_asset_log(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateAsset,
+            resource: Resource::EditAsset,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -51,7 +51,8 @@ pub struct InsertAssetLogInput {
     pub status: Option<AssetLogStatusNodeType>,
     pub reason_id: Option<String>,
     pub comment: Option<String>,
-    pub r#type: Option<String>,
+    pub r#type: Option<AssetLogTypeNodeType>,
+    pub log_datetime: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl From<InsertAssetLogInput> for InsertAssetLog {
@@ -63,6 +64,7 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             reason_id,
             comment,
             r#type,
+            log_datetime,
         }: InsertAssetLogInput,
     ) -> Self {
         InsertAssetLog {
@@ -71,7 +73,8 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             status: status.map(|s| s.into()),
             reason_id,
             comment,
-            r#type,
+            r#type: r#type.map(|t| t.into()),
+            log_datetime,
         }
     }
 }
@@ -95,20 +98,22 @@ pub enum InsertAssetLogErrorInterface {
     InternalError(InternalError),
     DatabaseError(DatabaseError),
 }
-
 fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:?}", error);
+    let formatted_error = format!("{error:?}");
 
     let graphql_error = match error {
-        // Standard Graphql Errors
-        ServiceError::AssetLogAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::AssetDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::InsufficientPermission => BadUserInput(formatted_error),
-        ServiceError::ReasonInvalidForStatus => BadUserInput(formatted_error),
-        ServiceError::ReasonDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::AssetLogAlreadyExists
+        | ServiceError::AssetDoesNotExist
+        | ServiceError::InsufficientPermission
+        | ServiceError::ReasonInvalidForStatus
+        | ServiceError::ReasonDoesNotExist
+        | ServiceError::StatusNotProvided
+        | ServiceError::CommentRequiredForReason
+        | ServiceError::LogDatetimeInFuture => BadUserInput(formatted_error),
+        ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -189,8 +194,8 @@ mod test {
         // Record already exists
         let test_service = TestService(Box::new(|_| {
             Ok(AssetLog {
-                id: "id".to_owned(),
-                asset_id: "asset_a".to_owned(),
+                id: "id".to_string(),
+                asset_id: "asset_a".to_string(),
                 status: Some(AssetLogStatus::Functioning),
                 ..Default::default()
             })

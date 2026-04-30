@@ -1,11 +1,7 @@
 use super::{
-    barcode_row::barcode, name_link_row::name_link, name_row::name, BarcodeRow, DBType,
-    NameLinkRow, NameRow, StorageConnection,
+    barcode_row::barcode, name_row::name, BarcodeRow, DBType, NameRow, StorageConnection,
 };
-use diesel::{
-    helper_types::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -35,7 +31,14 @@ pub enum BarcodeSortField {
 }
 
 pub type BarcodeSort = Sort<BarcodeSortField>;
-type BarcodeJoin = (BarcodeRow, Option<(NameLinkRow, NameRow)>);
+type BarcodeJoin = (BarcodeRow, Option<NameRow>);
+
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    barcode::table.left_join(name::table)
+}
+
+type BoxedBarcodeQuery = IntoBoxed<'static, query, DBType>;
 
 pub struct BarcodeRepository<'a> {
     connection: &'a StorageConnection,
@@ -86,13 +89,10 @@ impl<'a> BarcodeRepository<'a> {
     }
 }
 
-type BoxedBarcodeQuery =
-    IntoBoxed<'static, LeftJoin<barcode::table, InnerJoin<name_link::table, name::table>>, DBType>;
-
-fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedBarcodeQuery {
-    let mut query = barcode::table
-        .left_join(name_link::table.inner_join(name::table))
-        .into_boxed();
+fn create_filtered_query(
+    filter: Option<BarcodeFilter>,
+) -> BoxedBarcodeQuery {
+    let mut query = query().into_boxed();
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, barcode::id);
@@ -104,10 +104,10 @@ fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedBarcodeQuery {
     query
 }
 
-fn to_domain((barcode_row, name_link): BarcodeJoin) -> Barcode {
+fn to_domain((barcode_row, manufacturer_name_row): BarcodeJoin) -> Barcode {
     Barcode {
         barcode_row,
-        manufacturer_name_row: name_link.map(|(_, name)| name),
+        manufacturer_name_row,
     }
 }
 

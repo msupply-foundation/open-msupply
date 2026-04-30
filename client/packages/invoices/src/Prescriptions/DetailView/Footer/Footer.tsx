@@ -8,67 +8,39 @@ import {
   AppFooterPortal,
   InvoiceNodeStatus,
   useBreadcrumbs,
-  useTableStore,
   useDeleteConfirmation,
   DeleteIcon,
   Action,
   ActionsFooter,
   PrinterIcon,
   AlertModal,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
-import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
+import { getStatusTranslator } from '../../../utils';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
 import { StatusChangeButton } from './StatusChangeButton';
 import {
-  PrescriptionRowFragment,
+  PrescriptionLineFragment,
   usePrescription,
   usePrescriptionLines,
 } from '../../api';
 import { usePrintLabels } from '../hooks/usePrinter';
 
-const createStatusLog = (invoice: PrescriptionRowFragment) => {
-  const statusIdx = prescriptionStatuses.findIndex(s => invoice.status === s);
+const prescriptionSequence = getStatusSequence(InvoiceNodeType.Prescription);
 
-  const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
-    // Not used in prescriptions
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Received]: null,
-  };
-
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-  if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Cancelled] = invoice.cancelledDatetime;
-  }
-
-  return statusLog;
-};
-
-export const FooterComponent = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: PrescriptionLineFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
   const {
     query: { data: prescription },
     isDisabled,
-    rows,
   } = usePrescription();
   const { navigateUpOne } = useBreadcrumbs();
-
-  const selectedRows =
-    useTableStore(state => {
-      return rows?.filter(row => state.rowState[row.id]?.isSelected) || [];
-    }) || [];
 
   const {
     delete: { deleteLines },
@@ -76,6 +48,7 @@ export const FooterComponent = () => {
 
   const deleteAction = async () => {
     await deleteLines(selectedRows);
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -120,7 +93,7 @@ export const FooterComponent = () => {
   ];
 
   // Don't show "Cancelled" status unless this prescription is already cancelled
-  const statusList = prescriptionStatuses.filter(status =>
+  const statusList = prescriptionSequence.filter(status =>
     prescription?.status === InvoiceNodeStatus.Cancelled
       ? true
       : status !== InvoiceNodeStatus.Cancelled
@@ -135,6 +108,7 @@ export const FooterComponent = () => {
               <ActionsFooter
                 actions={actions}
                 selectedRowCount={selectedRows.length}
+                resetRowSelection={resetRowSelection}
               />
               <AlertModal
                 title={t('heading.unable-to-print')}
@@ -154,7 +128,7 @@ export const FooterComponent = () => {
             >
               <StatusCrumbs
                 statuses={statusList}
-                statusLog={createStatusLog(prescription)}
+                statusLog={createStatusLog(prescription, statusList)}
                 statusFormatter={getStatusTranslator(t)}
               />
 

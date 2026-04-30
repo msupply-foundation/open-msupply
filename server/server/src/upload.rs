@@ -1,4 +1,7 @@
-use actix_multipart::form::{tempfile::TempFile, MultipartForm};
+use actix_multipart::form::{
+    tempfile::{TempFile, TempFileConfig},
+    MultipartForm,
+};
 use actix_web::{
     post,
     web::{self, Data},
@@ -13,6 +16,10 @@ use service::{
 };
 
 use crate::authentication::validate_cookie_auth;
+
+pub fn get_default_directory(settings: &Settings) -> TempFileConfig {
+    TempFileConfig::default().directory(&settings.server.base_dir)
+}
 
 pub fn config_upload(cfg: &mut web::ServiceConfig) {
     cfg.service(upload);

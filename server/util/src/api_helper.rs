@@ -29,8 +29,8 @@ where
         let result = f(client).send().await;
 
         let (status, is_connect_error) = match result.as_ref() {
-            Ok(r) => (Some(r.status().clone()), false),
-            Err(e) => (e.status().clone(), e.is_connect()),
+            Ok(r) => (Some(r.status()), false),
+            Err(e) => (e.status(), e.is_connect()),
         };
 
         if (is_connect_error || status == Some(StatusCode::REQUEST_TIMEOUT))

@@ -2,12 +2,13 @@ pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
+pub(crate) mod asset_catalogue_type;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
+pub(crate) mod asset_internal_location;
 pub(crate) mod asset_log;
 pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
-pub(crate) mod asset_type;
 pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
 pub(crate) mod campaign;
@@ -21,6 +22,7 @@ pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
+pub(crate) mod encounter_legacy;
 pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
 pub(crate) mod goods_received;
@@ -90,6 +92,7 @@ pub(crate) mod vaccine_course_dose_legacy;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod vaccine_course_item_legacy;
 pub(crate) mod vaccine_course_legacy;
+pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
@@ -171,9 +174,10 @@ pub(crate) fn all_translators() -> SyncTranslators {
         special::clinician_merge::boxed(),
         // Assets
         asset::boxed(),
+        asset_internal_location::boxed(),
         asset_class::boxed(),
         asset_category::boxed(),
-        asset_type::boxed(),
+        asset_catalogue_type::boxed(),
         asset_catalogue_item::boxed(),
         asset_log::boxed(),
         asset_log_reason::boxed(),
@@ -188,8 +192,10 @@ pub(crate) fn all_translators() -> SyncTranslators {
         vaccine_course_legacy::boxed(),
         vaccine_course_dose::boxed(),
         vaccine_course_dose_legacy::boxed(),
+        vaccine_course_store_config::boxed(),
         vaccine_course_item::boxed(),
         vaccine_course_item_legacy::boxed(),
+        encounter_legacy::boxed(),
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
@@ -214,12 +220,11 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Purchase Order
         purchase_order::boxed(),
         purchase_order_line::boxed(),
-        // Goods Receiving
-        goods_received::boxed(),
-        // Goods Received
-        goods_received_line::boxed(),
         // Shipping Method
         shipping_method::boxed(),
+        // Goods Received (legacy OG → InboundShipment)
+        goods_received::boxed(),
+        goods_received_line::boxed(),
     ]
 }
 
@@ -525,7 +530,7 @@ fn translate_changelog(
     for translator in translators.iter() {
         if !r#type
             .iter()
-            .any(|r| translator.should_translate_to_sync_record(changelog, &r))
+            .any(|r| translator.should_translate_to_sync_record(changelog, r))
         {
             continue;
         }
@@ -542,7 +547,7 @@ fn translate_changelog(
         match translation_result {
             PushTranslateResult::PushRecord(records) => translation_results.push(records),
             PushTranslateResult::Ignored(ignore_message) => {
-                log::debug!("Ignored record in push translation: {}", ignore_message)
+                log::debug!("Ignored record in push translation: {ignore_message}")
             }
             PushTranslateResult::NotMatched => {}
         }
@@ -579,7 +584,7 @@ fn is_active_record_on_site(
     let result = match &record {
         ActiveRecordCheck::InvoiceLine { invoice_id } => {
             let invoice = InvoiceRepository::new(connection)
-                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_id)))
+                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_id.to_string())))
                 .map_err(Error::DatabaseError)?
                 .ok_or(Error::ParentRecordNotFound(record))?;
             invoice.store_row.site_id == site_id

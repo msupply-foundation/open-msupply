@@ -32,7 +32,7 @@ import { importPurchaseOrderLinesToCSVWithErrors } from '../utils';
 
 export type ImportRow = Omit<
   PurchaseOrderLineFragment,
-  '__typename' | 'item' | 'lineNumber'
+  '__typename' | 'item' | 'lineNumber' | 'shippedNumberOfUnits'
 > & {
   itemCode: string;
   discountPercentage: number;
@@ -89,13 +89,13 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
     {
       label: t('label.review'),
       description: '',
-      clickable: true,
+      clickable: bufferedLines.length > 0,
       tab: Tabs.Review,
     },
     {
       label: t('label.import'),
       description: '',
-      clickable: true,
+      clickable: false,
       tab: Tabs.Import,
     },
   ];

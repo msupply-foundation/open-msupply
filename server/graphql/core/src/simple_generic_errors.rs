@@ -259,14 +259,6 @@ impl CannotEditPurchaseOrder {
     }
 }
 
-pub struct CannotEditGoodsReceived;
-#[Object]
-impl CannotEditGoodsReceived {
-    pub async fn description(&self) -> &str {
-        "Cannot edit goods received"
-    }
-}
-
 pub struct CannotDeletePurchaseOrder;
 #[Object]
 impl CannotDeletePurchaseOrder {
@@ -294,7 +286,6 @@ pub enum ForeignKey {
     LocationId,
     RequisitionId,
     PurchaseOrderId,
-    GoodsReceivedId,
 }
 
 pub struct ForeignKeyError(pub ForeignKey);

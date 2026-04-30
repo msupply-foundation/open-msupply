@@ -5,9 +5,10 @@ import { TransitionProps } from '@mui/material/transitions';
 import { Slide } from '../../ui/animations';
 import { BasicModal, IconButton, ModalTitle } from '@common/components';
 import { useIntlUtils, useTranslation } from '@common/intl';
-import { SxProps, Theme, useMediaQuery } from '@mui/material';
+import { SxProps, Theme } from '@mui/material';
 import { CloseIcon } from '@common/icons';
 import { useKeyboard } from '../useKeyboard';
+import { EnvUtils, Platform } from '@common/utils';
 
 type OkClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>;
 
@@ -45,8 +46,10 @@ export interface ModalProps {
   sx?: SxProps<Theme>;
   title: string;
   deleteButton?: JSX.Element;
+  headerActions?: React.ReactNode;
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
+  disableEnforceFocus?: boolean;
 }
 
 export interface DialogProps {
@@ -160,6 +163,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     enableAutocomplete,
     sx = {},
     deleteButton,
+    headerActions,
+    disableEnforceFocus = false,
   }: ModalProps) => {
     const t = useTranslation();
     // The slide animation is triggered by cloning the next button and wrapping the passed
@@ -169,7 +174,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       animationTimeout
     );
     const { keyboardIsOpen } = useKeyboard();
-    const isSmallerScreen = useMediaQuery('(max-height: 850px)');
+    const isAndroid = EnvUtils.platform === Platform.Android;
 
     const defaultPreventedOnClick =
       (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
@@ -224,7 +229,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       width: width ? Math.min(window.innerWidth - 50, width) : undefined,
     };
 
-    const defaultFullscreen = isSmallerScreen && !disableMobileFullScreen;
+    const defaultFullscreen = isAndroid && !disableMobileFullScreen;
 
     return (
       <BasicModal
@@ -236,6 +241,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
         fullScreen={defaultFullscreen}
+        disableEnforceFocus={disableEnforceFocus}
       >
         {defaultFullscreen && (
           <IconButton
@@ -255,7 +261,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             label={t('button.close')}
           />
         )}
-        {title ? <ModalTitle title={title} /> : null}
+        {title ? <ModalTitle title={title} headerActions={headerActions} /> : null}
         <form
           style={{
             display: 'flex',

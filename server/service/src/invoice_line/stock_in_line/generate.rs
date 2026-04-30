@@ -11,7 +11,7 @@ pub fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> Invo
         volume_per_pack: invoice_line.volume_per_pack / invoice_line.pack_size,
         shipped_number_of_packs: invoice_line
             .shipped_number_of_packs
-            .map(|shipped| shipped * invoice_line.pack_size),
+            .map(|shipped| shipped * invoice_line.shipped_pack_size.unwrap_or(1.0)),
         shipped_pack_size: Some(1.0),
         pack_size: 1.0,
         ..invoice_line
@@ -23,7 +23,7 @@ pub struct StockLineInput {
     pub store_id: String,
     pub on_hold: bool,
     pub barcode_id: Option<String>,
-    pub supplier_link_id: String,
+    pub supplier_id: String,
     pub overwrite_stock_levels: bool,
 }
 
@@ -39,13 +39,15 @@ pub fn generate_batch(
         pack_size,
         batch,
         expiry_date,
+        manufacture_date,
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
         location_id,
         note,
         item_variant_id,
-        donor_link_id,
+        donor_id: donor_link_id,
+        manufacturer_id,
         vvm_status_id,
         campaign_id,
         program_id,
@@ -58,7 +60,7 @@ pub fn generate_batch(
         store_id,
         on_hold,
         barcode_id,
-        supplier_link_id,
+        supplier_id: supplier_link_id,
         overwrite_stock_levels,
     }: StockLineInput,
 ) -> Result<StockLineRow, RepositoryError> {
@@ -86,7 +88,7 @@ pub fn generate_batch(
             // if no new barcode, use the existing one if exists
             barcode_id.or(stock_line.barcode_id),
             // if stock_line already has supplier, use that
-            stock_line.supplier_link_id.or(Some(supplier_link_id)),
+            stock_line.supplier_id.or(Some(supplier_link_id)),
         ),
         None => (barcode_id, Some(supplier_link_id)),
     };
@@ -103,12 +105,14 @@ pub fn generate_batch(
         available_number_of_packs,
         total_number_of_packs,
         expiry_date,
+        manufacture_date,
         note,
-        supplier_link_id,
+        supplier_id: supplier_link_id,
         on_hold,
         barcode_id,
         item_variant_id,
-        donor_link_id,
+        donor_id: donor_link_id,
+        manufacturer_id,
         vvm_status_id,
         campaign_id,
         program_id,

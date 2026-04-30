@@ -20,7 +20,7 @@ pub fn check_printer_description_is_unique(
 ) -> Result<bool, RepositoryError> {
     let filter = PrinterFilter::new()
         .description(StringFilter::equal_to(&description))
-        .id(EqualFilter::not_equal_to(id));
+        .id(EqualFilter::not_equal_to(id.to_string()));
 
     let printers = PrinterRepository::new(con).query_by_filter(filter)?;
 
@@ -33,8 +33,8 @@ pub fn check_printer_address_is_unique(
     id: &str,
 ) -> Result<bool, RepositoryError> {
     let filter = PrinterFilter::new()
-        .address(EqualFilter::equal_to(&address))
-        .id(EqualFilter::not_equal_to(id));
+        .address(EqualFilter::equal_to(address.to_owned()))
+        .id(EqualFilter::not_equal_to(id.to_string()));
 
     let printers = PrinterRepository::new(con).query_by_filter(filter)?;
 

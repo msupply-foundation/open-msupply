@@ -1,47 +1,36 @@
 import React from 'react';
 import {
-  TableProvider,
-  DataTable,
-  createTableStore,
   NothingHere,
   useTranslation,
   useUrlQueryParams,
+  usePaginatedMaterialTable,
+  MaterialTable,
 } from '@openmsupply-client/common';
 import { useClinicianListColumns } from './columns';
-import { ClinicianFragment, useClinicians } from '@openmsupply-client/programs';
+import { useClinicians } from '@openmsupply-client/programs';
 
-const ClinicianListComponent = () => {
+export const ClinicianListView = () => {
   const {
-    updatePaginationQuery,
-    queryParams: { page, first, offset },
+    queryParams: { first, offset, sortBy },
   } = useUrlQueryParams();
-  const { data, isError, isLoading } = useClinicians.document.list({
+  const { data, isError, isFetching } = useClinicians.document.list({
     pagination: { first, offset },
-    sortBy: { key: 'lastName' },
+    sortBy: sortBy.key ? sortBy : { key: 'lastName' },
   });
-  const clinicians: ClinicianFragment[] = data?.nodes ?? [];
   const columns = useClinicianListColumns();
 
   const t = useTranslation();
 
-  return (
-    <DataTable
-      id="clinician-list"
-      pagination={{ page, first, offset, total: data?.totalCount }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={clinicians}
-      isError={isError}
-      isLoading={isLoading}
-      noDataElement={<NothingHere body={t('error.no-clinicians')} />}
-    />
-  );
-};
+  const { table } = usePaginatedMaterialTable({
+    tableId: 'clinician-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount || 0,
+    isError,
+    isLoading: isFetching,
+    enableRowSelection: false,
+    noDataElement: <NothingHere body={t('error.no-clinicians')} />,
+  });
 
-export const ClinicianListView = () => (
-  <>
-    <TableProvider createStore={createTableStore}>
-      <ClinicianListComponent />
-    </TableProvider>
-  </>
-);
+  return <MaterialTable table={table} />;
+};

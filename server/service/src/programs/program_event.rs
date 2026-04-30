@@ -48,11 +48,11 @@ fn max_datetime() -> NaiveDateTime {
 
 fn event_target_filter(target: &EventTarget) -> ProgramEventFilter {
     let mut filter = ProgramEventFilter::new()
-        .patient_id(EqualFilter::equal_to(&target.patient_id))
-        .document_type(EqualFilter::equal_to(&target.document_type))
-        .r#type(EqualFilter::equal_to(&target.r#type));
+        .patient_id(EqualFilter::equal_to(target.patient_id.to_string()))
+        .document_type(EqualFilter::equal_to(target.document_type.to_owned()))
+        .r#type(EqualFilter::equal_to(target.r#type.to_owned()));
     if let Some(document_name) = &target.document_name {
-        filter = filter.document_name(EqualFilter::equal_to(document_name));
+        filter = filter.document_name(EqualFilter::equal_to(document_name.to_owned()));
     }
     filter
 }
@@ -192,7 +192,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
 
                     repo.query_by_filter(
                         ProgramEventFilter::new()
-                            .patient_id(EqualFilter::equal_to(&patient_id))
+                            .patient_id(EqualFilter::equal_to(patient_id.to_string()))
                             .datetime(DatetimeFilter::equal_to(datetime)),
                     )?
                     .into_iter()
@@ -295,7 +295,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                             active_start_datetime: it.active_start_datetime,
                             active_end_datetime,
                             // Use the current patient_id as link id
-                            patient_link_id: Some(patient_id.clone()),
+                            patient_id: Some(patient_id.clone()),
                             document_type: target.document_type.clone(),
                             document_name: target.document_name.clone(),
                             context_id: context_id.to_string(),

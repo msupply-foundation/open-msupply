@@ -98,7 +98,7 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
   return (
     <Box
       display="flex"
-      gap={2}
+      gap={3}
       sx={theme => ({
         [theme.breakpoints.down('sm')]: {
           flexDirection: 'column',
@@ -165,8 +165,8 @@ const getFilterOptions = (
     }));
 };
 
-// Updates the active filter list based on the URL, but doesn't remove already
-// active filters and preserves the current order
+// Updates the active filter list when filter definitions change. Drops filters
+// whose definitions have been removed, preserves order for the rest.
 const updateFilters = (
   filters: (FilterDefinition | GroupFilterDefinition)[],
   activeFilters: FilterDefinition[],
@@ -178,11 +178,11 @@ const updateFilters = (
     else flattened.push(...fil.elements);
   });
 
-  // Preserve the order of the active filters, but update the filter definitions
-  const newFilters = activeFilters.map(
-    activeFilter =>
-      flattened.find(fil => fil.name === activeFilter.name) ?? activeFilter
-  );
+  // Preserve the order of active filters, but drop any whose definitions have
+  // been removed (e.g. stock-line filters hidden when switching to grouped mode)
+  const newFilters = activeFilters
+    .map(activeFilter => flattened.find(fil => fil.name === activeFilter.name))
+    .filter((fil): fil is FilterDefinition => fil !== undefined);
 
   // Append new filters
   flattened.forEach(fil => {
@@ -248,10 +248,12 @@ export const EndAdornment = ({
   isLoading,
   hasValue,
   onClear,
+  noValueIcon = <SearchIcon fontSize="small" />,
 }: {
   isLoading: boolean;
   hasValue: boolean;
   onClear: () => void;
+  noValueIcon?: React.ReactNode;
 }) => {
   const t = useTranslation();
   if (isLoading) return <InlineSpinner />;
@@ -262,7 +264,7 @@ export const EndAdornment = ({
         sx={{ color: 'gray.main' }}
         label={hasValue ? t('label.clear-filter') : ''}
         onClick={hasValue ? onClear : () => {}}
-        icon={hasValue ? <CloseIcon /> : <SearchIcon fontSize="small" />}
+        icon={hasValue ? <CloseIcon /> : noValueIcon}
       />
     </InputAdornment>
   );

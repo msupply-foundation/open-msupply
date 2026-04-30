@@ -2903,7 +2903,7 @@ end
 <Event>
 <Name>On Post Uninstall</Name>
 <Args/>
-<Script>Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop");
+<Script>Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Desktop");
 if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
 	Registry.DeleteKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
 end</Script>

@@ -216,43 +216,54 @@ describe('issue = doses', () => {
 
 describe('canAutoAllocate ', () => {
   it('canAutoAllocateTests', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2025-12-15T12:00:00Z'));
+
     const availableLine = createTestLine({ availablePacks: 10 });
-    expect(canAutoAllocate(availableLine)).toEqual(true);
+    expect(canAutoAllocate(availableLine, 0)).toEqual(true);
 
     const onHoldLine = createTestLine({
       availablePacks: 10,
       onHold: true,
     });
-    expect(canAutoAllocate(onHoldLine)).toEqual(false);
+    expect(canAutoAllocate(onHoldLine, 0)).toEqual(false);
     const expiredLine = createTestLine({
       availablePacks: 10,
       expiryDate: '2023-01-01',
 
       onHold: false,
     });
-    expect(canAutoAllocate(expiredLine)).toEqual(false);
+    expect(canAutoAllocate(expiredLine, 0)).toEqual(false);
+
+    // Tests the expiry threshold value
+    const almostExpiredLine = createTestLine({
+      availablePacks: 10,
+      expiryDate: '2025-12-20',
+      onHold: false,
+    });
+    expect(canAutoAllocate(almostExpiredLine, 10)).toEqual(false);
 
     const unusableVVMLine = createTestLine({
       availablePacks: 10,
       vvmStatus: { unusable: true },
     });
-    expect(canAutoAllocate(unusableVVMLine)).toEqual(false);
+    expect(canAutoAllocate(unusableVVMLine, 0)).toEqual(false);
     const usableVVMExpiredLine = createTestLine({
       availablePacks: 10,
       expiryDate: '2023-01-01',
       vvmStatus: { unusable: true },
     });
-    expect(canAutoAllocate(usableVVMExpiredLine)).toEqual(false);
+    expect(canAutoAllocate(usableVVMExpiredLine, 0)).toEqual(false);
 
     const usableVVMLine = createTestLine({
       availablePacks: 10,
       vvmStatus: { unusable: false },
     });
-    expect(canAutoAllocate(usableVVMLine)).toEqual(true);
+    expect(canAutoAllocate(usableVVMLine, 0)).toEqual(true);
 
     const packSize2 = createTestLine({ packSize: 2 });
-    expect(canAutoAllocate(packSize2, 2)).toEqual(true);
-    expect(canAutoAllocate(packSize2, 3)).toEqual(false);
+    expect(canAutoAllocate(packSize2, 0, 2)).toEqual(true);
+    expect(canAutoAllocate(packSize2, 0, 3)).toEqual(false);
   });
 });
 

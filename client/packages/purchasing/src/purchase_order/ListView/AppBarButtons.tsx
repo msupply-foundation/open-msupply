@@ -7,13 +7,11 @@ import {
   useTranslation,
   useNotification,
   useNavigate,
-  LoadingButton,
-  DownloadIcon,
-  useExportCSV,
   ToggleState,
   ListIcon,
   RouteBuilder,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import {
   NameRowFragment,
   SupplierSearchModal,
@@ -38,7 +36,6 @@ export const AppBarButtonsComponent = ({
 }: AppBarButtonProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const exportCsv = useExportCSV();
   const { error } = useNotification();
 
   const {
@@ -59,11 +56,7 @@ export const AppBarButtonsComponent = ({
     modalController.toggleOff();
   };
 
-  const handleCsvExportClick = async () => {
-    if (!data || !data.length) return error(t('error.no-data'))();
-    const csv = purchaseOrderToCsv(t, data);
-    await exportCsv(csv, t('filename.purchase-order'));
-  };
+  const getCsvData = () => (data?.length ? purchaseOrderToCsv(t, data) : null);
 
   return (
     <AppBarButtonsPortal>
@@ -85,12 +78,10 @@ export const AppBarButtonsComponent = ({
             )
           }
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.purchase-order')}
           isLoading={isLoading}
-          label={t('button.export')}
-          onClick={handleCsvExportClick}
         />
         {modalController.isOn && (
           <SupplierSearchModal

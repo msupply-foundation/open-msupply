@@ -7,6 +7,11 @@ import {
   Box,
   NumericTextInput,
   LoadingButton,
+  Switch,
+  useLocalStorage,
+  Divider,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import { CheckIcon, SaveIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
@@ -21,6 +26,7 @@ interface LabelPrinterSettings {
   labelWidth: number;
   port: number;
 }
+
 export const LabelPrinterSettings = () => {
   const t = useTranslation();
   const { error, success } = useNotification();
@@ -34,6 +40,8 @@ export const LabelPrinterSettings = () => {
     labelWidth: 576,
     port: 9100,
   });
+  const isAndroid = EnvUtils.platform === Platform.Android;
+  const [isUsb, setIsUsb] = useLocalStorage('/printlabel/isusb', false);
 
   const onChange = (patch: Partial<LabelPrinterSettings>) => {
     setDraft({ ...draft, ...patch });
@@ -92,6 +100,29 @@ export const LabelPrinterSettings = () => {
   return (
     <>
       <SettingsSubHeading title={t('settings.label-printing')} />
+      {!isAndroid && (
+        <>
+          <Setting
+            component={
+              <Switch
+                checked={isUsb ?? false}
+                onChange={(_, checked) => setIsUsb(checked)}
+                color="primary"
+              />
+            }
+            title={t('settings.print-via-usb')}
+          />
+          <Box
+            sx={{
+              mb: 3,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Divider sx={{ width: '80%' }} />
+          </Box>
+        </>
+      )}
       <Setting
         component={
           <BasicTextInput

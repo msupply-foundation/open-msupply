@@ -1,6 +1,0 @@
-DROP TABLE IF EXISTS invoice CASCADE;
-
-DROP TYPE IF EXISTS invoice_type;
-
-DROP TYPE IF EXISTS invoice_status;
-

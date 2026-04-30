@@ -63,7 +63,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
 fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Standard Graphql Errors

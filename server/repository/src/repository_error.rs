@@ -30,7 +30,7 @@ impl RepositoryError {
     pub fn as_db_error<T: std::fmt::Debug>(msg: &str, extra: T) -> Self {
         RepositoryError::DBError {
             msg: msg.to_string(),
-            extra: format!("{:?}", extra),
+            extra: format!("{extra:?}"),
         }
     }
 }

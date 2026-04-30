@@ -9,16 +9,26 @@ import {
 } from '@openmsupply-client/common';
 import { useStocktakeList } from '../api/hooks/useStocktakeList';
 import { canDeleteStocktake } from '../../utils';
+import { StocktakeRowFragment } from '../api';
 
-export const FooterComponent = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetSelection,
+}: {
+  selectedRows: StocktakeRowFragment[];
+  resetSelection: () => void;
+}) => {
   const t = useTranslation();
   const {
-    delete: { deleteStocktakes, selectedRows },
+    delete: { deleteStocktakes },
   } = useStocktakeList();
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
-    deleteAction: deleteStocktakes,
+    deleteAction: async () => {
+      await deleteStocktakes(selectedRows);
+      resetSelection();
+    },
     canDelete: selectedRows.every(canDeleteStocktake),
     messages: {
       confirmMessage: t('messages.confirm-delete-stocktakes', {
@@ -47,6 +57,7 @@ export const FooterComponent = () => {
         <>
           {selectedRows.length !== 0 && (
             <ActionsFooter
+              resetRowSelection={resetSelection}
               actions={actions}
               selectedRowCount={selectedRows.length}
             />

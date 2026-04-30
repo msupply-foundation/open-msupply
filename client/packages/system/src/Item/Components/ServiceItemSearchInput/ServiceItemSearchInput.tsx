@@ -15,7 +15,6 @@ interface ItemSearchInputProps {
   onChange: (item: ItemRowFragment | null) => void;
   currentItemId?: string | null;
   disabled?: boolean;
-  extraFilter?: (item: ItemRowFragment) => boolean;
   width?: number;
   autoFocus?: boolean;
   refetchOnMount?: boolean;

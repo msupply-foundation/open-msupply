@@ -118,8 +118,8 @@ impl UpdateInput {
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use ServiceError::*;
-    let formatted_error = format!("{:#?}", error);
-    log::error!("Error updating outbound shipment line: {}", formatted_error);
+    let formatted_error = format!("{error:#?}");
+    log::error!("Error updating outbound shipment line: {formatted_error}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -199,7 +199,7 @@ mod test {
             mock_item_a, mock_location_1, mock_outbound_shipment_c,
             mock_outbound_shipment_c_invoice_lines, MockDataInserts,
         },
-        InvoiceLine, RepositoryError, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -564,6 +564,7 @@ mod test {
                 invoice_row: mock_outbound_shipment_c(),
                 invoice_line_row: mock_outbound_shipment_c_invoice_lines()[0].clone(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })

@@ -41,7 +41,7 @@ pub fn mock_ledger_data() -> (
 
     let default_invoice = InvoiceRow {
         store_id: "store_a".to_string(),
-        name_link_id: mock_name_store_b().id,
+        name_id: mock_name_store_b().id,
         created_datetime: get_test_ledger_datetime(1),
         ..Default::default()
     };

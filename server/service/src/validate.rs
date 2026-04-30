@@ -1,7 +1,7 @@
 use repository::{
     property::{PropertyFilter, PropertyRepository},
-    EqualFilter, Name, NameFilter, NameLinkRow, NameRepository, Patient, PatientFilter,
-    PatientRepository, RepositoryError, StorageConnection, StoreRowRepository, StringFilter,
+    EqualFilter, Name, NameFilter, NameRepository, Patient, PatientFilter, PatientRepository,
+    RepositoryError, StorageConnection, StoreRowRepository, StringFilter,
 };
 
 pub fn check_store_id_matches(store_id_a: &str, store_id_b: &str) -> bool {
@@ -38,10 +38,26 @@ pub fn get_other_party(
     store_id: &str,
     other_party_id: &str,
 ) -> Result<Option<Name>, RepositoryError> {
-    NameRepository::new(connection).query_one(
+    let mut results = NameRepository::new(connection).query_by_filter(
         store_id,
-        NameFilter::new().id(EqualFilter::equal_to(other_party_id)),
-    )
+        NameFilter::new().id(EqualFilter::equal_to(other_party_id.to_string())),
+    )?;
+
+    if results.is_empty() {
+        return Ok(None);
+    }
+
+    // If names have been merged, there could be multiple results, if so we need to return the one with the name_store_join if it exists
+    // Revist this code in https://github.com/msupply-foundation/open-msupply/issues/9824
+    let name_with_join = results
+        .iter()
+        .find(|name| name.name_store_join_row.is_some());
+
+    if let Some(name) = name_with_join {
+        return Ok(Some(name.to_owned()));
+    }
+
+    Ok(results.pop())
 }
 
 pub fn check_patient_exists(
@@ -49,7 +65,7 @@ pub fn check_patient_exists(
     patient_id: &str,
 ) -> Result<Option<Patient>, RepositoryError> {
     PatientRepository::new(connection).query_one(
-        PatientFilter::new().id(EqualFilter::equal_to(patient_id)),
+        PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_string())),
         None,
     )
 }
@@ -66,10 +82,6 @@ pub fn check_other_party(
 
         return Ok(Name {
             name_row: patient,
-            name_link_row: NameLinkRow {
-                id: other_party_id.to_string(),
-                name_id: other_party_id.to_string(),
-            },
             name_store_join_row: None,
             store_row: None,
             properties: None,
@@ -119,7 +131,7 @@ pub fn check_property_key_does_not_exist(
 ) -> Result<bool, RepositoryError> {
     let filter = PropertyFilter::new()
         .key(StringFilter::equal_to(key))
-        .id(EqualFilter::not_equal_to(property_id));
+        .id(EqualFilter::not_equal_to(property_id.to_string()));
 
     let found = PropertyRepository::new(connection).query_by_filter(filter)?;
 

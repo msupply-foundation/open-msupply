@@ -29,60 +29,53 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
       <AppNavLink
         visible={isCentralServer}
-        end={false}
+        isParent
         to={AppRoute.Manage}
         icon={<SlidersIcon color="primary" fontSize="small" />}
         text={t('manage')}
-        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             visible={isCentralServer}
-            end
             to={RouteBuilder.create(AppRoute.Manage)
-              .addPart(AppRoute.Campaigns)
+              .addPart(AppRoute.Stores)
               .build()}
-            text={t('campaigns')}
+            text={t('stores')}
           />
           <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}
-            end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.IndicatorsDemographics)
               .build()}
             text={t('indicators-demographics')}
           />
           <AppNavLink
-            visible={isCentralServer && vaccineModuleEnabled}
-            end
-            to={RouteBuilder.create(AppRoute.Manage)
-              .addPart(AppRoute.Equipment)
-              .build()}
-            text={t('equipment')}
-          />
-          <AppNavLink
-            end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.GlobalPreferences)
               .build()}
             text={t('global-preferences')}
           />
           <AppNavLink
+            visible={isCentralServer && vaccineModuleEnabled}
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Equipment)
+              .build()}
+            text={t('equipment')}
+          />
+          <AppNavLink
+            visible={isCentralServer}
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Campaigns)
+              .build()}
+            text={t('campaigns')}
+          />
+          <AppNavLink
             visible={isCentralServer && isServerAdmin}
-            end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Reports)
               .build()}
             text={t('reports')}
-          />
-          <AppNavLink
-            visible={isCentralServer}
-            end
-            to={RouteBuilder.create(AppRoute.Manage)
-              .addPart(AppRoute.Stores)
-              .build()}
-            text={t('stores')}
           />
         </List>
       </Collapse>

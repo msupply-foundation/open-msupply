@@ -16,6 +16,7 @@ describe('allocateQuantities - standard behaviour.', () => {
     expect(
       allocateQuantities(draftLines, 3, {
         allocateIn: { type: AllocateInType.Units },
+        expiryThresholdDays: 0,
       })
     ).toEqual(expected);
   });
@@ -31,6 +32,7 @@ describe('allocateQuantities - standard behaviour.', () => {
     ];
     const allocated = allocateQuantities(draftLines, 15, {
       allocateIn: { type: AllocateInType.Units },
+      expiryThresholdDays: 0,
     });
 
     expect(allocated?.allocatedLines).toEqual(expected);
@@ -47,6 +49,7 @@ describe('allocateQuantities - standard behaviour.', () => {
     const expected = [{ ...lineOne, numberOfPacks: 1 }];
     const allocated = allocateQuantities(draftLines, 5, {
       allocateIn: { type: AllocateInType.Units },
+      expiryThresholdDays: 0,
     });
 
     expect(allocated?.allocatedLines).toEqual(expected);
@@ -61,6 +64,7 @@ describe('allocateQuantities - standard behaviour.', () => {
     const expected = [{ ...lineOne, numberOfPacks: 1 }];
     const allocated = allocateQuantities(draftLines, 5, {
       allocateIn: { type: AllocateInType.Units },
+      expiryThresholdDays: 0,
     });
 
     expect(allocated?.allocatedLines).toEqual(expected);
@@ -86,6 +90,7 @@ describe('Allocate quantities - with differing pack sizes', () => {
     ];
     const allocated = allocateQuantities(draftLines, 3, {
       allocateIn: { type: AllocateInType.Units },
+      expiryThresholdDays: 0,
     });
 
     expect(allocated?.allocatedLines).toEqual(expected);
@@ -112,6 +117,7 @@ describe('Allocated quantities - skips invalid lines', () => {
     expect(
       allocateQuantities(draftLines, 2, {
         allocateIn: { type: AllocateInType.Units },
+        expiryThresholdDays: 0,
       })?.allocatedLines
     ).toEqual([
       expiredLine,
@@ -141,6 +147,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     expect(
       allocateQuantities(draftLines, 7, {
         allocateIn: { type: AllocateInType.Units },
+        expiryThresholdDays: 0,
       })
     ).toEqual({
       allocatedLines: [
@@ -158,7 +165,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     const { allocatedLines, remainingQuantity } = allocateQuantities(
       draftLines,
       20,
-      { allocateIn: { type: AllocateInType.Units } }
+      { allocateIn: { type: AllocateInType.Units }, expiryThresholdDays: 0 }
     )!;
 
     expect(allocatedLines).toEqual([
@@ -186,7 +193,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     const { allocatedLines, remainingQuantity } = allocateQuantities(
       draftLines,
       43,
-      { allocateIn: { type: AllocateInType.Units } }
+      { allocateIn: { type: AllocateInType.Units }, expiryThresholdDays: 0 }
     )!;
 
     expect(allocatedLines).toEqual([
@@ -203,6 +210,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     expect(
       allocateQuantities(draftLines, 47, {
         allocateIn: { type: AllocateInType.Units },
+        expiryThresholdDays: 0,
       })
     ).toEqual({
       allocatedLines: [
@@ -224,6 +232,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
       allocateQuantities(draftLines, 7, {
         allocateIn: { type: AllocateInType.Units },
         allowPartialPacks: true,
+        expiryThresholdDays: 0,
       })
     ).toEqual({
       allocatedLines: [
@@ -249,6 +258,7 @@ describe('Allocating in doses', () => {
 
     const result = allocateQuantities(draftLines, doseQuantity, {
       allocateIn: { type: AllocateInType.Doses },
+      expiryThresholdDays: 0,
     });
 
     expect(result).toEqual({
@@ -279,7 +289,7 @@ describe('Allocating in doses', () => {
     const { allocatedLines, remainingQuantity } = allocateQuantities(
       draftLines,
       doseQuantity,
-      { allocateIn: { type: AllocateInType.Doses } }
+      { allocateIn: { type: AllocateInType.Doses }, expiryThresholdDays: 0 }
     )!;
 
     expect(allocatedLines).toEqual([
@@ -298,6 +308,7 @@ describe('Allocating in packs', () => {
 
     const result = allocateQuantities(draftLines, 3, {
       allocateIn: { type: AllocateInType.Packs, packSize: 10 },
+      expiryThresholdDays: 0,
     });
 
     expect(result).toEqual({

@@ -15,8 +15,8 @@ import { FlatButton } from './FlatButton/FlatButton';
 import {
   BookIcon,
   HelpIcon,
-  MinusIcon,
-  PlusIcon,
+  MinusCircleIcon,
+  PlusCircleIcon,
   TruckIcon,
 } from '@common/icons';
 import { Color } from '../menus';
@@ -77,8 +77,8 @@ const Template: StoryFn<{ color: 'primary' | 'secondary' }> = ({ color }) => {
   const [toggleValue, setToggleValue] = React.useState('?');
 
   const toggleOptions = [
-    { id: 'minus', label: 'minus', value: '-', icon: <MinusIcon /> },
-    { id: 'increase', label: 'increase', value: '+', icon: <PlusIcon /> },
+    { id: 'minus', label: 'minus', value: '-', icon: <MinusCircleIcon /> },
+    { id: 'increase', label: 'increase', value: '+', icon: <PlusCircleIcon /> },
     { id: 'other', label: 'other', value: '?', icon: <HelpIcon /> },
   ];
 

@@ -35,6 +35,7 @@ pub enum Resource {
     // name
     QueryName,
     MutateNameProperties,
+    ConfigureNameProperties,
     // location
     QueryLocation,
     MutateLocation,
@@ -48,6 +49,7 @@ pub enum Resource {
     MutateTemperatureBreach,
     // store
     QueryStore,
+    StoreAccess,
     // master list
     QueryMasterList,
     // items
@@ -78,8 +80,13 @@ pub enum Resource {
     UpdateStocktakeLine,
     DeleteStocktakeLine,
     // invoice
-    InvoiceCount,
+    InvoiceCount, // Deprecated: requires all invoice count permissions combined
     QueryInvoice,
+    QueryOutboundShipment,
+    QueryInboundShipment,
+    QueryPrescription,
+    QuerySupplierReturn,
+    QueryCustomerReturn,
     // outbound shipment
     MutateOutboundShipment,
     // inbound shipment
@@ -128,9 +135,11 @@ pub enum Resource {
     QueryStorePreferences,
     ColdChainApi,
     // assets
-    MutateAsset,
+    AddAsset,
+    EditAsset,
     MutateAssetCatalogueItem,
     QueryAsset,
+    MutateAssetStatus,
     // demographic
     QueryDemographic,
     MutateDemographic,
@@ -150,7 +159,8 @@ pub enum Resource {
     PluginGraphql,
     // Preferences
     MutatePreferences,
-    QueryAndMutateVvmStatus,
+    QueryVvmStatus,
+    MutateVvmStatus,
     // Campaigns
     QueryCampaigns,
     MutateCampaigns,
@@ -158,10 +168,11 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
-    // Goods Received
-    MutateGoodsReceived,
-    QueryGoodsReceived,
-    AuthoriseGoodsReceived,
+    // Inbound Shipment External
+    MutateInboundShipmentExternal,
+    QueryInboundShipmentExternal,
+    AuthoriseInboundShipmentExternal,
+    VerifyInboundShipmentExternal,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -179,6 +190,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::MutateNameProperties,
         PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
+    );
+
+    map.insert(
+        Resource::ConfigureNameProperties,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
+            PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
+        ]),
     );
 
     // location
@@ -235,6 +254,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     // store: No permission needed
     map.insert(Resource::QueryStore, PermissionDSL::NoPermissionRequired);
+    map.insert(Resource::StoreAccess, PermissionDSL::HasStoreAccess);
     // master list
     map.insert(Resource::QueryMasterList, PermissionDSL::HasStoreAccess);
 
@@ -399,17 +419,55 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
             PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
             PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
             PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
             PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
         ]),
     );
     map.insert(
+        Resource::QueryOutboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryInboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryPrescription,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QuerySupplierReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryCustomerReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
+        ]),
+    );
+    // Deprecated: combined invoice count resource requiring all query permissions
+    map.insert(
         Resource::InvoiceCount,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
             PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
         ]),
     );
     // outbound shipment
@@ -433,6 +491,35 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::InboundShipmentVerify),
+        ]),
+    );
+    // inbound shipment external
+    map.insert(
+        Resource::QueryInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalMutate),
+        ]),
+    );
+    map.insert(
+        Resource::VerifyInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalVerify),
+        ]),
+    );
+    map.insert(
+        Resource::AuthoriseInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalAuthorise),
         ]),
     );
     // Supplier return
@@ -480,7 +567,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::QueryLog,
-        PermissionDSL::HasPermission(PermissionType::LogQuery),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::LogQuery),
+        ]),
     );
 
     map.insert(Resource::QueryClinician, PermissionDSL::HasStoreAccess);
@@ -607,16 +697,55 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     map.insert(
-        Resource::MutateAsset,
+        Resource::AddAsset,
         PermissionDSL::Any(vec![
-            PermissionDSL::HasPermission(PermissionType::AssetMutate),
-            PermissionDSL::HasPermission(PermissionType::AssetMutateViaDataMatrix),
+            PermissionDSL::And(vec![PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasPermission(PermissionType::AssetMutateViaDataMatrix),
+            ])]),
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
         ]),
     );
+
+    map.insert(
+        Resource::EditAsset,
+        PermissionDSL::Any(vec![
+            // Central edit: must have BOTH AssetMutate AND EditCentralData
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasPermission(PermissionType::EditCentralData),
+            ]),
+            // Local edit: must have BOTH AssetMutate AND HasStoreAccess
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasStoreAccess,
+            ]),
+        ]),
+    );
+
     map.insert(
         Resource::MutateAssetCatalogueItem,
-        PermissionDSL::HasPermission(PermissionType::AssetCatalogueItemMutate),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(PermissionType::AssetCatalogueItemMutate),
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
+        ]),
     );
+
+    map.insert(
+        Resource::MutateAssetStatus,
+        PermissionDSL::And(vec![
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasPermission(PermissionType::AssetStatusMutate),
+            ]),
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasStoreAccess,
+                PermissionDSL::HasPermission(PermissionType::EditCentralData),
+            ]),
+        ]),
+    );
+
     map.insert(
         Resource::QueryAsset,
         PermissionDSL::HasPermission(PermissionType::AssetQuery),
@@ -669,21 +798,22 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // configure
     map.insert(
         Resource::ConfigurePlugin,
-        PermissionDSL::Any(vec![
-            PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can install plugins
-        ]),
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can install plugins
     );
 
     // plugin graphql
+    map.insert(Resource::PluginGraphql, PermissionDSL::HasStoreAccess);
+
+    // vvm status - queries only need authentication
     map.insert(
-        Resource::PluginGraphql,
-        PermissionDSL::Any(vec![PermissionDSL::HasStoreAccess]),
+        Resource::QueryVvmStatus,
+        PermissionDSL::NoPermissionRequired,
     );
 
-    // vvm status
+    // vvm status - mutations need permission
     map.insert(
-        Resource::QueryAndMutateVvmStatus,
-        PermissionDSL::Any(vec![
+        Resource::MutateVvmStatus,
+        PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::ViewAndEditVvmStatus),
         ]),
@@ -694,10 +824,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
-    map.insert(
-        Resource::QueryCampaigns,
-        PermissionDSL::Any(vec![PermissionDSL::HasStoreAccess]),
-    );
+    map.insert(Resource::QueryCampaigns, PermissionDSL::HasStoreAccess);
 
     map.insert(
         Resource::QueryPurchaseOrder,
@@ -705,24 +832,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutatePurchaseOrder,
-        PermissionDSL::HasPermission(PermissionType::PurchaseOrderMutate),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderMutate),
+        ]),
     );
     map.insert(
         Resource::AuthorisePurchaseOrder,
-        PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
-    );
-
-    map.insert(
-        Resource::QueryGoodsReceived,
-        PermissionDSL::HasPermission(PermissionType::GoodsReceivedQuery),
-    );
-    map.insert(
-        Resource::MutateGoodsReceived,
-        PermissionDSL::HasPermission(PermissionType::GoodsReceivedMutate),
-    );
-    map.insert(
-        Resource::AuthoriseGoodsReceived,
-        PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+        ]),
     );
 
     map
@@ -854,7 +974,7 @@ fn validate_resource_permissions(
             if user_permissions.iter().any(|p| &p.permission == permission) {
                 return Ok(());
             }
-            return Err(format!("Missing permission: {:?}", permission));
+            return Err(format!("Missing permission: {permission:?}"));
         }
         PermissionDSL::HasDynamicPermission(permission) => {
             let user_permissions = user_permissions
@@ -862,7 +982,7 @@ fn validate_resource_permissions(
                 .filter(|p| &p.permission == permission)
                 .collect::<Vec<_>>();
             if user_permissions.is_empty() {
-                return Err(format!("Missing permission: {:?}", permission));
+                return Err(format!("Missing permission: {permission:?}"));
             }
             let mut contexts = user_permissions
                 .iter()
@@ -893,7 +1013,7 @@ fn validate_resource_permissions(
                 return Ok(());
             }
 
-            return Err(format!("Missing access to store: {}", store_id));
+            return Err(format!("Missing access to store: {store_id}"));
         }
         PermissionDSL::And(children) => {
             for child in children {
@@ -924,7 +1044,7 @@ fn validate_resource_permissions(
                 }
             }
             if !found_any {
-                return Err(format!("No permissions for any of: {:?}", children));
+                return Err(format!("No permissions for any of: {children:?}"));
             }
             return Ok(());
         }
@@ -971,7 +1091,7 @@ impl AuthServiceTrait for AuthService {
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, AuthError> {
         let user_id = if let Some(override_user_id) = override_user_id {
-            log::info!("Overriding user id with: {}", override_user_id);
+            log::info!("Overriding user id with: {override_user_id}");
             override_user_id.clone()
         } else {
             validate_auth(auth_data, auth_token)?.user_id
@@ -980,9 +1100,10 @@ impl AuthServiceTrait for AuthService {
         let connection = &context.connection;
 
         let mut permission_filter =
-            UserPermissionFilter::new().user_id(EqualFilter::equal_to(&user_id));
+            UserPermissionFilter::new().user_id(EqualFilter::equal_to(user_id.to_string()));
         if let Some(store_id) = &resource_request.store_id {
-            permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
+            permission_filter =
+                permission_filter.store_id(EqualFilter::equal_to(store_id.to_string()));
         }
         let mut user_permissions = UserPermissionRepository::new(connection).query(
             Pagination::all(),
@@ -1040,7 +1161,7 @@ impl AuthServiceTrait for AuthService {
             Err(msg) => {
                 if auth_data.debug_no_access_control {
                     return Ok(ValidatedUser {
-                        user_id: user_id,
+                        user_id,
                         capabilities: Vec::new(),
                     });
                 }
@@ -1071,7 +1192,7 @@ impl AuthServiceTrait for AuthService {
 
 impl From<RepositoryError> for AuthError {
     fn from(error: RepositoryError) -> Self {
-        AuthError::InternalError(format!("{:#?}", error))
+        AuthError::InternalError(format!("{error:#?}"))
     }
 }
 
@@ -1480,7 +1601,7 @@ mod permission_validation_test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 code: "n/a".to_string(),
                 ..Default::default()
             }

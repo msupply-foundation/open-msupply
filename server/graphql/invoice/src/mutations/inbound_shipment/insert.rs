@@ -1,11 +1,12 @@
 use async_graphql::*;
 
+use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::{
     InsertInboundShipment as ServiceInput, InsertInboundShipmentError as ServiceError,
 };
@@ -20,6 +21,8 @@ pub struct InsertInput {
     pub their_reference: Option<String>,
     pub colour: Option<String>,
     pub requisition_id: Option<String>,
+    pub purchase_order_id: Option<String>,
+    pub insert_lines_from_purchase_order: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -35,11 +38,16 @@ pub enum InsertResponse {
     Response(InvoiceNode),
 }
 
-pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+pub fn insert(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: InsertInput,
+    r#type: InboundShipmentType,
+) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -47,11 +55,11 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_service
-            .insert_inbound_shipment(&service_context, input.to_domain()),
-    )
+    map_response(service_provider.invoice_service.insert_inbound_shipment(
+        &service_context,
+        input.to_domain(),
+        r#type.to_domain(),
+    ))
 }
 
 #[derive(Interface)]
@@ -72,6 +80,8 @@ impl InsertInput {
             their_reference,
             colour,
             requisition_id,
+            purchase_order_id,
+            insert_lines_from_purchase_order,
         } = self;
 
         ServiceInput {
@@ -82,7 +92,8 @@ impl InsertInput {
             their_reference,
             colour,
             requisition_id,
-            goods_received_id: None,
+            purchase_order_id,
+            insert_lines_from_purchase_order: insert_lines_from_purchase_order.unwrap_or(false),
         }
     }
 }
@@ -100,7 +111,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<InsertRespons
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -120,7 +131,10 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::RequisitionDoesNotExist
         | ServiceError::NotAnInternalOrder
         | ServiceError::InternalOrderDoesNotBelongToStore
-        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::PurchaseOrderDoesNotExist
+        | ServiceError::AddLinesFromPurchaseOrderWithoutPurchaseOrder
+        | ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -160,6 +174,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: ServiceInput,
+            _type: service::invoice::inbound_shipment::InboundShipmentType,
         ) -> Result<Invoice, ServiceError> {
             self.0(input)
         }
@@ -331,7 +346,8 @@ mod test {
                     their_reference: Some("reference input".to_string()),
                     colour: Some("colour input".to_string()),
                     requisition_id: None,
-                    goods_received_id: None,
+                    purchase_order_id: None,
+                    insert_lines_from_purchase_order: false,
                 }
             );
             Ok(Invoice {

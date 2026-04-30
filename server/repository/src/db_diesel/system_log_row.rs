@@ -26,6 +26,8 @@ pub enum SystemLogType {
     ProcessorError,
     LedgerFixError,
     LedgerFix,
+    Migration,
+    ServerStatus,
 }
 
 impl SystemLogType {
@@ -34,6 +36,8 @@ impl SystemLogType {
             SystemLogType::ProcessorError => true,
             SystemLogType::LedgerFixError => true,
             SystemLogType::LedgerFix => false,
+            SystemLogType::Migration => false,
+            SystemLogType::ServerStatus => false,
         }
     }
 }
@@ -79,7 +83,7 @@ impl<'a> SystemLogRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -93,10 +97,16 @@ impl<'a> SystemLogRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn last_x_messages(&self, count: i64) -> Result<Vec<SystemLogRow>, RepositoryError> {
+    pub fn last_x_errors(&self, count: i64) -> Result<Vec<SystemLogRow>, RepositoryError> {
         let result = system_log::table
             .limit(count)
+            .filter(system_log::is_error.eq(true))
             .get_results(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_all(&self) -> Result<Vec<SystemLogRow>, RepositoryError> {
+        let result = system_log::table.load(self.connection.lock().connection())?;
         Ok(result)
     }
 }

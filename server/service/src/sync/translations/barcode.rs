@@ -68,7 +68,7 @@ impl SyncTranslation for BarcodeTranslation {
             id,
             gtin,
             item_id,
-            manufacturer_link_id: manufacturer_id,
+            manufacturer_id: manufacturer_id,
             pack_size,
             parent_id,
         };
@@ -87,13 +87,15 @@ impl SyncTranslation for BarcodeTranslation {
                     id,
                     gtin,
                     item_id,
-                    manufacturer_link_id: _,
+                    manufacturer_id: _,
                     pack_size,
                     parent_id,
                 },
             manufacturer_name_row,
         } = BarcodeRepository::new(connection)
-            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .query_by_filter(
+                BarcodeFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+            )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Barcode not found"))?;
 

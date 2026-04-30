@@ -92,9 +92,9 @@ impl SaveOutboundShipmentLinesInput {
 
 fn map_error(error: SaveStockOutItemLinesError) -> Result<InvoiceNode> {
     use SaveStockOutItemLinesError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
-    log::error!("Error: {}", formatted_error);
+    log::error!("Error: {formatted_error}");
 
     // Future TODO: Implement structured errors where needed
     // (Would only occur if 2 people editing at same time)

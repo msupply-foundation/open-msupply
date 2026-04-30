@@ -8,15 +8,19 @@ import {
 
 export const createDraftPurchaseOrderLine = (
   item: ItemStockOnHandFragment,
-  purchaseOrderId: string
+  purchaseOrderId: string,
+  headerDates?: {
+    requestedDeliveryDate?: string | null;
+    expectedDeliveryDate?: string | null;
+  }
 ): DraftPurchaseOrderLine => {
   return {
     id: FnUtils.generateUUID(),
     purchaseOrderId,
     itemId: item.id,
     requestedPackSize: 0,
-    requestedDeliveryDate: null,
-    expectedDeliveryDate: null,
+    requestedDeliveryDate: headerDates?.requestedDeliveryDate ?? null,
+    expectedDeliveryDate: headerDates?.expectedDeliveryDate ?? null,
     requestedNumberOfUnits: 0,
     lineNumber: 0,
     adjustedNumberOfUnits: null,
@@ -29,6 +33,10 @@ export const createDraftPurchaseOrderLine = (
       code: item.code,
       name: item.name,
       unitName: item.unitName,
+      defaultPackSize: item.defaultPackSize,
+      isVaccine: item.isVaccine,
+      doses: item.doses,
+      restrictedLocationTypeId: item.restrictedLocationTypeId,
       stats: {
         __typename: 'ItemStatsNode',
         stockOnHand: item.stats?.stockOnHand || 0,
@@ -37,8 +45,8 @@ export const createDraftPurchaseOrderLine = (
     // This value not actually saved to DB
     discountPercentage: 0,
     numberOfPacks: 0,
-    status: PurchaseOrderLineStatusNode.New,
     receivedNumberOfUnits: 0,
+    status: PurchaseOrderLineStatusNode.New,
     unitsOrderedInOthers: 0,
   };
 };

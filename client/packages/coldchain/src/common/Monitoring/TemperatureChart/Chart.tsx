@@ -16,10 +16,9 @@ import {
   UNDEFINED_STRING_VALUE,
   XAxis,
   YAxis,
-  useMediaQuery,
   useAppTheme,
   useUrlQuery,
-  Breakpoints,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { BreachPopover } from './BreachPopover';
 import { BreachDot, DotProps } from './types';
@@ -74,9 +73,7 @@ export const Chart = ({
 }) => {
   const t = useTranslation();
   const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const { dayMonthTime, customDate } = useFormatDateTime();
   const dateFormatter = (date: Date) => dayMonthTime(date);

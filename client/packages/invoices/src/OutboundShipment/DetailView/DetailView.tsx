@@ -14,7 +14,6 @@ import {
   InvoiceLineNodeType,
   MaterialTable,
   NothingHere,
-  useIsGroupedState,
 } from '@openmsupply-client/common';
 import {
   toItemRow,
@@ -52,8 +51,7 @@ export const DetailView = () => {
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
-  const { isGrouped } = useIsGroupedState('outboundShipment');
-  const { data: rows } = useOutboundLines();
+  const { data: rows, isError } = useOutboundLines();
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -89,19 +87,25 @@ export const DetailView = () => {
 
   const columns = useOutboundColumns();
 
+  const isPlaceholderRow = (row: StockOutLineFragment) =>
+    row.type === InvoiceLineNodeType.UnallocatedStock ||
+    row.numberOfPacks === 0;
+
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<StockOutLineFragment>({
       tableId: 'outbound-shipment-detail-view',
       columns,
       data: rows,
-      groupByField: isGrouped ? 'itemName' : undefined,
+      isError,
+      grouping: { field: 'item.code' },
       isLoading: false,
       initialSort: { key: 'itemName', dir: 'asc' },
       onRowClick: !isDisabled ? onRowClick : undefined,
       getIsPlaceholderRow: row =>
-        row.type === InvoiceLineNodeType.UnallocatedStock ||
-        row.numberOfPacks === 0,
-      renderEmptyRowsFallback: () => (
+        isPlaceholderRow(row.original) ||
+        // Also mark parent rows as placeholder if any of its children are placeholders
+        row.getLeafRows().some(leaf => isPlaceholderRow(leaf.original)),
+      noDataElement: (
         <NothingHere
           body={t('error.no-outbound-items')}
           onCreate={isDisabled ? undefined : () => onAddItem()}
@@ -136,61 +140,55 @@ export const DetailView = () => {
     },
   ];
 
-  return (
-    <React.Suspense
-      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
-    >
-      {data ? (
-        <>
-          <AppBarButtons onAddItem={onAddItem} />
-          {isOpen && (
-            <OutboundLineEdit
-              openedWith={entity}
-              mode={mode}
-              isOpen={isOpen}
-              onClose={onClose}
-              status={data.status}
-              invoiceId={data.id}
-              getSortedItems={getSortedItems}
-            />
-          )}
-
-          {returnsIsOpen && (
-            <CustomerReturnEditModal
-              isOpen={returnsIsOpen}
-              onClose={onCloseReturns}
-              outboundShipmentLineIds={outboundShipmentLineIds || []}
-              customerId={data.otherPartyId}
-              modalMode={returnModalMode}
-              outboundShipmentId={data.id}
-              onCreate={table.resetRowSelection}
-              isNewReturn
-            />
-          )}
-
-          <Toolbar />
-          <DetailTabs tabs={tabs} />
-          <Footer
-            onReturnLines={onReturn}
-            selectedRows={selectedRows}
-            resetRowSelection={table.resetRowSelection}
-          />
-          <SidePanel />
-        </>
-      ) : (
-        <AlertModal
-          open={true}
-          onOk={() =>
-            navigate(
-              RouteBuilder.create(AppRoute.Distribution)
-                .addPart(AppRoute.OutboundShipment)
-                .build()
-            )
-          }
-          title={t('error.shipment-not-found')}
-          message={t('messages.click-to-return-to-shipments')}
+  return data ? (
+    <>
+      <AppBarButtons onAddItem={onAddItem} />
+      {isOpen && (
+        <OutboundLineEdit
+          openedWith={entity}
+          mode={mode}
+          isOpen={isOpen}
+          onClose={onClose}
+          status={data.status}
+          invoiceId={data.id}
+          getSortedItems={getSortedItems}
         />
       )}
-    </React.Suspense>
+
+      {returnsIsOpen && (
+        <CustomerReturnEditModal
+          isOpen={returnsIsOpen}
+          onClose={onCloseReturns}
+          outboundShipmentLineIds={outboundShipmentLineIds || []}
+          customerId={data.otherPartyId}
+          modalMode={returnModalMode}
+          outboundShipment={data}
+          onCreate={table.resetRowSelection}
+          isNewReturn
+        />
+      )}
+
+      <Toolbar />
+      <DetailTabs tabs={tabs} />
+      <Footer
+        onReturnLines={onReturn}
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
+      <SidePanel />
+    </>
+  ) : (
+    <AlertModal
+      open={true}
+      onOk={() =>
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.OutboundShipment)
+            .build()
+        )
+      }
+      title={t('error.shipment-not-found')}
+      message={t('messages.click-to-return-to-shipments')}
+    />
   );
 };

@@ -25,6 +25,7 @@ pub struct EqualFilterDocumentRegistryCategoryInput {
     pub equal_to: Option<DocumentRegistryCategoryNode>,
     pub equal_any: Option<Vec<DocumentRegistryCategoryNode>>,
     pub not_equal_to: Option<DocumentRegistryCategoryNode>,
+    pub not_equal_all: Option<Vec<DocumentRegistryCategoryNode>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -82,7 +83,7 @@ pub fn document_registries(
             allowed_ctx,
         )
         .map_err(|err| {
-            let formatted_err = format! {"{:?}", err};
+            let formatted_err = format! {"{err:?}"};
             StandardGraphqlError::InternalError(formatted_err).extend()
         })?;
     Ok(DocumentRegistryResponse::Response(
@@ -111,7 +112,8 @@ impl DocumentRegistryFilterInput {
             id: id.map(EqualFilter::from),
             document_type: document_type.map(EqualFilter::from),
             context_id: context_id.map(EqualFilter::from),
-            category: r#type.map(|t| map_filter!(t, |c| DocumentRegistryCategory::from(c))),
+            category: r#type.map(|t| map_filter!(t, DocumentRegistryCategory::from)),
+            name: None,
         }
     }
 }

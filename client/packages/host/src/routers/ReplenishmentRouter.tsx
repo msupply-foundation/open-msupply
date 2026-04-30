@@ -23,6 +23,13 @@ const fullInboundShipmentPath = RouteBuilder.create(AppRoute.Replenishment)
   .addWildCard()
   .build();
 
+const fullInboundShipmentExternalPath = RouteBuilder.create(
+  AppRoute.Replenishment
+)
+  .addPart(AppRoute.InboundShipmentExternal)
+  .addWildCard()
+  .build();
+
 const fullInternalOrderPath = RouteBuilder.create(AppRoute.Replenishment)
   .addPart(AppRoute.InternalOrder)
   .addWildCard()
@@ -48,19 +55,14 @@ const fullPurchaseOrdersPath = RouteBuilder.create(AppRoute.Replenishment)
   .addWildCard()
   .build();
 
-const fullGoodsReceivedPath = RouteBuilder.create(AppRoute.Replenishment)
-  .addPart(AppRoute.GoodsReceived)
-  .addWildCard()
-  .build();
-
 export const ReplenishmentRouter: FC = () => {
   const goToRnr = useMatch(fullRnRPath);
   const gotoRequisition = useMatch(fullInternalOrderPath);
   const gotoSuppliers = useMatch(fullSuppliersPath);
   const gotoInboundShipment = useMatch(fullInboundShipmentPath);
+  const gotoInboundShipmentExternal = useMatch(fullInboundShipmentExternalPath);
   const gotoReturns = useMatch(fullSupplierReturnsPath);
   const gotoPurchaseOrders = useMatch(fullPurchaseOrdersPath);
-  const gotoGoodsReceived = useMatch(fullGoodsReceivedPath);
 
   if (gotoRequisition || goToRnr) {
     return <RequisitionService />;
@@ -70,15 +72,11 @@ export const ReplenishmentRouter: FC = () => {
     return <NameService />;
   }
 
-  if (gotoInboundShipment || gotoReturns) {
+  if (gotoInboundShipment || gotoInboundShipmentExternal || gotoReturns) {
     return <InvoiceService />;
   }
 
   if (gotoPurchaseOrders) {
-    return <PurchasingService />;
-  }
-
-  if (gotoGoodsReceived) {
     return <PurchasingService />;
   }
 

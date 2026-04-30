@@ -26,9 +26,14 @@ import {
   initialiseI18n,
   KBarProvider,
   usePreferences,
+  useIsCentralServerApi,
+  useInitialisationStatus,
+  InitialisationStatusType,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
+import { MigrationInfoProvider } from './components/Migration';
 import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
@@ -65,6 +70,22 @@ Bugsnag.start({
 const skipRequest = () =>
   LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
+const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const { logout } = useAuthContext();
+  const data = useInitialisationStatus(false, true);
+
+  // Query still loading — don't render children yet, but don't logout either
+  if (!data?.data) return null;
+
+  if (data.data.status == InitialisationStatusType.Initialised)
+    return children;
+
+  // Server is not initialised — clear token
+  logout();
+
+  return null;
+};
+
 /**
  * Empty component which can be used to call startup hooks.
  * For example, this component is called when auth information such as user or store id changed.
@@ -72,6 +93,7 @@ const skipRequest = () =>
 const Init = () => {
   useInitPlugins();
   usePreferences(); // Ensure preferences are loaded on startup - they'll be cached indefinitely
+  useIsCentralServerApi();
   return <></>;
 };
 
@@ -157,14 +179,18 @@ const Host = () => (
                   url={Environment.GRAPHQL_URL}
                   skipRequest={skipRequest}
                 >
-                  <AuthProvider>
-                    <Init />
-                    <ConfirmationModalProvider>
-                      <AlertModalProvider>
-                        <RouterProvider router={router} />
-                      </AlertModalProvider>
-                    </ConfirmationModalProvider>
-                  </AuthProvider>
+                  <MigrationInfoProvider>
+                    <AuthProvider>
+                      <PreInit>
+                        <Init />
+                      </PreInit>
+                      <ConfirmationModalProvider>
+                        <AlertModalProvider>
+                          <RouterProvider router={router} />
+                        </AlertModalProvider>
+                      </ConfirmationModalProvider>
+                    </AuthProvider>
+                  </MigrationInfoProvider>
                   {/* <ReactQueryDevtools initialIsOpen /> */}
                 </GqlProvider>
               </QueryClientProvider>

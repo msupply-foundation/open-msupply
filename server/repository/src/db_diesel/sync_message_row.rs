@@ -107,7 +107,7 @@ impl<'a> SyncMessageRowRepository<'a> {
             table_name: ChangelogTableName::SyncMessage,
             record_id: id.to_string(),
             row_action: RowActionType::Upsert,
-            name_link_id: None,
+            name_id: None,
             store_id: None,
         };
 
@@ -118,7 +118,7 @@ impl<'a> SyncMessageRowRepository<'a> {
 impl Upsert for SyncMessageRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let change_log_id = SyncMessageRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id)) // Table not in Changelog
+        Ok(Some(change_log_id))
     }
 
     // Test only

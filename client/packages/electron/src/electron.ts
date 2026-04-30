@@ -5,6 +5,7 @@ import {
   ipcMain,
   Menu,
   MenuItemConstructorOptions,
+  session,
   shell,
   webContents,
 } from 'electron';
@@ -25,6 +26,7 @@ import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
 import https from 'https';
 import http from 'http';
 import defaultTranslations from '../../common/src/intl/locales/en/desktop.json';
+import fs from 'fs-extra';
 
 // We'll lazy load, once we have the locale available
 const importDesktopTranslations = async (locale: string) =>
@@ -322,6 +324,23 @@ const start = (): void => {
     });
   });
 
+  // Clear auth state when the window is closed
+  // so the user must log in again on next launch.
+  // This runs while the app is still fully alive, which is more reliable
+  // than clearing during the will-quit phase.
+  let isClosing = false;
+  window.on('close', event => {
+    if (!isClosing) {
+      isClosing = true;
+      event.preventDefault();
+      session.defaultSession
+        .clearStorageData({ storages: ['cookies'] })
+        .finally(() => {
+          window.destroy();
+        });
+    }
+  });
+
   window.webContents.on(
     'did-fail-load',
     (_event, _errorCode, errorDescription, validatedURL) => {
@@ -492,11 +511,10 @@ function configureMenus(
                 return;
               }
               store.clear();
-              const contents = webContents.getFocusedWebContents();
-              if (contents) {
-                contents.executeJavaScript(`localStorage.clear();`);
-              }
-              app.exit();
+              const userDataPath = app.getPath('userData');
+              fs.removeSync(userDataPath);
+
+              app.quit();
             });
         },
       },

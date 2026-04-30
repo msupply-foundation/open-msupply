@@ -11,8 +11,8 @@ export const useResponseApi = () => {
     sortedList: (sortBy: SortBy<ResponseRowFragment>) =>
       [...keys.list(), sortBy] as const,
     statsData: (lineId: string) => [...keys.base(), lineId, storeId] as const,
-    programSettings: () =>
-      [...keys.base(), 'programSettings', storeId] as const,
+    programSettings: (customerNameId?: string) =>
+      [...keys.base(), 'programSettings', storeId, customerNameId] as const,
     indicators: () => [...keys.base(), 'indicators', storeId] as const,
   };
 

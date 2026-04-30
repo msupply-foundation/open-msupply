@@ -55,11 +55,8 @@ pub struct StaticFileService {
     pub max_lifetime_millis: u64,
 }
 impl StaticFileService {
-    pub fn new(base_dir: &Option<String>) -> anyhow::Result<Self> {
-        let file_dir = match base_dir {
-            Some(file_dir) => PathBuf::from_str(file_dir)?.join(STATIC_FILE_DIR),
-            None => std::env::current_dir()?.join(STATIC_FILE_DIR),
-        };
+    pub fn new(base_dir: &str) -> anyhow::Result<Self> {
+        let file_dir = PathBuf::from_str(base_dir)?.join(STATIC_FILE_DIR);
         Ok(StaticFileService {
             dir: file_dir,
             max_lifetime_millis: 60 * 60 * 1000, // 1 hours
@@ -97,7 +94,7 @@ impl StaticFileService {
     /// use std::io::Write;
     /// use std::fs::File;
     ///
-    /// let static_file_service = StaticFileService::new(&Some("/tmp/".to_string())).unwrap();
+    /// let static_file_service = StaticFileService::new("/tmp/").unwrap();
     ///
     /// let static_file = static_file_service.reserve_file("test.txt", StaticFileCategory::Temporary).unwrap();
     /// let mut file = File::create(static_file.path).unwrap();
@@ -118,7 +115,7 @@ impl StaticFileService {
         let dir = self.dir.join(category.to_path_buf());
 
         std::fs::create_dir_all(&dir)?;
-        let file_path = dir.join(format!("{}_{}", id, file_name));
+        let file_path = dir.join(format!("{id}_{file_name}"));
         Ok(StaticFile {
             id,
             name: file_name.to_string(),
@@ -137,7 +134,7 @@ impl StaticFileService {
         let dir = self.dir.join(category.to_path_buf());
 
         std::fs::create_dir_all(&dir)?;
-        let file_path = dir.join(format!("{}_{}", id, file_name));
+        let file_path = dir.join(format!("{id}_{file_name}"));
         let file = StaticFile {
             id,
             name: file_name.to_string(),
@@ -217,7 +214,7 @@ fn parse_original_file_name(id: &str, file_path: &Path) -> Option<String> {
 
 /// Finds file starting with the provided id
 fn find_file_in_dir(id: &str, file_dir: &PathBuf) -> Result<Option<PathBuf>, Error> {
-    let starts_with = format!("{}_", id);
+    let starts_with = format!("{id}_");
     let paths = std::fs::read_dir(file_dir)?;
     for path in paths {
         let entry = path?;
@@ -253,9 +250,9 @@ fn delete_temporary_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Resu
             .unwrap_or(Duration::from_secs(0))
             > Duration::from_millis(max_life_time_millis)
         {
-            log::info!("Delete old static file: {:?}", entry_path);
+            log::info!("Delete old static file: {entry_path:?}");
             std::fs::remove_file(entry_path).unwrap_or_else(|err| {
-                log::error!("Failed to delete old static file: {}", err);
+                log::error!("Failed to delete old static file: {err}");
             });
         }
     }
@@ -275,7 +272,7 @@ mod test {
 
     #[test]
     fn test_static_file_storage() {
-        let mut service = StaticFileService::new(&None).unwrap();
+        let mut service = StaticFileService::new(".").unwrap();
         service.dir = PathBuf::from_str(TEST_DIR).unwrap();
         service.max_lifetime_millis = 100;
         let test_dir = std::env::current_dir().unwrap().join(TEST_DIR);

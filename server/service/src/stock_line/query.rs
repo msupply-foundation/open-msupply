@@ -12,7 +12,7 @@ pub const MIN_LIMIT: u32 = 1;
 pub fn get_stock_line(ctx: &ServiceContext, id: String) -> Result<StockLine, SingleRecordError> {
     let mut result = StockLineRepository::new(&ctx.connection).query(
         Pagination::one(),
-        Some(StockLineFilter::new().id(EqualFilter::equal_to(&id))),
+        Some(StockLineFilter::new().id(EqualFilter::equal_to(id.to_string()))),
         None,
         None,
     )?;

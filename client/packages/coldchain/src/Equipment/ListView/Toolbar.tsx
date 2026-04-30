@@ -45,8 +45,8 @@ export const useToolbar = () => {
     setTypes(newTypes);
 
     // reset the selected type if it is not under the selected category
-    if (newTypes.find(t => t.name === typeId) === null) {
-      updateQuery({ categoryId: '' });
+    if (!newTypes.find(t => t.name === typeId)) {
+      updateQuery({ typeId: '' });
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -6,6 +6,7 @@ export {
   ContactTraceRowFragment,
   ContactTraceFragment,
   VaccineCourseFragment,
+  VaccineCourseRowFragment,
   ImmunisationProgramFragment,
   ProgramFragment,
 } from './operations.generated';

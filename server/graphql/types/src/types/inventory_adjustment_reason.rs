@@ -58,8 +58,7 @@ impl InventoryAdjustmentReasonNodeType {
             from::PositiveInventoryAdjustment => Ok(to::Positive),
             from::NegativeInventoryAdjustment => Ok(to::Negative),
             _ => Err(Error::new(format!(
-                "Invalid inventory adjustment reason type: {:?}",
-                from,
+                "Invalid inventory adjustment reason type: {from:?}",
             ))),
         }
     }

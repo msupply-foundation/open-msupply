@@ -7,6 +7,8 @@ jobs:
     name: Remote Server Mac Build
     runs-on: self-hosted
     timeout-minutes: 30
+    env:
+      RUSTFLAGS: '--cfg recursion_limit_256'
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1

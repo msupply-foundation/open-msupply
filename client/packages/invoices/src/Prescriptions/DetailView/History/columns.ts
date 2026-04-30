@@ -1,30 +1,42 @@
-import { ColumnDescription, useColumns } from '@openmsupply-client/common';
+import { ColumnDef, ColumnType, useTranslation } from '@openmsupply-client/common';
 import { HistoryItem } from './HistoryModal';
+import { useMemo } from 'react';
 
 export const useHistoryColumns = () => {
-  const columns: ColumnDescription<HistoryItem>[] = [
-    {
-      label: 'report.item-name',
-      key: 'itemName',
-    },
-    {
-      label: 'label.unit-quantity',
-      key: 'unitQuantity',
-    },
-    {
-      label: 'label.directions',
-      key: 'directions',
-    },
-    {
-      label: 'label.date',
-      key: 'date',
-      accessor: ({ rowData }) => rowData.date?.toLocaleDateString(),
-    },
-    {
-      label: 'label.prescriber',
-      key: 'prescriber',
-    },
-  ];
+  const t = useTranslation();
 
-  return useColumns(columns, {}, []);
+  const columns = useMemo(
+    (): ColumnDef<HistoryItem>[] => [
+      {
+        accessorKey: 'itemName',
+        header: t('report.item-name'),
+        size: 150,
+      },
+      {
+        accessorKey: 'unitQuantity',
+        header: t('label.unit-quantity'),
+        columnType: ColumnType.Number,
+        size: 150,
+      },
+      {
+        accessorKey: 'directions',
+        header: t('label.directions'),
+        size: 150,
+      },
+      {
+        accessorKey: 'date',
+        header: t('label.date'),
+        columnType: ColumnType.Date,
+        size: 150,
+      },
+      {
+        accessorKey: 'prescriber',
+        header: t('label.prescriber'),
+        size: 150,
+      },
+    ],
+    []
+  );
+
+  return columns;
 };

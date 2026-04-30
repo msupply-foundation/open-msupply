@@ -44,7 +44,7 @@ where
     use BoaJsError as Error;
     // Initialise context with loader
     let loader = Rc::new(SimpleModuleLoader::new(Path::new("."))?);
-    let mut context = &mut Context::builder().module_loader(loader.clone()).build()?;
+    let context = &mut Context::builder().module_loader(loader.clone()).build()?;
 
     // Add plugin code as module
     let module = Module::parse(Source::from_bytes(bundle), None, context)?;
@@ -71,10 +71,10 @@ where
     let callable = find_callable_in_exports(context, module, export_location)?;
 
     let input: serde_json::Value = serde_json::to_value(&input)?;
-    let js_input = JsValue::from_json(&input, &mut context)?;
+    let js_input = JsValue::from_json(&input, context)?;
 
     let js_output = callable.call(&JsValue::undefined(), &[js_input], context)?;
-    let option_output = JsValue::to_json(&js_output, &mut context)?;
+    let option_output = JsValue::to_json(&js_output, context)?;
     let output = option_output.ok_or(JsError::from(NullError))?;
 
     Ok(serde_json::from_value(output)?)
@@ -91,7 +91,6 @@ fn find_callable_in_exports(
         path = path
             .get(js_string!(*name), context)?
             .as_object()
-            .cloned()
             .ok_or(BoaJsError::ExportMissing(name.to_string()))?;
     }
 

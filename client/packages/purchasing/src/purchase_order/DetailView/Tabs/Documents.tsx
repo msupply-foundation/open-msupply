@@ -2,7 +2,6 @@ import React, { ReactElement } from 'react';
 import {
   ButtonWithIcon,
   useTranslation,
-  NothingHere,
   useToggle,
   PlusCircleIcon,
   Grid,
@@ -44,10 +43,8 @@ export const Documents = ({
             recordId={data?.id ?? ''}
             documents={data?.documents?.nodes ?? []}
             tableName="purchase_order"
-            noDataElement={
-              <NothingHere body={t('error.no-purchase-order-documents')} />
-            }
             invalidateQueries={invalidateQueries}
+            deletableDocumentIds={disable ? new Set<string>() : undefined}
           />
         </Grid>
       </Grid>

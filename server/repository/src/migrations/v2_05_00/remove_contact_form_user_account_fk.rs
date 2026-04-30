@@ -35,10 +35,10 @@ impl MigrationFragment for Migrate {
                 );
                 INSERT INTO tmp_contact_form SELECT * FROM contact_form;
 
-                PRAGMA foreign_keys = OFF;
+                -- PRAGMA foreign_keys = OFF; -- No longer effective now that we're using transactions
                 DROP TABLE contact_form;
                 ALTER TABLE tmp_contact_form RENAME TO contact_form;
-                PRAGMA foreign_keys = ON;
+                -- PRAGMA foreign_keys = ON;
                 "#
             )?;
         }

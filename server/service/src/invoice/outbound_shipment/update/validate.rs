@@ -1,17 +1,18 @@
+use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
+use crate::common::check_shipping_method_exists;
 use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, InvoiceRowStatusError,
 };
+use crate::preference::{preferences::Backdating, Preference};
 use crate::validate::get_other_party;
-use chrono::Utc;
-use repository::{EqualFilter, NameLinkRowRepository};
+use crate::NullableUpdate;
+use chrono::{Duration, Utc};
 use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
-    InvoiceType, StorageConnection,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
+    InvoiceStatus, InvoiceType, StorageConnection,
 };
-
-use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
 
 pub fn validate(
     connection: &StorageConnection,
@@ -21,12 +22,8 @@ pub fn validate(
     use UpdateOutboundShipmentError::*;
 
     let invoice = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
-    let other_party_id = NameLinkRowRepository::new(connection)
-        .find_one_by_id(&invoice.name_link_id)?
-        .ok_or(OtherPartyDoesNotExist)?
-        .name_id;
     let other_party =
-        get_other_party(connection, store_id, &other_party_id)?.ok_or(OtherPartyDoesNotExist)?;
+        get_other_party(connection, store_id, &invoice.name_id)?.ok_or(OtherPartyDoesNotExist)?;
 
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
@@ -42,6 +39,44 @@ pub fn validate(
         && other_party.store_row.is_some()
     {
         return Err(CannotIssueInForeignCurrency);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(shipping_method_id),
+    }) = &patch.shipping_method_id
+    {
+        if !check_shipping_method_exists(connection, shipping_method_id)? {
+            return Err(ShippingMethodDoesNotExist);
+        }
+    }
+
+    // Backdating validation: preference enabled, only New outbound shipments, no lines, not future, max days
+    if let Some(backdated_datetime) = patch.backdated_datetime {
+        let backdating = Backdating.load(connection, None)?;
+        if !backdating.shipments_enabled {
+            return Err(CantBackDate(
+                "Backdating of shipments is not enabled".to_string(),
+            ));
+        }
+
+        if invoice.status != InvoiceStatus::New {
+            return Err(CantBackDate(
+                "Can only backdate new outbound shipments".to_string(),
+            ));
+        }
+
+        if backdated_datetime > Utc::now() {
+            return Err(CantBackDate("Cannot set date in the future".to_string()));
+        }
+
+        // Lines are deleted atomically in generate if backdating with existing lines
+
+        if backdating.max_days > 0 {
+            let earliest_allowed = Utc::now() - Duration::days(backdating.max_days as i64);
+            if backdated_datetime < earliest_allowed {
+                return Err(ExceedsMaximumBackdatingDays);
+            }
+        }
     }
 
     // Status check
@@ -83,9 +118,9 @@ fn check_can_change_status_to_allocated(
         let repository = InvoiceLineRepository::new(connection);
         let unallocated_lines = repository.query_by_filter(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(&invoice_row.id))
+                .invoice_id(EqualFilter::equal_to(invoice_row.id.to_string()))
                 .r#type(InvoiceLineType::UnallocatedStock.equal_to())
-                .number_of_packs(EqualFilter::not_equal_to_f64(0.0)),
+                .number_of_packs(EqualFilter::not_equal_to(0.0)),
         )?;
 
         if !unallocated_lines.is_empty() {

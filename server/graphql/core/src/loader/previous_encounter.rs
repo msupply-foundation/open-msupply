@@ -33,7 +33,7 @@ impl Loader<PreviousEncounterLoaderInput> for PreviousEncounterLoader {
 
         for input in inputs {
             let filter = EncounterFilter::new()
-                .patient_id(EqualFilter::equal_to(&input.patient_id))
+                .patient_id(EqualFilter::equal_to(input.patient_id.to_string()))
                 .start_datetime(DatetimeFilter::before(
                     input.current_encounter_start_datetime,
                 ));
@@ -48,13 +48,10 @@ impl Loader<PreviousEncounterLoaderInput> for PreviousEncounterLoader {
                     }),
                 )?
                 .first()
-                .map(|encounter| encounter.clone());
+                .cloned();
 
-            match encounter {
-                Some(encounter) => {
-                    out.insert(input.clone(), encounter);
-                }
-                None => {}
+            if let Some(encounter) = encounter {
+                out.insert(input.clone(), encounter);
             }
         }
 

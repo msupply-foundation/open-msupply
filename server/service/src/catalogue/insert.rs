@@ -66,7 +66,7 @@ pub fn validate(
 
     // Check the item does not already exist
     if repo.count(Some(
-        AssetCatalogueItemFilter::new().id(EqualFilter::equal_to(&input.id)),
+        AssetCatalogueItemFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
     ))? > 0
     {
         return Err(InsertAssetCatalogueItemError::ItemAlreadyExists);

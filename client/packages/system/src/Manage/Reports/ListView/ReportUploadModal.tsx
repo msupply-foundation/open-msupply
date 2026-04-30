@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileList } from '../../../../../coldchain/src/Equipment/Components';
-import { Environment } from 'packages/config/src';
+import { Environment } from '@openmsupply-client/config';
 import {
   useTranslation,
   Box,
@@ -93,7 +93,7 @@ export const ReportUploadModal = ({
             justifyContent: 'center',
           }}
         >
-          <UploadFile onUpload={onUpload} files={draft.files} />
+          <UploadFile onUpload={onUpload} files={draft.files} multiple />
         </Box>
         <Box sx={{ display: 'flex', width: '300px' }}>
           <FileList

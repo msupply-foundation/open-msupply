@@ -189,10 +189,11 @@ export const HorizontalStepper = ({
   nowrap = false,
 }: StepperProps) => {
   const paletteColour = usePaletteColour(colour);
+  const theme = useTheme();
   const StyledConnector = getConnector(paletteColour);
 
   return (
-    <Box flex={1}>
+    <Box flex={1} dir={theme.direction}>
       <GlobalStyles styles={getAnimationStyles(colour)} />
       <Stepper
         connector={<StyledConnector />}
@@ -205,7 +206,7 @@ export const HorizontalStepper = ({
           // There is no accessability role that I can find to accurately describe
           // a stepper, so turning to testids to mark the active/completed steps
           // for tests
-          const stepIcon = icon ? undefined : getCircle(paletteColour);
+          const stepIcon = getCircle(paletteColour);
 
           return (
             <Step

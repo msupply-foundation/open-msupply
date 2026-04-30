@@ -1,18 +1,19 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   useTranslation,
   SearchBar,
-  FilterController,
   FilterRule,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 
-interface ToolbarProps {
-  filter: FilterController;
-}
-
-export const Toolbar: FC<ToolbarProps> = ({ filter }) => {
+export const Toolbar = () => {
   const t = useTranslation();
+
+  const { filter } = useUrlQueryParams({
+    filters: [{ key: 'codeOrName' }],
+  });
+
   const filterString =
     ((filter.filterBy?.['codeOrName'] as FilterRule)?.like as string) || '';
 
@@ -29,14 +30,7 @@ export const Toolbar: FC<ToolbarProps> = ({ filter }) => {
         placeholder={t('placeholder.enter-code-or-name')}
         value={filterString ?? ''}
         onChange={newValue => {
-          if (!newValue) {
-            return filter.onClearFilterRule('codeOrName');
-          }
-          return filter.onChangeStringFilterRule(
-            'codeOrName',
-            'like',
-            newValue
-          );
+          filter.onChangeStringFilterRule('codeOrName', 'like', newValue);
         }}
       />
     </AppBarContentPortal>

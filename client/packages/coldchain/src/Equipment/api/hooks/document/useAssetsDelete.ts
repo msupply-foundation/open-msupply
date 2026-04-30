@@ -2,28 +2,21 @@ import {
   useDeleteConfirmation,
   useMutation,
   useQueryClient,
-  useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
-import { useAssets } from './useAssets';
-import { AssetFragment } from '../../operations.generated';
+import { AssetRowFragment } from '../../operations.generated';
 
-export const useAssetsDelete = () => {
+export const useAssetsDelete = (
+  selectedRows: AssetRowFragment[],
+  resetSelection: () => void
+) => {
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useAssetApi();
-  const { data: rows } = useAssets();
   const { mutateAsync } = useMutation(async (id: string) =>
     api.delete(id, api.storeId)
   );
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as AssetFragment[],
-  }));
 
   const deleteAction = async () => {
     await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
@@ -31,6 +24,7 @@ export const useAssetsDelete = () => {
       .catch(err => {
         throw err;
       });
+    resetSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -46,5 +40,5 @@ export const useAssetsDelete = () => {
     },
   });
 
-  return { confirmAndDelete, selectedRows };
+  return { confirmAndDelete };
 };

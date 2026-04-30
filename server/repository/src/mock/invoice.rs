@@ -5,12 +5,12 @@ use crate::{InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceT
 pub fn mock_outbound_shipment_a() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_a"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_b"),
         invoice_number: 1,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Picked,
-        comment: Some("Sort comment test ab".to_owned()),
+        comment: Some("Sort comment test ab".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 1)
             .unwrap()
@@ -24,12 +24,12 @@ pub fn mock_outbound_shipment_a() -> InvoiceRow {
 pub fn mock_outbound_shipment_b() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_b"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         invoice_number: 2,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Shipped,
-        comment: Some("Sort comment test Ab".to_owned()),
+        comment: Some("Sort comment test Ab".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 2)
             .unwrap()
@@ -50,12 +50,12 @@ pub fn mock_outbound_shipment_b() -> InvoiceRow {
 pub fn mock_outbound_shipment_c() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_c"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         invoice_number: 3,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
-        comment: Some("Sort comment test aB".to_owned()),
+        comment: Some("Sort comment test aB".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 2)
             .unwrap()
@@ -68,12 +68,12 @@ pub fn mock_outbound_shipment_c() -> InvoiceRow {
 pub fn mock_outbound_shipment_d() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_d"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         invoice_number: 9,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Picked,
-        comment: Some("Sort comment test ba".to_owned()),
+        comment: Some("Sort comment test ba".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 2)
             .unwrap()
@@ -98,12 +98,12 @@ pub fn mock_outbound_shipment_d() -> InvoiceRow {
 pub fn mock_outbound_shipment_e() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_e"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_a"),
         invoice_number: 3,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
-        comment: Some("Sort comment test aB".to_owned()),
+        comment: Some("Sort comment test aB".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 2)
             .unwrap()
@@ -117,12 +117,12 @@ pub fn mock_outbound_shipment_e() -> InvoiceRow {
 pub fn mock_outbound_shipment_picked() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_picked"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         invoice_number: 3,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Picked,
-        comment: Some("Sort comment test Ba".to_owned()),
+        comment: Some("Sort comment test Ba".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 7)
             .unwrap()
@@ -142,12 +142,12 @@ pub fn mock_outbound_shipment_picked() -> InvoiceRow {
 pub fn mock_outbound_shipment_shipped() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_shipped"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         invoice_number: 3,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Shipped,
-        comment: Some("Sort comment test bA".to_owned()),
+        comment: Some("Sort comment test bA".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 5)
             .unwrap()
@@ -169,12 +169,12 @@ pub fn mock_outbound_shipment_shipped() -> InvoiceRow {
 pub fn mock_outbound_shipment_no_lines() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_no_lines"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         invoice_number: 3,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Picked,
-        comment: Some("Sort comment test ac".to_owned()),
+        comment: Some("Sort comment test ac".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 6)
             .unwrap()
@@ -194,7 +194,7 @@ pub fn mock_outbound_shipment_no_lines() -> InvoiceRow {
 pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
     InvoiceRow {
         id: String::from("new_outbound_shipment_no_lines"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
@@ -205,7 +205,7 @@ pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
 pub fn mock_new_outbound_shipment_no_stockline() -> InvoiceRow {
     InvoiceRow {
         id: String::from("mock_new_outbound_shipment_no_stockline"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
@@ -220,13 +220,13 @@ pub fn mock_new_outbound_shipment_no_stockline() -> InvoiceRow {
 pub fn mock_outbound_shipment_on_hold() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_on_hold"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_a"),
         invoice_number: 10,
         on_hold: true,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Allocated,
-        comment: Some("Sort comment test Ba".to_owned()),
+        comment: Some("Sort comment test Ba".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 7)
             .unwrap()
@@ -245,12 +245,12 @@ pub fn mock_outbound_shipment_on_hold() -> InvoiceRow {
 pub fn mock_inbound_shipment_a() -> InvoiceRow {
     InvoiceRow {
         id: String::from("inbound_shipment_a"),
-        name_link_id: String::from("name_store_b"),
+        name_id: String::from("name_store_b"),
         store_id: String::from("store_a"),
         invoice_number: 4,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::Received,
-        comment: Some("Sort comment test Ac".to_owned()),
+        comment: Some("Sort comment test Ac".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 3)
             .unwrap()
@@ -266,12 +266,12 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
 pub fn mock_inbound_shipment_b() -> InvoiceRow {
     InvoiceRow {
         id: String::from("inbound_shipment_b"),
-        name_link_id: String::from("name_store_c"),
+        name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
         invoice_number: 5,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::Verified,
-        comment: Some("Sort comment test aC".to_owned()),
+        comment: Some("Sort comment test aC".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 4)
             .unwrap()
@@ -292,18 +292,18 @@ pub fn mock_inbound_shipment_b() -> InvoiceRow {
 pub fn mock_inbound_shipment_c() -> InvoiceRow {
     InvoiceRow {
         id: String::from("inbound_shipment_c"),
-        name_link_id: String::from("name_store_c"),
+        name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
         invoice_number: 6,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::New,
-        comment: Some("Sort comment test ca".to_owned()),
+        comment: Some("Sort comment test ca".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 4)
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap(),
-        default_donor_link_id: Some("donor_a".to_owned()),
+        default_donor_id: Some("donor_a".to_string()),
         ..Default::default()
     }
 }
@@ -311,12 +311,12 @@ pub fn mock_inbound_shipment_c() -> InvoiceRow {
 pub fn mock_inbound_shipment_d() -> InvoiceRow {
     InvoiceRow {
         id: String::from("inbound_shipment_d"),
-        name_link_id: String::from("name_store_c"),
+        name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
         invoice_number: 7,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::Received,
-        comment: Some("Sort comment test Ca".to_owned()),
+        comment: Some("Sort comment test Ca".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 5)
             .unwrap()
@@ -332,13 +332,13 @@ pub fn mock_inbound_shipment_d() -> InvoiceRow {
 pub fn mock_inbound_shipment_e() -> InvoiceRow {
     InvoiceRow {
         id: String::from("inbound_shipment_e"),
-        name_link_id: String::from("name_store_c"),
+        name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
         invoice_number: 7,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::New,
         on_hold: true,
-        comment: Some("Sort comment test".to_owned()),
+        comment: Some("Sort comment test".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 4)
             .unwrap()
@@ -351,13 +351,13 @@ pub fn mock_inbound_shipment_e() -> InvoiceRow {
 pub fn mock_inbound_shipment_f() -> InvoiceRow {
     InvoiceRow {
         id: String::from("inbound_shipment_f"),
-        name_link_id: String::from("name_store_c"),
+        name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
         invoice_number: 8,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::Received,
         on_hold: true,
-        comment: Some("Sort comment test".to_owned()),
+        comment: Some("Sort comment test".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 4)
             .unwrap()
@@ -370,12 +370,12 @@ pub fn mock_inbound_shipment_f() -> InvoiceRow {
 pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
     InvoiceRow {
         id: String::from("empty_draft_inbound_shipment"),
-        name_link_id: String::from("name_store_c"),
+        name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
         invoice_number: 8,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::New,
-        comment: Some("Sort comment test AC".to_owned()),
+        comment: Some("Sort comment test AC".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 4)
             .unwrap()
@@ -388,13 +388,13 @@ pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
 pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
     InvoiceRow {
         id: String::from("mock_unique_number_inbound_shipment"),
-        name_link_id: String::from("name_store_c"),
+        name_id: String::from("name_store_c"),
         store_id: String::from("store_a"),
         name_store_id: Some(String::from("store_a")),
         invoice_number: 9999999,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::New,
-        comment: Some("Sort comment test AC".to_owned()),
+        comment: Some("Sort comment test AC".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 4)
             .unwrap()
@@ -407,12 +407,12 @@ pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
 pub fn mock_transferred_inbound_shipment_a() -> InvoiceRow {
     InvoiceRow {
         id: String::from("transferred_inbound_shipment_a"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_b"),
         invoice_number: 9,
         r#type: InvoiceType::InboundShipment,
         status: InvoiceStatus::Received,
-        comment: Some("Sort comment test Ac".to_owned()),
+        comment: Some("Sort comment test Ac".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 3)
             .unwrap()
@@ -447,7 +447,7 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
 pub fn mock_prescription_a() -> InvoiceRow {
     InvoiceRow {
         id: String::from("prescription_a"),
-        name_link_id: String::from("testId"),
+        name_id: String::from("testId"),
         store_id: String::from("store_a"),
         invoice_number: 1,
         r#type: InvoiceType::Prescription,
@@ -463,7 +463,7 @@ pub fn mock_prescription_a() -> InvoiceRow {
 pub fn mock_prescription_picked() -> InvoiceRow {
     InvoiceRow {
         id: String::from("prescription_picked"),
-        name_link_id: String::from("testId"),
+        name_id: String::from("testId"),
         store_id: String::from("store_a"),
         invoice_number: 1,
         r#type: InvoiceType::Prescription,
@@ -479,7 +479,7 @@ pub fn mock_prescription_picked() -> InvoiceRow {
 pub fn mock_prescription_verified() -> InvoiceRow {
     InvoiceRow {
         id: String::from("prescription_verified"),
-        name_link_id: String::from("testId"),
+        name_id: String::from("testId"),
         store_id: String::from("store_a"),
         invoice_number: 1,
         r#type: InvoiceType::Prescription,
@@ -495,7 +495,7 @@ pub fn mock_prescription_verified() -> InvoiceRow {
 pub fn mock_prescription_cancelled() -> InvoiceRow {
     InvoiceRow {
         id: String::from("prescription_cancelled"),
-        name_link_id: String::from("testId"),
+        name_id: String::from("testId"),
         store_id: String::from("store_a"),
         invoice_number: 1,
         r#type: InvoiceType::Prescription,
@@ -511,7 +511,7 @@ pub fn mock_prescription_cancelled() -> InvoiceRow {
 pub fn mock_supplier_return_a() -> InvoiceRow {
     InvoiceRow {
         id: String::from("supplier_return_a"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_a"),
         invoice_number: 1,
         r#type: InvoiceType::SupplierReturn,
@@ -529,7 +529,7 @@ pub fn mock_supplier_return_a() -> InvoiceRow {
 pub fn mock_supplier_return_b() -> InvoiceRow {
     InvoiceRow {
         id: String::from("supplier_return_b"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_b"),
         invoice_number: 2,
         r#type: InvoiceType::SupplierReturn,
@@ -546,7 +546,7 @@ pub fn mock_supplier_return_b() -> InvoiceRow {
 pub fn mock_customer_return_a() -> InvoiceRow {
     InvoiceRow {
         id: String::from("customer_return_a"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_b"),
         invoice_number: 1,
         r#type: InvoiceType::CustomerReturn,
@@ -563,7 +563,7 @@ pub fn mock_customer_return_a() -> InvoiceRow {
 pub fn mock_customer_return_b() -> InvoiceRow {
     InvoiceRow {
         id: String::from("customer_return_b"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_b"),
         invoice_number: 2,
         r#type: InvoiceType::CustomerReturn,

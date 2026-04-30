@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod invoice_received_status;
+mod update_invoice_received_status;
 
 pub(crate) struct V2_08_03;
 
@@ -15,7 +16,10 @@ impl Migration for V2_08_03 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(invoice_received_status::Migrate)]
+        vec![
+            Box::new(invoice_received_status::Migrate),
+            Box::new(update_invoice_received_status::Migrate),
+        ]
     }
 }
 

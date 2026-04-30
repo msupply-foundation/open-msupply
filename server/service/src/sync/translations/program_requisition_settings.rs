@@ -98,8 +98,15 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
         if !data.is_program {
             // Check if we already have a program with the same id (is_program could have just been unchecked)
             match program_repo.find_one_by_id(&data.id)? {
-                // Should translate to soft delete
-                Some(_) => {}
+                Some(program) => {
+                    let program_row = ProgramRow {
+                        deleted_datetime: Some(chrono::Utc::now().naive_utc()),
+                        ..program
+                    };
+                    return Ok(PullTranslateResult::IntegrationOperations(vec![
+                        IntegrationOperation::upsert(program_row),
+                    ]));
+                }
                 // This is a non-program master list, don't translate
                 None => {
                     return Ok(PullTranslateResult::NotMatched);
@@ -281,6 +288,7 @@ fn generate_requisition_program(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]

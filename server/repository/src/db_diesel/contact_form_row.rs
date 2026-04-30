@@ -4,7 +4,7 @@ use crate::{
 };
 
 use super::{
-    contact_form_row::contact_form::dsl::*, name_link_row::name_link, name_row::name,
+    contact_form_row::contact_form::dsl::*, name_row::name,
     store_row::store, user_row::user_account,
 };
 
@@ -33,7 +33,6 @@ joinable!(contact_form -> user_account (user_id));
 allow_tables_to_appear_in_same_query!(contact_form, store);
 allow_tables_to_appear_in_same_query!(contact_form, user_account);
 allow_tables_to_appear_in_same_query!(contact_form, name);
-allow_tables_to_appear_in_same_query!(contact_form, name_link);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
@@ -94,7 +93,7 @@ impl<'a> ContactFormRowRepository<'a> {
             record_id: row.id,
             row_action: action,
             store_id: Some(row.store_id),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

@@ -104,7 +104,7 @@ use crate::database_settings::DatabaseSettings;
 impl From<rusqlite::Error> for RepositoryError {
     fn from(value: rusqlite::Error) -> Self {
         RepositoryError::DBError {
-            msg: format!("{}", value),
+            msg: format!("{value}"),
             extra: "".to_string(),
         }
     }
@@ -142,7 +142,7 @@ pub fn query_json(
                 if let Some(number) = number.as_f64() {
                     statement.raw_bind_parameter(p, number)?;
                 } else if let Some(number) = number.as_u64() {
-                    statement.raw_bind_parameter(p, number)?;
+                    statement.raw_bind_parameter(p, number as i64)?;
                 } else if let Some(number) = number.as_i64() {
                     statement.raw_bind_parameter(p, number)?;
                 }

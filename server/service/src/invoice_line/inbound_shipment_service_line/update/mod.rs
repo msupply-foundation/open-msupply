@@ -6,7 +6,12 @@ use generate::generate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
+use crate::{
+    invoice::inbound_shipment::InboundShipmentType,
+    invoice_line::query::get_invoice_line,
+    service_provider::ServiceContext,
+    WithDBError,
+};
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct UpdateInboundShipmentServiceLine {
     pub id: String,
@@ -22,11 +27,13 @@ type OutError = UpdateInboundShipmentServiceLineError;
 pub fn update_inbound_shipment_service_line(
     ctx: &ServiceContext,
     input: UpdateInboundShipmentServiceLine,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (existing_line, invoice_row, item) = validate(&input, &ctx.store_id, connection)?;
+            let (existing_line, invoice_row, item) =
+                validate(&input, &ctx.store_id, connection, inbound_shipment_type)?;
             let updated_line = generate(
                 connection,
                 input,
@@ -59,6 +66,7 @@ pub enum UpdateInboundShipmentServiceLineError {
     // Internal
     UpdatedLineDoesNotExist,
     DatabaseError(RepositoryError),
+    WrongInboundShipmentType,
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentServiceLineError {
@@ -123,7 +131,7 @@ mod test {
                 UpdateInboundShipmentServiceLine {
                     id: "invalid".to_string(),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::LineDoesNotExist)
         );
@@ -135,7 +143,7 @@ mod test {
                 UpdateInboundShipmentServiceLine {
                     id: mock_draft_outbound_service_line().id,
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
@@ -147,7 +155,7 @@ mod test {
                 UpdateInboundShipmentServiceLine {
                     id: mock_draft_inbound_verified_service_line().id,
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::CannotEditInvoice)
         );
@@ -160,7 +168,7 @@ mod test {
                     id: mock_draft_inbound_service_line().id,
                     item_id: Some("invalid".to_string()),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -173,7 +181,7 @@ mod test {
                     id: mock_draft_inbound_service_line().id,
                     item_id: Some(mock_item_a().id),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::NotAServiceItem)
         );
@@ -187,7 +195,7 @@ mod test {
                     id: mock_draft_inbound_service_line().id,
                     item_id: Some(mock_item_service_item().id),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -215,7 +223,7 @@ mod test {
                     id: mock_draft_inbound_service_line().id,
                     item_id: Some(mock_item_service_item().id),
                     ..Default::default()
-                },
+                }, None
             )
             .unwrap();
 
@@ -235,7 +243,7 @@ mod test {
                     item_id: Some(mock_default_service_item().id),
                     name: Some("name".to_string()),
                     ..Default::default()
-                },
+                }, None
             )
             .unwrap();
 
@@ -260,7 +268,7 @@ mod test {
                         percentage: Some(10.0),
                     }),
                     note: Some("note".to_string()),
-                },
+                }, None
             )
             .unwrap();
 

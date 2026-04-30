@@ -84,7 +84,7 @@ impl DeleteInput {
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -318,7 +318,7 @@ mod test {
                     id: "id input".to_string(),
                 }
             );
-            Ok("deleted id".to_owned())
+            Ok("deleted id".to_string())
         }));
 
         let variables = json!({

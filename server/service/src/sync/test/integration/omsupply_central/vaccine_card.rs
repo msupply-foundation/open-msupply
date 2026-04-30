@@ -152,7 +152,7 @@ pub(super) async fn test_vaccine_card() {
     let vaccination_one = VaccinationRow {
         id: uuid(),
         store_id: site1.config.new_site_properties.store_id.clone(),
-        patient_link_id: patient_one.id.clone(),
+        patient_id: patient_one.id.clone(),
         vaccine_course_dose_id: dose_id.clone(),
         // This could break in the future (when constraints are added)
         ..Default::default()
@@ -199,7 +199,7 @@ pub(super) async fn test_vaccine_card() {
     let vaccination_two = VaccinationRow {
         id: uuid(),
         store_id: site2.config.new_site_properties.store_id.clone(),
-        patient_link_id: patient_one.id.clone(),
+        patient_id: patient_one.id.clone(),
         vaccine_course_dose_id: dose_id.clone(),
         // This could break in the future
         ..Default::default()

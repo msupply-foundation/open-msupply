@@ -47,8 +47,8 @@ mod query {
         let service = service_provider.asset_service;
 
         assert_eq!(
-            service.get_asset(&context, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_asset(&context, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service.get_asset(&context, mock_asset_a().id).unwrap();
@@ -73,7 +73,7 @@ mod query {
             .get_assets(
                 &connection,
                 None,
-                Some(AssetFilter::new().id(EqualFilter::equal_to(&mock_asset_a().id))),
+                Some(AssetFilter::new().id(EqualFilter::equal_to(mock_asset_a().id))),
                 None,
             )
             .unwrap();
@@ -89,7 +89,7 @@ mod query {
                 &connection,
                 None,
                 Some(AssetFilter::new().category_id(EqualFilter::equal_to(
-                    "02cbea92-d5bf-4832-863b-c04e093a7760",
+                    "02cbea92-d5bf-4832-863b-c04e093a7760".to_string(),
                 ))),
                 None,
             )
@@ -105,7 +105,7 @@ mod query {
                 &connection,
                 None,
                 Some(AssetFilter::new().category_id(EqualFilter::equal_to(
-                    "b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d",
+                    "b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d".to_string(),
                 ))),
                 None,
             )
@@ -121,7 +121,7 @@ mod query {
                 &connection,
                 None,
                 Some(AssetFilter::new().class_id(EqualFilter::equal_to(
-                    "fad280b6-8384-41af-84cf-c7b6b4526ef0",
+                    "fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string(),
                 ))),
                 Some(AssetSort {
                     key: AssetSortField::Notes,

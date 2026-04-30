@@ -22,15 +22,17 @@ export const StockItemSearchInputWithStats = ({
   onChange,
   currentItemId,
   disabled = false,
-  extraFilter,
   width,
   autoFocus = false,
   openOnFocus,
+  filter: extraFilter,
 }: StockItemSearchInputWithStatsProps) => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
   const selectControl = useToggle();
+
   const { filter, onFilter } = useStringFilter('codeOrName');
+
   const [search, setSearch] = useState('');
 
   const debounceOnFilter = useDebouncedValueCallback(
@@ -42,7 +44,10 @@ export const StockItemSearchInputWithStats = ({
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useStockItemsWithStats({
       rowsPerPage: ROWS_PER_PAGE,
-      filter: { ...filter, isVisible: true },
+      filter: {
+        ...filter,
+        ...extraFilter,
+      },
     });
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
@@ -88,10 +93,9 @@ export const StockItemSearchInputWithStats = ({
         onChange(item);
       }}
       mapOptions={items =>
-        defaultOptionMapper(
-          extraFilter ? items.filter(extraFilter) : items,
-          'name'
-        ).sort((a, b) => a.label.localeCompare(b.label))
+        defaultOptionMapper(items, 'name').sort((a, b) =>
+          a.label.localeCompare(b.label)
+        )
       }
       getOptionLabel={option => `${option.code}     ${option.name}`}
       width={width ? `${width}px` : '100%'}

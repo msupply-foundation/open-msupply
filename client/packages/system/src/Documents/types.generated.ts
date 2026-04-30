@@ -58,13 +58,16 @@ export function getSdk(
   return {
     Dummy(
       variables?: DummyQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DummyQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DummyQuery>(DummyDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<DummyQuery>({
+            document: DummyDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'Dummy',
         'query',

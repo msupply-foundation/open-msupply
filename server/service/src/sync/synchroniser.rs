@@ -136,7 +136,8 @@ impl Synchroniser {
 
     pub(crate) async fn sync(&self, fetch_patient_id: Option<String>) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
-        let mut logger = SyncLogger::start(&ctx.connection)?;
+        let mut logger = SyncLogger::start(&ctx.connection)?
+            .with_subscription_trigger(self.service_provider.subscription_trigger.clone());
 
         let sync_result = self.sync_inner(&mut logger, &ctx, fetch_patient_id).await;
 
@@ -292,9 +293,9 @@ impl Synchroniser {
         )
         .map_err(SyncError::IntegrationError)?;
 
-        warn!("Upsert Integration result: {:?}", upserts);
-        warn!("Delete Integration result: {:?}", deletes);
-        warn!("Merge Integration result: {:?}", merges);
+        upserts.log("Upsert");
+        deletes.log("Delete");
+        merges.log("Merge");
 
         logger.done_step(SyncStep::Integrate)?;
 
@@ -325,6 +326,9 @@ impl Synchroniser {
 
         ctx.processors_trigger
             .trigger_processor(ProcessorType::Plugins);
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::RequisitionAutoFinalise);
 
         Ok(())
     }
@@ -370,14 +374,14 @@ pub fn integrate_and_translate_sync_buffer(
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Upsert,
             &table_order,
-            record_type.clone(),
+            record_type,
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Delete,
             &table_order,
-            record_type.clone(),
+            record_type,
         )?;
 
         let upsert_integration_result = translation_and_integration
@@ -398,7 +402,7 @@ pub fn integrate_and_translate_sync_buffer(
         let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Merge,
             &table_order,
-            record_type.clone(),
+            record_type,
         )?;
 
         let merge_integration_result: TranslationAndIntegrationResults =

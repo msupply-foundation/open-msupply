@@ -129,7 +129,7 @@ async fn download_file(
 
 // Request one part 'json_part' one part 'file_part'
 // can't directly align multipart between actix_web and reqwest
-// need to be vigilant when changing parts and update equivalent upload_part in sync apiv_v6 client request
+// need to be vigilant when changing parts and update equivalent upload_part in sync api_v6 client request
 #[derive(MultipartForm)]
 pub struct SyncUploadFileMultipartRequestV6 {
     pub file_part: TempFile,

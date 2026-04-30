@@ -56,7 +56,7 @@ pub fn insert_request_requisition(
             activity_log_entry(
                 ctx,
                 ActivityLogType::RequisitionCreated,
-                Some(new_requisition.id.to_owned()),
+                Some(new_requisition.id.to_string()),
                 None,
                 None,
             )?;
@@ -120,7 +120,7 @@ fn generate(
         id,
         user_id: Some(user_id.to_string()),
         requisition_number: next_number(connection, &NumberRowType::RequestRequisition, store_id)?,
-        name_link_id: other_party_id,
+        name_id: other_party_id,
         store_id: store_id.to_string(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -140,6 +140,8 @@ fn generate(
         period_id: None,
         order_type: None,
         is_emergency: false,
+        created_from_requisition_id: None,
+        destination_customer_id: None,
     };
 
     Ok(result)
@@ -299,7 +301,7 @@ mod test_insert {
         let mut expected = new_row.clone();
         expected.id = "new_request_requisition".to_string();
         expected.user_id = Some(mock_user_account_a().id);
-        expected.name_link_id = mock_name_store_c().id;
+        expected.name_id = mock_name_store_c().id;
         expected.colour = Some("new colour".to_string());
         expected.their_reference = Some("new their_reference".to_string());
         expected.comment = Some("new comment".to_string());

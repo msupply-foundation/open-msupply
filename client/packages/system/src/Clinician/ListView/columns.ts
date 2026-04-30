@@ -1,43 +1,42 @@
 import {
-  useColumns,
-  ColumnDescription,
   useTranslation,
   getGenderTranslationKey,
+  ColumnDef,
 } from '@openmsupply-client/common';
 import { ClinicianFragment } from 'packages/programs/src';
+import { useMemo } from 'react';
 
 export const useClinicianListColumns = () => {
   const t = useTranslation();
-  const columnList: ColumnDescription<ClinicianFragment>[] = [
-    {
-      key: 'code',
-      label: 'label.code',
-    },
-    {
-      key: 'firstName',
-      label: 'label.first-name',
-    },
-    {
-      key: 'lastName',
-      label: 'label.last-name',
-    },
-    {
-      key: 'initials',
-      label: 'label.initials',
-    },
-    {
-      key: 'mobile',
-      label: 'label.mobile',
-    },
-    {
-      key: 'gender',
-      label: 'label.gender',
-      accessor: ({ rowData }) =>
-        rowData.gender ? t(getGenderTranslationKey(rowData.gender)) : '',
-    },
-  ];
 
-  const columns = useColumns<ClinicianFragment>(columnList);
+  const columns = useMemo(
+    (): ColumnDef<ClinicianFragment>[] => [
+      { accessorKey: 'code', header: t('label.code'), enableSorting: true },
+      {
+        accessorKey: 'firstName',
+        header: t('label.first-name'),
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'lastName',
+        header: t('label.last-name'),
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'initials',
+        header: t('label.initials'),
+        enableSorting: true,
+      },
+      { accessorKey: 'mobile', header: t('label.mobile') },
+      {
+        id: 'gender',
+        header: t('label.gender'),
+        accessorFn: ({ gender }) =>
+          gender ? t(getGenderTranslationKey(gender)) : '',
+      },
+    ],
+    []
+  );
 
   return columns;
 };

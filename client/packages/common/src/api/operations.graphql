@@ -4,3 +4,17 @@ query initialisationStatus {
     siteName
   }
 }
+
+query migrationStatus {
+  migrationStatus {
+    inProgress
+    version
+  }
+}
+
+subscription initialisationStatusUpdated {
+  initialisationStatusUpdated {
+    status
+    siteName
+  }
+}

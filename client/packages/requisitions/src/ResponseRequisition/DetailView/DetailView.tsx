@@ -1,18 +1,17 @@
 import React, { useCallback, useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   useNavigate,
   useTranslation,
   AlertModal,
   RouteBuilder,
-  createQueryParamsStore,
   DetailTabs,
-  IndicatorLineRowNode,
   useBreadcrumbs,
   useEditModal,
   useAuthContext,
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
@@ -20,15 +19,15 @@ import { Toolbar } from './Toolbar/Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { ContentArea } from './ContentArea';
-import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
-import { IndicatorsTab } from './IndicatorsTab';
+import { useResponse, ResponseLineFragment } from '../api';
+import { IndicatorsTab, Documents } from './Tabs';
 import { ResponseRequisitionLineErrorProvider } from '../context';
-import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
-import { buildIndicatorEditRoute } from './utils';
 import { ResponseLineEditModal } from './ResponseLineEdit';
+import { useResponseColumns } from './columns';
+import { isResponseLinePlaceholderRow } from '../../utils';
+import { useResponseLines } from '../api/hooks/line/useResponseLines';
 
-export const DetailView = () => {
+const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -42,7 +41,10 @@ export const DetailView = () => {
     isOpen,
   } = useEditModal<string | null>();
 
-  const { data, isLoading } = useResponse.document.get();
+  const { data, isLoading, isFetching, isError, invalidateQueries } =
+    useResponse.document.get();
+  const { lines } = useResponseLines();
+  const { columns } = useResponseColumns();
   const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
@@ -59,24 +61,6 @@ export const DetailView = () => {
     [onOpen]
   );
 
-  const onProgramIndicatorClick = useCallback(
-    (
-      programIndicator?: ProgramIndicatorFragment,
-      indicatorLine?: IndicatorLineRowNode,
-      response?: ResponseFragment
-    ) => {
-      if (!response || !indicatorLine) return;
-      navigate(
-        buildIndicatorEditRoute(
-          response.id,
-          String(programIndicator?.code),
-          indicatorLine.id
-        )
-      );
-    },
-    []
-  );
-
   const onAddItem = () => {
     onOpen();
   };
@@ -84,6 +68,24 @@ export const DetailView = () => {
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
+
+  const { table, selectedRows } = useNonPaginatedMaterialTable({
+    tableId: 'response-requisition-detail',
+    columns,
+    data: lines,
+    isLoading: isFetching,
+    isError,
+    getIsPlaceholderRow: row => isResponseLinePlaceholderRow(row.original),
+    onRowClick,
+    initialSort: { key: 'itemName', dir: 'asc' },
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-requisition-items')}
+        onCreate={isDisabled ? undefined : onAddItem}
+        buttonText={t('button.add-item')}
+      />
+    ),
+  });
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -95,16 +97,14 @@ export const DetailView = () => {
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onAddItem={onAddItem}
-          onRowClick={onRowClick}
-          disableAddLine={
-            isDisabled || !!data?.linkedRequisition || !!data?.programName
-          }
-        />
-      ),
+      Component: <MaterialTable table={table} />,
       value: 'Details',
+    },
+    {
+      Component: (
+        <Documents data={data} invalidateQueries={invalidateQueries} />
+      ),
+      value: t('label.documents'),
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
@@ -116,10 +116,9 @@ export const DetailView = () => {
     tabs.push({
       Component: (
         <IndicatorsTab
-          onClick={onProgramIndicatorClick}
           isLoading={isLoading || isProgramIndicatorsLoading}
-          response={data}
           indicators={programIndicators?.nodes}
+          disabled={isDisabled}
         />
       ),
       value: t('label.indicators'),
@@ -127,36 +126,31 @@ export const DetailView = () => {
   }
 
   return !!data ? (
-    <ResponseRequisitionLineErrorProvider>
-      <TableProvider
-        createStore={createTableStore}
-        queryParamsStore={createQueryParamsStore<ResponseLineFragment>({
-          initialSortBy: { key: 'itemName' },
-        })}
-      >
-        <AppBarButtons
-          isDisabled={isDisabled}
-          hasLinkedRequisition={!!data.linkedRequisition}
-          isProgram={!!data.programName}
-          onAddItem={onAddItem}
+    <>
+      <AppBarButtons
+        isDisabled={isDisabled}
+        hasLinkedRequisition={!!data.linkedRequisition}
+        isProgram={!!data.programName}
+        onAddItem={onAddItem}
+      />
+      <Toolbar />
+      <DetailTabs tabs={tabs} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
+      <SidePanel />
+      {isOpen && (
+        <ResponseLineEditModal
+          requisition={data}
+          itemId={itemId}
+          store={store}
+          mode={mode}
+          isOpen={isOpen}
+          onClose={onClose}
         />
-        <Toolbar />
-        <DetailTabs tabs={tabs} />
-
-        <Footer />
-        <SidePanel />
-        {isOpen && (
-          <ResponseLineEditModal
-            requisition={data}
-            itemId={itemId}
-            store={store}
-            mode={mode}
-            isOpen={isOpen}
-            onClose={onClose}
-          />
-        )}
-      </TableProvider>
-    </ResponseRequisitionLineErrorProvider>
+      )}
+    </>
   ) : (
     <AlertModal
       open={true}
@@ -170,5 +164,13 @@ export const DetailView = () => {
       title={t('error.requisition-not-found')}
       message={t('messages.click-to-return-to-requisitions')}
     />
+  );
+};
+
+export const DetailView = () => {
+  return (
+    <ResponseRequisitionLineErrorProvider>
+      <DetailViewInner />
+    </ResponseRequisitionLineErrorProvider>
   );
 };

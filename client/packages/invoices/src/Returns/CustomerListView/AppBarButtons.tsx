@@ -1,20 +1,20 @@
 import React from 'react';
 import {
-  DownloadIcon,
   PlusCircleIcon,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
   useTranslation,
-  LoadingButton,
   ToggleState,
   useNotification,
   FnUtils,
   useNavigate,
   RouteBuilder,
-  useExportCSV,
 } from '@openmsupply-client/common';
-import { CustomerSearchModal } from '@openmsupply-client/system';
+import {
+  CustomerSearchModal,
+  ExportSelector,
+} from '@openmsupply-client/system';
 import { useReturns } from '../api';
 import { customerReturnsToCsv } from '../../utils';
 import { AppRoute } from '@openmsupply-client/config';
@@ -31,7 +31,6 @@ export const AppBarButtonsComponent = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { error } = useNotification();
-  const exportCSV = useExportCSV();
 
   const { mutateAsync: onCreate } = useReturns.document.insertCustomerReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllCustomer({
@@ -40,14 +39,9 @@ export const AppBarButtonsComponent = ({
     isDesc: true,
   });
 
-  const csvExport = async () => {
+  const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-    const csv = customerReturnsToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.customer-returns'));
+    return data?.nodes?.length ? customerReturnsToCsv(data.nodes, t) : null;
   };
 
   return (
@@ -58,12 +52,10 @@ export const AppBarButtonsComponent = ({
           label={t('button.new-return')}
           onClick={onNew}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.customer-returns')}
           isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          label={t('button.export')}
         />
       </Grid>
       <CustomerSearchModal

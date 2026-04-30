@@ -65,7 +65,7 @@ pub fn map_response(from: Result<PluginData, ServiceError>) -> Result<UpdateResp
 
 pub fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     use ServiceError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         PluginDataDoesNotExist

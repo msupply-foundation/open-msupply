@@ -1,31 +1,27 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
   useNavigate,
   NothingHere,
   useTranslation,
-  createQueryParamsStore,
   useUrlQueryParams,
-  TooltipTextCell,
+  TextWithTooltipCell,
   useAuthContext,
+  usePluginProvider,
+  ColumnDef,
+  usePaginatedMaterialTable,
+  MaterialTable,
 } from '@openmsupply-client/common';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { MasterListRowFragment, useMasterLists } from '../api';
 
-const MasterListComponent = () => {
+export const MasterListListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { store } = useAuthContext();
+  const { plugins } = usePluginProvider();
 
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    filter,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
     filters: [{ key: 'name' }],
   });
@@ -41,46 +37,52 @@ const MasterListComponent = () => {
       },
     },
   });
-  const pagination = { page, first, offset };
 
-  const columns = useColumns<MasterListRowFragment>(
-    [
-      ['name', { width: 300, Cell: TooltipTextCell }],
-      ['description', { minWidth: 100, Cell: TooltipTextCell }],
+  const columns = useMemo(
+    (): ColumnDef<MasterListRowFragment>[] => [
+      {
+        header: t('label.name'),
+        accessorKey: 'name',
+        Cell: TextWithTooltipCell,
+        size: 300,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        header: t('label.description'),
+        accessorKey: 'description',
+        Cell: TextWithTooltipCell,
+        minSize: 100,
+        size: 600,
+      },
+      ...(plugins.masterLists?.tableColumn || []),
     ],
-    {
-      onChangeSortBy: updateSortQuery,
-      sortBy,
-    },
-    [updateSortQuery, sortBy]
+    [plugins.masterLists?.tableColumn]
   );
+
+  const { table } =
+    usePaginatedMaterialTable<MasterListRowFragment>({
+      tableId: 'master-list-view',
+      isLoading,
+      isError,
+      columns,
+      data: data?.nodes ?? [],
+      enableRowSelection: false,
+      onRowClick: row => navigate(row.id),
+      totalCount: data?.totalCount ?? 0,
+      noDataElement: (
+        <NothingHere body={t('error.no-master-lists')}/>
+      ),
+    });
 
   return (
     <>
-      <Toolbar filter={filter} />
       <AppBarButtons data={data?.nodes ?? []} />
-      <DataTable
-        id="master-list-list"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isError={isError}
-        isLoading={isLoading}
-        onRowClick={row => navigate(row.id)}
-        noDataElement={<NothingHere body={t('error.no-master-lists')} />}
-      />
+      {plugins.masterLists?.tableStateLoader?.map((StateLoader, index) => (
+        <StateLoader key={index} masterLists={data?.nodes ?? []} />
+      ))}
+
+      <MaterialTable table={table} />
     </>
   );
 };
-
-export const MasterListListView = () => (
-  <TableProvider<MasterListRowFragment>
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<MasterListRowFragment>({
-      initialSortBy: { key: 'name' },
-    })}
-  >
-    <MasterListComponent />
-  </TableProvider>
-);

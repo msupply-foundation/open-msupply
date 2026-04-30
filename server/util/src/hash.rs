@@ -12,7 +12,7 @@ mod tests {
     fn test_sha256() {
         let plaintext = "plaintext";
         let ciphertext =
-            "96d62e2abd3e42de5f50330fb8efc4c5599835278077b21e9aa0b33c1df07a1c".to_owned();
+            "96d62e2abd3e42de5f50330fb8efc4c5599835278077b21e9aa0b33c1df07a1c".to_string();
         assert_eq!(sha256(plaintext), ciphertext);
     }
 }

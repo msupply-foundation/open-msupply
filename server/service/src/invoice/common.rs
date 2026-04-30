@@ -2,8 +2,8 @@ use chrono::Utc;
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, CurrencyFilter, CurrencyRepository,
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
-    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, NameLinkRowRepository,
-    RepositoryError, StockLineRow, StorageConnection,
+    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, RepositoryError,
+    StockLineRow, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -15,7 +15,7 @@ pub fn generate_invoice_user_id_update(
 ) -> Option<InvoiceRow> {
     let user_id_option = Some(user_id.to_string());
     let user_id_has_changed = existing_invoice_row.user_id != user_id_option;
-    user_id_has_changed.then(|| InvoiceRow {
+    user_id_has_changed.then_some(InvoiceRow {
         user_id: user_id_option,
         ..existing_invoice_row
     })
@@ -25,8 +25,9 @@ pub(crate) fn get_lines_for_invoice(
     connection: &StorageConnection,
     invoice_id: &str,
 ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-    let result = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?;
+    let result = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
+    )?;
 
     Ok(result)
 }
@@ -65,19 +66,15 @@ pub struct AddToShipmentFromMasterListInput {
     pub master_list_id: String,
 }
 
-pub fn check_master_list_for_name_link_id(
+pub fn check_master_list_for_name_id(
     connection: &StorageConnection,
-    name_link_id: &str,
+    name_id: &str,
     master_list_id: &str,
 ) -> Result<Option<MasterList>, RepositoryError> {
-    let Some(name_link) = NameLinkRowRepository::new(connection).find_one_by_id(name_link_id)?
-    else {
-        return Ok(None);
-    };
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_name_id(EqualFilter::equal_to(&name_link.name_id)),
+            .id(EqualFilter::equal_to(master_list_id.to_string()))
+            .exists_for_name_id(EqualFilter::equal_to(name_id.to_string())),
     )?;
     Ok(rows.pop())
 }
@@ -89,8 +86,8 @@ pub fn check_master_list_for_store(
 ) -> Result<Option<MasterList>, RepositoryError> {
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_store_id(EqualFilter::equal_to(store_id)),
+            .id(EqualFilter::equal_to(master_list_id.to_string()))
+            .exists_for_store_id(EqualFilter::equal_to(store_id.to_string())),
     )?;
     Ok(rows.pop())
 }
@@ -116,7 +113,7 @@ pub fn generate_batches_total_number_of_packs_update(
     let invoice_lines = InvoiceLineRepository::new(connection)
         .query_by_filter(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(invoice_id))
+                .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
                 .r#type(InvoiceLineType::StockOut.equal_to()),
         )
         .map_err(InvoiceLineHasNoStockLine::DatabaseError)?;
@@ -125,7 +122,7 @@ pub fn generate_batches_total_number_of_packs_update(
     for invoice_line in invoice_lines {
         let invoice_line_row = invoice_line.invoice_line_row;
         let mut stock_line = invoice_line.stock_line_option.ok_or(
-            InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(invoice_line_row.id.to_owned()),
+            InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(invoice_line_row.id.to_string()),
         )?;
 
         stock_line.total_number_of_packs -= invoice_line_row.number_of_packs;

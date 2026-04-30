@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::db_diesel::{
     invoice_row::invoice, item_link_row::item_link, item_row::item, location_row::location,
-    name_link_row::name_link, name_row::name, stock_line_row::stock_line,
+    name_row::name, stock_line_row::stock_line,
 };
 
 table! {
@@ -25,7 +25,6 @@ allow_tables_to_appear_in_same_query!(reason_option, item);
 allow_tables_to_appear_in_same_query!(reason_option, location);
 allow_tables_to_appear_in_same_query!(reason_option, invoice);
 allow_tables_to_appear_in_same_query!(reason_option, stock_line);
-allow_tables_to_appear_in_same_query!(reason_option, name_link);
 allow_tables_to_appear_in_same_query!(reason_option, name);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -137,7 +136,7 @@ mod test {
         let repo = ReasonOptionRowRepository::new(&connection);
         // Try upsert all variants, confirm that diesel enums match postgres
         for option_type in ReasonOptionType::iter() {
-            let id = format!("{:?}", option_type);
+            let id = format!("{option_type:?}");
             let result = repo.upsert_one(&ReasonOptionRow {
                 id: id.clone(),
                 r#type: option_type,

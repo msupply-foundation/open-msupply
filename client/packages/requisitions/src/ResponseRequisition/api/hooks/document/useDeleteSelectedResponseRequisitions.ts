@@ -1,27 +1,17 @@
 import {
   useTranslation,
-  useTableStore,
   RequisitionNodeStatus,
   useDeleteConfirmation,
-  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { ResponseFragment } from '../../operations.generated';
 import { useDeleteResponses } from './useDeleteResponses';
-import { useResponses } from './useResponses';
 
-export const useDeleteSelectedResponseRequisitions = () => {
-  const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'createdDatetime', dir: 'desc' },
-  });
-  const { data: rows } = useResponses(queryParams);
+export const useDeleteSelectedResponseRequisitions = (
+  selectedRows: ResponseFragment[],
+  resetRowSelection: () => void
+) => {
   const { mutateAsync } = useDeleteResponses();
   const t = useTranslation();
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as ResponseFragment[],
-  }));
   const deleteAction = async () => {
     const result = await mutateAsync(selectedRows).catch(err => {
       throw err;
@@ -41,6 +31,7 @@ export const useDeleteSelectedResponseRequisitions = () => {
         }
       }
     });
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({

@@ -23,7 +23,7 @@ export const AppBarTabs: FC = () => {
 export const AppBarTabsPortal: FC<BoxProps> = props => {
   const { appBarTabsRef } = useHostContext();
 
-  if (!appBarTabsRef) return null;
+  if (!appBarTabsRef?.current) return null;
 
   return (
     <Portal container={appBarTabsRef.current}>

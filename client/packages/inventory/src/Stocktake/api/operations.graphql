@@ -5,7 +5,6 @@ fragment StocktakeRow on StocktakeNode {
   description
   createdDatetime
   finalisedDatetime
-  stocktakeDate
   stocktakeNumber
   status
   isLocked
@@ -20,6 +19,7 @@ fragment StocktakeLine on StocktakeLineNode {
   itemName
   id
   expiryDate
+  manufactureDate
   packSize
   snapshotNumberOfPacks
   countedNumberOfPacks
@@ -30,6 +30,10 @@ fragment StocktakeLine on StocktakeLineNode {
 
   donorId
   donorName
+
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
 
   location {
     __typename
@@ -105,7 +109,6 @@ fragment Stocktake on StocktakeNode {
   comment
   createdDatetime
   finalisedDatetime
-  stocktakeDate
   status
   description
   isLocked

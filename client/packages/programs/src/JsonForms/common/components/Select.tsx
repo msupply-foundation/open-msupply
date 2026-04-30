@@ -12,12 +12,12 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
+import { formatErrors } from '../formatErrors';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
 import { extractProperty, getGenderTranslationKey } from '@common/utils';
-import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 import { usePrevious } from '../hooks/usePrevious';
 
 export const selectTester = rankWith(4, isEnumControl);
@@ -235,10 +235,15 @@ const getHighlightParts = (
 const useFilteredItems = (
   allItems: string[] | undefined,
   currentSelection: string | undefined,
-  options: Options | undefined
-): [string[], string | undefined] => {
+  options: Options | undefined,
+  customErrors: {
+    add: (path: string, error: string) => void;
+    remove: (path: string) => void;
+  },
+  path: string
+): string[] => {
+  const t = useTranslation();
   const { core } = useJsonForms();
-  const [error, setError] = useState<string | undefined>();
   const [visibleItems, setVisibleItems] = useState(allItems ?? []);
 
   const conditionField = extractProperty(
@@ -248,7 +253,7 @@ const useFilteredItems = (
   useEffect(() => {
     if (!allItems || !options?.fieldFilter) {
       setVisibleItems(allItems ?? []);
-      setError(undefined);
+      customErrors.remove(path);
       return;
     }
     const mapping = options.fieldFilter.mapping[conditionField] ?? [];
@@ -258,36 +263,36 @@ const useFilteredItems = (
       !filtered.includes(currentSelection)
     ) {
       setVisibleItems([currentSelection, ...filtered]);
-      setError('Please select a valid option');
+      customErrors.add(path, t('messages.please-select-valid-option'));
     } else {
       setVisibleItems(filtered);
-      setError(undefined);
+      customErrors.remove(path);
     }
   }, [options, currentSelection, conditionField]);
 
-  return [visibleItems, error];
+  return visibleItems;
 };
 
 const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
-  const { data, handleChange, label, schema, path, uischema, enabled } = props;
+  const { data, handleChange, label, schema, path, uischema, enabled, config } =
+    props;
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
     uischema.options
   );
-  const [items, validationError] = useFilteredItems(
+
+  const { customErrors } = config;
+
+  const items = useFilteredItems(
     schema.enum,
     data,
-    schemaOptions
+    schemaOptions,
+    customErrors,
+    path
   );
-  const { customError, setCustomError } = useJSONFormsCustomError(
-    path,
-    'Select'
-  );
+
   const preferences = usePreferences();
-  useEffect(() => {
-    setCustomError(validationError);
-  }, [validationError]);
 
   usePrevious(path, data, schemaOptions, value => handleChange(path, value));
 
@@ -371,8 +376,8 @@ const UIComponent = (props: ControlProps) => {
           }}
           clearable={!props.config?.required}
           inputProps={{
-            error: !!zErrors || !!customError || !!props.errors,
-            helperText: zErrors ?? customError ?? props.errors,
+            error: !!zErrors || !!props.errors,
+            helperText: formatErrors(zErrors || props.errors),
           }}
           isOptionEqualToValue={option => option.value === data}
         />

@@ -47,7 +47,7 @@ impl SyncTranslation for MasterListNameJoinTranslation {
         let result = MasterListNameJoinRow {
             id: data.ID,
             master_list_id: data.list_master_ID,
-            name_link_id: data.name_ID,
+            name_id: data.name_ID,
         };
 
         Ok(PullTranslateResult::upsert(result))

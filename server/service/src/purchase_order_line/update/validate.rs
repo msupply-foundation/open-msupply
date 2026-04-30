@@ -17,7 +17,9 @@ pub fn validate(
     user_has_permission: Option<bool>,
 ) -> Result<PurchaseOrderLineRow, UpdatePurchaseOrderLineInputError> {
     let purchase_order_line = PurchaseOrderLineRepository::new(connection)
-        .query_by_filter(PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(&input.id)))?
+        .query_by_filter(
+            PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
+        )?
         .pop()
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderLineNotFound)?;
     let line = purchase_order_line.purchase_order_line_row.clone();
@@ -25,6 +27,13 @@ pub fn validate(
     let purchase_order = PurchaseOrderRowRepository::new(connection)
         .find_one_by_id(&line.purchase_order_id)?
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
+
+    // Check if the user is trying to update the expected delivery date on a finalised PO
+    if input.expected_delivery_date.is_some()
+        && purchase_order.status == PurchaseOrderStatus::Finalised
+    {
+        return Err(UpdatePurchaseOrderLineInputError::CannotEditExpectedDeliveryDate);
+    }
 
     // Allow editing of the requested quantity
     // Check if the user is allowed to update the requested_number_of_units
@@ -48,7 +57,10 @@ pub fn validate(
     // Adjusted units cannot be reduced below received units
     if let Some(adjusted_units) = input.adjusted_number_of_units {
         if Some(adjusted_units) != line.adjusted_number_of_units
-            && adjusted_units < line.received_number_of_units
+            && adjusted_units
+                < purchase_order_line
+                    .purchase_order_line_stats_row
+                    .shipped_number_of_units
         {
             return Err(UpdatePurchaseOrderLineInputError::CannotEditQuantityBelowReceived);
         }
@@ -82,15 +94,19 @@ pub fn validate(
         Pagination::all(),
         Some(
             PurchaseOrderLineFilter::new()
-                .id(EqualFilter::not_equal_to(&input.id))
-                .purchase_order_id(EqualFilter::equal_to(&purchase_order.id))
-                .requested_pack_size(EqualFilter::equal_to_f64(
+                .id(EqualFilter::not_equal_to(input.id.to_string()))
+                .purchase_order_id(EqualFilter::equal_to(purchase_order.id.to_string()))
+                .requested_pack_size(EqualFilter::equal_to(
                     input
                         .requested_pack_size
                         .unwrap_or(line.requested_pack_size),
                 ))
                 .item_id(EqualFilter::equal_to(
-                    &input.item_id.clone().unwrap_or(line.item_link_id.clone()),
+                    input
+                        .item_id
+                        .clone()
+                        .unwrap_or(line.item_link_id.clone())
+                        .to_owned(),
                 )),
         ),
         None,

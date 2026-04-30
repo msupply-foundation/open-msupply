@@ -25,13 +25,15 @@ jobs:
     name: Build mac demo
     runs-on: self-hosted
     timeout-minutes: 30
+    env:
+      RUSTFLAGS: '--cfg recursion_limit_256'
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
       - name: Read .nvmrc
-        run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+        run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v1

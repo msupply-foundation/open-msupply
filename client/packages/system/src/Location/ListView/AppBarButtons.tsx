@@ -1,41 +1,28 @@
 import React from 'react';
 import {
-  DownloadIcon,
   PlusCircleIcon,
-  useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
+  SortBy,
   useTranslation,
-  LoadingButton,
-  useExportCSV,
 } from '@openmsupply-client/common';
-import { LocationRowFragment } from '..';
+import { ExportSelector } from '@openmsupply-client/system';
+import { LocationRowFragment, useExportLocationList } from '../api';
 import { locationsToCsv } from '../../utils';
 
 interface AppBarButtonsProps {
   onCreate: () => void;
-  locations?: LocationRowFragment[];
-  reportIsLoading: boolean;
+  sortBy: SortBy<LocationRowFragment>;
 }
 
-export const AppBarButtons = ({
-  onCreate,
-  locations,
-  reportIsLoading,
-}: AppBarButtonsProps) => {
-  const { error } = useNotification();
+export const AppBarButtons = ({ onCreate, sortBy }: AppBarButtonsProps) => {
   const t = useTranslation();
-  const exportCSV = useExportCSV();
+  const { fetchLocations, isLoading } = useExportLocationList(sortBy);
 
-  const csvExport = async () => {
-    if (!locations) {
-      error(t('error.no-data'))();
-      return;
-    }
-
-    const csv = locationsToCsv(locations, t);
-    exportCSV(csv, t('filename.locations'));
+  const getCsvData = async () => {
+    const { data } = await fetchLocations();
+    return data?.nodes?.length ? locationsToCsv(data.nodes, t) : null;
   };
 
   return (
@@ -46,12 +33,10 @@ export const AppBarButtons = ({
           label={t('label.new-location')}
           onClick={onCreate}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          onClick={csvExport}
-          label={t('button.export')}
-          isLoading={reportIsLoading}
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.locations')}
+          isLoading={isLoading}
         />
       </Grid>
     </AppBarButtonsPortal>

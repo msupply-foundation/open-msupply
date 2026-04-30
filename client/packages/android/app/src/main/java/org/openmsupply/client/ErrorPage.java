@@ -260,7 +260,7 @@ public class ErrorPage {
             "    </div>\n" +
             "  </div>\n" +
             "  <div>\n" +
-            "    <h5>Oops! Something's gone wrong.</h5>\n" +
+            "    <h5 style=\"text-align: center\">Oops! Something's gone wrong.</h5>\n" +
             "     <button\n" +
             "       style=\"\n" +
             "         display:block;\n" +
@@ -281,10 +281,23 @@ public class ErrorPage {
             "</div>\n";
     public static String encodedHtml = Base64.encodeToString(html.getBytes(), Base64.NO_PADDING);
 
+    public static String getEncodedHtml(String url) {
+        String body = html;
+        if (url != null) {
+            String urlDisplay = "<div style=\"text-align:center; margin-bottom: 16px; font-size: 0.875rem; color: #677285;\">" + url + "</div>";
+            body = body.replace("</h5>", "</h5>" + urlDisplay);
+        }
+        return Base64.encodeToString(body.getBytes(), Base64.NO_PADDING);
+    }
+
     @JavascriptInterface
     public void showLogs() {
         try {
             File file = new File(mContext.getFilesDir(), LOG_FILE_NAME);
+            if (!file.exists()) {
+                Toast.makeText(mContext, "Log file does not exist yet", Toast.LENGTH_SHORT).show();
+                return;
+            }
             BufferedReader br = new BufferedReader(new FileReader(file));
             StringBuilder sb = new StringBuilder();
             String line;

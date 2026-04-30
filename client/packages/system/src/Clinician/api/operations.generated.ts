@@ -42,15 +42,17 @@ export function getSdk(
   return {
     insertClinician(
       variables: InsertClinicianMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertClinicianMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertClinicianMutation>(
-            InsertClinicianDocument,
+          client.request<InsertClinicianMutation>({
+            document: InsertClinicianDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertClinician',
         'mutation',
         variables

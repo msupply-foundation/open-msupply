@@ -1,4 +1,7 @@
-use self::query::{get_purchase_order_line, get_purchase_order_lines};
+use self::query::{
+    get_purchase_order_line, get_purchase_order_lines,
+    get_units_ordered_in_other_purchase_orders,
+};
 pub mod query;
 use crate::{
     purchase_order_line::{
@@ -69,6 +72,16 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
         id: String,
     ) -> Result<String, DeletePurchaseOrderLineError> {
         delete_purchase_order_line(ctx, id)
+    }
+
+    fn get_units_ordered_in_other_purchase_orders(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        item_id: &str,
+        exclude_purchase_order_id: &str,
+    ) -> Result<f64, RepositoryError> {
+        get_units_ordered_in_other_purchase_orders(ctx, store_id, item_id, exclude_purchase_order_id)
     }
 }
 

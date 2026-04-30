@@ -1,4 +1,4 @@
-use super::{name_link, name_oms_fields, StorageConnection};
+use super::{name_oms_fields, StorageConnection};
 
 use crate::{repository_error::RepositoryError, Upsert};
 
@@ -11,7 +11,6 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(name_tag, name_link);
 allow_tables_to_appear_in_same_query!(name_tag, name_oms_fields);
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]

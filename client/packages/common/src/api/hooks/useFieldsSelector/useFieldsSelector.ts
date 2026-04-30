@@ -23,6 +23,8 @@ export type FieldSelectorControl<
   KeyOfEntity extends keyof Entity,
 > = Pick<Entity, KeyOfEntity> & {
   update: FieldUpdateMutation<Entity>;
+  isFetching: boolean;
+  isError: boolean;
 };
 
 export const useFieldsSelector = <Entity, KeyOfEntity extends keyof Entity>(
@@ -49,7 +51,11 @@ export const useFieldsSelector = <Entity, KeyOfEntity extends keyof Entity>(
     }
   }, []);
 
-  const { data } = useQuerySelector(queryKey, queryFn, select);
+  const { data, isFetching, isError } = useQuerySelector(
+    queryKey,
+    queryFn,
+    select
+  );
 
   const { mutate } = useMutation((patch: Partial<Entity>) => mutateFn(patch), {
     onMutate: async (patch: Partial<Entity>) => {
@@ -79,5 +85,5 @@ export const useFieldsSelector = <Entity, KeyOfEntity extends keyof Entity>(
   // and the comment is undefined when the invoice has not been fetched yet.
   const returnVal = data ?? ({} as Pick<Entity, KeyOfEntity>);
 
-  return { ...returnVal, update };
+  return { ...returnVal, update, isFetching, isError };
 };

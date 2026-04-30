@@ -29,9 +29,9 @@ query requisitionQuery($storeId: String!, $dataId: String!) {
             unitName
           }
           itemStats {
-            stockOnHand
+            availableStockOnHand
             averageMonthlyConsumption
-            monthsOfStockOnHand
+            availableMonthsOfStockOnHand
           }
         }
       }

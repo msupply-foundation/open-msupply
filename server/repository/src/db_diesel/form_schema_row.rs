@@ -70,7 +70,7 @@ fn row_from_schema(schema: &FormSchemaJson) -> Result<FormSchemaRow, RepositoryE
             extra: format!("{err}"),
         })?;
     Ok(FormSchemaRow {
-        id: schema.id.to_owned(),
+        id: schema.id.to_string(),
         r#type: schema.r#type.to_owned(),
         json_schema,
         ui_schema,
@@ -99,7 +99,7 @@ impl<'a> FormSchemaRowRepository<'a> {
             record_id: uid.to_string(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
         ChangelogRepository::new(self.connection).insert(&row)
     }

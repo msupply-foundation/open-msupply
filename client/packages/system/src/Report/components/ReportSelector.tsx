@@ -2,9 +2,9 @@ import React, { useMemo } from 'react';
 import {
   PrintFormat,
   PrintReportSortInput,
+  LocaleKey,
   ReportContext,
   useEditModal,
-  useIntlUtils,
   useToggle,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -38,7 +38,6 @@ export const ReportSelector = ({
   CustomButton,
 }: ReportSelectorProps) => {
   const t = useTranslation();
-  const { translateDynamicKey } = useIntlUtils();
   const modalOpen = useToggle();
 
   const {
@@ -58,21 +57,6 @@ export const ReportSelector = ({
 
   const { printAsync, isPrinting } = usePrintReport();
 
-  const onReportSelected = async (
-    report: ReportOption,
-    format: PrintFormat
-  ) => {
-    if (report.argumentSchema) {
-      onOpenArguments({
-        report,
-        format,
-      });
-    } else {
-      const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-      await print(report, { timezone, ...extraArguments }, format);
-    }
-  };
-
   const print = async (
     report: ReportRowFragment,
     args: JsonData,
@@ -91,11 +75,27 @@ export const ReportSelector = ({
     }
   };
 
+  const handleReportSelected = async (
+    report: ReportOption,
+    format: PrintFormat
+  ) => {
+    if (report.argumentSchema) {
+      onOpenArguments({
+        report,
+        format,
+      });
+    } else {
+      const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await print(report, { timezone, ...extraArguments }, format);
+    }
+  };
+
   const options: ReportOption[] = useMemo(() => {
     return data
       ? data?.nodes?.map(report => ({
           ...report,
-          label: translateDynamicKey(`report-code.${report.code}`, report.name),
+          // fine to cast here as we have fallback to report.name if translation key doesn't exist
+          label: t(`report-code.${report.code}` as LocaleKey, report.name),
         }))
       : [];
   }, [data]);
@@ -115,7 +115,7 @@ export const ReportSelector = ({
       )}
       {modalOpen.isOn && (
         <SelectReportModal
-          onSelectReport={onReportSelected}
+          onSelectReport={handleReportSelected}
           reportOptions={options}
           onClose={modalOpen.toggleOff}
         />

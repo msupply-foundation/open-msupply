@@ -47,7 +47,7 @@ pub fn insert_demographic_projection(
             activity_log_entry(
                 ctx,
                 ActivityLogType::DemographicProjectionCreated,
-                Some(new_demographic_projection.id.to_owned()),
+                Some(new_demographic_projection.id.to_string()),
                 None,
                 None,
             )?;

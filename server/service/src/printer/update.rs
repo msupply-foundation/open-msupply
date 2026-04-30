@@ -34,7 +34,7 @@ pub fn validate(
     Ok(existing)
 }
 
-pub fn generate(existing: PrinterRow, update: UpdatePrinter) -> PrinterRow {
+pub fn generate(update: UpdatePrinter) -> PrinterRow {
     let UpdatePrinter {
         id,
         description,
@@ -51,7 +51,6 @@ pub fn generate(existing: PrinterRow, update: UpdatePrinter) -> PrinterRow {
         port: port.into(),
         label_width,
         label_height,
-        ..existing
     }
 }
 #[derive(Default)]
@@ -71,8 +70,8 @@ pub fn update_printer(
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            let existing = validate(connection, &input)?;
-            let row = generate(existing, input);
+            let _existing: PrinterRow = validate(connection, &input)?;
+            let row = generate(input);
             let repo = PrinterRowRepository::new(connection);
 
             repo.upsert_one(&row)?;

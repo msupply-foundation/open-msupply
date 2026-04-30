@@ -1,15 +1,21 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   useTranslation,
-  FilterController,
   Box,
   FilterMenu,
-  InvoiceNodeStatus,
+  usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
+import { getStatusSequence } from '../../statuses';
+import { getStatusTranslator } from '../../utils';
 
-export const Toolbar: FC<{ filter: FilterController }> = () => {
+export const Toolbar = () => {
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
+  const statuses = getStatusSequence(InvoiceNodeType.SupplierReturn).filter(
+    status => invoiceStatusOptions?.includes(status)
+  );
 
   return (
     <AppBarContentPortal
@@ -33,19 +39,10 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               type: 'enum',
               name: t('label.status'),
               urlParameter: 'status',
-              options: [
-                { label: t('label.new'), value: InvoiceNodeStatus.New },
-                { label: t('label.picked'), value: InvoiceNodeStatus.Picked },
-                { label: t('label.shipped'), value: InvoiceNodeStatus.Shipped },
-                {
-                  label: t('label.delivered'),
-                  value: InvoiceNodeStatus.Delivered,
-                },
-                {
-                  label: t('label.verified'),
-                  value: InvoiceNodeStatus.Verified,
-                },
-              ],
+              options: statuses.map(status => ({
+                value: status,
+                label: getStatusTranslator(t)(status),
+              })),
             },
           ]}
         />

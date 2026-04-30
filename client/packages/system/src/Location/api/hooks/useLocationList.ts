@@ -21,13 +21,16 @@ export const useLocationList = (
   currentLocation?: LocationRowFragment | null,
   enabled: boolean = true
 ) => {
-  const { data, isLoading, isError } = useGetList(enabled, queryParams);
+  const { data, isLoading, isError, isFetching } = useGetList(
+    enabled,
+    queryParams
+  );
 
   // NEXT LOCATION
   const next = getNextLocation(data?.nodes ?? [], currentLocation);
 
   return {
-    query: { data, isLoading, isError },
+    query: { data, isLoading, isError, isFetching },
     nextLocation: next,
   };
 };
@@ -61,6 +64,7 @@ const useGetList = (enabled?: boolean, queryParams?: ListParams) => {
     queryKey: [...queryKey, enabled],
     queryFn,
     enabled,
+    keepPreviousData: true,
   });
   return query;
 };
@@ -76,7 +80,10 @@ const getNextLocation = (
   return next ?? null;
 };
 
-const toSortInput = (sortBy?: SortBy<LocationRowFragment>) => ({
-  desc: sortBy?.isDesc,
-  key: sortBy?.key as LocationSortFieldInput,
-});
+const toSortInput = (sortBy?: SortBy<LocationRowFragment>) =>
+  sortBy?.key
+    ? {
+        desc: sortBy?.isDesc,
+        key: sortBy?.key as LocationSortFieldInput,
+      }
+    : undefined;

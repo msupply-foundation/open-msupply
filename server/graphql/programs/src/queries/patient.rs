@@ -118,7 +118,7 @@ pub fn patient(
         .get_patients(
             &context,
             None,
-            Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
+            Some(PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_string()))),
             None,
             Some(allowed_ctx),
         )?

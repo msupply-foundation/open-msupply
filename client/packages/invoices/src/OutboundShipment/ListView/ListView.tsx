@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   useNavigate,
   useTranslation,
-  InvoiceNodeStatus,
   useToggle,
   useUrlQueryParams,
   TextWithTooltipCell,
@@ -13,16 +12,21 @@ import {
   ColumnType,
   NameAndColorSetterCell,
   NothingHere,
+  usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
+import { getStatusSequence } from '../../statuses';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const OutboundShipmentListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { invoiceStatusOptions } = usePreferences();
   const modalController = useToggle();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
@@ -33,7 +37,7 @@ export const OutboundShipmentListView = () => {
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
-      { key: 'status', condition: 'equalTo' },
+      { key: 'status', condition: 'equalAny' },
       { key: 'theirReference' },
       { key: 'createdDatetime', condition: 'between' },
       { key: 'shippedDatetime', condition: 'between' },
@@ -42,8 +46,11 @@ export const OutboundShipmentListView = () => {
   });
   const queryParams = { ...filter, sortBy, first, offset };
 
-  const { data, isFetching } = useOutbound.document.list(queryParams);
+  const { data, isFetching, isError } = useOutbound.document.list(queryParams);
   const { mutate: onUpdate } = useOutbound.document.update();
+  const statuses = getStatusSequence(InvoiceNodeType.OutboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
+  );
 
   const mrtColumns = useMemo(
     (): ColumnDef<OutboundRowFragment>[] => [
@@ -70,19 +77,14 @@ export const OutboundShipmentListView = () => {
         enableSorting: true,
         enableColumnFilter: true,
         filterVariant: 'select',
-        filterSelectOptions: [
-          { value: InvoiceNodeStatus.New, label: t('label.new') },
-          { value: InvoiceNodeStatus.Allocated, label: t('label.allocated') },
-          { value: InvoiceNodeStatus.Picked, label: t('label.picked') },
-          { value: InvoiceNodeStatus.Shipped, label: t('label.shipped') },
-          { value: InvoiceNodeStatus.Delivered, label: t('label.delivered') },
-          { value: InvoiceNodeStatus.Received, label: t('label.received') },
-          { value: InvoiceNodeStatus.Verified, label: t('label.verified') },
-        ],
+        filterSelectOptions: statuses.map(status => ({
+          value: status,
+          label: getStatusTranslator(t)(status),
+        })),
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
         columnType: ColumnType.Number,
         description: t('description.invoice-number'),
         enableSorting: true,
@@ -102,17 +104,16 @@ export const OutboundShipmentListView = () => {
         defaultHideOnMobile: true,
         Cell: TextWithTooltipCell,
       },
-
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
       {
         accessorKey: 'pricing.totalAfterTax',
         header: t('label.total'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
-      },
-      {
-        accessorKey: 'comment',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
       },
     ],
     []
@@ -122,12 +123,13 @@ export const OutboundShipmentListView = () => {
     usePaginatedMaterialTable<OutboundRowFragment>({
       tableId: 'outbound-shipment-list',
       isLoading: isFetching,
+      isError,
       onRowClick: row => navigate(row.id),
       columns: mrtColumns,
       data: data?.nodes,
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
-      getIsRestrictedRow: isOutboundDisabled,
+      getIsRestrictedRow: row => isOutboundDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-outbound-shipments')}
@@ -138,6 +140,7 @@ export const OutboundShipmentListView = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       <AppBarButtons
         modalController={modalController}
         simplifiedTabletView={simplifiedTabletView}

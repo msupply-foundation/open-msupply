@@ -44,7 +44,7 @@ pub fn mock_name_linked_to_store() -> NameRow {
 pub fn mock_store_linked_to_name() -> StoreRow {
     StoreRow {
         id: "name_store_id".to_string(),
-        name_link_id: "name_linked_to_store_id".to_string(),
+        name_id: "name_linked_to_store_id".to_string(),
         code: "name_store_code".to_string(),
         ..Default::default()
     }
@@ -53,7 +53,7 @@ pub fn mock_store_linked_to_name() -> StoreRow {
 pub fn mock_name_linked_to_store_join() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: "name_linked_to_store_id".to_string(),
-        name_link_id: "name_linked_to_store_id".to_string(),
+        name_id: "name_linked_to_store_id".to_string(),
         store_id: "store_a".to_string(),
         name_is_customer: true,
         name_is_supplier: true,
@@ -74,7 +74,7 @@ pub fn mock_name_linked_to_store_a() -> NameRow {
 pub fn mock_store_linked_to_name_a() -> StoreRow {
     StoreRow {
         id: "name_store_a_id".to_string(),
-        name_link_id: "name_linked_to_store_a_id".to_string(),
+        name_id: "name_linked_to_store_a_id".to_string(),
         code: "name_store_code_a".to_string(),
         ..Default::default()
     }
@@ -83,7 +83,7 @@ pub fn mock_store_linked_to_name_a() -> StoreRow {
 pub fn mock_name_linked_to_store_join_a() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: "name_linked_to_store_a_id".to_string(),
-        name_link_id: "name_linked_to_store_a_id".to_string(),
+        name_id: "name_linked_to_store_a_id".to_string(),
         store_id: "store_c".to_string(),
         name_is_customer: true,
         name_is_supplier: true,
@@ -104,7 +104,7 @@ pub fn mock_name_not_linked_to_store() -> NameRow {
 pub fn mock_name_not_linked_to_store_join() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: "name_not_linked_to_store_id".to_string(),
-        name_link_id: "name_not_linked_to_store_id".to_string(),
+        name_id: "name_not_linked_to_store_id".to_string(),
         store_id: "store_a".to_string(),
         name_is_customer: true,
         name_is_supplier: true,
@@ -125,7 +125,7 @@ pub fn mock_name_not_linked_to_store_a() -> NameRow {
 pub fn mock_name_not_linked_to_store_join_a() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: "name_not_linked_to_store_a_id".to_string(),
-        name_link_id: "name_not_linked_to_store_a_id".to_string(),
+        name_id: "name_not_linked_to_store_a_id".to_string(),
         store_id: "store_c".to_string(),
         name_is_customer: true,
         name_is_supplier: true,
@@ -147,7 +147,7 @@ pub fn mock_patient_linked_to_store() -> NameRow {
 pub fn mock_store_linked_to_patient() -> StoreRow {
     StoreRow {
         id: "patient_store_id".to_string(),
-        name_link_id: "patient_linked_to_store_id".to_string(),
+        name_id: "patient_linked_to_store_id".to_string(),
         code: "patient_store_code".to_string(),
         ..Default::default()
     }

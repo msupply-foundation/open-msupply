@@ -20,16 +20,12 @@ const Template: StoryFn<typeof CurrencyInput> = () => {
     <Grid container spacing={5} flexDirection="column">
       <Grid>
         <Typography>CurrencyInput</Typography>
-        <CurrencyInput defaultValue={value1} onChangeNumber={setValue1} />
+        <CurrencyInput value={value1} onChangeNumber={setValue1} />
         <Typography>Stored value: {value1}</Typography>
       </Grid>
       <Grid>
         <Typography>Disabled</Typography>
-        <CurrencyInput
-          defaultValue={value1}
-          disabled
-          onChangeNumber={() => {}}
-        />
+        <CurrencyInput value={value1} disabled onChangeNumber={() => {}} />
       </Grid>
     </Grid>
   );

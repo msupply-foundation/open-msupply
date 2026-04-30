@@ -9,6 +9,7 @@ import {
   SaveIcon,
   Typography,
   useDialog,
+  useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePatient } from '../../api';
@@ -54,6 +55,7 @@ export const ProgramDetailModal = ({
   patientId?: string;
 }) => {
   const t = useTranslation();
+  const { error } = useNotification();
 
   const { current, document, reset } = usePatientModalStore();
 
@@ -121,8 +123,12 @@ export const ProgramDetailModal = ({
           disabled={!isDirty || !!validationError}
           isLoading={isSaving}
           onClick={async () => {
-            await saveData();
-            reset();
+            try {
+              await saveData();
+              reset();
+            } catch (e) {
+              error(t('error.failed-to-save-program-enrolment'))();
+            }
           }}
           startIcon={isCreating ? <SaveIcon /> : <CheckIcon />}
           sx={{ marginLeft: 2 }}

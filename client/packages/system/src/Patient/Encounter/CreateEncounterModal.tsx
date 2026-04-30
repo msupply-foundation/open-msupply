@@ -186,7 +186,11 @@ export const CreateEncounterModal: FC = () => {
                   RouteBuilder.create(AppRoute.Dispensary)
                     .addPart(AppRoute.Patients)
                     .addPart(patientId)
-                    .addQuery({ tab: PatientTabValue.Encounters })
+                    .addQuery({
+                      tab: PatientTabValue.Encounters,
+                      sort: 'startDatetime',
+                      dir: 'desc',
+                    })
                     .build()
                 );
               }

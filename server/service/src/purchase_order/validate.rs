@@ -25,7 +25,7 @@ pub(crate) fn can_edit_adjusted_quantity(
     purchase_order: &PurchaseOrderRow,
     user_has_permission: bool,
 ) -> bool {
-    if user_has_permission == true {
+    if user_has_permission {
         // User can only update ADJUSTED QUANTITY field at CONFIRMED and SENT statuses and requires permissions
         match purchase_order.status {
             PurchaseOrderStatus::New

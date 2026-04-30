@@ -13,6 +13,7 @@ import {
   AutocompleteOnChange,
   InsertAssetLogReasonInput,
   AssetLogStatusNodeType,
+  Checkbox,
 } from '@openmsupply-client/common';
 import { useAssetLogReason } from '../../api/hooks/useAssetLogReason';
 import { getStatusOptions, parseStatus } from '../../utils';
@@ -34,6 +35,7 @@ const createNewLogReason = (
   assetLogStatus: AssetLogStatusNodeType.Functioning,
   id: FnUtils.generateUUID(),
   reason: '',
+  commentsRequired: false,
   ...seed,
 });
 
@@ -129,6 +131,18 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
               }}
               onChange={updateStatus}
             />
+          </Box>
+
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="flex-start"
+          >
+            <Checkbox
+              checked={draft.commentsRequired}
+              onChange={e => onUpdate({ commentsRequired: e.target.checked })}
+            />
+            <InputLabel>{t('label.comments-required')}</InputLabel>
           </Box>
         </Grid>
       ) : (

@@ -8,7 +8,6 @@ use crate::{
     get_default_pagination_unlimited, get_pagination_or_default, i64_to_u32, ListError, ListResult,
     SingleRecordError,
 };
- 
 
 pub fn get_programs(
     connection: &StorageConnection,
@@ -31,8 +30,8 @@ pub fn get_program(
 ) -> Result<ProgramRow, SingleRecordError> {
     let repository = ProgramRepository::new(connection);
 
-    let mut result =
-        repository.query_by_filter(ProgramFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let mut result = repository
+        .query_by_filter(ProgramFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

@@ -3,6 +3,13 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type AdminPreferenceFragment = {
+  __typename: 'PreferenceDescriptionNode';
+  key: Types.PreferenceKey;
+  valueType: Types.PreferenceValueNodeType;
+  value: any;
+};
+
 export type AdminPreferenceListQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   prefType: Types.PreferenceNodeType;
@@ -35,6 +42,13 @@ export type UpsertPreferencesMutation = {
   };
 };
 
+export const AdminPreferenceFragmentDoc = gql`
+  fragment AdminPreference on PreferenceDescriptionNode {
+    key
+    valueType
+    value
+  }
+`;
 export const AdminPreferenceListDocument = gql`
   query adminPreferenceList(
     $storeId: String!
@@ -46,11 +60,10 @@ export const AdminPreferenceListDocument = gql`
       prefType: $prefType
       prefContext: $prefContext
     ) {
-      key
-      valueType
-      value
+      ...AdminPreference
     }
   }
+  ${AdminPreferenceFragmentDoc}
 `;
 export const UpsertPreferencesDocument = gql`
   mutation upsertPreferences(
@@ -88,15 +101,17 @@ export function getSdk(
   return {
     adminPreferenceList(
       variables: AdminPreferenceListQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AdminPreferenceListQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AdminPreferenceListQuery>(
-            AdminPreferenceListDocument,
+          client.request<AdminPreferenceListQuery>({
+            document: AdminPreferenceListDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'adminPreferenceList',
         'query',
         variables
@@ -104,15 +119,17 @@ export function getSdk(
     },
     upsertPreferences(
       variables: UpsertPreferencesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpsertPreferencesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertPreferencesMutation>(
-            UpsertPreferencesDocument,
+          client.request<UpsertPreferencesMutation>({
+            document: UpsertPreferencesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'upsertPreferences',
         'mutation',
         variables

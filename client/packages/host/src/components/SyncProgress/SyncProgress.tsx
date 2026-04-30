@@ -5,14 +5,13 @@ import {
   useTranslation,
   Box,
   AlertIcon,
-  BoxedErrorWithDetails,
   HorizontalStepper,
   StepDefinition,
   StepperColour,
   useIsCentralServerApi,
-  useMediaQuery,
-  Breakpoints,
-  useAppTheme,
+  useIsExtraSmallScreen,
+  ChevronsDownIcon,
+  DownloadIcon,
 } from '@openmsupply-client/common';
 import {
   FullSyncStatusFragment,
@@ -49,17 +48,13 @@ export const SyncProgress: FC<SyncProgressProps> = ({
     !!error,
     isOperational
   );
-  const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
     <Box display="flex" flexDirection={'column'}>
       {!isExtraSmallScreen && (
         <HorizontalStepper steps={steps} colour={colour} />
       )}
-      {error && <BoxedErrorWithDetails {...error} />}
     </Box>
   );
 };
@@ -110,9 +105,31 @@ const getSteps = (
     const completed = !!progress?.finished;
     const active = !completed && !!progress?.started;
     const isActiveAndError = isError && active && !completed;
-    const icon = isActiveAndError ? (
-      <AlertIcon sx={{ color: 'error.main' }} />
-    ) : null;
+    let icon;
+
+    if (isActiveAndError === true) {
+      icon = <AlertIcon sx={{ color: 'error.main' }} />;
+    }
+    if (progress !== null && progress !== undefined) {
+      switch (progress) {
+        case syncStatus?.pushV6:
+        case syncStatus?.push:
+          icon = <ChevronsDownIcon sx={{ transform: 'rotate(180deg)' }} />;
+          break;
+        case syncStatus?.pullCentral:
+        case syncStatus?.pullRemote:
+        case syncStatus?.pullV6:
+          icon = <ChevronsDownIcon />;
+          break;
+        case syncStatus?.integration:
+          icon = <DownloadIcon sx={{ fontSize: '18px' }} />;
+          break;
+        default:
+          null;
+      }
+    } else {
+      icon = null;
+    }
 
     return {
       active,

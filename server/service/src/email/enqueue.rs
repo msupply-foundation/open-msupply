@@ -37,7 +37,7 @@ pub fn enqueue_email(
     };
 
     repo.upsert_one(&email_queue_row)
-        .map_err(|e| EmailServiceError::DatabaseError(e))?;
+        .map_err(EmailServiceError::DatabaseError)?;
 
     Ok(email_queue_row)
 }

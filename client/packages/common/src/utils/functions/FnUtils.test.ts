@@ -29,4 +29,21 @@ describe('debounce', () => {
     expect(result2).resolves.toBe(1);
     expect(result3).resolves.toBe(1);
   });
+
+  it('cancel prevents the pending callback from firing', async () => {
+    jest.useFakeTimers();
+    let callCount = 0;
+    const fn = FnUtils.debounce(() => {
+      callCount += 1;
+    }, 300);
+
+    fn();
+    fn();
+    fn.cancel();
+
+    jest.advanceTimersByTime(500);
+    expect(callCount).toBe(0);
+
+    jest.useRealTimers();
+  });
 });

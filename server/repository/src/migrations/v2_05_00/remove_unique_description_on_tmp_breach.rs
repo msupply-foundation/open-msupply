@@ -34,10 +34,10 @@ impl MigrationFragment for Migrate {
                 );
                 INSERT INTO tmp_temperature_breach_config SELECT * FROM temperature_breach_config;
 
-                PRAGMA foreign_keys = OFF;
+                -- PRAGMA foreign_keys = OFF; -- No longer effective now that we're using transactions
                 DROP TABLE temperature_breach_config;
                 ALTER TABLE tmp_temperature_breach_config RENAME TO temperature_breach_config;
-                PRAGMA foreign_keys = ON;
+                -- PRAGMA foreign_keys = ON;
                 "#
             )?;
         }

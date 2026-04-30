@@ -24,7 +24,7 @@ pub struct RawDocument {
 impl RawDocument {
     /// Calculates the document id
     pub fn document_id(&self) -> Result<String, String> {
-        let value = serde_json::to_value(self).map_err(|err| format!("{:?}", err))?;
+        let value = serde_json::to_value(self).map_err(|err| format!("{err:?}"))?;
         let str = canonical_json(&value);
         Ok(sha256(&str))
     }

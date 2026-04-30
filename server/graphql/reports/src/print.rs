@@ -37,7 +37,7 @@ pub struct PrintReportError {
 
 #[derive(PartialEq, Debug)]
 pub struct PrintReportNode {
-    file_id: String,
+    pub(crate) file_id: String,
 }
 
 #[Object]
@@ -101,7 +101,7 @@ pub async fn generate_report(
         sort,
     )
     .await
-    .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)).extend())?;
+    .map_err(|err| StandardGraphqlError::InternalError(format!("{err:#?}")).extend())?;
     let report_data = match result {
         FetchResult::Data(data) => data,
         FetchResult::Error(errors) => {
@@ -161,7 +161,7 @@ pub async fn generate_report_definition(
 
     // get the required report
     let report_definition: ReportDefinition = serde_json::from_value(report)
-        .map_err(|err| StandardGraphqlError::BadUserInput(format!("{}", err)).extend())?;
+        .map_err(|err| StandardGraphqlError::BadUserInput(format!("{err}")).extend())?;
     let resolved_report = match service.resolve_report_definition(
         &service_context,
         name.unwrap_or("report".to_string()),
@@ -186,7 +186,7 @@ pub async fn generate_report_definition(
         None,
     )
     .await
-    .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)).extend())?;
+    .map_err(|err| StandardGraphqlError::InternalError(format!("{err:#?}")).extend())?;
     let report_data = match result {
         FetchResult::Data(data) => data,
         FetchResult::Error(errors) => {
@@ -366,7 +366,7 @@ async fn fetch_graphql_data(
 }
 
 fn map_error(error: ReportError) -> Result<PrintReportErrorInterface> {
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ReportError::RepositoryError(_) => StandardGraphqlError::InternalError(formatted_error),

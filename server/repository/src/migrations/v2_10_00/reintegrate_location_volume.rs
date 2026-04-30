@@ -62,7 +62,7 @@ impl MigrationFragment for Migrate {
                         .set(sync_buffer::integration_error.eq(e.to_string()))
                         .execute(connection.lock().connection())?;
 
-                    println!("Error parsing legacy location data for ID {}: {}", id, e);
+                    println!("Error parsing legacy location data for ID {id}: {e}");
                     continue; // Skip rows with parsing errors
                 }
             };

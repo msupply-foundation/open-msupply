@@ -1,8 +1,7 @@
 use super::{
     item_link_row::item_link, master_list_line_row::master_list_line,
-    master_list_name_join::master_list_name_join, master_list_row::master_list,
-    name_link_row::name_link, name_row::name, program_row::program, store_row::store, DBType,
-    MasterListRow, StorageConnection,
+    master_list_name_join::master_list_name_join, master_list_row::master_list, name_row::name,
+    program_row::program, store_row::store, DBType, MasterListRow, StorageConnection,
 };
 
 use crate::{
@@ -86,11 +85,7 @@ impl<'a> MasterListRepository<'a> {
                 let mut name_join_query = master_list_name_join::table
                     .select(master_list_name_join::master_list_id)
                     .distinct()
-                    .left_join(
-                        name_link::table
-                            .left_join(store::table)
-                            .left_join(name::table),
-                    )
+                    .left_join(name::table.left_join(store::table))
                     .into_boxed();
 
                 apply_string_filter!(name_join_query, f.exists_for_name, name::name_);
@@ -103,7 +98,11 @@ impl<'a> MasterListRepository<'a> {
             if let Some(is_program) = f.is_program {
                 let program_join_query = program::table
                     .select(program::master_list_id)
-                    .filter(program::master_list_id.is_not_null())
+                    .filter(
+                        program::master_list_id
+                            .is_not_null()
+                            .and(program::deleted_datetime.is_null()),
+                    )
                     .distinct()
                     .into_boxed();
 

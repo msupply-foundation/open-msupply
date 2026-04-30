@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Box,
   useTranslation,
+  useNotification,
   DialogButton,
   useDialog,
   SaveIcon,
@@ -41,6 +42,7 @@ export const EditPatientModal = ({
   onClose: (patientId?: string) => void;
 }) => {
   const t = useTranslation();
+  const { error } = useNotification();
   const { id } = useParams();
   const {
     update: { update: updatePrescription },
@@ -107,12 +109,16 @@ export const EditPatientModal = ({
   };
 
   const handleSave = async () => {
-    save();
-    await updatePrescription({
-      id,
-      patientId,
-    });
-    onClose();
+    try {
+      await save();
+      await updatePrescription({
+        id,
+        patientId,
+      });
+      onClose();
+    } catch (e) {
+      error(t('error.failed-to-save-patient'))();
+    }
   };
 
   if (isLoading) return <BasicSpinner />;

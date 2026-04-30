@@ -8,7 +8,6 @@ import {
   useInitialisationStatus,
   useLocation,
   useNavigate,
-  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 
 interface LoginForm {
@@ -36,13 +35,13 @@ export const useLoginFormState = create<LoginForm>(set => ({
 }));
 
 export const useLoginForm = (
-  passwordRef: React.RefObject<HTMLInputElement>
+  passwordRef: React.RefObject<HTMLInputElement>,
+  navigateOnSuccess = true
 ) => {
   const state = useLoginFormState();
   const { data: initStatus } = useInitialisationStatus();
   const navigate = useNavigate();
   const location = useLocation();
-  const isGapsStore = useIsGapsStoreOnly();
   const { mostRecentUsername, login, isLoggingIn } = useAuthContext();
   const { password, setPassword, setUsername, username, error, setError } =
     state;
@@ -54,16 +53,12 @@ export const useLoginForm = (
     setPassword('');
     if (!token) return;
 
-    // navigate back, if redirected by the <RequireAuthentication /> component
-    // or to the dashboard as a default
-    const state = location.state as State | undefined;
-    let from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
-
-    // if GAPS store only, always redirect to Cold Chain
-    if (isGapsStore) {
-      from = `/${AppRoute.Coldchain}/${AppRoute.Equipment}`;
+    if (navigateOnSuccess) {
+      // Always navigate to root - let the Site component handle the redirect based on preferences
+      const state = location.state as State | undefined;
+      const from = state?.from?.pathname || `/`;
+      navigate(from, { replace: true });
     }
-    navigate(from, { replace: true });
   };
 
   const isValid = !!username && !!password;

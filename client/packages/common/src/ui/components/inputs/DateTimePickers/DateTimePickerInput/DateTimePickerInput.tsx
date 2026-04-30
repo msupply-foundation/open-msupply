@@ -13,11 +13,7 @@ import {
   TypedTFunction,
   useTranslation,
 } from '@common/intl';
-import {
-  FieldErrorWrapper,
-  FieldErrorWrapperProps,
-  useBufferState,
-} from '@common/hooks';
+import { useBufferState } from '@common/hooks';
 import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
 
 export const getFormattedDateError = (
@@ -40,27 +36,6 @@ export const getFormattedDateError = (
   }
 };
 
-type DateTimePickerInputProps = Omit<DateTimePickerProps<true>, 'onChange'> & {
-  error?: boolean;
-  errorText?: string;
-  // `setError` used by FormErrorState handler, `onError` used by JSONForms --
-  // should be integrated into single FormErrorState at some point
-  setError?: (error: string | null) => void;
-  onError?: (validationError: string, date?: Date | null) => void;
-  required?: boolean;
-  width?: number | string;
-  label?: string;
-  onChange: (value: Date | null) => void;
-  // This allows a calling component to know whether the date was changed via
-  // keyboard input or the picker UI
-  setIsOpen?: (open: boolean) => void;
-  showTime?: boolean;
-  actions?: PickersActionBarAction[];
-  dateAsEndOfDay?: boolean;
-  disableFuture?: boolean;
-  textFieldSx?: SxProps;
-};
-
 export const DateTimePickerInput = ({
   onChange,
   onError,
@@ -74,19 +49,37 @@ export const DateTimePickerInput = ({
   dateAsEndOfDay,
   disableFuture,
   error,
-  setError,
-  errorText,
   required,
   textFieldSx: inputSx,
   slotProps,
   ...props
-}: DateTimePickerInputProps) => {
+}: Omit<DateTimePickerProps<true>, 'onChange'> & {
+  error?: React.ReactNode;
+  width?: number | string;
+  label?: string;
+  onChange: (value: Date | null) => void;
+  onError?: (validationError: string, date?: Date | null) => void;
+  // This allows a calling component to know whether the date was changed via
+  // keyboard input or the picker UI
+  setIsOpen?: (open: boolean) => void;
+  showTime?: boolean;
+  actions?: PickersActionBarAction[];
+  dateAsEndOfDay?: boolean;
+  disableFuture?: boolean;
+  required?: boolean;
+  textFieldSx?: SxProps;
+}) => {
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
+  const [currentView, setCurrentView] = useState<string | null>(null);
   const t = useTranslation();
   const format =
     props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
+
+  // Month/year selections are intermediate only when a day view exists.
+  // Default views always include 'day'; only explicit overrides (e.g. ExpiryDateInput) omit it.
+  const hasDayView = !props.views || (props.views as string[]).includes('day');
 
   const isDesktop = useMediaQuery('(pointer: fine)');
 
@@ -122,7 +115,6 @@ export const DateTimePickerInput = ({
           if (validationError) {
             const translatedError = getFormattedDateError(t, validationError);
             if (onError) onError(translatedError, date);
-            if (setError) setError(translatedError);
             else setInternalError(validationError ? translatedError : null);
 
             // If there is a validation error, set internal value (so user can
@@ -133,6 +125,15 @@ export const DateTimePickerInput = ({
           if (!validationError) {
             setIsInitialEntry(false);
             setInternalError(null);
+          }
+
+          // Month/year picks should navigate, not set the date (unless there's no day view)
+          if (
+            date !== null &&
+            hasDayView &&
+            (currentView === 'month' || currentView === 'year')
+          ) {
+            return;
           }
 
           handleDateInput(date);
@@ -147,17 +148,18 @@ export const DateTimePickerInput = ({
           },
           textField: {
             onBlur: () => {
+              if (props.disabled) return;
               setIsInitialEntry(false);
-              // Apply max/mins on blur if present
-              if (minDate || maxDate) {
+              // Apply max/mins on blur only if the user changed the value
+              // (e.g. by typing). Without this check, existing values
+              // outside the min/max range get clamped on every blur.
+              if ((minDate || maxDate) && value !== props.value) {
                 setInternalError(null);
-                if (setError) setError(null);
                 handleDateInput(value);
               }
             },
             error: !!error || (!isInitialEntry && !!internalError),
-            helperText:
-              errorText || (!isInitialEntry ? (internalError ?? '') : ''),
+            helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
               ...getTextFieldSx(!!label, !showTime, inputSx, width),
               width,
@@ -178,9 +180,14 @@ export const DateTimePickerInput = ({
         minDate={minDate}
         maxDate={maxDate}
         disableFuture={disableFuture}
-        onOpen={() => setIsOpen?.(true)}
-        onClose={() => setIsOpen?.(false)}
+        closeOnSelect={true}
         {...props}
+        onViewChange={newView => setCurrentView(newView)}
+        onOpen={() => setIsOpen?.(true)}
+        onClose={() => {
+          setCurrentView(null);
+          setIsOpen?.(false);
+        }}
         value={value}
       />
       {required && (
@@ -199,26 +206,3 @@ export const DateTimePickerInput = ({
     </Box>
   );
 };
-
-export const DateTimePickerInputWithError = ({
-  code,
-  label,
-  value,
-  required,
-  customErrorState,
-  customErrorMessage,
-  ...dateTimeInputProps
-}: DateTimePickerInputProps &
-  Omit<FieldErrorWrapperProps<Date | null>, 'children'>) => (
-  <FieldErrorWrapper
-    {...{ code, label, value, required, customErrorState, customErrorMessage }}
-  >
-    {errorProps => (
-      <DateTimePickerInput
-        {...dateTimeInputProps}
-        {...errorProps}
-        label={undefined} // Suppress input's own label
-      />
-    )}
-  </FieldErrorWrapper>
-);

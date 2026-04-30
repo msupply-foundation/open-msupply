@@ -4,9 +4,7 @@ use dataloader::DataLoader;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     loader::{LocationByIdLoader, SensorByIdLoader},
-    map_filter,
-    simple_generic_errors::NodeError,
-    ContextExt,
+    map_filter, ContextExt,
 };
 
 use graphql_types::types::{LocationFilterInput, LocationNode};
@@ -56,6 +54,7 @@ pub struct EqualFilterTemperatureBreachRowTypeInput {
     pub equal_to: Option<TemperatureBreachNodeType>,
     pub equal_any: Option<Vec<TemperatureBreachNodeType>>,
     pub not_equal_to: Option<TemperatureBreachNodeType>,
+    pub not_equal_all: Option<Vec<TemperatureBreachNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -75,7 +74,7 @@ impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
             unacknowledged: f.unacknowledged,
             r#type: f
                 .r#type
-                .map(|t| map_filter!(t, |r| TemperatureBreachType::from(r))),
+                .map(|t| map_filter!(t, TemperatureBreachType::from)),
             id: f.id.map(EqualFilter::from),
             start_datetime: f.start_datetime.map(DatetimeFilter::from),
             end_datetime: f.end_datetime.map(DatetimeFilter::from),
@@ -167,12 +166,6 @@ impl TemperatureBreachNode {
 #[derive(Union)]
 pub enum TemperatureBreachesResponse {
     Response(TemperatureBreachConnector),
-}
-
-#[derive(Union)]
-pub enum TemperatureBreachResponse {
-    Error(NodeError),
-    Response(TemperatureBreachNode),
 }
 
 impl TemperatureBreachNode {

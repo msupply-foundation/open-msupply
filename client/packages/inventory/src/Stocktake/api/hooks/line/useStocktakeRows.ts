@@ -5,6 +5,7 @@ import { useStocktakeOld } from '..';
 import { isStocktakeDisabled } from '../../../../utils';
 import { useStocktakeLines } from './useStocktakeLines';
 import { useMemo } from 'react';
+import { useItemUtils } from '@openmsupply-client/common';
 
 const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
   Object.entries(ArrayUtils.groupBy(lines, 'itemId')).map(([itemId, lines]) => {
@@ -21,8 +22,19 @@ export const useStocktakeRows = (itemId?: string) => {
     stocktake?.id ?? '',
     itemId
   );
+
+  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
   const lines = lineData?.nodes;
-  const items = useMemo(() => getStocktakeItems(lines ?? []), [lines]);
+
+  const filteredLines = useMemo(() => {
+    return lines?.filter(item => matchItem(itemFilter, item.item));
+  }, [lines, itemFilter]);
+
+  const items = useMemo(
+    () => getStocktakeItems(filteredLines ?? []),
+    [filteredLines]
+  );
+
   const totalLineCount = lineData?.totalCount ?? 0;
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
 
@@ -30,7 +42,9 @@ export const useStocktakeRows = (itemId?: string) => {
     isDisabled,
     isLoading,
     items,
-    lines,
+    lines: filteredLines ?? [],
     totalLineCount,
+    itemFilter,
+    setItemFilter,
   };
 };

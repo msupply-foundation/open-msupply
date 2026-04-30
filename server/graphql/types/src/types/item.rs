@@ -6,20 +6,21 @@ use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationT
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
-        ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
-        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
-        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, ProgramsByItemIdLoader,
-        ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        ItemCategoryLoader, ItemDirectionsByItemIdLoader, ItemStatsLoaderInput,
+        ItemStoreJoinLoader, ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader,
+        ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
+        LocationTypeLoader, MasterListByItemIdLoader, MasterListByItemIdLoaderInput,
+        ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{Item, ItemRow};
+use repository::{category_row::CategoryRow, Item, ItemRow};
 use serde_json::json;
 use service::ListResult;
 
@@ -101,6 +102,7 @@ impl ItemNode {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
+        period_end: Option<NaiveDate>,
     ) -> Result<ItemStatsNode> {
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
@@ -108,6 +110,7 @@ impl ItemNode {
                 &store_id,
                 &self.row().id,
                 amc_lookback_months,
+                period_end,
             ))
             .await?
             .ok_or(
@@ -191,8 +194,23 @@ impl ItemNode {
         Ok(WarningNode::from_vec(result))
     }
 
+    pub async fn categories(&self, ctx: &Context<'_>) -> Result<Vec<ItemCategoryNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemCategoryLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(result.into_iter().map(ItemCategoryNode::from_domain).collect())
+    }
+
+    #[graphql(deprecation = "Since 2.16.0. Use universalCode instead")]
     pub async fn msupply_universal_code(&self) -> String {
-        self.legacy_string("universalcodes_code")
+        self.row().universal_code.clone().unwrap_or_default()
+    }
+
+    pub async fn universal_code(&self) -> String {
+        self.row().universal_code.clone().unwrap_or_default()
     }
 
     pub async fn msupply_universal_name(&self) -> String {
@@ -318,6 +336,28 @@ pub enum VenCategoryType {
     NotAssigned,
 }
 
+#[derive(PartialEq, Debug)]
+pub struct ItemCategoryNode {
+    category_row: CategoryRow,
+}
+
+#[Object]
+impl ItemCategoryNode {
+    pub async fn id(&self) -> &str {
+        &self.category_row.id
+    }
+
+    pub async fn name(&self) -> &str {
+        &self.category_row.name
+    }
+}
+
+impl ItemCategoryNode {
+    pub fn from_domain(category_row: CategoryRow) -> Self {
+        ItemCategoryNode { category_row }
+    }
+}
+
 #[derive(Union)]
 pub enum ItemResponse {
     Error(ItemError),
@@ -336,7 +376,7 @@ impl ItemNode {
     pub fn legacy_string(&self, key: &str) -> String {
         let json_value: serde_json::Value = match serde_json::from_str(&self.row().legacy_record) {
             Ok(value) => value,
-            Err(_) => return "".to_owned(),
+            Err(_) => return "".to_string(),
         };
 
         json_value
@@ -483,7 +523,6 @@ mod test {
                                 "category3_ID": "",
                                 "buy_price": 0,
                                 "VEN_category": "",
-                                "universalcodes_code": "universal code",
                                 "universalcodes_name": "universal name",
                                 "kit_data": null,
                                 "custom_data": null,
@@ -492,6 +531,7 @@ mod test {
                                 "restricted_location_type_ID": "84AA2B7A18694A2AB1E84DCABAD19617"
                             }"#
                             .to_string(),
+                            universal_code: Some("universal code".to_string()),
                             ..Default::default()
                         },
                         ..Default::default()
@@ -507,6 +547,7 @@ mod test {
               "ddd": "0.1",
               "margin": 0.3,
               "msupplyUniversalCode": "universal code",
+              "universalCode": "universal code",
               "msupplyUniversalName": "universal name",
               "outerPackSize": 10,
               "volumePerOuterPack": 11.2,
@@ -521,6 +562,7 @@ mod test {
             testQuery {
                 __typename
                msupplyUniversalCode
+               universalCode
                msupplyUniversalName
                outerPackSize
                volumePerPack

@@ -16,6 +16,7 @@ export const useResponse = {
     fields: Document.useResponseFields,
     indicators: Document.useIndicators,
     updateIndicatorValue: Document.useUpdateIndicatorValue,
+    insertRequestFromResponse: Document.useInsertRequestFromResponse,
   },
   line: {
     list: Lines.useResponseLines,
@@ -35,5 +36,7 @@ export const useResponse = {
     programRequisitionSettingsByCustomer:
       Utils.useProgramRequisitionSettingsByCustomer,
     addFromMasterList: Utils.useResponseAddFromMasterList,
+    hasCustomerProgramRequisitionSettings:
+      Utils.useHasCustomerProgramRequisitionSettings,
   },
 };

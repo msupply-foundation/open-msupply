@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS program_event CASCADE;

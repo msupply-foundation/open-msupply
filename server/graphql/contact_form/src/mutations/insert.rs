@@ -60,7 +60,7 @@ pub fn insert_contact_form(
 
     map_response(service_provider.contact_form_service.insert_contact_form(
         &service_context,
-        &store_id,
+        store_id,
         input.to_domain(),
     ))
 }
@@ -96,7 +96,7 @@ impl InsertContactFormInput {
 
 fn map_error(error: ServiceError) -> Result<InsertContactFormResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::MessageNotProvided

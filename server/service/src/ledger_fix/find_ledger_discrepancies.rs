@@ -24,7 +24,7 @@ pub(super) fn find_stock_line_ledger_discrepancies(
 
     // Filters
     let (stock_line, stock_line_id) = match stock_line_id {
-        Some(id) => (None, Some(EqualFilter::equal_to(id))),
+        Some(id) => (None, Some(EqualFilter::equal_to(id.to_string()))),
         None => (
             Some(
                 StockLineFilter::new()
@@ -49,11 +49,12 @@ pub(super) fn find_stock_line_ledger_discrepancies(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::test_helpers::{
-        make_movements, setup_all_with_data_and_service_provider, ServiceTestContext,
-    };
+    use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
     use repository::{
-        mock::{mock_item_a, mock_store_a, mock_store_b, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_store_a, mock_store_b, test_helpers::make_movements, MockData,
+            MockDataInserts,
+        },
         InvoiceStatus, KeyValueStoreRepository, StockLineRow,
     };
 
@@ -73,6 +74,12 @@ mod test {
 
         let total_not_matched = StockLineRow {
             id: "total_not_matched".to_string(),
+            total_number_of_packs: 100.0,
+            ..negative_balance.clone()
+        };
+
+        let orphan = StockLineRow {
+            id: "orphan".to_string(),
             total_number_of_packs: 100.0,
             ..negative_balance.clone()
         };
@@ -97,6 +104,7 @@ mod test {
                 total_not_matched.clone(),
                 correct_with_some_allocated_not_picked.clone(),
                 negative_balance_non_active_store.clone(),
+                orphan,
             ],
             ..Default::default()
         }
@@ -156,12 +164,11 @@ mod test {
         let mut stock_line_ids = find_stock_line_ledger_discrepancies(&connection, None).unwrap();
         stock_line_ids.sort();
 
-        assert_eq!(
-            stock_line_ids,
-            vec![
-                "negative_balance".to_string(),
-                "total_not_matched".to_string()
-            ]
-        );
+        assert!(stock_line_ids.contains(&"negative_balance".to_string()));
+        assert!(stock_line_ids.contains(&"total_not_matched".to_string()));
+        assert!(stock_line_ids.contains(&"orphan".to_string()));
+        assert!(!stock_line_ids.contains(&"correct".to_string()));
+        assert!(!stock_line_ids.contains(&"correct_with_some_allocated_not_picked".to_string()));
+        assert!(!stock_line_ids.contains(&"negative_balance_non_active_store".to_string()));
     }
 }

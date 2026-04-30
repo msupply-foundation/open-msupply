@@ -15,6 +15,7 @@ use service::{
 #[graphql(name = "InsertStocktakeInput")]
 pub struct InsertInput {
     pub id: String,
+    pub is_all_items_stocktake: Option<bool>,
     pub master_list_id: Option<String>,
     pub include_all_master_list_items: Option<bool>,
     pub location_id: Option<String>,
@@ -70,7 +71,7 @@ pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertRespo
         ))),
         Err(error) => {
             use StandardGraphqlError::*;
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
 
             let graphql_error = match error {
                 ServiceError::InvalidStore => BadUserInput(formatted_error),
@@ -93,6 +94,7 @@ impl InsertInput {
         let InsertInput {
             id,
             location_id,
+            is_all_items_stocktake,
             master_list_id,
             vvm_status_id,
             include_all_master_list_items,
@@ -106,6 +108,7 @@ impl InsertInput {
         ServiceInput {
             id,
             comment,
+            is_all_items_stocktake,
             location_id,
             master_list_id,
             vvm_status_id,

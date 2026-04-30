@@ -132,8 +132,8 @@ impl SyncTranslation for DocumentTranslation {
             data,
             form_schema_id,
             status,
-            owner_name_link_id: _,
             context_id,
+            owner_name_id: _,
         } = document.to_row()?;
 
         let legacy_row = LegacyDocumentRow {

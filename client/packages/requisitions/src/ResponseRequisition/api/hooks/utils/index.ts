@@ -7,6 +7,7 @@ import { useRequisitionPreferences } from './useRequisitionPreferences';
 import { useIsDisabledByAuthorisation } from './useIsDisabledByAuthorisation';
 import { useProgramRequisitionSettingsByCustomer } from './useProgramRequisitionSettingsByCustomer';
 import { useResponseAddFromMasterList } from './useAddFromMasterList';
+import { useHasCustomerProgramRequisitionSettings } from './useHasCustomerProgramRequisitionSettings';
 
 export const Utils = {
   useCreateOutboundFromResponse,
@@ -18,4 +19,5 @@ export const Utils = {
   useIsDisabledByAuthorisation,
   useProgramRequisitionSettingsByCustomer,
   useResponseAddFromMasterList,
+  useHasCustomerProgramRequisitionSettings,
 };

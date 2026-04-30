@@ -23,7 +23,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                PRAGMA foreign_keys = OFF;
+                -- PRAGMA foreign_keys = OFF; -- No longer effective now that we're using transactions
                 ALTER TABLE vaccination RENAME TO vaccination_old;
                 CREATE TABLE vaccination (
                     id TEXT NOT NULL PRIMARY KEY,
@@ -80,7 +80,7 @@ impl MigrationFragment for Migrate {
                     comment
                 FROM vaccination_old;
                 DROP TABLE vaccination_old;
-                PRAGMA foreign_keys = ON;
+                -- PRAGMA foreign_keys = ON;
                 "#,
             )?;
         };

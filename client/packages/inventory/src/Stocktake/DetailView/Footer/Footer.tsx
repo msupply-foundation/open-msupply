@@ -11,11 +11,14 @@ import {
   DeleteIcon,
   useEditModal,
   ActionsFooter,
-  useTableStore,
   useNotification,
 } from '@openmsupply-client/common';
-import { stocktakeStatuses, getStocktakeTranslator } from '../../../utils';
-import { StocktakeFragment, useStocktakeOld } from '../../api';
+import { stocktakeStatuses, getStatusTranslation } from '../../../utils';
+import {
+  StocktakeFragment,
+  StocktakeLineFragment,
+  useStocktakeOld,
+} from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { StocktakeLockButton } from './StocktakeLockButton';
 import { ReduceLinesToZeroConfirmationModal } from '../ReduceLinesToZeroModal';
@@ -28,18 +31,24 @@ const createStatusLog = (stocktake: StocktakeFragment) => {
   };
 };
 
-export const Footer = () => {
+export const Footer = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: StocktakeLineFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
   const { data: stocktake } = useStocktakeOld.document.get();
   const isDisabled = useStocktakeOld.utils.isDisabled();
-  const onDelete = useStocktakeOld.line.deleteSelected();
+  const onDelete = useStocktakeOld.line.deleteSelected(
+    selectedRows,
+    resetRowSelection
+  );
   const { info } = useNotification();
 
   const reduceModal = useEditModal();
   const changeLocationModal = useEditModal();
-
-  const selectedRows = useStocktakeOld.utils.selectedRows();
-  const { clearSelected } = useTableStore();
 
   const handleChangeLocationClick = () => {
     !!isDisabled
@@ -83,20 +92,22 @@ export const Footer = () => {
                 <ActionsFooter
                   actions={actions}
                   selectedRowCount={selectedRows.length}
+                  resetRowSelection={resetRowSelection}
                 />
               }
               {reduceModal.isOpen && (
                 <ReduceLinesToZeroConfirmationModal
                   isOpen={reduceModal.isOpen}
                   onCancel={reduceModal.onClose}
-                  clearSelected={clearSelected}
+                  clearSelected={resetRowSelection}
+                  selectedRows={selectedRows}
                 />
               )}
               {changeLocationModal.isOpen && (
                 <ChangeLocationConfirmationModal
                   isOpen={changeLocationModal.isOpen}
                   onCancel={changeLocationModal.onClose}
-                  clearSelected={clearSelected}
+                  clearSelected={resetRowSelection}
                   rows={selectedRows}
                 />
               )}
@@ -114,7 +125,7 @@ export const Footer = () => {
               <StatusCrumbs
                 statuses={stocktakeStatuses}
                 statusLog={createStatusLog(stocktake)}
-                statusFormatter={getStocktakeTranslator(t)}
+                statusFormatter={status => t(getStatusTranslation(status))}
               />
 
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>

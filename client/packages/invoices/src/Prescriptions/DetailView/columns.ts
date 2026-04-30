@@ -1,200 +1,170 @@
 import {
-  useColumns,
-  getNotePopoverColumn,
-  ColumnAlign,
-  GenericColumnKey,
-  SortBy,
-  Column,
   useTranslation,
-  useColumnUtils,
-  NumberCell,
-  CurrencyCell,
-  ColumnDescription,
   useAuthContext,
   usePreferences,
-  getDosesPerUnitColumn,
+  ColumnDef,
+  ColumnType,
+  weightedAverageByUnits,
 } from '@openmsupply-client/common';
-import { StockOutLineFragment } from '../../StockOut';
-import { getDosesQuantityColumn } from '../../DoseQtyColumn';
+import { PrescriptionLineFragment } from '../api/operations.generated';
+import { useMemo } from 'react';
+import { isPrescriptionPlaceholderRow } from '../../utils';
 
-interface UsePrescriptionColumnOptions {
-  sortBy: SortBy<StockOutLineFragment>;
-  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
-}
-
-export const usePrescriptionColumn = ({
-  sortBy,
-  onChangeSortBy,
-}: UsePrescriptionColumnOptions): Column<StockOutLineFragment>[] => {
+export const usePrescriptionColumn = () => {
   const t = useTranslation();
-  const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { manageVaccinesInDoses } = usePreferences();
   const { store: { preferences } = {} } = useAuthContext();
   const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 
-  const columns: ColumnDescription<StockOutLineFragment>[] = [
-    GenericColumnKey.Selection,
-    [
-      getNotePopoverColumn(t('label.directions')),
+  return useMemo((): ColumnDef<PrescriptionLineFragment>[] => {
+    return [
       {
-        accessor: ({ rowData }) => {
-          const noteSection = [
-            {
-              header: null,
-              body: rowData.note ?? '',
-            },
-          ];
-          return rowData.note ? noteSection : null;
+        accessorKey: 'note',
+        header: t('label.comment'),
+        pin: 'left',
+        columnType: ColumnType.Comment,
+      },
+      {
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        size: 120,
+        pin: 'left',
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 300,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 110,
+        enableSorting: true,
+        enableColumnFilter: true,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'expiryDate',
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
+        header: t('label.expiry-date'),
+        size: 110,
+        columnType: ColumnType.Date,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: 'locationCode',
+        accessorFn: row => row.location?.code ?? '',
+        header: t('label.location'),
+        enableColumnFilter: true,
+        enableSorting: true,
+        defaultHideOnMobile: true,
+        size: 100,
+      },
+      {
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        size: 100,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        enableSorting: true,
+        size: 100,
+      },
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
+        includeColumn: manageVaccinesInDoses,
+      },
+      {
+        id: 'unitQuantity',
+        header: t('label.unit-quantity'),
+        description: t('description.unit-quantity'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => row.packSize * row.numberOfPacks,
+        aggregationFn: 'sum',
+        size: 120,
+      },
+      {
+        id: 'doseQuantity',
+        header: t('label.doses'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
         },
+        aggregationFn: 'sum',
+        size: 120,
+        includeColumn: manageVaccinesInDoses,
       },
-    ],
-    [
-      'itemCode',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString<StockOutLineFragment>(row, [
-            { path: ['item', 'code'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [{ path: ['item', 'code'], default: '' }]),
-        isSticky: true,
+        accessorKey: 'prescribedQuantity',
+        header: t('label.prescribed-quantity'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        size: 120,
+        includeColumn: hasPrescribedQty,
       },
-    ],
-    [
-      'itemName',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [{ path: ['itemName'], default: '' }]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [{ path: ['itemName'], default: '' }]),
+        accessorKey: 'numberOfPacks',
+        header: t('label.pack-quantity'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        size: 100,
       },
-    ],
-    [
-      'batch',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [{ path: ['batch'], default: '' }]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [{ path: ['batch'] }]),
+        id: 'sellPricePerUnit',
+        header: t('label.unit-price'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if (isPrescriptionPlaceholderRow(rowData)) return undefined;
+          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+        },
+        aggregationFn: weightedAverageByUnits(),
+        size: 100,
       },
-    ],
-    [
-      'expiryDate',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['expiryDate'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [{ path: ['expiryDate'] }]),
+        id: 'lineTotal',
+        header: t('label.line-total'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if (isPrescriptionPlaceholderRow(rowData)) return null;
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
+        },
+        aggregationFn: 'sum',
+        size: 120,
       },
-    ],
-    [
-      'location',
       {
-        width: 100,
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['location', 'code'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [{ path: ['location', 'code'] }]),
+        id: 'totalCostPrice',
+        header: t('label.purchase-cost-price'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if (isPrescriptionPlaceholderRow(rowData)) return null;
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
+        },
+        aggregationFn: 'sum',
+        size: 120,
       },
-    ],
-    [
-      'itemUnit',
-      {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['item', 'unitName'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['item', 'unitName'], default: '' },
-          ]),
-      },
-    ],
-    [
-      'packSize',
-      {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [{ path: ['packSize'], default: '' }]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [{ path: ['packSize'] }]),
-      },
-    ],
-  ];
-
-  if (manageVaccinesInDoses) {
-    columns.push(getDosesPerUnitColumn(t));
-  }
-
-  columns.push([
-    'unitQuantity',
-    {
-      accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
-      getSortValue: rowData => rowData.packSize * rowData.numberOfPacks,
-    },
-  ]);
-
-  if (manageVaccinesInDoses) {
-    columns.push(getDosesQuantityColumn());
-  }
-
-  if (hasPrescribedQty) {
-    columns.push({
-      label: 'label.prescribed-quantity',
-      key: 'prescribedQuantity',
-      align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.prescribedQuantity ?? 0,
-      getSortValue: rowData => rowData.prescribedQuantity ?? 0,
-    });
-  }
-
-  columns.push(
-    [
-      'numberOfPacks',
-      {
-        Cell: NumberCell,
-        getSortValue: row => row.numberOfPacks,
-        accessor: ({ rowData }) => rowData.numberOfPacks,
-      },
-    ],
-    {
-      label: 'label.unit-price',
-      key: 'sellPricePerUnit',
-      align: ColumnAlign.Right,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) =>
-        !!rowData.batch
-          ? (rowData.sellPricePerPack ?? 0) / rowData.packSize
-          : 0,
-      getSortValue: rowData =>
-        !!rowData.batch
-          ? (rowData.sellPricePerPack ?? 0) / rowData.packSize
-          : 0,
-    },
-    {
-      label: 'label.line-total',
-      key: 'lineTotal',
-      align: ColumnAlign.Right,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) =>
-        (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks,
-      getSortValue: rowData =>
-        (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks,
-    },
-    {
-      label: 'label.purchase-cost-price',
-      key: 'totalCostPrice',
-      align: ColumnAlign.Right,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) =>
-        (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks,
-      getSortValue: rowData =>
-        (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks,
-    }
-  );
-
-  return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
+    ];
+  }, [manageVaccinesInDoses, hasPrescribedQty]);
 };

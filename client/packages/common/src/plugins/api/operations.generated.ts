@@ -13,6 +13,7 @@ export type FrontendPluginMetadataQuery = {
     __typename: 'FrontendPluginMetadataNode';
     code: string;
     path: string;
+    hash: string;
   }>;
 };
 
@@ -32,6 +33,7 @@ export const FrontendPluginMetadataDocument = gql`
     frontendPluginMetadata {
       code
       path
+      hash
     }
   }
 `;
@@ -70,15 +72,17 @@ export function getSdk(
   return {
     frontendPluginMetadata(
       variables?: FrontendPluginMetadataQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<FrontendPluginMetadataQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<FrontendPluginMetadataQuery>(
-            FrontendPluginMetadataDocument,
+          client.request<FrontendPluginMetadataQuery>({
+            document: FrontendPluginMetadataDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'frontendPluginMetadata',
         'query',
         variables
@@ -86,15 +90,17 @@ export function getSdk(
     },
     pluginGraphqlQuery(
       variables: PluginGraphqlQueryQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<PluginGraphqlQueryQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PluginGraphqlQueryQuery>(
-            PluginGraphqlQueryDocument,
+          client.request<PluginGraphqlQueryQuery>({
+            document: PluginGraphqlQueryDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'pluginGraphqlQuery',
         'query',
         variables

@@ -12,10 +12,11 @@ export const splitTranslatedLines = (
   translation: string,
   Component: React.ElementType = 'span'
 ) => {
-  return translation.split('\n').map((line, index) => (
-    <>
-      <Component key={index}>{line}</Component>
-      {index < translation.split('\n').length - 1 && <br />}
-    </>
+  const lines = translation.split('\n');
+  return lines.map((line, index) => (
+    <React.Fragment key={index}>
+      <Component>{line}</Component>
+      {index < lines.length - 1 && <br />}
+    </React.Fragment>
   ));
 };

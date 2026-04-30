@@ -55,7 +55,8 @@ pub enum ReportContext {
     Prescription,
     InternalOrder,
     PurchaseOrder,
-    GoodsReceived,
+    SupplierReturn,
+    CustomerReturn,
 }
 
 #[derive(InputObject, Clone)]
@@ -63,6 +64,7 @@ pub struct EqualFilterReportContextInput {
     pub equal_to: Option<ReportContext>,
     pub equal_any: Option<Vec<ReportContext>>,
     pub not_equal_to: Option<ReportContext>,
+    pub not_equal_all: Option<Vec<ReportContext>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -278,7 +280,7 @@ pub fn all_report_versions(
 
     let reports = match service_provider.report_service.query_all_report_versions(
         &service_context,
-        &localisations,
+        localisations,
         user_language,
         filter.map(|f| f.to_domain()),
         sort.and_then(|mut sort_list| sort_list.pop())
@@ -299,9 +301,7 @@ impl ReportFilterInput {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
             name: self.name.map(StringFilter::from),
-            context: self
-                .context
-                .map(|t| map_filter!(t, |c| ContextType::from(c))),
+            context: self.context.map(|t| map_filter!(t, ContextType::from)),
             sub_context: self.sub_context.map(EqualFilter::from),
             code: None,
             is_custom: None,

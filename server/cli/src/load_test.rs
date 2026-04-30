@@ -470,18 +470,21 @@ impl LoadTest {
                 override_is_central_server: false,
             },
             database: DatabaseSettings {
-                username: "postgres".to_owned(),
-                password: "password".to_owned(),
+                username: "postgres".to_string(),
+                password: "password".to_string(),
                 port: 5432,
-                host: "localhost".to_owned(),
+                host: "localhost".to_string(),
                 database_name: "omsupply-database".to_string(),
                 database_path: None,
+                connection_pool_max_connections: None,
+                connection_pool_timeout_seconds: None,
                 init_sql: None,
             },
             logging: None,
             backup: None,
             mail: None,
             sync: None,
+            features: None,
         };
         let base_config_path = self.output_dir.join("base.yaml");
         std::fs::write(base_config_path, serde_yml::to_string(&base_config)?)?;
@@ -551,16 +554,18 @@ impl LoadTest {
                     discovery: DiscoveryMode::Disabled,
                     cors_origins: vec![],
                     base_dir: Some(database_path.to_string()),
-                    machine_uid: Some("1337_test".to_owned()),
+                    machine_uid: Some("1337_test".to_string()),
                     override_is_central_server: false,
                 },
                 database: DatabaseSettings {
-                    username: "postgres".to_owned(),
-                    password: "password".to_owned(),
+                    username: "postgres".to_string(),
+                    password: "password".to_string(),
                     port: 5432,
-                    host: "localhost".to_owned(),
+                    host: "localhost".to_string(),
                     database_name: format!("site_{}", site_n_store.site.site_id),
                     database_path: Some(database_path.to_string()),
+                    connection_pool_max_connections: None,
+                    connection_pool_timeout_seconds: None,
                     init_sql: None,
                 },
                 sync: Some(SyncSettings {
@@ -577,6 +582,7 @@ impl LoadTest {
                 logging: None,
                 backup: None,
                 mail: None,
+                features: None,
             };
 
             let full_site = TestSite {

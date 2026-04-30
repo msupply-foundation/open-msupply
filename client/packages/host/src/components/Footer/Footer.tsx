@@ -16,8 +16,7 @@ import {
   EditIcon,
   SxProps,
   useAppTheme,
-  useMediaQuery,
-  Breakpoints,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
@@ -39,10 +38,7 @@ const PaddedCell: FC<PaddedCellProps> = ({
   tooltip,
   onClick,
 }) => {
-  const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   return (
     <Box
       onClick={onClick}
@@ -77,12 +73,10 @@ const PaddedCell: FC<PaddedCellProps> = ({
   );
 };
 
-export const Footer = () => {
+export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
   const t = useTranslation();
   const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const { user, store } = useAuthContext();
   const { currentLanguageName, getLocalisedFullName } = useIntlUtils();
 
@@ -92,7 +86,8 @@ export const Footer = () => {
   const Divider = styled(Box)({
     width: '1px',
     height: '24px',
-    backgroundColor: isCentralServer ? '#fff' : theme.palette.gray.main,
+    backgroundColor:
+      backgroundColor ?? (isCentralServer ? '#fff' : theme.palette.gray.main),
   });
 
   const iconStyles = {

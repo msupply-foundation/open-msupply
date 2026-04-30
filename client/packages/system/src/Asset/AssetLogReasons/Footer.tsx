@@ -1,4 +1,4 @@
-import React, { FC, memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -6,7 +6,6 @@ import {
   useTranslation,
   AppFooterPortal,
   useNotification,
-  useTableStore,
   useConfirmationModal,
   AssetLogReasonNode,
   AlertModal,
@@ -18,8 +17,12 @@ type DeleteError = {
   message: string;
 };
 
-export const FooterComponent: FC<{ data: AssetLogReasonNode[] }> = ({
-  data,
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: AssetLogReasonNode[];
+  resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
 
@@ -28,13 +31,6 @@ export const FooterComponent: FC<{ data: AssetLogReasonNode[] }> = ({
   } = useAssetLogReason();
   const { error, success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = useState<DeleteError[]>([]);
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as AssetLogReasonNode[],
-  }));
 
   const deleteAction = () => {
     const numberSelected = selectedRows.length;
@@ -67,6 +63,7 @@ export const FooterComponent: FC<{ data: AssetLogReasonNode[] }> = ({
             t('messages.error-deleting-reasons', { count: numberSelected })
           )()
         );
+      resetRowSelection();
     } else {
       const selectRowsSnack = info(t('messages.select-rows-to-delete'));
       selectRowsSnack();
@@ -104,6 +101,7 @@ export const FooterComponent: FC<{ data: AssetLogReasonNode[] }> = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
           <AlertModal

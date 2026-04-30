@@ -15,74 +15,71 @@ import {
   ActionsFooter,
   ArrowRightIcon,
   useEditModal,
-  useTableStore,
   useNotification,
+  useDisabledNotificationToast,
+  usePreferences,
+  useIsExtraSmallScreen,
+  CheckIcon,
+  CloseIcon,
+  ClockIcon,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
+import { getStatusTranslator, getInboundShipmentType } from '../../../utils';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
+import { InboundLineFragment, useInboundShipment } from '../../api';
 import {
-  getStatusTranslator,
-  inboundStatuses,
-  manualInboundStatuses,
-} from '../../../utils';
-import { InboundFragment, InboundLineFragment, useInbound } from '../../api';
-import { StatusChangeButton } from './StatusChangeButton';
+  useInboundDeleteSelectedLines,
+  useZeroInboundLinesQuantity,
+  useSaveInboundLines,
+  useChangeStatusOfInboundLines,
+} from '../../api/hooks/utils';
 import { OnHoldButton } from './OnHoldButton';
-import { useIsInboundDisabled } from '../../api/hooks/utils/useIsInboundDisabled';
-
-const createStatusLog = (invoice: InboundFragment) => {
-  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
-  const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Received]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    // Placeholder for typescript, not used in inbounds
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
-  };
-
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
-  }
-  if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
-  }
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
-  }
-  if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-
-  return statusLog;
-};
+import { StatusChangeButton } from './StatusChangeButton';
 
 interface FooterComponentProps {
-  onReturnLines: (selectedLines: InboundLineFragment[]) => void;
+  onReturnLines: () => void;
+  selectedRows: InboundLineFragment[];
+  resetRowSelection: () => void;
+  showLineStatus: boolean;
 }
 
-export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
+export const FooterComponent = ({
+  onReturnLines,
+  selectedRows,
+  resetRowSelection,
+  showLineStatus,
+}: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
-  const { clearSelected } = useTableStore();
   const { info } = useNotification();
   const changeCampaignOrProgramModal = useEditModal();
+  const { invoiceStatusOptions } = usePreferences();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
-  const { data } = useInbound.document.get();
-  const onDelete = useInbound.lines.deleteSelected();
-  const onZeroQuantities = useInbound.lines.zeroQuantities();
-  const selectedLines = useInbound.utils.selectedLines();
-  const { mutateAsync } = useInbound.lines.save();
-  const isDisabled = useIsInboundDisabled();
-  const isManuallyCreated = !data?.linkedShipment?.id;
+  const {
+    query: { data },
+    isDisabled,
+    isExternal,
+    hasAuthorisePermission,
+  } = useInboundShipment();
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+  const onDelete = useInboundDeleteSelectedLines(
+    selectedRows,
+    resetRowSelection
+  );
+  const onZeroQuantities = useZeroInboundLinesQuantity(
+    selectedRows,
+    resetRowSelection
+  );
+  const { mutateAsync } = useSaveInboundLines(isExternal);
+  const onChangeLineStatus = useChangeStatusOfInboundLines(
+    selectedRows,
+    resetRowSelection
+  );
+  const shipmentType = data ? getInboundShipmentType(data) : undefined;
 
   const handleCampaignClick = () => {
     if (isDisabled) {
@@ -94,7 +91,29 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
     }
   };
 
-  const actions: Action[] = [
+  const changeLineStatus = (status: 'approve' | 'reject' | 'pending') => {
+    if (!selectedRows.length) {
+      const selectLinesSnack = info(t(`messages.select-rows-to-${status}`));
+      selectLinesSnack();
+      return;
+    }
+
+    if (data?.status === InvoiceNodeStatus.Received || isDisabled) {
+      info(t('messages.cant-change-line-status-on-received-invoice'))();
+      return;
+    }
+
+    if (
+      (status === 'approve' || status === 'reject') &&
+      !hasAuthorisePermission
+    ) {
+      return permissionDeniedNotification();
+    }
+
+    onChangeLineStatus(status);
+  };
+
+  let actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
@@ -115,22 +134,47 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedLines),
+      onClick: () => onReturnLines(),
       shouldShrink: false,
     },
   ];
+  if (showLineStatus) {
+    actions = actions.concat([
+      {
+        label: t('button.approve'),
+        icon: <CheckIcon />,
+        onClick: () => changeLineStatus('approve'),
+      },
+      {
+        label: t('button.reject'),
+        icon: <CloseIcon />,
+        onClick: () => changeLineStatus('reject'),
+      },
+      {
+        label: t('button.pending'),
+        icon: <ClockIcon />,
+        onClick: () => changeLineStatus('pending'),
+      },
+    ]);
+  }
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment, {
+    inboundShipmentType: shipmentType,
+  }).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
 
   return (
     <AppFooterPortal
       Content={
         <>
-          {selectedLines.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedLines.length}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedLines.length === 0 ? (
+          {data && selectedRows.length === 0 ? (
             <Box
               gap={2}
               display="flex"
@@ -138,13 +182,10 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
               alignItems="center"
               height={64}
             >
-              <OnHoldButton />
-
+              {!isExtraSmallScreen && <OnHoldButton />}
               <StatusCrumbs
-                statuses={
-                  isManuallyCreated ? manualInboundStatuses : inboundStatuses
-                }
-                statusLog={createStatusLog(data)}
+                statuses={statuses}
+                statusLog={createStatusLog(data, statuses)}
                 statusFormatter={getStatusTranslator(t)}
               />
 
@@ -166,8 +207,8 @@ export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
             <ChangeCampaignOrProgramConfirmationModal
               isOpen={changeCampaignOrProgramModal.isOpen}
               onCancel={changeCampaignOrProgramModal.onClose}
-              clearSelected={clearSelected}
-              rows={selectedLines}
+              clearSelected={resetRowSelection}
+              rows={selectedRows}
               onChange={mutateAsync}
             />
           }

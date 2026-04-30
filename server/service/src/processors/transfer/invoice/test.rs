@@ -3,8 +3,9 @@ use repository::{
     mock::{insert_extra_mock_data, MockData, MockDataInserts},
     EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceStatus, InvoiceType, ItemRow, ItemStoreJoinRow, KeyType, KeyValueStoreRow, LocationRow,
-    NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
+    InvoiceStatus, InvoiceType, ItemRow, ItemRowRepository, ItemStoreJoinRow,
+    ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, KeyType, KeyValueStoreRow,
+    LocationRow, NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
     StoreRow,
 };
@@ -13,12 +14,14 @@ use util::uuid::uuid;
 use crate::{
     invoice::{
         customer_return::{UpdateCustomerReturn, UpdateCustomerReturnStatus},
-        inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
+        inbound_shipment::{
+            InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentStatus,
+        },
         outbound_shipment::update::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
         supplier_return::update::{UpdateSupplierReturn, UpdateSupplierReturnStatus},
     },
     invoice_line::stock_out_line::{StockOutType, UpdateStockOutLine},
-    processors::test_helpers::exec_concurrent,
+    processors::{test_helpers::exec_concurrent, transfer::invoice::common::get_cost_plus_margin},
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
@@ -38,7 +41,7 @@ async fn invoice_transfers() {
 
     let outbound_store = StoreRow {
         id: uuid(),
-        name_link_id: outbound_store_name.id.clone(),
+        name_id: outbound_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -51,7 +54,7 @@ async fn invoice_transfers() {
 
     let inbound_store = StoreRow {
         id: uuid(),
-        name_link_id: inbound_store_name.id.clone(),
+        name_id: inbound_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -67,6 +70,11 @@ async fn invoice_transfers() {
         ..Default::default()
     };
 
+    let item3 = ItemRow {
+        id: uuid(),
+        ..Default::default()
+    };
+
     let service_item = ItemRow {
         id: uuid(),
         ..Default::default()
@@ -78,12 +86,26 @@ async fn invoice_transfers() {
         ..Default::default()
     };
 
+    // Will use default_sell_price_per_pack for pricing
     let item1_store_properties = ItemStoreJoinRow {
         id: uuid(),
         item_link_id: item1.id.clone(),
         store_id: inbound_store.id.clone(),
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
+        margin: 10.0,
+        default_location_id: None,
+    };
+
+    // No default price - will use cost price + margin for pricing
+    let item3_store_properties = ItemStoreJoinRow {
+        id: uuid(),
+        item_link_id: item3.id.clone(),
+        store_id: inbound_store.id.clone(),
+        default_sell_price_per_pack: 0.0,
+        ignore_for_orders: false,
+        margin: 10.0,
+        default_location_id: None,
     };
 
     let ServiceTestContext {
@@ -101,8 +123,13 @@ async fn invoice_transfers() {
         MockData {
             names: vec![inbound_store_name.clone(), outbound_store_name.clone()],
             stores: vec![inbound_store.clone(), outbound_store.clone()],
-            items: vec![item1.clone(), item2.clone(), service_item.clone()],
-            item_store_joins: vec![item1_store_properties],
+            items: vec![
+                item1.clone(),
+                item2.clone(),
+                item3.clone(),
+                service_item.clone(),
+            ],
+            item_store_joins: vec![item1_store_properties, item3_store_properties],
             key_value_store_rows: vec![site_id_settings],
             ..Default::default()
         },
@@ -117,6 +144,7 @@ async fn invoice_transfers() {
         outbound_store_name,
         item1,
         item2,
+        item3,
         service_item,
     );
 
@@ -134,6 +162,7 @@ async fn invoice_transfers() {
                 outbound_store_name,
                 item1,
                 item2,
+                item3,
                 service_item,
             ) = test_input;
 
@@ -147,6 +176,7 @@ async fn invoice_transfers() {
                 Some(&inbound_store_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -214,6 +244,7 @@ async fn invoice_transfers() {
                 Some(&inbound_store_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -239,6 +270,7 @@ async fn invoice_transfers() {
                 Some(&inbound_store_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
             // Setup: create shipment
@@ -267,7 +299,7 @@ async fn invoice_transfers() {
     };
 }
 
-/// Checking behavior when a request requisition name_link_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
+/// Checking behavior when a request requisition name_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn invoice_transfers_with_merged_name() {
     let site_id = 25;
@@ -280,7 +312,7 @@ async fn invoice_transfers_with_merged_name() {
 
     let outbound_store = StoreRow {
         id: uuid(),
-        name_link_id: outbound_store_name.id.clone(),
+        name_id: outbound_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -293,7 +325,7 @@ async fn invoice_transfers_with_merged_name() {
 
     let inbound_store = StoreRow {
         id: uuid(),
-        name_link_id: inbound_store_name.id.clone(),
+        name_id: inbound_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -321,6 +353,12 @@ async fn invoice_transfers_with_merged_name() {
         ..Default::default()
     };
 
+    let item3 = ItemRow {
+        id: uuid(),
+        default_pack_size: 10.0,
+        ..Default::default()
+    };
+
     let service_item = ItemRow {
         id: uuid(),
         ..Default::default()
@@ -338,6 +376,18 @@ async fn invoice_transfers_with_merged_name() {
         store_id: inbound_store.id.clone(),
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
+        margin: 0.0,
+        default_location_id: None,
+    };
+
+    let item3_store_properties = ItemStoreJoinRow {
+        id: uuid(),
+        item_link_id: item3.id.clone(),
+        store_id: inbound_store.id.clone(),
+        default_sell_price_per_pack: 15.0,
+        ignore_for_orders: false,
+        margin: 10.0,
+        default_location_id: None,
     };
 
     let ServiceTestContext {
@@ -359,9 +409,14 @@ async fn invoice_transfers_with_merged_name() {
                 merge_name.clone(),
             ],
             stores: vec![inbound_store.clone(), outbound_store.clone()],
-            items: vec![item1.clone(), item2.clone(), service_item.clone()],
+            items: vec![
+                item1.clone(),
+                item2.clone(),
+                item3.clone(),
+                service_item.clone(),
+            ],
             key_value_store_rows: vec![site_id_settings],
-            item_store_joins: vec![item1_store_properties],
+            item_store_joins: vec![item1_store_properties, item3_store_properties],
             name_links: vec![merge_name_link.clone()],
             ..Default::default()
         },
@@ -376,6 +431,7 @@ async fn invoice_transfers_with_merged_name() {
         outbound_store_name,
         item1,
         item2,
+        item3,
         service_item,
     );
     let number_of_instances = 6;
@@ -392,6 +448,7 @@ async fn invoice_transfers_with_merged_name() {
                 outbound_store_name,
                 item1,
                 item2,
+                item3,
                 service_item,
             ) = test_input;
 
@@ -405,6 +462,7 @@ async fn invoice_transfers_with_merged_name() {
                 Some(&merge_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -469,6 +527,7 @@ async fn invoice_transfers_with_merged_name() {
                 Some(&merge_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -494,6 +553,7 @@ async fn invoice_transfers_with_merged_name() {
                 Some(&merge_name),
                 &item1,
                 &item2,
+                &item3,
                 &service_item,
             );
 
@@ -530,6 +590,7 @@ pub(crate) struct InvoiceTransferTester {
     request_requisition: RequisitionRow,
     outbound_shipment_line1: InvoiceLineRow,
     outbound_shipment_line2: InvoiceLineRow,
+    outbound_shipment_line3: InvoiceLineRow,
     outbound_shipment_unallocated_line: InvoiceLineRow,
     outbound_shipment_service_line: InvoiceLineRow,
     supplier_return_line: InvoiceLineRow,
@@ -539,6 +600,8 @@ pub(crate) struct InvoiceTransferTester {
     inbound_shipment: Option<InvoiceRow>,
     response_requisition: Option<RequisitionRow>,
     extra_mock_data: MockData,
+    // outbound_name: NameRow
+    outbound_name: Option<NameRow>,
 }
 
 impl InvoiceTransferTester {
@@ -549,11 +612,12 @@ impl InvoiceTransferTester {
         inbound_name: Option<&NameRow>,
         item1: &ItemRow,
         item2: &ItemRow,
+        item3: &ItemRow,
         service_item: &ItemRow,
     ) -> InvoiceTransferTester {
         let request_requisition = RequisitionRow {
             id: uuid(),
-            name_link_id: outbound_store.name_link_id.clone(),
+            name_id: outbound_store.name_id.clone(),
             store_id: inbound_store.id.clone(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
@@ -562,7 +626,7 @@ impl InvoiceTransferTester {
 
         let outbound_shipment = InvoiceRow {
             id: uuid(),
-            name_link_id: inbound_name.map_or(inbound_store.name_link_id.clone(), |n| n.id.clone()),
+            name_id: inbound_name.map_or(inbound_store.name_id.clone(), |n| n.id.clone()),
             store_id: outbound_store.id.clone(),
             invoice_number: 20,
             r#type: InvoiceType::OutboundShipment,
@@ -645,6 +709,37 @@ impl InvoiceTransferTester {
             ..Default::default()
         };
 
+        let stock_line3 = StockLineRow {
+            id: uuid(),
+            store_id: outbound_store.id.clone(),
+            item_link_id: item3.id.clone(),
+            batch: Some(uuid()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2025, 10, 1).unwrap()),
+            pack_size: 5.0,
+            total_number_of_packs: 100.0,
+            available_number_of_packs: 100.0,
+            ..Default::default()
+        };
+
+        let outbound_shipment_line3 = InvoiceLineRow {
+            id: uuid(),
+            invoice_id: outbound_shipment.id.clone(),
+            r#type: InvoiceLineType::StockOut,
+            pack_size: stock_line3.pack_size,
+            number_of_packs: 2.0,
+            item_link_id: item3.id.clone(),
+            item_name: item3.name.clone(),
+            item_code: item3.code.clone(),
+            cost_price_per_pack: 10.0,
+            sell_price_per_pack: 15.0,
+            batch: stock_line3.batch.clone(),
+            expiry_date: stock_line3.expiry_date,
+            stock_line_id: Some(stock_line3.id.clone()),
+            location_id: Some(location.id.clone()),
+            tax_percentage: Some(0.0),
+            ..Default::default()
+        };
+
         let outbound_shipment_service_line = InvoiceLineRow {
             id: uuid(),
             invoice_id: outbound_shipment.id.clone(),
@@ -674,8 +769,8 @@ impl InvoiceTransferTester {
 
         let supplier_return = InvoiceRow {
             id: uuid(),
-            name_link_id: outbound_name
-                .map_or(outbound_store.name_link_id.clone(), |n| n.id.clone()),
+            name_id: outbound_name
+                .map_or(outbound_store.name_id.clone(), |n| n.id.clone()),
             store_id: inbound_store.id.clone(),
             invoice_number: 5,
             r#type: InvoiceType::SupplierReturn,
@@ -714,16 +809,18 @@ impl InvoiceTransferTester {
             request_requisition,
             outbound_shipment_line1,
             outbound_shipment_line2,
+            outbound_shipment_line3,
             outbound_shipment_unallocated_line,
             outbound_shipment_service_line,
             supplier_return_line,
             supplier_return,
             outbound_shipment,
+            outbound_name: outbound_name.cloned(),
             customer_return: None,
             inbound_shipment: None,
             response_requisition: None,
             extra_mock_data: MockData {
-                stock_lines: vec![stock_line1, stock_line2],
+                stock_lines: vec![stock_line1, stock_line2, stock_line3],
                 locations: vec![location],
                 ..Default::default()
             },
@@ -759,8 +856,9 @@ impl InvoiceTransferTester {
     pub(crate) fn check_response_requisition_created(&mut self, connection: &StorageConnection) {
         let response_requisition = RequisitionRepository::new(connection)
             .query_one(
-                RequisitionFilter::new()
-                    .linked_requisition_id(EqualFilter::equal_to(&self.request_requisition.id)),
+                RequisitionFilter::new().linked_requisition_id(EqualFilter::equal_to(
+                    self.request_requisition.id.to_string(),
+                )),
             )
             .unwrap();
         assert!(response_requisition.is_some());
@@ -780,6 +878,7 @@ impl InvoiceTransferTester {
                 invoice_lines: vec![
                     self.outbound_shipment_line1.clone(),
                     self.outbound_shipment_line2.clone(),
+                    self.outbound_shipment_line3.clone(),
                     self.outbound_shipment_service_line.clone(),
                 ],
                 ..Default::default()
@@ -838,8 +937,8 @@ impl InvoiceTransferTester {
         assert_eq!(inbound_shipment.r#type, InvoiceType::InboundShipment);
         assert_eq!(inbound_shipment.store_id, self.inbound_store.id);
         assert_eq!(
-            inbound_shipment.name_link_id,
-            self.outbound_store.name_link_id
+            inbound_shipment.name_id,
+            self.outbound_store.name_id
         );
         assert_eq!(
             inbound_shipment.name_store_id,
@@ -859,7 +958,7 @@ impl InvoiceTransferTester {
         );
         assert_eq!(inbound_shipment.colour, None);
         assert_eq!(inbound_shipment.user_id, None);
-        assert_eq!(inbound_shipment.on_hold, false);
+        assert!(!inbound_shipment.on_hold);
         assert_eq!(inbound_shipment.allocated_datetime, None);
 
         if self.response_requisition.is_some() {
@@ -873,31 +972,61 @@ impl InvoiceTransferTester {
 
         assert_eq!(
             InvoiceLineRepository::new(connection)
-                .count(Some(
-                    InvoiceLineFilter::new()
-                        .invoice_id(EqualFilter::equal_to(&inbound_shipment.id))
-                ))
+                .count(Some(InvoiceLineFilter::new().invoice_id(
+                    EqualFilter::equal_to(inbound_shipment.id.to_string())
+                )))
                 .unwrap(),
-            3
+            4
         );
 
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line1,
-            Some(self.outbound_shipment_line1.item_link_id.clone()),
         );
+
+        check_line_pricing(
+            connection,
+            &inbound_shipment.id,
+            &inbound_shipment.store_id,
+            &self.outbound_shipment_line1,
+            self.outbound_shipment_line1.item_link_id.clone(),
+            self.outbound_name.as_ref(),
+        );
+
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line2,
-            None,
+        );
+
+        check_line_pricing(
+            connection,
+            &inbound_shipment.id,
+            &inbound_shipment.store_id,
+            &self.outbound_shipment_line2,
+            self.outbound_shipment_line2.item_link_id.clone(),
+            self.outbound_name.as_ref(),
+        );
+
+        check_line(
+            connection,
+            &inbound_shipment.id,
+            &self.outbound_shipment_line3,
+        );
+
+        check_line_pricing(
+            connection,
+            &inbound_shipment.id,
+            &inbound_shipment.store_id,
+            &self.outbound_shipment_line3,
+            self.outbound_shipment_line3.item_link_id.clone(),
+            self.outbound_name.as_ref(),
         );
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_service_line,
-            None,
         );
     }
 
@@ -929,9 +1058,9 @@ impl InvoiceTransferTester {
         let inbound_shipment_id = &self.inbound_shipment.clone().map(|r| r.id).unwrap();
         assert_eq!(
             InvoiceLineRepository::new(connection)
-                .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(inbound_shipment_id))
-                ))
+                .count(Some(InvoiceLineFilter::new().invoice_id(
+                    EqualFilter::equal_to(inbound_shipment_id.to_string())
+                )))
                 .unwrap(),
             0
         );
@@ -1009,25 +1138,22 @@ impl InvoiceTransferTester {
 
         assert_eq!(
             InvoiceLineRepository::new(connection)
-                .count(Some(
-                    InvoiceLineFilter::new()
-                        .invoice_id(EqualFilter::equal_to(&inbound_shipment.id))
-                ))
+                .count(Some(InvoiceLineFilter::new().invoice_id(
+                    EqualFilter::equal_to(inbound_shipment.id.to_string())
+                )))
                 .unwrap(),
-            2
+            3
         );
 
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_line2,
-            None,
         );
         check_line(
             connection,
             &inbound_shipment.id,
             &self.outbound_shipment_service_line,
-            None,
         );
 
         self.inbound_shipment = Some(inbound_shipment)
@@ -1050,6 +1176,7 @@ impl InvoiceTransferTester {
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1073,6 +1200,7 @@ impl InvoiceTransferTester {
                     status: Some(UpdateInboundShipmentStatus::Verified),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1152,8 +1280,8 @@ impl InvoiceTransferTester {
         assert_eq!(customer_return.r#type, InvoiceType::CustomerReturn);
         assert_eq!(customer_return.store_id, self.outbound_store.id);
         assert_eq!(
-            customer_return.name_link_id,
-            self.inbound_store.name_link_id
+            customer_return.name_id,
+            self.inbound_store.name_id
         );
         assert_eq!(
             customer_return.name_store_id,
@@ -1173,7 +1301,7 @@ impl InvoiceTransferTester {
         );
         assert_eq!(customer_return.colour, None);
         assert_eq!(customer_return.user_id, None);
-        assert_eq!(customer_return.on_hold, false);
+        assert!(!customer_return.on_hold);
         assert_eq!(customer_return.allocated_datetime, None);
 
         assert_eq!(
@@ -1185,19 +1313,14 @@ impl InvoiceTransferTester {
 
         assert_eq!(
             InvoiceLineRepository::new(connection)
-                .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&customer_return.id))
-                ))
+                .count(Some(InvoiceLineFilter::new().invoice_id(
+                    EqualFilter::equal_to(customer_return.id.to_string())
+                )))
                 .unwrap(),
             1
         );
 
-        check_line(
-            connection,
-            &customer_return.id,
-            &self.supplier_return_line,
-            None,
-        );
+        check_line(connection, &customer_return.id, &self.supplier_return_line);
     }
 
     pub(crate) fn check_supplier_return_was_linked(&self, connection: &StorageConnection) {
@@ -1228,9 +1351,9 @@ impl InvoiceTransferTester {
         let customer_return_id = &self.customer_return.clone().map(|r| r.id).unwrap();
         assert_eq!(
             InvoiceLineRepository::new(connection)
-                .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(customer_return_id))
-                ))
+                .count(Some(InvoiceLineFilter::new().invoice_id(
+                    EqualFilter::equal_to(customer_return_id.to_string())
+                )))
                 .unwrap(),
             0
         );
@@ -1299,19 +1422,14 @@ impl InvoiceTransferTester {
 
         assert_eq!(
             InvoiceLineRepository::new(connection)
-                .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&customer_return.id))
-                ))
+                .count(Some(InvoiceLineFilter::new().invoice_id(
+                    EqualFilter::equal_to(customer_return.id.to_string())
+                )))
                 .unwrap(),
             1
         );
 
-        check_line(
-            connection,
-            &customer_return.id,
-            &self.supplier_return_line,
-            None,
-        );
+        check_line(connection, &customer_return.id, &self.supplier_return_line);
 
         self.inbound_shipment = Some(customer_return)
     }
@@ -1386,17 +1504,14 @@ fn check_invoice_status(invoice1: &InvoiceRow, invoice2: &InvoiceRow) {
     assert_eq!(invoice1.received_datetime, invoice2.received_datetime);
 }
 /// Line uniqueness is checked in caller method where invoice line count is checked
-fn check_line(
-    connection: &StorageConnection,
-    inbound_id: &str,
-    outbound_line: &InvoiceLineRow,
-    item1_id: Option<String>,
-) {
+fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &InvoiceLineRow) {
     let inbound_line = InvoiceLineRepository::new(connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(inbound_id))
-                .item_id(EqualFilter::equal_to(&outbound_line.item_link_id)),
+                .invoice_id(EqualFilter::equal_to(inbound_id.to_string()))
+                .item_id(EqualFilter::equal_to(
+                    outbound_line.item_link_id.to_string(),
+                )),
         )
         .unwrap();
 
@@ -1410,6 +1525,48 @@ fn check_line(
     assert_eq!(inbound_line.pack_size, outbound_line.pack_size);
     assert_eq!(inbound_line.number_of_packs, outbound_line.number_of_packs);
     assert_eq!(inbound_line.note, outbound_line.note);
+    assert_eq!(inbound_line.stock_line_id, None);
+    assert_eq!(inbound_line.location_id, None);
+    assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
+}
+
+// Check pricing is calculated correctly for each line
+fn check_line_pricing(
+    connection: &StorageConnection,
+    inbound_id: &str,
+    inbound_store: &str,
+    outbound_line: &InvoiceLineRow,
+    item_id: String,
+    outbound_name: Option<&NameRow>,
+) {
+    let inbound_line = InvoiceLineRepository::new(connection)
+        .query_one(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(inbound_id.to_string()))
+                .item_id(EqualFilter::equal_to(
+                    outbound_line.item_link_id.to_string(),
+                )),
+        )
+        .unwrap();
+
+    assert!(inbound_line.is_some());
+    let inbound_line = inbound_line.unwrap().invoice_line_row;
+
+    let item = ItemRowRepository::new(connection)
+        .find_one_by_item_link_id(&item_id)
+        .unwrap_or(None);
+
+    let item_properties = ItemStoreJoinRowRepository::new(connection)
+        .find_one_by_item_and_store_id(&item_id, inbound_store)
+        .unwrap_or(None);
+
+    let default_sell_price_per_pack = item_properties
+        .as_ref()
+        .map_or(0.0, |i| i.default_sell_price_per_pack);
+
+    let margin = item_properties.as_ref().map_or(0.0, |i| i.margin);
+
+    let default_pack_size = item.as_ref().map_or(0.0, |i| i.default_pack_size);
 
     match outbound_line.r#type {
         InvoiceLineType::Service => {
@@ -1440,14 +1597,27 @@ fn check_line(
         inbound_line.cost_price_per_pack,
         outbound_line.sell_price_per_pack
     );
-    match item1_id
-        .as_ref()
-        .map(|id| outbound_line.item_link_id == *id)
-    {
-        Some(true) => assert_eq!(inbound_line.sell_price_per_pack, 20.0),
-        _ => assert_eq!(inbound_line.sell_price_per_pack, 0.0),
-    }
-    assert_eq!(inbound_line.stock_line_id, None);
-    assert_eq!(inbound_line.location_id, None);
-    assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
+
+    if default_sell_price_per_pack > 0.0 {
+        let price_per_new_pack =
+            (default_sell_price_per_pack / default_pack_size) * inbound_line.pack_size;
+
+        assert_eq!(inbound_line.sell_price_per_pack, price_per_new_pack)
+    } else if margin > 0.0 {
+        let supplier_id = outbound_name.map_or_else(String::new, |n| n.id.clone());
+        let margin_price = get_cost_plus_margin(
+            connection,
+            inbound_line.cost_price_per_pack,
+            item_properties,
+            &supplier_id,
+        )
+        .unwrap();
+
+        assert_eq!(inbound_line.sell_price_per_pack, margin_price)
+    } else {
+        assert_eq!(
+            inbound_line.sell_price_per_pack,
+            inbound_line.cost_price_per_pack
+        )
+    };
 }

@@ -45,14 +45,13 @@ pub fn generate(
         expected_delivery_date,
         price_per_pack_before_discount: price_per_pack_before_discount.unwrap_or(0.0),
         price_per_pack_after_discount: price_per_pack_after_discount.unwrap_or(0.0),
-        manufacturer_link_id: manufacturer_id,
+        manufacturer_id: manufacturer_id,
         note,
         unit,
         supplier_item_code,
         comment,
         status: PurchaseOrderLineStatus::New,
         adjusted_number_of_units: None,
-        received_number_of_units: 0.0,
         stock_on_hand_in_units: 0.0,
     })
 }

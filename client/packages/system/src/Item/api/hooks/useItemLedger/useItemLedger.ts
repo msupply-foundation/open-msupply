@@ -39,5 +39,6 @@ export const useItemLedger = (
   return useQuery({
     queryKey: [ITEM_LEDGER, itemId, queryParams],
     queryFn,
+    keepPreviousData: true,
   });
 };

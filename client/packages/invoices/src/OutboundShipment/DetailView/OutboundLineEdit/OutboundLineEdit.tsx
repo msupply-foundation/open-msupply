@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   DialogButton,
   Grid,
@@ -8,7 +8,6 @@ import {
   useNotification,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { useNextItem } from './hooks';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
@@ -16,6 +15,7 @@ import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
 import { useAllocationContext, getAllocatedQuantity } from '../../../StockOut';
 import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
 import { ItemRowFragment } from '@openmsupply-client/system';
+import { useNextItem } from '../../../useNextItem';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 
@@ -41,6 +41,13 @@ export const OutboundLineEdit = ({
   const t = useTranslation();
   const { info, warning } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
+
+  // Used to determine if the item selector should be disabled. We want to allow
+  // changing the item if we opened with a barcode and haven't selected an item
+  // yet (e.g. if the barcode didn't match any items), but once an item is
+  // selected, we want to disable changing it to avoid complications with
+  // changing the allocation when the item changes.
+  const hasInitialItem = useRef(!!itemId);
 
   const onClose = () => {
     clear();
@@ -167,7 +174,8 @@ export const OutboundLineEdit = ({
         <SelectItem
           itemId={itemId}
           onChangeItem={setItemId}
-          disabled={mode === ModalMode.Update}
+          disabled={mode === ModalMode.Update || hasInitialItem.current}
+          openedWithBarcode={!!asBarcodeOrNull(openedWith)}
         />
 
         {itemId && (

@@ -1,29 +1,32 @@
 import { Box, BoxProps, Portal } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import React, { FC, useEffect, useRef } from 'react';
-import { useHostContext } from '@common/hooks';
-
-const Container = styled('div')({
-  display: 'flex',
-  flex: 1,
-  justifyContent: 'flex-end',
-});
+import { useHostContext, useIsExtraSmallScreen } from '@common/hooks';
 
 export const AppBarButtons: FC = () => {
   const { setAppBarButtonsRef } = useHostContext();
   const ref = useRef(null);
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   useEffect(() => {
     setAppBarButtonsRef(ref);
   }, []);
 
-  return <Container ref={ref} />;
+  return (
+    <Box
+      ref={ref}
+      sx={{
+        display: 'flex',
+        flex: isExtraSmallScreen ? undefined : 1,
+        justifyContent: isExtraSmallScreen ? undefined : 'flex-end',
+      }}
+    />
+  );
 };
 
 export const AppBarButtonsPortal: FC<BoxProps> = props => {
   const { appBarButtonsRef } = useHostContext();
 
-  if (!appBarButtonsRef) return null;
+  if (!appBarButtonsRef?.current) return null;
 
   return (
     <Portal container={appBarButtonsRef.current}>

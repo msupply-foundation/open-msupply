@@ -102,6 +102,7 @@ mod inbound_shipment_service_line_update_test {
                 .clone(),
             invoice_row: mock_inbound_shipment_a(),
             item_row: item1.clone(),
+            invoice_line_stats_row: Default::default(),
             location_row_option: None,
             stock_line_option: None,
         };
@@ -150,7 +151,7 @@ mod inbound_shipment_service_line_update_test {
             &connection,
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
-                item_id: Some(item2.id.to_owned()),
+                item_id: Some(item2.id.to_string()),
                 name: Some("input name 2".to_string()),
                 total_before_tax: None,
                 tax: None,
@@ -169,7 +170,7 @@ mod inbound_shipment_service_line_update_test {
             &connection,
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
-                item_id: Some(item2.id.to_owned()),
+                item_id: Some(item2.id.to_string()),
                 name: None,
                 total_before_tax: None,
                 tax: None,

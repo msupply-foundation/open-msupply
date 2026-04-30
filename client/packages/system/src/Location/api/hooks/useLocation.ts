@@ -1,4 +1,4 @@
-import { useMutation, useTableStore } from '@openmsupply-client/common';
+import { useMutation, useTranslation } from '@openmsupply-client/common';
 import { useLocationGraphQL } from '../useLocationGraphQL';
 import { LOCATION } from './keys';
 import { LocationRowFragment } from '../operations.generated';
@@ -8,7 +8,7 @@ export type DeleteError = {
   message: string;
 };
 
-export const useLocation = (locations?: LocationRowFragment[]) => {
+export const useLocation = () => {
   // CREATE
   const {
     mutateAsync: createMutation,
@@ -24,33 +24,23 @@ export const useLocation = (locations?: LocationRowFragment[]) => {
   } = useUpdateLocation();
 
   // DELETE
-  const { deleteLocations, selectedRows } = useDeleteLocation(locations);
+  const { deleteLocations } = useDeleteLocation();
 
   return {
-    create: {
-      create: createMutation,
-      isCreating,
-      createError,
-    },
-    update: {
-      update,
-      isUpdating,
-      updateError,
-    },
-    delete: {
-      delete: deleteLocations,
-      selectedRows,
-    },
+    create: { create: createMutation, isCreating, createError },
+    update: { update, isUpdating, updateError },
+    delete: { delete: deleteLocations },
   };
 };
 
 const useCreateLocation = () => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
+  const t = useTranslation();
 
   const mutationFn = async (input: LocationRowFragment) => {
     const { id, code, name, onHold, locationType, volume } = input;
 
-    await locationApi.insertLocation({
+    const result = await locationApi.insertLocation({
       input: {
         id,
         code,
@@ -61,6 +51,17 @@ const useCreateLocation = () => {
       },
       storeId,
     });
+
+    const { insertLocation } = result;
+    if (insertLocation.__typename === 'InsertLocationError') {
+      const { error } = insertLocation;
+      if (error.__typename === 'UniqueValueViolation') {
+        throw new Error(
+          t('error.unique-value-violation', { field: error.field })
+        );
+      }
+      throw new Error(error.description);
+    }
   };
 
   return useMutation({
@@ -76,11 +77,12 @@ const useCreateLocation = () => {
 
 const useUpdateLocation = () => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
+  const t = useTranslation();
 
   const mutationFn = async (input: LocationRowFragment) => {
     const { id, code, name, onHold, locationType, volume } = input;
 
-    await locationApi.updateLocation({
+    const result = await locationApi.updateLocation({
       input: {
         id,
         code,
@@ -91,6 +93,17 @@ const useUpdateLocation = () => {
       },
       storeId,
     });
+
+    const { updateLocation } = result;
+    if (updateLocation.__typename === 'UpdateLocationError') {
+      const { error } = updateLocation;
+      if (error.__typename === 'UniqueValueViolation') {
+        throw new Error(
+          t('error.unique-value-violation', { field: error.field })
+        );
+      }
+      throw new Error(error.description);
+    }
   };
 
   return useMutation({
@@ -104,21 +117,12 @@ const useUpdateLocation = () => {
   });
 };
 
-const useDeleteLocation = (locations?: LocationRowFragment[]) => {
+const useDeleteLocation = () => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => locations?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as LocationRowFragment[],
-  }));
 
   const mutationFn = async (id: string) => {
     const result = await locationApi.deleteLocation({
-      input: {
-        id,
-      },
+      input: { id },
       storeId,
     });
     return result.deleteLocation;
@@ -131,7 +135,7 @@ const useDeleteLocation = (locations?: LocationRowFragment[]) => {
     },
   });
 
-  const deleteLocations = async () => {
+  const deleteLocations = async (selectedRows: LocationRowFragment[]) => {
     const deleteErrors: DeleteError[] = [];
 
     await Promise.all(
@@ -150,6 +154,5 @@ const useDeleteLocation = (locations?: LocationRowFragment[]) => {
 
   return {
     deleteLocations,
-    selectedRows,
   };
 };

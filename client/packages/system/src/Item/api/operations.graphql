@@ -2,6 +2,7 @@ fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
   expiryDate
+  manufactureDate
   id
   itemId
   location {
@@ -522,6 +523,9 @@ fragment ItemLedger on ItemLedgerNode {
   sellPricePerPack
   totalBeforeTax
   numberOfPacks
+  user {
+    username
+  }
 }
 
 query itemLedger(

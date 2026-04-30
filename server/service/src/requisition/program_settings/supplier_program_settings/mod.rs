@@ -51,8 +51,8 @@ mod test {
             mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_store_a, mock_store_b,
             mock_store_c, MockData, MockDataInserts,
         },
-        ContextRow, MasterListNameJoinRow, MasterListRow, Name, NameLinkRow, NameStoreJoinRow,
-        NameTagJoinRow, NameTagRow, PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow,
+        ContextRow, MasterListNameJoinRow, MasterListRow, Name, NameStoreJoinRow, NameTagJoinRow,
+        NameTagRow, PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow,
         ProgramRequisitionSettings, ProgramRequisitionSettingsRow, ProgramRow, ProgramSupplier,
         RequisitionRow,
     };
@@ -76,7 +76,7 @@ mod test {
         let name_tag_join1 = NameTagJoinRow {
             id: "name_tag_join1".to_string(),
             name_tag_id: name_tag1.id.clone(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
         };
         let name_tag2 = NameTagRow {
             id: "name_tag2".to_string(),
@@ -85,7 +85,7 @@ mod test {
         let name_tag_join2 = NameTagJoinRow {
             id: "name_tag_join2".to_string(),
             name_tag_id: name_tag2.id.clone(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
         };
 
         // Two programs, with master list both joined to store a
@@ -96,7 +96,7 @@ mod test {
         };
         let master_list_name_join1 = MasterListNameJoinRow {
             id: "master_list_name_join1".to_string(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             master_list_id: master_list1.id.clone(),
         };
         let context1 = ContextRow {
@@ -116,7 +116,7 @@ mod test {
         };
         let master_list_name_join2 = MasterListNameJoinRow {
             id: "master_list_name_join2".to_string(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             master_list_id: master_list2.id.clone(),
         };
         let context2 = ContextRow {
@@ -193,7 +193,7 @@ mod test {
         let requisition1 = RequisitionRow {
             id: "requisition1".to_string(),
             order_type: Some("Order Type 1".to_string()),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             store_id: mock_store_a().id,
             period_id: Some(period1.id.clone()),
             program_id: Some(program1.id.clone()),
@@ -203,7 +203,7 @@ mod test {
             id: "requisition2".to_string(),
             // Checking case insensitive match
             order_type: Some("OrDeR TyPe 2".to_string()),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             store_id: mock_store_a().id,
             period_id: Some(period4.id.clone()),
             program_id: Some(program2.id.clone()),
@@ -214,24 +214,24 @@ mod test {
         // to program 1 and program 2 respecively and visible in mock_store_a
         let master_list_name_join3 = MasterListNameJoinRow {
             id: "master_list_name_join3".to_string(),
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             master_list_id: master_list1.id.clone(),
         };
         let master_list_name_join4 = MasterListNameJoinRow {
             id: "master_list_name_join4".to_string(),
-            name_link_id: mock_name_store_c().id,
+            name_id: mock_name_store_c().id,
             master_list_id: master_list2.id.clone(),
         };
         let name_store_join1 = NameStoreJoinRow {
             id: "name_store_join1".to_string(),
-            name_link_id: mock_name_store_b().id.clone(),
+            name_id: mock_name_store_b().id.clone(),
             store_id: mock_store_a().id,
             name_is_supplier: true,
             ..Default::default()
         };
         let name_store_join2 = NameStoreJoinRow {
             id: "name_store_join2".to_string(),
-            name_link_id: mock_name_store_c().id.clone(),
+            name_id: mock_name_store_c().id.clone(),
             store_id: mock_store_a().id,
             name_is_supplier: true,
             ..Default::default()
@@ -310,10 +310,6 @@ mod test {
                         // program1 master list only visible in mock_name_store_b supplier
                         supplier: Name {
                             name_row: mock_name_store_b(),
-                            name_link_row: NameLinkRow {
-                                id: mock_name_store_b().id,
-                                name_id: mock_name_store_b().id,
-                            },
                             name_store_join_row: Some(name_store_join1.clone()),
                             store_row: Some(mock_store_b()),
                             properties: None,
@@ -340,10 +336,6 @@ mod test {
                         // program2 master list only visible in mock_name_store_c supplier
                         supplier: Name {
                             name_row: mock_name_store_c(),
-                            name_link_row: NameLinkRow {
-                                id: mock_name_store_c().id,
-                                name_id: mock_name_store_c().id,
-                            },
                             name_store_join_row: Some(name_store_join2.clone()),
                             store_row: Some(mock_store_c()),
                             properties: None,

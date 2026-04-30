@@ -19,6 +19,7 @@ table! {
         asset_log_status -> crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping,
         reason -> Text,
         deleted_datetime -> Nullable<Timestamp>,
+        comments_required -> Bool,
     }
 }
 
@@ -31,6 +32,7 @@ pub struct AssetLogReasonRow {
     pub asset_log_status: AssetLogStatus,
     pub reason: String,
     pub deleted_datetime: Option<NaiveDateTime>,
+    pub comments_required: bool,
 }
 
 pub struct AssetLogReasonRowRepository<'a> {
@@ -61,7 +63,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_log_reason_row)?;
         // Return the changelog id
-        self.insert_changelog(asset_log_reason_row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(asset_log_reason_row.id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
@@ -74,7 +76,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
             record_id: asset_log_id,
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -102,7 +104,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         let _cursor_id =
-            self.insert_changelog(asset_log_reason_id.to_owned(), RowActionType::Delete);
+            self.insert_changelog(asset_log_reason_id.to_string(), RowActionType::Delete);
         Ok(())
     }
 }

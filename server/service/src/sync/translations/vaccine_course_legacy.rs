@@ -117,7 +117,7 @@ mod tests {
             "test_vaccine_course_legacy_translation",
             MockDataInserts::none()
                 .programs()
-                .full_master_list()
+                .full_master_lists()
                 .items()
                 .names(),
         )
@@ -138,6 +138,7 @@ mod tests {
             use_in_gaps_calculations: false,
             wastage_rate: 0.0,
             deleted_datetime: None,
+            can_skip_dose: false,
         };
 
         let _insert_cursor = VaccineCourseRowRepository::new(&connection)
@@ -152,13 +153,10 @@ mod tests {
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
-        assert_eq!(
-            translator.should_translate_to_sync_record(
-                &changelog_row,
-                &ToSyncRecordTranslationType::PushToLegacyCentral
-            ),
-            false
-        );
+        assert!(!translator.should_translate_to_sync_record(
+            &changelog_row,
+            &ToSyncRecordTranslationType::PushToLegacyCentral
+        ));
 
         // Should translate if a central server
         test_util_set_is_central_server(true);

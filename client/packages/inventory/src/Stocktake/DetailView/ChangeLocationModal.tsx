@@ -28,7 +28,7 @@ export const ChangeLocationConfirmationModal = ({
   rows,
 }: ChangeLocationConfirmationModalProps) => {
   const t = useTranslation();
-  const onChangeLocation = useStocktakeOld.line.changeLocation();
+  const onChangeLocation = useStocktakeOld.line.changeLocation(rows);
 
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
 

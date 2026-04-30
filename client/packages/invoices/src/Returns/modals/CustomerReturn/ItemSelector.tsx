@@ -24,6 +24,8 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
 
   const { items } = useReturns.lines.customerReturnRows();
 
+  const existingItemIds = items.map(item => item.itemId);
+
   return (
     <Box marginBottom="14px">
       <ModalRow>
@@ -38,12 +40,7 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
             disabled={disabled}
             currentItemId={itemId}
             onChange={newItem => newItem && onChangeItemId(newItem.id)}
-            extraFilter={
-              disabled
-                ? undefined
-                : item =>
-                    !items?.some(existingItem => existingItem.id === item.id)
-            }
+            filter={{ id: { notEqualAll: existingItemIds } }}
           />
         </Grid>
       </ModalRow>

@@ -72,7 +72,7 @@ pub struct LegacyPrefData {
     #[serde(rename = "useConsumptionAndStockFromCustomersForInternalOrders")]
     pub use_consumption_and_stock_from_customers_for_internal_orders: bool,
     #[serde(default)]
-    #[serde(rename = "canLinkRequisitionToSupplierInvoice")]
+    #[serde(rename = "canLinkRequistionToSupplierInvoice")]
     pub manually_link_internal_order_to_inbound_shipment: bool,
     #[serde(default)]
     #[serde(rename = "editPrescribedQuantityOnPrescription")]
