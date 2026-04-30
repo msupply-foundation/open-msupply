@@ -463,6 +463,7 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         rows: Vec<ChangeLogInsertRow>,
     ) -> Result<Option<i64>, RepositoryError> {
+        //TODO: Need to handle batch insert size limit
         if rows.is_empty() {
             return Ok(None);
         }
@@ -502,6 +503,7 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         rows: Vec<ChangeLogInsertRow>,
     ) -> Result<Option<i64>, RepositoryError> {
+        //TODO: Need to handle batch insert size limit
         if rows.is_empty() {
             return Ok(None);
         }

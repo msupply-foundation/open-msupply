@@ -168,19 +168,31 @@ pub struct InvoiceRow {
     pub default_donor_id: Option<String>,
 }
 
+pub(crate) enum InvoiceRowOrId<'a> {
+    Row(&'a InvoiceRow),
+    Id(&'a str),
+}
+
 impl InvoiceRow {
     pub(crate) fn changelog(
-        &self,
+        row_or_id: InvoiceRowOrId,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            InvoiceRowOrId::Row(row) => row,
+            InvoiceRowOrId::Id(id) => &InvoiceRowRepository::new(con)
+                .find_one_by_id(id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Invoice,
-            record_id: self.id.clone(),
+            record_id: row.id.clone(),
             row_action: action,
-            store_id: Some(self.store_id.clone()),
-            name_id: Some(self.name_id.clone()),
+            store_id: Some(row.store_id.clone()),
+            name_id: Some(row.name_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -192,10 +204,7 @@ impl InvoiceRow {
         action: RowActionType,
         source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = InvoiceRowRepository::new(con)
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
+        Self::changelog(InvoiceRowOrId::Id(id), con, action, source_site_id)
     }
 }
 
@@ -210,7 +219,8 @@ impl<'a> InvoiceRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &InvoiceRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.changelog(
+        let changelog = InvoiceRow::changelog(
+            InvoiceRowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteIdForChangelog::CurrentSiteId,
@@ -306,7 +316,8 @@ impl Upsert for InvoiceRow {
         InvoiceRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => InvoiceRow::changelog(
+                InvoiceRowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteIdForChangelog::SourceSiteId(source_site_id),

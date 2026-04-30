@@ -1,11 +1,12 @@
 use crate::db_diesel::{item_link_row::item_link, requisition_row::requisition};
 use crate::repository_error::RepositoryError;
-use crate::{RequisitionRowRepository, StorageConnection};
+use crate::StorageConnection;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::requisition_row::RequisitionRowOrId;
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RequisitionRow, RowActionType};
 use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
 
 use chrono::NaiveDateTime;
@@ -92,21 +93,16 @@ impl RequisitionLineRow {
         action: RowActionType,
         source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let requisition =
-            RequisitionRowRepository::new(con).find_one_by_id(&self.requisition_id)?;
-        let requisition = match requisition {
-            Some(requisition) => requisition,
-            None => return Err(RepositoryError::NotFound),
-        };
-
+        let requisition_changelog = RequisitionRow::changelog(
+            RequisitionRowOrId::Id(&self.requisition_id),
+            con,
+            action,
+            source_site_id,
+        )?;
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::RequisitionLine,
             record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(requisition.store_id.clone()),
-            name_id: Some(requisition.name_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
+            ..requisition_changelog
         })
     }
 
