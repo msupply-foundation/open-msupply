@@ -131,7 +131,7 @@ pub enum PurchaseOrderStatus {
 }
 
 impl PurchaseOrderRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -148,7 +148,7 @@ impl PurchaseOrderRow {
         })
     }
 
-    pub fn delete_changelog(
+    pub(crate) fn delete_changelog(
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
@@ -175,7 +175,11 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         purchase_order_row: &PurchaseOrderRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert(purchase_order_row)?;
-        let changelog = purchase_order_row.changelog(self.connection, RowActionType::Upsert, SourceSiteIdForChangelog::CurrentSiteId)?;
+        let changelog = purchase_order_row.changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -196,7 +200,12 @@ impl<'a> PurchaseOrderRowRepository<'a> {
     }
 
     pub fn delete(&self, purchase_order_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = PurchaseOrderRow::delete_changelog(purchase_order_id, self.connection, RowActionType::Delete, SourceSiteIdForChangelog::CurrentSiteId)?;
+        let changelog = PurchaseOrderRow::delete_changelog(
+            purchase_order_id,
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(purchase_order_with_links::table)
@@ -218,13 +227,19 @@ impl<'a> PurchaseOrderRowRepository<'a> {
 }
 
 impl Upsert for PurchaseOrderRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         PurchaseOrderRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
@@ -251,7 +266,12 @@ impl Delete for PurchaseOrderDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                PurchaseOrderRow::delete_changelog(&self.0, con, RowActionType::Delete, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
+                PurchaseOrderRow::delete_changelog(
+                    &self.0,
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

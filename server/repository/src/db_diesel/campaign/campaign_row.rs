@@ -30,7 +30,7 @@ pub struct CampaignRow {
 }
 
 impl CampaignRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -112,7 +112,11 @@ impl<'a> CampaignRowRepository<'a> {
 }
 
 impl Upsert for CampaignRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         CampaignRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(

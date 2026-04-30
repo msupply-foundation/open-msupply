@@ -3,7 +3,9 @@ use super::{
     RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert,
+};
 use clap::ValueEnum;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -89,7 +91,7 @@ pub struct ReportMetaDataRow {
 }
 
 impl ReportRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -184,7 +186,11 @@ impl Delete for ReportRowDelete {
 }
 
 impl Upsert for ReportRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ReportRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

@@ -2,8 +2,8 @@ use super::asset_log_row::asset_log::dsl::*;
 
 use crate::asset_row::{asset, AssetRowRepository};
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RepositoryError,
-    RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    RepositoryError, RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -71,7 +71,7 @@ pub struct AssetLogRow {
 }
 
 impl AssetLogRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -139,7 +139,11 @@ impl<'a> AssetLogRowRepository<'a> {
 }
 
 impl Upsert for AssetLogRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         AssetLogRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(

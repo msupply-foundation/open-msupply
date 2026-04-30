@@ -1,4 +1,4 @@
-use super::changelog::changelog;
+use super::changelog::{changelog, SourceSiteIdForChangelog};
 use diesel::prelude::*;
 
 use crate::{
@@ -112,10 +112,7 @@ async fn test_changelog() {
     assert_eq!(4, result.len());
     // Last entry should be the delete
     assert_eq!(result.last().unwrap().row_action, RowActionType::Delete);
-    assert_eq!(
-        result.last().unwrap().record_id,
-        mock_location_on_hold().id
-    );
+    assert_eq!(result.last().unwrap().record_id, mock_location_on_hold().id);
 }
 
 #[actix_rt::test]
@@ -627,7 +624,9 @@ async fn test_changelog_outgoing_sync_records() {
         id: asset_class_id.clone(),
         ..Default::default()
     };
-    AssetClassRowRepository::new(&connection).upsert_one(&row).unwrap();
+    AssetClassRowRepository::new(&connection)
+        .upsert_one(&row)
+        .unwrap();
 
     let outgoing_results = repo
         .outgoing_sync_records_from_central(0, 1000, 1, true)
@@ -645,9 +644,19 @@ async fn test_changelog_outgoing_sync_records() {
         ..Default::default()
     };
 
-    AssetRowRepository::new(&connection)._upsert_one(&row).unwrap();
-    let changelog = row.changelog(&connection, RowActionType::Upsert, Some(site1_id)).unwrap();
-    ChangelogRepository::new(&connection).insert(&changelog).unwrap();
+    AssetRowRepository::new(&connection)
+        ._upsert_one(&row)
+        .unwrap();
+    let changelog = row
+        .changelog(
+            &connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::SourceSiteId(Some(site1_id)),
+        )
+        .unwrap();
+    ChangelogRepository::new(&connection)
+        .insert(&changelog)
+        .unwrap();
 
     // Now we should have two records to send to site 1 the remote site on initialisation
     // The asset class and the asset
@@ -696,7 +705,9 @@ async fn test_changelog_outgoing_patient_sync_records() {
         ..Default::default()
     };
 
-    let cursor = VaccinationRowRepository::new(&connection).upsert_one(&vaccination).unwrap();
+    let cursor = VaccinationRowRepository::new(&connection)
+        .upsert_one(&vaccination)
+        .unwrap();
 
     // store A (on site1) has name_store_join for patient2
 

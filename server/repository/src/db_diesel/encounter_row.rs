@@ -1,6 +1,6 @@
 use super::{
-    clinician_link, clinician_row::clinician, name_row::name,
-    program_row::program, StorageConnection,
+    clinician_link, clinician_row::clinician, name_row::name, program_row::program,
+    StorageConnection,
 };
 
 use crate::diesel_macros::define_linked_tables;
@@ -77,7 +77,7 @@ pub struct EncounterRow {
 }
 
 impl EncounterRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,

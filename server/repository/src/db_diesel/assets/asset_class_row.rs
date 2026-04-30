@@ -3,8 +3,8 @@ use super::asset_class_row::asset_class::dsl::*;
 use crate::RepositoryError;
 use crate::SourceSiteIdForChangelog;
 use crate::StorageConnection;
-use crate::{ChangelogSyncType, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 use serde::Deserialize;
@@ -27,7 +27,7 @@ pub struct AssetClassRow {
 }
 
 impl AssetClassRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -100,7 +100,11 @@ impl<'a> AssetClassRowRepository<'a> {
 }
 
 impl Upsert for AssetClassRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         AssetClassRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(

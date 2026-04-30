@@ -6,8 +6,8 @@ use serde::Serialize;
 use crate::RepositoryError;
 use crate::SourceSiteIdForChangelog;
 use crate::StorageConnection;
-use crate::{ChangelogSyncType, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -31,7 +31,7 @@ pub struct AssetCategoryRow {
 }
 
 impl AssetCategoryRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -110,7 +110,11 @@ impl<'a> AssetCategoryRowRepository<'a> {
 }
 
 impl Upsert for AssetCategoryRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         AssetCategoryRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(

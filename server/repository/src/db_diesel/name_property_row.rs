@@ -35,7 +35,7 @@ pub struct NamePropertyRow {
 }
 
 impl NamePropertyRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -108,7 +108,11 @@ impl<'a> NamePropertyRowRepository<'a> {
 }
 
 impl Upsert for NamePropertyRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         NamePropertyRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

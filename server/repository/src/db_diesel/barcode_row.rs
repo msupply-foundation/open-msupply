@@ -6,9 +6,7 @@ use super::{
     name_link_row::name_link, RepositoryError, StorageConnection,
 };
 use crate::diesel_macros::define_linked_tables;
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
-};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -50,7 +48,7 @@ pub struct BarcodeRow {
 }
 
 impl BarcodeRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -105,7 +103,11 @@ impl<'a> BarcodeRowRepository<'a> {
 }
 
 impl Upsert for BarcodeRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         BarcodeRowRepository::new(con)._upsert(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(

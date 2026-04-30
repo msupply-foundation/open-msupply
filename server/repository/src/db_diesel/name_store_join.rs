@@ -5,7 +5,7 @@ use crate::{
     NameRow,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{Delete, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -55,7 +55,7 @@ pub struct NameStoreJoinFilter {
 }
 
 impl NameStoreJoinRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -72,7 +72,7 @@ impl NameStoreJoinRow {
         })
     }
 
-    pub fn delete_changelog(
+    pub(crate) fn delete_changelog(
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
@@ -243,7 +243,11 @@ impl Delete for NameStoreJoinRowDelete {
 }
 
 impl Upsert for NameStoreJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         NameStoreJoinRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {

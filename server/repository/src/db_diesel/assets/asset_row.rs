@@ -68,7 +68,7 @@ pub struct AssetRow {
 }
 
 impl AssetRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -84,7 +84,7 @@ impl AssetRow {
         })
     }
 
-    pub fn soft_delete_and_get_changelog(
+    pub(crate) fn soft_delete_and_get_changelog(
         row_id: &str,
         con: &StorageConnection,
         source_site_id: SourceSiteIdForChangelog,
@@ -172,7 +172,11 @@ impl<'a> AssetRowRepository<'a> {
 }
 
 impl Upsert for AssetRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         AssetRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(

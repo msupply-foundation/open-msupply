@@ -1,4 +1,7 @@
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, ChangelogSyncType, Upsert};
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RowActionType,
+    Upsert,
+};
 use crate::{RepositoryError, SourceSiteIdForChangelog, StorageConnection};
 
 use chrono::NaiveDateTime;
@@ -58,7 +61,7 @@ pub struct SystemLogRow {
 }
 
 impl SystemLogRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -126,7 +129,11 @@ impl<'a> SystemLogRowRepository<'a> {
 }
 
 impl Upsert for SystemLogRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         SystemLogRowRepository::new(con)._insert_one(self)?;
 
         let changelog = match sync_type {

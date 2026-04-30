@@ -9,7 +9,10 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 use crate::SourceSiteIdForChangelog;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, ChangelogSyncType, Upsert};
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RowActionType,
+    Upsert,
+};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -88,7 +91,7 @@ pub struct SyncFileReferenceRow {
 }
 
 impl SyncFileReferenceRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         changelog_record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -194,7 +197,11 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
 }
 
 impl Upsert for SyncFileReferenceRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         SyncFileReferenceRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

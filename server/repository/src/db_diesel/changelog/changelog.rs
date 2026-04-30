@@ -1,5 +1,11 @@
 use crate::{
-    DBType, EqualFilter, KeyValueStoreRepository, LockedConnection, RepositoryError, StorageConnection, TransactionNotification, db_diesel::store_row::store, diesel_macros::{apply_equal_filter, diesel_string_enum}, dynamic_query_filter::create_condition, name_store_join::name_store_join, vaccination_row::vaccination
+    db_diesel::store_row::store,
+    diesel_macros::{apply_equal_filter, diesel_string_enum},
+    dynamic_query_filter::create_condition,
+    name_store_join::name_store_join,
+    vaccination_row::vaccination,
+    DBType, EqualFilter, KeyValueStoreRepository, LockedConnection, RepositoryError,
+    StorageConnection, TransactionNotification,
 };
 use diesel::{helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -125,10 +131,15 @@ pub(crate) enum SourceSiteIdForChangelog {
 }
 
 impl SourceSiteIdForChangelog {
-    pub(crate) fn get_id(&self, connection: &StorageConnection) -> Result<Option<i32>, RepositoryError> {
+    pub(crate) fn get_id(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<Option<i32>, RepositoryError> {
         match self {
             SourceSiteIdForChangelog::SourceSiteId(id) => Ok(*id),
-            SourceSiteIdForChangelog::CurrentSiteId => KeyValueStoreRepository::new(connection).get_current_site_id(),
+            SourceSiteIdForChangelog::CurrentSiteId => {
+                KeyValueStoreRepository::new(connection).get_current_site_id()
+            }
         }
     }
 }
@@ -446,6 +457,32 @@ impl<'a> ChangelogRepository<'a> {
         Ok(cursor_id)
     }
 
+    #[cfg(feature = "postgres")]
+    // Inserts multiple changelogs and returns the cursor of the last inserted row
+    pub fn insert_all(
+        &self,
+        rows: Vec<ChangeLogInsertRow>,
+    ) -> Result<Option<i64>, RepositoryError> {
+        if rows.is_empty() {
+            return Ok(None);
+        }
+        // Insert the records, and then return the cursor of the changelog table
+        // Using a returning clause makes this thread safe
+        let cursor_id = diesel::insert_into(changelog::table)
+            .values(rows)
+            .returning(changelog::cursor)
+            .get_results(self.connection.lock().connection())?
+            .pop()
+            .ok_or(RepositoryError::as_db_error(
+                "insert_all returned no cursors",
+                "",
+            ))?;
+
+        self.connection
+            .notify(TransactionNotification::ChangelogInsert);
+        Ok(Some(cursor_id))
+    }
+
     #[cfg(not(feature = "postgres"))]
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
         // Insert the record, and then return the cursor of the inserted record
@@ -458,6 +495,24 @@ impl<'a> ChangelogRepository<'a> {
         self.connection
             .notify(TransactionNotification::ChangelogInsert);
         Ok(cursor_id)
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    pub fn insert_all(
+        &self,
+        rows: Vec<ChangeLogInsertRow>,
+    ) -> Result<Option<i64>, RepositoryError> {
+        if rows.is_empty() {
+            return Ok(None);
+        }
+        diesel::insert_into(changelog::table)
+            .values(rows)
+            .execute(self.connection.lock().connection())?;
+        let cursor_id = diesel::select(last_insert_rowid())
+            .get_result::<i64>(self.connection.lock().connection())?;
+        self.connection
+            .notify(TransactionNotification::ChangelogInsert);
+        Ok(Some(cursor_id))
     }
 }
 

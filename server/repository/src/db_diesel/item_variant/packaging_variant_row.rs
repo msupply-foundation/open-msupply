@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RepositoryError,
-    RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    RepositoryError, RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
@@ -33,7 +33,7 @@ pub struct PackagingVariantRow {
 }
 
 impl PackagingVariantRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -110,7 +110,11 @@ impl<'a> PackagingVariantRowRepository<'a> {
 }
 
 impl Upsert for PackagingVariantRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         PackagingVariantRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

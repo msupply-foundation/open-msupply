@@ -42,7 +42,7 @@ pub struct VVMStatusLogRow {
 }
 
 impl VVMStatusLogRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -59,7 +59,7 @@ impl VVMStatusLogRow {
         })
     }
 
-    pub fn delete_changelog(
+    pub(crate) fn delete_changelog(
         row_id: &str,
         con: &StorageConnection,
         action: RowActionType,
@@ -159,8 +159,7 @@ impl Delete for VVMStatusLogRowDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        diesel::delete(vvm_status_log.filter(id.eq(&self.0)))
-            .execute(con.lock().connection())?;
+        diesel::delete(vvm_status_log.filter(id.eq(&self.0))).execute(con.lock().connection())?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
@@ -174,7 +173,11 @@ impl Delete for VVMStatusLogRowDelete {
 }
 
 impl Upsert for VVMStatusLogRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         VVMStatusLogRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

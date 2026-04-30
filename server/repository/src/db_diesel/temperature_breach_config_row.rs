@@ -5,9 +5,7 @@ use super::{
 
 use crate::repository_error::RepositoryError;
 use crate::SourceSiteIdForChangelog;
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
-};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -44,7 +42,7 @@ pub struct TemperatureBreachConfigRow {
 }
 
 impl TemperatureBreachConfigRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,

@@ -2,7 +2,9 @@ use super::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert,
+};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -70,7 +72,7 @@ pub struct BackendPluginRow {
 }
 
 impl BackendPluginRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -150,7 +152,11 @@ impl<'a> BackendPluginRowRepository<'a> {
 }
 
 impl Upsert for BackendPluginRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         BackendPluginRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

@@ -39,7 +39,7 @@ pub struct VaccineCourseItemRow {
 }
 
 impl VaccineCourseItemRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -125,7 +125,11 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
 }
 
 impl Upsert for VaccineCourseItemRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         VaccineCourseItemRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

@@ -1,7 +1,7 @@
 use super::vaccine_course_store_config_row::vaccine_course_store_config::dsl::*;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RepositoryError,
-    RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    RepositoryError, RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -30,7 +30,7 @@ pub struct VaccineCourseStoreConfigRow {
 }
 
 impl VaccineCourseStoreConfigRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -89,7 +89,11 @@ impl<'a> VaccineCourseStoreConfigRowRepository<'a> {
 }
 
 impl Upsert for VaccineCourseStoreConfigRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         VaccineCourseStoreConfigRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

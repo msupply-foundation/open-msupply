@@ -47,7 +47,7 @@ pub struct AssetCatalogueItemRow {
 }
 
 impl AssetCatalogueItemRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
