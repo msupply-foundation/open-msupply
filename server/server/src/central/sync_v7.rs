@@ -1,15 +1,13 @@
 use actix_web::{
     dev::HttpServiceFactory,
-    http::header::{HeaderName, AUTHORIZATION},
     post,
     web::{self, Data, Json},
-    HttpRequest, Responder,
+    Responder,
 };
-use repository::{migrations::Version, syncv7::SyncError};
 use service::{
     service_provider::ServiceProvider,
     sync_v7::{
-        api::{self, Common, APP_VERSION_HEADER, HARDWARE_ID_HEADER},
+        api::{self, site_info::SiteInfoInput},
         sync_on_central as handlers,
     },
 };
@@ -23,7 +21,7 @@ pub fn sync_v7_on_central() -> impl HttpServiceFactory {
 
 #[post("/get_site_info")]
 async fn get_site_info(
-    request: Json<api::site_info::Request>,
+    request: Json<SiteInfoInput>,
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     let response: api::site_info::Response =
@@ -50,37 +48,4 @@ async fn push(
     Ok(web::Json(
         handlers::push(service_provider.into_inner(), request.into_inner()).await,
     ))
-}
-
-pub fn extract_site_auth(req: &HttpRequest) -> Result<Common, SyncError> {
-    let headers = req.headers();
-
-    let token = headers
-        .get(AUTHORIZATION)
-        .and_then(|h| h.to_str().ok())
-        .and_then(|s| s.strip_prefix("Bearer "))
-        .ok_or_else(|| {
-            SyncError::Other(
-                "Missing or incorrect Authorization header (expected `Bearer <token>`)".to_string(),
-            )
-        })?
-        .to_string();
-
-    let hardware_id = headers
-        .get(HeaderName::from_static(HARDWARE_ID_HEADER))
-        .and_then(|h| h.to_str().ok())
-        .ok_or(SyncError::FailedToGetHardwareId)?
-        .to_string();
-
-    let version = headers
-        .get(HeaderName::from_static(APP_VERSION_HEADER))
-        .and_then(|h| h.to_str().ok())
-        .map(Version::from_str)
-        .ok_or_else(|| SyncError::Other("Missing app-version header".to_string()))?;
-
-    Ok(Common {
-        token,
-        hardware_id,
-        version,
-    })
 }
