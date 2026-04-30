@@ -9,13 +9,10 @@ use repository::{migrations::Version, syncv7::SyncError};
 use service::{
     service_provider::ServiceProvider,
     sync_v7::{
-        api::{self, Common},
+        api::{self, Common, APP_VERSION_HEADER, HARDWARE_ID_HEADER},
         sync_on_central as handlers,
     },
 };
-
-const HARDWARE_ID_HEADER: &str = "HardwareId";
-const APP_VERSION_HEADER: &str = "appVersion";
 
 pub fn sync_v7_on_central() -> impl HttpServiceFactory {
     web::scope("sync_v7")

@@ -12,6 +12,9 @@ pub mod push;
 pub mod site_info;
 pub mod status;
 
+pub const HARDWARE_ID_HEADER: &str = "hardware-id";
+pub const APP_VERSION_HEADER: &str = "app-version";
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Common {
@@ -107,11 +110,11 @@ impl SyncApiV7 {
 
         let hardware_id = HeaderValue::from_str(&common.hardware_id)
             .map_err(|e| SyncError::Other(e.to_string()))?;
-        headers.insert("HardwareId", hardware_id);
+        headers.insert(HARDWARE_ID_HEADER, hardware_id);
 
         let app_version = HeaderValue::from_str(&common.version.to_string())
             .map_err(|e| SyncError::Other(e.to_string()))?;
-        headers.insert("appVersion", app_version);
+        headers.insert(APP_VERSION_HEADER, app_version);
 
         Ok(headers)
     }
