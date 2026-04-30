@@ -230,7 +230,7 @@ impl<'a> StockLineRepository<'a> {
                     if search_for_item.is_some() || item_code_or_name.is_some() {
                         let item_filter = ItemFilter {
                             code_or_name: search_for_item.or(item_code_or_name),
-                            ..ItemFilter::new().is_visible(true).is_active(true)
+                            ..ItemFilter::new().is_active(true)
                         };
                         let item_query = ItemRepository::create_filtered_query(
                             store_id.clone(),
