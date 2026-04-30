@@ -202,17 +202,16 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
     // Yarn install
     run_command_with_error(
         Command::new(YARN_COMMAND)
-            .args(["install", "--cwd"])
-            .arg(plugin_root),
+            .arg("install")
+            .current_dir(plugin_root),
     )
     .map_err(|e| Error::FailedToYarnInstall(plugin_root.to_path_buf(), e))?;
 
     // Yarn build plugin
     run_command_with_error(
         Command::new(YARN_COMMAND)
-            .arg("--cwd")
-            .arg(plugin_root)
-            .arg("build-plugin"),
+            .arg("build-plugin")
+            .current_dir(plugin_root),
     )
     .map_err(|e| Error::FailedToBuildPlugin(plugin_root.to_path_buf(), e))?;
 
