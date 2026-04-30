@@ -167,7 +167,7 @@ async fn request_and_set_site_info_v7(
     use RequestAndSetSiteInfoError as Error;
 
     if let (Some(_token), Some(site_id), Some(central_site_id)) = (
-        repo.get_string(KeyType::SettingsSyncTokenV7)?,
+        repo.get_string(KeyType::SettingsSyncV7Token)?,
         repo.get_i32(KeyType::SettingsSyncSiteId)?,
         repo.get_i32(KeyType::SettingsSyncCentralServerSiteId)?,
     ) {
@@ -212,7 +212,7 @@ fn save_v7_token_to_key_value(
     repo: &KeyValueStoreRepository<'_>,
     output: &SiteInfoOutput,
 ) -> Result<(), RepositoryError> {
-    repo.set_string(KeyType::SettingsSyncTokenV7, Some(output.token.clone()))?;
+    repo.set_string(KeyType::SettingsSyncV7Token, Some(output.token.clone()))?;
     repo.set_i32(KeyType::SettingsSyncSiteId, Some(output.site_id))?;
     repo.set_i32(
         KeyType::SettingsSyncCentralServerSiteId,

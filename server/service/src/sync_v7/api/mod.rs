@@ -80,7 +80,7 @@ impl SyncApiV7 {
             .map_err(|e| SyncError::Other(format_error(&e)))?;
 
         let token = KeyValueStoreRepository::new(&ctx.connection)
-            .get_string(KeyType::SettingsSyncTokenV7)
+            .get_string(KeyType::SettingsSyncV7Token)
             .map_err(SyncError::DatabaseError)?
             .ok_or_else(|| {
                 SyncError::Other("Sync v7 token not set — site must initialise first".to_string())

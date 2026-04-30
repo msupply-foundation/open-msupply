@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE key_type ADD VALUE IF NOT EXISTS 'SETTINGS_SYNC_TOKEN_V7';
+                    ALTER TYPE key_type ADD VALUE IF NOT EXISTS 'SETTINGS_SYNC_V7_TOKEN';
                 "#
             )?;
         }
