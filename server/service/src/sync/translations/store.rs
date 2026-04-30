@@ -61,9 +61,11 @@ impl SyncTranslation for StoreTranslation {
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
         // HIS -> Hospital Information System (no name_id)
         // SM -> Supervisor Store
-        if let "HIS" | "SM" = &data.code[..] {
+        // DRG -> Drug Registration (name_id exists but no name with that id)
+        // Other names that don't exist are handled below...
+        if let "HIS" | "DRG" | "SM" = &data.code[..] {
             return Ok(PullTranslateResult::Ignored(
-                "System store not implemented".to_string(),
+                "System names not implemented for store translation".to_string(),
             ));
         }
 
