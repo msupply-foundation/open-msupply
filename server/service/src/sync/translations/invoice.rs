@@ -393,14 +393,7 @@ impl SyncTranslation for InvoiceTranslation {
 
         let currency_id = match data.currency_id {
             Some(currency_id) => {
-                // SL currency fix, please remove later!
-                const OLD_CURRENCY_ID: &str = "E874EBB014D34D499A22C7287DC7EAA1";
-                const NEW_CURRENCY_ID: &str = "31E451B60092594AB0DBC3A8C57B36CA";
-                if currency_id == OLD_CURRENCY_ID {
-                    Some(NEW_CURRENCY_ID.to_string())
-                } else {
-                    Some(currency_id)
-                }
+                Some(currency_id)
             }
             None => {
                 let currency_id = CurrencyRepository::new(connection)
