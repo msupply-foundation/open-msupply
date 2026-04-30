@@ -298,6 +298,10 @@ mutation createInventoryAdjustment(
           __typename
           description
         }
+        ... on LedgerWouldGoBelowZero {
+          __typename
+          description
+        }
         ... on AdjustmentReasonNotProvided {
           __typename
           description

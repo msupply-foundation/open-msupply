@@ -59,9 +59,11 @@ export const fetchPlugin = (
   pluginNode: FrontendPluginMetadataNode
 ): Promise<Container> =>
   new Promise((resolve, reject) => {
-    // We define a script tag to use the browser for fetching the plugin js file
+    // We define a script tag to use the browser for fetching the plugin js file.
+    // ?v=<hash> makes the URL change whenever the bundle's bytes change, so the
+    // browser can safely cache the response with `immutable, max-age=1y`.
     const script = document.createElement('script');
-    script.src = `${Environment.API_HOST}/frontend_plugins/${pluginNode.path}`;
+    script.src = `${Environment.API_HOST}/frontend_plugins/${pluginNode.path}?v=${pluginNode.hash}`;
     script.onerror = err => {
       const message = typeof err === 'string' ? err : 'unknown';
       reject(

@@ -1,25 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
   PlusCircleIcon,
   AppBarButtonsPortal,
+  ButtonWithIcon,
   Grid,
   useTranslation,
   ToggleState,
   useNavigate,
   RouteBuilder,
   useAuthContext,
-  useUrlQuery,
   useCallbackWithPermission,
   useNotification,
+  usePreferences,
   UserPermission,
   SplitButtonOption,
   SplitButton,
 } from '@openmsupply-client/common';
 
-import { ExportSelector } from '@openmsupply-client/system';
 import {
+  ExportSelector,
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
@@ -186,7 +187,7 @@ export const AddButton = ({
   onNewShipmentExternal: () => void;
 }) => {
   const t = useTranslation();
-  const currentTab = useUrlQuery().urlQuery['tab'];
+  const { useProcurementFunctionality } = usePreferences();
 
   const handleNewShipment = useCallbackWithPermission(
     UserPermission.InboundShipmentMutate,
@@ -203,27 +204,19 @@ export const AddButton = ({
       value: 'new-shipment',
       label: t('button.new-shipment'),
     },
-    {
-      value: 'new-external-shipment',
-      label: t('button.new-external-shipment'),
-    },
+    ...(useProcurementFunctionality
+      ? [
+          {
+            value: 'new-external-shipment',
+            label: t('button.new-external-shipment'),
+          },
+        ]
+      : []),
   ];
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
   >(allOptions[0] ?? { value: '', label: '' });
-
-  useEffect(() => {
-    if (currentTab === t('label.external')) {
-      const externalOption = allOptions.find(
-        o => o.value === 'new-external-shipment'
-      );
-      if (externalOption) setSelectedOption(externalOption);
-    } else {
-      const internalOption = allOptions.find(o => o.value === 'new-shipment');
-      if (internalOption) setSelectedOption(internalOption);
-    }
-  }, [currentTab]);
 
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
@@ -241,17 +234,25 @@ export const AddButton = ({
     handleOptionSelection(option);
   };
 
-  return (
-    <>
-      <SplitButton
-        color="primary"
-        options={allOptions}
-        selectedOption={selectedOption}
-        onSelectOption={onSelectOption}
-        onClick={handleOptionSelection}
-        openFrom="bottom"
+  if (allOptions.length === 1) {
+    return (
+      <ButtonWithIcon
         Icon={<PlusCircleIcon />}
+        label={t('button.new-shipment')}
+        onClick={handleNewShipment}
       />
-    </>
+    );
+  }
+
+  return (
+    <SplitButton
+      color="primary"
+      options={allOptions}
+      selectedOption={selectedOption}
+      onSelectOption={onSelectOption}
+      onClick={handleOptionSelection}
+      openFrom="bottom"
+      Icon={<PlusCircleIcon />}
+    />
   );
 };

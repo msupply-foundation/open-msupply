@@ -58,7 +58,7 @@ impl SyncTranslation for IndicatorValue {
             indicator_line_id,
             store_id,
             value,
-        } = serde_json::from_value::<LegacyIndicatorValue>(sync_record.data.0.clone())?;
+        } = sync_record.deserialize()?;
         let customer_name_id = StoreRepository::new(connection)
             .query_one(StoreFilter::new().id(EqualFilter::equal_to(customer_store_id.to_string())))?
             .ok_or(anyhow::anyhow!(
@@ -104,7 +104,9 @@ impl SyncTranslation for IndicatorValue {
         } = indicator_value.indicator_value_row;
 
         let customer_store_id = StoreRepository::new(connection)
-            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())))?
+            .query_one(
+                StoreFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())),
+            )?
             .ok_or(anyhow::anyhow!(
                 "The store record for customer_name_id could not be found! {customer_name_id}"
             ))?

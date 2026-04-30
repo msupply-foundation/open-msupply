@@ -3,7 +3,7 @@ pub mod queries;
 
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use mutations::{upsert_site, UpsertSiteInput, UpsertSiteResponse};
+use mutations::{delete_site, upsert_site, DeleteSiteNode, UpsertSiteInput, UpsertSiteResponse};
 use queries::{SiteFilterInput, SiteSortInput, SitesResponse};
 
 #[derive(Default, Clone)]
@@ -17,6 +17,10 @@ impl CentralSiteMutations {
         input: UpsertSiteInput,
     ) -> Result<UpsertSiteResponse> {
         upsert_site(ctx, input)
+    }
+
+    pub async fn delete_site(&self, ctx: &Context<'_>, site_id: i32) -> Result<DeleteSiteNode> {
+        delete_site(ctx, site_id)
     }
 }
 

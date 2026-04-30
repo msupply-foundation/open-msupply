@@ -69,7 +69,7 @@ pub fn validate(
     // in Received or Verified status. Once moved back it cannot be moved forward again.
     if let Some(received_datetime) = patch.received_datetime {
         let backdating = Backdating.load(connection, None)?;
-        if !backdating.enabled {
+        if !backdating.shipments_enabled {
             return Err(BackdatingNotEnabled);
         }
 

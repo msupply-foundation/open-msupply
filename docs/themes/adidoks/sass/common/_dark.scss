@@ -21,6 +21,7 @@ $navbar-dark-active-color:          $link-color-dark;
 body.dark {
   background: $body-bg-dark;
   color: $body-color-dark;
+  color-scheme: dark;
 }
 
 body.dark a {
@@ -187,13 +188,12 @@ body.dark .docs-navigation {
   border-top: 1px solid $border-dark;
 }
 
-body.dark pre code::-webkit-scrollbar-thumb {
-  background: $border-dark;
+body.dark pre.giallo {
+  color-scheme: dark !important;
 }
 
-body.dark pre:not(.hljs) {
-  background: $body-overlay-dark;
-  color: $body-color-dark;
+body.dark pre code::-webkit-scrollbar-thumb {
+  background: $border-dark;
 }
 
 body.dark pre code:hover {

@@ -514,6 +514,7 @@ export type AssetLogFilterInput = {
   logDatetime?: InputMaybe<DatetimeFilterInput>;
   reasonId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStatusInput>;
+  type?: InputMaybe<EqualFilterAssetLogTypeInput>;
   user?: InputMaybe<StringFilterInput>;
 };
 
@@ -521,12 +522,13 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['NaiveDateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
-  type?: Maybe<Scalars['String']['output']>;
+  type: AssetLogTypeNodeType;
   user?: Maybe<UserNode>;
 };
 
@@ -602,6 +604,11 @@ export enum AssetLogStatusNodeType {
   NotFunctioning = 'NOT_FUNCTIONING',
   NotInUse = 'NOT_IN_USE',
   Unserviceable = 'UNSERVICEABLE',
+}
+
+export enum AssetLogTypeNodeType {
+  StatusUpdate = 'STATUS_UPDATE',
+  TemperatureMapping = 'TEMPERATURE_MAPPING',
 }
 
 export type AssetLogsResponse = AssetLogConnector;
@@ -752,14 +759,16 @@ export type AvailableVolumeAtLocationTypeNode = {
 };
 
 export type BackdatingInput = {
-  enabled: Scalars['Boolean']['input'];
+  inventoryAdjustmentsEnabled: Scalars['Boolean']['input'];
   maxDays: Scalars['Int']['input'];
+  shipmentsEnabled: Scalars['Boolean']['input'];
 };
 
 export type BackdatingNode = {
   __typename: 'BackdatingNode';
-  enabled: Scalars['Boolean']['output'];
+  inventoryAdjustmentsEnabled: Scalars['Boolean']['output'];
   maxDays: Scalars['Int']['output'];
+  shipmentsEnabled: Scalars['Boolean']['output'];
 };
 
 export type BarcodeNode = {
@@ -1330,12 +1339,39 @@ export type CentralServerMutationNode = {
   plugins: CentralPluginMutations;
   preferences: PreferenceMutations;
   reports: CentralReportMutations;
+  site: CentralSiteMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
   plugin: CentralPluginQueries;
+  site: CentralSiteQueries;
+};
+
+export type CentralSiteMutations = {
+  __typename: 'CentralSiteMutations';
+  deleteSite: DeleteSiteNode;
+  upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsDeleteSiteArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsUpsertSiteArgs = {
+  input: UpsertSiteInput;
+};
+
+export type CentralSiteQueries = {
+  __typename: 'CentralSiteQueries';
+  sites: SitesResponse;
+};
+
+export type CentralSiteQueriesSitesArgs = {
+  filter?: InputMaybe<SiteFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SiteSortInput>>;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
@@ -1401,6 +1437,11 @@ export type ClinicianSortInput = {
 };
 
 export type CliniciansResponse = ClinicianConnector;
+
+export type CodeMustBeProvided = UpsertSiteErrorInterface & {
+  __typename: 'CodeMustBeProvided';
+  description: Scalars['String']['output'];
+};
 
 export type ConfigureNamePropertiesResponse = Success;
 
@@ -1550,6 +1591,7 @@ export type CreateInventoryAdjustmentError = {
 export type CreateInventoryAdjustmentInput = {
   adjustment: Scalars['Float']['input'];
   adjustmentType: AdjustmentTypeInput;
+  backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
@@ -2160,6 +2202,11 @@ export type DeleteRnRFormInput = {
 
 export type DeleteRnRFormResponse = DeleteResponse;
 
+export type DeleteSiteNode = {
+  __typename: 'DeleteSiteNode';
+  id: Scalars['Int']['output'];
+};
+
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
   error: DeleteStocktakeErrorInterface;
@@ -2664,6 +2711,13 @@ export type EqualFilterActivityLogTypeInput = {
   notEqualTo?: InputMaybe<ActivityLogNodeType>;
 };
 
+export type EqualFilterAssetLogTypeInput = {
+  equalAny?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  equalTo?: InputMaybe<AssetLogTypeNodeType>;
+  notEqualAll?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  notEqualTo?: InputMaybe<AssetLogTypeNodeType>;
+};
+
 export type EqualFilterBigFloatingNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
   equalAnyOrNull?: InputMaybe<Array<Scalars['Float']['input']>>;
@@ -2933,6 +2987,12 @@ export type FormSchemaSortInput = {
 export type FrontendPluginMetadataNode = {
   __typename: 'FrontendPluginMetadataNode';
   code: Scalars['String']['output'];
+  /**
+   * Hash of the plugin's bundled file contents — clients append this as a
+   * cache-busting URL token (?v=...) so the browser only refetches when the
+   * bundle's bytes change.
+   */
+  hash: Scalars['String']['output'];
   path: Scalars['String']['output'];
 };
 
@@ -3155,9 +3215,10 @@ export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  logDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   reasonId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<AssetLogStatusNodeType>;
-  type?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<AssetLogTypeNodeType>;
 };
 
 export type InsertAssetLogReasonError = {
@@ -4995,6 +5056,12 @@ export type LedgerSortInput = {
   key: LedgerSortFieldInput;
 };
 
+export type LedgerWouldGoBelowZero = InsertInventoryAdjustmentErrorInterface & {
+  __typename: 'LedgerWouldGoBelowZero';
+  description: Scalars['String']['output'];
+  stockLine: StockLineNode;
+};
+
 export type LineDeleteError = DeleteResponseRequisitionErrorInterface & {
   __typename: 'LineDeleteError';
   description: Scalars['String']['output'];
@@ -6207,6 +6274,11 @@ export type NameFilterInput = {
   type?: InputMaybe<EqualFilterTypeInput>;
 };
 
+export type NameMustBeProvided = UpsertSiteErrorInterface & {
+  __typename: 'NameMustBeProvided';
+  description: Scalars['String']['output'];
+};
+
 export type NameNode = {
   __typename: 'NameNode';
   address1?: Maybe<Scalars['String']['output']>;
@@ -6523,6 +6595,11 @@ export type PaginationInput = {
   first?: InputMaybe<Scalars['Int']['input']>;
   /** First returned item is at the `offset` position in the full list */
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type PasswordRequired = UpsertSiteErrorInterface & {
+  __typename: 'PasswordRequired';
+  description: Scalars['String']['output'];
 };
 
 export type PatientConnector = {
@@ -7196,6 +7273,7 @@ export type PropertyNode = {
 
 export enum PropertyNodeValueType {
   Boolean = 'BOOLEAN',
+  Date = 'DATE',
   Float = 'FLOAT',
   Integer = 'INTEGER',
   String = 'STRING',
@@ -7603,6 +7681,7 @@ export type QueriesActivityLogsArgs = {
   filter?: InputMaybe<ActivityLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ActivityLogSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 export type QueriesAllReportVersionsArgs = {
@@ -9184,6 +9263,39 @@ export type ShippingMethodNode = {
 
 export type ShippingMethodsResponse = ShippingMethodConnector;
 
+export type SiteConnector = {
+  __typename: 'SiteConnector';
+  nodes: Array<SiteNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SiteFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterNumberInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type SiteNode = {
+  __typename: 'SiteNode';
+  code: Scalars['String']['output'];
+  hardwareId?: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+};
+
+export enum SiteSortFieldInput {
+  Code = 'code',
+  Id = 'id',
+  Name = 'name',
+}
+
+export type SiteSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: SiteSortFieldInput;
+};
+
+export type SitesResponse = SiteConnector;
+
 export type SnapshotCountCurrentCountMismatch =
   UpdateStocktakeErrorInterface & {
     __typename: 'SnapshotCountCurrentCountMismatch';
@@ -9662,6 +9774,7 @@ export type SupplierReturnInput = {
   inboundShipmentId?: InputMaybe<Scalars['String']['input']>;
   supplierId: Scalars['String']['input'];
   supplierReturnLines: Array<SupplierReturnLineInput>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SupplierReturnLineConnector = {
@@ -10337,6 +10450,7 @@ export type UpdateOutboundShipmentError = {
 };
 
 export type UpdateOutboundShipmentInput = {
+  backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
@@ -11223,6 +11337,25 @@ export type UpsertPreferencesInput = {
   >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
+
+export type UpsertSiteError = {
+  __typename: 'UpsertSiteError';
+  error: UpsertSiteErrorInterface;
+};
+
+export type UpsertSiteErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertSiteInput = {
+  clearHardwareId?: InputMaybe<Scalars['Boolean']['input']>;
+  code?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  password?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpsertSiteResponse = SiteNode | UpsertSiteError;
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;

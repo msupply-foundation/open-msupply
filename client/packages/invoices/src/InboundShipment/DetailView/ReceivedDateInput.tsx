@@ -25,7 +25,7 @@ export const ReceivedDateInput = () => {
   } = useInboundShipment();
 
   const { backdating } = usePreferences();
-  const allowBackdatingOfShipments = backdating?.enabled;
+  const allowBackdatingOfShipments = backdating?.shipmentsEnabled;
   const maximumBackdatingDays = backdating?.maxDays;
 
   const isReceived =
