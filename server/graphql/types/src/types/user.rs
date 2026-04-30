@@ -4,9 +4,11 @@ use async_graphql::{
 };
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
+    loader::{HomeCurrencyLoader, NameRowLoader},
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
-use repository::{CurrencyFilter, User, UserStore};
+use repository::{User, UserStore};
 use service::permission::permissions;
 
 pub struct UserStoreNode {
@@ -64,24 +66,8 @@ impl UserStoreNode {
         &self.user_store.store_row.created_date
     }
     pub async fn home_currency_code(&self, ctx: &Context<'_>) -> Result<Option<String>> {
-        let service_provider = ctx.service_provider();
-        let currency_provider = &service_provider.currency_service;
-        let service_context = service_provider.basic_context()?;
-
-        let home_currency = currency_provider
-            .get_currencies(
-                &service_context,
-                Some(CurrencyFilter::new().is_home_currency(true)),
-                None,
-            )
-            .map_err(StandardGraphqlError::from_list_error)?
-            .rows
-            .pop();
-
-        match home_currency {
-            Some(home_currency) => Ok(Some(home_currency.currency_row.code)),
-            None => Ok(None),
-        }
+        let loader = ctx.get_loader::<DataLoader<HomeCurrencyLoader>>();
+        Ok(loader.load_one(()).await?)
     }
 
     pub async fn is_disabled(&self) -> bool {
@@ -154,16 +140,13 @@ impl UserNode {
         ctx: &Context<'_>,
         store_id: Option<String>,
     ) -> Result<UserStorePermissionConnector> {
-        let service_provider = &ctx.service_provider().connection_manager;
+        let service_context = ctx.service_provider().basic_context()?;
 
-        let result = match store_id {
-            Some(store_id) => permissions(
-                service_provider,
-                &self.user.user_row.id.clone(),
-                Some(store_id),
-            ),
-            None => permissions(service_provider, &self.user.user_row.id.clone(), None),
-        }?;
+        let result = permissions(
+            &service_context.connection,
+            &self.user.user_row.id,
+            store_id,
+        )?;
 
         Ok(UserStorePermissionConnector::from_vec(result))
     }

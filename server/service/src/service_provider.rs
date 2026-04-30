@@ -88,6 +88,8 @@ use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
     StoreFilter, StoreSort,
 };
+
+use crate::subscription::SubscriptionTriggerHandle;
 use util::constants::SYSTEM_USER_ID;
 
 pub struct ServiceProvider {
@@ -204,6 +206,9 @@ pub struct ServiceProvider {
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
+    // Subscription trigger handle — used by SyncLogger and changelog callbacks
+    // to send events to the shared subscription worker.
+    pub subscription_trigger: SubscriptionTriggerHandle,
 }
 
 pub struct ServiceContext {
@@ -228,6 +233,7 @@ impl ServiceProvider {
             LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
+            SubscriptionTriggerHandle::new_void(),
         )
     }
 
@@ -238,6 +244,7 @@ impl ServiceProvider {
         ledger_fix_trigger: LedgerFixTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
+        subscription_trigger: SubscriptionTriggerHandle,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -317,6 +324,7 @@ impl ServiceProvider {
             contact_service: Box::new(ContactService {}),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
+            subscription_trigger,
         }
     }
 
