@@ -49,12 +49,12 @@ pub fn get_site_info(
         .map_err(|e| SyncError::Other(e.to_string()))?;
 
     let site = get_site_by_name(&ctx.connection, &input.name)?
-        .ok_or_else(|| SyncError::SiteNotFound(input.name.clone()))?;
+        .ok_or(SyncError::InvalidSiteNameOrPassword)?;
 
     let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
         .map_err(|e| SyncError::Other(e.to_string()))?;
     if !valid {
-        return Err(SyncError::IncorrectPassword);
+        return Err(SyncError::InvalidSiteNameOrPassword);
     }
 
     if site.token.is_some() {
@@ -383,14 +383,14 @@ mod tests {
         let mut unknown = input();
         unknown.name = "nonexistent".to_string();
         let err = super::get_site_info(&service_provider, unknown).unwrap_err();
-        assert!(matches!(err, SyncError::SiteNotFound(_)));
+        assert!(matches!(err, SyncError::InvalidSiteNameOrPassword));
 
         // Bad password
         test_site(&connection, None);
         let mut bad = input();
         bad.password_sha256 = "wrong".to_string();
         let err = super::get_site_info(&service_provider, bad).unwrap_err();
-        assert!(matches!(err, SyncError::IncorrectPassword));
+        assert!(matches!(err, SyncError::InvalidSiteNameOrPassword));
 
         // Token already set
         test_site(&connection, Some("existing_token".to_string()));
