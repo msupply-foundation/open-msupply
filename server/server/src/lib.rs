@@ -69,7 +69,14 @@ mod logging;
 pub mod middleware;
 mod schedule_plugin;
 mod scheduled_tasks;
+#[cfg(not(all(debug_assertions, any(target_os = "macos", target_os = "linux"))))]
 mod serve_frontend;
+#[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
+mod dev_server;
+#[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
+mod serve_frontend_dev;
+#[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
+use serve_frontend_dev as serve_frontend;
 pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
@@ -282,11 +289,23 @@ pub async fn start_server(
     let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
+    // In dev mode, spawn webpack-dev-server for frontend hot reloading
+    #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
+    let (dev_server, dev_server_process) = {
+        match dev_server::spawn(settings.server.port).await {
+            Ok((ds, proc)) => (Some(Data::new(ds)), Some(proc)),
+            Err(e) => {
+                log::warn!("Failed to start webpack dev server: {e}. Frontend will not be available.");
+                (None, None)
+            }
+        }
+    };
+
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
     let closure_schema = graphql_schema.clone();
     let mut http_server = HttpServer::new(move || {
-        App::new()
+        let app = App::new()
             .app_data(Data::new(closure_settings.clone()))
             .wrap(logger_middleware())
             .wrap(cors_policy(&closure_settings))
@@ -309,9 +328,28 @@ pub async fn start_server(
             .configure(config_support)
             .configure(config_print)
             .configure(config_custom_translations)
-            .configure(config_upload)
-            // Needs to be last to capture all unmatches routes
-            .configure(config_serve_frontend)
+            .configure(config_upload);
+
+        // In dev mode, add dev server data and proxy; in release, serve embedded frontend.
+        // The awc Client is !Send (internal Rc), so it can't go through Data<T> — register
+        // it per worker via app_data and pull it out with req.app_data::<awc::Client>() in
+        // the handler. One Client per worker means the connection pool is reused.
+        #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
+        let app = {
+            if let Some(ref ds) = dev_server {
+                app.app_data(ds.clone())
+                    .app_data(awc::Client::new())
+                    .configure(config_serve_frontend)
+            } else {
+                app
+            }
+        };
+        #[cfg(not(all(debug_assertions, any(target_os = "macos", target_os = "linux"))))]
+        let app = app
+            // Needs to be last to capture all unmatched routes
+            .configure(config_serve_frontend);
+
+        app
     })
     .disable_signals();
 
@@ -339,6 +377,10 @@ pub async fn start_server(
         Ok(result) => result,
         Err(e) => {
             log::error!("Failed to run DB migrations: {}", format_error(&e));
+            // std::process::exit bypasses Drop — explicitly drop so the dev-server
+            // process group gets SIGTERM before we vanish
+            #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
+            drop(dev_server_process);
             std::process::exit(1);
         }
     };
@@ -464,6 +506,11 @@ pub async fn start_server(
         Some(_) = off_switch.recv() => {
             status_log.log("Server received request to stop with off switch");
         },
+        // SIGHUP from terminal close / IDE restart — without this the dev-server child gets orphaned.
+        // Pends forever on platforms where the dev server isn't spawned.
+        _ = wait_for_sighup() => {
+            status_log.log("Server received SIGHUP, stopping server");
+        },
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
@@ -473,11 +520,29 @@ pub async fn start_server(
         subscription_error = subscription_task_handle => unreachable!("Subscription task stopped unexpectedly: {:?}", subscription_error),
     };
 
+    // Kill dev server first so it doesn't hold connections open
+    #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
+    drop(dev_server_process);
+
     server_handle.stop(true).await;
 
     status_log.log("Server stopped successfully");
 
     Ok(())
+}
+
+/// Resolves on SIGHUP under macOS/Linux debug builds (where we have a dev-server child to clean up).
+/// On every other target it pends forever, so the surrounding `select!` arm is a no-op.
+async fn wait_for_sighup() {
+    #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
+    {
+        let mut sig =
+            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::hangup())
+                .expect("Failed to install SIGHUP handler");
+        sig.recv().await;
+    }
+    #[cfg(not(all(debug_assertions, any(target_os = "macos", target_os = "linux"))))]
+    std::future::pending::<()>().await
 }
 
 struct StatusLog<'a>(&'a StorageConnection);

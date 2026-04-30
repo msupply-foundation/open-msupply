@@ -85,7 +85,9 @@ cd ..
 yarn start
 ```
 
-This will compile the React app and launch a browser on <http://localhost:3003>. We're using mostly chrome and firefox.. but you be you!
+On **macOS or Linux** in dev builds, `cd server && cargo run` is enough on its own — the backend auto-spawns webpack-dev-server as a child process, proxies HMR through, and opens a browser to <http://localhost:8000>. Use this *instead of* `yarn start` to avoid running two webpack instances. Windows users should keep using `yarn start`.
+
+`yarn start` will compile the React app and launch a browser on <http://localhost:3003>. We're using mostly chrome and firefox.. but you be you!
 Running `yarn start-remote` will connect you to our [demo server](https://demo-open.msupply.org/)
 You can log in using:
 
