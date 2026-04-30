@@ -190,7 +190,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     0.0
                 };
                 log::info!(
-                    "Integration progress: integrated: {},  total: {}  errored: {} ({:.1} rec/s, last table: {})",
+                    "Integration progress: integrated: {}, total: {}, errored: {} ({:.1} rec/s, last table: {})",
                     number_of_records_integrated,
                     total_to_integrate,
                     error_count,
