@@ -74,7 +74,6 @@ impl<'a> TranslationAndIntegration<'a> {
         let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
         let mut error_count: u32 = 0;
-        let mut batch_error_count: u32 = 0;
 
         // Try translate
         // Record initial progress (will be set as total progress)
@@ -100,8 +99,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     self.sync_buffer
                         .record_integration_error(sync_record, &translation_error)?;
                     result.insert_error(&sync_record.table_name);
-                    error_count += 1;
-                    batch_error_count += 1;
+                    error_count += 1; // We want to count these as errors as this is likely to be FK or other data issues, that might affect performance of integration and we want to track that.
                     warn!(
                         "{:?} {:?} {:?}",
                         translation_error, sync_record.record_id, sync_record.table_name
@@ -129,8 +127,7 @@ impl<'a> TranslationAndIntegration<'a> {
                             &anyhow::anyhow!("Ignored: {}", ignore_message),
                         )?;
                         result.insert_error(&sync_record.table_name);
-                        error_count += 1;
-                    batch_error_count += 1;
+                        // Don't count this as an error in the count, it's valid to have records that are ignored based on translation logic.
 
                         debug!(
                             "Ignored record: {:?} {:?} {:?}",
@@ -152,7 +149,7 @@ impl<'a> TranslationAndIntegration<'a> {
                 self.sync_buffer
                     .record_integration_error(sync_record, &error)?;
                 result.insert_error(&sync_record.table_name);
-                error_count += 1;
+                // Don't count this as an error in the count, it's valid to have no translators for a record matching.
                 warn!(
                     "{:?} {:?} {:?}",
                     error, sync_record.record_id, sync_record.table_name
@@ -176,7 +173,6 @@ impl<'a> TranslationAndIntegration<'a> {
                         .record_integration_error(sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);
                     error_count += 1;
-                    batch_error_count += 1;
                     warn!(
                         "{:?} {:?} {:?}",
                         error, sync_record.record_id, sync_record.table_name
@@ -194,16 +190,14 @@ impl<'a> TranslationAndIntegration<'a> {
                     0.0
                 };
                 log::info!(
-                    "Integration progress: integrated: {},  total: {}  errored: {} ({:.1} rec/s, errors: {}, last table: {})",
+                    "Integration progress: integrated: {},  total: {}  errored: {} ({:.1} rec/s, last table: {})",
                     number_of_records_integrated,
                     total_to_integrate,
                     error_count,
                     rec_per_sec,
-                    batch_error_count,
                     sync_record.table_name
                 );
                 last_progress_time = Instant::now();
-                batch_error_count = 0;
             }
         }
 
