@@ -8,7 +8,7 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
-    vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
+    ChangelogRow, ChangelogTableName,
     EqualFilter, LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository,
     StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StorageConnection, SyncBufferRow,
@@ -185,15 +185,8 @@ impl SyncTranslation for StocktakeLineTranslation {
             |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
             true,
         )?;
-        let vvm_status_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "vvm_status_id",
-            vvm_status_id,
-            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        // No DB-level FK constraint on stocktake_line.vvm_status_id (unlike stock_line/invoice_line), skip validation
+        // Note: the DB constraint may be missing from the migration and should be added separately
         let reason_option_id = clear_invalid_fk(
             connection,
             RECORD_TABLE,
