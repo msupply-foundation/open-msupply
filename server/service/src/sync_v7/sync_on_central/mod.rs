@@ -147,6 +147,10 @@ fn validate(
         _ => return Err(SyncError::HardwareIdMismatch),
     }
 
+    if let Some(lock) = check_site_lock(site.id) {
+        return Err(SyncError::SiteLockError(lock));
+    }
+
     Ok((site, ctx))
 }
 
@@ -160,9 +164,6 @@ fn get_central_site_id(connection: &StorageConnection) -> Result<i32, SyncError>
 /// Send Records to a remote open-mSupply Server
 pub async fn pull(service_provider: &ServiceProvider, request: pull::Request) -> pull::Response {
     let (site, ctx) = validate(service_provider, &request.common)?;
-    if let Some(lock) = check_site_lock(site.id) {
-        return Err(SyncError::SiteLockError(lock));
-    }
 
     let filter = Site::SiteId(site.id).all_data_for_site(request.input.is_initialising);
 
@@ -182,9 +183,6 @@ pub async fn push(
     request: push::Request,
 ) -> push::Response {
     let (site, ctx) = validate(&service_provider, &request.common)?;
-    if let Some(lock) = check_site_lock(site.id) {
-        return Err(SyncError::SiteLockError(lock));
-    }
     let site_id = site.id;
 
     let SyncBatchV7 {
