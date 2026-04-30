@@ -255,6 +255,7 @@ impl Upsert for PurchaseOrderLineRow {
     ) -> Result<(), RepositoryError> {
         PurchaseOrderLineRowRepository::new(con)._upsert(self)?;
 
+        let repo = ChangelogRepository::new(con);
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
