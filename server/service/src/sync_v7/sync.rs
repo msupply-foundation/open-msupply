@@ -190,8 +190,10 @@ impl<'a> SyncV7<'a> {
         }
 
         let cursor_controller = CursorController::new(KeyType::SyncPushCursorV7);
+        // TODO use SourceSiteId, and remove from other uses
         let site_id = get_current_site_id(self.connection)?;
 
+        // TODO think about just the filter for source site id = current site on changelog
         let filter = Site::SiteId(site_id).remote_data_for_site();
 
         loop {
@@ -201,7 +203,13 @@ impl<'a> SyncV7<'a> {
                 SyncBatchV7::generate(self.connection, filter.clone(), cursor, self.batch_size)?;
 
             let record_count = batch.records.len();
+
+            // TODO, we need to rethink logger progress by max cursor vs current cursor
             logger.progress(record_count as i64)?;
+
+            // TODO if we don't get any records from changelog filtering, we should really set the
+            // cursor controller to the latest cursor in the changelog
+            // this relies on the filtering of changelog to be always trying to return the batch size number
 
             let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
                 break;
