@@ -33,6 +33,8 @@ diesel_json_type! {
         HardwareIdMismatch,
         #[error("Failed to get hardware id")]
         FailedToGetHardwareId,
+        #[error("Missing auth header: {0}")]
+        MissingAuthHeader(String),
         #[error(transparent)]
         SiteLockError(#[from] SiteLockError),
         #[error("Could not connect to server {url} {e}")]

@@ -1,10 +1,10 @@
 use crate::service_provider::ServiceProvider;
 use repository::{migrations::Version, syncv7::SyncError, KeyType, KeyValueStoreRepository};
 use reqwest::{
-    header::{HeaderMap, HeaderValue, AUTHORIZATION},
+    header::{HeaderMap, HeaderValue, IntoHeaderName, AUTHORIZATION},
     Response,
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 use util::{format_error, with_retries, RetrySeconds};
 
 pub mod pull;
@@ -15,69 +15,15 @@ pub mod status;
 pub const HARDWARE_ID_HEADER: &str = "hardware-id";
 pub const APP_VERSION_HEADER: &str = "app-version";
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug)]
 pub struct Common {
     pub token: String,
     pub hardware_id: String,
     pub version: Version,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Request<I> {
-    #[serde(flatten)]
-    pub(crate) common: Common,
-    #[serde(flatten)]
-    pub(crate) input: I,
-}
-
-pub type ApiResponse<O> = Result<O, SyncError>;
-
-#[derive(Clone)]
-pub(crate) struct SyncApiV7 {
-    pub(crate) url: reqwest::Url,
-    pub(crate) common: Common,
-    pub(crate) auth_headers: HeaderMap,
-}
-
-impl SyncApiV7 {
-    pub async fn op<I: Serialize, O: DeserializeOwned>(
-        &self,
-        route: &str,
-        input: I,
-        // For get_site_info route, this won't be present for api call that deals with initial login
-        use_token: bool,
-    ) -> Result<O, SyncError> {
-        let Self {
-            url,
-            common,
-            auth_headers,
-        } = self.clone();
-
-        let url = url.join("central/sync_v7/").unwrap().join(route).unwrap();
-
-        let request = Request { common, input };
-        let result = with_retries(RetrySeconds::default(), |client| {
-            let mut builder = client.post(url.clone());
-            if use_token {
-                builder = builder.headers(auth_headers.clone());
-            }
-            builder.json(&request)
-        })
-        .await;
-
-        let res = response_or_err(result, url).await;
-        let error = match res {
-            Ok(ApiResponse::Ok(output)) => return Ok(output),
-            Ok(ApiResponse::Err(error)) => error,
-            Err(error) => error,
-        };
-
-        Err(error)
-    }
-
-    pub fn load_site_auth(service_provider: &ServiceProvider) -> Result<Common, SyncError> {
+impl Common {
+    pub fn load(service_provider: &ServiceProvider) -> Result<Self, SyncError> {
         let ctx = service_provider
             .basic_context()
             .map_err(|e| SyncError::Other(format_error(&e)))?;
@@ -85,9 +31,7 @@ impl SyncApiV7 {
         let token = KeyValueStoreRepository::new(&ctx.connection)
             .get_string(KeyType::SettingsSyncV7Token)
             .map_err(SyncError::DatabaseError)?
-            .ok_or_else(|| {
-                SyncError::Other("Sync v7 token not set — site must initialise first".to_string())
-            })?;
+            .ok_or(SyncError::TokenNotFound)?;
 
         let hardware_id = service_provider
             .app_data_service
@@ -101,22 +45,95 @@ impl SyncApiV7 {
         })
     }
 
-    pub fn build_auth_headers(common: &Common) -> Result<HeaderMap, SyncError> {
+    pub fn from_header_values(
+        authorization: Option<&str>,
+        hardware_id: Option<&str>,
+        app_version: Option<&str>,
+    ) -> Result<Self, SyncError> {
+        let token = authorization
+            .and_then(|s| s.split_at_checked(7))
+            .filter(|(prefix, _)| prefix.eq_ignore_ascii_case("Bearer "))
+            .map(|(_, token)| token.to_string())
+            .ok_or_else(|| {
+                SyncError::MissingAuthHeader(
+                    "missing or incorrect Authorization header".to_string(),
+                )
+            })?;
+
+        let hardware_id = hardware_id
+            .ok_or_else(|| SyncError::MissingAuthHeader("missing hardware-id header".to_string()))?
+            .to_string();
+
+        let version = app_version.map(Version::from_str).ok_or_else(|| {
+            SyncError::MissingAuthHeader("missing app-version header".to_string())
+        })?;
+
+        Ok(Common {
+            token,
+            hardware_id,
+            version,
+        })
+    }
+
+    pub fn to_auth_headers(&self) -> Result<HeaderMap, SyncError> {
         let mut headers = HeaderMap::new();
-
-        let bearer = HeaderValue::from_str(&format!("Bearer {}", common.token))
-            .map_err(|e| SyncError::Other(e.to_string()))?;
-        headers.insert(AUTHORIZATION, bearer);
-
-        let hardware_id = HeaderValue::from_str(&common.hardware_id)
-            .map_err(|e| SyncError::Other(e.to_string()))?;
-        headers.insert(HARDWARE_ID_HEADER, hardware_id);
-
-        let app_version = HeaderValue::from_str(&common.version.to_string())
-            .map_err(|e| SyncError::Other(e.to_string()))?;
-        headers.insert(APP_VERSION_HEADER, app_version);
-
+        insert_header(
+            &mut headers,
+            AUTHORIZATION,
+            &format!("Bearer {}", self.token),
+        )?;
+        insert_header(&mut headers, HARDWARE_ID_HEADER, &self.hardware_id)?;
+        insert_header(&mut headers, APP_VERSION_HEADER, &self.version.to_string())?;
         Ok(headers)
+    }
+}
+
+fn insert_header<K: IntoHeaderName>(
+    headers: &mut HeaderMap,
+    name: K,
+    value: &str,
+) -> Result<(), SyncError> {
+    let value = HeaderValue::from_str(value).map_err(|e| SyncError::Other(e.to_string()))?;
+    headers.insert(name, value);
+    Ok(())
+}
+
+pub type ApiResponse<O> = Result<O, SyncError>;
+
+#[derive(Clone)]
+pub(crate) struct SyncApiV7 {
+    pub(crate) url: reqwest::Url,
+    pub(crate) auth_headers: HeaderMap,
+}
+
+impl SyncApiV7 {
+    pub async fn op<I: Serialize, O: DeserializeOwned>(
+        &self,
+        route: &str,
+        input: I,
+    ) -> Result<O, SyncError> {
+        let url = self
+            .url
+            .join("central/sync_v7/")
+            .unwrap()
+            .join(route)
+            .unwrap();
+        let auth_headers = self.auth_headers.clone();
+
+        let result = with_retries(RetrySeconds::default(), |client| {
+            client
+                .post(url.clone())
+                .headers(auth_headers.clone())
+                .json(&input)
+        })
+        .await;
+
+        let res = response_or_err(result, url).await;
+        match res {
+            Ok(ApiResponse::Ok(output)) => Ok(output),
+            Ok(ApiResponse::Err(error)) => Err(error),
+            Err(error) => Err(error),
+        }
     }
 }
 
@@ -150,4 +167,26 @@ async fn response_or_err<T: DeserializeOwned>(
     })?;
 
     Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn from_authorization(authorization: Option<&str>) -> Result<Common, SyncError> {
+        Common::from_header_values(authorization, Some("hw-1"), Some("1.0.0"))
+    }
+
+    #[test]
+    fn bearer_prefix_is_case_insensitive() {
+        for header in [
+            "Bearer abc123",
+            "bearer abc123",
+            "BEARER abc123",
+            "BeArEr abc123",
+        ] {
+            let common = from_authorization(Some(header)).unwrap();
+            assert_eq!(common.token, "abc123", "header: {}", header);
+        }
+    }
 }
