@@ -1,6 +1,6 @@
 use actix_web::{
     dev::HttpServiceFactory,
-    http::header::AUTHORIZATION,
+    http::header::{HeaderName, AUTHORIZATION},
     post,
     web::{self, Data, Json},
     HttpRequest, Responder,
@@ -53,8 +53,9 @@ async fn push(
 }
 
 pub fn extract_site_auth(req: &HttpRequest) -> Result<Common, SyncError> {
-    let token = req
-        .headers()
+    let headers = req.headers();
+
+    let token = headers
         .get(AUTHORIZATION)
         .and_then(|h| h.to_str().ok())
         .and_then(|s| s.strip_prefix("Bearer "))
@@ -65,19 +66,17 @@ pub fn extract_site_auth(req: &HttpRequest) -> Result<Common, SyncError> {
         })?
         .to_string();
 
-    let hardware_id = req
-        .headers()
-        .get(HARDWARE_ID_HEADER)
+    let hardware_id = headers
+        .get(HeaderName::from_static(HARDWARE_ID_HEADER))
         .and_then(|h| h.to_str().ok())
         .ok_or(SyncError::FailedToGetHardwareId)?
         .to_string();
 
-    let version = req
-        .headers()
-        .get(APP_VERSION_HEADER)
+    let version = headers
+        .get(HeaderName::from_static(APP_VERSION_HEADER))
         .and_then(|h| h.to_str().ok())
         .map(Version::from_str)
-        .ok_or_else(|| SyncError::Other("Missing appVersion header".to_string()))?;
+        .ok_or_else(|| SyncError::Other("Missing app-version header".to_string()))?;
 
     Ok(Common {
         token,
