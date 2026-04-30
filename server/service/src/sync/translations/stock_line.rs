@@ -138,6 +138,7 @@ impl SyncTranslation for StockLineTranslation {
             "barcode_id",
             barcode_id,
             |c, id| BarcodeRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let location_id = clear_invalid_fk(
             connection,
@@ -146,6 +147,7 @@ impl SyncTranslation for StockLineTranslation {
             "location_id",
             location_ID,
             |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let item_variant_id = clear_invalid_fk(
             connection,
@@ -154,6 +156,7 @@ impl SyncTranslation for StockLineTranslation {
             "item_variant_id",
             item_variant_id,
             |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let vvm_status_id = clear_invalid_fk(
             connection,
@@ -162,6 +165,7 @@ impl SyncTranslation for StockLineTranslation {
             "vvm_status_id",
             vvm_status_id,
             |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let StockLineRowOmsFields {
@@ -176,6 +180,7 @@ impl SyncTranslation for StockLineTranslation {
             "campaign_id",
             campaign_id,
             |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let program_id = clear_invalid_fk(
             connection,
@@ -184,6 +189,7 @@ impl SyncTranslation for StockLineTranslation {
             "program_id",
             program_id,
             |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let result = StockLineRow {

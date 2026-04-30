@@ -100,6 +100,7 @@ impl SyncTranslation for DocumentTranslation {
             "form_schema_id",
             form_schema_id,
             |c, id| FormSchemaRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let result = Document {

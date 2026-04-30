@@ -82,6 +82,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
             "form_schema_id",
             form_schema_id,
             |c, id| FormSchemaRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let config_str = match config {

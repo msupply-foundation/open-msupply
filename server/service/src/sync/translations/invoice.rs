@@ -412,6 +412,7 @@ impl SyncTranslation for InvoiceTranslation {
             "currency_id",
             currency_id,
             |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let diagnosis_id = clear_invalid_fk(
             connection,
@@ -420,6 +421,7 @@ impl SyncTranslation for InvoiceTranslation {
             "diagnosis_id",
             data.diagnosis_id,
             |c, id| DiagnosisRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let name_insurance_join_id = clear_invalid_fk(
             connection,
@@ -428,6 +430,7 @@ impl SyncTranslation for InvoiceTranslation {
             "name_insurance_join_id",
             data.name_insurance_join_id,
             |c, id| NameInsuranceJoinRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let shipping_method_id = clear_invalid_fk(
             connection,
@@ -436,6 +439,7 @@ impl SyncTranslation for InvoiceTranslation {
             "shipping_method_id",
             data.shipping_method_id,
             |c, id| ShippingMethodRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let status = match data.om_status {

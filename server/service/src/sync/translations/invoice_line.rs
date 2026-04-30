@@ -259,26 +259,24 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
         )?;
 
-        // When invoice lines are coming from another site we don't own the referenced stock
-        // line, so even when it exists locally we don't want to link to it. Skipping the FK
-        // check in that case also avoids a misleading SyncTranslationFkError system_log row
-        // for an FK the operator can't fix.
+        // On a remote site, foreign-site invoice lines arrive without their stock lines or
+        // locations (those records belong to the other site). On OMS central all site data is
+        // present, so the FK may well exist. In both cases: keep the link if the record exists
+        // locally, null it if it doesn't. Only log an error for records this site owns —
+        // a missing FK on a foreign-site record is expected, not operator-actionable.
         // TODO: remove the stock_line FK validation once central server does not generate the
         // inbound shipment — omSupply should be generating the inbound with valid stock lines.
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign
         // key constraint violation, so we still need this for active-on-site records.
-        let stock_line_id = if is_record_active_on_site {
-            clear_invalid_fk(
-                connection,
-                "invoice_line",
-                &id,
-                "stock_line_id",
-                stock_line_id,
-                |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
-            )?
-        } else {
-            None
-        };
+        let stock_line_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "stock_line_id",
+            stock_line_id,
+            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
+            is_record_active_on_site,
+        )?;
         let location_id = clear_invalid_fk(
             connection,
             "invoice_line",
@@ -286,6 +284,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             "location_id",
             location_id,
             |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            is_record_active_on_site,
         )?;
 
         let item_variant_id = clear_invalid_fk(
@@ -295,6 +294,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             "item_variant_id",
             item_variant_id,
             |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let vvm_status_id = clear_invalid_fk(
             connection,
@@ -303,6 +303,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             "vvm_status_id",
             vvm_status_id,
             |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         // "0" is a sentinel value used by OG for "no option set" — treat it as None before
@@ -321,6 +322,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             "reason_option_id",
             reason_option_id,
             |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let TransLineRowOmsFields {
@@ -335,6 +337,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             "campaign_id",
             campaign_id,
             |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let program_id = clear_invalid_fk(
             connection,
@@ -343,6 +346,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             "program_id",
             program_id,
             |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let result = InvoiceLineRow {

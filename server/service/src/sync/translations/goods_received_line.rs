@@ -81,6 +81,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             "location_id",
             legacy_row.location_ID,
             |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let result = GoodsReceivedLineRow {
