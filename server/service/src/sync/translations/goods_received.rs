@@ -1,13 +1,14 @@
 use crate::sync::translations::{
-    invoice::InvoiceTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
+    invoice::InvoiceTranslation, purchase_order::PurchaseOrderTranslation, utils::clear_invalid_fk,
+    PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
     goods_received_row::{
         GoodsReceivedDelete, GoodsReceivedRow, GoodsReceivedRowRepository, GoodsReceivedStatus,
     },
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, InvoiceRowRepository, PurchaseOrderRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -89,15 +90,35 @@ impl SyncTranslation for GoodsReceivedTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let legacy: LegacyGoodsReceived = serde_json::from_str(&sync_record.data)?;
+
+        let purchase_order_id = clear_invalid_fk(
+            connection,
+            "goods_received",
+            &legacy.id,
+            "purchase_order_id",
+            legacy.purchase_order_id,
+            |c, id| PurchaseOrderRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let inbound_shipment_id = clear_invalid_fk(
+            connection,
+            "goods_received",
+            &legacy.id,
+            "inbound_shipment_id",
+            legacy.inbound_shipment_id,
+            |c, id| InvoiceRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
         let result = GoodsReceivedRow {
             id: legacy.id,
             store_id: legacy.store_id,
-            purchase_order_id: legacy.purchase_order_id,
-            inbound_shipment_id: legacy.inbound_shipment_id,
+            purchase_order_id,
+            inbound_shipment_id,
             goods_received_number: legacy.goods_received_number,
             status: match legacy.status {
                 LegacyGoodsReceivedStatus::Finalised => GoodsReceivedStatus::Finalised,
@@ -159,16 +180,47 @@ impl SyncTranslation for GoodsReceivedTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::translations::{goods_received::GoodsReceivedTranslation, SyncTranslation};
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use crate::sync::translations::{
+        goods_received::GoodsReceivedTranslation, PullTranslateResult, SyncTranslation,
+    };
+    use chrono::NaiveDate;
+    use repository::{
+        mock::{mock_outbound_shipment_a, mock_store_a, MockData, MockDataInserts},
+        purchase_order_row::PurchaseOrderRow,
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::{setup_all, setup_all_with_data},
+        InvoiceRow, SyncAction, SyncBufferRow,
+    };
 
     #[actix_rt::test]
     async fn test_goods_received_translation() {
         use crate::sync::test::test_data::goods_received as test_data;
         let translator = GoodsReceivedTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_goods_received_translation", MockDataInserts::none()).await;
+        // FK validation requires the referenced purchase_order and invoice to exist
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_goods_received_translation",
+            MockDataInserts::none().names().stores(),
+            MockData {
+                purchase_order: vec![PurchaseOrderRow {
+                    id: "sync_test_purchase_order_1".to_string(),
+                    store_id: mock_store_a().id,
+                    supplier_name_link_id: "name_a".to_string(),
+                    purchase_order_number: 1,
+                    created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                    ..Default::default()
+                }],
+                invoices: vec![InvoiceRow {
+                    id: "12e889c0f0d211eb8dddb54df6d741bc".to_string(),
+                    ..mock_outbound_shipment_a()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
@@ -187,5 +239,62 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+    }
+
+    #[actix_rt::test]
+    async fn test_goods_received_clears_invalid_optional_fks_and_writes_system_log() {
+        let translator = GoodsReceivedTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_goods_received_clears_invalid_optional_fks_and_writes_system_log",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "Goods_received".to_string(),
+            record_id: "GR_FK_INVALID".to_string(),
+            data: r#"{
+                "ID": "GR_FK_INVALID",
+                "store_ID": "store_a",
+                "purchase_order_ID": "does_not_exist_po",
+                "linked_transaction_ID": "does_not_exist_invoice",
+                "serial_number": 1,
+                "status": "nw",
+                "entry_date": "2024-01-01",
+                "received_date": "0000-00-00",
+                "comment": "",
+                "supplier_reference": "",
+                "donor_id": "",
+                "user_id_created": ""
+            }"#
+            .to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains("purchase_order_id: None"),
+            "{}",
+            format!("expected purchase_order_id None; got:\n{debug}")
+        );
+        assert!(
+            debug.contains("inbound_shipment_id: None"),
+            "{}",
+            format!("expected inbound_shipment_id None; got:\n{debug}")
+        );
+        let _ = matches!(result, PullTranslateResult::IntegrationOperations(_));
+
+        let logs = SystemLogRowRepository::new(&connection)
+            .find_all()
+            .unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        assert_eq!(fk_errors.len(), 2, "got {fk_errors:?}");
     }
 }

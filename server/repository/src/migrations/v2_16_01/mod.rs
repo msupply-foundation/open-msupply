@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_sync_translation_fk_error_to_system_log_type_enums;
 mod invoice_datetime_indexes;
 
 pub(crate) struct V2_16_01;
@@ -14,7 +15,8 @@ impl Migration for V2_16_01 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(invoice_datetime_indexes::Migrate)]
+        vec![Box::new(add_sync_translation_fk_error_to_system_log_type_enums::Migrate),
+            Box::new(invoice_datetime_indexes::Migrate)]
     }
 }
 
