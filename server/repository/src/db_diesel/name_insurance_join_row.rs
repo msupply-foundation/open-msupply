@@ -1,6 +1,6 @@
 use super::{
-    name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    KeyValueStoreRepository, RowActionType, StorageConnection,
+    name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    StorageConnection,
 };
 
 use crate::{
@@ -11,6 +11,7 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use crate::ChangelogSyncType;
+use crate::SourceSiteIdForChangelog;
 
 pub enum NameInsuranceJoinSortField {
     ExpiryDate,
@@ -80,7 +81,7 @@ impl NameInsuranceJoinRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::NameInsuranceJoin,
@@ -88,7 +89,7 @@ impl NameInsuranceJoinRow {
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -156,7 +157,7 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -167,9 +168,12 @@ impl Upsert for NameInsuranceJoinRow {
         NameInsuranceJoinRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RepositoryError, RowActionType, StorageConnection, ChangelogSyncType, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    SourceSiteIdForChangelog, StorageConnection, ChangelogSyncType, Upsert,
 };
 use crate::diesel_macros::define_linked_tables;
 
@@ -106,7 +106,7 @@ impl VaccinationRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Vaccination,
@@ -114,7 +114,7 @@ impl VaccinationRow {
             row_action: action,
             store_id: None,
             name_id: Some(self.patient_id.clone()),
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -136,7 +136,11 @@ impl<'a> VaccinationRowRepository<'a> {
 
     pub fn upsert_one(&self, vaccination_row: &VaccinationRow) -> Result<i64, RepositoryError> {
         self._upsert_one(vaccination_row)?;
-        let changelog = vaccination_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = vaccination_row.changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -163,9 +167,11 @@ impl Upsert for VaccinationRow {
         VaccinationRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

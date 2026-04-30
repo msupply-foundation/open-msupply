@@ -1,9 +1,8 @@
 use crate::{
     db_diesel::{item_link_row::item_link, item_row::item},
     diesel_macros::define_linked_tables,
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete,
-    KeyValueStoreRepository, RepositoryError, RowActionType, StorageConnection, ChangelogSyncType,
-    Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    RepositoryError, RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -136,7 +135,7 @@ impl PurchaseOrderRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::PurchaseOrder,
@@ -144,7 +143,7 @@ impl PurchaseOrderRow {
             row_action: action,
             store_id: Some(self.store_id.clone()),
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -153,7 +152,7 @@ impl PurchaseOrderRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = PurchaseOrderRowRepository::new(con)
             .find_one_by_id(id)?
@@ -176,7 +175,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         purchase_order_row: &PurchaseOrderRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert(purchase_order_row)?;
-        let changelog = purchase_order_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = purchase_order_row.changelog(self.connection, RowActionType::Upsert, SourceSiteIdForChangelog::CurrentSiteId)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -197,7 +196,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
     }
 
     pub fn delete(&self, purchase_order_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = PurchaseOrderRow::delete_changelog(purchase_order_id, self.connection, RowActionType::Delete, None)?;
+        let changelog = PurchaseOrderRow::delete_changelog(purchase_order_id, self.connection, RowActionType::Delete, SourceSiteIdForChangelog::CurrentSiteId)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(purchase_order_with_links::table)
@@ -224,7 +223,7 @@ impl Upsert for PurchaseOrderRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                self.changelog(con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -252,7 +251,7 @@ impl Delete for PurchaseOrderDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                PurchaseOrderRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+                PurchaseOrderRow::delete_changelog(&self.0, con, RowActionType::Delete, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

@@ -4,8 +4,8 @@ use super::{
 };
 
 use crate::{
-    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    KeyValueStoreRepository, RowActionType, ChangelogSyncType, Upsert,
+    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
+    ChangelogTableName, RowActionType, SourceSiteIdForChangelog, Upsert,
 };
 
 use diesel::prelude::*;
@@ -41,13 +41,13 @@ impl MasterListRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::MasterList,
             record_id,
             row_action: action,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -78,7 +78,7 @@ impl<'a> MasterListRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -101,7 +101,7 @@ impl Upsert for MasterListRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
+                Self::changelog(self.id.clone(), con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

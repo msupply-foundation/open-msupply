@@ -1,11 +1,5 @@
 use crate::{
-    db_diesel::store_row::store,
-    diesel_macros::{apply_equal_filter, diesel_string_enum},
-    dynamic_query_filter::create_condition,
-    name_store_join::name_store_join,
-    vaccination_row::vaccination,
-    DBType, EqualFilter, LockedConnection, RepositoryError, StorageConnection,
-    TransactionNotification,
+    DBType, EqualFilter, KeyValueStoreRepository, LockedConnection, RepositoryError, StorageConnection, TransactionNotification, db_diesel::store_row::store, diesel_macros::{apply_equal_filter, diesel_string_enum}, dynamic_query_filter::create_condition, name_store_join::name_store_join, vaccination_row::vaccination
 };
 use diesel::{helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -122,6 +116,20 @@ diesel_string_enum! {
         PurchaseOrderLine,
         MasterList,
         Site,
+    }
+}
+
+pub(crate) enum SourceSiteIdForChangelog {
+    SourceSiteId(Option<i32>),
+    CurrentSiteId,
+}
+
+impl SourceSiteIdForChangelog {
+    pub(crate) fn get_id(&self, connection: &StorageConnection) -> Result<Option<i32>, RepositoryError> {
+        match self {
+            SourceSiteIdForChangelog::SourceSiteId(id) => Ok(*id),
+            SourceSiteIdForChangelog::CurrentSiteId => KeyValueStoreRepository::new(connection).get_current_site_id(),
+        }
     }
 }
 

@@ -4,9 +4,9 @@ use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
     define_linked_tables,
 };
+use crate::SourceSiteIdForChangelog;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RowActionType,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
 };
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
@@ -223,7 +223,7 @@ impl<'a> DocumentRepository<'a> {
             doc.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -387,7 +387,7 @@ impl Document {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Document,
@@ -395,7 +395,7 @@ impl Document {
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }

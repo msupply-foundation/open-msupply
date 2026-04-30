@@ -8,11 +8,8 @@ use crate::db_diesel::{
 use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
 
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RowActionType,
-};
-use crate::{ChangelogSyncType, Delete, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -138,7 +135,7 @@ impl RequisitionRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Requisition,
@@ -146,7 +143,7 @@ impl RequisitionRow {
             row_action: action,
             store_id: Some(self.store_id.clone()),
             name_id: Some(self.name_id.clone()),
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -155,7 +152,7 @@ impl RequisitionRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = RequisitionRowRepository::new(con)
             .find_one_by_id(id)?
@@ -175,12 +172,12 @@ impl<'a> RequisitionRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &RequisitionRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, SourceSiteIdForChangelog::CurrentSiteId)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn delete(&self, requisition_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = RequisitionRow::delete_changelog(requisition_id, self.connection, RowActionType::Delete, None)?;
+        let changelog = RequisitionRow::delete_changelog(requisition_id, self.connection, RowActionType::Delete, SourceSiteIdForChangelog::CurrentSiteId)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(
@@ -226,7 +223,7 @@ impl Delete for RequisitionRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                RequisitionRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+                RequisitionRow::delete_changelog(&self.0, con, RowActionType::Delete, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -253,7 +250,7 @@ impl Upsert for RequisitionRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                self.changelog(con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

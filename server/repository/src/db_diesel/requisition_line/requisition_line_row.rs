@@ -5,11 +5,8 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RowActionType,
-};
-use crate::{ChangelogSyncType, Delete, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
 
 use chrono::NaiveDateTime;
 
@@ -93,7 +90,7 @@ impl RequisitionLineRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let requisition =
             RequisitionRowRepository::new(con).find_one_by_id(&self.requisition_id)?;
@@ -108,7 +105,7 @@ impl RequisitionLineRow {
             row_action: action,
             store_id: Some(requisition.store_id.clone()),
             name_id: Some(requisition.name_id.clone()),
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -117,7 +114,7 @@ impl RequisitionLineRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = RequisitionLineRowRepository::new(con)
             .find_one_by_id(id)?
@@ -147,7 +144,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = row.changelog(self.connection, RowActionType::Upsert, SourceSiteIdForChangelog::CurrentSiteId)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -171,7 +168,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .load(self.connection.lock().connection())?;
 
         for row in rows {
-            let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+            let changelog = row.changelog(self.connection, RowActionType::Upsert, SourceSiteIdForChangelog::CurrentSiteId)?;
             ChangelogRepository::new(self.connection).insert(&changelog)?;
         }
 
@@ -179,7 +176,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
     }
 
     pub fn delete(&self, requisition_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = RequisitionLineRow::delete_changelog(requisition_line_id, self.connection, RowActionType::Delete, None)?;
+        let changelog = RequisitionLineRow::delete_changelog(requisition_line_id, self.connection, RowActionType::Delete, SourceSiteIdForChangelog::CurrentSiteId)?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(
@@ -208,7 +205,7 @@ impl Delete for RequisitionLineRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                RequisitionLineRow::delete_changelog(&self.0, con, RowActionType::Delete, source_site_id)?
+                RequisitionLineRow::delete_changelog(&self.0, con, RowActionType::Delete, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -235,7 +232,7 @@ impl Upsert for RequisitionLineRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                self.changelog(con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

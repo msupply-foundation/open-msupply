@@ -1,9 +1,9 @@
 use super::{
     form_schema_row::form_schema, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    KeyValueStoreRepository, RowActionType, StorageConnection,
+    RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, ChangelogSyncType, Upsert};
+use crate::{repository_error::RepositoryError, Delete, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
 use clap::ValueEnum;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -93,7 +93,7 @@ impl ReportRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Report,
@@ -101,7 +101,7 @@ impl ReportRow {
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -140,7 +140,7 @@ impl<'a> ReportRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            None,
+            SourceSiteIdForChangelog::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -161,9 +161,12 @@ impl Delete for ReportRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                ReportRow::changelog(self.0.clone(), con, RowActionType::Delete, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ReportRow::changelog(
+                self.0.clone(),
+                con,
+                RowActionType::Delete,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
@@ -185,9 +188,12 @@ impl Upsert for ReportRow {
         ReportRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::changelog(self.id.clone(), con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
