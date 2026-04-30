@@ -6,10 +6,12 @@ use crate::{
 use super::{validate::*, write_sync_buffer_error};
 use repository::syncv7::INTEGRATION_ORDER;
 use repository::{
-    ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRow, DatetimeFilter,
-    EqualFilter, InvoiceLineRow, InvoiceRow, ItemRow, LocationTypeRow, NameRow, RepositoryError,
-    RowActionType, StockLineRow, StorageConnection, StoreRow, SyncBufferFilter,
-    SyncBufferRepository, SyncBufferRow, UnitRow, Upsert,
+    ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRow, CurrencyRowDelete,
+    DatetimeFilter, Delete, EqualFilter, InvoiceLineRow, InvoiceLineRowDelete, InvoiceRow,
+    InvoiceRowDelete, ItemRow, ItemRowDelete, LocationTypeRow, LocationTypeRowDelete, NameRow,
+    NameRowDelete, RepositoryError, RowActionType, StockLineRow, StockLineRowDelete,
+    StorageConnection, StoreRow, StoreRowDelete, SyncAction, SyncBufferFilter,
+    SyncBufferRepository, SyncBufferRow, UnitRow, UnitRowDelete, Upsert,
 };
 use serde::de::Error as _;
 use thiserror::Error;
@@ -38,6 +40,8 @@ enum Error {
     IntegrationError(#[source] RepositoryError),
     #[error("Unknown table name: {0}")]
     UnknownTableName(String),
+    #[error("Unsupported sync action: {0:?}")]
+    UnsupportedAction(SyncAction),
 }
 
 fn parse_table_name(table_name: &str) -> Result<ChangelogTableName, Error> {
@@ -62,7 +66,24 @@ fn sync_type(table_name: &ChangelogTableName) -> &'static SyncType {
     }
 }
 
-fn translate(
+fn changelog(
+    table_name: ChangelogTableName,
+    action: RowActionType,
+    row: &SyncBufferRow,
+) -> ChangeLogInsertRow {
+    ChangeLogInsertRow {
+        table_name,
+        record_id: row.record_id.clone(),
+        row_action: action,
+        store_id: row.store_id.clone(),
+        source_site_id: row.source_site_id,
+        transfer_store_id: row.transfer_store_id.clone(),
+        patient_id: row.patient_id.clone(),
+        ..Default::default()
+    }
+}
+
+fn translate_upsert(
     table_name: &ChangelogTableName,
     data: &serde_json::Value,
 ) -> Result<Box<dyn Upsert>, Error> {
@@ -88,7 +109,7 @@ fn translate(
         }
         _ => {
             return Err(Error::TranslationError(serde_json::Error::custom(format!(
-                "No translator for table {:?}",
+                "No upsert translator for table {:?}",
                 table_name
             ))))
         }
@@ -97,29 +118,58 @@ fn translate(
     Ok(upsert)
 }
 
+fn translate_delete(
+    table_name: &ChangelogTableName,
+    record_id: &str,
+) -> Result<Box<dyn Delete>, Error> {
+    let id = record_id.to_string();
+    let delete: Box<dyn Delete> = match table_name {
+        ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
+        ChangelogTableName::Currency => Box::new(CurrencyRowDelete(id)),
+        ChangelogTableName::Name => Box::new(NameRowDelete(id)),
+        ChangelogTableName::Store => Box::new(StoreRowDelete(id)),
+        ChangelogTableName::LocationType => Box::new(LocationTypeRowDelete(id)),
+        ChangelogTableName::Item => Box::new(ItemRowDelete(id)),
+        ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
+        ChangelogTableName::Invoice => Box::new(InvoiceRowDelete(id)),
+        ChangelogTableName::InvoiceLine => Box::new(InvoiceLineRowDelete(id)),
+        _ => {
+            return Err(Error::TranslationError(serde_json::Error::custom(format!(
+                "No delete translator for table {:?}",
+                table_name
+            ))))
+        }
+    };
+
+    Ok(delete)
+}
+
+enum Translated {
+    Upsert(Box<dyn Upsert>),
+    Delete(Box<dyn Delete>),
+}
+
 fn integrate(
     connection: &StorageConnection,
-    upsert: Box<dyn Upsert>,
+    translated: Translated,
     table_name: ChangelogTableName,
     row: &SyncBufferRow,
 ) -> Result<(), RepositoryError> {
-    let changelog = ChangeLogInsertRow {
-        table_name,
-        record_id: row.record_id.clone(),
-        row_action: RowActionType::Upsert,
-        store_id: row.store_id.clone(),
-        source_site_id: row.source_site_id,
-        transfer_store_id: row.transfer_store_id.clone(),
-        patient_id: row.patient_id.clone(),
-        ..Default::default()
-    };
-
-    upsert.upsert_sync(
-        connection,
-        ChangelogSyncType::SyncTypeV7 {
-            changelog_row: changelog,
-        },
-    )?;
+    match translated {
+        Translated::Upsert(upsert) => {
+            let changelog = changelog(table_name, RowActionType::Upsert, row);
+            upsert.upsert_sync(
+                connection,
+                ChangelogSyncType::SyncTypeV7 {
+                    changelog_row: changelog,
+                },
+            )?;
+        }
+        Translated::Delete(delete) => {
+            let changelog = changelog(table_name, RowActionType::Delete, row);
+            delete.delete_v7(connection, changelog)?;
+        }
+    }
 
     Ok(())
 }
@@ -140,7 +190,11 @@ fn validate_translate_integrate_one(
         } => validate_on_remote(row, st, active_stores, *is_initialising)?,
     };
 
-    let translated = translate(&table_name, &row.data)?;
+    let translated = match row.action {
+        SyncAction::Upsert => Translated::Upsert(translate_upsert(&table_name, &row.data)?),
+        SyncAction::Delete => Translated::Delete(translate_delete(&table_name, &row.record_id)?),
+        _ => return Err(Error::UnsupportedAction(row.action.clone())),
+    };
 
     integrate(connection, translated, table_name, row).map_err(Error::IntegrationError)?;
 
@@ -175,19 +229,16 @@ pub fn validate_translate_integrate<'a>(
         logger.progress(total)?;
     }
 
-    let mut had_store_records = false;
-
-    // Process tables in FK order so parents integrate before children.
-    for table in INTEGRATION_ORDER {
-        let per_table_filter = filter
+    let mut integrate_table = |table: &ChangelogTableName,
+                               action_filter: &SyncBufferFilter|
+     -> Result<(), RepositoryError> {
+        let per_table_filter = action_filter
             .clone()
             .table_name(EqualFilter::equal_to(table.to_string()));
 
         let rows = SyncBufferRepository::new(connection).query(Some(per_table_filter))?;
 
-        if *table == ChangelogTableName::Store && !rows.is_empty() {
-            had_store_records = true;
-        }
+        let had_store_records = *table == ChangelogTableName::Store && !rows.is_empty();
 
         for row in &rows {
             match validate_translate_integrate_one(connection, row, &sync_context) {
@@ -207,9 +258,9 @@ pub fn validate_translate_integrate<'a>(
             }
         }
 
-        // Refresh active stores after the Store batch so downstream Remote
-        // records validate against fresh state.
-        if *table == ChangelogTableName::Store && had_store_records {
+        // Refresh active stores after any Store batch (upsert or delete)
+        // so downstream Remote records validate against fresh state.
+        if had_store_records {
             if let SyncContext::Remote {
                 is_initialising: _,
                 active_stores,
@@ -218,6 +269,20 @@ pub fn validate_translate_integrate<'a>(
                 *active_stores = ActiveStoresOnSite::get(connection).unwrap();
             }
         }
+
+        Ok(())
+    };
+
+    // Upserts: parents before children.
+    let upsert_filter = filter.clone().action(SyncAction::Upsert.equal_to());
+    for table in INTEGRATION_ORDER {
+        integrate_table(table, &upsert_filter)?;
+    }
+
+    // Deletes: children before parents.
+    let delete_filter = filter.clone().action(SyncAction::Delete.equal_to());
+    for table in INTEGRATION_ORDER.iter().rev() {
+        integrate_table(table, &delete_filter)?;
     }
 
     Ok(())
