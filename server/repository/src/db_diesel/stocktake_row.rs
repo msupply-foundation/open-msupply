@@ -84,13 +84,12 @@ impl StocktakeRow {
     pub(crate) fn delete_changelog(
         id: &str,
         con: &StorageConnection,
-        action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = StocktakeRowRepository::new(con)
             .find_one_by_id(id)?
             .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, action, source_site_id)
+        row.changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -127,7 +126,6 @@ impl<'a> StocktakeRowRepository<'a> {
         let changelog = StocktakeRow::delete_changelog(
             id,
             self.connection,
-            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
@@ -176,7 +174,6 @@ impl Delete for StocktakeRowDelete {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StocktakeRow::delete_changelog(
                 &self.0,
                 con,
-                RowActionType::Delete,
                 SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,

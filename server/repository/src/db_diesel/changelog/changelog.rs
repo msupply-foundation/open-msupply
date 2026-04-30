@@ -459,13 +459,10 @@ impl<'a> ChangelogRepository<'a> {
 
     #[cfg(feature = "postgres")]
     // Inserts multiple changelogs and returns the cursor of the last inserted row
-    pub fn insert_all(
-        &self,
-        rows: Vec<ChangeLogInsertRow>,
-    ) -> Result<Option<i64>, RepositoryError> {
+    pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<i64, RepositoryError> {
         //TODO: Need to handle batch insert size limit
         if rows.is_empty() {
-            return Ok(None);
+            return Err(RepositoryError::as_db_error("No changelogs to be inserted provided", ""));
         }
         // Insert the records, and then return the cursor of the changelog table
         // Using a returning clause makes this thread safe
@@ -481,7 +478,7 @@ impl<'a> ChangelogRepository<'a> {
 
         self.connection
             .notify(TransactionNotification::ChangelogInsert);
-        Ok(Some(cursor_id))
+        Ok(cursor_id)
     }
 
     #[cfg(not(feature = "postgres"))]
@@ -499,13 +496,10 @@ impl<'a> ChangelogRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn insert_all(
-        &self,
-        rows: Vec<ChangeLogInsertRow>,
-    ) -> Result<Option<i64>, RepositoryError> {
+    pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<i64, RepositoryError> {
         //TODO: Need to handle batch insert size limit
         if rows.is_empty() {
-            return Ok(None);
+            return Err(RepositoryError::as_db_error("No changelogs to be inserted provided", ""));
         }
         diesel::insert_into(changelog::table)
             .values(rows)
@@ -514,7 +508,7 @@ impl<'a> ChangelogRepository<'a> {
             .get_result::<i64>(self.connection.lock().connection())?;
         self.connection
             .notify(TransactionNotification::ChangelogInsert);
-        Ok(Some(cursor_id))
+        Ok(cursor_id)
     }
 }
 
