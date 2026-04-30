@@ -138,13 +138,13 @@ async fn sync_inner<'a>(
     settings: SyncSettings,
     is_initialising: bool,
 ) -> Result<(), SyncError> {
-    let auth = SyncApiV7::load_site_auth(service_provider)?;
-    let auth_headers = SyncApiV7::build_auth_headers(&auth)?;
+    let common = SyncApiV7::load_site_auth(service_provider)?;
+    let auth_headers = SyncApiV7::build_auth_headers(&common)?;
     let sync_v7 = SyncV7 {
         connection,
         sync_api_v7: SyncApiV7 {
             url: settings.url.parse().unwrap(),
-            hardware_id: auth.hardware_id,
+            common,
             auth_headers,
         },
         batch_size: 5000,
