@@ -8,10 +8,9 @@ use crate::diesel_macros::define_linked_tables;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, InvoiceRowRepository,
-    RowActionType,
+    invoice_row::InvoiceRowOrId, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
+    ChangelogTableName, Delete, InvoiceRow, RowActionType, SourceSiteIdForChangelog, Upsert,
 };
-use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
 
 use diesel::prelude::*;
 
@@ -159,20 +158,12 @@ impl InvoiceLineRow {
         action: RowActionType,
         source_site_id: SourceSiteIdForChangelog,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let invoice = InvoiceRowRepository::new(con).find_one_by_id(&self.invoice_id)?;
-        let invoice = match invoice {
-            Some(invoice) => invoice,
-            None => return Err(RepositoryError::NotFound),
-        };
-
+        let invoice_changelog =
+            InvoiceRow::changelog(InvoiceRowOrId::Id(&self.invoice_id), con, action, source_site_id)?;
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::InvoiceLine,
             record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(invoice.store_id.clone()),
-            name_id: Some(invoice.name_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
+            ..invoice_changelog
         })
     }
 
