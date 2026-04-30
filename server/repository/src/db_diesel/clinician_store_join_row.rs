@@ -1,7 +1,7 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RowActionType};
-use crate::{ChangelogSyncType, RepositoryError, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 
 use diesel::prelude::*;
 
@@ -30,7 +30,7 @@ impl ClinicianStoreJoinRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::ClinicianStoreJoin,
@@ -69,7 +69,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
@@ -108,7 +108,7 @@ impl Upsert for ClinicianStoreJoinRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

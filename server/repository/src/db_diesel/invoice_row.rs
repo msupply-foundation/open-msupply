@@ -6,7 +6,7 @@ use super::{
 use crate::{
     diesel_macros::define_linked_tables, repository_error::RepositoryError, ChangeLogInsertRow,
     ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete, RowActionType,
-    SourceSiteIdForChangelog, Upsert,
+    SourceSiteId, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -178,7 +178,7 @@ impl InvoiceRow {
         row_or_id: InvoiceRowOrId,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = match row_or_id {
             InvoiceRowOrId::Row(row) => row,
@@ -202,7 +202,7 @@ impl InvoiceRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Self::changelog(InvoiceRowOrId::Id(id), con, action, source_site_id)
     }
@@ -223,7 +223,7 @@ impl<'a> InvoiceRowRepository<'a> {
             InvoiceRowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -239,7 +239,7 @@ impl<'a> InvoiceRowRepository<'a> {
             invoice_id,
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         self._delete(invoice_id)?;
@@ -289,7 +289,7 @@ impl Delete for InvoiceRowDelete {
                 &self.0,
                 con,
                 RowActionType::Delete,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -320,7 +320,7 @@ impl Upsert for InvoiceRow {
                 InvoiceRowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

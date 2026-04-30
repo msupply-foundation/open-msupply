@@ -2,7 +2,7 @@ use super::{item_link_row::item_link, master_list_row::master_list::dsl::*, Stor
 
 use crate::{
     repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
-    ChangelogTableName, RowActionType, SourceSiteIdForChangelog, Upsert,
+    ChangelogTableName, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -38,7 +38,7 @@ impl MasterListRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::MasterList,
@@ -75,7 +75,7 @@ impl<'a> MasterListRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -105,7 +105,7 @@ impl Upsert for MasterListRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

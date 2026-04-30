@@ -5,7 +5,7 @@ use crate::{
     },
     diesel_macros::define_linked_tables,
     item_link, user_account, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
-    ChangelogTableName, RepositoryError, RowActionType, SourceSiteIdForChangelog,
+    ChangelogTableName, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
 
@@ -67,7 +67,7 @@ impl ItemVariantRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::ItemVariant,
@@ -95,7 +95,7 @@ impl<'a> ItemVariantRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -134,7 +134,7 @@ impl<'a> ItemVariantRowRepository<'a> {
             item_variant_id.to_string(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -153,7 +153,7 @@ impl Upsert for ItemVariantRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

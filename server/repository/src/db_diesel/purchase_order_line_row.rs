@@ -1,7 +1,7 @@
 use crate::{
     db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
     diesel_macros::define_linked_tables,
-    ChangelogSyncType, Delete, PurchaseOrderRowRepository, SourceSiteIdForChangelog, Upsert,
+    ChangelogSyncType, Delete, PurchaseOrderRowRepository, SourceSiteId, Upsert,
 };
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
@@ -115,7 +115,7 @@ impl PurchaseOrderLineRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let purchase_order =
             PurchaseOrderRowRepository::new(con).find_one_by_id(&self.purchase_order_id)?;
@@ -150,7 +150,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let _ = ChangelogRepository::new(self.connection).insert(&changelog);
 
@@ -163,7 +163,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         let po_changelog = purchase_order.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&po_changelog)
     }
@@ -177,7 +177,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         let changelog = old_row.changelog(
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let _ = ChangelogRepository::new(self.connection).insert(&changelog);
 
@@ -190,7 +190,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         let po_changelog = purchase_order.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&po_changelog)?;
 
@@ -268,13 +268,13 @@ impl Upsert for PurchaseOrderLineRow {
                 let po_changelog = purchase_order.changelog(
                     con,
                     RowActionType::Upsert,
-                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?;
 
                 let pol_changelog = self.changelog(
                     con,
                     RowActionType::Upsert,
-                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?;
                 ChangelogRepository::new(con).insert_all(vec![po_changelog, pol_changelog])?;
             }
@@ -317,13 +317,13 @@ impl PurchaseOrderLineDelete {
         let po_changelog = purchase_order.changelog(
             con,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            SourceSiteId::SourceSiteId(source_site_id),
         )?;
 
         let pol_changelog = old_row.changelog(
             con,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            SourceSiteId::SourceSiteId(source_site_id),
         )?;
 
         Ok(vec![po_changelog, pol_changelog])

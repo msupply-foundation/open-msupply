@@ -2,7 +2,7 @@ use super::{
     store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
     StorageConnection,
 };
-use crate::{ChangelogSyncType, RepositoryError, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 use ts_rs::TS;
 
 use chrono::NaiveDateTime;
@@ -80,7 +80,7 @@ impl SyncMessageRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncMessage,
@@ -119,7 +119,7 @@ impl<'a> SyncMessageRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -146,7 +146,7 @@ impl Upsert for SyncMessageRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

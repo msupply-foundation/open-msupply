@@ -1,7 +1,7 @@
 use super::asset_class_row::asset_class::dsl::*;
 
 use crate::RepositoryError;
-use crate::SourceSiteIdForChangelog;
+use crate::SourceSiteId;
 use crate::StorageConnection;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
@@ -31,7 +31,7 @@ impl AssetClassRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetClass,
@@ -70,7 +70,7 @@ impl<'a> AssetClassRowRepository<'a> {
             asset_class_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -111,7 +111,7 @@ impl Upsert for AssetClassRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

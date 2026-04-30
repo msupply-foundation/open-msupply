@@ -3,7 +3,7 @@ use super::{
 };
 
 use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert,
+    repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -35,7 +35,7 @@ impl InsuranceProviderRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::InsuranceProvider,
@@ -107,7 +107,7 @@ impl<'a> InsuranceProviderRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -125,7 +125,7 @@ impl Upsert for InsuranceProviderRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

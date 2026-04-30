@@ -1,7 +1,7 @@
 use super::{location_row::location, sensor_row::sensor, store_row::store, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert,
+    repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
@@ -71,7 +71,7 @@ impl TemperatureBreachRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::TemperatureBreach,
@@ -109,7 +109,7 @@ impl<'a> TemperatureBreachRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -138,7 +138,7 @@ impl<'a> TemperatureBreachRowRepository<'a> {
             let changelog = breach.changelog(
                 self.connection,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::CurrentSiteId,
+                SourceSiteId::CurrentSiteId,
             )?;
             ChangelogRepository::new(self.connection).insert(&changelog)?;
         }
@@ -179,7 +179,7 @@ impl Upsert for TemperatureBreachRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

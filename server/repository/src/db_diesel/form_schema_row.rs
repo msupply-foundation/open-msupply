@@ -2,7 +2,7 @@ use super::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
 };
 
-use crate::{ChangelogSyncType, Delete, RepositoryError, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, Delete, RepositoryError, SourceSiteId, Upsert};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -40,7 +40,7 @@ impl FormSchemaJson {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::FormSchema,
@@ -118,7 +118,7 @@ impl<'a> FormSchemaRowRepository<'a> {
             schema.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -167,7 +167,7 @@ impl Upsert for FormSchemaJson {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -197,7 +197,7 @@ impl Delete for FormSchemaRowDelete {
                 self.0.clone(),
                 con,
                 RowActionType::Delete,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

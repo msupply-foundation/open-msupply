@@ -1,4 +1,4 @@
-use super::changelog::{changelog, SourceSiteIdForChangelog};
+use super::changelog::{changelog, SourceSiteId};
 use diesel::prelude::*;
 
 use crate::{
@@ -651,7 +651,7 @@ async fn test_changelog_outgoing_sync_records() {
         .changelog(
             &connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::SourceSiteId(Some(site1_id)),
+            SourceSiteId::SourceSiteId(Some(site1_id)),
         )
         .unwrap();
     ChangelogRepository::new(&connection)

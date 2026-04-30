@@ -1,9 +1,7 @@
 use super::{
     location_row::location, stock_line_row::stock_line, store_row::store, StorageConnection,
 };
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert,
-};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use chrono::NaiveDateTime;
@@ -40,7 +38,7 @@ impl LocationMovementRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::LocationMovement,
@@ -78,7 +76,7 @@ impl<'a> LocationMovementRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -110,7 +108,7 @@ impl Upsert for LocationMovementRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

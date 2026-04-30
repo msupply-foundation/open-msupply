@@ -7,7 +7,7 @@ use ts_rs::TS;
 
 use crate::requisition_row::RequisitionRowOrId;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RequisitionRow, RowActionType};
-use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
 use chrono::NaiveDateTime;
 
@@ -91,7 +91,7 @@ impl RequisitionLineRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let requisition_changelog = RequisitionRow::changelog(
             RequisitionRowOrId::Id(&self.requisition_id),
@@ -110,7 +110,7 @@ impl RequisitionLineRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = RequisitionLineRowRepository::new(con)
             .find_one_by_id(id)?
@@ -143,7 +143,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -171,7 +171,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
             let changelog = row.changelog(
                 self.connection,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::CurrentSiteId,
+                SourceSiteId::CurrentSiteId,
             )?;
             ChangelogRepository::new(self.connection).insert(&changelog)?;
         }
@@ -184,7 +184,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
             requisition_line_id,
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
@@ -218,7 +218,7 @@ impl Delete for RequisitionLineRowDelete {
                     &self.0,
                     con,
                     RowActionType::Delete,
-                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
@@ -250,7 +250,7 @@ impl Upsert for RequisitionLineRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
