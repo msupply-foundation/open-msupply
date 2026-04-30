@@ -434,8 +434,16 @@ impl SyncTranslation for InvoiceTranslation {
             |c, id| NameInsuranceJoinRowRepository::new(c).check_exists_by_id(id),
             true,
         )?;
-        // No DB-level FK constraint on shipping_method_id, skip validation
-        let shipping_method_id = data.shipping_method_id;
+        
+        let shipping_method_id = clear_invalid_fk(
+            connection,
+            "invoice",
+            &data.ID,
+            "shipping_method_id",
+            data.shipping_method_id,
+            |c, id| repository::ShippingMethodRowRepository::new(c).check_exists_by_id(id),
+            true,
+         )?;
 
         let status = match data.om_status {
             Some(legacy_om_status) => legacy_om_status.to_invoice_status(),
