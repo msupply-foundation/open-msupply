@@ -180,9 +180,10 @@ export const SettingsMenu = ({
           <ListItemIcon>{densityIcon()}</ListItemIcon>
           <ListItemText> {t('label.toggle-density')}</ListItemText>
         </MenuItem>
-        {onSaveAsGlobalDefault && <Divider />}
-        {onSaveAsGlobalDefault && (
+        {onSaveAsGlobalDefault && [
+          <Divider key="save-default-divider" />,
           <MenuItem
+            key="save-default"
             onClick={() => {
               onSaveAsGlobalDefault();
               setAnchorEl(null);
@@ -194,8 +195,8 @@ export const SettingsMenu = ({
             <ListItemText>
               {t('label.save-table-config-as-global-default')}
             </ListItemText>
-          </MenuItem>
-        )}
+          </MenuItem>,
+        ]}
         <Divider />
         <MenuItem
           disabled={!hasAnySavedState}

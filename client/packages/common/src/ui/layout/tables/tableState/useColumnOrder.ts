@@ -48,11 +48,12 @@ export const useColumnOrder = <T extends MRT_RowData>(
 
   // If initial state changes (due to plugin column loading, for example) and no
   // custom column order has been saved, update the column order to the new
-  // default
+  // default. globalDefaults?.columnOrder is included so the saved global order
+  // applies when preferences load after this hook has already mounted.
   useEffect(() => {
     if (!getSavedState(tableId)?.columnOrder)
       setState(globalDefaults?.columnOrder ?? initial);
-  }, [initial, hasExpanding]);
+  }, [initial, globalDefaults?.columnOrder]);
 
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnOrderChange']>

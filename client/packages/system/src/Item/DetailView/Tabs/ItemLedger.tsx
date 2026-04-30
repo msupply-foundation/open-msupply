@@ -147,10 +147,7 @@ const ItemLedgerTable = ({
         accessorFn: row => row.user?.username,
       },
     ],
-    // localisedTime is excluded from deps as useFormatDateTime creates new
-    // function refs every render; the locale is already covered by `t`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t]
+    [t, localisedTime]
   );
 
   const { table } = usePaginatedMaterialTable<ItemLedgerFragment>({
