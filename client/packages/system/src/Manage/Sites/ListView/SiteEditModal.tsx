@@ -13,6 +13,7 @@ import {
   XCircleIcon,
   LoadingButton,
   Typography,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { DraftSite, useSiteStoresDraft } from '../api';
 import { SiteStoresSection } from './SiteStoresSection';
@@ -56,6 +57,12 @@ export const SiteEditModal = ({
   const handleClose = () => {
     onClose();
   };
+
+  const confirmClearSyncToken = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-clear-sync-token'),
+    onConfirm: () => clearSyncToken(id),
+  });
 
   // const handleOk = async () => {
   //   await upsert(storesDraft.save);
@@ -155,7 +162,7 @@ export const SiteEditModal = ({
                     startIcon={<XCircleIcon />}
                     isLoading={isClearingSyncToken}
                     label={t('label.clear-sync-token')}
-                    onClick={() => clearSyncToken(id)}
+                    onClick={() => confirmClearSyncToken()}
                   />
                 </Box>
               }

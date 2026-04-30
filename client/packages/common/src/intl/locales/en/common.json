@@ -1972,6 +1972,7 @@
   "messages.confirm-change-campaign-or-program": "This will change the campaign or program for all selected lines",
   "messages.confirm-change-location": "This will change the location of all selected lines",
   "messages.confirm-changing-from-new": "Note: changing from 'New' will remove any lines with zero quantity.",
+  "messages.confirm-clear-sync-token": "The site will stop syncing until someone there re-enters their sync credentials to receive a new token.",
   "messages.confirm-close-purchase-order-lines_few": "This will permanently close {{count}} lines from this purchase order. Once closed you cannot receive any more stock against these lines.",
   "messages.confirm-close-purchase-order-lines_many": "This will permanently close {{count}} lines from this purchase order. Once closed you cannot receive any more stock against these lines.",
   "messages.confirm-close-purchase-order-lines_one": "This will permanently close 1 line from this purchase order. Once closed you cannot receive any more stock against this line.",
