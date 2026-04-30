@@ -393,7 +393,9 @@ impl SyncTranslation for InvoiceTranslation {
         let mapping = map_legacy(&invoice_type, &data, is_transfer);
 
         let currency_id = match data.currency_id {
-            Some(currency_id) => Some(currency_id),
+            Some(currency_id) => {
+                Some(currency_id)
+            }
             None => {
                 let currency_id = CurrencyRepository::new(connection)
                     .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
