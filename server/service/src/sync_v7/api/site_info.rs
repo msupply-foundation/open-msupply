@@ -22,7 +22,6 @@ pub struct SiteInfoOutput {
 }
 
 pub type Response = ApiResponse<SiteInfoOutput>;
-pub type Request = SiteInfoInput;
 pub(crate) static ROUTE: &str = "get_site_info";
 
 pub async fn get_site_info(
