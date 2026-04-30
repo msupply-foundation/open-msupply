@@ -10,7 +10,7 @@ use super::{
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 
 use repository::{
     asset_log_row::{AssetLogStatus, AssetLogType},
@@ -21,6 +21,9 @@ use repository::{
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
 };
+use util::uuid::uuid;
+
+pub const IMPORTED_FROM_CSV_COMMENT: &str = "Imported from CSV";
 
 #[derive(PartialEq, Debug)]
 pub enum InsertAssetLogError {
@@ -214,6 +217,57 @@ pub fn recalculate_mapping_dates(
     updated_row.modified_datetime = Utc::now().naive_utc();
 
     AssetRowRepository::new(connection).upsert_one(&updated_row, None)?;
+
+    Ok(())
+}
+
+/// CSV imports persist `initial_mapping_date` / `most_recent_mapping_date` directly into
+/// `asset.properties`. Without a corresponding `TemperatureMapping` log, the next call to
+/// `recalculate_mapping_dates` (triggered by any UI-recorded mapping) would overwrite those
+/// values from the log table and the imported dates would be lost. This creates synthetic
+/// log entries so the recalc treats the imported dates as part of the history.
+pub fn create_logs_for_imported_mapping_dates(
+    connection: &StorageConnection,
+    asset_id: &str,
+    user_id: &str,
+    properties_json: &str,
+) -> Result<(), RepositoryError> {
+    let props: serde_json::Map<String, serde_json::Value> =
+        match serde_json::from_str(properties_json) {
+            Ok(p) => p,
+            Err(_) => return Ok(()),
+        };
+
+    let mut dates: Vec<NaiveDate> = ["initial_mapping_date", "most_recent_mapping_date"]
+        .iter()
+        .filter_map(|key| props.get(*key).and_then(|v| v.as_str()))
+        .filter_map(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .collect();
+    dates.sort();
+    dates.dedup();
+
+    if dates.is_empty() {
+        return Ok(());
+    }
+
+    let now = Utc::now().naive_utc();
+    let repo = AssetLogRowRepository::new(connection);
+
+    for date in dates {
+        let log_datetime = date.and_hms_opt(0, 0, 0).unwrap_or(now);
+        let log = AssetLogRow {
+            id: uuid(),
+            asset_id: asset_id.to_string(),
+            user_id: user_id.to_string(),
+            status: None,
+            comment: Some(IMPORTED_FROM_CSV_COMMENT.to_string()),
+            r#type: Some(AssetLogType::TemperatureMapping),
+            reason_id: None,
+            log_datetime,
+            created_datetime: now,
+        };
+        repo.upsert_one(&log)?;
+    }
 
     Ok(())
 }
