@@ -18,8 +18,7 @@ import {
   AuthProvider,
   AlertModalProvider,
   EnvUtils,
-  LocalStorage,
-  AuthError,
+  AuthOverlayProvider,
   BadUserInputError,
   InternalServerError,
   NetworkError,
@@ -42,6 +41,7 @@ import { MigrationInfoProvider } from './components/Migration';
 import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
 import { ConnectionLostBanner } from './components/ConnectionLostBanner';
+import { AuthOverlayModal } from './components/AuthOverlayModal';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
 import { BackButtonHandler } from './BackButtonHandler';
@@ -65,9 +65,9 @@ const queryClient = new QueryClient({
       // errors during render unless this is set, which would trip the
       // global ErrorBoundary. Every typed GraphQL error is already
       // surfaced elsewhere — network by the connection banner, auth by
-      // the existing auth-error modal, permission/internal/bad-input by
-      // toasts in QueryErrorHandler — so none of them should escalate.
-      // The error boundary stays as a backstop for unexpected throws.
+      // the AuthOverlay, permission/internal/bad-input by toasts in
+      // QueryErrorHandler — so none of them should escalate. The error
+      // boundary stays as a backstop for genuinely unexpected throws.
       useErrorBoundary: error =>
         !(
           error instanceof NetworkError ||
@@ -91,9 +91,6 @@ Bugsnag.start({
   appVersion: appVersion,
   enabledBreadcrumbTypes: ['error'],
 });
-
-const skipRequest = () =>
-  LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { logout } = useAuthContext();
@@ -167,6 +164,7 @@ const router = createBrowserRouter(
           <Viewport>
             <ConnectionLostBanner />
             <ErrorAlert />
+            <AuthOverlayModal />
             <BackButtonHandler />
             <Box display="flex" style={{ minHeight: '100%' }}>
               <Routes>
@@ -206,21 +204,20 @@ const Host = () => (
           <React.Suspense fallback={<RandomLoader />}>
             <ErrorBoundary Fallback={GenericErrorFallback}>
               <QueryClientProvider client={queryClient}>
-                <GqlProvider
-                  url={Environment.GRAPHQL_URL}
-                  skipRequest={skipRequest}
-                >
+                <GqlProvider url={Environment.GRAPHQL_URL}>
                   <MigrationInfoProvider>
-                    <AuthProvider>
-                      <PreInit>
-                        <Init />
-                      </PreInit>
-                      <ConfirmationModalProvider>
-                        <AlertModalProvider>
-                          <RouterProvider router={router} />
-                        </AlertModalProvider>
-                      </ConfirmationModalProvider>
-                    </AuthProvider>
+                    <AuthOverlayProvider>
+                      <AuthProvider>
+                        <PreInit>
+                          <Init />
+                        </PreInit>
+                        <ConfirmationModalProvider>
+                          <AlertModalProvider>
+                            <RouterProvider router={router} />
+                          </AlertModalProvider>
+                        </ConfirmationModalProvider>
+                      </AuthProvider>
+                    </AuthOverlayProvider>
                   </MigrationInfoProvider>
                   {/* <ReactQueryDevtools initialIsOpen /> */}
                 </GqlProvider>
