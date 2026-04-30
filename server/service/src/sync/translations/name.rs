@@ -291,6 +291,7 @@ impl SyncTranslation for NameTranslation {
             "supplying_store_id",
             supplying_store_id,
             |c, id| StoreRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let currency_id = clear_invalid_fk(
             connection,
@@ -299,6 +300,7 @@ impl SyncTranslation for NameTranslation {
             "currency_id",
             currency_id,
             |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let result = NameRow {

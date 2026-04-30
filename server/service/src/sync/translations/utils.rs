@@ -8,9 +8,12 @@ use util::uuid::uuid;
 /// Validate an optional foreign key during sync translation.
 ///
 /// If the FK is `Some` but the referenced record does not exist, this:
-///  - logs an error (so the operator can fix the translator dependency list)
-///  - inserts a `system_log` row of type `SyncTranslationFkError`
+///  - if `log_if_missing` is true: logs an error and inserts a `system_log` row of type
+///    `SyncTranslationFkError` (use for FKs the operator should be aware of)
 ///  - returns `Ok(None)` so the translated row can still be inserted
+///
+/// Pass `log_if_missing: false` when a missing FK is expected and not actionable — e.g. a
+/// foreign-site invoice line referencing a location that only exists on the remote site.
 ///
 /// If the FK is `None` or the referenced record exists, the input is returned unchanged.
 pub(crate) fn clear_invalid_fk<F>(
@@ -20,6 +23,7 @@ pub(crate) fn clear_invalid_fk<F>(
     fk_field: &str,
     fk_id: Option<String>,
     check_exists: F,
+    log_if_missing: bool,
 ) -> Result<Option<String>, RepositoryError>
 where
     F: FnOnce(&StorageConnection, &str) -> Result<bool, RepositoryError>,
@@ -32,20 +36,22 @@ where
         return Ok(Some(id));
     }
 
-    let message = format!(
-        "Sync translation: foreign key not found, ensure the dependency was defined correctly in the translator. \
-         table={record_table}, record_id={record_id}, fk_field={fk_field}, fk_id={id}"
-    );
-    log::error!("{message}");
+    if log_if_missing {
+        let message = format!(
+            "Sync translation: foreign key not found, ensure the dependency was defined correctly in the translator. \
+             table={record_table}, record_id={record_id}, fk_field={fk_field}, fk_id={id}"
+        );
+        log::error!("{message}");
 
-    SystemLogRowRepository::new(connection).insert_one(&SystemLogRow {
-        id: uuid(),
-        r#type: SystemLogType::SyncTranslationFkError,
-        sync_site_id: None,
-        datetime: Utc::now().naive_utc(),
-        message: Some(message),
-        is_error: true,
-    })?;
+        SystemLogRowRepository::new(connection).insert_one(&SystemLogRow {
+            id: uuid(),
+            r#type: SystemLogType::SyncTranslationFkError,
+            sync_site_id: None,
+            datetime: Utc::now().naive_utc(),
+            message: Some(message),
+            is_error: true,
+        })?;
+    }
 
     Ok(None)
 }

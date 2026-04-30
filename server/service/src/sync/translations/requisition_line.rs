@@ -134,6 +134,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             "option_id",
             data.option_id,
             |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let location_type_id = clear_invalid_fk(
             connection,
@@ -142,6 +143,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             "location_type_id",
             location_type_id,
             |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let result = RequisitionLineRow {

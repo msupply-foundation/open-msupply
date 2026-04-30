@@ -104,6 +104,7 @@ impl SyncTranslation for ClinicianTranslation {
             "store_id",
             store_id,
             |c, id| StoreRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let gender = if let Some(fields) = oms_fields {

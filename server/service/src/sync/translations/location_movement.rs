@@ -88,6 +88,7 @@ impl SyncTranslation for LocationMovementTranslation {
             "location_id",
             location_id,
             |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let result = LocationMovementRow {

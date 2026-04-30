@@ -276,6 +276,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             "currency_id",
             currency_id,
             |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let result = PurchaseOrderRow {

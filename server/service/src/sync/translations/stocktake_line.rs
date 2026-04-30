@@ -160,6 +160,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             "stock_line_id",
             item_line_ID,
             |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let (campaign_id, program_id) = oms_fields
@@ -173,6 +174,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             "location_id",
             location_id,
             |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let item_variant_id = clear_invalid_fk(
             connection,
@@ -181,6 +183,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             "item_variant_id",
             item_variant_id,
             |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let vvm_status_id = clear_invalid_fk(
             connection,
@@ -189,6 +192,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             "vvm_status_id",
             vvm_status_id,
             |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let reason_option_id = clear_invalid_fk(
             connection,
@@ -197,6 +201,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             "reason_option_id",
             reason_option_id,
             |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let campaign_id = clear_invalid_fk(
             connection,
@@ -205,6 +210,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             "campaign_id",
             campaign_id,
             |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
         let program_id = clear_invalid_fk(
             connection,
@@ -213,6 +219,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             "program_id",
             program_id,
             |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
+            true,
         )?;
 
         let result = StocktakeLineRow {
