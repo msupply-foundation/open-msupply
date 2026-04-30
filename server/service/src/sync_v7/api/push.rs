@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use super::{ApiResponse, SyncApiV7};
 use crate::sync_v7::sync::SyncBatchV7;
 
