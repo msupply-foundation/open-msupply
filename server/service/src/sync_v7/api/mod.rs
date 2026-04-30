@@ -1,4 +1,4 @@
-use crate::{apis::api_on_central::SiteAuth, service_provider::ServiceProvider};
+use crate::service_provider::ServiceProvider;
 use repository::{migrations::Version, syncv7::SyncError, KeyType, KeyValueStoreRepository};
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION},
@@ -12,13 +12,12 @@ pub mod push;
 pub mod site_info;
 pub mod status;
 
-pub(crate) static VERSION: u32 = 1;
-
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Common {
-    pub(crate) version: Version,
-    pub(crate) hardware_id: String,
+    pub token: String,
+    pub hardware_id: String,
+    pub version: Version,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -35,7 +34,7 @@ pub type ApiResponse<O> = Result<O, SyncError>;
 #[derive(Clone)]
 pub(crate) struct SyncApiV7 {
     pub(crate) url: reqwest::Url,
-    pub(crate) hardware_id: String,
+    pub(crate) common: Common,
     pub(crate) auth_headers: HeaderMap,
 }
 
@@ -49,19 +48,13 @@ impl SyncApiV7 {
     ) -> Result<O, SyncError> {
         let Self {
             url,
-            hardware_id,
+            common,
             auth_headers,
         } = self.clone();
 
         let url = url.join("central/sync_v7/").unwrap().join(route).unwrap();
 
-        let request = Request {
-            input,
-            common: Common {
-                version: Version::from_package_json(),
-                hardware_id,
-            },
-        };
+        let request = Request { common, input };
         let result = with_retries(RetrySeconds::default(), |client| {
             let mut builder = client.post(url.clone());
             if use_token {
@@ -81,7 +74,7 @@ impl SyncApiV7 {
         Err(error)
     }
 
-    pub fn load_site_auth(service_provider: &ServiceProvider) -> Result<SiteAuth, SyncError> {
+    pub fn load_site_auth(service_provider: &ServiceProvider) -> Result<Common, SyncError> {
         let ctx = service_provider
             .basic_context()
             .map_err(|e| SyncError::Other(format_error(&e)))?;
@@ -98,25 +91,25 @@ impl SyncApiV7 {
             .get_hardware_id()
             .map_err(|_| SyncError::FailedToGetHardwareId)?;
 
-        Ok(SiteAuth {
+        Ok(Common {
             token,
             hardware_id,
-            app_version: VERSION,
+            version: Version::from_package_json(),
         })
     }
 
-    pub fn build_auth_headers(auth: &SiteAuth) -> Result<HeaderMap, SyncError> {
+    pub fn build_auth_headers(common: &Common) -> Result<HeaderMap, SyncError> {
         let mut headers = HeaderMap::new();
 
-        let bearer = HeaderValue::from_str(&format!("Bearer {}", auth.token))
+        let bearer = HeaderValue::from_str(&format!("Bearer {}", common.token))
             .map_err(|e| SyncError::Other(e.to_string()))?;
         headers.insert(AUTHORIZATION, bearer);
 
-        let hardware_id = HeaderValue::from_str(&auth.hardware_id)
+        let hardware_id = HeaderValue::from_str(&common.hardware_id)
             .map_err(|e| SyncError::Other(e.to_string()))?;
         headers.insert("HardwareId", hardware_id);
 
-        let app_version = HeaderValue::from_str(&auth.app_version.to_string())
+        let app_version = HeaderValue::from_str(&common.version.to_string())
             .map_err(|e| SyncError::Other(e.to_string()))?;
         headers.insert("appVersion", app_version);
 
