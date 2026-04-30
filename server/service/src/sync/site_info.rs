@@ -133,6 +133,11 @@ async fn allocate_v7_token(
 ) -> Result<(), RequestAndSetSiteInfoError> {
     use RequestAndSetSiteInfoError as Error;
 
+    // Central only issues a token once per site; skip if we've already got one.
+    if repo.get_string(KeyType::SettingsSyncV7Token)?.is_some() {
+        return Ok(());
+    }
+
     let hardware_id = service_provider
         .app_data_service
         .get_hardware_id()
