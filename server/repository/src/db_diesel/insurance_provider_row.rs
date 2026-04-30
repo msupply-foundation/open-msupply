@@ -31,7 +31,7 @@ pub struct InsuranceProviderRow {
 }
 
 impl InsuranceProviderRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -103,7 +103,7 @@ impl<'a> InsuranceProviderRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &InsuranceProviderRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = InsuranceProviderRow::changelog(
+        let changelog = InsuranceProviderRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -121,7 +121,7 @@ impl Upsert for InsuranceProviderRow {
     ) -> Result<(), RepositoryError> {
         InsuranceProviderRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

@@ -64,7 +64,7 @@ pub struct StocktakeRow {
 }
 
 impl StocktakeRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -81,7 +81,7 @@ impl StocktakeRow {
         })
     }
 
-    pub(crate) fn delete_changelog(
+    pub(crate) fn generate_delete_changelog(
         id: &str,
         con: &StorageConnection,
         source_site_id: SourceSiteId,
@@ -89,7 +89,7 @@ impl StocktakeRow {
         let row = StocktakeRowRepository::new(con)
             .find_one_by_id(id)?
             .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, RowActionType::Delete, source_site_id)
+        row.generate_changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -114,7 +114,7 @@ impl<'a> StocktakeRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &StocktakeRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -123,7 +123,7 @@ impl<'a> StocktakeRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = StocktakeRow::delete_changelog(
+        let changelog = StocktakeRow::generate_delete_changelog(
             id,
             self.connection,
             SourceSiteId::CurrentSiteId,
@@ -171,7 +171,7 @@ impl Delete for StocktakeRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StocktakeRow::delete_changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StocktakeRow::generate_delete_changelog(
                 &self.0,
                 con,
                 SourceSiteId::SourceSiteId(source_site_id),
@@ -202,7 +202,7 @@ impl Upsert for StocktakeRow {
         StocktakeRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

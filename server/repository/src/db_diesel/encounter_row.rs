@@ -77,7 +77,7 @@ pub struct EncounterRow {
 }
 
 impl EncounterRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -106,7 +106,7 @@ impl<'a> EncounterRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &EncounterRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.changelog(
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,

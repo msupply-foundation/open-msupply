@@ -205,7 +205,7 @@ pub struct NameRow {
 }
 
 impl NameRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -222,7 +222,7 @@ impl NameRow {
 }
 
 impl NameOmsFieldsRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -282,7 +282,7 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = NameRow::changelog(
+        let changelog = NameRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -300,7 +300,7 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn mark_deleted(&self, name_id: &str) -> Result<i64, RepositoryError> {
         self._mark_deleted(name_id)?;
-        let changelog = NameRow::changelog(
+        let changelog = NameRow::generate_changelog(
             name_id.to_string(),
             self.connection,
             RowActionType::Delete,
@@ -360,7 +360,7 @@ impl<'a> NameRowRepository<'a> {
             .set(name_oms_fields::properties.eq(properties))
             .execute(self.connection.lock().connection())?;
 
-        let changelog = NameOmsFieldsRow::changelog(
+        let changelog = NameOmsFieldsRow::generate_changelog(
             name_id.to_string(),
             self.connection,
             RowActionType::Upsert,
@@ -403,7 +403,7 @@ impl Delete for NameRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => NameRow::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => NameRow::generate_changelog(
                 self.0.clone(),
                 con,
                 RowActionType::Delete,
@@ -434,7 +434,7 @@ impl Upsert for NameRow {
         NameRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
@@ -466,7 +466,7 @@ impl Upsert for NameOmsFieldsRow {
             .execute(con.lock().connection())?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

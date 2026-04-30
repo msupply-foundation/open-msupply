@@ -48,7 +48,7 @@ pub struct ClinicianRow {
 allow_tables_to_appear_in_same_query!(clinician, clinician_link);
 
 impl ClinicianRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -105,7 +105,7 @@ impl<'a> ClinicianRowRepositoryTrait<'a> for ClinicianRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         insert_or_ignore_clinician_link(self.connection, row)?;
-        let changelog = ClinicianRow::changelog(
+        let changelog = ClinicianRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -148,7 +148,7 @@ impl Upsert for ClinicianRow {
     ) -> Result<(), RepositoryError> {
         ClinicianRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

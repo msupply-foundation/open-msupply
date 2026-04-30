@@ -33,7 +33,7 @@ pub struct PackagingVariantRow {
 }
 
 impl PackagingVariantRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -71,7 +71,7 @@ impl<'a> PackagingVariantRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &PackagingVariantRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = PackagingVariantRow::changelog(
+        let changelog = PackagingVariantRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -99,7 +99,7 @@ impl<'a> PackagingVariantRowRepository<'a> {
         .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        let changelog = PackagingVariantRow::changelog(
+        let changelog = PackagingVariantRow::generate_changelog(
             packaging_variant_id.to_string(),
             self.connection,
             RowActionType::Upsert,
@@ -118,7 +118,7 @@ impl Upsert for PackagingVariantRow {
         PackagingVariantRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

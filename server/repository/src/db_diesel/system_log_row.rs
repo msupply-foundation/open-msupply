@@ -61,7 +61,7 @@ pub struct SystemLogRow {
 }
 
 impl SystemLogRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -97,7 +97,7 @@ impl<'a> SystemLogRowRepository<'a> {
 
     pub fn insert_one(&self, row: &SystemLogRow) -> Result<i64, RepositoryError> {
         self._insert_one(row)?;
-        let changelog = SystemLogRow::changelog(
+        let changelog = SystemLogRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -137,7 +137,7 @@ impl Upsert for SystemLogRow {
         SystemLogRowRepository::new(con)._insert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

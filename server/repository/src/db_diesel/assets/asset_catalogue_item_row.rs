@@ -47,7 +47,7 @@ pub struct AssetCatalogueItemRow {
 }
 
 impl AssetCatalogueItemRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -92,7 +92,7 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         asset_catalogue_item_row: &AssetCatalogueItemRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_catalogue_item_row)?;
-        let changelog = AssetCatalogueItemRow::changelog(
+        let changelog = AssetCatalogueItemRow::generate_changelog(
             asset_catalogue_item_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -121,7 +121,7 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         diesel::update(asset_catalogue_item.filter(id.eq(asset_catalogue_item_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        let changelog = AssetCatalogueItemRow::changelog(
+        let changelog = AssetCatalogueItemRow::generate_changelog(
             asset_catalogue_item_id.to_string(),
             self.connection,
             RowActionType::Upsert,
@@ -139,7 +139,7 @@ impl Upsert for AssetCatalogueItemRow {
     ) -> Result<(), RepositoryError> {
         AssetCatalogueItemRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

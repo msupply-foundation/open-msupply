@@ -27,7 +27,7 @@ pub struct DemographicRow {
 }
 
 impl DemographicRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -65,7 +65,7 @@ impl<'a> DemographicRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &DemographicRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = DemographicRow::changelog(
+        let changelog = DemographicRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -105,7 +105,7 @@ impl Upsert for DemographicRow {
     ) -> Result<(), RepositoryError> {
         DemographicRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

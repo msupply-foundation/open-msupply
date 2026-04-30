@@ -45,7 +45,7 @@ pub struct IndicatorValueRow {
 }
 
 impl IndicatorValueRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -74,7 +74,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &IndicatorValueRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = IndicatorValueRow::changelog(
+        let changelog = IndicatorValueRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -84,7 +84,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = IndicatorValueRow::changelog(
+        let changelog = IndicatorValueRow::generate_changelog(
             id.to_string(),
             self.connection,
             RowActionType::Delete,
@@ -120,7 +120,7 @@ impl Delete for IndicatorValueRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => IndicatorValueRow::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => IndicatorValueRow::generate_changelog(
                 self.0.clone(),
                 con,
                 RowActionType::Delete,
@@ -154,7 +154,7 @@ impl Upsert for IndicatorValueRow {
         IndicatorValueRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

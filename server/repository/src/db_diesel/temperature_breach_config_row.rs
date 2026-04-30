@@ -42,7 +42,7 @@ pub struct TemperatureBreachConfigRow {
 }
 
 impl TemperatureBreachConfigRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -76,7 +76,7 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        let changelog = row.changelog(
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,

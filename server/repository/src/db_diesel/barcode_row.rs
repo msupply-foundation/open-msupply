@@ -48,7 +48,7 @@ pub struct BarcodeRow {
 }
 
 impl BarcodeRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -77,7 +77,7 @@ impl<'a> BarcodeRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &BarcodeRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = BarcodeRow::changelog(
+        let changelog = BarcodeRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -110,7 +110,7 @@ impl Upsert for BarcodeRow {
     ) -> Result<(), RepositoryError> {
         BarcodeRowRepository::new(con)._upsert(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

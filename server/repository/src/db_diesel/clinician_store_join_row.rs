@@ -26,7 +26,7 @@ pub struct ClinicianStoreJoinRow {
 }
 
 impl ClinicianStoreJoinRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -65,7 +65,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = ClinicianStoreJoinRow::changelog(
+        let changelog = ClinicianStoreJoinRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -104,7 +104,7 @@ impl Upsert for ClinicianStoreJoinRow {
     ) -> Result<(), RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

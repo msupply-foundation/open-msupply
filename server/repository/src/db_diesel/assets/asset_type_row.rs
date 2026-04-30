@@ -31,7 +31,7 @@ pub struct AssetTypeRow {
 }
 
 impl AssetTypeRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -70,7 +70,7 @@ impl<'a> AssetTypeRowRepository<'a> {
 
     pub fn upsert_one(&self, asset_type_row: &AssetTypeRow) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_type_row)?;
-        let changelog = AssetTypeRow::changelog(
+        let changelog = AssetTypeRow::generate_changelog(
             asset_type_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -111,7 +111,7 @@ impl Upsert for AssetTypeRow {
     ) -> Result<(), RepositoryError> {
         AssetTypeRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

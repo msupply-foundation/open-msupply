@@ -42,7 +42,7 @@ pub struct VVMStatusLogRow {
 }
 
 impl VVMStatusLogRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -59,7 +59,7 @@ impl VVMStatusLogRow {
         })
     }
 
-    pub(crate) fn delete_changelog(
+    pub(crate) fn generate_delete_changelog(
         row_id: &str,
         con: &StorageConnection,
         source_site_id: SourceSiteId,
@@ -67,7 +67,7 @@ impl VVMStatusLogRow {
         let row = VVMStatusLogRowRepository::new(con)
             .find_one_by_id(row_id)?
             .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, RowActionType::Delete, source_site_id)
+        row.generate_changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -111,7 +111,7 @@ impl<'a> VVMStatusLogRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -120,7 +120,7 @@ impl<'a> VVMStatusLogRowRepository<'a> {
     }
 
     pub fn delete(&self, log_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = match VVMStatusLogRow::delete_changelog(
+        let changelog = match VVMStatusLogRow::generate_delete_changelog(
             log_id,
             self.connection,
             SourceSiteId::CurrentSiteId,
@@ -147,7 +147,7 @@ impl Delete for VVMStatusLogRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                VVMStatusLogRow::delete_changelog(
+                VVMStatusLogRow::generate_delete_changelog(
                     &self.0,
                     con,
                     SourceSiteId::SourceSiteId(source_site_id),
@@ -178,7 +178,7 @@ impl Upsert for VVMStatusLogRow {
         VVMStatusLogRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

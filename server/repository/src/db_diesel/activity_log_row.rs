@@ -139,7 +139,7 @@ pub struct ActivityLogRow {
 }
 
 impl ActivityLogRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -175,7 +175,7 @@ impl<'a> ActivityLogRowRepository<'a> {
 
     pub fn insert_one(&self, row: &ActivityLogRow) -> Result<i64, RepositoryError> {
         self._insert_one(row)?;
-        let changelog = row.changelog(
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -208,7 +208,7 @@ impl Upsert for ActivityLogRow {
         ActivityLogRowRepository::new(con)._insert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

@@ -67,7 +67,7 @@ pub struct TemperatureBreachRow {
 }
 
 impl TemperatureBreachRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -106,7 +106,7 @@ impl<'a> TemperatureBreachRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &TemperatureBreachRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -135,7 +135,7 @@ impl<'a> TemperatureBreachRowRepository<'a> {
             .load::<TemperatureBreachRow>(self.connection.lock().connection())?;
 
         for breach in &breaches {
-            let changelog = breach.changelog(
+            let changelog = breach.generate_changelog(
                 self.connection,
                 RowActionType::Upsert,
                 SourceSiteId::CurrentSiteId,
@@ -176,7 +176,7 @@ impl Upsert for TemperatureBreachRow {
         TemperatureBreachRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

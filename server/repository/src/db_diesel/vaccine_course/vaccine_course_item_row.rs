@@ -39,7 +39,7 @@ pub struct VaccineCourseItemRow {
 }
 
 impl VaccineCourseItemRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -83,7 +83,7 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         vaccine_course_item_row: &VaccineCourseItemRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(vaccine_course_item_row)?;
-        let changelog = VaccineCourseItemRow::changelog(
+        let changelog = VaccineCourseItemRow::generate_changelog(
             vaccine_course_item_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -114,7 +114,7 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        let changelog = VaccineCourseItemRow::changelog(
+        let changelog = VaccineCourseItemRow::generate_changelog(
             vaccine_course_item_id.to_string(),
             self.connection,
             RowActionType::Upsert,
@@ -133,7 +133,7 @@ impl Upsert for VaccineCourseItemRow {
         VaccineCourseItemRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

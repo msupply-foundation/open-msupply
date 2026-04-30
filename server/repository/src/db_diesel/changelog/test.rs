@@ -648,7 +648,7 @@ async fn test_changelog_outgoing_sync_records() {
         ._upsert_one(&row)
         .unwrap();
     let changelog = row
-        .changelog(
+        .generate_changelog(
             &connection,
             RowActionType::Upsert,
             SourceSiteId::SourceSiteId(Some(site1_id)),
