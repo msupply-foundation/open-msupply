@@ -162,17 +162,16 @@ fn get_central_site_id(connection: &StorageConnection) -> Result<i32, SyncError>
 }
 
 /// Send Records to a remote open-mSupply Server
-pub async fn pull(service_provider: &ServiceProvider, request: pull::Request) -> pull::Response {
-    let (site, ctx) = validate(service_provider, &request.common)?;
+pub async fn pull(
+    service_provider: &ServiceProvider,
+    common: Common,
+    input: pull::Input,
+) -> pull::Response {
+    let (site, ctx) = validate(service_provider, &common)?;
 
-    let filter = Site::SiteId(site.id).all_data_for_site(request.input.is_initialising);
+    let filter = Site::SiteId(site.id).all_data_for_site(input.is_initialising);
 
-    let batch = SyncBatchV7::generate(
-        &ctx.connection,
-        filter,
-        request.input.cursor,
-        request.input.batch_size,
-    )?;
+    let batch = SyncBatchV7::generate(&ctx.connection, filter, input.cursor, input.batch_size)?;
 
     Ok(batch)
 }
@@ -180,16 +179,17 @@ pub async fn pull(service_provider: &ServiceProvider, request: pull::Request) ->
 /// Receive Records from a remote open-mSupply Server
 pub async fn push(
     service_provider: Arc<ServiceProvider>,
-    request: push::Request,
+    common: Common,
+    input: push::Input,
 ) -> push::Response {
-    let (site, ctx) = validate(&service_provider, &request.common)?;
+    let (site, ctx) = validate(&service_provider, &common)?;
     let site_id = site.id;
 
     let SyncBatchV7 {
         site_id: from_site_id,
         max_cursor: _,
         records,
-    } = request.input;
+    } = input;
 
     if from_site_id != site_id {
         return Err(SyncError::SiteIdMismatch {
@@ -479,13 +479,11 @@ mod tests {
 
         let batch = pull(
             &service_provider,
-            pull::Request {
-                common,
-                input: pull::Input {
-                    cursor: 0,
-                    batch_size: 100,
-                    is_initialising: true,
-                },
+            common,
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: true,
             },
         )
         .await
@@ -506,13 +504,11 @@ mod tests {
 
         let count = push(
             service_provider,
-            push::Request {
-                common,
-                input: SyncBatchV7 {
-                    site_id: authenticated_site_id,
-                    max_cursor: 0,
-                    records: vec![],
-                },
+            common,
+            SyncBatchV7 {
+                site_id: authenticated_site_id,
+                max_cursor: 0,
+                records: vec![],
             },
         )
         .await
@@ -532,16 +528,14 @@ mod tests {
 
         let response = pull(
             &service_provider,
-            pull::Request {
-                common: Common {
-                    version: Version::from_str("99.99.99"),
-                    ..common
-                },
-                input: pull::Input {
-                    cursor: 0,
-                    batch_size: 100,
-                    is_initialising: true,
-                },
+            Common {
+                version: Version::from_str("99.99.99"),
+                ..common
+            },
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: true,
             },
         )
         .await;

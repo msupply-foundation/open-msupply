@@ -13,11 +13,10 @@ pub struct Input {
     pub is_initialising: bool,
 }
 
-pub type Request = super::Request<Input>;
 static ROUTE: &str = "pull";
 
 impl SyncApiV7 {
     pub async fn pull(&self, input: Input) -> Response {
-        self.op(ROUTE, input, true).await
+        self.op(ROUTE, input).await
     }
 }

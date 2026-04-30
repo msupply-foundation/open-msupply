@@ -15,7 +15,7 @@ use crate::{
     service_provider::ServiceProvider,
     sync::{settings::SyncSettings, ActiveStoresOnSite},
     sync_v7::{
-        api::{self, SyncApiV7},
+        api::{self, Common, SyncApiV7},
         get_current_site_id,
         prepare::prepare,
         sync_logger::{SyncLogger, SyncStep},
@@ -138,13 +138,12 @@ async fn sync_inner<'a>(
     settings: SyncSettings,
     is_initialising: bool,
 ) -> Result<(), SyncError> {
-    let common = SyncApiV7::load_site_auth(service_provider)?;
-    let auth_headers = SyncApiV7::build_auth_headers(&common)?;
+    let common = Common::load(service_provider)?;
+    let auth_headers = common.to_auth_headers()?;
     let sync_v7 = SyncV7 {
         connection,
         sync_api_v7: SyncApiV7 {
             url: settings.url.parse().unwrap(),
-            common,
             auth_headers,
         },
         batch_size: 5000,
