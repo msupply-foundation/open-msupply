@@ -27,7 +27,7 @@ use crate::{
     },
 };
 
-/// TODO: revisit token format — UUID v7 for now.
+/// TODO: revisit token format
 pub fn get_site_info(
     service_provider: &ServiceProvider,
     input: SiteInfoInput,
@@ -368,6 +368,16 @@ mod tests {
             .unwrap();
         assert_eq!(stored.token.as_deref(), Some(output.token.as_str()));
         assert_eq!(stored.hardware_id.as_deref(), Some(HARDWARE_ID));
+
+        // Using same valid credentials must not reallocate a new token or change hardware id.
+        let err = get_site_info(&service_provider, input()).unwrap_err();
+        assert!(matches!(err, SyncError::TokenAlreadyAllocated));
+        let site = SiteRowRepository::new(&connection)
+            .find_one_by_id(1)
+            .unwrap()
+            .unwrap();
+        assert_eq!(site.token.as_deref(), Some(output.token.as_str()));
+        assert_eq!(site.hardware_id.as_deref(), Some(HARDWARE_ID));
     }
 
     #[actix_rt::test]
