@@ -286,7 +286,7 @@ impl Synchroniser {
             &ctx.connection,
             Some(logger),
             SyncBufferSource::Central(central_sync_server_id),
-            self.settings.use_integration_transaction,
+            !self.settings.disable_integration_transaction,
         )
         .map_err(SyncError::IntegrationError)?;
 
