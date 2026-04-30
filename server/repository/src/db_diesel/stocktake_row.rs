@@ -2,7 +2,7 @@ use super::{user_row::user_account, StorageConnection};
 
 use crate::{repository_error::RepositoryError, Delete};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, SourceSiteId, Upsert};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -68,7 +68,7 @@ impl StocktakeRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Stocktake,
@@ -85,7 +85,7 @@ impl StocktakeRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = StocktakeRowRepository::new(con)
             .find_one_by_id(id)?
@@ -118,7 +118,7 @@ impl<'a> StocktakeRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -128,7 +128,7 @@ impl<'a> StocktakeRowRepository<'a> {
             id,
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(stocktake::table.filter(stocktake::id.eq(id)))
@@ -177,7 +177,7 @@ impl Delete for StocktakeRowDelete {
                 &self.0,
                 con,
                 RowActionType::Delete,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -208,7 +208,7 @@ impl Upsert for StocktakeRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

@@ -8,7 +8,7 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-use crate::SourceSiteIdForChangelog;
+use crate::SourceSiteId;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RowActionType,
     Upsert,
@@ -95,7 +95,7 @@ impl SyncFileReferenceRow {
         changelog_record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncFileReference,
@@ -138,7 +138,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             sync_file_reference_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -162,7 +162,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             sync_file_reference_id.to_string(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
@@ -209,7 +209,7 @@ impl Upsert for SyncFileReferenceRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

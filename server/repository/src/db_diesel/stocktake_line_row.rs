@@ -6,7 +6,7 @@ use super::{
 
 use crate::diesel_macros::define_linked_tables;
 use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert,
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
@@ -101,7 +101,7 @@ impl StocktakeLineRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let stocktake_row = StocktakeRowRepository::new(con).find_one_by_id(&self.stocktake_id)?;
         let stocktake = match stocktake_row {
@@ -124,7 +124,7 @@ impl StocktakeLineRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = StocktakeLineRowRepository::new(con)
             .find_one_by_id(id)?
@@ -147,7 +147,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -157,7 +157,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
             id,
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(
@@ -201,7 +201,7 @@ impl Delete for StocktakeLineRowDelete {
                     &self.0,
                     con,
                     RowActionType::Delete,
-                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
@@ -235,7 +235,7 @@ impl Upsert for StocktakeLineRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

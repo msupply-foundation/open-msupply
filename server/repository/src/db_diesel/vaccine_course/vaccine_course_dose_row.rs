@@ -8,7 +8,7 @@ use crate::{
         item_row::item, name_row::name,
     },
     ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
-    RepositoryError, RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -57,7 +57,7 @@ impl VaccineCourseDoseRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::VaccineCourseDose,
@@ -101,7 +101,7 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
             vaccine_course_dose_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -132,7 +132,7 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
             vaccine_course_dose_id.to_string(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -151,7 +151,7 @@ impl Upsert for VaccineCourseDoseRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

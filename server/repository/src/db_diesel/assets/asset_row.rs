@@ -3,7 +3,7 @@ use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
-    RepositoryError, RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -72,7 +72,7 @@ impl AssetRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Asset,
@@ -87,7 +87,7 @@ impl AssetRow {
     pub(crate) fn soft_delete_and_get_changelog(
         row_id: &str,
         con: &StorageConnection,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = AssetRowRepository::new(con)
             .find_one_by_id(row_id)?
@@ -127,7 +127,7 @@ impl<'a> AssetRowRepository<'a> {
         let changelog = asset_row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let changelog_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
@@ -138,7 +138,7 @@ impl<'a> AssetRowRepository<'a> {
             let mut original_changelog = asset_row.changelog(
                 self.connection,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::CurrentSiteId,
+                SourceSiteId::CurrentSiteId,
             )?;
             original_changelog.store_id = Some(original_store);
             ChangelogRepository::new(self.connection).insert(&original_changelog)?;
@@ -165,7 +165,7 @@ impl<'a> AssetRowRepository<'a> {
         let changelog = AssetRow::soft_delete_and_get_changelog(
             asset_id_param,
             self.connection,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -182,7 +182,7 @@ impl Upsert for AssetRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -212,7 +212,7 @@ impl Delete for AssetRowDelete {
                 AssetRow::soft_delete_and_get_changelog(
                     &self.0,
                     con,
-                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => {

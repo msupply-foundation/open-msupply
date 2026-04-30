@@ -3,7 +3,7 @@ use super::{
     StorageConnection,
 };
 use crate::ChangelogSyncType;
-use crate::SourceSiteIdForChangelog;
+use crate::SourceSiteId;
 use crate::{
     diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
 };
@@ -49,7 +49,7 @@ impl IndicatorValueRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::IndicatorValue,
@@ -78,7 +78,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -88,7 +88,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
             id.to_string(),
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
@@ -124,7 +124,7 @@ impl Delete for IndicatorValueRowDelete {
                 self.0.clone(),
                 con,
                 RowActionType::Delete,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -158,7 +158,7 @@ impl Upsert for IndicatorValueRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

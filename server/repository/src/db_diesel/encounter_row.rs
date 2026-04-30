@@ -4,7 +4,7 @@ use super::{
 };
 
 use crate::diesel_macros::define_linked_tables;
-use crate::SourceSiteIdForChangelog;
+use crate::SourceSiteId;
 use crate::{
     repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
     RowActionType,
@@ -81,7 +81,7 @@ impl EncounterRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Encounter,
@@ -109,7 +109,7 @@ impl<'a> EncounterRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }

@@ -3,7 +3,7 @@ use super::{
 };
 
 use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert,
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -76,7 +76,7 @@ impl BackendPluginRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::BackendPlugin,
@@ -131,7 +131,7 @@ impl<'a> BackendPluginRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -141,7 +141,7 @@ impl<'a> BackendPluginRowRepository<'a> {
             id.to_string(),
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
@@ -164,7 +164,7 @@ impl Upsert for BackendPluginRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -197,7 +197,7 @@ impl Delete for BackendPluginRowDelete {
                 self.0.clone(),
                 con,
                 RowActionType::Delete,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

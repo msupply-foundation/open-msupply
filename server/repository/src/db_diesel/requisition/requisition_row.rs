@@ -9,7 +9,7 @@ use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -140,7 +140,7 @@ impl RequisitionRow {
         row_or_id: RequisitionRowOrId,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = match row_or_id {
             RequisitionRowOrId::Row(row) => row.clone(),
@@ -164,7 +164,7 @@ impl RequisitionRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Self::changelog(RequisitionRowOrId::Id(id), con, action, source_site_id)
     }
@@ -185,7 +185,7 @@ impl<'a> RequisitionRowRepository<'a> {
             RequisitionRowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -195,7 +195,7 @@ impl<'a> RequisitionRowRepository<'a> {
             requisition_id,
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
@@ -245,7 +245,7 @@ impl Delete for RequisitionRowDelete {
                 &self.0,
                 con,
                 RowActionType::Delete,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -279,7 +279,7 @@ impl Upsert for RequisitionRow {
                 RequisitionRowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

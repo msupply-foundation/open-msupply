@@ -2,7 +2,7 @@ use super::StorageConnection;
 
 use crate::{
     clinician_link, ChangelogSyncType, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType,
-    RepositoryError, SourceSiteIdForChangelog, Upsert,
+    RepositoryError, SourceSiteId, Upsert,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
@@ -52,7 +52,7 @@ impl ClinicianRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Clinician,
@@ -109,7 +109,7 @@ impl<'a> ClinicianRowRepositoryTrait<'a> for ClinicianRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -152,7 +152,7 @@ impl Upsert for ClinicianRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

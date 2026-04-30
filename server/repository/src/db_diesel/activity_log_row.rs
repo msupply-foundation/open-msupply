@@ -2,7 +2,7 @@ use super::StorageConnection;
 
 use crate::{
     db_diesel::store_row::store, repository_error::RepositoryError, user_account,
-    ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert,
+    ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
@@ -143,7 +143,7 @@ impl ActivityLogRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::ActivityLog,
@@ -178,7 +178,7 @@ impl<'a> ActivityLogRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -211,7 +211,7 @@ impl Upsert for ActivityLogRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

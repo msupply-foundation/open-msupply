@@ -125,19 +125,19 @@ diesel_string_enum! {
     }
 }
 
-pub(crate) enum SourceSiteIdForChangelog {
+pub(crate) enum SourceSiteId {
     SourceSiteId(Option<i32>),
     CurrentSiteId,
 }
 
-impl SourceSiteIdForChangelog {
+impl SourceSiteId {
     pub(crate) fn get_id(
         &self,
         connection: &StorageConnection,
     ) -> Result<Option<i32>, RepositoryError> {
         match self {
-            SourceSiteIdForChangelog::SourceSiteId(id) => Ok(*id),
-            SourceSiteIdForChangelog::CurrentSiteId => {
+            SourceSiteId::SourceSiteId(id) => Ok(*id),
+            SourceSiteId::CurrentSiteId => {
                 KeyValueStoreRepository::new(connection).get_current_site_id()
             }
         }

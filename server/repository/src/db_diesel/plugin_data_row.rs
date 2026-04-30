@@ -3,9 +3,7 @@ use super::{
     StorageConnection,
 };
 
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert,
-};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert};
 
 use diesel::prelude::*;
 
@@ -44,7 +42,7 @@ impl PluginDataRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::PluginData,
@@ -82,7 +80,7 @@ impl<'a> PluginDataRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -109,7 +107,7 @@ impl Upsert for PluginDataRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

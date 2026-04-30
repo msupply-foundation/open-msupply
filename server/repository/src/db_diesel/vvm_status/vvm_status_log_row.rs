@@ -2,7 +2,7 @@ use super::vvm_status_log_row::vvm_status_log::dsl::*;
 use crate::{
     db_diesel::{invoice_line_row::invoice_line, stock_line_row::stock_line, store_row::store},
     ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
-    RepositoryError, RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -46,7 +46,7 @@ impl VVMStatusLogRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::VVMStatusLog,
@@ -63,7 +63,7 @@ impl VVMStatusLogRow {
         row_id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = VVMStatusLogRowRepository::new(con)
             .find_one_by_id(row_id)?
@@ -115,7 +115,7 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -125,7 +125,7 @@ impl<'a> VVMStatusLogRowRepository<'a> {
             log_id,
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         ) {
             Ok(changelog) => changelog,
             Err(RepositoryError::NotFound) => return Ok(None),
@@ -153,7 +153,7 @@ impl Delete for VVMStatusLogRowDelete {
                     &self.0,
                     con,
                     RowActionType::Delete,
-                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
@@ -184,7 +184,7 @@ impl Upsert for VVMStatusLogRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

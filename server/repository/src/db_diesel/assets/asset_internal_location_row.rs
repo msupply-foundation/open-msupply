@@ -4,7 +4,7 @@ use crate::asset_row::AssetRowRepository;
 use crate::Delete;
 use crate::LocationRowRepository;
 use crate::RepositoryError;
-use crate::SourceSiteIdForChangelog;
+use crate::SourceSiteId;
 use crate::StorageConnection;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
@@ -36,7 +36,7 @@ impl AssetInternalLocationRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let store_id_location = LocationRowRepository::new(con)
             .find_one_by_id(&self.location_id)?
@@ -61,7 +61,7 @@ impl AssetInternalLocationRow {
         row_id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = AssetInternalLocationRowRepository::new(con)
             .find_one_by_id(row_id)?
@@ -100,7 +100,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         let changelog = asset_internal_location_row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -141,7 +141,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
             asset_internal_location_id,
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         ) {
             Ok(changelog) => changelog,
             Err(RepositoryError::NotFound) => {
@@ -179,7 +179,7 @@ impl Upsert for AssetInternalLocationRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -210,7 +210,7 @@ impl Delete for AssetInternalLocationRowDelete {
                     &self.0,
                     con,
                     RowActionType::Delete,
-                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,

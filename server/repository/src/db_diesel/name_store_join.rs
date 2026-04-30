@@ -5,7 +5,7 @@ use crate::{
     NameRow,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -59,7 +59,7 @@ impl NameStoreJoinRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::NameStoreJoin,
@@ -76,7 +76,7 @@ impl NameStoreJoinRow {
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = NameStoreJoinRepository::new(con)
             .find_one_by_id(id)?
@@ -99,7 +99,7 @@ impl<'a> NameStoreJoinRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -124,7 +124,7 @@ impl<'a> NameStoreJoinRepository<'a> {
             id,
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(
@@ -220,7 +220,7 @@ impl Delete for NameStoreJoinRowDelete {
                     &self.0,
                     con,
                     RowActionType::Delete,
-                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
@@ -254,7 +254,7 @@ impl Upsert for NameStoreJoinRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

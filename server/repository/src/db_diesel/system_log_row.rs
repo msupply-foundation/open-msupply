@@ -2,7 +2,7 @@ use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RowActionType,
     Upsert,
 };
-use crate::{RepositoryError, SourceSiteIdForChangelog, StorageConnection};
+use crate::{RepositoryError, SourceSiteId, StorageConnection};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -65,7 +65,7 @@ impl SystemLogRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::SystemLog,
@@ -101,7 +101,7 @@ impl<'a> SystemLogRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -141,7 +141,7 @@ impl Upsert for SystemLogRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

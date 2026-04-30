@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
-    RepositoryError, RnRFormRowRepository, RowActionType, SourceSiteIdForChangelog,
+    RepositoryError, RnRFormRowRepository, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
 
@@ -100,7 +100,7 @@ impl RnRFormLineRow {
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let store_id = RnRFormRowRepository::new(con)
             .find_one_by_id(&self.rnr_form_id)?
@@ -121,7 +121,7 @@ impl RnRFormLineRow {
         row_id: &str,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = RnRFormLineRowRepository::new(con)
             .find_one_by_id(row_id)?
@@ -154,7 +154,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -175,7 +175,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
         let changelog = row.changelog(
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
@@ -222,7 +222,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
             rnr_form_line_id,
             self.connection,
             RowActionType::Delete,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         ) {
             Ok(changelog) => changelog,
             Err(RepositoryError::NotFound) => return Ok(None),
@@ -250,7 +250,7 @@ impl Delete for RnRFormLineDelete {
                 &self.0,
                 con,
                 RowActionType::Delete,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
@@ -280,7 +280,7 @@ impl Upsert for RnRFormLineRow {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

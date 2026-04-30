@@ -2,7 +2,7 @@ use super::StorageConnection;
 
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
-    RepositoryError, RowActionType, SourceSiteIdForChangelog, Upsert,
+    RepositoryError, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -31,7 +31,7 @@ impl DemographicRow {
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: SourceSiteIdForChangelog,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Demographic,
@@ -69,7 +69,7 @@ impl<'a> DemographicRowRepository<'a> {
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
-            SourceSiteIdForChangelog::CurrentSiteId,
+            SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -109,7 +109,7 @@ impl Upsert for DemographicRow {
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
-                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+                SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
