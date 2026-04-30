@@ -78,7 +78,7 @@ pub struct NameInsuranceJoinRow {
 }
 
 impl NameInsuranceJoinRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -154,7 +154,7 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameInsuranceJoinRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = NameInsuranceJoinRow::changelog(
+        let changelog = NameInsuranceJoinRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -173,7 +173,7 @@ impl Upsert for NameInsuranceJoinRow {
         NameInsuranceJoinRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

@@ -38,7 +38,7 @@ pub struct PropertyRow {
 }
 
 impl PropertyRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -77,7 +77,7 @@ impl<'a> PropertyRowRepository<'a> {
 
     pub fn upsert_one(&self, property_row: &PropertyRow) -> Result<i64, RepositoryError> {
         self._upsert_one(property_row)?;
-        let changelog = PropertyRow::changelog(
+        let changelog = PropertyRow::generate_changelog(
             property_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -119,7 +119,7 @@ impl Upsert for PropertyRow {
         PropertyRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

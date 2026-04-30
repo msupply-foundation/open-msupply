@@ -36,7 +36,7 @@ pub struct LocationRow {
 }
 
 impl LocationRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -53,7 +53,7 @@ impl LocationRow {
         })
     }
 
-    pub(crate) fn delete_changelog(
+    pub(crate) fn generate_delete_changelog(
         id: &str,
         con: &StorageConnection,
         source_site_id: SourceSiteId,
@@ -61,7 +61,7 @@ impl LocationRow {
         let row = LocationRowRepository::new(con)
             .find_one_by_id(id)?
             .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, RowActionType::Delete, source_site_id)
+        row.generate_changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -86,7 +86,7 @@ impl<'a> LocationRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &LocationRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -111,7 +111,7 @@ impl<'a> LocationRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = LocationRow::delete_changelog(
+        let changelog = LocationRow::generate_delete_changelog(
             id,
             self.connection,
             SourceSiteId::CurrentSiteId,
@@ -135,7 +135,7 @@ impl Delete for LocationRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => LocationRow::delete_changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => LocationRow::generate_delete_changelog(
                 &self.0,
                 con,
                 SourceSiteId::SourceSiteId(source_site_id),
@@ -166,7 +166,7 @@ impl Upsert for LocationRow {
         LocationRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

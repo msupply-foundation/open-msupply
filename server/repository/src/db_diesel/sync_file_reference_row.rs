@@ -91,7 +91,7 @@ pub struct SyncFileReferenceRow {
 }
 
 impl SyncFileReferenceRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         changelog_record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -134,7 +134,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
-        let changelog = SyncFileReferenceRow::changelog(
+        let changelog = SyncFileReferenceRow::generate_changelog(
             sync_file_reference_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -158,7 +158,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        let changelog = SyncFileReferenceRow::changelog(
+        let changelog = SyncFileReferenceRow::generate_changelog(
             sync_file_reference_id.to_string(),
             self.connection,
             RowActionType::Upsert,
@@ -205,7 +205,7 @@ impl Upsert for SyncFileReferenceRow {
         SyncFileReferenceRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

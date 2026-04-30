@@ -30,7 +30,7 @@ pub struct BundledItemRow {
 }
 
 impl BundledItemRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -68,7 +68,7 @@ impl<'a> BundledItemRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &BundledItemRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = BundledItemRow::changelog(
+        let changelog = BundledItemRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -94,7 +94,7 @@ impl<'a> BundledItemRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        let changelog = BundledItemRow::changelog(
+        let changelog = BundledItemRow::generate_changelog(
             bundled_item_id.to_string(),
             self.connection,
             RowActionType::Upsert,
@@ -113,7 +113,7 @@ impl Upsert for BundledItemRow {
         BundledItemRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

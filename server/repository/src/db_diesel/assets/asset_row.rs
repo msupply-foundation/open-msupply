@@ -68,7 +68,7 @@ pub struct AssetRow {
 }
 
 impl AssetRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -95,7 +95,7 @@ impl AssetRow {
         diesel::update(asset.filter(id.eq(row_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(con.lock().connection())?;
-        row.changelog(con, RowActionType::Upsert, source_site_id)
+        row.generate_changelog(con, RowActionType::Upsert, source_site_id)
     }
 }
 
@@ -124,7 +124,7 @@ impl<'a> AssetRowRepository<'a> {
         original_store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_row)?;
-        let changelog = asset_row.changelog(
+        let changelog = asset_row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -135,7 +135,7 @@ impl<'a> AssetRowRepository<'a> {
             // Insert upsert changelog for original store
             // if store is on different site it should be synced there
             // with new store_id, making it invisible in that store
-            let mut original_changelog = asset_row.changelog(
+            let mut original_changelog = asset_row.generate_changelog(
                 self.connection,
                 RowActionType::Upsert,
                 SourceSiteId::CurrentSiteId,
@@ -179,7 +179,7 @@ impl Upsert for AssetRow {
     ) -> Result<(), RepositoryError> {
         AssetRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

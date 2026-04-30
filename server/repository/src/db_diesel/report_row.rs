@@ -91,7 +91,7 @@ pub struct ReportMetaDataRow {
 }
 
 impl ReportRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -138,7 +138,7 @@ impl<'a> ReportRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &ReportRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = ReportRow::changelog(
+        let changelog = ReportRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -163,7 +163,7 @@ impl Delete for ReportRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ReportRow::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ReportRow::generate_changelog(
                 self.0.clone(),
                 con,
                 RowActionType::Delete,
@@ -194,7 +194,7 @@ impl Upsert for ReportRow {
         ReportRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

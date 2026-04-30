@@ -83,7 +83,7 @@ pub struct FrontendPluginRow {
 }
 
 impl FrontendPluginRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -138,7 +138,7 @@ impl<'a> FrontendPluginRowRepository<'a> {
 
     pub fn upsert_one(&self, row: FrontendPluginRow) -> Result<i64, RepositoryError> {
         self._upsert_one(&row)?;
-        let changelog = FrontendPluginRow::changelog(
+        let changelog = FrontendPluginRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -148,7 +148,7 @@ impl<'a> FrontendPluginRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = FrontendPluginRow::changelog(
+        let changelog = FrontendPluginRow::generate_changelog(
             id.to_string(),
             self.connection,
             RowActionType::Delete,
@@ -170,7 +170,7 @@ impl Upsert for FrontendPluginRow {
     ) -> Result<(), RepositoryError> {
         FrontendPluginRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,
@@ -202,7 +202,7 @@ impl Delete for FrontendPluginRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FrontendPluginRow::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FrontendPluginRow::generate_changelog(
                 self.0.clone(),
                 con,
                 RowActionType::Delete,

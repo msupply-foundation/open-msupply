@@ -37,7 +37,7 @@ pub struct AssetLogReasonRow {
 }
 
 impl AssetLogReasonRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -82,7 +82,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
         asset_log_reason_row: &AssetLogReasonRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_log_reason_row)?;
-        let changelog = AssetLogReasonRow::changelog(
+        let changelog = AssetLogReasonRow::generate_changelog(
             asset_log_reason_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -112,7 +112,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
 
-        let changelog = AssetLogReasonRow::changelog(
+        let changelog = AssetLogReasonRow::generate_changelog(
             asset_log_reason_id.to_string(),
             self.connection,
             RowActionType::Delete,
@@ -131,7 +131,7 @@ impl Upsert for AssetLogReasonRow {
     ) -> Result<(), RepositoryError> {
         AssetLogReasonRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

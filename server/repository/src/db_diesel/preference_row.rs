@@ -29,7 +29,7 @@ pub struct PreferenceRow {
 }
 
 impl PreferenceRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -46,7 +46,7 @@ impl PreferenceRow {
         })
     }
 
-    pub(crate) fn delete_changelog(
+    pub(crate) fn generate_delete_changelog(
         record_id: &str,
         con: &StorageConnection,
         source_site_id: SourceSiteId,
@@ -54,7 +54,7 @@ impl PreferenceRow {
         let row = PreferenceRowRepository::new(con)
             .find_one_by_id(record_id)?
             .ok_or(RepositoryError::NotFound)?;
-        row.changelog(con, RowActionType::Delete, source_site_id)
+        row.generate_changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -79,7 +79,7 @@ impl<'a> PreferenceRowRepository<'a> {
 
     pub fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
         self._upsert_one(preference_row)?;
-        let changelog = preference_row.changelog(
+        let changelog = preference_row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -110,7 +110,7 @@ impl<'a> PreferenceRowRepository<'a> {
     }
 
     pub fn delete(&self, preference_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = PreferenceRow::delete_changelog(
+        let changelog = PreferenceRow::generate_delete_changelog(
             preference_id,
             self.connection,
             SourceSiteId::CurrentSiteId,
@@ -132,7 +132,7 @@ impl Upsert for PreferenceRow {
         PreferenceRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
@@ -162,7 +162,7 @@ impl Delete for PreferenceRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => PreferenceRow::delete_changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => PreferenceRow::generate_delete_changelog(
                 &self.0,
                 con,
                 SourceSiteId::SourceSiteId(source_site_id),

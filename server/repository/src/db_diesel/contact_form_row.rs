@@ -60,7 +60,7 @@ pub enum ContactType {
 }
 
 impl ContactFormRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -99,7 +99,7 @@ impl<'a> ContactFormRowRepository<'a> {
 
     pub fn upsert_one(&self, contact_form_row: &ContactFormRow) -> Result<i64, RepositoryError> {
         self._upsert_one(contact_form_row)?;
-        let changelog = contact_form_row.changelog(
+        let changelog = contact_form_row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -127,7 +127,7 @@ impl Upsert for ContactFormRow {
     ) -> Result<(), RepositoryError> {
         ContactFormRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

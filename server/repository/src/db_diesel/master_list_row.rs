@@ -34,7 +34,7 @@ pub struct MasterListRow {
 allow_tables_to_appear_in_same_query!(master_list, item_link);
 
 impl MasterListRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -71,7 +71,7 @@ impl<'a> MasterListRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &MasterListRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = MasterListRow::changelog(
+        let changelog = MasterListRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -101,7 +101,7 @@ impl Upsert for MasterListRow {
         MasterListRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

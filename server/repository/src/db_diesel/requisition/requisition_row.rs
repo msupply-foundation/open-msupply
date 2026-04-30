@@ -136,7 +136,7 @@ pub(crate) enum RequisitionRowOrId<'a> {
 }
 
 impl RequisitionRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         row_or_id: RequisitionRowOrId,
         con: &StorageConnection,
         action: RowActionType,
@@ -160,12 +160,12 @@ impl RequisitionRow {
         })
     }
 
-    pub(crate) fn delete_changelog(
+    pub(crate) fn generate_delete_changelog(
         id: &str,
         con: &StorageConnection,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Self::changelog(
+        Self::generate_changelog(
             RequisitionRowOrId::Id(id),
             con,
             RowActionType::Delete,
@@ -185,7 +185,7 @@ impl<'a> RequisitionRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &RequisitionRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = RequisitionRow::changelog(
+        let changelog = RequisitionRow::generate_changelog(
             RequisitionRowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
@@ -195,7 +195,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     pub fn delete(&self, requisition_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = RequisitionRow::delete_changelog(
+        let changelog = RequisitionRow::generate_delete_changelog(
             requisition_id,
             self.connection,
             SourceSiteId::CurrentSiteId,
@@ -244,7 +244,7 @@ impl Delete for RequisitionRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::delete_changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_delete_changelog(
                 &self.0,
                 con,
                 SourceSiteId::SourceSiteId(source_site_id),
@@ -277,7 +277,7 @@ impl Upsert for RequisitionRow {
         RequisitionRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_changelog(
                 RequisitionRowOrId::Row(self),
                 con,
                 RowActionType::Upsert,

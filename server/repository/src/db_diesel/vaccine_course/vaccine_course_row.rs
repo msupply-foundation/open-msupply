@@ -43,7 +43,7 @@ pub struct VaccineCourseRow {
 }
 
 impl VaccineCourseRow {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -87,7 +87,7 @@ impl<'a> VaccineCourseRowRepository<'a> {
         vaccine_course_row: &VaccineCourseRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(vaccine_course_row)?;
-        let changelog = VaccineCourseRow::changelog(
+        let changelog = VaccineCourseRow::generate_changelog(
             vaccine_course_row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -129,7 +129,7 @@ impl Upsert for VaccineCourseRow {
         VaccineCourseRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
                 self.id.clone(),
                 con,
                 RowActionType::Upsert,

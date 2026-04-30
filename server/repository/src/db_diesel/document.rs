@@ -217,7 +217,7 @@ impl<'a> DocumentRepository<'a> {
     /// Inserts a document
     pub fn insert(&self, doc: &Document) -> Result<i64, RepositoryError> {
         self._upsert(&doc.to_row()?)?;
-        let changelog = Document::changelog(
+        let changelog = Document::generate_changelog(
             doc.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -381,7 +381,7 @@ fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
 }
 
 impl Document {
-    pub(crate) fn changelog(
+    pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
