@@ -68,7 +68,7 @@ async fn test_sync_pull_and_push() {
         .upsert_many(&sync_records)
         .unwrap();
 
-    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0)).unwrap();
+    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true).unwrap();
 
     check_test_records_against_database(&connection, test_records).await;
 
@@ -180,7 +180,7 @@ async fn test_sync_pull_and_push() {
         .upsert_many(&sync_records)
         .unwrap();
 
-    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0)).unwrap();
+    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true).unwrap();
 
     check_test_records_against_database(&connection, test_records).await;
 

@@ -435,6 +435,7 @@ async fn main() -> anyhow::Result<()> {
                 &ctx.connection,
                 Some(&mut logger),
                 SyncBufferSource::Central(0),
+                true,
             )?;
 
             info!("Initialising users");
