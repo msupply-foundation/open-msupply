@@ -48,44 +48,47 @@ pub fn get_site_info(
         .basic_context()
         .map_err(|e| SyncError::Other(e.to_string()))?;
 
-    let site = get_site_by_name(&ctx.connection, &input.name)?
-        .ok_or(SyncError::InvalidSiteNameOrPassword)?;
+    ctx.connection
+        .transaction_sync(|connection| {
+            let site = get_site_by_name(connection, &input.name)?
+                .ok_or(SyncError::InvalidSiteNameOrPassword)?;
 
-    let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
-        .map_err(|e| SyncError::Other(e.to_string()))?;
-    if !valid {
-        return Err(SyncError::InvalidSiteNameOrPassword);
-    }
+            let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
+                .map_err(|e| SyncError::Other(e.to_string()))?;
+            if !valid {
+                return Err(SyncError::InvalidSiteNameOrPassword);
+            }
 
-    if site.token.is_some() {
-        return Err(SyncError::TokenAlreadyAllocated);
-    }
+            if site.token.is_some() {
+                return Err(SyncError::TokenAlreadyAllocated);
+            }
 
-    let hardware_id = match &site.hardware_id {
-        Some(existing) if existing != &input.hardware_id => {
-            return Err(SyncError::HardwareIdMismatch);
-        }
-        _ => input.hardware_id.clone(),
-    };
+            let hardware_id = match &site.hardware_id {
+                Some(existing) if existing != &input.hardware_id => {
+                    return Err(SyncError::HardwareIdMismatch);
+                }
+                _ => input.hardware_id.clone(),
+            };
 
-    let token = util::uuid::uuid();
+            let token = util::uuid::uuid();
 
-    let updated = SiteRow {
-        hardware_id: Some(hardware_id),
-        token: Some(token.clone()),
-        ..site.clone()
-    };
-    SiteRowRepository::new(&ctx.connection)
-        .upsert(&updated)
-        .map_err(SyncError::DatabaseError)?;
+            SiteRowRepository::new(connection)
+                .upsert(&SiteRow {
+                    hardware_id: Some(hardware_id),
+                    token: Some(token.clone()),
+                    ..site.clone()
+                })
+                .map_err(SyncError::DatabaseError)?;
 
-    let central_site_id = get_central_site_id(&ctx.connection)?;
+            let central_site_id = get_central_site_id(connection)?;
 
-    Ok(SiteInfoOutput {
-        token,
-        site_id: site.id,
-        central_site_id,
-    })
+            Ok(SiteInfoOutput {
+                token,
+                site_id: site.id,
+                central_site_id,
+            })
+        })
+        .map_err(|e| e.to_inner_error())
 }
 
 fn get_site_by_name(
