@@ -98,7 +98,7 @@ export const useDraftPurchaseOrderInboundLines = (
     );
   }, [data, purchaseOrderLine]);
 
-  const { mutateAsync, isPending: isLoading } = useSaveInboundLines(isExternal);
+  const { mutateAsync, isPending } = useSaveInboundLines(isExternal);
   const { mutateAsync: deleteMutation } = useDeleteInboundLines(isExternal);
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
@@ -248,7 +248,7 @@ export const useDraftPurchaseOrderInboundLines = (
     duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
-    isPending: isLoading,
+    isPending,
     saveLines,
   };
 };

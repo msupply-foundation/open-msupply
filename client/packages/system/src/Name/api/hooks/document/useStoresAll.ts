@@ -10,8 +10,6 @@ export const useStoresAll = () => {
 
   return useQuery({
     queryKey: api.keys.paramList(queryParams),
-
-    queryFn: () =>
-      api.get.stores(queryParams)
+    queryFn: () => api.get.stores(queryParams),
   });
 };
