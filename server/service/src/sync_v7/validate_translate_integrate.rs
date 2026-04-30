@@ -118,6 +118,25 @@ fn translate_upsert(
     Ok(upsert)
 }
 
+fn integrate_upsert(
+    connection: &StorageConnection,
+    upsert: Box<dyn Upsert>,
+    table_name: ChangelogTableName,
+    row: &SyncBufferRow,
+) -> Result<(), Error> {
+    let changelog = changelog(table_name, RowActionType::Upsert, row);
+    upsert
+        .upsert_sync(
+            connection,
+            ChangelogSyncType::SyncTypeV7 {
+                changelog_row: changelog,
+            },
+        )
+        .map_err(Error::IntegrationError)?;
+
+    Ok(())
+}
+
 fn translate_delete(
     table_name: &ChangelogTableName,
     record_id: &str,
@@ -144,32 +163,16 @@ fn translate_delete(
     Ok(delete)
 }
 
-enum Translated {
-    Upsert(Box<dyn Upsert>),
-    Delete(Box<dyn Delete>),
-}
-
-fn integrate(
+fn integrate_delete(
     connection: &StorageConnection,
-    translated: Translated,
+    delete: Box<dyn Delete>,
     table_name: ChangelogTableName,
     row: &SyncBufferRow,
-) -> Result<(), RepositoryError> {
-    match translated {
-        Translated::Upsert(upsert) => {
-            let changelog = changelog(table_name, RowActionType::Upsert, row);
-            upsert.upsert_sync(
-                connection,
-                ChangelogSyncType::SyncTypeV7 {
-                    changelog_row: changelog,
-                },
-            )?;
-        }
-        Translated::Delete(delete) => {
-            let changelog = changelog(table_name, RowActionType::Delete, row);
-            delete.delete_v7(connection, changelog)?;
-        }
-    }
+) -> Result<(), Error> {
+    let changelog = changelog(table_name, RowActionType::Delete, row);
+    delete
+        .delete_v7(connection, changelog)
+        .map_err(Error::IntegrationError)?;
 
     Ok(())
 }
@@ -190,15 +193,17 @@ fn validate_translate_integrate_one(
         } => validate_on_remote(row, st, active_stores, *is_initialising)?,
     };
 
-    let translated = match row.action {
-        SyncAction::Upsert => Translated::Upsert(translate_upsert(&table_name, &row.data)?),
-        SyncAction::Delete => Translated::Delete(translate_delete(&table_name, &row.record_id)?),
-        _ => return Err(Error::UnsupportedAction(row.action.clone())),
-    };
-
-    integrate(connection, translated, table_name, row).map_err(Error::IntegrationError)?;
-
-    Ok(())
+    match row.action {
+        SyncAction::Upsert => {
+            let upsert = translate_upsert(&table_name, &row.data)?;
+            integrate_upsert(connection, upsert, table_name, row)
+        }
+        SyncAction::Delete => {
+            let delete = translate_delete(&table_name, &row.record_id)?;
+            integrate_delete(connection, delete, table_name, row)
+        }
+        _ => Err(Error::UnsupportedAction(row.action.clone())),
+    }
 }
 
 // TODO transactions
