@@ -74,7 +74,6 @@ impl<'a> ProgramRowRepository<'a> {
     pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
         let result: Option<String> = program::table
             .filter(program::id.eq(lookup_id))
-            .filter(deleted_datetime.is_null())
             .select(program::id)
             .first(self.connection.lock().connection())
             .optional()?;
