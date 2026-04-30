@@ -116,21 +116,19 @@ fn get_site_by_token(
     Ok(rows.into_iter().next())
 }
 
-pub fn authenticate_site(
+fn validate(
     service_provider: &ServiceProvider,
-    token: &str,
-    hardware_id: &str,
-    app_version: Version,
-) -> Result<SiteRow, SyncError> {
+    common: &Common,
+) -> Result<(SiteRow, ServiceContext), SyncError> {
     if !CentralServerConfig::is_central_server() {
         return Err(SyncError::NotACentralServer);
     }
 
     let central_version = Version::from_package_json();
-    if app_version > central_version {
+    if common.version > central_version {
         return Err(SyncError::SyncVersionMismatch {
             central: central_version,
-            remote: app_version,
+            remote: common.version.clone(),
         });
     }
 
@@ -138,14 +136,15 @@ pub fn authenticate_site(
         .basic_context()
         .map_err(|e| SyncError::Other(e.to_string()))?;
 
-    let site = get_site_by_token(&ctx.connection, token)?.ok_or(SyncError::TokenNotFound)?;
+    let site =
+        get_site_by_token(&ctx.connection, &common.token)?.ok_or(SyncError::TokenNotFound)?;
 
     match site.hardware_id.as_deref() {
-        Some(stored) if stored == hardware_id => {}
+        Some(id) if id == common.hardware_id => {}
         _ => return Err(SyncError::HardwareIdMismatch),
     }
 
-    Ok(site)
+    Ok((site, ctx))
 }
 
 fn get_central_site_id(connection: &StorageConnection) -> Result<i32, SyncError> {
@@ -157,9 +156,12 @@ fn get_central_site_id(connection: &StorageConnection) -> Result<i32, SyncError>
 
 /// Send Records to a remote open-mSupply Server
 pub async fn pull(service_provider: &ServiceProvider, request: pull::Request) -> pull::Response {
-    let (site_id, ctx) = validate(service_provider, request.common)?;
+    let (site, ctx) = validate(service_provider, &request.common)?;
+    if let Some(lock) = check_site_lock(site.id) {
+        return Err(SyncError::SiteLockError(lock));
+    }
 
-    let filter = Site::SiteId(site_id).all_data_for_site(request.input.is_initialising);
+    let filter = Site::SiteId(site.id).all_data_for_site(request.input.is_initialising);
 
     let batch = SyncBatchV7::generate(
         &ctx.connection,
@@ -176,7 +178,11 @@ pub async fn push(
     service_provider: Arc<ServiceProvider>,
     request: push::Request,
 ) -> push::Response {
-    let (site_id, ctx) = validate(&service_provider, request.common)?;
+    let (site, ctx) = validate(&service_provider, &request.common)?;
+    if let Some(lock) = check_site_lock(site.id) {
+        return Err(SyncError::SiteLockError(lock));
+    }
+    let site_id = site.id;
 
     let SyncBatchV7 {
         site_id: from_site_id,
@@ -210,34 +216,6 @@ pub async fn push(
     spawn_integration(service_provider, site_id);
 
     Ok(records_in_this_batch)
-}
-
-fn validate(
-    service_provider: &ServiceProvider,
-    common: Common,
-) -> Result<(i32, ServiceContext), SyncError> {
-    if !CentralServerConfig::is_central_server() {
-        return Err(SyncError::NotACentralServer);
-    }
-    let ctx = service_provider.basic_context()?;
-
-    // TODO(11139.5-auth): replace with
-    //   authenticate_site(service_provider, &common.token, &common.hardware_id, common.version)?.id
-    let site_id = 1;
-
-    let central_version = Version::from_package_json();
-    if common.version > central_version {
-        return Err(SyncError::SyncVersionMismatch {
-            central: central_version,
-            remote: common.version,
-        });
-    }
-
-    if let Some(lock) = check_site_lock(site_id) {
-        return Err(SyncError::SiteLockError(lock));
-    }
-
-    Ok((site_id, ctx))
 }
 
 fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
@@ -351,20 +329,20 @@ mod tests {
         }
     }
 
-    fn common() -> Common {
-        Common {
-            version: Version::from_package_json(),
-            hardware_id: HARDWARE_ID.to_string(),
-        }
-    }
-
-    async fn setup(name: &str) -> ServiceTestContext {
+    async fn setup(name: &str) -> (ServiceTestContext, Common) {
         let context = setup_all_and_service_provider(name, MockDataInserts::none()).await;
         CentralServerConfig::set_is_central_server_on_startup();
         KeyValueStoreRepository::new(&context.connection)
             .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
             .unwrap();
-        context
+        test_site(&context.connection, None);
+        let site_info = get_site_info(&context.service_provider, input()).unwrap();
+        let common = Common {
+            token: site_info.token,
+            hardware_id: HARDWARE_ID.to_string(),
+            version: Version::from_package_json(),
+        };
+        (context, common)
     }
 
     #[actix_rt::test]
@@ -433,56 +411,65 @@ mod tests {
 
         let allocated = get_site_info(&sp, input()).unwrap();
 
-        let site = authenticate_site(
-            &sp,
-            &allocated.token,
-            HARDWARE_ID,
-            Version::from_package_json(),
-        )
-        .unwrap();
+        let common = Common {
+            token: allocated.token.clone(),
+            hardware_id: HARDWARE_ID.to_string(),
+            version: Version::from_package_json(),
+        };
+
+        let (site, _) = validate(&sp, &common).unwrap();
         assert_eq!(site.id, 1);
 
         // Wrong token
-        let err = authenticate_site(
+        let err = validate(
             &sp,
-            "wrong_token",
-            HARDWARE_ID,
-            Version::from_package_json(),
+            &Common {
+                token: "wrong_token".to_string(),
+                ..common.clone()
+            },
         )
-        .unwrap_err();
+        .err()
+        .unwrap();
         assert!(matches!(err, SyncError::TokenNotFound));
 
         // Wrong hardware id
-        let err = authenticate_site(
+        let err = validate(
             &sp,
-            &allocated.token,
-            "wrong_hw",
-            Version::from_package_json(),
+            &Common {
+                hardware_id: "wrong_hw".to_string(),
+                ..common.clone()
+            },
         )
-        .unwrap_err();
+        .err()
+        .unwrap();
         assert!(matches!(err, SyncError::HardwareIdMismatch));
 
         // Newer app version than central
-        let err = authenticate_site(
+        let err = validate(
             &sp,
-            &allocated.token,
-            HARDWARE_ID,
-            Version::from_str("99.99.99"),
+            &Common {
+                version: Version::from_str("99.99.99"),
+                ..common
+            },
         )
-        .unwrap_err();
+        .err()
+        .unwrap();
         assert!(matches!(err, SyncError::SyncVersionMismatch { .. }));
     }
 
     #[actix_rt::test]
     async fn pull_returns_empty_batch_when_no_changelog() {
-        let ServiceTestContext {
-            service_provider, ..
-        } = setup("sync_v7_pull_empty").await;
+        let (
+            ServiceTestContext {
+                service_provider, ..
+            },
+            common,
+        ) = setup("sync_v7_pull_empty").await;
 
         let batch = pull(
             &service_provider,
             pull::Request {
-                common: common(),
+                common,
                 input: pull::Input {
                     cursor: 0,
                     batch_size: 100,
@@ -498,15 +485,18 @@ mod tests {
 
     #[actix_rt::test]
     async fn push_accepts_empty_batch() {
-        let ServiceTestContext {
-            service_provider, ..
-        } = setup("sync_v7_push_empty").await;
-        let authenticated_site_id = 1; // matches placeholder in `validate`
+        let (
+            ServiceTestContext {
+                service_provider, ..
+            },
+            common,
+        ) = setup("sync_v7_push_empty").await;
+        let authenticated_site_id = 1;
 
         let count = push(
             service_provider,
             push::Request {
-                common: common(),
+                common,
                 input: SyncBatchV7 {
                     site_id: authenticated_site_id,
                     max_cursor: 0,
@@ -522,16 +512,19 @@ mod tests {
 
     #[actix_rt::test]
     async fn version_mismatch_is_returned() {
-        let ServiceTestContext {
-            service_provider, ..
-        } = setup("sync_v7_version_mismatch").await;
+        let (
+            ServiceTestContext {
+                service_provider, ..
+            },
+            common,
+        ) = setup("sync_v7_version_mismatch").await;
 
         let response = pull(
             &service_provider,
             pull::Request {
                 common: Common {
                     version: Version::from_str("99.99.99"),
-                    ..common()
+                    ..common
                 },
                 input: pull::Input {
                     cursor: 0,

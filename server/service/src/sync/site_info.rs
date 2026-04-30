@@ -4,7 +4,6 @@ use crate::{
     sync::{
         api::{SiteInfoV5, SyncApiV5},
         settings::{SyncSettings, SYNC_V5_VERSION},
-        CentralServerConfig,
     },
     sync_v7::api::{
         self as api_v7,
