@@ -7,8 +7,7 @@ import {
 } from '../operations.generated';
 
 export const useInitialisationStatus = (
-  refetchInterval: number | false = false,
-  _shouldSuspend?: boolean
+  refetchInterval: number | false = false
 ) => {
   const { client } = useGql();
   const sdk = getSdk(client);

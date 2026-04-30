@@ -66,7 +66,7 @@ const skipRequest = () =>
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { logout } = useAuthContext();
-  const data = useInitialisationStatus(false, true);
+  const data = useInitialisationStatus(false);
 
   // Query still loading — don't render children yet, but don't logout either
   if (!data?.data) return null;
