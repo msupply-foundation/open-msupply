@@ -598,10 +598,12 @@ mod tests {
             .try_translate_from_upsert_sync_record(&connection, &sync_record)
             .unwrap();
         let debug = format!("{result:?}");
+        // supplying_store_id has no DB-level FK constraint (store depends on name so we can't
+        // validate ordering), so it is passed through as-is.
         assert!(
-            debug.contains("supplying_store_id: None"),
+            debug.contains("supplying_store_id: Some(\"does_not_exist_store\")"),
             "{}",
-            format!("expected supplying_store_id None; got:\n{debug}")
+            format!("expected supplying_store_id to pass through unchanged; got:\n{debug}")
         );
         assert!(
             debug.contains("currency_id: None"),
@@ -616,6 +618,7 @@ mod tests {
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
             .collect();
-        assert_eq!(fk_errors.len(), 2, "got {fk_errors:?}");
+        // Only currency_id is validated (supplying_store_id skipped — no DB FK)
+        assert_eq!(fk_errors.len(), 1, "got {fk_errors:?}");
     }
 }

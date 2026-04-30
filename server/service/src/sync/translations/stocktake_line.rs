@@ -483,7 +483,7 @@ mod tests {
             item_variant_id: None,
             donor_link_id: None,
             reason_option_id: None,
-            vvm_status_id: None,
+            vvm_status_id: Some("does_not_exist_vvm".to_string()),
             volume_per_pack: 0.0,
             campaign_id: None,
             program_id: None,
@@ -497,8 +497,9 @@ mod tests {
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
             .collect();
-        // location_id, item_variant_id, vvm_status_id, reason_option_id, campaign_id, program_id
-        assert_eq!(fk_errors.len(), 6, "got {fk_errors:?}");
+        // location_id, item_variant_id, reason_option_id, campaign_id, program_id
+        // (vvm_status_id skipped — no DB-level FK constraint)
+        assert_eq!(fk_errors.len(), 5, "got {fk_errors:?}");
         let messages: String = fk_errors
             .iter()
             .filter_map(|l| l.message.as_deref())
@@ -507,7 +508,6 @@ mod tests {
         for fk_field in [
             "location_id",
             "item_variant_id",
-            "vvm_status_id",
             "reason_option_id",
             "campaign_id",
             "program_id",
