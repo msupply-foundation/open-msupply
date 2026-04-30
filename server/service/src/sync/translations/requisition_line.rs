@@ -6,7 +6,7 @@ use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_f
 
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, LocationTypeRowRepository,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository,
     ReasonOptionRowRepository, RequisitionFilter, RequisitionLineRow, RequisitionLineRowDelete,
     RequisitionLineRowRepository, RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository,
     StorageConnection, SyncBufferRow,
@@ -136,15 +136,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
             true,
         )?;
-        let location_type_id = clear_invalid_fk(
-            connection,
-            "requisition_line",
-            &data.ID,
-            "location_type_id",
-            location_type_id,
-            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        // No DB-level FK constraint on requisition_line.location_type_id, skip validation
 
         let result = RequisitionLineRow {
             id: data.ID.to_string(),

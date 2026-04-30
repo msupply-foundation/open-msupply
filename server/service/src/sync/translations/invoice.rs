@@ -12,7 +12,7 @@ use repository::{
     CurrencyFilter, CurrencyRepository, CurrencyRowRepository, DiagnosisRowRepository, EqualFilter,
     Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowRepository,
     InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository,
-    ShippingMethodRowRepository, StorageConnection, StoreFilter, StoreRepository,
+    StorageConnection, StoreFilter, StoreRepository,
     StoreRowRepository, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
@@ -432,15 +432,8 @@ impl SyncTranslation for InvoiceTranslation {
             |c, id| NameInsuranceJoinRowRepository::new(c).check_exists_by_id(id),
             true,
         )?;
-        let shipping_method_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "shipping_method_id",
-            data.shipping_method_id,
-            |c, id| ShippingMethodRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        // No DB-level FK constraint on shipping_method_id, skip validation
+        let shipping_method_id = data.shipping_method_id;
 
         let status = match data.om_status {
             Some(legacy_om_status) => legacy_om_status.to_invoice_status(),
