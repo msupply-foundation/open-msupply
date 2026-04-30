@@ -43,9 +43,7 @@ impl From<RepositoryError> for UpsertSiteError {
 
 fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), UpsertSiteError> {
     match (&input.code, existing) {
-        (Some(code), _) if code.trim().is_empty() => {
-            return Err(UpsertSiteError::CodeRequired)
-        }
+        (Some(code), _) if code.trim().is_empty() => return Err(UpsertSiteError::CodeRequired),
         (None, None) => return Err(UpsertSiteError::CodeRequired),
         _ => {}
     }
@@ -74,6 +72,7 @@ fn generate(
     let existing_og_id = existing_site.as_ref().and_then(|s| s.og_id.clone());
     let existing_code = existing_site.as_ref().map(|s| s.code.clone());
     let existing_hardware_id = existing_site.as_ref().and_then(|s| s.hardware_id.clone());
+    let existing_token = existing_site.as_ref().and_then(|s| s.token.clone());
 
     let hashed_password = match password {
         Some(pw) => hash(pw, DEFAULT_COST).expect("bcrypt hash failed"),
@@ -94,7 +93,7 @@ fn generate(
         } else {
             existing_hardware_id
         },
-        token: None,
+        token: existing_token,
     }
 }
 
@@ -335,5 +334,47 @@ mod tests {
 
         let site = repo.find_one_by_id(1).unwrap().unwrap();
         assert_eq!(site.hardware_id, None);
+    }
+
+    #[actix_rt::test]
+    async fn upsert_site_preserves_token() {
+        let (_, _, connection_manager, _) =
+            setup_all("upsert_site_preserves_token", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider.basic_context().unwrap();
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: Some("code1".to_string()),
+                name: "Site A".to_string(),
+                password: Some("password".to_string()),
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+
+        let connection = connection_manager.connection().unwrap();
+        let repo = SiteRowRepository::new(&connection);
+        let mut site = repo.find_one_by_id(1).unwrap().unwrap();
+        site.token = Some("existing_token".to_string());
+        repo.upsert(&site).unwrap();
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: None,
+                name: "Site A Renamed".to_string(),
+                password: None,
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+
+        let site = repo.find_one_by_id(1).unwrap().unwrap();
+        assert_eq!(site.token.as_deref(), Some("existing_token"));
     }
 }
