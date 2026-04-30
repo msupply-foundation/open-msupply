@@ -1,9 +1,9 @@
 use super::{location_row::location, store_row::store, StorageConnection};
 
-use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert,
 };
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -68,7 +68,7 @@ pub struct SensorRow {
 }
 
 impl SensorRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -131,7 +131,11 @@ impl<'a> SensorRowRepository<'a> {
 }
 
 impl Upsert for SensorRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         SensorRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

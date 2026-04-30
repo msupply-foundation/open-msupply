@@ -3,7 +3,9 @@ use super::{
     StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert,
+};
 
 use diesel::prelude::*;
 
@@ -38,7 +40,7 @@ pub struct PluginDataRow {
 }
 
 impl PluginDataRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -77,7 +79,11 @@ impl<'a> PluginDataRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &PluginDataRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, SourceSiteIdForChangelog::CurrentSiteId)?;
+        let changelog = row.changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -92,13 +98,19 @@ impl<'a> PluginDataRowRepository<'a> {
 }
 
 impl Upsert for PluginDataRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         PluginDataRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

@@ -2,7 +2,7 @@ use super::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
 };
 
-use crate::{Delete, RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, Delete, RepositoryError, SourceSiteIdForChangelog, Upsert};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -36,7 +36,7 @@ pub struct FormSchemaJson {
 }
 
 impl FormSchemaJson {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -156,7 +156,11 @@ impl<'a> FormSchemaRowRepository<'a> {
 }
 
 impl Upsert for FormSchemaJson {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         FormSchemaRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(

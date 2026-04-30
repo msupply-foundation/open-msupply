@@ -6,8 +6,8 @@ use crate::LocationRowRepository;
 use crate::RepositoryError;
 use crate::SourceSiteIdForChangelog;
 use crate::StorageConnection;
-use crate::{ChangelogSyncType, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogSyncType, Upsert};
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -32,7 +32,7 @@ pub struct AssetInternalLocationRow {
 }
 
 impl AssetInternalLocationRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -57,7 +57,7 @@ impl AssetInternalLocationRow {
         })
     }
 
-    pub fn delete_changelog(
+    pub(crate) fn delete_changelog(
         row_id: &str,
         con: &StorageConnection,
         action: RowActionType,
@@ -169,7 +169,11 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
 }
 
 impl Upsert for AssetInternalLocationRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         AssetInternalLocationRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(

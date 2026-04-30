@@ -63,7 +63,7 @@ pub struct ItemVariantRow {
 }
 
 impl ItemVariantRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -123,9 +123,11 @@ impl<'a> ItemVariantRowRepository<'a> {
     }
 
     pub fn mark_deleted(&self, item_variant_id: &str) -> Result<i64, RepositoryError> {
-        diesel::update(item_variant_with_links::table.filter(item_variant_with_links::id.eq(item_variant_id)))
-            .set(item_variant_with_links::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(self.connection.lock().connection())?;
+        diesel::update(
+            item_variant_with_links::table.filter(item_variant_with_links::id.eq(item_variant_id)),
+        )
+        .set(item_variant_with_links::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+        .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
         let changelog = ItemVariantRow::changelog(
@@ -139,7 +141,11 @@ impl<'a> ItemVariantRowRepository<'a> {
 }
 
 impl Upsert for ItemVariantRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ItemVariantRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {

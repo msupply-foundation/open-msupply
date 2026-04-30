@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RepositoryError,
-    RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    RepositoryError, RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -30,7 +30,7 @@ pub struct BundledItemRow {
 }
 
 impl BundledItemRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -105,7 +105,11 @@ impl<'a> BundledItemRowRepository<'a> {
 }
 
 impl Upsert for BundledItemRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         BundledItemRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

@@ -3,15 +3,16 @@ use super::{
     StorageConnection,
 };
 
+use crate::ChangelogSyncType;
+use crate::SourceSiteIdForChangelog;
 use crate::{
     diesel_macros::{apply_sort, define_linked_tables},
-    repository_error::RepositoryError, Sort, Upsert
+    repository_error::RepositoryError,
+    Sort, Upsert,
 };
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-use crate::ChangelogSyncType;
-use crate::SourceSiteIdForChangelog;
 
 pub enum NameInsuranceJoinSortField {
     ExpiryDate,
@@ -77,7 +78,7 @@ pub struct NameInsuranceJoinRow {
 }
 
 impl NameInsuranceJoinRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -164,7 +165,11 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
 }
 
 impl Upsert for NameInsuranceJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         NameInsuranceJoinRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {

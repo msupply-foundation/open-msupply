@@ -96,7 +96,7 @@ pub enum RnRFormLowStock {
 }
 
 impl RnRFormLineRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -117,7 +117,7 @@ impl RnRFormLineRow {
         })
     }
 
-    pub fn delete_changelog(
+    pub(crate) fn delete_changelog(
         row_id: &str,
         con: &StorageConnection,
         action: RowActionType,
@@ -169,7 +169,8 @@ impl<'a> RnRFormLineRowRepository<'a> {
             .set(requisition_line_id.eq(linked_requisition_line_id))
             .execute(self.connection.lock().connection())?;
 
-        let row = self.find_one_by_id(rnr_form_line_id)?
+        let row = self
+            .find_one_by_id(rnr_form_line_id)?
             .ok_or(RepositoryError::NotFound)?;
         let changelog = row.changelog(
             self.connection,
@@ -245,19 +246,16 @@ impl Delete for RnRFormLineDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                RnRFormLineRow::delete_changelog(
-                    &self.0,
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteIdForChangelog::SourceSiteId(source_site_id),
-                )?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormLineRow::delete_changelog(
+                &self.0,
+                con,
+                RowActionType::Delete,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        diesel::delete(rnr_form_line.filter(id.eq(&self.0)))
-            .execute(con.lock().connection())?;
+        diesel::delete(rnr_form_line.filter(id.eq(&self.0))).execute(con.lock().connection())?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
@@ -271,7 +269,11 @@ impl Delete for RnRFormLineDelete {
 }
 
 impl Upsert for RnRFormLineRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         RnRFormLineRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

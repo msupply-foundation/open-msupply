@@ -2,7 +2,9 @@ use super::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert,
+};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -29,7 +31,7 @@ pub struct InsuranceProviderRow {
 }
 
 impl InsuranceProviderRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -112,7 +114,11 @@ impl<'a> InsuranceProviderRowRepository<'a> {
 }
 
 impl Upsert for InsuranceProviderRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         InsuranceProviderRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(

@@ -7,8 +7,8 @@ use crate::{
         clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
         item_row::item, name_row::name,
     },
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RepositoryError,
-    RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    RepositoryError, RowActionType, SourceSiteIdForChangelog, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -53,7 +53,7 @@ pub struct VaccineCourseDoseRow {
 }
 
 impl VaccineCourseDoseRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -139,7 +139,11 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
 }
 
 impl Upsert for VaccineCourseDoseRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         VaccineCourseDoseRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

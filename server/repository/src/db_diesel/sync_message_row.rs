@@ -2,7 +2,7 @@ use super::{
     store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
     StorageConnection,
 };
-use crate::{RepositoryError, ChangelogSyncType, SourceSiteIdForChangelog, Upsert};
+use crate::{ChangelogSyncType, RepositoryError, SourceSiteIdForChangelog, Upsert};
 use ts_rs::TS;
 
 use chrono::NaiveDateTime;
@@ -76,7 +76,7 @@ pub struct SyncMessageRow {
 }
 
 impl SyncMessageRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -134,7 +134,11 @@ impl<'a> SyncMessageRowRepository<'a> {
 }
 
 impl Upsert for SyncMessageRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         SyncMessageRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {

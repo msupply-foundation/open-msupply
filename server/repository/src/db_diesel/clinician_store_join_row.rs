@@ -26,7 +26,7 @@ pub struct ClinicianStoreJoinRow {
 }
 
 impl ClinicianStoreJoinRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -94,16 +94,22 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
 }
 
 impl Upsert for ClinicianStoreJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::changelog(self.id.clone(), con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
         ChangelogRepository::new(con).insert(&changelog)?;
@@ -122,7 +128,11 @@ impl Upsert for ClinicianStoreJoinRow {
 #[derive(Debug, Clone)]
 pub struct ClinicianStoreJoinRowDelete(pub String);
 impl Delete for ClinicianStoreJoinRowDelete {
-    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con).delete(&self.0)?;
         Ok(()) // Clinician store joins not in Changelog/not synced out
     }

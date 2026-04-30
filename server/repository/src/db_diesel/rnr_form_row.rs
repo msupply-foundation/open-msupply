@@ -1,12 +1,11 @@
 use super::{
-    name_row::name, period_row::period,
-    period_schedule_row::period_schedule, program_row::program,
+    name_row::name, period_row::period, period_schedule_row::period_schedule, program_row::program,
     store_row::store, StorageConnection,
 };
 use crate::{
-    diesel_macros::define_linked_tables,
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
-    RepositoryError, RowActionType, SourceSiteIdForChangelog, Upsert,
+    diesel_macros::define_linked_tables, ChangeLogInsertRow, ChangelogRepository,
+    ChangelogSyncType, ChangelogTableName, Delete, RepositoryError, RowActionType,
+    SourceSiteIdForChangelog, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -78,7 +77,7 @@ pub enum RnRFormStatus {
 }
 
 impl RnRFormRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -95,7 +94,7 @@ impl RnRFormRow {
         })
     }
 
-    pub fn delete_changelog(
+    pub(crate) fn delete_changelog(
         id: &str,
         con: &StorageConnection,
         action: RowActionType,
@@ -193,7 +192,11 @@ impl Delete for RnRFormDelete {
 }
 
 impl Upsert for RnRFormRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         RnRFormRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {

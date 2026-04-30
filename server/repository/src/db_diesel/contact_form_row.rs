@@ -4,8 +4,8 @@ use crate::{
 };
 
 use super::{
-    contact_form_row::contact_form::dsl::*, name_row::name,
-    store_row::store, user_row::user_account,
+    contact_form_row::contact_form::dsl::*, name_row::name, store_row::store,
+    user_row::user_account,
 };
 
 use chrono::NaiveDateTime;
@@ -60,7 +60,7 @@ pub enum ContactType {
 }
 
 impl ContactFormRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -99,7 +99,11 @@ impl<'a> ContactFormRowRepository<'a> {
 
     pub fn upsert_one(&self, contact_form_row: &ContactFormRow) -> Result<i64, RepositoryError> {
         self._upsert_one(contact_form_row)?;
-        let changelog = contact_form_row.changelog(self.connection, RowActionType::Upsert, SourceSiteIdForChangelog::CurrentSiteId)?;
+        let changelog = contact_form_row.changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteIdForChangelog::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -116,12 +120,18 @@ impl<'a> ContactFormRowRepository<'a> {
 }
 
 impl Upsert for ContactFormRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ContactFormRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, SourceSiteIdForChangelog::SourceSiteId(source_site_id))?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteIdForChangelog::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
         ChangelogRepository::new(con).insert(&changelog)?;

@@ -220,7 +220,7 @@ impl<'a> KeyValueStoreRepository<'a> {
     }
 
     pub fn get_current_site_id(&self) -> Result<Option<i32>, RepositoryError> {
-        Ok(self.get_i32(KeyType::SettingsSyncSiteId)?)
+        self.get_i32(KeyType::SettingsSyncSiteId)
     }
 }
 

@@ -1,14 +1,13 @@
 use super::{
-    name_row::name, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogTableName, RowActionType, StorageConnection,
+    name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    StorageConnection,
 };
-use crate::{
-    diesel_macros::define_linked_tables,
-    repository_error::RepositoryError, Delete, Upsert
-};
-use diesel::prelude::*;
 use crate::ChangelogSyncType;
 use crate::SourceSiteIdForChangelog;
+use crate::{
+    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
+};
+use diesel::prelude::*;
 
 define_linked_tables! {
     view: indicator_value = "indicator_value_view",
@@ -46,7 +45,7 @@ pub struct IndicatorValueRow {
 }
 
 impl IndicatorValueRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         record_id: String,
         con: &StorageConnection,
         action: RowActionType,
@@ -93,8 +92,10 @@ impl<'a> IndicatorValueRowRepository<'a> {
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
 
-        diesel::delete(indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 
@@ -128,8 +129,10 @@ impl Delete for IndicatorValueRowDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        diesel::delete(indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(&self.0)))
-            .execute(con.lock().connection())?;
+        diesel::delete(
+            indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
@@ -143,7 +146,11 @@ impl Delete for IndicatorValueRowDelete {
 }
 
 impl Upsert for IndicatorValueRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         IndicatorValueRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {

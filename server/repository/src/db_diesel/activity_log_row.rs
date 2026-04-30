@@ -1,7 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::store_row::store, repository_error::RepositoryError, user_account, Delete, ChangelogSyncType, SourceSiteIdForChangelog, Upsert,
+    db_diesel::store_row::store, repository_error::RepositoryError, user_account,
+    ChangelogSyncType, Delete, SourceSiteIdForChangelog, Upsert,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
@@ -138,7 +139,7 @@ pub struct ActivityLogRow {
 }
 
 impl ActivityLogRow {
-    pub fn changelog(
+    pub(crate) fn changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
@@ -199,7 +200,11 @@ impl<'a> ActivityLogRowRepository<'a> {
 }
 
 impl Upsert for ActivityLogRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ActivityLogRowRepository::new(con)._insert_one(self)?;
 
         let changelog = match sync_type {
