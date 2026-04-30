@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   BasicSpinner,
+  DataError,
   Grid,
   NothingHere,
   ReportContext,
@@ -26,7 +27,7 @@ export const ListView = () => {
   const t = useTranslation();
   const { store } = useAuthContext();
   const navigate = useNavigate();
-  const { data, isLoading } = useReportList({
+  const { data, isLoading, isError } = useReportList({
     queryParams: {
       filterBy: {
         context: { equalAny: [ReportContext.Report, ReportContext.Dispensary] },
@@ -64,6 +65,10 @@ export const ListView = () => {
 
   if (isLoading) {
     return <BasicSpinner messageKey="loading" />;
+  }
+
+  if (isError) {
+    return <DataError error={t('error.unable-to-load-data')} />;
   }
 
   if (!categorisedReports.stockAndItems?.length) {

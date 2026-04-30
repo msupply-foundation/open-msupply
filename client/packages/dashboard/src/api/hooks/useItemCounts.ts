@@ -15,6 +15,7 @@ export const useItemCounts = (lowStockThreshold: number, highStockThreshold: num
       }),
     {
       retry: false,
+      onError: () => {},
     }
   );
 

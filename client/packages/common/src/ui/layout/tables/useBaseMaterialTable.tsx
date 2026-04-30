@@ -194,7 +194,12 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     localization,
 
-    data: data ?? [],
+    // When the underlying query is in error state, hide any cached
+    // rows it has — otherwise the table renders stale data alongside
+    // an "error" badge with no obvious indication that what's on
+    // screen is potentially out of date. Empty rows + isError trigger
+    // the DataError fallback below.
+    data: isError ? [] : (data ?? []),
     enablePagination: false,
 
     layoutMode: 'grid',

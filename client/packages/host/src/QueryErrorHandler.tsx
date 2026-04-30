@@ -14,25 +14,6 @@ import {
   useQueryClient,
 } from '@openmsupply-client/common';
 
-// Background queries (mostly dashboard widgets) that should not raise a
-// toast or modal when permission is denied — the user is already informed
-// by the page-level query that landed them on the page in the first place.
-//
-// TODO: replace with `meta: { silent: true }` opt-in on each hook.
-const SILENT_PERMISSION_DENIED_PATHS = new Set([
-  'reports',
-  'stockCounts',
-  'inboundShipmentCounts',
-  'inboundShipmentExternalCounts',
-  'outboundShipmentCounts',
-  'itemCounts',
-  'requisitionCounts',
-  'temperatureNotifications',
-]);
-
-const isSilentPermissionDenied = (e: PermissionDeniedError): boolean =>
-  (e.path ?? []).every(p => SILENT_PERMISSION_DENIED_PATHS.has(p));
-
 type RoutedToast =
   | { kind: 'none' }
   | { kind: 'short'; message: string }
@@ -77,7 +58,6 @@ export const QueryErrorHandler = () => {
       }
 
       if (e instanceof PermissionDeniedError) {
-        if (isSilentPermissionDenied(e)) return { kind: 'none' };
         setAuthError(AuthError.PermissionDenied);
         return { kind: 'none' };
       }

@@ -13,6 +13,7 @@ export const useInboundInternalCounts = () => {
       }),
     {
       retry: false,
+      onError: () => {},
     }
   );
 

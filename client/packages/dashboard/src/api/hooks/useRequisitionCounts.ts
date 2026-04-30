@@ -13,6 +13,7 @@ export const useRequisitionCounts = () => {
       }),
     {
       retry: false,
+      onError: () => {},
     }
   );
 
