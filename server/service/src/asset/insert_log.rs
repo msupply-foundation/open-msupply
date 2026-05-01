@@ -232,10 +232,6 @@ pub fn create_logs_for_imported_mapping_dates(
     user_id: &str,
     properties_json: &str,
 ) -> Result<(), InsertAssetError> {
-    println!(
-        "Creating logs for imported mapping dates: asset_id={}, user_id={}, properties={}",
-        asset_id, user_id, properties_json
-    );
     let props: serde_json::Map<String, serde_json::Value> =
         match serde_json::from_str(properties_json) {
             Ok(p) => p,
