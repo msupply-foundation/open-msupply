@@ -233,45 +233,53 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             options={options}
           />
         </Row>
-        <Row label={t('label.coverage-rate')}>
-          <NumericTextInput
-            value={draft?.coverageRate}
-            fullWidth
-            onChange={value => updatePatch({ coverageRate: value })}
-            endAdornment="%"
-            decimalLimit={1}
-            min={0}
-            max={100}
-            required
-            formError={{
-              formId: FORM_ID,
-              fieldId: 'coverageRate',
-              label: t('label.coverage-rate'),
-            }}
-          />
-        </Row>
-        <Row label={t('label.wastage-rate')}>
-          <NumericTextInput
-            value={draft?.wastageRate}
-            fullWidth
-            onChange={value => updatePatch({ wastageRate: value })}
-            endAdornment="%"
-            decimalLimit={1}
-            min={0}
-            max={100}
-            required
-            formError={{
-              formId: FORM_ID,
-              fieldId: 'wastageRate',
-              label: t('label.wastage-rate'),
-            }}
-          />
-        </Row>
-        <Box display="flex" justifyContent="flex-end" paddingTop={1}>
-          <StoreWastagePanel
-            storeConfigs={draft.storeConfigs ?? []}
-            updatePatch={updatePatch}
-          />
+        <Box display="flex" alignItems="center" gap={2}>
+          <Box flex={1}>
+            <Row label={t('label.coverage-rate')}>
+              <NumericTextInput
+                value={draft?.coverageRate}
+                fullWidth
+                onChange={value => updatePatch({ coverageRate: value })}
+                endAdornment="%"
+                decimalLimit={1}
+                min={0}
+                max={100}
+                required
+                formError={{
+                  formId: FORM_ID,
+                  fieldId: 'coverageRate',
+                  label: t('label.coverage-rate'),
+                }}
+              />
+            </Row>
+          </Box>
+          <Box flex={1}>
+            <Row label={t('label.wastage-rate')}>
+              <NumericTextInput
+                value={draft?.wastageRate}
+                fullWidth
+                onChange={value => updatePatch({ wastageRate: value })}
+                endAdornment="%"
+                decimalLimit={1}
+                min={0}
+                max={100}
+                required
+                formError={{
+                  formId: FORM_ID,
+                  fieldId: 'wastageRate',
+                  label: t('label.wastage-rate'),
+                }}
+              />
+            </Row>
+          </Box>
+          {/* `Row` adds `paddingTop={1.5}` internally; match it on the
+              button wrapper so the button visually aligns with the inputs. */}
+          <Box paddingTop={1.5}>
+            <StoreWastagePanel
+              storeConfigs={draft.storeConfigs ?? []}
+              updatePatch={updatePatch}
+            />
+          </Box>
         </Box>
         <Row label={t('label.vaccine-items')}>
           <FieldErrorWrapper
@@ -320,7 +328,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             minimum height that pushes content below it too far down. The
             summary stays close to the rest of the form regardless of how
             many doses are in the table. */}
-        <ErrorDisplay items={summaryItems} sx={{ marginTop: '1em' }} />
+        <ErrorDisplay
+          items={summaryItems}
+          sx={{ marginTop: '1em', marginBottom: '1em' }}
+        />
         <VaccineCourseDoseTable
           courseName={draft.name}
           doses={doses}
