@@ -635,7 +635,7 @@ mod tests {
                     name: "test variant".to_string(),
                     item_link_id: mock_item_a().id,
                     location_type_id: None,
-                    manufacturer_link_id: None,
+                    manufacturer_id: None,
                     deleted_datetime: None,
                     vvm_type: None,
                     created_datetime: NaiveDateTime::default(),
