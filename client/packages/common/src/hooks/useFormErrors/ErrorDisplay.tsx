@@ -4,6 +4,7 @@ import { useTranslation } from '@common/intl';
 import { Alert } from '@common/components';
 import { AlertIcon } from '@common/icons';
 import { List, ListItem } from '@mui/material';
+import { isEqual } from '@common/utils';
 import { useFormErrorStore, selectVisibleError } from './store';
 
 export type FormErrorListEntry = {
@@ -25,6 +26,10 @@ export type ErrorDisplayItem = {
  * pass the result back via `<ErrorDisplay items={...} />`.
  */
 export const useFormErrorList = (formId: string): FormErrorListEntry[] =>
+  // The selector below builds a fresh array on every store update, so the
+  // default `Object.is` check would re-render consumers on every unrelated
+  // store tick (e.g. a keystroke in another field). Use a deep equality
+  // check so re-renders only happen when the visible errors actually change.
   useFormErrorStore(state => {
     const form = state.forms[formId];
     if (!form) return EMPTY_LIST;
@@ -40,7 +45,7 @@ export const useFormErrorList = (formId: string): FormErrorListEntry[] =>
       }
     });
     return list;
-  }, errorListEquality);
+  }, isEqual);
 
 const EMPTY_LIST: FormErrorListEntry[] = [];
 
@@ -125,24 +130,4 @@ const ErrorDisplayInternal = ({
       </List>
     </Alert>
   );
-};
-
-const errorListEquality = (
-  a: FormErrorListEntry[],
-  b: FormErrorListEntry[]
-): boolean => {
-  if (a === b) return true;
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    const ai = a[i];
-    const bi = b[i];
-    if (
-      ai!.fieldId !== bi!.fieldId ||
-      ai!.label !== bi!.label ||
-      ai!.message !== bi!.message
-    ) {
-      return false;
-    }
-  }
-  return true;
 };
