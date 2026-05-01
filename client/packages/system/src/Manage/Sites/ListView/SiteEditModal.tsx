@@ -10,8 +10,10 @@ import {
   BasicTextInput,
   // PasswordTextInput,
   // IconButton,
-  // XCircleIcon,
+  XCircleIcon,
+  LoadingButton,
   Typography,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { DraftSite, useSiteStoresDraft } from '../api';
 import { SiteStoresSection } from './SiteStoresSection';
@@ -22,6 +24,8 @@ interface SiteEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   updateDraft: (patch: Partial<DraftSite>) => void;
+  clearSyncToken: (siteId: number) => Promise<unknown>;
+  isClearingSyncToken: boolean;
   // upsert: (afterUpsert: () => Promise<void>) => Promise<void>;
   // onDelete: () => void;
 }
@@ -31,6 +35,8 @@ export const SiteEditModal = ({
   isOpen,
   onClose,
   updateDraft,
+  clearSyncToken,
+  isClearingSyncToken,
 }: // upsert,
   // onDelete,
   SiteEditModalProps) => {
@@ -51,6 +57,12 @@ export const SiteEditModal = ({
   const handleClose = () => {
     onClose();
   };
+
+  const confirmClearSyncToken = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-clear-sync-token'),
+    onConfirm: () => clearSyncToken(id),
+  });
 
   // const handleOk = async () => {
   //   await upsert(storesDraft.save);
@@ -134,6 +146,24 @@ export const SiteEditModal = ({
                       onClick={() => updateDraft({ clearHardwareId: true })}
                     />
                   )} */}
+                </Box>
+              }
+            />
+          )}
+          {isExisting && (
+            <InputWithLabelRow
+              key="sync-token"
+              label={t('label.clear-sync-token')}
+              Input={
+                <Box display="flex" justifyContent="flex-end" flex={1}>
+                  <LoadingButton
+                    color="secondary"
+                    variant="contained"
+                    startIcon={<XCircleIcon />}
+                    isLoading={isClearingSyncToken}
+                    label={t('label.clear-sync-token')}
+                    onClick={() => confirmClearSyncToken()}
+                  />
                 </Box>
               }
             />

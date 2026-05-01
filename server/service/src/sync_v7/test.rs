@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod pull_integration {
-    use actix_web::{web, App, HttpServer};
+    use actix_web::{http::header::AUTHORIZATION, web, App, HttpRequest, HttpServer};
+    use assert_json_diff::assert_json_include;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        migrations::Version, mock::MockDataInserts, ChangelogFilter, ChangelogRepository,
         ChangelogRow, ChangelogTableName, CurrencyRow, EqualFilter, ItemRow, KeyType,
         KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection, StoreRow,
         SyncBufferRowRepository, UnitRow, Upsert,
@@ -11,7 +12,9 @@ mod pull_integration {
     use serde_json::json;
 
     use crate::sync::settings::SyncSettings;
+    use crate::sync_v7::api::{APP_VERSION_HEADER, HARDWARE_ID_HEADER};
     use crate::sync_v7::sync::sync_v7;
+    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
 
     // ---- Test data: expected rows after integration ----
 
@@ -128,17 +131,55 @@ mod pull_integration {
 
     // ---- Mock server handlers ----
 
-    async fn site_status() -> actix_web::HttpResponse {
+    fn assert_auth_headers(req: &HttpRequest) {
+        let headers = req.headers();
+        assert_eq!(
+            headers.get(AUTHORIZATION).and_then(|v| v.to_str().ok()),
+            Some("Bearer test_token"),
+        );
+        assert_eq!(
+            headers
+                .get(APP_VERSION_HEADER)
+                .and_then(|v| v.to_str().ok()),
+            Some(Version::from_package_json().to_string().as_str()),
+        );
+        assert!(headers.get(HARDWARE_ID_HEADER).is_some());
+    }
+
+    async fn site_status(req: HttpRequest) -> actix_web::HttpResponse {
+        assert_auth_headers(&req);
         actix_web::HttpResponse::Ok().json(json!({
-            "Ok": { "site_id": 1, "central_site_id": 0 }
+            "Ok": { "siteId": 1, "centralSiteId": 0 }
         }))
     }
 
-    async fn push() -> actix_web::HttpResponse {
+    async fn push(req: HttpRequest, body: web::Json<serde_json::Value>) -> actix_web::HttpResponse {
+        assert_auth_headers(&req);
+        assert_json_include!(
+            actual: body.into_inner(),
+            expected: json!({
+                "siteId": 1,
+                "maxCursor": 0,
+                "records": [],
+            })
+        );
         actix_web::HttpResponse::Ok().json(json!({ "Ok": 0 }))
     }
 
-    async fn pull(data: web::Data<serde_json::Value>) -> actix_web::HttpResponse {
+    async fn pull(
+        data: web::Data<serde_json::Value>,
+        req: HttpRequest,
+        body: web::Json<serde_json::Value>,
+    ) -> actix_web::HttpResponse {
+        assert_auth_headers(&req);
+        assert_json_include!(
+            actual: body.into_inner(),
+            expected: json!({
+                "cursor": 0,
+                "batchSize": 5000,
+                "isInitialising": true,
+            })
+        );
         actix_web::HttpResponse::Ok().json(data.get_ref())
     }
 
@@ -150,10 +191,17 @@ mod pull_integration {
         db_name: &str,
         pull_response: serde_json::Value,
     ) -> StorageConnection {
-        let (_, connection, _, _) = setup_all(db_name, MockDataInserts::none()).await;
+        let ServiceTestContext {
+            service_provider,
+            connection,
+            ..
+        } = setup_all_and_service_provider(db_name, MockDataInserts::none()).await;
 
         KeyValueStoreRepository::new(&connection)
             .set_i32(KeyType::SettingsSyncSiteId, Some(1))
+            .unwrap();
+        KeyValueStoreRepository::new(&connection)
+            .set_string(KeyType::SettingsSyncV7Token, Some("test_token".to_string()))
             .unwrap();
 
         let pull_data = web::Data::new(pull_response);
@@ -167,12 +215,13 @@ mod pull_integration {
         .bind("127.0.0.1:0")
         .unwrap();
 
-        let addr = server.addrs().first().unwrap().clone();
+        let addr = *server.addrs().first().unwrap();
         let server_handle = server.run();
         let handle = server_handle.handle();
         tokio::spawn(server_handle);
 
         let result = sync_v7(
+            &service_provider,
             &connection,
             SyncSettings {
                 url: format!("http://{}/", addr),

@@ -1,4 +1,6 @@
-use crate::{diesel_macros::diesel_json_type, ChangelogTableName, RepositoryError};
+use crate::{
+    diesel_macros::diesel_json_type, migrations::Version, ChangelogTableName, RepositoryError,
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
@@ -15,12 +17,24 @@ diesel_json_type! {
             id: String,
             table: ChangelogTableName
         },
-        #[error("Sync V7 API version not compatible, minVersion: {0}, maxVersion: {1}, received: {2}")]
-        SyncVersionMismatch(u32, u32, u32),
+        #[error("Sync V7 version mismatch, central: {central}, remote: {remote}")]
+        SyncVersionMismatch { central: Version, remote: Version },
         #[error("Not a central server")]
         NotACentralServer,
         #[error("Could not authenticate")]
         Authentication,
+        #[error("Invalid site name or password")]
+        InvalidSiteNameOrPassword,
+        #[error("Site already has a token allocated; admin must clear it before re-init")]
+        TokenAlreadyAllocated,
+        #[error("Token not found")]
+        TokenNotFound,
+        #[error("Hardware id does not match the one stored on the site")]
+        HardwareIdMismatch,
+        #[error("Failed to get hardware id")]
+        FailedToGetHardwareId,
+        #[error("Missing auth header: {0}")]
+        MissingAuthHeader(String),
         #[error(transparent)]
         SiteLockError(#[from] SiteLockError),
         #[error("Could not connect to server {url} {e}")]
