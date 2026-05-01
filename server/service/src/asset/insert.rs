@@ -27,6 +27,7 @@ pub enum InsertAssetError {
     DatabaseError(RepositoryError),
     SerialNumberAlreadyExists,
     AssetNumberAlreadyExists,
+    InvalidMappingDate { key: String, value: String },
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -80,6 +81,7 @@ pub fn insert_asset(
             let new_asset = generate(input);
             AssetRowRepository::new(connection).upsert_one(&new_asset, None)?;
 
+            println!("Inserted asset with ID: {}", new_asset.id);
             if let Some(props) = &new_asset.properties {
                 create_logs_for_imported_mapping_dates(
                     connection,

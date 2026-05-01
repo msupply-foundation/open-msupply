@@ -1,6 +1,7 @@
 use std::ops::Not;
 
 use super::{
+    insert::InsertAssetError,
     query_log::get_asset_log,
     validate::{
         check_asset_exists, check_asset_log_exists, check_comment_required_for_reason,
@@ -181,11 +182,10 @@ pub fn recalculate_mapping_dates(
         .find_one_by_id(asset_id)?
         .ok_or(InsertAssetLogError::AssetDoesNotExist)?;
 
-    let mut properties: serde_json::Map<String, serde_json::Value> =
-        match &asset_row.properties {
-            Some(props) => serde_json::from_str(props).unwrap_or_default(),
-            None => serde_json::Map::new(),
-        };
+    let mut properties: serde_json::Map<String, serde_json::Value> = match &asset_row.properties {
+        Some(props) => serde_json::from_str(props).unwrap_or_default(),
+        None => serde_json::Map::new(),
+    };
 
     let format_date = |dt: chrono::NaiveDateTime| dt.format("%Y-%m-%d").to_string();
 
@@ -231,18 +231,37 @@ pub fn create_logs_for_imported_mapping_dates(
     asset_id: &str,
     user_id: &str,
     properties_json: &str,
-) -> Result<(), RepositoryError> {
+) -> Result<(), InsertAssetError> {
+    println!(
+        "Creating logs for imported mapping dates: asset_id={}, user_id={}, properties={}",
+        asset_id, user_id, properties_json
+    );
     let props: serde_json::Map<String, serde_json::Value> =
         match serde_json::from_str(properties_json) {
             Ok(p) => p,
             Err(_) => return Ok(()),
         };
 
-    let mut dates: Vec<NaiveDate> = ["initial_mapping_date", "most_recent_mapping_date"]
-        .iter()
-        .filter_map(|key| props.get(*key).and_then(|v| v.as_str()))
-        .filter_map(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
-        .collect();
+    let mut dates: Vec<NaiveDate> = Vec::new();
+    for key in ["initial_mapping_date", "most_recent_mapping_date"] {
+        let Some(raw) = props.get(key).and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let trimmed = raw.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        // Canonical form is YYYY-MM-DD (what `recalculate_mapping_dates` writes
+        // and what the fixed client now sends). Accept DD/MM/YYYY too as a
+        // safety net for any caller that still sends the CSV display format.
+        let parsed = NaiveDate::parse_from_str(trimmed, "%Y-%m-%d")
+            .or_else(|_| NaiveDate::parse_from_str(trimmed, "%d/%m/%Y"))
+            .map_err(|_| InsertAssetError::InvalidMappingDate {
+                key: key.to_string(),
+                value: trimmed.to_string(),
+            })?;
+        dates.push(parsed);
+    }
     dates.sort();
     dates.dedup();
 
