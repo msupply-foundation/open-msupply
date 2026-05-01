@@ -279,10 +279,9 @@ return <DialogButton variant="save" disabled={hasErrors} onClick={handleSave} />
 |-------|--------------|
 | `nameOfInsured` | plain participation, no errors |
 | `policyNumberFamily` / `policyNumberPerson` | conditional required (one-of-two) |
-| `policyNumberPerson` | reactive `customError` (`'666'` triggers a custom message) |
 | `policyType` / `insuranceProviderId` | `<FieldErrorWrapper>` fallback for composite Selects |
 | `expiryDate` | per-field `validate` callback (date-in-past check) |
-| `discountPercentage` | built-in `min`/`max` validation **plus** reactive `customError` (>110 triggers a custom message), demonstrating the `custom > invalid` precedence |
+| `discountPercentage` | built-in `min`/`max` validation **plus** a cross-field `customError` (`isActive && rate === 0` blocks save — an active policy must have non-zero coverage) |
 | `isActive` | a Switch — kept out of the system entirely (booleans don't need validation) |
 
 Walking through the modal in the browser and comparing it with the test plan in [PR #8494](https://github.com/msupply-foundation/open-msupply/pull/8494) is the fastest way to internalise the behaviour.

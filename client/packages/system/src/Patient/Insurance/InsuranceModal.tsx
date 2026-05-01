@@ -162,11 +162,6 @@ export const InsuranceModal = ({
                     fieldId: 'policyNumberPerson',
                     label: t('label.policy-number-person'),
                   }}
-                  customError={
-                    draft.policyNumberPerson === '666'
-                      ? t('messages.devil-number')
-                      : null
-                  }
                   required={!draft.policyNumberFamily}
                   disabled={hasInsuranceId}
                   value={draft.policyNumberPerson}
@@ -261,8 +256,8 @@ export const InsuranceModal = ({
                     label: t('label.coverage-rate'),
                   }}
                   customError={
-                    (draft.discountPercentage ?? 0) > 110
-                      ? t('messages.way-too-big')
+                    draft.isActive && (draft.discountPercentage ?? 0) === 0
+                      ? t('messages.active-policy-needs-coverage')
                       : null
                   }
                   required
