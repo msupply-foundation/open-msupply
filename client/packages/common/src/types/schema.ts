@@ -525,7 +525,7 @@ export type AssetLogNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
-  logDatetime: Scalars['NaiveDateTime']['output'];
+  logDatetime: Scalars['DateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
   type: AssetLogTypeNodeType;
@@ -623,7 +623,7 @@ export type AssetNode = {
   catalogProperties?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   donorNameId?: Maybe<Scalars['String']['output']>;
@@ -631,7 +631,7 @@ export type AssetNode = {
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   lockedFields: LockedAssetFieldsNode;
-  modifiedDatetime: Scalars['NaiveDateTime']['output'];
+  modifiedDatetime: Scalars['DateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"} */
@@ -4704,8 +4704,19 @@ export type ItemFilterInput = {
   categoryName?: InputMaybe<Scalars['String']['input']>;
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
-  /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
+  /**
+   * Items with available stock on hand (i.e. stock not reserved by an unfinalised
+   * outbound), regardless of item visibility. This filter is ignored if
+   * `is_visible_or_on_hand` is true. Use `has_total_stock_on_hand` if you want to
+   * include items whose physical stock is fully reserved.
+   */
   hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Items with any physical stock on hand in the store, including stock currently
+   * reserved by an unfinalised outbound. Mirrors the `total_stock_on_hand` column on
+   * the `stock_on_hand` view.
+   */
+  hasTotalStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   ignoreForOrders?: InputMaybe<Scalars['Boolean']['input']>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
@@ -9777,7 +9788,7 @@ export type SyncFileReferenceConnector = {
 
 export type SyncFileReferenceNode = {
   __typename: 'SyncFileReferenceNode';
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   fileName: Scalars['String']['output'];
   id: Scalars['String']['output'];
   mimeType?: Maybe<Scalars['String']['output']>;

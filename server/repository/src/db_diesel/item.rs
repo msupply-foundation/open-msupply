@@ -57,9 +57,17 @@ pub struct ItemFilter {
     /// If true it returns ItemAndMasterList that have a name join row (including items with no stock), or items with stock on hand
     #[ts(optional)]
     pub is_visible_or_on_hand: Option<bool>,
-    /// Return items with stock on hand, including non-visible items (ignored if is_visible_or_on_hand is true!)
+    /// Return items with available stock on hand (i.e. stock not reserved by an
+    /// unfinalised outbound), including non-visible items (ignored if is_visible_or_on_hand is true!).
+    /// Use `has_total_stock_on_hand` if you want to include items whose physical stock
+    /// is fully reserved.
     #[ts(optional)]
     pub has_stock_on_hand: Option<bool>,
+    /// Return items with any physical stock on hand in the store, including stock that
+    /// is currently reserved by an unfinalised outbound. Mirrors the
+    /// `total_stock_on_hand` column on the `stock_on_hand` view.
+    #[ts(optional)]
+    pub has_total_stock_on_hand: Option<bool>,
     #[ts(optional)]
     pub code_or_name: Option<StringFilter>,
     #[ts(optional)]
@@ -140,6 +148,11 @@ impl ItemFilter {
 
     pub fn has_stock_on_hand(mut self, value: bool) -> Self {
         self.has_stock_on_hand = Some(value);
+        self
+    }
+
+    pub fn has_total_stock_on_hand(mut self, value: bool) -> Self {
+        self.has_total_stock_on_hand = Some(value);
         self
     }
 
@@ -259,6 +272,7 @@ impl<'a> ItemRepository<'a> {
                 is_active,
                 is_vaccine,
                 has_stock_on_hand,
+                has_total_stock_on_hand,
                 is_visible_or_on_hand,
                 master_list_id,
                 is_program_item,
@@ -350,6 +364,18 @@ impl<'a> ItemRepository<'a> {
                 )
                 .group_by(item_link::item_id);
 
+            // Parallel subquery for items with any physical stock on hand, including
+            // stock that is reserved by an unfinalised outbound.
+            let item_ids_with_total_stock_on_hand = item_link::table
+                .select(item_link::item_id)
+                .inner_join(stock_on_hand::table)
+                .filter(
+                    stock_on_hand::total_stock_on_hand
+                        .gt(0.0)
+                        .and(stock_on_hand::store_id.eq(store_id.clone())),
+                )
+                .group_by(item_link::item_id);
+
             query =
                 match (is_visible_or_on_hand, has_stock_on_hand) {
                     // visible items AND non-visible items with stock on hand
@@ -370,6 +396,16 @@ impl<'a> ItemRepository<'a> {
                     // no stock_on_hand filters
                     (_, _) => query,
                 };
+
+            query = match has_total_stock_on_hand {
+                Some(true) => query.filter(
+                    item::id.eq_any(item_ids_with_total_stock_on_hand.clone().into_boxed()),
+                ),
+                Some(false) => query.filter(
+                    item::id.ne_all(item_ids_with_total_stock_on_hand.clone().into_boxed()),
+                ),
+                None => query,
+            };
 
             query = match (is_visible_or_on_hand, is_visible) {
                 // visible items AND non-visible items with stock on hand
@@ -918,6 +954,58 @@ mod tests {
                 .map(|r| r.item_row.id)
                 .collect::<Vec<String>>(),
             vec!["item1", "item2", "item3"]
+        );
+
+        // Test has_total_stock_on_hand filter (regression for issue #11429)
+
+        // Add a stock line for item 4 with total > 0 but available == 0, e.g. fully
+        // reserved by an unfinalised outbound. This item should be excluded by
+        // `has_stock_on_hand` (which checks available stock) but matched by
+        // `has_total_stock_on_hand` (which checks physical stock).
+        StockLineRowRepository::new(&storage_connection)
+            .upsert_one(&StockLineRow {
+                id: "stock_line_for_item_4".to_string(),
+                item_link_id: "item4".to_string(),
+                store_id: "name1_store".to_string(),
+                available_number_of_packs: 0.0,
+                total_number_of_packs: 1.0,
+                pack_size: 1.0,
+                ..Default::default()
+            })
+            .unwrap();
+
+        // has_stock_on_hand(true) excludes item 4 — its physical stock is fully reserved.
+        let results = ItemRepository::new(&storage_connection)
+            .query(
+                Pagination::new(),
+                Some(ItemFilter::new().has_stock_on_hand(true)),
+                None,
+                Some("name1_store".to_string()),
+            )
+            .unwrap();
+        assert_eq!(
+            results
+                .into_iter()
+                .map(|r| r.item_row.id)
+                .collect::<Vec<String>>(),
+            vec!["item3"]
+        );
+
+        // has_total_stock_on_hand(true) includes item 4.
+        let results = ItemRepository::new(&storage_connection)
+            .query(
+                Pagination::new(),
+                Some(ItemFilter::new().has_total_stock_on_hand(true)),
+                None,
+                Some("name1_store".to_string()),
+            )
+            .unwrap();
+        assert_eq!(
+            results
+                .into_iter()
+                .map(|r| r.item_row.id)
+                .collect::<Vec<String>>(),
+            vec!["item4"]
         );
 
         // Make sure stock on hand filter applies to only one store

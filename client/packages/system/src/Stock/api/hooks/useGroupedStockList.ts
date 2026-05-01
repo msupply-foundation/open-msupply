@@ -53,7 +53,7 @@ export const useGroupedStockList = (
     totalCount: number;
   }> => {
     const filter = {
-      hasStockOnHand: true,
+      hasTotalStockOnHand: true,
       ...(filterBy?.search ? { codeOrName: filterBy.search } : {}),
       ...(filterBy?.name ? { codeOrName: filterBy.name } : {}),
       ...(filterBy?.code ? { code: filterBy.code } : {}),

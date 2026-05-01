@@ -52,8 +52,15 @@ pub struct ItemFilterInput {
     pub is_visible_or_on_hand: Option<bool>,
     /// Items that are part of a masterlist which is visible in this store. This filter is ignored if `is_visible_or_on_hand` is true
     pub is_visible: Option<bool>,
-    /// Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true
+    /// Items with available stock on hand (i.e. stock not reserved by an unfinalised
+    /// outbound), regardless of item visibility. This filter is ignored if
+    /// `is_visible_or_on_hand` is true. Use `has_total_stock_on_hand` if you want to
+    /// include items whose physical stock is fully reserved.
     pub has_stock_on_hand: Option<bool>,
+    /// Items with any physical stock on hand in the store, including stock currently
+    /// reserved by an unfinalised outbound. Mirrors the `total_stock_on_hand` column on
+    /// the `stock_on_hand` view.
+    pub has_total_stock_on_hand: Option<bool>,
     pub code_or_name: Option<StringFilterInput>,
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
@@ -116,6 +123,7 @@ impl ItemFilterInput {
             is_active,
             is_vaccine,
             has_stock_on_hand,
+            has_total_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id,
             is_program_item,
@@ -139,6 +147,7 @@ impl ItemFilterInput {
             is_active,
             is_vaccine,
             has_stock_on_hand,
+            has_total_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id: master_list_id.map(EqualFilter::from),
             is_program_item,
