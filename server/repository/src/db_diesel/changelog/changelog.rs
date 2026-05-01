@@ -267,7 +267,7 @@ impl ChangelogTableName {
     }
 }
 
-#[derive(Debug, PartialEq, Insertable, Default)]
+#[derive(Debug, Clone, PartialEq, Insertable, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
