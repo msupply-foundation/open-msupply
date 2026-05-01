@@ -19,7 +19,6 @@ import {
   InputWithLabelRow,
   MaterialTable,
   ModalMode,
-  NothingHere,
   NumericTextInput,
   PlusCircleIcon,
   useDialog,
