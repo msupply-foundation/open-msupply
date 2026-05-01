@@ -4,6 +4,7 @@ fragment SyncSettings on SyncSettingsNode {
   url
   username
   centralServerSiteId
+  syncSiteId
 }
 
 query syncSettings {
