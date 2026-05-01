@@ -144,6 +144,15 @@ impl<'a> StockLineRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = stock_line::table
+            .filter(stock_line::id.eq(lookup_id))
+            .select(stock_line::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<StockLineRow>, RepositoryError> {
         stock_line::table
             .filter(stock_line::id.eq_any(ids))

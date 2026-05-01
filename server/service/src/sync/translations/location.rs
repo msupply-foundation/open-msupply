@@ -1,6 +1,6 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationRow, LocationRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, LocationRow, LocationRowRepository, LocationTypeRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +8,7 @@ use util::sync_serde::empty_str_as_option_string;
 
 use crate::sync::translations::{location_type::LocationTypeTranslation, store::StoreTranslation};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyLocationRow {
@@ -53,7 +53,7 @@ impl SyncTranslation for LocationTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyLocationRow {
@@ -65,6 +65,16 @@ impl SyncTranslation for LocationTranslation {
             location_type_id,
             volume,
         } = serde_json::from_str::<LegacyLocationRow>(&sync_record.data)?;
+
+        let location_type_id = clear_invalid_fk(
+            connection,
+            "location",
+            &id,
+            "location_type_id",
+            location_type_id,
+            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = LocationRow {
             id,
@@ -128,15 +138,31 @@ impl SyncTranslation for LocationTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        LocationTypeRow,
+    };
 
     #[actix_rt::test]
     async fn test_location_translation() {
         use crate::sync::test::test_data::location as test_data;
         let translator = LocationTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_location_translation", MockDataInserts::none()).await;
+        // FK validation requires the referenced location_type to exist
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_location_translation",
+            MockDataInserts::none(),
+            MockData {
+                location_types: vec![LocationTypeRow {
+                    id: "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),
+                    name: "Test Location Type".to_string(),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
