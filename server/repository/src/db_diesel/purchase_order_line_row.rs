@@ -281,13 +281,7 @@ impl Delete for PurchaseOrderLineDelete {
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
-        diesel::delete(
-            purchase_order_line_with_links::table
-                .filter(purchase_order_line_with_links::id.eq(&self.0)),
-        )
-        .execute(con.lock().connection())?;
-
-        let repo = ChangelogRepository::new(con);
+        // Build changelog BEFORE deleting — generate_changelog needs to fetch the row by id
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
                 PurchaseOrderLineRow::generate_changelog(
@@ -300,7 +294,13 @@ impl Delete for PurchaseOrderLineDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        repo.insert(&changelog)?;
+        diesel::delete(
+            purchase_order_line_with_links::table
+                .filter(purchase_order_line_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+
+        ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
     // Test only
