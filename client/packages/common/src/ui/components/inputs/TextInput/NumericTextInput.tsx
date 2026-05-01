@@ -110,7 +110,7 @@ import {
 } from '@common/utils';
 import { useFormatNumber, useCurrency, useTranslation } from '@common/intl';
 import { InputAdornment, Tooltip } from '@common/components';
-import { useBufferState, useFormField } from '@common/hooks';
+import { CustomErrorValue, useBufferState, useFormField } from '@common/hooks';
 
 export interface NumericInputProps {
   /**
@@ -176,7 +176,7 @@ export type NumericTextInputProps = NumericInputProps &
     onChange?: (value: number | undefined) => void;
     endAdornment?: string;
     formError?: FormErrorBinding;
-    customError?: string | null;
+    customError?: CustomErrorValue;
   };
 
 export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;

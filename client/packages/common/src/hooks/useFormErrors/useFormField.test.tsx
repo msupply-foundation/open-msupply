@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
 import { TestingProvider } from '@openmsupply-client/common';
 import { selectVisibleError, useFormErrorStore } from './store';
-import { useFormField } from './useFormField';
+import { CustomErrorValue, useFormField } from './useFormField';
 import { useForm } from './useForm';
 
 const reset = () => useFormErrorStore.setState({ forms: {} });
@@ -17,7 +17,7 @@ const Field = ({
   fieldId: string;
   value: string;
   required?: boolean;
-  customError?: string | null;
+  customError?: CustomErrorValue;
   onRender?: () => void;
 }) => {
   onRender?.();
@@ -50,23 +50,63 @@ describe('useFormField', () => {
     ).toBeUndefined();
   });
 
-  it('mirrors customError into the store', () => {
+  it('mirrors a string customError into the immediate slot', () => {
+    render(
+      <TestingProvider>
+        <Field fieldId="a" value="x" customError="bad" />
+      </TestingProvider>
+    );
+    const field = useFormErrorStore.getState().forms['f1']?.fields['a'];
+    expect(field?.customError).toBe('bad');
+    expect(field?.submissionError).toBeNull();
+  });
+
+  it('routes { showOnSubmit: true } to the deferred slot', () => {
+    render(
+      <TestingProvider>
+        <Field
+          fieldId="a"
+          value="x"
+          customError={{ message: 'soft', showOnSubmit: true }}
+        />
+      </TestingProvider>
+    );
+    const field = useFormErrorStore.getState().forms['f1']?.fields['a'];
+    expect(field?.customError).toBeNull();
+    expect(field?.submissionError).toBe('soft');
+  });
+
+  it('moves a customError between slots when showOnSubmit toggles', () => {
     const { rerender } = render(
       <TestingProvider>
         <Field fieldId="a" value="x" customError="bad" />
       </TestingProvider>
     );
-    expect(
-      useFormErrorStore.getState().forms['f1']?.fields['a']?.customError
-    ).toBe('bad');
+    let field = useFormErrorStore.getState().forms['f1']?.fields['a'];
+    expect(field?.customError).toBe('bad');
+    expect(field?.submissionError).toBeNull();
+
+    rerender(
+      <TestingProvider>
+        <Field
+          fieldId="a"
+          value="x"
+          customError={{ message: 'bad', showOnSubmit: true }}
+        />
+      </TestingProvider>
+    );
+    field = useFormErrorStore.getState().forms['f1']?.fields['a'];
+    expect(field?.customError).toBeNull();
+    expect(field?.submissionError).toBe('bad');
+
     rerender(
       <TestingProvider>
         <Field fieldId="a" value="x" customError={null} />
       </TestingProvider>
     );
-    expect(
-      useFormErrorStore.getState().forms['f1']?.fields['a']?.customError
-    ).toBeNull();
+    field = useFormErrorStore.getState().forms['f1']?.fields['a'];
+    expect(field?.customError).toBeNull();
+    expect(field?.submissionError).toBeNull();
   });
 
   it('flips required-error based on value', () => {

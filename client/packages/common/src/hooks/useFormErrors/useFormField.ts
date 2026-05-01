@@ -6,6 +6,28 @@ import {
   VisibleFieldError,
 } from './store';
 
+/**
+ * A custom error can be expressed two ways:
+ *
+ *   - `'message'` — shown immediately, like an inline validation error.
+ *   - `{ message, showOnSubmit: true }` — held back until the form's required
+ *     errors are shown (i.e. after the user attempts Save).
+ *
+ * The `showOnSubmit` opt-in only exists on `customError` and not on
+ * `validate`. That's deliberate: `validate` is per-field and only sees that
+ * one field's value, so on a fresh form the field is empty and the callback
+ * returns null — there's no "error visible before the user has done
+ * anything" problem to fix. `customError`, in contrast, is computed from the
+ * whole draft and can fire on default values (e.g. an "active && coverage=0"
+ * cross-field rule that trips before the user has interacted with anything).
+ * Those are the cases that need deferring; deferring `validate` would just
+ * be dead surface area.
+ */
+export type CustomErrorValue =
+  | string
+  | { message: string; showOnSubmit?: boolean }
+  | null;
+
 export type FormFieldOptions<T> = {
   formId: string;
   fieldId: string;
@@ -18,10 +40,12 @@ export type FormFieldOptions<T> = {
    */
   validate?: (value: T) => string | null;
   /**
-   * Reactive custom error. Set to a string to flag a custom error, or null to
-   * clear. Custom errors take precedence over validation and required errors.
+   * Reactive custom error — `string` (shown immediately) or `{ message,
+   * showOnSubmit: true }` (deferred until the form's required errors are
+   * revealed). Custom errors take precedence over validation and required
+   * errors when shown.
    */
-  customError?: string | null;
+  customError?: CustomErrorValue;
 };
 
 export type FormFieldResult = {
@@ -74,6 +98,7 @@ export const useFormField = <T,>({
     setRequiredError: setStoreRequiredError,
     setValidationError: setStoreValidationError,
     setCustomError: setStoreCustomError,
+    setSubmissionError: setStoreSubmissionError,
     setLabel,
   } = useFormErrorStore.getState();
 
@@ -132,11 +157,25 @@ export const useFormField = <T,>({
     setStoreValidationError(activeFormId, fieldId, v(value));
   }, [isActive, activeFormId, fieldId, value, setStoreValidationError]);
 
-  // Mirror the reactive customError prop into the store.
+  // Mirror the reactive customError prop into the store. The string form
+  // routes to `customError` (shown immediately); the object form with
+  // `showOnSubmit: true` routes to `submissionError` instead, which is gated
+  // by the form's `showRequired` flag. Whichever slot we're not using gets
+  // cleared, so flipping `showOnSubmit` between renders behaves correctly.
+  const { customMessage, submissionMessage } = normaliseCustomError(customError);
   useEffect(() => {
     if (!isActive) return;
-    setStoreCustomError(activeFormId, fieldId, customError);
-  }, [isActive, activeFormId, fieldId, customError, setStoreCustomError]);
+    setStoreCustomError(activeFormId, fieldId, customMessage);
+    setStoreSubmissionError(activeFormId, fieldId, submissionMessage);
+  }, [
+    isActive,
+    activeFormId,
+    fieldId,
+    customMessage,
+    submissionMessage,
+    setStoreCustomError,
+    setStoreSubmissionError,
+  ]);
 
   const setCustomError = useCallback(
     (message: string | null) => {
@@ -164,6 +203,19 @@ export const useFormField = <T,>({
 
 const isEmpty = (value: unknown): boolean =>
   value === undefined || value === null || value === '';
+
+const normaliseCustomError = (
+  customError: CustomErrorValue | undefined
+): { customMessage: string | null; submissionMessage: string | null } => {
+  if (!customError) return { customMessage: null, submissionMessage: null };
+  if (typeof customError === 'string') {
+    return { customMessage: customError, submissionMessage: null };
+  }
+  if (customError.showOnSubmit) {
+    return { customMessage: null, submissionMessage: customError.message };
+  }
+  return { customMessage: customError.message, submissionMessage: null };
+};
 
 const visibleErrorEquality = (
   a: VisibleFieldError | null,

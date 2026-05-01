@@ -5,7 +5,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useFormField } from '@common/hooks';
+import { CustomErrorValue, useFormField } from '@common/hooks';
 
 export type FormErrorBinding = {
   formId: string;
@@ -23,9 +23,11 @@ export type BasicTextInputProps = StandardTextFieldProps & {
    */
   formError?: FormErrorBinding;
   /**
-   * Reactive custom error message. Only used when `formError` is set.
+   * Reactive custom error. Only used when `formError` is set. Pass a string
+   * for an immediate error, or `{ message, showOnSubmit: true }` to defer
+   * the error until the user attempts Save (same gate as required errors).
    */
-  customError?: string | null;
+  customError?: CustomErrorValue;
 };
 
 /**

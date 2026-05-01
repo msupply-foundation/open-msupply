@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFormField } from './useFormField';
+import { CustomErrorValue, useFormField } from './useFormField';
 
 export type FieldErrorWrapperProps<T> = {
   formId: string;
@@ -8,7 +8,7 @@ export type FieldErrorWrapperProps<T> = {
   value: T;
   required?: boolean;
   validate?: (value: T) => string | null;
-  customError?: string | null;
+  customError?: CustomErrorValue;
   children: (fieldProps: {
     error: boolean;
     required: boolean;
