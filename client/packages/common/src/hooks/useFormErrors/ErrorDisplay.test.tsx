@@ -2,7 +2,11 @@ import React from 'react';
 import { act, render } from '@testing-library/react';
 import { TestingProvider } from '@openmsupply-client/common';
 import { useFormErrorStore } from './store';
-import { ErrorDisplay, useFormErrorList } from './ErrorDisplay';
+import {
+  ErrorDisplay,
+  FormErrorListEntry,
+  useFormErrorList,
+} from './ErrorDisplay';
 
 const reset = () => useFormErrorStore.setState({ forms: {} });
 
@@ -26,7 +30,7 @@ describe('ErrorDisplay (formId mode)', () => {
         <ErrorDisplay formId="f1" />
       </TestingProvider>
     );
-    expect(queryByRole('alert')).toBeNull();
+    expect(queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('renders one bullet per visible error from the store', () => {
@@ -49,7 +53,7 @@ describe('ErrorDisplay (formId mode)', () => {
         <ErrorDisplay formId="f1" />
       </TestingProvider>
     );
-    expect(queryByText('- Name: Required')).toBeNull();
+    expect(queryByText('- Name: Required')).not.toBeInTheDocument();
 
     act(() => seedField('f1', 'name', 'Name', 'Required'));
     expect(getByText('- Name: Required')).toBeInTheDocument();
@@ -86,7 +90,7 @@ describe('ErrorDisplay (items mode)', () => {
     );
 
     expect(getByText('- Override: fromProp')).toBeInTheDocument();
-    expect(queryByText('- Name: StoreError')).toBeNull();
+    expect(queryByText('- Name: StoreError')).not.toBeInTheDocument();
   });
 
   it('hides itself when items is empty', () => {
@@ -95,14 +99,18 @@ describe('ErrorDisplay (items mode)', () => {
         <ErrorDisplay items={[]} />
       </TestingProvider>
     );
-    expect(queryByRole('alert')).toBeNull();
+    expect(queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 
 describe('useFormErrorList', () => {
   beforeEach(reset);
 
-  const Probe = ({ onResult }: { onResult: (v: unknown) => void }) => {
+  const Probe = ({
+    onResult,
+  }: {
+    onResult: (v: FormErrorListEntry[]) => void;
+  }) => {
     const list = useFormErrorList('f1');
     onResult(list);
     return null;
@@ -112,7 +120,7 @@ describe('useFormErrorList', () => {
     seedField('f1', 'name', 'Name', 'Required');
     seedField('f1', 'rate', 'Rate', 'Too big');
 
-    let result: any;
+    let result: FormErrorListEntry[] | undefined;
     render(
       <TestingProvider>
         <Probe onResult={v => (result = v)} />
