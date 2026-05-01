@@ -257,7 +257,15 @@ export const InsuranceModal = ({
                   }}
                   customError={
                     draft.isActive && (draft.discountPercentage ?? 0) === 0
-                      ? t('messages.active-policy-needs-coverage')
+                      ? {
+                          message: t('messages.active-policy-needs-coverage'),
+                          // The default coverage is 0 and the default isActive
+                          // is true, so this rule trips on a freshly opened
+                          // form. Defer the message until the user attempts
+                          // Save so they don't see an error before they've
+                          // touched anything.
+                          showOnSubmit: true,
+                        }
                       : null
                   }
                   required

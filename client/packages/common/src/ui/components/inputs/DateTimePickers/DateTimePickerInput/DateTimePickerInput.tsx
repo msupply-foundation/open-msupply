@@ -13,7 +13,7 @@ import {
   TypedTFunction,
   useTranslation,
 } from '@common/intl';
-import { useBufferState, useFormField } from '@common/hooks';
+import { CustomErrorValue, useBufferState, useFormField } from '@common/hooks';
 import { FormErrorBinding } from '../../TextInput';
 import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
 
@@ -75,7 +75,7 @@ export const DateTimePickerInput = ({
   required?: boolean;
   textFieldSx?: SxProps;
   formError?: FormErrorBinding;
-  customError?: string | null;
+  customError?: CustomErrorValue;
   validate?: (value: Date | null | undefined) => string | null;
 }) => {
   const [internalError, setInternalError] = useState<string | null>(null);

@@ -1,5 +1,9 @@
 export { useFormField } from './useFormField';
-export type { FormFieldOptions, FormFieldResult } from './useFormField';
+export type {
+  CustomErrorValue,
+  FormFieldOptions,
+  FormFieldResult,
+} from './useFormField';
 export { useForm, useHasErrors } from './useForm';
 export type { UseFormResult } from './useForm';
 export { FieldErrorWrapper } from './FieldErrorWrapper';

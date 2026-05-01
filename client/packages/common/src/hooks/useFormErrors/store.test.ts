@@ -14,6 +14,7 @@ describe('FormErrorStore', () => {
     expect(form?.fields['a']).toEqual({
       label: 'A',
       customError: null,
+      submissionError: null,
       validationError: null,
       requiredError: null,
     });
@@ -57,6 +58,37 @@ describe('FormErrorStore', () => {
 
     // Required is hidden when showRequired is false
     expect(selectVisibleError(field3, false)).toBeNull();
+  });
+
+  it('submission errors are gated by showRequired and lose to immediate custom/invalid', () => {
+    const s = useFormErrorStore.getState();
+    s.registerField('f1', 'a', 'A');
+    s.setSubmissionError('f1', 'a', 'Submit-only');
+
+    // Hidden until showRequired flips
+    const before = useFormErrorStore.getState().forms['f1']?.fields['a'];
+    expect(selectVisibleError(before, false)).toBeNull();
+    expect(selectVisibleError(before, true)?.kind).toBe('submission');
+
+    // Loses to validation when shown
+    s.setValidationError('f1', 'a', 'Invalid');
+    const withInvalid = useFormErrorStore.getState().forms['f1']?.fields['a'];
+    expect(selectVisibleError(withInvalid, true)?.kind).toBe('invalid');
+
+    // Loses to immediate custom error when shown
+    s.setValidationError('f1', 'a', null);
+    s.setCustomError('f1', 'a', 'Immediate');
+    const withCustom = useFormErrorStore.getState().forms['f1']?.fields['a'];
+    expect(selectVisibleError(withCustom, true)?.kind).toBe('custom');
+  });
+
+  it('hasVisibleErrors counts submission errors only when showRequired is on', () => {
+    const s = useFormErrorStore.getState();
+    s.registerField('f1', 'a', 'A');
+    s.setSubmissionError('f1', 'a', 'Submit-only');
+    expect(s.hasVisibleErrors('f1')).toBe(false);
+    s.showRequiredErrors('f1');
+    expect(useFormErrorStore.getState().hasVisibleErrors('f1')).toBe(true);
   });
 
   it('clearing a custom error reveals the underlying validation error', () => {

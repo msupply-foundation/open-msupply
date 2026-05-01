@@ -28,17 +28,18 @@ Errors live in one global Zustand store keyed by `formId`. There's no provider t
 }
 ```
 
-### Three error kinds
+### Four error kinds
 
-Each field independently tracks three slots, with display precedence **`custom > invalid > required`**:
+Each field independently tracks four slots, with display precedence **`custom > invalid > submission > required`**:
 
 | Kind | Source | Visible when |
 |------|--------|--------------|
-| `custom` | `customError` prop on the input, or `setCustomError(msg)` called imperatively | always |
+| `custom` | `customError` (string form) on the input | always |
 | `invalid` | `validate(value)` callback, or set by the input component itself (e.g. `NumericTextInput`'s built-in min/max) | always |
-| `required` | derived from `required && !value` | only after the form's `showRequired` flag is set (i.e. user has attempted Save) |
+| `submission` | `customError={{ message, showOnSubmit: true }}` on the input | only after the form's `showRequired` flag is set (i.e. user has attempted Save) |
+| `required` | derived from `required && !value` | only after `showRequired` is set |
 
-Because the slots are independent, clearing a custom error reveals the underlying validation error rather than leaving the field looking valid when it isn't.
+Because the slots are independent, clearing one reveals the next-highest-priority error rather than leaving the field looking valid when it isn't.
 
 ### Required-error visibility
 
@@ -110,8 +111,10 @@ formError={{
   fieldId: string,    // unique within the form
   label: string,      // shown in the error summary
 }}
-customError?: string | null
+customError?: string | { message: string; showOnSubmit?: boolean } | null
 ```
+
+The string form shows the error immediately. The object form with `showOnSubmit: true` defers the error until the user attempts Save — useful for cross-field rules that trip on default values, where you don't want the user to see an error before they've touched anything.
 
 Currently supported on `BasicTextInput`, `NumericTextInput`, `DateTimePickerInput`. (`Autocomplete` accepts a top-level `error: boolean` that you'd typically feed from `<FieldErrorWrapper>` rather than `formError` directly, since the wrapper sees the actual selected value.)
 
@@ -196,17 +199,36 @@ For composite components (custom Selects, Autocompletes, third-party widgets), u
 
 Two ways to express it. Pick whichever reads better at the call site.
 
-**Reactive prop** — use when the rule is a pure function of the current draft:
+**Reactive prop** — use when the rule is a pure function of the current draft. Pass a string for an immediate error:
 
 ```tsx
 <NumericTextInput
   formError={{ formId: FORM_ID, fieldId: 'discount', label: t('label.discount') }}
-  customError={draft.discount > 110 ? t('messages.way-too-big') : null}
+  customError={draft.discount > 110 ? t('messages.too-big') : null}
   min={0}
   max={100}
   ...
 />
 ```
+
+…or an object with `showOnSubmit: true` to defer the message until the user attempts Save:
+
+```tsx
+<NumericTextInput
+  formError={{ formId: FORM_ID, fieldId: 'discount', label: t('label.discount') }}
+  customError={
+    draft.isActive && (draft.discount ?? 0) === 0
+      ? {
+          message: t('messages.active-policy-needs-coverage'),
+          showOnSubmit: true,
+        }
+      : null
+  }
+  ...
+/>
+```
+
+Use `showOnSubmit` for cross-field rules that can trip on default values (which would otherwise show an error on a freshly opened form). The `showOnSubmit` flag is intentionally not available on `validate` — `validate` is per-field and only fires once the user has typed/picked something, so it doesn't have the "error visible before any user interaction" problem that `customError` can have.
 
 **`validate` callback** — use when the rule is per-input, returns a message based on the value, and you don't want to rebuild the message every render:
 
@@ -281,7 +303,7 @@ return <DialogButton variant="save" disabled={hasErrors} onClick={handleSave} />
 | `policyNumberFamily` / `policyNumberPerson` | conditional required (one-of-two) |
 | `policyType` / `insuranceProviderId` | `<FieldErrorWrapper>` fallback for composite Selects |
 | `expiryDate` | per-field `validate` callback (date-in-past check) |
-| `discountPercentage` | built-in `min`/`max` validation **plus** a cross-field `customError` (`isActive && rate === 0` blocks save — an active policy must have non-zero coverage) |
+| `discountPercentage` | built-in `min`/`max` validation **plus** a cross-field `customError` with `showOnSubmit: true` (`isActive && rate === 0` blocks save, but the message is deferred until the user attempts Save so it doesn't show on a freshly opened form) |
 | `isActive` | a Switch — kept out of the system entirely (booleans don't need validation) |
 
 Walking through the modal in the browser and comparing it with the test plan in [PR #8494](https://github.com/msupply-foundation/open-msupply/pull/8494) is the fastest way to internalise the behaviour.

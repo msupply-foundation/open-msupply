@@ -1,6 +1,6 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
 
-export type ErrorKind = 'required' | 'invalid' | 'custom';
+export type ErrorKind = 'required' | 'invalid' | 'custom' | 'submission';
 
 export type VisibleFieldError = {
   kind: ErrorKind;
@@ -10,7 +10,12 @@ export type VisibleFieldError = {
 
 type FieldEntry = {
   label: string;
+  // Custom error shown immediately. For rules where the user-visible message
+  // shouldn't appear until they attempt to submit (e.g. cross-field rules
+  // that trip on default values), use submissionError instead.
   customError: string | null;
+  // Custom error deferred until showRequired is set, like requiredError.
+  submissionError: string | null;
   validationError: string | null;
   requiredError: string | null;
 };
@@ -38,6 +43,11 @@ type StoreActions = {
     message: string | null
   ) => void;
   setCustomError: (
+    formId: string,
+    fieldId: string,
+    message: string | null
+  ) => void;
+  setSubmissionError: (
     formId: string,
     fieldId: string,
     message: string | null
@@ -90,6 +100,7 @@ export const useFormErrorStore = create<FormErrorStore>((set, get) => ({
         : {
             label,
             customError: null,
+            submissionError: null,
             validationError: null,
             requiredError: null,
           };
@@ -146,6 +157,15 @@ export const useFormErrorStore = create<FormErrorStore>((set, get) => ({
     );
   },
 
+  setSubmissionError: (formId, fieldId, message) => {
+    set(state =>
+      updateField(state, formId, fieldId, entry => {
+        if (entry.submissionError === message) return entry;
+        return { ...entry, submissionError: message };
+      })
+    );
+  },
+
   setLabel: (formId, fieldId, label) => {
     set(state =>
       updateField(state, formId, fieldId, entry => {
@@ -190,6 +210,7 @@ export const useFormErrorStore = create<FormErrorStore>((set, get) => ({
     return Object.values(form.fields).some(entry => {
       if (entry.customError) return true;
       if (entry.validationError) return true;
+      if (showRequired && entry.submissionError) return true;
       if (showRequired && entry.requiredError) return true;
       return false;
     });
@@ -199,7 +220,10 @@ export const useFormErrorStore = create<FormErrorStore>((set, get) => ({
 /**
  * Compute the highest-priority visible error for a single field. Used by both
  * the per-field hook and the summary display so that they agree on what's
- * shown. Precedence: custom > invalid > required.
+ * shown. Precedence: custom > invalid > submission > required.
+ *
+ * `submission` and `required` are both gated by `showRequired` — they're
+ * tracked from the start but only surfaced after the user attempts Save.
  */
 export const selectVisibleError = (
   field: FieldEntry | undefined,
@@ -213,6 +237,13 @@ export const selectVisibleError = (
     return {
       kind: 'invalid',
       message: field.validationError,
+      label: field.label,
+    };
+  }
+  if (showRequired && field.submissionError) {
+    return {
+      kind: 'submission',
+      message: field.submissionError,
       label: field.label,
     };
   }
