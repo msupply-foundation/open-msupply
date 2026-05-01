@@ -2,7 +2,6 @@ import React, { ReactElement, useMemo } from 'react';
 import {
   ErrorDisplay,
   FieldErrorWrapper,
-  FormIdProvider,
   useDialog,
   useForm,
   useNotification,
@@ -28,7 +27,7 @@ import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
 const FORM_ID = 'patient-insurance';
 
-const InsuranceModalContent = ({
+export const InsuranceModal = ({
   patientName,
 }: {
   patientName?: string;
@@ -52,16 +51,8 @@ const InsuranceModalContent = ({
     insuranceId,
     hasInsuranceId,
     draft,
-    updatePatch: updateDraft,
+    updatePatch,
   } = useInsurancePolicies(nameId, patientName);
-
-  // Note: we don't call `form.resetRequired()` here — once the user has
-  // attempted Save and the required-error summary is visible, it should stay
-  // visible until each missing field is individually filled in. The per-field
-  // requiredError is cleared automatically when the field's value becomes
-  // non-empty (see useFormField), so the summary list shrinks as the user
-  // types, rather than disappearing wholesale on the first keystroke.
-  const updatePatch = updateDraft;
 
   const today = useMemo(() => {
     const d = new Date();
@@ -129,6 +120,7 @@ const InsuranceModalContent = ({
               Input={
                 <BasicTextInput
                   formError={{
+                    formId: FORM_ID,
                     fieldId: 'nameOfInsured',
                     label: t('label.name-of-the-insured'),
                   }}
@@ -146,6 +138,7 @@ const InsuranceModalContent = ({
               Input={
                 <BasicTextInput
                   formError={{
+                    formId: FORM_ID,
                     fieldId: 'policyNumberFamily',
                     label: t('label.policy-number-family'),
                   }}
@@ -165,6 +158,7 @@ const InsuranceModalContent = ({
               Input={
                 <BasicTextInput
                   formError={{
+                    formId: FORM_ID,
                     fieldId: 'policyNumberPerson',
                     label: t('label.policy-number-person'),
                   }}
@@ -185,6 +179,7 @@ const InsuranceModalContent = ({
               }
             />
             <FieldErrorWrapper
+              formId={FORM_ID}
               fieldId="policyType"
               label={t('label.policy-type')}
               value={draft.policyType}
@@ -217,6 +212,7 @@ const InsuranceModalContent = ({
               Input={
                 <DateTimePickerInput
                   formError={{
+                    formId: FORM_ID,
                     fieldId: 'expiryDate',
                     label: t('label.insurance-expiry-date'),
                   }}
@@ -236,6 +232,7 @@ const InsuranceModalContent = ({
               sx={{ justifyContent: 'flex-end' }}
             />
             <FieldErrorWrapper
+              formId={FORM_ID}
               fieldId="insuranceProviderId"
               label={t('label.provider-name')}
               value={draft.insuranceProviderId}
@@ -259,6 +256,7 @@ const InsuranceModalContent = ({
               Input={
                 <NumericTextInput
                   formError={{
+                    formId: FORM_ID,
                     fieldId: 'discountPercentage',
                     label: t('label.coverage-rate'),
                   }}
@@ -290,11 +288,3 @@ const InsuranceModalContent = ({
     </Modal>
   );
 };
-
-export const InsuranceModal = (props: {
-  patientName?: string;
-}): ReactElement => (
-  <FormIdProvider formId={FORM_ID}>
-    <InsuranceModalContent {...props} />
-  </FormIdProvider>
-);

@@ -5,10 +5,9 @@ import {
   useFormErrorStore,
   VisibleFieldError,
 } from './store';
-import { useFormId } from './FormIdProvider';
 
 export type FormFieldOptions<T> = {
-  formId?: string;
+  formId: string;
   fieldId: string;
   label: string;
   value: T;
@@ -49,11 +48,11 @@ export type FormFieldResult = {
 
 /**
  * Subscribe an input to the form-error store. Returns its visible error state
- * and stable setters. If `formId` is not supplied (and no FormIdProvider is in
- * the tree), this is a no-op — the input is opted out.
+ * and stable setters. If `formId` or `fieldId` are empty strings, this is a
+ * no-op — the input is opted out.
  */
 export const useFormField = <T,>({
-  formId: explicitFormId,
+  formId,
   fieldId,
   label,
   value,
@@ -61,12 +60,11 @@ export const useFormField = <T,>({
   validate,
   customError = null,
 }: FormFieldOptions<T>): FormFieldResult => {
-  const formId = useFormId(explicitFormId);
   const t = useTranslation();
   const requiredMessage = t('messages.required-field');
 
   const isActive = !!formId && !!fieldId;
-  const activeFormId = formId ?? '';
+  const activeFormId = formId;
 
   // Actions are stable references created once by `create()`, so we can grab
   // them via getState() without subscribing — saves N subscriptions per input.

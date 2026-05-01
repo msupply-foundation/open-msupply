@@ -8,7 +8,7 @@ import {
 import { useFormField } from '@common/hooks';
 
 export type FormErrorBinding = {
-  formId?: string;
+  formId: string;
   fieldId: string;
   label: string;
 };
@@ -60,7 +60,7 @@ export const BasicTextInput = React.forwardRef<
     }, [focusOnRender]);
 
     const { error: storeError } = useFormField({
-      formId: formError?.formId,
+      formId: formError?.formId ?? '',
       fieldId: formError?.fieldId ?? '',
       label: formError?.label ?? '',
       value: props.value,
