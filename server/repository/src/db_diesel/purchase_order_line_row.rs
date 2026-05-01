@@ -149,7 +149,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         PurchaseOrderLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &PurchaseOrderLineRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &PurchaseOrderLineRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
         let changelog = PurchaseOrderLineRow::generate_changelog(
             RowOrId::Row(row),
@@ -166,10 +166,10 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         ChangelogRepository::new(self.connection).batch_insert(vec![changelog, po_changelog])
     }
 
-    pub fn delete(&self, purchase_order_line_id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, purchase_order_line_id: &str) -> Result<(), RepositoryError> {
         let old_row = match self.find_one_by_id(purchase_order_line_id)? {
             Some(row) => row,
-            None => return Ok(None),
+            None => return Ok(()),
         };
 
         let changelog = PurchaseOrderLineRow::generate_changelog(
@@ -184,15 +184,14 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
         )?;
-        let change_log_id = ChangelogRepository::new(self.connection)
-            .batch_insert(vec![changelog, po_changelog])?;
+        ChangelogRepository::new(self.connection).batch_insert(vec![changelog, po_changelog])?;
 
         diesel::delete(
             purchase_order_line_with_links::table
                 .filter(purchase_order_line_with_links::id.eq(purchase_order_line_id)),
         )
         .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 
     pub fn find_one_by_id(
