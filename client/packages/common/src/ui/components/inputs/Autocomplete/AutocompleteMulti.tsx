@@ -55,9 +55,11 @@ export function AutocompleteMulti<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>
 >): JSX.Element {
   const t = useTranslation();
+  const inputProps = restOfAutocompleteProps.inputProps;
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
+      {...inputProps}
       autoFocus={autoFocus}
       slotProps={{
         input: {
