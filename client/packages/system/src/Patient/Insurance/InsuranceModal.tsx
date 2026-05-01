@@ -55,10 +55,13 @@ const InsuranceModalContent = ({
     updatePatch: updateDraft,
   } = useInsurancePolicies(nameId, patientName);
 
-  const updatePatch: typeof updateDraft = newData => {
-    form.resetRequired();
-    updateDraft(newData);
-  };
+  // Note: we don't call `form.resetRequired()` here — once the user has
+  // attempted Save and the required-error summary is visible, it should stay
+  // visible until each missing field is individually filled in. The per-field
+  // requiredError is cleared automatically when the field's value becomes
+  // non-empty (see useFormField), so the summary list shrinks as the user
+  // types, rather than disappearing wholesale on the first keystroke.
+  const updatePatch = updateDraft;
 
   const today = useMemo(() => {
     const d = new Date();
