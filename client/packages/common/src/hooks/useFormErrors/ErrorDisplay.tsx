@@ -2,6 +2,7 @@ import React from 'react';
 import { SxProps } from '@mui/material';
 import { useTranslation } from '@common/intl';
 import { Alert } from '@common/components';
+import { AlertIcon } from '@common/icons';
 import { List, ListItem } from '@mui/material';
 import { useFormErrorStore, selectVisibleError } from './store';
 
@@ -39,6 +40,7 @@ export const ErrorDisplay = ({
   return (
     <Alert
       severity="error"
+      icon={<AlertIcon fontSize="large" />}
       sx={{
         whiteSpace: 'pre-wrap',
         '& .MuiAlert-icon': { alignItems: 'center' },
