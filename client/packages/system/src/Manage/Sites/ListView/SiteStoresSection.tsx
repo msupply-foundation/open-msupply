@@ -1,4 +1,4 @@
-import React, { useMemo /*, useState */ } from 'react';
+import React, { useMemo /* , useState */ } from 'react';
 import {
   Box,
   ColumnDef,
@@ -29,8 +29,8 @@ export const SiteStoresSection = ({
   stores,
   isFetching,
 }: // onAddStore,
-// onRemoveStore,
-SiteStoresSectionProps) => {
+  // onRemoveStore,
+  SiteStoresSectionProps) => {
   const t = useTranslation();
   // const [searchKey, setSearchKey] = useState(0);
 
