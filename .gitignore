@@ -21,3 +21,7 @@ worktrees
 .claude/*.local.json
 # Default path for backups
 backup/
+server/configuration/*.yaml
+# Keep the example and base configuration files
+!configuration/base.yaml
+!configuration/example.yaml

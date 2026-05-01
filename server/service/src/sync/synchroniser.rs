@@ -136,7 +136,8 @@ impl Synchroniser {
 
     pub(crate) async fn sync(&self, fetch_patient_id: Option<String>) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
-        let mut logger = SyncLogger::start(&ctx.connection)?;
+        let mut logger = SyncLogger::start(&ctx.connection)?
+            .with_subscription_trigger(self.service_provider.subscription_trigger.clone());
 
         let sync_result = self.sync_inner(&mut logger, &ctx, fetch_patient_id).await;
 
@@ -283,12 +284,9 @@ impl Synchroniser {
 
         let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
             &ctx.connection,
-            // Only pass in logger during initialisation
-            match is_initialised {
-                false => Some(logger),
-                true => None,
-            },
+            Some(logger),
             SyncBufferSource::Central(central_sync_server_id),
+            !self.settings.disable_integration_transaction,
         )
         .map_err(SyncError::IntegrationError)?;
 
@@ -338,6 +336,7 @@ pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
     record_type: SyncBufferSource,
+    use_transaction: bool,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -418,9 +417,13 @@ pub fn integrate_and_translate_sync_buffer(
         ))
     };
 
-    let result = connection
-        .transaction_sync(integrate_and_translate)
-        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
+    let result = if use_transaction {
+        connection
+            .transaction_sync(integrate_and_translate)
+            .map_err::<RepositoryError, _>(|e| e.to_inner_error())?
+    } else {
+        integrate_and_translate(connection)?
+    };
 
     Ok(result)
 }

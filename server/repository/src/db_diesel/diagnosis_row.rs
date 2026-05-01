@@ -64,6 +64,15 @@ impl<'a> DiagnosisRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, diagnosis_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = diagnosis
+            .filter(id.eq(diagnosis_id))
+            .select(id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn delete(&self, diagnosis_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(diagnosis.filter(id.eq(diagnosis_id)))
             .execute(self.connection.lock().connection())?;
