@@ -16,6 +16,8 @@ export type LoginLayoutProps = {
   LoginButton: React.ReactNode;
   ErrorMessage: React.ReactNode;
   SiteInfo: React.ReactNode;
+  StoreSelector?: React.ReactNode;
+  showStoreSelector?: boolean;
   onLogin: () => Promise<void>;
   fullSize: boolean;
 };
@@ -26,6 +28,8 @@ export const LoginLayout = ({
   LoginButton,
   ErrorMessage,
   SiteInfo,
+  StoreSelector,
+  showStoreSelector = false,
   onLogin,
   fullSize,
 }: LoginLayoutProps) => {
@@ -102,25 +106,43 @@ export const LoginLayout = ({
       </Box>
       <Box
         flex="1 0 50%"
-        flexDirection="column"
-        alignItems="center"
-        display="flex"
         sx={{
           backgroundColor: 'background.login',
-          overflowY: 'scroll',
+          overflow: 'hidden',
+          position: 'relative',
         }}
       >
+        {/* Login form — slides left when store selector is active */}
         <Box
-          display="flex"
-          flexGrow="1"
           sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
+            overflowY: 'auto',
+            transition: 'transform 0.35s ease-in-out',
+            transform: showStoreSelector ? 'translateX(-100%)' : 'translateX(0)',
           }}
         >
-          {loginForm}
+          <Box display="flex" flexGrow={1} sx={{ alignItems: 'center' }}>
+            {loginForm}
+          </Box>
+          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+          <LanguageButton />
         </Box>
-        <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
-        <LanguageButton />
+
+        {/* Store selector — slides in from the right */}
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            transition: 'transform 0.35s ease-in-out',
+            transform: showStoreSelector ? 'translateX(0)' : 'translateX(100%)',
+          }}
+        >
+          {StoreSelector}
+        </Box>
       </Box>
     </Box>
   );
