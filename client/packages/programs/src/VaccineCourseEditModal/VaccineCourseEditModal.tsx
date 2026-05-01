@@ -168,6 +168,28 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     label: draft.demographic?.name ?? '',
   };
 
+  const addDose = () => {
+    const previousDose = doses[doses.length - 1];
+    const previousMin = previousDose?.minAgeMonths ?? 0;
+    const previousMax = previousDose?.maxAgeMonths ?? 0;
+    const previousRange = previousMax - previousMin;
+
+    updatePatch({
+      vaccineCourseDoses: [
+        ...doses,
+        {
+          __typename: 'VaccineCourseDoseNode',
+          id: FnUtils.generateUUID(),
+          label: `${draft.name} ${doses.length + 1}`,
+          minAgeMonths: previousMax,
+          maxAgeMonths: previousMax + (previousRange || 1),
+          minIntervalDays: previousDose?.minIntervalDays ?? 30,
+          customAgeLabel: '',
+        },
+      ],
+    });
+  };
+
   const save = async () => {
     form.showRequired();
     if (form.hasErrors()) return;
@@ -273,8 +295,12 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             </Row>
           </Box>
           {/* `Row` adds `paddingTop={1.5}` internally; match it on the
-              button wrapper so the button visually aligns with the inputs. */}
-          <Box paddingTop={1.5}>
+              button wrapper so the button visually aligns with the inputs.
+              The extra `marginLeft` compensates for the empty whitespace
+              that the next-row's right-aligned label naturally creates
+              between the inputs — the button has no such buffer to its
+              left and would otherwise sit too close to the Wastage input. */}
+          <Box paddingTop={1.5} marginLeft={3}>
             <StoreWastagePanel
               storeConfigs={draft.storeConfigs ?? []}
               updatePatch={updatePatch}
@@ -308,7 +334,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             )}
           </FieldErrorWrapper>
         </Row>
-        <Box display="flex">
+        <Box display="flex" alignItems="center" sx={{ marginBottom: '1em' }}>
           <Row label={t('label.calculate-demand')}>
             <Checkbox
               checked={draft?.useInGapsCalculations ?? true}
@@ -323,6 +349,13 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
               onChange={e => updatePatch({ canSkipDose: e.target.checked })}
             />
           </Row>
+          <Box flex={1} display="flex" justifyContent="flex-end" paddingTop={1.5}>
+            <ButtonWithIcon
+              Icon={<PlusCircleIcon />}
+              label={t('label.dose')}
+              onClick={addDose}
+            />
+          </Box>
         </Box>
         {/* ErrorDisplay sits above the dose table because the table has a
             minimum height that pushes content below it too far down. The
@@ -330,13 +363,9 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             many doses are in the table. */}
         <ErrorDisplay
           items={summaryItems}
-          sx={{ marginTop: '1em', marginBottom: '1em' }}
+          sx={{ marginBottom: '1em' }}
         />
-        <VaccineCourseDoseTable
-          courseName={draft.name}
-          doses={doses}
-          updatePatch={updatePatch}
-        />
+        <VaccineCourseDoseTable doses={doses} updatePatch={updatePatch} />
       </Container>
     </Box>
   );
@@ -362,9 +391,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
 const VaccineCourseDoseTable = ({
   doses,
   updatePatch,
-  courseName,
 }: {
-  courseName: string;
   doses: VaccineCourseDoseFragment[];
   updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
 }) => {
@@ -388,28 +415,6 @@ const VaccineCourseDoseTable = ({
           }
         : null,
   });
-
-  const addDose = () => {
-    const previousDose = doses[doses.length - 1];
-    const previousMin = previousDose?.minAgeMonths ?? 0;
-    const previousMax = previousDose?.maxAgeMonths ?? 0;
-    const previousRange = previousMax - previousMin;
-
-    updatePatch({
-      vaccineCourseDoses: [
-        ...doses,
-        {
-          __typename: 'VaccineCourseDoseNode',
-          id: FnUtils.generateUUID(),
-          label: `${courseName} ${doses.length + 1}`,
-          minAgeMonths: previousMax,
-          maxAgeMonths: previousMax + (previousRange || 1),
-          minIntervalDays: previousDose?.minIntervalDays ?? 30,
-          customAgeLabel: '',
-        },
-      ],
-    });
-  };
 
   const deleteDose = (id: string) => {
     updatePatch({
@@ -555,16 +560,5 @@ const VaccineCourseDoseTable = ({
     noDataElement: <></>,
   });
 
-  return (
-    <>
-      <Box display="flex" justifyContent="flex-end" marginBottom="8px">
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('label.dose')}
-          onClick={addDose}
-        />
-      </Box>
-      <MaterialTable table={table} />
-    </>
-  );
+  return <MaterialTable table={table} />;
 };
