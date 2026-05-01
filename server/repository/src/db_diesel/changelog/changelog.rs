@@ -490,30 +490,6 @@ impl<'a> ChangelogRepository<'a> {
         Ok(cursor_id)
     }
 
-    #[cfg(feature = "postgres")]
-    // Inserts multiple changelogs and returns the cursor of the last inserted row
-    pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<i64, RepositoryError> {
-        //TODO: Need to handle batch insert size limit
-        if rows.is_empty() {
-            return Err(RepositoryError::as_db_error("No changelogs to be inserted provided", ""));
-        }
-        // Insert the records, and then return the cursor of the changelog table
-        // Using a returning clause makes this thread safe
-        let cursor_id = diesel::insert_into(changelog::table)
-            .values(rows)
-            .returning(changelog::cursor)
-            .get_results(self.connection.lock().connection())?
-            .pop()
-            .ok_or(RepositoryError::as_db_error(
-                "insert_all returned no cursors",
-                "",
-            ))?;
-
-        self.connection
-            .notify(TransactionNotification::ChangelogInsert);
-        Ok(cursor_id)
-    }
-
     #[cfg(not(feature = "postgres"))]
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
         // Insert the record, and then return the cursor of the inserted record
@@ -528,20 +504,14 @@ impl<'a> ChangelogRepository<'a> {
         Ok(cursor_id)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<i64, RepositoryError> {
+    pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
         //TODO: Need to handle batch insert size limit
-        if rows.is_empty() {
-            return Err(RepositoryError::as_db_error("No changelogs to be inserted provided", ""));
-        }
         diesel::insert_into(changelog::table)
             .values(rows)
             .execute(self.connection.lock().connection())?;
-        let cursor_id = diesel::select(last_insert_rowid())
-            .get_result::<i64>(self.connection.lock().connection())?;
         self.connection
             .notify(TransactionNotification::ChangelogInsert);
-        Ok(cursor_id)
+        Ok(())
     }
 }
 

@@ -644,7 +644,9 @@ async fn test_changelog_outgoing_sync_records() {
         ..Default::default()
     };
 
-    //
+    // We want to test the sync scenario where changelog is set with site id = site1_id.
+    // upsert_one method would set the site id to be current_site_id and leaves us with no way to update it later.
+    // Hence, we call _upsert_one which only upserts the given row and then generate the changelog with the given site_id
     AssetRowRepository::new(&connection)
         ._upsert_one(&row)
         .unwrap();
