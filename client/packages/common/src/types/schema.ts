@@ -525,7 +525,7 @@ export type AssetLogNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
-  logDatetime: Scalars['DateTime']['output'];
+  logDatetime: Scalars['NaiveDateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
   type: AssetLogTypeNodeType;
@@ -623,7 +623,7 @@ export type AssetNode = {
   catalogProperties?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['DateTime']['output'];
+  createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   donorNameId?: Maybe<Scalars['String']['output']>;
@@ -631,7 +631,7 @@ export type AssetNode = {
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   lockedFields: LockedAssetFieldsNode;
-  modifiedDatetime: Scalars['DateTime']['output'];
+  modifiedDatetime: Scalars['NaiveDateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"} */
@@ -9777,7 +9777,7 @@ export type SyncFileReferenceConnector = {
 
 export type SyncFileReferenceNode = {
   __typename: 'SyncFileReferenceNode';
-  createdDatetime: Scalars['DateTime']['output'];
+  createdDatetime: Scalars['NaiveDateTime']['output'];
   fileName: Scalars['String']['output'];
   id: Scalars['String']['output'];
   mimeType?: Maybe<Scalars['String']['output']>;
