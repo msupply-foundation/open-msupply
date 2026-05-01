@@ -98,7 +98,7 @@ export const DateTimePickerInput = ({
     [formError, internalError, validate]
   );
   const { error: storeError } = useFormField({
-    formId: formError?.formId,
+    formId: formError?.formId ?? '',
     fieldId: formError?.fieldId ?? '',
     label: formError?.label ?? '',
     value,

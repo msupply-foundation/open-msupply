@@ -297,7 +297,7 @@ export const NumericTextInput = React.forwardRef<
       [isFormErrorActive, min, max, t]
     );
     const { error: storeError } = useFormField({
-      formId: formError?.formId,
+      formId: formError?.formId ?? '',
       fieldId: formError?.fieldId ?? '',
       label: formError?.label ?? '',
       value,

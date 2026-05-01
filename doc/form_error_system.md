@@ -77,6 +77,7 @@ Render-prop wrapper for inputs that haven't (or shouldn't) be modified to call `
 
 ```tsx
 <FieldErrorWrapper
+  formId={FORM_ID}
   fieldId="policyType"
   label={t('label.policy-type')}
   value={draft.policyType}
@@ -99,17 +100,13 @@ The render-prop also receives `setCustomError(msg | null)` and `setValidationErr
 
 Renders the red `<Alert>` summary listing the form's visible errors, or nothing if there are none. Drop it once per form, typically below the form body.
 
-### `<FormIdProvider formId={...}>` &nbsp;— optional ergonomics
-
-A tiny string-only Context that provides `formId` to descendant inputs so they don't all need to repeat it. The Context contains no state — it's purely prop-drilling avoidance. You can ignore it and pass `formId` explicitly on each input if you prefer.
-
 ### `formError` prop &nbsp;— input-side
 
 Any input that has been opted into the system accepts:
 
 ```tsx
 formError={{
-  formId?: string,    // optional if a <FormIdProvider> is in the tree
+  formId: string,     // which form this field belongs to
   fieldId: string,    // unique within the form
   label: string,      // shown in the error summary
 }}
@@ -136,12 +133,12 @@ When `formError` is set, `NumericTextInput` skips its usual clamp-to-`min`/`max`
 
 Any unique string. Convention: kebab-case, descriptive. E.g. `'create-patient'`, `'edit-immunisation-course'`.
 
-### 2. Wrap the form body in `<FormIdProvider>` and call `useForm`
+### 2. Call `useForm` and drop in `<ErrorDisplay>`
 
 ```tsx
 const FORM_ID = 'my-form';
 
-const MyFormContent = () => {
+export const MyForm = () => {
   const form = useForm(FORM_ID);
 
   const handleSave = async () => {
@@ -157,13 +154,9 @@ const MyFormContent = () => {
     </Modal>
   );
 };
-
-export const MyForm = () => (
-  <FormIdProvider formId={FORM_ID}>
-    <MyFormContent />
-  </FormIdProvider>
-);
 ```
+
+`FORM_ID` is just a module-level string constant. Reference it wherever you need it — there's no provider to wrap and no extra component to add.
 
 ### 3. Wire each field
 
@@ -171,7 +164,7 @@ For inputs with native support (`BasicTextInput`, `NumericTextInput`, `DateTimeP
 
 ```tsx
 <BasicTextInput
-  formError={{ fieldId: 'patientName', label: t('label.patient-name') }}
+  formError={{ formId: FORM_ID, fieldId: 'patientName', label: t('label.patient-name') }}
   required
   value={draft.patientName}
   onChange={e => updatePatch({ patientName: e.target.value })}
@@ -182,6 +175,7 @@ For composite components (custom Selects, Autocompletes, third-party widgets), u
 
 ```tsx
 <FieldErrorWrapper
+  formId={FORM_ID}
   fieldId="program"
   label={t('label.program')}
   value={draft.programId}
@@ -206,7 +200,7 @@ Two ways to express it. Pick whichever reads better at the call site.
 
 ```tsx
 <NumericTextInput
-  formError={{ fieldId: 'discount', label: t('label.discount') }}
+  formError={{ formId: FORM_ID, fieldId: 'discount', label: t('label.discount') }}
   customError={draft.discount > 110 ? t('messages.way-too-big') : null}
   min={0}
   max={100}
@@ -218,7 +212,7 @@ Two ways to express it. Pick whichever reads better at the call site.
 
 ```tsx
 <DateTimePickerInput
-  formError={{ fieldId: 'expiry', label: t('label.expiry') }}
+  formError={{ formId: FORM_ID, fieldId: 'expiry', label: t('label.expiry') }}
   required
   validate={date =>
     date && date < today ? t('error.date-in-past') : null
@@ -256,7 +250,7 @@ You're then responsible for calling `form.clear()` at the right moment.
 
 ```tsx
 <BasicTextInput
-  formError={{ fieldId: 'family', label: t('label.policy-family') }}
+  formError={{ formId: FORM_ID, fieldId: 'family', label: t('label.policy-family') }}
   required={!draft.policyPerson}
   ...
 />

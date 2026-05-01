@@ -2,7 +2,7 @@ import React from 'react';
 import { useFormField } from './useFormField';
 
 export type FieldErrorWrapperProps<T> = {
-  formId?: string;
+  formId: string;
   fieldId: string;
   label: string;
   value: T;
