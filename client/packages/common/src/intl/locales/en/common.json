@@ -1880,6 +1880,8 @@
   "messages.alert-invalid-pack-size": "Pack size must be 1 or more for returned lines",
   "messages.alert-problem-with-form-input": "There is a problem with one or more inputs:",
   "messages.alert-zero-return-quantity": "Please add some quantities to return before proceeding to the next step",
+  "messages.at-least-one-dose-required": "At least one is required",
+  "messages.at-least-one-vaccine-item-required": "At least one vaccine item is required",
   "messages.all-changes-must-be-confirmed": "You have some lines with unsaved changes. Mark these lines as confirmed to finalise.",
   "messages.all-packs-repacked": "All stock has been repacked and this stock line will no longer show in the list. Click OK to be taken to the new stock line.",
   "messages.allocated-lines-failed_one": "{{count}} line not allocated due to insufficient stock.",

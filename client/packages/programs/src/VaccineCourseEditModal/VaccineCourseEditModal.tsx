@@ -14,7 +14,9 @@ import {
   DialogButton,
   ErrorDisplay,
   ErrorDisplayItem,
+  FieldErrorWrapper,
   FnUtils,
+  useFormField,
   IconButton,
   InputWithLabelRow,
   MaterialTable,
@@ -272,7 +274,31 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           />
         </Box>
         <Row label={t('label.vaccine-items')}>
-          <VaccineItemSelect draft={draft} onChange={updatePatch} />
+          <FieldErrorWrapper
+            formId={FORM_ID}
+            fieldId="vaccineItems"
+            label={t('label.vaccine-items')}
+            // Coerce empty array → undefined so the required-error
+            // logic (which treats undefined/null/'' as missing) fires.
+            value={draft.vaccineCourseItems?.length || undefined}
+            customError={
+              (draft.vaccineCourseItems?.length ?? 0) === 0
+                ? {
+                    message: t('messages.at-least-one-vaccine-item-required'),
+                    showOnSubmit: true,
+                  }
+                : null
+            }
+          >
+            {({ error, required }) => (
+              <VaccineItemSelect
+                draft={draft}
+                onChange={updatePatch}
+                error={error}
+                required={required}
+              />
+            )}
+          </FieldErrorWrapper>
         </Row>
         <Box display="flex">
           <Row label={t('label.calculate-demand')}>
@@ -332,6 +358,25 @@ const VaccineCourseDoseTable = ({
   updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
 }) => {
   const t = useTranslation();
+
+  // Synthetic form-error field for "at least one dose is required". The
+  // table's rows are dynamic, so this rule has no specific cell to attach
+  // to — register a virtual field at the table level whose customError
+  // fires when the doses array is empty. `showOnSubmit: true` mirrors
+  // required-error gating: only visible after the user attempts Save.
+  useFormField({
+    formId: FORM_ID,
+    fieldId: 'doses',
+    label: t('label.doses'),
+    value: doses.length,
+    customError:
+      doses.length === 0
+        ? {
+            message: t('messages.at-least-one-dose-required'),
+            showOnSubmit: true,
+          }
+        : null,
+  });
 
   const addDose = () => {
     const previousDose = doses[doses.length - 1];
