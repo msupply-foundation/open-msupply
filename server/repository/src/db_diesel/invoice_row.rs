@@ -215,6 +215,15 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, invoice_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = invoice
+            .filter(id.eq(invoice_id))
+            .select(id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceRow>, RepositoryError> {
         let result = invoice::table
             .filter(invoice::id.eq_any(ids))
