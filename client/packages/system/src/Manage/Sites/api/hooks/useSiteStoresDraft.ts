@@ -3,8 +3,6 @@ import { SiteStoreRowFragment } from '../operations.generated';
 import { useAssignStoresToSite, useStoresForSite } from './useSiteStores';
 import { useSyncSettings } from '../../../../Sync/api/hooks/settings/useSyncSettings';
 
-const DEFAULT_UNASSIGNED_SITE_ID = 1;
-
 export type SiteStoreDraftRow = Pick<
   SiteStoreRowFragment,
   'id' | 'code' | 'storeName'
@@ -16,7 +14,7 @@ export const useSiteStoresDraft = (siteId: number, isNew = false) => {
     useAssignStoresToSite();
   const { data: syncSettings } = useSyncSettings();
   const unassignedSiteId =
-    syncSettings?.centralServerSiteId ?? DEFAULT_UNASSIGNED_SITE_ID;
+    syncSettings?.syncSiteId ?? syncSettings?.centralServerSiteId ?? 0;
 
   const originalStores: SiteStoreDraftRow[] = useMemo(
     () => (isNew ? [] : (data?.nodes ?? [])),

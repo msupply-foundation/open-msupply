@@ -36,6 +36,14 @@ impl SyncSettingsNode {
             .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
         Ok(value)
     }
+
+    pub async fn sync_site_id(&self, ctx: &Context<'_>) -> Result<Option<i32>> {
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.basic_context()?;
+        let value = KeyValueStoreRepository::new(&service_context.connection)
+            .get_i32(KeyType::SettingsSyncSiteId)?;
+        Ok(value)
+    }
 }
 
 pub(crate) fn sync_settings(
