@@ -11,6 +11,7 @@ pub struct SiteFilter {
     pub id: Option<EqualFilter<i32>>,
     pub code: Option<StringFilter>,
     pub name: Option<StringFilter>,
+    pub token: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -84,6 +85,11 @@ impl SiteFilter {
         self.name = Some(filter);
         self
     }
+
+    pub fn token(mut self, filter: EqualFilter<String>) -> Self {
+        self.token = Some(filter);
+        self
+    }
 }
 
 type BoxedSiteQuery = site::BoxedQuery<'static, DBType>;
@@ -95,6 +101,7 @@ fn create_filtered_query(filter: Option<SiteFilter>) -> BoxedSiteQuery {
         apply_equal_filter!(query, filter.id, site::id);
         apply_string_filter!(query, filter.code, site::code);
         apply_string_filter!(query, filter.name, site::name);
+        apply_equal_filter!(query, filter.token, site::token);
     }
 
     query

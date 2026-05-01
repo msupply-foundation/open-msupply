@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::{ApiResponse, SyncApiV7};
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Output {
     pub site_id: i32,
     pub central_site_id: i32,
@@ -10,7 +11,6 @@ pub struct Output {
 
 pub type Response = ApiResponse<Output>;
 pub type Input = ();
-pub type Request = super::Request<Input>;
 static ROUTE: &str = "site_status";
 
 impl SyncApiV7 {

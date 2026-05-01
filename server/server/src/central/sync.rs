@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{
     dev::HttpServiceFactory,
@@ -8,6 +6,7 @@ use actix_web::{
     web::{self, Data, Json},
     HttpRequest, Responder, ResponseError,
 };
+use std::fmt::Display;
 
 use service::{
     service_provider::ServiceProvider,

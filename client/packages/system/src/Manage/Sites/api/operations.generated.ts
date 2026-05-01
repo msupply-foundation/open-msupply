@@ -110,6 +110,21 @@ export type AssignStoresToSiteMutation = {
   };
 };
 
+export type ClearSiteTokenMutationVariables = Types.Exact<{
+  siteId: Types.Scalars['Int']['input'];
+}>;
+
+export type ClearSiteTokenMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    site: {
+      __typename: 'CentralSiteMutations';
+      clearSiteToken: { __typename: 'ClearSiteTokenNode'; id: number };
+    };
+  };
+};
+
 export type StoresBySiteQueryVariables = Types.Exact<{
   siteId: Types.Scalars['Int']['input'];
 }>;
@@ -231,6 +246,17 @@ export const AssignStoresToSiteDocument = gql`
     }
   }
 `;
+export const ClearSiteTokenDocument = gql`
+  mutation clearSiteToken($siteId: Int!) {
+    centralServer {
+      site {
+        clearSiteToken(siteId: $siteId) {
+          id
+        }
+      }
+    }
+  }
+`;
 export const StoresBySiteDocument = gql`
   query storesBySite($siteId: Int!) {
     stores(filter: { siteId: { equalTo: $siteId } }, page: { first: 1000 }) {
@@ -333,6 +359,24 @@ export function getSdk(
             signal,
           }),
         'assignStoresToSite',
+        'mutation',
+        variables
+      );
+    },
+    clearSiteToken(
+      variables: ClearSiteTokenMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ClearSiteTokenMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ClearSiteTokenMutation>({
+            document: ClearSiteTokenDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'clearSiteToken',
         'mutation',
         variables
       );

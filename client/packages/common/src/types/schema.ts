@@ -1363,12 +1363,17 @@ export type CentralServerQueryNode = {
 export type CentralSiteMutations = {
   __typename: 'CentralSiteMutations';
   assignStoresToSite: AssignStoresToSiteNode;
+  clearSiteToken: ClearSiteTokenNode;
   deleteSite: DeleteSiteNode;
   upsertSite: UpsertSiteResponse;
 };
 
 export type CentralSiteMutationsAssignStoresToSiteArgs = {
   input: AssignStoresToSiteInput;
+};
+
+export type CentralSiteMutationsClearSiteTokenArgs = {
+  siteId: Scalars['Int']['input'];
 };
 
 export type CentralSiteMutationsDeleteSiteArgs = {
@@ -1393,6 +1398,11 @@ export type CentralSiteQueriesSitesArgs = {
 export type CentralSyncRequired = AuthTokenErrorInterface & {
   __typename: 'CentralSyncRequired';
   description: Scalars['String']['output'];
+};
+
+export type ClearSiteTokenNode = {
+  __typename: 'ClearSiteTokenNode';
+  id: Scalars['Int']['output'];
 };
 
 export type ClinicianConnector = {
@@ -9890,8 +9900,12 @@ export enum SyncErrorVariantV7 {
   Authentication = 'AUTHENTICATION',
   ConnectionError = 'CONNECTION_ERROR',
   DatabaseError = 'DATABASE_ERROR',
+  FailedToGetHardwareId = 'FAILED_TO_GET_HARDWARE_ID',
   GetCurrentSiteIdError = 'GET_CURRENT_SITE_ID_ERROR',
+  HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
   IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
+  InvalidSiteNameOrPassword = 'INVALID_SITE_NAME_OR_PASSWORD',
+  MissingAuthHeader = 'MISSING_AUTH_HEADER',
   NotACentralServer = 'NOT_A_CENTRAL_SERVER',
   Other = 'OTHER',
   ParsingError = 'PARSING_ERROR',
@@ -9901,6 +9915,8 @@ export enum SyncErrorVariantV7 {
   SiteLockError = 'SITE_LOCK_ERROR',
   SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
   SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
+  TokenAlreadyAllocated = 'TOKEN_ALREADY_ALLOCATED',
+  TokenNotFound = 'TOKEN_NOT_FOUND',
 }
 
 export type SyncFileReferenceConnector = {
@@ -9940,6 +9956,7 @@ export type SyncSettingsNode = {
   centralServerSiteId?: Maybe<Scalars['Int']['output']>;
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
+  syncSiteId?: Maybe<Scalars['Int']['output']>;
   /** Central server url */
   url: Scalars['String']['output'];
   /** Central server username */
