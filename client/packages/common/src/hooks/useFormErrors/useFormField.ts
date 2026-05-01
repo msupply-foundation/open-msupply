@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from '@common/intl';
+import { isEqual } from '@common/utils';
 import {
   selectVisibleError,
   useFormErrorStore,
@@ -109,7 +110,7 @@ export const useFormField = <T,>({
     if (!isActive) return null;
     const form = state.forms[activeFormId];
     return selectVisibleError(form?.fields[fieldId], !!form?.showRequired);
-  }, visibleErrorEquality);
+  }, isEqual);
 
   // Register / unregister
   useEffect(() => {
@@ -215,15 +216,4 @@ const normaliseCustomError = (
     return { customMessage: null, submissionMessage: customError.message };
   }
   return { customMessage: customError.message, submissionMessage: null };
-};
-
-const visibleErrorEquality = (
-  a: VisibleFieldError | null,
-  b: VisibleFieldError | null
-): boolean => {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  return (
-    a.kind === b.kind && a.message === b.message && a.label === b.label
-  );
 };
