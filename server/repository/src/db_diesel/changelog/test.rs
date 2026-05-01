@@ -644,6 +644,7 @@ async fn test_changelog_outgoing_sync_records() {
         ..Default::default()
     };
 
+    //
     AssetRowRepository::new(&connection)
         ._upsert_one(&row)
         .unwrap();

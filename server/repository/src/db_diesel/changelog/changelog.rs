@@ -158,6 +158,11 @@ pub(crate) enum SourceSiteId {
     CurrentSiteId,
 }
 
+pub(crate) enum RowOrId<'a, T> {
+    Row(&'a T),
+    Id(&'a str),
+}
+
 impl SourceSiteId {
     pub(crate) fn get_id(
         &self,

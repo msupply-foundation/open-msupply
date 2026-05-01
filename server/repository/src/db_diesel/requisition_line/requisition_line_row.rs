@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::requisition_row::RequisitionRowOrId;
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RequisitionRow, RowActionType};
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
@@ -88,33 +88,28 @@ pub struct RequisitionLineRow {
 
 impl RequisitionLineRow {
     pub(crate) fn generate_changelog(
-        &self,
+        row_or_id: RowOrId<RequisitionLineRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &RequisitionLineRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
         let requisition_changelog = RequisitionRow::generate_changelog(
-            RequisitionRowOrId::Id(&self.requisition_id),
+            RowOrId::Id(&row.requisition_id),
             con,
             action,
             source_site_id,
         )?;
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::RequisitionLine,
-            record_id: self.id.clone(),
+            record_id: row.id.clone(),
             ..requisition_changelog
         })
-    }
-
-    pub(crate) fn generate_delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = RequisitionLineRowRepository::new(con)
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.generate_changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -139,7 +134,8 @@ impl<'a> RequisitionLineRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.generate_changelog(
+        let changelog = RequisitionLineRow::generate_changelog(
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -167,7 +163,8 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .load(self.connection.lock().connection())?;
 
         for row in rows {
-            let changelog = row.generate_changelog(
+            let changelog = RequisitionLineRow::generate_changelog(
+                RowOrId::Row(&row),
                 self.connection,
                 RowActionType::Upsert,
                 SourceSiteId::CurrentSiteId,
@@ -179,9 +176,10 @@ impl<'a> RequisitionLineRowRepository<'a> {
     }
 
     pub fn delete(&self, requisition_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = RequisitionLineRow::generate_delete_changelog(
-            requisition_line_id,
+        let changelog = RequisitionLineRow::generate_changelog(
+            RowOrId::Id(requisition_line_id),
             self.connection,
+            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
@@ -212,9 +210,10 @@ impl Delete for RequisitionLineRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                RequisitionLineRow::generate_delete_changelog(
-                    &self.0,
+                RequisitionLineRow::generate_changelog(
+                    RowOrId::Id(&self.0),
                     con,
+                    RowActionType::Delete,
                     SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
@@ -244,11 +243,14 @@ impl Upsert for RequisitionLineRow {
         RequisitionLineRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                RequisitionLineRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
