@@ -8,8 +8,8 @@ use crate::diesel_macros::define_linked_tables;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
-    invoice_row::InvoiceRowOrId, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
-    ChangelogTableName, Delete, InvoiceRow, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::changelog::RowOrId, ChangeLogInsertRow, ChangelogRepository,
+    ChangelogSyncType, ChangelogTableName, Delete, InvoiceRow, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -153,33 +153,28 @@ pub struct InvoiceLineRow {
 
 impl InvoiceLineRow {
     pub(crate) fn generate_changelog(
-        &self,
+        row_or_id: RowOrId<InvoiceLineRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &InvoiceLineRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
         let invoice_changelog = InvoiceRow::generate_changelog(
-            InvoiceRowOrId::Id(&self.invoice_id),
+            RowOrId::Id(&row.invoice_id),
             con,
             action,
             source_site_id,
         )?;
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::InvoiceLine,
-            record_id: self.id.clone(),
+            record_id: row.id.clone(),
             ..invoice_changelog
         })
-    }
-
-    pub(crate) fn generate_delete_changelog(
-        record_id: &str,
-        con: &StorageConnection,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = InvoiceLineRowRepository::new(con)
-            .find_one_by_id(record_id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.generate_changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -200,7 +195,8 @@ impl<'a> InvoiceLineRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.generate_changelog(
+        let changelog = InvoiceLineRow::generate_changelog(
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -290,9 +286,10 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn delete(&self, invoice_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = InvoiceLineRow::generate_delete_changelog(
-            invoice_line_id,
+        let changelog = InvoiceLineRow::generate_changelog(
+            RowOrId::Id(invoice_line_id),
             self.connection,
+            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
@@ -352,9 +349,10 @@ impl Delete for InvoiceLineRowDelete {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                InvoiceLineRow::generate_delete_changelog(
-                    &self.0,
+                InvoiceLineRow::generate_changelog(
+                    RowOrId::Id(&self.0),
                     con,
+                    RowActionType::Delete,
                     SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
@@ -383,11 +381,14 @@ impl Upsert for InvoiceLineRow {
         InvoiceLineRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                InvoiceLineRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

@@ -1,4 +1,5 @@
 use super::{name_row::name, store_row::store, StorageConnection};
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
@@ -56,31 +57,26 @@ pub struct NameStoreJoinFilter {
 
 impl NameStoreJoinRow {
     pub(crate) fn generate_changelog(
-        &self,
+        row_or_id: RowOrId<NameStoreJoinRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &NameStoreJoinRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::NameStoreJoin,
-            record_id: self.id.clone(),
+            record_id: row.id.clone(),
             row_action: action,
-            store_id: Some(self.store_id.clone()),
-            name_id: Some(self.name_id.clone()),
+            store_id: Some(row.store_id.clone()),
+            name_id: Some(row.name_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
-    }
-
-    pub(crate) fn generate_delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = NameStoreJoinRepository::new(con)
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.generate_changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -95,7 +91,8 @@ impl<'a> NameStoreJoinRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.generate_changelog(
+        let changelog = NameStoreJoinRow::generate_changelog(
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -119,9 +116,10 @@ impl<'a> NameStoreJoinRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = NameStoreJoinRow::generate_delete_changelog(
-            id,
+        let changelog = NameStoreJoinRow::generate_changelog(
+            RowOrId::Id(id),
             self.connection,
+            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
@@ -214,9 +212,10 @@ impl Delete for NameStoreJoinRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                NameStoreJoinRow::generate_delete_changelog(
-                    &self.0,
+                NameStoreJoinRow::generate_changelog(
+                    RowOrId::Id(&self.0),
                     con,
+                    RowActionType::Delete,
                     SourceSiteId::SourceSiteId(source_site_id),
                 )?
             }
@@ -248,11 +247,14 @@ impl Upsert for NameStoreJoinRow {
         NameStoreJoinRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                NameStoreJoinRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

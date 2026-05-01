@@ -8,6 +8,7 @@ use crate::db_diesel::{
 use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
 
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -130,22 +131,17 @@ pub struct RequisitionRow {
     pub destination_customer_id: Option<String>,
 }
 
-pub(crate) enum RequisitionRowOrId<'a> {
-    Row(&'a RequisitionRow),
-    Id(&'a str),
-}
-
 impl RequisitionRow {
     pub(crate) fn generate_changelog(
-        row_or_id: RequisitionRowOrId,
+        row_or_id: RowOrId<RequisitionRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = match row_or_id {
-            RequisitionRowOrId::Row(row) => row.clone(),
-            RequisitionRowOrId::Id(id) => RequisitionRowRepository::new(con)
-                .find_one_by_id(id)?
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &RequisitionRowRepository::new(con)
+                .find_one_by_id(row_id)?
                 .ok_or(RepositoryError::NotFound)?,
         };
 
@@ -158,19 +154,6 @@ impl RequisitionRow {
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
-    }
-
-    pub(crate) fn generate_delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Self::generate_changelog(
-            RequisitionRowOrId::Id(id),
-            con,
-            RowActionType::Delete,
-            source_site_id,
-        )
     }
 }
 
@@ -186,7 +169,7 @@ impl<'a> RequisitionRowRepository<'a> {
     pub fn upsert_one(&self, row: &RequisitionRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
         let changelog = RequisitionRow::generate_changelog(
-            RequisitionRowOrId::Row(row),
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -195,9 +178,10 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     pub fn delete(&self, requisition_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = RequisitionRow::generate_delete_changelog(
-            requisition_id,
+        let changelog = RequisitionRow::generate_changelog(
+            RowOrId::Id(requisition_id),
             self.connection,
+            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
         let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
@@ -244,9 +228,10 @@ impl Delete for RequisitionRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_delete_changelog(
-                &self.0,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_changelog(
+                RowOrId::Id(&self.0),
                 con,
+                RowActionType::Delete,
                 SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
@@ -278,7 +263,7 @@ impl Upsert for RequisitionRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_changelog(
-                RequisitionRowOrId::Row(self),
+                RowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

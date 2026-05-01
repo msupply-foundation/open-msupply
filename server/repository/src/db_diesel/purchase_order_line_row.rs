@@ -1,7 +1,10 @@
 use crate::{
-    db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
+    db_diesel::{
+        changelog::changelog::RowOrId, item_link_row::item_link, item_row::item,
+        purchase_order_row::purchase_order,
+    },
     diesel_macros::define_linked_tables,
-    ChangelogSyncType, Delete, PurchaseOrderRowRepository, SourceSiteId, Upsert,
+    ChangelogSyncType, Delete, PurchaseOrderRow, SourceSiteId, Upsert,
 };
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
@@ -112,26 +115,27 @@ pub enum PurchaseOrderLineStatus {
 
 impl PurchaseOrderLineRow {
     pub(crate) fn generate_changelog(
-        &self,
+        row_or_id: RowOrId<PurchaseOrderLineRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let purchase_order =
-            PurchaseOrderRowRepository::new(con).find_one_by_id(&self.purchase_order_id)?;
-        let purchase_order = match purchase_order {
-            Some(purchase_order) => purchase_order,
-            None => return Err(RepositoryError::NotFound),
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &PurchaseOrderLineRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
         };
-
+        let purchase_order_changelog = PurchaseOrderRow::generate_changelog(
+            RowOrId::Id(&row.purchase_order_id),
+            con,
+            action,
+            source_site_id,
+        )?;
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::PurchaseOrderLine,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(purchase_order.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
+            record_id: row.id.clone(),
+            ..purchase_order_changelog
         })
     }
 }
@@ -147,19 +151,14 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &PurchaseOrderLineRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.generate_changelog(
+        let changelog = PurchaseOrderLineRow::generate_changelog(
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
         )?;
-
-        let purchase_order = PurchaseOrderRowRepository::new(self.connection)
-            .find_one_by_id(&row.purchase_order_id)?;
-        let purchase_order = match purchase_order {
-            Some(po) => po,
-            None => return Err(RepositoryError::NotFound),
-        };
-        let po_changelog = purchase_order.generate_changelog(
+        let po_changelog = PurchaseOrderRow::generate_changelog(
+            RowOrId::Id(&row.purchase_order_id),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -173,19 +172,14 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             None => return Ok(None),
         };
 
-        let changelog = old_row.generate_changelog(
+        let changelog = PurchaseOrderLineRow::generate_changelog(
+            RowOrId::Row(&old_row),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
-
-        let purchase_order = PurchaseOrderRowRepository::new(self.connection)
-            .find_one_by_id(&old_row.purchase_order_id)?;
-        let purchase_order = match purchase_order {
-            Some(po) => po,
-            None => return Err(RepositoryError::NotFound),
-        };
-        let po_changelog = purchase_order.generate_changelog(
+        let po_changelog = PurchaseOrderRow::generate_changelog(
+            RowOrId::Id(&old_row.purchase_order_id),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -257,7 +251,8 @@ impl Upsert for PurchaseOrderLineRow {
 
         let repo = ChangelogRepository::new(con);
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                RowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
@@ -296,11 +291,8 @@ impl Delete for PurchaseOrderLineDelete {
         let repo = ChangelogRepository::new(con);
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                let old_row = PurchaseOrderLineRowRepository::new(con)
-                    .find_one_by_id(&self.0)?
-                    .ok_or(RepositoryError::NotFound)?;
-
-                old_row.generate_changelog(
+                PurchaseOrderLineRow::generate_changelog(
+                    RowOrId::Id(&self.0),
                     con,
                     RowActionType::Delete,
                     SourceSiteId::SourceSiteId(source_site_id),

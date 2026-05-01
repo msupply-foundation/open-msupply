@@ -3,9 +3,9 @@ use super::{
     store_row::store, StorageConnection,
 };
 use crate::{
-    diesel_macros::define_linked_tables, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogSyncType, ChangelogTableName, Delete, RepositoryError, RowActionType,
-    SourceSiteId, Upsert,
+    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    RepositoryError, RowActionType, SourceSiteId, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -78,31 +78,26 @@ pub enum RnRFormStatus {
 
 impl RnRFormRow {
     pub(crate) fn generate_changelog(
-        &self,
+        row_or_id: RowOrId<RnRFormRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &RnRFormRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::RnrForm,
-            record_id: self.id.clone(),
+            record_id: row.id.clone(),
             row_action: action,
-            store_id: Some(self.store_id.clone()),
-            name_id: Some(self.name_id.clone()),
+            store_id: Some(row.store_id.clone()),
+            name_id: Some(row.name_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
-    }
-
-    pub(crate) fn generate_delete_changelog(
-        id: &str,
-        con: &StorageConnection,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = RnRFormRowRepository::new(con)
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
-        row.generate_changelog(con, RowActionType::Delete, source_site_id)
     }
 }
 
@@ -117,7 +112,8 @@ impl<'a> RnRFormRowRepository<'a> {
 
     pub fn upsert_one(&self, rnr_form_row: &RnRFormRow) -> Result<i64, RepositoryError> {
         self._upsert(rnr_form_row)?;
-        let changelog = rnr_form_row.generate_changelog(
+        let changelog = RnRFormRow::generate_changelog(
+            RowOrId::Row(rnr_form_row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -139,9 +135,10 @@ impl<'a> RnRFormRowRepository<'a> {
     }
 
     pub fn delete(&self, rnr_form_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let changelog = match RnRFormRow::generate_delete_changelog(
-            rnr_form_id,
+        let changelog = match RnRFormRow::generate_changelog(
+            RowOrId::Id(rnr_form_id),
             self.connection,
+            RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         ) {
             Ok(changelog) => changelog,
@@ -166,9 +163,10 @@ impl Delete for RnRFormDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormRow::generate_delete_changelog(
-                &self.0,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormRow::generate_changelog(
+                RowOrId::Id(&self.0),
                 con,
+                RowActionType::Delete,
                 SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
@@ -197,7 +195,8 @@ impl Upsert for RnRFormRow {
         RnRFormRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormRow::generate_changelog(
+                RowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
