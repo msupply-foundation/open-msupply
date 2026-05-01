@@ -216,9 +216,9 @@ impl<'a> InvoiceRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, invoice_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = invoice
-            .filter(id.eq(invoice_id))
-            .select(id)
+        let result: Option<String> = invoice::table
+            .filter(invoice::id.eq(invoice_id))
+            .select(invoice::id)
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result.is_some())
