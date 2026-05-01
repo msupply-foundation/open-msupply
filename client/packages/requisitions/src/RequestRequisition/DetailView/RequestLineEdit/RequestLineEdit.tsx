@@ -19,7 +19,6 @@ import {
   MultilineTextInput,
   InfoRow,
   ValueInfoRow,
-  ValueInfo,
   RepresentationValue,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
@@ -29,17 +28,13 @@ import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import {
-  getLeftPanel,
-  getExtraMiddlePanels,
-  getSuggestedRow,
-} from './ModalContentPanels';
-import {
   CONSUMPTION_HISTORY_INFO,
   FORECAST_QUANTITY_INFO,
   STOCK_DISTRIBUTION_INFO,
   STOCK_EVOLUTION_INFO,
 } from '../utils';
 import ForecastCalculationDisplay from '../../../common/ForecastCalculationDisplay';
+import ForecastMethodPicker from '../../../common/ForecastMethodPicker';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -48,6 +43,7 @@ interface RequestLineEditProps {
   onChangeItem: (item: ItemWithStatsFragment) => void;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
+  save: (overrides?: Partial<DraftRequestLine>) => Promise<unknown>;
   isPacksEnabled: boolean;
   representation: RepresentationValue;
   setRepresentation: (type: RepresentationValue) => void;
@@ -65,6 +61,7 @@ export const RequestLineEdit = ({
   currentItem,
   onChangeItem,
   update,
+  save,
   isPacksEnabled,
   representation,
   setRepresentation,
@@ -76,11 +73,7 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const {
-    manageVaccinesInDoses,
-    warningForExcessRequest,
-    displayPopulationBasedForecasting,
-  } = usePreferences();
+  const { manageVaccinesInDoses, warningForExcessRequest } = usePreferences();
 
   const isInfoVisible = useCallback(
     (infoType: string) =>
@@ -97,8 +90,11 @@ export const RequestLineEdit = ({
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
-  const displayForecasting =
-    displayPopulationBasedForecasting && !!draft?.forecastTotalUnits;
+  // Forecasting UI is shown for any line that has produced a forecast
+  // snapshot — independent of the legacy population preference, since method
+  // is now a per-line concept. The preference still drives default-method
+  // resolution at line generation time on the server.
+  const displayForecasting = !!draft?.forecastTotalUnits;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -109,120 +105,131 @@ export const RequestLineEdit = ({
     [lines, currentItem?.id]
   );
 
-  const renderValueInfoRows = useCallback(
-    (info: ValueInfo[]) => (
-      <>
-        {info.map(
-          ({
-            label,
-            value,
-            sx,
-            endAdornmentOverride,
-            isDosesEnabled: dosesEnabled,
-            roundUp,
-            isFixedValue,
-          }) => (
-            <ValueInfoRow
-              key={label}
-              label={label}
-              value={value}
-              endAdornmentOverride={endAdornmentOverride}
-              defaultPackSize={defaultPackSize}
-              representation={representation}
-              unitName={unitName}
-              sx={sx}
-              isDosesEnabled={dosesEnabled ?? isDosesEnabled}
-              dosesPerUnit={currentItem?.doses}
-              decimalLimit={0}
-              roundUp={roundUp}
-              isFixedValue={isFixedValue ?? false}
-            />
-          )
-        )}
-      </>
-    ),
-    [
-      defaultPackSize,
-      representation,
-      unitName,
-      isDosesEnabled,
-      currentItem?.doses,
-    ]
+  // Common formatting props shared by every numeric stat row in the modal.
+  // Spread directly onto each `<ValueInfoRow>` instead of going through an
+  // array-of-objects + render-callback intermediate.
+  const valueRowProps = {
+    defaultPackSize,
+    representation,
+    unitName,
+    isDosesEnabled,
+    dosesPerUnit: currentItem?.doses,
+    decimalLimit: 0,
+    isFixedValue: false,
+  };
+
+  const showExcessRequestWarning =
+    warningForExcessRequest &&
+    !!draft &&
+    draft.requestedQuantity - draft.suggestedQuantity >= 1;
+
+  const middleStatRows = !showContent || !draft ? null : (
+    <>
+      <ValueInfoRow
+        {...valueRowProps}
+        label={t('label.suggested')}
+        value={draft.suggestedQuantity}
+        sx={{
+          background: theme => theme.palette.background.group.dark,
+          pt: 0.5,
+          pb: 0.5,
+        }}
+        roundUp
+      />
+      <ValueInfoRow
+        {...valueRowProps}
+        label={t('label.incoming-stock')}
+        value={draft.incomingUnits}
+      />
+      <ValueInfoRow
+        {...valueRowProps}
+        label={t('label.outgoing')}
+        value={draft.outgoingUnits}
+      />
+      <ValueInfoRow
+        {...valueRowProps}
+        label={t('label.losses')}
+        value={draft.lossInUnits}
+      />
+      <ValueInfoRow
+        {...valueRowProps}
+        label={t('label.additions')}
+        value={draft.additionInUnits}
+      />
+      <ValueInfoRow
+        {...valueRowProps}
+        label={t('label.days-out-of-stock')}
+        value={draft.daysOutOfStock}
+        endAdornmentOverride={t('label.days')}
+        isFixedValue
+      />
+    </>
   );
 
-  const getMiddlePanelContent = () => {
-    if (!showContent) return null;
-
-    return renderValueInfoRows(getExtraMiddlePanels(t, draft));
-  };
-
-  const getRightPanelContent = () => {
-    if (!showContent) return null;
-
-    const showExcessRequestWarning =
-      warningForExcessRequest &&
-      draft.requestedQuantity - draft.suggestedQuantity >= 1;
-
-    return (
-      <>
-        <ModalPanelArea>
-          {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
-          <RequestedSelection
-            disabled={disabled}
-            defaultPackSize={defaultPackSize}
-            isPacksEnabled={isPacksEnabled}
-            draft={draft}
-            update={update}
-            representation={representation}
-            setRepresentation={setRepresentation}
-            unitName={unitName}
-            isDosesEnabled={isDosesEnabled}
-            dosesPerUnit={currentItem?.doses}
-            setIsEditingRequested={setIsEditingRequested}
+  const rightPanelContent = !showContent || !draft ? null : (
+    <ModalPanelArea>
+      {!showExtraFields && (
+        <ValueInfoRow
+          {...valueRowProps}
+          label={t('label.suggested')}
+          value={draft.suggestedQuantity}
+          sx={{ pl: 0, pt: 0.5 }}
+          roundUp
+        />
+      )}
+      <RequestedSelection
+        disabled={disabled}
+        defaultPackSize={defaultPackSize}
+        isPacksEnabled={isPacksEnabled}
+        draft={draft}
+        update={update}
+        representation={representation}
+        setRepresentation={setRepresentation}
+        unitName={unitName}
+        isDosesEnabled={isDosesEnabled}
+        dosesPerUnit={currentItem?.doses}
+        setIsEditingRequested={setIsEditingRequested}
+      />
+      {showExcessRequestWarning && (
+        <Alert severity="warning" sx={{ mt: 1 }}>
+          {t('warning.requested-exceeds-suggested')}
+        </Alert>
+      )}
+      {showExtraFields && (
+        <Typography variant="body1" fontWeight="bold">
+          {t('label.reason')}:
+          <ReasonOptionsSearchInput
+            value={draft.reason}
+            onChange={value => {
+              update({ reason: value });
+            }}
+            fullWidth
+            type={ReasonOptionNodeType.RequisitionLineVariance}
+            disabled={disableReasons}
+            textSx={
+              disableReasons
+                ? {
+                    backgroundColor: theme =>
+                      theme.palette.background.toolbar,
+                  }
+                : {
+                    backgroundColor: theme => theme.palette.background.white,
+                  }
+            }
+            inputProps={{
+              error: isReasonsError,
+            }}
           />
-          {showExcessRequestWarning && (
-            <Alert severity="warning" sx={{ mt: 1 }}>
-              {t('warning.requested-exceeds-suggested')}
-            </Alert>
-          )}
-          {showExtraFields && (
-            <Typography variant="body1" fontWeight="bold">
-              {t('label.reason')}:
-              <ReasonOptionsSearchInput
-                value={draft?.reason}
-                onChange={value => {
-                  update({ reason: value });
-                }}
-                fullWidth
-                type={ReasonOptionNodeType.RequisitionLineVariance}
-                disabled={disableReasons}
-                textSx={
-                  disableReasons
-                    ? {
-                        backgroundColor: theme =>
-                          theme.palette.background.toolbar,
-                      }
-                    : {
-                        backgroundColor: theme =>
-                          theme.palette.background.white,
-                      }
-                }
-                inputProps={{
-                  error: isReasonsError,
-                }}
-              />
-            </Typography>
-          )}
-          <MultilineTextInput
-            label={t('label.comment')}
-            value={draft?.comment ?? ''}
-            onChange={(value?: string) => update({ comment: value })}
-            disabled={disabled}
-          />
-        </ModalPanelArea>
-      </>
-    );
-  };
+        </Typography>
+      )}
+      <MultilineTextInput
+        label={t('label.comment')}
+        value={draft.comment ?? ''}
+        onChange={(value?: string) => update({ comment: value })}
+        disabled={disabled}
+      />
+    </ModalPanelArea>
+  );
 
   return (
     <>
@@ -270,28 +277,50 @@ export const RequestLineEdit = ({
                   value={currentItem?.doses}
                 />
               ) : null}
-              {renderValueInfoRows(getLeftPanel(t, draft))}
+              <ValueInfoRow
+                {...valueRowProps}
+                label={t('label.our-soh')}
+                value={draft?.itemStats.availableStockOnHand}
+              />
+              <ValueInfoRow
+                {...valueRowProps}
+                label={t('label.amc/amd')}
+                value={draft?.itemStats.averageMonthlyConsumption}
+              />
               <InfoRow
                 label={t('label.months-of-stock')}
                 value={draft?.itemStats?.availableMonthsOfStockOnHand}
                 packagingDisplay={t('label.months')}
               />
-              {displayForecasting &&
-                renderValueInfoRows([
-                  {
-                    label: t('label.target-stock-population'),
-                    value: line?.forecastTotalUnits
+              {displayForecasting && line && (
+                <ForecastMethodPicker
+                  options={line.applicableForecastMethods ?? []}
+                  value={draft?.forecastMethod ?? line.forecastMethod}
+                  onChange={code => {
+                    update({ forecastMethod: code });
+                    save({ forecastMethod: code });
+                  }}
+                  disabled={disabled}
+                />
+              )}
+              {displayForecasting && (
+                <ValueInfoRow
+                  {...valueRowProps}
+                  label={t('label.target-stock')}
+                  value={
+                    line?.forecastTotalUnits
                       ? Math.ceil(line.forecastTotalUnits)
-                      : undefined,
-                  },
-                ])}
-              {showExtraFields &&
-                renderValueInfoRows([
-                  {
-                    label: t('label.short-expiry'),
-                    value: draft?.expiringUnits,
-                  } as ValueInfo,
-                ])}
+                      : undefined
+                  }
+                />
+              )}
+              {showExtraFields && (
+                <ValueInfoRow
+                  {...valueRowProps}
+                  label={t('label.short-expiry')}
+                  value={draft?.expiringUnits}
+                />
+              )}
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
                   (Field, index) => (
@@ -306,10 +335,8 @@ export const RequestLineEdit = ({
             </>
           ) : null
         }
-        Middle={
-          showExtraFields ? getMiddlePanelContent() : getRightPanelContent()
-        }
-        Right={showExtraFields ? getRightPanelContent() : null}
+        Middle={showExtraFields ? middleStatRows : rightPanelContent}
+        Right={showExtraFields ? rightPanelContent : null}
       />
 
       {line &&
@@ -324,52 +351,56 @@ export const RequestLineEdit = ({
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
+            mt: 3,
           }}
         >
-          {displayForecasting && isInfoVisible(FORECAST_QUANTITY_INFO) ? (
-            <ForecastCalculationDisplay vaccineCourses={line.vaccineCourses} />
-          ) : (
-            <>
-              {isInfoVisible(STOCK_DISTRIBUTION_INFO) && (
-                <Box
-                  sx={{
-                    width: '100%',
-                    maxWidth: 900,
-                    mx: 'auto',
-                    p: '8px 16px',
-                  }}
-                >
-                  <StockDistribution
-                    availableStockOnHand={line.itemStats?.availableStockOnHand}
-                    averageMonthlyConsumption={
-                      line.itemStats?.averageMonthlyConsumption
-                    }
-                    suggestedQuantity={line.suggestedQuantity}
-                  />
-                </Box>
-              )}
+          {displayForecasting && isInfoVisible(FORECAST_QUANTITY_INFO) && (
+            <ForecastCalculationDisplay forecastData={line.forecastData} />
+          )}
+          {/* Stock distribution chart is AMC-framed (target = max_months ×
+              AMC, monthly columns, min/max thresholds). Population and
+              AncillaryRatio target stock comes from a different formula
+              entirely, so the chart would mislead — hide it for those
+              methods. `null` is the legacy/implicit AMC fallback. */}
+          {isInfoVisible(STOCK_DISTRIBUTION_INFO) &&
+            (line.forecastMethod === 'amc' || line.forecastMethod == null) && (
               <Box
-                display="flex"
-                justifyContent="center"
-                gap={2}
                 sx={{
-                  padding: 2,
-                  flexDirection: {
-                    xs: 'column',
-                    md: 'row',
-                  },
-                  alignItems: 'center',
+                  width: '100%',
+                  maxWidth: 900,
+                  mx: 'auto',
+                  p: '8px 16px',
                 }}
               >
-                {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
-                  <ConsumptionHistory id={line.id} />
-                )}
-                {isInfoVisible(STOCK_EVOLUTION_INFO) && (
-                  <StockEvolution id={line.id} />
-                )}
+                <StockDistribution
+                  availableStockOnHand={line.itemStats?.availableStockOnHand}
+                  averageMonthlyConsumption={
+                    line.itemStats?.averageMonthlyConsumption
+                  }
+                  suggestedQuantity={line.suggestedQuantity}
+                />
               </Box>
-            </>
-          )}
+            )}
+          <Box
+            display="flex"
+            justifyContent="center"
+            gap={2}
+            sx={{
+              padding: 2,
+              flexDirection: {
+                xs: 'column',
+                md: 'row',
+              },
+              alignItems: 'center',
+            }}
+          >
+            {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
+              <ConsumptionHistory id={line.id} />
+            )}
+            {isInfoVisible(STOCK_EVOLUTION_INFO) && (
+              <StockEvolution id={line.id} />
+            )}
+          </Box>
         </Box>
       )}
     </>

@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod add_ancillary_item_table;
 mod add_base_population_to_demographic_projection;
 mod add_invoice_date_backdated_activity_log_type;
+mod refactor_requisition_line_forecasting;
 
 pub(crate) struct V2_18_00;
 impl Migration for V2_18_00 {
@@ -20,6 +21,7 @@ impl Migration for V2_18_00 {
             Box::new(add_ancillary_item_table::Migrate),
             Box::new(add_base_population_to_demographic_projection::Migrate),
             Box::new(add_invoice_date_backdated_activity_log_type::Migrate),
+            Box::new(refactor_requisition_line_forecasting::Migrate),
         ]
     }
 }

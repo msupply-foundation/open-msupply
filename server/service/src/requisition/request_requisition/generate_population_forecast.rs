@@ -3,41 +3,17 @@ use repository::{
     vaccine_course::vaccine_course_store_config::{
         VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
     },
-    EqualFilter, NameFilter, NameRepository, RepositoryError, StorageConnection, StoreFilter,
-    VaccinationCourseRepository, VaccinationCourseRow,
+    EqualFilter, NameFilter, NameRepository, PopulationCourseData, PopulationSnapshot,
+    RepositoryError, StorageConnection, StoreFilter, VaccinationCourseRepository,
+    VaccinationCourseRow,
 };
-use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ForecastQuantityData {
-    pub forecast_total_units: f64,
-    pub forecast_total_doses: f64,
-    pub vaccine_courses: Vec<CourseData>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct CourseData {
-    pub course_title: String,
-    pub number_of_doses: i32,
-    pub coverage_rate: f64,
-    pub target_population: f64,
-    pub wastage_rate: f64,
-    pub loss_factor: f64,
-    pub annual_target_doses: f64,
-    pub buffer_stock_months: f64,
-    pub supply_period_months: f64,
-    pub doses_per_unit: i32,
-    pub forecast_doses: f64,
-    pub forecast_units: f64,
-}
 
 pub fn calculate_forecasting_fields(
     ctx: &ServiceContext,
     item_ids: Vec<String>,
-) -> Result<HashMap<String, Option<ForecastQuantityData>>, RepositoryError> {
+) -> Result<HashMap<String, Option<PopulationSnapshot>>, RepositoryError> {
     let store_properties = match get_store_properties_and_validate(&ctx.connection, &ctx.store_id)?
     {
         Some(props) => props,
@@ -115,7 +91,7 @@ fn calculate_forecast_quantities(
         population_served,
     }: &StoreProperties,
     item_ids: Vec<String>,
-) -> Result<HashMap<String, Option<ForecastQuantityData>>, RepositoryError> {
+) -> Result<HashMap<String, Option<PopulationSnapshot>>, RepositoryError> {
     let vaccination_courses =
         VaccinationCourseRepository::new(connection).query_by_item_ids(item_ids.clone())?;
 
@@ -208,7 +184,7 @@ fn calculate_forecast_quantities(
                 group.demographic_name.as_deref().unwrap_or_default()
             );
 
-            forecast_values.push(CourseData {
+            forecast_values.push(PopulationCourseData {
                 course_title,
                 number_of_doses: number_of_doses as i32,
                 coverage_rate,
@@ -230,7 +206,7 @@ fn calculate_forecast_quantities(
         let forecast_data = if forecast_values.is_empty() {
             None
         } else {
-            Some(ForecastQuantityData {
+            Some(PopulationSnapshot {
                 forecast_total_units,
                 forecast_total_doses,
                 vaccine_courses: forecast_values,
@@ -271,11 +247,11 @@ mod tests {
     // Annual target doses: 2500.0 * 3 * (60.0 / 100.0) * 2.0 = 9000.0
     // Forecast doses: (9000.0 / 12) * (3 + 2) = 3750.0
     // Forecast units: 3750.0 / 2 = 1875.0
-    fn forecast_result_store_specific_config() -> ForecastQuantityData {
-        ForecastQuantityData {
+    fn forecast_result_store_specific_config() -> PopulationSnapshot {
+        PopulationSnapshot {
             forecast_total_units: 1875.0,
             forecast_total_doses: 3750.0,
-            vaccine_courses: vec![CourseData {
+            vaccine_courses: vec![PopulationCourseData {
                 course_title: "Vaccine Course A (demographic_1)".to_string(),
                 number_of_doses: 3,
                 coverage_rate: 60.0,
@@ -298,11 +274,11 @@ mod tests {
     // Annual target doses: 2500.0 * 3 * (80.0 / 100.0) * 1.1111111111111112 = 6666.666666666667
     // Forecast doses: (6666.666666666667 / 12) * (3 + 2) = 2777.777777777778
     // Forecast units: 2777.777777777778 / 2
-    fn forecast_result_global_rates() -> ForecastQuantityData {
-        ForecastQuantityData {
+    fn forecast_result_global_rates() -> PopulationSnapshot {
+        PopulationSnapshot {
             forecast_total_units: 1388.888888888889,
             forecast_total_doses: 2777.777777777778,
-            vaccine_courses: vec![CourseData {
+            vaccine_courses: vec![PopulationCourseData {
                 course_title: "Vaccine Course A (demographic_1)".to_string(),
                 number_of_doses: 3,
                 coverage_rate: 80.0,
@@ -385,7 +361,7 @@ mod tests {
 
         let item_ids = vec![mock_vaccine_item_a().id.clone()];
 
-        let result: HashMap<String, Option<ForecastQuantityData>> = calculate_forecast_quantities(
+        let result: HashMap<String, Option<PopulationSnapshot>> = calculate_forecast_quantities(
             &connection,
             "store_b",
             &store_properties,

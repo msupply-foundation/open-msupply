@@ -324,8 +324,8 @@ fn generate_lines(
                 available_volume: None,
                 location_type_id: None,
                 forecast_total_units: None,
-                forecast_total_doses: None,
-                vaccine_courses: None,
+                forecast_method: None,
+                forecast_data: None,
             }
         })
         .collect();

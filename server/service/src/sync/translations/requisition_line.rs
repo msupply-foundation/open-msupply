@@ -22,8 +22,8 @@ pub struct RequisitionLineOmsFields {
     pub available_volume: Option<f64>,
     pub location_type_id: Option<String>,
     pub forecast_total_units: Option<f64>,
-    pub forecast_total_doses: Option<f64>,
-    pub vaccine_courses: Option<String>,
+    pub forecast_method: Option<String>,
+    pub forecast_data: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -124,16 +124,16 @@ impl SyncTranslation for RequisitionLineTranslation {
             available_volume,
             location_type_id,
             forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
+            forecast_method,
+            forecast_data,
         ) = if let Some(oms_fields) = data.oms_fields {
             (
                 oms_fields.price_per_unit,
                 oms_fields.available_volume,
                 oms_fields.location_type_id,
                 oms_fields.forecast_total_units,
-                oms_fields.forecast_total_doses,
-                oms_fields.vaccine_courses,
+                oms_fields.forecast_method,
+                oms_fields.forecast_data,
             )
         } else {
             (None, None, None, None, None, None)
@@ -167,8 +167,8 @@ impl SyncTranslation for RequisitionLineTranslation {
             available_volume,
             location_type_id,
             forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
+            forecast_method,
+            forecast_data,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -216,8 +216,8 @@ impl SyncTranslation for RequisitionLineTranslation {
             available_volume,
             location_type_id,
             forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
+            forecast_method,
+            forecast_data,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -265,8 +265,8 @@ impl SyncTranslation for RequisitionLineTranslation {
             available_volume,
             location_type_id,
             forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
+            forecast_method,
+            forecast_data,
         });
 
         let legacy_row = LegacyRequisitionLineRow {

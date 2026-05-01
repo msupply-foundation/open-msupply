@@ -45,7 +45,8 @@ export type RequestLineFragment = {
   pricePerUnit?: number | null;
   forecastTotalUnits?: number | null;
   forecastTotalDoses?: number | null;
-  vaccineCourses?: string | null;
+  forecastMethod?: string | null;
+  forecastData?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     availableStockOnHand: number;
@@ -84,6 +85,13 @@ export type RequestLineFragment = {
     reason: string;
     isActive: boolean;
   } | null;
+  applicableForecastMethods: Array<{
+    __typename: 'ForecastMethodOptionNode';
+    code: string;
+    label: string;
+    isAvailable: boolean;
+    unavailableReason?: string | null;
+  }>;
 };
 
 export type RequestFragment = {
@@ -148,7 +156,8 @@ export type RequestFragment = {
       pricePerUnit?: number | null;
       forecastTotalUnits?: number | null;
       forecastTotalDoses?: number | null;
-      vaccineCourses?: string | null;
+      forecastMethod?: string | null;
+      forecastData?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         availableStockOnHand: number;
@@ -187,6 +196,13 @@ export type RequestFragment = {
         reason: string;
         isActive: boolean;
       } | null;
+      applicableForecastMethods: Array<{
+        __typename: 'ForecastMethodOptionNode';
+        code: string;
+        label: string;
+        isAvailable: boolean;
+        unavailableReason?: string | null;
+      }>;
     }>;
   };
   program?: { __typename: 'ProgramNode'; id: string } | null;
@@ -307,7 +323,14 @@ export const RequestLineFragmentDoc = gql`
     }
     forecastTotalUnits
     forecastTotalDoses
-    vaccineCourses
+    forecastMethod
+    forecastData
+    applicableForecastMethods {
+      code
+      label
+      isAvailable
+      unavailableReason
+    }
   }
   ${ItemWithStatsFragmentDoc}
   ${ReasonOptionRowFragmentDoc}

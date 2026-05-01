@@ -81,9 +81,9 @@ fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
             price_per_unit: None,
             available_volume: Some(5.0),
             location_type_id: None,
-            forecast_total_doses: None,
             forecast_total_units: None,
-            vaccine_courses: None,
+            forecast_method: None,
+            forecast_data: None,
         },
     )
 }
@@ -120,9 +120,9 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
                 price_per_unit: None,
                 available_volume: Some(5.0),
                 location_type_id: None,
-                forecast_total_doses: None,
                 forecast_total_units: None,
-                vaccine_courses: None,
+                forecast_method: None,
+                forecast_data: None,
             }),
         }),
     }
@@ -168,9 +168,9 @@ const REQUISITION_LINE_OM_FIELD: (&str, &str) = (
             "price_per_unit": 1.1,
             "available_volume": null,
             "location_type_id": null,
-            "forecast_total_doses": null,
             "forecast_total_units": null,
-            "vaccine_courses": null
+            "forecast_method": null,
+            "forecast_data": null
         }
     }"#,
 );
@@ -208,9 +208,9 @@ fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             price_per_unit: Some(1.1),
             available_volume: None,
             location_type_id: None,
-            forecast_total_doses: None,
             forecast_total_units: None,
-            vaccine_courses: None,
+            forecast_method: None,
+            forecast_data: None,
         },
     )
 }
@@ -252,9 +252,9 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
                 price_per_unit: Some(1.1),
                 available_volume: None,
                 location_type_id: None,
-                forecast_total_doses: None,
                 forecast_total_units: None,
-                vaccine_courses: None,
+                forecast_method: None,
+                forecast_data: None,
             }),
         }),
     }

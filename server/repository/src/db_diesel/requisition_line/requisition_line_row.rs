@@ -8,6 +8,7 @@ use ts_rs::TS;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
 
+use super::forecast_snapshot::ForecastSnapshot;
 use chrono::NaiveDateTime;
 
 table! {
@@ -37,10 +38,10 @@ table! {
         expiring_units -> Double,
         days_out_of_stock -> Double,
         option_id -> Nullable<Text>,
-        // Population forcasting fields
+        // Forecasting: method tag + headline result + JSON snapshot of inputs/calculation
         forecast_total_units -> Nullable<Double>,
-        forecast_total_doses -> Nullable<Double>,
-        vaccine_courses -> Nullable<Text>,
+        forecast_method -> Nullable<Text>,
+        forecast_data -> Nullable<Text>,
     }
 }
 
@@ -79,10 +80,28 @@ pub struct RequisitionLineRow {
     pub expiring_units: f64,
     pub days_out_of_stock: f64,
     pub option_id: Option<String>,
-    // Population forecasting fields
+    // Forecasting: method tag (`null` ≡ AMC implicit/legacy), headline units,
+    // and a JSON snapshot of the calculation. See `forecast_snapshot.rs`.
     pub forecast_total_units: Option<f64>,
-    pub forecast_total_doses: Option<f64>,
-    pub vaccine_courses: Option<String>,
+    pub forecast_method: Option<String>,
+    pub forecast_data: Option<String>,
+}
+
+impl RequisitionLineRow {
+    /// Parse the persisted JSON snapshot into the typed discriminated union.
+    /// Returns `None` if the column is null or the JSON shape is unrecognised.
+    pub fn forecast_snapshot(&self) -> Option<ForecastSnapshot> {
+        self.forecast_data
+            .as_deref()
+            .and_then(|json| serde_json::from_str::<ForecastSnapshot>(json).ok())
+    }
+
+    /// Serialize the snapshot into `forecast_data`. Sets `forecast_total_units`
+    /// from the snapshot's headline units.
+    pub fn set_forecast_snapshot(&mut self, snapshot: &ForecastSnapshot) {
+        self.forecast_data = serde_json::to_string(snapshot).ok();
+        self.forecast_total_units = Some(snapshot.forecast_units());
+    }
 }
 
 pub struct RequisitionLineRowRepository<'a> {

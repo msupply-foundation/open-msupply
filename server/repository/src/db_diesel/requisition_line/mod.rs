@@ -2,9 +2,11 @@ use crate::EqualFilter;
 use crate::RequisitionStatus;
 use crate::RequisitionType;
 
+pub mod forecast_snapshot;
 pub mod requisition_line;
 pub mod requisition_line_row;
 
+pub use self::forecast_snapshot::*;
 pub use self::requisition_line::*;
 pub use self::requisition_line_row::*;
 

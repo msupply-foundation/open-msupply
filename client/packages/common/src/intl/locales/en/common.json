@@ -1425,7 +1425,7 @@
   "label.policy-number-family": "Family policy number",
   "label.policy-number-person": "Personal Policy number",
   "label.policy-type": "Policy type",
-  "label.population-forecast-calculation": "Population Forecast Calculation",
+  "label.population-forecast-calculation": "Population Target Stock Calculation",
   "label.position": "Position",
   "label.preferences": "Preferences",
   "label.prescribed-quantity": "Prescribed Quantity",
@@ -2832,5 +2832,13 @@
   "warning.confirm-send-ancillary-items-missing_one": "1 ancillary item has not been added to this order. Send anyway?",
   "warning.confirm-send-ancillary-items-missing_other": "{{count}} ancillary items have not been added to this order. Send anyway?",
   "warning.confirm-send-ancillary-items-stale_one": "1 ancillary item line has an outdated quantity. Send anyway?",
-  "warning.confirm-send-ancillary-items-stale_other": "{{count}} ancillary item lines have outdated quantities. Send anyway?"
+  "warning.confirm-send-ancillary-items-stale_other": "{{count}} ancillary item lines have outdated quantities. Send anyway?",
+  "label.amc-forecast-calculation": "AMC Target Stock Calculation",
+  "description.amc-forecast-calculation": "Months of Stock Target × Average Monthly Consumption",
+  "label.ancillary-ratio-forecast-calculation": "Ancillary Ratio Target Stock Calculation",
+  "description.ancillary-ratio-contribution": "Parent Forecast × (Ancillary Quantity / Item Quantity)",
+  "warning.ancillary-ratio-fallback": "Parent item not on this requisition — falling back to AMC.",
+  "label.forecast-method": "Forecast method",
+  "label.target-stock-method": "Target stock method",
+  "label.target-stock": "Target stock"
 }

@@ -139,7 +139,8 @@ export type RequestByNumberQuery = {
             pricePerUnit?: number | null;
             forecastTotalUnits?: number | null;
             forecastTotalDoses?: number | null;
-            vaccineCourses?: string | null;
+            forecastMethod?: string | null;
+            forecastData?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;
@@ -178,6 +179,13 @@ export type RequestByNumberQuery = {
               reason: string;
               isActive: boolean;
             } | null;
+            applicableForecastMethods: Array<{
+              __typename: 'ForecastMethodOptionNode';
+              code: string;
+              label: string;
+              isAvailable: boolean;
+              unavailableReason?: string | null;
+            }>;
           }>;
         };
         program?: { __typename: 'ProgramNode'; id: string } | null;
@@ -305,7 +313,8 @@ export type RequestByIdQuery = {
             pricePerUnit?: number | null;
             forecastTotalUnits?: number | null;
             forecastTotalDoses?: number | null;
-            vaccineCourses?: string | null;
+            forecastMethod?: string | null;
+            forecastData?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;
@@ -344,6 +353,13 @@ export type RequestByIdQuery = {
               reason: string;
               isActive: boolean;
             } | null;
+            applicableForecastMethods: Array<{
+              __typename: 'ForecastMethodOptionNode';
+              code: string;
+              label: string;
+              isAvailable: boolean;
+              unavailableReason?: string | null;
+            }>;
           }>;
         };
         program?: { __typename: 'ProgramNode'; id: string } | null;

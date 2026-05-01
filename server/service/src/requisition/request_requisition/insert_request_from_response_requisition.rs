@@ -242,10 +242,11 @@ fn generate(
                 } else {
                     None
                 },
-                forecast_total_units: population_forecast_for_item.map(|f| f.forecast_total_units),
-                forecast_total_doses: population_forecast_for_item.map(|f| f.forecast_total_doses),
-                vaccine_courses: population_forecast_for_item
-                    .map(|f| serde_json::to_string(&f.vaccine_courses).unwrap_or_default()),
+                forecast_total_units: population_forecast_for_item.map(|s| s.forecast_total_units),
+                forecast_method: population_forecast_for_item.map(|_| "population".to_string()),
+                forecast_data: population_forecast_for_item.and_then(|s| {
+                    serde_json::to_string(&repository::ForecastSnapshot::Population(s.clone())).ok()
+                }),
                 // Defaults
                 available_volume: None,
                 location_type_id: None,

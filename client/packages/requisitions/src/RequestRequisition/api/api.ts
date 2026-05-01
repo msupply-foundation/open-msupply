@@ -105,6 +105,7 @@ const requestParser = {
     requestedQuantity: line.requestedQuantity,
     comment: line.comment,
     optionId: line?.reason?.id ?? null,
+    forecastMethod: line.forecastMethod ?? null,
   }),
 };
 

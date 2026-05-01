@@ -1,6 +1,9 @@
 use crate::{
     location::query::get_available_volume_by_location_type,
-    requisition::common::check_requisition_row_exists,
+    requisition::{
+        common::check_requisition_row_exists,
+        request_requisition::forecast::{self, ForecastInputs},
+    },
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
@@ -8,8 +11,9 @@ use crate::{
 
 use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
-    ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
-    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
+    EqualFilter, ForecastMethod, ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType,
+    RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -18,6 +22,10 @@ pub struct UpdateRequestRequisitionLine {
     pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
     pub option_id: Option<String>,
+    /// Storage form (`"amc"`, `"population"`, `"ancillary_ratio"`, `"plugin:<code>"`).
+    /// When `Some`, recompute the snapshot for this line; `requested_quantity` is
+    /// always preserved (per design — user-authored).
+    pub forecast_method: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -42,8 +50,9 @@ pub fn update_request_requisition_line(
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let updated_requisition_line_row = generate(ctx, requisition_row, input)?;
+            let (existing_line, requisition_row) = validate(connection, &ctx.store_id, &input)?;
+            let updated_requisition_line_row =
+                generate(ctx, &requisition_row, existing_line, input)?;
 
             RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
@@ -60,7 +69,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateRequestRequisitionLine,
-) -> Result<RequisitionLineRow, OutError> {
+) -> Result<(RequisitionLineRow, RequisitionRow), OutError> {
     let requisition_line = check_requisition_line_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?;
     let requisition_line_row = requisition_line.clone().requisition_line_row;
@@ -103,17 +112,19 @@ fn validate(
         }
     }
 
-    Ok(requisition_line_row)
+    Ok((requisition_line_row, requisition_row))
 }
 
 fn generate(
     ctx: &ServiceContext,
+    requisition_row: &RequisitionRow,
     existing: RequisitionLineRow,
     UpdateRequestRequisitionLine {
         id: _,
         requested_quantity: updated_requested_quantity,
         comment: updated_comment,
         option_id,
+        forecast_method,
     }: UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, RepositoryError> {
     let available_volume_by_type = get_available_volume_by_location_type(
@@ -125,14 +136,68 @@ fn generate(
     .cloned()
     .unwrap_or_default();
 
-    Ok(RequisitionLineRow {
+    let mut updated = RequisitionLineRow {
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
-        comment: updated_comment.or(existing.comment),
-        option_id: option_id.or(existing.option_id),
+        comment: updated_comment.or(existing.comment.clone()),
+        option_id: option_id.or(existing.option_id.clone()),
         available_volume: available_volume_by_type.available_volume,
         location_type_id: available_volume_by_type.restricted_location_type_id.clone(),
         ..existing
-    })
+    };
+
+    // Method change → recompute snapshot + suggested_quantity. requested_quantity
+    // is user-authored and is never overwritten as part of a method switch.
+    //
+    // The dispatcher needs all sibling lines on the requisition so AncillaryRatio
+    // can resolve parents — load them, run the pass, then keep just the updated
+    // line's resulting forecast fields.
+    if let Some(method) = forecast_method.as_deref().and_then(ForecastMethod::from_storage) {
+        updated.forecast_method = Some(method.to_storage());
+
+        let mut sibling_lines: Vec<RequisitionLineRow> = RequisitionLineRepository::new(
+            &ctx.connection,
+        )
+        .query_by_filter(
+            RequisitionLineFilter::new()
+                .requisition_id(EqualFilter::equal_to(updated.requisition_id.clone())),
+        )?
+        .into_iter()
+        .map(|l| {
+            if l.requisition_line_row.id == updated.id {
+                updated.clone()
+            } else {
+                l.requisition_line_row
+            }
+        })
+        .collect();
+
+        forecast::run(
+            ctx,
+            ForecastInputs {
+                min_months_of_stock: requisition_row.min_months_of_stock,
+                max_months_of_stock: requisition_row.max_months_of_stock,
+            },
+            &mut sibling_lines,
+        )?;
+
+        if let Some(recomputed) = sibling_lines.into_iter().find(|l| l.id == updated.id) {
+            updated.forecast_method = recomputed.forecast_method;
+            updated.forecast_data = recomputed.forecast_data;
+            updated.forecast_total_units = recomputed.forecast_total_units;
+        }
+
+        updated.suggested_quantity = match updated.forecast_method.as_deref() {
+            Some("amc") | None => updated.suggested_quantity,
+            Some(_) => match updated.forecast_total_units {
+                Some(units) if units > updated.available_stock_on_hand => {
+                    (units - updated.available_stock_on_hand).ceil()
+                }
+                _ => 0.0,
+            },
+        };
+    }
+
+    Ok(updated)
 }
 
 impl From<RepositoryError> for UpdateRequestRequisitionLineError {
@@ -302,6 +367,7 @@ mod test {
                     requested_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
                     option_id: None,
+                    forecast_method: None,
                 },
             )
             .unwrap();

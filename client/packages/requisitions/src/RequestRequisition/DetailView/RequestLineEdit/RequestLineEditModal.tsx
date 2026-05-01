@@ -172,6 +172,7 @@ export const RequestLineEditModal = ({
           onChangeItem={onChangeItem}
           draft={draft}
           update={update}
+          save={save}
           isPacksEnabled={!!currentItem?.defaultPackSize}
           representation={representation}
           setRepresentation={setRepresentation}

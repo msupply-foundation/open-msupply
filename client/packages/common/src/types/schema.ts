@@ -2919,6 +2919,15 @@ export type FloatStorePrefInput = {
   value: Scalars['Float']['input'];
 };
 
+export type ForecastMethodOptionNode = {
+  __typename: 'ForecastMethodOptionNode';
+  /** Storage form: `"amc"`, `"population"`, `"ancillary_ratio"`, `"plugin:<code>"` */
+  code: Scalars['String']['output'];
+  isAvailable: Scalars['Boolean']['output'];
+  label: Scalars['String']['output'];
+  unavailableReason?: Maybe<Scalars['String']['output']>;
+};
+
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
@@ -8782,6 +8791,17 @@ export type RequisitionLineNode = {
   additionInUnits: Scalars['Float']['output'];
   /** Quantity already issued in outbound shipments */
   alreadyIssued: Scalars['Float']['output'];
+  /**
+   * Methods this line can use, given its item and the rest of the
+   * requisition. AMC always available; Population available when the item
+   * is mapped to at least one vaccine course; AncillaryRatio available when
+   * at least one ancillary parent of this item is also a line on the same
+   * requisition. Plugin-supplied methods enumerate registered backend
+   * plugins of `PluginType::ForecastMethod`. Unavailable options are
+   * returned with `is_available = false` and a reason so the UI can
+   * disable them with a tooltip rather than hide them.
+   */
+  applicableForecastMethods: Array<ForecastMethodOptionNode>;
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
   availableStockOnHand: Scalars['Float']['output'];
@@ -8790,6 +8810,8 @@ export type RequisitionLineNode = {
   comment?: Maybe<Scalars['String']['output']>;
   daysOutOfStock: Scalars['Float']['output'];
   expiringUnits: Scalars['Float']['output'];
+  forecastData?: Maybe<Scalars['String']['output']>;
+  forecastMethod?: Maybe<Scalars['String']['output']>;
   forecastTotalDoses?: Maybe<Scalars['Float']['output']>;
   forecastTotalUnits?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
@@ -8830,7 +8852,6 @@ export type RequisitionLineNode = {
   suggestedQuantity: Scalars['Float']['output'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */
   supplyQuantity: Scalars['Float']['output'];
-  vaccineCourses?: Maybe<Scalars['String']['output']>;
 };
 
 export type RequisitionLineNodeItemStatsArgs = {
@@ -10834,6 +10855,11 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 
 export type UpdateRequestRequisitionLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Storage form: `"amc"` | `"population"` | `"ancillary_ratio"` | `"plugin:<code>"`.
+   * When set, recomputes the line's forecast snapshot + suggested quantity.
+   */
+  forecastMethod?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   optionId?: InputMaybe<Scalars['String']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;

@@ -2,15 +2,13 @@ import React from 'react';
 import {
   Box,
   Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  ExpandIcon,
+  TypedTFunction,
+  LocaleKey,
   useTranslation,
   useFormatNumber,
 } from '@openmsupply-client/common';
 
-interface ForecastQuantityData {
+interface PopulationCourseData {
   courseTitle: string;
   numberOfDoses: number;
   coverageRate: number;
@@ -24,126 +22,380 @@ interface ForecastQuantityData {
   forecastUnits: number;
 }
 
-interface CalculationStepProps {
-  title: string;
-  formula: string;
-  substitution: string;
+interface AmcSnapshot {
+  averageMonthlyConsumption: number;
+  monthsOfStockTarget: number;
+  availableStockOnHand: number;
+  forecastUnits: number;
+}
+
+interface PopulationSnapshot {
+  forecastTotalUnits: number;
+  forecastTotalDoses: number;
+  vaccineCourses: PopulationCourseData[];
+}
+
+interface AncillaryContribution {
+  parentLineId: string;
+  parentItemId: string;
+  parentItemName: string;
+  parentForecastUnits: number;
+  itemQuantity: number;
+  ancillaryQuantity: number;
+  units: number;
+}
+
+interface AncillaryRatioSnapshot {
+  forecastUnits: number;
+  contributions: AncillaryContribution[];
+  fallback?: string | null;
+}
+
+interface DisplayRow {
+  label: string;
+  formula?: string | null;
+  substitution?: string | null;
   result: string;
 }
 
-interface TextProps {
-  children: React.ReactNode;
+interface PluginSnapshot {
+  pluginCode: string;
+  pluginVersion: string;
+  forecastUnits: number;
+  forecastDoses?: number | null;
+  display: DisplayRow[];
 }
 
-const FormulaDisplay = ({ children }: TextProps) => (
-  <Typography
-    variant="body2"
+// Server-side serde flattens the variant data alongside the `method` tag,
+// so each branch's fields sit at the top level next to `method`.
+type ForecastSnapshot =
+  | ({ method: 'amc' } & AmcSnapshot)
+  | ({ method: 'population' } & PopulationSnapshot)
+  | ({ method: 'ancillary_ratio' } & AncillaryRatioSnapshot)
+  | ({ method: 'plugin' } & PluginSnapshot);
+
+interface EquationLine {
+  /// Left-hand label, only shown on the first row (subsequent rows align
+  /// under the `=` sign with no label).
+  label?: string;
+  rhs: React.ReactNode;
+  /// Optional unit suffix dimmed next to the value (e.g. "units").
+  suffix?: string;
+}
+
+/// One section of the breakdown. With a `title` it renders as an accordion
+/// (e.g. one per vaccine course / per ancillary parent); without, it's
+/// rendered flat.
+interface EquationGroup {
+  title?: string;
+  /// Each inner array is one equation block (formula / substitution / result
+  /// rows that share a single `=` column).
+  equations: EquationLine[][];
+}
+
+/// Single renderer that every method funnels into. The per-method adapters
+/// below shape their snapshot into `EquationDisplayProps`.
+interface EquationDisplayProps {
+  heading: string;
+  warning?: string;
+  groups: EquationGroup[];
+}
+
+/// Three-column grid: `label = rhs (suffix)`. Subsequent rows omit the label
+/// so all `=` and rhs values stack vertically aligned.
+const EquationBlock = ({ rows }: { rows: EquationLine[] }) => (
+  <Box
     sx={{
-      mb: 1,
-      backgroundColor: 'grey.100',
-      p: 1,
-      borderRadius: 2,
+      display: 'grid',
+      gridTemplateColumns: 'auto auto 1fr',
+      columnGap: 1,
+      rowGap: 0.5,
+      fontFamily: 'monospace',
+      fontSize: 14,
+      mt: 1,
+      ml: 1,
+      alignItems: 'baseline',
     }}
   >
-    {children}
-  </Typography>
-);
-
-const SubstitutionDisplay = ({ children }: TextProps) => (
-  <Typography
-    variant="body2"
-    sx={{
-      color: 'text.secondary',
-      mb: 0.5,
-    }}
-  >
-    {children}
-  </Typography>
-);
-
-const ResultDisplay = ({ children }: TextProps) => (
-  <Typography
-    variant="body2"
-    sx={{
-      fontWeight: 'bold',
-      color: 'success.main',
-    }}
-  >
-    {children}
-  </Typography>
-);
-
-const CalculationStep = ({
-  title,
-  formula,
-  substitution,
-  result,
-}: CalculationStepProps) => (
-  <Box>
-    <Typography fontWeight="bold">{title}</Typography>
-    <FormulaDisplay>{formula}</FormulaDisplay>
-    <SubstitutionDisplay>{substitution}</SubstitutionDisplay>
-    <ResultDisplay>{result}</ResultDisplay>
+    {rows.map((row, i) => (
+      <React.Fragment key={i}>
+        <Box sx={{ fontWeight: i === 0 ? 700 : 400 }}>{row.label ?? ''}</Box>
+        <Box>=</Box>
+        <Box>
+          {row.rhs}
+          {row.suffix && (
+            <Box
+              component="span"
+              sx={{ color: 'text.secondary', ml: 1, fontSize: 12 }}
+            >
+              {row.suffix}
+            </Box>
+          )}
+        </Box>
+      </React.Fragment>
+    ))}
   </Box>
 );
 
+/// Renders the breakdown as a single card with stacked groups — no
+/// accordions, no expand/collapse. Each group has an optional small
+/// uppercased subtitle (e.g. one per vaccine course / per ancillary
+/// parent), and its equation blocks are visible inline.
+const EquationDisplay = ({
+  heading,
+  warning,
+  groups,
+}: EquationDisplayProps) => (
+  <Box
+    sx={{
+      width: '100%',
+      maxWidth: 900,
+      mx: 'auto',
+      p: 3,
+      borderRadius: 2,
+      backgroundColor: 'background.menu',
+    }}
+  >
+    <Typography variant="body1" fontWeight={700} sx={{ mb: 1 }}>
+      {heading}
+    </Typography>
+    {warning && (
+      <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
+        {warning}
+      </Typography>
+    )}
+    {groups.map((group, gi) => (
+      <Box key={gi} sx={{ mt: gi === 0 ? 1 : 3 }}>
+        {group.title && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.secondary',
+              textTransform: 'uppercase',
+              fontWeight: 700,
+              letterSpacing: 0.5,
+            }}
+          >
+            {group.title}
+          </Typography>
+        )}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2.5,
+            mt: group.title ? 1 : 0,
+            pl: group.title ? 1 : 0,
+            borderLeft: group.title ? '2px solid' : 'none',
+            borderColor: 'divider',
+          }}
+        >
+          {group.equations.map((eq, ei) => (
+            <EquationBlock key={ei} rows={eq} />
+          ))}
+        </Box>
+      </Box>
+    ))}
+  </Box>
+);
+
+// --- Adapters: snapshot → EquationDisplayProps ------------------------------
+
+type FormatFns = {
+  format: (value?: number) => string;
+  round: (value?: number, decimals?: number) => string;
+};
+
+const amcAdapter = (
+  d: AmcSnapshot,
+  t: TypedTFunction<LocaleKey>,
+  { format, round }: FormatFns
+): EquationDisplayProps => ({
+  heading: t('label.amc-forecast-calculation'),
+  groups: [
+    {
+      equations: [
+        [
+          { label: 'target', rhs: 'months × AMC' },
+          {
+            rhs: `${format(d.monthsOfStockTarget)} × ${round(d.averageMonthlyConsumption, 2)}`,
+          },
+          {
+            rhs: format(Math.ceil(d.forecastUnits)),
+            suffix: t('label.units').toLowerCase(),
+          },
+        ],
+      ],
+    },
+  ],
+});
+
+const populationAdapter = (
+  d: PopulationSnapshot,
+  t: TypedTFunction<LocaleKey>,
+  { format, round }: FormatFns
+): EquationDisplayProps => ({
+  heading: t('label.population-forecast-calculation'),
+  groups: d.vaccineCourses.map(c => ({
+    title: c.courseTitle,
+    equations: [
+      [
+        {
+          label: 'annualDoses',
+          rhs: 'population × doses × coverage% × lossFactor',
+        },
+        {
+          rhs: `${format(c.targetPopulation)} × ${format(c.numberOfDoses)} × (${format(c.coverageRate)} / 100) × ${round(c.lossFactor, 3)}`,
+        },
+        {
+          rhs: round(c.annualTargetDoses, 2),
+          suffix: t('label.doses-per-year'),
+        },
+      ],
+      [
+        {
+          label: 'forecastDoses',
+          rhs: 'annualDoses / 12 × (supplyPeriod + buffer)',
+        },
+        {
+          rhs: `${round(c.annualTargetDoses, 2)} / 12 × (${format(c.supplyPeriodMonths)} + ${format(c.bufferStockMonths)})`,
+        },
+        {
+          rhs: round(c.forecastDoses, 2),
+          suffix: t('label.doses').toLowerCase(),
+        },
+      ],
+      [
+        { label: 'target', rhs: 'forecastDoses / dosesPerUnit' },
+        {
+          rhs: `${round(c.forecastDoses, 2)} / ${format(c.dosesPerUnit)}`,
+        },
+        {
+          rhs: format(Math.ceil(c.forecastUnits)),
+          suffix: t('label.units').toLowerCase(),
+        },
+      ],
+    ],
+  })),
+});
+
+const ancillaryAdapter = (
+  d: AncillaryRatioSnapshot,
+  t: TypedTFunction<LocaleKey>,
+  { format, round }: FormatFns
+): EquationDisplayProps => ({
+  heading: t('label.ancillary-ratio-forecast-calculation'),
+  warning: d.fallback ? t('warning.ancillary-ratio-fallback') : undefined,
+  groups: [
+    ...d.contributions.map(c => ({
+      title: c.parentItemName,
+      equations: [
+        [
+          {
+            label: 'contribution',
+            rhs: 'parentTarget × (ancillaryQty / itemQty)',
+          },
+          {
+            rhs: `${round(c.parentForecastUnits, 2)} × (${format(c.ancillaryQuantity)} / ${format(c.itemQuantity)})`,
+          },
+          {
+            rhs: round(c.units, 2),
+            suffix: t('label.units').toLowerCase(),
+          },
+        ],
+      ],
+    })),
+    {
+      equations: [
+        [
+          {
+            label: 'target',
+            rhs: round(d.forecastUnits, 2),
+            suffix: t('label.units').toLowerCase(),
+          },
+        ],
+      ],
+    },
+  ],
+});
+
+const pluginAdapter = (
+  d: PluginSnapshot,
+  t: TypedTFunction<LocaleKey>,
+  _fmt: FormatFns
+): EquationDisplayProps => ({
+  heading: d.pluginCode,
+  groups: [
+    {
+      // Each plugin display row becomes its own equation block; rows that
+      // only have a `result` collapse to a single line.
+      equations: d.display.map(row => {
+        const eq: EquationLine[] = [];
+        if (row.formula) eq.push({ label: row.label, rhs: row.formula });
+        if (row.substitution) {
+          eq.push(
+            eq.length === 0
+              ? { label: row.label, rhs: row.substitution }
+              : { rhs: row.substitution }
+          );
+        }
+        eq.push(
+          eq.length === 0
+            ? { label: row.label, rhs: row.result }
+            : { rhs: row.result }
+        );
+        return eq;
+      }),
+    },
+    {
+      equations: [
+        [
+          {
+            label: t('label.total').toLowerCase(),
+            rhs: d.forecastUnits,
+            suffix: t('label.units').toLowerCase(),
+          },
+        ],
+      ],
+    },
+  ],
+});
+
+// --- Top-level component ---------------------------------------------------
+
 interface ForecastCalculationDisplayProps {
-  vaccineCourses?: string | null;
+  forecastData?: string | null;
 }
 
+/// Parses the snapshot JSON, runs the appropriate adapter, and hands the
+/// result to the single `EquationDisplay` renderer. Adding a new method only
+/// requires writing one adapter — the rendering surface is shared.
 const ForecastCalculationDisplay = ({
-  vaccineCourses,
+  forecastData,
 }: ForecastCalculationDisplayProps) => {
   const t = useTranslation();
   const { round, format } = useFormatNumber();
-
-  const courses = vaccineCourses
-    ? (JSON.parse(vaccineCourses) as ForecastQuantityData[])
-    : [];
-
-  if (!courses || courses.length === 0) {
+  if (!forecastData) return null;
+  let snapshot: ForecastSnapshot;
+  try {
+    snapshot = JSON.parse(forecastData) as ForecastSnapshot;
+  } catch {
     return null;
   }
-
-  return (
-    <Box sx={{ width: '100%', m: 2, pr: 3 }}>
-      <Typography variant="body1" fontWeight={700}>
-        {t('label.population-forecast-calculation')}
-      </Typography>
-
-      {courses.map((course, index) => (
-        <Accordion key={index}>
-          <AccordionSummary expandIcon={<ExpandIcon />}>
-            <Typography variant="body1">{course.courseTitle}</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <CalculationStep
-                title={t('label.annual-target-doses-calculation')}
-                formula={t('description.annual-target-doses-calculation')}
-                substitution={`${format(course.targetPopulation)} × ${format(course.numberOfDoses)} × (${format(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`}
-                result={`= ${round(course.annualTargetDoses, 2)} ${t('label.doses-per-year')}`}
-              />
-
-              <CalculationStep
-                title={t('label.forecast-doses-calculation')}
-                formula={t('description.forecast-doses-calculation')}
-                substitution={`(${round(course.annualTargetDoses, 2)} / 12) × (${format(course.supplyPeriodMonths)} + ${format(course.bufferStockMonths)})`}
-                result={`= ${round(course.forecastDoses, 2)} ${t('label.doses').toLowerCase()}`}
-              />
-
-              <CalculationStep
-                title={t('label.forecast-units-calculation')}
-                formula={t('description.forecast-units-calculation')}
-                substitution={`${round(course.forecastDoses, 2)} / ${format(course.dosesPerUnit)}`}
-                result={`= ${format(Math.ceil(course.forecastUnits))} ${t('label.units').toLowerCase()}`}
-              />
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-      ))}
-    </Box>
-  );
+  const fmt: FormatFns = { format, round };
+  switch (snapshot.method) {
+    case 'amc':
+      return <EquationDisplay {...amcAdapter(snapshot, t, fmt)} />;
+    case 'population':
+      if (!snapshot.vaccineCourses?.length) return null;
+      return <EquationDisplay {...populationAdapter(snapshot, t, fmt)} />;
+    case 'ancillary_ratio':
+      return <EquationDisplay {...ancillaryAdapter(snapshot, t, fmt)} />;
+    case 'plugin':
+      return <EquationDisplay {...pluginAdapter(snapshot, t, fmt)} />;
+    default:
+      return null;
+  }
 };
 
 export default ForecastCalculationDisplay;

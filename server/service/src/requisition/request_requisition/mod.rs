@@ -31,3 +31,5 @@ pub use self::insert_request_from_response_requisition::*;
 
 mod generate_population_forecast;
 pub use self::generate_population_forecast::*;
+
+pub mod forecast;

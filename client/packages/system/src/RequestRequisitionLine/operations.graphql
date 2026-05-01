@@ -54,7 +54,14 @@ fragment RequestLine on RequisitionLineNode {
 
   forecastTotalUnits
   forecastTotalDoses
-  vaccineCourses
+  forecastMethod
+  forecastData
+  applicableForecastMethods {
+    code
+    label
+    isAvailable
+    unavailableReason
+  }
 }
 
 fragment Request on RequisitionNode {

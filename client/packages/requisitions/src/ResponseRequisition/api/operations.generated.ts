@@ -99,7 +99,8 @@ export type ResponseLineFragment = {
   approvalComment?: string | null;
   forecastTotalUnits?: number | null;
   forecastTotalDoses?: number | null;
-  vaccineCourses?: string | null;
+  forecastMethod?: string | null;
+  forecastData?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     stockOnHand: number;
@@ -238,7 +239,8 @@ export type ResponseFragment = {
       approvalComment?: string | null;
       forecastTotalUnits?: number | null;
       forecastTotalDoses?: number | null;
-      vaccineCourses?: string | null;
+      forecastMethod?: string | null;
+      forecastData?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         stockOnHand: number;
@@ -410,7 +412,8 @@ export type ResponseByNumberQuery = {
             approvalComment?: string | null;
             forecastTotalUnits?: number | null;
             forecastTotalDoses?: number | null;
-            vaccineCourses?: string | null;
+            forecastMethod?: string | null;
+            forecastData?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -590,7 +593,8 @@ export type ResponseByIdQuery = {
             approvalComment?: string | null;
             forecastTotalUnits?: number | null;
             forecastTotalDoses?: number | null;
-            vaccineCourses?: string | null;
+            forecastMethod?: string | null;
+            forecastData?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -1244,7 +1248,8 @@ export const ResponseLineFragmentDoc = gql`
     }
     forecastTotalUnits
     forecastTotalDoses
-    vaccineCourses
+    forecastMethod
+    forecastData
   }
   ${ItemWithStatsFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
