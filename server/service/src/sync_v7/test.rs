@@ -138,7 +138,9 @@ mod pull_integration {
             Some("Bearer test_token"),
         );
         assert_eq!(
-            headers.get(APP_VERSION_HEADER).and_then(|v| v.to_str().ok()),
+            headers
+                .get(APP_VERSION_HEADER)
+                .and_then(|v| v.to_str().ok()),
             Some(Version::from_package_json().to_string().as_str()),
         );
         assert!(headers.get(HARDWARE_ID_HEADER).is_some());
@@ -147,14 +149,11 @@ mod pull_integration {
     async fn site_status(req: HttpRequest) -> actix_web::HttpResponse {
         assert_auth_headers(&req);
         actix_web::HttpResponse::Ok().json(json!({
-            "Ok": { "site_id": 1, "central_site_id": 0 }
+            "Ok": { "siteId": 1, "centralSiteId": 0 }
         }))
     }
 
-    async fn push(
-        req: HttpRequest,
-        body: web::Json<serde_json::Value>,
-    ) -> actix_web::HttpResponse {
+    async fn push(req: HttpRequest, body: web::Json<serde_json::Value>) -> actix_web::HttpResponse {
         assert_auth_headers(&req);
         assert_json_include!(
             actual: body.into_inner(),
@@ -216,7 +215,7 @@ mod pull_integration {
         .bind("127.0.0.1:0")
         .unwrap();
 
-        let addr = server.addrs().first().unwrap().clone();
+        let addr = *server.addrs().first().unwrap();
         let server_handle = server.run();
         let handle = server_handle.handle();
         tokio::spawn(server_handle);
