@@ -1291,7 +1291,8 @@ mod tests {
               "is_cancellation": false,
               "insuranceDiscountAmount": 0,
               "insuranceDiscountRate": 0,
-              "goods_received_ID": ""
+              "goods_received_ID": "",
+              "original_PO_ID": ""
             }"#
             .to_string(),
             action: SyncAction::Upsert,
