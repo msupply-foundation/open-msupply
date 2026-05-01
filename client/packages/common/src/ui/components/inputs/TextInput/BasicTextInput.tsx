@@ -5,10 +5,27 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useFormField } from '@common/hooks';
+
+export type FormErrorBinding = {
+  formId?: string;
+  fieldId: string;
+  label: string;
+};
 
 export type BasicTextInputProps = StandardTextFieldProps & {
   textAlign?: 'left' | 'center' | 'right';
   focusOnRender?: boolean;
+  /**
+   * Opts the input into the form-error system. When provided, `error` and
+   * required-state visibility are driven by the store; otherwise the input
+   * behaves exactly as before.
+   */
+  formError?: FormErrorBinding;
+  /**
+   * Reactive custom error message. Only used when `formError` is set.
+   */
+  customError?: string | null;
 };
 
 /**
@@ -25,10 +42,12 @@ export const BasicTextInput = React.forwardRef<
       sx,
       style,
       slotProps,
-      error,
+      error: errorProp,
       required,
       textAlign,
       focusOnRender,
+      formError,
+      customError,
       ...props
     },
     ref
@@ -39,6 +58,16 @@ export const BasicTextInput = React.forwardRef<
         inputRef.current.focus();
       }
     }, [focusOnRender]);
+
+    const { error: storeError } = useFormField({
+      formId: formError?.formId,
+      fieldId: formError?.fieldId ?? '',
+      label: formError?.label ?? '',
+      value: props.value,
+      required,
+      customError,
+    });
+    const error = formError ? errorProp || storeError : errorProp;
 
     return (
       <Box

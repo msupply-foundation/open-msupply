@@ -8,11 +8,15 @@ import { useInsuranceProviders } from '../apiModern/hooks';
 interface InsuranceProvidersSelectProps {
   insuranceProviderId: string;
   onChange: (value: string) => void;
+  error?: boolean;
+  required?: boolean;
 }
 
 export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
   insuranceProviderId,
   onChange,
+  error,
+  required,
 }): ReactElement => {
   const t = useTranslation();
   const {
@@ -34,7 +38,8 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
       Input={
         <Autocomplete
           clearable={false}
-          required
+          required={required ?? true}
+          error={error}
           options={options}
           getOptionLabel={option => option.label}
           value={{
