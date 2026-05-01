@@ -6,22 +6,29 @@ import { AlertIcon } from '@common/icons';
 import { List, ListItem } from '@mui/material';
 import { useFormErrorStore, selectVisibleError } from './store';
 
+export type FormErrorListEntry = {
+  fieldId: string;
+  label: string;
+  message: string;
+};
+
+export type ErrorDisplayItem = {
+  key: string;
+  label: string;
+  message: string;
+};
+
 /**
- * Renders a summary of the visible errors for a given form. Hidden when there
- * are no visible errors.
+ * Returns the flat list of currently-visible errors for a form, in the same
+ * shape `<ErrorDisplay>` renders by default. Useful for consumers that want
+ * to compute a custom summary layout (grouping, filtering, re-ordering) and
+ * pass the result back via `<ErrorDisplay items={...} />`.
  */
-export const ErrorDisplay = ({
-  formId,
-  sx,
-}: {
-  formId: string;
-  sx?: SxProps;
-}) => {
-  const t = useTranslation();
-  const errors = useFormErrorStore(state => {
+export const useFormErrorList = (formId: string): FormErrorListEntry[] =>
+  useFormErrorStore(state => {
     const form = state.forms[formId];
-    if (!form) return [];
-    const list: { fieldId: string; label: string; message: string }[] = [];
+    if (!form) return EMPTY_LIST;
+    const list: FormErrorListEntry[] = [];
     Object.entries(form.fields).forEach(([fieldId, entry]) => {
       const visible = selectVisibleError(entry, form.showRequired);
       if (visible) {
@@ -35,8 +42,68 @@ export const ErrorDisplay = ({
     return list;
   }, errorListEquality);
 
-  if (errors.length === 0) return null;
+const EMPTY_LIST: FormErrorListEntry[] = [];
 
+type ErrorDisplayProps =
+  | {
+      // Default mode — read entries from the form's store.
+      formId: string;
+      items?: undefined;
+      sx?: SxProps;
+    }
+  | {
+      // Override mode — render the supplied items verbatim. Use this with
+      // `useFormErrorList` to build custom summaries (e.g. grouping by row).
+      formId?: string;
+      items: ErrorDisplayItem[];
+      sx?: SxProps;
+    };
+
+/**
+ * Renders a summary of visible form errors. Two modes:
+ *
+ *   <ErrorDisplay formId="my-form" />
+ *     — reads from the store and renders the default flat list.
+ *
+ *   <ErrorDisplay items={[...]} />
+ *     — renders the supplied items verbatim. Pair with `useFormErrorList`
+ *       to build custom layouts (grouping, filtering) without losing the
+ *       Alert chrome and styling.
+ *
+ * Hidden when there are no items to render.
+ */
+export const ErrorDisplay = (props: ErrorDisplayProps) => {
+  if (props.items !== undefined) {
+    return <ErrorDisplayInternal items={props.items} sx={props.sx} />;
+  }
+  return <ErrorDisplayFromStore formId={props.formId} sx={props.sx} />;
+};
+
+const ErrorDisplayFromStore = ({
+  formId,
+  sx,
+}: {
+  formId: string;
+  sx?: SxProps;
+}) => {
+  const errors = useFormErrorList(formId);
+  const items = errors.map(({ fieldId, label, message }) => ({
+    key: fieldId,
+    label,
+    message,
+  }));
+  return <ErrorDisplayInternal items={items} sx={sx} />;
+};
+
+const ErrorDisplayInternal = ({
+  items,
+  sx,
+}: {
+  items: ErrorDisplayItem[];
+  sx?: SxProps;
+}) => {
+  const t = useTranslation();
+  if (items.length === 0) return null;
   return (
     <Alert
       severity="error"
@@ -49,9 +116,9 @@ export const ErrorDisplay = ({
     >
       {t('messages.alert-problem-with-form-input')}
       <List sx={{ m: 0, p: 0 }}>
-        {errors.map(({ fieldId, label, message }) => (
+        {items.map(({ key, label, message }) => (
           <ListItem
-            key={fieldId}
+            key={key}
             sx={{ pt: 0, pb: 0, m: 0 }}
           >{`- ${label}: ${message}`}</ListItem>
         ))}
@@ -61,8 +128,8 @@ export const ErrorDisplay = ({
 };
 
 const errorListEquality = (
-  a: { fieldId: string; label: string; message: string }[],
-  b: { fieldId: string; label: string; message: string }[]
+  a: FormErrorListEntry[],
+  b: FormErrorListEntry[]
 ): boolean => {
   if (a === b) return true;
   if (a.length !== b.length) return false;

@@ -12,6 +12,8 @@ import {
   DeleteIcon,
   DemographicNode,
   DialogButton,
+  ErrorDisplay,
+  ErrorDisplayItem,
   FnUtils,
   IconButton,
   InputWithLabelRow,
@@ -21,6 +23,8 @@ import {
   NumericTextInput,
   PlusCircleIcon,
   useDialog,
+  useForm,
+  useFormErrorList,
   useNotification,
   useSimpleMaterialTable,
   useTranslation,
@@ -35,6 +39,8 @@ import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { StoreWastagePanel } from './StorageConfigPanel';
 import { DraftVaccineCourse } from '../api';
 import { VaccineCourseDoseFragment } from '../api/operations.generated';
+
+const FORM_ID = 'vaccine-course-edit';
 
 const getDemographicOptions = (demographics: DemographicNode[]) => {
   const options = demographics.map(demographic => {
@@ -88,6 +94,10 @@ function doseIndex(
   return doses.indexOf(dose) + 1;
 }
 
+function doseIndexById(doses: VaccineCourseDoseFragment[], doseId: string) {
+  return doses.findIndex(d => d.id === doseId) + 1;
+}
+
 export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   vaccineCourseId,
   isOpen,
@@ -103,11 +113,47 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     create: { create },
     updatePatch,
     query: { isLoading },
-    isDirty,
     resetDraft,
   } = useVaccineCourse(vaccineCourseId ?? undefined);
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const doses = draft.vaccineCourseDoses ?? [];
+
+  const form = useForm(FORM_ID);
+  const flatErrors = useFormErrorList(FORM_ID);
+
+  // Combined summary: top-form errors pass through 1:1; dose-cell errors
+  // (fieldId `${doseId}.${column}`) are grouped per row into one consolidated
+  // line. The `.` in fieldId is what tells this combiner to group.
+  const summaryItems = useMemo<ErrorDisplayItem[]>(() => {
+    const topForm: ErrorDisplayItem[] = [];
+    const doseGroups = new Map<string, string[]>();
+
+    for (const err of flatErrors) {
+      if (!err.fieldId.includes('.')) {
+        topForm.push({
+          key: err.fieldId,
+          label: err.label,
+          message: err.message,
+        });
+      } else {
+        const [doseId] = err.fieldId.split('.');
+        if (!doseId) continue;
+        const list = doseGroups.get(doseId) ?? [];
+        list.push(err.message);
+        doseGroups.set(doseId, list);
+      }
+    }
+
+    const doseItems: ErrorDisplayItem[] = [...doseGroups].map(
+      ([doseId, messages]) => ({
+        key: doseId,
+        label: `${t('label.dose')} ${doseIndexById(doses, doseId)}`,
+        message: messages.join(', '),
+      })
+    );
+
+    return [...topForm, ...doseItems];
+  }, [flatErrors, doses, t]);
 
   const { data: demographicData } = useDemographicData.demographics.list();
 
@@ -120,27 +166,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     value: draft.demographic?.name ?? '',
     label: draft.demographic?.name ?? '',
   };
+
   const save = async () => {
-    const agesAreInOrder = doses.every((dose, index, doses) => {
-      const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
-      return dose.minAgeMonths > prevDoseAge;
-    });
-
-    if (!agesAreInOrder) {
-      error(t('error.dose-ages-out-of-order'))();
-      return;
-    }
-
-    for (const dose of doses) {
-      if (dose.minAgeMonths > dose.maxAgeMonths) {
-        error(
-          t('error.dose-max-lower-than-min', {
-            doseIndex: doseIndex(doses, dose),
-          })
-        )();
-        return;
-      }
-    }
+    form.showRequired();
+    if (form.hasErrors()) return;
 
     try {
       const result =
@@ -163,15 +192,14 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     }
   };
 
-  const isValid =
-    draft.name.trim() &&
-    !draft.vaccineCourseDoses?.some(dose => !dose.label.trim());
-  const disable =
-    !isDirty ||
-    !programId ||
-    !isValid ||
-    draft.wastageRate === undefined ||
-    draft.coverageRate === undefined;
+  // Save is enabled by default — validation is now surfaced through
+  // `<ErrorDisplay>` and gated by `form.hasErrors()` in the save handler. The
+  // only reason to keep Save disabled outside of validation is when there's
+  // no program context to save against (programmer error, shouldn't happen in
+  // practice). `isDirty` no longer gates the button: in Create mode, the user
+  // needs to be able to click Save on a fresh form to see the required-field
+  // errors; in Edit mode, re-saving an unchanged record is harmless.
+  const disable = !programId;
 
   const modalContent = isLoading ? (
     <BasicSpinner />
@@ -185,6 +213,11 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             onChange={e => updatePatch({ name: e.target.value })}
             autoFocus
             required
+            formError={{
+              formId: FORM_ID,
+              fieldId: 'name',
+              label: t('label.immunisation-name'),
+            }}
           />
         </Row>
         <Row label={t('label.target-demographic')}>
@@ -206,7 +239,14 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             onChange={value => updatePatch({ coverageRate: value })}
             endAdornment="%"
             decimalLimit={1}
+            min={0}
             max={100}
+            required
+            formError={{
+              formId: FORM_ID,
+              fieldId: 'coverageRate',
+              label: t('label.coverage-rate'),
+            }}
           />
         </Row>
         <Row label={t('label.wastage-rate')}>
@@ -216,7 +256,14 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             onChange={value => updatePatch({ wastageRate: value })}
             endAdornment="%"
             decimalLimit={1}
+            min={0}
             max={100}
+            required
+            formError={{
+              formId: FORM_ID,
+              fieldId: 'wastageRate',
+              label: t('label.wastage-rate'),
+            }}
           />
         </Row>
         <Box display="flex" justifyContent="flex-end" paddingTop={1}>
@@ -244,6 +291,11 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             />
           </Row>
         </Box>
+        {/* ErrorDisplay sits above the dose table because the table has a
+            minimum height that pushes content below it too far down. The
+            summary stays close to the rest of the form regardless of how
+            many doses are in the table. */}
+        <ErrorDisplay items={summaryItems} sx={{ marginTop: '1em' }} />
         <VaccineCourseDoseTable
           courseName={draft.name}
           doses={doses}
@@ -318,6 +370,28 @@ const VaccineCourseDoseTable = ({
     });
   };
 
+  // Cross-row constraints. Each cell receives its specific message via
+  // customError; the modal's combined summary groups them per-row.
+  const doseErrors = useMemo(() => {
+    const errs: Record<string, { min?: string; max?: string }> = {};
+    doses.forEach((dose, idx) => {
+      const prev = doses[idx - 1];
+      if (prev && dose.minAgeMonths <= prev.minAgeMonths) {
+        errs[dose.id] = {
+          ...errs[dose.id],
+          min: t('error.dose-min-out-of-order'),
+        };
+      }
+      if (dose.maxAgeMonths < dose.minAgeMonths) {
+        errs[dose.id] = {
+          ...errs[dose.id],
+          max: t('error.dose-max-less-than-min'),
+        };
+      }
+    });
+    return errs;
+  }, [doses, t]);
+
   const columns = useMemo(
     (): ColumnDef<VaccineCourseDoseFragment>[] => [
       {
@@ -334,6 +408,12 @@ const VaccineCourseDoseTable = ({
           <TextInputCell
             cell={cell}
             updateFn={value => updateDose({ ...row, label: value })}
+            required
+            formError={{
+              formId: FORM_ID,
+              fieldId: `${row.id}.label`,
+              label: t('label.label'),
+            }}
           />
         ),
         size: 200,
@@ -345,6 +425,12 @@ const VaccineCourseDoseTable = ({
           <AgeInputCell
             cell={cell}
             updateFn={value => updateDose({ ...row, minAgeMonths: value })}
+            formError={{
+              formId: FORM_ID,
+              fieldId: `${row.id}.minAgeMonths`,
+              label: t('label.from-age'),
+            }}
+            customError={doseErrors[row.id]?.min ?? null}
           />
         ),
         size: 140,
@@ -356,6 +442,12 @@ const VaccineCourseDoseTable = ({
           <AgeInputCell
             cell={cell}
             updateFn={value => updateDose({ ...row, maxAgeMonths: value })}
+            formError={{
+              formId: FORM_ID,
+              fieldId: `${row.id}.maxAgeMonths`,
+              label: t('label.to-age'),
+            }}
+            customError={doseErrors[row.id]?.max ?? null}
           />
         ),
         size: 140,
@@ -394,7 +486,7 @@ const VaccineCourseDoseTable = ({
         size: 50,
       },
     ],
-    [doses]
+    [doses, doseErrors, t]
   );
 
   const table = useSimpleMaterialTable<VaccineCourseDoseFragment>({
@@ -402,7 +494,10 @@ const VaccineCourseDoseTable = ({
     columns,
     data: doses,
     enableRowSelection: false,
-    noDataElement: <NothingHere body={t('message.add-a-dose')} />,
+    // When there are no doses we don't render the "Nothing here" placeholder —
+    // it pushes the form's <ErrorDisplay> too far down on a fresh form. The
+    // empty header row is enough of a hint that the table exists.
+    noDataElement: <></>,
   });
 
   return (
