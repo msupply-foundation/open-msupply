@@ -525,7 +525,7 @@ export type AssetLogNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
-  logDatetime: Scalars['NaiveDateTime']['output'];
+  logDatetime: Scalars['DateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
   type: AssetLogTypeNodeType;
@@ -623,7 +623,7 @@ export type AssetNode = {
   catalogProperties?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   donorNameId?: Maybe<Scalars['String']['output']>;
@@ -631,7 +631,7 @@ export type AssetNode = {
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   lockedFields: LockedAssetFieldsNode;
-  modifiedDatetime: Scalars['NaiveDateTime']['output'];
+  modifiedDatetime: Scalars['DateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"} */
@@ -733,6 +733,17 @@ export type AssetTypeSortInput = {
 export type AssetTypesResponse = AssetTypeConnector;
 
 export type AssetsResponse = AssetConnector;
+
+export type AssignStoresToSiteInput = {
+  siteId: Scalars['Int']['input'];
+  storeIds: Array<Scalars['String']['input']>;
+};
+
+export type AssignStoresToSiteNode = {
+  __typename: 'AssignStoresToSiteNode';
+  siteId: Scalars['Int']['output'];
+  storeIds: Array<Scalars['String']['output']>;
+};
 
 export type AuthToken = {
   __typename: 'AuthToken';
@@ -1351,8 +1362,13 @@ export type CentralServerQueryNode = {
 
 export type CentralSiteMutations = {
   __typename: 'CentralSiteMutations';
+  assignStoresToSite: AssignStoresToSiteNode;
   deleteSite: DeleteSiteNode;
   upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsAssignStoresToSiteArgs = {
+  input: AssignStoresToSiteInput;
 };
 
 export type CentralSiteMutationsDeleteSiteArgs = {
@@ -1438,8 +1454,8 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
-export type CodeMustBeProvided = UpsertSiteErrorInterface & {
-  __typename: 'CodeMustBeProvided';
+export type CodeRequired = UpsertSiteErrorInterface & {
+  __typename: 'CodeRequired';
   description: Scalars['String']['output'];
 };
 
@@ -3010,6 +3026,20 @@ export type FullSyncStatusNode = {
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  warningThreshold: Scalars['Int']['output'];
+};
+
+export type FullSyncStatusV7Node = {
+  __typename: 'FullSyncStatusV7Node';
+  error?: Maybe<SyncErrorV7Node>;
+  errorThreshold: Scalars['Int']['output'];
+  integration?: Maybe<SyncStatusWithProgressV7Node>;
+  isSyncing: Scalars['Boolean']['output'];
+  lastSuccessfulSync?: Maybe<SyncStatusV7Node>;
+  pull?: Maybe<SyncStatusWithProgressV7Node>;
+  push?: Maybe<SyncStatusWithProgressV7Node>;
+  summary: SyncStatusV7Node;
+  waitingForIntegration?: Maybe<SyncStatusV7Node>;
   warningThreshold: Scalars['Int']['output'];
 };
 
@@ -6274,11 +6304,6 @@ export type NameFilterInput = {
   type?: InputMaybe<EqualFilterTypeInput>;
 };
 
-export type NameMustBeProvided = UpsertSiteErrorInterface & {
-  __typename: 'NameMustBeProvided';
-  description: Scalars['String']['output'];
-};
-
 export type NameNode = {
   __typename: 'NameNode';
   address1?: Maybe<Scalars['String']['output']>;
@@ -6337,6 +6362,11 @@ export type NamePropertyNode = {
 };
 
 export type NamePropertyResponse = NamePropertyConnector;
+
+export type NameRequired = UpsertSiteErrorInterface & {
+  __typename: 'NameRequired';
+  description: Scalars['String']['output'];
+};
 
 export enum NameSortFieldInput {
   Code = 'code',
@@ -7570,6 +7600,7 @@ export type Queries = {
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
+  latestSyncStatusV7?: Maybe<FullSyncStatusV7Node>;
   ledger: LedgerResponse;
   /** Query omSupply "location_type" entries */
   locationTypes: LocationTypesResponse;
@@ -9832,6 +9863,12 @@ export type SyncErrorNode = {
   variant: SyncErrorVariant;
 };
 
+export type SyncErrorV7Node = {
+  __typename: 'SyncErrorV7Node';
+  fullError: Scalars['String']['output'];
+  variant: SyncErrorVariantV7;
+};
+
 export enum SyncErrorVariant {
   ApiVersionIncompatible = 'API_VERSION_INCOMPATIBLE',
   CentralV6NotConfigured = 'CENTRAL_V6_NOT_CONFIGURED',
@@ -9849,6 +9886,23 @@ export enum SyncErrorVariant {
   V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE',
 }
 
+export enum SyncErrorVariantV7 {
+  Authentication = 'AUTHENTICATION',
+  ConnectionError = 'CONNECTION_ERROR',
+  DatabaseError = 'DATABASE_ERROR',
+  GetCurrentSiteIdError = 'GET_CURRENT_SITE_ID_ERROR',
+  IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
+  NotACentralServer = 'NOT_A_CENTRAL_SERVER',
+  Other = 'OTHER',
+  ParsingError = 'PARSING_ERROR',
+  RecordNotFound = 'RECORD_NOT_FOUND',
+  SiteIdMismatch = 'SITE_ID_MISMATCH',
+  SiteIdNotSet = 'SITE_ID_NOT_SET',
+  SiteLockError = 'SITE_LOCK_ERROR',
+  SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
+  SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
+}
+
 export type SyncFileReferenceConnector = {
   __typename: 'SyncFileReferenceConnector';
   nodes: Array<SyncFileReferenceNode>;
@@ -9857,7 +9911,7 @@ export type SyncFileReferenceConnector = {
 
 export type SyncFileReferenceNode = {
   __typename: 'SyncFileReferenceNode';
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   fileName: Scalars['String']['output'];
   id: Scalars['String']['output'];
   mimeType?: Maybe<Scalars['String']['output']>;
@@ -9882,6 +9936,8 @@ export type SyncSettingsInput = {
 
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
+  /** Currently OG Central Server ID */
+  centralServerSiteId?: Maybe<Scalars['Int']['output']>;
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
   /** Central server url */
@@ -9897,8 +9953,23 @@ export type SyncStatusNode = {
   started: Scalars['DateTime']['output'];
 };
 
+export type SyncStatusV7Node = {
+  __typename: 'SyncStatusV7Node';
+  durationInSeconds: Scalars['Int']['output'];
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+};
+
 export type SyncStatusWithProgressNode = {
   __typename: 'SyncStatusWithProgressNode';
+  done?: Maybe<Scalars['Int']['output']>;
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+  total?: Maybe<Scalars['Int']['output']>;
+};
+
+export type SyncStatusWithProgressV7Node = {
+  __typename: 'SyncStatusWithProgressV7Node';
   done?: Maybe<Scalars['Int']['output']>;
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];

@@ -6,6 +6,14 @@ fragment SiteRow on SiteNode {
   hardwareId
 }
 
+fragment SiteStoreRow on StoreNode {
+  __typename
+  id
+  code
+  storeName
+  siteId
+}
+
 query sites(
   $sort: [SiteSortInput!]
   $first: Int
@@ -43,11 +51,11 @@ mutation upsertSite($input: UpsertSiteInput!) {
         ... on UpsertSiteError {
           __typename
           error {
-            ... on CodeMustBeProvided {
+            ... on CodeRequired {
               __typename
               description
             }
-            ... on NameMustBeProvided {
+            ... on NameRequired {
               __typename
               description
             }
@@ -68,6 +76,29 @@ mutation deleteSite($siteId: Int!) {
     site {
       deleteSite(siteId: $siteId) {
         id
+      }
+    }
+  }
+}
+
+mutation assignStoresToSite($input: AssignStoresToSiteInput!) {
+  centralServer {
+    site {
+      assignStoresToSite(input: $input) {
+        siteId
+        storeIds
+      }
+    }
+  }
+}
+
+query storesBySite($siteId: Int!) {
+  stores(filter: { siteId: { equalTo: $siteId } }, page: { first: 1000 }) {
+    ... on StoreConnector {
+      __typename
+      totalCount
+      nodes {
+        ...SiteStoreRow
       }
     }
   }

@@ -4,8 +4,8 @@ use repository::{RepositoryError, SiteRow, SiteRowRepository};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertSiteError {
-    CodeMustBeProvided,
-    NameMustBeProvided,
+    CodeRequired,
+    NameRequired,
     PasswordRequired,
     DatabaseError(RepositoryError),
 }
@@ -44,14 +44,14 @@ impl From<RepositoryError> for UpsertSiteError {
 fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), UpsertSiteError> {
     match (&input.code, existing) {
         (Some(code), _) if code.trim().is_empty() => {
-            return Err(UpsertSiteError::CodeMustBeProvided)
+            return Err(UpsertSiteError::CodeRequired)
         }
-        (None, None) => return Err(UpsertSiteError::CodeMustBeProvided),
+        (None, None) => return Err(UpsertSiteError::CodeRequired),
         _ => {}
     }
 
     if input.name.trim().is_empty() {
-        return Err(UpsertSiteError::NameMustBeProvided);
+        return Err(UpsertSiteError::NameRequired);
     }
 
     match (&input.password, existing) {
@@ -125,7 +125,7 @@ mod tests {
                     clear_hardware_id: false,
                 },
             ),
-            Err(UpsertSiteError::CodeMustBeProvided)
+            Err(UpsertSiteError::CodeRequired)
         );
 
         assert_eq!(
@@ -139,7 +139,7 @@ mod tests {
                     clear_hardware_id: false,
                 },
             ),
-            Err(UpsertSiteError::CodeMustBeProvided)
+            Err(UpsertSiteError::CodeRequired)
         );
 
         // Whitespace-only code
@@ -154,7 +154,7 @@ mod tests {
                     clear_hardware_id: false,
                 },
             ),
-            Err(UpsertSiteError::CodeMustBeProvided)
+            Err(UpsertSiteError::CodeRequired)
         );
 
         assert_eq!(
@@ -168,7 +168,7 @@ mod tests {
                     clear_hardware_id: false,
                 },
             ),
-            Err(UpsertSiteError::NameMustBeProvided)
+            Err(UpsertSiteError::NameRequired)
         );
 
         assert_eq!(
@@ -182,7 +182,7 @@ mod tests {
                     clear_hardware_id: false,
                 },
             ),
-            Err(UpsertSiteError::NameMustBeProvided)
+            Err(UpsertSiteError::NameRequired)
         );
 
         assert_eq!(

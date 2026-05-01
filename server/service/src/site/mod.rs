@@ -1,4 +1,5 @@
 use self::{
+    assign_stores::{assign_stores_to_site, AssignStoresToSite, AssignStoresToSiteError},
     delete::{delete_site, DeleteSiteError},
     query::get_sites,
     upsert::{upsert_site, UpsertSite, UpsertSiteError},
@@ -6,6 +7,7 @@ use self::{
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{PaginationOption, SiteFilter, SiteRow, SiteSort};
 
+pub mod assign_stores;
 pub mod delete;
 pub mod query;
 pub mod upsert;
@@ -31,6 +33,14 @@ pub trait SiteServiceTrait: Sync + Send {
 
     fn delete_site(&self, ctx: &ServiceContext, site_id: i32) -> Result<i32, DeleteSiteError> {
         delete_site(ctx, site_id)
+    }
+
+    fn assign_stores_to_site(
+        &self,
+        ctx: &ServiceContext,
+        input: AssignStoresToSite,
+    ) -> Result<Vec<String>, AssignStoresToSiteError> {
+        assign_stores_to_site(ctx, input)
     }
 }
 
