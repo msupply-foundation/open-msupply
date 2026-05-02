@@ -12,9 +12,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     cursor_controller::CursorController,
-    sync::{settings::SyncSettings, ActiveStoresOnSite},
+    service_provider::ServiceProvider,
+    sync::{
+        settings::{BatchSize, SyncSettings},
+        ActiveStoresOnSite,
+    },
     sync_v7::{
-        api::{self, SyncApiV7, VERSION},
+        api::{self, Common, SyncApiV7},
         get_current_site_id,
         prepare::prepare,
         sync_logger::{SyncLogger, SyncStep},
@@ -104,13 +108,21 @@ pub(crate) fn sync_record_to_buffer_row(
 }
 
 pub(crate) async fn sync_v7(
+    service_provider: &ServiceProvider,
     connection: &StorageConnection,
     settings: SyncSettings,
     is_initialising: bool,
 ) -> Result<(), anyhow::Error> {
     let mut logger = SyncLogger::start(connection)?;
 
-    let sync_result = sync_inner(&mut logger, connection, settings, is_initialising).await;
+    let sync_result = sync_inner(
+        &mut logger,
+        service_provider,
+        connection,
+        settings,
+        is_initialising,
+    )
+    .await;
 
     if let Err(error) = &sync_result {
         logger.error(error)?;
@@ -124,20 +136,21 @@ pub(crate) async fn sync_v7(
 
 async fn sync_inner<'a>(
     logger: &mut SyncLogger<'a>,
+    service_provider: &ServiceProvider,
     connection: &StorageConnection,
     settings: SyncSettings,
     is_initialising: bool,
 ) -> Result<(), SyncError> {
-    let sync_v7 = SyncV7::new(
+    let common = Common::load(service_provider)?;
+    let auth_headers = common.to_auth_headers()?;
+    let sync_v7 = SyncV7 {
         connection,
-        SyncApiV7 {
+        sync_api_v7: SyncApiV7 {
             url: settings.url.parse().unwrap(),
-            version: VERSION,
-            username: settings.username,
-            password: settings.password_sha256,
+            auth_headers,
         },
-        5000,
-    );
+        batch_size: settings.batch_size,
+    };
 
     logger.start_step(SyncStep::Push)?;
     sync_v7.push(logger, is_initialising).await?;
@@ -159,23 +172,9 @@ async fn sync_inner<'a>(
 }
 
 pub(crate) struct SyncV7<'a> {
-    connection: &'a StorageConnection,
-    sync_api_v7: SyncApiV7,
-    batch_size: u32,
-}
-
-impl<'a> SyncV7<'a> {
-    pub(crate) fn new(
-        connection: &'a StorageConnection,
-        sync_api_v7: SyncApiV7,
-        batch_size: u32,
-    ) -> SyncV7<'a> {
-        SyncV7 {
-            connection,
-            sync_api_v7,
-            batch_size,
-        }
-    }
+    pub(crate) connection: &'a StorageConnection,
+    pub(crate) sync_api_v7: SyncApiV7,
+    pub(crate) batch_size: BatchSize,
 }
 
 impl<'a> SyncV7<'a> {
@@ -194,13 +193,17 @@ impl<'a> SyncV7<'a> {
         let site_id = get_current_site_id(self.connection)?;
 
         // TODO think about just the filter for source site id = current site on changelog
-        let filter = Site::SiteId(site_id).remote_data_for_site();
+        let filter = Site::SiteId(site_id).all_data_edited_on_site();
 
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
 
-            let batch =
-                SyncBatchV7::generate(self.connection, filter.clone(), cursor, self.batch_size)?;
+            let batch = SyncBatchV7::generate(
+                self.connection,
+                filter.clone(),
+                cursor,
+                self.batch_size.remote_push,
+            )?;
 
             let record_count = batch.records.len();
 
@@ -219,7 +222,7 @@ impl<'a> SyncV7<'a> {
 
             cursor_controller.update(self.connection, batch_max_cursor as u64)?;
 
-            if record_count < self.batch_size as usize {
+            if record_count < self.batch_size.remote_push as usize {
                 break;
             }
         }
@@ -269,7 +272,7 @@ impl<'a> SyncV7<'a> {
                 .sync_api_v7
                 .pull(api::pull::Input {
                     cursor,
-                    batch_size: self.batch_size,
+                    batch_size: self.batch_size.remote_pull,
                     is_initialising,
                 })
                 .await?;
@@ -295,7 +298,7 @@ impl<'a> SyncV7<'a> {
                 })
                 .map_err(|e| e.to_inner_error())?;
 
-            if record_count < self.batch_size as usize {
+            if record_count < self.batch_size.remote_pull as usize {
                 break;
             }
         }

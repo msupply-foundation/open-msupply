@@ -90,7 +90,7 @@ mod test {
     use repository::{
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        SyncAction, SyncBufferRow, SyncBufferRowRepository, SyncRecordData,
+        SyncAction, SyncBufferRow, SyncBufferRowRepository,
     };
 
     use crate::sync::{

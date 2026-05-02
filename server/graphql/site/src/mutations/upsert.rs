@@ -18,19 +18,19 @@ pub struct UpsertSiteInput {
     pub clear_hardware_id: Option<bool>,
 }
 
-pub struct CodeMustBeProvided;
+pub struct CodeRequired;
 #[Object]
-impl CodeMustBeProvided {
+impl CodeRequired {
     pub async fn description(&self) -> &str {
-        "Code must be provided"
+        "Code is required"
     }
 }
 
-pub struct NameNotProvided;
+pub struct NameRequired;
 #[Object]
-impl NameNotProvided {
+impl NameRequired {
     pub async fn description(&self) -> &str {
-        "Name must be provided"
+        "Name is required"
     }
 }
 
@@ -45,8 +45,8 @@ impl PasswordRequired {
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpsertSiteErrorInterface {
-    CodeMustBeProvided(CodeMustBeProvided),
-    NameNotProvided(NameNotProvided),
+    CodeRequired(CodeRequired),
+    NameRequired(NameRequired),
     PasswordRequired(PasswordRequired),
 }
 
@@ -89,18 +89,16 @@ fn map_error(error: ServiceError) -> Result<UpsertSiteErrorInterface> {
     let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
-        ServiceError::CodeMustBeProvided => {
-            return Ok(UpsertSiteErrorInterface::CodeMustBeProvided(
-                CodeMustBeProvided,
+        ServiceError::CodeRequired => {
+            return Ok(UpsertSiteErrorInterface::CodeRequired(
+                CodeRequired,
             ))
         }
-        ServiceError::NameNotProvided => {
-            return Ok(UpsertSiteErrorInterface::NameNotProvided(NameNotProvided))
+        ServiceError::NameRequired => {
+            return Ok(UpsertSiteErrorInterface::NameRequired(NameRequired))
         }
         ServiceError::PasswordRequired => {
-            return Ok(UpsertSiteErrorInterface::PasswordRequired(
-                PasswordRequired,
-            ))
+            return Ok(UpsertSiteErrorInterface::PasswordRequired(PasswordRequired))
         }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

@@ -54,13 +54,39 @@ export const useSites = (queryParams?: ListParams) => {
     error: upsertError,
   } = useUpsertSite();
 
+  const {
+    mutateAsync: deleteMutation,
+    isLoading: isDeleting,
+    error: deleteError,
+  } = useDeleteSite();
+
+  const {
+    mutateAsync: clearSyncTokenMutation,
+    isLoading: isClearingSyncToken,
+    error: clearSyncTokenError,
+  } = useClearSiteToken();
+
   const upsert = async () => {
     return await upsertMutation(draft);
+  };
+
+  const deleteSite = async (siteId: number) => {
+    return await deleteMutation(siteId);
+  };
+
+  const clearSyncToken = async (siteId: number) => {
+    return await clearSyncTokenMutation(siteId);
   };
 
   return {
     query: { data, isFetching, isError },
     upsert: { upsert, isUpserting, upsertError },
+    deleteSite: { deleteSite, isDeleting, deleteError },
+    clearSyncToken: {
+      clearSyncToken,
+      isClearingSyncToken,
+      clearSyncTokenError,
+    },
     draft,
     updateDraft,
   };
@@ -92,8 +118,8 @@ const toSortInput = (sortBy?: SortBy<SiteRowFragment>) => ({
 });
 
 enum UpsertSiteError {
-  CodeMustBeProvided = 'CodeMustBeProvided',
-  NameNotProvided = 'NameNotProvided',
+  CodeRequired = 'CodeRequired',
+  NameRequired = 'NameRequired',
   PasswordRequired = 'PasswordRequired',
 }
 
@@ -119,13 +145,13 @@ const useUpsertSite = () => {
 
     if (upsertResult?.__typename === 'UpsertSiteError') {
       switch (upsertResult.error.__typename) {
-        case UpsertSiteError.CodeMustBeProvided:
+        case UpsertSiteError.CodeRequired:
           throw new Error(
             t('error.field-must-be-specified', {
               field: t('label.code'),
             })
           );
-        case UpsertSiteError.NameNotProvided:
+        case UpsertSiteError.NameRequired:
           throw new Error(
             t('error.field-must-be-specified', {
               field: t('label.name'),
@@ -143,6 +169,44 @@ const useUpsertSite = () => {
     }
 
     throw new Error(t('error.unable-to-save-site'));
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([SITE]);
+    },
+    onError: (e: unknown) => {
+      console.error(e);
+    },
+  });
+};
+
+const useDeleteSite = () => {
+  const { siteApi, queryClient } = useSiteGraphQL();
+
+  const mutationFn = async (siteId: number) => {
+    const result = await siteApi.deleteSite({ siteId });
+    return result?.centralServer?.site?.deleteSite;
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([SITE]);
+    },
+    onError: (e: unknown) => {
+      console.error(e);
+    },
+  });
+};
+
+const useClearSiteToken = () => {
+  const { siteApi, queryClient } = useSiteGraphQL();
+
+  const mutationFn = async (siteId: number) => {
+    const result = await siteApi.clearSiteToken({ siteId });
+    return result?.centralServer?.site?.clearSiteToken;
   };
 
   return useMutation({

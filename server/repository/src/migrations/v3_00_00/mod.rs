@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_sync_log_v7;
 mod add_sync_v7_cursor_pg_enum;
+mod add_sync_v7_token_pg_enum;
 mod alter_changelog_table_for_sync_v7;
 mod alter_sync_buffer_for_sync_v7;
 mod changelog_related_changes_for_sync_v7;
@@ -21,6 +22,7 @@ impl Migration for V3_00_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_sync_v7_cursor_pg_enum::Migrate),
+            Box::new(add_sync_v7_token_pg_enum::Migrate),
             Box::new(alter_changelog_table_for_sync_v7::Migrate),
             Box::new(alter_sync_buffer_for_sync_v7::Migrate),
             Box::new(add_sync_log_v7::Migrate),

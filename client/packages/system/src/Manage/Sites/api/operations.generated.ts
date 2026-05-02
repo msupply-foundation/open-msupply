@@ -11,6 +11,14 @@ export type SiteRowFragment = {
   hardwareId?: string | null;
 };
 
+export type SiteStoreRowFragment = {
+  __typename: 'StoreNode';
+  id: string;
+  code: string;
+  storeName: string;
+  siteId: number;
+};
+
 export type SitesQueryVariables = Types.Exact<{
   sort?: Types.InputMaybe<Array<Types.SiteSortInput> | Types.SiteSortInput>;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -60,11 +68,79 @@ export type UpsertSiteMutation = {
         | {
             __typename: 'UpsertSiteError';
             error:
-              | { __typename: 'CodeMustBeProvided'; description: string }
-              | { __typename: 'NameNotProvided'; description: string }
+              | { __typename: 'CodeRequired'; description: string }
+              | { __typename: 'NameRequired'; description: string }
               | { __typename: 'PasswordRequired'; description: string };
           };
     };
+  };
+};
+
+export type DeleteSiteMutationVariables = Types.Exact<{
+  siteId: Types.Scalars['Int']['input'];
+}>;
+
+export type DeleteSiteMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    site: {
+      __typename: 'CentralSiteMutations';
+      deleteSite: { __typename: 'DeleteSiteNode'; id: number };
+    };
+  };
+};
+
+export type AssignStoresToSiteMutationVariables = Types.Exact<{
+  input: Types.AssignStoresToSiteInput;
+}>;
+
+export type AssignStoresToSiteMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    site: {
+      __typename: 'CentralSiteMutations';
+      assignStoresToSite: {
+        __typename: 'AssignStoresToSiteNode';
+        siteId: number;
+        storeIds: Array<string>;
+      };
+    };
+  };
+};
+
+export type ClearSiteTokenMutationVariables = Types.Exact<{
+  siteId: Types.Scalars['Int']['input'];
+}>;
+
+export type ClearSiteTokenMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    site: {
+      __typename: 'CentralSiteMutations';
+      clearSiteToken: { __typename: 'ClearSiteTokenNode'; id: number };
+    };
+  };
+};
+
+export type StoresBySiteQueryVariables = Types.Exact<{
+  siteId: Types.Scalars['Int']['input'];
+}>;
+
+export type StoresBySiteQuery = {
+  __typename: 'Queries';
+  stores: {
+    __typename: 'StoreConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      storeName: string;
+      siteId: number;
+    }>;
   };
 };
 
@@ -75,6 +151,15 @@ export const SiteRowFragmentDoc = gql`
     code
     name
     hardwareId
+  }
+`;
+export const SiteStoreRowFragmentDoc = gql`
+  fragment SiteStoreRow on StoreNode {
+    __typename
+    id
+    code
+    storeName
+    siteId
   }
 `;
 export const SitesDocument = gql`
@@ -117,11 +202,11 @@ export const UpsertSiteDocument = gql`
           ... on UpsertSiteError {
             __typename
             error {
-              ... on CodeMustBeProvided {
+              ... on CodeRequired {
                 __typename
                 description
               }
-              ... on NameNotProvided {
+              ... on NameRequired {
                 __typename
                 description
               }
@@ -137,6 +222,54 @@ export const UpsertSiteDocument = gql`
     }
   }
   ${SiteRowFragmentDoc}
+`;
+export const DeleteSiteDocument = gql`
+  mutation deleteSite($siteId: Int!) {
+    centralServer {
+      site {
+        deleteSite(siteId: $siteId) {
+          id
+        }
+      }
+    }
+  }
+`;
+export const AssignStoresToSiteDocument = gql`
+  mutation assignStoresToSite($input: AssignStoresToSiteInput!) {
+    centralServer {
+      site {
+        assignStoresToSite(input: $input) {
+          siteId
+          storeIds
+        }
+      }
+    }
+  }
+`;
+export const ClearSiteTokenDocument = gql`
+  mutation clearSiteToken($siteId: Int!) {
+    centralServer {
+      site {
+        clearSiteToken(siteId: $siteId) {
+          id
+        }
+      }
+    }
+  }
+`;
+export const StoresBySiteDocument = gql`
+  query storesBySite($siteId: Int!) {
+    stores(filter: { siteId: { equalTo: $siteId } }, page: { first: 1000 }) {
+      ... on StoreConnector {
+        __typename
+        totalCount
+        nodes {
+          ...SiteStoreRow
+        }
+      }
+    }
+  }
+  ${SiteStoreRowFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -191,6 +324,78 @@ export function getSdk(
           }),
         'upsertSite',
         'mutation',
+        variables
+      );
+    },
+    deleteSite(
+      variables: DeleteSiteMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteSiteMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteSiteMutation>({
+            document: DeleteSiteDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteSite',
+        'mutation',
+        variables
+      );
+    },
+    assignStoresToSite(
+      variables: AssignStoresToSiteMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<AssignStoresToSiteMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<AssignStoresToSiteMutation>({
+            document: AssignStoresToSiteDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'assignStoresToSite',
+        'mutation',
+        variables
+      );
+    },
+    clearSiteToken(
+      variables: ClearSiteTokenMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ClearSiteTokenMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ClearSiteTokenMutation>({
+            document: ClearSiteTokenDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'clearSiteToken',
+        'mutation',
+        variables
+      );
+    },
+    storesBySite(
+      variables: StoresBySiteQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<StoresBySiteQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StoresBySiteQuery>({
+            document: StoresBySiteDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'storesBySite',
+        'query',
         variables
       );
     },
