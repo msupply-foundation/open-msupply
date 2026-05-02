@@ -30,8 +30,12 @@ table! {
 
 allow_tables_to_appear_in_same_query!(changelog, vaccination);
 allow_tables_to_appear_in_same_query!(changelog, store);
+allow_tables_to_appear_in_same_query!(changelog, name_store_join);
 
-diesel::alias!(store as transfer_stores: TransferStores);
+diesel::alias!(
+    store as transfer_stores: TransferStores,
+    store as patient_stores: PatientStore,
+);
 
 #[diesel::dsl::auto_type]
 fn query() -> _ {
@@ -43,18 +47,42 @@ fn query() -> _ {
                 .nullable()
                 .eq(changelog::transfer_store_id)),
         )
+        .left_join(
+            name_store_join::table.on(name_store_join::name_id
+                .nullable()
+                .eq(changelog::patient_id)),
+        )
+        .left_join(
+            patient_stores.on(patient_stores
+                .field(store::id)
+                .nullable()
+                .eq(name_store_join::store_id.nullable())),
+        )
 }
 
+// Expand macro recurseively for auto_type, hen replace "diesel::dsl::LeftJoin" with "LeftJoinQuerySource"
+// And then remove diesel::dsl::On< keeping what's inside here >
 type Source = LeftJoinQuerySource<
     LeftJoinQuerySource<
-        changelog::table,
-        store::table,
-        diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog::store_id>,
+        LeftJoinQuerySource<
+            LeftJoinQuerySource<
+                changelog::table,
+                store::table,
+                diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog::store_id>,
+            >,
+            transfer_stores,
+            diesel::dsl::Eq<
+                diesel::dsl::Nullable<diesel::dsl::Field<transfer_stores, store::id>>,
+                changelog::transfer_store_id,
+            >,
+        >,
+        name_store_join::table,
+        diesel::dsl::Eq<diesel::dsl::Nullable<name_store_join::name_id>, changelog::patient_id>,
     >,
-    transfer_stores,
+    patient_stores,
     diesel::dsl::Eq<
-        diesel::dsl::Nullable<diesel::dsl::Field<transfer_stores, store::id>>,
-        changelog::transfer_store_id,
+        diesel::dsl::Nullable<diesel::dsl::Field<patient_stores, store::id>>,
+        diesel::dsl::Nullable<name_store_join::store_id>,
     >,
 >;
 
@@ -71,80 +99,101 @@ diesel_string_enum! {
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, strum::EnumIter, TS)]
     #[strum(serialize_all = "snake_case")]
+    // Variants are grouped by `sync_style()` and sorted alphabetically within each group.
+    // Keep this layout in sync with the match in `sync_style` below.
     pub enum ChangelogTableName {
-        Unit,
-        Store,
-        LocationType,
-        BackendPlugin,
-        Number,
-        Location,
-        LocationMovement,
-        StockLine,
-        Invoice,
-        InvoiceLine,
-        Stocktake,
-        StocktakeLine,
-        Requisition,
-        RequisitionLine,
+        // ---- Legacy — Remote (not v6) ----
         ActivityLog,
         Barcode,
         Clinician,
         ClinicianStoreJoin,
-        Name,
-        NameStoreJoin,
+        Currency,
         Document,
+        IndicatorValue,
+        InsuranceProvider,
+        Item,
+        Location,
+        LocationMovement,
+        Name,
+        NameInsuranceJoin,
+        NameStoreJoin,
+        Number,
+        PurchaseOrder,
+        PurchaseOrderLine,
         Sensor,
+        StockLine,
+        Stocktake,
+        StocktakeLine,
         TemperatureBreach,
         TemperatureBreachConfig,
         TemperatureLog,
-        PackVariant,
-        Currency,
-        AssetClass,
-        AssetCategory,
-        AssetCatalogueType,
+        VVMStatusLog,
+
+        // ---- Legacy — Remote + Transfer (not v6) ----
+        Requisition,
+        RequisitionLine,
+
+        // ---- Legacy — Remote + Transfer + Patient (not v6) ----
+        Invoice,
+        InvoiceLine,
+
+        // ---- Central (v6) ----
         AssetCatalogueItem,
         AssetCatalogueItemProperty,
         AssetCatalogueProperty,
-        AssetInternalLocation,
-        #[default]
-        SyncFileReference,
-        Asset,
-        AssetLog,
+        AssetCatalogueType,
+        AssetCategory,
+        AssetClass,
         AssetLogReason,
         AssetProperty,
-        Property,
-        NameProperty,
+        BackendPlugin,
+        BundledItem,
+        Campaign,
+        Demographic,
+        FormSchema,
+        FrontendPlugin,
+        ItemVariant,
         NameOmsFields,
+        NameProperty,
+        PackVariant,
+        PackagingVariant,
+        Property,
+        Report,
+        VaccineCourse,
+        VaccineCourseDose,
+        VaccineCourseItem,
+        VaccineCourseStoreConfig,
+
+        // ---- Central (not v6) ----
+        LocationType,
+        MasterList,
+        Store,
+        Unit,
+
+        // ---- ToLegacyCentralOnly (not v6) ----
+        Site,
+
+        // ---- Remote (v6) ----
+        Asset,
+        AssetInternalLocation,
+        AssetLog,
+        Encounter,
         RnrForm,
         RnrFormLine,
-        Demographic,
-        VaccineCourse,
-        VaccineCourseItem,
-        VaccineCourseDose,
-        VaccineCourseStoreConfig,
+        SyncMessage,
         Vaccination,
-        Encounter,
-        ItemVariant,
-        PackagingVariant,
-        IndicatorValue,
-        BundledItem,
-        Item,
-        ContactForm,
-        SystemLog,
-        InsuranceProvider,
-        FrontendPlugin,
-        NameInsuranceJoin,
-        Report,
-        FormSchema,
+
+        // ---- File (v6) ----
+        #[default]
+        SyncFileReference,
+
+        // ---- RemoteAndCentral (v6) ----
         PluginData,
         Preference,
-        VVMStatusLog,
-        Campaign,
-        SyncMessage,
-        PurchaseOrder,
-        PurchaseOrderLine,
-        MasterList,
-        Site,
+
+        // ---- RemoteToCentral (v6) ----
+        ContactForm,
+        SystemLog,
     }
 }
 
@@ -172,92 +221,137 @@ impl SourceSiteId {
     }
 }
 
+#[derive(strum::EnumIter, PartialEq, Eq, Debug)]
 pub(crate) enum ChangeLogSyncStyle {
-    Legacy,  // Everything that goes to Legacy mSupply server
     Central, // Data created on Open-mSupply central server
     Remote,
     File,
-    RemoteAndCentral, // These records will sync like remote record if store_id exist, otherwise they will sync like central records
-    RemoteToCentral,  // These records won't sync back to the remote site on re-initalisation
-    ProcessorOnly,    // There records won't sync anywhere, only used for processor tasks
+    ToLegacyCentralOnly,
+    Transfer,
+    Patient,
+    RemoteToCentral, // These records won't sync back to the remote site on re-initalisation
+}
+
+fn v6() -> bool {
+    true
+}
+fn not_v6() -> bool {
+    false
 }
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
+//
+// Variants are grouped to match the order of `ChangelogTableName` above and
+// sorted alphabetically within each group. Keep the two in sync.
 impl ChangelogTableName {
-    pub(crate) fn sync_style(&self) -> ChangeLogSyncStyle {
+    pub(crate) fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, bool /* is v6 */) {
+        use ChangeLogSyncStyle::*;
+        use ChangelogTableName::*;
         match self {
-            ChangelogTableName::Unit => ChangeLogSyncStyle::Central,
-            ChangelogTableName::Store => ChangeLogSyncStyle::Central,
-            ChangelogTableName::LocationType => ChangeLogSyncStyle::Central,
-            ChangelogTableName::BackendPlugin => ChangeLogSyncStyle::Central,
-            ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::LocationMovement => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::StockLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Invoice => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::InvoiceLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Stocktake => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::StocktakeLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Requisition => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::RequisitionLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::ActivityLog => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Barcode => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Clinician => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::ClinicianStoreJoin => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Name => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::NameStoreJoin => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Document => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Sensor => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::TemperatureBreach => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::TemperatureBreachConfig => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::TemperatureLog => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Currency => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Item => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::PackVariant => ChangeLogSyncStyle::Central,
-            ChangelogTableName::AssetClass => ChangeLogSyncStyle::Central,
-            ChangelogTableName::AssetCategory => ChangeLogSyncStyle::Central,
-            ChangelogTableName::AssetCatalogueType => ChangeLogSyncStyle::Central,
-            ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
-            ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::AssetInternalLocation => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
-            ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
-            ChangelogTableName::AssetCatalogueProperty => ChangeLogSyncStyle::Central,
-            ChangelogTableName::AssetLogReason => ChangeLogSyncStyle::Central,
-            ChangelogTableName::AssetProperty => ChangeLogSyncStyle::Central,
-            ChangelogTableName::Property => ChangeLogSyncStyle::Central,
-            ChangelogTableName::NameProperty => ChangeLogSyncStyle::Central,
-            ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
-            ChangelogTableName::RnrForm => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::Demographic => ChangeLogSyncStyle::Central,
-            ChangelogTableName::VaccineCourse => ChangeLogSyncStyle::Central,
-            ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
-            ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
-            ChangelogTableName::VaccineCourseStoreConfig => ChangeLogSyncStyle::Central,
-            ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::Encounter => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::ItemVariant => ChangeLogSyncStyle::Central,
-            ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
-            ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
-            ChangelogTableName::ContactForm => ChangeLogSyncStyle::RemoteToCentral,
-            ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral,
-            ChangelogTableName::InsuranceProvider => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::FrontendPlugin => ChangeLogSyncStyle::Central,
-            ChangelogTableName::NameInsuranceJoin => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Report => ChangeLogSyncStyle::Central,
-            ChangelogTableName::FormSchema => ChangeLogSyncStyle::Central,
-            ChangelogTableName::PluginData => ChangeLogSyncStyle::RemoteAndCentral,
-            ChangelogTableName::Preference => ChangeLogSyncStyle::RemoteAndCentral,
-            ChangelogTableName::VVMStatusLog => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Campaign => ChangeLogSyncStyle::Central,
-            ChangelogTableName::SyncMessage => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::MasterList => ChangeLogSyncStyle::ProcessorOnly,
-            ChangelogTableName::Site => ChangeLogSyncStyle::Central,
+            // ----------------------------------------------------------
+            // Legacy — Remote (not v6)
+            // ----------------------------------------------------------
+            ActivityLog
+            | Barcode
+            | Clinician
+            | ClinicianStoreJoin
+            | Currency
+            | Document
+            | IndicatorValue
+            | InsuranceProvider
+            | Item
+            | Location
+            | LocationMovement
+            | Name
+            | NameInsuranceJoin
+            | NameStoreJoin
+            | Number
+            | PurchaseOrder
+            | PurchaseOrderLine
+            | Sensor
+            | StockLine
+            | Stocktake
+            | StocktakeLine
+            | TemperatureBreach
+            | TemperatureBreachConfig
+            | TemperatureLog
+            | VVMStatusLog => (vec![Remote], not_v6()),
+
+            // ----------------------------------------------------------
+            // Legacy — Remote + Transfer (not v6)
+            // ----------------------------------------------------------
+            Requisition | RequisitionLine => (vec![Remote, Transfer], not_v6()),
+
+            // ----------------------------------------------------------
+            // Legacy — Remote + Transfer + Patient (not v6)
+            // ----------------------------------------------------------
+            Invoice | InvoiceLine => (vec![Remote, Transfer, Patient], not_v6()),
+
+            // ----------------------------------------------------------
+            // Central (v6) — created on the Open-mSupply central server
+            // ----------------------------------------------------------
+            AssetCatalogueItem
+            | AssetCatalogueItemProperty
+            | AssetCatalogueProperty
+            | AssetCatalogueType
+            | AssetCategory
+            | AssetClass
+            | AssetLogReason
+            | AssetProperty
+            | BackendPlugin
+            | BundledItem
+            | Campaign
+            | Demographic
+            | FormSchema
+            | FrontendPlugin
+            | ItemVariant
+            | NameOmsFields
+            | NameProperty
+            | PackVariant
+            | PackagingVariant
+            | Property
+            | Report
+            | VaccineCourse
+            | VaccineCourseDose
+            | VaccineCourseItem
+            | VaccineCourseStoreConfig => (vec![Central], v6()),
+
+            // ----------------------------------------------------------
+            // Central (not v6) — central data synced via legacy mSupply
+            // ----------------------------------------------------------
+            LocationType | MasterList | Store | Unit => (vec![Central], not_v6()),
+
+            // ----------------------------------------------------------
+            // ToLegacyCentralOnly (not v6)
+            // ----------------------------------------------------------
+            Site => (vec![ToLegacyCentralOnly], not_v6()),
+
+            // ----------------------------------------------------------
+            // Remote (v6) — store-scoped data that syncs to the owning site
+            // ----------------------------------------------------------
+            Asset
+            | AssetInternalLocation
+            | AssetLog
+            | Encounter
+            | RnrForm
+            | RnrFormLine
+            | SyncMessage
+            | Vaccination => (vec![Remote], v6()),
+
+            // ----------------------------------------------------------
+            // File (v6) — file references (handled by the file-sync pipeline)
+            // ----------------------------------------------------------
+            SyncFileReference => (vec![File], v6()),
+
+            // ----------------------------------------------------------
+            // RemoteAndCentral (v6) — Remote when store_id is set, otherwise Central
+            // ----------------------------------------------------------
+            PluginData | Preference => (vec![Remote, Central], v6()),
+
+            // ----------------------------------------------------------
+            // RemoteToCentral (v6) — pushed to central but not synced back on re-init
+            // ----------------------------------------------------------
+            ContactForm | SystemLog => (vec![RemoteToCentral], v6()),
         }
     }
 }
@@ -500,6 +594,7 @@ create_condition!(
     (transfer_store_id, string, changelog::transfer_store_id),
     (patient_id, string, changelog::patient_id),
     (transfer_site_id, i32, transfer_stores.field(store::site_id)),
+    (patient_site_id, i32, patient_stores.field(store::site_id)),
 );
 
 type BoxedChangelogQuery = IntoBoxed<'static, changelog::table, DBType>;
@@ -561,63 +656,63 @@ fn create_filtered_outgoing_sync_query(
 ) -> BoxedChangelogQuery {
     let mut query = create_base_query(earliest);
 
-    // If we are initialising, we want to send all the records for the site, even ones that originally came from the site
-    // The rest of the time we want to exclude any records that were created by the site
-    if is_initialized {
-        query = query.filter(
-            changelog::source_site_id
-                .ne(Some(sync_site_id))
-                .or(changelog::source_site_id.is_null()),
-        )
-    }
+    // // If we are initialising, we want to send all the records for the site, even ones that originally came from the site
+    // // The rest of the time we want to exclude any records that were created by the site
+    // if is_initialized {
+    //     query = query.filter(
+    //         changelog::source_site_id
+    //             .ne(Some(sync_site_id))
+    //             .or(changelog::source_site_id.is_null()),
+    //     )
+    // }
 
-    // Loop through all the Sync tables and add them to the query if they have the right sync style
+    // // Loop through all the Sync tables and add them to the query if they have the right sync style
 
-    // Central Records
-    let central_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
-        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Central))
-        .collect();
+    // // Central Records
+    // let central_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+    //     .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Central))
+    //     .collect();
 
-    // Remote Records
-    let remote_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
-        .filter(|table| {
-            matches!(
-                table.sync_style(),
-                ChangeLogSyncStyle::Remote | ChangeLogSyncStyle::RemoteAndCentral
-            )
-        })
-        .collect();
+    // // Remote Records
+    // let remote_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+    //     .filter(|table| {
+    //         matches!(
+    //             table.sync_style(),
+    //             ChangeLogSyncStyle::Remote | ChangeLogSyncStyle::RemoteAndCentral
+    //         )
+    //     })
+    //     .collect();
 
-    // Central record where store id is null
-    let central_by_empty_store_id: Vec<ChangelogTableName> = ChangelogTableName::iter()
-        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::RemoteAndCentral))
-        .collect();
+    // // Central record where store id is null
+    // let central_by_empty_store_id: Vec<ChangelogTableName> = ChangelogTableName::iter()
+    //     .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::RemoteAndCentral))
+    //     .collect();
 
-    let active_stores_for_site = store::table
-        .filter(store::site_id.eq(sync_site_id))
-        .select(store::id.nullable());
+    // let active_stores_for_site = store::table
+    //     .filter(store::site_id.eq(sync_site_id))
+    //     .select(store::id.nullable());
 
-    let patient_names_visible_on_site =
-        patient_names_visible_on_site(sync_site_id).select(name_store_join::name_id.nullable());
+    // let patient_names_visible_on_site =
+    //     patient_names_visible_on_site(sync_site_id).select(name_store_join::name_id.nullable());
 
-    // Filter the query for the matching records for each type
-    query = query.filter(
-        changelog::table_name
-            .eq_any(central_sync_table_names)
-            .or(changelog::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
-            .or(changelog::table_name
-                .eq_any(remote_sync_table_names)
-                .and(changelog::store_id.eq_any(active_stores_for_site.into_boxed())))
-            .or(changelog::table_name
-                .eq_any(central_by_empty_store_id)
-                .and(changelog::store_id.is_null()))
-            // Special case: patient Vaccination records
-            // where patient is visible, regardless of the store_id in the changelog
-            .or(changelog::table_name
-                .eq(ChangelogTableName::Vaccination)
-                .and(changelog::name_link_id.eq_any(patient_names_visible_on_site))),
-        // Any other special cases could be handled here...
-    );
+    // // Filter the query for the matching records for each type
+    // query = query.filter(
+    //     changelog::table_name
+    //         .eq_any(central_sync_table_names)
+    //         .or(changelog::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
+    //         .or(changelog::table_name
+    //             .eq_any(remote_sync_table_names)
+    //             .and(changelog::store_id.eq_any(active_stores_for_site.into_boxed())))
+    //         .or(changelog::table_name
+    //             .eq_any(central_by_empty_store_id)
+    //             .and(changelog::store_id.is_null()))
+    //         // Special case: patient Vaccination records
+    //         // where patient is visible, regardless of the store_id in the changelog
+    //         .or(changelog::table_name
+    //             .eq(ChangelogTableName::Vaccination)
+    //             .and(changelog::name_link_id.eq_any(patient_names_visible_on_site))),
+    //     // Any other special cases could be handled here...
+    // );
 
     query
 }
@@ -784,83 +879,56 @@ pub enum SyncType {
     Remote,
 }
 
-pub enum Site {
-    SiteId(i32),
-    StoreIds(Vec<String>),
+pub fn all_data_edited_on_site(site_id: i32) -> ChangelogCondition::Inner {
+    ChangelogCondition::source_site_id::equal(site_id)
 }
 
-fn central_data() -> ChangelogCondition::Inner {
-    let table_names = get_table_names_for_sync_types(&[SyncType::Central]);
-    ChangelogCondition::table_name::any(table_names)
+pub fn all_data_for_site(site_id: i32, is_initialising: bool) -> ChangelogCondition::Inner {
+    // TODO can optimise, not filter at all by remote data when initialising
+    use ChangeLogSyncStyle::*;
+    use ChangelogCondition as C;
+    let mut inner_or_conditions = vec![];
+    for sync_style in ChangeLogSyncStyle::iter() {
+        let table_names = get_table_names_for_sync_style(&sync_style, None);
+        let pre_condition = C::table_name::any(table_names);
+
+        let condition = match sync_style {
+            Central | File => C::And(vec![
+                // We have central and remote records with same table_name, so need to make sure to include only central ones (where store_id is null)
+                C::store_id::is_null(),
+            ]),
+            ToLegacyCentralOnly | RemoteToCentral => {
+                // Don't sync
+                continue;
+            }
+            Remote => C::site_id::equal(site_id),
+            Transfer => C::transfer_site_id::equal(site_id),
+            Patient => C::patient_site_id::equal(site_id),
+        };
+
+        inner_or_conditions.push(C::And(vec![pre_condition, condition]));
+    }
+
+    let mut outer_and_condition = vec![C::Or(inner_or_conditions)];
+    if !is_initialising {
+        outer_and_condition.push(C::source_site_id::not_equal(site_id));
+    }
+
+    C::And(outer_and_condition)
 }
 
-impl Site {
-    // TODO once all V7 changelog queries are created, think of a better abstraction that is more readable
-    // for example we would need to sync store related data when it's moved, and probably want transfer and
-    // remote data to be in one place instead of split into transfer_data_for_site and remote_data_for_site
-    pub fn remote_data_for_site(&self) -> ChangelogCondition::Inner {
-        let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
-        ChangelogCondition::And(vec![
-            ChangelogCondition::table_name::any(table_names),
-            match self {
-                Site::SiteId(site_id) => ChangelogCondition::site_id::equal(*site_id),
-                Site::StoreIds(ids) => ChangelogCondition::store_id::any(ids.clone()),
-            },
-        ])
-    }
-
-    pub fn all_data_edited_on_site(&self) -> ChangelogCondition::Inner {
-        match self {
-            Site::SiteId(site_id) => ChangelogCondition::source_site_id::equal(*site_id),
-            Site::StoreIds(ids) => ChangelogCondition::store_id::any(ids.clone()),
-        }
-    }
-
-    pub fn all_data_for_site(&self, is_initialising: bool) -> ChangelogCondition::Inner {
-        let mut or_conditions = vec![self.transfer_data_for_site(), central_data()];
-        if is_initialising {
-            or_conditions.push(self.remote_data_for_site());
-        }
-
-        let filter = ChangelogCondition::Or(or_conditions);
-        if is_initialising {
-            ChangelogCondition::And(vec![
-                filter,
-                ChangelogCondition::action::not_equal(RowActionType::Delete),
-            ])
-        } else {
-            filter
-        }
-    }
-
-    fn transfer_data_for_site(&self) -> ChangelogCondition::Inner {
-        let table_names = get_table_names_for_sync_types(&[SyncType::Remote]);
-        ChangelogCondition::And(vec![
-            ChangelogCondition::table_name::any(table_names),
-            match self {
-                Site::SiteId(site_id) => ChangelogCondition::transfer_site_id::equal(*site_id),
-                Site::StoreIds(ids) => ChangelogCondition::transfer_store_id::any(ids.clone()),
-            },
-        ])
-    }
-}
-
-pub fn get_table_names_for_sync_types(sync_types: &[SyncType]) -> Vec<ChangelogTableName> {
-    // TODO should come from main SyncType mapping for the changelog like "sync_style" method
-    let all: &[(ChangelogTableName, SyncType)] = &[
-        (ChangelogTableName::Unit, SyncType::Central),
-        (ChangelogTableName::Currency, SyncType::Central),
-        (ChangelogTableName::Name, SyncType::Central),
-        (ChangelogTableName::Store, SyncType::Central),
-        (ChangelogTableName::LocationType, SyncType::Central),
-        (ChangelogTableName::Item, SyncType::Central),
-        (ChangelogTableName::StockLine, SyncType::Remote),
-        (ChangelogTableName::Invoice, SyncType::Remote),
-        (ChangelogTableName::InvoiceLine, SyncType::Remote),
-    ];
-    all.iter()
-        .filter(|(_, st)| sync_types.contains(st))
-        .map(|(tn, _)| tn.clone())
+pub fn get_table_names_for_sync_style(
+    sync_style: &ChangeLogSyncStyle,
+    is_v6_option: Option<bool>,
+) -> Vec<ChangelogTableName> {
+    ChangelogTableName::iter()
+        .filter(|table| {
+            let (styles, is_v6) = table.sync_style();
+            if is_v6_option == Some(true) && !is_v6 {
+                return false;
+            }
+            styles.iter().any(|style| style == sync_style)
+        })
         .collect()
 }
 
