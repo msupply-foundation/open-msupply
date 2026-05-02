@@ -5,7 +5,7 @@ use repository::{
     get_changelogs,
     syncv7::{SiteLockError, SyncError},
     ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, KeyType,
-    RowActionType, StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository,
+    RowActionType, Site, StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository,
     SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,10 @@ use serde::{Deserialize, Serialize};
 use crate::{
     cursor_controller::CursorController,
     service_provider::ServiceProvider,
-    sync::{settings::SyncSettings, ActiveStoresOnSite},
+    sync::{
+        settings::{BatchSize, SyncSettings},
+        ActiveStoresOnSite,
+    },
     sync_v7::{
         api::{self, Common, SyncApiV7},
         get_current_site_id,
@@ -146,11 +149,11 @@ async fn sync_inner<'a>(
             url: settings.url.parse().unwrap(),
             auth_headers,
         },
-        batch_size: 5000,
+        batch_size: settings.batch_size,
     };
 
     logger.start_step(SyncStep::Push)?;
-    sync_v7.push(logger).await?;
+    sync_v7.push(logger, is_initialising).await?;
 
     logger.start_step(SyncStep::WaitForIntegration)?;
     sync_v7
@@ -168,17 +171,64 @@ async fn sync_inner<'a>(
     Ok(())
 }
 
-struct SyncV7<'a> {
-    connection: &'a StorageConnection,
-    sync_api_v7: SyncApiV7,
-    batch_size: u32,
+pub(crate) struct SyncV7<'a> {
+    pub(crate) connection: &'a StorageConnection,
+    pub(crate) sync_api_v7: SyncApiV7,
+    pub(crate) batch_size: BatchSize,
 }
 
 impl<'a> SyncV7<'a> {
-    pub(crate) async fn push<'b>(&self, logger: &mut SyncLogger<'b>) -> Result<(), SyncError> {
-        // TODO: implement push using changelog query
-        // For now, push is a no-op placeholder
+    pub(crate) async fn push<'b>(
+        &self,
+        logger: &mut SyncLogger<'b>,
+        is_initialising: bool,
+    ) -> Result<(), SyncError> {
+        if is_initialising {
+            logger.progress(0)?;
+            return Ok(());
+        }
+
+        let cursor_controller = CursorController::new(KeyType::SyncPushCursorV7);
+        // TODO use SourceSiteId, and remove from other uses
+        let site_id = get_current_site_id(self.connection)?;
+
+        // TODO think about just the filter for source site id = current site on changelog
+        let filter = Site::SiteId(site_id).all_data_edited_on_site();
+
+        loop {
+            let cursor = cursor_controller.get(self.connection)? as i64;
+
+            let batch = SyncBatchV7::generate(
+                self.connection,
+                filter.clone(),
+                cursor,
+                self.batch_size.remote_push,
+            )?;
+
+            let record_count = batch.records.len();
+
+            // TODO, we need to rethink logger progress by max cursor vs current cursor
+            logger.progress(record_count as i64)?;
+
+            // TODO if we don't get any records from changelog filtering, we should really set the
+            // cursor controller to the latest cursor in the changelog
+            // this relies on the filtering of changelog to be always trying to return the batch size number
+
+            let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
+                break;
+            };
+
+            self.sync_api_v7.push(batch).await?;
+
+            cursor_controller.update(self.connection, batch_max_cursor as u64)?;
+
+            if record_count < self.batch_size.remote_push as usize {
+                break;
+            }
+        }
+
         logger.progress(0)?;
+
         Ok(())
     }
 
@@ -222,7 +272,7 @@ impl<'a> SyncV7<'a> {
                 .sync_api_v7
                 .pull(api::pull::Input {
                     cursor,
-                    batch_size: self.batch_size,
+                    batch_size: self.batch_size.remote_pull,
                     is_initialising,
                 })
                 .await?;
@@ -230,12 +280,10 @@ impl<'a> SyncV7<'a> {
             let record_count = batch.records.len();
             logger.progress(record_count as i64)?;
 
-            if record_count == 0 {
-                break;
-            }
-
             let site_id = batch.site_id;
-            let max_cursor = batch.max_cursor;
+            let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
+                break;
+            };
 
             let sync_buffer_rows: Vec<SyncBufferRow> = batch
                 .records
@@ -246,11 +294,11 @@ impl<'a> SyncV7<'a> {
             self.connection
                 .transaction_sync(|t_con| {
                     SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)?;
-                    cursor_controller.update(self.connection, max_cursor as u64 + 1)
+                    cursor_controller.update(self.connection, batch_max_cursor as u64)
                 })
                 .map_err(|e| e.to_inner_error())?;
 
-            if record_count < self.batch_size as usize {
+            if record_count < self.batch_size.remote_pull as usize {
                 break;
             }
         }
@@ -260,7 +308,7 @@ impl<'a> SyncV7<'a> {
         Ok(())
     }
 
-    async fn integrate<'b>(
+    pub(crate) async fn integrate<'b>(
         &self,
         logger: &mut SyncLogger<'b>,
         is_initialising: bool,
