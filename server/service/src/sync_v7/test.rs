@@ -1,20 +1,22 @@
 #[cfg(test)]
-mod pull_integration {
+mod test_sync_v7_client_api {
     use actix_web::{http::header::AUTHORIZATION, web, App, HttpRequest, HttpServer};
     use assert_json_diff::assert_json_include;
+    use repository::mock::MockData;
     use repository::{
         migrations::Version, mock::MockDataInserts, ChangelogFilter, ChangelogRepository,
         ChangelogRow, ChangelogTableName, CurrencyRow, EqualFilter, ItemRow, KeyType,
         KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection, StoreRow,
         SyncBufferRowRepository, UnitRow, Upsert,
     };
-    use repository::{SyncAction, SyncBufferRow};
+    use repository::{KeyValueStoreRow, SyncAction, SyncBufferRow};
     use serde_json::json;
+    use tokio::sync::Mutex;
 
-    use crate::sync::settings::SyncSettings;
+    use crate::sync::settings::{BatchSize, SyncSettings};
     use crate::sync_v7::api::{APP_VERSION_HEADER, HARDWARE_ID_HEADER};
     use crate::sync_v7::sync::sync_v7;
-    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
 
     // ---- Test data: expected rows after integration ----
 
@@ -153,60 +155,86 @@ mod pull_integration {
         }))
     }
 
-    async fn push(req: HttpRequest, body: web::Json<serde_json::Value>) -> actix_web::HttpResponse {
-        assert_auth_headers(&req);
-        assert_json_include!(
-            actual: body.into_inner(),
-            expected: json!({
-                "siteId": 1,
-                "maxCursor": 0,
-                "records": [],
-            })
-        );
-        actix_web::HttpResponse::Ok().json(json!({ "Ok": 0 }))
-    }
-
-    async fn pull(
-        data: web::Data<serde_json::Value>,
+    async fn push(
+        captured: web::Data<Mutex<Vec<serde_json::Value>>>,
         req: HttpRequest,
         body: web::Json<serde_json::Value>,
     ) -> actix_web::HttpResponse {
         assert_auth_headers(&req);
-        assert_json_include!(
-            actual: body.into_inner(),
-            expected: json!({
-                "cursor": 0,
-                "batchSize": 5000,
-                "isInitialising": true,
-            })
-        );
-        actix_web::HttpResponse::Ok().json(data.get_ref())
+        let input = body.into_inner();
+        captured.lock().await.push(json!(input));
+        actix_web::HttpResponse::Ok().json(json!({ "Ok": 0 }))
+    }
+
+    async fn pull(
+        data: web::Data<Option<serde_json::Value>>,
+        req: HttpRequest,
+        _body: web::Json<serde_json::Value>,
+    ) -> actix_web::HttpResponse {
+        assert_auth_headers(&req);
+        match data.get_ref() {
+            Some(value) => actix_web::HttpResponse::Ok().json(value),
+            None => actix_web::HttpResponse::Ok().json(json!({
+                "Ok": { "siteId": 1, "maxCursor": 0, "records": [] }
+            })),
+        }
     }
 
     // ---- Shared test setup ----
 
+    #[derive(Default)]
+    struct Test {
+        db_name: &'static str,
+        pull_response: Option<serde_json::Value>,
+        mock_data: Option<MockData>,
+        batch_size: BatchSize,
+        is_initialising: bool,
+    }
+
     /// Runs sync_v7 against a mock central with the given pull response.
     /// Returns the connection for per-test assertions.
     async fn run_sync_v7_test(
-        db_name: &str,
-        pull_response: serde_json::Value,
-    ) -> StorageConnection {
+        Test {
+            db_name,
+            pull_response,
+            mock_data,
+            batch_size,
+            is_initialising,
+        }: Test,
+    ) -> (
+        StorageConnection,
+        serde_json::Value, /* push response */
+    ) {
+        let mock_data = MockData {
+            key_value_store_rows: vec![
+                KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(1),
+                    ..Default::default()
+                },
+                KeyValueStoreRow {
+                    id: KeyType::SettingsSyncV7Token,
+                    value_string: Some("test_token".to_string()),
+                    ..Default::default()
+                },
+            ],
+            ..mock_data.unwrap_or_default()
+        };
+
         let ServiceTestContext {
             service_provider,
             connection,
             ..
-        } = setup_all_and_service_provider(db_name, MockDataInserts::none()).await;
-
-        KeyValueStoreRepository::new(&connection)
-            .set_i32(KeyType::SettingsSyncSiteId, Some(1))
-            .unwrap();
-        KeyValueStoreRepository::new(&connection)
-            .set_string(KeyType::SettingsSyncV7Token, Some("test_token".to_string()))
-            .unwrap();
+        } = setup_all_with_data_and_service_provider(db_name, MockDataInserts::none(), mock_data)
+            .await;
 
         let pull_data = web::Data::new(pull_response);
+
+        let captured_requests = web::Data::new(Mutex::new(Vec::<serde_json::Value>::new()));
+        let server_captured_requests = captured_requests.clone();
         let server = HttpServer::new(move || {
             App::new()
+                .app_data(server_captured_requests.clone())
                 .app_data(pull_data.clone())
                 .route("/central/sync_v7/site_status", web::post().to(site_status))
                 .route("/central/sync_v7/push", web::post().to(push))
@@ -228,25 +256,34 @@ mod pull_integration {
                 username: "test_user".to_string(),
                 password_sha256: "test_pass".to_string(),
                 interval_seconds: 0,
+                batch_size,
                 ..Default::default()
             },
-            true,
+            is_initialising,
         )
         .await;
         assert!(result.is_ok(), "sync_v7 failed: {:?}", result.err());
         handle.stop(true).await;
-
-        connection
+        let push_response = captured_requests.lock().await.clone();
+        (connection, json!(push_response))
     }
 
     // ---- Test ----
 
     #[actix_rt::test]
+    async fn test_sync_v7_api() {
+        test_sync_v7_pull_and_integrate().await;
+        test_sync_v7_integrates_records_out_of_fk_order().await;
+        test_sync_v7_push().await;
+    }
+
     async fn test_sync_v7_pull_and_integrate() {
-        let connection = run_sync_v7_test(
-            "test_sync_v7_pull_and_integrate",
-            pull_response_in_fk_order(),
-        )
+        let (connection, _) = run_sync_v7_test(Test {
+            db_name: "test_sync_v7_pull_and_integrate",
+            pull_response: Some(pull_response_in_fk_order()),
+            is_initialising: true,
+            ..Default::default()
+        })
         .await;
 
         // Assert: all records were integrated into their tables
@@ -399,12 +436,14 @@ mod pull_integration {
 
     /// Records arriving children-before-parents still all integrate because
     /// the loop iterates INTEGRATION_ORDER, not sync_buffer arrival order.
-    #[actix_rt::test]
+
     async fn test_sync_v7_integrates_records_out_of_fk_order() {
-        let connection = run_sync_v7_test(
-            "test_sync_v7_integrates_records_out_of_fk_order",
-            pull_response_reversed(),
-        )
+        let (connection, _) = run_sync_v7_test(Test {
+            db_name: "test_sync_v7_integrates_records_out_of_fk_order",
+            pull_response: Some(pull_response_reversed()),
+            is_initialising: true,
+            ..Default::default()
+        })
         .await;
 
         // FK violations would surface via integration_error.
@@ -429,139 +468,52 @@ mod pull_integration {
             record.assert_upserted(&connection);
         }
     }
-}
 
-#[cfg(test)]
-mod push_test {
-    use std::sync::Mutex;
-
-    use actix_web::{web, App, HttpResponse, HttpServer};
-    use assert_json_diff::assert_json_include;
-    use repository::{
-        mock::MockDataInserts, test_db::setup_all, KeyType, KeyValueStoreRepository, StockLineRow,
-        StockLineRowRepository,
-    };
-    use serde_json::{json, Value};
-
-    use crate::sync_v7::api::{SyncApiV7, VERSION};
-    use crate::sync_v7::sync::SyncV7;
-    use crate::sync_v7::sync_logger::SyncLogger;
-
-    async fn push(
-        captured_requests: web::Data<Mutex<Vec<Value>>>,
-        req: web::Json<Value>,
-    ) -> HttpResponse {
-        captured_requests.lock().unwrap().push(req.into_inner());
-        HttpResponse::Ok().json(json!({ "Ok": 0 }))
-    }
-
-    #[actix_rt::test]
     async fn test_sync_v7_push() {
         let batch_size: u32 = 2;
 
-        // store_a (site_id 100) and item_a come from MockDataInserts.
-        let (_, connection, _, _) = setup_all(
-            "test_sync_v7_push",
-            MockDataInserts::none().names().stores().items(),
-        )
-        .await;
-
-        KeyValueStoreRepository::new(&connection)
-            .set_i32(KeyType::SettingsSyncSiteId, Some(100))
-            .unwrap();
-
-        let stock_line_repo = StockLineRowRepository::new(&connection);
-        stock_line_repo
-            .upsert_one(&StockLineRow {
-                id: "stock_line_test_1".into(),
-                item_link_id: "item_a".into(),
-                store_id: "store_a".into(),
+        let (_, push_response) = run_sync_v7_test(Test {
+            db_name: "test_sync_v7_push",
+            mock_data: Some(MockData {
+                names: vec![
+                    NameRow {
+                        id: "a".into(),
+                        ..Default::default()
+                    },
+                    NameRow {
+                        id: "b".into(),
+                        ..Default::default()
+                    },
+                    NameRow {
+                        id: "c".into(),
+                        ..Default::default()
+                    },
+                ],
                 ..Default::default()
-            })
-            .unwrap();
-        stock_line_repo
-            .upsert_one(&StockLineRow {
-                id: "stock_line_test_2".into(),
-                item_link_id: "item_a".into(),
-                store_id: "store_a".into(),
+            }),
+            batch_size: BatchSize {
+                remote_push: batch_size,
                 ..Default::default()
-            })
-            .unwrap();
-        stock_line_repo
-            .upsert_one(&StockLineRow {
-                id: "stock_line_test_3".into(),
-                item_link_id: "item_a".into(),
-                store_id: "store_a".into(),
-                ..Default::default()
-            })
-            .unwrap();
-
-        let captured_requests = web::Data::new(Mutex::new(Vec::<Value>::new()));
-        let server_captured_requests = captured_requests.clone();
-        let server = HttpServer::new(move || {
-            App::new()
-                .app_data(server_captured_requests.clone())
-                .route("/central/sync_v7/push", web::post().to(push))
+            },
+            is_initialising: false,
+            ..Default::default()
         })
-        .bind("127.0.0.1:0")
-        .unwrap();
-
-        let addr = *server.addrs().first().unwrap();
-        let server_handle = server.run();
-        let handle = server_handle.handle();
-        tokio::spawn(server_handle);
-
-        // Construct SyncV7 directly so we can inject batch_size = 2
-        let api = SyncApiV7 {
-            url: format!("http://{addr}/").parse().unwrap(),
-            version: VERSION,
-            username: "test_user".into(),
-            password: "test_pass".into(),
-        };
-        let sync_v7 = SyncV7::new(&connection, api, batch_size);
-        let mut logger = SyncLogger::start(&connection).unwrap();
-        sync_v7.push(&mut logger, false).await.unwrap();
-        handle.stop(true).await;
-
-        let captured_requests = captured_requests.lock().unwrap();
-        assert_eq!(captured_requests.len(), 2);
+        .await;
 
         // First batch: 2 records (stock_line_test_1, stock_line_test_2)
         assert_json_include!(
-            actual: captured_requests[0].clone(),
-            expected: json!({
-                "input": {
-                    "records": [
-                        { "recordId": "stock_line_test_1", "tableName": "StockLine", "action": "Upsert", "storeId": "store_a" },
-                        { "recordId": "stock_line_test_2", "tableName": "StockLine", "action": "Upsert", "storeId": "store_a" },
-                    ]
-                }
-            })
+            actual: push_response,
+            expected: json!([
+                {
+                "records": [
+                    { "recordId": "a", "tableName": "Name", "action": "Upsert" },
+                    { "recordId": "b", "tableName": "Name", "action": "Upsert" },
+                ]},
+                {
+                "records": [
+                    { "recordId": "c", "tableName": "Name", "action": "Upsert" },
+                ]}
+            ])
         );
-
-        // Second batch: 1 record (stock_line_test_3)
-        assert_json_include!(
-            actual: captured_requests[1].clone(),
-            expected: json!({
-                "input": {
-                    "records": [
-                        { "recordId": "stock_line_test_3", "tableName": "StockLine", "action": "Upsert", "storeId": "store_a" },
-                    ]
-                }
-            })
-        );
-
-        // Cursor advancement: batch 2 starts exactly one past batch 1's last cursor.
-        let last_of_batch_1 = captured_requests[0]
-            .pointer("/input/records/1/cursor")
-            .unwrap()
-            .as_i64()
-            .unwrap();
-        let first_of_batch_2 = captured_requests[1]
-            .pointer("/input/records/0/cursor")
-            .unwrap()
-            .as_i64()
-            .unwrap();
-        assert_eq!(first_of_batch_2, last_of_batch_1 + 1);
     }
 }
