@@ -72,13 +72,11 @@ pub fn get_site_info(
 
             let token = util::uuid::uuid();
 
-            SiteRowRepository::new(connection)
-                .upsert(&SiteRow {
-                    hardware_id: Some(hardware_id),
-                    token: Some(token.clone()),
-                    ..site.clone()
-                })
-                .map_err(SyncError::DatabaseError)?;
+            SiteRowRepository::new(connection).upsert(&SiteRow {
+                hardware_id: Some(hardware_id),
+                token: Some(token.clone()),
+                ..site.clone()
+            })?;
 
             let central_site_id = get_central_site_id(connection)?;
 
@@ -95,13 +93,11 @@ fn get_site_by_name(
     connection: &StorageConnection,
     name: &str,
 ) -> Result<Option<SiteRow>, SyncError> {
-    let rows = SiteRepository::new(connection)
-        .query(
-            Pagination::one(),
-            Some(SiteFilter::new().name(StringFilter::equal_to(name))),
-            None,
-        )
-        .map_err(SyncError::DatabaseError)?;
+    let rows = SiteRepository::new(connection).query(
+        Pagination::one(),
+        Some(SiteFilter::new().name(StringFilter::equal_to(name))),
+        None,
+    )?;
     Ok(rows.into_iter().next())
 }
 
@@ -109,13 +105,11 @@ fn get_site_by_token(
     connection: &StorageConnection,
     token: &str,
 ) -> Result<Option<SiteRow>, SyncError> {
-    let rows = SiteRepository::new(connection)
-        .query(
-            Pagination::one(),
-            Some(SiteFilter::new().token(EqualFilter::equal_to(token.to_string()))),
-            None,
-        )
-        .map_err(SyncError::DatabaseError)?;
+    let rows = SiteRepository::new(connection).query(
+        Pagination::one(),
+        Some(SiteFilter::new().token(EqualFilter::equal_to(token.to_string()))),
+        None,
+    )?;
     Ok(rows.into_iter().next())
 }
 
@@ -156,8 +150,7 @@ fn validate(
 
 fn get_central_site_id(connection: &StorageConnection) -> Result<i32, SyncError> {
     KeyValueStoreRepository::new(connection)
-        .get_i32(KeyType::SettingsSyncCentralServerSiteId)
-        .map_err(SyncError::DatabaseError)?
+        .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
         .ok_or_else(|| SyncError::Other("Central site id not configured".to_string()))
 }
 

@@ -820,6 +820,13 @@ impl Site {
         ])
     }
 
+    pub fn all_data_edited_on_site(&self) -> ChangelogCondition::Inner {
+        match self {
+            Site::SiteId(site_id) => ChangelogCondition::source_site_id::equal(*site_id),
+            Site::StoreIds(ids) => ChangelogCondition::store_id::any(ids.clone()),
+        }
+    }
+
     pub fn all_data_for_site(&self, is_initialising: bool) -> ChangelogCondition::Inner {
         let mut or_conditions = vec![self.transfer_data_for_site(), central_data()];
         if is_initialising {
@@ -878,12 +885,15 @@ pub fn get_changelogs(
         ChangelogCondition::cursor::greater_than(cursor),
     ]);
 
-    let result: Vec<ChangelogRow> = query()
+    let query = query()
         .filter(filter.to_boxed())
         .order(changelog::cursor.asc())
         .limit(limit)
-        .select(changelog::all_columns)
-        .load(connection.lock().connection())?;
+        .select(changelog::all_columns);
+
+    // Debug diesel query
+    // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
+    let result: Vec<ChangelogRow> = query.load(connection.lock().connection())?;
 
     Ok(result)
 }

@@ -29,8 +29,7 @@ impl Common {
             .map_err(|e| SyncError::Other(format_error(&e)))?;
 
         let token = KeyValueStoreRepository::new(&ctx.connection)
-            .get_string(KeyType::SettingsSyncV7Token)
-            .map_err(SyncError::DatabaseError)?
+            .get_string(KeyType::SettingsSyncV7Token)?
             .ok_or(SyncError::TokenNotFound)?;
 
         let hardware_id = service_provider
