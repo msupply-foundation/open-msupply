@@ -79,6 +79,7 @@ impl From<SiteFilterInput> for SiteFilter {
             id: f.id.map(EqualFilter::from),
             code: f.code.map(StringFilter::from),
             name: f.name.map(StringFilter::from),
+            token: None,
         }
     }
 }

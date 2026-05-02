@@ -8,6 +8,8 @@ export type SyncSettingsFragment = {
   intervalSeconds: number;
   url: string;
   username: string;
+  centralServerSiteId?: number | null;
+  syncSiteId?: number | null;
 };
 
 export type SyncSettingsQueryVariables = Types.Exact<{ [key: string]: never }>;
@@ -19,6 +21,8 @@ export type SyncSettingsQuery = {
     intervalSeconds: number;
     url: string;
     username: string;
+    centralServerSiteId?: number | null;
+    syncSiteId?: number | null;
   } | null;
 };
 
@@ -45,6 +49,8 @@ export type InitialiseSiteMutation = {
         intervalSeconds: number;
         url: string;
         username: string;
+        centralServerSiteId?: number | null;
+        syncSiteId?: number | null;
       };
 };
 
@@ -65,6 +71,8 @@ export type UpdateSyncSettingsMutation = {
         intervalSeconds: number;
         url: string;
         username: string;
+        centralServerSiteId?: number | null;
+        syncSiteId?: number | null;
       };
 };
 
@@ -408,6 +416,8 @@ export const SyncSettingsFragmentDoc = gql`
     intervalSeconds
     url
     username
+    centralServerSiteId
+    syncSiteId
   }
 `;
 export const SyncErrorFragmentDoc = gql`
