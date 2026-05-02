@@ -1,5 +1,5 @@
 use super::{
-    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    store_row::store, ChangelogRepository, RowActionType,
     StorageConnection,
 };
 use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
@@ -74,26 +74,6 @@ pub struct SyncMessageRow {
     #[ts(optional)]
     pub error_message: Option<String>,
 }
-
-impl SyncMessageRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::SyncMessage,
-            record_id,
-            row_action: action,
-            name_id: None,
-            store_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct SyncMessageRowRepository<'a> {
     connection: &'a StorageConnection,
 }

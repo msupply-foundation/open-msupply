@@ -3,7 +3,7 @@ use super::{location_row::location, sensor_row::sensor, store_row::store, Storag
 use crate::{
     repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -65,26 +65,6 @@ pub struct TemperatureBreachRow {
     pub threshold_duration_milliseconds: i32,
     pub comment: Option<String>,
 }
-
-impl TemperatureBreachRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::TemperatureBreach,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(self.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct TemperatureBreachRowRepository<'a> {
     connection: &'a StorageConnection,
 }

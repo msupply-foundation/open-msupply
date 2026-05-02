@@ -118,6 +118,14 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        let result = store::table
+            .filter(store::name_id.eq(name_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store::table
             .filter(store::id.eq_any(ids))

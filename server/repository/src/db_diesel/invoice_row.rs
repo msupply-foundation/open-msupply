@@ -5,8 +5,7 @@ use super::{
 };
 use crate::{
     db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
-    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
-    ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -167,33 +166,6 @@ pub struct InvoiceRow {
     pub name_id: String,
     pub default_donor_id: Option<String>,
 }
-
-impl InvoiceRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<InvoiceRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(id) => &InvoiceRowRepository::new(con)
-                .find_one_by_id(id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Invoice,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: Some(row.name_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct InvoiceRowRepository<'a> {
     connection: &'a StorageConnection,
 }

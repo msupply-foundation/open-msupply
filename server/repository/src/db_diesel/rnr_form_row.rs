@@ -3,8 +3,7 @@ use super::{
     store_row::store, StorageConnection,
 };
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, Delete,
     RepositoryError, RowActionType, SourceSiteId, Upsert,
 };
 
@@ -75,32 +74,6 @@ pub enum RnRFormStatus {
     Draft,
     Finalised,
 }
-
-impl RnRFormRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<RnRFormRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &RnRFormRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::RnrForm,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: Some(row.name_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct RnRFormRowRepository<'a> {
     connection: &'a StorageConnection,
 }

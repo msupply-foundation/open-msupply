@@ -2,8 +2,7 @@ use crate::{
     db_diesel::{
         changelog::changelog::RowOrId, item_link_row::item_link, item_row::item,
     },
-    diesel_macros::define_linked_tables,
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, Delete,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
@@ -131,32 +130,6 @@ pub enum PurchaseOrderStatus {
     Sent,
     Finalised,
 }
-
-impl PurchaseOrderRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<PurchaseOrderRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &PurchaseOrderRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::PurchaseOrder,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct PurchaseOrderRowRepository<'a> {
     connection: &'a StorageConnection,
 }

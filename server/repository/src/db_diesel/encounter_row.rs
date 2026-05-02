@@ -6,7 +6,7 @@ use super::{
 use crate::diesel_macros::define_linked_tables;
 use crate::SourceSiteId;
 use crate::{
-    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    repository_error::RepositoryError, ChangelogRepository,
     RowActionType,
 };
 
@@ -75,26 +75,6 @@ pub struct EncounterRow {
     // Resolved from name_link - must be last to match view column order
     pub patient_id: String,
 }
-
-impl EncounterRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Encounter,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: self.store_id.clone(),
-            name_id: Some(self.patient_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct EncounterRowRepository<'a> {
     connection: &'a StorageConnection,
 }

@@ -2,9 +2,7 @@ use super::{name_property_row::name_property::dsl::*, property_row::property};
 
 use serde::{Deserialize, Serialize};
 
-use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
-use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::RowActionType;
 use crate::SourceSiteId;
@@ -33,26 +31,6 @@ pub struct NamePropertyRow {
     pub property_id: String,
     pub remote_editable: bool,
 }
-
-impl NamePropertyRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameProperty,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct NamePropertyRowRepository<'a> {
     connection: &'a StorageConnection,
 }

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::db_diesel::changelog::changelog::RowOrId;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RequisitionRow, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
 use chrono::NaiveDateTime;
@@ -85,34 +85,6 @@ pub struct RequisitionLineRow {
     pub forecast_total_doses: Option<f64>,
     pub vaccine_courses: Option<String>,
 }
-
-impl RequisitionLineRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<RequisitionLineRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &RequisitionLineRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        let requisition_changelog = RequisitionRow::generate_changelog(
-            RowOrId::Id(&row.requisition_id),
-            con,
-            action,
-            source_site_id,
-        )?;
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::RequisitionLine,
-            record_id: row.id.clone(),
-            ..requisition_changelog
-        })
-    }
-}
-
 pub struct RequisitionLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }

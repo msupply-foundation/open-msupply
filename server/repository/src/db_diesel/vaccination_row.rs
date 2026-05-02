@@ -1,6 +1,6 @@
 use crate::diesel_macros::define_linked_tables;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    ChangelogRepository, ChangelogSyncType,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
@@ -97,26 +97,6 @@ pub enum VaccinationStatus {
     Draft,
     Finalised,
 }
-
-impl VaccinationRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Vaccination,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: None,
-            name_id: Some(self.patient_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct VaccinationRowRepository<'a> {
     connection: &'a StorageConnection,
 }

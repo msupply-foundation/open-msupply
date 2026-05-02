@@ -6,8 +6,7 @@ use crate::{
     db_diesel::{
         clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
         item_row::item, name_row::name,
-    },
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    }, ChangelogRepository, ChangelogSyncType,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
@@ -51,25 +50,6 @@ pub struct VaccineCourseDoseRow {
     pub min_interval_days: i32,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
-
-impl VaccineCourseDoseRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::VaccineCourseDose,
-            record_id,
-            row_action: action,
-            store_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct VaccineCourseDoseRowRepository<'a> {
     connection: &'a StorageConnection,
 }

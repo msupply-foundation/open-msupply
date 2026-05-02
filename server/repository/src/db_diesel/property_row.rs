@@ -3,9 +3,7 @@ use super::property_row::property::dsl::*;
 use serde::{Deserialize, Serialize};
 
 use crate::types::PropertyValueType;
-use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
-use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::RowActionType;
 use crate::SourceSiteId;
@@ -36,26 +34,6 @@ pub struct PropertyRow {
     pub value_type: PropertyValueType,
     pub allowed_values: Option<String>,
 }
-
-impl PropertyRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Property,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct PropertyRowRepository<'a> {
     connection: &'a StorageConnection,
 }

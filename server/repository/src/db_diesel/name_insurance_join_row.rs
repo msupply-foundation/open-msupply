@@ -1,5 +1,5 @@
 use super::{
-    name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    name_row::name, ChangelogRepository, RowActionType,
     StorageConnection,
 };
 
@@ -76,26 +76,6 @@ pub struct NameInsuranceJoinRow {
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
 }
-
-impl NameInsuranceJoinRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameInsuranceJoin,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct NameInsuranceJoinRowRepository<'a> {
     connection: &'a StorageConnection,
 }

@@ -5,8 +5,8 @@ use super::{
     StorageConnection,
 };
 use crate::{
-    item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
-    ChangelogRepository, ChangelogTableName, EqualFilter, NameLinkRow, NameLinkRowRepository,
+    item_link, name_link, repository_error::RepositoryError,
+    ChangelogRepository, EqualFilter, NameLinkRow, NameLinkRowRepository,
     RowActionType,
 };
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
@@ -203,41 +203,6 @@ pub struct NameRow {
     pub freight_factor: Option<f64>,
     pub currency_id: Option<String>,
 }
-
-impl NameRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Name,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl NameOmsFieldsRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameOmsFields,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
 )]

@@ -1,5 +1,5 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    ChangelogRepository, RowActionType, StorageConnection,
 };
 
 use crate::{ChangelogSyncType, Delete, RepositoryError, SourceSiteId, Upsert};
@@ -34,26 +34,6 @@ pub struct FormSchemaJson {
     pub json_schema: serde_json::Value,
     pub ui_schema: serde_json::Value,
 }
-
-impl FormSchemaJson {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::FormSchema,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct FormSchemaRowRepository<'a> {
     connection: &'a StorageConnection,
 }

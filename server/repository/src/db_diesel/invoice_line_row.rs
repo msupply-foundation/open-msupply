@@ -8,8 +8,8 @@ use crate::diesel_macros::define_linked_tables;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogSyncType, ChangelogTableName, Delete, InvoiceRow, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::changelog::RowOrId, ChangelogRepository,
+    ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -150,34 +150,6 @@ pub struct InvoiceLineRow {
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
 }
-
-impl InvoiceLineRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<InvoiceLineRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &InvoiceLineRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        let invoice_changelog = InvoiceRow::generate_changelog(
-            RowOrId::Id(&row.invoice_id),
-            con,
-            action,
-            source_site_id,
-        )?;
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::InvoiceLine,
-            record_id: row.id.clone(),
-            ..invoice_changelog
-        })
-    }
-}
-
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
 #[diesel(table_name = invoice_line_stats)]
 pub struct InvoiceLineStatsRow {

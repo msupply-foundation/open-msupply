@@ -1,6 +1,6 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RowActionType};
+use crate::{ChangelogRepository, Delete, RowActionType};
 use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 
 use diesel::prelude::*;
@@ -24,26 +24,6 @@ pub struct ClinicianStoreJoinRow {
     pub store_id: String,
     pub clinician_link_id: String,
 }
-
-impl ClinicianStoreJoinRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ClinicianStoreJoin,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct ClinicianStoreJoinRowRepository<'a> {
     connection: &'a StorageConnection,
 }

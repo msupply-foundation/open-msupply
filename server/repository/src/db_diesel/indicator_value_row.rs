@@ -1,5 +1,5 @@
 use super::{
-    name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    name_row::name, ChangelogRepository, RowActionType,
     StorageConnection,
 };
 use crate::ChangelogSyncType;
@@ -43,26 +43,6 @@ pub struct IndicatorValueRow {
     // Resolved from name_link - must be last to match view column order
     pub customer_name_id: String,
 }
-
-impl IndicatorValueRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::IndicatorValue,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct IndicatorValueRowRepository<'a> {
     connection: &'a StorageConnection,
 }
