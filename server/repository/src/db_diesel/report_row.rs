@@ -136,7 +136,7 @@ impl<'a> ReportRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &ReportRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = ReportRow::generate_changelog(
             row.id.clone(),

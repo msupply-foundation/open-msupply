@@ -97,7 +97,7 @@ impl<'a> ContactFormRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, contact_form_row: &ContactFormRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, contact_form_row: &ContactFormRow) -> Result<(), RepositoryError> {
         self._upsert_one(contact_form_row)?;
         let changelog = contact_form_row.generate_changelog(
             self.connection,

@@ -80,7 +80,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
     pub fn upsert_one(
         &self,
         asset_log_reason_row: &AssetLogReasonRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(asset_log_reason_row)?;
         let changelog = AssetLogReasonRow::generate_changelog(
             asset_log_reason_row.id.clone(),

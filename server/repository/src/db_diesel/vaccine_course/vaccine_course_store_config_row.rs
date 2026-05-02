@@ -66,7 +66,7 @@ impl<'a> VaccineCourseStoreConfigRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &VaccineCourseStoreConfigRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &VaccineCourseStoreConfigRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = row.generate_changelog(
             self.connection,

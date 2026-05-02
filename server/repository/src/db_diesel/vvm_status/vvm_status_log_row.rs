@@ -107,7 +107,7 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = VVMStatusLogRow::generate_changelog(
             RowOrId::Row(row),
@@ -118,7 +118,7 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn delete(&self, log_id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, log_id: &str) -> Result<(), RepositoryError> {
         let changelog = match VVMStatusLogRow::generate_changelog(
             RowOrId::Id(log_id),
             self.connection,
@@ -126,13 +126,13 @@ impl<'a> VVMStatusLogRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         ) {
             Ok(changelog) => changelog,
-            Err(RepositoryError::NotFound) => return Ok(None),
+            Err(RepositoryError::NotFound) => return Ok(()),
             Err(e) => return Err(e),
         };
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(vvm_status_log.filter(id.eq(log_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 }
 

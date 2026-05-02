@@ -132,7 +132,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = RequisitionLineRow::generate_changelog(
             RowOrId::Row(row),
@@ -175,20 +175,20 @@ impl<'a> RequisitionLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn delete(&self, requisition_line_id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, requisition_line_id: &str) -> Result<(), RepositoryError> {
         let changelog = RequisitionLineRow::generate_changelog(
             RowOrId::Id(requisition_line_id),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(
             requisition_line::table.filter(requisition_line::id.eq(requisition_line_id)),
         )
         .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionLineRow>, RepositoryError> {

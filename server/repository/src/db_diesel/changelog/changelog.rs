@@ -58,11 +58,6 @@ type Source = LeftJoinQuerySource<
     >,
 >;
 
-#[cfg(not(feature = "postgres"))]
-define_sql_function!(
-    fn last_insert_rowid() -> BigInt
-);
-
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, TS)]
     #[strum(serialize_all = "snake_case")]
@@ -473,35 +468,13 @@ impl<'a> ChangelogRepository<'a> {
         Ok(())
     }
 
-    /// Inserts a changelog record, and returns the cursor of the inserted record
-    #[cfg(feature = "postgres")]
-    pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
-        // Insert the record, and then return the cursor of the inserted record
-        // Using a returning clause makes this thread safe
-        let cursor_id = diesel::insert_into(changelog::table)
-            .values(row)
-            .returning(changelog::cursor)
-            .get_results(self.connection.lock().connection())?
-            .pop()
-            .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
-
-        self.connection
-            .notify(TransactionNotification::ChangelogInsert);
-        Ok(cursor_id)
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
-        // Insert the record, and then return the cursor of the inserted record
-        // SQLite docs say this is safe if you don't have different threads sharing a single connection
+    pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
         diesel::insert_into(changelog::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
-        let cursor_id = diesel::select(last_insert_rowid())
-            .get_result::<i64>(self.connection.lock().connection())?;
         self.connection
             .notify(TransactionNotification::ChangelogInsert);
-        Ok(cursor_id)
+        Ok(())
     }
 
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {

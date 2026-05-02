@@ -66,7 +66,7 @@ impl<'a> BundledItemRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &BundledItemRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &BundledItemRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = BundledItemRow::generate_changelog(
             row.id.clone(),
@@ -88,7 +88,7 @@ impl<'a> BundledItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, bundled_item_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, bundled_item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(bundled_item::table.filter(bundled_item::id.eq(bundled_item_id)))
             .set(bundled_item::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;

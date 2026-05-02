@@ -101,7 +101,7 @@ impl<'a> InsuranceProviderRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &InsuranceProviderRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &InsuranceProviderRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = InsuranceProviderRow::generate_changelog(
             row.id.clone(),

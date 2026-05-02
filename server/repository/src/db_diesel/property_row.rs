@@ -75,7 +75,7 @@ impl<'a> PropertyRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, property_row: &PropertyRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, property_row: &PropertyRow) -> Result<(), RepositoryError> {
         self._upsert_one(property_row)?;
         let changelog = PropertyRow::generate_changelog(
             property_row.id.clone(),

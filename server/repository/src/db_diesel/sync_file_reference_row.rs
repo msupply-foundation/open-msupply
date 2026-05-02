@@ -132,7 +132,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     pub fn upsert_one(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
         let changelog = SyncFileReferenceRow::generate_changelog(
             sync_file_reference_row.id.clone(),

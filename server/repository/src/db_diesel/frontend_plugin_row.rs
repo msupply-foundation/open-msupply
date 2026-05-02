@@ -136,7 +136,7 @@ impl<'a> FrontendPluginRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: FrontendPluginRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: FrontendPluginRow) -> Result<(), RepositoryError> {
         self._upsert_one(&row)?;
         let changelog = FrontendPluginRow::generate_changelog(
             row.id.clone(),
@@ -147,18 +147,18 @@ impl<'a> FrontendPluginRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         let changelog = FrontendPluginRow::generate_changelog(
             id.to_string(),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(frontend_plugin::table.filter(frontend_plugin::id.eq(id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 }
 

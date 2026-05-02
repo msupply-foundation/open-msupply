@@ -63,7 +63,7 @@ impl<'a> DemographicRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &DemographicRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &DemographicRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = DemographicRow::generate_changelog(
             row.id.clone(),

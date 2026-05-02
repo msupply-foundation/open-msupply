@@ -95,7 +95,7 @@ impl<'a> SystemLogRowRepository<'a> {
         Ok(())
     }
 
-    pub fn insert_one(&self, row: &SystemLogRow) -> Result<i64, RepositoryError> {
+    pub fn insert_one(&self, row: &SystemLogRow) -> Result<(), RepositoryError> {
         self._insert_one(row)?;
         let changelog = SystemLogRow::generate_changelog(
             row.id.clone(),

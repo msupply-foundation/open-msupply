@@ -69,7 +69,7 @@ impl<'a> MasterListRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &MasterListRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = MasterListRow::generate_changelog(
             row.id.clone(),

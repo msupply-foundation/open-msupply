@@ -73,7 +73,7 @@ impl<'a> PreferenceRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<(), RepositoryError> {
         self._upsert_one(preference_row)?;
         let changelog = PreferenceRow::generate_changelog(
             RowOrId::Row(preference_row),
@@ -106,18 +106,18 @@ impl<'a> PreferenceRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, preference_id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, preference_id: &str) -> Result<(), RepositoryError> {
         let changelog = PreferenceRow::generate_changelog(
             RowOrId::Id(preference_id),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(preference.filter(preference::id.eq(preference_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 }
 

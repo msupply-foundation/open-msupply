@@ -74,7 +74,7 @@ impl<'a> AssetCategoryRowRepository<'a> {
     pub fn upsert_one(
         &self,
         asset_category_row: &AssetCategoryRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(asset_category_row)?;
         let changelog = AssetCategoryRow::generate_changelog(
             asset_category_row.id.clone(),

@@ -69,7 +69,7 @@ impl<'a> PackagingVariantRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &PackagingVariantRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &PackagingVariantRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = PackagingVariantRow::generate_changelog(
             row.id.clone(),
@@ -91,7 +91,7 @@ impl<'a> PackagingVariantRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, packaging_variant_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, packaging_variant_id: &str) -> Result<(), RepositoryError> {
         diesel::update(
             packaging_variant::table.filter(packaging_variant::id.eq(packaging_variant_id)),
         )

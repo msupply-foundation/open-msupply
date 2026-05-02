@@ -72,7 +72,7 @@ impl<'a> NamePropertyRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, name_property_row: &NamePropertyRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, name_property_row: &NamePropertyRow) -> Result<(), RepositoryError> {
         self._upsert_one(name_property_row)?;
         let changelog = NamePropertyRow::generate_changelog(
             name_property_row.id.clone(),

@@ -141,7 +141,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &RnRFormLineRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &RnRFormLineRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = RnRFormLineRow::generate_changelog(
             RowOrId::Row(row),
@@ -211,7 +211,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, rnr_form_line_id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, rnr_form_line_id: &str) -> Result<(), RepositoryError> {
         let changelog = match RnRFormLineRow::generate_changelog(
             RowOrId::Id(rnr_form_line_id),
             self.connection,
@@ -219,14 +219,14 @@ impl<'a> RnRFormLineRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         ) {
             Ok(changelog) => changelog,
-            Err(RepositoryError::NotFound) => return Ok(None),
+            Err(RepositoryError::NotFound) => return Ok(()),
             Err(e) => return Err(e),
         };
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(rnr_form_line.filter(id.eq(rnr_form_line_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 }
 

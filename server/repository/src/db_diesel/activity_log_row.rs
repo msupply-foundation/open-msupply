@@ -173,7 +173,7 @@ impl<'a> ActivityLogRowRepository<'a> {
         Ok(())
     }
 
-    pub fn insert_one(&self, row: &ActivityLogRow) -> Result<i64, RepositoryError> {
+    pub fn insert_one(&self, row: &ActivityLogRow) -> Result<(), RepositoryError> {
         self._insert_one(row)?;
         let changelog = row.generate_changelog(
             self.connection,

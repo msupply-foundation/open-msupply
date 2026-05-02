@@ -87,7 +87,7 @@ impl<'a> AssetPropertyRowRepository<'a> {
     pub fn upsert_one(
         &self,
         asset_property_row: &AssetPropertyRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(asset_property_row)?;
         let changelog = AssetPropertyRow::generate_changelog(
             asset_property_row.id.clone(),

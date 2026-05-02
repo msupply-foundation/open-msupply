@@ -84,7 +84,7 @@ pub struct ClinicianRowRepository<'a> {
 
 pub trait ClinicianRowRepositoryTrait<'a> {
     fn find_one_by_id(&self, row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError>;
-    fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError>;
+    fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError>;
     fn delete(&self, row_id: &str) -> Result<(), RepositoryError>;
 }
 
@@ -97,7 +97,7 @@ impl<'a> ClinicianRowRepositoryTrait<'a> for ClinicianRowRepository<'a> {
         Ok(result)
     }
 
-    fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError> {
+    fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician::dsl::clinician)
             .values(row)
             .on_conflict(clinician::dsl::id)
@@ -184,8 +184,8 @@ impl<'a> ClinicianRowRepositoryTrait<'a> for MockClinicianRowRepository {
         Ok(self.find_one_by_id_result.clone())
     }
 
-    fn upsert_one(&self, _row: &ClinicianRow) -> Result<i64, RepositoryError> {
-        Ok(0)
+    fn upsert_one(&self, _row: &ClinicianRow) -> Result<(), RepositoryError> {
+        Ok(())
     }
 
     fn delete(&self, _row_id: &str) -> Result<(), RepositoryError> {

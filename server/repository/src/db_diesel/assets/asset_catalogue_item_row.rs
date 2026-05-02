@@ -90,7 +90,7 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
     pub fn upsert_one(
         &self,
         asset_catalogue_item_row: &AssetCatalogueItemRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(asset_catalogue_item_row)?;
         let changelog = AssetCatalogueItemRow::generate_changelog(
             asset_catalogue_item_row.id.clone(),
@@ -117,7 +117,7 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, asset_catalogue_item_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, asset_catalogue_item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(asset_catalogue_item.filter(id.eq(asset_catalogue_item_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;

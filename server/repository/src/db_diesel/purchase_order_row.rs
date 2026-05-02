@@ -169,7 +169,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
     pub fn upsert_one(
         &self,
         purchase_order_row: &PurchaseOrderRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert(purchase_order_row)?;
         let changelog = PurchaseOrderRow::generate_changelog(
             RowOrId::Row(purchase_order_row),
@@ -196,19 +196,19 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, purchase_order_id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, purchase_order_id: &str) -> Result<(), RepositoryError> {
         let changelog = PurchaseOrderRow::generate_changelog(
             RowOrId::Id(purchase_order_id),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(purchase_order_with_links::table)
             .filter(purchase_order_with_links::id.eq(purchase_order_id))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 
     pub fn find_max_purchase_order_number(

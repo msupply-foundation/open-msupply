@@ -91,7 +91,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     pub fn upsert_one(
         &self,
         asset_internal_location_row: &AssetInternalLocationRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(asset_internal_location_row)?;
         let changelog = AssetInternalLocationRow::generate_changelog(
             RowOrId::Row(asset_internal_location_row),
@@ -133,7 +133,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, asset_internal_location_id: &str) -> Result<i64, RepositoryError> {
+    pub fn delete(&self, asset_internal_location_id: &str) -> Result<(), RepositoryError> {
         let changelog = match AssetInternalLocationRow::generate_changelog(
             RowOrId::Id(asset_internal_location_id),
             self.connection,
@@ -142,16 +142,16 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         ) {
             Ok(changelog) => changelog,
             Err(RepositoryError::NotFound) => {
-                return Ok(0); // already deleted?
+                return Ok(()); // already deleted?
             }
             Err(e) => return Err(e),
         };
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(asset_internal_location)
             .filter(id.eq(asset_internal_location_id))
             .execute(self.connection.lock().connection())?;
 
-        Ok(change_log_id)
+        Ok(())
     }
 
     pub fn delete_all_for_asset_id(

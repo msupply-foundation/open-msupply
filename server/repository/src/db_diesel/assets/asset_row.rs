@@ -122,14 +122,14 @@ impl<'a> AssetRowRepository<'a> {
         &self,
         asset_row: &AssetRow,
         original_store_id: Option<String>,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(asset_row)?;
         let changelog = asset_row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
         )?;
-        let changelog_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         if let Some(original_store) = original_store_id {
             // Insert upsert changelog for original store
@@ -143,7 +143,7 @@ impl<'a> AssetRowRepository<'a> {
             original_changelog.store_id = Some(original_store);
             ChangelogRepository::new(self.connection).insert(&original_changelog)?;
         }
-        Ok(changelog_id)
+        Ok(())
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetRow>, RepositoryError> {
@@ -161,7 +161,7 @@ impl<'a> AssetRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, asset_id_param: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, asset_id_param: &str) -> Result<(), RepositoryError> {
         let changelog = AssetRow::soft_delete_and_get_changelog(
             asset_id_param,
             self.connection,

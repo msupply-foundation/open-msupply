@@ -89,7 +89,7 @@ impl<'a> ItemVariantRowRepository<'a> {
         ItemVariantRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ItemVariantRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &ItemVariantRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
         let changelog = ItemVariantRow::generate_changelog(
             row.id.clone(),
@@ -122,7 +122,7 @@ impl<'a> ItemVariantRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, item_variant_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, item_variant_id: &str) -> Result<(), RepositoryError> {
         diesel::update(
             item_variant_with_links::table.filter(item_variant_with_links::id.eq(item_variant_id)),
         )
