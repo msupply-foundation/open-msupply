@@ -1,8 +1,11 @@
 use super::vvm_status_log_row::vvm_status_log::dsl::*;
 use crate::{
-    db_diesel::{invoice_line_row::invoice_line, stock_line_row::stock_line, store_row::store},
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, KeyValueStoreRepository,
-    RepositoryError, RowActionType, StorageConnection, ChangelogSyncType, Upsert,
+    db_diesel::{
+        changelog::changelog::RowOrId, invoice_line_row::invoice_line,
+        stock_line_row::stock_line, store_row::store,
+    },
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -42,19 +45,25 @@ pub struct VVMStatusLogRow {
 }
 
 impl VVMStatusLogRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        row_or_id: RowOrId<VVMStatusLogRow>,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &VVMStatusLogRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::VVMStatusLog,
-            record_id: self.id.clone(),
+            record_id: row.id.clone(),
             row_action: action,
-            store_id: Some(self.store_id.clone()),
+            store_id: Some(row.store_id.clone()),
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -98,22 +107,32 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = VVMStatusLogRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn delete(&self, log_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = match self.find_one_by_id(log_id)? {
-            Some(row) => row,
-            None => return Ok(None),
+    pub fn delete(&self, log_id: &str) -> Result<(), RepositoryError> {
+        let changelog = match VVMStatusLogRow::generate_changelog(
+            RowOrId::Id(log_id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        ) {
+            Ok(changelog) => changelog,
+            Err(RepositoryError::NotFound) => return Ok(()),
+            Err(e) => return Err(e),
         };
-        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(vvm_status_log.filter(id.eq(log_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 }
 
@@ -121,8 +140,26 @@ impl<'a> VVMStatusLogRowRepository<'a> {
 pub struct VVMStatusLogRowDelete(pub String);
 
 impl Delete for VVMStatusLogRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        VVMStatusLogRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                VVMStatusLogRow::generate_changelog(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(vvm_status_log.filter(id.eq(&self.0))).execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -134,12 +171,21 @@ impl Delete for VVMStatusLogRowDelete {
 }
 
 impl Upsert for VVMStatusLogRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         VVMStatusLogRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
+                VVMStatusLogRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
             }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

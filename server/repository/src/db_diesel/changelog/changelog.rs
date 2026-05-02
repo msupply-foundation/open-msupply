@@ -4,8 +4,8 @@ use crate::{
     dynamic_query_filter::create_condition,
     name_store_join::name_store_join,
     vaccination_row::vaccination,
-    DBType, EqualFilter, LockedConnection, RepositoryError, StorageConnection,
-    TransactionNotification,
+    DBType, EqualFilter, KeyValueStoreRepository, LockedConnection, RepositoryError,
+    StorageConnection, TransactionNotification,
 };
 use diesel::{dsl::LeftJoinQuerySource, helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -57,11 +57,6 @@ type Source = LeftJoinQuerySource<
         changelog::transfer_store_id,
     >,
 >;
-
-#[cfg(not(feature = "postgres"))]
-define_sql_function!(
-    fn last_insert_rowid() -> BigInt
-);
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, TS)]
@@ -150,6 +145,30 @@ diesel_string_enum! {
         PurchaseOrderLine,
         MasterList,
         Site,
+    }
+}
+
+pub(crate) enum SourceSiteId {
+    SourceSiteId(Option<i32>),
+    CurrentSiteId,
+}
+
+pub(crate) enum RowOrId<'a, T> {
+    Row(&'a T),
+    Id(&'a str),
+}
+
+impl SourceSiteId {
+    pub(crate) fn get_id(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<Option<i32>, RepositoryError> {
+        match self {
+            SourceSiteId::SourceSiteId(id) => Ok(*id),
+            SourceSiteId::CurrentSiteId => {
+                KeyValueStoreRepository::new(connection).get_current_site_id()
+            }
+        }
     }
 }
 
@@ -243,7 +262,7 @@ impl ChangelogTableName {
     }
 }
 
-#[derive(Debug, PartialEq, Insertable, Default)]
+#[derive(Debug, Clone, PartialEq, Insertable, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
@@ -252,7 +271,6 @@ pub struct ChangeLogInsertRow {
     #[diesel(column_name = "name_link_id")]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
-    pub is_sync_update: Option<bool>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
     pub patient_id: Option<String>,
@@ -450,50 +468,23 @@ impl<'a> ChangelogRepository<'a> {
         Ok(())
     }
 
-    pub fn set_source_site_id_and_is_sync_update(
-        &self,
-        cursor_id: i64,
-        source_site_id: Option<i32>,
-    ) -> Result<(), RepositoryError> {
-        diesel::update(changelog::table)
-            .set((
-                changelog::source_site_id.eq(source_site_id),
-                changelog::is_sync_update.eq(true),
-            ))
-            .filter(changelog::cursor.eq(cursor_id))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    /// Inserts a changelog record, and returns the cursor of the inserted record
-    #[cfg(feature = "postgres")]
-    pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
-        // Insert the record, and then return the cursor of the inserted record
-        // Using a returning clause makes this thread safe
-        let cursor_id = diesel::insert_into(changelog::table)
-            .values(row)
-            .returning(changelog::cursor)
-            .get_results(self.connection.lock().connection())?
-            .pop()
-            .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
-
-        self.connection
-            .notify(TransactionNotification::ChangelogInsert);
-        Ok(cursor_id)
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
-        // Insert the record, and then return the cursor of the inserted record
-        // SQLite docs say this is safe if you don't have different threads sharing a single connection
+    pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
         diesel::insert_into(changelog::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
-        let cursor_id = diesel::select(last_insert_rowid())
-            .get_result::<i64>(self.connection.lock().connection())?;
         self.connection
             .notify(TransactionNotification::ChangelogInsert);
-        Ok(cursor_id)
+        Ok(())
+    }
+
+    pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
+        //TODO: Need to handle batch insert size limit
+        diesel::insert_into(changelog::table)
+            .values(rows)
+            .execute(self.connection.lock().connection())?;
+        self.connection
+            .notify(TransactionNotification::ChangelogInsert);
+        Ok(())
     }
 }
 

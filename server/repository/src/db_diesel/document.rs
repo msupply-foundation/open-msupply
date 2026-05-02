@@ -4,10 +4,8 @@ use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
     define_linked_tables,
 };
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RowActionType,
-};
+use crate::SourceSiteId;
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -217,9 +215,14 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    pub fn insert(&self, doc: &Document) -> Result<i64, RepositoryError> {
+    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         self._upsert(&doc.to_row()?)?;
-        let changelog = doc.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = Document::generate_changelog(
+            doc.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -378,19 +381,19 @@ fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
 }
 
 impl Document {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Document,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }

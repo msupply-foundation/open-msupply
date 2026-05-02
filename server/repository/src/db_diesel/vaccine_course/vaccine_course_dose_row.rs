@@ -7,8 +7,8 @@ use crate::{
         clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
         item_row::item, name_row::name,
     },
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RepositoryError, RowActionType, StorageConnection, ChangelogSyncType, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -53,18 +53,18 @@ pub struct VaccineCourseDoseRow {
 }
 
 impl VaccineCourseDoseRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::VaccineCourseDose,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -95,9 +95,14 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
     pub fn upsert_one(
         &self,
         vaccine_course_dose_row: &VaccineCourseDoseRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(vaccine_course_dose_row)?;
-        let changelog = vaccine_course_dose_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = VaccineCourseDoseRow::generate_changelog(
+            vaccine_course_dose_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -117,26 +122,37 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, vaccine_course_dose_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, vaccine_course_dose_id: &str) -> Result<(), RepositoryError> {
         diesel::update(vaccine_course_dose.filter(id.eq(vaccine_course_dose_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        let changelog = VaccineCourseDoseRow { id: vaccine_course_dose_id.to_string(), ..Default::default() }
-            .changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = VaccineCourseDoseRow::generate_changelog(
+            vaccine_course_dose_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for VaccineCourseDoseRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         VaccineCourseDoseRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

@@ -1,11 +1,8 @@
-use super::{
-    item_link_row::item_link, master_list_row::master_list::dsl::*,
-    StorageConnection,
-};
+use super::{item_link_row::item_link, master_list_row::master_list::dsl::*, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    KeyValueStoreRepository, RowActionType, ChangelogSyncType, Upsert,
+    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
+    ChangelogTableName, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -37,17 +34,17 @@ pub struct MasterListRow {
 allow_tables_to_appear_in_same_query!(master_list, item_link);
 
 impl MasterListRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::MasterList,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -72,9 +69,14 @@ impl<'a> MasterListRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &MasterListRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = MasterListRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -91,13 +93,20 @@ impl<'a> MasterListRowRepository<'a> {
 }
 
 impl Upsert for MasterListRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         MasterListRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

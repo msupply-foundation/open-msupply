@@ -1,6 +1,6 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
 use crate::{
-    db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
+    db_diesel::changelog::ChangelogRepository,
     repository_error::RepositoryError,
     ChangelogSyncType, ChangelogTableName, Delete, Upsert,
 };
@@ -88,17 +88,15 @@ impl<'a> UnitRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct UnitRowDelete(pub String);
 impl Delete for UnitRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        UnitRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
-    }
-    fn delete_v7(
+    fn delete_sync(
         &self,
         con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
+        sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         UnitRowRepository::new(con).delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
+        if let ChangelogSyncType::SyncTypeV7 { changelog_row } = sync_type {
+            ChangelogRepository::new(con).insert(&changelog_row)?;
+        }
         Ok(())
     }
     // Test only

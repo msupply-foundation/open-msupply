@@ -103,9 +103,9 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ProgramRequisitionOrderTypeRowDelete(pub String);
 impl Delete for ProgramRequisitionOrderTypeRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ProgramRequisitionOrderTypeRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

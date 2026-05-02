@@ -220,14 +220,8 @@ impl<'a> KeyValueStoreRepository<'a> {
         Ok(row.and_then(|row| row.value_bool))
     }
 
-    pub fn get_source_site_id(
-        &self,
-        source_site_id: Option<i32>,
-    ) -> Result<Option<i32>, RepositoryError> {
-        match source_site_id {
-            Some(id) => Ok(Some(id)),
-            None => Ok(self.get_i32(KeyType::SettingsSyncSiteId)?),
-        }
+    pub fn get_current_site_id(&self) -> Result<Option<i32>, RepositoryError> {
+        self.get_i32(KeyType::SettingsSyncSiteId)
     }
 }
 

@@ -1,9 +1,10 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RowActionType, StorageConnection,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, ChangelogSyncType, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
+};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -71,19 +72,19 @@ pub struct BackendPluginRow {
 }
 
 impl BackendPluginRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::BackendPlugin,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -124,38 +125,47 @@ impl<'a> BackendPluginRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: BackendPluginRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: BackendPluginRow) -> Result<(), RepositoryError> {
         self._upsert_one(&row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = BackendPluginRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => {
-                let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
-                ChangelogRepository::new(self.connection).insert(&changelog)?
-            }
-            None => {
-                return Ok(None);
-            }
-        };
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        let changelog = BackendPluginRow::generate_changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(backend_plugin::table.filter(backend_plugin::id.eq(id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 }
 
 impl Upsert for BackendPluginRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         BackendPluginRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
@@ -177,9 +187,25 @@ impl Upsert for BackendPluginRow {
 // backend_plugins don't have referential relations to any other tables so it's ok to delete as an example
 pub struct BackendPluginRowDelete(pub String);
 impl Delete for BackendPluginRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = BackendPluginRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => BackendPluginRow::generate_changelog(
+                self.0.clone(),
+                con,
+                RowActionType::Delete,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(backend_plugin::table.filter(backend_plugin::id.eq(&self.0)))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

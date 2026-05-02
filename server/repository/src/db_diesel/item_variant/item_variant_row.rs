@@ -4,9 +4,9 @@ use crate::{
         location_type_row::location_type, name_link_row::name_link, name_row::name,
     },
     diesel_macros::define_linked_tables,
-    item_link, user_account, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    KeyValueStoreRepository, RepositoryError, RowActionType, StorageConnection, ChangelogSyncType,
-    Upsert,
+    item_link, user_account, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
+    ChangelogTableName, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -63,18 +63,18 @@ pub struct ItemVariantRow {
 }
 
 impl ItemVariantRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::ItemVariant,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -89,9 +89,14 @@ impl<'a> ItemVariantRowRepository<'a> {
         ItemVariantRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ItemVariantRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &ItemVariantRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = ItemVariantRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -117,26 +122,39 @@ impl<'a> ItemVariantRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, item_variant_id: &str) -> Result<i64, RepositoryError> {
-        diesel::update(item_variant_with_links::table.filter(item_variant_with_links::id.eq(item_variant_id)))
-            .set(item_variant_with_links::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(self.connection.lock().connection())?;
+    pub fn mark_deleted(&self, item_variant_id: &str) -> Result<(), RepositoryError> {
+        diesel::update(
+            item_variant_with_links::table.filter(item_variant_with_links::id.eq(item_variant_id)),
+        )
+        .set(item_variant_with_links::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+        .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        let changelog = ItemVariantRow { id: item_variant_id.to_string(), ..Default::default() }
-            .changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = ItemVariantRow::generate_changelog(
+            item_variant_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for ItemVariantRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ItemVariantRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

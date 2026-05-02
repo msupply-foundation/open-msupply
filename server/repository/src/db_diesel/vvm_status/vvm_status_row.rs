@@ -4,6 +4,7 @@ use crate::db_diesel::{
     item_variant::item_variant_row::item_variant, location_row::location,
     name_row::name, stock_line_row::stock_line,
 };
+use crate::ChangelogRepository;
 use crate::Delete;
 use crate::RepositoryError;
 use crate::StorageConnection;
@@ -116,9 +117,18 @@ impl Upsert for VVMStatusRow {
 #[derive(Debug, Clone)]
 pub struct VVMStatusRowDelete(pub String);
 impl Delete for VVMStatusRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         VVMStatusRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
+
+        if let ChangelogSyncType::SyncTypeV7 { changelog_row } = sync_type {
+            ChangelogRepository::new(con).insert(&changelog_row)?;
+        }
+
+        Ok(())
     }
 
     // Test only

@@ -3,11 +3,11 @@ use super::asset_type_row::asset_catalogue_type::dsl::*;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::KeyValueStoreRepository;
 use crate::RepositoryError;
+use crate::SourceSiteId;
 use crate::StorageConnection;
-use crate::{ChangelogSyncType, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -31,19 +31,19 @@ pub struct AssetTypeRow {
 }
 
 impl AssetTypeRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetCatalogueType,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -68,9 +68,14 @@ impl<'a> AssetTypeRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, asset_type_row: &AssetTypeRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, asset_type_row: &AssetTypeRow) -> Result<(), RepositoryError> {
         self._upsert_one(asset_type_row)?;
-        let changelog = asset_type_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = AssetTypeRow::generate_changelog(
+            asset_type_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -99,12 +104,19 @@ impl<'a> AssetTypeRowRepository<'a> {
 }
 
 impl Upsert for AssetTypeRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         AssetTypeRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
         ChangelogRepository::new(con).insert(&changelog)?;

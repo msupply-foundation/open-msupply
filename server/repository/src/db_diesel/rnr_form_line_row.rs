@@ -3,9 +3,9 @@ use super::{
     rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
 };
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, KeyValueStoreRepository,
-    RepositoryError, RnRFormRowRepository, RowActionType, StorageConnection, ChangelogSyncType,
-    Upsert,
+    db_diesel::changelog::changelog::RowOrId, ChangeLogInsertRow, ChangelogRepository,
+    ChangelogSyncType, ChangelogTableName, Delete, RepositoryError, RnRFormRow, RowActionType,
+    SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -96,24 +96,28 @@ pub enum RnRFormLowStock {
 }
 
 impl RnRFormLineRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        row_or_id: RowOrId<RnRFormLineRow>,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let store_id = RnRFormRowRepository::new(con)
-            .find_one_by_id(&self.rnr_form_id)?
-            .map(|r| r.store_id);
-
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &RnRFormLineRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+        let rnr_form_changelog = RnRFormRow::generate_changelog(
+            RowOrId::Id(&row.rnr_form_id),
+            con,
+            action,
+            source_site_id,
+        )?;
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::RnrFormLine,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id,
-            name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
-            ..Default::default()
+            record_id: row.id.clone(),
+            ..rnr_form_changelog
         })
     }
 }
@@ -137,9 +141,14 @@ impl<'a> RnRFormLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &RnRFormLineRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &RnRFormLineRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = RnRFormLineRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -153,9 +162,15 @@ impl<'a> RnRFormLineRowRepository<'a> {
             .set(requisition_line_id.eq(linked_requisition_line_id))
             .execute(self.connection.lock().connection())?;
 
-        let row = self.find_one_by_id(rnr_form_line_id)?
+        let row = self
+            .find_one_by_id(rnr_form_line_id)?
             .ok_or(RepositoryError::NotFound)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = RnRFormLineRow::generate_changelog(
+            RowOrId::Row(&row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
     }
@@ -196,18 +211,22 @@ impl<'a> RnRFormLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, rnr_form_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = match self.find_one_by_id(rnr_form_line_id)? {
-            Some(row) => row,
-            None => return Ok(None),
+    pub fn delete(&self, rnr_form_line_id: &str) -> Result<(), RepositoryError> {
+        let changelog = match RnRFormLineRow::generate_changelog(
+            RowOrId::Id(rnr_form_line_id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        ) {
+            Ok(changelog) => changelog,
+            Err(RepositoryError::NotFound) => return Ok(()),
+            Err(e) => return Err(e),
         };
-
-        let changelog = old_row.changelog(self.connection, RowActionType::Delete, None)?;
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(rnr_form_line.filter(id.eq(rnr_form_line_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 }
 
@@ -215,8 +234,24 @@ impl<'a> RnRFormLineRowRepository<'a> {
 pub struct RnRFormLineDelete(pub String);
 // For tests only
 impl Delete for RnRFormLineDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        RnRFormLineRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormLineRow::generate_changelog(
+                RowOrId::Id(&self.0),
+                con,
+                RowActionType::Delete,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(rnr_form_line.filter(id.eq(&self.0))).execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -228,13 +263,20 @@ impl Delete for RnRFormLineDelete {
 }
 
 impl Upsert for RnRFormLineRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         RnRFormLineRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormLineRow::generate_changelog(
+                RowOrId::Row(self),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

@@ -1,13 +1,10 @@
 use super::StorageConnection;
 
 use crate::{
-    clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType, RepositoryError,
-    ChangelogSyncType, Upsert,
+    clinician_link, ChangelogSyncType, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType,
+    RepositoryError, SourceSiteId, Upsert,
 };
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RowActionType,
-};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -51,19 +48,19 @@ pub struct ClinicianRow {
 allow_tables_to_appear_in_same_query!(clinician, clinician_link);
 
 impl ClinicianRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Clinician,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -87,7 +84,7 @@ pub struct ClinicianRowRepository<'a> {
 
 pub trait ClinicianRowRepositoryTrait<'a> {
     fn find_one_by_id(&self, row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError>;
-    fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError>;
+    fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError>;
     fn delete(&self, row_id: &str) -> Result<(), RepositoryError>;
 }
 
@@ -100,7 +97,7 @@ impl<'a> ClinicianRowRepositoryTrait<'a> for ClinicianRowRepository<'a> {
         Ok(result)
     }
 
-    fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError> {
+    fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician::dsl::clinician)
             .values(row)
             .on_conflict(clinician::dsl::id)
@@ -108,7 +105,12 @@ impl<'a> ClinicianRowRepositoryTrait<'a> for ClinicianRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         insert_or_ignore_clinician_link(self.connection, row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = ClinicianRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -139,12 +141,19 @@ impl<'a> ClinicianRowRepository<'a> {
 pub struct ClinicianRowDelete(pub String);
 
 impl Upsert for ClinicianRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ClinicianRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
         ChangelogRepository::new(con).insert(&changelog)?;
@@ -175,8 +184,8 @@ impl<'a> ClinicianRowRepositoryTrait<'a> for MockClinicianRowRepository {
         Ok(self.find_one_by_id_result.clone())
     }
 
-    fn upsert_one(&self, _row: &ClinicianRow) -> Result<i64, RepositoryError> {
-        Ok(0)
+    fn upsert_one(&self, _row: &ClinicianRow) -> Result<(), RepositoryError> {
+        Ok(())
     }
 
     fn delete(&self, _row_id: &str) -> Result<(), RepositoryError> {
