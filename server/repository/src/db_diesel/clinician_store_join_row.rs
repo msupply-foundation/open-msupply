@@ -1,7 +1,7 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, KeyValueStoreRepository, RowActionType};
-use crate::{RepositoryError, ChangelogSyncType, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RowActionType};
+use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 
 use diesel::prelude::*;
 
@@ -26,19 +26,19 @@ pub struct ClinicianStoreJoinRow {
 }
 
 impl ClinicianStoreJoinRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::ClinicianStoreJoin,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -65,7 +65,12 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = ClinicianStoreJoinRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
     }
@@ -89,16 +94,22 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
 }
 
 impl Upsert for ClinicianStoreJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
         ChangelogRepository::new(con).insert(&changelog)?;
@@ -117,9 +128,13 @@ impl Upsert for ClinicianStoreJoinRow {
 #[derive(Debug, Clone)]
 pub struct ClinicianStoreJoinRowDelete(pub String);
 impl Delete for ClinicianStoreJoinRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Clinician store joins not in Changelog/not synced out
+        Ok(()) // Clinician store joins not in Changelog/not synced out
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

@@ -3,7 +3,10 @@ use crate::db_diesel::item_link_row::item_link;
 use crate::db_diesel::item_row::item;
 use crate::RepositoryError;
 use crate::StorageConnection;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository, RowActionType, ChangelogSyncType, Upsert};
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RowActionType,
+    SourceSiteId, Upsert,
+};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -36,18 +39,18 @@ pub struct VaccineCourseItemRow {
 }
 
 impl VaccineCourseItemRow {
-    pub fn changelog(
-        &self,
+    pub(crate) fn generate_changelog(
+        record_id: String,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::VaccineCourseItem,
-            record_id: self.id.clone(),
+            record_id,
             row_action: action,
             store_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -78,9 +81,14 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
     pub fn upsert_one(
         &self,
         vaccine_course_item_row: &VaccineCourseItemRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(vaccine_course_item_row)?;
-        let changelog = vaccine_course_item_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = VaccineCourseItemRow::generate_changelog(
+            vaccine_course_item_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -100,26 +108,37 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, vaccine_course_item_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, vaccine_course_item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(vaccine_course_item.filter(id.eq(vaccine_course_item_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        let changelog = VaccineCourseItemRow { id: vaccine_course_item_id.to_string(), ..Default::default() }
-            .changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = VaccineCourseItemRow::generate_changelog(
+            vaccine_course_item_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for VaccineCourseItemRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         VaccineCourseItemRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

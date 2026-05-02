@@ -171,7 +171,12 @@ fn integrate_delete(
 ) -> Result<(), Error> {
     let changelog = changelog(table_name, RowActionType::Delete, row);
     delete
-        .delete_v7(connection, changelog)
+        .delete_sync(
+            connection,
+            ChangelogSyncType::SyncTypeV7 {
+                changelog_row: changelog,
+            },
+        )
         .map_err(Error::IntegrationError)?;
 
     Ok(())

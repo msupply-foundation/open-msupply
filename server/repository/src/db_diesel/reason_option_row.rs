@@ -91,9 +91,9 @@ impl<'a> ReasonOptionRowRepository<'a> {
 pub struct ReasonOptionRowDelete(pub String);
 
 impl Delete for ReasonOptionRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ReasonOptionRowRepository::new(con).soft_delete(&self.0)?;
-        Ok(None)
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

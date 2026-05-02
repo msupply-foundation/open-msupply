@@ -26,14 +26,11 @@ define_sql_function!(fn lower(x: Text) -> Text);
 
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
-    fn delete_v7(
+    fn delete_sync(
         &self,
-        _con: &StorageConnection,
-        _changelog: ChangeLogInsertRow,
-    ) -> Result<(), RepositoryError> {
-        unimplemented!("delete_v7 not implemented for this type")
-    }
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError>;
     // Test only
     fn assert_deleted(&self, con: &StorageConnection);
 }

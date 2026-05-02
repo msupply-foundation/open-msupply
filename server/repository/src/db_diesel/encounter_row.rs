@@ -1,12 +1,13 @@
 use super::{
-    clinician_link, clinician_row::clinician, name_row::name,
-    program_row::program, StorageConnection,
+    clinician_link, clinician_row::clinician, name_row::name, program_row::program,
+    StorageConnection,
 };
 
 use crate::diesel_macros::define_linked_tables;
+use crate::SourceSiteId;
 use crate::{
     repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    KeyValueStoreRepository, RowActionType,
+    RowActionType,
 };
 
 use diesel::prelude::*;
@@ -76,11 +77,11 @@ pub struct EncounterRow {
 }
 
 impl EncounterRow {
-    pub fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Encounter,
@@ -88,7 +89,7 @@ impl EncounterRow {
             row_action: action,
             store_id: self.store_id.clone(),
             name_id: Some(self.patient_id.clone()),
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -103,9 +104,13 @@ impl<'a> EncounterRowRepository<'a> {
         EncounterRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &EncounterRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 

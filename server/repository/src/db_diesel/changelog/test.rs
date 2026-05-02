@@ -3,17 +3,17 @@ use diesel::prelude::*;
 
 use crate::{
     asset_class_row::{AssetClassRow, AssetClassRowRepository},
-    asset_row::{AssetRow, AssetRowRepository},
+    asset_row::AssetRow,
     mock::{
         mock_item_a, mock_location_1, mock_location_2, mock_location_in_another_store,
         mock_location_on_hold, mock_store_a, mock_store_b, MockData, MockDataInserts,
     },
     test_db::{self, setup_all, setup_all_with_data},
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, CurrencyRow,
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow,
-    VaccinationRow, VaccinationRowRepository,
+    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType, ChangelogTableName,
+    CurrencyRow, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, LocationRowRepository, NameRow, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RowActionType,
+    StorageConnection, StoreRow, Upsert, VaccinationRow, VaccinationRowRepository,
 };
 
 #[actix_rt::test]
@@ -112,10 +112,7 @@ async fn test_changelog() {
     assert_eq!(4, result.len());
     // Last entry should be the delete
     assert_eq!(result.last().unwrap().row_action, RowActionType::Delete);
-    assert_eq!(
-        result.last().unwrap().record_id,
-        mock_location_on_hold().id
-    );
+    assert_eq!(result.last().unwrap().record_id, mock_location_on_hold().id);
 }
 
 #[actix_rt::test]
@@ -627,7 +624,9 @@ async fn test_changelog_outgoing_sync_records() {
         id: asset_class_id.clone(),
         ..Default::default()
     };
-    AssetClassRowRepository::new(&connection).upsert_one(&row).unwrap();
+    AssetClassRowRepository::new(&connection)
+        .upsert_one(&row)
+        .unwrap();
 
     let outgoing_results = repo
         .outgoing_sync_records_from_central(0, 1000, 1, true)
@@ -645,11 +644,14 @@ async fn test_changelog_outgoing_sync_records() {
         ..Default::default()
     };
 
-    let cursor_id = AssetRowRepository::new(&connection).upsert_one(&row, None).unwrap();
-
-    // Set the source_site_id (usually this happens during integration step in sync)
-    repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
-        .unwrap();
+    // We want to test the sync scenario where changelog is set with site id = site1_id.
+    row.upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(site1_id),
+        },
+    )
+    .unwrap();
 
     // Now we should have two records to send to site 1 the remote site on initialisation
     // The asset class and the asset
@@ -698,13 +700,17 @@ async fn test_changelog_outgoing_patient_sync_records() {
         ..Default::default()
     };
 
-    let cursor = VaccinationRowRepository::new(&connection).upsert_one(&vaccination).unwrap();
+    let cursor_before = repo.latest_cursor().unwrap();
+    VaccinationRowRepository::new(&connection)
+        .upsert_one(&vaccination)
+        .unwrap();
+    let cursor = repo.latest_cursor().unwrap();
 
     // store A (on site1) has name_store_join for patient2
 
     // Site 1 sync should get the vaccination changelog via name_store_join
     let outgoing_results = repo
-        .outgoing_sync_records_from_central(cursor as u64, 1000, site1_id, true)
+        .outgoing_sync_records_from_central(cursor_before, 1000, site1_id, true)
         .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
@@ -712,8 +718,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
     // Site 1 patient_pull
     let outgoing_results = repo
         .outgoing_patient_sync_records_from_central(
-            // Definitely a higher cursor than the vaccination changelog (+500)
-            (cursor) as u64,
+            cursor_before,
             1000,
             site1_id,
             "patient2".to_string(),
@@ -726,7 +731,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
     // on patient_pull
     let outgoing_results = repo
         .outgoing_patient_sync_records_from_central(
-            (cursor + 500) as u64,
+            cursor + 500,
             1000,
             5,
             "patient2".to_string(),

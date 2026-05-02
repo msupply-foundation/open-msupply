@@ -4,10 +4,8 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RowActionType,
-};
+use crate::SourceSiteId;
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -44,11 +42,11 @@ pub struct TemperatureBreachConfigRow {
 }
 
 impl TemperatureBreachConfigRow {
-    pub fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::TemperatureBreachConfig,
@@ -56,7 +54,7 @@ impl TemperatureBreachConfigRow {
             row_action: action,
             store_id: Some(self.store_id.clone()),
             name_id: None,
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -71,14 +69,18 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
         TemperatureBreachConfigRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
         diesel::insert_into(temperature_breach_config::table)
             .values(row)
             .on_conflict(temperature_breach_config::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        let changelog = row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 

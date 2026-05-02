@@ -1,7 +1,7 @@
 use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
 use crate::{
-    db_diesel::changelog::{ChangeLogInsertRow, ChangelogRepository},
+    db_diesel::changelog::ChangelogRepository,
     diesel_macros::define_linked_tables,
     repository_error::RepositoryError,
     ChangelogSyncType, ChangelogTableName, Delete, Upsert,
@@ -141,17 +141,15 @@ impl<'a> StoreRowRepository<'a> {
 pub struct StoreRowDelete(pub String);
 // TODO soft delete
 impl Delete for StoreRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StoreRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
-    }
-    fn delete_v7(
+    fn delete_sync(
         &self,
         con: &StorageConnection,
-        changelog: ChangeLogInsertRow,
+        sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con).delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
+        if let ChangelogSyncType::SyncTypeV7 { changelog_row } = sync_type {
+            ChangelogRepository::new(con).insert(&changelog_row)?;
+        }
         Ok(())
     }
     // Test only

@@ -1,13 +1,12 @@
-use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, KeyValueStoreRepository,
-    RepositoryError, RowActionType, StorageConnection, ChangelogSyncType, Upsert,
-};
 use crate::diesel_macros::define_linked_tables;
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+};
 
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
-    item_row::item, name_row::name, name_store_join::name_store_join,
-    store_row::store,
+    item_row::item, name_row::name, name_store_join::name_store_join, store_row::store,
     vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
 };
 
@@ -62,9 +61,7 @@ allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_dose);
 allow_tables_to_appear_in_same_query!(vaccination, name_store_join);
 allow_tables_to_appear_in_same_query!(vaccination, store);
 
-#[derive(
-    Clone, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize, Default,
-)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[diesel(table_name = vaccination)]
 pub struct VaccinationRow {
     pub id: String,
@@ -102,11 +99,11 @@ pub enum VaccinationStatus {
 }
 
 impl VaccinationRow {
-    pub fn changelog(
+    pub(crate) fn generate_changelog(
         &self,
         con: &StorageConnection,
         action: RowActionType,
-        source_site_id: Option<i32>,
+        source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Vaccination,
@@ -114,7 +111,7 @@ impl VaccinationRow {
             row_action: action,
             store_id: None,
             name_id: Some(self.patient_id.clone()),
-            source_site_id: KeyValueStoreRepository::new(con).get_source_site_id(source_site_id)?,
+            source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
     }
@@ -134,9 +131,13 @@ impl<'a> VaccinationRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, vaccination_row: &VaccinationRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, vaccination_row: &VaccinationRow) -> Result<(), RepositoryError> {
         self._upsert_one(vaccination_row)?;
-        let changelog = vaccination_row.changelog(self.connection, RowActionType::Upsert, None)?;
+        let changelog = vaccination_row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
@@ -152,20 +153,28 @@ impl<'a> VaccinationRowRepository<'a> {
     }
 
     pub fn delete(&self, vaccination_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(vaccination_with_links::table.filter(vaccination_with_links::id.eq(vaccination_id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            vaccination_with_links::table.filter(vaccination_with_links::id.eq(vaccination_id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
 impl Upsert for VaccinationRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         VaccinationRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                self.changelog(con, RowActionType::Upsert, source_site_id)?
-            }
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
