@@ -3,8 +3,8 @@ use super::{
     rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
 };
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogSyncType, ChangelogTableName, Delete, RepositoryError, RnRFormRow, RowActionType,
+    db_diesel::changelog::changelog::RowOrId, ChangelogRepository,
+    ChangelogSyncType, Delete, RepositoryError, RowActionType,
     SourceSiteId, StorageConnection, Upsert,
 };
 
@@ -94,34 +94,6 @@ pub enum RnRFormLowStock {
     BelowHalf,
     BelowQuarter,
 }
-
-impl RnRFormLineRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<RnRFormLineRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &RnRFormLineRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        let rnr_form_changelog = RnRFormRow::generate_changelog(
-            RowOrId::Id(&row.rnr_form_id),
-            con,
-            action,
-            source_site_id,
-        )?;
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::RnrFormLine,
-            record_id: row.id.clone(),
-            ..rnr_form_changelog
-        })
-    }
-}
-
 pub struct RnRFormLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }

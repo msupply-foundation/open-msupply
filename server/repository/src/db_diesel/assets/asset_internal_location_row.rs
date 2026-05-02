@@ -1,13 +1,11 @@
 use super::asset_internal_location_row::asset_internal_location::dsl::*;
 
-use crate::asset_row::AssetRowRepository;
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::Delete;
-use crate::LocationRowRepository;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
 use serde::Deserialize;
 use serde::Serialize;
@@ -31,41 +29,6 @@ pub struct AssetInternalLocationRow {
     pub asset_id: String,
     pub location_id: String,
 }
-
-impl AssetInternalLocationRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<AssetInternalLocationRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &AssetInternalLocationRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-
-        let store_id_location = LocationRowRepository::new(con)
-            .find_one_by_id(&row.location_id)?
-            .map(|r| r.store_id);
-
-        let store_id_asset = AssetRowRepository::new(con)
-            .find_one_by_id(&row.asset_id)?
-            .and_then(|r| r.store_id);
-
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetInternalLocation,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: store_id_location.or(store_id_asset),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct AssetInternalLocationRowRepository<'a> {
     connection: &'a StorageConnection,
 }

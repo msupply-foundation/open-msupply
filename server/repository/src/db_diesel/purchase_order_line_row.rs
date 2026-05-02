@@ -1,14 +1,15 @@
 use crate::{
     db_diesel::{
-        changelog::changelog::RowOrId, item_link_row::item_link, item_row::item,
+        changelog::{changelog::RowOrId, Changelogs},
+        item_link_row::item_link,
+        item_row::item,
         purchase_order_row::purchase_order,
     },
     diesel_macros::define_linked_tables,
-    ChangelogSyncType, Delete, PurchaseOrderRow, SourceSiteId, Upsert,
+    ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection,
+    ChangelogRepository, RepositoryError, RowActionType, StorageConnection,
 };
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -111,44 +112,6 @@ pub enum PurchaseOrderLineStatus {
     New,
     Sent,
     Closed,
-}
-
-struct Changelogs {
-    purchase_order_changelog: ChangeLogInsertRow,
-    purchase_order_line_changelog: ChangeLogInsertRow,
-}
-
-impl PurchaseOrderLineRow {
-    fn generate_changelogs(
-        row_or_id: RowOrId<PurchaseOrderLineRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<Changelogs, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &PurchaseOrderLineRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        let purchase_order_changelog = PurchaseOrderRow::generate_changelog(
-            RowOrId::Id(&row.purchase_order_id),
-            con,
-            RowActionType::Upsert, // Even when deleting purchase order line the parent changelog should be only upsert
-            source_site_id,
-        )?;
-        let purchase_order_line_changelog = ChangeLogInsertRow {
-            table_name: ChangelogTableName::PurchaseOrderLine,
-            record_id: row.id.clone(),
-            row_action: action,
-            ..purchase_order_changelog.clone()
-        };
-
-        Ok(Changelogs {
-            purchase_order_changelog,
-            purchase_order_line_changelog,
-        })
-    }
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {

@@ -5,7 +5,7 @@ use crate::diesel_macros::{
     define_linked_tables,
 };
 use crate::SourceSiteId;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -381,22 +381,6 @@ fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
 }
 
 impl Document {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Document,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
 
     pub fn to_row(&self) -> Result<DocumentRow, RepositoryError> {
         let parents =

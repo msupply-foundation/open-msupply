@@ -2,7 +2,7 @@ use super::{user_row::user_account, StorageConnection};
 
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{repository_error::RepositoryError, Delete};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, SourceSiteId, Upsert};
 
 use chrono::{NaiveDate, NaiveDateTime};
@@ -63,32 +63,6 @@ pub struct StocktakeRow {
     pub verified_by: Option<String>,
     pub is_initial_stocktake: bool,
 }
-
-impl StocktakeRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<StocktakeRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &StocktakeRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Stocktake,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct StocktakeRowRepository<'a> {
     connection: &'a StorageConnection,
 }

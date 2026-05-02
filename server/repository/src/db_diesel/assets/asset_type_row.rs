@@ -6,7 +6,7 @@ use serde::Serialize;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
@@ -29,26 +29,6 @@ pub struct AssetTypeRow {
     #[diesel(column_name = "asset_category_id")]
     pub category_id: String,
 }
-
-impl AssetTypeRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetCatalogueType,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct AssetTypeRowRepository<'a> {
     connection: &'a StorageConnection,
 }

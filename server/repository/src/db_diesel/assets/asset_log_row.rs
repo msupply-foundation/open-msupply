@@ -1,8 +1,8 @@
 use super::asset_log_row::asset_log::dsl::*;
 
-use crate::asset_row::{asset, AssetRowRepository};
+use crate::asset_row::asset;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    ChangelogRepository, ChangelogSyncType,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
@@ -83,29 +83,6 @@ pub struct AssetLogRow {
     #[serde(default)]
     pub created_datetime: NaiveDateTime,
 }
-
-impl AssetLogRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let store_id = AssetRowRepository::new(con)
-            .find_one_by_id(&self.asset_id)?
-            .and_then(|a| a.store_id);
-
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetLog,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct AssetLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }

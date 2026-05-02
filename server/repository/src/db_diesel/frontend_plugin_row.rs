@@ -1,5 +1,5 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    ChangelogRepository, RowActionType, StorageConnection,
 };
 
 use crate::{
@@ -81,26 +81,6 @@ pub struct FrontendPluginRow {
     #[diesel(deserialize_as = String)]
     pub files: FrontendPluginFiles,
 }
-
-impl FrontendPluginRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::FrontendPlugin,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct FrontendPluginRowRepository<'a> {
     connection: &'a StorageConnection,
 }

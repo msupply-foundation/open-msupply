@@ -6,7 +6,7 @@ use super::{
     name_link_row::name_link, RepositoryError, StorageConnection,
 };
 use crate::diesel_macros::define_linked_tables;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
@@ -46,26 +46,6 @@ pub struct BarcodeRow {
     // Resolved from name_link - must be last to match view column order
     pub manufacturer_id: Option<String>,
 }
-
-impl BarcodeRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Barcode,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct BarcodeRowRepository<'a> {
     connection: &'a StorageConnection,
 }

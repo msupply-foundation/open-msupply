@@ -1,5 +1,5 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    ChangelogRepository, ChangelogSyncType,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
@@ -28,25 +28,6 @@ pub struct BundledItemRow {
     pub ratio: f64,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
-
-impl BundledItemRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::BundledItem,
-            record_id,
-            row_action: action,
-            store_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct BundledItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }

@@ -2,7 +2,7 @@ use super::StorageConnection;
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
 use crate::repository_error::RepositoryError;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -39,24 +39,6 @@ pub struct CurrencyRow {
     pub date_updated: Option<NaiveDate>,
     pub is_active: bool,
 }
-
-impl CurrencyRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Currency,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct CurrencyRowRepository<'a> {
     connection: &'a StorageConnection,
 }

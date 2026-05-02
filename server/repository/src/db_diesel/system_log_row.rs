@@ -1,5 +1,5 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RowActionType,
+    ChangelogRepository, ChangelogSyncType, RowActionType,
     Upsert,
 };
 use crate::{RepositoryError, SourceSiteId, StorageConnection};
@@ -59,26 +59,6 @@ pub struct SystemLogRow {
     pub message: Option<String>,
     pub is_error: bool,
 }
-
-impl SystemLogRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::SystemLog,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct SystemLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }

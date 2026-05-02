@@ -3,8 +3,7 @@ use crate::{
     db_diesel::{
         changelog::changelog::RowOrId, invoice_line_row::invoice_line,
         stock_line_row::stock_line, store_row::store,
-    },
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    }, ChangelogRepository, ChangelogSyncType, Delete,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
@@ -43,32 +42,6 @@ pub struct VVMStatusLogRow {
     pub invoice_line_id: Option<String>,
     pub store_id: String,
 }
-
-impl VVMStatusLogRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<VVMStatusLogRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &VVMStatusLogRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::VVMStatusLog,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct VVMStatusLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }

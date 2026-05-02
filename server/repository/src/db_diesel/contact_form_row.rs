@@ -1,5 +1,5 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    ChangelogRepository, ChangelogSyncType,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
@@ -58,26 +58,6 @@ pub enum ContactType {
     Feedback,
     Support,
 }
-
-impl ContactFormRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ContactForm,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(self.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct ContactFormRowRepository<'a> {
     connection: &'a StorageConnection,
 }

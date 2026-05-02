@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
@@ -45,26 +45,6 @@ pub struct AssetCatalogueItemRow {
     pub properties: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
-
-impl AssetCatalogueItemRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetCatalogueItem,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct AssetCatalogueItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }

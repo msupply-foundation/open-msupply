@@ -1,6 +1,6 @@
 use super::vaccine_course_store_config_row::vaccine_course_store_config::dsl::*;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    ChangelogRepository, ChangelogSyncType,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 use diesel::prelude::*;
@@ -28,25 +28,6 @@ pub struct VaccineCourseStoreConfigRow {
     pub wastage_rate: Option<f64>,
     pub coverage_rate: Option<f64>,
 }
-
-impl VaccineCourseStoreConfigRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::VaccineCourseStoreConfig,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(self.store_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct VaccineCourseStoreConfigRowRepository<'a> {
     connection: &'a StorageConnection,
 }

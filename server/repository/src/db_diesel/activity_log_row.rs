@@ -4,7 +4,7 @@ use crate::{
     db_diesel::store_row::store, repository_error::RepositoryError, user_account,
     ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -137,26 +137,6 @@ pub struct ActivityLogRow {
     pub changed_to: Option<String>,
     pub changed_from: Option<String>,
 }
-
-impl ActivityLogRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ActivityLog,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: self.store_id.clone(),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct ActivityLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }

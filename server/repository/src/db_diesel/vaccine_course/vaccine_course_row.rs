@@ -4,7 +4,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    ChangelogRepository, ChangelogSyncType,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
@@ -41,25 +41,6 @@ pub struct VaccineCourseRow {
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
     pub can_skip_dose: bool,
 }
-
-impl VaccineCourseRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::VaccineCourse,
-            record_id,
-            row_action: action,
-            store_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct VaccineCourseRowRepository<'a> {
     connection: &'a StorageConnection,
 }
