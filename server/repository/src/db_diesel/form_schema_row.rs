@@ -112,7 +112,7 @@ impl<'a> FormSchemaRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         self._upsert_one(schema)?;
         let changelog = FormSchemaJson::generate_changelog(
             schema.id.clone(),

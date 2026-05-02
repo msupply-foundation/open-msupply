@@ -125,7 +125,7 @@ impl<'a> AssetLogRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<(), RepositoryError> {
         self._upsert_one(asset_log_row)?;
         let changelog = asset_log_row.generate_changelog(
             self.connection,

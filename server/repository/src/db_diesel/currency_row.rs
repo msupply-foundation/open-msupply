@@ -76,7 +76,7 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = CurrencyRow::generate_changelog(
             row.id.clone(),
@@ -105,7 +105,7 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(())
     }
 
-    pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {
+    pub fn delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
         self._delete(currency_id)?;
         let changelog = CurrencyRow::generate_changelog(
             currency_id.to_string(),

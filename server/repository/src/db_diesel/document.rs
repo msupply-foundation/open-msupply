@@ -215,7 +215,7 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    pub fn insert(&self, doc: &Document) -> Result<i64, RepositoryError> {
+    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         self._upsert(&doc.to_row()?)?;
         let changelog = Document::generate_changelog(
             doc.id.clone(),

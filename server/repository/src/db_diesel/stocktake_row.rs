@@ -108,7 +108,7 @@ impl<'a> StocktakeRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &StocktakeRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &StocktakeRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = StocktakeRow::generate_changelog(
             RowOrId::Row(row),
@@ -119,17 +119,17 @@ impl<'a> StocktakeRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         let changelog = StocktakeRow::generate_changelog(
             RowOrId::Id(id),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
         diesel::delete(stocktake::table.filter(stocktake::id.eq(id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StocktakeRow>, RepositoryError> {

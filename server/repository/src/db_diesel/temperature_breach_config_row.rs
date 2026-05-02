@@ -69,7 +69,7 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
         TemperatureBreachConfigRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
         diesel::insert_into(temperature_breach_config::table)
             .values(row)
             .on_conflict(temperature_breach_config::id)

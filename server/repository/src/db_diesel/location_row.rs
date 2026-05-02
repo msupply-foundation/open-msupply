@@ -80,7 +80,7 @@ impl<'a> LocationRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &LocationRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = LocationRow::generate_changelog(
             RowOrId::Row(row),
@@ -107,19 +107,19 @@ impl<'a> LocationRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         let changelog = LocationRow::generate_changelog(
             RowOrId::Id(id),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(location::table.filter(location::id.eq(id)))
             .execute(self.connection.lock().connection())?;
 
-        Ok(Some(change_log_id))
+        Ok(())
     }
 }
 

@@ -280,7 +280,7 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &NameRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = NameRow::generate_changelog(
             row.id.clone(),
@@ -298,7 +298,7 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    pub fn mark_deleted(&self, name_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
         self._mark_deleted(name_id)?;
         let changelog = NameRow::generate_changelog(
             name_id.to_string(),
@@ -355,7 +355,7 @@ impl<'a> NameRowRepository<'a> {
         &self,
         name_id: &str,
         properties: &Option<String>,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         diesel::update(name_oms_fields::table.find(name_id))
             .set(name_oms_fields::properties.eq(properties))
             .execute(self.connection.lock().connection())?;

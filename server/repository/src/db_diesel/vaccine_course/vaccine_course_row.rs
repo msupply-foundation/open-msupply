@@ -85,7 +85,7 @@ impl<'a> VaccineCourseRowRepository<'a> {
     pub fn upsert_one(
         &self,
         vaccine_course_row: &VaccineCourseRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(vaccine_course_row)?;
         let changelog = VaccineCourseRow::generate_changelog(
             vaccine_course_row.id.clone(),

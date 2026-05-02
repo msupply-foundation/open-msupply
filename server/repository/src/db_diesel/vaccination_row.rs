@@ -131,7 +131,7 @@ impl<'a> VaccinationRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, vaccination_row: &VaccinationRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, vaccination_row: &VaccinationRow) -> Result<(), RepositoryError> {
         self._upsert_one(vaccination_row)?;
         let changelog = vaccination_row.generate_changelog(
             self.connection,

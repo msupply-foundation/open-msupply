@@ -75,7 +75,7 @@ impl<'a> PluginDataRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &PluginDataRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = row.generate_changelog(
             self.connection,

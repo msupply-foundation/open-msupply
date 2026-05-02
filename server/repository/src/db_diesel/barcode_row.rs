@@ -75,7 +75,7 @@ impl<'a> BarcodeRowRepository<'a> {
         BarcodeRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &BarcodeRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &BarcodeRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
         let changelog = BarcodeRow::generate_changelog(
             row.id.clone(),

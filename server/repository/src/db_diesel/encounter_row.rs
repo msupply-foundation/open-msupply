@@ -104,7 +104,7 @@ impl<'a> EncounterRowRepository<'a> {
         EncounterRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &EncounterRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
         let changelog = row.generate_changelog(
             self.connection,

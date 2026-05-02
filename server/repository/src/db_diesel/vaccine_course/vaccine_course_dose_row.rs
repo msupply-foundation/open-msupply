@@ -95,7 +95,7 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
     pub fn upsert_one(
         &self,
         vaccine_course_dose_row: &VaccineCourseDoseRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(vaccine_course_dose_row)?;
         let changelog = VaccineCourseDoseRow::generate_changelog(
             vaccine_course_dose_row.id.clone(),
@@ -122,7 +122,7 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, vaccine_course_dose_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, vaccine_course_dose_id: &str) -> Result<(), RepositoryError> {
         diesel::update(vaccine_course_dose.filter(id.eq(vaccine_course_dose_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;

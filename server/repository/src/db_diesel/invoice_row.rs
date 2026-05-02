@@ -203,7 +203,7 @@ impl<'a> InvoiceRowRepository<'a> {
         InvoiceRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &InvoiceRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &InvoiceRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
         let changelog = InvoiceRow::generate_changelog(
             RowOrId::Row(row),
@@ -220,16 +220,16 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(())
     }
 
-    pub fn delete(&self, invoice_id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, invoice_id: &str) -> Result<(), RepositoryError> {
         let changelog = InvoiceRow::generate_changelog(
             RowOrId::Id(invoice_id),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
         self._delete(invoice_id)?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, invoice_id: &str) -> Result<Option<InvoiceRow>, RepositoryError> {

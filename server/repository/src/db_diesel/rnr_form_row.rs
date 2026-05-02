@@ -110,7 +110,7 @@ impl<'a> RnRFormRowRepository<'a> {
         RnRFormRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, rnr_form_row: &RnRFormRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, rnr_form_row: &RnRFormRow) -> Result<(), RepositoryError> {
         self._upsert(rnr_form_row)?;
         let changelog = RnRFormRow::generate_changelog(
             RowOrId::Row(rnr_form_row),
@@ -134,7 +134,7 @@ impl<'a> RnRFormRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, rnr_form_id: &str) -> Result<Option<i64>, RepositoryError> {
+    pub fn delete(&self, rnr_form_id: &str) -> Result<(), RepositoryError> {
         let changelog = match RnRFormRow::generate_changelog(
             RowOrId::Id(rnr_form_id),
             self.connection,
@@ -142,14 +142,14 @@ impl<'a> RnRFormRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         ) {
             Ok(changelog) => changelog,
-            Err(RepositoryError::NotFound) => return Ok(None),
+            Err(RepositoryError::NotFound) => return Ok(()),
             Err(e) => return Err(e),
         };
-        let change_log_id = ChangelogRepository::new(self.connection).insert(&changelog)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(rnr_form_with_links::table.filter(rnr_form_with_links::id.eq(rnr_form_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 }
 

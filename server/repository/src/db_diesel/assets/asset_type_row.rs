@@ -68,7 +68,7 @@ impl<'a> AssetTypeRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, asset_type_row: &AssetTypeRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, asset_type_row: &AssetTypeRow) -> Result<(), RepositoryError> {
         self._upsert_one(asset_type_row)?;
         let changelog = AssetTypeRow::generate_changelog(
             asset_type_row.id.clone(),

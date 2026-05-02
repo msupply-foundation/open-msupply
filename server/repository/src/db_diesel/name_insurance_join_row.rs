@@ -152,7 +152,7 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: &NameInsuranceJoinRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &NameInsuranceJoinRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
         let changelog = NameInsuranceJoinRow::generate_changelog(
             row.id.clone(),
