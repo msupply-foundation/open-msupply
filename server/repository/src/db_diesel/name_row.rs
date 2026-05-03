@@ -334,6 +334,90 @@ impl<'a> NameRowRepository<'a> {
         Ok(result)
     }
 
+    /// Batch upsert. Does not write changelog rows.
+    /// On Postgres: single batched INSERT...ON CONFLICT DO UPDATE on `name`,
+    /// followed by a single batched INSERT...ON CONFLICT DO NOTHING on
+    /// `name_link`. On SQLite: per-row loop calling `_upsert_one`.
+    pub fn _upsert_many(&self, rows: &[NameRow]) -> Result<(), RepositoryError> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        #[cfg(feature = "postgres")]
+        {
+            use diesel::upsert::excluded;
+            diesel::insert_into(name::table)
+                .values(rows)
+                .on_conflict(name::id)
+                .do_update()
+                .set((
+                    name::name_.eq(excluded(name::name_)),
+                    name::code.eq(excluded(name::code)),
+                    name::type_.eq(excluded(name::type_)),
+                    name::is_customer.eq(excluded(name::is_customer)),
+                    name::is_supplier.eq(excluded(name::is_supplier)),
+                    name::supplying_store_id.eq(excluded(name::supplying_store_id)),
+                    name::first_name.eq(excluded(name::first_name)),
+                    name::last_name.eq(excluded(name::last_name)),
+                    name::gender.eq(excluded(name::gender)),
+                    name::date_of_birth.eq(excluded(name::date_of_birth)),
+                    name::phone.eq(excluded(name::phone)),
+                    name::charge_code.eq(excluded(name::charge_code)),
+                    name::comment.eq(excluded(name::comment)),
+                    name::country.eq(excluded(name::country)),
+                    name::address1.eq(excluded(name::address1)),
+                    name::address2.eq(excluded(name::address2)),
+                    name::email.eq(excluded(name::email)),
+                    name::website.eq(excluded(name::website)),
+                    name::is_manufacturer.eq(excluded(name::is_manufacturer)),
+                    name::is_donor.eq(excluded(name::is_donor)),
+                    name::on_hold.eq(excluded(name::on_hold)),
+                    name::next_of_kin_id.eq(excluded(name::next_of_kin_id)),
+                    name::next_of_kin_name.eq(excluded(name::next_of_kin_name)),
+                    name::created_datetime.eq(excluded(name::created_datetime)),
+                    name::is_deceased.eq(excluded(name::is_deceased)),
+                    name::national_health_number.eq(excluded(name::national_health_number)),
+                    name::date_of_death.eq(excluded(name::date_of_death)),
+                    name::custom_data.eq(excluded(name::custom_data)),
+                    name::deleted_datetime.eq(excluded(name::deleted_datetime)),
+                    name::hsh_code.eq(excluded(name::hsh_code)),
+                    name::hsh_name.eq(excluded(name::hsh_name)),
+                    name::margin.eq(excluded(name::margin)),
+                    name::freight_factor.eq(excluded(name::freight_factor)),
+                    name::currency_id.eq(excluded(name::currency_id)),
+                ))
+                .execute(self.connection.lock().connection())?;
+
+            let link_rows: Vec<NameLinkRow> = rows
+                .iter()
+                .map(|r| NameLinkRow {
+                    id: r.id.clone(),
+                    name_id: r.id.clone(),
+                })
+                .collect();
+            NameLinkRowRepository::new(self.connection)
+                .insert_many_or_ignore(&link_rows)?;
+        }
+        #[cfg(not(feature = "postgres"))]
+        {
+            for row in rows {
+                self._upsert_one(row)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Batch soft-delete (sets `deleted_datetime`) as a single SQL statement.
+    /// Does not write changelog rows.
+    pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(name::table.filter(name::id.eq_any(ids)))
+            .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_one_oms_fields_by_id(
         &self,
         name_id: &str,

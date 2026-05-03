@@ -233,6 +233,16 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(result)
     }
 
+    /// Batch hard-delete as a single SQL statement. Does not write changelog rows.
+    pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(invoice_with_links::table.filter(invoice_with_links::id.eq_any(ids)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_max_invoice_number(
         &self,
         r#type: InvoiceType,

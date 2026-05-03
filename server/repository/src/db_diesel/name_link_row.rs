@@ -47,6 +47,30 @@ impl<'a> NameLinkRowRepository<'a> {
         Ok(())
     }
 
+    /// Batch insert-or-ignore. Single statement on Postgres; per-row loop on
+    /// SQLite (Diesel does not support batched `ON CONFLICT DO NOTHING` for
+    /// SQLite via this combination).
+    pub fn insert_many_or_ignore(&self, rows: &[NameLinkRow]) -> Result<(), RepositoryError> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        #[cfg(feature = "postgres")]
+        {
+            diesel::insert_into(name_link)
+                .values(rows)
+                .on_conflict(name_link::id)
+                .do_nothing()
+                .execute(self.connection.lock().connection())?;
+        }
+        #[cfg(not(feature = "postgres"))]
+        {
+            for row in rows {
+                self.insert_one_or_ignore(row)?;
+            }
+        }
+        Ok(())
+    }
+
     pub async fn insert_one(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_link)
             .values(row)

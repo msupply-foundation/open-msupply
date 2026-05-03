@@ -153,6 +153,69 @@ impl<'a> ItemRowRepository<'a> {
         Ok(())
     }
 
+    /// Batch upsert. Does not write changelog rows.
+    /// On Postgres: single batched INSERT...ON CONFLICT DO UPDATE on `item`,
+    /// followed by a single batched INSERT...ON CONFLICT DO NOTHING on
+    /// `item_link`. On SQLite: per-row loop calling `upsert_one`.
+    pub fn _upsert_many(&self, rows: &[ItemRow]) -> Result<(), RepositoryError> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        #[cfg(feature = "postgres")]
+        {
+            use diesel::upsert::excluded;
+            diesel::insert_into(item)
+                .values(rows)
+                .on_conflict(id)
+                .do_update()
+                .set((
+                    name.eq(excluded(name)),
+                    code.eq(excluded(code)),
+                    unit_id.eq(excluded(unit_id)),
+                    strength.eq(excluded(strength)),
+                    ven_category.eq(excluded(ven_category)),
+                    default_pack_size.eq(excluded(default_pack_size)),
+                    type_.eq(excluded(type_)),
+                    legacy_record.eq(excluded(legacy_record)),
+                    is_active.eq(excluded(is_active)),
+                    is_vaccine.eq(excluded(is_vaccine)),
+                    vaccine_doses.eq(excluded(vaccine_doses)),
+                    restricted_location_type_id.eq(excluded(restricted_location_type_id)),
+                    volume_per_pack.eq(excluded(volume_per_pack)),
+                    universal_code.eq(excluded(universal_code)),
+                ))
+                .execute(self.connection.lock().connection())?;
+
+            let link_rows: Vec<ItemLinkRow> = rows
+                .iter()
+                .map(|r| ItemLinkRow {
+                    id: r.id.clone(),
+                    item_id: r.id.clone(),
+                })
+                .collect();
+            ItemLinkRowRepository::new(self.connection).insert_many_or_ignore(&link_rows)?;
+        }
+        #[cfg(not(feature = "postgres"))]
+        {
+            for row in rows {
+                self.upsert_one(row)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Batch soft-delete (sets is_active=false) as a single SQL statement.
+    /// Does not write changelog rows.
+    pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(item.filter(id.eq_any(ids)))
+            .set(is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item)
             .values(item_row)

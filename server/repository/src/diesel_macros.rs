@@ -596,6 +596,52 @@ macro_rules! define_linked_tables {
 
                 Ok(())
             }
+
+            /// Batch upsert. Single batched INSERT...ON CONFLICT DO UPDATE
+            /// statement on Postgres; per-row loop calling `_upsert` on
+            /// SQLite (Diesel does not support batched ON CONFLICT for
+            /// SQLite). Does not write changelog rows.
+            #[cfg(feature = "postgres")]
+            pub fn _upsert_many(
+                &self,
+                records: &[$struct_name],
+            ) -> Result<(), crate::RepositoryError> {
+                if records.is_empty() {
+                    return Ok(());
+                }
+                let values: Vec<_> = records
+                    .iter()
+                    .map(|record| (
+                        $core_table::id.eq(&record.id),
+                        $(define_linked_tables!(@field_access $core_table, $field, record),)*
+                        $($core_table::$link_id.eq(&record.$resolved_id),)*
+                        $($core_table::$opt_link_id.eq(&record.$opt_resolved_id.as_ref()),)*
+                    ))
+                    .collect();
+
+                diesel::insert_into($core_table::table)
+                    .values(values)
+                    .on_conflict($core_table::id)
+                    .do_update()
+                    .set((
+                        $($core_table::$field.eq(diesel::upsert::excluded($core_table::$field)),)*
+                        $($core_table::$link_id.eq(diesel::upsert::excluded($core_table::$link_id)),)*
+                        $($core_table::$opt_link_id.eq(diesel::upsert::excluded($core_table::$opt_link_id)),)*
+                    ))
+                    .execute(self.connection.lock().connection())?;
+                Ok(())
+            }
+
+            #[cfg(not(feature = "postgres"))]
+            pub fn _upsert_many(
+                &self,
+                records: &[$struct_name],
+            ) -> Result<(), crate::RepositoryError> {
+                for record in records {
+                    self._upsert(record)?;
+                }
+                Ok(())
+            }
         }
     };
 }

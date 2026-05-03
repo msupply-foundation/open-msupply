@@ -162,6 +162,16 @@ impl<'a> StockLineRowRepository<'a> {
             .map_err(RepositoryError::from)
     }
 
+    /// Batch hard-delete as a single SQL statement. Does not write changelog rows.
+    pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(stock_line_with_links::table.filter(stock_line_with_links::id.eq_any(ids)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
         stock_line::table
             .filter(stock_line::store_id.eq(store_id))

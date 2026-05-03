@@ -60,6 +60,33 @@ impl<'a> ItemLinkRowRepository<'a> {
         Ok(())
     }
 
+    /// Batch insert-or-ignore. Single statement on Postgres; per-row loop on
+    /// SQLite (Diesel does not support batched `ON CONFLICT DO NOTHING` for
+    /// SQLite via this combination).
+    pub fn insert_many_or_ignore(
+        &self,
+        rows: &[ItemLinkRow],
+    ) -> Result<(), RepositoryError> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        #[cfg(feature = "postgres")]
+        {
+            diesel::insert_into(item_link::table)
+                .values(rows)
+                .on_conflict(item_link::id)
+                .do_nothing()
+                .execute(self.connection.lock().connection())?;
+        }
+        #[cfg(not(feature = "postgres"))]
+        {
+            for row in rows {
+                self.insert_one_or_ignore(row)?;
+            }
+        }
+        Ok(())
+    }
+
     pub async fn find_all(&mut self) -> Result<Vec<ItemLinkRow>, RepositoryError> {
         let result = item_link::table.load(self.connection.lock().connection());
         Ok(result?)

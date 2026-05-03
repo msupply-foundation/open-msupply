@@ -69,6 +69,62 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UnitRow>, RepositoryError> {
+        let result = unit
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    /// Batch upsert. Does not write changelog rows.
+    /// On Postgres this runs as a single batched statement. On SQLite the
+    /// statement is issued per row (Diesel does not support batched
+    /// `ON CONFLICT DO UPDATE` for SQLite).
+    pub fn _upsert_many(&self, rows: &[UnitRow]) -> Result<(), RepositoryError> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        #[cfg(feature = "postgres")]
+        {
+            use diesel::upsert::excluded;
+            diesel::insert_into(unit)
+                .values(rows)
+                .on_conflict(id)
+                .do_update()
+                .set((
+                    name.eq(excluded(name)),
+                    description.eq(excluded(description)),
+                    index.eq(excluded(index)),
+                    is_active.eq(excluded(is_active)),
+                ))
+                .execute(self.connection.lock().connection())?;
+        }
+        #[cfg(not(feature = "postgres"))]
+        {
+            for row in rows {
+                diesel::insert_into(unit)
+                    .values(row)
+                    .on_conflict(id)
+                    .do_update()
+                    .set(row)
+                    .execute(self.connection.lock().connection())?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Batch soft-delete (sets is_active=false) as a single SQL statement.
+    /// Does not write changelog rows.
+    pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(unit.filter(id.eq_any(ids)))
+            .set(is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_inactive_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id).and(is_active.eq(false)))

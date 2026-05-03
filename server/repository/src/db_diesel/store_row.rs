@@ -135,6 +135,16 @@ impl<'a> StoreRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    /// Batch hard-delete as a single SQL statement. Does not write changelog rows.
+    pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(store_with_links::table.filter(store_with_links::id.eq_any(ids)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone)]

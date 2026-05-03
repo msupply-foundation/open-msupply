@@ -86,6 +86,55 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CurrencyRow>, RepositoryError> {
+        let result = currency::table
+            .filter(currency::id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    /// Batch upsert. Does not write changelog rows.
+    /// Single batched statement on Postgres; per-row loop on SQLite.
+    pub fn _upsert_many(&self, rows: &[CurrencyRow]) -> Result<(), RepositoryError> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        #[cfg(feature = "postgres")]
+        {
+            use diesel::upsert::excluded;
+            diesel::insert_into(currency::table)
+                .values(rows)
+                .on_conflict(currency::id)
+                .do_update()
+                .set((
+                    currency::rate.eq(excluded(currency::rate)),
+                    currency::code.eq(excluded(currency::code)),
+                    currency::is_home_currency.eq(excluded(currency::is_home_currency)),
+                    currency::date_updated.eq(excluded(currency::date_updated)),
+                    currency::is_active.eq(excluded(currency::is_active)),
+                ))
+                .execute(self.connection.lock().connection())?;
+        }
+        #[cfg(not(feature = "postgres"))]
+        {
+            for row in rows {
+                self._upsert_one(row)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Batch soft-delete (sets is_active=false). Does not write changelog rows.
+    pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(currency::table.filter(currency::id.eq_any(ids)))
+            .set(currency::is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     fn _delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
         diesel::update(currency::table.filter(currency::id.eq(currency_id)))
             .set(currency::is_active.eq(false))

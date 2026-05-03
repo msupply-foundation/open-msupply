@@ -64,8 +64,62 @@ impl<'a> LocationTypeRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+        let result = location_type::table
+            .filter(location_type::id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(location_type::table.filter(location_type::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    /// Batch upsert. Does not write changelog rows.
+    /// Single batched statement on Postgres; per-row loop on SQLite.
+    pub fn _upsert_many(&self, rows: &[LocationTypeRow]) -> Result<(), RepositoryError> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        #[cfg(feature = "postgres")]
+        {
+            use diesel::upsert::excluded;
+            diesel::insert_into(location_type::table)
+                .values(rows)
+                .on_conflict(location_type::id)
+                .do_update()
+                .set((
+                    location_type::name.eq(excluded(location_type::name)),
+                    location_type::min_temperature.eq(excluded(location_type::min_temperature)),
+                    location_type::max_temperature.eq(excluded(location_type::max_temperature)),
+                ))
+                .execute(self.connection.lock().connection())?;
+        }
+        #[cfg(not(feature = "postgres"))]
+        {
+            for row in rows {
+                diesel::insert_into(location_type::table)
+                    .values(row)
+                    .on_conflict(location_type::id)
+                    .do_update()
+                    .set(row)
+                    .execute(self.connection.lock().connection())?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Batch hard-delete as a single SQL statement. Does not write changelog rows.
+    pub fn delete_many(&self, ids: &[String]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(location_type::table.filter(location_type::id.eq_any(ids)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
