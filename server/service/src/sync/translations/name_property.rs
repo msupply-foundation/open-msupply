@@ -1,5 +1,5 @@
 use repository::{
-    name_property_row::{NamePropertyRow, NamePropertyRowRepository},
+    name_property_row::NamePropertyRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
 };
@@ -7,7 +7,7 @@ use repository::{
 use crate::sync::translations::property::PropertyTranslation;
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]

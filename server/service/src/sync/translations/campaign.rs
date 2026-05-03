@@ -1,11 +1,11 @@
 use repository::{
-    campaign::campaign_row::{CampaignRow, CampaignRowRepository},
+    campaign::campaign_row::CampaignRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
 };
 
 use crate::sync::translations::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
     TranslatedUpsert,
 };
 

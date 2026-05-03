@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository,
-    ClinicianRowRepositoryTrait, GenderType, StorageConnection, SyncBufferRow,
+    ChangelogTableName, ClinicianRow, GenderType, StorageConnection, SyncBufferRow,
     Row,
 };
 
-use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ PullTranslateResult, SyncTranslation, TranslatedUpsert };
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option, ok_or_none};
 

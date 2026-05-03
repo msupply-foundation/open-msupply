@@ -1,12 +1,12 @@
 use chrono::NaiveDateTime;
 use repository::{
-    ActivityLogRow, ActivityLogRowRepository, ActivityLogType, ChangelogRow, ChangelogTableName,
+    ActivityLogRow, ActivityLogType, ChangelogTableName,
     StorageConnection, SyncBufferRow,
     Row,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ PullTranslateResult, SyncTranslation, TranslatedUpsert };
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::empty_str_as_option_string;
 

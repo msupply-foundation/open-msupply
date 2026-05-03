@@ -1,5 +1,5 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationRow, LocationRowRepository, StorageConnection,
+    ChangelogRow, ChangelogTableName, LocationRow, StorageConnection,
     SyncBufferRow,
     Row,
 };

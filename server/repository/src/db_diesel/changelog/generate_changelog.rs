@@ -4,28 +4,7 @@
 
 use super::{ChangeLogInsertRow, ChangelogTableName, RowActionType, RowOrId, SourceSiteId};
 // Types re-exported flat at the crate root via `pub use db_diesel::*`.
-use crate::{
-    AbbreviationRow, ActivityLogRow, BackendPluginRow, BarcodeRow, ClinicianRow,
-    ClinicianStoreJoinRow, ContactRow, ContextRow, CurrencyRow, DemographicIndicatorRow,
-    DemographicRow, DiagnosisRow, Document, DocumentRegistryRow,
-    EncounterRow, FormSchemaJson, FrontendPluginRow, IndicatorColumnRow, IndicatorLineRow,
-    IndicatorValueRow, InsuranceProviderRow, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    InvoiceRowRepository, ItemDirectionRow, ItemStoreJoinRow, ItemWarningJoinRow,
-    LocationMovementRow, LocationRow, LocationRowRepository, MasterListLineRow,
-    MasterListNameJoinRow, MasterListRow, NameOmsFieldsRow, NamePropertyRow, NameRow,
-    NameStoreJoinRepository, NameStoreJoinRow, NameTagJoinRow, NameTagRow, PeriodRow,
-    PeriodScheduleRow, PluginDataRow, PreferenceRow, PreferenceRowRepository, PrinterRow,
-    ProgramEnrolmentRow, ProgramEventRow, ProgramIndicatorRow, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionSettingsRow, ProgramRow, PropertyRow, PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository, PurchaseOrderRow, PurchaseOrderRowRepository, ReasonOptionRow,
-    ReportRow, RepositoryError, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRow,
-    RnRFormRowRepository, SensorRow, ShippingMethodRow, StockLineRow, StockLineRowRepository,
-    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
-    StorageConnection, StorePreferenceRow, StoreRowRepository, SyncFileReferenceRow,
-    SyncMessageRow, TemperatureBreachRow, TemperatureLogRow,
-    UserAccountRow, UserPermissionRow, UserStoreJoinRow, VaccinationRow,
-};
+use crate::*;
 // Types only reachable via their full submodule path (no flat re-export).
 use crate::{
     assets::{
@@ -785,15 +764,23 @@ impl AssetInternalLocationRow {
 
 impl NameRow {
     pub(crate) fn generate_changelog(
-        record_id: String,
+        row_or_id: RowOrId<NameRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &NameRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Name,
-            record_id,
+            record_id: row.id.clone(),
             row_action: action,
+            patient_id: (row.r#type == NameRowType::Patient).then_some(row.id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -1174,17 +1161,18 @@ impl ReportRow {
     }
 }
 
-impl Document {
+impl DocumentRow {
     pub(crate) fn generate_changelog(
-        record_id: String,
+        &self,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Document,
-            record_id,
+            record_id: self.id.clone(),
             row_action: action,
+            patient_id: self.owner_name_id.clone(),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })

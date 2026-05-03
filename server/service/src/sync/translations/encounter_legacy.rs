@@ -2,9 +2,9 @@ use serde::Serialize;
 
 use crate::sync::CentralServerConfig;
 
-use super::{ PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{ SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 use repository::{
-    ChangelogRow, ChangelogTableName, EncounterRowRepository, StorageConnection,
+    ChangelogRow, ChangelogTableName, StorageConnection,
     Row,
 };
 
@@ -142,10 +142,13 @@ mod tests {
             .upsert_one(&encounter_row)
             .unwrap();
 
-        let changelog = ChangelogRepository::new(&connection).query(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 })
+        let entry = ChangelogRepository::new(&connection).query_with_data(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 })
             .unwrap()
             .pop()
             .expect("Expected at least one changelog entry");
+        let repository::RowOrDelete::Row { changelog, row } = entry else {
+            panic!("expected upsert row")
+        };
 
         // Shouldn't translate if not central server
         test_util_set_is_central_server(false);
@@ -162,15 +165,11 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
+            .try_translate_to_upsert_sync_record(&connection, row)
             .unwrap();
         match translation_result {
             TranslatedUpsert::Translated(upsert_result) => {
-                assert_eq!("_test_record_id".to_string(), "test_encounter_id");
-                assert_eq!(
-                    "_test_table_name".to_string(),
-                    LEGACY_ENCOUNTER_TABLE_NAME
-                );
+                assert_eq!(upsert_result["ID"], "test_encounter_id");
             }
             _ => panic!("Expected PushRecord result"),
         }

@@ -1,11 +1,11 @@
 use repository::{
-    asset_log_reason_row::{AssetLogReasonRow, AssetLogReasonRowRepository},
+    asset_log_reason_row::AssetLogReasonRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
 };
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]

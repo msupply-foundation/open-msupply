@@ -213,6 +213,13 @@ mod test_sync_v7_client_api {
                     ..Default::default()
                 },
                 KeyValueStoreRow {
+                    // Mock pull responses are stamped with `siteId: 1`; the
+                    // integrate step filters sync_buffer rows by this site id.
+                    id: KeyType::SettingsSyncCentralServerSiteId,
+                    value_int: Some(1),
+                    ..Default::default()
+                },
+                KeyValueStoreRow {
                     id: KeyType::SettingsSyncV7Token,
                     value_string: Some("test_token".to_string()),
                     ..Default::default()

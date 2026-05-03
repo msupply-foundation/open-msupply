@@ -63,7 +63,16 @@ pub enum DocumentStatus {
     Deleted,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[cfg_attr(test, derive(Default))]
 #[diesel(table_name = document)]
 pub struct DocumentRow {
@@ -217,9 +226,9 @@ impl<'a> DocumentRepository<'a> {
 
     /// Inserts a document
     pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
-        self._upsert(&doc.to_row()?)?;
-        let changelog = Document::generate_changelog(
-            doc.id.clone(),
+        let row = doc.to_row()?;
+        self._upsert(&row)?;
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -395,8 +404,7 @@ impl Upsert for DocumentRow {
     ) -> Result<(), RepositoryError> {
         DocumentRepository::new(con)._upsert(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Document::generate_changelog(
-                self.id.clone(),
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
@@ -417,7 +425,6 @@ impl Upsert for DocumentRow {
 }
 
 impl Document {
-
     pub fn to_row(&self) -> Result<DocumentRow, RepositoryError> {
         let parents =
             serde_json::to_string(&self.parent_ids).map_err(|err| RepositoryError::DBError {

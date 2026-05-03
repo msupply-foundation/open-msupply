@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, Document, DocumentRepository, DocumentRow, DocumentStatus,
+    ChangelogTableName, Document, DocumentRepository, DocumentRow, DocumentStatus,
     StorageConnection, SyncBufferRow,
     Row,
 };
@@ -18,7 +18,7 @@ use crate::sync::{
 
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ PullTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

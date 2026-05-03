@@ -1,9 +1,9 @@
 use crate::sync::translations::store::StoreTranslation;
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 use repository::{
-    ChangelogRow, ChangelogTableName, PreferenceRow, PreferenceRowDelete, PreferenceRowRepository,
+    ChangelogRow, ChangelogTableName, PreferenceRow, PreferenceRowDelete,
     StorageConnection, SyncBufferRow,
     Row,
 };

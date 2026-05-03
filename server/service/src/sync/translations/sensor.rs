@@ -6,13 +6,13 @@ use util::sync_serde::{
 };
 
 use repository::{
-    get_sensor_type, ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, SensorType,
+    get_sensor_type, ChangelogTableName, SensorRow, SensorType,
     StorageConnection, SyncBufferRow,
     Row,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{ to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ to_legacy_time, PullTranslateResult, SyncTranslation, TranslatedUpsert };
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacySensorRow {

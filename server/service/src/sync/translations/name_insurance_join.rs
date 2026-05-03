@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
     name_insurance_join_row::{
-        InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
+        InsurancePolicyType, NameInsuranceJoinRow,
     },
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
@@ -14,7 +14,7 @@ use crate::sync::translations::{
 };
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyInsurancePolicyType {

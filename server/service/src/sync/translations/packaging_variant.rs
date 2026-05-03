@@ -1,12 +1,10 @@
-use repository::item_variant::packaging_variant_row::{
-    PackagingVariantRow, PackagingVariantRowRepository,
-};
+use repository::item_variant::packaging_variant_row::PackagingVariantRow;
 use repository::{ ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, Row };
 
 use crate::sync::translations::item_variant::ItemVariantTranslation;
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]

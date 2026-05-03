@@ -205,10 +205,12 @@ diesel_string_enum! {
         Asset,
         AssetInternalLocation,
         AssetLog,
-        Encounter,
         RnrForm,
         RnrFormLine,
         SyncMessage,
+
+        // ---- Remote + Patient (v6) ----
+        Encounter,
         Vaccination,
 
         // ---- File (v6) ----

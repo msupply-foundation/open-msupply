@@ -5,11 +5,10 @@ use super::{
     StorageConnection,
 };
 use crate::{
-    item_link, name_link, repository_error::RepositoryError,
-    ChangelogRepository, EqualFilter, NameLinkRow, NameLinkRowRepository,
-    RowActionType,
+    item_link, name_link, repository_error::RepositoryError, ChangelogRepository, EqualFilter,
+    NameLinkRow, NameLinkRowRepository, RowActionType,
 };
-use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{ChangelogSyncType, Delete, RowOrId, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -248,7 +247,7 @@ impl<'a> NameRowRepository<'a> {
     pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = NameRow::generate_changelog(
-            row.id.clone(),
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -266,7 +265,7 @@ impl<'a> NameRowRepository<'a> {
     pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
         self._mark_deleted(name_id)?;
         let changelog = NameRow::generate_changelog(
-            name_id.to_string(),
+            RowOrId::Id(name_id),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -378,7 +377,7 @@ impl Delete for NameRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => NameRow::generate_changelog(
-                self.0.clone(),
+                RowOrId::Id(&self.0),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
@@ -409,7 +408,7 @@ impl Upsert for NameRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+                RowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

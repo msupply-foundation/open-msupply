@@ -1,7 +1,7 @@
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowRepository,
+    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete,
     NameRowType, Row, StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{

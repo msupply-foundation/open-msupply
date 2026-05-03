@@ -1,5 +1,5 @@
 use repository::{
-    asset_category_row::{AssetCategoryRow, AssetCategoryRowRepository},
+    asset_category_row::AssetCategoryRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
 };
@@ -7,7 +7,7 @@ use repository::{
 use crate::sync::translations::asset_class::AssetClassTranslation;
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]

@@ -9,13 +9,12 @@ use util::sync_serde::{
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureLogRow,
-    TemperatureLogRowRepository,
+    ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureLogRow,
     Row,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{ to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ to_legacy_time, PullTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]

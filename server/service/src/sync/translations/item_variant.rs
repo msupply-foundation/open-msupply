@@ -1,4 +1,4 @@
-use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
+use repository::item_variant::item_variant_row::ItemVariantRow;
 use repository::{ ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, Row };
 
 use crate::sync::translations::item::ItemTranslation;
@@ -6,7 +6,7 @@ use crate::sync::translations::location_type::LocationTypeTranslation;
 use crate::sync::translations::name::NameTranslation;
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]

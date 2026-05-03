@@ -1,5 +1,5 @@
 use repository::{
-    contact_form_row::{ContactFormRow, ContactFormRowRepository},
+    contact_form_row::ContactFormRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
 };
@@ -7,7 +7,7 @@ use repository::{
 use crate::sync::translations::{store::StoreTranslation, user::UserTranslation};
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translations()
 #[deny(dead_code)]
@@ -78,7 +78,7 @@ mod tests {
         contact_form_row::ContactFormRow,
         mock::{mock_contact_form_a, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        RowActionType,
+        ChangelogRepository, FilterBuilder,
     };
     use serde_json::json;
 
@@ -123,16 +123,22 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let changelog = ChangelogRow {
-            cursor: 1,
-            table_name: ChangelogTableName::ContactForm,
-            record_id: "contact_id".to_string(),
-            row_action: RowActionType::Upsert,
-            name_id: None,
-            store_id: None,
-            is_sync_update: false,
-            source_site_id: None,
-            ..Default::default()
+        let entry = ChangelogRepository::new(&connection)
+            .query_with_data(
+                repository::ChangelogCondition::table_name::equal(
+                    ChangelogTableName::ContactForm,
+                ),
+                repository::CursorAndLimit {
+                    cursor: -1,
+                    limit: 1,
+                },
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        let repository::RowOrDelete::Row { changelog, row } = entry else {
+            panic!("expected upsert row")
         };
 
         let translator = ContactFormTranslation {};
@@ -141,7 +147,7 @@ mod tests {
             &ToSyncRecordTranslationType::PushToOmSupplyCentral
         ));
         let translated = translator
-            .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
+            .try_translate_to_upsert_sync_record(&connection, row)
             .unwrap();
 
         assert!(matches!(translated, TranslatedUpsert::Translated(_)));

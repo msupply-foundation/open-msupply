@@ -1,6 +1,6 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationMovementRow, LocationMovementRowRepository,
+    ChangelogTableName, LocationMovementRow,
     StorageConnection, SyncBufferRow,
     Row,
 };
@@ -10,7 +10,7 @@ use crate::sync::translations::{
     location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
 };
 
-use super::{ to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ to_legacy_time, PullTranslateResult, SyncTranslation, TranslatedUpsert };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
 };

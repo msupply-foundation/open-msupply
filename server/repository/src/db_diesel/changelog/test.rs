@@ -13,7 +13,8 @@ use crate::{
     ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, LocationRowRepository, NameRow,
     RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
-    RowActionType, StorageConnection, StoreRow, Upsert, VaccinationRow, VaccinationRowRepository,
+    KeyType, KeyValueStoreRepository, RowActionType, StorageConnection, StoreRow,
+    StoreRowRepository, Upsert, VaccinationRow, VaccinationRowRepository,
 };
 
 fn delete_all_changelog(connection: &StorageConnection) {
@@ -274,12 +275,15 @@ async fn test_changelog_filter() {
 struct TestRecord<T> {
     record: T,
     record_id: String,
+    /// Used to look up the store backed by this name; that store id is the
+    /// expected `transfer_store_id` on the generated changelog.
     name_id: String,
     store_id: String,
 }
 
-/// Helper method to test name and store id
-/// Does db operation passed in as a function and then queries changelog to confirm name_id and store_id are set correctly
+/// Helper method to test transfer_store_id and store_id on the generated changelog.
+/// Does db operation passed in as a function and then resolves the expected
+/// transfer_store_id by looking up the store backed by `record.name_id`.
 fn test_changelog_name_and_store_id<T, F>(
     connection: &StorageConnection,
     record: TestRecord<T>,
@@ -289,6 +293,11 @@ fn test_changelog_name_and_store_id<T, F>(
     F: Fn(&StorageConnection, &T),
 {
     db_op(connection, &record.record);
+
+    let expected_transfer_store_id = StoreRowRepository::new(connection)
+        .find_one_by_name_id(&record.name_id)
+        .unwrap()
+        .map(|s| s.id);
 
     let change_logs = ChangelogRepository::new(connection)
         .query(
@@ -308,7 +317,7 @@ fn test_changelog_name_and_store_id<T, F>(
     let last = change_logs.last().unwrap();
     assert_eq!(last, &{
         let mut r = last.clone();
-        r.name_id = Some(record.name_id);
+        r.transfer_store_id = expected_transfer_store_id;
         r.store_id = Some(record.store_id);
         r.record_id = record.record_id;
         r.row_action = row_action.clone();
@@ -349,6 +358,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         InvoiceRow {
             id: "invoice".to_string(),
             name_id: name().id,
+            name_store_id: Some(store().id),
             store_id: store().id,
             currency_id: Some(currency().id),
             ..Default::default()
@@ -611,6 +621,23 @@ async fn test_changelog_outgoing_sync_records() {
     )
     .await;
 
+    let site1_id = mock_store_a().site_id; // Site 1 is used in mock_store_a
+    let site1_store_id = mock_store_a().id;
+
+    let site2_id = mock_store_b().site_id; // Site 2 is used in mock_store_b
+
+    assert_ne!(site1_id, site2_id);
+
+    // This test simulates the central server. Set the current site id to a value
+    // distinct from site1/site2 so that records upserted here (using
+    // `SourceSiteId::CurrentSiteId`) get a non-null source_site_id.
+    let central_site_id = 999;
+    assert_ne!(central_site_id, site1_id);
+    assert_ne!(central_site_id, site2_id);
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(central_site_id))
+        .unwrap();
+
     let outgoing_results = ChangelogRepository::new(&connection).query(
         ChangelogFilter::all_data_for_site(1, false, None),
         CursorAndLimit {
@@ -620,13 +647,6 @@ async fn test_changelog_outgoing_sync_records() {
     )
     .unwrap();
     assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
-
-    let site1_id = mock_store_a().site_id; // Site 1 is used in mock_store_a
-    let site1_store_id = mock_store_a().id;
-
-    let site2_id = mock_store_b().site_id; // Site 2 is used in mock_store_b
-
-    assert_ne!(site1_id, site2_id);
 
     // Insert an asset_class variant (which should trigger a changelog record for Central Sync)
     let asset_class_id = "asset_class_id".to_string();

@@ -22,7 +22,7 @@ use std::sync::RwLock;
 
 use log::info;
 use repository::{
-    ChangelogCondition, EqualFilter, FilterBuilder, KeyValueStoreRepository, RepositoryError,
+    EqualFilter, KeyValueStoreRepository, RepositoryError,
     StorageConnection, Store, StoreFilter, StoreRepository,
 };
 

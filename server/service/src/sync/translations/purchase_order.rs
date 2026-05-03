@@ -489,7 +489,7 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
 };
     use serde_json::json;
 
@@ -531,7 +531,7 @@ mod tests {
         .await;
 
         let translator = PurchaseOrderTranslation {};
-        let changelogs = ChangelogRepository::new(&connection).query(
+        let entries = ChangelogRepository::new(&connection).query_with_data(
             ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrder),
             CursorAndLimit {
                 cursor: -1,
@@ -540,13 +540,13 @@ mod tests {
         )
         .unwrap();
 
-        for changelog in changelogs {
+        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
+                .try_translate_to_upsert_sync_record(&connection, row)
                 .unwrap();
 
             assert!(matches!(translated, TranslatedUpsert::Translated(_)));

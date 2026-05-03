@@ -1,5 +1,5 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, PluginDataRow, PluginDataRowRepository, StorageConnection,
+    ChangelogRow, ChangelogTableName, PluginDataRow, StorageConnection,
     SyncBufferRow,
     Row,
 };
@@ -7,7 +7,7 @@ use repository::{
 use crate::sync::translations::store::StoreTranslation;
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
