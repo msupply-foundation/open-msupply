@@ -1,7 +1,7 @@
 use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{sync_buffer::SyncBufferSource, sync_status::logger::SyncStep, CentralServerConfig},
+    sync::{sync_status::logger::SyncStep, CentralServerConfig},
 };
 use log::warn;
 use repository::{
@@ -20,7 +20,7 @@ use super::{
         WaitForSyncOperationError,
     },
     settings::{SyncSettings, SYNC_V5_VERSION},
-    sync_buffer::SyncBuffer,
+    sync_buffer::get_ordered_sync_buffer_records,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
     translations::{all_translators, pull_integration_order},
@@ -219,7 +219,7 @@ impl Synchroniser {
                 false => Some(logger),
                 true => None,
             },
-            SyncBufferSource::Central(central_sync_server_id),
+            central_sync_server_id,
         )
         .map_err(SyncError::IntegrationError)?;
 
@@ -265,7 +265,7 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
-    record_type: SyncBufferSource,
+    source_site_id: i32,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -294,21 +294,22 @@ pub fn integrate_and_translate_sync_buffer(
         let translators = all_translators();
         let table_order = pull_integration_order(&translators);
 
-        let sync_buffer = SyncBuffer::new(connection);
-        let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
+        let translation_and_integration = TranslationAndIntegration::new(connection);
 
         // Translate and integrate upserts (ordered by referential database constraints)
-        let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+        let upsert_sync_buffer_records = get_ordered_sync_buffer_records(
+            connection,
             SyncAction::Upsert,
             &table_order,
-            record_type,
+            source_site_id,
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
-        let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+        let delete_sync_buffer_records = get_ordered_sync_buffer_records(
+            connection,
             SyncAction::Delete,
             &table_order,
-            record_type,
+            source_site_id,
         )?;
 
         let upsert_integration_result = translation_and_integration
@@ -326,10 +327,11 @@ pub fn integrate_and_translate_sync_buffer(
                 None,
             )?;
 
-        let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+        let merge_sync_buffer_records = get_ordered_sync_buffer_records(
+            connection,
             SyncAction::Merge,
             &table_order,
-            record_type,
+            source_site_id,
         )?;
 
         let merge_integration_result: TranslationAndIntegrationResults =

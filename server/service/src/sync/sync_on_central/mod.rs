@@ -6,7 +6,7 @@ use std::{
 use actix_multipart::form::tempfile::TempFile;
 use repository::{
     ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, FilterBuilder,
-    SyncBufferRowRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository,
+    SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository,
     SyncStyleOptions,
 };
 use util::format_error;
@@ -19,7 +19,6 @@ use crate::{
     sync::{
         api::{validate_site_auth, CommonSyncRecord},
         api_v6::SiteStatusV6,
-        sync_buffer::SyncBufferSource,
         synchroniser::integrate_and_translate_sync_buffer,
         translations::ToSyncRecordTranslationType,
         CentralServerConfig,
@@ -181,12 +180,12 @@ pub async fn push(
 
     let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
         records.into_iter().map(|r| r.record).collect(),
-        Some(response.site_id),
+        response.site_id,
     )?;
 
     ctx.connection
         .transaction_sync(|t_con| {
-            SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
+            SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)
         })
         .map_err(|e| e.to_inner_error())?;
 
@@ -338,7 +337,7 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
         match integrate_and_translate_sync_buffer(
             &ctx.connection,
             None,
-            SyncBufferSource::Remote(site_id),
+            site_id,
         ) {
             Ok(_) => {
                 log::info!("Integration complete for site {site_id}");

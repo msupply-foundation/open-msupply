@@ -7,7 +7,6 @@ use super::{
 };
 use crate::sync::{
     api::SyncAction,
-    sync_buffer::SyncBufferSource,
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
@@ -21,8 +20,8 @@ use crate::sync::{
 use pretty_assertions::assert_eq;
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
-    test_db, ChangelogRepository, KeyType, KeyValueStoreRow, SyncBufferRow,
-    SyncBufferRowRepository,
+    test_db, ChangelogRepository, KeyType, KeyValueStoreRow, SyncBufferRepository, SyncBufferRow,
+    SyncBufferRowInsert,
 };
 
 #[actix_rt::test]
@@ -63,11 +62,16 @@ async fn test_sync_pull_and_push() {
     insert_all_extra_data(&test_records, &connection).await;
     let sync_records: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 
-    SyncBufferRowRepository::new(&connection)
-        .upsert_many(&sync_records)
+    let inserts: Vec<SyncBufferRowInsert> = sync_records
+        .iter()
+        .cloned()
+        .map(SyncBufferRowInsert::from)
+        .collect();
+    SyncBufferRepository::new(&connection)
+        .insert_many(&inserts)
         .unwrap();
 
-    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0)).unwrap();
+    integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
     check_test_records_against_database(&connection, test_records).await;
 
@@ -164,11 +168,16 @@ async fn test_sync_pull_and_push() {
     insert_all_extra_data(&test_records, &connection).await;
     let sync_records: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 
-    SyncBufferRowRepository::new(&connection)
-        .upsert_many(&sync_records)
+    let inserts: Vec<SyncBufferRowInsert> = sync_records
+        .iter()
+        .cloned()
+        .map(SyncBufferRowInsert::from)
+        .collect();
+    SyncBufferRepository::new(&connection)
+        .insert_many(&inserts)
         .unwrap();
 
-    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0)).unwrap();
+    integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
     check_test_records_against_database(&connection, test_records).await;
 
