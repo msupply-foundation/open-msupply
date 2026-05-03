@@ -69,6 +69,13 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UnitRow>, RepositoryError> {
+        let result = unit
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn find_inactive_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id).and(is_active.eq(false)))

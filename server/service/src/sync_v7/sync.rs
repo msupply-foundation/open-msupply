@@ -58,9 +58,9 @@ impl SyncBatchV7 {
         batch_size: u32,
     ) -> Result<SyncBatchV7, SyncError> {
         let site_id = get_current_site_id(connection)?;
+        let repo = ChangelogRepository::new(connection);
 
-        let changelog_repo = ChangelogRepository::new(connection);
-        let changelogs = changelog_repo.query(
+        let rows = repo.query_with_data(
             filter,
             CursorAndLimit {
                 cursor,
@@ -68,12 +68,12 @@ impl SyncBatchV7 {
             },
         )?;
 
-        let records = changelogs
+        let records = rows
             .into_iter()
-            .map(|changelog| prepare(connection, changelog))
+            .map(prepare)
             .collect::<Result<Vec<_>, _>>()?;
 
-        let max_cursor = changelog_repo.max_cursor()?;
+        let max_cursor = repo.max_cursor()?;
 
         Ok(SyncBatchV7 {
             site_id,

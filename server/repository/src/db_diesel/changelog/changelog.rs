@@ -94,7 +94,7 @@ diesel_string_enum! {
 }
 
 diesel_string_enum! {
-    #[derive(Clone, Eq, Serialize, Deserialize, strum::EnumIter, TS)]
+    #[derive(Clone, Eq, Hash, Serialize, Deserialize, strum::EnumIter, TS)]
     #[strum(serialize_all = "snake_case")]
     // Variants are grouped by `sync_style()` and sorted alphabetically within each group.
     // Keep this layout in sync with the match in `sync_style` below.
@@ -687,3 +687,4 @@ impl ChangelogFilter {
         ChangelogCondition::source_site_id::equal(site_id)
     }
 }
+
