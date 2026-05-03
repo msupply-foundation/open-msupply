@@ -9,7 +9,6 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-    sync::{get_sync_push_changelogs_filter, SyncChangelogError},
 };
 
 use super::SyncLogError;
@@ -188,7 +187,7 @@ pub trait SyncStatusTrait: Sync + Send {
     fn number_of_records_in_push_queue(
         &self,
         ctx: &ServiceContext,
-    ) -> Result<u64, NumberOfRecordsInPushQueueError> {
+    ) -> Result<u64, RepositoryError> {
         number_of_records_in_push_queue(ctx)
     }
 
@@ -293,31 +292,14 @@ fn get_latest_successful_sync_status(
 
     Ok(Some(result))
 }
-
-#[derive(Debug)]
-pub enum NumberOfRecordsInPushQueueError {
-    DatabaseError(RepositoryError),
-    SyncChangelogError(SyncChangelogError),
-}
-
-fn number_of_records_in_push_queue(
-    ctx: &ServiceContext,
-) -> Result<u64, NumberOfRecordsInPushQueueError> {
-    use NumberOfRecordsInPushQueueError as Error;
+fn number_of_records_in_push_queue(ctx: &ServiceContext) -> Result<u64, RepositoryError> {
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
-    let cursor = CursorController::new(KeyType::RemoteSyncPushCursor)
-        .get(&ctx.connection)
-        .map_err(Error::DatabaseError)?;
+    let cursor = CursorController::new(KeyType::RemoteSyncPushCursor).get(&ctx.connection)?;
 
-    let changelog_filter = get_sync_push_changelogs_filter(&ctx.connection)
-        .map_err(NumberOfRecordsInPushQueueError::SyncChangelogError)?;
+    let max_cursor = changelog_repo.max_cursor()?;
 
-    let change_logs_total = changelog_repo
-        .count(cursor, changelog_filter)
-        .map_err(Error::DatabaseError)?;
-
-    Ok(change_logs_total)
+    Ok(max_cursor.saturating_sub(cursor))
 }
 
 impl SyncLogError {

@@ -4,10 +4,10 @@ mod test_sync_v7_client_api {
     use assert_json_diff::assert_json_include;
     use repository::mock::MockData;
     use repository::{
-        migrations::Version, mock::MockDataInserts, ChangelogFilter, ChangelogRepository,
-        ChangelogRow, ChangelogTableName, CurrencyRow, EqualFilter, ItemRow, KeyType,
-        KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection, StoreRow,
-        SyncBufferRowRepository, UnitRow, Upsert,
+        migrations::Version, mock::MockDataInserts, ChangelogCondition, ChangelogRepository,
+        ChangelogRow, ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, ItemRow,
+        KeyType, KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection,
+        StoreRow, SyncBufferRowRepository, UnitRow, Upsert,
     };
     use repository::{KeyValueStoreRow, SyncAction, SyncBufferRow};
     use serde_json::json;
@@ -370,13 +370,14 @@ mod test_sync_v7_client_api {
         );
 
         // Assert: changelog entries
-        let changelogs = ChangelogRepository::new(&connection)
-            .changelogs(
-                0,
-                100,
-                Some(ChangelogFilter::new().source_site_id(EqualFilter::equal_to(1))),
-            )
-            .unwrap();
+        let changelogs = ChangelogRepository::new(&connection).query(
+            ChangelogCondition::source_site_id::equal(1),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 100,
+            },
+        )
+        .unwrap();
         assert_eq!(changelogs.len(), 6);
         assert_eq!(
             changelogs,

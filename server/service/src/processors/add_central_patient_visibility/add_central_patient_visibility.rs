@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use log::debug;
 use repository::{
-    ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, KeyType, NameRowRepository,
-    NameRowType, NameStoreJoinFilter, NameStoreJoinRepository,
+    ChangelogCondition, ChangelogRow, ChangelogTableName, EqualFilter, FilterBuilder, KeyType,
+    NameRowRepository, NameRowType, NameStoreJoinFilter, NameStoreJoinRepository,
 };
 use util::format_error;
 
@@ -134,16 +134,14 @@ impl Processor for AddPatientVisibilityForCentral {
         Ok(Some(result))
     }
 
-    fn changelogs_filter(&self, _ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
-        let filter = ChangelogFilter::new().table_name(EqualFilter {
-            equal_any: Some(vec![
-                ChangelogTableName::Name,
-                ChangelogTableName::NameStoreJoin,
-            ]),
-            ..Default::default()
-        });
-
-        Ok(filter)
+    fn changelogs_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<ChangelogCondition::Inner, ProcessorError> {
+        Ok(ChangelogCondition::table_name::any(vec![
+            ChangelogTableName::Name,
+            ChangelogTableName::NameStoreJoin,
+        ]))
     }
 
     fn cursor_type(&self) -> CursorType {

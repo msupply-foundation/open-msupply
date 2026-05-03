@@ -2,10 +2,7 @@ use std::time::{Duration, SystemTime};
 
 use crate::{
     cursor_controller::CursorController,
-    sync::{
-        get_sync_push_changelogs_filter, sync_status::logger::SyncStepProgress,
-        GetActiveStoresOnSiteError, SyncChangelogError,
-    },
+    sync::{sync_status::logger::SyncStepProgress, GetActiveStoresOnSiteError},
 };
 
 use super::{
@@ -19,8 +16,8 @@ use super::{
 
 use log::info;
 use repository::{
-    ChangelogRepository, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection,
-    SyncBufferRowRepository,
+    ChangelogFilter, ChangelogRepository, CursorAndLimit, KeyType, KeyValueStoreRepository,
+    LegacyDataFilterError, RepositoryError, StorageConnection, SyncBufferRowRepository,
 };
 
 use thiserror::Error;
@@ -62,7 +59,7 @@ pub(crate) enum RemotePushError {
     #[error("Problem getting active stores on site during remote push")]
     GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
     #[error("Problem getting changelog during remote push")]
-    SyncChangelogError(#[from] SyncChangelogError),
+    LegacyDataFilterError(#[from] LegacyDataFilterError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
 }
@@ -119,7 +116,7 @@ impl RemoteDataSynchroniser {
         &self,
         connection: &StorageConnection,
     ) -> Result<(), RepositoryError> {
-        let cursor = ChangelogRepository::new(connection).latest_cursor()?;
+        let cursor = ChangelogRepository::new(connection).max_cursor()?;
 
         CursorController::new(KeyType::RemoteSyncPushCursor).update(connection, cursor + 1)?;
         Ok(())
@@ -190,15 +187,22 @@ impl RemoteDataSynchroniser {
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePushError> {
         let changelog_repo = ChangelogRepository::new(connection);
-        let change_log_filter = get_sync_push_changelogs_filter(connection)?;
+        let change_log_filter = ChangelogFilter::all_data_for_legacy_central(connection)?;
         let cursor_controller = CursorController::new(KeyType::RemoteSyncPushCursor);
 
         loop {
             // TODO inside transaction
             let cursor = cursor_controller.get(connection)?;
-            let changelogs =
-                changelog_repo.changelogs(cursor, batch_size, change_log_filter.clone())?;
-            let change_logs_total = changelog_repo.count(cursor, change_log_filter.clone())?;
+            let changelogs = changelog_repo.query(
+                change_log_filter.clone(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: batch_size as i64,
+                },
+            )?;
+            // Total = remaining records to process based on max cursor
+            let max_cursor = changelog_repo.max_cursor()?;
+            let change_logs_total = max_cursor.saturating_sub(cursor);
 
             logger.progress(SyncStepProgress::Push, change_logs_total)?;
 

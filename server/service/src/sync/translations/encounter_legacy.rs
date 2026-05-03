@@ -124,7 +124,7 @@ mod tests {
             setup_all("test_translate_encounter_to_legacy", MockDataInserts::all()).await;
 
         let cursor = ChangelogRepository::new(&connection)
-            .latest_cursor()
+            .max_cursor()
             .unwrap_or(0);
 
         // Create a new EncounterRow (this will get a changelog entry created automatically)
@@ -146,8 +146,7 @@ mod tests {
             .upsert_one(&encounter_row)
             .unwrap();
 
-        let changelog = ChangelogRepository::new(&connection)
-            .changelogs(cursor, 100, None)
+        let changelog = ChangelogRepository::new(&connection).query(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 })
             .unwrap()
             .pop()
             .expect("Expected at least one changelog entry");

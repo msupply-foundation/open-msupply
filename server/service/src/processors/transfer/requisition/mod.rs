@@ -7,8 +7,8 @@ pub(crate) mod update_request_requisition_status;
 pub(crate) mod test;
 
 use repository::{
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
-    RepositoryError, Requisition, RowActionType, StorageConnection,
+    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit,
+    FilterBuilder, KeyType, RepositoryError, Requisition, RowActionType, StorageConnection,
 };
 use thiserror::Error;
 
@@ -63,12 +63,12 @@ fn process_change_log(
     connection: &StorageConnection,
     log: &ChangelogRow,
     processors: &[Box<dyn RequisitionTransferProcessor>],
-    active_stores: &ActiveStoresOnSite,
+    _active_stores: &ActiveStoresOnSite,
 ) -> Result<(), ProcessRequisitionTransfersError> {
     use ProcessRequisitionTransfersError as Error;
-    let name_id = log
-        .name_id
-        .as_ref()
+    let other_party_store_id = log
+        .transfer_store_id
+        .clone()
         .ok_or_else(|| Error::NameIdIsMissingFromChangelog(log.clone()))?;
 
     // Prepare record
@@ -81,9 +81,7 @@ fn process_change_log(
     let record = RequisitionTransferProcessorRecord {
         requisition,
         linked_requisition,
-        other_party_store_id: active_stores
-            .get_store_id_for_name_id(name_id)
-            .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
+        other_party_store_id,
     };
 
     // Try record against all of the processors
@@ -113,24 +111,29 @@ pub(crate) fn process_requisition_transfers(
     let active_stores =
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
 
-    let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let cursor_controller = CursorController::new(KeyType::RequisitionTransferProcessorCursor);
-    // For transfers, changelog MUST be filtered by records where name_id is active store on this site
+    // For transfers, changelog MUST be filtered by records where transfer_store_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
-    let filter = ChangelogFilter::new()
-        .table_name(ChangelogTableName::Requisition.equal_to())
-        .name_id(EqualFilter::equal_any(active_stores.name_ids()))
+    let filter = ChangelogCondition::And(vec![
+        ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
+        ChangelogCondition::transfer_store_id::any(active_stores.store_ids()),
         // Filter out deletes
-        .action(RowActionType::Upsert.equal_to());
+        ChangelogCondition::action::equal(RowActionType::Upsert),
+    ]);
 
     loop {
         let cursor = cursor_controller
             .get(&ctx.connection)
             .map_err(Error::DatabaseError)?;
 
-        let logs = changelog_repo
-            .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
-            .map_err(Error::DatabaseError)?;
+        let logs = ChangelogRepository::new(&ctx.connection).query(
+            filter.clone(),
+            CursorAndLimit {
+                cursor: cursor as i64,
+                limit: CHANGELOG_BATCH_SIZE as i64,
+            },
+        )
+        .map_err(Error::DatabaseError)?;
 
         if logs.is_empty() {
             break;

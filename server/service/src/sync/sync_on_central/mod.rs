@@ -5,8 +5,9 @@ use std::{
 
 use actix_multipart::form::tempfile::TempFile;
 use repository::{
-    ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
-    SyncFileReferenceRowRepository,
+    ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, FilterBuilder,
+    SyncBufferRowRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository,
+    SyncStyleOptions,
 };
 use util::format_error;
 
@@ -77,23 +78,30 @@ pub async fn pull(
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
-    let changelogs = changelog_repo.outgoing_sync_records_from_central(
-        cursor,
-        batch_size,
+    let filter = ChangelogFilter::all_data_for_site(
         response.site_id,
-        is_initialised,
+        !is_initialised,
+        Some(SyncStyleOptions {
+            is_v6: true,
+            is_v5: false,
+        }),
+    );
+    let changelogs = ChangelogRepository::new(&ctx.connection).query(
+        filter,
+        CursorAndLimit {
+            cursor: cursor as i64,
+            limit: batch_size as i64,
+        },
     )?;
-    let total_records = changelog_repo.count_outgoing_sync_records_from_central(
-        cursor,
-        response.site_id,
-        is_initialised,
-    )?;
-    let max_cursor = changelog_repo.latest_cursor()?;
+    let max_cursor = changelog_repo.max_cursor()?;
 
     let end_cursor = changelogs
         .last()
         .map(|log| log.cursor as u64)
         .unwrap_or(max_cursor);
+
+    // Total = remaining records to process based on max cursor
+    let total_records = max_cursor.saturating_sub(cursor);
 
     let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
         &ctx.connection,
@@ -230,23 +238,32 @@ pub async fn patient_pull(
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
-    let changelogs = changelog_repo.outgoing_patient_sync_records_from_central(
-        cursor,
-        batch_size,
-        response.site_id,
-        fetch_patient_id.clone(),
+    let filter = ChangelogCondition::And(vec![
+        ChangelogFilter::patient_data_for_site(
+            response.site_id,
+            Some(SyncStyleOptions {
+                is_v6: true,
+                is_v5: false,
+            }),
+        ),
+        ChangelogCondition::patient_id::equal(fetch_patient_id),
+    ]);
+    let changelogs = ChangelogRepository::new(&ctx.connection).query(
+        filter,
+        CursorAndLimit {
+            cursor: cursor as i64,
+            limit: batch_size as i64,
+        },
     )?;
-    let total_records = changelog_repo.count_outgoing_patient_sync_records_from_central(
-        cursor,
-        response.site_id,
-        fetch_patient_id,
-    )?;
-    let max_cursor = changelog_repo.latest_cursor()?;
+    let max_cursor = changelog_repo.max_cursor()?;
 
     let end_cursor = changelogs
         .last()
         .map(|log| log.cursor as u64)
         .unwrap_or(max_cursor);
+
+    // Total = remaining records to process based on max cursor
+    let total_records = max_cursor.saturating_sub(cursor);
 
     let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
         &ctx.connection,

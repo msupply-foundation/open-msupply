@@ -2,10 +2,9 @@ use std::time::{Duration, SystemTime};
 
 use chrono::Utc;
 use repository::{
-    get_changelogs,
     syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, KeyType,
-    RowActionType, Site, StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository,
+    ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogTableName, CursorAndLimit,
+    KeyType, RowActionType, StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository,
     SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
@@ -60,8 +59,8 @@ impl SyncBatchV7 {
     ) -> Result<SyncBatchV7, SyncError> {
         let site_id = get_current_site_id(connection)?;
 
-        let changelogs = get_changelogs(
-            connection,
+        let changelog_repo = ChangelogRepository::new(connection);
+        let changelogs = changelog_repo.query(
             filter,
             CursorAndLimit {
                 cursor,
@@ -74,7 +73,7 @@ impl SyncBatchV7 {
             .map(|changelog| prepare(connection, changelog))
             .collect::<Result<Vec<_>, _>>()?;
 
-        let max_cursor = ChangelogRepository::new(connection).latest_cursor()?;
+        let max_cursor = changelog_repo.max_cursor()?;
 
         Ok(SyncBatchV7 {
             site_id,
@@ -193,7 +192,7 @@ impl<'a> SyncV7<'a> {
         let site_id = get_current_site_id(self.connection)?;
 
         // TODO think about just the filter for source site id = current site on changelog
-        let filter = Site::SiteId(site_id).all_data_edited_on_site();
+        let filter = ChangelogFilter::all_data_edited_on_site(site_id);
 
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;

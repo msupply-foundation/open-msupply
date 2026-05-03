@@ -1035,7 +1035,8 @@ mod tests {
     use repository::{
         mock::{mock_store_a, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, KeyType,
+        KeyValueStoreRow,
     };
     use serde_json::json;
 
@@ -1092,14 +1093,14 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Invoice.equal_to())),
-            )
-            .unwrap();
+        let changelogs = ChangelogRepository::new(&connection).query(
+            ChangelogCondition::table_name::equal(ChangelogTableName::Invoice),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = InvoiceTranslation {};
         for changelog in changelogs {

@@ -634,9 +634,9 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder,
         SyncAction, SyncBufferRow, SyncRecordData,
-    };
+};
     use serde_json::json;
     use util::assert_variant;
 
@@ -741,14 +741,14 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to())),
-            )
-            .unwrap();
+        let changelogs = ChangelogRepository::new(&connection).query(
+            ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = RequisitionTranslation {};
         for changelog in changelogs {
