@@ -3,9 +3,10 @@ use serde::{Deserialize, Serialize};
 use repository::{
     ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository,
     ClinicianRowRepositoryTrait, GenderType, StorageConnection, SyncBufferRow,
+    Row,
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option, ok_or_none};
 
@@ -125,9 +126,13 @@ impl SyncTranslation for ClinicianTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::Clinician(clinician_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let ClinicianRow {
             id,
             code,
@@ -142,12 +147,7 @@ impl SyncTranslation for ClinicianTranslation {
             gender,
             is_active,
             store_id,
-        } = ClinicianRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Clinician row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = clinician_row;
 
         let is_female = gender
             .as_ref()
@@ -172,11 +172,7 @@ impl SyncTranslation for ClinicianTranslation {
             store_id,
             oms_fields,
         };
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 }
 

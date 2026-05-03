@@ -97,6 +97,12 @@ impl<'a> ContactFormRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ContactFormRow>, RepositoryError> {
+        Ok(contact_form::table
+            .filter(contact_form::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for ContactFormRow {

@@ -177,6 +177,12 @@ impl<'a> ActivityLogRowRepository<'a> {
             .get_results(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ActivityLogRow>, RepositoryError> {
+        Ok(activity_log::table
+            .filter(activity_log::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for ActivityLogRow {

@@ -1,6 +1,7 @@
 use repository::{
     rnr_form_line_row::{RnRFormLineRow, RnRFormLineRowRepository},
     ChangelogRow, ChangelogTableName, RnRFormLineDelete, StorageConnection, SyncBufferRow,
+    Row,
 };
 
 use crate::sync::translations::{
@@ -8,9 +9,8 @@ use crate::sync::translations::{
     rnr_form::RnRFormTranslation,
 };
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{ 
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -65,21 +65,16 @@ impl SyncTranslation for RnRFormLineTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = RnRFormLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "RnRFormLine row ({}) not found",
-                changelog.record_id
-            )))?;
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::RnrFormLine(rnr_form_line_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let row = rnr_form_line_row;
+
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(row)?))
     }
 
     fn try_translate_from_delete_sync_record(

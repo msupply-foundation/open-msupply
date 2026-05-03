@@ -132,6 +132,12 @@ impl<'a> ReportRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ReportRow>, RepositoryError> {
+        Ok(report::table
+            .filter(report::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[derive(Debug, Clone)]

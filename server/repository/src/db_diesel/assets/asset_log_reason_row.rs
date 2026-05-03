@@ -99,6 +99,12 @@ impl<'a> AssetLogReasonRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetLogReasonRow>, RepositoryError> {
+        Ok(asset_log_reason::table
+            .filter(asset_log_reason::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for AssetLogReasonRow {

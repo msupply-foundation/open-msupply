@@ -93,6 +93,12 @@ impl<'a> PreferenceRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PreferenceRow>, RepositoryError> {
+        Ok(preference::table
+            .filter(preference::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for PreferenceRow {

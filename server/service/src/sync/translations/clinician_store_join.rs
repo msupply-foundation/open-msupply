@@ -3,11 +3,12 @@ use serde::{Deserialize, Serialize};
 use repository::{
     ChangelogRow, ChangelogTableName, ClinicianLinkRowRepository, ClinicianStoreJoinRow,
     ClinicianStoreJoinRowDelete, ClinicianStoreJoinRowRepository, StorageConnection, SyncBufferRow,
+    Row,
 };
 
 use crate::sync::translations::{clinician::ClinicianTranslation, store::StoreTranslation};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyClinicianStoreJoinRow {
@@ -64,18 +65,17 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::ClinicianStoreJoin(clinician_store_join_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let ClinicianStoreJoinRow {
             id,
             store_id,
             clinician_link_id,
-        } = ClinicianStoreJoinRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Clinician row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = clinician_store_join_row;
 
         let clinician_link_row = ClinicianLinkRowRepository::new(connection)
             .find_one_by_id(&clinician_link_id)?
@@ -91,11 +91,7 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             prescriber_id: clinician_link_row.clinician_id,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_from_delete_sync_record(

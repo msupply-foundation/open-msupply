@@ -140,6 +140,12 @@ impl<'a> FrontendPluginRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<FrontendPluginRow>, RepositoryError> {
+        Ok(frontend_plugin::table
+            .filter(frontend_plugin::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for FrontendPluginRow {

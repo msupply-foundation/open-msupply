@@ -2,7 +2,7 @@ use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowRepository,
-    NameRowType, StorageConnection, SyncBufferRow,
+    NameRowType, Row, StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
@@ -12,9 +12,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::sync::{translations::currency::CurrencyTranslation, CentralServerConfig};
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{ 
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -345,9 +344,12 @@ impl SyncTranslation for NameTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::Name(name_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
         let NameRow {
             id,
             name,
@@ -385,14 +387,9 @@ impl SyncTranslation for NameTranslation {
             currency_id,
             // See comment in pull translation
             custom_data_string: _,
-        } = NameRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Name row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = name_row;
         if deleted_datetime.is_some() {
-            return Ok(PushTranslateResult::Ignored(
+            return Ok(TranslatedUpsert::Ignored(
                 "Ignore pushing soft deleted name".to_string(),
             ));
         }
@@ -400,7 +397,7 @@ impl SyncTranslation for NameTranslation {
         let patient_type = match r#type {
             NameRowType::Patient => LegacyNameRowType::Patient,
             _ => {
-                return Ok(PushTranslateResult::Ignored(
+                return Ok(TranslatedUpsert::Ignored(
                     "Only push name records that belong to patients".to_string(),
                 ))
             }
@@ -448,11 +445,7 @@ impl SyncTranslation for NameTranslation {
             custom_data: None,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 
     // TODO soft delete

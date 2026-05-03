@@ -14,5 +14,12 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::StockLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Invoice(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::InvoiceLine(r) => serde_json::to_value(r).map_err(map_serde_err),
+        // v7 only ships the variants above today. The Row enum is shared
+        // with v5/v6 push and now covers many more tables; if one shows
+        // up here it's a caller bug (a v7 filter let in a non-v7 table).
+        other => Err(SyncRecordSerializeError::SerdeError(format!(
+            "v7 serialize: unsupported Row variant {:?}",
+            std::mem::discriminant(other)
+        ))),
     }
 }

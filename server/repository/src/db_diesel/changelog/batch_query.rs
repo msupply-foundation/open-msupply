@@ -1,32 +1,223 @@
 use std::collections::HashMap;
 
 use crate::{
-    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CurrencyRow,
-    CurrencyRowRepository, CursorAndLimit, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    InvoiceRowRepository, ItemRow, ItemRowRepository, LocationTypeRow, LocationTypeRowRepository,
-    NameRow, NameRowRepository, RepositoryError, RowActionType, StockLineRow,
-    StockLineRowRepository, StorageConnection, StoreRow, StoreRowRepository, UnitRow,
+    ActivityLogRow,
+    ActivityLogRowRepository,
+    AssetCatalogueItemRow,
+    AssetCatalogueItemRowRepository,
+    AssetCategoryRow,
+    AssetCategoryRowRepository,
+    AssetClassRow,
+    AssetClassRowRepository,
+    AssetInternalLocationRow,
+    AssetInternalLocationRowRepository,
+    AssetLogReasonRow,
+    AssetLogReasonRowRepository,
+    AssetLogRow,
+    AssetLogRowRepository,
+    AssetPropertyRow,
+    AssetPropertyRowRepository,
+    AssetRow,
+    AssetRowRepository,
+    BackendPluginRow,
+    BackendPluginRowRepository,
+    BarcodeRow,
+    BarcodeRowRepository,
+    BundledItemRow,
+    BundledItemRowRepository,
+    CampaignRow,
+    CampaignRowRepository,
+    ChangelogCondition,
+    ChangelogRepository,
+    ChangelogRow,
+    ChangelogTableName,
+    ClinicianRow,
+    ClinicianRowRepository,
+    ClinicianStoreJoinRow,
+    ClinicianStoreJoinRowRepository,
+    ContactFormRow,
+    ContactFormRowRepository,
+    CurrencyRow,
+    CurrencyRowRepository,
+    CursorAndLimit,
+    DemographicRow,
+    DemographicRowRepository,
+    DocumentRepository,
+    DocumentRow,
+    EncounterRow,
+    EncounterRowRepository,
+    FormSchemaRow,
+    FormSchemaRowRepository,
+    FrontendPluginRow,
+    FrontendPluginRowRepository,
+    IndicatorValueRow,
+    IndicatorValueRowRepository,
+    InsuranceProviderRow,
+    InsuranceProviderRowRepository,
+    InvoiceLineRow,
+    InvoiceLineRowRepository,
+    InvoiceRow,
+    InvoiceRowRepository,
+    ItemRow,
+    ItemRowRepository,
+    ItemVariantRow,
+    ItemVariantRowRepository,
+    LocationMovementRow,
+    LocationMovementRowRepository,
+    LocationRow,
+    LocationRowRepository,
+    LocationTypeRow,
+    LocationTypeRowRepository,
+    MasterListRow,
+    MasterListRowRepository,
+    NameInsuranceJoinRow,
+    NameInsuranceJoinRowRepository,
+    NamePropertyRow,
+    NamePropertyRowRepository,
+    NameRow,
+    NameRowRepository,
+    NameStoreJoinRepository,
+    NameStoreJoinRow,
+    NumberRow,
+    NumberRowRepository,
+    PackagingVariantRow,
+    PackagingVariantRowRepository,
+    PluginDataRow,
+    PluginDataRowRepository,
+    PreferenceRow,
+    PreferenceRowRepository,
+    PropertyRow,
+    PropertyRowRepository,
+    PurchaseOrderLineRow,
+    PurchaseOrderLineRowRepository,
+    PurchaseOrderRow,
+    PurchaseOrderRowRepository,
+    ReportRow,
+    ReportRowRepository,
+    RepositoryError,
+    RequisitionLineRow,
+    RequisitionLineRowRepository,
+    RequisitionRow,
+    RequisitionRowRepository,
+    RnRFormLineRow,
+    RnRFormLineRowRepository,
+    RnRFormRow,
+    RnRFormRowRepository,
+    RowActionType,
+    SensorRow,
+    SensorRowRepository,
+    StockLineRow,
+    StockLineRowRepository,
+    StocktakeLineRow,
+    StocktakeLineRowRepository,
+    StocktakeRow,
+    StocktakeRowRepository,
+    StorageConnection,
+    StoreRow,
+    StoreRowRepository,
+    SyncFileReferenceRow,
+    SyncFileReferenceRowRepository,
+    SyncMessageRow,
+    SyncMessageRowRepository,
+    SystemLogRow,
+    SystemLogRowRepository,
+    TemperatureBreachConfigRow,
+    TemperatureBreachConfigRowRepository,
+    TemperatureBreachRow,
+    TemperatureBreachRowRepository,
+    TemperatureLogRow,
+    TemperatureLogRowRepository,
+    UnitRow,
     UnitRowRepository,
+    VVMStatusLogRow,
+    VVMStatusLogRowRepository,
+    VaccinationRow,
+    VaccinationRowRepository,
+    VaccineCourseDoseRow,
+    VaccineCourseDoseRowRepository,
+    VaccineCourseItemRow,
+    VaccineCourseItemRowRepository,
+    VaccineCourseRow,
+    VaccineCourseRowRepository,
+    VaccineCourseStoreConfigRow,
+    VaccineCourseStoreConfigRowRepository,
 };
 
 /// Max ids per IN-clause when batch-fetching rows; keeps us well below
 /// SQLite's default 999-parameter limit and groups queries efficiently.
 const ROW_FETCH_BATCH_SIZE: usize = 500;
 
-/// One of the row variants that can appear in a changelog. Only the tables
-/// supported by the first iteration of `query_with_data` are listed;
-/// extend this enum (and `fetch_rows_for_table`) as more tables are wired up.
+/// One of the row variants that can appear in a changelog. Generated
+/// to cover every push-translated `ChangelogTableName`. Tables not in
+/// this enum trigger `unimplemented!()` in `fetch_rows_for_table`.
 #[derive(Debug, Clone)]
 pub enum Row {
-    Unit(UnitRow),
+    ActivityLog(ActivityLogRow),
+    Barcode(BarcodeRow),
+    Clinician(ClinicianRow),
+    ClinicianStoreJoin(ClinicianStoreJoinRow),
     Currency(CurrencyRow),
-    Name(NameRow),
-    Store(StoreRow),
-    LocationType(LocationTypeRow),
+    Document(DocumentRow),
+    IndicatorValue(IndicatorValueRow),
+    InsuranceProvider(InsuranceProviderRow),
     Item(ItemRow),
+    Location(LocationRow),
+    LocationMovement(LocationMovementRow),
+    Name(NameRow),
+    NameInsuranceJoin(NameInsuranceJoinRow),
+    NameStoreJoin(NameStoreJoinRow),
+    Number(NumberRow),
+    PurchaseOrder(PurchaseOrderRow),
+    PurchaseOrderLine(PurchaseOrderLineRow),
+    Sensor(SensorRow),
     StockLine(StockLineRow),
+    Stocktake(StocktakeRow),
+    StocktakeLine(StocktakeLineRow),
+    TemperatureBreach(TemperatureBreachRow),
+    TemperatureBreachConfig(TemperatureBreachConfigRow),
+    TemperatureLog(TemperatureLogRow),
+    VVMStatusLog(VVMStatusLogRow),
+    Requisition(RequisitionRow),
+    RequisitionLine(RequisitionLineRow),
     Invoice(InvoiceRow),
     InvoiceLine(InvoiceLineRow),
+    AssetCatalogueItem(AssetCatalogueItemRow),
+    AssetCategory(AssetCategoryRow),
+    AssetClass(AssetClassRow),
+    AssetLogReason(AssetLogReasonRow),
+    AssetProperty(AssetPropertyRow),
+    BackendPlugin(BackendPluginRow),
+    BundledItem(BundledItemRow),
+    Campaign(CampaignRow),
+    Demographic(DemographicRow),
+    FormSchema(FormSchemaRow),
+    FrontendPlugin(FrontendPluginRow),
+    ItemVariant(ItemVariantRow),
+    NameProperty(NamePropertyRow),
+    PackagingVariant(PackagingVariantRow),
+    Property(PropertyRow),
+    Report(ReportRow),
+    VaccineCourse(VaccineCourseRow),
+    VaccineCourseDose(VaccineCourseDoseRow),
+    VaccineCourseItem(VaccineCourseItemRow),
+    VaccineCourseStoreConfig(VaccineCourseStoreConfigRow),
+    LocationType(LocationTypeRow),
+    MasterList(MasterListRow),
+    Store(StoreRow),
+    Unit(UnitRow),
+    Asset(AssetRow),
+    AssetInternalLocation(AssetInternalLocationRow),
+    AssetLog(AssetLogRow),
+    Encounter(EncounterRow),
+    RnrForm(RnRFormRow),
+    RnrFormLine(RnRFormLineRow),
+    SyncMessage(SyncMessageRow),
+    Vaccination(VaccinationRow),
+    SyncFileReference(SyncFileReferenceRow),
+    PluginData(PluginDataRow),
+    Preference(PreferenceRow),
+    ContactForm(ContactFormRow),
+    SystemLog(SystemLogRow),
 }
 
 /// Output entry of `query_with_data`. `Row` carries the loaded row
@@ -167,9 +358,24 @@ fn fetch_rows_for_table(
 
     for chunk in ids.chunks(ROW_FETCH_BATCH_SIZE) {
         match table_name {
-            ChangelogTableName::Unit => {
-                for r in UnitRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::Unit(r));
+            ChangelogTableName::ActivityLog => {
+                for r in ActivityLogRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ActivityLog(r));
+                }
+            }
+            ChangelogTableName::Barcode => {
+                for r in BarcodeRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Barcode(r));
+                }
+            }
+            ChangelogTableName::Clinician => {
+                for r in ClinicianRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Clinician(r));
+                }
+            }
+            ChangelogTableName::ClinicianStoreJoin => {
+                for r in ClinicianStoreJoinRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ClinicianStoreJoin(r));
                 }
             }
             ChangelogTableName::Currency => {
@@ -177,19 +383,19 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::Currency(r));
                 }
             }
-            ChangelogTableName::Name => {
-                for r in NameRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::Name(r));
+            ChangelogTableName::Document => {
+                for r in DocumentRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Document(r));
                 }
             }
-            ChangelogTableName::Store => {
-                for r in StoreRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::Store(r));
+            ChangelogTableName::IndicatorValue => {
+                for r in IndicatorValueRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::IndicatorValue(r));
                 }
             }
-            ChangelogTableName::LocationType => {
-                for r in LocationTypeRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::LocationType(r));
+            ChangelogTableName::InsuranceProvider => {
+                for r in InsuranceProviderRowRepository::new(connection).find_many_by_ids(chunk)? {
+                    out.insert(r.id.clone(), Row::InsuranceProvider(r));
                 }
             }
             ChangelogTableName::Item => {
@@ -197,9 +403,94 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::Item(r));
                 }
             }
+            ChangelogTableName::Location => {
+                for r in LocationRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Location(r));
+                }
+            }
+            ChangelogTableName::LocationMovement => {
+                for r in LocationMovementRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::LocationMovement(r));
+                }
+            }
+            ChangelogTableName::Name => {
+                for r in NameRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Name(r));
+                }
+            }
+            ChangelogTableName::NameInsuranceJoin => {
+                for r in NameInsuranceJoinRowRepository::new(connection).find_many_by_ids(chunk)? {
+                    out.insert(r.id.clone(), Row::NameInsuranceJoin(r));
+                }
+            }
+            ChangelogTableName::NameStoreJoin => {
+                for r in NameStoreJoinRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::NameStoreJoin(r));
+                }
+            }
+            ChangelogTableName::Number => {
+                for r in NumberRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Number(r));
+                }
+            }
+            ChangelogTableName::PurchaseOrder => {
+                for r in PurchaseOrderRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::PurchaseOrder(r));
+                }
+            }
+            ChangelogTableName::PurchaseOrderLine => {
+                for r in PurchaseOrderLineRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::PurchaseOrderLine(r));
+                }
+            }
+            ChangelogTableName::Sensor => {
+                for r in SensorRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Sensor(r));
+                }
+            }
             ChangelogTableName::StockLine => {
                 for r in StockLineRowRepository::new(connection).find_many_by_ids(chunk)? {
                     out.insert(r.id.clone(), Row::StockLine(r));
+                }
+            }
+            ChangelogTableName::Stocktake => {
+                for r in StocktakeRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Stocktake(r));
+                }
+            }
+            ChangelogTableName::StocktakeLine => {
+                for r in StocktakeLineRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::StocktakeLine(r));
+                }
+            }
+            ChangelogTableName::TemperatureBreach => {
+                for r in TemperatureBreachRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::TemperatureBreach(r));
+                }
+            }
+            ChangelogTableName::TemperatureBreachConfig => {
+                for r in TemperatureBreachConfigRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::TemperatureBreachConfig(r));
+                }
+            }
+            ChangelogTableName::TemperatureLog => {
+                for r in TemperatureLogRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::TemperatureLog(r));
+                }
+            }
+            ChangelogTableName::VVMStatusLog => {
+                for r in VVMStatusLogRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::VVMStatusLog(r));
+                }
+            }
+            ChangelogTableName::Requisition => {
+                for r in RequisitionRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Requisition(r));
+                }
+            }
+            ChangelogTableName::RequisitionLine => {
+                for r in RequisitionLineRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::RequisitionLine(r));
                 }
             }
             ChangelogTableName::Invoice => {
@@ -210,6 +501,191 @@ fn fetch_rows_for_table(
             ChangelogTableName::InvoiceLine => {
                 for r in InvoiceLineRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::InvoiceLine(r));
+                }
+            }
+            ChangelogTableName::AssetCatalogueItem => {
+                for r in AssetCatalogueItemRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::AssetCatalogueItem(r));
+                }
+            }
+            ChangelogTableName::AssetCategory => {
+                for r in AssetCategoryRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::AssetCategory(r));
+                }
+            }
+            ChangelogTableName::AssetClass => {
+                for r in AssetClassRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::AssetClass(r));
+                }
+            }
+            ChangelogTableName::AssetLogReason => {
+                for r in AssetLogReasonRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::AssetLogReason(r));
+                }
+            }
+            ChangelogTableName::AssetProperty => {
+                for r in AssetPropertyRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::AssetProperty(r));
+                }
+            }
+            ChangelogTableName::BackendPlugin => {
+                for r in BackendPluginRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::BackendPlugin(r));
+                }
+            }
+            ChangelogTableName::BundledItem => {
+                for r in BundledItemRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::BundledItem(r));
+                }
+            }
+            ChangelogTableName::Campaign => {
+                for r in CampaignRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Campaign(r));
+                }
+            }
+            ChangelogTableName::Demographic => {
+                for r in DemographicRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Demographic(r));
+                }
+            }
+            ChangelogTableName::FormSchema => {
+                for r in FormSchemaRowRepository::new(connection).find_many_rows_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::FormSchema(r));
+                }
+            }
+            ChangelogTableName::FrontendPlugin => {
+                for r in FrontendPluginRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::FrontendPlugin(r));
+                }
+            }
+            ChangelogTableName::ItemVariant => {
+                for r in ItemVariantRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ItemVariant(r));
+                }
+            }
+            ChangelogTableName::NameProperty => {
+                for r in NamePropertyRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::NameProperty(r));
+                }
+            }
+            ChangelogTableName::PackagingVariant => {
+                for r in PackagingVariantRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::PackagingVariant(r));
+                }
+            }
+            ChangelogTableName::Property => {
+                for r in PropertyRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Property(r));
+                }
+            }
+            ChangelogTableName::Report => {
+                for r in ReportRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Report(r));
+                }
+            }
+            ChangelogTableName::VaccineCourse => {
+                for r in VaccineCourseRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::VaccineCourse(r));
+                }
+            }
+            ChangelogTableName::VaccineCourseDose => {
+                for r in VaccineCourseDoseRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::VaccineCourseDose(r));
+                }
+            }
+            ChangelogTableName::VaccineCourseItem => {
+                for r in VaccineCourseItemRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::VaccineCourseItem(r));
+                }
+            }
+            ChangelogTableName::VaccineCourseStoreConfig => {
+                for r in VaccineCourseStoreConfigRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::VaccineCourseStoreConfig(r));
+                }
+            }
+            ChangelogTableName::LocationType => {
+                for r in LocationTypeRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::LocationType(r));
+                }
+            }
+            ChangelogTableName::MasterList => {
+                for r in MasterListRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::MasterList(r));
+                }
+            }
+            ChangelogTableName::Store => {
+                for r in StoreRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Store(r));
+                }
+            }
+            ChangelogTableName::Unit => {
+                for r in UnitRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Unit(r));
+                }
+            }
+            ChangelogTableName::Asset => {
+                for r in AssetRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Asset(r));
+                }
+            }
+            ChangelogTableName::AssetInternalLocation => {
+                for r in AssetInternalLocationRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::AssetInternalLocation(r));
+                }
+            }
+            ChangelogTableName::AssetLog => {
+                for r in AssetLogRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::AssetLog(r));
+                }
+            }
+            ChangelogTableName::Encounter => {
+                for r in EncounterRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Encounter(r));
+                }
+            }
+            ChangelogTableName::RnrForm => {
+                for r in RnRFormRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::RnrForm(r));
+                }
+            }
+            ChangelogTableName::RnrFormLine => {
+                for r in RnRFormLineRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::RnrFormLine(r));
+                }
+            }
+            ChangelogTableName::SyncMessage => {
+                for r in SyncMessageRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::SyncMessage(r));
+                }
+            }
+            ChangelogTableName::Vaccination => {
+                for r in VaccinationRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Vaccination(r));
+                }
+            }
+            ChangelogTableName::SyncFileReference => {
+                for r in SyncFileReferenceRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::SyncFileReference(r));
+                }
+            }
+            ChangelogTableName::PluginData => {
+                for r in PluginDataRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::PluginData(r));
+                }
+            }
+            ChangelogTableName::Preference => {
+                for r in PreferenceRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Preference(r));
+                }
+            }
+            ChangelogTableName::ContactForm => {
+                for r in ContactFormRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ContactForm(r));
+                }
+            }
+            ChangelogTableName::SystemLog => {
+                for r in SystemLogRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::SystemLog(r));
                 }
             }
             other => unimplemented!("query_with_data does not yet support {:?}", other),

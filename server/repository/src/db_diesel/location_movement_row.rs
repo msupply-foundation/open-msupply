@@ -74,6 +74,12 @@ impl<'a> LocationMovementRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationMovementRow>, RepositoryError> {
+        Ok(location_movement::table
+            .filter(location_movement::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for LocationMovementRow {

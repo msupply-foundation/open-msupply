@@ -106,6 +106,12 @@ impl<'a> SystemLogRowRepository<'a> {
         let result = system_log::table.load(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SystemLogRow>, RepositoryError> {
+        Ok(system_log::table
+            .filter(system_log::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for SystemLogRow {

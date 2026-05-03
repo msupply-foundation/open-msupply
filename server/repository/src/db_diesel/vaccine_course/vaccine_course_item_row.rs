@@ -103,6 +103,12 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseItemRow>, RepositoryError> {
+        Ok(vaccine_course_item::table
+            .filter(vaccine_course_item::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for VaccineCourseItemRow {

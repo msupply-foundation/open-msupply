@@ -118,6 +118,12 @@ impl<'a> ItemVariantRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ItemVariantRow>, RepositoryError> {
+        Ok(item_variant::table
+            .filter(item_variant::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for ItemVariantRow {

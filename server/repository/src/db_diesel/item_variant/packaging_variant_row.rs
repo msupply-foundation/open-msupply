@@ -88,6 +88,12 @@ impl<'a> PackagingVariantRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PackagingVariantRow>, RepositoryError> {
+        Ok(packaging_variant::table
+            .filter(packaging_variant::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for PackagingVariantRow {

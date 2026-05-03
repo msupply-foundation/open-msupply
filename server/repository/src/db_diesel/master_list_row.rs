@@ -71,6 +71,12 @@ impl<'a> MasterListRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<MasterListRow>, RepositoryError> {
+        Ok(master_list::table
+            .filter(master_list::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for MasterListRow {

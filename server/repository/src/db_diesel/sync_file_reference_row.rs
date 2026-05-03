@@ -176,6 +176,12 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         self._upsert_one(sync_file_reference_row)?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
+        Ok(sync_file_reference::table
+            .filter(sync_file_reference::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for SyncFileReferenceRow {

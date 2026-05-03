@@ -4,12 +4,13 @@ use repository::{
     ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
     InvoiceRepository, ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository,
     RequisitionRow, RequisitionRowDelete, StorageConnection, SyncBufferRow,
+    Row,
 };
 
 use serde::{Deserialize, Serialize};
 use util::constants::{APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, MISSING_PROGRAM};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 use crate::sync::translations::{
     master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
     store::StoreTranslation,
@@ -347,8 +348,12 @@ impl SyncTranslation for RequisitionTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::Requisition(requisition_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let Requisition {
             requisition_row:
                 RequisitionRow {
@@ -382,7 +387,7 @@ impl SyncTranslation for RequisitionTranslation {
             ..
         } = RequisitionRepository::new(connection)
             .query_by_filter(
-                RequisitionFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                RequisitionFilter::new().id(EqualFilter::equal_to(requisition_row.id.clone())),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
@@ -413,9 +418,9 @@ impl SyncTranslation for RequisitionTranslation {
             status: match to_legacy_status(&r#type, &status, has_outbound_shipment) {
                 Some(status) => status,
                 None => {
-                    return Ok(PushTranslateResult::Ignored(format!(
+                    return Ok(TranslatedUpsert::Ignored(format!(
                         "Unsupported requisition status: {:?} (type: {:?}) row id: {}",
-                        status, r#type, changelog.record_id
+                        status, r#type, requisition_row.id
                     )))
                 }
             },
@@ -445,11 +450,7 @@ impl SyncTranslation for RequisitionTranslation {
             oms_fields,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -757,16 +758,16 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
 
-            let PushTranslateResult::PushRecord(translated) = translated else {
+            let TranslatedUpsert::Translated(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
+            assert_eq!(translated["name_ID"], json!("name_a"));
         }
     }
 

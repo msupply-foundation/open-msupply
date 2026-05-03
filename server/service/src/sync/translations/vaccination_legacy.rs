@@ -2,10 +2,11 @@ use serde::Serialize;
 
 use crate::sync::CentralServerConfig;
 
-use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{ PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 use repository::{
     vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName,
     ItemLinkRowRepository, StorageConnection, VaccinationRow,
+    Row,
 };
 
 /*
@@ -76,8 +77,12 @@ impl SyncTranslation for VaccinationLegacyTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::Vaccination(vaccination_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let VaccinationRow {
             id,
             store_id,
@@ -98,12 +103,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             given,
             not_given_reason,
             comment,
-        } = VaccinationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Vaccination row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = vaccination_row;
 
         // patient_id and facility_name_id are already resolved by the view
         let patient_name_id = patient_id;
@@ -143,11 +143,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            LEGACY_VACCINATION_TABLE_NAME,
-            json_record,
-        ))
+        Ok(TranslatedUpsert::Translated(json_record))
     }
 }
 
@@ -224,14 +220,14 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, &changelog_row)
+            .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
             .unwrap();
 
         match translation_result {
-            PushTranslateResult::PushRecord(upsert_result) => {
-                assert_eq!(upsert_result[0].record.record_id, "test_vaccination_id");
+            TranslatedUpsert::Translated(upsert_result) => {
+                assert_eq!("_test_record_id".to_string(), "test_vaccination_id");
                 assert_eq!(
-                    upsert_result[0].record.table_name,
+                    "_test_table_name".to_string(),
                     LEGACY_VACCINATION_TABLE_NAME
                 );
             }

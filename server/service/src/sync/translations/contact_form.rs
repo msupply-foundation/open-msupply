@@ -1,13 +1,13 @@
 use repository::{
     contact_form_row::{ContactFormRow, ContactFormRowRepository},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
 };
 
 use crate::sync::translations::{store::StoreTranslation, user::UserTranslation};
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{ 
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translations()
 #[deny(dead_code)]
@@ -55,21 +55,16 @@ impl SyncTranslation for ContactFormTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = ContactFormRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Contact Form row ({}) not found",
-                changelog.record_id
-            )))?;
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::ContactForm(contact_form_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let row = contact_form_row;
+
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(row)?))
     }
 }
 
@@ -146,17 +141,17 @@ mod tests {
             &ToSyncRecordTranslationType::PushToOmSupplyCentral
         ));
         let translated = translator
-            .try_translate_to_upsert_sync_record(&connection, &changelog)
+            .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
             .unwrap();
 
-        assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+        assert!(matches!(translated, TranslatedUpsert::Translated(_)));
 
-        let PushTranslateResult::PushRecord(translated) = translated else {
+        let TranslatedUpsert::Translated(translated) = translated else {
             panic!("Test fail, should translate")
         };
 
         assert_eq!(
-            translated[0].record.record_data["user_id"],
+            translated["user_id"],
             json!("user_account_a")
         );
     }

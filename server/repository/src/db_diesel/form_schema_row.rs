@@ -128,6 +128,15 @@ impl<'a> FormSchemaRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_rows_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<FormSchemaRow>, RepositoryError> {
+        Ok(form_schema::dsl::form_schema
+            .filter(form_schema::dsl::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(form_schema::dsl::form_schema.filter(form_schema::dsl::id.eq(id)))
             .execute(self.connection.lock().connection())?;
