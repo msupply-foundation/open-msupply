@@ -1,146 +1,65 @@
 use std::collections::HashMap;
 
 use crate::{
-    ActivityLogRow,
-    ActivityLogRowRepository,
-    AssetCatalogueItemRow,
-    AssetCatalogueItemRowRepository,
-    AssetCategoryRow,
-    AssetCategoryRowRepository,
-    AssetClassRow,
-    AssetClassRowRepository,
-    AssetInternalLocationRow,
-    AssetInternalLocationRowRepository,
-    AssetLogReasonRow,
-    AssetLogReasonRowRepository,
-    AssetLogRow,
-    AssetLogRowRepository,
-    AssetPropertyRow,
-    AssetPropertyRowRepository,
-    AssetRow,
-    AssetRowRepository,
-    BackendPluginRow,
-    BackendPluginRowRepository,
-    BarcodeRow,
-    BarcodeRowRepository,
-    BundledItemRow,
-    BundledItemRowRepository,
-    CampaignRow,
-    CampaignRowRepository,
-    ChangelogCondition,
-    ChangelogRepository,
-    ChangelogRow,
-    ChangelogTableName,
-    ClinicianRow,
-    ClinicianRowRepository,
-    ClinicianStoreJoinRow,
-    ClinicianStoreJoinRowRepository,
-    ContactFormRow,
-    ContactFormRowRepository,
-    CurrencyRow,
-    CurrencyRowRepository,
+    AbbreviationRow, AbbreviationRowRepository, ActivityLogRow, ActivityLogRowRepository,
+    AssetCatalogueItemRow, AssetCatalogueItemRowRepository, AssetCategoryRow,
+    AssetCategoryRowRepository, AssetClassRow, AssetClassRowRepository, AssetInternalLocationRow,
+    AssetInternalLocationRowRepository, AssetLogReasonRow, AssetLogReasonRowRepository, AssetLogRow,
+    AssetLogRowRepository, AssetPropertyRow, AssetPropertyRowRepository, AssetRow,
+    AssetRowRepository, BackendPluginRow, BackendPluginRowRepository, BarcodeRow,
+    BarcodeRowRepository, BundledItemRow, BundledItemRowRepository, CampaignRow,
+    CampaignRowRepository, ChangelogCondition, ChangelogRepository, ChangelogRow,
+    ChangelogTableName, ClinicianRow, ClinicianRowRepository, ClinicianStoreJoinRow,
+    ClinicianStoreJoinRowRepository, ContactFormRow, ContactFormRowRepository, ContactRow,
+    ContactRowRepository, ContextRow, ContextRowRepository, CurrencyRow, CurrencyRowRepository,
     CursorAndLimit,
-    DemographicRow,
-    DemographicRowRepository,
-    DocumentRepository,
-    DocumentRow,
-    EncounterRow,
-    EncounterRowRepository,
-    FormSchemaRow,
-    FormSchemaRowRepository,
-    FrontendPluginRow,
-    FrontendPluginRowRepository,
-    IndicatorValueRow,
-    IndicatorValueRowRepository,
-    InsuranceProviderRow,
-    InsuranceProviderRowRepository,
-    InvoiceLineRow,
-    InvoiceLineRowRepository,
-    InvoiceRow,
-    InvoiceRowRepository,
-    ItemRow,
-    ItemRowRepository,
-    ItemVariantRow,
-    ItemVariantRowRepository,
-    LocationMovementRow,
-    LocationMovementRowRepository,
-    LocationRow,
-    LocationRowRepository,
-    LocationTypeRow,
-    LocationTypeRowRepository,
-    MasterListRow,
-    MasterListRowRepository,
-    NameInsuranceJoinRow,
-    NameInsuranceJoinRowRepository,
-    NamePropertyRow,
-    NamePropertyRowRepository,
-    NameRow,
-    NameRowRepository,
-    NameStoreJoinRepository,
-    NameStoreJoinRow,
-    NumberRow,
-    NumberRowRepository,
-    PackagingVariantRow,
-    PackagingVariantRowRepository,
-    PluginDataRow,
-    PluginDataRowRepository,
-    PreferenceRow,
-    PreferenceRowRepository,
-    PropertyRow,
-    PropertyRowRepository,
-    PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository,
-    PurchaseOrderRow,
-    PurchaseOrderRowRepository,
-    ReportRow,
-    ReportRowRepository,
-    RepositoryError,
-    RequisitionLineRow,
-    RequisitionLineRowRepository,
-    RequisitionRow,
-    RequisitionRowRepository,
-    RnRFormLineRow,
-    RnRFormLineRowRepository,
-    RnRFormRow,
-    RnRFormRowRepository,
-    RowActionType,
-    SensorRow,
-    SensorRowRepository,
-    StockLineRow,
-    StockLineRowRepository,
-    StocktakeLineRow,
-    StocktakeLineRowRepository,
-    StocktakeRow,
-    StocktakeRowRepository,
-    StorageConnection,
-    StoreRow,
-    StoreRowRepository,
-    SyncFileReferenceRow,
-    SyncFileReferenceRowRepository,
-    SyncMessageRow,
-    SyncMessageRowRepository,
-    SystemLogRow,
-    SystemLogRowRepository,
-    TemperatureBreachConfigRow,
-    TemperatureBreachConfigRowRepository,
-    TemperatureBreachRow,
-    TemperatureBreachRowRepository,
-    TemperatureLogRow,
-    TemperatureLogRowRepository,
-    UnitRow,
-    UnitRowRepository,
-    VVMStatusLogRow,
-    VVMStatusLogRowRepository,
-    VaccinationRow,
-    VaccinationRowRepository,
-    VaccineCourseDoseRow,
-    VaccineCourseDoseRowRepository,
-    VaccineCourseItemRow,
-    VaccineCourseItemRowRepository,
-    VaccineCourseRow,
-    VaccineCourseRowRepository,
-    VaccineCourseStoreConfigRow,
-    VaccineCourseStoreConfigRowRepository,
+    DemographicIndicatorRow, DemographicIndicatorRowRepository, DemographicProjectionRow,
+    DemographicProjectionRowRepository, DemographicRow, DemographicRowRepository, DiagnosisRow,
+    DiagnosisRowRepository, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRepository,
+    DocumentRow, EncounterRow, EncounterRowRepository, FormSchemaRow, FormSchemaRowRepository,
+    FrontendPluginRow, FrontendPluginRowRepository, IndicatorColumnRow,
+    IndicatorColumnRowRepository, IndicatorLineRow, IndicatorLineRowRepository, IndicatorValueRow,
+    IndicatorValueRowRepository, InsuranceProviderRow, InsuranceProviderRowRepository,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, ItemDirectionRow,
+    ItemDirectionRowRepository, ItemRow, ItemRowRepository, ItemStoreJoinRow,
+    ItemStoreJoinRowRepository, ItemVariantRow, ItemVariantRowRepository, ItemWarningJoinRow,
+    ItemWarningJoinRowRepository, LocationMovementRow, LocationMovementRowRepository, LocationRow,
+    LocationRowRepository, LocationTypeRow, LocationTypeRowRepository, MasterListLineRow,
+    MasterListLineRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
+    MasterListRow, MasterListRowRepository, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
+    NamePropertyRow, NamePropertyRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository,
+    NameStoreJoinRow, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
+    NumberRow, NumberRowRepository, PackagingVariantRow, PackagingVariantRowRepository, PeriodRow,
+    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
+    PluginDataRowRepository, PreferenceRow, PreferenceRowRepository, PrinterRow,
+    PrinterRowRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository, ProgramEventRow,
+    ProgramEventRowRepository, ProgramIndicatorRow, ProgramIndicatorRowRepository,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
+    ProgramRowRepository, PropertyRow, PropertyRowRepository, PurchaseOrderLineRow,
+    PurchaseOrderLineRowRepository, PurchaseOrderRow, PurchaseOrderRowRepository, ReasonOptionRow,
+    ReasonOptionRowRepository, ReportRow, ReportRowRepository, RepositoryError, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RnRFormLineRow,
+    RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, RowActionType, SensorRow,
+    SensorRowRepository, ShippingMethodRow, ShippingMethodRowRepository, StockLineRow,
+    StockLineRowRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow,
+    StocktakeRowRepository, StorageConnection, StorePreferenceRow, StorePreferenceRowRepository,
+    StoreRow, StoreRowRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository,
+    SyncMessageRow, SyncMessageRowRepository, SystemLogRow, SystemLogRowRepository,
+    TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository, TemperatureBreachRow,
+    TemperatureBreachRowRepository, TemperatureLogRow, TemperatureLogRowRepository, UnitRow,
+    UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository, VVMStatusLogRow,
+    VVMStatusLogRowRepository, VVMStatusRow, VVMStatusRowRepository, VaccinationRow,
+    VaccinationRowRepository, VaccineCourseDoseRow, VaccineCourseDoseRowRepository,
+    VaccineCourseItemRow, VaccineCourseItemRowRepository, VaccineCourseRow, VaccineCourseRowRepository,
+    VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
+};
+// Types only reachable via their full submodule path (no flat re-export).
+use crate::{
+    category_row::{CategoryRow, CategoryRowRepository},
+    contact_trace_row::{ContactTraceRow, ContactTraceRowRepository},
+    item_category_row::{ItemCategoryJoinRow, ItemCategoryJoinRowRepository},
 };
 
 /// Max ids per IN-clause when batch-fetching rows; keeps us well below
@@ -218,6 +137,41 @@ pub enum Row {
     Preference(PreferenceRow),
     ContactForm(ContactFormRow),
     SystemLog(SystemLogRow),
+    Abbreviation(AbbreviationRow),
+    Category(CategoryRow),
+    Contact(ContactRow),
+    ContactTrace(ContactTraceRow),
+    Context(ContextRow),
+    DemographicIndicator(DemographicIndicatorRow),
+    DemographicProjection(DemographicProjectionRow),
+    Diagnosis(DiagnosisRow),
+    DocumentRegistry(DocumentRegistryRow),
+    IndicatorColumn(IndicatorColumnRow),
+    IndicatorLine(IndicatorLineRow),
+    ItemCategoryJoin(ItemCategoryJoinRow),
+    ItemDirection(ItemDirectionRow),
+    ItemStoreJoin(ItemStoreJoinRow),
+    ItemWarningJoin(ItemWarningJoinRow),
+    MasterListLine(MasterListLineRow),
+    MasterListNameJoin(MasterListNameJoinRow),
+    NameTag(NameTagRow),
+    NameTagJoin(NameTagJoinRow),
+    Period(PeriodRow),
+    PeriodSchedule(PeriodScheduleRow),
+    Printer(PrinterRow),
+    Program(ProgramRow),
+    ProgramEnrolment(ProgramEnrolmentRow),
+    ProgramEvent(ProgramEventRow),
+    ProgramIndicator(ProgramIndicatorRow),
+    ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow),
+    ProgramRequisitionSettings(ProgramRequisitionSettingsRow),
+    ReasonOption(ReasonOptionRow),
+    ShippingMethod(ShippingMethodRow),
+    StorePreference(StorePreferenceRow),
+    UserAccount(UserAccountRow),
+    UserPermission(UserPermissionRow),
+    UserStoreJoin(UserStoreJoinRow),
+    VVMStatus(VVMStatusRow),
 }
 
 /// Output entry of `query_with_data`. `Row` carries the loaded row
@@ -686,6 +640,189 @@ fn fetch_rows_for_table(
             ChangelogTableName::SystemLog => {
                 for r in SystemLogRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::SystemLog(r));
+                }
+            }
+            ChangelogTableName::Abbreviation => {
+                for r in AbbreviationRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Abbreviation(r));
+                }
+            }
+            ChangelogTableName::Category => {
+                for r in CategoryRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Category(r));
+                }
+            }
+            ChangelogTableName::Contact => {
+                for r in ContactRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Contact(r));
+                }
+            }
+            ChangelogTableName::ContactTrace => {
+                for r in ContactTraceRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ContactTrace(r));
+                }
+            }
+            ChangelogTableName::Context => {
+                for r in ContextRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Context(r));
+                }
+            }
+            ChangelogTableName::DemographicIndicator => {
+                for r in
+                    DemographicIndicatorRowRepository::new(connection).find_many_by_id(chunk)?
+                {
+                    out.insert(r.id.clone(), Row::DemographicIndicator(r));
+                }
+            }
+            ChangelogTableName::DemographicProjection => {
+                for r in
+                    DemographicProjectionRowRepository::new(connection).find_many_by_id(chunk)?
+                {
+                    out.insert(r.id.clone(), Row::DemographicProjection(r));
+                }
+            }
+            ChangelogTableName::Diagnosis => {
+                for r in DiagnosisRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Diagnosis(r));
+                }
+            }
+            ChangelogTableName::DocumentRegistry => {
+                for r in DocumentRegistryRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::DocumentRegistry(r));
+                }
+            }
+            ChangelogTableName::IndicatorColumn => {
+                for r in IndicatorColumnRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::IndicatorColumn(r));
+                }
+            }
+            ChangelogTableName::IndicatorLine => {
+                for r in IndicatorLineRowRepository::new(connection).find_many_by_ids(chunk)? {
+                    out.insert(r.id.clone(), Row::IndicatorLine(r));
+                }
+            }
+            ChangelogTableName::ItemCategoryJoin => {
+                for r in ItemCategoryJoinRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ItemCategoryJoin(r));
+                }
+            }
+            ChangelogTableName::ItemDirection => {
+                for r in ItemDirectionRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ItemDirection(r));
+                }
+            }
+            ChangelogTableName::ItemStoreJoin => {
+                for r in ItemStoreJoinRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ItemStoreJoin(r));
+                }
+            }
+            ChangelogTableName::ItemWarningJoin => {
+                for r in ItemWarningJoinRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ItemWarningJoin(r));
+                }
+            }
+            ChangelogTableName::MasterListLine => {
+                for r in MasterListLineRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::MasterListLine(r));
+                }
+            }
+            ChangelogTableName::MasterListNameJoin => {
+                for r in MasterListNameJoinRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::MasterListNameJoin(r));
+                }
+            }
+            ChangelogTableName::NameTag => {
+                for r in NameTagRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::NameTag(r));
+                }
+            }
+            ChangelogTableName::NameTagJoin => {
+                for r in NameTagJoinRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::NameTagJoin(r));
+                }
+            }
+            ChangelogTableName::Period => {
+                for r in PeriodRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Period(r));
+                }
+            }
+            ChangelogTableName::PeriodSchedule => {
+                for r in PeriodScheduleRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::PeriodSchedule(r));
+                }
+            }
+            ChangelogTableName::Printer => {
+                for r in PrinterRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Printer(r));
+                }
+            }
+            ChangelogTableName::Program => {
+                for r in ProgramRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::Program(r));
+                }
+            }
+            ChangelogTableName::ProgramEnrolment => {
+                for r in ProgramEnrolmentRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ProgramEnrolment(r));
+                }
+            }
+            ChangelogTableName::ProgramEvent => {
+                for r in ProgramEventRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ProgramEvent(r));
+                }
+            }
+            ChangelogTableName::ProgramIndicator => {
+                for r in ProgramIndicatorRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ProgramIndicator(r));
+                }
+            }
+            ChangelogTableName::ProgramRequisitionOrderType => {
+                for r in ProgramRequisitionOrderTypeRowRepository::new(connection)
+                    .find_many_by_id(chunk)?
+                {
+                    out.insert(r.id.clone(), Row::ProgramRequisitionOrderType(r));
+                }
+            }
+            ChangelogTableName::ProgramRequisitionSettings => {
+                for r in ProgramRequisitionSettingsRowRepository::new(connection)
+                    .find_many_by_id(chunk)?
+                {
+                    out.insert(r.id.clone(), Row::ProgramRequisitionSettings(r));
+                }
+            }
+            ChangelogTableName::ReasonOption => {
+                for r in ReasonOptionRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ReasonOption(r));
+                }
+            }
+            ChangelogTableName::ShippingMethod => {
+                for r in ShippingMethodRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::ShippingMethod(r));
+                }
+            }
+            ChangelogTableName::StorePreference => {
+                for r in StorePreferenceRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::StorePreference(r));
+                }
+            }
+            ChangelogTableName::UserAccount => {
+                for r in UserAccountRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::UserAccount(r));
+                }
+            }
+            ChangelogTableName::UserPermission => {
+                for r in UserPermissionRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::UserPermission(r));
+                }
+            }
+            ChangelogTableName::UserStoreJoin => {
+                for r in UserStoreJoinRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::UserStoreJoin(r));
+                }
+            }
+            ChangelogTableName::VVMStatus => {
+                for r in VVMStatusRowRepository::new(connection).find_many_by_ids(chunk)? {
+                    out.insert(r.id.clone(), Row::VVMStatus(r));
                 }
             }
             other => unimplemented!("query_with_data does not yet support {:?}", other),

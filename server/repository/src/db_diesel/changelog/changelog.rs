@@ -162,10 +162,45 @@ diesel_string_enum! {
         VaccineCourseStoreConfig,
 
         // ---- Central (not v6) ----
+        Abbreviation,
+        Category,
+        Contact,
+        ContactTrace,
+        Context,
+        DemographicIndicator,
+        DemographicProjection,
+        Diagnosis,
+        DocumentRegistry,
+        IndicatorColumn,
+        IndicatorLine,
+        ItemCategoryJoin,
+        ItemDirection,
+        ItemStoreJoin,
+        ItemWarningJoin,
         LocationType,
         MasterList,
+        MasterListLine,
+        MasterListNameJoin,
+        NameTag,
+        NameTagJoin,
+        Period,
+        PeriodSchedule,
+        Printer,
+        Program,
+        ProgramEnrolment,
+        ProgramEvent,
+        ProgramIndicator,
+        ProgramRequisitionOrderType,
+        ProgramRequisitionSettings,
+        ReasonOption,
+        ShippingMethod,
         Store,
+        StorePreference,
         Unit,
+        UserAccount,
+        UserPermission,
+        UserStoreJoin,
+        VVMStatus,
 
         // ---- ToLegacyCentralOnly (not v6) ----
         Site,
@@ -358,9 +393,49 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Central (not v6) — central data synced via legacy mSupply
+            // Central (not v6) — central data synced via legacy mSupply.
+            // Also a catch-all bucket for tables not yet classified into a
+            // more specific sync style.
             // ----------------------------------------------------------
-            LocationType | MasterList | Store | Unit => (
+            Abbreviation
+            | Category
+            | Contact
+            | ContactTrace
+            | Context
+            | DemographicIndicator
+            | DemographicProjection
+            | Diagnosis
+            | DocumentRegistry
+            | IndicatorColumn
+            | IndicatorLine
+            | ItemCategoryJoin
+            | ItemDirection
+            | ItemStoreJoin
+            | ItemWarningJoin
+            | LocationType
+            | MasterList
+            | MasterListLine
+            | MasterListNameJoin
+            | NameTag
+            | NameTagJoin
+            | Period
+            | PeriodSchedule
+            | Printer
+            | Program
+            | ProgramEnrolment
+            | ProgramEvent
+            | ProgramIndicator
+            | ProgramRequisitionOrderType
+            | ProgramRequisitionSettings
+            | ReasonOption
+            | ShippingMethod
+            | Store
+            | StorePreference
+            | Unit
+            | UserAccount
+            | UserPermission
+            | UserStoreJoin
+            | VVMStatus => (
                 vec![Central],
                 SyncStyleOptions {
                     is_v6: false,

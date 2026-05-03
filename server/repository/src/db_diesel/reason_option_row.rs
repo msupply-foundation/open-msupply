@@ -1,6 +1,9 @@
 use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, Delete, ChangelogSyncType, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
+    RowActionType, SourceSiteId, Upsert,
+};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -60,7 +63,7 @@ impl<'a> ReasonOptionRowRepository<'a> {
         ReasonOptionRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ReasonOptionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ReasonOptionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(reason_option::table)
             .values(row)
             .on_conflict(reason_option::id)
@@ -68,6 +71,17 @@ impl<'a> ReasonOptionRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &ReasonOptionRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = ReasonOptionRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReasonOptionRow>, RepositoryError> {
@@ -78,12 +92,32 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ReasonOptionRow>, RepositoryError> {
+        Ok(reason_option::table
+            .filter(reason_option::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    fn _soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
         diesel::update(reason_option::table)
             .filter(reason_option::id.eq(reason_option_id))
             .set(reason_option::is_active.eq(false))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+        self._soft_delete(reason_option_id)?;
+        let changelog = ReasonOptionRow::generate_changelog(
+            reason_option_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
@@ -91,9 +125,28 @@ impl<'a> ReasonOptionRowRepository<'a> {
 pub struct ReasonOptionRowDelete(pub String);
 
 impl Delete for ReasonOptionRowDelete {
-    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        ReasonOptionRowRepository::new(con).soft_delete(&self.0)?;
-        Ok(()) // Table not in Changelog
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = ReasonOptionRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                ReasonOptionRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._soft_delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -106,9 +159,25 @@ impl Delete for ReasonOptionRowDelete {
 }
 
 impl Upsert for ReasonOptionRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        ReasonOptionRowRepository::new(con).upsert_one(self)?;
-        Ok(()) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ReasonOptionRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
