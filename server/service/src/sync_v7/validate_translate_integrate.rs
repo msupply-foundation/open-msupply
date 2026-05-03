@@ -1,17 +1,16 @@
 use crate::{
     sync::ActiveStoresOnSite,
-    sync_v7::{sync_logger::SyncLogger, write_sync_buffer_success},
+    sync_v7::{serde::deserialize, sync_logger::SyncLogger, write_sync_buffer_success},
 };
 
 use super::{validate::*, write_sync_buffer_error};
-use repository::syncv7::INTEGRATION_ORDER;
+use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
 use repository::{
-    ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRow, CurrencyRowDelete,
-    DatetimeFilter, Delete, EqualFilter, InvoiceLineRow, InvoiceLineRowDelete, InvoiceRow,
-    InvoiceRowDelete, ItemRow, ItemRowDelete, LocationTypeRow, LocationTypeRowDelete, NameRow,
-    NameRowDelete, RepositoryError, RowActionType, StockLineRow, StockLineRowDelete,
-    StorageConnection, StoreRow, StoreRowDelete, SyncAction, SyncBufferFilter,
-    SyncBufferRepository, SyncBufferRow, UnitRow, UnitRowDelete, Upsert,
+    ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRowDelete, DatetimeFilter,
+    Delete, EqualFilter, InvoiceLineRowDelete, InvoiceRowDelete, ItemRowDelete,
+    LocationTypeRowDelete, NameRowDelete, RepositoryError, RowActionType, StockLineRowDelete,
+    StorageConnection, StoreRowDelete, SyncAction, SyncBufferFilter, SyncBufferRepository,
+    SyncBufferRow, UnitRowDelete, Upsert,
 };
 use serde::de::Error as _;
 use thiserror::Error;
@@ -34,6 +33,8 @@ enum Error {
     RepositoryError(#[from] RepositoryError),
     #[error("Error during record translation")]
     TranslationError(#[from] serde_json::Error),
+    #[error("Error during record deserialization: {0}")]
+    DeserializeError(#[from] SyncRecordSerializeError),
     #[error("Error during record validation")]
     ValidationError(#[from] ValidationError),
     #[error("Error during record integration")]
@@ -81,41 +82,6 @@ fn changelog(
         patient_id: row.patient_id.clone(),
         ..Default::default()
     }
-}
-
-fn translate_upsert(
-    table_name: &ChangelogTableName,
-    data: &serde_json::Value,
-) -> Result<Box<dyn Upsert>, Error> {
-    let upsert: Box<dyn Upsert> = match table_name {
-        ChangelogTableName::Unit => Box::new(serde_json::from_value::<UnitRow>(data.clone())?),
-        ChangelogTableName::Currency => {
-            Box::new(serde_json::from_value::<CurrencyRow>(data.clone())?)
-        }
-        ChangelogTableName::Name => Box::new(serde_json::from_value::<NameRow>(data.clone())?),
-        ChangelogTableName::Store => Box::new(serde_json::from_value::<StoreRow>(data.clone())?),
-        ChangelogTableName::LocationType => {
-            Box::new(serde_json::from_value::<LocationTypeRow>(data.clone())?)
-        }
-        ChangelogTableName::Item => Box::new(serde_json::from_value::<ItemRow>(data.clone())?),
-        ChangelogTableName::StockLine => {
-            Box::new(serde_json::from_value::<StockLineRow>(data.clone())?)
-        }
-        ChangelogTableName::Invoice => {
-            Box::new(serde_json::from_value::<InvoiceRow>(data.clone())?)
-        }
-        ChangelogTableName::InvoiceLine => {
-            Box::new(serde_json::from_value::<InvoiceLineRow>(data.clone())?)
-        }
-        _ => {
-            return Err(Error::TranslationError(serde_json::Error::custom(format!(
-                "No upsert translator for table {:?}",
-                table_name
-            ))))
-        }
-    };
-
-    Ok(upsert)
 }
 
 fn integrate_upsert(
@@ -200,7 +166,7 @@ fn validate_translate_integrate_one(
 
     match row.action {
         SyncAction::Upsert => {
-            let upsert = translate_upsert(&table_name, &row.data)?;
+            let upsert = deserialize(&table_name, &row.data)?;
             integrate_upsert(connection, upsert, table_name, row)
         }
         SyncAction::Delete => {

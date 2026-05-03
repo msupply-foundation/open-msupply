@@ -43,7 +43,7 @@ pub enum ReasonOptionType {
     RequisitionLineVariance,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = reason_option)]
 pub struct ReasonOptionRow {

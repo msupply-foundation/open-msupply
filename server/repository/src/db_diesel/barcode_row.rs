@@ -35,7 +35,7 @@ joinable!(barcode -> name (manufacturer_id));
 joinable!(barcode_with_links -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(barcode, item_link);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = barcode)]
 pub struct BarcodeRow {
     pub id: String,

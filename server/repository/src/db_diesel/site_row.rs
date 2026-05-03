@@ -1,5 +1,6 @@
 use crate::{ChangelogSyncType, Delete, RepositoryError, StorageConnection, Upsert};
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     site (id) {
@@ -13,7 +14,9 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
+)]
 #[diesel(table_name = site)]
 #[diesel(treat_none_as_null = true)]
 pub struct SiteRow {
@@ -60,6 +63,12 @@ impl<'a> SiteRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[i32]) -> Result<Vec<SiteRow>, RepositoryError> {
+        Ok(site::table
+            .filter(site::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 
     pub fn delete(&self, id: i32) -> Result<(), RepositoryError> {

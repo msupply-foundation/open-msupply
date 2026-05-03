@@ -7,7 +7,7 @@ use crate::{
 };
 use diesel::prelude::*;
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = name_tag_join)]
 pub struct NameTagJoinRow {
     pub id: String,

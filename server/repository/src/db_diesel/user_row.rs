@@ -25,7 +25,7 @@ table! {
 }
 
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum LanguageType {
@@ -40,7 +40,7 @@ pub enum LanguageType {
     Tetum,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = user_account)]
 pub struct UserAccountRow {
     pub id: String,

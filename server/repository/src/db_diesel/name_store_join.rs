@@ -27,7 +27,7 @@ define_linked_tables!(
     }
 );
 
-#[derive(Queryable, Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Queryable, Debug, PartialEq, Eq, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = name_store_join)]
 pub struct NameStoreJoinRow {
     pub id: String,

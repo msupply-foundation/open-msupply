@@ -24,7 +24,7 @@ joinable!(program_requisition_settings -> program (program_id));
 joinable!(program_requisition_settings -> period_schedule(period_schedule_id));
 allow_tables_to_appear_in_same_query!(program_requisition_settings, name_oms_fields);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = program_requisition_settings)]
 pub struct ProgramRequisitionSettingsRow {
     pub id: String,

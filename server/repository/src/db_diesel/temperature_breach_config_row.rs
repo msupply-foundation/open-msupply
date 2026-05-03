@@ -4,8 +4,6 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
-use crate::SourceSiteId;
-use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
@@ -26,7 +24,7 @@ joinable!(temperature_breach_config -> store (store_id));
 
 allow_tables_to_appear_in_same_query!(temperature_breach_config, temperature_log);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = temperature_breach_config)]
 pub struct TemperatureBreachConfigRow {
@@ -56,12 +54,7 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        let changelog = row.generate_changelog(
-            self.connection,
-            RowActionType::Upsert,
-            SourceSiteId::CurrentSiteId,
-        )?;
-        ChangelogRepository::new(self.connection).insert(&changelog)
+        Ok(())
     }
 
     pub fn find_one_by_id(

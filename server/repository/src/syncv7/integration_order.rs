@@ -21,7 +21,6 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
 /// checks in the test) once empty.
 pub const NOT_YET_IN_V7: &[ChangelogTableName] = &[
     ChangelogTableName::BackendPlugin,
-    ChangelogTableName::Number,
     ChangelogTableName::Location,
     ChangelogTableName::LocationMovement,
     ChangelogTableName::Stocktake,
@@ -36,15 +35,11 @@ pub const NOT_YET_IN_V7: &[ChangelogTableName] = &[
     ChangelogTableName::Document,
     ChangelogTableName::Sensor,
     ChangelogTableName::TemperatureBreach,
-    ChangelogTableName::TemperatureBreachConfig,
     ChangelogTableName::TemperatureLog,
-    ChangelogTableName::PackVariant,
     ChangelogTableName::AssetClass,
     ChangelogTableName::AssetCategory,
     ChangelogTableName::AssetCatalogueType,
     ChangelogTableName::AssetCatalogueItem,
-    ChangelogTableName::AssetCatalogueItemProperty,
-    ChangelogTableName::AssetCatalogueProperty,
     ChangelogTableName::AssetInternalLocation,
     ChangelogTableName::SyncFileReference,
     ChangelogTableName::Asset,

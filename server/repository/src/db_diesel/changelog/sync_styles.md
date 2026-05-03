@@ -42,7 +42,7 @@ The trait default is "push to legacy if `change_log_type()` matches; never push/
 
 ### `Legacy` — the legacy mSupply backbone
 
-`Number, Location, LocationMovement, StockLine, Invoice, InvoiceLine, Stocktake, StocktakeLine, Requisition, RequisitionLine, ActivityLog, Barcode, Clinician, ClinicianStoreJoin, Document, Sensor, TemperatureBreach, TemperatureBreachConfig, TemperatureLog, Currency, Item, IndicatorValue, InsuranceProvider, NameInsuranceJoin, VVMStatusLog, PurchaseOrder, PurchaseOrderLine`
+`Location, LocationMovement, StockLine, Invoice, InvoiceLine, Stocktake, StocktakeLine, Requisition, RequisitionLine, ActivityLog, Barcode, Clinician, ClinicianStoreJoin, Document, Sensor, TemperatureBreach, TemperatureLog, Currency, Item, IndicatorValue, InsuranceProvider, NameInsuranceJoin, VVMStatusLog, PurchaseOrder, PurchaseOrderLine`
 
 - Translators use trait defaults: **push to 4D legacy central** when changed; not pushed to OMS central; not selected by the v6 outgoing query (it filters out `Legacy`).
 - `Name` and `NameStoreJoin` are special: legacy by classification, but their translators also override `PushToOmSupplyCentral=true` so they round-trip via OMS too (with a guard against echoing rows received from legacy).
@@ -50,7 +50,7 @@ The trait default is "push to legacy if `change_log_type()` matches; never push/
 
 ### `Central` — created on OMS central, fanned to all sites
 
-`BackendPlugin, PackVariant, AssetClass, AssetCategory, AssetCatalogueType, AssetCatalogueItem, AssetCatalogueItemProperty, AssetCatalogueProperty, AssetLogReason, AssetProperty, Property, NameProperty, NameOmsFields, Demographic, VaccineCourse, VaccineCourseItem, VaccineCourseDose, VaccineCourseStoreConfig, ItemVariant, PackagingVariant, BundledItem, FrontendPlugin, Report, FormSchema, Campaign`
+`BackendPlugin, AssetClass, AssetCategory, AssetCatalogueType, AssetCatalogueItem, AssetLogReason, AssetProperty, Property, NameProperty, NameOmsFields, Demographic, VaccineCourse, VaccineCourseItem, VaccineCourseDose, VaccineCourseStoreConfig, ItemVariant, PackagingVariant, BundledItem, FrontendPlugin, Report, FormSchema, Campaign`
 
 - Selected by the v6 query for **every** site (no `store_id` predicate).
 - Translators override only `PullFromOmSupplyCentral=true`; explicit `PushToLegacyCentral=false, PushToOmSupplyCentral=false` so a site can't push these back.

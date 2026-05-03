@@ -10,6 +10,8 @@ use strum::IntoEnumIterator;
 use thiserror::Error;
 use ts_rs::TS;
 
+use super::sync_style::{ChangeLogSyncStyle, SyncStyleOptions};
+
 table! {
     changelog (cursor) {
         cursor -> BigInt,
@@ -114,7 +116,6 @@ diesel_string_enum! {
         Name,
         NameInsuranceJoin,
         NameStoreJoin,
-        Number,
         PurchaseOrder,
         PurchaseOrderLine,
         Sensor,
@@ -122,7 +123,6 @@ diesel_string_enum! {
         Stocktake,
         StocktakeLine,
         TemperatureBreach,
-        TemperatureBreachConfig,
         TemperatureLog,
         VVMStatusLog,
 
@@ -136,8 +136,6 @@ diesel_string_enum! {
 
         // ---- Central (v6) ----
         AssetCatalogueItem,
-        AssetCatalogueItemProperty,
-        AssetCatalogueProperty,
         AssetCatalogueType,
         AssetCategory,
         AssetClass,
@@ -152,7 +150,6 @@ diesel_string_enum! {
         ItemVariant,
         NameOmsFields,
         NameProperty,
-        PackVariant,
         PackagingVariant,
         Property,
         Report,
@@ -168,7 +165,6 @@ diesel_string_enum! {
         ContactTrace,
         Context,
         DemographicIndicator,
-        DemographicProjection,
         Diagnosis,
         DocumentRegistry,
         IndicatorColumn,
@@ -249,260 +245,6 @@ impl SourceSiteId {
             SourceSiteId::CurrentSiteId => {
                 KeyValueStoreRepository::new(connection).get_current_site_id()
             }
-        }
-    }
-}
-
-#[derive(strum::EnumIter, PartialEq, Eq, Debug)]
-pub(crate) enum ChangeLogSyncStyle {
-    Central, // Data created on Open-mSupply central server
-    Remote,
-    File,
-    ToLegacyCentralOnly,
-    Transfer,
-    Patient,
-    RemoteToCentral, // These records won't sync back to the remote site on re-initalisation
-}
-
-impl ChangeLogSyncStyle {
-    fn get_table_names_for_sync_style(
-        &self,
-        sync_style_options: Option<SyncStyleOptions>,
-    ) -> Vec<ChangelogTableName> {
-        ChangelogTableName::iter()
-            .filter(|table| {
-                let (styles, options) = table.sync_style();
-                if let Some(sync_style_options) = &sync_style_options {
-                    if sync_style_options != &options {
-                        return false;
-                    }
-                }
-                styles.iter().any(|style| style == self)
-            })
-            .collect()
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct SyncStyleOptions {
-    pub is_v6: bool,
-    pub is_v5: bool,
-}
-
-// When adding a new change log record type, specify how it should be synced
-// If new requirements are needed a different ChangeLogSyncStyle can be added
-//
-// Variants are grouped to match the order of `ChangelogTableName` above and
-// sorted alphabetically within each group. Keep the two in sync.
-impl ChangelogTableName {
-    pub(crate) fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncStyleOptions) {
-        use ChangeLogSyncStyle::*;
-        use ChangelogTableName::*;
-        match self {
-            // ----------------------------------------------------------
-            // Legacy — Remote (not v6)
-            // ----------------------------------------------------------
-            ActivityLog
-            | Barcode
-            | Clinician
-            | ClinicianStoreJoin
-            | Currency
-            | Document
-            | IndicatorValue
-            | InsuranceProvider
-            | Item
-            | Location
-            | LocationMovement
-            | Name
-            | NameInsuranceJoin
-            | NameStoreJoin
-            | Number
-            | PurchaseOrder
-            | PurchaseOrderLine
-            | Sensor
-            | StockLine
-            | Stocktake
-            | StocktakeLine
-            | TemperatureBreach
-            | TemperatureBreachConfig
-            | TemperatureLog
-            | SyncMessage
-            | VVMStatusLog => (
-                vec![Remote],
-                SyncStyleOptions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // Legacy — Remote + Transfer (not v6)
-            // ----------------------------------------------------------
-            Requisition | RequisitionLine => (
-                vec![Remote, Transfer],
-                SyncStyleOptions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // Legacy — Remote + Transfer + Patient (not v6)
-            // ----------------------------------------------------------
-            Invoice | InvoiceLine => (
-                vec![Remote, Transfer, Patient],
-                SyncStyleOptions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // Central (v6) — created on the Open-mSupply central server
-            // ----------------------------------------------------------
-            AssetCatalogueItem
-            | AssetCatalogueItemProperty
-            | AssetCatalogueProperty
-            | AssetCatalogueType
-            | AssetCategory
-            | AssetClass
-            | AssetLogReason
-            | AssetProperty
-            | BackendPlugin
-            | BundledItem
-            | Campaign
-            | Demographic
-            | FormSchema
-            | FrontendPlugin
-            | ItemVariant
-            | NameOmsFields
-            | NameProperty
-            | PackVariant
-            | PackagingVariant
-            | Property
-            | Report
-            | VaccineCourse
-            | VaccineCourseDose
-            | VaccineCourseItem
-            | VaccineCourseStoreConfig => (
-                vec![Central],
-                SyncStyleOptions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // Central (not v6) — central data synced via legacy mSupply.
-            // Also a catch-all bucket for tables not yet classified into a
-            // more specific sync style.
-            // ----------------------------------------------------------
-            Abbreviation
-            | Category
-            | Contact
-            | ContactTrace
-            | Context
-            | DemographicIndicator
-            | DemographicProjection
-            | Diagnosis
-            | DocumentRegistry
-            | IndicatorColumn
-            | IndicatorLine
-            | ItemCategoryJoin
-            | ItemDirection
-            | ItemStoreJoin
-            | ItemWarningJoin
-            | LocationType
-            | MasterList
-            | MasterListLine
-            | MasterListNameJoin
-            | NameTag
-            | NameTagJoin
-            | Period
-            | PeriodSchedule
-            | Printer
-            | Program
-            | ProgramEnrolment
-            | ProgramEvent
-            | ProgramIndicator
-            | ProgramRequisitionOrderType
-            | ProgramRequisitionSettings
-            | ReasonOption
-            | ShippingMethod
-            | Store
-            | StorePreference
-            | Unit
-            | UserAccount
-            | UserPermission
-            | UserStoreJoin
-            | VVMStatus => (
-                vec![Central],
-                SyncStyleOptions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // ToLegacyCentralOnly (not v6)
-            // ----------------------------------------------------------
-            Site => (
-                vec![ToLegacyCentralOnly],
-                SyncStyleOptions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // Remote (v6) — store-scoped data that syncs to the owning site
-            // ----------------------------------------------------------
-            Asset
-            | AssetInternalLocation
-            | AssetLog
-            | Encounter
-            | RnrForm
-            | RnrFormLine
-            | Vaccination => (
-                vec![Remote],
-                SyncStyleOptions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // File (v6) — file references (handled by the file-sync pipeline)
-            // ----------------------------------------------------------
-            SyncFileReference => (
-                vec![File],
-                SyncStyleOptions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // RemoteAndCentral (v6) — Remote when store_id is set, otherwise Central
-            // ----------------------------------------------------------
-            PluginData | Preference => (
-                vec![Remote, Central],
-                SyncStyleOptions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // RemoteToCentral (v6) — pushed to central but not synced back on re-init
-            // ----------------------------------------------------------
-            ContactForm | SystemLog => (
-                vec![RemoteToCentral],
-                SyncStyleOptions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
         }
     }
 }

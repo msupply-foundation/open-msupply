@@ -316,6 +316,15 @@ impl<'a> NameRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_oms_fields_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<NameOmsFieldsRow>, RepositoryError> {
+        Ok(name_oms_fields::table
+            .filter(name_oms_fields::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn update_properties(
         &self,
         name_id: &str,

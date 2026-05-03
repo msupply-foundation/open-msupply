@@ -26,7 +26,7 @@ define_linked_tables! {
     }
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = master_list_name_join)]
 pub struct MasterListNameJoinRow {
     pub id: String,

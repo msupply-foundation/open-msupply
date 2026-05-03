@@ -17,7 +17,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = indicator_column)]
 pub struct IndicatorColumnRow {
     pub id: String,

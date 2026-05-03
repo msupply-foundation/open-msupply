@@ -1,6 +1,9 @@
 pub mod changelog;
 pub use self::changelog::*;
 
+pub mod sync_style;
+pub use self::sync_style::*;
+
 pub mod batch_query;
 pub use self::batch_query::*;
 
