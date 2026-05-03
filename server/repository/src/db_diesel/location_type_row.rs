@@ -51,6 +51,15 @@ impl<'a> LocationTypeRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = location_type::table
+            .filter(location_type::id.eq(lookup_id))
+            .select(location_type::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(location_type::table.filter(location_type::id.eq(id)))
             .execute(self.connection.lock().connection())?;
