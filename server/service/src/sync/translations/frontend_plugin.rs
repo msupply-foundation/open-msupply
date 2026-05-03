@@ -1,11 +1,10 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, FrontendPluginRow, FrontendPluginRowDelete,
-    FrontendPluginRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, FrontendPluginRow, FrontendPluginRowDelete, StorageConnection, SyncBufferRow,
     Row,
 };
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]

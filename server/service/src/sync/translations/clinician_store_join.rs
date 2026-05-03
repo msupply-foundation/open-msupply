@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianLinkRowRepository, ClinicianStoreJoinRow,
-    ClinicianStoreJoinRowDelete, ClinicianStoreJoinRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogTableName, ClinicianLinkRowRepository, ClinicianStoreJoinRow,
+    ClinicianStoreJoinRowDelete, StorageConnection, SyncBufferRow,
     Row,
 };
 
 use crate::sync::translations::{clinician::ClinicianTranslation, store::StoreTranslation};
 
-use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ PullTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyClinicianStoreJoinRow {

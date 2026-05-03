@@ -1,8 +1,7 @@
 use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
-    item_category_row::ItemCategoryJoinRow,
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
+    item_category_row::ItemCategoryJoinRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete,
     ItemType, Row, StorageConnection, SyncBufferRow, VENCategory,
 };
 use serde::{Deserialize, Serialize};
@@ -17,7 +16,7 @@ use crate::sync::{
 
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{ IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ IntegrationOperation, PullTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Serialize)]

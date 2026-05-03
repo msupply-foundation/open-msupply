@@ -8,13 +8,12 @@ use util::sync_serde::{
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachRow,
-    TemperatureBreachRowRepository, TemperatureBreachType,
+    ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachRow, TemperatureBreachType,
     Row,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{ to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ to_legacy_time, PullTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

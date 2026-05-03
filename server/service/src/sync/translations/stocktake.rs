@@ -1,7 +1,7 @@
 use crate::sync::translations::{invoice::InvoiceTranslation, store::StoreTranslation};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, Row, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+    ChangelogRow, ChangelogTableName, Row, StocktakeRow, StocktakeStatus,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};

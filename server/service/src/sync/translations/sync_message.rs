@@ -2,14 +2,14 @@ use crate::sync::translations::{store::StoreTranslation, PullTranslateResult, Sy
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncMessageRow, SyncMessageRowRepository,
+    ChangelogTableName, StorageConnection, SyncMessageRow, SyncMessageRowRepository,
     SyncMessageRowStatus, SyncMessageRowType,
     Row,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, naive_time};
 
-use super::{ to_legacy_time, PushTranslateResult, TranslatedUpsert };
+use super::{ to_legacy_time, TranslatedUpsert };
 
 /// Message from mSupply Central Server
 #[derive(Deserialize, Serialize, Debug)]

@@ -1,7 +1,5 @@
 use repository::{
-    vaccine_course::vaccine_course_dose_row::{
-        VaccineCourseDoseRow, VaccineCourseDoseRowRepository,
-    },
+    vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
 };
@@ -9,7 +7,7 @@ use repository::{
 use crate::sync::translations::vaccine_course::VaccineCourseTranslation;
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]

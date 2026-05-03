@@ -1,5 +1,5 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, NameOmsFieldsRow, NameRowRepository, StorageConnection,
+    ChangelogRow, ChangelogTableName, NameOmsFieldsRow, StorageConnection,
     SyncBufferRow,
     Row,
 };
@@ -7,7 +7,7 @@ use repository::{
 use crate::sync::translations::name::NameTranslation;
 
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -59,7 +59,7 @@ impl SyncTranslation for NameOmsFieldsTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
-        row: Row,
+        _row: Row,
     ) -> Result<TranslatedUpsert, anyhow::Error> {
         // NameOmsFields is not represented in the `Row` enum (no
         // standalone bare-row repository), so `query_with_data` cannot

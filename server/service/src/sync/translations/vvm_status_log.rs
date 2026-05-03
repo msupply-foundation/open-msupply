@@ -5,7 +5,7 @@ use crate::sync::translations::{
 use anyhow::Error;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
     ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};

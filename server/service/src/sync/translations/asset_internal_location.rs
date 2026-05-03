@@ -1,6 +1,6 @@
 use repository::{
     asset_internal_location_row::AssetInternalLocationRowDelete,
-    asset_internal_location_row::{AssetInternalLocationRow, AssetInternalLocationRowRepository},
+    asset_internal_location_row::AssetInternalLocationRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
 };

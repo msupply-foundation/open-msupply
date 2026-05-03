@@ -1,5 +1,5 @@
 use repository::{
-    asset_row::{AssetRow, AssetRowDelete, AssetRowRepository},
+    asset_row::{AssetRow, AssetRowDelete},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
 };

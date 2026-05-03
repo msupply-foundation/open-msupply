@@ -2,9 +2,9 @@ use serde::Serialize;
 
 use crate::sync::CentralServerConfig;
 
-use super::{ PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{ SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 use repository::{
-    vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRowRepository, ChangelogRow,
+    ChangelogRow,
     ChangelogTableName, StorageConnection,
     Row,
 };
@@ -100,7 +100,7 @@ mod tests {
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all,
-        vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRow, ChangelogRepository,
+        vaccine_course::vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository}, ChangelogRepository,
     };
 
     #[actix_rt::test]
@@ -139,10 +139,8 @@ mod tests {
             .upsert_one(&vaccine_course_dose_row)
             .unwrap();
 
-        let changelog_row = ChangelogRepository::new(&connection).query(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 })
-            .unwrap()
-            .pop()
-            .unwrap();
+        let entry = ChangelogRepository::new(&connection).query_with_data(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 }).unwrap().pop().unwrap();
+        let repository::RowOrDelete::Row { changelog: changelog_row, row } = entry else { panic!("expected upsert row") };
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
@@ -159,19 +157,12 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
+            .try_translate_to_upsert_sync_record(&connection, row)
             .unwrap();
 
         match translation_result {
             TranslatedUpsert::Translated(upsert_result) => {
-                assert_eq!(
-                    "_test_record_id".to_string(),
-                    "test_vaccine_course_dose_id"
-                );
-                assert_eq!(
-                    "_test_table_name".to_string(),
-                    LEGACY_VACCINE_COURSE_DOSE_TABLE_NAME
-                );
+                assert_eq!(upsert_result["ID"], "test_vaccine_course_dose_id");
             }
             _ => panic!("Expected Upsert result"),
         }

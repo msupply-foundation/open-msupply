@@ -1,8 +1,7 @@
 use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 use repository::{
-    schema_from_row, ChangelogRow, ChangelogTableName, FormSchemaJson, FormSchemaRowDelete,
-    FormSchemaRowRepository, Row, StorageConnection, SyncBufferRow,
+    schema_from_row, ChangelogRow, ChangelogTableName, FormSchemaJson, FormSchemaRowDelete, Row, StorageConnection, SyncBufferRow,
 };
 // Needs to be added to all_translators()
 #[deny(dead_code)]

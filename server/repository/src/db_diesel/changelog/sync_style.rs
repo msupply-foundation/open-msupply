@@ -51,29 +51,10 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Legacy — Remote (not v6)
             // ----------------------------------------------------------
-            ActivityLog
-            | Barcode
-            | Clinician
-            | ClinicianStoreJoin
-            | Currency
-            | Document
-            | IndicatorValue
-            | InsuranceProvider
-            | Item
-            | Location
-            | LocationMovement
-            | Name
-            | NameInsuranceJoin
-            | NameStoreJoin
-            | PurchaseOrder
-            | PurchaseOrderLine
-            | Sensor
-            | StockLine
-            | Stocktake
-            | StocktakeLine
-            | TemperatureBreach
-            | TemperatureLog
-            | SyncMessage
+            ActivityLog | Barcode | Clinician | ClinicianStoreJoin | Currency | IndicatorValue
+            | InsuranceProvider | Item | Location | LocationMovement | Name | NameInsuranceJoin
+            | NameStoreJoin | PurchaseOrder | PurchaseOrderLine | Sensor | StockLine
+            | Stocktake | StocktakeLine | TemperatureBreach | TemperatureLog | SyncMessage
             | VVMStatusLog => (
                 vec![Remote],
                 SyncStyleOptions {
@@ -200,14 +181,21 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Remote (v6) — store-scoped data that syncs to the owning site
             // ----------------------------------------------------------
-            Asset
-            | AssetInternalLocation
-            | AssetLog
-            | Encounter
-            | RnrForm
-            | RnrFormLine
-            | Vaccination => (
+            Asset | AssetInternalLocation | AssetLog | RnrForm | RnrFormLine => (
                 vec![Remote],
+                SyncStyleOptions {
+                    is_v6: true,
+                    is_v5: false,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Remote + Patient (v6) — store-scoped patient records that
+            // also flow to sites where the patient is visible (via
+            // name_store_join on the patient_id).
+            // ----------------------------------------------------------
+            Encounter | Vaccination | Document => (
+                vec![Remote, Patient],
                 SyncStyleOptions {
                     is_v6: true,
                     is_v5: false,

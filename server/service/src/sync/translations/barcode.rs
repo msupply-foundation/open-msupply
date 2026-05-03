@@ -1,6 +1,6 @@
 use repository::{
     barcode::{Barcode, BarcodeFilter, BarcodeRepository},
-    BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, StorageConnection, SyncBufferRow,
+    BarcodeRow, ChangelogTableName, EqualFilter, StorageConnection, SyncBufferRow,
     Row,
 };
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::sync::translations::item::ItemTranslation;
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{ PullTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -125,7 +125,7 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
 };
     use serde_json::json;
 
@@ -154,7 +154,7 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let changelogs = ChangelogRepository::new(&connection).query(
+        let entries = ChangelogRepository::new(&connection).query_with_data(
             ChangelogCondition::table_name::equal(ChangelogTableName::Barcode),
             CursorAndLimit {
                 cursor: -1,
@@ -164,13 +164,13 @@ mod tests {
         .unwrap();
 
         let translator = BarcodeTranslation;
-        for changelog in changelogs {
+        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
+                .try_translate_to_upsert_sync_record(&connection, row)
                 .unwrap();
 
             assert!(matches!(translated, TranslatedUpsert::Translated(_)));
