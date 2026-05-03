@@ -1,6 +1,9 @@
 pub mod changelog;
 pub use self::changelog::*;
 
+pub mod batch_query;
+pub use self::batch_query::*;
+
 pub mod compatibility_changelog;
 pub use self::compatibility_changelog::*;
 
