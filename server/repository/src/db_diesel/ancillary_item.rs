@@ -453,4 +453,111 @@ mod tests {
             Err(AncillaryItemValidationError::Cycle)
         );
     }
+
+    #[actix_rt::test]
+    async fn test_validate_branching() {
+        // Two principals can share an ancillary (convergence: A->C and B->C),
+        // and one principal can have multiple ancillaries (divergence: A->B and A->C).
+        let connection = setup("test_validate_branching").await;
+        for id in ["a", "b", "c"] {
+            make_item(&connection, id);
+        }
+
+        // Divergence: A -> B then A -> C
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "a", "b", None),
+            Ok(())
+        );
+        insert_edge(&connection, "ab", "a", "b");
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "a", "c", None),
+            Ok(())
+        );
+        insert_edge(&connection, "ac", "a", "c");
+
+        // Convergence: A -> C exists, now B -> C
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "b", "c", None),
+            Ok(())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_validate_longest_path_uses_max_not_first() {
+        // Two backward paths to D have different lengths:
+        //   A -> B -> D            (2 edges)
+        //   A -> C -> C2 -> D      (3 edges)
+        // The depth check must take the max, otherwise a refactor that returns
+        // the first path traversed would silently undercount.
+        let connection = setup("test_validate_longest_path_uses_max_not_first").await;
+        for id in ["a", "b", "c", "c2", "d", "e", "f", "g"] {
+            make_item(&connection, id);
+        }
+        insert_edge(&connection, "ab", "a", "b");
+        insert_edge(&connection, "bd", "b", "d");
+        insert_edge(&connection, "ac", "a", "c");
+        insert_edge(&connection, "cc2", "c", "c2");
+        insert_edge(&connection, "c2d", "c2", "d");
+
+        // Longest backward path from D is 3, so adding D -> E gives a chain of 4 — allowed.
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "d", "e", None),
+            Ok(())
+        );
+        insert_edge(&connection, "de", "d", "e");
+
+        // E -> F is the 5th edge — at the boundary, allowed.
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "e", "f", None),
+            Ok(())
+        );
+        insert_edge(&connection, "ef", "e", "f");
+
+        // F -> G would be a 6th edge through the longer back-path — must be rejected.
+        // (If longest_path_from short-circuited on the first path it found from D
+        // and returned 2 instead of 3, this would slip through as a chain of 5.)
+        assert!(matches!(
+            validate_ancillary_item_link(&connection, "f", "g", None),
+            Err(AncillaryItemValidationError::DepthExceeded { max: 5, actual: 6 })
+        ));
+    }
+
+    #[actix_rt::test]
+    async fn test_validate_ignores_soft_deleted_edges() {
+        // Soft-deleted rows are excluded from the cycle/depth graph, so reusing
+        // their endpoints in the opposite direction is allowed.
+        let connection = setup("test_validate_ignores_soft_deleted_edges").await;
+        for id in ["a", "b"] {
+            make_item(&connection, id);
+        }
+        insert_edge(&connection, "ab", "a", "b");
+        AncillaryItemRowRepository::new(&connection)
+            .mark_deleted("ab")
+            .unwrap();
+
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "b", "a", None),
+            Ok(())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_validate_update_detects_cycle() {
+        // Updating an unrelated row to a value that would close a cycle must be
+        // rejected. The existing graph (minus the row being updated) is A -> B -> C;
+        // proposing C -> A as the new value of an unrelated row "de" would form
+        // the cycle A -> B -> C -> A.
+        let connection = setup("test_validate_update_detects_cycle").await;
+        for id in ["a", "b", "c", "d", "e"] {
+            make_item(&connection, id);
+        }
+        insert_edge(&connection, "ab", "a", "b");
+        insert_edge(&connection, "bc", "b", "c");
+        insert_edge(&connection, "de", "d", "e");
+
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "c", "a", Some("de")),
+            Err(AncillaryItemValidationError::Cycle)
+        );
+    }
 }
