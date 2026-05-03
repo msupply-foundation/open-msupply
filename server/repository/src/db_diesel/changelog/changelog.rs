@@ -10,7 +10,7 @@ use strum::IntoEnumIterator;
 use thiserror::Error;
 use ts_rs::TS;
 
-use super::sync_style::{ChangeLogSyncStyle, SyncStyleOptions};
+use super::sync_style::{ChangeLogSyncStyle, SyncVersions};
 
 table! {
     changelog (cursor) {
@@ -376,7 +376,7 @@ impl ChangelogFilter {
     pub fn all_data_for_site(
         site_id: i32,
         is_initialising: bool,
-        sync_style_options: Option<SyncStyleOptions>,
+        sync_style_options: Option<SyncVersions>,
     ) -> ChangelogCondition::Inner {
         // TODO can optimise, not filter at all by remote data when initialising
         use ChangeLogSyncStyle::*;
@@ -421,7 +421,7 @@ impl ChangelogFilter {
 
     pub fn patient_data_for_site(
         site_id: i32,
-        sync_style_options: Option<SyncStyleOptions>,
+        sync_style_options: Option<SyncVersions>,
     ) -> ChangelogCondition::Inner {
         // TODO do we need to sync name_store_join ?
         use ChangeLogSyncStyle::*;
@@ -477,7 +477,7 @@ impl ChangelogFilter {
 
         let mut inner_or_conditions = vec![];
 
-        let options = Some(SyncStyleOptions {
+        let options = Some(SyncVersions {
             is_v6: false,
             is_v5: true,
         });

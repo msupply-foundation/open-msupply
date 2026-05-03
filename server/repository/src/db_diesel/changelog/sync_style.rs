@@ -16,7 +16,7 @@ pub(crate) enum ChangeLogSyncStyle {
 impl ChangeLogSyncStyle {
     pub(crate) fn get_table_names_for_sync_style(
         &self,
-        sync_style_options: Option<SyncStyleOptions>,
+        sync_style_options: Option<SyncVersions>,
     ) -> Vec<ChangelogTableName> {
         ChangelogTableName::iter()
             .filter(|table| {
@@ -33,7 +33,7 @@ impl ChangeLogSyncStyle {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct SyncStyleOptions {
+pub struct SyncVersions {
     pub is_v6: bool,
     pub is_v5: bool,
 }
@@ -44,7 +44,7 @@ pub struct SyncStyleOptions {
 // Variants are grouped to match the order of `ChangelogTableName` above and
 // sorted alphabetically within each group. Keep the two in sync.
 impl ChangelogTableName {
-    pub(crate) fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncStyleOptions) {
+    pub(crate) fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncVersions) {
         use ChangeLogSyncStyle::*;
         use ChangelogTableName::*;
         match self {
@@ -57,7 +57,7 @@ impl ChangelogTableName {
             | Stocktake | StocktakeLine | TemperatureBreach | TemperatureLog | SyncMessage
             | VVMStatusLog => (
                 vec![Remote],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: false,
                     is_v5: true,
                 },
@@ -68,7 +68,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             Requisition | RequisitionLine => (
                 vec![Remote, Transfer],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: false,
                     is_v5: true,
                 },
@@ -79,7 +79,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             Invoice | InvoiceLine => (
                 vec![Remote, Transfer, Patient],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: false,
                     is_v5: true,
                 },
@@ -111,7 +111,7 @@ impl ChangelogTableName {
             | VaccineCourseItem
             | VaccineCourseStoreConfig => (
                 vec![Central],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: true,
                     is_v5: false,
                 },
@@ -161,7 +161,7 @@ impl ChangelogTableName {
             | UserStoreJoin
             | VVMStatus => (
                 vec![Central],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: false,
                     is_v5: true,
                 },
@@ -172,7 +172,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             Site => (
                 vec![ToLegacyCentralOnly],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: false,
                     is_v5: true,
                 },
@@ -183,7 +183,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             Asset | AssetInternalLocation | AssetLog | RnrForm | RnrFormLine => (
                 vec![Remote],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: true,
                     is_v5: false,
                 },
@@ -196,7 +196,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             Encounter | Vaccination | Document => (
                 vec![Remote, Patient],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: true,
                     is_v5: false,
                 },
@@ -207,7 +207,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             SyncFileReference => (
                 vec![File],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: true,
                     is_v5: false,
                 },
@@ -218,7 +218,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             PluginData | Preference => (
                 vec![Remote, Central],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: true,
                     is_v5: false,
                 },
@@ -229,7 +229,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             ContactForm | SystemLog => (
                 vec![RemoteToCentral],
-                SyncStyleOptions {
+                SyncVersions {
                     is_v6: true,
                     is_v5: false,
                 },

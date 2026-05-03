@@ -6,8 +6,7 @@ use std::{
 use actix_multipart::form::tempfile::TempFile;
 use repository::{
     ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, FilterBuilder,
-    SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository,
-    SyncStyleOptions,
+    SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncVersions,
 };
 use util::format_error;
 
@@ -80,7 +79,7 @@ pub async fn pull(
     let filter = ChangelogFilter::all_data_for_site(
         response.site_id,
         !is_initialised,
-        Some(SyncStyleOptions {
+        Some(SyncVersions {
             is_v6: true,
             is_v5: false,
         }),
@@ -184,9 +183,7 @@ pub async fn push(
     )?;
 
     ctx.connection
-        .transaction_sync(|t_con| {
-            SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)
-        })
+        .transaction_sync(|t_con| SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows))
         .map_err(|e| e.to_inner_error())?;
 
     if is_last_batch {
@@ -240,7 +237,7 @@ pub async fn patient_pull(
     let filter = ChangelogCondition::And(vec![
         ChangelogFilter::patient_data_for_site(
             response.site_id,
-            Some(SyncStyleOptions {
+            Some(SyncVersions {
                 is_v6: true,
                 is_v5: false,
             }),
@@ -334,11 +331,7 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
 
         set_integrating(site_id, true);
 
-        match integrate_and_translate_sync_buffer(
-            &ctx.connection,
-            None,
-            site_id,
-        ) {
+        match integrate_and_translate_sync_buffer(&ctx.connection, None, site_id) {
             Ok(_) => {
                 log::info!("Integration complete for site {site_id}");
             }
