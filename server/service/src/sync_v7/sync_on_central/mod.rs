@@ -6,9 +6,9 @@ use std::{
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError, Site, SiteFilter,
-    SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter, SyncBufferFilter,
-    SyncBufferRowRepository,
+    ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
+    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter,
+    SyncBufferFilter, SyncBufferRowRepository,
 };
 use thiserror::Error;
 use util::format_error;
@@ -162,7 +162,7 @@ pub async fn pull(
 ) -> pull::Response {
     let (site, ctx) = validate(service_provider, &common)?;
 
-    let filter = Site::SiteId(site.id).all_data_for_site(input.is_initialising);
+    let filter = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
 
     let batch = SyncBatchV7::generate(&ctx.connection, filter, input.cursor, input.batch_size)?;
 

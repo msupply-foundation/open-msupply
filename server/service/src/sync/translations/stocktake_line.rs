@@ -323,8 +323,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-    };
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder,
+};
     use serde_json::json;
 
     #[actix_rt::test]
@@ -365,16 +365,14 @@ mod tests {
 
         merge_all_item_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new().table_name(ChangelogTableName::StocktakeLine.equal_to()),
-                ),
-            )
-            .unwrap();
+        let changelogs = ChangelogRepository::new(&connection).query(
+            ChangelogCondition::table_name::equal(ChangelogTableName::StocktakeLine),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = StocktakeLineTranslation {};
         for changelog in changelogs {

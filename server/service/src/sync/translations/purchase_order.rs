@@ -488,8 +488,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-    };
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder,
+};
     use serde_json::json;
 
     #[actix_rt::test]
@@ -530,16 +530,14 @@ mod tests {
         .await;
 
         let translator = PurchaseOrderTranslation {};
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new().table_name(ChangelogTableName::PurchaseOrder.equal_to()),
-                ),
-            )
-            .unwrap();
+        let changelogs = ChangelogRepository::new(&connection).query(
+            ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrder),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         for changelog in changelogs {
             assert!(translator.should_translate_to_sync_record(

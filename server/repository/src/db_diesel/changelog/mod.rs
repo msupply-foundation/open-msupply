@@ -1,6 +1,9 @@
 pub mod changelog;
 pub use self::changelog::*;
 
+pub mod compatibility_changelog;
+pub use self::compatibility_changelog::*;
+
 mod generate_changelog;
 pub(crate) use self::generate_changelog::Changelogs;
 

@@ -1,7 +1,8 @@
 use async_trait::async_trait;
 use repository::{
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter,
-    PluginType, RepositoryError, TransactionError,
+    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName,
+    CompatibilityChangelogFilter, CursorAndLimit, FilterBuilder, PluginType, RepositoryError,
+    TransactionError,
 };
 use strum::Display;
 use thiserror::Error;
@@ -109,21 +110,39 @@ pub(crate) async fn process_records(
         let ctx = service_provider
             .basic_context()
             .map_err(Error::DatabaseError)?;
-        let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
         let cursor_controller = CursorController::from_cursor_type(processor.cursor_type());
 
         // Only process the changelogs we care about
-        let filter = processor.changelogs_filter(&ctx)?;
+        // If processor provides a compatibility filter (e.g. plugins), use compatibility_query
+        let compatibility_filter = processor.compatibility_filter(&ctx)?;
+        let filter = if compatibility_filter.is_none() {
+            Some(processor.changelogs_filter(&ctx)?)
+        } else {
+            None
+        };
 
         loop {
             let cursor = cursor_controller
                 .get(&ctx.connection)
                 .map_err(Error::DatabaseError)?;
 
-            let logs = changelog_repo
-                .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
-                .map_err(Error::DatabaseError)?;
+            let changelog_repo = ChangelogRepository::new(&ctx.connection);
+            let logs = match (&compatibility_filter, &filter) {
+                (Some(compat_filter), _) => changelog_repo
+                    .compatibility_query(cursor, CHANGELOG_BATCH_SIZE, Some(compat_filter.clone()))
+                    .map_err(Error::DatabaseError)?,
+                (None, Some(f)) => changelog_repo
+                    .query(
+                        f.clone(),
+                        CursorAndLimit {
+                            cursor: cursor as i64,
+                            limit: CHANGELOG_BATCH_SIZE as i64,
+                        },
+                    )
+                    .map_err(Error::DatabaseError)?,
+                (None, None) => unreachable!(),
+            };
 
             if logs.is_empty() {
                 break;
@@ -156,16 +175,28 @@ pub(super) trait Processor: Sync + Send {
     fn get_description(&self) -> String;
 
     /// Default to using change_log_table_names
-    fn changelogs_filter(&self, _ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
-        Ok(ChangelogFilter::new().table_name(EqualFilter {
-            equal_any: Some(self.change_log_table_names()),
-            ..Default::default()
-        }))
+    fn changelogs_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<ChangelogCondition::Inner, ProcessorError> {
+        Ok(ChangelogCondition::table_name::any(
+            self.change_log_table_names(),
+        ))
     }
 
     /// Default to empty array in case changelogs_filter is manually implemented
     fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
         Vec::new()
+    }
+
+    /// Plugins (and other legacy callers) can return a compatibility filter to use the
+    /// pre-v7 changelog query path. When `Some`, the processor loop uses
+    /// `compatibility_query` and ignores `changelogs_filter`.
+    fn compatibility_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<Option<CompatibilityChangelogFilter>, ProcessorError> {
+        Ok(None)
     }
 
     /// Extra check to see if processor should trigger, like if it's central for contact form email

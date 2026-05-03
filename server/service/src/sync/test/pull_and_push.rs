@@ -47,7 +47,7 @@ async fn test_sync_pull_and_push() {
 
     // Get push cursor before inserting pull data (so that we can test push, excluding inserted mock data)
     let push_cursor = ChangelogRepository::new(&connection)
-        .latest_cursor()
+        .max_cursor()
         .unwrap()
         + 1;
 
@@ -82,9 +82,14 @@ async fn test_sync_pull_and_push() {
     // let change_log_filter = get_sync_push_changelogs_filter(&connection).unwrap();
 
     // Records would have been inserted in test Pull Upsert and trigger should have inserted changelogs
-    let all_changelogs = ChangelogRepository::new(&connection)
-        .changelogs(push_cursor, 100000, None /*change_log_filter*/)
-        .unwrap();
+    let all_changelogs = ChangelogRepository::new(&connection).query(
+        repository::ChangelogCondition::True(),
+        repository::CursorAndLimit {
+            cursor: push_cursor as i64,
+            limit: 100000,
+        },
+    )
+    .unwrap();
     // Deduplicate: keep only the latest (highest cursor) entry per record_id,
     // since the changelog_deduped view was removed.
     let changelogs = {
