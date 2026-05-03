@@ -80,6 +80,15 @@ impl<'a> LocationRowRepository<'a> {
         }
     }
 
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = location::table
+            .filter(location::id.eq(lookup_id))
+            .select(location::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationRow>, RepositoryError> {
         Ok(location::table
             .filter(location::id.eq_any(ids))

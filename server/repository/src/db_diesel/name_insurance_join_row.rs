@@ -94,6 +94,15 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = name_insurance_join::table
+            .filter(name_insurance_join::id.eq(lookup_id))
+            .select(name_insurance_join::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_ids(
         &self,
         ids: &[String],
