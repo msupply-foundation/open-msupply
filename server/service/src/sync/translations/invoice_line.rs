@@ -10,6 +10,7 @@ use repository::{
     InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineStatus,
     InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
     StorageConnection, SyncBufferRow,
+    Row,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -17,10 +18,9 @@ use util::sync_serde::{
     zero_date_as_option,
 };
 
-use super::{
+use super::{ 
     is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck,
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
-};
+    PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyTransLineType {
@@ -366,10 +366,14 @@ impl SyncTranslation for InvoiceLineTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::InvoiceLine(invoice_line_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let Some(invoice_line) = InvoiceLineRepository::new(connection).query_one(
-            InvoiceLineFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+            InvoiceLineFilter::new().id(EqualFilter::equal_to(invoice_line_row.id)),
         )?
         else {
             return Err(anyhow::anyhow!("invoice_line row not found"));
@@ -462,11 +466,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_pack_size,
             manufacturer_id,
         };
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -605,16 +605,16 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
 
-            let PushTranslateResult::PushRecord(translated) = translated else {
+            let TranslatedUpsert::Translated(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
+            assert_eq!(translated["item_ID"], json!("item_a"));
         }
     }
 }

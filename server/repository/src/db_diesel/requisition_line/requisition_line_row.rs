@@ -170,6 +170,12 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
+        Ok(requisition_line::table
+            .filter(requisition_line::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[derive(Debug, Clone)]

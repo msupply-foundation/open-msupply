@@ -127,6 +127,12 @@ impl<'a> AssetLogRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetLogRow>, RepositoryError> {
+        Ok(asset_log::table
+            .filter(asset_log::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for AssetLogRow {

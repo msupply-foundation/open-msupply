@@ -107,6 +107,12 @@ impl<'a> VVMStatusLogRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VVMStatusLogRow>, RepositoryError> {
+        Ok(vvm_status_log::table
+            .filter(vvm_status_log::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[derive(Debug, Clone)]

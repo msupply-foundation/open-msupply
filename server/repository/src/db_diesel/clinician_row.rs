@@ -116,6 +116,12 @@ impl<'a> ClinicianRowRepository<'a> {
         insert_or_ignore_clinician_link(self.connection, row)?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ClinicianRow>, RepositoryError> {
+        Ok(clinician::table
+            .filter(clinician::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 pub struct ClinicianRowDelete(pub String);

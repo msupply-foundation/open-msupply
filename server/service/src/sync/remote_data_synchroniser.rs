@@ -9,7 +9,7 @@ use super::{
     api::*,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
-        translate_changelogs_to_sync_records, PushSyncRecord, PushTranslationError,
+        translate_rows_to_sync_records, PushSyncRecord, PushTranslationError,
         ToSyncRecordTranslationType,
     },
 };
@@ -193,7 +193,7 @@ impl RemoteDataSynchroniser {
         loop {
             // TODO inside transaction
             let cursor = cursor_controller.get(connection)?;
-            let changelogs = changelog_repo.query(
+            let rows = changelog_repo.query_with_data(
                 change_log_filter.clone(),
                 CursorAndLimit {
                     cursor: cursor as i64,
@@ -206,11 +206,11 @@ impl RemoteDataSynchroniser {
 
             logger.progress(SyncStepProgress::Push, change_logs_total)?;
 
-            let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
+            let last_pushed_cursor = rows.last().map(|r| r.changelog().cursor);
 
-            let records = translate_changelogs_to_sync_records(
+            let records = translate_rows_to_sync_records(
                 connection,
-                changelogs,
+                rows,
                 vec![ToSyncRecordTranslationType::PushToLegacyCentral],
             )?
             .into_iter()

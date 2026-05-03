@@ -98,6 +98,12 @@ impl<'a> AssetPropertyRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetPropertyRow>, RepositoryError> {
+        Ok(asset_property::table
+            .filter(asset_property::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for AssetPropertyRow {

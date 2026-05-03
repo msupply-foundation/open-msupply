@@ -15,7 +15,7 @@ use crate::sync::{
         TestSyncOutgoingRecord,
     },
     translations::{
-        translate_changelogs_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType,
+        translate_rows_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType,
     },
 };
 use pretty_assertions::assert_eq;
@@ -81,34 +81,22 @@ async fn test_sync_pull_and_push() {
     // which are usually filtered out via is_sync_updated flag
     // let change_log_filter = get_sync_push_changelogs_filter(&connection).unwrap();
 
-    // Records would have been inserted in test Pull Upsert and trigger should have inserted changelogs
-    let all_changelogs = ChangelogRepository::new(&connection).query(
-        repository::ChangelogCondition::True(),
-        repository::CursorAndLimit {
-            cursor: push_cursor as i64,
-            limit: 100000,
-        },
-    )
-    .unwrap();
-    // Deduplicate: keep only the latest (highest cursor) entry per record_id,
-    // since the changelog_deduped view was removed.
-    let changelogs = {
-        use std::collections::HashMap;
-        let mut latest: HashMap<String, repository::ChangelogRow> = HashMap::new();
-        for row in all_changelogs {
-            let entry = latest.entry(row.record_id.clone()).or_insert(row.clone());
-            if row.cursor > entry.cursor {
-                *entry = row;
-            }
-        }
-        let mut deduped: Vec<_> = latest.into_values().collect();
-        deduped.sort_by_key(|r| r.cursor);
-        deduped
-    };
+    // Records would have been inserted in test Pull Upsert and trigger should have inserted changelogs.
+    // `query_with_data` returns `Vec<RowOrDelete>`, batch-loading the rows
+    // and deduplicating per (table, record_id) within the window.
+    let rows = ChangelogRepository::new(&connection)
+        .query_with_data(
+            repository::ChangelogCondition::True(),
+            repository::CursorAndLimit {
+                cursor: push_cursor as i64,
+                limit: 100000,
+            },
+        )
+        .unwrap();
     // Translate
-    let mut translated = vec![translate_changelogs_to_sync_records(
+    let mut translated = vec![translate_rows_to_sync_records(
         &connection,
-        changelogs.clone(),
+        rows,
         vec![
             ToSyncRecordTranslationType::PushToLegacyCentral,
             ToSyncRecordTranslationType::PullFromOmSupplyCentral,

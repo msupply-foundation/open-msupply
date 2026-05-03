@@ -32,7 +32,7 @@ use super::{
         SyncPatientPullRequestV6, SyncPullRequestV6, SyncPushRequestV6, SyncPushSuccessV6,
         SyncRecordV6, SyncUploadFileRequestV6,
     },
-    translations::translate_changelogs_to_sync_records,
+    translations::translate_rows_to_sync_records,
 };
 
 // See ../README.md for when to increment versions!
@@ -86,7 +86,7 @@ pub async fn pull(
             is_v5: false,
         }),
     );
-    let changelogs = ChangelogRepository::new(&ctx.connection).query(
+    let rows = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
             cursor: cursor as i64,
@@ -95,17 +95,17 @@ pub async fn pull(
     )?;
     let max_cursor = changelog_repo.max_cursor()?;
 
-    let end_cursor = changelogs
+    let end_cursor = rows
         .last()
-        .map(|log| log.cursor as u64)
+        .map(|r| r.changelog().cursor as u64)
         .unwrap_or(max_cursor);
 
     // Total = remaining records to process based on max cursor
     let total_records = max_cursor.saturating_sub(cursor);
 
-    let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
+    let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
         &ctx.connection,
-        changelogs,
+        rows,
         vec![ToSyncRecordTranslationType::PullFromOmSupplyCentral],
     )
     .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -248,7 +248,7 @@ pub async fn patient_pull(
         ),
         ChangelogCondition::patient_id::equal(fetch_patient_id),
     ]);
-    let changelogs = ChangelogRepository::new(&ctx.connection).query(
+    let rows = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
             cursor: cursor as i64,
@@ -257,17 +257,17 @@ pub async fn patient_pull(
     )?;
     let max_cursor = changelog_repo.max_cursor()?;
 
-    let end_cursor = changelogs
+    let end_cursor = rows
         .last()
-        .map(|log| log.cursor as u64)
+        .map(|r| r.changelog().cursor as u64)
         .unwrap_or(max_cursor);
 
     // Total = remaining records to process based on max cursor
     let total_records = max_cursor.saturating_sub(cursor);
 
-    let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
+    let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
         &ctx.connection,
-        changelogs,
+        rows,
         vec![ToSyncRecordTranslationType::PullFromOmSupplyCentral],
     )
     .map_err(|e| Error::OtherServerError(format_error(&e)))?

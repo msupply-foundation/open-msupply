@@ -124,6 +124,12 @@ impl<'a> RnRFormRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<RnRFormRow>, RepositoryError> {
+        Ok(rnr_form::table
+            .filter(rnr_form::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[derive(Debug, Clone)]

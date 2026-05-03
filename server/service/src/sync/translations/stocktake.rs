@@ -1,7 +1,7 @@
 use crate::sync::translations::{invoice::InvoiceTranslation, store::StoreTranslation};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+    ChangelogRow, ChangelogTableName, Row, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use util::sync_serde::{
     empty_str_as_option_string, naive_time, zero_date_as_option,
 };
 
-use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum LegacyStocktakeStatus {
@@ -160,9 +160,12 @@ impl SyncTranslation for StocktakeTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::Stocktake(stocktake) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
         let StocktakeRow {
             id,
             user_id,
@@ -181,9 +184,7 @@ impl SyncTranslation for StocktakeTranslation {
             counted_by,
             verified_by,
             is_initial_stocktake,
-        } = StocktakeRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
+        } = stocktake;
 
         let legacy_row = LegacyStocktakeRow {
             ID: id.clone(),
@@ -207,11 +208,7 @@ impl SyncTranslation for StocktakeTranslation {
             is_initial_stocktake,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(

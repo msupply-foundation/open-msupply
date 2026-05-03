@@ -67,6 +67,12 @@ impl<'a> VaccineCourseStoreConfigRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseStoreConfigRow>, RepositoryError> {
+        Ok(vaccine_course_store_config::table
+            .filter(vaccine_course_store_config::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for VaccineCourseStoreConfigRow {

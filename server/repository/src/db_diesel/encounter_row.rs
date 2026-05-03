@@ -101,4 +101,10 @@ impl<'a> EncounterRowRepository<'a> {
             .optional();
         result.map_err(RepositoryError::from)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<EncounterRow>, RepositoryError> {
+        Ok(encounter::table
+            .filter(encounter::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }

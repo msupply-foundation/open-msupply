@@ -1,6 +1,7 @@
 use repository::{
     vaccine_course::vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
 };
 
 use crate::sync::translations::{
@@ -8,9 +9,8 @@ use crate::sync::translations::{
     program_requisition_settings::ProgramRequisitionSettingsTranslation,
 };
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{ 
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -68,21 +68,16 @@ impl SyncTranslation for VaccineCourseTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = VaccineCourseRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "VaccineCourse row ({}) not found",
-                changelog.record_id
-            )))?;
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::VaccineCourse(vaccine_course_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let row = vaccine_course_row;
+
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(row)?))
     }
 }
 

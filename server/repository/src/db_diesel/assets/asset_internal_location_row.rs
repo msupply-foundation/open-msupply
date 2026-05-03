@@ -126,6 +126,12 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         }
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
+        Ok(asset_internal_location::table
+            .filter(asset_internal_location::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for AssetInternalLocationRow {

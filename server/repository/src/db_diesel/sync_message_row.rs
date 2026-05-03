@@ -111,6 +111,12 @@ impl<'a> SyncMessageRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SyncMessageRow>, RepositoryError> {
+        Ok(sync_message::table
+            .filter(sync_message::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for SyncMessageRow {

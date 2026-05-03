@@ -8,6 +8,7 @@ use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
     StockLineRow, StorageConnection, SyncBufferRow,
+    Row,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -18,6 +19,7 @@ use util::sync_serde::{
 use super::{
     utils::{clear_invalid_barcode_id, clear_invalid_location_id},
     PullTranslateResult, PushTranslateResult, SyncTranslation,
+    TranslatedUpsert,
 };
 
 #[allow(non_snake_case)]
@@ -179,11 +181,15 @@ impl SyncTranslation for StockLineTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::StockLine(stock_line_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let Some(stock_line) = StockLineRepository::new(connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                StockLineFilter::new().id(EqualFilter::equal_to(stock_line_row.id)),
                 None,
             )?
             .pop()
@@ -255,11 +261,7 @@ impl SyncTranslation for StockLineTranslation {
             volume_per_pack,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -328,20 +330,20 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
 
-            let PushTranslateResult::PushRecord(translated) = translated else {
+            let TranslatedUpsert::Translated(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
+            assert_eq!(translated["item_ID"], json!("item_a"));
 
             // Supplier ID can be null. We want to check if the non-null supplier_ids is "name_a".
-            if translated[0].record.record_data["name_ID"] != json!(null) {
-                assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
+            if translated["name_ID"] != json!(null) {
+                assert_eq!(translated["name_ID"], json!("name_a"));
             }
         }
     }

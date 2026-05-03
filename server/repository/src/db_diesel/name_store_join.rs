@@ -121,6 +121,12 @@ impl<'a> NameStoreJoinRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+        Ok(name_store_join::table
+            .filter(name_store_join::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[diesel::dsl::auto_type]

@@ -1,6 +1,7 @@
 use repository::{
     ChangelogRow, ChangelogTableName, LocationRow, LocationRowRepository, StorageConnection,
     SyncBufferRow,
+    Row,
 };
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +9,7 @@ use util::sync_serde::empty_str_as_option_string;
 
 use crate::sync::translations::{location_type::LocationTypeTranslation, store::StoreTranslation};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyLocationRow {
@@ -81,9 +82,13 @@ impl SyncTranslation for LocationTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::Location(location_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let LocationRow {
             id,
             name,
@@ -92,12 +97,7 @@ impl SyncTranslation for LocationTranslation {
             store_id,
             location_type_id,
             volume,
-        } = LocationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Location row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = location_row;
 
         let legacy_row = LegacyLocationRow {
             id: id.clone(),
@@ -109,11 +109,7 @@ impl SyncTranslation for LocationTranslation {
             volume,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(

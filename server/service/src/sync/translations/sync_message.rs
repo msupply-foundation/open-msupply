@@ -4,11 +4,12 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncMessageRow, SyncMessageRowRepository,
     SyncMessageRowStatus, SyncMessageRowType,
+    Row,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, naive_time};
 
-use super::{to_legacy_time, PushTranslateResult};
+use super::{ to_legacy_time, PushTranslateResult, TranslatedUpsert };
 
 /// Message from mSupply Central Server
 #[derive(Deserialize, Serialize, Debug)]
@@ -101,10 +102,14 @@ impl SyncTranslation for MessageTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::SyncMessage(sync_message_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let Some(message) =
-            SyncMessageRowRepository::new(connection).find_one_by_id(&changelog.record_id)?
+            SyncMessageRowRepository::new(connection).find_one_by_id(&sync_message_row.id)?
         else {
             return Err(anyhow::anyhow!("Message not found"));
         };
@@ -143,11 +148,7 @@ impl SyncTranslation for MessageTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            json_record,
-        ))
+        Ok(TranslatedUpsert::Translated(json_record))
     }
 }
 

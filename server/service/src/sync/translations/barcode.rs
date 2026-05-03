@@ -1,13 +1,14 @@
 use repository::{
     barcode::{Barcode, BarcodeFilter, BarcodeRepository},
     BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, StorageConnection, SyncBufferRow,
+    Row,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::item::ItemTranslation;
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -79,8 +80,12 @@ impl SyncTranslation for BarcodeTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::Barcode(barcode_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let Barcode {
             barcode_row:
                 BarcodeRow {
@@ -94,7 +99,7 @@ impl SyncTranslation for BarcodeTranslation {
             manufacturer_name_row,
         } = BarcodeRepository::new(connection)
             .query_by_filter(
-                BarcodeFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                BarcodeFilter::new().id(EqualFilter::equal_to(barcode_row.id)),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Barcode not found"))?;
@@ -108,11 +113,7 @@ impl SyncTranslation for BarcodeTranslation {
             parent_id,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 }
 
@@ -169,17 +170,17 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
 
-            let PushTranslateResult::PushRecord(translated) = translated else {
+            let TranslatedUpsert::Translated(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            if translated[0].record.record_data["name_ID"] != json!(null) {
-                assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
+            if translated["name_ID"] != json!(null) {
+                assert_eq!(translated["name_ID"], json!("name_a"));
             }
         }
     }

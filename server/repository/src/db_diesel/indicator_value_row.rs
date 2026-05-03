@@ -89,6 +89,12 @@ impl<'a> IndicatorValueRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+        Ok(indicator_value::table
+            .filter(indicator_value::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[derive(Debug, Clone)]

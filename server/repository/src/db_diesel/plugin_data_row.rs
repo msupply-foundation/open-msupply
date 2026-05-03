@@ -73,6 +73,12 @@ impl<'a> PluginDataRowRepository<'a> {
 
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PluginDataRow>, RepositoryError> {
+        Ok(plugin_data::table
+            .filter(plugin_data::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for PluginDataRow {

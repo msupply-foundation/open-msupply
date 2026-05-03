@@ -2,6 +2,7 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, LocationMovementRow, LocationMovementRowRepository,
     StorageConnection, SyncBufferRow,
+    Row,
 };
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +10,7 @@ use crate::sync::translations::{
     location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
 };
 
-use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
 };
@@ -92,9 +93,13 @@ impl SyncTranslation for LocationMovementTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::LocationMovement(location_movement_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let LocationMovementRow {
             id,
             store_id,
@@ -102,12 +107,7 @@ impl SyncTranslation for LocationMovementTranslation {
             location_id,
             enter_datetime,
             exit_datetime,
-        } = LocationMovementRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Location movement row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = location_movement_row;
 
         let legacy_row = LegacyLocationMovementRow {
             id: id.clone(),
@@ -124,11 +124,7 @@ impl SyncTranslation for LocationMovementTranslation {
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 }
 

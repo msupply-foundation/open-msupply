@@ -129,6 +129,12 @@ impl<'a> BackendPluginRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<BackendPluginRow>, RepositoryError> {
+        Ok(backend_plugin::table
+            .filter(backend_plugin::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for BackendPluginRow {

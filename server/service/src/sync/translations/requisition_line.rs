@@ -8,11 +8,12 @@ use repository::{
     RequisitionLineRow, RequisitionLineRowDelete, RequisitionLineRowRepository,
     RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, StorageConnection,
     SyncBufferRow,
+    Row,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[derive(Deserialize, Serialize, PartialEq)]
 pub struct RequisitionLineOmsFields {
@@ -188,8 +189,12 @@ impl SyncTranslation for RequisitionLineTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::RequisitionLine(requisition_line_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let RequisitionLineRow {
             id,
             requisition_id,
@@ -218,12 +223,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             forecast_total_units,
             forecast_total_doses,
             vaccine_courses,
-        } = RequisitionLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Requisition line row not found: {}",
-                changelog.record_id
-            )))?;
+        } = requisition_line_row;
 
         // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
         let item_id = ItemLinkRowRepository::new(connection)
@@ -295,11 +295,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             oms_fields,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -378,16 +374,16 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
 
-            let PushTranslateResult::PushRecord(translated) = translated else {
+            let TranslatedUpsert::Translated(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
+            assert_eq!(translated["item_ID"], json!("item_a"));
         }
     }
 }

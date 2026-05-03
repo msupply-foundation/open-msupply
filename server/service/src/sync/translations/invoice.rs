@@ -1,4 +1,4 @@
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
@@ -13,6 +13,7 @@ use repository::{
     InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository,
     StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
     UserAccountRow, UserAccountRowRepository,
+    Row,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -509,11 +510,15 @@ impl SyncTranslation for InvoiceTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::Invoice(invoice_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let Some(invoice) = InvoiceRepository::new(connection)
             .query_by_filter(
-                InvoiceFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                InvoiceFilter::new().id(EqualFilter::equal_to(invoice_row.id)),
             )?
             .pop()
         else {
@@ -576,7 +581,7 @@ impl SyncTranslation for InvoiceTranslation {
         let _type = match legacy_invoice_type(&r#type) {
             Some(_type) => _type,
             None => {
-                return Ok(PushTranslateResult::Ignored(format!(
+                return Ok(TranslatedUpsert::Ignored(format!(
                     "Unsupported invoice type {type:?}"
                 )))
             }
@@ -585,7 +590,7 @@ impl SyncTranslation for InvoiceTranslation {
         let legacy_status = match legacy_invoice_status(&r#type, &status) {
             Some(legacy_status) => legacy_status,
             None => {
-                return Ok(PushTranslateResult::Ignored(format!(
+                return Ok(TranslatedUpsert::Ignored(format!(
                     "Unsupported invoice status: {status:?}"
                 )))
             }
@@ -651,11 +656,7 @@ impl SyncTranslation for InvoiceTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            json_record,
-        ))
+        Ok(TranslatedUpsert::Translated(json_record))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -1109,16 +1110,16 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
 
-            let PushTranslateResult::PushRecord(translated) = translated else {
+            let TranslatedUpsert::Translated(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
+            assert_eq!(translated["name_ID"], json!("name_a"));
         }
     }
 }

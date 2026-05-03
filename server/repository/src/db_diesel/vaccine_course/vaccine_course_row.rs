@@ -99,6 +99,12 @@ impl<'a> VaccineCourseRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseRow>, RepositoryError> {
+        Ok(vaccine_course::table
+            .filter(vaccine_course::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for VaccineCourseRow {

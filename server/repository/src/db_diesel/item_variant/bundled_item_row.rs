@@ -83,6 +83,12 @@ impl<'a> BundledItemRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<BundledItemRow>, RepositoryError> {
+        Ok(bundled_item::table
+            .filter(bundled_item::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for BundledItemRow {

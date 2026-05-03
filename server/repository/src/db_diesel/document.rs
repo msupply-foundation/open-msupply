@@ -335,6 +335,12 @@ impl<'a> DocumentRepository<'a> {
         }
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<DocumentRow>, RepositoryError> {
+        Ok(document::table
+            .filter(document::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {

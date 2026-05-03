@@ -139,6 +139,12 @@ impl<'a> VaccinationRowRepository<'a> {
         .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccinationRow>, RepositoryError> {
+        Ok(vaccination::table
+            .filter(vaccination::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for VaccinationRow {

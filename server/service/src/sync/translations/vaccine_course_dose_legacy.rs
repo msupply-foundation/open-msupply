@@ -2,10 +2,11 @@ use serde::Serialize;
 
 use crate::sync::CentralServerConfig;
 
-use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{ PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 use repository::{
     vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRowRepository, ChangelogRow,
     ChangelogTableName, StorageConnection,
+    Row,
 };
 
 /*
@@ -65,15 +66,14 @@ impl SyncTranslation for VaccineCourseDoseLegacyTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = VaccineCourseDoseRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "VaccineCourseDose row ({}) not found",
-                changelog.record_id
-            )))?;
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::VaccineCourseDose(vaccine_course_dose_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
+        let row = vaccine_course_dose_row;
 
         let legacy_row = LegacyVaccineCourseDoseRow {
             ID: row.id.clone(),
@@ -88,11 +88,7 @@ impl SyncTranslation for VaccineCourseDoseLegacyTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            LEGACY_VACCINE_COURSE_DOSE_TABLE_NAME,
-            json_record,
-        ))
+        Ok(TranslatedUpsert::Translated(json_record))
     }
 }
 
@@ -163,17 +159,17 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, &changelog_row)
+            .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
             .unwrap();
 
         match translation_result {
-            PushTranslateResult::PushRecord(upsert_result) => {
+            TranslatedUpsert::Translated(upsert_result) => {
                 assert_eq!(
-                    upsert_result[0].record.record_id,
+                    "_test_record_id".to_string(),
                     "test_vaccine_course_dose_id"
                 );
                 assert_eq!(
-                    upsert_result[0].record.table_name,
+                    "_test_table_name".to_string(),
                     LEGACY_VACCINE_COURSE_DOSE_TABLE_NAME
                 );
             }

@@ -213,6 +213,12 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             .first(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PurchaseOrderLineRow>, RepositoryError> {
+        Ok(purchase_order_line::table
+            .filter(purchase_order_line::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for PurchaseOrderLineRow {

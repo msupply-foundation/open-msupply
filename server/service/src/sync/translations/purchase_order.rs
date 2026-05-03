@@ -1,12 +1,13 @@
 use crate::sync::translations::{
     name::NameTranslation, store::StoreTranslation, PullTranslateResult, PushTranslateResult,
-    SyncTranslation,
+    SyncTranslation, TranslatedUpsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderDelete, PurchaseOrderFilter,
     PurchaseOrderRepository, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus,
     StorageConnection, SyncBufferRow,
+    Row,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -318,12 +319,16 @@ impl SyncTranslation for PurchaseOrderTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::PurchaseOrder(purchase_order_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let purchase_order = PurchaseOrderRepository::new(connection)
             .query_by_filter(
                 PurchaseOrderFilter::new()
-                    .id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                    .id(EqualFilter::equal_to(purchase_order_row.id)),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
@@ -424,11 +429,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             oms_fields: Some(oms_fields),
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -545,16 +546,16 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
 
-            let PushTranslateResult::PushRecord(translated) = translated else {
+            let TranslatedUpsert::Translated(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
+            assert_eq!(translated["name_ID"], json!("name_a"));
         }
     }
 }

@@ -1,13 +1,12 @@
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
-use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow};
+use repository::{ ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, Row };
 
 use crate::sync::translations::item::ItemTranslation;
 use crate::sync::translations::location_type::LocationTypeTranslation;
 use crate::sync::translations::name::NameTranslation;
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{ 
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -60,21 +59,16 @@ impl SyncTranslation for ItemVariantTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = ItemVariantRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "ItemVariant row ({}) not found",
-                changelog.record_id
-            )))?;
+        _connection: &StorageConnection,
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::ItemVariant(item_variant_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let row = item_variant_row;
+
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(row)?))
     }
 }
 

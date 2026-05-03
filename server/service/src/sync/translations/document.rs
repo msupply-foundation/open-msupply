@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use repository::{
     ChangelogRow, ChangelogTableName, Document, DocumentRepository, DocumentRow, DocumentStatus,
     StorageConnection, SyncBufferRow,
+    Row,
 };
 use serde_json::Value;
 
@@ -17,7 +18,7 @@ use crate::sync::{
 
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -114,13 +115,17 @@ impl SyncTranslation for DocumentTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
+        row: Row,
+    ) -> Result<TranslatedUpsert, anyhow::Error> {
+        let Row::Document(document_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+
         let document = DocumentRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
+            .find_one_by_id(&document_row.id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Document row ({}) not found",
-                changelog.record_id
+                document_row.id
             )))?;
         let DocumentRow {
             id,
@@ -153,10 +158,6 @@ impl SyncTranslation for DocumentTranslation {
             context_id,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
     }
 }

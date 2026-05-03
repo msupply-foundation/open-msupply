@@ -83,6 +83,12 @@ impl<'a> NamePropertyRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NamePropertyRow>, RepositoryError> {
+        Ok(name_property::table
+            .filter(name_property::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for NamePropertyRow {
