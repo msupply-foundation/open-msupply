@@ -75,6 +75,12 @@ impl<'a> AssetTypeRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetTypeRow>, RepositoryError> {
+        Ok(asset_catalogue_type
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
     // pub fn delete(&self, asset_type_id: &str) -> Result<(), RepositoryError> {
     //     diesel::delete(asset_catalogue_type)
     //         .filter(id.eq(asset_type_id))

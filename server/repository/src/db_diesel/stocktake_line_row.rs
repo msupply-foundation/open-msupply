@@ -61,7 +61,7 @@ joinable!(stocktake_line -> name (donor_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
 allow_tables_to_appear_in_same_query!(stocktake_line, reason_option);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = stocktake_line)]
 pub struct StocktakeLineRow {
     pub id: String,

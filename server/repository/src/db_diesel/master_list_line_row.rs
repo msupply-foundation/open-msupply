@@ -22,7 +22,7 @@ joinable!(master_list_line -> master_list (master_list_id));
 joinable!(master_list_line -> item_link (item_link_id));
 allow_tables_to_appear_in_same_query!(master_list_line, item_link);
 
-#[derive(Clone, Insertable, Queryable, Debug, Default, PartialEq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, Default, PartialEq, AsChangeset, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = master_list_line)]
 pub struct MasterListLineRow {
     pub id: String,

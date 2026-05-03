@@ -22,7 +22,7 @@ allow_tables_to_appear_in_same_query!(item_category_join, category);
 allow_tables_to_appear_in_same_query!(item_category_join, item_link);
 allow_tables_to_appear_in_same_query!(item_category_join, item);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = item_category_join)]
 pub struct ItemCategoryJoinRow {
     pub id: String,

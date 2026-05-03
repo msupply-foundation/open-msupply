@@ -72,7 +72,7 @@ allow_tables_to_appear_in_same_query!(contact_trace_name_link_view, program);
 joinable!(contact_trace_name_link_view -> document (document_id));
 allow_tables_to_appear_in_same_query!(contact_trace_name_link_view, document);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ContactTraceRow {
     pub id: String,
     pub program_id: String,

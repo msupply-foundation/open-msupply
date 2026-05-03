@@ -30,7 +30,7 @@ joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
 allow_tables_to_appear_in_same_query!(program, item_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = program)]
 #[diesel(treat_none_as_null = true)]
 pub struct ProgramRow {

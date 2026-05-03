@@ -23,7 +23,7 @@ joinable!(location -> store (store_id));
 allow_tables_to_appear_in_same_query!(location, item_link);
 allow_tables_to_appear_in_same_query!(location, asset_internal_location);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = location)]
 #[diesel(treat_none_as_null = true)]
 pub struct LocationRow {

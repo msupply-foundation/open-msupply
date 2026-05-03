@@ -31,7 +31,7 @@ define_linked_tables! {
 joinable!(indicator_value -> name (customer_name_id));
 allow_tables_to_appear_in_same_query!(indicator_value, name);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = indicator_value)]
 pub struct IndicatorValueRow {
     pub id: String,

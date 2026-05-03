@@ -7,7 +7,7 @@ use super::{ChangeLogInsertRow, ChangelogTableName, RowActionType, RowOrId, Sour
 use crate::{
     AbbreviationRow, ActivityLogRow, BackendPluginRow, BarcodeRow, ClinicianRow,
     ClinicianStoreJoinRow, ContactRow, ContextRow, CurrencyRow, DemographicIndicatorRow,
-    DemographicProjectionRow, DemographicRow, DiagnosisRow, Document, DocumentRegistryRow,
+    DemographicRow, DiagnosisRow, Document, DocumentRegistryRow,
     EncounterRow, FormSchemaJson, FrontendPluginRow, IndicatorColumnRow, IndicatorLineRow,
     IndicatorValueRow, InsuranceProviderRow, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     InvoiceRowRepository, ItemDirectionRow, ItemStoreJoinRow, ItemWarningJoinRow,
@@ -23,7 +23,7 @@ use crate::{
     RnRFormRowRepository, SensorRow, ShippingMethodRow, StockLineRow, StockLineRowRepository,
     StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
     StorageConnection, StorePreferenceRow, StoreRowRepository, SyncFileReferenceRow,
-    SyncMessageRow, TemperatureBreachConfigRow, TemperatureBreachRow, TemperatureLogRow,
+    SyncMessageRow, TemperatureBreachRow, TemperatureLogRow,
     UserAccountRow, UserPermissionRow, UserStoreJoinRow, VaccinationRow,
 };
 // Types only reachable via their full submodule path (no flat re-export).
@@ -571,24 +571,6 @@ impl TemperatureBreachRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::TemperatureBreach,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(self.store_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl TemperatureBreachConfigRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::TemperatureBreachConfig,
             record_id: self.id.clone(),
             row_action: action,
             store_id: Some(self.store_id.clone()),
@@ -1473,23 +1455,6 @@ impl DemographicIndicatorRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::DemographicIndicator,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl DemographicProjectionRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::DemographicProjection,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,

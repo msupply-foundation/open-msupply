@@ -16,7 +16,7 @@ table! {
 
 allow_tables_to_appear_in_same_query!(name_tag, name_oms_fields);
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = name_tag)]
 pub struct NameTagRow {
     pub id: String,

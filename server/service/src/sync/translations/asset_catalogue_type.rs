@@ -59,11 +59,11 @@ impl SyncTranslation for AssetCatalogueTypeTranslation {
         _connection: &StorageConnection,
         row: Row,
     ) -> Result<TranslatedUpsert, anyhow::Error> {
-        // AssetCatalogueType is not represented in the `Row` enum
-        // (no bare-row variant for the asset_type repo at the moment),
-        // so `query_with_data` cannot surface it. Unreachable for push
-        // until the table is added to `Row`.
-        Ok(TranslatedUpsert::NotMatched)
+        let Row::AssetCatalogueType(asset_type_row) = row else {
+            return Ok(TranslatedUpsert::NotMatched);
+        };
+        let json_record = serde_json::to_value(asset_type_row)?;
+        Ok(TranslatedUpsert::Translated(json_record))
     }
 }
 

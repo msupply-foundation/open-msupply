@@ -45,7 +45,15 @@ pub enum TemperatureBreachType {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = temperature_breach)]

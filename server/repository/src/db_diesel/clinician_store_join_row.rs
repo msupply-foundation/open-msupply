@@ -17,7 +17,7 @@ joinable!(clinician_store_join -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(clinician, clinician_store_join);
 allow_tables_to_appear_in_same_query!(clinician_store_join, clinician_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = clinician_store_join)]
 pub struct ClinicianStoreJoinRow {
     pub id: String,

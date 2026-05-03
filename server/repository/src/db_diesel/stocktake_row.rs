@@ -33,7 +33,7 @@ table! {
 
 joinable!(stocktake -> user_account (user_id));
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StocktakeStatus {
     #[default]
@@ -41,7 +41,7 @@ pub enum StocktakeStatus {
     Finalised,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = stocktake)]
 pub struct StocktakeRow {
     pub id: String,

@@ -4,17 +4,16 @@ use crate::{
     AbbreviationRow, AbbreviationRowRepository, ActivityLogRow, ActivityLogRowRepository,
     AssetCatalogueItemRow, AssetCatalogueItemRowRepository, AssetCategoryRow,
     AssetCategoryRowRepository, AssetClassRow, AssetClassRowRepository, AssetInternalLocationRow,
-    AssetInternalLocationRowRepository, AssetLogReasonRow, AssetLogReasonRowRepository, AssetLogRow,
-    AssetLogRowRepository, AssetPropertyRow, AssetPropertyRowRepository, AssetRow,
-    AssetRowRepository, BackendPluginRow, BackendPluginRowRepository, BarcodeRow,
-    BarcodeRowRepository, BundledItemRow, BundledItemRowRepository, CampaignRow,
-    CampaignRowRepository, ChangelogCondition, ChangelogRepository, ChangelogRow,
-    ChangelogTableName, ClinicianRow, ClinicianRowRepository, ClinicianStoreJoinRow,
-    ClinicianStoreJoinRowRepository, ContactFormRow, ContactFormRowRepository, ContactRow,
-    ContactRowRepository, ContextRow, ContextRowRepository, CurrencyRow, CurrencyRowRepository,
-    CursorAndLimit,
-    DemographicIndicatorRow, DemographicIndicatorRowRepository, DemographicProjectionRow,
-    DemographicProjectionRowRepository, DemographicRow, DemographicRowRepository, DiagnosisRow,
+    AssetInternalLocationRowRepository, AssetLogReasonRow, AssetLogReasonRowRepository,
+    AssetLogRow, AssetLogRowRepository, AssetPropertyRow, AssetPropertyRowRepository, AssetRow,
+    AssetRowRepository, AssetTypeRow, AssetTypeRowRepository, BackendPluginRow,
+    BackendPluginRowRepository, BarcodeRow, BarcodeRowRepository, BundledItemRow,
+    BundledItemRowRepository, CampaignRow, CampaignRowRepository, ChangelogCondition,
+    ChangelogRepository, ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository,
+    ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContactFormRow,
+    ContactFormRowRepository, ContactRow, ContactRowRepository, ContextRow, ContextRowRepository,
+    CurrencyRow, CurrencyRowRepository, CursorAndLimit, DemographicIndicatorRow,
+    DemographicIndicatorRowRepository, DemographicRow, DemographicRowRepository, DiagnosisRow,
     DiagnosisRowRepository, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRepository,
     DocumentRow, EncounterRow, EncounterRowRepository, FormSchemaRow, FormSchemaRowRepository,
     FrontendPluginRow, FrontendPluginRowRepository, IndicatorColumnRow,
@@ -27,9 +26,9 @@ use crate::{
     LocationRowRepository, LocationTypeRow, LocationTypeRowRepository, MasterListLineRow,
     MasterListLineRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
     MasterListRow, MasterListRowRepository, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
-    NamePropertyRow, NamePropertyRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository,
-    NameStoreJoinRow, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
-    NumberRow, NumberRowRepository, PackagingVariantRow, PackagingVariantRowRepository, PeriodRow,
+    NameOmsFieldsRow, NamePropertyRow, NamePropertyRowRepository, NameRow, NameRowRepository,
+    NameStoreJoinRepository, NameStoreJoinRow, NameTagJoinRepository, NameTagJoinRow, NameTagRow,
+    NameTagRowRepository, PackagingVariantRow, PackagingVariantRowRepository, PeriodRow,
     PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
     PluginDataRowRepository, PreferenceRow, PreferenceRowRepository, PrinterRow,
     PrinterRowRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository, ProgramEventRow,
@@ -41,19 +40,19 @@ use crate::{
     ReasonOptionRowRepository, ReportRow, ReportRowRepository, RepositoryError, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RnRFormLineRow,
     RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, RowActionType, SensorRow,
-    SensorRowRepository, ShippingMethodRow, ShippingMethodRowRepository, StockLineRow,
-    StockLineRowRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow,
-    StocktakeRowRepository, StorageConnection, StorePreferenceRow, StorePreferenceRowRepository,
-    StoreRow, StoreRowRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository,
-    SyncMessageRow, SyncMessageRowRepository, SystemLogRow, SystemLogRowRepository,
-    TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository, TemperatureBreachRow,
-    TemperatureBreachRowRepository, TemperatureLogRow, TemperatureLogRowRepository, UnitRow,
-    UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
-    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository, VVMStatusLogRow,
-    VVMStatusLogRowRepository, VVMStatusRow, VVMStatusRowRepository, VaccinationRow,
-    VaccinationRowRepository, VaccineCourseDoseRow, VaccineCourseDoseRowRepository,
-    VaccineCourseItemRow, VaccineCourseItemRowRepository, VaccineCourseRow, VaccineCourseRowRepository,
-    VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
+    SensorRowRepository, ShippingMethodRow, ShippingMethodRowRepository, SiteRow,
+    SiteRowRepository, StockLineRow, StockLineRowRepository, StocktakeLineRow,
+    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StorageConnection,
+    StorePreferenceRow, StorePreferenceRowRepository, StoreRow, StoreRowRepository,
+    SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncMessageRow, SyncMessageRowRepository,
+    SystemLogRow, SystemLogRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
+    TemperatureLogRow, TemperatureLogRowRepository, UnitRow, UnitRowRepository, UserAccountRow,
+    UserAccountRowRepository, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository, VVMStatusLogRow, VVMStatusLogRowRepository, VVMStatusRow,
+    VVMStatusRowRepository, VaccinationRow, VaccinationRowRepository, VaccineCourseDoseRow,
+    VaccineCourseDoseRowRepository, VaccineCourseItemRow, VaccineCourseItemRowRepository,
+    VaccineCourseRow, VaccineCourseRowRepository, VaccineCourseStoreConfigRow,
+    VaccineCourseStoreConfigRowRepository,
 };
 // Types only reachable via their full submodule path (no flat re-export).
 use crate::{
@@ -85,7 +84,6 @@ pub enum Row {
     Name(NameRow),
     NameInsuranceJoin(NameInsuranceJoinRow),
     NameStoreJoin(NameStoreJoinRow),
-    Number(NumberRow),
     PurchaseOrder(PurchaseOrderRow),
     PurchaseOrderLine(PurchaseOrderLineRow),
     Sensor(SensorRow),
@@ -93,7 +91,6 @@ pub enum Row {
     Stocktake(StocktakeRow),
     StocktakeLine(StocktakeLineRow),
     TemperatureBreach(TemperatureBreachRow),
-    TemperatureBreachConfig(TemperatureBreachConfigRow),
     TemperatureLog(TemperatureLogRow),
     VVMStatusLog(VVMStatusLogRow),
     Requisition(RequisitionRow),
@@ -143,7 +140,6 @@ pub enum Row {
     ContactTrace(ContactTraceRow),
     Context(ContextRow),
     DemographicIndicator(DemographicIndicatorRow),
-    DemographicProjection(DemographicProjectionRow),
     Diagnosis(DiagnosisRow),
     DocumentRegistry(DocumentRegistryRow),
     IndicatorColumn(IndicatorColumnRow),
@@ -172,6 +168,9 @@ pub enum Row {
     UserPermission(UserPermissionRow),
     UserStoreJoin(UserStoreJoinRow),
     VVMStatus(VVMStatusRow),
+    NameOmsFields(NameOmsFieldsRow),
+    Site(SiteRow),
+    AssetCatalogueType(AssetTypeRow),
 }
 
 /// Output entry of `query_with_data`. `Row` carries the loaded row
@@ -382,11 +381,6 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::NameStoreJoin(r));
                 }
             }
-            ChangelogTableName::Number => {
-                for r in NumberRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::Number(r));
-                }
-            }
             ChangelogTableName::PurchaseOrder => {
                 for r in PurchaseOrderRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::PurchaseOrder(r));
@@ -420,11 +414,6 @@ fn fetch_rows_for_table(
             ChangelogTableName::TemperatureBreach => {
                 for r in TemperatureBreachRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::TemperatureBreach(r));
-                }
-            }
-            ChangelogTableName::TemperatureBreachConfig => {
-                for r in TemperatureBreachConfigRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::TemperatureBreachConfig(r));
                 }
             }
             ChangelogTableName::TemperatureLog => {
@@ -553,7 +542,9 @@ fn fetch_rows_for_table(
                 }
             }
             ChangelogTableName::VaccineCourseStoreConfig => {
-                for r in VaccineCourseStoreConfigRowRepository::new(connection).find_many_by_id(chunk)? {
+                for r in
+                    VaccineCourseStoreConfigRowRepository::new(connection).find_many_by_id(chunk)?
+                {
                     out.insert(r.id.clone(), Row::VaccineCourseStoreConfig(r));
                 }
             }
@@ -583,7 +574,9 @@ fn fetch_rows_for_table(
                 }
             }
             ChangelogTableName::AssetInternalLocation => {
-                for r in AssetInternalLocationRowRepository::new(connection).find_many_by_id(chunk)? {
+                for r in
+                    AssetInternalLocationRowRepository::new(connection).find_many_by_id(chunk)?
+                {
                     out.insert(r.id.clone(), Row::AssetInternalLocation(r));
                 }
             }
@@ -672,13 +665,6 @@ fn fetch_rows_for_table(
                     DemographicIndicatorRowRepository::new(connection).find_many_by_id(chunk)?
                 {
                     out.insert(r.id.clone(), Row::DemographicIndicator(r));
-                }
-            }
-            ChangelogTableName::DemographicProjection => {
-                for r in
-                    DemographicProjectionRowRepository::new(connection).find_many_by_id(chunk)?
-                {
-                    out.insert(r.id.clone(), Row::DemographicProjection(r));
                 }
             }
             ChangelogTableName::Diagnosis => {
@@ -825,7 +811,22 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::VVMStatus(r));
                 }
             }
-            other => unimplemented!("query_with_data does not yet support {:?}", other),
+            ChangelogTableName::NameOmsFields => {
+                for r in NameRowRepository::new(connection).find_many_oms_fields_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::NameOmsFields(r));
+                }
+            }
+            ChangelogTableName::Site => {
+                let int_ids: Vec<i32> = chunk.iter().filter_map(|s| s.parse().ok()).collect();
+                for r in SiteRowRepository::new(connection).find_many_by_id(&int_ids)? {
+                    out.insert(r.id.to_string(), Row::Site(r));
+                }
+            }
+            ChangelogTableName::AssetCatalogueType => {
+                for r in AssetTypeRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::AssetCatalogueType(r));
+                }
+            }
         }
     }
 
@@ -893,14 +894,15 @@ mod test {
         let c2 = upsert_unit(&connection, "u2");
         let c3 = delete_unit_changelog(&connection, "u3");
 
-        let result = ChangelogRepository::new(&connection).query_with_data(
-            unit_filter(),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 10,
-            },
-        )
-        .unwrap();
+        let result = ChangelogRepository::new(&connection)
+            .query_with_data(
+                unit_filter(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 10,
+                },
+            )
+            .unwrap();
 
         assert_eq!(result.len(), 3);
         // Ordered ascending by cursor
@@ -938,14 +940,15 @@ mod test {
         upsert_unit(&connection, "u2");
         upsert_unit(&connection, "u3");
 
-        let result = ChangelogRepository::new(&connection).query_with_data(
-            unit_filter(),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 3,
-            },
-        )
-        .unwrap();
+        let result = ChangelogRepository::new(&connection)
+            .query_with_data(
+                unit_filter(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 3,
+                },
+            )
+            .unwrap();
 
         // Three distinct keys, exactly limit. u1 collapsed to its latest cursor.
         assert_eq!(result.len(), 3);
@@ -985,14 +988,15 @@ mod test {
         );
         upsert_unit(&connection, "u3");
 
-        let result = ChangelogRepository::new(&connection).query_with_data(
-            unit_filter(),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 2,
-            },
-        )
-        .unwrap();
+        let result = ChangelogRepository::new(&connection)
+            .query_with_data(
+                unit_filter(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 2,
+                },
+            )
+            .unwrap();
 
         // u2 is dropped (Upsert pointing to non-existent row); u1 + u3 remain
         // and were topped up to reach limit=2.
@@ -1015,14 +1019,15 @@ mod test {
         upsert_unit(&connection, "u1");
         upsert_unit(&connection, "u2");
 
-        let result = ChangelogRepository::new(&connection).query_with_data(
-            unit_filter(),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 100,
-            },
-        )
-        .unwrap();
+        let result = ChangelogRepository::new(&connection)
+            .query_with_data(
+                unit_filter(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 100,
+                },
+            )
+            .unwrap();
 
         assert_eq!(result.len(), 2);
     }
@@ -1061,14 +1066,15 @@ mod test {
         let c3 = upsert_unit(&connection, "u1");
         upsert_unit(&connection, "u2");
 
-        let result = ChangelogRepository::new(&connection).query_with_data(
-            unit_filter(),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 2,
-            },
-        )
-        .unwrap();
+        let result = ChangelogRepository::new(&connection)
+            .query_with_data(
+                unit_filter(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 2,
+                },
+            )
+            .unwrap();
 
         assert_eq!(result.len(), 2);
         let u1 = result
@@ -1120,14 +1126,15 @@ mod test {
         let c3 = delete_unit_changelog(&connection, "u1");
         upsert_unit(&connection, "u2");
 
-        let result = ChangelogRepository::new(&connection).query_with_data(
-            unit_filter(),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 2,
-            },
-        )
-        .unwrap();
+        let result = ChangelogRepository::new(&connection)
+            .query_with_data(
+                unit_filter(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 2,
+                },
+            )
+            .unwrap();
 
         assert_eq!(result.len(), 2);
         let u1 = result
