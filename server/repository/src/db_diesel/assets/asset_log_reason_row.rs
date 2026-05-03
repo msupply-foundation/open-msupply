@@ -93,7 +93,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
         let changelog = AssetLogReasonRow::generate_changelog(
             asset_log_reason_id.to_string(),
             self.connection,
-            RowActionType::Delete,
+            RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;

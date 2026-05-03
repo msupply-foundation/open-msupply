@@ -2,7 +2,9 @@ use super::{name_oms_fields, name_tag_row::name_tag, StorageConnection};
 use crate::diesel_macros::define_linked_tables;
 use crate::name_row::name;
 use crate::repository_error::RepositoryError;
-use crate::{Delete, ChangelogSyncType, Upsert};
+use crate::{
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
+};
 use diesel::prelude::*;
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
@@ -43,7 +45,13 @@ impl<'a> NameTagJoinRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        Ok(())
+        let changelog = NameTagJoinRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameTagJoinRow>, RepositoryError> {
@@ -54,19 +62,55 @@ impl<'a> NameTagJoinRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameTagJoinRow>, RepositoryError> {
+        Ok(name_tag_join::table
+            .filter(name_tag_join::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    fn _delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(name_tag_join_with_links::table.filter(name_tag_join_with_links::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        self._delete(id)?;
+        let changelog = NameTagJoinRow::generate_changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct NameTagJoinRowDelete(pub String);
 impl Delete for NameTagJoinRowDelete {
-    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        NameTagJoinRepository::new(con).delete(&self.0)?;
-        Ok(()) // Table not in Changelog
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = NameTagJoinRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                NameTagJoinRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -78,9 +122,25 @@ impl Delete for NameTagJoinRowDelete {
 }
 
 impl Upsert for NameTagJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        NameTagJoinRepository::new(con).upsert_one(self)?;
-        Ok(()) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        NameTagJoinRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

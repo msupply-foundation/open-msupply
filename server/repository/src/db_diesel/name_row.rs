@@ -268,7 +268,7 @@ impl<'a> NameRowRepository<'a> {
         let changelog = NameRow::generate_changelog(
             name_id.to_string(),
             self.connection,
-            RowActionType::Delete,
+            RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
@@ -371,7 +371,7 @@ impl Delete for NameRowDelete {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => NameRow::generate_changelog(
                 self.0.clone(),
                 con,
-                RowActionType::Delete,
+                RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
