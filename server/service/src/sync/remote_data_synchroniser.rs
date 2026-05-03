@@ -17,7 +17,7 @@ use super::{
 use log::info;
 use repository::{
     ChangelogFilter, ChangelogRepository, CursorAndLimit, KeyType, KeyValueStoreRepository,
-    LegacyDataFilterError, RepositoryError, StorageConnection, SyncBufferRowRepository,
+    LegacyDataFilterError, RepositoryError, StorageConnection, SyncBufferRepository,
 };
 
 use thiserror::Error;
@@ -44,6 +44,8 @@ pub(crate) enum RemotePullError {
     ParsingRecordError(#[from] ParsingSyncRecordError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
+    #[error("Central server site id not configured (SettingsSyncCentralServerSiteId)")]
+    CentralServerSiteIdNotSet,
 }
 
 #[derive(Error, Debug)]
@@ -132,12 +134,13 @@ impl RemoteDataSynchroniser {
         let step_progress = SyncStepProgress::PullRemote;
 
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
-            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+            .ok_or(RemotePullError::CentralServerSiteIdNotSet)?;
 
         log::info!(
             "Pulling remote data with batch size {} and msupply_central_server_id {}",
             batch_size,
-            msupply_central_server_id.unwrap_or_default()
+            msupply_central_server_id
         );
 
         loop {
@@ -164,7 +167,7 @@ impl RemoteDataSynchroniser {
             if number_of_pulled_records > 0 {
                 connection
                     .transaction_sync(|t_con| {
-                        SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
+                        SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)
                     })
                     .map_err(|e| e.to_inner_error())?;
 

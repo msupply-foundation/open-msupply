@@ -2,10 +2,11 @@ use std::time::{Duration, SystemTime};
 
 use chrono::Utc;
 use repository::{
+    migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogTableName, CursorAndLimit,
-    KeyType, RowActionType, StorageConnection, SyncAction, SyncBufferRow, SyncBufferRowRepository,
-    SyncRecordData,
+    AppVersion, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogTableName,
+    CursorAndLimit, KeyType, KeyValueStoreRepository, RowActionType, StorageConnection, SyncAction,
+    SyncBufferRepository, SyncBufferRowInsert, SyncRecordData, SyncVersion,
 };
 use serde::{Deserialize, Serialize};
 
@@ -83,26 +84,28 @@ impl SyncBatchV7 {
     }
 }
 
-/// Convert a SyncRecordV7 (API shape) into a SyncBufferRow (DB shape) for storage
+/// Convert a SyncRecordV7 (API shape) into an insertable sync_buffer row.
 pub(crate) fn sync_record_to_buffer_row(
     record: SyncRecordV7,
     source_site_id: i32,
-) -> SyncBufferRow {
-    SyncBufferRow {
+    app_version: Option<Version>,
+) -> SyncBufferRowInsert {
+    SyncBufferRowInsert {
         record_id: record.record_id,
         received_datetime: Utc::now().naive_utc(),
-        integration_datetime: None,
-        integration_error: None,
         table_name: record.table_name.to_string(),
         action: match record.action {
             RowActionType::Upsert => SyncAction::Upsert,
             RowActionType::Delete => SyncAction::Delete,
         },
         data: SyncRecordData(record.data),
-        source_site_id: Some(source_site_id),
+        sync_version: SyncVersion::V7,
+        app_version: app_version.map(AppVersion),
+        source_site_id,
         store_id: record.store_id,
         transfer_store_id: record.transfer_store_id,
         patient_id: record.patient_id,
+        reference: None,
     }
 }
 
@@ -284,15 +287,17 @@ impl<'a> SyncV7<'a> {
                 break;
             };
 
-            let sync_buffer_rows: Vec<SyncBufferRow> = batch
+            // V7 pull: records arrive without an originating app_version (it isn't
+            // carried through the central server), so app_version is None here.
+            let sync_buffer_rows: Vec<SyncBufferRowInsert> = batch
                 .records
                 .into_iter()
-                .map(|r| sync_record_to_buffer_row(r, site_id))
+                .map(|r| sync_record_to_buffer_row(r, site_id, None))
                 .collect();
 
             self.connection
                 .transaction_sync(|t_con| {
-                    SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)?;
+                    SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
                     cursor_controller.update(self.connection, batch_max_cursor as u64)
                 })
                 .map_err(|e| e.to_inner_error())?;
@@ -315,9 +320,19 @@ impl<'a> SyncV7<'a> {
         let active_stores = ActiveStoresOnSite::get(self.connection)
             .map_err(|e| SyncError::Other(e.to_string()))?;
 
+        // V7 records pulled from central are stamped with the central server's site id
+        // (see `sync_record_to_buffer_row` callsite in `pull`). Filter by that id here.
+        let central_site_id = KeyValueStoreRepository::new(self.connection)
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)
+            .map_err(SyncError::DatabaseError)?
+            .ok_or_else(|| {
+                SyncError::Other("Central server site id not configured".to_string())
+            })?;
+
         validate_translate_integrate(
             self.connection,
             Some(logger),
+            central_site_id,
             None,
             SyncContext::Remote {
                 active_stores,

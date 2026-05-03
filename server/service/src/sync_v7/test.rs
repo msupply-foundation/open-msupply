@@ -7,7 +7,7 @@ mod test_sync_v7_client_api {
         migrations::Version, mock::MockDataInserts, ChangelogCondition, ChangelogRepository,
         ChangelogRow, ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, ItemRow,
         KeyType, KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection,
-        StoreRow, SyncBufferRowRepository, UnitRow, Upsert,
+        StoreRow, SyncBufferRepository, UnitRow, Upsert,
     };
     use repository::{KeyValueStoreRow, SyncAction, SyncBufferRow};
     use serde_json::json;
@@ -292,7 +292,7 @@ mod test_sync_v7_client_api {
         }
 
         // Assert: sync buffer rows
-        let buffers = SyncBufferRowRepository::new(&connection).get_all().unwrap();
+        let buffers = SyncBufferRepository::new(&connection).get_all().unwrap();
         assert_eq!(buffers.len(), 6);
         for buf in &buffers {
             assert!(buf.integration_datetime.is_some());
@@ -304,7 +304,7 @@ mod test_sync_v7_client_api {
                     record_id: "unit_test_1".to_string(),
                     table_name: "unit".to_string(),
                     action: SyncAction::Upsert,
-                    source_site_id: Some(1),
+                    source_site_id: 1,
                     integration_error: None,
                     store_id: None,
                     transfer_store_id: None,
@@ -315,7 +315,7 @@ mod test_sync_v7_client_api {
                     record_id: "currency_test_1".to_string(),
                     table_name: "currency".to_string(),
                     action: SyncAction::Upsert,
-                    source_site_id: Some(1),
+                    source_site_id: 1,
                     integration_error: None,
                     store_id: None,
                     transfer_store_id: None,
@@ -326,7 +326,7 @@ mod test_sync_v7_client_api {
                     record_id: "name_test_1".to_string(),
                     table_name: "name".to_string(),
                     action: SyncAction::Upsert,
-                    source_site_id: Some(1),
+                    source_site_id: 1,
                     integration_error: None,
                     store_id: None,
                     transfer_store_id: None,
@@ -337,7 +337,7 @@ mod test_sync_v7_client_api {
                     record_id: "item_test_1".to_string(),
                     table_name: "item".to_string(),
                     action: SyncAction::Upsert,
-                    source_site_id: Some(1),
+                    source_site_id: 1,
                     integration_error: None,
                     store_id: None,
                     transfer_store_id: None,
@@ -348,7 +348,7 @@ mod test_sync_v7_client_api {
                     record_id: "store_test_1".to_string(),
                     table_name: "store".to_string(),
                     action: SyncAction::Upsert,
-                    source_site_id: Some(1),
+                    source_site_id: 1,
                     integration_error: None,
                     store_id: None,
                     transfer_store_id: None,
@@ -359,7 +359,7 @@ mod test_sync_v7_client_api {
                     record_id: "stock_line_test_1".to_string(),
                     table_name: "stock_line".to_string(),
                     action: SyncAction::Upsert,
-                    source_site_id: Some(1),
+                    source_site_id: 1,
                     integration_error: None,
                     store_id: Some("store_test_1".to_string()),
                     transfer_store_id: None,
@@ -448,7 +448,7 @@ mod test_sync_v7_client_api {
         .await;
 
         // FK violations would surface via integration_error.
-        let buffers = SyncBufferRowRepository::new(&connection).get_all().unwrap();
+        let buffers = SyncBufferRepository::new(&connection).get_all().unwrap();
         assert_eq!(buffers.len(), 3);
         for buf in &buffers {
             assert_eq!(

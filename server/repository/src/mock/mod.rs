@@ -1246,10 +1246,14 @@ pub fn insert_mock_data(
         }
 
         if inserts.sync_buffer_rows {
-            let repo = SyncBufferRowRepository::new(connection);
-            for row in &mock_data.sync_buffer_rows {
-                repo.upsert_one(row).unwrap();
-            }
+            let repo = SyncBufferRepository::new(connection);
+            let rows: Vec<SyncBufferRowInsert> = mock_data
+                .sync_buffer_rows
+                .iter()
+                .cloned()
+                .map(SyncBufferRowInsert::from)
+                .collect();
+            repo.insert_many(&rows).unwrap();
         }
 
         if inserts.activity_logs {

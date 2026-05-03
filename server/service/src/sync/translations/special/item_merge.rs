@@ -63,13 +63,13 @@ impl SyncTranslation for ItemMergeTranslation {
 #[cfg(test)]
 mod tests {
     use crate::sync::{
-        sync_buffer::SyncBufferSource, synchroniser::integrate_and_translate_sync_buffer,
+        synchroniser::integrate_and_translate_sync_buffer,
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
-        SyncRecordData,
+        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRepository,
+        SyncBufferRowInsert, SyncRecordData,
     };
     use serde_json::json;
 
@@ -77,7 +77,7 @@ mod tests {
     async fn test_item_merge() {
         // util::init_logger(util::LogLevel::Info);
         let mut sync_records = vec![
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "item_b_merge".to_string(),
                 table_name: "item".to_string(),
                 action: SyncAction::Merge,
@@ -85,9 +85,9 @@ mod tests {
                     "mergeIdToKeep": "item_b",
                     "mergeIdToDelete": "item_a"
                 })),
-                ..SyncBufferRow::default()
+                ..SyncBufferRowInsert::default()
             },
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "item_c_merge".to_string(),
                 table_name: "item".to_string(),
                 action: SyncAction::Merge,
@@ -95,7 +95,7 @@ mod tests {
                     "mergeIdToKeep": "item_c",
                     "mergeIdToDelete": "item_b"
                 })),
-                ..SyncBufferRow::default()
+                ..SyncBufferRowInsert::default()
             },
         ];
 
@@ -120,10 +120,10 @@ mod tests {
         )
         .await;
 
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&sync_records)
+        SyncBufferRepository::new(&connection)
+            .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, 0)
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
@@ -139,11 +139,11 @@ mod tests {
         .await;
 
         sync_records.reverse();
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&sync_records)
+        SyncBufferRepository::new(&connection)
+            .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, 0)
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
