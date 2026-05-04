@@ -94,6 +94,46 @@ fn get_plugin_processors() -> Vec<Box<dyn Processor>> {
         .collect()
 }
 
+/// A processor either uses the new changelog filter or the pre-v7 compatibility filter.
+/// Plugins (and other legacy callers) opt into the compatibility path by returning
+/// `Some` from `Processor::compatibility_filter`.
+enum ProcessorFilter {
+    Compatibility(CompatibilityChangelogFilter),
+    Normal(ChangelogCondition::Inner),
+}
+
+impl ProcessorFilter {
+    fn from_processor(
+        processor: &dyn Processor,
+        ctx: &ServiceContext,
+    ) -> Result<Self, ProcessorError> {
+        if let Some(compat) = processor.compatibility_filter(ctx)? {
+            Ok(ProcessorFilter::Compatibility(compat))
+        } else {
+            Ok(ProcessorFilter::Normal(processor.changelogs_filter(ctx)?))
+        }
+    }
+
+    fn query(
+        &self,
+        changelog_repo: &ChangelogRepository,
+        cursor: u64,
+    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+        match self {
+            ProcessorFilter::Compatibility(f) => {
+                changelog_repo.compatibility_query(cursor, CHANGELOG_BATCH_SIZE, Some(f.clone()))
+            }
+            ProcessorFilter::Normal(f) => changelog_repo.query(
+                f.clone(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: CHANGELOG_BATCH_SIZE as i64,
+                },
+            ),
+        }
+    }
+}
+
 pub(crate) async fn process_records(
     service_provider: &ServiceProvider,
     r#type: ProcessorType,
@@ -112,15 +152,7 @@ pub(crate) async fn process_records(
             .map_err(Error::DatabaseError)?;
 
         let cursor_controller = CursorController::from_cursor_type(processor.cursor_type());
-
-        // Only process the changelogs we care about
-        // If processor provides a compatibility filter (e.g. plugins), use compatibility_query
-        let compatibility_filter = processor.compatibility_filter(&ctx)?;
-        let filter = if compatibility_filter.is_none() {
-            Some(processor.changelogs_filter(&ctx)?)
-        } else {
-            None
-        };
+        let filter = ProcessorFilter::from_processor(processor.as_ref(), &ctx)?;
 
         loop {
             let cursor = cursor_controller
@@ -128,21 +160,9 @@ pub(crate) async fn process_records(
                 .map_err(Error::DatabaseError)?;
 
             let changelog_repo = ChangelogRepository::new(&ctx.connection);
-            let logs = match (&compatibility_filter, &filter) {
-                (Some(compat_filter), _) => changelog_repo
-                    .compatibility_query(cursor, CHANGELOG_BATCH_SIZE, Some(compat_filter.clone()))
-                    .map_err(Error::DatabaseError)?,
-                (None, Some(f)) => changelog_repo
-                    .query(
-                        f.clone(),
-                        CursorAndLimit {
-                            cursor: cursor as i64,
-                            limit: CHANGELOG_BATCH_SIZE as i64,
-                        },
-                    )
-                    .map_err(Error::DatabaseError)?,
-                (None, None) => unreachable!(),
-            };
+            let logs = filter
+                .query(&changelog_repo, cursor)
+                .map_err(Error::DatabaseError)?;
 
             if logs.is_empty() {
                 break;
