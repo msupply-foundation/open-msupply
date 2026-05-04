@@ -172,8 +172,8 @@ fragment AncillaryItem on AncillaryItemNode {
   id
   itemQuantity
   ancillaryQuantity
-  itemLinkId
-  ancillaryItemLinkId
+  itemId
+  ancillaryItemId
   item {
     ...AncillaryItemRow
   }
