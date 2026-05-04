@@ -6,8 +6,11 @@ export const useSupplierReturns = (queryParams: SupplierListParams) => {
   const api = useReturnsApi();
 
   return {
-    ...useQuery(api.keys.supplierParamList(queryParams), () =>
-      api.get.listSupplier(queryParams)
-    ),
+    ...useQuery({
+      queryKey: api.keys.supplierParamList(queryParams),
+
+      queryFn: () =>
+        api.get.listSupplier(queryParams)
+    }),
   };
 };

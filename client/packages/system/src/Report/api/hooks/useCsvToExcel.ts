@@ -39,7 +39,7 @@ export const useCsvToExcel = () => {
     throw new Error(errorMessage);
   };
 
-  const { mutate, mutateAsync, isLoading } = useMutation({
+  const { mutate, mutateAsync, isPending: isLoading } = useMutation({
     mutationFn,
     onSuccess: fileId => {
       if (!fileId) {

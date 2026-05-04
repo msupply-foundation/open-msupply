@@ -6,8 +6,8 @@ export const useAssetLogs = (
   additionalFilter?: Partial<AssetLogFilterInput>
 ) => {
   const api = useAssetApi();
-  return useQuery(
-    [...api.keys.logs(assetId), additionalFilter],
-    () => api.get.logs(assetId, additionalFilter)
-  );
+  return useQuery({
+    queryKey: [...api.keys.logs(assetId), additionalFilter],
+    queryFn: () => api.get.logs(assetId, additionalFilter),
+  });
 };

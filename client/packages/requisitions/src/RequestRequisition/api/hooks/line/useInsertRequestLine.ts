@@ -7,7 +7,11 @@ export const useInsertRequestLines = () => {
   const queryClient = useQueryClient();
   const api = useRequestApi();
 
-  return useMutation(api.insertLine, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.detail(requestId)),
+  return useMutation({
+    mutationFn: api.insertLine,
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: api.keys.detail(requestId)
+    })
   });
 };

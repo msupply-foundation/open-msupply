@@ -4,6 +4,7 @@ import {
   InvoiceSortFieldInput,
   SortBy,
   useQuery,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { LIST, PRESCRIPTION } from './keys';
@@ -67,7 +68,7 @@ export const usePrescriptionList = (queryParams?: ListParams) => {
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey,
     queryFn,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   return {

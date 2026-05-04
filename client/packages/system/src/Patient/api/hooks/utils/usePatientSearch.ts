@@ -3,5 +3,7 @@ import { usePatientApi } from '../utils/usePatientApi';
 
 export const usePatientSearch = () => {
   const api = usePatientApi();
-  return useMutation((params: PatientSearchInput) => api.get.search(params));
+  return useMutation({
+    mutationFn: (params: PatientSearchInput) => api.get.search(params)
+  });
 };
