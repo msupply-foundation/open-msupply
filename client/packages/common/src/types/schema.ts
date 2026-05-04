@@ -342,6 +342,37 @@ export type AllocateProgramNumberInput = {
 
 export type AllocateProgramNumberResponse = NumberNode;
 
+export type AncillaryItemMutations = {
+  __typename: 'AncillaryItemMutations';
+  deleteAncillaryItem: DeleteAncillaryItemResponse;
+  upsertAncillaryItem: UpsertAncillaryItemResponse;
+};
+
+export type AncillaryItemMutationsDeleteAncillaryItemArgs = {
+  input: DeleteAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemMutationsUpsertAncillaryItemArgs = {
+  input: UpsertAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemNode = {
+  __typename: 'AncillaryItemNode';
+  /** The ancillary item — the item to be added to the order as a supply for the principal. */
+  ancillaryItem?: Maybe<ItemNode>;
+  ancillaryItemId: Scalars['String']['output'];
+  /** Right-hand side of the stored `x:y` ratio (ancillary count). */
+  ancillaryQuantity: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+  /** The principal item — the item this ancillary supply should be ordered alongside. */
+  item?: Maybe<ItemNode>;
+  itemId: Scalars['String']['output'];
+  /** Left-hand side of the stored `x:y` ratio (principal count). */
+  itemQuantity: Scalars['Float']['output'];
+};
+
 export enum ApplyToLinesInput {
   AssignIfNone = 'ASSIGN_IF_NONE',
   AssignToAll = 'ASSIGN_TO_ALL',
@@ -1329,6 +1360,7 @@ export type CentralReportMutationsInstallUploadedReportsArgs = {
 
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
+  ancillaryItem: AncillaryItemMutations;
   assetCatalogue: AssetCatalogueMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
@@ -1707,6 +1739,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertAncillaryItemErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -1736,6 +1769,12 @@ export type DatetimeFilterInput = {
   beforeOrEqualTo?: InputMaybe<Scalars['DateTime']['input']>;
   equalTo?: InputMaybe<Scalars['DateTime']['input']>;
 };
+
+export type DeleteAncillaryItemInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteAncillaryItemResponse = DeleteResponse;
 
 export type DeleteAssetCatalogueItemError = {
   __typename: 'DeleteAssetCatalogueItemError';
@@ -4213,6 +4252,7 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertAncillaryItemErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -4766,6 +4806,16 @@ export type ItemLedgerResponse = ItemLedgerConnector;
 
 export type ItemNode = {
   __typename: 'ItemNode';
+  /**
+   * Ancillary item links where this item is the ancillary supply for some
+   * other (principal) item.
+   */
+  ancillaryFor: Array<AncillaryItemNode>;
+  /**
+   * Ancillary items configured against this item — i.e. items that should be
+   * ordered alongside it (e.g. syringes that go with a vaccine).
+   */
+  ancillaryItems: Array<AncillaryItemNode>;
   atcCategory: Scalars['String']['output'];
   availableBatches: StockLineConnector;
   availableStockOnHand: Scalars['Int']['output'];
@@ -11146,6 +11196,29 @@ export enum UploadedPluginErrorVariant {
 }
 
 export type UploadedPluginInfoResponse = PluginInfoNode | UploadedPluginError;
+
+export type UpsertAncillaryItemError = {
+  __typename: 'UpsertAncillaryItemError';
+  error: UpsertAncillaryItemErrorInterface;
+};
+
+export type UpsertAncillaryItemErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertAncillaryItemInput = {
+  ancillaryItemId: Scalars['String']['input'];
+  /** Right-hand side of the user-entered `x:y` ratio (ancillary count). */
+  ancillaryQuantity: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  /** Left-hand side of the user-entered `x:y` ratio (principal count). */
+  itemQuantity: Scalars['Float']['input'];
+};
+
+export type UpsertAncillaryItemResponse =
+  | AncillaryItemNode
+  | UpsertAncillaryItemError;
 
 export type UpsertBundledItemError = {
   __typename: 'UpsertBundledItemError';
