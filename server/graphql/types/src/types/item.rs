@@ -9,7 +9,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        AncillaryItemsByAncillaryLinkIdLoader, AncillaryItemsByItemLinkIdLoader,
+        AncillaryItemsByAncillaryIdLoader, AncillaryItemsByItemIdLoader,
         ItemCategoryLoader, ItemDirectionsByItemIdLoader, ItemStatsLoaderInput,
         ItemStoreJoinLoader, ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader,
         ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
@@ -178,7 +178,7 @@ impl ItemNode {
     /// Ancillary items configured against this item — i.e. items that should be
     /// ordered alongside it (e.g. syringes that go with a vaccine).
     pub async fn ancillary_items(&self, ctx: &Context<'_>) -> Result<Vec<AncillaryItemNode>> {
-        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByItemLinkIdLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByItemIdLoader>>();
         let result = loader
             .load_one(self.row().id.clone())
             .await?
@@ -190,7 +190,7 @@ impl ItemNode {
     /// Ancillary item links where this item is the ancillary supply for some
     /// other (principal) item.
     pub async fn ancillary_for(&self, ctx: &Context<'_>) -> Result<Vec<AncillaryItemNode>> {
-        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByAncillaryLinkIdLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByAncillaryIdLoader>>();
         let result = loader
             .load_one(self.row().id.clone())
             .await?

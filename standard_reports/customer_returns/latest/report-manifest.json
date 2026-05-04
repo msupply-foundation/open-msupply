@@ -1,0 +1,17 @@
+{
+  "is_custom": false,
+  "version": "2.17.3",
+  "code": "customer-returns",
+  "context": "REPORT",
+  "sub_context": "Distribution",
+  "name": "Customer Returns",
+  "queries": {
+    "gql": "query.graphql"
+  },
+  "arguments": {
+    "schema": "argument_schemas/arguments.json",
+    "ui": "argument_schemas/arguments_ui.json"
+  },
+  "convert_data": "convert_data_js",
+  "convert_data_type": "BoaJs"
+}
