@@ -1,15 +1,15 @@
 use repository::{
-    asset_property_row::{AssetPropertyRow, AssetPropertyRowRepository},
+    asset_property_row::AssetPropertyRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
 use crate::sync::translations::asset_catalogue_type::AssetCatalogueTypeTranslation;
 use crate::sync::translations::asset_category::AssetCategoryTranslation;
 use crate::sync::translations::asset_class::AssetClassTranslation;
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -62,21 +62,17 @@ impl SyncTranslation for AssetPropertyTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AssetPropertyRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "AssetProperty row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::AssetProperty(asset_property_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let row = asset_property_row;
+
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
 }
 

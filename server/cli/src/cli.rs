@@ -12,7 +12,8 @@ use report_builder::{
 use repository::{
     get_storage_connection_manager, migrations::migrate, schema_from_row, test_db, ContextType,
     EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
+    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRepository,
+    SyncBufferRowInsert,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -25,7 +26,7 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        settings::SyncSettings, sync_buffer::SyncBufferSource,
+        settings::SyncSettings,
         sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
         synchroniser_driver::SynchroniserDriver,
     },
@@ -389,7 +390,7 @@ async fn main() -> anyhow::Result<()> {
 
             let data = InitialisationData {
                 // Sync Buffer Rows
-                sync_buffer_rows: SyncBufferRowRepository::new(&ctx.connection).get_all()?,
+                sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
                 users: synced_user_info_rows,
                 site_id: service_provider
                     .site_info_service
@@ -429,23 +430,26 @@ async fn main() -> anyhow::Result<()> {
             // Need to set site_id before integration
             KeyValueStoreRepository::new(&ctx.connection)
                 .set_i32(KeyType::SettingsSyncSiteId, Some(data.site_id))?;
-            let buffer_repo = SyncBufferRowRepository::new(&ctx.connection);
-            let buffer_rows = data
+            let buffer_repo = SyncBufferRepository::new(&ctx.connection);
+            let buffer_rows: Vec<SyncBufferRowInsert> = data
                 .sync_buffer_rows
                 .into_iter()
                 .map(|mut r| {
+                    // Reset integration state — we want re-init to retry integration
+                    r.integration_started_datetime = None;
                     r.integration_datetime = None;
                     r.integration_error = None;
-                    r
+                    r.integration_result = None;
+                    SyncBufferRowInsert::from(r)
                 })
                 .collect();
-            buffer_repo.upsert_many(&buffer_rows)?;
+            buffer_repo.insert_many(&buffer_rows)?;
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
             integrate_and_translate_sync_buffer(
                 &ctx.connection,
                 Some(&mut logger),
-                SyncBufferSource::Central(0),
+                0,
             )?;
 
             info!("Initialising users");

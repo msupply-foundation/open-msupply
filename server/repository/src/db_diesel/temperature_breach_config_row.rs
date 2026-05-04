@@ -4,8 +4,6 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
-use crate::SourceSiteId;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -26,7 +24,7 @@ joinable!(temperature_breach_config -> store (store_id));
 
 allow_tables_to_appear_in_same_query!(temperature_breach_config, temperature_log);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = temperature_breach_config)]
 pub struct TemperatureBreachConfigRow {
@@ -40,26 +38,6 @@ pub struct TemperatureBreachConfigRow {
     pub minimum_temperature: f64,
     pub maximum_temperature: f64,
 }
-
-impl TemperatureBreachConfigRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::TemperatureBreachConfig,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(self.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct TemperatureBreachConfigRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -76,12 +54,7 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        let changelog = row.generate_changelog(
-            self.connection,
-            RowActionType::Upsert,
-            SourceSiteId::CurrentSiteId,
-        )?;
-        ChangelogRepository::new(self.connection).insert(&changelog)
+        Ok(())
     }
 
     pub fn find_one_by_id(

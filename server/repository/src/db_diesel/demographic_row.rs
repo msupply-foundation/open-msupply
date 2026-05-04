@@ -1,7 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    ChangelogRepository, ChangelogSyncType,
     RepositoryError, RowActionType, SourceSiteId, Upsert,
 };
 
@@ -25,25 +25,6 @@ pub struct DemographicRow {
     pub name: String,
     pub population_percentage: f64,
 }
-
-impl DemographicRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Demographic,
-            record_id,
-            row_action: action,
-            store_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct DemographicRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -94,6 +75,12 @@ impl<'a> DemographicRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<DemographicRow>, RepositoryError> {
+        Ok(demographic::table
+            .filter(demographic::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

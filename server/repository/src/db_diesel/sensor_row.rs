@@ -1,9 +1,9 @@
 use super::{location_row::location, store_row::store, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -50,7 +50,9 @@ pub fn get_sensor_type(serial: &str) -> SensorType {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Default)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Deserialize, Default,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sensor)]
 pub struct SensorRow {
@@ -66,26 +68,6 @@ pub struct SensorRow {
     #[diesel(column_name = "type_")]
     pub r#type: SensorType,
 }
-
-impl SensorRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Sensor,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(self.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct SensorRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -127,6 +109,53 @@ impl<'a> SensorRowRepository<'a> {
         Ok(sensor::table
             .filter(sensor::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
+    }
+
+    fn _soft_delete(&self, sensor_id: &str) -> Result<(), RepositoryError> {
+        diesel::update(sensor::table)
+            .filter(sensor::id.eq(sensor_id))
+            .set(sensor::is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SensorRowDelete(pub String);
+
+impl Delete for SensorRowDelete {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = SensorRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                let row = repo.find_one_by_id(&self.0)?.ok_or_else(|| {
+                    RepositoryError::NotFound
+                })?;
+                row.generate_changelog(
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._soft_delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        let row = SensorRowRepository::new(con)
+            .find_one_by_id(&self.0)
+            .expect("sensor lookup");
+        assert_eq!(row.map(|r| r.is_active), Some(false));
     }
 }
 

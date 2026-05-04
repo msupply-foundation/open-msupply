@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::SourceSiteId;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RowActionType,
+    ChangelogRepository, ChangelogSyncType, RowActionType,
     Upsert,
 };
 
@@ -89,24 +89,6 @@ pub struct SyncFileReferenceRow {
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
-
-impl SyncFileReferenceRow {
-    pub(crate) fn generate_changelog(
-        changelog_record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::SyncFileReference,
-            record_id: changelog_record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct SyncFileReferenceRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -193,6 +175,12 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
         Ok(())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
+        Ok(sync_file_reference::table
+            .filter(sync_file_reference::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

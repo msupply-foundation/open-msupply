@@ -1,8 +1,7 @@
 use super::{item_link_row::item_link, master_list_row::master_list::dsl::*, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
-    ChangelogTableName, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -19,7 +18,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = master_list)]
 pub struct MasterListRow {
     pub id: String,
@@ -32,24 +31,6 @@ pub struct MasterListRow {
 }
 
 allow_tables_to_appear_in_same_query!(master_list, item_link);
-
-impl MasterListRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::MasterList,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct MasterListRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -89,6 +70,12 @@ impl<'a> MasterListRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<MasterListRow>, RepositoryError> {
+        Ok(master_list::table
+            .filter(master_list::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

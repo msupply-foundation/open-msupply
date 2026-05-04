@@ -1,9 +1,7 @@
 use super::asset_log_reason_row::asset_log_reason::dsl::*;
 
 use crate::asset_log_row::AssetLogStatus;
-use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
-use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::RowActionType;
 use crate::SourceSiteId;
@@ -35,26 +33,6 @@ pub struct AssetLogReasonRow {
     pub deleted_datetime: Option<NaiveDateTime>,
     pub comments_required: bool,
 }
-
-impl AssetLogReasonRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetLogReason,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct AssetLogReasonRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -115,11 +93,17 @@ impl<'a> AssetLogReasonRowRepository<'a> {
         let changelog = AssetLogReasonRow::generate_changelog(
             asset_log_reason_id.to_string(),
             self.connection,
-            RowActionType::Delete,
+            RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetLogReasonRow>, RepositoryError> {
+        Ok(asset_log_reason::table
+            .filter(asset_log_reason::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

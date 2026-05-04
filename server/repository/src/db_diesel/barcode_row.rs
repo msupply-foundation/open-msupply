@@ -6,7 +6,7 @@ use super::{
     name_link_row::name_link, RepositoryError, StorageConnection,
 };
 use crate::diesel_macros::define_linked_tables;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
@@ -35,7 +35,7 @@ joinable!(barcode -> name (manufacturer_id));
 joinable!(barcode_with_links -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(barcode, item_link);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = barcode)]
 pub struct BarcodeRow {
     pub id: String,
@@ -46,26 +46,6 @@ pub struct BarcodeRow {
     // Resolved from name_link - must be last to match view column order
     pub manufacturer_id: Option<String>,
 }
-
-impl BarcodeRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Barcode,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct BarcodeRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -99,6 +79,12 @@ impl<'a> BarcodeRowRepository<'a> {
             .filter(barcode::item_id.eq(item_id))
             .get_results(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<BarcodeRow>, RepositoryError> {
+        Ok(barcode::table
+            .filter(barcode::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

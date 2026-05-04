@@ -4,8 +4,7 @@ use crate::{
         location_type_row::location_type, name_link_row::name_link, name_row::name,
     },
     diesel_macros::define_linked_tables,
-    item_link, user_account, ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType,
-    ChangelogTableName, RepositoryError, RowActionType, SourceSiteId,
+    item_link, user_account, ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
 
@@ -61,25 +60,6 @@ pub struct ItemVariantRow {
     // Resolved from name_link - must be last to match view column order
     pub manufacturer_id: Option<String>,
 }
-
-impl ItemVariantRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ItemVariant,
-            record_id,
-            row_action: action,
-            store_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct ItemVariantRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -137,6 +117,12 @@ impl<'a> ItemVariantRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ItemVariantRow>, RepositoryError> {
+        Ok(item_variant::table
+            .filter(item_variant::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

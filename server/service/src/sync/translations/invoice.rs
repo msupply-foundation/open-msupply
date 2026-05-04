@@ -4,6 +4,7 @@ use crate::sync::translations::{
     diagnosis::DiagnosisTranslation, name::NameTranslation,
     name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
     shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
+
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -13,12 +14,15 @@ use repository::{
     InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository,
     StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
     UserAccountRow, UserAccountRowRepository,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
     date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
     naive_time, object_fields_as_option, zero_date_as_option, zero_f64_as_none,
+
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -328,6 +332,7 @@ fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
     }
 
     data
+
 }
 
 // Needs to be added to all_translators()
@@ -510,10 +515,15 @@ impl SyncTranslation for InvoiceTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Invoice(invoice_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(invoice) = InvoiceRepository::new(connection)
             .query_by_filter(
-                InvoiceFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                InvoiceFilter::new().id(EqualFilter::equal_to(invoice_row.id)),
             )?
             .pop()
         else {
@@ -646,16 +656,13 @@ impl SyncTranslation for InvoiceTranslation {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency,
                 charges_foreign_currency,
+            
             }),
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            json_record,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -833,6 +840,7 @@ fn map_legacy(
         }
     };
     mapping
+
 }
 
 struct ToLegacyDatetime {
@@ -1029,13 +1037,15 @@ fn check_owned_invoice_update(
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
         mock::{mock_store_a, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, KeyType,
+        KeyValueStoreRow, RowOrDelete,
     };
     use serde_json::json;
 
@@ -1092,23 +1102,26 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Invoice.equal_to())),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::Invoice),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = InvoiceTranslation {};
-        for changelog in changelogs {
+        for entry in entries {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

@@ -1,17 +1,18 @@
 use repository::{
-    rnr_form_row::{RnRFormRow, RnRFormRowRepository},
+    rnr_form_row::RnRFormRow,
     ChangelogRow, ChangelogTableName, RnRFormDelete, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
 use crate::sync::translations::{
     master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
     program_requisition_settings::ProgramRequisitionSettingsTranslation,
     requisition::RequisitionTranslation, store::StoreTranslation,
+
 };
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -69,21 +70,17 @@ impl SyncTranslation for RnRFormTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = RnRFormRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "RnRForm row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::RnrForm(rnr_form_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let row = rnr_form_row;
+
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
 
     fn try_translate_from_delete_sync_record(

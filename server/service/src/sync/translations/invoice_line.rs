@@ -2,6 +2,7 @@ use crate::sync::translations::{
     currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
     item_variant::ItemVariantTranslation, location::LocationTranslation, reason::ReasonTranslation,
     stock_line::StockLineTranslation,
+
 };
 
 use chrono::NaiveDate;
@@ -10,17 +11,17 @@ use repository::{
     InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineStatus,
     InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
     StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
     zero_date_as_option,
+
 };
 
-use super::{
-    is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck,
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
-};
+use super::{is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyTransLineType {
@@ -253,6 +254,7 @@ impl SyncTranslation for InvoiceLineTranslation {
 
                 let total = total_multiplier * number_of_packs;
                 (item.code, None, total, total)
+            
             }
         };
 
@@ -367,9 +369,14 @@ impl SyncTranslation for InvoiceLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::InvoiceLine(invoice_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(invoice_line) = InvoiceLineRepository::new(connection).query_one(
-            InvoiceLineFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+            InvoiceLineFilter::new().id(EqualFilter::equal_to(invoice_line_row.id)),
         )?
         else {
             return Err(anyhow::anyhow!("invoice_line row not found"));
@@ -462,11 +469,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_pack_size,
             manufacturer_id,
         };
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -521,13 +524,15 @@ fn adjust_negative_values(line: InvoiceLineRow) -> InvoiceLineRow {
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
         mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, KeyType,
+        KeyValueStoreRow, RowOrDelete,
     };
     use serde_json::json;
 
@@ -588,23 +593,26 @@ mod tests {
 
         merge_all_item_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::InvoiceLine.equal_to())),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::InvoiceLine),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = InvoiceLineTranslation {};
-        for changelog in changelogs {
+        for entry in entries {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

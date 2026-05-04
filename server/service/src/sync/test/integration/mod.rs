@@ -141,7 +141,7 @@ pub(crate) fn integrate_with_is_sync_reset(
     integrations: Vec<IntegrationOperation>,
 ) -> Vec<IntegrationOperation> {
     let changelog_repo = ChangelogRepository::new(&connection);
-    let cursor = changelog_repo.latest_cursor().unwrap();
+    let cursor = changelog_repo.max_cursor().unwrap();
     // Need to reset is_sync_update since we've inserted test data with sync methods
     // they need to sync to central (if is_sync_update is set to true they will not sync to central)
     let integrations: Vec<(Option<_>, IntegrationOperation)> =

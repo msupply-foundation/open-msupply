@@ -6,8 +6,8 @@ use super::{
 use crate::diesel_macros::define_linked_tables;
 use crate::SourceSiteId;
 use crate::{
-    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    RowActionType,
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
+    Upsert,
 };
 
 use diesel::prelude::*;
@@ -56,7 +56,7 @@ allow_tables_to_appear_in_same_query!(encounter, clinician_link);
 allow_tables_to_appear_in_same_query!(encounter, clinician);
 allow_tables_to_appear_in_same_query!(encounter, name);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = encounter)]
 pub struct EncounterRow {
     pub id: String,
@@ -75,26 +75,6 @@ pub struct EncounterRow {
     // Resolved from name_link - must be last to match view column order
     pub patient_id: String,
 }
-
-impl EncounterRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Encounter,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: self.store_id.clone(),
-            name_id: Some(self.patient_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct EncounterRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -120,5 +100,39 @@ impl<'a> EncounterRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<EncounterRow>, RepositoryError> {
+        Ok(encounter::table
+            .filter(encounter::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+}
+
+impl Upsert for EncounterRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        EncounterRowRepository::new(con)._upsert(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            EncounterRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

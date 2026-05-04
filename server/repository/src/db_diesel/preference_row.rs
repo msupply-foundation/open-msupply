@@ -1,6 +1,6 @@
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogSyncType, ChangelogTableName, Delete, RepositoryError, RowActionType, SourceSiteId,
+    db_diesel::changelog::changelog::RowOrId, ChangelogRepository,
+    ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
 
@@ -28,32 +28,6 @@ pub struct PreferenceRow {
     pub value: String,
     pub store_id: Option<String>,
 }
-
-impl PreferenceRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<PreferenceRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &PreferenceRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Preference,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: row.store_id.clone(),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct PreferenceRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -118,6 +92,12 @@ impl<'a> PreferenceRowRepository<'a> {
         diesel::delete(preference.filter(preference::id.eq(preference_id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PreferenceRow>, RepositoryError> {
+        Ok(preference::table
+            .filter(preference::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

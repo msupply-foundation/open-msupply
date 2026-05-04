@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 use crate::sync::translations::{
     clinician::ClinicianTranslation, PullTranslateResult, SyncTranslation,
+
 };
 
 #[derive(Deserialize)]
@@ -69,20 +70,22 @@ impl SyncTranslation for ClinicianMergeTranslation {
 #[cfg(test)]
 mod tests {
     use crate::sync::{
-        sync_buffer::SyncBufferSource, synchroniser::integrate_and_translate_sync_buffer,
+        synchroniser::integrate_and_translate_sync_buffer,
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
+        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRepository,
+        SyncBufferRowInsert,
         SyncRecordData,
+    
     };
     use serde_json::json;
 
     #[actix_rt::test]
     async fn test_clinician_merge() {
         let mut sync_records = vec![
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "clinician_b_merge".to_string(),
                 table_name: "clinician".to_string(),
                 action: SyncAction::Merge,
@@ -90,9 +93,9 @@ mod tests {
                     "mergeIdToKeep": "clinician_b",
                     "mergeIdToDelete": "clinician_a"
                 })),
-                ..SyncBufferRow::default()
+                ..SyncBufferRowInsert::default()
             },
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "clinician_c_merge".to_string(),
                 table_name: "clinician".to_string(),
                 action: SyncAction::Merge,
@@ -100,7 +103,7 @@ mod tests {
                     "mergeIdToKeep": "clinician_c",
                     "mergeIdToDelete": "clinician_b"
                 })),
-                ..SyncBufferRow::default()
+                ..SyncBufferRowInsert::default()
             },
         ];
 
@@ -125,10 +128,10 @@ mod tests {
         )
         .await;
 
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&sync_records)
+        SyncBufferRepository::new(&connection)
+            .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, 0)
             .unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
@@ -146,11 +149,11 @@ mod tests {
         .await;
 
         sync_records.reverse();
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&sync_records)
+        SyncBufferRepository::new(&connection)
+            .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, 0)
             .unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);

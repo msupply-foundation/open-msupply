@@ -1,11 +1,11 @@
 use repository::{
-    BackendPluginRow, BackendPluginRowDelete, BackendPluginRowRepository, ChangelogRow,
+    BackendPluginRow, BackendPluginRowDelete, ChangelogRow,
     ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -54,21 +54,17 @@ impl SyncTranslation for BackendPluginTranslator {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = BackendPluginRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "backend_plugin row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::BackendPlugin(backend_plugin_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let row = backend_plugin_row;
+
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
 
     fn try_translate_from_delete_sync_record(

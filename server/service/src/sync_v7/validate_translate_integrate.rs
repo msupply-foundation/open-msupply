@@ -1,20 +1,25 @@
 use crate::{
-    sync::ActiveStoresOnSite,
-    sync_v7::{sync_logger::SyncLogger, write_sync_buffer_success},
+    sync::{
+        sync_buffer::{write_sync_buffer_error, write_sync_buffer_success},
+        ActiveStoresOnSite,
+    },
+    sync_v7::{serde::deserialize, sync_logger::SyncLogger},
 };
 
-use super::{validate::*, write_sync_buffer_error};
-use repository::syncv7::INTEGRATION_ORDER;
+use super::validate::*;
+use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
 use repository::{
-    ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRow, CurrencyRowDelete,
-    DatetimeFilter, Delete, EqualFilter, InvoiceLineRow, InvoiceLineRowDelete, InvoiceRow,
-    InvoiceRowDelete, ItemRow, ItemRowDelete, LocationTypeRow, LocationTypeRowDelete, NameRow,
-    NameRowDelete, RepositoryError, RowActionType, StockLineRow, StockLineRowDelete,
-    StorageConnection, StoreRow, StoreRowDelete, SyncAction, SyncBufferFilter,
-    SyncBufferRepository, SyncBufferRow, UnitRow, UnitRowDelete, Upsert,
+    ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRowDelete, CursorDirection,
+    Delete, InvoiceLineRowDelete, InvoiceRowDelete, ItemRowDelete, LocationTypeRowDelete,
+    NameRowDelete, PendingQuery, RepositoryError, RowActionType, StockLineRowDelete,
+    StorageConnection, StoreRowDelete, SyncAction, SyncBufferRepository, SyncBufferRow,
+    SyncVersion, UnitRowDelete, Upsert,
 };
 use serde::de::Error as _;
 use thiserror::Error;
+use util::{datetime_now, format_error};
+
+const PROGRESS_INTERVAL: i64 = 1000;
 
 pub(crate) enum SyncContext {
     Central {
@@ -26,14 +31,14 @@ pub(crate) enum SyncContext {
     },
 }
 
-static PROGRESS_INTERVAL: i64 = 1000;
-
 #[derive(Error, Debug)]
 enum Error {
     #[error(transparent)]
     RepositoryError(#[from] RepositoryError),
     #[error("Error during record translation")]
     TranslationError(#[from] serde_json::Error),
+    #[error("Error during record deserialization: {0}")]
+    DeserializeError(#[from] SyncRecordSerializeError),
     #[error("Error during record validation")]
     ValidationError(#[from] ValidationError),
     #[error("Error during record integration")]
@@ -76,46 +81,11 @@ fn changelog(
         record_id: row.record_id.clone(),
         row_action: action,
         store_id: row.store_id.clone(),
-        source_site_id: row.source_site_id,
+        source_site_id: Some(row.source_site_id),
         transfer_store_id: row.transfer_store_id.clone(),
         patient_id: row.patient_id.clone(),
         ..Default::default()
     }
-}
-
-fn translate_upsert(
-    table_name: &ChangelogTableName,
-    data: &serde_json::Value,
-) -> Result<Box<dyn Upsert>, Error> {
-    let upsert: Box<dyn Upsert> = match table_name {
-        ChangelogTableName::Unit => Box::new(serde_json::from_value::<UnitRow>(data.clone())?),
-        ChangelogTableName::Currency => {
-            Box::new(serde_json::from_value::<CurrencyRow>(data.clone())?)
-        }
-        ChangelogTableName::Name => Box::new(serde_json::from_value::<NameRow>(data.clone())?),
-        ChangelogTableName::Store => Box::new(serde_json::from_value::<StoreRow>(data.clone())?),
-        ChangelogTableName::LocationType => {
-            Box::new(serde_json::from_value::<LocationTypeRow>(data.clone())?)
-        }
-        ChangelogTableName::Item => Box::new(serde_json::from_value::<ItemRow>(data.clone())?),
-        ChangelogTableName::StockLine => {
-            Box::new(serde_json::from_value::<StockLineRow>(data.clone())?)
-        }
-        ChangelogTableName::Invoice => {
-            Box::new(serde_json::from_value::<InvoiceRow>(data.clone())?)
-        }
-        ChangelogTableName::InvoiceLine => {
-            Box::new(serde_json::from_value::<InvoiceLineRow>(data.clone())?)
-        }
-        _ => {
-            return Err(Error::TranslationError(serde_json::Error::custom(format!(
-                "No upsert translator for table {:?}",
-                table_name
-            ))))
-        }
-    };
-
-    Ok(upsert)
 }
 
 fn integrate_upsert(
@@ -200,7 +170,7 @@ fn validate_translate_integrate_one(
 
     match row.action {
         SyncAction::Upsert => {
-            let upsert = translate_upsert(&table_name, &row.data)?;
+            let upsert = deserialize(&table_name, &row.data)?;
             integrate_upsert(connection, upsert, table_name, row)
         }
         SyncAction::Delete => {
@@ -215,46 +185,44 @@ fn validate_translate_integrate_one(
 pub fn validate_translate_integrate<'a>(
     connection: &StorageConnection,
     mut logger: Option<&mut SyncLogger<'a>>,
-    sync_buffer_filter: Option<SyncBufferFilter>,
+    source_site_id: i32,
+    reference: Option<&str>,
     sync_context: SyncContext,
 ) -> Result<(), RepositoryError> {
     // TODO this is too hacky, prefer active store cache
     let mut sync_context = sync_context;
 
-    let base_filter = SyncBufferFilter::new().integration_datetime(DatetimeFilter::is_null(true));
+    let repo = SyncBufferRepository::new(connection);
 
-    let filter = match sync_buffer_filter {
-        Some(extra) => SyncBufferFilter {
-            integration_datetime: base_filter.integration_datetime,
-            source_site_id: extra.source_site_id,
-            ..extra
-        },
-        None => base_filter,
-    };
-
-    let mut total = SyncBufferRepository::new(connection).count(filter.clone())?;
+    let mut total = repo.count_pending(source_site_id, SyncVersion::V7, reference)?;
     let mut last_progress = total / PROGRESS_INTERVAL;
 
     if let Some(logger) = logger.as_mut() {
         logger.progress(total)?;
     }
 
-    let mut integrate_table = |table: &ChangelogTableName,
-                               action_filter: &SyncBufferFilter|
+    let mut integrate_table = |logger: &mut Option<&mut SyncLogger<'a>>,
+                               table: &ChangelogTableName,
+                               action: SyncAction,
+                               direction: CursorDirection|
      -> Result<(), RepositoryError> {
-        let per_table_filter = action_filter
-            .clone()
-            .table_name(EqualFilter::equal_to(table.to_string()));
-
-        let rows = SyncBufferRepository::new(connection).query(Some(per_table_filter))?;
+        let rows = repo.pending_ordered_by_cursor(PendingQuery {
+            source_site_id,
+            sync_version: SyncVersion::V7,
+            reference,
+            table_name: &table.to_string(),
+            action,
+            direction,
+        })?;
 
         let had_store_records = *table == ChangelogTableName::Store && !rows.is_empty();
 
         for row in &rows {
+            let started = datetime_now();
             match validate_translate_integrate_one(connection, row, &sync_context) {
-                Ok(()) => write_sync_buffer_success(&row.record_id, connection)?,
+                Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
                 Err(e) => {
-                    write_sync_buffer_error(&row.record_id, connection, &e)?;
+                    write_sync_buffer_error(connection, row.cursor, started, &format_error(&e))?;
                 }
             }
 
@@ -283,16 +251,19 @@ pub fn validate_translate_integrate<'a>(
         Ok(())
     };
 
-    // Upserts: parents before children.
-    let upsert_filter = filter.clone().action(SyncAction::Upsert.equal_to());
+    // Upserts: parents before children, rows ordered by cursor ASC within each table.
     for table in INTEGRATION_ORDER {
-        integrate_table(table, &upsert_filter)?;
+        integrate_table(&mut logger, table, SyncAction::Upsert, CursorDirection::Asc)?;
     }
 
-    // Deletes: children before parents.
-    let delete_filter = filter.clone().action(SyncAction::Delete.equal_to());
+    // Deletes: children before parents, rows ordered by cursor DESC within each table.
     for table in INTEGRATION_ORDER.iter().rev() {
-        integrate_table(table, &delete_filter)?;
+        integrate_table(
+            &mut logger,
+            table,
+            SyncAction::Delete,
+            CursorDirection::Desc,
+        )?;
     }
 
     Ok(())

@@ -5,7 +5,8 @@ use crate::diesel_macros::{
     define_linked_tables,
 };
 use crate::SourceSiteId;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
+use crate::{ChangelogSyncType, Upsert};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -62,7 +63,16 @@ pub enum DocumentStatus {
     Deleted,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[cfg_attr(test, derive(Default))]
 #[diesel(table_name = document)]
 pub struct DocumentRow {
@@ -216,9 +226,9 @@ impl<'a> DocumentRepository<'a> {
 
     /// Inserts a document
     pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
-        self._upsert(&doc.to_row()?)?;
-        let changelog = Document::generate_changelog(
-            doc.id.clone(),
+        let row = doc.to_row()?;
+        self._upsert(&row)?;
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -335,6 +345,12 @@ impl<'a> DocumentRepository<'a> {
         }
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<DocumentRow>, RepositoryError> {
+        Ok(document::table
+            .filter(document::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
@@ -380,24 +396,35 @@ fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
     Ok(document)
 }
 
-impl Document {
-    pub(crate) fn generate_changelog(
-        record_id: String,
+impl Upsert for DocumentRow {
+    fn upsert_sync(
+        &self,
         con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Document,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        DocumentRepository::new(con)._upsert(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        let stored = DocumentRepository::new(con)
+            .find_many_by_id(&[self.id.clone()])
+            .expect("document lookup");
+        assert_eq!(stored.first(), Some(self));
+    }
+}
+
+impl Document {
     pub fn to_row(&self) -> Result<DocumentRow, RepositoryError> {
         let parents =
             serde_json::to_string(&self.parent_ids).map_err(|err| RepositoryError::DBError {

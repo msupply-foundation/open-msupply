@@ -2,7 +2,7 @@ use super::{
     location_row::location, stock_line_row::stock_line, store_row::store, StorageConnection,
 };
 use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -22,7 +22,7 @@ joinable!(location_movement -> store (store_id));
 joinable!(location_movement -> stock_line (stock_line_id));
 joinable!(location_movement -> location (location_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = location_movement)]
 pub struct LocationMovementRow {
     pub id: String,
@@ -32,26 +32,6 @@ pub struct LocationMovementRow {
     pub enter_datetime: Option<NaiveDateTime>,
     pub exit_datetime: Option<NaiveDateTime>,
 }
-
-impl LocationMovementRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::LocationMovement,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: Some(self.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct LocationMovementRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -93,6 +73,12 @@ impl<'a> LocationMovementRowRepository<'a> {
         diesel::delete(location_movement::table.filter(location_movement::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationMovementRow>, RepositoryError> {
+        Ok(location_movement::table
+            .filter(location_movement::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

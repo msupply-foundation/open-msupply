@@ -9,7 +9,7 @@ use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
 
 use crate::db_diesel::changelog::changelog::RowOrId;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -130,33 +130,6 @@ pub struct RequisitionRow {
     pub name_id: String,
     pub destination_customer_id: Option<String>,
 }
-
-impl RequisitionRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<RequisitionRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &RequisitionRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Requisition,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: Some(row.name_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct RequisitionRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -216,6 +189,12 @@ impl<'a> RequisitionRowRepository<'a> {
             .select(diesel::dsl::max(requisition::requisition_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<RequisitionRow>, RepositoryError> {
+        Ok(requisition::table
+            .filter(requisition::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

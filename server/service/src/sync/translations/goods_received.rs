@@ -2,11 +2,12 @@ use super::{
     currency::CurrencyTranslation, invoice::InvoiceTranslation, name::NameTranslation,
     purchase_order::PurchaseOrderTranslation, store::StoreTranslation, PullTranslateResult,
     SyncTranslation,
+
 };
 use chrono::NaiveDate;
 use repository::{
     InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, PurchaseOrderRowRepository,
-    StorageConnection, SyncBufferRow, SyncBufferRowRepository,
+    StorageConnection, SyncBufferRow, SyncBufferRepository,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -49,7 +50,7 @@ fn find_linked_invoice_id(
     goods_received_id: &str,
 ) -> Result<Option<String>, anyhow::Error> {
     let pattern = format!("%\"goods_received_ID\"%\"{goods_received_id}\"%");
-    let rows = SyncBufferRowRepository::new(connection)
+    let rows = SyncBufferRepository::new(connection)
         .find_by_table_and_data_like("transact", &pattern)?;
 
     // Verify the match by parsing JSON (LIKE can produce false positives)

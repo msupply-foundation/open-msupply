@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use repository::{
-    ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRepository,
+    ChangelogCondition, ChangelogRow, ChangelogTableName, EqualFilter, FilterBuilder,
+    InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRepository,
     InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyType, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, RequisitionStatus, RequisitionType,
 };
@@ -164,18 +164,17 @@ impl Processor for RequisitionAutoFinaliseProcessor {
         )))
     }
 
-    fn changelogs_filter(&self, ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
+    fn changelogs_filter(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<ChangelogCondition::Inner, ProcessorError> {
         let active_stores = ActiveStoresOnSite::get(&ctx.connection)
             .map_err(ProcessorError::GetActiveStoresOnSiteError)?;
 
-        let filter = ChangelogFilter::new()
-            .table_name(EqualFilter {
-                equal_to: Some(ChangelogTableName::Invoice),
-                ..Default::default()
-            })
-            .store_id(EqualFilter::equal_any(active_stores.store_ids()));
-
-        Ok(filter)
+        Ok(ChangelogCondition::And(vec![
+            ChangelogCondition::table_name::equal(ChangelogTableName::Invoice),
+            ChangelogCondition::store_id::any(active_stores.store_ids()),
+        ]))
     }
 
     fn cursor_type(&self) -> CursorType {

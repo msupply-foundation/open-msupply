@@ -6,7 +6,9 @@ use super::{
 use crate::diesel_macros::define_linked_tables;
 use crate::name_row::name;
 use crate::repository_error::RepositoryError;
-use crate::{Delete, ChangelogSyncType, Upsert};
+use crate::{
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
+};
 use diesel::prelude::*;
 
 define_linked_tables! {
@@ -24,7 +26,7 @@ define_linked_tables! {
     }
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = master_list_name_join)]
 pub struct MasterListNameJoinRow {
     pub id: String,
@@ -47,7 +49,13 @@ impl<'a> MasterListNameJoinRepository<'a> {
 
     pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        Ok(())
+        let changelog = MasterListNameJoinRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -61,7 +69,16 @@ impl<'a> MasterListNameJoinRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, record_id: &str) -> Result<(), RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<MasterListNameJoinRow>, RepositoryError> {
+        Ok(master_list_name_join
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    fn _delete(&self, record_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             master_list_name_join_with_links::table
                 .filter(master_list_name_join_with_links::id.eq(record_id)),
@@ -69,14 +86,44 @@ impl<'a> MasterListNameJoinRepository<'a> {
         .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn delete(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete(record_id)?;
+        let changelog = MasterListNameJoinRow::generate_changelog(
+            record_id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct MasterListNameJoinRowDelete(pub String);
 impl Delete for MasterListNameJoinRowDelete {
-    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        MasterListNameJoinRepository::new(con).delete(&self.0)?;
-        Ok(()) // Table not in Changelog
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = MasterListNameJoinRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                MasterListNameJoinRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -88,9 +135,25 @@ impl Delete for MasterListNameJoinRowDelete {
 }
 
 impl Upsert for MasterListNameJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        MasterListNameJoinRepository::new(con).upsert_one(self)?;
-        Ok(()) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        MasterListNameJoinRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

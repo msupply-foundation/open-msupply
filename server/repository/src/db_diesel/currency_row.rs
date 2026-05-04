@@ -2,7 +2,7 @@ use super::StorageConnection;
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
 use crate::repository_error::RepositoryError;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -39,24 +39,6 @@ pub struct CurrencyRow {
     pub date_updated: Option<NaiveDate>,
     pub is_active: bool,
 }
-
-impl CurrencyRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Currency,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct CurrencyRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -98,6 +80,13 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CurrencyRow>, RepositoryError> {
+        let result = currency::table
+            .filter(currency::id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     fn _delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
         diesel::update(currency::table.filter(currency::id.eq(currency_id)))
             .set(currency::is_active.eq(false))
@@ -110,7 +99,7 @@ impl<'a> CurrencyRowRepository<'a> {
         let changelog = CurrencyRow::generate_changelog(
             currency_id.to_string(),
             self.connection,
-            RowActionType::Delete,
+            RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
@@ -131,7 +120,7 @@ impl Delete for CurrencyRowDelete {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => CurrencyRow::generate_changelog(
                 self.0.clone(),
                 con,
-                RowActionType::Delete,
+                RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,

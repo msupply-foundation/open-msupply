@@ -1,13 +1,15 @@
 use crate::sync::translations::{invoice::InvoiceTranslation, store::StoreTranslation};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+    ChangelogRow, ChangelogTableName, Row, StocktakeRow, StocktakeStatus,
     StorageConnection, SyncBufferRow,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
     empty_str_as_option_string, naive_time, zero_date_as_option,
+
 };
 
 use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
@@ -160,9 +162,13 @@ impl SyncTranslation for StocktakeTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Stocktake(stocktake) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
         let StocktakeRow {
             id,
             user_id,
@@ -181,9 +187,7 @@ impl SyncTranslation for StocktakeTranslation {
             counted_by,
             verified_by,
             is_initial_stocktake,
-        } = StocktakeRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
+        } = stocktake;
 
         let legacy_row = LegacyStocktakeRow {
             ID: id.clone(),
@@ -207,11 +211,7 @@ impl SyncTranslation for StocktakeTranslation {
             is_initial_stocktake,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(

@@ -4,7 +4,7 @@ use crate::{
     db_diesel::store_row::store, repository_error::RepositoryError, user_account,
     ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -123,7 +123,7 @@ pub enum ActivityLogType {
     InvoiceDateBackdated,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = activity_log)]
 pub struct ActivityLogRow {
@@ -137,26 +137,6 @@ pub struct ActivityLogRow {
     pub changed_to: Option<String>,
     pub changed_from: Option<String>,
 }
-
-impl ActivityLogRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ActivityLog,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: self.store_id.clone(),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct ActivityLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -196,6 +176,12 @@ impl<'a> ActivityLogRowRepository<'a> {
             .filter(activity_log::record_id.eq(id))
             .get_results(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ActivityLogRow>, RepositoryError> {
+        Ok(activity_log::table
+            .filter(activity_log::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

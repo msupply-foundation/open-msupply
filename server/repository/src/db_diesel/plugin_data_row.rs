@@ -1,5 +1,5 @@
 use super::{
-    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    store_row::store, ChangelogRepository, RowActionType,
     StorageConnection,
 };
 
@@ -36,26 +36,6 @@ pub struct PluginDataRow {
     pub data_identifier: String, // Used by the plugin to identify the data, often would be a table name
     pub data: String,
 }
-
-impl PluginDataRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::PluginData,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: self.store_id.clone(),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct PluginDataRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -92,6 +72,12 @@ impl<'a> PluginDataRowRepository<'a> {
             .optional()?;
 
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PluginDataRow>, RepositoryError> {
+        Ok(plugin_data::table
+            .filter(plugin_data::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

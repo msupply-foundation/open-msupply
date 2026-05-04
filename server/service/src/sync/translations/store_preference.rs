@@ -83,6 +83,7 @@ pub struct LegacyPrefData {
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(StorePreferenceTranslation)
+
 }
 
 pub(super) struct StorePreferenceTranslation;

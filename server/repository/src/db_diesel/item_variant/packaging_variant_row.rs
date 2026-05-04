@@ -1,5 +1,5 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName,
+    ChangelogRepository, ChangelogSyncType,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
@@ -31,25 +31,6 @@ pub struct PackagingVariantRow {
     pub volume_per_unit: Option<f64>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
-
-impl PackagingVariantRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::PackagingVariant,
-            record_id,
-            row_action: action,
-            store_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct PackagingVariantRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -106,6 +87,12 @@ impl<'a> PackagingVariantRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PackagingVariantRow>, RepositoryError> {
+        Ok(packaging_variant::table
+            .filter(packaging_variant::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

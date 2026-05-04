@@ -1,6 +1,6 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RowActionType};
+use crate::{ChangelogRepository, Delete, RowActionType};
 use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 
 use diesel::prelude::*;
@@ -17,33 +17,13 @@ joinable!(clinician_store_join -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(clinician, clinician_store_join);
 allow_tables_to_appear_in_same_query!(clinician_store_join, clinician_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = clinician_store_join)]
 pub struct ClinicianStoreJoinRow {
     pub id: String,
     pub store_id: String,
     pub clinician_link_id: String,
 }
-
-impl ClinicianStoreJoinRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ClinicianStoreJoin,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct ClinicianStoreJoinRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -93,6 +73,12 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         )
         .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ClinicianStoreJoinRow>, RepositoryError> {
+        Ok(clinician_store_join::table
+            .filter(clinician_store_join::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

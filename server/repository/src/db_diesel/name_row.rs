@@ -5,11 +5,10 @@ use super::{
     StorageConnection,
 };
 use crate::{
-    item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
-    ChangelogRepository, ChangelogTableName, EqualFilter, NameLinkRow, NameLinkRowRepository,
-    RowActionType,
+    item_link, name_link, repository_error::RepositoryError, ChangelogRepository, EqualFilter,
+    NameLinkRow, NameLinkRowRepository, RowActionType,
 };
-use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{ChangelogSyncType, Delete, RowOrId, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -203,41 +202,6 @@ pub struct NameRow {
     pub freight_factor: Option<f64>,
     pub currency_id: Option<String>,
 }
-
-impl NameRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Name,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl NameOmsFieldsRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameOmsFields,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
 )]
@@ -283,7 +247,7 @@ impl<'a> NameRowRepository<'a> {
     pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = NameRow::generate_changelog(
-            row.id.clone(),
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -301,9 +265,9 @@ impl<'a> NameRowRepository<'a> {
     pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
         self._mark_deleted(name_id)?;
         let changelog = NameRow::generate_changelog(
-            name_id.to_string(),
+            RowOrId::Id(name_id),
             self.connection,
-            RowActionType::Delete,
+            RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
@@ -349,6 +313,15 @@ impl<'a> NameRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn find_many_oms_fields_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<NameOmsFieldsRow>, RepositoryError> {
+        Ok(name_oms_fields::table
+            .filter(name_oms_fields::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 
     pub fn update_properties(
@@ -404,9 +377,9 @@ impl Delete for NameRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => NameRow::generate_changelog(
-                self.0.clone(),
+                RowOrId::Id(&self.0),
                 con,
-                RowActionType::Delete,
+                RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
@@ -435,7 +408,7 @@ impl Upsert for NameRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+                RowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

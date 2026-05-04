@@ -322,6 +322,12 @@ pub use vaccination::*;
 pub use vaccination_card::*;
 pub use vaccination_course::*;
 pub use vaccination_row::*;
+pub use vaccine_course::*;
+pub use vvm_status::*;
+pub use item_variant::*;
+pub use contact_form_row::*;
+pub use name_insurance_join_row::*;
+pub use system_log_row::*;
 pub use warning::*;
 pub use warning_row::*;
 

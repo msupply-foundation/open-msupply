@@ -4,7 +4,7 @@ use crate::{
     clinician_link, ChangelogSyncType, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType,
     RepositoryError, SourceSiteId, Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
@@ -27,7 +27,7 @@ table! {
 
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = clinician)]
 pub struct ClinicianRow {
     pub id: String,
@@ -46,26 +46,6 @@ pub struct ClinicianRow {
 }
 
 allow_tables_to_appear_in_same_query!(clinician, clinician_link);
-
-impl ClinicianRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Clinician,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 fn insert_or_ignore_clinician_link(
     connection: &StorageConnection,
     row: &ClinicianRow,
@@ -135,6 +115,12 @@ impl<'a> ClinicianRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         insert_or_ignore_clinician_link(self.connection, row)?;
         Ok(())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ClinicianRow>, RepositoryError> {
+        Ok(clinician::table
+            .filter(clinician::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

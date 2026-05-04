@@ -6,7 +6,7 @@ use serde::Serialize;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
@@ -29,26 +29,6 @@ pub struct AssetCategoryRow {
     #[diesel(column_name = "asset_class_id")]
     pub class_id: String,
 }
-
-impl AssetCategoryRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetCategory,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct AssetCategoryRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -107,6 +87,12 @@ impl<'a> AssetCategoryRowRepository<'a> {
     //         .execute(self.connection.lock().connection())?;
     //     Ok(())
     // }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetCategoryRow>, RepositoryError> {
+        Ok(asset_category::table
+            .filter(asset_category::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for AssetCategoryRow {

@@ -3,7 +3,7 @@ use super::asset_class_row::asset_class::dsl::*;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
@@ -25,26 +25,6 @@ pub struct AssetClassRow {
     pub id: String,
     pub name: String,
 }
-
-impl AssetClassRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetClass,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct AssetClassRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -97,6 +77,12 @@ impl<'a> AssetClassRowRepository<'a> {
     //         .execute(self.connection.lock().connection())?;
     //     Ok(())
     // }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetClassRow>, RepositoryError> {
+        Ok(asset_class::table
+            .filter(asset_class::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for AssetClassRow {

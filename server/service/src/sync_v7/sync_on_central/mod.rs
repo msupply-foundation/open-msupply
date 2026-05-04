@@ -6,9 +6,9 @@ use std::{
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError, Site, SiteFilter,
-    SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter, SyncBufferFilter,
-    SyncBufferRowRepository,
+    ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
+    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter,
+    SyncBufferRepository,
 };
 use thiserror::Error;
 use util::format_error;
@@ -162,7 +162,7 @@ pub async fn pull(
 ) -> pull::Response {
     let (site, ctx) = validate(service_provider, &common)?;
 
-    let filter = Site::SiteId(site.id).all_data_for_site(input.is_initialising);
+    let filter = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
 
     let batch = SyncBatchV7::generate(&ctx.connection, filter, input.cursor, input.batch_size)?;
 
@@ -193,15 +193,16 @@ pub async fn push(
 
     let records_in_this_batch = records.len() as i64;
 
+    // The remote site's app_version arrives in the request header (Common::version).
+    let app_version = Some(common.version.clone());
+
     let sync_buffer_rows = records
         .into_iter()
-        .map(|record| sync_record_to_buffer_row(record, site_id))
+        .map(|record| sync_record_to_buffer_row(record, site_id, app_version.clone()))
         .collect::<Vec<_>>();
 
     ctx.connection
-        .transaction_sync(|t_con| {
-            SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
-        })
+        .transaction_sync(|t_con| SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows))
         .map_err(|e| e.to_inner_error())?;
 
     // SyncBatchV7 has no `remaining` field, so we can't gate spawn on "is last batch".
@@ -247,13 +248,13 @@ async fn spawn_integration_inner(
 ) -> Result<(), SpawnIntegrationError> {
     let ctx = service_provider.basic_context()?;
 
-    let filter = SyncBufferFilter::new().source_site_id(EqualFilter::equal_to(site_id));
     let active_stores = ActiveStoresOnSite::get(&ctx.connection)?;
 
     validate_translate_integrate(
         &ctx.connection,
         None,
-        Some(filter),
+        site_id,
+        None,
         SyncContext::Central { active_stores },
     )?;
     Ok(())

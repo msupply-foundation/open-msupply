@@ -3,9 +3,7 @@ use super::asset_property_row::asset_property::dsl::*;
 use serde::{Deserialize, Serialize};
 
 use crate::types::PropertyValueType;
-use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
-use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::RowActionType;
 use crate::SourceSiteId;
@@ -42,26 +40,6 @@ pub struct AssetPropertyRow {
     pub value_type: PropertyValueType,
     pub allowed_values: Option<String>,
 }
-
-impl AssetPropertyRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetProperty,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct AssetPropertyRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -119,6 +97,12 @@ impl<'a> AssetPropertyRowRepository<'a> {
             .filter(id.eq(asset_property_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetPropertyRow>, RepositoryError> {
+        Ok(asset_property::table
+            .filter(asset_property::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

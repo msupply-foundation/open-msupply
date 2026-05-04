@@ -8,7 +8,7 @@ use crate::{
     db_diesel::vvm_status::vvm_status_row::vvm_status, diesel_macros::define_linked_tables,
     repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
@@ -91,32 +91,6 @@ pub struct StockLineRow {
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
 }
-
-impl StockLineRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<StockLineRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &StockLineRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::StockLine,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct StockLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }

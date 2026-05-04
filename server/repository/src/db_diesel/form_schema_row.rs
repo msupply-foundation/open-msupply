@@ -1,5 +1,5 @@
 use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
+    ChangelogRepository, RowActionType, StorageConnection,
 };
 
 use crate::{ChangelogSyncType, Delete, RepositoryError, SourceSiteId, Upsert};
@@ -16,7 +16,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Deserialize, serde::Serialize)]
 #[diesel(table_name = form_schema)]
 pub struct FormSchemaRow {
     /// The json schema id
@@ -34,26 +34,6 @@ pub struct FormSchemaJson {
     pub json_schema: serde_json::Value,
     pub ui_schema: serde_json::Value,
 }
-
-impl FormSchemaJson {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::FormSchema,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct FormSchemaRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -148,10 +128,58 @@ impl<'a> FormSchemaRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_rows_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<FormSchemaRow>, RepositoryError> {
+        Ok(form_schema::dsl::form_schema
+            .filter(form_schema::dsl::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(form_schema::dsl::form_schema.filter(form_schema::dsl::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn _upsert_one_row(&self, row: &FormSchemaRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(form_schema::dsl::form_schema)
+            .values(row)
+            .on_conflict(form_schema::dsl::id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+}
+
+impl Upsert for FormSchemaRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        FormSchemaRowRepository::new(con)._upsert_one_row(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FormSchemaJson::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        let stored = FormSchemaRowRepository::new(con)
+            .find_many_rows_by_id(&[self.id.clone()])
+            .expect("form schema lookup");
+        assert_eq!(stored.first(), Some(self));
     }
 }
 

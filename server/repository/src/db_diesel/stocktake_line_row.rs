@@ -7,10 +7,10 @@ use super::{
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
 use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, StocktakeRow,
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId,
     Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
@@ -61,7 +61,7 @@ joinable!(stocktake_line -> name (donor_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
 allow_tables_to_appear_in_same_query!(stocktake_line, reason_option);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = stocktake_line)]
 pub struct StocktakeLineRow {
     pub id: String,
@@ -94,34 +94,6 @@ pub struct StocktakeLineRow {
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
 }
-
-impl StocktakeLineRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<StocktakeLineRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &StocktakeLineRowRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        let stocktake_changelog = StocktakeRow::generate_changelog(
-            RowOrId::Id(&row.stocktake_id),
-            con,
-            action,
-            source_site_id,
-        )?;
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::StocktakeLine,
-            record_id: row.id.clone(),
-            ..stocktake_changelog
-        })
-    }
-}
-
 pub struct StocktakeLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }

@@ -1,5 +1,5 @@
 use super::{
-    name_row::name, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    name_row::name, ChangelogRepository, RowActionType,
     StorageConnection,
 };
 use crate::ChangelogSyncType;
@@ -31,7 +31,7 @@ define_linked_tables! {
 joinable!(indicator_value -> name (customer_name_id));
 allow_tables_to_appear_in_same_query!(indicator_value, name);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = indicator_value)]
 pub struct IndicatorValueRow {
     pub id: String,
@@ -43,26 +43,6 @@ pub struct IndicatorValueRow {
     // Resolved from name_link - must be last to match view column order
     pub customer_name_id: String,
 }
-
-impl IndicatorValueRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::IndicatorValue,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct IndicatorValueRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -108,6 +88,12 @@ impl<'a> IndicatorValueRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+        Ok(indicator_value::table
+            .filter(indicator_value::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

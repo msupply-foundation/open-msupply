@@ -4,7 +4,7 @@ use crate::db_diesel::item_row::item;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RowActionType,
+    ChangelogRepository, ChangelogSyncType, RowActionType,
     SourceSiteId, Upsert,
 };
 
@@ -37,25 +37,6 @@ pub struct VaccineCourseItemRow {
     pub item_link_id: String,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
-
-impl VaccineCourseItemRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::VaccineCourseItem,
-            record_id,
-            row_action: action,
-            store_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct VaccineCourseItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -121,6 +102,12 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseItemRow>, RepositoryError> {
+        Ok(vaccine_course_item::table
+            .filter(vaccine_course_item::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

@@ -4,11 +4,12 @@ use super::{
     item::ItemTranslation,
     purchase_order_line::PurchaseOrderLineTranslation,
     PullTranslateResult, SyncTranslation,
+
 };
 use chrono::NaiveDate;
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
-    StorageConnection, SyncBufferRow, SyncBufferRowRepository,
+    StorageConnection, SyncBufferRow, SyncBufferRepository,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -63,7 +64,7 @@ fn find_linked_invoice_line_id(
     goods_received_line_id: &str,
 ) -> Result<Option<String>, anyhow::Error> {
     let pattern = format!("%\"goods_received_lines_ID\"%\"{goods_received_line_id}\"%");
-    let rows = SyncBufferRowRepository::new(connection)
+    let rows = SyncBufferRepository::new(connection)
         .find_by_table_and_data_like("trans_line", &pattern)?;
 
     // Verify the match by parsing JSON (LIKE can produce false positives)
@@ -122,7 +123,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         }
 
         // Look up parent GR to check if finalized
-        let gr_sync_row = match SyncBufferRowRepository::new(connection)
+        let gr_sync_row = match SyncBufferRepository::new(connection)
             .find_one_by_record_id(&data.goods_received_ID)?
         {
             Some(row) if row.table_name == GoodsReceivedTranslation.table_name() => row,

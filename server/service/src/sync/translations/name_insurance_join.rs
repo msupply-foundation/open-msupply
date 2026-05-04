@@ -1,20 +1,21 @@
 use chrono::NaiveDate;
 use repository::{
     name_insurance_join_row::{
-        InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
+        InsurancePolicyType, NameInsuranceJoinRow,
     },
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option};
 
 use crate::sync::translations::{
     insurance_provider::InsuranceProviderTranslator, name::NameTranslation,
+
 };
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyInsurancePolicyType {
@@ -138,9 +139,14 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &repository::ChangelogRow,
-    ) -> Result<super::PushTranslateResult, anyhow::Error> {
+        _connection: &StorageConnection,
+        changelog: &ChangelogRow,
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::NameInsuranceJoin(name_insurance_join_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let NameInsuranceJoinRow {
             id,
             name_id,
@@ -154,14 +160,7 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             is_active,
             entered_by_id,
             name_of_insured,
-        } = NameInsuranceJoinRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| {
-                anyhow::Error::msg(format!(
-                    "NameInsuranceJoin row ({}) not found",
-                    changelog.record_id
-                ))
-            })?;
+        } = name_insurance_join_row;
 
         let oms_fields = if name_of_insured.is_some() {
             Some(LegacyNameInsuranceJoinRowOmsFields { name_of_insured })
@@ -187,11 +186,7 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             oms_fields,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

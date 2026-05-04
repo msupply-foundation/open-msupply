@@ -5,7 +5,7 @@ use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
     NameRow,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -27,7 +27,7 @@ define_linked_tables!(
     }
 );
 
-#[derive(Queryable, Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Queryable, Debug, PartialEq, Eq, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = name_store_join)]
 pub struct NameStoreJoinRow {
     pub id: String,
@@ -54,32 +54,6 @@ pub struct NameStoreJoinFilter {
     pub name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
 }
-
-impl NameStoreJoinRow {
-    pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<NameStoreJoinRow>,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        let row = match row_or_id {
-            RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &NameStoreJoinRepository::new(con)
-                .find_one_by_id(row_id)?
-                .ok_or(RepositoryError::NotFound)?,
-        };
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameStoreJoin,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_id: Some(row.name_id.clone()),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct NameStoreJoinRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -146,6 +120,12 @@ impl<'a> NameStoreJoinRepository<'a> {
         let result = query.load::<NameStoreJoins>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+        Ok(name_store_join::table
+            .filter(name_store_join::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

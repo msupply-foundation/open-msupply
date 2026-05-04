@@ -2,12 +2,14 @@ use repository::{
     EqualFilter, NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter,
     NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection,
     StoreFilter, StoreRepository, SyncBufferRow,
+
 };
 
 use serde::Deserialize;
 
 use crate::sync::translations::{
     name::NameTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
+
 };
 
 #[derive(Deserialize)]
@@ -155,20 +157,20 @@ impl SyncTranslation for NameMergeTranslation {
 #[cfg(test)]
 mod tests {
     use crate::sync::{
-        sync_buffer::SyncBufferSource, synchroniser::integrate_and_translate_sync_buffer,
+        synchroniser::integrate_and_translate_sync_buffer,
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
-        SyncRecordData,
+        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRepository,
+        SyncBufferRowInsert, SyncRecordData,
     };
     use serde_json::json;
 
     #[actix_rt::test]
     async fn test_name_merge() {
         let mut sync_records = vec![
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "name_b".to_string(),
                 table_name: "name".to_string(),
                 action: SyncAction::Merge,
@@ -176,9 +178,9 @@ mod tests {
                     "mergeIdToKeep": "name_b",
                     "mergeIdToDelete": "name_a"
                 })),
-                ..SyncBufferRow::default()
+                ..SyncBufferRowInsert::default()
             },
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "name_c".to_string(),
                 table_name: "name".to_string(),
                 action: SyncAction::Merge,
@@ -186,7 +188,7 @@ mod tests {
                     "mergeIdToKeep": "name_c",
                     "mergeIdToDelete": "name_b"
                 })),
-                ..SyncBufferRow::default()
+                ..SyncBufferRowInsert::default()
             },
         ];
 
@@ -211,10 +213,10 @@ mod tests {
         )
         .await;
 
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&sync_records)
+        SyncBufferRepository::new(&connection)
+            .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, 0)
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
@@ -229,10 +231,10 @@ mod tests {
         .await;
         sync_records.reverse();
 
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&sync_records)
+        SyncBufferRepository::new(&connection)
+            .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, 0)
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
@@ -275,7 +277,7 @@ mod tests {
         assert_eq!(count_name_store_join("name_store_a"), 1);
 
         let sync_records = vec![
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "name3_merge".to_string(),
                 table_name: "name".to_string(),
                 action: SyncAction::Merge,
@@ -283,9 +285,9 @@ mod tests {
                     "mergeIdToKeep": "name2",
                     "mergeIdToDelete": "name3"
                 })),
-                ..SyncBufferRow::default()
+                ..SyncBufferRowInsert::default()
             },
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "name2_merge".to_string(),
                 table_name: "name".to_string(),
                 action: SyncAction::Merge,
@@ -293,9 +295,9 @@ mod tests {
                     "mergeIdToKeep": "name_a",
                     "mergeIdToDelete": "name2"
                 })),
-                ..SyncBufferRow::default()
+                ..SyncBufferRowInsert::default()
             },
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 // name_a is visible to name_store_a. This merge is test if the name_store_join is deleted, rather than letting the store have it's own name visible
                 record_id: "name_a_merge".to_string(),
                 table_name: "name".to_string(),
@@ -304,14 +306,14 @@ mod tests {
                     "mergeIdToKeep": "name_store_a",
                     "mergeIdToDelete": "name_a"
                 })),
-                ..SyncBufferRow::default()
+                ..SyncBufferRowInsert::default()
             },
         ];
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&sync_records)
+        SyncBufferRepository::new(&connection)
+            .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, 0)
             .unwrap();
 
         assert_eq!(count_name_store_join("name_a"), 0);

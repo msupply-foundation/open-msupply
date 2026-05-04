@@ -1,9 +1,9 @@
 use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
-    item_category_row::ItemCategoryJoinRow,
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
-    ItemType, StorageConnection, SyncBufferRow, VENCategory,
+    item_category_row::ItemCategoryJoinRow, ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete,
+    ItemType, Row, StorageConnection, SyncBufferRow, VENCategory,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +13,7 @@ use crate::sync::{
         unit::UnitTranslation,
     },
     CentralServerConfig,
+
 };
 
 use util::sync_serde::empty_str_as_option_string;
@@ -170,8 +171,9 @@ impl SyncTranslation for ItemTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
         if !CentralServerConfig::is_central_server() {
             return Err(anyhow::anyhow!(
@@ -179,12 +181,8 @@ impl SyncTranslation for ItemTranslation {
             ));
         }
 
-        let Some(item) = ItemRowRepository::new(connection).find_one_by_id(&changelog.record_id)?
-        else {
-            return Err(anyhow::anyhow!(
-                "Item with ID {} could not be found",
-                changelog.record_id
-            ));
+        let Row::Item(item) = row else {
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let ItemRow {
@@ -227,11 +225,7 @@ impl SyncTranslation for ItemTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            json_record,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
     }
 }
 

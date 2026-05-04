@@ -1,8 +1,6 @@
 use repository::{
-    syncv7::GetCurrentSiteIdError, KeyValueStoreRepository, RepositoryError, StorageConnection,
-    SyncBufferRowRepository,
+    syncv7::GetCurrentSiteIdError, KeyValueStoreRepository, StorageConnection,
 };
-use util::format_error;
 
 pub mod api;
 pub mod prepare;
@@ -24,20 +22,4 @@ pub fn get_current_site_id(connection: &StorageConnection) -> Result<i32, GetCur
         .ok_or(GetCurrentSiteIdError::SiteIdNotSet)?;
 
     Ok(site_id)
-}
-
-pub(crate) fn write_sync_buffer_error(
-    record_id: &str,
-    connection: &StorageConnection,
-    error: &impl std::error::Error,
-) -> Result<(), RepositoryError> {
-    SyncBufferRowRepository::new(connection)
-        .set_integration_result(record_id, Some(&format_error(&error)))
-}
-
-pub(crate) fn write_sync_buffer_success(
-    record_id: &str,
-    connection: &StorageConnection,
-) -> Result<(), RepositoryError> {
-    SyncBufferRowRepository::new(connection).set_integration_result(record_id, None)
 }

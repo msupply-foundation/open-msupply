@@ -1,11 +1,11 @@
 use crate::sync::translations::om_form_schema::OmFormSchemaTranslation;
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    ChangelogRow, ChangelogTableName, ReportRow, ReportRowDelete, ReportRowRepository,
+    ChangelogRow, ChangelogTableName, ReportRow, ReportRowDelete,
     StorageConnection, SyncBufferRow,
+    Row,
+
 };
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -47,20 +47,16 @@ impl SyncTranslation for OmReportTranslator {
     }
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = ReportRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Om report row ({}) not found",
-                changelog.record_id
-            )))?;
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let Row::Report(report_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = report_row;
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
     fn try_translate_from_delete_sync_record(
         &self,

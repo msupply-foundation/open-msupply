@@ -78,6 +78,13 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
         ("sync_buffer", "received_datetime"),
         ("sync_buffer", "integration_datetime"),
+        ("sync_buffer", "integration_started_datetime"),
+        ("sync_buffer_pending", "received_datetime"),
+        ("sync_buffer_pending", "integration_datetime"),
+        ("sync_buffer_pending", "integration_started_datetime"),
+        ("sync_buffer_archive", "received_datetime"),
+        ("sync_buffer_archive", "integration_datetime"),
+        ("sync_buffer_archive", "integration_started_datetime"),
         ("sync_log", "started_datetime"),
         ("sync_log", "finished_datetime"),
         ("sync_log", "prepare_initial_started_datetime"),

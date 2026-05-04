@@ -1,5 +1,5 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, RowActionType,
+    ChangelogRepository, ChangelogSyncType, RowActionType,
     Upsert,
 };
 use crate::{RepositoryError, SourceSiteId, StorageConnection};
@@ -59,26 +59,6 @@ pub struct SystemLogRow {
     pub message: Option<String>,
     pub is_error: bool,
 }
-
-impl SystemLogRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::SystemLog,
-            record_id,
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 pub struct SystemLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -125,6 +105,12 @@ impl<'a> SystemLogRowRepository<'a> {
     pub fn find_all(&self) -> Result<Vec<SystemLogRow>, RepositoryError> {
         let result = system_log::table.load(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SystemLogRow>, RepositoryError> {
+        Ok(system_log::table
+            .filter(system_log::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

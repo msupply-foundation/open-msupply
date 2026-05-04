@@ -2,7 +2,7 @@ use super::asset_row::asset::dsl::*;
 use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogSyncType, Delete,
     RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
@@ -68,21 +68,6 @@ pub struct AssetRow {
 }
 
 impl AssetRow {
-    pub(crate) fn generate_changelog(
-        &self,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::Asset,
-            record_id: self.id.clone(),
-            row_action: action,
-            store_id: self.store_id.clone(),
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
 
     pub(crate) fn soft_delete_and_get_changelog(
         row_id: &str,
@@ -168,6 +153,12 @@ impl<'a> AssetRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetRow>, RepositoryError> {
+        Ok(asset::table
+            .filter(asset::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
