@@ -1,11 +1,16 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { MRT_RowData, MRT_TableInstance } from 'material-react-table';
+import {
+  MRT_RowData,
+  MRT_RowVirtualizer,
+  MRT_TableInstance,
+} from 'material-react-table';
 
 export const useTableKeyboardNavigation = <T extends MRT_RowData>(
   onRowClick?: (row: T, isCtrlClick: boolean) => void
 ) => {
-  const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const rowVirtualizerRef = useRef<MRT_RowVirtualizer | null>(null);
 
   // Auto-focus the table container so keyboard navigation works immediately.
   // Two async cases require retries:
@@ -43,17 +48,6 @@ export const useTableKeyboardNavigation = <T extends MRT_RowData>(
     return () => clearTimeout(timer);
   }, []);
 
-  const scrollRowIntoView = useCallback((index: number) => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const rowElements = container.querySelectorAll('tbody tr');
-    const rowEl = rowElements[index];
-    if (rowEl) {
-      rowEl.scrollIntoView({ block: 'nearest' });
-    }
-  }, []);
-
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent, table: MRT_TableInstance<T>) => {
       // Don't interfere when focus is inside an interactive element
@@ -64,39 +58,38 @@ export const useTableKeyboardNavigation = <T extends MRT_RowData>(
       const rowCount = rows.length;
       if (rowCount === 0) return;
 
+      const currentIdx = focusedRowId
+        ? rows.findIndex(r => r.id === focusedRowId)
+        : -1;
+
+      const move = (nextIdx: number) => {
+        setFocusedRowId(rows[nextIdx]?.id ?? null);
+        rowVirtualizerRef.current?.scrollToIndex(nextIdx, { align: 'auto' });
+      };
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setFocusedRowIndex(prev => {
-          const next = prev === null ? 0 : Math.min(prev + 1, rowCount - 1);
-          scrollRowIntoView(next);
-          return next;
-        });
+        move(currentIdx < 0 ? 0 : Math.min(currentIdx + 1, rowCount - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setFocusedRowIndex(prev => {
-          const next = prev === null ? rowCount - 1 : Math.max(prev - 1, 0);
-          scrollRowIntoView(next);
-          return next;
-        });
+        move(currentIdx < 0 ? rowCount - 1 : Math.max(currentIdx - 1, 0));
       } else if (e.key === 'Enter') {
-        if (focusedRowIndex !== null && focusedRowIndex < rowCount) {
+        if (currentIdx >= 0 && onRowClick) {
           e.preventDefault();
-          const row = rows[focusedRowIndex];
-          if (row && onRowClick) {
-            onRowClick(row.original, false);
-          }
+          onRowClick(rows[currentIdx]!.original, false);
         }
       } else if (e.key === 'Escape') {
-        setFocusedRowIndex(null);
+        setFocusedRowId(null);
       }
     },
-    [focusedRowIndex, onRowClick, scrollRowIntoView]
+    [focusedRowId, onRowClick]
   );
 
   return {
-    focusedRowIndex,
-    setFocusedRowIndex,
+    focusedRowId,
+    setFocusedRowId,
     containerRef,
+    rowVirtualizerRef,
     handleKeyDown,
   };
 };

@@ -73,7 +73,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
-  const { focusedRowIndex, containerRef, handleKeyDown } =
+  const { focusedRowId, containerRef, rowVirtualizerRef, handleKeyDown } =
     useTableKeyboardNavigation<T>(onRowClick);
 
   // shared between the table body and head to ensure consistent padding
@@ -92,6 +92,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           : '0.8rem';
 
   return {
+    rowVirtualizerInstanceRef: rowVirtualizerRef,
     // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
       const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
@@ -259,14 +260,13 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           },
 
     muiTableBodyRowProps: params => {
-      const { row, table, staticRowIndex } = params;
+      const { row, table } = params;
       const customProps =
         typeof muiTableBodyRowProps === 'function'
           ? muiTableBodyRowProps(params)
           : muiTableBodyRowProps;
 
-      const isFocused =
-        focusedRowIndex !== null && staticRowIndex === focusedRowIndex;
+      const isFocused = row.id === focusedRowId;
 
       const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
         ...(onRowClick

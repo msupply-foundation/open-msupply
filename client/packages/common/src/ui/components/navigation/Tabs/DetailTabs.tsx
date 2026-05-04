@@ -116,7 +116,6 @@ export const DetailTabs: FC<DetailTabsProps> = ({
             label={t(`label.${value.toLowerCase()}` as LocaleKey, {
               defaultValue: value,
             })}
-            tabIndex={index === 0 ? -1 : undefined}
           />
         ))}
       </ShortTabList>
