@@ -7,6 +7,7 @@ use reqwest::{
 use serde::{de::DeserializeOwned, Serialize};
 use util::{format_error, with_retries, RetrySeconds};
 
+pub mod patient_search;
 pub mod pull;
 pub mod push;
 pub mod site_info;
