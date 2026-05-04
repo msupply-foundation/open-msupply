@@ -2829,6 +2829,5 @@
   "messages.confirm-delete-ancillary-item": "This will remove this ancillary supply link",
   "error.failed-to-save-ancillary-item": "Failed to save ancillary supply",
   "error.failed-to-delete-ancillary-item": "Failed to delete ancillary supply",
-  "error.ratio-format": "Ratio must be in the form x:y",
   "error.ratio-non-positive": "Both sides of the ratio must be greater than 0"
 }
