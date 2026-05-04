@@ -12,8 +12,8 @@ export const useOutboundCounts = () => {
       api.outboundCounts({
         storeId,
       }),
-
-    retry: false
+    enabled: !!storeId,
+    retry: false,
   });
 
   if (!data?.outboundShipmentCounts) {

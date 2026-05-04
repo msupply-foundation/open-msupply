@@ -375,15 +375,15 @@ mutation updateVvmStatusLog(
   }
 }
 
-query stockItemsGrouped(
+query itemsByStockLineFilter(
   $first: Int
   $offset: Int
   $key: ItemSortFieldInput!
   $desc: Boolean
-  $filter: ItemFilterInput
+  $filter: StockLineFilterInput
   $storeId: String!
 ) {
-  items(
+  itemsByStockLineFilter(
     storeId: $storeId
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }

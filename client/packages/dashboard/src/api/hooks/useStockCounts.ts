@@ -13,8 +13,8 @@ export const useStockCounts = (daysTillExpired: number) => {
         storeId,
         daysTillExpired,
       }),
-
-    retry: false
+    enabled: !!storeId,
+    retry: false,
   });
 
   if (!data?.stockCounts) {
