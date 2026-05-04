@@ -18,9 +18,9 @@ use crate::{
     sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
 };
 use repository::{
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, Invoice,
-    InvoiceFilter, InvoiceRepository, InvoiceStatus, InvoiceType, KeyType, RepositoryError,
-    Requisition, RowActionType, StorageConnection,
+    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit,
+    EqualFilter, FilterBuilder, Invoice, InvoiceFilter, InvoiceRepository, InvoiceStatus,
+    InvoiceType, KeyType, RepositoryError, Requisition, RowActionType, StorageConnection,
 };
 use thiserror::Error;
 
@@ -91,20 +91,18 @@ pub(crate) enum ProcessInvoiceTransfersError {
     ProcessorError(ProcessorError),
     #[error("Name id is missing from invoice changelog {0:?}")]
     NameIdIsMissingFromChangelog(ChangelogRow),
-    #[error("Name is not an active store {0:?}")]
-    NameIsNotAnActiveStore(ChangelogRow),
 }
 
 fn process_change_log(
     ctx: &ServiceContext,
     log: &ChangelogRow,
     processors: &[Box<dyn InvoiceTransferProcessor>],
-    active_stores: &ActiveStoresOnSite,
+    _active_stores: &ActiveStoresOnSite,
 ) -> Result<(), ProcessInvoiceTransfersError> {
     use ProcessInvoiceTransfersError as Error;
-    let name_id = log
-        .name_id
-        .as_ref()
+    let other_party_store_id = log
+        .transfer_store_id
+        .clone()
         .ok_or_else(|| Error::NameIdIsMissingFromChangelog(log.clone()))?;
 
     // Prepare record
@@ -118,9 +116,7 @@ fn process_change_log(
 
     let record = InvoiceTransferProcessorRecord {
         operation,
-        other_party_store_id: active_stores
-            .get_store_id_for_name_id(name_id)
-            .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
+        other_party_store_id,
     };
 
     // TODO: MERGE: Ignore if invoice name_id points to store's name. Supplying to itself! (Can happen with names are merge into stores)
@@ -157,21 +153,27 @@ pub(crate) fn process_invoice_transfers(
     let active_stores =
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
 
-    let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let cursor_controller = CursorController::new(KeyType::ShipmentTransferProcessorCursor);
-    // For transfers, changelog MUST be filtered by records where name_id is active store on this site
+    // For transfers, changelog MUST be filtered by records where transfer_store_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
-    let filter = ChangelogFilter::new()
-        .table_name(ChangelogTableName::Invoice.equal_to())
-        .name_id(EqualFilter::equal_any(active_stores.name_ids().clone()));
+    let filter = ChangelogCondition::And(vec![
+        ChangelogCondition::table_name::equal(ChangelogTableName::Invoice),
+        ChangelogCondition::transfer_store_id::any(active_stores.store_ids()),
+    ]);
 
     loop {
         let cursor = cursor_controller
             .get(&ctx.connection)
             .map_err(Error::DatabaseError)?;
 
-        let logs = changelog_repo
-            .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
+        let logs = ChangelogRepository::new(&ctx.connection)
+            .query(
+                filter.clone(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: CHANGELOG_BATCH_SIZE as i64,
+                },
+            )
             .map_err(Error::DatabaseError)?;
 
         if logs.is_empty() {

@@ -1,15 +1,18 @@
 use crate::sync::translations::{
     location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
+
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use util::sync_serde::{
     date_from_date_time, date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
     naive_time, zero_date_as_option,
+
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachRow,
-    TemperatureBreachRowRepository, TemperatureBreachType,
+    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachRow, TemperatureBreachType,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -98,7 +101,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyTemperatureBreachRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyTemperatureBreachRow>()?;
         let LegacyTemperatureBreachRow {
             id,
             duration_milliseconds,
@@ -143,9 +146,14 @@ impl SyncTranslation for TemperatureBreachTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::TemperatureBreach(temperature_breach_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let TemperatureBreachRow {
             id,
             duration_milliseconds,
@@ -160,12 +168,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             threshold_maximum,
             threshold_duration_milliseconds,
             comment,
-        } = TemperatureBreachRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "TemperatureBreach row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = temperature_breach_row;
 
         let r#type = to_legacy_breach_type(&r#type);
 
@@ -191,11 +194,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             comment,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

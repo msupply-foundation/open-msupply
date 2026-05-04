@@ -24,6 +24,8 @@ pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod frontend_plugin;
+pub(crate) mod goods_received;
+pub(crate) mod goods_received_line;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -67,6 +69,7 @@ pub(crate) mod rnr_form;
 pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
 pub(crate) mod shipping_method;
+pub(crate) mod site;
 pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
@@ -84,8 +87,8 @@ pub(crate) mod user_permission;
 pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
-pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vaccine_course_item;
+pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
@@ -184,6 +187,9 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut sync_message::test_pull_upsert_records());
     test_records.append(&mut purchase_order::test_pull_upsert_records());
     test_records.append(&mut purchase_order_line::test_pull_upsert_records());
+    // goods_received and goods_received_line are pull-only translators tested
+    // in their own module tests, not in the integration test (they create invoice/invoice_line
+    // changelogs that would need matching push test data).
 
     // Open mSupply central
     test_records.append(&mut rnr_form::test_pull_upsert_records());

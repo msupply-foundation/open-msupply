@@ -28,6 +28,8 @@ pub enum KeyType {
     CentralSyncPullCursor,
     SyncPullCursorV6,
     SyncPushCursorV6,
+    SyncPullCursorV7,
+    SyncPushCursorV7,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
@@ -47,6 +49,7 @@ pub enum KeyType {
     SettingsSyncSiteId,
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
+    SettingsSyncV7Token,
     SettingsTokenSecret,
 
     DatabaseVersion,
@@ -215,6 +218,10 @@ impl<'a> KeyValueStoreRepository<'a> {
     pub fn get_bool(&self, key: KeyType) -> Result<Option<bool>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_bool))
+    }
+
+    pub fn get_current_site_id(&self) -> Result<Option<i32>, RepositoryError> {
+        self.get_i32(KeyType::SettingsSyncSiteId)
     }
 }
 

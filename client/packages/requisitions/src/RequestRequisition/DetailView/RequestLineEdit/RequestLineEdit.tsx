@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import {
+  ItemWithAvailableStockFragment,
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
   RequestFragment,
@@ -44,7 +45,7 @@ import ForecastCalculationDisplay from '../../../common/ForecastCalculationDispl
 interface RequestLineEditProps {
   requisition: RequestFragment;
   lines: RequestLineFragment[];
-  currentItem?: ItemWithStatsFragment;
+  currentItem?: ItemWithAvailableStockFragment;
   onChangeItem: (item: ItemWithStatsFragment) => void;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
@@ -270,7 +271,7 @@ export const RequestLineEdit = ({
                   value={currentItem?.doses}
                 />
               ) : null}
-              {renderValueInfoRows(getLeftPanel(t, draft))}
+              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
               <InfoRow
                 label={t('label.months-of-stock')}
                 value={draft?.itemStats?.availableMonthsOfStockOnHand}

@@ -1,7 +1,10 @@
 use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
 use crate::{
-    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
+    db_diesel::changelog::ChangelogRepository,
+    diesel_macros::define_linked_tables,
+    repository_error::RepositoryError,
+    ChangelogSyncType, ChangelogTableName, Delete, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -68,6 +71,15 @@ pub struct StoreRow {
     pub name_id: String,
 }
 
+impl StoreRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Store
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
+}
+
 pub struct StoreRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -106,6 +118,14 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        let result = store::table
+            .filter(store::name_id.eq(name_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store::table
             .filter(store::id.eq_any(ids))
@@ -129,9 +149,16 @@ impl<'a> StoreRowRepository<'a> {
 pub struct StoreRowDelete(pub String);
 // TODO soft delete
 impl Delete for StoreRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+        if let ChangelogSyncType::SyncTypeV7 { changelog_row } = sync_type {
+            ChangelogRepository::new(con).insert(&changelog_row)?;
+        }
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -143,11 +170,16 @@ impl Delete for StoreRowDelete {
 }
 
 impl Upsert for StoreRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { .. } => Ok(()),
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => {
+                ChangelogRepository::new(con).insert(&changelog_row)?;
+                Ok(())
+            }
+        }
     }
-
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

@@ -62,7 +62,11 @@ function setupErrorTracking(page: Page): ErrorTracker {
         tracker.hasInfiniteLoop = true;
       }
     } else if (msg.type() === 'warning') {
-      tracker.warnings.push(text);
+      // React Router v6 emits deprecation warnings about v7 future flags;
+      // these are informational and not actionable bugs.
+      if (!text.includes('React Router Future Flag Warning')) {
+        tracker.warnings.push(text);
+      }
     }
   });
   page.on('pageerror', err => {

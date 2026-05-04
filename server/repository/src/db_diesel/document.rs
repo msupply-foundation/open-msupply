@@ -4,7 +4,9 @@ use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
     define_linked_tables,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::SourceSiteId;
+use crate::{ChangelogRepository, RowActionType};
+use crate::{ChangelogSyncType, Upsert};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -61,7 +63,16 @@ pub enum DocumentStatus {
     Deleted,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[cfg_attr(test, derive(Default))]
 #[diesel(table_name = document)]
 pub struct DocumentRow {
@@ -214,26 +225,15 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    pub fn insert(&self, doc: &Document) -> Result<i64, RepositoryError> {
-        self._upsert(&doc.to_row()?)?;
-        self.insert_changelog(doc, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &Document,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Document,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: None,
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
+        let row = doc.to_row()?;
+        self._upsert(&row)?;
+        let changelog = row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     /// Get a specific document version
@@ -345,6 +345,12 @@ impl<'a> DocumentRepository<'a> {
         }
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<DocumentRow>, RepositoryError> {
+        Ok(document::table
+            .filter(document::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
@@ -388,6 +394,34 @@ fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
     };
 
     Ok(document)
+}
+
+impl Upsert for DocumentRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        DocumentRepository::new(con)._upsert(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        let stored = DocumentRepository::new(con)
+            .find_many_by_id(&[self.id.clone()])
+            .expect("document lookup");
+        assert_eq!(stored.first(), Some(self));
+    }
 }
 
 impl Document {

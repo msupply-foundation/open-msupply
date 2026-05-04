@@ -26,14 +26,27 @@ define_sql_function!(fn lower(x: Text) -> Text);
 
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError>;
     // Test only
     fn assert_deleted(&self, con: &StorageConnection);
 }
 
+#[derive(Debug)]
+pub enum ChangelogSyncType {
+    SyncTypeV5V6 { source_site_id: Option<i32> },
+    SyncTypeV7 { changelog_row: ChangeLogInsertRow },
+}
+
 pub trait Upsert: DebugTrait {
-    // Upsert returns a changelog id if the table is tracked in changelog
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError>;
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection);

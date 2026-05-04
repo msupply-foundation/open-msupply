@@ -3,6 +3,7 @@ use crate::sync::translations::{
     master_list::MasterListTranslation, reason::ReasonTranslation,
     stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
     vvm_status::VVMStatusTranslation,
+
 };
 
 use chrono::NaiveDate;
@@ -10,16 +11,17 @@ use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, StockLineRowRepository, StocktakeLine,
     StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StorageConnection,
     SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
     zero_date_as_option,
+
 };
 
-use super::{
-    utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation,
-};
+use super::{utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -146,7 +148,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             volume_per_pack,
             manufacturer_id,
             oms_fields,
-        } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         // TODO is this correct?
         let counted_number_of_packs = if is_edited {
@@ -171,7 +173,13 @@ impl SyncTranslation for StocktakeLineTranslation {
         }
 
         let (campaign_id, program_id, manufacture_date) = oms_fields
-            .map(|fields| (fields.campaign_id, fields.program_id, fields.manufacture_date))
+            .map(|fields| {
+                (
+                    fields.campaign_id,
+                    fields.program_id,
+                    fields.manufacture_date,
+                )
+            })
             .unwrap_or((None, None, None));
 
         let location_id = clear_invalid_location_id(connection, location_id)?;
@@ -212,11 +220,16 @@ impl SyncTranslation for StocktakeLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::StocktakeLine(stocktake_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(stocktake_line) = StocktakeLineRepository::new(connection)
             .query_by_filter(
                 StocktakeLineFilter::new()
-                    .id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                    .id(EqualFilter::equal_to(stocktake_line_row.id)),
                 None,
             )?
             .pop()
@@ -293,11 +306,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             oms_fields,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -313,12 +322,13 @@ impl SyncTranslation for StocktakeLineTranslation {
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-    };
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
+};
     use serde_json::json;
 
     #[actix_rt::test]
@@ -359,19 +369,17 @@ mod tests {
 
         merge_all_item_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new().table_name(ChangelogTableName::StocktakeLine.equal_to()),
-                ),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::StocktakeLine),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = StocktakeLineTranslation {};
-        for changelog in changelogs {
+        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             // Translate and sort
             // Translate and sort
             assert!(translator.should_translate_to_sync_record(
@@ -379,7 +387,7 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
