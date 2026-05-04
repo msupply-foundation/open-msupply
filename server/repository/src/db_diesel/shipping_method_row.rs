@@ -49,6 +49,15 @@ impl<'a> ShippingMethodRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = shipping_method::table
+            .filter(shipping_method::id.eq(lookup_id))
+            .select(shipping_method::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
 }
 
 impl Upsert for ShippingMethodRow {
