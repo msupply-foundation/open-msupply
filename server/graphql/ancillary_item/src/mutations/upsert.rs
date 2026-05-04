@@ -14,8 +14,8 @@ use service::{
 #[derive(InputObject)]
 pub struct UpsertAncillaryItemInput {
     pub id: String,
-    pub item_link_id: String,
-    pub ancillary_item_link_id: String,
+    pub item_id: String,
+    pub ancillary_item_id: String,
     /// Left-hand side of the user-entered `x:y` ratio (principal count).
     pub item_quantity: f64,
     /// Right-hand side of the user-entered `x:y` ratio (ancillary count).
@@ -67,16 +67,16 @@ impl UpsertAncillaryItemInput {
     pub fn to_domain(self) -> UpsertAncillaryItem {
         let UpsertAncillaryItemInput {
             id,
-            item_link_id,
-            ancillary_item_link_id,
+            item_id,
+            ancillary_item_id,
             item_quantity,
             ancillary_quantity,
         } = self;
 
         UpsertAncillaryItem {
             id,
-            item_link_id,
-            ancillary_item_link_id,
+            item_id,
+            ancillary_item_id,
             item_quantity,
             ancillary_quantity,
         }
