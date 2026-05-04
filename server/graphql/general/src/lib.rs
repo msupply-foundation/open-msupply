@@ -7,6 +7,7 @@ pub mod types;
 
 use std::collections::HashMap;
 
+pub use self::queries::item::{ItemSortFieldInput, ItemSortInput, ItemsResponse};
 pub use self::queries::sync_status::*;
 pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
 use self::queries::*;
