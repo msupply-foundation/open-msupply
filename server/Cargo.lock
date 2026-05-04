@@ -4467,7 +4467,6 @@ dependencies = [
  "serde",
  "serde_json",
  "service",
- "util",
 ]
 
 [[package]]
@@ -5037,6 +5036,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "graphql_general",
  "graphql_types",
  "repository",
  "serde",

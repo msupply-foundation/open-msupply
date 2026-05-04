@@ -566,6 +566,7 @@ export type AssetLogFilterInput = {
   logDatetime?: InputMaybe<DatetimeFilterInput>;
   reasonId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStatusInput>;
+  type?: InputMaybe<EqualFilterAssetLogTypeInput>;
   user?: InputMaybe<StringFilterInput>;
 };
 
@@ -573,12 +574,13 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['DateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
-  type?: Maybe<Scalars['String']['output']>;
+  type: AssetLogTypeNodeType;
   user?: Maybe<UserNode>;
 };
 
@@ -654,6 +656,11 @@ export enum AssetLogStatusNodeType {
   NotFunctioning = 'NOT_FUNCTIONING',
   NotInUse = 'NOT_IN_USE',
   Unserviceable = 'UNSERVICEABLE',
+}
+
+export enum AssetLogTypeNodeType {
+  StatusUpdate = 'STATUS_UPDATE',
+  TemperatureMapping = 'TEMPERATURE_MAPPING',
 }
 
 export type AssetLogsResponse = AssetLogConnector;
@@ -2728,6 +2735,13 @@ export type EqualFilterActivityLogTypeInput = {
   notEqualTo?: InputMaybe<ActivityLogNodeType>;
 };
 
+export type EqualFilterAssetLogTypeInput = {
+  equalAny?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  equalTo?: InputMaybe<AssetLogTypeNodeType>;
+  notEqualAll?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  notEqualTo?: InputMaybe<AssetLogTypeNodeType>;
+};
+
 export type EqualFilterBigFloatingNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
   equalAnyOrNull?: InputMaybe<Array<Scalars['Float']['input']>>;
@@ -2998,6 +3012,12 @@ export type FormSchemaSortInput = {
 export type FrontendPluginMetadataNode = {
   __typename: 'FrontendPluginMetadataNode';
   code: Scalars['String']['output'];
+  /**
+   * Hash of the plugin's bundled file contents — clients append this as a
+   * cache-busting URL token (?v=...) so the browser only refetches when the
+   * bundle's bytes change.
+   */
+  hash: Scalars['String']['output'];
   path: Scalars['String']['output'];
 };
 
@@ -3220,9 +3240,10 @@ export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  logDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   reasonId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<AssetLogStatusNodeType>;
-  type?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<AssetLogTypeNodeType>;
 };
 
 export type InsertAssetLogReasonError = {
@@ -7284,6 +7305,7 @@ export type PropertyNode = {
 
 export enum PropertyNodeValueType {
   Boolean = 'BOOLEAN',
+  Date = 'DATE',
   Float = 'FLOAT',
   Integer = 'INTEGER',
   String = 'STRING',
@@ -7577,6 +7599,15 @@ export type Queries = {
   itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
   items: ItemsResponse;
+  /**
+   * Query for items that have at least one stock_line matching `filter`
+   * in `store_id`, sorted/paginated by item attributes. Companion to
+   * `stockLines`: same filter shape, but the result is one row per item
+   * (suitable for an aggregated/grouped stock view). Because the predicate
+   * is identical to what `stockLines` uses, an item appears here iff at
+   * least one of its stock lines would appear in `stockLines`.
+   */
+  itemsByStockLineFilter: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
@@ -8036,6 +8067,13 @@ export type QueriesItemVariantsConfiguredArgs = {
 
 export type QueriesItemsArgs = {
   filter?: InputMaybe<ItemFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ItemSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesItemsByStockLineFilterArgs = {
+  filter?: InputMaybe<StockLineFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
   storeId: Scalars['String']['input'];
@@ -9788,6 +9826,7 @@ export type SupplierReturnInput = {
   inboundShipmentId?: InputMaybe<Scalars['String']['input']>;
   supplierId: Scalars['String']['input'];
   supplierReturnLines: Array<SupplierReturnLineInput>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SupplierReturnLineConnector = {
@@ -10463,6 +10502,7 @@ export type UpdateOutboundShipmentError = {
 };
 
 export type UpdateOutboundShipmentInput = {
+  backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;

@@ -14,7 +14,7 @@ Open mSupply is an open source logistic management system for medicine distribut
 
 # Image flavours
 
-Image comes with two flavours base, and dev (with -dev prefix). Dev image comes with client folder ready for development, with dependencies pre-installed
+Image comes with two flavours base, and dev (with -dev suffix). Dev image comes with client folder ready for development, with dependencies pre-installed
 
 # How to use this image
 
@@ -70,6 +70,17 @@ Or with FAKETIME, which will set server time at particular date, this does not w
 
 ```bash
 docker run -e LOAD_REFERENCE_FILE=reference1 -e FAKETIME="@2023-05-20 11:30:00" -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
+```
+
+## Production
+
+If used in production, it's important to persist database and to give each instance a unique UUID (hardware_id). Persisting database for sqlite flavour is done by mounting database folder (it's important to do this before initialising omSupply instance): `"$(pwd)/mydatabase":/database`. Default [test-uuid](https://github.com/msupply-foundation/open-msupply/blob/1f066619137959131866d291516d4b39e958b819/Dockerfile#L26) can be overwritten through `/etc/machine-id`. 
+
+Example command for mac:
+
+```bash
+echo $(ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3 }') > machine-id
+docker run -v "$(pwd)/mydatabase":/database -v "$(pwd)/machine-id":/etc/machine-id -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
 ```
 
 ## Dev 

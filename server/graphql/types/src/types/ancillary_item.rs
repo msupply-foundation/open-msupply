@@ -24,21 +24,18 @@ impl AncillaryItemNode {
         self.ancillary_item.ancillary_quantity
     }
 
-    pub async fn item_link_id(&self) -> &str {
-        &self.ancillary_item.item_link_id
+    pub async fn item_id(&self) -> &str {
+        &self.ancillary_item.item_id
     }
 
-    pub async fn ancillary_item_link_id(&self) -> &str {
-        &self.ancillary_item.ancillary_item_link_id
+    pub async fn ancillary_item_id(&self) -> &str {
+        &self.ancillary_item.ancillary_item_id
     }
 
     /// The principal item — the item this ancillary supply should be ordered alongside.
-    /// Resolved via `item_link_id`, which matches `item.id` in the common (unmerged) case.
     pub async fn item(&self, ctx: &Context<'_>) -> Result<Option<ItemNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let result = loader
-            .load_one(self.ancillary_item.item_link_id.clone())
-            .await?;
+        let result = loader.load_one(self.ancillary_item.item_id.clone()).await?;
         Ok(result.map(ItemNode::from_domain))
     }
 
@@ -46,7 +43,7 @@ impl AncillaryItemNode {
     pub async fn ancillary_item(&self, ctx: &Context<'_>) -> Result<Option<ItemNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
         let result = loader
-            .load_one(self.ancillary_item.ancillary_item_link_id.clone())
+            .load_one(self.ancillary_item.ancillary_item_id.clone())
             .await?;
         Ok(result.map(ItemNode::from_domain))
     }
@@ -58,6 +55,8 @@ impl AncillaryItemNode {
     }
 
     pub fn from_vec(rows: Vec<AncillaryItemRow>) -> Vec<AncillaryItemNode> {
-        rows.into_iter().map(AncillaryItemNode::from_domain).collect()
+        rows.into_iter()
+            .map(AncillaryItemNode::from_domain)
+            .collect()
     }
 }
