@@ -1,6 +1,9 @@
 use chrono::NaiveDate;
 
-use crate::{asset_log_row::AssetLogStatus, assets::asset_log_row::AssetLogRow};
+use crate::{
+    asset_log_row::{AssetLogStatus, AssetLogType},
+    assets::asset_log_row::AssetLogRow,
+};
 
 pub fn mock_asset_log_a() -> AssetLogRow {
     AssetLogRow {
@@ -9,9 +12,13 @@ pub fn mock_asset_log_a() -> AssetLogRow {
         user_id: String::from("user_account_a"),
         status: None,
         comment: None,
-        r#type: None,
+        r#type: Some(AssetLogType::StatusUpdate),
         reason_id: None,
         log_datetime: NaiveDate::from_ymd_opt(2022, 4, 12)
+            .unwrap()
+            .and_hms_opt(11, 11, 11)
+            .unwrap(),
+        created_datetime: NaiveDate::from_ymd_opt(2022, 4, 12)
             .unwrap()
             .and_hms_opt(11, 11, 11)
             .unwrap(),
@@ -25,9 +32,13 @@ pub fn mock_asset_log_b() -> AssetLogRow {
         user_id: String::from("user_account_a"),
         status: None,
         comment: None,
-        r#type: None,
+        r#type: Some(AssetLogType::StatusUpdate),
         reason_id: None,
         log_datetime: NaiveDate::from_ymd_opt(2022, 5, 12)
+            .unwrap()
+            .and_hms_opt(11, 11, 11)
+            .unwrap(),
+        created_datetime: NaiveDate::from_ymd_opt(2022, 5, 12)
             .unwrap()
             .and_hms_opt(11, 11, 11)
             .unwrap(),
@@ -41,9 +52,13 @@ pub fn mock_asset_log_c() -> AssetLogRow {
         user_id: String::from("user_account_a"),
         status: Some(AssetLogStatus::Functioning),
         comment: None,
-        r#type: None,
+        r#type: Some(AssetLogType::StatusUpdate),
         reason_id: None,
         log_datetime: NaiveDate::from_ymd_opt(2021, 6, 12)
+            .unwrap()
+            .and_hms_opt(11, 11, 11)
+            .unwrap(),
+        created_datetime: NaiveDate::from_ymd_opt(2021, 6, 12)
             .unwrap()
             .and_hms_opt(11, 11, 11)
             .unwrap(),

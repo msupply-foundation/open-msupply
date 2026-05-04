@@ -7,6 +7,7 @@ use crate::usize_to_u64;
 use log::{debug, warn};
 use repository::*;
 use std::collections::HashMap;
+use std::time::Instant;
 
 static PROGRESS_STEP_LEN: usize = 100;
 
@@ -72,10 +73,13 @@ impl<'a> TranslationAndIntegration<'a> {
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
         let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
+        let mut error_count: u32 = 0;
 
         // Try translate
         // Record initial progress (will be set as total progress)
         let total_to_integrate = sync_records.len();
+
+        let mut last_progress_time = Instant::now();
 
         // Helper to make below logic less verbose
         let mut record_progress = |progress: usize| -> Result<(), RepositoryError> {
@@ -95,6 +99,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     self.sync_buffer
                         .record_integration_error(sync_record, &translation_error)?;
                     result.insert_error(&sync_record.table_name);
+                    error_count += 1; // We want to count these as errors as this is likely to be FK or other data issues, that might affect performance of integration and we want to track that.
                     warn!(
                         "{:?} {:?} {:?}",
                         translation_error, sync_record.record_id, sync_record.table_name
@@ -122,6 +127,7 @@ impl<'a> TranslationAndIntegration<'a> {
                             &anyhow::anyhow!("Ignored: {ignore_message}"),
                         )?;
                         result.insert_error(&sync_record.table_name);
+                        // Don't count this as an error in the count, it's valid to have records that are ignored based on translation logic.
 
                         debug!(
                             "Ignored record: {:?} {:?} {:?}",
@@ -143,6 +149,7 @@ impl<'a> TranslationAndIntegration<'a> {
                 self.sync_buffer
                     .record_integration_error(sync_record, &error)?;
                 result.insert_error(&sync_record.table_name);
+                // Don't count this as an error in the count, it's valid to have no translators for a record matching.
                 warn!(
                     "{:?} {:?} {:?}",
                     error, sync_record.record_id, sync_record.table_name
@@ -165,6 +172,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     self.sync_buffer
                         .record_integration_error(sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);
+                    error_count += 1;
                     warn!(
                         "{:?} {:?} {:?}",
                         error, sync_record.record_id, sync_record.table_name
@@ -174,6 +182,22 @@ impl<'a> TranslationAndIntegration<'a> {
 
             if number_of_records_integrated % PROGRESS_STEP_LEN == 0 {
                 record_progress(total_to_integrate - number_of_records_integrated)?;
+                let elapsed = last_progress_time.elapsed();
+                let rec_per_sec = if number_of_records_integrated > 0 && elapsed.as_secs_f64() > 0.0
+                {
+                    PROGRESS_STEP_LEN as f64 / elapsed.as_secs_f64()
+                } else {
+                    0.0
+                };
+                log::info!(
+                    "Integration progress: integrated: {}, total: {}, errored: {} ({:.1} rec/s, last table: {})",
+                    number_of_records_integrated,
+                    total_to_integrate,
+                    error_count,
+                    rec_per_sec,
+                    sync_record.table_name
+                );
+                last_progress_time = Instant::now();
             }
         }
 
