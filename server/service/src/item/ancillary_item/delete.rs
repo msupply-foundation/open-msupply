@@ -22,7 +22,8 @@ pub fn delete_ancillary_item(
 
     ctx.connection
         .transaction_sync(|connection| {
-            // Soft delete — re-deleting an already-deleted row is a no-op
+            // Soft delete — `mark_deleted` updates `deleted_datetime` to now even if already set,
+            // so re-deleting refreshes the timestamp
             AncillaryItemRowRepository::new(connection).mark_deleted(&input.id)
         })
         .map_err(|error| error.to_inner_error())?;

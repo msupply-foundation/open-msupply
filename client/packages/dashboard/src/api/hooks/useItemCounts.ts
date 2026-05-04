@@ -14,6 +14,7 @@ export const useItemCounts = (lowStockThreshold: number, highStockThreshold: num
         highStockThreshold,
       }),
     {
+      enabled: !!storeId,
       retry: false,
     }
   );

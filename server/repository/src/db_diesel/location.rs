@@ -2,6 +2,7 @@ use super::{location_row::location, LocationRow, StorageConnection};
 
 use crate::{
     asset_internal_location_row::asset_internal_location,
+    diesel_extensions::OrderByExtensions,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     StringFilter,
 };
@@ -70,7 +71,8 @@ impl<'a> LocationRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 LocationSortField::Name => {
-                    apply_sort_no_case!(query, sort, location::name)
+                    apply_sort_no_case!(query, sort, location::name);
+                    query = query.then_order_by(location::code.asc_no_case());
                 }
                 LocationSortField::Code => {
                     apply_sort_no_case!(query, sort, location::code)

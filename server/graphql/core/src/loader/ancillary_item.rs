@@ -7,63 +7,58 @@ use async_graphql::dataloader::*;
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
-/// Loads ancillary items grouped by their `item_link_id` (the principal side).
-/// In the common case `item_link.id == item.id`, so callers may pass `item_id`
-/// as the key. Items that have been merged (and therefore have multiple
-/// `item_link` rows) are not yet supported here.
-pub struct AncillaryItemsByItemLinkIdLoader {
+/// Loads ancillary items grouped by their principal `item_id`. The repository
+/// layer resolves `item_link_id` → `item_id` via the `ancillary_item_view`, so
+/// merged items are handled transparently here.
+pub struct AncillaryItemsByItemIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-impl Loader<String> for AncillaryItemsByItemLinkIdLoader {
+impl Loader<String> for AncillaryItemsByItemIdLoader {
     type Value = Vec<AncillaryItemRow>;
     type Error = RepositoryError;
 
-    async fn load(
-        &self,
-        item_link_ids: &[String],
-    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(&self, item_ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
         let repo = AncillaryItemRepository::new(&service_context.connection);
 
         let rows = repo.query_by_filter(
-            AncillaryItemFilter::new()
-                .item_link_id(EqualFilter::equal_any(item_link_ids.to_vec())),
+            AncillaryItemFilter::new().item_id(EqualFilter::equal_any(item_ids.to_vec())),
         )?;
 
         let mut map: HashMap<String, Vec<AncillaryItemRow>> = HashMap::new();
         for row in rows {
-            map.entry(row.item_link_id.clone()).or_default().push(row);
+            map.entry(row.item_id.clone()).or_default().push(row);
         }
         Ok(map)
     }
 }
 
-/// Loads ancillary items grouped by their `ancillary_item_link_id` — i.e. links
+/// Loads ancillary items grouped by their `ancillary_item_id` — i.e. links
 /// where this item is the ancillary supply for some other principal item.
-pub struct AncillaryItemsByAncillaryLinkIdLoader {
+pub struct AncillaryItemsByAncillaryIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-impl Loader<String> for AncillaryItemsByAncillaryLinkIdLoader {
+impl Loader<String> for AncillaryItemsByAncillaryIdLoader {
     type Value = Vec<AncillaryItemRow>;
     type Error = RepositoryError;
 
     async fn load(
         &self,
-        ancillary_item_link_ids: &[String],
+        ancillary_item_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
         let repo = AncillaryItemRepository::new(&service_context.connection);
 
         let rows = repo.query_by_filter(
             AncillaryItemFilter::new()
-                .ancillary_item_link_id(EqualFilter::equal_any(ancillary_item_link_ids.to_vec())),
+                .ancillary_item_id(EqualFilter::equal_any(ancillary_item_ids.to_vec())),
         )?;
 
         let mut map: HashMap<String, Vec<AncillaryItemRow>> = HashMap::new();
         for row in rows {
-            map.entry(row.ancillary_item_link_id.clone())
+            map.entry(row.ancillary_item_id.clone())
                 .or_default()
                 .push(row);
         }

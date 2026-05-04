@@ -82,8 +82,8 @@ mod test {
                     id
                     itemQuantity
                     ancillaryQuantity
-                    itemLinkId
-                    ancillaryItemLinkId
+                    itemId
+                    ancillaryItemId
                 }
             }
         }"#;
@@ -92,8 +92,8 @@ mod test {
             "storeId": "store_a",
             "input": {
                 "id": "ai1",
-                "itemLinkId": "item_a",
-                "ancillaryItemLinkId": "item_b",
+                "itemId": "item_a",
+                "ancillaryItemId": "item_b",
                 "itemQuantity": 2.0,
                 "ancillaryQuantity": 3.0,
             }
@@ -134,8 +134,8 @@ mod test {
             upsert: Some(Box::new(|_, input| {
                 Ok(AncillaryItemRow {
                     id: input.id,
-                    item_link_id: input.item_link_id,
-                    ancillary_item_link_id: input.ancillary_item_link_id,
+                    item_id: input.item_id,
+                    ancillary_item_id: input.ancillary_item_id,
                     item_quantity: input.item_quantity,
                     ancillary_quantity: input.ancillary_quantity,
                     deleted_datetime: None,
@@ -148,8 +148,8 @@ mod test {
                 "id": "ai1",
                 "itemQuantity": 2.0,
                 "ancillaryQuantity": 3.0,
-                "itemLinkId": "item_a",
-                "ancillaryItemLinkId": "item_b",
+                "itemId": "item_a",
+                "ancillaryItemId": "item_b",
             }
         });
         assert_graphql_query!(

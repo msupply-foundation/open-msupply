@@ -12,6 +12,7 @@ export const useRequisitionCounts = () => {
         storeId,
       }),
     {
+      enabled: !!storeId,
       retry: false,
     }
   );
