@@ -1,24 +1,11 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
-
-use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
-    ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
-    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter,
-    SyncBufferRepository,
-};
-use thiserror::Error;
-use util::format_error;
-
 use crate::{
+    apis::patient_v4::PatientV4,
+    programs::patient::PatientSearch,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError},
     sync_v7::{
         api::{
-            pull, push,
+            patient_search, pull, push,
             site_info::{SiteInfoInput, SiteInfoOutput},
             Common,
         },
@@ -26,6 +13,19 @@ use crate::{
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
+use repository::{
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
+    ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
+    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter,
+    SyncBufferRepository,
+};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
+use thiserror::Error;
+use util::format_error;
 
 /// TODO: revisit token format
 pub fn get_site_info(
@@ -167,6 +167,46 @@ pub async fn pull(
     let batch = SyncBatchV7::generate(&ctx.connection, filter, input.cursor, input.batch_size)?;
 
     Ok(batch)
+}
+
+pub async fn patient_search(
+    service_provider: &ServiceProvider,
+    common: Common,
+    input: patient_search::Input,
+) -> patient_search::Response {
+    let (_, ctx) = validate(service_provider, &common)?;
+
+    let params = PatientSearch {
+        code: input.code,
+        code_2: None,
+        first_name: input.first_name,
+        last_name: input.last_name,
+        date_of_birth: input.date_of_birth,
+        gender: None,
+        identifier: None,
+        name: None,
+    };
+
+    let results = patient_search_local(&ctx, service_provider, params, None)?;
+
+    Ok(results
+        .rows
+        .into_iter()
+        .map(|r| name_row_to_patient_v4(r.patient))
+        .collect())
+}
+
+fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
+    PatientV4 {
+        id: name.id,
+        name: name.name,
+        phone: name.phone.unwrap_or_default(),
+        email: name.email.unwrap_or_default(),
+        code: name.code,
+        last: name.last_name.unwrap_or_default(),
+        first: name.first_name.unwrap_or_default(),
+        date_of_birth: name.date_of_birth,
+    }
 }
 
 /// Receive Records from a remote open-mSupply Server
