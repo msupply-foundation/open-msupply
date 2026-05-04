@@ -233,8 +233,8 @@ export type AncillaryItemFragment = {
   id: string;
   itemQuantity: number;
   ancillaryQuantity: number;
-  itemLinkId: string;
-  ancillaryItemLinkId: string;
+  itemId: string;
+  ancillaryItemId: string;
   item?: {
     __typename: 'ItemNode';
     id: string;
@@ -526,8 +526,8 @@ export type ItemFragment = {
     id: string;
     itemQuantity: number;
     ancillaryQuantity: number;
-    itemLinkId: string;
-    ancillaryItemLinkId: string;
+    itemId: string;
+    ancillaryItemId: string;
     item?: {
       __typename: 'ItemNode';
       id: string;
@@ -770,8 +770,8 @@ export type ItemsWithStockLinesQuery = {
         id: string;
         itemQuantity: number;
         ancillaryQuantity: number;
-        itemLinkId: string;
-        ancillaryItemLinkId: string;
+        itemId: string;
+        ancillaryItemId: string;
         item?: {
           __typename: 'ItemNode';
           id: string;
@@ -1132,8 +1132,8 @@ export type ItemByIdQuery = {
         id: string;
         itemQuantity: number;
         ancillaryQuantity: number;
-        itemLinkId: string;
-        ancillaryItemLinkId: string;
+        itemId: string;
+        ancillaryItemId: string;
         item?: {
           __typename: 'ItemNode';
           id: string;
@@ -1565,8 +1565,8 @@ export type UpsertAncillaryItemMutation = {
             id: string;
             itemQuantity: number;
             ancillaryQuantity: number;
-            itemLinkId: string;
-            ancillaryItemLinkId: string;
+            itemId: string;
+            ancillaryItemId: string;
             item?: {
               __typename: 'ItemNode';
               id: string;
@@ -1894,8 +1894,8 @@ export const AncillaryItemFragmentDoc = gql`
     id
     itemQuantity
     ancillaryQuantity
-    itemLinkId
-    ancillaryItemLinkId
+    itemId
+    ancillaryItemId
     item {
       ...AncillaryItemRow
     }

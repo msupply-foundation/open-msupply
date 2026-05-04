@@ -1,13 +1,10 @@
 use repository::{ancillary_item_row::AncillaryItemRow, RequisitionLineRow};
 use std::collections::{HashMap, HashSet};
+use util::f64_approx_eq;
 
 /// Max number of edges we'll follow when chasing ancillary chains. Matches the
 /// cap enforced on insert so this is defensive — real chains can't exceed it.
 const MAX_ANCILLARY_DEPTH: u32 = 5;
-/// Two required quantities closer than this are considered equal. Floating
-/// point arithmetic through the `ancillary_qty / item_qty` ratio can introduce
-/// drift even when everything cancels algebraically.
-const EPSILON: f64 = 1e-6;
 
 /// Whether a requisition has missing or stale ancillary lines.
 ///
@@ -66,7 +63,7 @@ pub fn compute_ancillary_plan(
     lines: &[RequisitionLineRow],
     ancillary_rows: &[AncillaryItemRow],
 ) -> AncillaryPlan {
-    // Build adjacency: item_link_id -> list of (ancillary_item_link_id, ratio)
+    // Build adjacency: item_id -> list of (ancillary_item_id, ratio)
     //
     // Ratio here is "ancillary units per principal unit" — i.e. for every unit
     // of the principal item, we need this many units of the ancillary item.
@@ -77,9 +74,9 @@ pub fn compute_ancillary_plan(
         }
         let ratio = row.ancillary_quantity / row.item_quantity;
         graph
-            .entry(&row.item_link_id)
+            .entry(&row.item_id)
             .or_default()
-            .push((&row.ancillary_item_link_id, ratio));
+            .push((&row.ancillary_item_id, ratio));
     }
 
     // A line's item is "top-level" if it is not transitively reachable from any
@@ -134,7 +131,7 @@ pub fn compute_ancillary_plan(
                 existing_line_id: None,
             }),
             Some(line) => {
-                if (line.requested_quantity - required_quantity).abs() > EPSILON {
+                if !f64_approx_eq(line.requested_quantity, required_quantity) {
                     plan.to_update.push(AncillaryDelta {
                         item_link_id,
                         required_quantity,
@@ -225,8 +222,8 @@ mod tests {
     fn link(principal: &str, ancillary: &str, i: f64, a: f64) -> AncillaryItemRow {
         AncillaryItemRow {
             id: format!("{principal}->{ancillary}"),
-            item_link_id: principal.to_string(),
-            ancillary_item_link_id: ancillary.to_string(),
+            item_id: principal.to_string(),
+            ancillary_item_id: ancillary.to_string(),
             item_quantity: i,
             ancillary_quantity: a,
             deleted_datetime: None,
@@ -250,7 +247,7 @@ mod tests {
         assert_eq!(plan.to_add.len(), 1);
         let delta = &plan.to_add[0];
         assert_eq!(delta.item_link_id, "safety_box");
-        assert!((delta.required_quantity - 1.0).abs() < EPSILON);
+        assert!(f64_approx_eq(delta.required_quantity, 1.0));
     }
 
     #[test]
@@ -279,7 +276,7 @@ mod tests {
         let delta = &plan.to_update[0];
         assert_eq!(delta.item_link_id, "safety_box");
         assert_eq!(delta.existing_line_id.as_deref(), Some("l2"));
-        assert!((delta.required_quantity - 1.0).abs() < EPSILON);
+        assert!(f64_approx_eq(delta.required_quantity, 1.0));
     }
 
     #[test]
@@ -290,7 +287,7 @@ mod tests {
             &[link("vaccine", "syringe", 1.0, 1.1)],
         );
         assert_eq!(plan.to_add.len(), 1);
-        assert!((plan.to_add[0].required_quantity - 55.0).abs() < EPSILON);
+        assert!(f64_approx_eq(plan.to_add[0].required_quantity, 55.0));
     }
 
     #[test]
@@ -316,8 +313,8 @@ mod tests {
             .iter()
             .find(|d| d.item_link_id == "safety_box")
             .unwrap();
-        assert!((syringe.required_quantity - 110.0).abs() < EPSILON);
-        assert!((safety_box.required_quantity - 1.1).abs() < EPSILON);
+        assert!(f64_approx_eq(syringe.required_quantity, 110.0));
+        assert!(f64_approx_eq(safety_box.required_quantity, 1.1));
     }
 
     #[test]
@@ -331,7 +328,7 @@ mod tests {
             ],
         );
         assert_eq!(plan.to_add.len(), 1);
-        assert!((plan.to_add[0].required_quantity - 1.5).abs() < EPSILON);
+        assert!(f64_approx_eq(plan.to_add[0].required_quantity, 1.5));
     }
 
     #[test]
@@ -417,8 +414,8 @@ mod tests {
             .iter()
             .find(|d| d.item_link_id == "safety_box")
             .unwrap();
-        assert!((syringe.required_quantity - 200.0).abs() < EPSILON);
-        assert!((safety_box.required_quantity - 2.0).abs() < EPSILON);
+        assert!(f64_approx_eq(syringe.required_quantity, 200.0));
+        assert!(f64_approx_eq(safety_box.required_quantity, 2.0));
     }
 
     #[test]

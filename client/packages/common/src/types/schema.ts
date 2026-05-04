@@ -362,16 +362,13 @@ export type AncillaryItemNode = {
   __typename: 'AncillaryItemNode';
   /** The ancillary item — the item to be added to the order as a supply for the principal. */
   ancillaryItem?: Maybe<ItemNode>;
-  ancillaryItemLinkId: Scalars['String']['output'];
+  ancillaryItemId: Scalars['String']['output'];
   /** Right-hand side of the stored `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['output'];
   id: Scalars['String']['output'];
-  /**
-   * The principal item — the item this ancillary supply should be ordered alongside.
-   * Resolved via `item_link_id`, which matches `item.id` in the common (unmerged) case.
-   */
+  /** The principal item — the item this ancillary supply should be ordered alongside. */
   item?: Maybe<ItemNode>;
-  itemLinkId: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
   /** Left-hand side of the stored `x:y` ratio (principal count). */
   itemQuantity: Scalars['Float']['output'];
 };
@@ -11273,11 +11270,11 @@ export type UpsertAncillaryItemErrorInterface = {
 };
 
 export type UpsertAncillaryItemInput = {
-  ancillaryItemLinkId: Scalars['String']['input'];
+  ancillaryItemId: Scalars['String']['input'];
   /** Right-hand side of the user-entered `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['input'];
   id: Scalars['String']['input'];
-  itemLinkId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
   /** Left-hand side of the user-entered `x:y` ratio (principal count). */
   itemQuantity: Scalars['Float']['input'];
 };
