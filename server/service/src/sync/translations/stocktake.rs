@@ -3,14 +3,16 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, Row, StocktakeRow, StocktakeStatus,
     StorageConnection, SyncBufferRow,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
     empty_str_as_option_string, naive_time, zero_date_as_option,
+
 };
 
-use super::{ to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum LegacyStocktakeStatus {
@@ -161,10 +163,11 @@ impl SyncTranslation for StocktakeTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::Stocktake(stocktake) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
         let StocktakeRow {
             id,
@@ -208,7 +211,7 @@ impl SyncTranslation for StocktakeTranslation {
             is_initial_stocktake,
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(

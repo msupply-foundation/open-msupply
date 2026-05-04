@@ -2,14 +2,15 @@ use crate::sync::translations::{store::StoreTranslation, PullTranslateResult, Sy
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogTableName, StorageConnection, SyncMessageRow, SyncMessageRowRepository,
+    ChangelogRow, ChangelogTableName, StorageConnection, SyncMessageRow, SyncMessageRowRepository,
     SyncMessageRowStatus, SyncMessageRowType,
     Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, naive_time};
 
-use super::{ to_legacy_time, TranslatedUpsert };
+use super::{to_legacy_time, PushTranslateResult};
 
 /// Message from mSupply Central Server
 #[derive(Deserialize, Serialize, Debug)]
@@ -102,10 +103,11 @@ impl SyncTranslation for MessageTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::SyncMessage(sync_message_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let Some(message) =
@@ -148,7 +150,7 @@ impl SyncTranslation for MessageTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(TranslatedUpsert::Translated(json_record))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
     }
 }
 

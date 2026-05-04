@@ -2,16 +2,17 @@ use repository::{
     rnr_form_row::RnRFormRow,
     ChangelogRow, ChangelogTableName, RnRFormDelete, StorageConnection, SyncBufferRow,
     Row,
+
 };
 
 use crate::sync::translations::{
     master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
     program_requisition_settings::ProgramRequisitionSettingsTranslation,
     requisition::RequisitionTranslation, store::StoreTranslation,
+
 };
 
-use super::{ 
-    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -70,15 +71,16 @@ impl SyncTranslation for RnRFormTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::RnrForm(rnr_form_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let row = rnr_form_row;
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
 
     fn try_translate_from_delete_sync_record(

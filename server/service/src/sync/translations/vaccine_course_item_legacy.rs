@@ -2,11 +2,12 @@ use serde::Serialize;
 
 use crate::sync::CentralServerConfig;
 
-use super::{ SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
     ChangelogRow,
     ChangelogTableName, StorageConnection,
     Row,
+
 };
 
 /*
@@ -63,10 +64,11 @@ impl SyncTranslation for VaccineCourseItemLegacyTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::VaccineCourseItem(vaccine_course_item_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let row = vaccine_course_item_row;
@@ -80,7 +82,7 @@ impl SyncTranslation for VaccineCourseItemLegacyTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(TranslatedUpsert::Translated(json_record))
+        Ok(PushTranslateResult::upsert(changelog, LEGACY_VACCINE_COURSE_ITEM_TABLE_NAME, json_record))
     }
 }
 
@@ -92,7 +94,8 @@ mod tests {
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all,
-        vaccine_course::vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository}, ChangelogRepository,
+        vaccine_course::vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
+        ChangelogRepository,
     };
 
     #[actix_rt::test]
@@ -145,12 +148,16 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, row)
+            .try_translate_to_upsert_sync_record(&connection, &changelog_row, row)
             .unwrap();
 
         match translation_result {
-            TranslatedUpsert::Translated(upsert_result) => {
-                assert_eq!(upsert_result["ID"], "test_vaccine_course_item_id");
+            PushTranslateResult::PushRecord(records) => {
+                assert_eq!(records[0].record.record_id, "test_vaccine_course_item_id");
+                assert_eq!(
+                    records[0].record.table_name,
+                    LEGACY_VACCINE_COURSE_ITEM_TABLE_NAME
+                );
             }
             _ => panic!("Expected Upsert result"),
         }

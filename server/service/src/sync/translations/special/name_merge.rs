@@ -2,12 +2,14 @@ use repository::{
     EqualFilter, NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter,
     NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection,
     StoreFilter, StoreRepository, SyncBufferRow,
+
 };
 
 use serde::Deserialize;
 
 use crate::sync::translations::{
     name::NameTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
+
 };
 
 #[derive(Deserialize)]

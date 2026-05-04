@@ -1,17 +1,19 @@
 use crate::sync::translations::{
     invoice_line::InvoiceLineTranslation, stock_line::StockLineTranslation,
     store::StoreTranslation, user::UserTranslation, vvm_status::VVMStatusTranslation,
+
 };
 use anyhow::Error;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow,
     ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time};
 
-use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -97,10 +99,11 @@ impl SyncTranslation for VVMStatusLogTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::VVMStatusLog(vvm_status_log_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let VVMStatusLogRow {
@@ -126,7 +129,7 @@ impl SyncTranslation for VVMStatusLogTranslation {
             store_id,
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(

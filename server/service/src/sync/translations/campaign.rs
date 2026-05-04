@@ -2,11 +2,11 @@ use repository::{
     campaign::campaign_row::CampaignRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
+
 };
 
 use crate::sync::translations::{
-    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-    TranslatedUpsert,
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -55,15 +55,16 @@ impl SyncTranslation for CampaignTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::Campaign(campaign_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let row = campaign_row;
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
 }
 

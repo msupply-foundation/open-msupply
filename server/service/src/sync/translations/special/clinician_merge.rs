@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 use crate::sync::translations::{
     clinician::ClinicianTranslation, PullTranslateResult, SyncTranslation,
+
 };
 
 #[derive(Deserialize)]
@@ -77,6 +78,7 @@ mod tests {
         mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRepository,
         SyncBufferRowInsert,
         SyncRecordData,
+    
     };
     use serde_json::json;
 

@@ -3,17 +3,18 @@ use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete,
     NameRowType, Row, StorageConnection, SyncBufferRow,
+
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
+
 };
 
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{translations::currency::CurrencyTranslation, CentralServerConfig};
 
-use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -345,10 +346,11 @@ impl SyncTranslation for NameTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::Name(name_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
         let NameRow {
             id,
@@ -389,7 +391,7 @@ impl SyncTranslation for NameTranslation {
             custom_data_string: _,
         } = name_row;
         if deleted_datetime.is_some() {
-            return Ok(TranslatedUpsert::Ignored(
+            return Ok(PushTranslateResult::Ignored(
                 "Ignore pushing soft deleted name".to_string(),
             ));
         }
@@ -397,7 +399,7 @@ impl SyncTranslation for NameTranslation {
         let patient_type = match r#type {
             NameRowType::Patient => LegacyNameRowType::Patient,
             _ => {
-                return Ok(TranslatedUpsert::Ignored(
+                return Ok(PushTranslateResult::Ignored(
                     "Only push name records that belong to patients".to_string(),
                 ))
             }
@@ -445,7 +447,7 @@ impl SyncTranslation for NameTranslation {
             custom_data: None,
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     // TODO soft delete

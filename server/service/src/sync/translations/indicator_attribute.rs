@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use repository::{
     IndicatorColumnRow, IndicatorLineRow, IndicatorValueType, StorageConnection, SyncBufferRow,
+
 };
 
 use serde::Deserialize;
