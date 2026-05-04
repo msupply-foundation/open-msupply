@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { getLocale, useIntlUtils, useTranslation } from '@common/intl';
 import {
   addMinutes,
@@ -226,49 +227,74 @@ export const useFormatDateTime = () => {
   const locale = getLocale(currentLanguage);
   const t = useTranslation();
 
-  const localisedDate = (date: Date | string | number): string =>
-    formatIfValid(dateInputHandler(date), 'P', { locale });
+  const localisedDate = useCallback(
+    (date: Date | string | number): string =>
+      formatIfValid(dateInputHandler(date), 'P', { locale }),
+    [locale]
+  );
 
-  const localisedTime = (date: Date | string | number): string =>
-    formatIfValid(dateInputHandler(date), 'p', { locale });
+  const localisedTime = useCallback(
+    (date: Date | string | number): string =>
+      formatIfValid(dateInputHandler(date), 'p', { locale }),
+    [locale]
+  );
 
-  const localisedDateTime = (date: Date | string | number): string =>
-    format(dateInputHandler(date), 'P p', { locale });
+  const localisedDateTime = useCallback(
+    (date: Date | string | number): string =>
+      format(dateInputHandler(date), 'P p', { locale }),
+    [locale]
+  );
 
-  const dayMonthShort = (date: Date | string | number): string =>
-    formatIfValid(dateInputHandler(date), 'dd MMM', { locale });
+  const dayMonthShort = useCallback(
+    (date: Date | string | number): string =>
+      formatIfValid(dateInputHandler(date), 'dd MMM', { locale }),
+    [locale]
+  );
 
-  const dayMonthTime = (date: Date | string | number): string =>
-    formatIfValid(dateInputHandler(date), 'dd/MM HH:mm', { locale });
+  const dayMonthTime = useCallback(
+    (date: Date | string | number): string =>
+      formatIfValid(dateInputHandler(date), 'dd/MM HH:mm', { locale }),
+    [locale]
+  );
 
-  const customDate = (
-    date: Date | string | number,
-    formatString: string
-  ): string => formatIfValid(dateInputHandler(date), formatString, { locale });
+  const customDate = useCallback(
+    (date: Date | string | number, formatString: string): string =>
+      formatIfValid(dateInputHandler(date), formatString, { locale }),
+    [locale]
+  );
 
-  const relativeDateTime = (
-    date: Date | string | number,
-    baseDate: Date = new Date()
-  ): string => {
-    const d = dateInputHandler(date);
-    return isValid(d) ? formatRelative(d, baseDate, { locale }) : '';
-  };
+  const relativeDateTime = useCallback(
+    (
+      date: Date | string | number,
+      baseDate: Date = new Date()
+    ): string => {
+      const d = dateInputHandler(date);
+      return isValid(d) ? formatRelative(d, baseDate, { locale }) : '';
+    },
+    [locale]
+  );
 
-  const localisedDistanceToNow = (date: Date | string | number) => {
-    const d = dateInputHandler(date);
-    return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
-  };
+  const localisedDistanceToNow = useCallback(
+    (date: Date | string | number) => {
+      const d = dateInputHandler(date);
+      return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
+    },
+    [locale]
+  );
 
-  const localisedDistance = (
-    startDate: Date | string | number,
-    endDate: Date | string | number
-  ) => {
-    const from = dateInputHandler(startDate);
-    const to = dateInputHandler(endDate);
-    return isValid(from) && isValid(to)
-      ? formatDistance(from, to, { locale })
-      : '';
-  };
+  const localisedDistance = useCallback(
+    (
+      startDate: Date | string | number,
+      endDate: Date | string | number
+    ) => {
+      const from = dateInputHandler(startDate);
+      const to = dateInputHandler(endDate);
+      return isValid(from) && isValid(to)
+        ? formatDistance(from, to, { locale })
+        : '';
+    },
+    [locale]
+  );
 
   // Returns a formatted age for the input date (of birth) relative to the
   // current date. Will format as whole number of years unless the age is less
@@ -277,21 +303,27 @@ export const useFormatDateTime = () => {
   // - DOB is 2 years in the past => "2"
   // - DOB is 9 months and 2 days ago => "9 months, 2 days"
   // - DOB is 5 days ago => "5 days"
-  const getDisplayAge = (dob: Date | null | undefined): string => {
-    if (!dob) return '';
-    const patientAge = DateUtils.age(dob);
-    const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
+  const getDisplayAge = useCallback(
+    (dob: Date | null | undefined): string => {
+      if (!dob) return '';
+      const patientAge = DateUtils.age(dob);
+      const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
 
-    if (patientAge >= 1) {
-      return `${t('label.age-years', { count: patientAge })}`;
-    } else
-      return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
-  };
+      if (patientAge >= 1) {
+        return `${t('label.age-years', { count: patientAge })}`;
+      } else
+        return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
+    },
+    [t]
+  );
 
-  const formatDaysFromToday = (days?: number): string => {
-    const date = days ? DateUtils.addDays(new Date(), days) : new Date();
-    return customDate(date, URL_QUERY_DATE);
-  };
+  const formatDaysFromToday = useCallback(
+    (days?: number): string => {
+      const date = days ? DateUtils.addDays(new Date(), days) : new Date();
+      return customDate(date, URL_QUERY_DATE);
+    },
+    [customDate]
+  );
 
   return {
     urlQueryDate: URL_QUERY_DATE,

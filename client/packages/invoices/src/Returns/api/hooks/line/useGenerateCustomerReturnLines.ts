@@ -11,15 +11,16 @@ export const useGenerateCustomerReturnLines = (
   const existingLinesInput =
     returnId && itemId ? { returnId, itemId } : undefined;
 
-  return useQuery(
-    api.keys.generatedCustomerLines(),
-    () =>
+  return useQuery({
+    queryKey: api.keys.generatedCustomerLines(),
+
+    queryFn: () =>
       api.get.generateCustomerReturnLines({
         outboundShipmentLineIds,
         existingLinesInput,
       }),
-    {
-      enabled: false, // disables automatic fetching
-    }
-  );
+
+    // disables automatic fetching
+    enabled: false
+  });
 };

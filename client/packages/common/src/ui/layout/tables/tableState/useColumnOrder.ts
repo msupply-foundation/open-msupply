@@ -17,6 +17,8 @@ export const useColumnOrder = <T extends MRT_RowData>(
   enableExpanding: MRT_TableOptions<T>['enableExpanding']
 ) => {
   const globalDefaults = useGlobalTableDefaults(tableId);
+  const hasRowSelection = !!enableRowSelection;
+  const hasExpanding = !!enableExpanding;
   const initial = useMemo(() => {
     for (const col of columns) {
       // if column has a custom columnIndex, remove it from its current position
@@ -33,10 +35,10 @@ export const useColumnOrder = <T extends MRT_RowData>(
     return getDefaultColumnOrderIds({
       columns,
       state: {},
-      enableRowSelection, // adds `mrt-row-select`
-      enableExpanding, // adds `mrt-row-expand`
+      enableRowSelection: hasRowSelection, // adds `mrt-row-select`
+      enableExpanding: hasExpanding, // adds `mrt-row-expand`
     } as MRT_StatefulTableOptions<MRT_RowData>);
-  }, [columns, enableRowSelection, enableExpanding]);
+  }, [columns, hasRowSelection, hasExpanding]);
 
   // Saved/global column orders may have been persisted before
   // `enableExpanding` flipped on (e.g. before the user toggled grouping).
@@ -65,12 +67,14 @@ export const useColumnOrder = <T extends MRT_RowData>(
 
   // If initial state changes (due to plugin column loading, for example) and no
   // custom column order has been saved, update the column order to the new
-  // default. Also re-runs when `enableExpanding` flips so the saved order
-  // gets the expand column spliced in.
+  // default. globalDefaults?.columnOrder is included so the saved global order
+  // applies when preferences load after this hook has already mounted.
+  // Also re-runs when `enableExpanding` flips so the saved order gets the
+  // expand column spliced in.
   useEffect(() => {
     const saved = getSavedState(tableId)?.columnOrder;
     setState(withExpandColumn(saved ?? globalDefaults?.columnOrder ?? initial));
-  }, [initial, enableExpanding, withExpandColumn]);
+  }, [initial, globalDefaults?.columnOrder, enableExpanding, withExpandColumn]);
 
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnOrderChange']>

@@ -149,7 +149,7 @@ const ItemLedgerTable = ({
         accessorFn: row => row.user?.username,
       },
     ],
-    [localisedTime, t]
+    [t, localisedTime]
   );
 
   const { table } = usePaginatedMaterialTable<ItemLedgerFragment>({
