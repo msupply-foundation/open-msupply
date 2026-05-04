@@ -223,7 +223,7 @@ export const useNativeClient = ({
         connectToPrevious(previousServer);
       }
     });
-  }, [state.previousServer, autoconnect, state, nativeAPI, connectToPrevious]);
+  }, [state.previousServer, autoconnect, nativeAPI, connectToPrevious]);
 
   return {
     ...state,
