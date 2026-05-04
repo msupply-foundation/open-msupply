@@ -2,15 +2,16 @@ use repository::{
     vaccine_course::vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
+
 };
 
 use crate::sync::translations::{
     demographic::DemographicTranslation, master_list::MasterListTranslation,
     program_requisition_settings::ProgramRequisitionSettingsTranslation,
+
 };
 
-use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -69,15 +70,16 @@ impl SyncTranslation for VaccineCourseTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::VaccineCourse(vaccine_course_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let row = vaccine_course_row;
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
 }
 

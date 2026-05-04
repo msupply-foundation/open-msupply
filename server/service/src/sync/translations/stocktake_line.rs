@@ -3,6 +3,7 @@ use crate::sync::translations::{
     master_list::MasterListTranslation, reason::ReasonTranslation,
     stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
     vvm_status::VVMStatusTranslation,
+
 };
 
 use chrono::NaiveDate;
@@ -11,15 +12,16 @@ use repository::{
     StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StorageConnection,
     SyncBufferRow,
     Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
     zero_date_as_option,
+
 };
 
-use super::{ 
-    utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -217,10 +219,11 @@ impl SyncTranslation for StocktakeLineTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::StocktakeLine(stocktake_line_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let Some(stocktake_line) = StocktakeLineRepository::new(connection)
@@ -303,7 +306,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             oms_fields,
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -319,11 +322,13 @@ impl SyncTranslation for StocktakeLineTranslation {
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder,
+
 };
     use serde_json::json;
 
@@ -383,16 +388,16 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
+                .try_translate_to_upsert_sync_record(&connection, &changelog, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
 
-            let TranslatedUpsert::Translated(translated) = translated else {
+            let PushTranslateResult::PushRecord(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated["item_ID"], json!("item_a"));
+            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
         }
     }
 }

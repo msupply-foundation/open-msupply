@@ -302,6 +302,7 @@ impl PartialEq for PullTranslateResult {
     fn eq(&self, other: &Self) -> bool {
         format!("{self:?}") == format!("{other:?}")
     }
+
 }
 
 impl PullTranslateResult {
@@ -351,15 +352,6 @@ pub(crate) struct PushSyncRecord {
 
 pub(crate) enum PushTranslateResult {
     PushRecord(Vec<PushSyncRecord>),
-    Ignored(String),
-    NotMatched,
-}
-
-/// Return type of `try_translate_to_upsert_sync_record`. Translators
-/// return only the serialised JSON (or skip); the dispatcher wraps it
-/// with changelog metadata to produce a `PushSyncRecord`.
-pub(crate) enum TranslatedUpsert {
-    Translated(serde_json::Value),
     Ignored(String),
     NotMatched,
 }
@@ -424,11 +416,13 @@ pub(crate) trait SyncTranslation {
     /// A single table name to match on, If there's just one table name to match on, use this function
     fn table_name(&self) -> &str {
         ""
+    
     }
 
     /// If you need to match on more than one table_name with the same translator, use this one...
     fn table_names(&self) -> Vec<&str> {
         vec![self.table_name()]
+    
     }
 
     /// By default matching by table name
@@ -501,9 +495,10 @@ pub(crate) trait SyncTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        _changelog: &ChangelogRow,
         _row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
-        Ok(TranslatedUpsert::NotMatched)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::NotMatched)
     }
 
     fn try_translate_to_delete_sync_record(
@@ -545,80 +540,35 @@ fn translate_row_or_delete(
     row_or_delete: RowOrDelete,
     r#type: &Vec<ToSyncRecordTranslationType>,
 ) -> Result<Vec<PushSyncRecord>, anyhow::Error> {
-    let mut translation_results: Vec<Vec<PushSyncRecord>> = Vec::new();
+    let mut translation_results = Vec::new();
+    let changelog = row_or_delete.changelog().clone();
 
-    match row_or_delete {
-        RowOrDelete::Row { changelog, row } => {
-            // Find every translator that wants this row, then call them.
-            // The last matching translator gets the row by value; all
-            // earlier ones get a clone so each can move out of it.
-            let mut matching: Vec<&Box<dyn SyncTranslation>> = translators
-                .iter()
-                .filter(|t| {
-                    r#type
-                        .iter()
-                        .any(|rt| t.should_translate_to_sync_record(&changelog, rt))
-                })
-                .collect();
-
-            let last = matching.pop();
-            for translator in matching {
-                let result = translator
-                    .try_translate_to_upsert_sync_record(connection, row.clone())?;
-                handle_upsert_result(translator, &changelog, result, &mut translation_results);
-            }
-            if let Some(translator) = last {
-                let result =
-                    translator.try_translate_to_upsert_sync_record(connection, row)?;
-                handle_upsert_result(translator, &changelog, result, &mut translation_results);
-            }
+    for translator in translators.iter() {
+        if !r#type
+            .iter()
+            .any(|r| translator.should_translate_to_sync_record(&changelog, r))
+        {
+            continue;
         }
-        RowOrDelete::Delete { changelog } => {
-            for translator in translators.iter() {
-                if !r#type
-                    .iter()
-                    .any(|r| translator.should_translate_to_sync_record(&changelog, r))
-                {
-                    continue;
-                }
-                let result = translator.try_translate_to_delete_sync_record(connection, &changelog)?;
-                match result {
-                    PushTranslateResult::PushRecord(records) => translation_results.push(records),
-                    PushTranslateResult::Ignored(ignore_message) => {
-                        log::debug!("Ignored record in push translation: {ignore_message}")
-                    }
-                    PushTranslateResult::NotMatched => {}
-                }
+
+        let translation_result = match &row_or_delete {
+            RowOrDelete::Row { row, .. } => translator
+                .try_translate_to_upsert_sync_record(connection, &changelog, row.clone())?,
+            RowOrDelete::Delete { .. } => {
+                translator.try_translate_to_delete_sync_record(connection, &changelog)?
             }
+        };
+
+        match translation_result {
+            PushTranslateResult::PushRecord(records) => translation_results.push(records),
+            PushTranslateResult::Ignored(ignore_message) => {
+                log::debug!("Ignored record in push translation: {ignore_message}")
+            }
+            PushTranslateResult::NotMatched => {}
         }
     }
 
     Ok(translation_results.into_iter().flatten().collect())
-}
-
-fn handle_upsert_result(
-    translator: &Box<dyn SyncTranslation>,
-    changelog: &ChangelogRow,
-    result: TranslatedUpsert,
-    out: &mut Vec<Vec<PushSyncRecord>>,
-) {
-    match result {
-        TranslatedUpsert::Translated(record_data) => {
-            out.push(vec![PushSyncRecord {
-                cursor: changelog.cursor,
-                record: CommonSyncRecord {
-                    table_name: translator.table_name().to_string(),
-                    record_id: changelog.record_id.clone(),
-                    action: SyncAction::Update,
-                    record_data,
-                },
-            }]);
-        }
-        TranslatedUpsert::Ignored(msg) => {
-            log::debug!("Ignored record in push translation: {msg}")
-        }
-        TranslatedUpsert::NotMatched => {}
-    }
 }
 
 #[derive(Debug)]

@@ -4,6 +4,7 @@ use repository::{
     item_category_row::ItemCategoryJoinRow,
     ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
     ItemType, Row, StorageConnection, SyncBufferRow, VENCategory,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -13,11 +14,12 @@ use crate::sync::{
         unit::UnitTranslation,
     },
     CentralServerConfig,
+
 };
 
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{ IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Serialize)]
@@ -171,8 +173,9 @@ impl SyncTranslation for ItemTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         if !CentralServerConfig::is_central_server() {
             return Err(anyhow::anyhow!(
                 "Item push is only supported from the central server"
@@ -180,7 +183,7 @@ impl SyncTranslation for ItemTranslation {
         }
 
         let Row::Item(item) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let ItemRow {
@@ -223,7 +226,7 @@ impl SyncTranslation for ItemTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(TranslatedUpsert::Translated(json_record))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
     }
 }
 

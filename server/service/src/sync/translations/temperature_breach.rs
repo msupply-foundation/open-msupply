@@ -1,20 +1,23 @@
 use crate::sync::translations::{
     location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
+
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use util::sync_serde::{
     date_from_date_time, date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
     naive_time, zero_date_as_option,
+
 };
 
 use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachRow,
     TemperatureBreachRowRepository, TemperatureBreachType,
     Row,
+
 };
 use serde::{Deserialize, Serialize};
 
-use super::{ to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -145,10 +148,11 @@ impl SyncTranslation for TemperatureBreachTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::TemperatureBreach(temperature_breach_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let TemperatureBreachRow {
@@ -191,7 +195,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             comment,
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 
