@@ -13,9 +13,7 @@ mod tests {
     use crate::sync::test_util_set_is_central_server;
 
     // The central-server flag is a process-wide static, so all sub-cases live in one test
-    // function to avoid races with the test runner's parallel execution. Mock items
-    // auto-create item_link rows with the same id, so `mock_item_a().id` doubles as a
-    // valid `item_link_id`.
+    // function to avoid races with the test runner's parallel execution.
     #[actix_rt::test]
     async fn ancillary_item_service() {
         let (_, _, connection_manager, _) =
@@ -32,8 +30,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "r1".to_string(),
-                    item_link_id: mock_item_a().id,
-                    ancillary_item_link_id: mock_item_b().id,
+                    item_id: mock_item_a().id,
+                    ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
                 },
@@ -60,8 +58,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "r1".to_string(),
-                    item_link_id: mock_item_a().id,
-                    ancillary_item_link_id: mock_item_b().id,
+                    item_id: mock_item_a().id,
+                    ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 0.0,
                 },
@@ -75,8 +73,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "r2".to_string(),
-                    item_link_id: "does_not_exist".to_string(),
-                    ancillary_item_link_id: mock_item_b().id,
+                    item_id: "does_not_exist".to_string(),
+                    ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
                 },
@@ -90,8 +88,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "r3".to_string(),
-                    item_link_id: mock_item_a().id,
-                    ancillary_item_link_id: "does_not_exist".to_string(),
+                    item_id: mock_item_a().id,
+                    ancillary_item_id: "does_not_exist".to_string(),
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
                 },
@@ -105,8 +103,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "r4".to_string(),
-                    item_link_id: mock_item_a().id,
-                    ancillary_item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
+                    ancillary_item_id: mock_item_a().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
                 },
@@ -120,8 +118,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "ab".to_string(),
-                    item_link_id: mock_item_a().id,
-                    ancillary_item_link_id: mock_item_b().id,
+                    item_id: mock_item_a().id,
+                    ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
                 },
@@ -135,8 +133,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "ba".to_string(),
-                    item_link_id: mock_item_b().id,
-                    ancillary_item_link_id: mock_item_a().id,
+                    item_id: mock_item_b().id,
+                    ancillary_item_id: mock_item_a().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
                 },
@@ -150,8 +148,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "ab_duplicate".to_string(),
-                    item_link_id: mock_item_a().id,
-                    ancillary_item_link_id: mock_item_b().id,
+                    item_id: mock_item_a().id,
+                    ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 3.0,
                 },
@@ -165,8 +163,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "ab".to_string(),
-                    item_link_id: mock_item_a().id,
-                    ancillary_item_link_id: mock_item_b().id,
+                    item_id: mock_item_a().id,
+                    ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 5.0,
                 },
@@ -189,8 +187,8 @@ mod tests {
                 &context,
                 UpsertAncillaryItem {
                     id: "ac".to_string(),
-                    item_link_id: mock_item_a().id,
-                    ancillary_item_link_id: mock_item_c().id,
+                    item_id: mock_item_a().id,
+                    ancillary_item_id: mock_item_c().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
                 },

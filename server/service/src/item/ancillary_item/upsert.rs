@@ -4,7 +4,7 @@ use repository::{
         AncillaryItemValidationError,
     },
     ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
-    EqualFilter, ItemLinkRowRepository, RepositoryError, StorageConnection,
+    EqualFilter, ItemRowRepository, RepositoryError, StorageConnection,
 };
 
 use crate::{service_provider::ServiceContext, sync::CentralServerConfig};
@@ -20,7 +20,10 @@ pub enum UpsertAncillaryItemError {
     /// Adding this link would create a cycle through existing ancillary item links
     CycleDetected,
     /// Adding this link would push a chain past the maximum allowed depth
-    MaxDepthExceeded { max: u32, actual: u32 },
+    MaxDepthExceeded {
+        max: u32,
+        actual: u32,
+    },
     /// Both `item_quantity` and `ancillary_quantity` must be > 0
     RatioMustBePositive,
     CreatedRecordNotFound,
@@ -30,8 +33,8 @@ pub enum UpsertAncillaryItemError {
 #[derive(Default, Clone, Debug)]
 pub struct UpsertAncillaryItem {
     pub id: String,
-    pub item_link_id: String,
-    pub ancillary_item_link_id: String,
+    pub item_id: String,
+    pub ancillary_item_id: String,
     /// Left-hand side of the user-entered `x:y` ratio (principal count).
     pub item_quantity: f64,
     /// Right-hand side of the user-entered `x:y` ratio (ancillary count).
@@ -84,16 +87,16 @@ impl From<AncillaryItemValidationError> for UpsertAncillaryItemError {
 fn generate(
     UpsertAncillaryItem {
         id,
-        item_link_id,
-        ancillary_item_link_id,
+        item_id,
+        ancillary_item_id,
         item_quantity,
         ancillary_quantity,
     }: UpsertAncillaryItem,
 ) -> AncillaryItemRow {
     AncillaryItemRow {
         id,
-        item_link_id,
-        ancillary_item_link_id,
+        item_id,
+        ancillary_item_id,
         item_quantity,
         ancillary_quantity,
         deleted_datetime: None,
@@ -112,12 +115,12 @@ fn validate(
         return Err(UpsertAncillaryItemError::RatioMustBePositive);
     }
 
-    let item_link_repo = ItemLinkRowRepository::new(connection);
-    if item_link_repo.find_one_by_id(&input.item_link_id)?.is_none() {
+    let item_repo = ItemRowRepository::new(connection);
+    if item_repo.find_one_by_id(&input.item_id)?.is_none() {
         return Err(UpsertAncillaryItemError::PrincipalItemDoesNotExist);
     }
-    if item_link_repo
-        .find_one_by_id(&input.ancillary_item_link_id)?
+    if item_repo
+        .find_one_by_id(&input.ancillary_item_id)?
         .is_none()
     {
         return Err(UpsertAncillaryItemError::AncillaryItemDoesNotExist);
@@ -134,8 +137,8 @@ fn validate(
     };
     validate_ancillary_item_link(
         connection,
-        &input.item_link_id,
-        &input.ancillary_item_link_id,
+        &input.item_id,
+        &input.ancillary_item_id,
         excluding_id,
     )?;
 
@@ -143,8 +146,8 @@ fn validate(
     // which ratio to apply at order time.
     let duplicate_count = AncillaryItemRepository::new(connection).count(Some(
         AncillaryItemFilter::new()
-            .item_link_id(EqualFilter::equal_to(input.item_link_id.clone()))
-            .ancillary_item_link_id(EqualFilter::equal_to(input.ancillary_item_link_id.clone()))
+            .item_id(EqualFilter::equal_to(input.item_id.clone()))
+            .ancillary_item_id(EqualFilter::equal_to(input.ancillary_item_id.clone()))
             .id(EqualFilter::not_equal_to(input.id.clone())),
     ))?;
     if duplicate_count > 0 {

@@ -4467,7 +4467,6 @@ dependencies = [
  "serde",
  "serde_json",
  "service",
- "util",
 ]
 
 [[package]]
