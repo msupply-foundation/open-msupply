@@ -19,6 +19,7 @@ pub fn sync_v7_on_central() -> impl HttpServiceFactory {
         .service(get_site_info)
         .service(pull)
         .service(push)
+        .service(patient_data_for_site)
         .service(patient_search)
 }
 
@@ -64,6 +65,21 @@ async fn push(
     let response: api::push::Response = match extract_common(&http_req) {
         Ok(common) => {
             handlers::push(service_provider.into_inner(), common, body.into_inner()).await
+        }
+        Err(e) => Err(e),
+    };
+    Ok(web::Json(response))
+}
+
+#[post("/patient_data_for_site")]
+async fn patient_data_for_site(
+    http_req: HttpRequest,
+    body: Json<api::patient_data_for_site::Input>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response: api::patient_data_for_site::Response = match extract_common(&http_req) {
+        Ok(common) => {
+            handlers::patient_data_for_site(&service_provider, common, body.into_inner()).await
         }
         Err(e) => Err(e),
     };

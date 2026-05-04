@@ -1,11 +1,14 @@
 use crate::{
     apis::patient_v4::PatientV4,
-    programs::patient::PatientSearch,
+    programs::patient::{
+        patient_search as patient_search_local, patient_updated::create_patient_name_store_join,
+        PatientSearch,
+    },
     service_provider::{ServiceContext, ServiceProvider},
     sync::{ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError},
     sync_v7::{
         api::{
-            patient_search, pull, push,
+            patient_data_for_site, patient_search, pull, push,
             site_info::{SiteInfoInput, SiteInfoOutput},
             Common,
         },
@@ -16,9 +19,9 @@ use crate::{
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
-    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter,
-    SyncBufferRepository,
+    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
+    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
+    SiteRowRepository, StorageConnection, StringFilter, SyncBufferRepository,
 };
 use std::{
     collections::HashMap,
@@ -207,6 +210,53 @@ fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
         first: name.first_name.unwrap_or_default(),
         date_of_birth: name.date_of_birth,
     }
+}
+
+/// Send patient-scoped records to a remote open-mSupply Server, after a
+/// patient lookup.
+pub async fn patient_data_for_site(
+    service_provider: &ServiceProvider,
+    common: Common,
+    input: patient_data_for_site::Input,
+) -> patient_data_for_site::Response {
+    let (site, ctx) = validate(service_provider, &common)?;
+
+    let patient_data_for_site::Input {
+        cursor,
+        batch_size,
+        patient_id,
+        store_id,
+        name_store_join_id,
+    } = input;
+
+    let nsj_id = if cursor == 0 {
+        let id = ctx
+            .connection
+            .transaction_sync(|con| {
+                create_patient_name_store_join(
+                    con,
+                    &store_id,
+                    &patient_id,
+                    Some(name_store_join_id),
+                )
+            })
+            .map_err(|e| e.to_inner_error())?;
+        Some(id)
+    } else {
+        None
+    };
+
+    let filter = ChangelogCondition::And(vec![
+        ChangelogFilter::patient_data_for_v7_site(site.id, None),
+        ChangelogCondition::patient_id::equal(patient_id),
+    ]);
+
+    let batch = SyncBatchV7::generate(&ctx.connection, filter, cursor, batch_size)?;
+
+    Ok(patient_data_for_site::Output {
+        batch,
+        name_store_join_id: nsj_id,
+    })
 }
 
 /// Receive Records from a remote open-mSupply Server

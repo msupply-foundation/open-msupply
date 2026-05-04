@@ -29,6 +29,9 @@ pub(crate) enum SyncContext {
         is_initialising: bool,
         active_stores: ActiveStoresOnSite,
     },
+    /// Records arrived via a patient-lookup pull. They belong to other sites'
+    /// stores.
+    PatientLookup,
 }
 
 #[derive(Error, Debug)]
@@ -166,6 +169,7 @@ fn validate_translate_integrate_one(
             is_initialising,
             active_stores,
         } => validate_on_remote(row, st, active_stores, *is_initialising)?,
+        SyncContext::PatientLookup => {}
     };
 
     match row.action {
