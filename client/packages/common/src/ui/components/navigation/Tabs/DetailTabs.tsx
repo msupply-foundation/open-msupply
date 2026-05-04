@@ -109,7 +109,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({
   const tabList = (
     <Box flex={1}>
       <ShortTabList value={currentTab} centered onChange={onChange}>
-        {tabs.map(({ value }, index) => (
+        {tabs.map(({ value }) => (
           <Tab
             key={value}
             value={value}
