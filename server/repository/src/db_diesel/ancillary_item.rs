@@ -15,9 +15,9 @@ pub const MAX_ANCILLARY_ITEM_DEPTH: u32 = 5;
 #[derive(Clone, Default)]
 pub struct AncillaryItemFilter {
     pub id: Option<EqualFilter<String>>,
-    pub item_link_id: Option<EqualFilter<String>>,
-    pub ancillary_item_link_id: Option<EqualFilter<String>>,
-    pub item_or_ancillary_link_id: Option<String>,
+    pub item_id: Option<EqualFilter<String>>,
+    pub ancillary_item_id: Option<EqualFilter<String>>,
+    pub item_or_ancillary_id: Option<String>,
 }
 
 impl AncillaryItemFilter {
@@ -29,16 +29,16 @@ impl AncillaryItemFilter {
         self.id = Some(filter);
         self
     }
-    pub fn item_link_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.item_link_id = Some(filter);
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
         self
     }
-    pub fn ancillary_item_link_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.ancillary_item_link_id = Some(filter);
+    pub fn ancillary_item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.ancillary_item_id = Some(filter);
         self
     }
-    pub fn item_or_ancillary_link_id(mut self, id: String) -> Self {
-        self.item_or_ancillary_link_id = Some(id);
+    pub fn item_or_ancillary_id(mut self, id: String) -> Self {
+        self.item_or_ancillary_id = Some(id);
         self
     }
 }
@@ -102,25 +102,25 @@ fn create_filtered_query(filter: Option<AncillaryItemFilter>) -> BoxedAncillaryI
     if let Some(f) = filter {
         let AncillaryItemFilter {
             id,
-            item_link_id,
-            ancillary_item_link_id,
-            item_or_ancillary_link_id,
+            item_id,
+            ancillary_item_id,
+            item_or_ancillary_id,
         } = f;
 
-        if let Some(record_id) = item_or_ancillary_link_id {
+        if let Some(record_id) = item_or_ancillary_id {
             query = query.filter(
-                ancillary_item::item_link_id
+                ancillary_item::item_id
                     .eq(record_id.clone())
-                    .or(ancillary_item::ancillary_item_link_id.eq(record_id)),
+                    .or(ancillary_item::ancillary_item_id.eq(record_id)),
             );
         }
 
         apply_equal_filter!(query, id, ancillary_item::id);
-        apply_equal_filter!(query, item_link_id, ancillary_item::item_link_id);
+        apply_equal_filter!(query, item_id, ancillary_item::item_id);
         apply_equal_filter!(
             query,
-            ancillary_item_link_id,
-            ancillary_item::ancillary_item_link_id
+            ancillary_item_id,
+            ancillary_item::ancillary_item_id
         );
     }
 
@@ -139,18 +139,18 @@ pub enum AncillaryItemValidationError {
     DatabaseError(#[from] RepositoryError),
 }
 
-/// Validate that adding/updating an ancillary item link from `item_link_id` to
-/// `ancillary_item_link_id` will not create a cycle or exceed [`MAX_ANCILLARY_ITEM_DEPTH`].
+/// Validate that adding/updating an ancillary item link from `item_id` to
+/// `ancillary_item_id` will not create a cycle or exceed [`MAX_ANCILLARY_ITEM_DEPTH`].
 ///
 /// `excluding_id` should be `Some(row_id)` when validating an update, so the row being
 /// replaced is excluded from the existing graph.
 pub fn validate_ancillary_item_link(
     connection: &StorageConnection,
-    item_link_id: &str,
-    ancillary_item_link_id: &str,
+    item_id: &str,
+    ancillary_item_id: &str,
     excluding_id: Option<&str>,
 ) -> Result<(), AncillaryItemValidationError> {
-    if item_link_id == ancillary_item_link_id {
+    if item_id == ancillary_item_id {
         return Err(AncillaryItemValidationError::SelfLink);
     }
 
@@ -164,23 +164,23 @@ pub fn validate_ancillary_item_link(
             continue;
         }
         forward
-            .entry(edge.item_link_id.clone())
+            .entry(edge.item_id.clone())
             .or_default()
-            .push(edge.ancillary_item_link_id.clone());
+            .push(edge.ancillary_item_id.clone());
         backward
-            .entry(edge.ancillary_item_link_id.clone())
+            .entry(edge.ancillary_item_id.clone())
             .or_default()
-            .push(edge.item_link_id.clone());
+            .push(edge.item_id.clone());
     }
 
     // Cycle: from the new ancillary node, can we reach back to the principal?
-    if reachable(&forward, ancillary_item_link_id, item_link_id) {
+    if reachable(&forward, ancillary_item_id, item_id) {
         return Err(AncillaryItemValidationError::Cycle);
     }
 
     // Depth: longest chain through the new edge
-    let forward_depth = longest_path_from(&forward, ancillary_item_link_id);
-    let backward_depth = longest_path_from(&backward, item_link_id);
+    let forward_depth = longest_path_from(&forward, ancillary_item_id);
+    let backward_depth = longest_path_from(&backward, item_id);
     let total = forward_depth + 1 + backward_depth;
     if total > MAX_ANCILLARY_ITEM_DEPTH {
         return Err(AncillaryItemValidationError::DepthExceeded {
@@ -247,7 +247,7 @@ mod tests {
     use crate::{
         ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
         mock::MockDataInserts,
-        test_db, ItemRow, ItemRowRepository,
+        test_db, ItemLinkRow, ItemLinkRowRepository, ItemRow, ItemRowRepository,
     };
 
     async fn setup(name: &str) -> StorageConnection {
@@ -256,9 +256,9 @@ mod tests {
     }
 
     /// Creates an item with the given id; `ItemRowRepository::upsert_one` also
-    /// inserts a matching `item_link` row with the same id, so callers can use the
-    /// id directly as an `item_link_id`.
-    fn make_link(connection: &StorageConnection, id: &str) {
+    /// inserts a matching `item_link` row with the same id, so for unmerged items
+    /// the id can be used directly as both `item_id` and `item_link_id`.
+    fn make_item(connection: &StorageConnection, id: &str) {
         ItemRowRepository::new(connection)
             .upsert_one(&ItemRow {
                 id: id.to_string(),
@@ -272,8 +272,8 @@ mod tests {
         AncillaryItemRowRepository::new(connection)
             .upsert_one(&AncillaryItemRow {
                 id: id.to_string(),
-                item_link_id: principal.to_string(),
-                ancillary_item_link_id: ancillary.to_string(),
+                item_id: principal.to_string(),
+                ancillary_item_id: ancillary.to_string(),
                 item_quantity: 1.0,
                 ancillary_quantity: 1.0,
                 deleted_datetime: None,
@@ -285,7 +285,7 @@ mod tests {
     async fn test_ancillary_item_query_repository() {
         let connection = setup("test_ancillary_item_query_repository").await;
         for id in ["a", "b"] {
-            make_link(&connection, id);
+            make_item(&connection, id);
         }
 
         insert_edge(&connection, "row1", "a", "b");
@@ -294,11 +294,11 @@ mod tests {
             .query_one(AncillaryItemFilter::new().id(EqualFilter::equal_to("row1".to_string())))
             .unwrap()
             .unwrap();
-        assert_eq!(row.item_link_id, "a");
-        assert_eq!(row.ancillary_item_link_id, "b");
+        assert_eq!(row.item_id, "a");
+        assert_eq!(row.ancillary_item_id, "b");
 
         let row = AncillaryItemRepository::new(&connection)
-            .query_one(AncillaryItemFilter::new().item_or_ancillary_link_id("b".to_string()))
+            .query_one(AncillaryItemFilter::new().item_or_ancillary_id("b".to_string()))
             .unwrap()
             .unwrap();
         assert_eq!(row.id, "row1");
@@ -318,7 +318,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_validate_self_link() {
         let connection = setup("test_validate_self_link").await;
-        make_link(&connection, "a");
+        make_item(&connection, "a");
 
         assert_eq!(
             validate_ancillary_item_link(&connection, "a", "a", None),
@@ -331,7 +331,7 @@ mod tests {
         // A -> B already exists; trying to add B -> A should fail
         let connection = setup("test_validate_direct_cycle").await;
         for id in ["a", "b"] {
-            make_link(&connection, id);
+            make_item(&connection, id);
         }
         insert_edge(&connection, "ab", "a", "b");
 
@@ -346,7 +346,7 @@ mod tests {
         // A -> B -> C exists; adding C -> A should fail
         let connection = setup("test_validate_indirect_cycle").await;
         for id in ["a", "b", "c"] {
-            make_link(&connection, id);
+            make_item(&connection, id);
         }
         insert_edge(&connection, "ab", "a", "b");
         insert_edge(&connection, "bc", "b", "c");
@@ -363,7 +363,7 @@ mod tests {
         // which is the 5th edge — at the boundary, allowed.
         let connection = setup("test_validate_depth_5_boundary").await;
         for id in ["a", "b", "c", "d", "e", "f", "g"] {
-            make_link(&connection, id);
+            make_item(&connection, id);
         }
         insert_edge(&connection, "ab", "a", "b");
         insert_edge(&connection, "bc", "b", "c");
@@ -390,7 +390,7 @@ mod tests {
         // — a chain of 4 edges, which is still allowed.
         let connection = setup("test_validate_depth_through_middle").await;
         for id in ["a", "b", "c", "d", "e"] {
-            make_link(&connection, id);
+            make_item(&connection, id);
         }
         insert_edge(&connection, "ab", "a", "b");
         insert_edge(&connection, "bc", "b", "c");
@@ -408,13 +408,156 @@ mod tests {
         // as creating a cycle.
         let connection = setup("test_validate_update_excludes_self").await;
         for id in ["a", "b"] {
-            make_link(&connection, id);
+            make_item(&connection, id);
         }
         insert_edge(&connection, "ab", "a", "b");
 
         assert_eq!(
             validate_ancillary_item_link(&connection, "a", "b", Some("ab")),
             Ok(())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_validate_cycle_through_merged_item() {
+        // Demonstrates that the validator operates in resolved item-id space, not
+        // raw link-id space, by catching a cycle that would be invisible to a
+        // link-id-only check.
+        //
+        // Setup: item B is merged into item A, so item_link contains
+        //   (id=a, item_id=a) and (id=b, item_id=a).
+        // We insert an edge with item_link_id=b, ancillary_item_link_id=c. Through
+        // the view this resolves to (item_id=a, ancillary_item_id=c).
+        //
+        // Then we propose adding c -> a. In link-id space the graph is b -> c, so
+        // c -> a appears acyclic (b != a). In item-id space (what the view shows)
+        // the graph is a -> c, so c -> a closes the cycle a -> c -> a.
+        let connection = setup("test_validate_cycle_through_merged_item").await;
+        for id in ["a", "b", "c"] {
+            make_item(&connection, id);
+        }
+        // Merge b into a by repointing item_link.b at item a
+        ItemLinkRowRepository::new(&connection)
+            .upsert_one(&ItemLinkRow {
+                id: "b".to_string(),
+                item_id: "a".to_string(),
+            })
+            .unwrap();
+
+        // Edge stored as link_id=b -> link_id=c; view resolves to item_id a -> c
+        insert_edge(&connection, "bc", "b", "c");
+
+        // c -> a forms a cycle once b -> a is resolved
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "c", "a", None),
+            Err(AncillaryItemValidationError::Cycle)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_validate_branching() {
+        // Two principals can share an ancillary (convergence: A->C and B->C),
+        // and one principal can have multiple ancillaries (divergence: A->B and A->C).
+        let connection = setup("test_validate_branching").await;
+        for id in ["a", "b", "c"] {
+            make_item(&connection, id);
+        }
+
+        // Divergence: A -> B then A -> C
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "a", "b", None),
+            Ok(())
+        );
+        insert_edge(&connection, "ab", "a", "b");
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "a", "c", None),
+            Ok(())
+        );
+        insert_edge(&connection, "ac", "a", "c");
+
+        // Convergence: A -> C exists, now B -> C
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "b", "c", None),
+            Ok(())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_validate_longest_path_uses_max_not_first() {
+        // Two backward paths to D have different lengths:
+        //   A -> B -> D            (2 edges)
+        //   A -> C -> C2 -> D      (3 edges)
+        // The depth check must take the max, otherwise a refactor that returns
+        // the first path traversed would silently undercount.
+        let connection = setup("test_validate_longest_path_uses_max_not_first").await;
+        for id in ["a", "b", "c", "c2", "d", "e", "f", "g"] {
+            make_item(&connection, id);
+        }
+        insert_edge(&connection, "ab", "a", "b");
+        insert_edge(&connection, "bd", "b", "d");
+        insert_edge(&connection, "ac", "a", "c");
+        insert_edge(&connection, "cc2", "c", "c2");
+        insert_edge(&connection, "c2d", "c2", "d");
+
+        // Longest backward path from D is 3, so adding D -> E gives a chain of 4 — allowed.
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "d", "e", None),
+            Ok(())
+        );
+        insert_edge(&connection, "de", "d", "e");
+
+        // E -> F is the 5th edge — at the boundary, allowed.
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "e", "f", None),
+            Ok(())
+        );
+        insert_edge(&connection, "ef", "e", "f");
+
+        // F -> G would be a 6th edge through the longer back-path — must be rejected.
+        // (If longest_path_from short-circuited on the first path it found from D
+        // and returned 2 instead of 3, this would slip through as a chain of 5.)
+        assert!(matches!(
+            validate_ancillary_item_link(&connection, "f", "g", None),
+            Err(AncillaryItemValidationError::DepthExceeded { max: 5, actual: 6 })
+        ));
+    }
+
+    #[actix_rt::test]
+    async fn test_validate_ignores_soft_deleted_edges() {
+        // Soft-deleted rows are excluded from the cycle/depth graph, so reusing
+        // their endpoints in the opposite direction is allowed.
+        let connection = setup("test_validate_ignores_soft_deleted_edges").await;
+        for id in ["a", "b"] {
+            make_item(&connection, id);
+        }
+        insert_edge(&connection, "ab", "a", "b");
+        AncillaryItemRowRepository::new(&connection)
+            .mark_deleted("ab")
+            .unwrap();
+
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "b", "a", None),
+            Ok(())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_validate_update_detects_cycle() {
+        // Updating an unrelated row to a value that would close a cycle must be
+        // rejected. The existing graph (minus the row being updated) is A -> B -> C;
+        // proposing C -> A as the new value of an unrelated row "de" would form
+        // the cycle A -> B -> C -> A.
+        let connection = setup("test_validate_update_detects_cycle").await;
+        for id in ["a", "b", "c", "d", "e"] {
+            make_item(&connection, id);
+        }
+        insert_edge(&connection, "ab", "a", "b");
+        insert_edge(&connection, "bc", "b", "c");
+        insert_edge(&connection, "de", "d", "e");
+
+        assert_eq!(
+            validate_ancillary_item_link(&connection, "c", "a", Some("de")),
+            Err(AncillaryItemValidationError::Cycle)
         );
     }
 }
