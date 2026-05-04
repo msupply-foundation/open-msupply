@@ -1,7 +1,8 @@
 use log::{error, info};
-use repository::RepositoryError;
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
 use thiserror::Error;
 use url::Url;
+use util::format_error;
 
 use crate::{
     apis::{
@@ -11,15 +12,55 @@ use crate::{
             NameStoreJoinParamsV4, NameStoreJoinV2, PatientApiV4, PatientParamsV4, PatientV4,
         },
     },
+    programs::patient::patient_updated::create_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         api::SyncApiV5,
         settings::{SyncSettings, SYNC_V5_VERSION},
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
+    sync_v7::{
+        api::{patient_search, Common, SyncApiV7},
+        patient_lookup::pull_and_integrate_patient_data,
+    },
 };
 
 use super::PatientSearch;
+
+// TODO: When standalone work done, also check OMS only central.
+fn is_v7_remote(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
+    let token =
+        KeyValueStoreRepository::new(&ctx.connection).get_string(KeyType::SettingsSyncV7Token)?;
+    Ok(token.is_some())
+}
+
+fn map_v7_sync_error(err: repository::syncv7::SyncError) -> CentralPatientRequestError {
+    error!("v7 patient lookup failed: {err}");
+    match err {
+        repository::syncv7::SyncError::ConnectionError { .. } => {
+            CentralPatientRequestError::ConnectionError(format_error(&err))
+        }
+        _ => CentralPatientRequestError::InternalError(format_error(&err)),
+    }
+}
+
+fn build_v7_api(
+    service_provider: &ServiceProvider,
+    sync_settings: &SyncSettings,
+) -> Result<SyncApiV7, CentralPatientRequestError> {
+    let common = Common::load(service_provider).map_err(|e| {
+        CentralPatientRequestError::InternalError(format!("Failed to load v7 common: {e:?}"))
+    })?;
+    let auth_headers = common.to_auth_headers().map_err(|e| {
+        CentralPatientRequestError::InternalError(format!("Failed to build v7 auth headers: {e:?}"))
+    })?;
+    let url = Url::parse(&sync_settings.url).map_err(|err| {
+        CentralPatientRequestError::InternalError(format!(
+            "Failed to parse central server url: {err}"
+        ))
+    })?;
+    Ok(SyncApiV7 { url, auth_headers })
+}
 
 #[derive(Error, Debug)]
 pub enum CentralPatientRequestError {
@@ -32,6 +73,25 @@ pub enum CentralPatientRequestError {
 }
 
 pub async fn patient_search_central(
+    service_provider: &ServiceProvider,
+    ctx: &ServiceContext,
+    params: PatientSearch,
+) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
+    let sync_settings = service_provider
+        .settings
+        .sync_settings(ctx)?
+        .ok_or_else(|| {
+            CentralPatientRequestError::InternalError("Missing sync settings".to_string())
+        })?;
+
+    if is_v7_remote(ctx)? {
+        return patient_search_central_v7(service_provider, &sync_settings, params).await;
+    }
+
+    patient_search_central_v4(&sync_settings, params).await
+}
+
+async fn patient_search_central_v4(
     sync_settings: &SyncSettings,
     params: PatientSearch,
 ) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
@@ -74,6 +134,31 @@ pub async fn patient_search_central(
     Ok(patients)
 }
 
+async fn patient_search_central_v7(
+    service_provider: &ServiceProvider,
+    sync_settings: &SyncSettings,
+    params: PatientSearch,
+) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
+    let api = build_v7_api(service_provider, sync_settings)?;
+
+    let PatientSearch {
+        code,
+        first_name,
+        last_name,
+        date_of_birth,
+        ..
+    } = params;
+
+    api.patient_search(patient_search::Input {
+        code,
+        first_name,
+        last_name,
+        date_of_birth,
+    })
+    .await
+    .map_err(map_v7_sync_error)
+}
+
 #[derive(Clone, Debug)]
 pub struct NameStoreJoin {
     pub id: String,
@@ -88,6 +173,10 @@ pub async fn link_patient_to_store(
     store_id: &str,
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
+    if is_v7_remote(context)? {
+        return link_patient_to_store_v7(service_provider, context, store_id, name_id).await;
+    }
+
     let sync_settings = service_provider.settings.sync_settings(context)?.ok_or(
         CentralPatientRequestError::InternalError("Missing sync settings".to_string()),
     )?;
@@ -126,6 +215,29 @@ pub async fn link_patient_to_store(
     link_patient_to_store_v6(service_provider, &sync_settings, &result).await?;
 
     Ok(result)
+}
+
+async fn link_patient_to_store_v7(
+    service_provider: &ServiceProvider,
+    context: &ServiceContext,
+    store_id: &str,
+    name_id: &str,
+) -> Result<NameStoreJoin, CentralPatientRequestError> {
+    let id = util::uuid::uuid();
+
+    // If nsj exists, then generated id is discarded.
+    let nsj_id = pull_and_integrate_patient_data(service_provider, name_id, store_id, &id)
+        .await
+        .map_err(map_v7_sync_error)?;
+
+    let local_nsj_id =
+        create_patient_name_store_join(&context.connection, store_id, name_id, Some(nsj_id))?;
+
+    Ok(NameStoreJoin {
+        id: local_nsj_id,
+        name_id: name_id.to_string(),
+        store_id: store_id.to_string(),
+    })
 }
 
 /// Creates a name_store_join for the patient on Open mSupply Central Server
