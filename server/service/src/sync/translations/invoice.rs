@@ -458,6 +458,15 @@ impl SyncTranslation for InvoiceTranslation {
             |c, id| repository::ShippingMethodRowRepository::new(c).check_exists_by_id(id),
             true,
         )?;
+        let purchase_order_id = clear_invalid_fk(
+            connection,
+            "invoice",
+            &data.ID,
+            "purchase_order_id",
+            data.purchase_order_id,
+            |c, id| repository::PurchaseOrderRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let oms_fields = data.oms_fields.unwrap_or_default();
 
@@ -508,7 +517,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
             expected_delivery_date: data.expected_delivery_date,
-            purchase_order_id: data.purchase_order_id,
+            purchase_order_id,
             shipping_method_id,
             charges_local_currency: oms_fields.charges_local_currency,
             charges_foreign_currency: oms_fields.charges_foreign_currency,
@@ -1165,6 +1174,9 @@ mod tests {
         }
         .upsert(&connection)
         .unwrap();
+        repository::PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&repository::mock::mock_purchase_order_a())
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
@@ -1229,9 +1241,10 @@ mod tests {
         }
     }
 
-    /// FK validation: when currency_id, diagnosis_id, name_insurance_join_id and
-    /// shipping_method_id all reference records that don't exist, the translator should null
-    /// each one on the translated row and write a SyncTranslationFkError for each.
+    /// FK validation: when currency_id, diagnosis_id, name_insurance_join_id,
+    /// shipping_method_id and purchase_order_id all reference records that don't exist, the
+    /// translator should null each one on the translated row and write a SyncTranslationFkError
+    /// for each.
     #[actix_rt::test]
     async fn test_invoice_clears_invalid_optional_fks_and_writes_system_log() {
         let translator = InvoiceTranslation {};
@@ -1292,7 +1305,7 @@ mod tests {
               "insuranceDiscountAmount": 0,
               "insuranceDiscountRate": 0,
               "goods_received_ID": "",
-              "original_PO_ID": ""
+              "original_PO_ID": "does_not_exist_purchase_order"
             }"#
             .to_string(),
             action: SyncAction::Upsert,
@@ -1323,6 +1336,11 @@ mod tests {
             "{}",
             format!("expected shipping_method_id None; got:\n{debug}")
         );
+        assert!(
+            debug.contains("purchase_order_id: None"),
+            "{}",
+            format!("expected purchase_order_id None; got:\n{debug}")
+        );
 
         let logs = SystemLogRowRepository::new(&connection)
             .find_all()
@@ -1331,6 +1349,6 @@ mod tests {
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
             .collect();
-        assert_eq!(fk_errors.len(), 4, "got {fk_errors:?}");
+        assert_eq!(fk_errors.len(), 5, "got {fk_errors:?}");
     }
 }
