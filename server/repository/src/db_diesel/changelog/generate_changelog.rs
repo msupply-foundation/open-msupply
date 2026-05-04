@@ -91,7 +91,9 @@ impl InvoiceRow {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
+            // For patient this will always be None
             transfer_store_id: row.name_store_id.clone(),
+            patient_id: (row.r#type == InvoiceType::Prescription).then_some(row.name_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
