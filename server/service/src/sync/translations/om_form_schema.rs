@@ -1,7 +1,7 @@
-use super::{ 
-    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    schema_from_row, ChangelogRow, ChangelogTableName, FormSchemaJson, FormSchemaRowDelete, Row, StorageConnection, SyncBufferRow,
+    schema_from_row, ChangelogRow, ChangelogTableName, FormSchemaJson, FormSchemaRowDelete,
+    FormSchemaRowRepository, Row, StorageConnection, SyncBufferRow,
 };
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -44,16 +44,17 @@ impl SyncTranslation for OmFormSchemaTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::FormSchema(form_schema_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         // Convert the bare row into the JSON-parsed `FormSchemaJson`
         // wire shape (FormSchemaRow itself isn't Serialize).
         let row: FormSchemaJson = schema_from_row(form_schema_row)?;
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
     fn try_translate_from_delete_sync_record(
         &self,

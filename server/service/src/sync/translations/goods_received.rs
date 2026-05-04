@@ -2,6 +2,7 @@ use super::{
     currency::CurrencyTranslation, invoice::InvoiceTranslation, name::NameTranslation,
     purchase_order::PurchaseOrderTranslation, store::StoreTranslation, PullTranslateResult,
     SyncTranslation,
+
 };
 use chrono::NaiveDate;
 use repository::{

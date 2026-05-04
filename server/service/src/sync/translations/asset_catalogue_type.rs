@@ -2,12 +2,12 @@ use repository::{
     asset_type_row::AssetTypeRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
+
 };
 
 use crate::sync::translations::asset_category::AssetCategoryTranslation;
 
-use super::{ 
-    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -57,13 +57,14 @@ impl SyncTranslation for AssetCatalogueTypeTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
-        row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
-        let Row::AssetCatalogueType(asset_type_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
-        };
-        let json_record = serde_json::to_value(asset_type_row)?;
-        Ok(TranslatedUpsert::Translated(json_record))
+        _changelog: &ChangelogRow,
+        _row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        // AssetCatalogueType is not represented in the `Row` enum
+        // (no bare-row variant for the asset_type repo at the moment),
+        // so `query_with_data` cannot surface it. Unreachable for push
+        // until the table is added to `Row`.
+        Ok(PushTranslateResult::NotMatched)
     }
 }
 

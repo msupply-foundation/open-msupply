@@ -1,9 +1,10 @@
-use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
     name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
     shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
+
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -14,12 +15,14 @@ use repository::{
     StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
     UserAccountRow, UserAccountRowRepository,
     Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
     date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
     naive_time, object_fields_as_option, zero_date_as_option, zero_f64_as_none,
+
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -329,6 +332,7 @@ fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
     }
 
     data
+
 }
 
 // Needs to be added to all_translators()
@@ -510,10 +514,11 @@ impl SyncTranslation for InvoiceTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::Invoice(invoice_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let Some(invoice) = InvoiceRepository::new(connection)
@@ -581,7 +586,7 @@ impl SyncTranslation for InvoiceTranslation {
         let _type = match legacy_invoice_type(&r#type) {
             Some(_type) => _type,
             None => {
-                return Ok(TranslatedUpsert::Ignored(format!(
+                return Ok(PushTranslateResult::Ignored(format!(
                     "Unsupported invoice type {type:?}"
                 )))
             }
@@ -590,7 +595,7 @@ impl SyncTranslation for InvoiceTranslation {
         let legacy_status = match legacy_invoice_status(&r#type, &status) {
             Some(legacy_status) => legacy_status,
             None => {
-                return Ok(TranslatedUpsert::Ignored(format!(
+                return Ok(PushTranslateResult::Ignored(format!(
                     "Unsupported invoice status: {status:?}"
                 )))
             }
@@ -651,12 +656,13 @@ impl SyncTranslation for InvoiceTranslation {
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency,
                 charges_foreign_currency,
+            
             }),
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(TranslatedUpsert::Translated(json_record))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -834,6 +840,7 @@ fn map_legacy(
         }
     };
     mapping
+
 }
 
 struct ToLegacyDatetime {
@@ -1030,6 +1037,7 @@ fn check_owned_invoice_update(
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
@@ -1113,16 +1121,16 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, row)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
-            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
 
-            let TranslatedUpsert::Translated(translated) = translated else {
+            let PushTranslateResult::PushRecord(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated["name_ID"], json!("name_a"));
+            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
     }
 }

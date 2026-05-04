@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogTableName, ClinicianRow, GenderType, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ClinicianRow, GenderType, StorageConnection, SyncBufferRow,
     Row,
+
 };
 
-use super::{ PullTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option, ok_or_none};
 
@@ -126,10 +127,11 @@ impl SyncTranslation for ClinicianTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::Clinician(clinician_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let ClinicianRow {
@@ -171,7 +173,7 @@ impl SyncTranslation for ClinicianTranslation {
             store_id,
             oms_fields,
         };
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

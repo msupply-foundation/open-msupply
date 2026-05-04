@@ -3,16 +3,18 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
     zero_date_as_option,
+
 };
 
 use repository::{
-    get_sensor_type, ChangelogTableName, SensorRow, SensorType,
+    get_sensor_type, ChangelogRow, ChangelogTableName, SensorRow, SensorType,
     StorageConnection, SyncBufferRow,
     Row,
+
 };
 use serde::{Deserialize, Serialize};
 
-use super::{ to_legacy_time, PullTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacySensorRow {
@@ -113,10 +115,11 @@ impl SyncTranslation for SensorTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::Sensor(sensor_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let SensorRow {
@@ -162,7 +165,7 @@ impl SyncTranslation for SensorTranslation {
             last_connection_datetime,
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

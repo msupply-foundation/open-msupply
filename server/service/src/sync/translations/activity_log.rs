@@ -1,12 +1,13 @@
 use chrono::NaiveDateTime;
 use repository::{
-    ActivityLogRow, ActivityLogType, ChangelogTableName,
+    ActivityLogRow, ActivityLogType, ChangelogRow, ChangelogTableName,
     StorageConnection, SyncBufferRow,
     Row,
+
 };
 use serde::{Deserialize, Serialize};
 
-use super::{ PullTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::empty_str_as_option_string;
 
@@ -76,10 +77,11 @@ impl SyncTranslation for ActivityLogTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::ActivityLog(activity_log_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let ActivityLogRow {
@@ -95,7 +97,7 @@ impl SyncTranslation for ActivityLogTranslation {
 
         let (Some(store_id), Some(record_id), Some(user_id)) = (store_id, record_id, user_id)
         else {
-            return Ok(TranslatedUpsert::Ignored(
+            return Ok(PushTranslateResult::Ignored(
                 "Ignoring activity logs without store, user or record id".to_string(),
             ));
         };
@@ -111,7 +113,7 @@ impl SyncTranslation for ActivityLogTranslation {
             changed_from,
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

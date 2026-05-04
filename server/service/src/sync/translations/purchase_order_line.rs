@@ -1,15 +1,18 @@
 use crate::sync::translations::{
     item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
-    PushTranslateResult, SyncTranslation, TranslatedUpsert,
+    PushTranslateResult, SyncTranslation,
+
 };
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow, PurchaseOrderLineStatus, StorageConnection, SyncBufferRow,
     Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, zero_date_as_option, zero_f64_as_none,
+
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -171,10 +174,11 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::PurchaseOrderLine(purchase_order_line_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let PurchaseOrderLineRow {
@@ -234,7 +238,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             oms_fields: Some(LegacyPurchaseOrderLineRowOmsFields { status }),
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -311,17 +315,17 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, row)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
-            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
 
-            let TranslatedUpsert::Translated(translated) = translated else {
+            let PushTranslateResult::PushRecord(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
             assert_eq!(
-                translated["ID"],
+                translated[0].record.record_data["ID"],
                 json!(changelog.record_id)
             );
         }

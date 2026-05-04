@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use repository::{
     PermissionType, StorageConnection, SyncBufferRow, UserPermissionRow, UserPermissionRowDelete,
+
 };
 
 use crate::sync::translations::{master_list::MasterListTranslation, store::StoreTranslation};

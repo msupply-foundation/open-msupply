@@ -1,11 +1,11 @@
 use crate::sync::translations::store::StoreTranslation;
 
-use super::{ 
-    PullTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
     ChangelogRow, ChangelogTableName, PreferenceRow, PreferenceRowDelete,
     StorageConnection, SyncBufferRow,
     Row,
+
 };
 
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -53,14 +53,15 @@ impl SyncTranslation for PreferenceTranslator {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::Preference(preference_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let row = preference_row;
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
 
     fn try_translate_from_delete_sync_record(
