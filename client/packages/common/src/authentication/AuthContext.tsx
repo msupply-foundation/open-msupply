@@ -6,6 +6,8 @@ import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns/addMinutes';
 import { useLogin, useGetUserPermissions, useRefreshToken } from './api/hooks';
 import { AuthenticationResponse } from './api';
+import { useAuthApi } from './api/hooks/useAuthApi';
+import { UnauthenticatedError } from '../api/GqlContext';
 import { UserStoreNodeFragment } from './api/operations.generated';
 import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
@@ -109,6 +111,15 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
   const [error, setError] = useLocalStorage('/error/auth');
+  const { sdk } = useAuthApi();
+  // If we boot with a cookie, the token may belong to a user that no longer
+  // exists (e.g. the DB was re-initialised). Validate it before letting any
+  // child render — otherwise downstream startup queries fire authed requests
+  // against a stale cookie. Network failures don't invalidate the cookie;
+  // they're handled by the global connection banner and per-query retries.
+  const [isValidatingCookie, setIsValidatingCookie] = useState(
+    !!authCookie.token
+  );
   const storeId = cookie?.store?.id ?? '';
   const {
     login,
@@ -224,6 +235,34 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     }, TOKEN_CHECK_INTERVAL);
     return () => window.clearInterval(timer);
   }, [cookie?.token, isActive, refreshToken, setError]);
+
+  useEffect(() => {
+    if (!isValidatingCookie) return;
+    let cancelled = false;
+    sdk
+      .me({}, { Authorization: `Bearer ${authCookie.token}` })
+      .then(() => {
+        if (!cancelled) setIsValidatingCookie(false);
+      })
+      .catch(e => {
+        if (cancelled) return;
+        if (e instanceof UnauthenticatedError) {
+          Cookies.remove('auth');
+          setCookie(undefined);
+        }
+        // Network or other failures — leave the cookie alone and let the
+        // user proceed; the connection banner and per-query retries cover
+        // transport problems.
+        setIsValidatingCookie(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Mount-only — we're validating the cookie that was present at boot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (isValidatingCookie) return null;
 
   return <Provider value={val}>{children}</Provider>;
 };

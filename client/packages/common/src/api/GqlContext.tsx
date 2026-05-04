@@ -5,28 +5,12 @@ import {
   RequestOptions,
   Variables,
 } from 'graphql-request';
-import { AuthError, getAuthCookie } from '../authentication/AuthContext';
-import { LocalStorage } from '../localStorage';
+import { getAuthCookie } from '../authentication/AuthContext';
 import { DocumentNode } from 'graphql';
 import { RequestConfig } from 'graphql-request/build/esm/types';
 import { createRegisteredContext } from 'react-singleton-context';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
-
-// these queries are allowed to fail silently with permission denied errors
-// as they are for background data fetches only; the user will be notified
-// by other, page-level, queries instead. Allowing the exceptions here
-// prevents the display of multiple permission denied errors for a single page
-const permissionExceptions = [
-  'reports',
-  'stockCounts',
-  'inboundShipmentCounts',
-  'inboundShipmentExternalCounts',
-  'outboundShipmentCounts',
-  'itemCounts',
-  'requisitionCounts',
-  'temperatureNotifications',
-];
 
 interface ResponseError {
   message?: string;
@@ -34,43 +18,81 @@ interface ResponseError {
   extensions?: { details?: string };
 }
 
-export class GraphqlStdError extends Error {
-  public stdError?: string | undefined;
-  constructor(message: string, stdError: string | undefined) {
-    super(message);
-    this.stdError = stdError;
+/**
+ * Transport-level failure: no HTTP response was received (offline, DNS,
+ * CORS, server unreachable). React Query retries these; the global
+ * connection banner watches for them.
+ */
+export class NetworkError extends Error {
+  constructor(public cause?: unknown) {
+    super('Network request failed');
+    this.name = 'NetworkError';
   }
 }
 
-const hasError = (errors: ResponseError[], error: AuthError) =>
-  errors.some(({ message }: { message?: string }) => message === error);
-
-const hasPermissionException = (errors: ResponseError[]) =>
-  errors.every(({ path }: { path?: string[] }) =>
-    (path || []).every(p => permissionExceptions.includes(p))
-  );
-
-const handleResponseError = (errors: ResponseError[]) => {
-  if (hasError(errors, AuthError.Unauthenticated)) {
-    LocalStorage.setItem('/error/auth', AuthError.Unauthenticated);
-    return;
+/** Token missing/expired/rejected. Drives the re-login modal. */
+export class UnauthenticatedError extends Error {
+  constructor(public detail?: string) {
+    super('Unauthenticated');
+    this.name = 'UnauthenticatedError';
   }
+}
 
-  if (hasError(errors, AuthError.PermissionDenied)) {
-    if (hasPermissionException(errors)) {
-      throw errors[0];
-    }
-    LocalStorage.setItem('/error/auth', AuthError.PermissionDenied);
-    return;
+/**
+ * Authenticated but not allowed. `path` is the GraphQL field path,
+ * used by the global handler to decide whether to surface a toast.
+ */
+export class PermissionDeniedError extends Error {
+  constructor(
+    public detail?: string,
+    public path?: string[]
+  ) {
+    super('Forbidden');
+    this.name = 'PermissionDeniedError';
   }
+}
 
+/** 4xx-equivalent: client sent something the server rejected. */
+export class BadUserInputError extends Error {
+  constructor(public detail?: string) {
+    super('Bad user input');
+    this.name = 'BadUserInputError';
+  }
+}
+
+/** 5xx-equivalent: backend bug or unexpected state. Reported to Bugsnag. */
+export class InternalServerError extends Error {
+  constructor(public detail?: string) {
+    super(detail ?? 'Internal error');
+    this.name = 'InternalServerError';
+  }
+}
+
+const toTypedGraphqlError = (errors: ResponseError[]): Error => {
   const error = errors[0];
-  const { extensions } = error || {};
-  const { details } = extensions || {};
-  throw new GraphqlStdError(
-    details || error?.message || 'Unknown error',
-    error?.message
-  );
+  const detail = error?.extensions?.details ?? error?.message;
+  switch (error?.message) {
+    case 'Unauthenticated':
+      return new UnauthenticatedError(detail);
+    case 'Forbidden':
+      return new PermissionDeniedError(detail, error?.path);
+    case 'Bad user input':
+      return new BadUserInputError(detail);
+    case 'Internal error':
+      return new InternalServerError(detail);
+    default:
+      return new InternalServerError(detail ?? 'Unknown error');
+  }
+};
+
+const isTransportFailure = (reason: unknown): boolean => {
+  // graphql-request rejects with a ClientError carrying `response` for
+  // any HTTP response with a body. Anything else (TypeError from fetch,
+  // abort, DNS) reaches us without a response and is a transport failure.
+  if (!reason || typeof reason !== 'object') return true;
+  if (!('response' in reason) || !(reason as { response: unknown }).response)
+    return true;
+  return false;
 };
 
 class GQLClient extends GraphQLClient {
@@ -113,18 +135,22 @@ class GQLClient extends GraphQLClient {
           variables,
           requestHeaders
         );
-    // returning an empty object in order to give the caller a stable reference
-    // without it, the page will re-render continuously
+    // returning an empty object on success is to give the caller a stable
+    // reference when the response is null/undefined; without it pages
+    // re-render continuously.
     return response.then(
       data => (data ?? this.emptyData) as T,
       reason => {
-        const { response } = reason;
-        if (response && response.errors) {
-          handleResponseError(response.errors);
-          return this.emptyData as unknown as T;
-        } else {
-          throw new Error(`Error making API request: ${reason}`);
+        if (isTransportFailure(reason)) {
+          throw new NetworkError(reason);
         }
+        const errors = (reason as { response?: { errors?: ResponseError[] } })
+          .response?.errors;
+        if (errors && errors.length > 0) {
+          throw toTypedGraphqlError(errors);
+        }
+        // HTTP response with no graphql errors body — treat as transport.
+        throw new NetworkError(reason);
       }
     );
   }
