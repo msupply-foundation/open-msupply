@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                -- Drop changelog_deduped view before altering columns (SQLite requires this)
+                -- View needs to be dropped here as its no longer included in the all_views list
                 DROP VIEW IF EXISTS changelog_deduped;
 
                 -- Add transfer_store_id and patient_id to changelog
@@ -25,9 +25,8 @@ impl MigrationFragment for Migrate {
                 -- Drop row_action index
                 DROP INDEX IF EXISTS index_changelog_row_action;
 
-                -- Add transfer_store_id to requisition and invoice
-                ALTER TABLE requisition ADD COLUMN transfer_store_id TEXT;
-                ALTER TABLE invoice ADD COLUMN transfer_store_id TEXT;
+                -- Add name_store_id for requisition. transfer_store_id for a changelog is name_store_id
+                ALTER TABLE requisition ADD COLUMN name_store_id TEXT;
             "#
         )?;
 
