@@ -387,6 +387,7 @@ impl GraphqlSchema {
         .data(service_provider.clone())
         .data(subscription_broadcast.clone())
         .data(operational_status_ref.clone())
+        .data(subscription_broadcast.clone())
         .extension(GraphQLRequestLogger);
 
         let migration_builder =
