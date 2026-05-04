@@ -2,12 +2,14 @@ use repository::{
     EqualFilter, NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter,
     NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection,
     StoreFilter, StoreRepository, SyncBufferRow,
+
 };
 
 use serde::Deserialize;
 
 use crate::sync::translations::{
     name::NameTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
+
 };
 
 #[derive(Deserialize)]
@@ -156,12 +158,14 @@ impl SyncTranslation for NameMergeTranslation {
 mod tests {
     use crate::sync::{
         sync_buffer::SyncBufferSource, synchroniser::integrate_and_translate_sync_buffer,
+    
     };
 
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
         SyncRecordData,
+    
     };
     use serde_json::json;
 

@@ -3,6 +3,7 @@ use repository::{
     NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete,
     StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
     Row,
+
 };
 
 use serde::{Deserialize, Serialize};
@@ -10,10 +11,10 @@ use serde::{Deserialize, Serialize};
 use crate::sync::{
     translations::{name::NameTranslation, store::StoreTranslation},
     CentralServerConfig,
+
 };
 
-use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -143,10 +144,11 @@ impl SyncTranslation for NameStoreJoinTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::NameStoreJoin(name_store_join_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let NameStoreJoin {
@@ -176,7 +178,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             inactive: Some(false),
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -197,9 +199,11 @@ mod tests {
     use super::*;
     use crate::sync::{
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    
     };
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder,
+
 };
     use serde_json::json;
 
@@ -264,16 +268,16 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
+                .try_translate_to_upsert_sync_record(&connection, &changelog, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
 
-            let TranslatedUpsert::Translated(translated) = translated else {
+            let PushTranslateResult::PushRecord(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated["name_ID"], json!("name_a"));
+            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
     }
 }

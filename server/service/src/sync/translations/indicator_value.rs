@@ -3,13 +3,14 @@ use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, IndicatorValueRow, IndicatorValueRowDelete,
     StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
     Row,
+
 };
 
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::indicator_attribute::IndicatorAttribute;
 
-use super::{ PullTranslateResult, PushTranslateResult, SyncTranslation, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyIndicatorValue {
@@ -82,10 +83,11 @@ impl SyncTranslation for IndicatorValue {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::IndicatorValue(indicator_value_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let Some(indicator_value) = IndicatorValueRepository::new(connection)
@@ -127,7 +129,7 @@ impl SyncTranslation for IndicatorValue {
             store_id,
             value,
         };
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_from_delete_sync_record(

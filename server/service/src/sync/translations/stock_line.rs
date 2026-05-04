@@ -2,6 +2,7 @@ use crate::sync::translations::{
     barcode::BarcodeTranslation, campaign::CampaignTranslation, item::ItemTranslation,
     item_variant::ItemVariantTranslation, location::LocationTranslation, name::NameTranslation,
     store::StoreTranslation, vvm_status::VVMStatusTranslation,
+
 };
 
 use chrono::NaiveDate;
@@ -9,17 +10,19 @@ use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
     StockLineRow, StorageConnection, SyncBufferRow,
     Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
     zero_date_as_option,
+
 };
 
 use super::{
     utils::{clear_invalid_barcode_id, clear_invalid_location_id},
     PullTranslateResult, PushTranslateResult, SyncTranslation,
-    TranslatedUpsert,
+
 };
 
 #[allow(non_snake_case)]
@@ -181,10 +184,11 @@ impl SyncTranslation for StockLineTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::StockLine(stock_line_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let Some(stock_line) = StockLineRepository::new(connection)
@@ -261,7 +265,7 @@ impl SyncTranslation for StockLineTranslation {
             volume_per_pack,
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -278,11 +282,13 @@ mod tests {
     use crate::sync::{
         test::merge_helpers::{merge_all_item_links, merge_all_name_links},
         translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder,
+
 };
     use serde_json::json;
 
@@ -330,20 +336,20 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
+                .try_translate_to_upsert_sync_record(&connection, &changelog, repository::Row::Unit(repository::UnitRow::default()))
                 .unwrap();
 
-            assert!(matches!(translated, TranslatedUpsert::Translated(_)));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
 
-            let TranslatedUpsert::Translated(translated) = translated else {
+            let PushTranslateResult::PushRecord(translated) = translated else {
                 panic!("Test fail, should translate")
             };
 
-            assert_eq!(translated["item_ID"], json!("item_a"));
+            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
 
             // Supplier ID can be null. We want to check if the non-null supplier_ids is "name_a".
-            if translated["name_ID"] != json!(null) {
-                assert_eq!(translated["name_ID"], json!("name_a"));
+            if translated[0].record.record_data["name_ID"] != json!(null) {
+                assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
             }
         }
     }

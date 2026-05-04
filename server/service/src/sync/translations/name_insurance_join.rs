@@ -5,16 +5,17 @@ use repository::{
     },
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
     Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option};
 
 use crate::sync::translations::{
     insurance_provider::InsuranceProviderTranslator, name::NameTranslation,
+
 };
 
-use super::{ 
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyInsurancePolicyType {
@@ -139,10 +140,11 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::NameInsuranceJoin(name_insurance_join_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let NameInsuranceJoinRow {
@@ -184,7 +186,7 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             oms_fields,
         };
 
-        Ok(TranslatedUpsert::Translated(serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

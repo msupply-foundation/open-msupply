@@ -2,11 +2,12 @@ use serde::Serialize;
 
 use crate::sync::CentralServerConfig;
 
-use super::{ PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType, TranslatedUpsert };
+use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
     vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName,
     ItemLinkRowRepository, StorageConnection, VaccinationRow,
     Row,
+
 };
 
 /*
@@ -77,10 +78,11 @@ impl SyncTranslation for VaccinationLegacyTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        changelog: &ChangelogRow,
         row: Row,
-    ) -> Result<TranslatedUpsert, anyhow::Error> {
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Row::Vaccination(vaccination_row) = row else {
-            return Ok(TranslatedUpsert::NotMatched);
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let VaccinationRow {
@@ -143,7 +145,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(TranslatedUpsert::Translated(json_record))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
     }
 }
 
@@ -156,10 +158,12 @@ mod tests {
     use repository::mock::{
         mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_patient,
         mock_store_a, mock_user_account_a, mock_vaccine_course_a_dose_a, mock_vaccine_item_a,
+    
     };
     use repository::{
         mock::MockDataInserts, test_db::setup_all, vaccination_row::VaccinationRow,
         ChangelogRepository,
+    
     };
 
     #[actix_rt::test]
@@ -220,11 +224,11 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, repository::Row::Unit(repository::UnitRow::default()))
+            .try_translate_to_upsert_sync_record(&connection, &changelog_row, repository::Row::Unit(repository::UnitRow::default()))
             .unwrap();
 
         match translation_result {
-            TranslatedUpsert::Translated(upsert_result) => {
+            PushTranslateResult::PushRecord(_) => {
                 assert_eq!("_test_record_id".to_string(), "test_vaccination_id");
                 assert_eq!(
                     "_test_table_name".to_string(),
