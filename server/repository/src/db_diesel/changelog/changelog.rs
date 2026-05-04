@@ -1,8 +1,13 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::diesel_string_enum,
-    dynamic_query_filter::create_condition, name_store_join::name_store_join,
-    vaccination_row::vaccination, KeyType, KeyValueStoreRepository, RepositoryError,
-    StorageConnection, TransactionNotification,
+    db_diesel::{
+        changelog::changelog_cursor_tracker::ChangelogCursorTracker, store_row::store,
+    },
+    diesel_macros::diesel_string_enum,
+    dynamic_query_filter::create_condition,
+    name_store_join::name_store_join,
+    vaccination_row::vaccination,
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection,
+    TransactionNotification,
 };
 use diesel::{dsl::LeftJoinQuerySource, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -293,10 +298,16 @@ impl<'a> ChangelogRepository<'a> {
         filter: ChangelogCondition::Inner,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let filter = ChangelogCondition::And(vec![
+        let mut conditions = vec![
             filter,
             ChangelogCondition::cursor::greater_than(cursor),
-        ]);
+        ];
+        if let Some(safe) = ChangelogCursorTracker::max_safe_cursor(self.connection) {
+            // `lower_than(safe + 1)` expresses `cursor <= safe`; the macro does
+            // not generate a `lower_than_or_equal` helper.
+            conditions.push(ChangelogCondition::cursor::lower_than(safe + 1));
+        }
+        let filter = ChangelogCondition::And(conditions);
 
         let query = query()
             .filter(filter.to_boxed())
@@ -311,8 +322,17 @@ impl<'a> ChangelogRepository<'a> {
         Ok(result)
     }
 
-    /// Returns latest/max change log cursor
+    /// Returns latest/max change log cursor.
+    ///
+    /// If the `ChangelogCursorTracker` reports an in-flight cursor, the safe cursor
+    /// (`min(in_flight) - 1`) is returned without a database query — it is
+    /// always at most the DB MAX visible to this connection (every committed
+    /// changelog row passed through `track`, registering a value <= its actual
+    /// cursor).
     pub fn max_cursor(&self) -> Result<u64, RepositoryError> {
+        if let Some(safe) = ChangelogCursorTracker::max_safe_cursor(self.connection) {
+            return Ok(safe.max(0) as u64);
+        }
         let result = changelog::table
             .select(diesel::dsl::max(changelog::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
@@ -320,6 +340,7 @@ impl<'a> ChangelogRepository<'a> {
     }
 
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
+        ChangelogCursorTracker::track(self.connection)?;
         diesel::insert_into(changelog::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
@@ -330,6 +351,7 @@ impl<'a> ChangelogRepository<'a> {
 
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
         //TODO: Need to handle batch insert size limit
+        ChangelogCursorTracker::track(self.connection)?;
         diesel::insert_into(changelog::table)
             .values(rows)
             .execute(self.connection.lock().connection())?;

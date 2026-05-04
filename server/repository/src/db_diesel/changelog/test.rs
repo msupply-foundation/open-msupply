@@ -800,3 +800,106 @@ async fn test_changelog_outgoing_patient_sync_records() {
     .unwrap();
     assert_eq!(outgoing_results.len(), 0);
 }
+
+/// Concurrent-tx race: while connection A is mid-transaction with a changelog
+/// row in flight, an observer on connection B (same manager) should see
+/// `max_cursor()` clamped below A's tracked boundary and `query()` must not
+/// return any rows beyond the clamp. After A commits, the clamp lifts and
+/// everything becomes visible.
+///
+/// Postgres-only: SQLite serialises writers under `BEGIN IMMEDIATE`, so the
+/// "concurrent in-flight tx on a separate connection" scenario can't be
+/// reproduced.
+#[cfg(feature = "postgres")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_max_cursor_clamped_by_in_flight_tx() {
+    use crate::{
+        ChangelogCursorTracker, ClinicianRow, ClinicianRowRepository, ClinicianRowRepositoryTrait,
+        RepositoryError, TransactionError,
+    };
+
+    let (_, _, manager, _) = setup_all(
+        "test_max_cursor_clamped_by_in_flight_tx",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    let observer = manager.connection().unwrap();
+    let cursor_before = ChangelogRepository::new(&observer).max_cursor().unwrap() as i64;
+
+    // Channels to drive the slow tx: signal it has registered, signal it to commit.
+    let (registered_tx, registered_rx) = std::sync::mpsc::channel::<()>();
+    let (release_tx, release_rx) = std::sync::mpsc::channel::<()>();
+
+    let manager_for_tx = manager.clone();
+    let slow_tx = tokio::task::spawn_blocking(move || {
+        let conn = manager_for_tx.connection().unwrap();
+        let _: Result<(), TransactionError<RepositoryError>> =
+            conn.transaction_sync(|con| -> Result<(), RepositoryError> {
+                ClinicianRowRepository::new(con).upsert_one(&ClinicianRow {
+                    id: "clinician_in_flight".to_string(),
+                    code: "C1".to_string(),
+                    last_name: "in_flight".to_string(),
+                    initials: "IF".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                })?;
+                registered_tx.send(()).unwrap();
+                release_rx.recv().unwrap();
+                Ok(())
+            });
+    });
+
+    registered_rx.recv().unwrap();
+
+    // While the slow tx is open: the tracker has an entry for that connection
+    // pegged at `cursor_before + 1` (its lookup of MAX(cursor) before the
+    // insert), so observer's max_cursor must be `<= cursor_before`.
+    let max_during = ChangelogRepository::new(&observer).max_cursor().unwrap() as i64;
+    assert!(
+        max_during <= cursor_before,
+        "expected max_cursor <= {} while in-flight tx open, got {}",
+        cursor_before,
+        max_during
+    );
+    assert!(ChangelogCursorTracker::max_safe_cursor(&observer).is_some());
+
+    let rows_during = ChangelogRepository::new(&observer)
+        .query(
+            ChangelogCondition::True(),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 100,
+            },
+        )
+        .unwrap();
+    assert!(
+        rows_during.is_empty(),
+        "expected no rows past clamp while in-flight tx open, got {} rows",
+        rows_during.len()
+    );
+
+    // Release the slow tx; once it commits the tracker entry is removed.
+    release_tx.send(()).unwrap();
+    slow_tx.await.unwrap();
+
+    assert_eq!(ChangelogCursorTracker::max_safe_cursor(&observer), None);
+    let max_after = ChangelogRepository::new(&observer).max_cursor().unwrap() as i64;
+    assert!(
+        max_after > cursor_before,
+        "expected max_cursor to advance past {} after commit, got {}",
+        cursor_before,
+        max_after
+    );
+    let rows_after = ChangelogRepository::new(&observer)
+        .query(
+            ChangelogCondition::True(),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 100,
+            },
+        )
+        .unwrap();
+    assert_eq!(rows_after.len(), 1);
+    assert_eq!(rows_after[0].record_id, "clinician_in_flight");
+}

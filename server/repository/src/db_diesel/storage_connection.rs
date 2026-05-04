@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 
 use super::{get_connection, DBBackendConnection, DBConnection};
 
+use crate::db_diesel::changelog::ChangelogCursorTracker;
 use crate::repository_error::RepositoryError;
 
 use diesel::{
@@ -10,6 +11,7 @@ use diesel::{
     r2d2::{ConnectionManager, Pool},
 };
 use log::error;
+use util::uuid::uuid;
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
@@ -67,6 +69,10 @@ pub struct StorageConnection {
     raw_connection: Mutex<DBConnection>,
     on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
     pending_notifications: RwLock<HashSet<TransactionNotification>>,
+    /// Identifies this connection in the `ChangelogCursorTracker`. Generated once at
+    /// construction; reused across transactions on the same connection.
+    uuid: String,
+    changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
 }
 
 impl StorageConnection {
@@ -74,6 +80,14 @@ impl StorageConnection {
         LockedConnection {
             raw_connection: self.raw_connection.lock().unwrap(),
         }
+    }
+
+    pub fn uuid(&self) -> &str {
+        &self.uuid
+    }
+
+    pub fn changelog_cursor_tracker(&self) -> &ChangelogCursorTracker {
+        &self.changelog_cursor_tracker
     }
 
     /// Queue a notification to be fired after the transaction commits.
@@ -137,11 +151,16 @@ impl From<TransactionError<RepositoryError>> for RepositoryError {
 }
 
 impl StorageConnection {
-    pub fn new(connection: DBConnection) -> StorageConnection {
+    pub fn new(
+        connection: DBConnection,
+        changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
+    ) -> StorageConnection {
         StorageConnection {
             raw_connection: Mutex::new(connection),
             on_commit: None,
             pending_notifications: RwLock::new(HashSet::new()),
+            uuid: uuid(),
+            changelog_cursor_tracker,
         }
     }
 
@@ -209,8 +228,14 @@ impl StorageConnection {
                         level: current_level + 1,
                     }
                 })?;
-                // Fire pending notifications after outermost transaction commits
+                drop(guard);
+                // After outermost commit: untrack BEFORE firing notifications.
+                // Notifications can wake processor tasks on other threads that
+                // immediately run `query()` / `max_cursor()` against the changelog —
+                // if the tracker still holds this connection's clamp those reads
+                // hide the rows we just committed.
                 if current_level == 0 {
+                    ChangelogCursorTracker::untrack(self);
                     self.flush_notifications();
                 }
                 Ok(value)
@@ -225,6 +250,10 @@ impl StorageConnection {
                         level: current_level + 1,
                     }
                 })?;
+                drop(guard);
+                if current_level == 0 {
+                    ChangelogCursorTracker::untrack(self);
+                }
                 Err(TransactionError::Inner(e))
             }
         }
@@ -246,6 +275,8 @@ fn map_begin_transaction_error<T>(
 pub struct StorageConnectionManager {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
     on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
+    /// Shared with every `StorageConnection` produced by this manager.
+    changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
 }
 
 impl StorageConnectionManager {
@@ -253,6 +284,7 @@ impl StorageConnectionManager {
         StorageConnectionManager {
             pool,
             on_commit: None,
+            changelog_cursor_tracker: ChangelogCursorTracker::new(),
         }
     }
 
@@ -261,7 +293,10 @@ impl StorageConnectionManager {
     }
 
     pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
-        let conn = StorageConnection::new(get_connection(&self.pool)?);
+        let conn = StorageConnection::new(
+            get_connection(&self.pool)?,
+            self.changelog_cursor_tracker.clone(),
+        );
         match &self.on_commit {
             Some(callback) => Ok(conn.with_on_commit(callback.clone())),
             None => Ok(conn),
