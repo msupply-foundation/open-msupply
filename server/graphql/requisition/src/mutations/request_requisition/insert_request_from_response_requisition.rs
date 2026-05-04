@@ -195,7 +195,7 @@ mod test {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
-            "test_graphql_insert_request_from_response_requisition_structured_errors",
+            "test_graphql_insert_req_from_resp_requisition_structured_errors",
             MockDataInserts::all(),
         )
         .await;
