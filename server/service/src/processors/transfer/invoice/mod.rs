@@ -91,8 +91,6 @@ pub(crate) enum ProcessInvoiceTransfersError {
     ProcessorError(ProcessorError),
     #[error("Name id is missing from invoice changelog {0:?}")]
     NameIdIsMissingFromChangelog(ChangelogRow),
-    #[error("Name is not an active store {0:?}")]
-    NameIsNotAnActiveStore(ChangelogRow),
 }
 
 fn process_change_log(
@@ -168,14 +166,15 @@ pub(crate) fn process_invoice_transfers(
             .get(&ctx.connection)
             .map_err(Error::DatabaseError)?;
 
-        let logs = ChangelogRepository::new(&ctx.connection).query(
-            filter.clone(),
-            CursorAndLimit {
-                cursor: cursor as i64,
-                limit: CHANGELOG_BATCH_SIZE as i64,
-            },
-        )
-        .map_err(Error::DatabaseError)?;
+        let logs = ChangelogRepository::new(&ctx.connection)
+            .query(
+                filter.clone(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: CHANGELOG_BATCH_SIZE as i64,
+                },
+            )
+            .map_err(Error::DatabaseError)?;
 
         if logs.is_empty() {
             break;
