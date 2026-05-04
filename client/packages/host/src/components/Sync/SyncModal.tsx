@@ -33,7 +33,7 @@ import {
 } from '@common/components';
 import { AppRoute } from '@openmsupply-client/config';
 
-const STATUS_POLLING_INTERVAL = 1000;
+const STATUS_POLLING_INTERVAL = 2000;
 
 interface SyncModalProps {
   open: boolean;

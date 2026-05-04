@@ -22,3 +22,7 @@ worktrees
 # Default path for backups
 backup/
 !docs/content/server/cli/backup/
+server/configuration/*.yaml
+# Keep the example and base configuration files
+!configuration/base.yaml
+!configuration/example.yaml

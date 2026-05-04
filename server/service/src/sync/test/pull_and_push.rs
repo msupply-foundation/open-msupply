@@ -21,7 +21,8 @@ use crate::sync::{
 use pretty_assertions::assert_eq;
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
-    test_db, ChangelogRepository, KeyType, KeyValueStoreRow, SyncBufferRow,
+    system_log_row::{SystemLogRowRepository, SystemLogType},
+    test_db, ChangelogRepository, ChangelogTableName, KeyType, KeyValueStoreRow, SyncBufferRow,
     SyncBufferRowRepository,
 };
 
@@ -67,7 +68,7 @@ async fn test_sync_pull_and_push() {
         .upsert_many(&sync_records)
         .unwrap();
 
-    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0)).unwrap();
+    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true).unwrap();
 
     check_test_records_against_database(&connection, test_records).await;
 
@@ -85,6 +86,25 @@ async fn test_sync_pull_and_push() {
     let changelogs = ChangelogRepository::new(&connection)
         .changelogs(push_cursor, 100000, None /*change_log_filter*/)
         .unwrap();
+    // Drop SyncTranslationFkError system_log rows: these are an audit-log side effect of
+    // pull translation (e.g. fixtures with deliberately invalid optional FKs) and aren't
+    // part of the push fixture set.
+    let system_log_repo = SystemLogRowRepository::new(&connection);
+    let changelogs = changelogs
+        .into_iter()
+        .filter(|changelog| {
+            if changelog.table_name != ChangelogTableName::SystemLog {
+                return true;
+            }
+            let row = system_log_repo
+                .find_one_by_id(&changelog.record_id)
+                .unwrap();
+            !matches!(
+                row.map(|r| r.r#type),
+                Some(SystemLogType::SyncTranslationFkError)
+            )
+        })
+        .collect::<Vec<_>>();
     // Translate
     let mut translated = vec![translate_changelogs_to_sync_records(
         &connection,
@@ -160,7 +180,7 @@ async fn test_sync_pull_and_push() {
         .upsert_many(&sync_records)
         .unwrap();
 
-    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0)).unwrap();
+    integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true).unwrap();
 
     check_test_records_against_database(&connection, test_records).await;
 
