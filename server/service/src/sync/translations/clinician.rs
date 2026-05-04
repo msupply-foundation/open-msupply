@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository,
-    ClinicianRowRepositoryTrait, GenderType, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ClinicianRow, GenderType, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
@@ -95,7 +96,7 @@ impl SyncTranslation for ClinicianTranslation {
             is_active,
             store_id,
             oms_fields,
-        } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let gender = if let Some(fields) = oms_fields {
             fields.gender
@@ -125,9 +126,14 @@ impl SyncTranslation for ClinicianTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Clinician(clinician_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let ClinicianRow {
             id,
             code,
@@ -142,12 +148,7 @@ impl SyncTranslation for ClinicianTranslation {
             gender,
             is_active,
             store_id,
-        } = ClinicianRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Clinician row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = clinician_row;
 
         let is_female = gender
             .as_ref()
@@ -172,11 +173,7 @@ impl SyncTranslation for ClinicianTranslation {
             store_id,
             oms_fields,
         };
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

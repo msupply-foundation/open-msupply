@@ -66,6 +66,7 @@ use crate::{
     settings::MailSettings,
     settings_service::{SettingsService, SettingsServiceTrait},
     shipping_method::{ShippingMethodService, ShippingMethodServiceTrait},
+    site::{SiteService, SiteServiceTrait},
     standard_reports::StandardReports,
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
@@ -76,6 +77,7 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
+    sync_v7::sync_status::status::{SyncStatusV7Service, SyncStatusV7Trait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
@@ -95,6 +97,7 @@ pub struct ServiceProvider {
     pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+    pub site_service: Box<dyn SiteServiceTrait>,
 
     // Cold chain
     pub sensor_service: Box<dyn SensorServiceTrait>,
@@ -146,6 +149,7 @@ pub struct ServiceProvider {
     // Sync
     pub site_info_service: Box<dyn SiteInfoTrait>,
     pub sync_status_service: Box<dyn SyncStatusTrait>,
+    pub sync_status_v7_service: Box<dyn SyncStatusV7Trait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
@@ -246,6 +250,7 @@ impl ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
+            site_service: Box::new(SiteService {}),
             sensor_service: Box::new(SensorService {}),
             cold_chain_service: Box::new(ColdChainService {}),
             master_list_service: Box::new(MasterListService {}),
@@ -277,6 +282,7 @@ impl ServiceProvider {
             app_data_service: Box::new(AppDataService {}),
             site_info_service: Box::new(SiteInfoService),
             sync_status_service: Box::new(SyncStatusService),
+            sync_status_v7_service: Box::new(SyncStatusV7Service),
             processors_trigger,
             sync_trigger,
             site_is_initialised_trigger,

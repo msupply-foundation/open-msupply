@@ -1,5 +1,9 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    db_diesel::changelog::ChangelogRepository,
+    repository_error::RepositoryError,
+    ChangelogSyncType, ChangelogTableName, Delete, Upsert,
+};
 use diesel::prelude::*;
 
 table! {
@@ -12,7 +16,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = unit)]
 pub struct UnitRow {
     pub id: String,
@@ -20,6 +24,15 @@ pub struct UnitRow {
     pub description: Option<String>,
     pub index: i32,
     pub is_active: bool,
+}
+
+impl UnitRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Unit
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
 }
 
 pub struct UnitRowRepository<'a> {
@@ -56,6 +69,13 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UnitRow>, RepositoryError> {
+        let result = unit
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn find_inactive_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id).and(is_active.eq(false)))
@@ -75,9 +95,16 @@ impl<'a> UnitRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct UnitRowDelete(pub String);
 impl Delete for UnitRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         UnitRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+        if let ChangelogSyncType::SyncTypeV7 { changelog_row } = sync_type {
+            ChangelogRepository::new(con).insert(&changelog_row)?;
+        }
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -92,11 +119,16 @@ impl Delete for UnitRowDelete {
 }
 
 impl Upsert for UnitRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         UnitRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { .. } => Ok(()),
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => {
+                ChangelogRepository::new(con).insert(&changelog_row)?;
+                Ok(())
+            }
+        }
     }
-
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

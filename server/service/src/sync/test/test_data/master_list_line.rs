@@ -1,4 +1,4 @@
-use repository::{MasterListLineRow, SyncBufferRow};
+use repository::{sync_buffer::SyncRecordData, MasterListLineRow, SyncBufferRow};
 
 use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
 
@@ -45,7 +45,7 @@ fn master_list_line_b() -> TestSyncIncomingRecord {
         sync_buffer_row: SyncBufferRow {
             table_name: "list_master_line".to_string(),
             record_id: MASTER_LIST_LINE_2.0.to_string(),
-            data: MASTER_LIST_LINE_2.1.to_string(),
+            data: SyncRecordData(serde_json::from_str(MASTER_LIST_LINE_2.1).unwrap()),
             ..Default::default()
         },
         extra_data: None,

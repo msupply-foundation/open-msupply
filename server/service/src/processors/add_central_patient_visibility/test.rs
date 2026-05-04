@@ -2,7 +2,7 @@ use repository::{
     mock::{mock_name_store_a, mock_store_a, MockData, MockDataInserts},
     system_log_row::SystemLogRowRepository,
     EqualFilter, KeyType, KeyValueStoreRow, NameRow, NameRowType, NameStoreJoinFilter,
-    NameStoreJoinRepository, NameStoreJoinRow, StorageConnection, StoreRow, Upsert,
+    NameStoreJoinRepository, NameStoreJoinRow, StorageConnection, StoreRow,
 };
 use util::uuid::uuid;
 
@@ -79,8 +79,8 @@ async fn requests_link_patient_to_oms_central_store() {
     log::debug!("insert nsj_non_visible_patient_remote");
 
     // Insert, to emulate receiving this record via push from remote site
-    nsj_non_visible_patient_remote
-        .upsert(&ctx.connection)
+    NameStoreJoinRepository::new(&ctx.connection)
+        .upsert_one(&nsj_non_visible_patient_remote)
         .unwrap();
 
     // manually trigger because insert doesn't trigger the processor

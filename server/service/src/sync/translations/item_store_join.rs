@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::{utils::clear_invalid_location_id, PullTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     item::ItemTranslation, location::LocationTranslation, store::StoreTranslation,
+
 };
 use repository::{ItemStoreJoinRow, StorageConnection, SyncBufferRow};
 use util::sync_serde::empty_str_as_option_string;
@@ -51,7 +52,7 @@ impl SyncTranslation for ItemStoreJoinTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyItemStoreJoinRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyItemStoreJoinRow>()?;
 
         let default_location_id = clear_invalid_location_id(connection, data.default_location_id)?;
 

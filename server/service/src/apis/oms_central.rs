@@ -1,7 +1,6 @@
+use super::api_on_central::NameStoreJoinParams;
 use reqwest::{StatusCode, Url};
 use util::{with_retries, RetrySeconds};
-
-use super::api_on_central::NameStoreJoinParams;
 
 // Non-sync related APIs on the OMS Central server
 pub struct OmsCentralApi {

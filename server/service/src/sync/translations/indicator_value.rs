@@ -2,6 +2,8 @@ use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     ChangelogRow, ChangelogTableName, EqualFilter, IndicatorValueRow, IndicatorValueRowDelete,
     StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    Row,
+
 };
 
 use serde::{Deserialize, Serialize};
@@ -58,7 +60,7 @@ impl SyncTranslation for IndicatorValue {
             indicator_line_id,
             store_id,
             value,
-        } = serde_json::from_str::<LegacyIndicatorValue>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
         let customer_name_id = StoreRepository::new(connection)
             .query_one(StoreFilter::new().id(EqualFilter::equal_to(customer_store_id.to_string())))?
             .ok_or(anyhow::anyhow!(
@@ -82,11 +84,16 @@ impl SyncTranslation for IndicatorValue {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::IndicatorValue(indicator_value_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(indicator_value) = IndicatorValueRepository::new(connection)
             .query_by_filter(
                 IndicatorValueFilter::new()
-                    .id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                    .id(EqualFilter::equal_to(indicator_value_row.id)),
             )?
             .pop()
         else {
@@ -104,7 +111,9 @@ impl SyncTranslation for IndicatorValue {
         } = indicator_value.indicator_value_row;
 
         let customer_store_id = StoreRepository::new(connection)
-            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())))?
+            .query_one(
+                StoreFilter::new().name_id(EqualFilter::equal_to(customer_name_id.to_string())),
+            )?
             .ok_or(anyhow::anyhow!(
                 "The store record for customer_name_id could not be found! {customer_name_id}"
             ))?
@@ -120,11 +129,7 @@ impl SyncTranslation for IndicatorValue {
             store_id,
             value,
         };
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_from_delete_sync_record(

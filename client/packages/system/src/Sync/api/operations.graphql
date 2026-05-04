@@ -3,6 +3,8 @@ fragment SyncSettings on SyncSettingsNode {
   intervalSeconds
   url
   username
+  centralServerSiteId
+  syncSiteId
 }
 
 query syncSettings {

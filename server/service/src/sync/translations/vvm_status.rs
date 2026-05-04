@@ -1,6 +1,7 @@
 use repository::{
     vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowDelete},
     StorageConnection, SyncBufferRow,
+
 };
 use serde::Deserialize;
 use util::sync_serde::empty_str_as_option_string;
@@ -43,7 +44,7 @@ impl SyncTranslation for VVMStatusTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyVVMStatusRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyVVMStatusRow>()?;
         let result = VVMStatusRow {
             id: data.ID,
             description: data.description,

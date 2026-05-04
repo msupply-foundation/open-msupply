@@ -32,7 +32,7 @@ impl SyncTranslation for AbbreviationTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyAbbreviationRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyAbbreviationRow>()?;
         let result = AbbreviationRow {
             id: data.ID,
             text: data.abbreviation,

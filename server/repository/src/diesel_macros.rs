@@ -634,7 +634,6 @@ macro_rules! diesel_string_enum {
             diesel::expression::AsExpression,
             diesel::deserialize::FromSqlRow,
         )]
-        #[strum(serialize_all = "snake_case")]
         #[diesel(sql_type = diesel::sql_types::Text)]
         $(#[$meta])*
         $vis enum $name {

@@ -5,9 +5,11 @@ use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_f
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
-    RequisitionLineRow, RequisitionLineRowDelete, RequisitionLineRowRepository,
+    RequisitionLineRow, RequisitionLineRowDelete,
     RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, StorageConnection,
     SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -89,6 +91,7 @@ pub struct LegacyRequisitionLineRow {
 
     #[serde(default, deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<RequisitionLineOmsFields>,
+
 }
 // Needs to be added to all_translators()
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -117,7 +120,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyRequisitionLineRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyRequisitionLineRow>()?;
 
         let (
             price_per_unit,
@@ -189,7 +192,12 @@ impl SyncTranslation for RequisitionLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::RequisitionLine(requisition_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let RequisitionLineRow {
             id,
             requisition_id,
@@ -218,12 +226,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             forecast_total_units,
             forecast_total_doses,
             vaccine_courses,
-        } = RequisitionLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Requisition line row not found: {}",
-                changelog.record_id
-            )))?;
+        } = requisition_line_row;
 
         // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
         let item_id = ItemLinkRowRepository::new(connection)
@@ -295,11 +298,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             oms_fields,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -315,12 +314,13 @@ impl SyncTranslation for RequisitionLineTranslation {
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-    };
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
+};
     use serde_json::json;
 
     #[actix_rt::test]
@@ -362,26 +362,23 @@ mod tests {
 
         merge_all_item_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new()
-                        .table_name(ChangelogTableName::RequisitionLine.equal_to()),
-                ),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::RequisitionLine),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = RequisitionLineTranslation;
-        for changelog in changelogs {
+        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

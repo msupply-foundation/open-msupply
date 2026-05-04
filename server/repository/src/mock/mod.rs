@@ -159,11 +159,11 @@ use crate::{
     reason_option_row::{ReasonOptionRow, ReasonOptionRowRepository},
     vaccine_course::{
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
+        vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
+        vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
         vaccine_course_store_config_row::{
             VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
         },
-        vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
-        vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
     vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
     *,
@@ -1008,6 +1008,13 @@ pub fn insert_mock_data(
     mock_data: MockDataCollection,
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
+        if inserts.key_value_store_rows {
+            let repo = KeyValueStoreRepository::new(connection);
+            for row in &mock_data.key_value_store_rows {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
         if inserts.names {
             for row in &mock_data.names {
                 NameRowRepository::new(connection).upsert_one(row).unwrap();
@@ -1239,17 +1246,14 @@ pub fn insert_mock_data(
         }
 
         if inserts.sync_buffer_rows {
-            let repo = SyncBufferRowRepository::new(connection);
-            for row in &mock_data.sync_buffer_rows {
-                repo.upsert_one(row).unwrap();
-            }
-        }
-
-        if inserts.key_value_store_rows {
-            let repo = KeyValueStoreRepository::new(connection);
-            for row in &mock_data.key_value_store_rows {
-                repo.upsert_one(row).unwrap();
-            }
+            let repo = SyncBufferRepository::new(connection);
+            let rows: Vec<SyncBufferRowInsert> = mock_data
+                .sync_buffer_rows
+                .iter()
+                .cloned()
+                .map(SyncBufferRowInsert::from)
+                .collect();
+            repo.insert_many(&rows).unwrap();
         }
 
         if inserts.activity_logs {

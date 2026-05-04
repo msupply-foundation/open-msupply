@@ -7,6 +7,7 @@ import {
 import {
   useRequest,
   RequestLineFragment,
+  ItemWithAvailableStockFragment,
   ItemWithStatsFragment,
   RequestFragment,
 } from '../../api';
@@ -65,7 +66,7 @@ const createDraftFromRequestLine = (
 });
 
 export const useDraftRequisitionLine = (
-  item?: ItemWithStatsFragment | null
+  item?: ItemWithAvailableStockFragment | ItemWithStatsFragment | null
 ) => {
   const t = useTranslation();
   const [isReasonsError, setIsReasonsError] = useState(false);
@@ -85,7 +86,7 @@ export const useDraftRequisitionLine = (
       );
       if (existingLine) {
         setDraft(createDraftFromRequestLine(existingLine, data));
-      } else {
+      } else if ('stats' in item) {
         setDraft(createDraftFromItem(item, data));
       }
     } else {
@@ -142,7 +143,7 @@ export const useDraftRequisitionLine = (
 
 export const useNextRequestLine = (
   lines?: RequestLineFragment[],
-  currentItem?: ItemWithStatsFragment | null
+  currentItem?: ItemWithAvailableStockFragment | null
 ) => {
   if (!lines || !currentItem) {
     return { hasNext: false, next: null };
@@ -150,7 +151,7 @@ export const useNextRequestLine = (
 
   const nextState: {
     hasNext: boolean;
-    next: null | ItemWithStatsFragment;
+    next: null | ItemWithAvailableStockFragment;
   } = { hasNext: true, next: null };
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
   const next = lines[idx + 1];

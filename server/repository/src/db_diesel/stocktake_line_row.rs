@@ -1,15 +1,16 @@
 use super::{
     item_link_row::item_link, location_row::location, name_row::name,
-    reason_option_row::reason_option, stock_line_row::stock_line,
-    stocktake_row::stocktake, StorageConnection,
+    reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
+    StorageConnection,
 };
 
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
-use crate::{repository_error::RepositoryError, Delete, Upsert};
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
-    StocktakeRowRepository,
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId,
+    Upsert,
 };
+use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
@@ -60,7 +61,7 @@ joinable!(stocktake_line -> name (donor_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
 allow_tables_to_appear_in_same_query!(stocktake_line, reason_option);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = stocktake_line)]
 pub struct StocktakeLineRow {
     pub id: String,
@@ -93,7 +94,6 @@ pub struct StocktakeLineRow {
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
 }
-
 pub struct StocktakeLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -103,47 +103,30 @@ impl<'a> StocktakeLineRowRepository<'a> {
         StocktakeLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        let changelog = StocktakeLineRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    fn insert_changelog(
-        &self,
-        row: &StocktakeLineRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let stocktake_row =
-            StocktakeRowRepository::new(self.connection).find_one_by_id(&row.stocktake_id)?;
-        let stocktake = match stocktake_row {
-            Some(stocktake) => stocktake,
-            None => return Err(RepositoryError::NotFound),
-        };
-
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::StocktakeLine,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(stocktake.store_id.clone()),
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
-    }
-
-    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
-        };
-
-        diesel::delete(stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        let changelog = StocktakeLineRow::generate_changelog(
+            RowOrId::Id(id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
+        diesel::delete(
+            stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StocktakeLineRow>, RepositoryError> {
@@ -169,8 +152,29 @@ impl<'a> StocktakeLineRowRepository<'a> {
 pub struct StocktakeLineRowDelete(pub String);
 // For tests only
 impl Delete for StocktakeLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StocktakeLineRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                StocktakeLineRow::generate_changelog(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(
+            stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -182,9 +186,27 @@ impl Delete for StocktakeLineRowDelete {
 }
 
 impl Upsert for StocktakeLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = StocktakeLineRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        StocktakeLineRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                StocktakeLineRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

@@ -1,11 +1,11 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use super::{
-    contact_form_row::contact_form::dsl::*, name_row::name,
-    store_row::store, user_row::user_account,
+    contact_form_row::contact_form::dsl::*, name_row::name, store_row::store,
+    user_row::user_account,
 };
 
 use chrono::NaiveDateTime;
@@ -58,7 +58,6 @@ pub enum ContactType {
     Feedback,
     Support,
 }
-
 pub struct ContactFormRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -78,26 +77,14 @@ impl<'a> ContactFormRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, contact_form_row: &ContactFormRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, contact_form_row: &ContactFormRow) -> Result<(), RepositoryError> {
         self._upsert_one(contact_form_row)?;
-        self.insert_changelog(contact_form_row.to_owned(), RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: ContactFormRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::ContactForm,
-            record_id: row.id,
-            row_action: action,
-            store_id: Some(row.store_id),
-            name_id: None,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = contact_form_row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -110,12 +97,31 @@ impl<'a> ContactFormRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ContactFormRow>, RepositoryError> {
+        Ok(contact_form::table
+            .filter(contact_form::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for ContactFormRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = ContactFormRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ContactFormRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

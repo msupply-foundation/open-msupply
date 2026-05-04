@@ -32,7 +32,7 @@ impl SyncTranslation for ItemMergeTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<ItemMergeMessage>(&sync_record.data)?;
+        let data = sync_record.deserialize::<ItemMergeMessage>()?;
 
         let item_link_repo = ItemLinkRowRepository::new(connection);
         let item_links = item_link_repo.find_many_by_item_id(&data.merge_id_to_delete)?;
@@ -63,39 +63,39 @@ impl SyncTranslation for ItemMergeTranslation {
 #[cfg(test)]
 mod tests {
     use crate::sync::{
-        sync_buffer::SyncBufferSource, synchroniser::integrate_and_translate_sync_buffer,
+        synchroniser::integrate_and_translate_sync_buffer,
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
+        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRepository,
+        SyncBufferRowInsert, SyncRecordData,
     };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_item_merge() {
         // util::init_logger(util::LogLevel::Info);
         let mut sync_records = vec![
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "item_b_merge".to_string(),
                 table_name: "item".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                        "mergeIdToKeep": "item_b",
-                        "mergeIdToDelete": "item_a"
-                    }"#
-                .to_string(),
-                ..SyncBufferRow::default()
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "item_b",
+                    "mergeIdToDelete": "item_a"
+                })),
+                ..SyncBufferRowInsert::default()
             },
-            SyncBufferRow {
+            SyncBufferRowInsert {
                 record_id: "item_c_merge".to_string(),
                 table_name: "item".to_string(),
                 action: SyncAction::Merge,
-                data: r#"{
-                      "mergeIdToKeep": "item_c",
-                      "mergeIdToDelete": "item_b"
-                    }"#
-                .to_string(),
-                ..SyncBufferRow::default()
+                data: SyncRecordData(json!({
+                    "mergeIdToKeep": "item_c",
+                    "mergeIdToDelete": "item_b"
+                })),
+                ..SyncBufferRowInsert::default()
             },
         ];
 
@@ -120,10 +120,10 @@ mod tests {
         )
         .await;
 
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&sync_records)
+        SyncBufferRepository::new(&connection)
+            .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, 0)
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
@@ -139,11 +139,11 @@ mod tests {
         .await;
 
         sync_records.reverse();
-        SyncBufferRowRepository::new(&connection)
-            .upsert_many(&sync_records)
+        SyncBufferRepository::new(&connection)
+            .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, 0)
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);

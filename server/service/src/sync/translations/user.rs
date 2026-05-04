@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use repository::{
     LanguageType, StorageConnection, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+
 };
 
 use util::sync_serde::empty_str_as_option_string;
@@ -59,7 +60,7 @@ impl SyncTranslation for UserTranslation {
             last_name,
             phone_number,
             job_title,
-        } = serde_json::from_str::<LegacyUserTable>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let user_account = UserAccountRowRepository::new(connection).find_one_by_id(&id)?;
 

@@ -1,6 +1,8 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationRow, LocationRowRepository, StorageConnection,
+    ChangelogRow, ChangelogTableName, LocationRow, StorageConnection,
     SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -64,7 +66,7 @@ impl SyncTranslation for LocationTranslation {
             store_id,
             location_type_id,
             volume,
-        } = serde_json::from_str::<LegacyLocationRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let result = LocationRow {
             id,
@@ -81,9 +83,14 @@ impl SyncTranslation for LocationTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Location(location_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let LocationRow {
             id,
             name,
@@ -92,12 +99,7 @@ impl SyncTranslation for LocationTranslation {
             store_id,
             location_type_id,
             volume,
-        } = LocationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Location row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = location_row;
 
         let legacy_row = LegacyLocationRow {
             id: id.clone(),
@@ -109,11 +111,7 @@ impl SyncTranslation for LocationTranslation {
             volume,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(

@@ -6,7 +6,7 @@ use repository::{
     EqualFilter, IndicatorValueRow,
 };
 use service::service_provider::ServiceProvider;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct IndicatorValueLoaderInput {
@@ -48,44 +48,43 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
         loader_inputs: &[IndicatorValueLoaderInput],
     ) -> Result<HashMap<IndicatorValueLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
+        let repo = IndicatorValueRepository::new(&service_context.connection);
 
-        let (period_id, store_id, customer_name_id) =
-            // TODO replace with logic to not assume only one combination queried at any time.
-            if let Some(loader_input) = loader_inputs.first() {
-                (
-                    loader_input.period_id.clone(),
-                    loader_input.store_id.clone(),
-                    loader_input.customer_name_id.clone(),
-                )
-            } else {
-                return Ok(HashMap::new());
-            };
-        if loader_inputs.len() > 1 {
-            log::error!("Multiple loader inputs provided to IndicatorValueLoader, but only one combination of period_id, store_id, and customer_name_id is supported. Only the first input will be used.");
+        // Group inputs by (period_id, store_id, customer_name_id) to handle
+        // batched requests with different filter combinations
+        let mut groups: HashSet<(String, String, String)> = HashSet::new();
+        for input in loader_inputs {
+            groups.insert((
+                input.period_id.clone(),
+                input.store_id.clone(),
+                input.customer_name_id.clone(),
+            ));
         }
 
-        let filter = IndicatorValueFilter::new()
-            .store_id(EqualFilter::equal_to(store_id.to_string()))
-            .customer_name_id(EqualFilter::equal_to(customer_name_id.to_string()))
-            .period_id(EqualFilter::equal_to(period_id.to_string()));
+        let mut result = HashMap::new();
 
-        let values =
-            IndicatorValueRepository::new(&service_context.connection).query_by_filter(filter)?;
+        for (period_id, store_id, customer_name_id) in &groups {
+            let filter = IndicatorValueFilter::new()
+                .store_id(EqualFilter::equal_to(store_id.clone()))
+                .customer_name_id(EqualFilter::equal_to(customer_name_id.clone()))
+                .period_id(EqualFilter::equal_to(period_id.clone()));
 
-        Ok(values
-            .into_iter()
-            .map(|value| {
-                (
+            let values = repo.query_by_filter(filter)?;
+
+            for value in values {
+                result.insert(
                     IndicatorValueLoaderInput::new(
                         &value.indicator_value_row.indicator_line_id,
                         &value.indicator_value_row.indicator_column_id,
-                        &period_id,
-                        &store_id,
-                        &customer_name_id,
+                        period_id,
+                        store_id,
+                        customer_name_id,
                     ),
                     value.indicator_value_row,
-                )
-            })
-            .collect())
+                );
+            }
+        }
+
+        Ok(result)
     }
 }
