@@ -144,6 +144,11 @@ const store = new ElectronStore() as unknown as {
 
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
 
+// Set by the standalone Setup Factory installer's desktop shortcut.
+// When true, the Electron client always connects to its bundled local server
+// via 127.0.0.1 and auto-connects on startup if no server is configured.
+const isStandalone = process.argv.includes('--standalone');
+
 let connectedServer: FrontEndHost | null = null;
 let discoveredServers: FrontEndHost[] = [];
 let hasLoadingError = false;
@@ -163,6 +168,13 @@ const getDebugHost = () => {
 const START_URL = getDebugHost()
   ? `${getDebugHost()}/discovery`
   : MAIN_WINDOW_WEBPACK_ENTRY;
+
+const buildStartUrl = (extra: Record<string, string> = {}) => {
+  const params = new URLSearchParams(extra);
+  if (isStandalone) params.set('standalone', 'true');
+  const qs = params.toString();
+  return qs ? `${START_URL}?${qs}` : START_URL;
+};
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -193,10 +205,14 @@ const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
 };
 
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
-  // translate loopback addresses to allow for clients, such as CCA to connect
-  // to the API by IP address
-  if (server.isLocal && isLoopback(server.ip)) {
-    server.ip = getIpAddress('public');
+  if (isStandalone && server.isLocal) {
+    // Standalone build: always reach the bundled local server via loopback so
+    // the connection survives network changes (issue #10036).
+    server = { ...server, ip: '127.0.0.1' };
+  } else if (server.isLocal && isLoopback(server.ip)) {
+    // Non-standalone desktop: translate loopback to public IP so the QR code
+    // and SiteInfo show an externally-reachable URL for clients like CCA.
+    server = { ...server, ip: getIpAddress('public') };
   }
   discovery.stop();
   connectedServer = server;
@@ -239,7 +255,7 @@ const start = (): void => {
     });
 
   // and load discovery (with autoconnect=true by default)
-  window.loadURL(START_URL);
+  window.loadURL(buildStartUrl());
 
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
     discovery.stop();
@@ -248,7 +264,7 @@ const start = (): void => {
   });
 
   ipcMain.on(IPC_MESSAGES.GO_BACK_TO_DISCOVERY, () => {
-    window.loadURL(`${START_URL}?autoconnect=false`);
+    window.loadURL(buildStartUrl({ autoconnect: 'false' }));
   });
 
   ipcMain.handle(
