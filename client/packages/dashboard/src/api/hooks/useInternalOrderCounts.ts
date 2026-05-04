@@ -12,6 +12,7 @@ export const useInternalOrderCounts = () => {
         storeId,
       }),
     {
+      enabled: !!storeId,
       retry: false,
     }
   );
