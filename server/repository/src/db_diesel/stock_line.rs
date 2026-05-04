@@ -202,8 +202,9 @@ impl<'a> StockLineRepository<'a> {
         // and the outer items table has each id exactly once, this implicitly
         // groups by item without needing a `GROUP BY` (which Diesel can't
         // type-check on top of the deeply-boxed wide join here).
-        let item_id_subquery =
-            Self::create_filtered_query(filter, store_id).select(item::id);
+        let item_id_subquery = Self::create_filtered_query(filter, store_id)
+            .select(item::id)
+            .distinct();
 
         let mut items_query = item::table
             .left_join(unit::table)
@@ -250,8 +251,7 @@ impl<'a> StockLineRepository<'a> {
         // is in the filtered stock_line subquery. The items table has each id
         // exactly once, so `COUNT(*)` of the outer query is the count of
         // distinct items with matching stock without needing `GROUP BY`.
-        let item_id_subquery =
-            Self::create_filtered_query(filter, store_id).select(item::id);
+        let item_id_subquery = Self::create_filtered_query(filter, store_id).select(item::id);
 
         Ok(item::table
             .filter(item::id.eq_any(item_id_subquery))
