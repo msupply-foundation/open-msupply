@@ -11,7 +11,7 @@ export const useDeleteAncillaryItem = ({ itemId }: { itemId: string }) => {
   const { api, storeId, queryClient } = useItemGraphQL();
   const { keys } = useItemApi();
   const t = useTranslation();
-  const { success } = useNotification();
+  const { success, error } = useNotification();
 
   const mutationFn = async (id: string) => {
     const apiResult = await api.deleteAncillaryItem({
@@ -42,8 +42,16 @@ export const useDeleteAncillaryItem = ({ itemId }: { itemId: string }) => {
   return (id: string) => {
     showDeleteConfirmation({
       onConfirm: async () => {
-        await mutateAsync(id);
-        success(t('messages.deleted-ancillary-item'))();
+        try {
+          await mutateAsync(id);
+          success(t('messages.deleted-ancillary-item'))();
+        } catch (e) {
+          error(
+            e instanceof Error
+              ? e.message
+              : t('error.failed-to-delete-ancillary-item')
+          )();
+        }
       },
     });
   };
