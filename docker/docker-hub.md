@@ -84,21 +84,14 @@ docker run -v "$(pwd)/mydatabase":/database -p 9000:8000 msupplyfoundation/omsup
 
 ### Hardware id — default behaviour
 
-On first start the container generates a UUID, writes it to a `machine-id` file alongside your database (but **not inside it**), and reuses it on every subsequent start. The file lives in the persistent volume each flavour expects:
+On first start the container generates a UUID and writes it to `/database/machine-id`, alongside your database but **not inside it**. On every subsequent start the same id is reused. This gives you:
 
-| Flavour  | Path                                  |
-| -------- | ------------------------------------- |
-| SQLite   | `/database/machine-id`                |
-| Postgres | `/var/lib/postgresql/data/machine-id` |
-
-This gives you:
-
-- **Protection against an accidental dump-and-restore.** A logical database dump (`sqlite .dump`, `pg_dump`) only contains rows — it does not contain the `machine-id` file. If the dump is restored into a fresh deployment, that deployment generates its own hardware id, and the central API will see the mismatch and reject the unauthorised sync.
+- **Protection against an accidental dump-and-restore.** A logical database dump (`sqlite .dump`) only contains rows — it does not contain `/database/machine-id`. If the dump is restored into a fresh deployment, that deployment generates its own hardware id, and the central API will see the mismatch and reject the unauthorised sync.
 - **A recovery path for legitimate moves.** If you need to rebuild the container or move the deployment to a new host and keep the existing site identity, copy `machine-id` along with the database. Be conscious of the risk — only do this for a true migration, never for cloning a database to test against the same central instance.
 
 ### Hardware id — using the host's `/etc/machine-id` instead
 
-If you'd rather bind the deployment to the host machine (so a copied database directory taken to a different host is rejected), bind-mount the host's `/etc/machine-id` into the container. When `/etc/machine-id` is non-empty at startup, the container leaves it alone and the volume `machine-id` file is ignored. Note: this doesn't provide protection for multiple deployments on the same host sharing the same hardware id, so only do this if you have one deployment per host!
+If you'd rather bind the deployment to the host machine (so a copied database directory taken to a different host is rejected), bind-mount the host's `/etc/machine-id` into the container. When `/etc/machine-id` is non-empty at startup, the container leaves it alone and `/database/machine-id` is ignored. Note: this doesn't provide protection for multiple deployments on the same host sharing the same hardware id, so only do this if you have one deployment per host!
 
 ```bash
 docker run -v "$(pwd)/mydatabase":/database -v /etc/machine-id:/etc/machine-id:ro -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
