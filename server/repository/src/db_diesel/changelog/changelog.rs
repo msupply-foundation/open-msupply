@@ -110,7 +110,6 @@ diesel_string_enum! {
         Document,
         IndicatorValue,
         InsuranceProvider,
-        Item,
         Location,
         LocationMovement,
         Name,
@@ -161,6 +160,7 @@ diesel_string_enum! {
         // ---- Central (not v6) ----
         Abbreviation,
         Category,
+        Item,
         Contact,
         ContactTrace,
         Context,
@@ -290,22 +290,42 @@ impl<'a> ChangelogRepository<'a> {
         filter: ChangelogCondition::Inner,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let filter = ChangelogCondition::And(vec![
-            filter,
-            ChangelogCondition::cursor::greater_than(cursor),
-        ]);
+        // Each sub-query scans at most this many cursor values. Bounding the cursor
+        // range gives the planner a tight window to drive an index scan on
+        // changelog_pkey, instead of a full bitmap scan + sort across the whole table.
+        // TODO make this configurable
+        const CURSOR_WINDOW: i64 = 250_000;
 
-        let query = query()
-            .filter(filter.to_boxed())
-            .order(changelog::cursor.asc())
-            .limit(limit)
-            .select(changelog::all_columns);
+        let max_cursor = self.max_cursor()? as i64;
+        let mut results: Vec<ChangelogRow> = Vec::new();
+        let mut current_cursor = cursor;
 
-        // Debug diesel query
-        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
-        let result: Vec<ChangelogRow> = query.load(self.connection.lock().connection())?;
+        while (results.len() as i64) < limit && current_cursor < max_cursor {
+            let window_end = current_cursor.saturating_add(CURSOR_WINDOW).min(max_cursor);
+            let remaining = limit - results.len() as i64;
 
-        Ok(result)
+            let sub_filter = ChangelogCondition::And(vec![
+                filter.clone(),
+                ChangelogCondition::cursor::greater_than(current_cursor),
+                // `lower_than(window_end + 1)` expresses `cursor <= window_end`;
+                // the macro does not generate a `lower_than_or_equal` helper.
+                ChangelogCondition::cursor::lower_than(window_end + 1),
+            ]);
+
+            let sub_query = query()
+                .filter(sub_filter.to_boxed())
+                .order(changelog::cursor.asc())
+                .limit(remaining)
+                .select(changelog::all_columns);
+
+            let sub_results: Vec<ChangelogRow> =
+                sub_query.load(self.connection.lock().connection())?;
+
+            results.extend(sub_results);
+            current_cursor = window_end;
+        }
+
+        Ok(results)
     }
 
     /// Returns latest/max change log cursor
@@ -392,6 +412,8 @@ impl ChangelogFilter {
                 Central | File => C::And(vec![
                     // We have central and remote records with same table_name, so need to make sure to include only central ones (where store_id is null)
                     C::store_id::is_null(),
+                    // We have patients that are also central data, therefore patient_id should be null
+                    C::patient_id::is_null(),
                 ]),
                 ToLegacyCentralOnly | RemoteToCentral => {
                     // Don't sync
@@ -504,5 +526,27 @@ impl ChangelogFilter {
     // Push from OMS remote
     pub fn all_data_edited_on_site(site_id: i32) -> ChangelogCondition::Inner {
         ChangelogCondition::source_site_id::equal(site_id)
+    }
+}
+
+#[cfg(test)]
+mod print_query_tests {
+    use super::*;
+    use crate::DBType;
+    use diesel::debug_query;
+
+    // Remove ignore when you need to print the query
+    #[ignore]
+    #[test]
+    fn print_all_data_for_site_query_for_site_300() {
+        let filter = ChangelogFilter::all_data_for_site(300, false, None);
+
+        let q = query()
+            .filter(filter.to_boxed())
+            .order(changelog::cursor.asc())
+            .limit(100)
+            .select(changelog::all_columns);
+
+        println!("{}", debug_query::<DBType, _>(&q));
     }
 }
