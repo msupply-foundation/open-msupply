@@ -148,6 +148,10 @@ enum Action {
         /// Run pending migrations before reintegrating
         #[clap(short, long)]
         migrate: bool,
+        /// Skip resetting sync_buffer integration state — only re-run integration
+        /// against the buffer as it already is.
+        #[clap(long)]
+        skip_buffer_reset: bool,
     },
     /// Helper tool to upsert report to local omSupply instance, helpful when developing reports, especially with argument schema
     UpsertReport {
@@ -528,6 +532,7 @@ async fn main() -> anyhow::Result<()> {
             inner_transaction,
             outer_transaction,
             migrate: should_migrate,
+            skip_buffer_reset,
         } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
 
@@ -544,8 +549,10 @@ async fn main() -> anyhow::Result<()> {
             let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
             let ctx = service_provider.basic_context()?;
 
-            info!("Updating sync buffer to reintegrate");
-            {
+            if skip_buffer_reset {
+                info!("Skipping sync buffer reset");
+            } else {
+                info!("Updating sync buffer to reintegrate");
                 let connection = connection_manager.connection()?;
                 connection
                     .lock()
