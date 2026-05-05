@@ -1251,7 +1251,6 @@
   "label.linked-patient": "Linked patient",
   "label.linked-order": "Linked order",
   "label.linked-order-number": "Linked order number",
-  "label.linked-po-requisition": "Linked PO/requisition",
   "label.listening": "Listening for scans",
   "label.location": "Location",
   "label.location-temperature-range": " {{locationName}} ({{minTemperature}}°C to {{maxTemperature}}°C)",
