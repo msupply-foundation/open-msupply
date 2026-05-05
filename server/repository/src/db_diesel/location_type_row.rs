@@ -3,7 +3,7 @@ use super::StorageConnection;
 use crate::{
     db_diesel::changelog::ChangelogRepository,
     repository_error::RepositoryError,
-    ChangelogSyncType, ChangelogTableName, Delete, Upsert,
+    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -46,7 +46,7 @@ impl<'a> LocationTypeRowRepository<'a> {
         LocationTypeRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &LocationTypeRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &LocationTypeRow) -> Result<(), RepositoryError> {
         diesel::insert_into(location_type::table)
             .values(row)
             .on_conflict(location_type::id)
@@ -54,6 +54,17 @@ impl<'a> LocationTypeRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &LocationTypeRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = LocationTypeRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationTypeRow>, RepositoryError> {
@@ -73,47 +84,24 @@ impl<'a> LocationTypeRowRepository<'a> {
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(location_type::table.filter(location_type::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct LocationTypeRowDelete(pub String);
-impl Delete for LocationTypeRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        LocationTypeRowRepository::new(con).delete(&self.0)?;
-        if let ChangelogSyncType::SyncTypeV7 { changelog_row } = sync_type {
-            ChangelogRepository::new(con).insert(&changelog_row)?;
-        }
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            LocationTypeRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
 }
 
 impl Upsert for LocationTypeRow {
     fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        LocationTypeRowRepository::new(con).upsert_one(self)?;
-        match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { .. } => Ok(()),
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => {
-                ChangelogRepository::new(con).insert(&changelog_row)?;
-                Ok(())
+        LocationTypeRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                LocationTypeRow::generate_changelog(
+                    self.id.clone(),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
             }
-        }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
