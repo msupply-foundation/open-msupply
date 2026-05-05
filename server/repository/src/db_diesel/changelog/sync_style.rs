@@ -2,8 +2,8 @@ use strum::IntoEnumIterator;
 
 use super::changelog::ChangelogTableName;
 
-#[derive(strum::EnumIter, PartialEq, Eq, Debug)]
-pub(crate) enum ChangeLogSyncStyle {
+#[derive(strum::EnumIter, PartialEq, Eq, Debug, Clone, Copy)]
+pub enum ChangeLogSyncStyle {
     Central, // Data created on Open-mSupply central server
     Remote,
     File,
@@ -44,7 +44,7 @@ pub struct SyncVersions {
 // Variants are grouped to match the order of `ChangelogTableName` above and
 // sorted alphabetically within each group. Keep the two in sync.
 impl ChangelogTableName {
-    pub(crate) fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncVersions) {
+    pub fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncVersions) {
         use ChangeLogSyncStyle::*;
         use ChangelogTableName::*;
         match self {
