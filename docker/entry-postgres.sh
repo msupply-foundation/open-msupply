@@ -16,6 +16,19 @@ if [ ! -s "$PG_DATA/PG_VERSION" ]; then
     echo "local all all trust" >> "$PG_DATA/pg_hba.conf"
 fi
 
+# Hardware id setup. See entry.sh for the full rationale; the postgres
+# flavour persists the id inside PG_DATA (rather than /database) because
+# PG_DATA is the volume production deployments actually mount. pg_dump
+# only contains SQL, so the file still doesn't travel with a logical dump.
+if [ ! -s /etc/machine-id ]; then
+    ID_FILE="$PG_DATA/machine-id"
+    if [ ! -s "$ID_FILE" ]; then
+        cat /proc/sys/kernel/random/uuid > "$ID_FILE"
+        chown $PG_USER:$PG_USER "$ID_FILE"
+    fi
+    cat "$ID_FILE" > /etc/machine-id
+fi
+
 # Start PostgreSQL
 echo "Starting PostgreSQL..."
 gosu $PG_USER pg_ctl -D "$PG_DATA" -l /var/lib/postgresql/pg.log -w start
