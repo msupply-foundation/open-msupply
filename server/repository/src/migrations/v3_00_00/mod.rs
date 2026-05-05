@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_sync_log_v7;
+mod add_sync_translation_fk_error_to_system_log_type_enums;
 mod add_sync_v7_cursor_pg_enum;
 mod add_sync_v7_token_pg_enum;
 mod alter_changelog_table_for_sync_v7;
@@ -30,6 +31,7 @@ impl Migration for V3_00_00 {
             Box::new(changelog_related_changes_for_sync_v7::Migrate),
             Box::new(create_site_table::Migrate),
             Box::new(rebuild_sync_buffer::Migrate),
+            Box::new(add_sync_translation_fk_error_to_system_log_type_enums::Migrate),
         ]
     }
 }

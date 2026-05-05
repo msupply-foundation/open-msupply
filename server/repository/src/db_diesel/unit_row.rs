@@ -69,6 +69,15 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, unit_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = unit
+            .filter(id.eq(unit_id))
+            .select(id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq_any(ids))

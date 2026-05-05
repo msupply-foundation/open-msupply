@@ -8,11 +8,11 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, StockLineRowRepository, StocktakeLine,
-    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StorageConnection,
-    SyncBufferRow,
-    Row,
-
+    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
+    vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
+    EqualFilter, LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository, Row,
+    StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+    StocktakeLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -21,7 +21,9 @@ use util::sync_serde::{
 
 };
 
-use super::{utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+const RECORD_TABLE: &str = "stocktake_line";
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -157,20 +159,55 @@ impl SyncTranslation for StocktakeLineTranslation {
             None
         };
 
-        // omSupply should be generating the stocktake line with valid stock lines.
-        // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
-        let is_stock_line_valid = match item_line_ID {
-            Some(ref stock_line_id) => StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)?
-                .is_some(),
-            None => true,
-        };
+        let stock_line_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "stock_line_id",
+            item_line_ID,
+            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
-        if !is_stock_line_valid {
-            log::warn!(
-                "Stock line is not valid, stocktake_line_id: {ID}, stock_line_id: {item_line_ID:?}"
-            );
-        }
+        let location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "location_id",
+            location_id,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
+        let item_variant_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "item_variant_id",
+            item_variant_id,
+            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
+        let vvm_status_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "vvm_status_id",
+            vvm_status_id,
+            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
+        let reason_option_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "reason_option_id",
+            reason_option_id,
+            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let (campaign_id, program_id, manufacture_date) = oms_fields
             .map(|fields| {
@@ -182,14 +219,30 @@ impl SyncTranslation for StocktakeLineTranslation {
             })
             .unwrap_or((None, None, None));
 
-        let location_id = clear_invalid_location_id(connection, location_id)?;
+        let campaign_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "campaign_id",
+            campaign_id,
+            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
+        let program_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "program_id",
+            program_id,
+            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
         let result = StocktakeLineRow {
             id: ID,
             stocktake_id: stock_take_ID,
-            stock_line_id: match is_stock_line_valid {
-                true => item_line_ID,
-                false => None,
-            },
+            stock_line_id,
             location_id,
             comment,
             snapshot_number_of_packs: snapshot_qty,

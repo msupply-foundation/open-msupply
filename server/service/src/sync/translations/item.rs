@@ -2,23 +2,24 @@ use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow, ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete,
-    ItemType, Row, StorageConnection, SyncBufferRow, VENCategory,
-
+    ItemType, LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow,
+    UnitRowRepository, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
     translations::{
         category::CategoryTranslation, location_type::LocationTypeTranslation,
-        unit::UnitTranslation,
+        unit::UnitTranslation, utils::clear_invalid_fk,
     },
     CentralServerConfig,
-
 };
 
 use util::sync_serde::empty_str_as_option_string;
 
 use super::{IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+const RECORD_TABLE: &str = "item";
 
 #[allow(non_camel_case_types)]
 #[derive(Deserialize, Serialize)]
@@ -128,12 +129,31 @@ impl SyncTranslation for ItemTranslation {
         // Translate the item_category join row
         let item_category_upserts = translate_item_category_join(connection, &data)?;
 
+        let unit_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.ID,
+            "unit_id",
+            data.unit_ID,
+            |c, id| UnitRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let restricted_location_type_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.ID,
+            "restricted_location_type_id",
+            data.restricted_location_type_ID,
+            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
         // Translate the item row
         let item_row = ItemRow {
             id: data.ID.clone(),
             name: data.item_name,
             code: data.code,
-            unit_id: data.unit_ID,
+            unit_id,
             r#type: to_item_type(data.type_of),
             legacy_record: ordered_simple_json(&serde_json::to_string(&sync_record.data.0)?)?,
             default_pack_size: data.default_pack_size,
@@ -142,7 +162,7 @@ impl SyncTranslation for ItemTranslation {
             strength: data.strength,
             ven_category: to_ven_category(data.VEN_category),
             vaccine_doses: data.doses,
-            restricted_location_type_id: data.restricted_location_type_ID,
+            restricted_location_type_id,
             volume_per_pack: data.volume_per_pack,
             universal_code: data.universal_code,
         };

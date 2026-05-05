@@ -7,10 +7,10 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
-    StockLineRow, StorageConnection, SyncBufferRow,
-    Row,
-
+    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
+    vvm_status::vvm_status_row::VVMStatusRowRepository, BarcodeRowRepository, ChangelogRow,
+    ChangelogTableName, EqualFilter, LocationRowRepository, ProgramRowRepository, Row, StockLine,
+    StockLineFilter, StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -19,11 +19,9 @@ use util::sync_serde::{
 
 };
 
-use super::{
-    utils::{clear_invalid_barcode_id, clear_invalid_location_id},
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-};
+const RECORD_TABLE: &str = "stock_line";
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Default)]
@@ -142,14 +140,67 @@ impl SyncTranslation for StockLineTranslation {
             volume_per_pack,
         } = sync_record.deserialize()?;
 
-        let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
-        let location_id = clear_invalid_location_id(connection, location_ID)?;
+        let barcode_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "barcode_id",
+            barcode_id,
+            |c, id| BarcodeRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "location_id",
+            location_ID,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let item_variant_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "item_variant_id",
+            item_variant_id,
+            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let vvm_status_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "vvm_status_id",
+            vvm_status_id,
+            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let StockLineRowOmsFields {
             campaign_id,
             program_id,
             manufacture_date,
         } = oms_fields.unwrap_or_default();
+
+        let campaign_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "campaign_id",
+            campaign_id,
+            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let program_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "program_id",
+            program_id,
+            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = StockLineRow {
             id: ID,

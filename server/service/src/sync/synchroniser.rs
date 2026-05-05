@@ -220,6 +220,8 @@ impl Synchroniser {
                 true => None,
             },
             central_sync_server_id,
+            true,
+            true,
         )
         .map_err(SyncError::IntegrationError)?;
 
@@ -266,6 +268,8 @@ pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
     source_site_id: i32,
+    inner_transaction: bool,
+    outer_transaction: bool,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -317,6 +321,7 @@ pub fn integrate_and_translate_sync_buffer(
                 &upsert_sync_buffer_records,
                 &translators,
                 logger,
+                inner_transaction,
             )?;
 
         // pass the logger here
@@ -325,6 +330,7 @@ pub fn integrate_and_translate_sync_buffer(
                 &delete_sync_buffer_records,
                 &translators,
                 None,
+                inner_transaction,
             )?;
 
         let merge_sync_buffer_records = get_ordered_sync_buffer_records(
@@ -339,6 +345,7 @@ pub fn integrate_and_translate_sync_buffer(
                 &merge_sync_buffer_records,
                 &translators,
                 None,
+                inner_transaction,
             )?;
 
         Ok((
@@ -348,9 +355,13 @@ pub fn integrate_and_translate_sync_buffer(
         ))
     };
 
-    let result = connection
-        .transaction_sync(integrate_and_translate)
-        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
+    let result = if outer_transaction {
+        connection
+            .transaction_sync(integrate_and_translate)
+            .map_err::<RepositoryError, _>(|e| e.to_inner_error())?
+    } else {
+        integrate_and_translate(connection)?
+    };
 
     Ok(result)
 }

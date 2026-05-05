@@ -7,12 +7,12 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineStatus,
-    InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
-    StorageConnection, SyncBufferRow,
-    Row,
-
+    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
+    vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceLineRowDelete, InvoiceLineStatus, InvoiceLineType, InvoiceRowRepository, InvoiceType,
+    ItemRowRepository, LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository, Row,
+    StockLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -21,7 +21,12 @@ use util::sync_serde::{
 
 };
 
-use super::{is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    is_active_record_on_site, utils::clear_invalid_fk, ActiveRecordCheck, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
+};
+
+const RECORD_TABLE: &str = "invoice_line";
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyTransLineType {
@@ -265,31 +270,57 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
         )?;
 
-        // TODO: remove the stock_line_is_valid check once central server does not generate the inbound shipment
-        // omSupply should be generating the inbound, with valid stock lines.
-        // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
-        let is_stock_line_valid = stock_line_id.as_ref().is_some_and(|stock_line_id| {
-            StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)
-                .is_ok_and(|stock_line| stock_line.is_some())
-        });
-
-        if !is_stock_line_valid {
-            log::warn!(
-                "Stock line is not valid, invoice_line_id: {id}, stock_line_id: {stock_line_id:?}"
-            );
-        }
-
         // When invoice lines are coming from another site, we don't get stock line and location
         // so foreign key constraint is violated, thus we want to set them to None if it's foreign site record.
         // If the invoice is an auto generated inbound shipment, then the stock_lines are not valid either.
-        let stock_line_id = if is_record_active_on_site && is_stock_line_valid {
-            stock_line_id
+        // The FK check runs only for active-on-site records — for foreign-site records the missing
+        // stock_line is expected (the operator can't fix it), so we don't log it.
+        let stock_line_id = if is_record_active_on_site {
+            clear_invalid_fk(
+                connection,
+                RECORD_TABLE,
+                &id,
+                "stock_line_id",
+                stock_line_id,
+                |c, sid| StockLineRowRepository::new(c).check_exists_by_id(sid),
+                true,
+            )?
         } else {
             None
         };
-        let location_id = clear_invalid_location_id(connection, location_id)?;
 
+        let location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "location_id",
+            location_id,
+            |c, lid| LocationRowRepository::new(c).check_exists_by_id(lid),
+            true,
+        )?;
+
+        let item_variant_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "item_variant_id",
+            item_variant_id,
+            |c, iid| ItemVariantRowRepository::new(c).check_exists_by_id(iid),
+            true,
+        )?;
+
+        let vvm_status_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "vvm_status_id",
+            vvm_status_id,
+            |c, vid| VVMStatusRowRepository::new(c).check_exists_by_id(vid),
+            true,
+        )?;
+
+        // Map the "0" sentinel to None *before* the FK check so the sentinel
+        // doesn't generate a spurious system_log entry.
         let reason_option_id = reason_option_id.and_then(|reason_option_id| {
             if reason_option_id == "0" {
                 // This is not a valid optionID
@@ -298,6 +329,15 @@ impl SyncTranslation for InvoiceLineTranslation {
                 Some(reason_option_id)
             }
         });
+        let reason_option_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "reason_option_id",
+            reason_option_id,
+            |c, rid| ReasonOptionRowRepository::new(c).check_exists_by_id(rid),
+            true,
+        )?;
 
         let TransLineRowOmsFields {
             campaign_id,
@@ -306,6 +346,26 @@ impl SyncTranslation for InvoiceLineTranslation {
             manufacture_date,
             purchase_order_line_id,
         } = oms_fields.unwrap_or_default();
+
+        let campaign_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "campaign_id",
+            campaign_id,
+            |c, cid| CampaignRowRepository::new(c).check_exists_by_id(cid),
+            true,
+        )?;
+
+        let program_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "program_id",
+            program_id,
+            |c, pid| ProgramRowRepository::new(c).check_exists_by_id(pid),
+            true,
+        )?;
 
         let result = InvoiceLineRow {
             id,

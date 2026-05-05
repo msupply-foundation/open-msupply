@@ -3,12 +3,17 @@ use crate::sync::translations::{
 
 };
 
-use repository::{DocumentRegistryCategory, DocumentRegistryRow, StorageConnection, SyncBufferRow};
+use repository::{
+    DocumentRegistryCategory, DocumentRegistryRow, FormSchemaRowRepository, StorageConnection,
+    SyncBufferRow,
+};
 use serde::Deserialize;
 use serde_json::Value;
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{utils::clear_invalid_fk, PullTranslateResult, SyncTranslation};
+
+const RECORD_TABLE: &str = "document_registry";
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -60,7 +65,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyDocumentRegistryRow {
@@ -72,6 +77,16 @@ impl SyncTranslation for DocumentRegistryTranslation {
             form_schema_id,
             config,
         } = sync_record.deserialize()?;
+
+        let form_schema_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "form_schema_id",
+            form_schema_id,
+            |c, id| FormSchemaRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let config_str = match config {
             Some(config) => Some(serde_json::to_string(&config)?),

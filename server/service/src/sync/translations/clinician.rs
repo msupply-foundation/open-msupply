@@ -1,14 +1,15 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, GenderType, StorageConnection, SyncBufferRow,
-    Row,
-
+    ChangelogRow, ChangelogTableName, ClinicianRow, GenderType, Row, StorageConnection,
+    StoreRowRepository, SyncBufferRow,
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option, ok_or_none};
+
+const RECORD_TABLE: &str = "clinician";
 
 #[derive(Deserialize, Serialize)]
 pub struct ClinicianOmsFields {
@@ -78,7 +79,7 @@ impl SyncTranslation for ClinicianTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _connection: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyClinicianRow {
@@ -97,6 +98,16 @@ impl SyncTranslation for ClinicianTranslation {
             store_id,
             oms_fields,
         } = sync_record.deserialize()?;
+
+        let store_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "store_id",
+            store_id,
+            |c, id| StoreRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let gender = if let Some(fields) = oms_fields {
             fields.gender

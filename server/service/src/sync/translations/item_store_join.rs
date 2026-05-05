@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-use super::{utils::clear_invalid_location_id, PullTranslateResult, SyncTranslation};
+use super::{utils::clear_invalid_fk, PullTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     item::ItemTranslation, location::LocationTranslation, store::StoreTranslation,
 
 };
-use repository::{ItemStoreJoinRow, StorageConnection, SyncBufferRow};
+use repository::{ItemStoreJoinRow, LocationRowRepository, StorageConnection, SyncBufferRow};
 use util::sync_serde::empty_str_as_option_string;
+
+const RECORD_TABLE: &str = "item_store_join";
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -54,7 +56,15 @@ impl SyncTranslation for ItemStoreJoinTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyItemStoreJoinRow>()?;
 
-        let default_location_id = clear_invalid_location_id(connection, data.default_location_id)?;
+        let default_location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.id,
+            "default_location_id",
+            data.default_location_id,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = ItemStoreJoinRow {
             id: data.id,

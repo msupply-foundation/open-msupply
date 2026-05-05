@@ -123,7 +123,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0)
+        integrate_and_translate_sync_buffer(&connection, None, 0, true, true)
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
@@ -143,7 +143,7 @@ mod tests {
             .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, 0)
+        integrate_and_translate_sync_buffer(&connection, None, 0, true, true)
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);

@@ -1,8 +1,6 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationRow, StorageConnection,
-    SyncBufferRow,
-    Row,
-
+    ChangelogRow, ChangelogTableName, LocationRow, LocationTypeRowRepository, Row,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +8,9 @@ use util::sync_serde::empty_str_as_option_string;
 
 use crate::sync::translations::{location_type::LocationTypeTranslation, store::StoreTranslation};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+const RECORD_TABLE: &str = "location";
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyLocationRow {
@@ -55,7 +55,7 @@ impl SyncTranslation for LocationTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyLocationRow {
@@ -67,6 +67,16 @@ impl SyncTranslation for LocationTranslation {
             location_type_id,
             volume,
         } = sync_record.deserialize()?;
+
+        let location_type_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "location_type_id",
+            location_type_id,
+            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = LocationRow {
             id,

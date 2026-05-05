@@ -64,6 +64,15 @@ impl<'a> LocationTypeRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = location_type::table
+            .filter(location_type::id.eq(lookup_id))
+            .select(location_type::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_id(
         &self,
         ids: &[String],

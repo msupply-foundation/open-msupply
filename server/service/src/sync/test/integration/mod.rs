@@ -146,7 +146,7 @@ pub(crate) fn integrate_with_is_sync_reset(
     // they need to sync to central (if is_sync_update is set to true they will not sync to central)
     let integrations: Vec<(Option<_>, IntegrationOperation)> =
         integrations.into_iter().map(|i| (None, i)).collect();
-    integrate(&connection, &integrations).unwrap();
+    integrate(&connection, &integrations, true).unwrap();
     changelog_repo.reset_is_sync_update(cursor).unwrap();
 
     integrations.into_iter().map(|(_, i)| i).collect()

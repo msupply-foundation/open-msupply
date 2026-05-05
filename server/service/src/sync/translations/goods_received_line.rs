@@ -3,14 +3,16 @@ use super::{
     invoice_line::InvoiceLineTranslation,
     item::ItemTranslation,
     purchase_order_line::PurchaseOrderLineTranslation,
+    utils::clear_invalid_fk,
     PullTranslateResult, SyncTranslation,
-
 };
 use chrono::NaiveDate;
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
-    StorageConnection, SyncBufferRow, SyncBufferRepository,
+    LocationRowRepository, StorageConnection, SyncBufferRow, SyncBufferRepository,
 };
+
+const RECORD_TABLE: &str = "goods_received_line";
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
 
@@ -185,6 +187,16 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 
         let total = data.cost_price * data.quantity_received;
 
+        let location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.id,
+            "location_id",
+            data.location_ID,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
         let line = InvoiceLineRow {
             id: data.id,
             invoice_id: data.goods_received_ID,
@@ -192,7 +204,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             item_name: data.item_name,
             item_code,
             stock_line_id: None,
-            location_id: data.location_ID,
+            location_id,
             batch: data.batch_received,
             expiry_date: data.expiry_date,
             pack_size: data.pack_received,

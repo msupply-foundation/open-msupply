@@ -11,13 +11,17 @@ use util::sync_serde::{
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureLogRow,
-    Row,
-
+    ChangelogRow, ChangelogTableName, LocationRowRepository, Row, StorageConnection, SyncBufferRow,
+    TemperatureBreachRowRepository, TemperatureLogRow,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    to_legacy_time, utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
+};
+
+const RECORD_TABLE: &str = "temperature_log";
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -72,7 +76,7 @@ impl SyncTranslation for TemperatureLogTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyTemperatureLogRow>()?;
@@ -88,6 +92,25 @@ impl SyncTranslation for TemperatureLogTranslation {
             temperature_breach_id,
             datetime,
         } = data;
+
+        let location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "location_id",
+            location_id,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let temperature_breach_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "temperature_breach_id",
+            temperature_breach_id,
+            |c, id| TemperatureBreachRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = TemperatureLogRow {
             id,

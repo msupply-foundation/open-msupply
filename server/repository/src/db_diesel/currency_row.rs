@@ -80,6 +80,15 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, currency_id: &str) -> Result<bool, RepositoryError> {
+        let id: Option<String> = currency::table
+            .filter(currency::id.eq(currency_id))
+            .select(currency::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(id.is_some())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CurrencyRow>, RepositoryError> {
         let result = currency::table
             .filter(currency::id.eq_any(ids))

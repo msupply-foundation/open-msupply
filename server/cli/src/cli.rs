@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
 use colored::Colorize;
+use diesel::connection::SimpleConnection;
 use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
@@ -26,9 +27,8 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        settings::SyncSettings,
-        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
-        synchroniser_driver::SynchroniserDriver,
+        settings::SyncSettings, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
 };
@@ -129,6 +129,25 @@ enum Action {
         /// Path to the certificate file matching the private key
         #[clap(short, long)]
         cert: String,
+    },
+    /// Truncate core tables and re-run sync buffer integration. Useful for re-processing
+    /// already-pulled records after fixing a translator. Resets `integration_error` and
+    /// `integration_datetime` on the buffer, truncates `unit`/`item`/`name`/`changelog`
+    /// (CASCADE), then calls integrate_and_translate_sync_buffer.
+    ReintegrateBuffer {
+        /// Source site id to use when ordering buffer records (used by
+        /// integrate_and_translate_sync_buffer)
+        #[clap(short, long, default_value = "1")]
+        source_site_id: i32,
+        /// Wrap the whole integration in an outer transaction
+        #[clap(short, long)]
+        outer_transaction: bool,
+        /// Use a per-record nested transaction (postgres only)
+        #[clap(short, long)]
+        inner_transaction: bool,
+        /// Run pending migrations before reintegrating
+        #[clap(short, long)]
+        migrate: bool,
     },
     /// Helper tool to upsert report to local omSupply instance, helpful when developing reports, especially with argument schema
     UpsertReport {
@@ -331,9 +350,12 @@ async fn main() -> anyhow::Result<()> {
     match args.action {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
-            let schema =
-                OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
-                    .finish();
+            let schema = OperationalSchema::build(
+                Queries::new(),
+                Mutations::new(),
+                Subscriptions::default(),
+            )
+            .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
                 schema.sdl(),
@@ -446,11 +468,7 @@ async fn main() -> anyhow::Result<()> {
             buffer_repo.insert_many(&buffer_rows)?;
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
-            integrate_and_translate_sync_buffer(
-                &ctx.connection,
-                Some(&mut logger),
-                0,
-            )?;
+            integrate_and_translate_sync_buffer(&ctx.connection, Some(&mut logger), 0, true, true)?;
 
             info!("Initialising users");
             for (input, user_info) in data.users {
@@ -504,6 +522,84 @@ async fn main() -> anyhow::Result<()> {
             }
 
             info!("Refresh data result: {result:#?}");
+        }
+        Action::ReintegrateBuffer {
+            source_site_id,
+            inner_transaction,
+            outer_transaction,
+            migrate: should_migrate,
+        } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+
+            if should_migrate {
+                info!("Applying database migrations");
+                if let Some(init_sql) = &settings.database.startup_sql() {
+                    connection_manager.execute(init_sql).unwrap();
+                }
+                migrate(&connection_manager.connection().unwrap(), None)
+                    .expect("Failed to run DB migrations");
+                info!("Finished applying database migrations");
+            }
+
+            let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
+            let ctx = service_provider.basic_context()?;
+
+            info!("Updating sync buffer to reintegrate");
+            {
+                let connection = connection_manager.connection()?;
+                connection
+                    .lock()
+                    .connection()
+                    .batch_execute(
+                        r#"
+                    delete from sync_buffer where action = 'UPSERT' and data ='null';
+                    update sync_buffer set integration_datetime = null, integration_error = null, integration_result = null, integration_started_datetime = null, is_integrated = false;
+                    "#,
+                    )
+                    .unwrap();
+            }
+
+            info!("Starting reintegration");
+
+            let mut logger = SyncLogger::start(&ctx.connection).unwrap();
+            integrate_and_translate_sync_buffer(
+                &ctx.connection,
+                Some(&mut logger),
+                source_site_id,
+                inner_transaction,
+                outer_transaction,
+            )?;
+
+            info!("Reintegration complete");
+
+            /* DO $$
+            DECLARE
+                tables text;
+            BEGIN
+                SELECT string_agg(format('%I.%I', schemaname, tablename), ', ')
+                INTO tables
+                FROM pg_tables
+                WHERE schemaname = 'public'
+                AND tablename NOT IN (
+                    'sync_buffer',
+                    'sync_buffer_archive',
+                    'sync_buffer_pending',
+                    'key_value_store',
+                    'migration_fragment_log',
+                    'item',
+                    'item_link',
+                    'name',
+                    'name_link',
+                    -- Excluded because item/name FK to these; truncating them cascades into item/name
+                    'location_type',
+                    'unit',
+                    'currency'
+                );
+
+                IF tables IS NOT NULL THEN
+                    EXECUTE 'TRUNCATE TABLE ' || tables || ' RESTART IDENTITY CASCADE';
+                END IF;
+            END $$; */
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::BuildReports { path } => {

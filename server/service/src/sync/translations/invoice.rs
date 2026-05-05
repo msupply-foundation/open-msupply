@@ -1,4 +1,4 @@
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
@@ -9,14 +9,15 @@ use crate::sync::translations::{
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
-    InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowRepository,
-    InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository,
-    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
-    UserAccountRow, UserAccountRowRepository,
-    Row,
-
+    name_insurance_join_row::NameInsuranceJoinRowRepository, ChangelogRow, ChangelogTableName,
+    CurrencyFilter, CurrencyRepository, CurrencyRowRepository, DiagnosisRowRepository,
+    EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete,
+    InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow,
+    NameRowRepository, Row, ShippingMethodRowRepository, StorageConnection, StoreFilter,
+    StoreRepository, StoreRowRepository, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
+
+const RECORD_TABLE: &str = "invoice";
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
@@ -424,6 +425,43 @@ impl SyncTranslation for InvoiceTranslation {
                 Some(currency_id)
             }
         };
+        // Validate AFTER home-currency fallback; the fallback resolves to a real id.
+        let currency_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.ID,
+            "currency_id",
+            currency_id,
+            |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let diagnosis_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.ID,
+            "diagnosis_id",
+            data.diagnosis_id,
+            |c, id| DiagnosisRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let name_insurance_join_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.ID,
+            "name_insurance_join_id",
+            data.name_insurance_join_id,
+            |c, id| NameInsuranceJoinRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let shipping_method_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.ID,
+            "shipping_method_id",
+            data.shipping_method_id,
+            |c, id| ShippingMethodRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let oms_fields = data.oms_fields.unwrap_or_default();
 
@@ -468,14 +506,14 @@ impl SyncTranslation for InvoiceTranslation {
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,
-            diagnosis_id: data.diagnosis_id,
+            diagnosis_id,
             program_id: data.program_id,
-            name_insurance_join_id: data.name_insurance_join_id,
+            name_insurance_join_id,
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
             expected_delivery_date: data.expected_delivery_date,
             purchase_order_id: data.purchase_order_id,
-            shipping_method_id: data.shipping_method_id,
+            shipping_method_id,
             charges_local_currency: oms_fields.charges_local_currency,
             charges_foreign_currency: oms_fields.charges_foreign_currency,
             ..Default::default()

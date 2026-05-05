@@ -1,9 +1,8 @@
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete,
+    ChangelogRow, ChangelogTableName, CurrencyRowRepository, GenderType, NameRow, NameRowDelete,
     NameRowType, Row, StorageConnection, SyncBufferRow,
-
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
@@ -14,7 +13,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::sync::{translations::currency::CurrencyTranslation, CentralServerConfig};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
+};
+
+const RECORD_TABLE: &str = "name";
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -232,7 +236,7 @@ impl SyncTranslation for NameTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameRow {
@@ -282,6 +286,19 @@ impl SyncTranslation for NameTranslation {
             .flatten()
             .transpose()
             .context("Error serialising custom data to string")?;
+
+        // No DB-level FK constraint on supplying_store_id, because the store records also rely on name.
+        // We don't want to blank out supplying_store_id if the store record just hasn't been synced yet
+
+        let currency_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &id,
+            "currency_id",
+            currency_id,
+            |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = NameRow {
             id,

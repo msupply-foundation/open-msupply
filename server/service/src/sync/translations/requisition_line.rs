@@ -1,20 +1,22 @@
-use crate::sync::translations::{item::ItemTranslation, requisition::RequisitionTranslation};
+use crate::sync::translations::{
+    item::ItemTranslation, requisition::RequisitionTranslation, utils::clear_invalid_fk,
+};
 
 use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_fields_as_option};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
-    RequisitionLineRow, RequisitionLineRowDelete,
-    RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, StorageConnection,
-    SyncBufferRow,
-    Row,
-
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository,
+    LocationTypeRowRepository, ReasonOptionRowRepository, RequisitionFilter, RequisitionLineRow,
+    RequisitionLineRowDelete, RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+const RECORD_TABLE: &str = "requisition_line";
 
 #[derive(Deserialize, Serialize, PartialEq)]
 pub struct RequisitionLineOmsFields {
@@ -117,7 +119,7 @@ impl SyncTranslation for RequisitionLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyRequisitionLineRow>()?;
@@ -142,6 +144,26 @@ impl SyncTranslation for RequisitionLineTranslation {
             (None, None, None, None, None, None)
         };
 
+        let option_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.ID,
+            "option_id",
+            data.option_id,
+            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
+        let location_type_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &data.ID,
+            "location_type_id",
+            location_type_id,
+            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
             requisition_id: data.requisition_ID,
@@ -165,7 +187,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             addition_in_units: data.addition_in_units,
             expiring_units: data.expiring_units,
             days_out_of_stock: data.days_out_of_stock,
-            option_id: data.option_id,
+            option_id,
             price_per_unit,
             available_volume,
             location_type_id,
