@@ -41,7 +41,7 @@ RUN apt-get update && apt-get install -y postgresql-17 libpq5 gosu && \
 ENV PATH="/usr/lib/postgresql/17/bin:$PATH"
 COPY docker/local.postgres.yaml /usr/src/omsupply/server/configuration/local.yaml
 COPY --chmod=755 docker/entry-postgres.sh /usr/src/omsupply/server/entry-postgres.sh
-RUN mkdir -p /var/lib/postgresql/data && chown -R postgres:postgres /var/lib/postgresql
+RUN chown -R postgres:postgres /var/lib/postgresql
 ENTRYPOINT ["/usr/src/omsupply/server/entry-postgres.sh"]
 
 FROM sqlite as dev
