@@ -5,7 +5,7 @@ import { useDebouncedValue } from '@common/hooks';
 const shouldSearch = (text: string) => text.length > 0;
 export const useSearchPatient = () => {
   const [searchText, setSearchText] = useState('');
-  const { mutate, isLoading, data, isSuccess } = usePatient.utils.search();
+  const { mutate, isPending: isLoading, data, isSuccess } = usePatient.utils.search();
 
   const debouncedSearchText = useDebouncedValue(searchText, 500);
 

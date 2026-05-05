@@ -8,9 +8,9 @@ export const useEncounterPrevious = (
 ) => {
   const api = useEncounterApi();
 
-  return useQuery(
-    api.keys.previous(patientId ?? '', currentEncounter.getTime()),
-    () => api.previousEncounters(patientId ?? '', currentEncounter),
-    { enabled: enabled !== false && !!patientId }
-  );
+  return useQuery({
+    queryKey: api.keys.previous(patientId ?? '', currentEncounter.getTime()),
+    queryFn: () => api.previousEncounters(patientId ?? '', currentEncounter),
+    enabled: enabled !== false && !!patientId
+  });
 };

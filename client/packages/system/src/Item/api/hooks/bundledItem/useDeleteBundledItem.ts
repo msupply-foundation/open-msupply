@@ -31,7 +31,9 @@ export const useDeleteBundledItem = ({ itemId }: { itemId: string }) => {
   const { mutateAsync } = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries(keys.detail(itemId));
+      queryClient.invalidateQueries({
+        queryKey: keys.detail(itemId)
+      });
     },
   });
 

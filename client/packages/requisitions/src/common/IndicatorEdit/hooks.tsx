@@ -42,14 +42,14 @@ export const usePreviousNextIndicatorLine = (
 // identical, so the shared draft hook just accepts one and calls it.
 export type UseUpdateIndicatorValue = () => {
   mutateAsync: (input: IndicatorValueFragment) => Promise<unknown>;
-  isLoading: boolean;
+  isPending: boolean;
 };
 
 export const useDraftIndicatorValue = (
   indicatorValue: IndicatorValueFragment,
   useUpdate: UseUpdateIndicatorValue
 ) => {
-  const { mutateAsync, isLoading } = useUpdate();
+  const { mutateAsync, isPending } = useUpdate();
   const { error } = useNotification();
   const [draft, setDraft] = useState<IndicatorValueFragment>(indicatorValue);
   const save = useDebounceCallback(
@@ -65,5 +65,5 @@ export const useDraftIndicatorValue = (
     return save(newDraft);
   };
 
-  return { draft, isLoading, update };
+  return { draft, isPending, update };
 };

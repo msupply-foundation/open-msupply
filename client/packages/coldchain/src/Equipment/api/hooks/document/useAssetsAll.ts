@@ -4,9 +4,9 @@ import { useAssetApi } from '../utils/useAssetApi';
 export const useAssetsAll = () => {
   const { queryParams } = useUrlQueryParams();
   const api = useAssetApi();
-  const result = useMutation(api.keys.sortedList(queryParams?.sortBy), () =>
-    api.get.listAll(queryParams)
-  );
+  const result = useMutation({
+    mutationFn: () => api.get.listAll(queryParams),
+  });
 
   return {
     ...result,

@@ -3,7 +3,10 @@ import { useHostApi } from '../utils/useHostApi';
 
 export const useDatabaseSettings = () => {
   const api = useHostApi();
-  return useQuery(api.keys.databaseSettings(), async () =>
-    api.get.databaseSettings()
-  );
+  return useQuery({
+    queryKey: api.keys.databaseSettings(),
+
+    queryFn: async () =>
+      api.get.databaseSettings()
+  });
 };
