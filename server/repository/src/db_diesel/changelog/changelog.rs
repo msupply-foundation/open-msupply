@@ -232,7 +232,7 @@ diesel_string_enum! {
     }
 }
 
-pub(crate) enum SourceSiteId {
+pub enum SourceSiteId {
     SourceSiteId(Option<i32>),
     CurrentSiteId,
 }
@@ -243,10 +243,7 @@ pub(crate) enum RowOrId<'a, T> {
 }
 
 impl SourceSiteId {
-    pub(crate) fn get_id(
-        &self,
-        connection: &StorageConnection,
-    ) -> Result<Option<i32>, RepositoryError> {
+    pub fn get_id(&self, connection: &StorageConnection) -> Result<Option<i32>, RepositoryError> {
         match self {
             SourceSiteId::SourceSiteId(id) => Ok(*id),
             SourceSiteId::CurrentSiteId => {
