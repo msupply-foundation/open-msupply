@@ -4,7 +4,7 @@ This is uploaded to dockerhub manually
 
 # What is Open mSupply?
 
-Open mSupply is an open source logistic management system for medicine distribution. 
+Open mSupply is an open source logistic management system for medicine distribution.
 
 [Documentation](https://docs.msupply.foundation/)
 
@@ -30,7 +30,7 @@ Remember the first argument of `-p` is the local port on which you would like to
 
 ## Initialise, Load reference data or from sqlite datafile
 
-You will need to initialise database at this point, either by syncing to mSupply server (when connecting to local server you probably need to use `host.docker.internal` rather then localhost). 
+You will need to initialise database at this point, either by syncing to mSupply server (when connecting to local server you probably need to use `host.docker.internal` rather then localhost).
 
 This docker image comes with reference data that can be loaded via (with credentials Admin/pass)
 
@@ -56,7 +56,7 @@ docker run --rm -v "$(pwd)/putschemahere":/schemafolder msupplyfoundation/omsupp
 
 Try `--help` instead of export-graphql-schema to see more
 
-## Date imitation 
+## Date imitation
 
 For tests or stable demos it's good to be able to refresh dates or imitate a particular date.
 
@@ -86,9 +86,9 @@ docker run -v "$(pwd)/mydatabase":/database -p 9000:8000 msupplyfoundation/omsup
 
 On first start the container generates a UUID, writes it to a `machine-id` file alongside your database (but **not inside it**), and reuses it on every subsequent start. The file lives in the persistent volume each flavour expects:
 
-| Flavour  | Path                              |
-| -------- | --------------------------------- |
-| SQLite   | `/database/machine-id`            |
+| Flavour  | Path                                  |
+| -------- | ------------------------------------- |
+| SQLite   | `/database/machine-id`                |
 | Postgres | `/var/lib/postgresql/data/machine-id` |
 
 This gives you:
@@ -98,7 +98,7 @@ This gives you:
 
 ### Hardware id — using the host's `/etc/machine-id` instead
 
-If you'd rather bind the deployment to the host machine (so a copied database directory taken to a different host is also rejected), bind-mount the host's `/etc/machine-id` into the container. When `/etc/machine-id` is non-empty at startup, the container leaves it alone and the volume `machine-id` file is ignored.
+If you'd rather bind the deployment to the host machine (so a copied database directory taken to a different host is rejected), bind-mount the host's `/etc/machine-id` into the container. When `/etc/machine-id` is non-empty at startup, the container leaves it alone and the volume `machine-id` file is ignored. Note: this doesn't provide protection for multiple deployments on the same host sharing the same hardware id, so only do this if you have one deployment per host!
 
 ```bash
 docker run -v "$(pwd)/mydatabase":/database -v /etc/machine-id:/etc/machine-id:ro -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
@@ -111,7 +111,7 @@ echo $(ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3 }
 docker run -v "$(pwd)/mydatabase":/database -v "$(pwd)/machine-id":/etc/machine-id:ro -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
 ```
 
-## Dev 
+## Dev
 
 You can work on front end using the 'dev' flavour of omSupply image, it comes with all dependencies pre-installed (make sure clientdev folder is empty).
 
@@ -122,14 +122,14 @@ docker run --rm -v "$(pwd)/clientdev":/usr/src/omsupply/clientcopy -ti --entrypo
 ```
 
 When overriding entrypoint like this, you can leave out arguments after image name, which will allow you bash into the image
- 
+
 Then we can start front end (`-v /usr/src/omsupply/client/node_modules` keeps node_modules folder from volume)
 
 ```bash
 docker run -p 9003:3003 -v "$(pwd)/clientdev":/usr/src/omsupply/client -v /usr/src/omsupply/client/node_modules -ti --entrypoint="/bin/bash" -w /usr/src/omsupply/client msupplyfoundation/omsupply:v2.7.3-dev -c "yarn start --env API_HOST='http://localhost:9000'"
 ```
 
-And start server 
+And start server
 
 ```bash
 docker run -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
