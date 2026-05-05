@@ -6,6 +6,8 @@ export const useSupplierReturnDelete = () => {
   const api = useReturnsApi();
 
   return useMutation(api.deleteSupplier, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+    // `void` is load-bearing: returning the invalidateQueries promise would make
+    // mutateAsync await the refetch of the just-deleted detail query and hang.
+    onSuccess: () => void queryClient.invalidateQueries(api.keys.base()),
   });
 };

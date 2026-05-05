@@ -1,10 +1,12 @@
-use self::query::{get_stock_line, get_stock_lines};
+use self::query::{get_stock_line, get_stock_lines, get_items_by_stock_line_filter};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::NaiveDateTime;
 use historical_stock::get_historical_stock_lines;
-use repository::{PaginationOption, StockLine, StockLineFilter, StockLineSort};
+use repository::{
+    Item, ItemSort, PaginationOption, StockLine, StockLineFilter, StockLineSort,
+};
 
 pub mod historical_stock;
 pub mod query;
@@ -37,6 +39,17 @@ pub trait StockLineServiceTrait: Sync + Send {
         input: UpdateStockLine,
     ) -> Result<StockLine, UpdateStockLineError> {
         update_stock_line(ctx, input)
+    }
+
+    fn get_items_by_stock_line_filter(
+        &self,
+        ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
+        filter: Option<StockLineFilter>,
+        sort: Option<ItemSort>,
+        store_id: Option<String>,
+    ) -> Result<ListResult<Item>, ListError> {
+        get_items_by_stock_line_filter(ctx, pagination, filter, sort, store_id)
     }
 
     fn get_historical_stock_lines(
