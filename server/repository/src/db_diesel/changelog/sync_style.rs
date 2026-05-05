@@ -51,11 +51,10 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Legacy — Remote (not v6)
             // ----------------------------------------------------------
-            ActivityLog | Barcode | Clinician | ClinicianStoreJoin | Currency | IndicatorValue
-            | InsuranceProvider | Item | Location | LocationMovement | Name | NameInsuranceJoin
-            | NameStoreJoin | PurchaseOrder | PurchaseOrderLine | Sensor | StockLine
-            | Stocktake | StocktakeLine | TemperatureBreach | TemperatureLog | SyncMessage
-            | VVMStatusLog => (
+            ActivityLog | Clinician | ClinicianStoreJoin | IndicatorValue | InsuranceProvider
+            | Location | LocationMovement | NameInsuranceJoin | NameStoreJoin | PurchaseOrder
+            | PurchaseOrderLine | Sensor | StockLine | Stocktake | StocktakeLine
+            | TemperatureBreach | TemperatureLog | SyncMessage | VVMStatusLog => (
                 vec![Remote],
                 SyncVersions {
                     is_v6: false,
@@ -132,6 +131,10 @@ impl ChangelogTableName {
             | DocumentRegistry
             | IndicatorColumn
             | IndicatorLine
+            | Item
+            | Barcode
+            | Currency
+            | Name
             | ItemCategoryJoin
             | ItemDirection
             | ItemStoreJoin
@@ -183,6 +186,19 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             Asset | AssetInternalLocation | AssetLog | RnrForm | RnrFormLine => (
                 vec![Remote],
+                SyncVersions {
+                    is_v6: true,
+                    is_v5: false,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Patient (v6) — store-scoped patient records that
+            // also flow to sites where the patient is visible (via
+            // name_store_join on the patient_id).
+            // ----------------------------------------------------------
+            Encounter | Vaccination | Document => (
+                vec![Central, Patient],
                 SyncVersions {
                     is_v6: true,
                     is_v5: false,
