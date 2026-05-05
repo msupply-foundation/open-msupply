@@ -29,7 +29,7 @@ export const Toolbar = () => {
             },
             {
               type: 'number',
-              name: t('label.purchase-order-number'),
+              name: t('label.linked-order-number'),
               urlParameter: 'purchaseOrderNumber',
             },
             {
