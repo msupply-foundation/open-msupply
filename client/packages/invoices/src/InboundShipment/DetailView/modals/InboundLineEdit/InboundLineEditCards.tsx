@@ -64,7 +64,7 @@ interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
   isReceived?: boolean;
-  lastCardRef?: React.RefObject<HTMLDivElement>;
+  lastCardRef?: React.RefObject<HTMLDivElement | null>;
   actions?: React.ReactNode;
   /** The specific line ID to scroll into view when the modal opens */
   scrollToLineId?: string | null;

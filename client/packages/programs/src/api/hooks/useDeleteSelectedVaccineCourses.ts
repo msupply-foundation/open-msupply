@@ -18,11 +18,13 @@ export const useDeleteSelectedVaccineCourses = ({
   const t = useTranslation();
   const { api, queryClient } = useProgramsGraphQL();
   const { mutateAsync } = useMutation(
-    async ({ vaccineCourseId }: { vaccineCourseId: string }) => {
-      const apiResult = await api.deleteVaccineCourse({ vaccineCourseId });
+    {
+      mutationFn: async ({ vaccineCourseId }: { vaccineCourseId: string }) => {
+        const apiResult = await api.deleteVaccineCourse({ vaccineCourseId });
 
-      // The `?` after `centralServer` handles empty `apiResult` (see issue: https://github.com/msupply-foundation/open-msupply/issues/4191)
-      return apiResult.centralServer?.vaccineCourse.deleteVaccineCourse;
+        // The `?` after `centralServer` handles empty `apiResult` (see issue: https://github.com/msupply-foundation/open-msupply/issues/4191)
+        return apiResult.centralServer?.vaccineCourse.deleteVaccineCourse;
+      }
     }
   );
 
@@ -51,7 +53,9 @@ export const useDeleteSelectedVaccineCourses = ({
         throw new Error(errorMessage);
       }
 
-      await queryClient.invalidateQueries([VACCINE, LIST]);
+      await queryClient.invalidateQueries({
+        queryKey: [VACCINE, LIST]
+      });
       resetRowSelection();
     }
   };
