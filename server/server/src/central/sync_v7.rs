@@ -9,14 +9,14 @@ use repository::syncv7::SyncError;
 use service::{
     service_provider::ServiceProvider,
     sync_v7::{
-        api::{self, site_info::SiteInfoInput, Common, APP_VERSION_HEADER, HARDWARE_ID_HEADER},
+        api::{self, get_token::GetTokenInput, Common, APP_VERSION_HEADER, HARDWARE_ID_HEADER},
         sync_on_central as handlers,
     },
 };
 
 pub fn sync_v7_on_central() -> impl HttpServiceFactory {
     web::scope("sync_v7")
-        .service(get_site_info)
+        .service(get_token)
         .service(pull)
         .service(push)
 }
@@ -30,13 +30,13 @@ fn extract_common(req: &HttpRequest) -> Result<Common, SyncError> {
     )
 }
 
-#[post("/get_site_info")]
-async fn get_site_info(
-    request: Json<SiteInfoInput>,
+#[post("/get_token")]
+async fn get_token(
+    request: Json<GetTokenInput>,
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
-    let response: api::site_info::Response =
-        handlers::get_site_info(&service_provider, request.into_inner());
+    let response: api::get_token::Response =
+        handlers::get_token(&service_provider, request.into_inner());
 
     Ok(web::Json(response))
 }

@@ -14,7 +14,7 @@ mod tests {
             api::{ParsedError, SyncApiError, SyncApiErrorVariantV5, SyncErrorCodeV5},
             settings::SyncSettings,
             sync_status::SyncLogError,
-            synchroniser::{SyncError, Synchroniser},
+            synchroniser::{SyncError, SynchroniserV5V6},
             test::integration::{
                 central_server_configurations::SiteConfiguration, create_site, FullSiteConfig,
             },
@@ -26,7 +26,7 @@ mod tests {
         connection_manager: &StorageConnectionManager,
         settings: &SyncSettings,
         hardware_id: &str,
-    ) -> Synchroniser {
+    ) -> SynchroniserV5V6 {
         let mut service_provider = ServiceProvider::new(connection_manager.clone());
         struct TestService1(String);
         impl AppDataServiceTrait for TestService1 {
@@ -39,7 +39,7 @@ mod tests {
         }
         service_provider.app_data_service = Box::new(TestService1(hardware_id.to_string()));
 
-        Synchroniser::new(settings.clone(), Arc::new(service_provider)).unwrap()
+        SynchroniserV5V6::new(settings.clone(), Arc::new(service_provider)).unwrap()
     }
 
     #[actix_rt::test]
@@ -110,7 +110,7 @@ mod tests {
             ..
         } = create_site("api_incompatible_error", vec![]).await;
 
-        let synchroniser = Synchroniser::new_with_version(
+        let synchroniser = SynchroniserV5V6::new_with_version(
             sync_settings.clone(),
             service_provider.clone(),
             10000,

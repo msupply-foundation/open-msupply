@@ -6,7 +6,7 @@ use util::{with_retries, RetrySeconds};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SiteInfoInput {
+pub struct GetTokenInput {
     pub version: Version,
     pub name: String,
     pub password_sha256: String,
@@ -15,19 +15,19 @@ pub struct SiteInfoInput {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct SiteInfoOutput {
+pub struct GetTokenOutput {
     pub token: String,
     pub site_id: i32,
     pub central_site_id: i32,
 }
 
-pub type Response = ApiResponse<SiteInfoOutput>;
-pub(crate) static ROUTE: &str = "get_site_info";
+pub type Response = ApiResponse<GetTokenOutput>;
+pub(crate) static ROUTE: &str = "get_token";
 
-pub async fn get_site_info(
+pub async fn get_token(
     base_url: &reqwest::Url,
-    input: SiteInfoInput,
-) -> Result<SiteInfoOutput, SyncError> {
+    input: GetTokenInput,
+) -> Result<GetTokenOutput, SyncError> {
     let url = base_url
         .join("central/sync_v7/")
         .unwrap()

@@ -32,8 +32,8 @@ pub async fn initialise_site(
     let sync_settings = input.to_domain();
 
     if let Err(error) = service_provider
-        .site_info_service
-        .request_and_set_site_info(service_provider, &sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(service_provider, &sync_settings)
         .await
     {
         return Ok(InitialiseSiteResponse::Error(SyncErrorNode::map_error(
@@ -41,7 +41,7 @@ pub async fn initialise_site(
         )?));
     }
 
-    // request_and_set_site_info above should validate settings, can consider all error in update_sync_settings as internal error
+    // request_and_set_site_auth above should validate settings, can consider all error in update_sync_settings as internal error
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)
