@@ -16,11 +16,6 @@ if [ ! -s "$PG_DATA/PG_VERSION" ]; then
     echo "local all all trust" >> "$PG_DATA/pg_hba.conf"
 fi
 
-# Hardware id: persist inside PG_DATA, the volume production postgres
-# deployments actually mount. /database is only used for an optional
-# import dump and isn't persisted by default.
-/usr/src/omsupply/server/setup-machine-id.sh "$PG_DATA/machine-id"
-
 # Start PostgreSQL
 echo "Starting PostgreSQL..."
 gosu $PG_USER pg_ctl -D "$PG_DATA" -l /var/lib/postgresql/pg.log -w start
