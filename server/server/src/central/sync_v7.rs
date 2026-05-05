@@ -17,6 +17,7 @@ use service::{
 pub fn sync_v7_on_central() -> impl HttpServiceFactory {
     web::scope("sync_v7")
         .service(get_token)
+        .service(site_status)
         .service(pull)
         .service(push)
 }
@@ -38,6 +39,18 @@ async fn get_token(
     let response: api::get_token::Response =
         handlers::get_token(&service_provider, request.into_inner());
 
+    Ok(web::Json(response))
+}
+
+#[post("/site_status")]
+async fn site_status(
+    http_req: HttpRequest,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response: api::status::Response = match extract_common(&http_req) {
+        Ok(common) => handlers::site_status(&service_provider, common).await,
+        Err(e) => Err(e),
+    };
     Ok(web::Json(response))
 }
 

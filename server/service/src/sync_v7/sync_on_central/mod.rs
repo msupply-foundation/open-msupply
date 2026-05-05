@@ -19,7 +19,9 @@ use crate::{
     sync_v7::{
         api::{
             get_token::{GetTokenInput, GetTokenOutput},
-            pull, push, Common,
+            pull, push,
+            status::{self},
+            Common,
         },
         sync::{sync_record_to_buffer_row, SyncBatchV7},
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
@@ -151,6 +153,21 @@ fn get_central_site_id(connection: &StorageConnection) -> Result<i32, SyncError>
     KeyValueStoreRepository::new(connection)
         .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
         .ok_or_else(|| SyncError::Other("Central site id not configured".to_string()))
+}
+
+/// Report site status to a remote open-mSupply Server.
+/// Errors with `SiteLockError::IntegrationInProgress` while integration is running, so clients
+/// can poll until it clears.
+pub async fn site_status(
+    service_provider: &ServiceProvider,
+    common: Common,
+) -> status::Response {
+    let (site, ctx) = validate(service_provider, &common)?;
+    let central_site_id = get_central_site_id(&ctx.connection)?;
+    Ok(status::Output {
+        site_id: site.id,
+        central_site_id,
+    })
 }
 
 /// Send Records to a remote open-mSupply Server
