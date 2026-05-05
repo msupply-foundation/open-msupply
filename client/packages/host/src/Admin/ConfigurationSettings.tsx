@@ -19,7 +19,7 @@ import { SupplyLevelModal } from './SupplyLevelModal';
 export const ConfigurationSettings = () => {
   const t = useTranslation();
   const { currentLanguage } = useIntlUtils();
-  const { mutateAsync, isLoading } = useConfigureNameProperties();
+  const { mutateAsync, isPending: isLoading } = useConfigureNameProperties();
   const { isLoading: dataLoading } = useName.document.properties();
   const { gapsConfigured, forecastingConfigured } =
     useCheckConfiguredProperties();

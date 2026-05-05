@@ -33,7 +33,6 @@ const Template: StoryFn<AppNavLinkProps & { collapsed: boolean }> = args => {
 export const Collapsed = Template.bind({});
 Collapsed.parameters = { routes: ['/distribution'] };
 Collapsed.args = {
-  end: false,
   text: 'Distribution',
   icon: <TruckIcon />,
   to: 'outbound-shipments',
@@ -43,7 +42,6 @@ Collapsed.args = {
 export const Expanded = Template.bind({});
 Expanded.parameters = { routes: ['/distribution'] };
 Expanded.args = {
-  end: false,
   text: 'Distribution',
   icon: <TruckIcon />,
   to: 'outbound-shipments',

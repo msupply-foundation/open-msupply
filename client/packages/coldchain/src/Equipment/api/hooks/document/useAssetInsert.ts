@@ -5,9 +5,11 @@ import { DraftAsset } from '../../../types';
 export const useAssetInsert = () => {
   const api = useAssetApi();
 
-  return useMutation(async (asset: Partial<DraftAsset>) => api.insert(asset), {
+  return useMutation({
+    mutationFn: async (asset: Partial<DraftAsset>) => api.insert(asset),
+
     onError: e => {
       console.error(e);
-    },
+    }
   });
 };

@@ -8,10 +8,14 @@ export const useOutboundUpdateInvoiceTax = () => {
   const api = useOutboundApi();
   const { data } = useOutbound();
 
-  const { mutateAsync, ...mutateState } = useMutation(api.update, {
+  const { mutateAsync, ...mutateState } = useMutation({
+    mutationFn: api.update,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 
   const updateInvoiceTax = useCallback(

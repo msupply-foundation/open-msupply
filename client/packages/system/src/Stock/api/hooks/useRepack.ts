@@ -80,8 +80,12 @@ export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
       // - Repack list
       // - Stockline quantity
       // - Ledger
-      queryClient.invalidateQueries([STOCK_LINE]);
-      queryClient.invalidateQueries([STOCK, invoiceId]);
+      queryClient.invalidateQueries({
+        queryKey: [STOCK_LINE]
+      });
+      queryClient.invalidateQueries({
+        queryKey: [STOCK, invoiceId]
+      });
       onChange({
         packSize: 0,
         newPackSize: 0,

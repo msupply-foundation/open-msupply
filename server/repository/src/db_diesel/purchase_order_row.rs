@@ -179,6 +179,15 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, purchase_order_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = purchase_order::table
+            .filter(purchase_order::id.eq(purchase_order_id))
+            .select(purchase_order::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn delete(&self, purchase_order_id: &str) -> Result<Option<i64>, RepositoryError> {
         let old_row = self.find_one_by_id(purchase_order_id)?;
         let change_log_id = match old_row {

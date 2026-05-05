@@ -267,9 +267,7 @@ export const CreateAssetModal = ({
                     updateDraft({ catalogueItemId: selected?.id ?? '' })
                   }
                   paginationDebounce={DEBOUNCE_TIMEOUT}
-                  onPageChange={pageNumber =>
-                    fetchNextPage({ pageParam: pageNumber })
-                  }
+                  onPageChange={() => fetchNextPage()}
                   loading={isFetching}
                   onInputChange={(reason, value) => {
                     if (reason?.type === 'change') debounceOnFilter(value);
