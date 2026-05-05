@@ -7,8 +7,8 @@ use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
     ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
-    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, StorageConnection, StringFilter,
-    SyncBufferRepository,
+    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId, StorageConnection,
+    StringFilter, SyncBufferRepository,
 };
 use thiserror::Error;
 use util::format_error;
@@ -79,7 +79,9 @@ pub fn get_token(
                 ..site.clone()
             })?;
 
-            let central_site_id = get_central_site_id(connection)?;
+            let central_site_id = SourceSiteId::CurrentSiteId
+                .get_id(&ctx.connection)?
+                .ok_or(SyncError::SiteIdNotSet)?;
 
             Ok(GetTokenOutput {
                 token,
@@ -148,22 +150,14 @@ fn validate(
 
     Ok((site, ctx))
 }
-
-fn get_central_site_id(connection: &StorageConnection) -> Result<i32, SyncError> {
-    KeyValueStoreRepository::new(connection)
-        .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
-        .ok_or_else(|| SyncError::Other("Central site id not configured".to_string()))
-}
-
 /// Report site status to a remote open-mSupply Server.
 /// Errors with `SiteLockError::IntegrationInProgress` while integration is running, so clients
 /// can poll until it clears.
-pub async fn site_status(
-    service_provider: &ServiceProvider,
-    common: Common,
-) -> status::Response {
+pub async fn site_status(service_provider: &ServiceProvider, common: Common) -> status::Response {
     let (site, ctx) = validate(service_provider, &common)?;
-    let central_site_id = get_central_site_id(&ctx.connection)?;
+    let central_site_id = SourceSiteId::CurrentSiteId
+        .get_id(&ctx.connection)?
+        .ok_or(SyncError::SiteIdNotSet)?;
     Ok(status::Output {
         site_id: site.id,
         central_site_id,

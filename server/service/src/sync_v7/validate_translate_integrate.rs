@@ -256,6 +256,8 @@ fn validate_translate_integrate_inner<'a>(
                                action: SyncAction,
                                direction: CursorDirection|
      -> Result<(), RepositoryError> {
+        log::info!("Integrating table {table} with action {action}");
+
         let rows = repo.pending_ordered_by_cursor(PendingQuery {
             source_site_id,
             sync_version: SyncVersion::V7,
@@ -264,6 +266,8 @@ fn validate_translate_integrate_inner<'a>(
             action,
             direction,
         })?;
+
+        log::info!("Number of records to integrate  {}", rows.len());
 
         let had_store_records = *table == ChangelogTableName::Store && !rows.is_empty();
 
