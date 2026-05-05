@@ -277,23 +277,46 @@ docker run -e LOAD_REFERENCE_FILE=reference1 -p 9000:8000 msupplyfoundation/omsu
 
 ### Postgres
 
-The postgres image runs its own PostgreSQL server inside the container. Basic usage (starts with an empty database):
+The postgres image runs its own PostgreSQL server inside the container. The container uses two mount points:
+
+- `/database` — persistent state. The postgres data directory lives at `/database/postgres/data` and the per-deployment hardware id at `/database/machine-id`. Mount a host directory or named volume here to persist across container recreations.
+- `/import.dump` — optional one-shot mount point for a `pg_dump --format custom` dump. If present at startup, it's restored into the database before the server starts.
+
+Basic usage (ephemeral — empty database, lost when the container is removed):
 
 ```bash
 docker run -p 9000:8000 msupplyfoundation/omsupply:v2.7.3-postgres
 ```
 
-To import an existing database dump (`pg_dump --format custom`) on launch, mount the dump file to `/database/import.dump`:
+To import an existing database dump on launch (still ephemeral):
 
 ```bash
-docker run -v /path/to/my_dump.dump:/database/import.dump -p 9000:8000 \
+docker run -v /path/to/my_dump.dump:/import.dump -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3-postgres
+```
+
+For production / persistent deployments, mount a host directory at `/database`:
+
+```bash
+docker run -v /path/to/data-dir:/database -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3-postgres
+```
+
+To seed a persistent deployment from a dump on first run, combine both mounts. Remove the `-v .../import.dump` mount on subsequent runs — otherwise the dump will be re-imported every restart on top of the existing data:
+
+```bash
+docker run -v /path/to/data-dir:/database \
+  -v /path/to/my_dump.dump:/import.dump \
+  -p 9000:8000 \
   msupplyfoundation/omsupply:v2.7.3-postgres
 ```
 
 The database name can be overridden via environment variable:
 
 ```bash
-docker run -v /path/to/my_dump.dump:/database/import.dump -p 9000:8000 \
+docker run -v /path/to/data-dir:/database \
+  -v /path/to/my_dump.dump:/import.dump \
+  -p 9000:8000 \
   -e APP_DATABASE__DATABASE_NAME="my-database" \
   msupplyfoundation/omsupply:v2.7.3-postgres
 ```
