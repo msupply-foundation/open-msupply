@@ -2,6 +2,7 @@ import {
   ItemSortFieldInput,
   SortBy,
   StockLineFilterInput,
+  keepPreviousData,
   useQuery,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../operations.generated';
@@ -89,7 +90,7 @@ export const useGroupedStockList = (
   const query = useQuery({
     queryKey,
     queryFn,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     enabled: options?.enabled,
   });
 

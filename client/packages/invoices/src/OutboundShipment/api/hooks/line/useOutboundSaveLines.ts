@@ -10,9 +10,13 @@ export const useOutboundSaveLines = (status: InvoiceNodeStatus) => {
   const outboundId = useOutboundId();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
-  return useMutation(api.updateLines(status), {
+  return useMutation({
+    mutationFn: api.updateLines(status),
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.detail(outboundId));
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(outboundId)
+      });
+    }
   });
 };

@@ -31,7 +31,7 @@ export const AppBarButtons: FC<{
   const { mutateAsync: onCreate } = useRequest.document.insert();
   const { insert: onProgramCreate } = useRequest.document.insertProgram();
 
-  const { isLoading, fetchAsync } = useRequest.document.listAll({
+  const { isPending: isLoading, fetchAsync } = useRequest.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,

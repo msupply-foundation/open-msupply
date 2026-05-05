@@ -6,7 +6,10 @@ use repository::{
     ReportMetaData, ReportRepository, ReportRowRepository, ReportSort, RepositoryError,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, time::SystemTime};
+use std::{
+    collections::{BTreeMap, HashMap},
+    time::SystemTime,
+};
 use thiserror::Error;
 use util::{format_error, uuid::uuid};
 
@@ -791,7 +794,7 @@ fn load_template_references(
 ) -> Result<ReportDefinition, ReportError> {
     let mut out = ReportDefinition {
         index: report.index.clone(),
-        entries: HashMap::new(),
+        entries: BTreeMap::new(),
     };
     for (name, entry) in report.entries {
         match entry {
@@ -842,7 +845,7 @@ impl From<std::io::Error> for ReportError {
 
 #[cfg(test)]
 mod report_service_test {
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ContextType, ReportRow, ReportRowRepository,
@@ -868,7 +871,7 @@ mod report_service_test {
                 query: vec!["query".to_string()],
                 ..Default::default()
             },
-            entries: HashMap::from([
+            entries: BTreeMap::from([
                 (
                     "template.html".to_string(),
                     ReportDefinitionEntry::TeraTemplate(TeraTemplate {
@@ -898,7 +901,7 @@ mod report_service_test {
                 query: vec![],
                 ..Default::default()
             },
-            entries: HashMap::from([(
+            entries: BTreeMap::from([(
                 "footer.html".to_string(),
                 ReportDefinitionEntry::TeraTemplate(TeraTemplate {
                     output: ReportOutputType::Html,

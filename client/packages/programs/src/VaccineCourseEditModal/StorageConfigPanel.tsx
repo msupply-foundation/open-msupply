@@ -170,8 +170,7 @@ export const StoreWastagePanel = ({
                   stores.length < totalCount &&
                   !isFetchingNextPage
                 ) {
-                  const nextPage = data?.pages?.length ?? 0;
-                  fetchNextPage({ pageParam: nextPage });
+                  fetchNextPage();
                 }
               }}
             >

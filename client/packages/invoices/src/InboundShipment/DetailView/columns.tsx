@@ -5,6 +5,7 @@ import {
   useTranslation,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   StatusCell,
   weightedAverageByUnits,
 } from '@openmsupply-client/common';
@@ -74,6 +75,7 @@ export const useInboundShipmentColumns = (
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         size: 120,
         enableColumnFilter: true,
         enableSorting: true,

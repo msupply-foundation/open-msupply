@@ -6,9 +6,9 @@ export const useSupplierReturnsAll = (
   sortBy: SortBy<SupplierReturnRowFragment>
 ) => {
   const api = useReturnsApi();
-  const result = useMutation(api.keys.supplierSortedList(sortBy), () =>
-    api.get.listAllSupplier(sortBy)
-  );
+  const result = useMutation({
+    mutationFn: () => api.get.listAllSupplier(sortBy),
+  });
   return {
     ...result,
     fetchAsync: result.mutateAsync,
