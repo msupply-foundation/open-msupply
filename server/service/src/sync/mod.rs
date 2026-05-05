@@ -7,7 +7,7 @@ pub(crate) mod central_data_synchroniser;
 mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
-pub mod site_info;
+pub mod site_auth;
 pub mod sync_buffer;
 pub mod sync_on_central;
 pub mod sync_status;

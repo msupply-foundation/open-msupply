@@ -7,9 +7,9 @@ use reqwest::{
 use serde::{de::DeserializeOwned, Serialize};
 use util::{format_error, with_retries, RetrySeconds};
 
+pub mod get_token;
 pub mod pull;
 pub mod push;
-pub mod site_info;
 pub mod status;
 
 pub const HARDWARE_ID_HEADER: &str = "hardware-id";

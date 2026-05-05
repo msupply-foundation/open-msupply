@@ -12,9 +12,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     cursor_controller::CursorController,
-    service_provider::ServiceProvider,
+    service_provider::{ServiceContext, ServiceProvider},
     sync::{
         settings::{BatchSize, SyncSettings},
+        synchroniser::run_post_sync_triggers,
         ActiveStoresOnSite,
     },
     sync_v7::{
@@ -111,16 +112,16 @@ pub(crate) fn sync_record_to_buffer_row(
 
 pub(crate) async fn sync_v7(
     service_provider: &ServiceProvider,
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     settings: SyncSettings,
     is_initialising: bool,
-) -> Result<(), anyhow::Error> {
-    let mut logger = SyncLogger::start(connection)?;
+) -> Result<(), SyncError> {
+    let mut logger = SyncLogger::start(&ctx.connection)?;
 
     let sync_result = sync_inner(
         &mut logger,
         service_provider,
-        connection,
+        ctx,
         settings,
         is_initialising,
     )
@@ -139,11 +140,12 @@ pub(crate) async fn sync_v7(
 async fn sync_inner<'a>(
     logger: &mut SyncLogger<'a>,
     service_provider: &ServiceProvider,
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     settings: SyncSettings,
     is_initialising: bool,
 ) -> Result<(), SyncError> {
     let common = Common::load(service_provider)?;
+    let connection = &ctx.connection;
     let auth_headers = common.to_auth_headers()?;
     let sync_v7 = SyncV7 {
         connection,
@@ -153,6 +155,12 @@ async fn sync_inner<'a>(
         },
         batch_size: settings.batch_size,
     };
+
+    let status = sync_v7.sync_api_v7.site_status(()).await?;
+    KeyValueStoreRepository::new(connection).set_i32(
+        KeyType::SettingsSyncCentralServerSiteId,
+        Some(status.central_site_id),
+    )?;
 
     logger.start_step(SyncStep::Push)?;
     sync_v7.push(logger, is_initialising).await?;
@@ -169,6 +177,8 @@ async fn sync_inner<'a>(
     sync_v7.integrate(logger, is_initialising).await?;
 
     logger.finish()?;
+
+    run_post_sync_triggers(&ctx, service_provider, !is_initialising);
 
     Ok(())
 }
@@ -325,9 +335,7 @@ impl<'a> SyncV7<'a> {
         let central_site_id = KeyValueStoreRepository::new(self.connection)
             .get_i32(KeyType::SettingsSyncCentralServerSiteId)
             .map_err(SyncError::DatabaseError)?
-            .ok_or_else(|| {
-                SyncError::Other("Central server site id not configured".to_string())
-            })?;
+            .ok_or_else(|| SyncError::Other("Central server site id not configured".to_string()))?;
 
         validate_translate_integrate(
             self.connection,
