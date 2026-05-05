@@ -30,7 +30,7 @@ Remember the first argument of `-p` is the local port on which you would like to
 
 ## Initialise, Load reference data or from sqlite datafile
 
-You will need to initialise database at this point, either by syncing to mSupply server (when connecting to local server you probably need to use `host.docker.internal` rather then localhost).
+You will need to initialise database at this point, either by syncing to mSupply server (when connecting to local server you probably need to use `host.docker.internal` rather than localhost).
 
 This docker image comes with reference data that can be loaded via (with credentials Admin/pass)
 
