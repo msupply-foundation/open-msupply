@@ -4,7 +4,7 @@ set -e
 PG_DATA="/database/postgres/data"
 PG_USER="postgres"
 PG_DB="${APP_DATABASE__DATABASE_NAME:-omsupply-database}"
-IMPORT_DUMP="/database/import.dump"
+IMPORT_DUMP="/import.dump"
 
 # Ensure PG_DATA exists and is owned by the postgres user before initdb.
 # /database is root-owned (created in the Dockerfile / mounted as a volume),
