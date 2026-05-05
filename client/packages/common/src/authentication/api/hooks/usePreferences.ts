@@ -32,12 +32,7 @@ export const usePreferences = (): Partial<PreferencesNode> => {
     // Or when switching stores
     gcTime: Infinity,
     staleTime: Infinity,
-<<<<<<< 11486-prefs-query-during-init
-    suspense: true,
     enabled: !!storeId && isOperational,
-=======
-    enabled: !!storeId,
->>>>>>> develop
   });
 
   return data ?? {};
