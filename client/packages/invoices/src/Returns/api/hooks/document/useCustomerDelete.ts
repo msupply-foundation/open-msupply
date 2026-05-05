@@ -12,14 +12,18 @@ export const useCustomerReturnDelete = () => {
   const api = useReturnsApi();
   const navigate = useNavigate();
 
-  return useMutation(api.deleteCustomer, {
+  return useMutation({
+    mutationFn: api.deleteCustomer,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
       navigate(
         RouteBuilder.create(AppRoute.Distribution)
           .addPart(AppRoute.CustomerReturn)
           .build()
       );
-    },
+    }
   });
 };
