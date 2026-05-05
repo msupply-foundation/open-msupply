@@ -14,6 +14,7 @@ RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
 
 WORKDIR /usr/src/omsupply/server
 COPY --chmod=755 docker/entry.sh .
+COPY --chmod=755 docker/setup-machine-id.sh .
 COPY server/data data
 
 WORKDIR /usr/src/omsupply/server/configuration
