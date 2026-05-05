@@ -14,7 +14,9 @@ use tokio::sync::broadcast;
 use crate::queries::initialisation_status::InitialisationStatusNode;
 
 use initialisation_status::initialisation_status_stream;
-use sync_info::{sync_info_stream, SyncInfoUpdatedNode};
+use sync_info::{
+    sync_info_stream, sync_info_v7_stream, SyncInfoUpdatedNode, SyncInfoV7UpdatedNode,
+};
 
 fn get_subscription_broadcast(
     ctx: &Context<'_>,
@@ -50,6 +52,14 @@ impl SyncStatusSubscriptions {
         Ok(sync_info_stream(get_subscription_broadcast(ctx)?))
     }
 
+    async fn sync_info_v7_updated(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<impl Stream<Item = SyncInfoV7UpdatedNode>> {
+        validate_sync_auth(ctx)?;
+        Ok(sync_info_v7_stream(get_subscription_broadcast(ctx)?))
+    }
+
     async fn initialisation_status_updated(
         &self,
         ctx: &Context<'_>,
@@ -71,6 +81,13 @@ impl InitialisationSubscriptions {
         ctx: &Context<'_>,
     ) -> Result<impl Stream<Item = SyncInfoUpdatedNode>> {
         Ok(sync_info_stream(get_subscription_broadcast(ctx)?))
+    }
+
+    async fn sync_info_v7_updated(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<impl Stream<Item = SyncInfoV7UpdatedNode>> {
+        Ok(sync_info_v7_stream(get_subscription_broadcast(ctx)?))
     }
 
     async fn initialisation_status_updated(

@@ -115,7 +115,8 @@ pub(crate) async fn sync_v7(
     settings: SyncSettings,
     is_initialising: bool,
 ) -> Result<(), anyhow::Error> {
-    let mut logger = SyncLogger::start(connection)?;
+    let mut logger = SyncLogger::start(connection)?
+        .with_subscription_trigger(service_provider.subscription_trigger.clone());
 
     let sync_result = sync_inner(
         &mut logger,

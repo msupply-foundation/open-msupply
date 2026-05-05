@@ -120,3 +120,74 @@ subscription syncInfoUpdated {
     numberOfRecordsInPushQueue
   }
 }
+
+fragment SyncErrorV7 on SyncErrorV7Node {
+  __typename
+  variant
+  fullError
+}
+
+fragment SyncStatusV7 on SyncStatusV7Node {
+  __typename
+  finished
+  durationInSeconds
+  started
+}
+
+fragment SyncStatusWithProgressV7 on SyncStatusWithProgressV7Node {
+  __typename
+  finished
+  started
+  done
+  total
+}
+
+fragment FullSyncStatusV7 on FullSyncStatusV7Node {
+  __typename
+  isSyncing
+  error {
+    ...SyncErrorV7
+  }
+  summary {
+    ...SyncStatusV7
+  }
+  push {
+    ...SyncStatusWithProgressV7
+  }
+  waitingForIntegration {
+    ...SyncStatusV7
+  }
+  pull {
+    ...SyncStatusWithProgressV7
+  }
+  integration {
+    ...SyncStatusWithProgressV7
+  }
+  lastSuccessfulSync {
+    ...SyncStatusV7
+  }
+  errorThreshold
+  warningThreshold
+}
+
+query syncInfoV7 {
+  syncStatus: latestSyncStatusV7 {
+    ...FullSyncStatusV7
+  }
+  numberOfRecordsInPushQueue
+}
+
+query syncStatusV7 {
+  syncStatus: latestSyncStatusV7 {
+    ...FullSyncStatusV7
+  }
+}
+
+subscription syncInfoV7Updated {
+  syncInfoV7Updated {
+    syncStatus {
+      ...FullSyncStatusV7
+    }
+    numberOfRecordsInPushQueue
+  }
+}

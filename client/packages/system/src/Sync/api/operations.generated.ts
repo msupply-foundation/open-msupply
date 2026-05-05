@@ -410,6 +410,253 @@ export type SyncInfoUpdatedSubscription = {
   };
 };
 
+export type SyncErrorV7Fragment = {
+  __typename: 'SyncErrorV7Node';
+  variant: Types.SyncErrorVariantV7;
+  fullError: string;
+};
+
+export type SyncStatusV7Fragment = {
+  __typename: 'SyncStatusV7Node';
+  finished?: string | null;
+  durationInSeconds: number;
+  started: string;
+};
+
+export type SyncStatusWithProgressV7Fragment = {
+  __typename: 'SyncStatusWithProgressV7Node';
+  finished?: string | null;
+  started: string;
+  done?: number | null;
+  total?: number | null;
+};
+
+export type FullSyncStatusV7Fragment = {
+  __typename: 'FullSyncStatusV7Node';
+  isSyncing: boolean;
+  errorThreshold: number;
+  warningThreshold: number;
+  error?: {
+    __typename: 'SyncErrorV7Node';
+    variant: Types.SyncErrorVariantV7;
+    fullError: string;
+  } | null;
+  summary: {
+    __typename: 'SyncStatusV7Node';
+    finished?: string | null;
+    durationInSeconds: number;
+    started: string;
+  };
+  push?: {
+    __typename: 'SyncStatusWithProgressV7Node';
+    finished?: string | null;
+    started: string;
+    done?: number | null;
+    total?: number | null;
+  } | null;
+  waitingForIntegration?: {
+    __typename: 'SyncStatusV7Node';
+    finished?: string | null;
+    durationInSeconds: number;
+    started: string;
+  } | null;
+  pull?: {
+    __typename: 'SyncStatusWithProgressV7Node';
+    finished?: string | null;
+    started: string;
+    done?: number | null;
+    total?: number | null;
+  } | null;
+  integration?: {
+    __typename: 'SyncStatusWithProgressV7Node';
+    finished?: string | null;
+    started: string;
+    done?: number | null;
+    total?: number | null;
+  } | null;
+  lastSuccessfulSync?: {
+    __typename: 'SyncStatusV7Node';
+    finished?: string | null;
+    durationInSeconds: number;
+    started: string;
+  } | null;
+};
+
+export type SyncInfoV7QueryVariables = Types.Exact<{ [key: string]: never }>;
+
+export type SyncInfoV7Query = {
+  __typename: 'Queries';
+  numberOfRecordsInPushQueue: number;
+  syncStatus?: {
+    __typename: 'FullSyncStatusV7Node';
+    isSyncing: boolean;
+    errorThreshold: number;
+    warningThreshold: number;
+    error?: {
+      __typename: 'SyncErrorV7Node';
+      variant: Types.SyncErrorVariantV7;
+      fullError: string;
+    } | null;
+    summary: {
+      __typename: 'SyncStatusV7Node';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    };
+    push?: {
+      __typename: 'SyncStatusWithProgressV7Node';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    waitingForIntegration?: {
+      __typename: 'SyncStatusV7Node';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    } | null;
+    pull?: {
+      __typename: 'SyncStatusWithProgressV7Node';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    integration?: {
+      __typename: 'SyncStatusWithProgressV7Node';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    lastSuccessfulSync?: {
+      __typename: 'SyncStatusV7Node';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    } | null;
+  } | null;
+};
+
+export type SyncStatusV7QueryVariables = Types.Exact<{ [key: string]: never }>;
+
+export type SyncStatusV7Query = {
+  __typename: 'Queries';
+  syncStatus?: {
+    __typename: 'FullSyncStatusV7Node';
+    isSyncing: boolean;
+    errorThreshold: number;
+    warningThreshold: number;
+    error?: {
+      __typename: 'SyncErrorV7Node';
+      variant: Types.SyncErrorVariantV7;
+      fullError: string;
+    } | null;
+    summary: {
+      __typename: 'SyncStatusV7Node';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    };
+    push?: {
+      __typename: 'SyncStatusWithProgressV7Node';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    waitingForIntegration?: {
+      __typename: 'SyncStatusV7Node';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    } | null;
+    pull?: {
+      __typename: 'SyncStatusWithProgressV7Node';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    integration?: {
+      __typename: 'SyncStatusWithProgressV7Node';
+      finished?: string | null;
+      started: string;
+      done?: number | null;
+      total?: number | null;
+    } | null;
+    lastSuccessfulSync?: {
+      __typename: 'SyncStatusV7Node';
+      finished?: string | null;
+      durationInSeconds: number;
+      started: string;
+    } | null;
+  } | null;
+};
+
+export type SyncInfoV7UpdatedSubscriptionVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type SyncInfoV7UpdatedSubscription = {
+  __typename: 'Subscriptions';
+  syncInfoV7Updated: {
+    __typename: 'SyncInfoV7UpdatedNode';
+    numberOfRecordsInPushQueue: number;
+    syncStatus?: {
+      __typename: 'FullSyncStatusV7Node';
+      isSyncing: boolean;
+      errorThreshold: number;
+      warningThreshold: number;
+      error?: {
+        __typename: 'SyncErrorV7Node';
+        variant: Types.SyncErrorVariantV7;
+        fullError: string;
+      } | null;
+      summary: {
+        __typename: 'SyncStatusV7Node';
+        finished?: string | null;
+        durationInSeconds: number;
+        started: string;
+      };
+      push?: {
+        __typename: 'SyncStatusWithProgressV7Node';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      waitingForIntegration?: {
+        __typename: 'SyncStatusV7Node';
+        finished?: string | null;
+        durationInSeconds: number;
+        started: string;
+      } | null;
+      pull?: {
+        __typename: 'SyncStatusWithProgressV7Node';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      integration?: {
+        __typename: 'SyncStatusWithProgressV7Node';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      lastSuccessfulSync?: {
+        __typename: 'SyncStatusV7Node';
+        finished?: string | null;
+        durationInSeconds: number;
+        started: string;
+      } | null;
+    } | null;
+  };
+};
+
 export const SyncSettingsFragmentDoc = gql`
   fragment SyncSettings on SyncSettingsNode {
     __typename
@@ -485,6 +732,62 @@ export const FullSyncStatusFragmentDoc = gql`
   ${SyncStatusWithProgressFragmentDoc}
   ${SyncStatusFragmentDoc}
 `;
+export const SyncErrorV7FragmentDoc = gql`
+  fragment SyncErrorV7 on SyncErrorV7Node {
+    __typename
+    variant
+    fullError
+  }
+`;
+export const SyncStatusV7FragmentDoc = gql`
+  fragment SyncStatusV7 on SyncStatusV7Node {
+    __typename
+    finished
+    durationInSeconds
+    started
+  }
+`;
+export const SyncStatusWithProgressV7FragmentDoc = gql`
+  fragment SyncStatusWithProgressV7 on SyncStatusWithProgressV7Node {
+    __typename
+    finished
+    started
+    done
+    total
+  }
+`;
+export const FullSyncStatusV7FragmentDoc = gql`
+  fragment FullSyncStatusV7 on FullSyncStatusV7Node {
+    __typename
+    isSyncing
+    error {
+      ...SyncErrorV7
+    }
+    summary {
+      ...SyncStatusV7
+    }
+    push {
+      ...SyncStatusWithProgressV7
+    }
+    waitingForIntegration {
+      ...SyncStatusV7
+    }
+    pull {
+      ...SyncStatusWithProgressV7
+    }
+    integration {
+      ...SyncStatusWithProgressV7
+    }
+    lastSuccessfulSync {
+      ...SyncStatusV7
+    }
+    errorThreshold
+    warningThreshold
+  }
+  ${SyncErrorV7FragmentDoc}
+  ${SyncStatusV7FragmentDoc}
+  ${SyncStatusWithProgressV7FragmentDoc}
+`;
 export const SyncSettingsDocument = gql`
   query syncSettings {
     syncSettings {
@@ -555,6 +858,34 @@ export const SyncInfoUpdatedDocument = gql`
     }
   }
   ${FullSyncStatusFragmentDoc}
+`;
+export const SyncInfoV7Document = gql`
+  query syncInfoV7 {
+    syncStatus: latestSyncStatusV7 {
+      ...FullSyncStatusV7
+    }
+    numberOfRecordsInPushQueue
+  }
+  ${FullSyncStatusV7FragmentDoc}
+`;
+export const SyncStatusV7Document = gql`
+  query syncStatusV7 {
+    syncStatus: latestSyncStatusV7 {
+      ...FullSyncStatusV7
+    }
+  }
+  ${FullSyncStatusV7FragmentDoc}
+`;
+export const SyncInfoV7UpdatedDocument = gql`
+  subscription syncInfoV7Updated {
+    syncInfoV7Updated {
+      syncStatus {
+        ...FullSyncStatusV7
+      }
+      numberOfRecordsInPushQueue
+    }
+  }
+  ${FullSyncStatusV7FragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -698,6 +1029,60 @@ export function getSdk(
             signal,
           }),
         'syncInfoUpdated',
+        'subscription',
+        variables
+      );
+    },
+    syncInfoV7(
+      variables?: SyncInfoV7QueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<SyncInfoV7Query> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SyncInfoV7Query>({
+            document: SyncInfoV7Document,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'syncInfoV7',
+        'query',
+        variables
+      );
+    },
+    syncStatusV7(
+      variables?: SyncStatusV7QueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<SyncStatusV7Query> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SyncStatusV7Query>({
+            document: SyncStatusV7Document,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'syncStatusV7',
+        'query',
+        variables
+      );
+    },
+    syncInfoV7Updated(
+      variables?: SyncInfoV7UpdatedSubscriptionVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<SyncInfoV7UpdatedSubscription> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SyncInfoV7UpdatedSubscription>({
+            document: SyncInfoV7UpdatedDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'syncInfoV7Updated',
         'subscription',
         variables
       );

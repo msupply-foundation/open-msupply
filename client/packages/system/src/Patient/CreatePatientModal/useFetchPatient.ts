@@ -4,7 +4,7 @@ import {
   useQueryClient,
   useTranslation,
 } from '@openmsupply-client/common';
-import { mapSyncError, useSync } from '../../Sync';
+import { mapSyncErrorV5V6, useSync } from '../../Sync';
 import { useCallback, useRef, useState } from 'react';
 import { usePatientApi } from '../api/hooks/utils/usePatientApi';
 
@@ -33,7 +33,7 @@ export const useFetchPatient = () => {
     while (true) {
       const result = await getSyncStatus();
       if (result?.error) {
-        const error = mapSyncError(t, result.error, 'error.unknown-sync-error');
+        const error = mapSyncErrorV5V6(t, result.error, 'error.unknown-sync-error');
 
         setError(error.error);
         // Setting a ref here, as 'error' state not updated in time within the 'mutateAsync'

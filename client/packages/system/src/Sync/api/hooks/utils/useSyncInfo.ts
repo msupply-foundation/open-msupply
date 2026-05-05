@@ -1,44 +1,18 @@
-import {
-  useAuthContext,
-  useQuery,
-  useSubscription,
-} from '@openmsupply-client/common';
-import { useSyncApi } from './useSyncApi';
-import {
-  SyncInfoUpdatedDocument,
-  SyncInfoUpdatedSubscription,
-} from '../../operations.generated';
+import { useIsCentralServerApi } from '@openmsupply-client/common';
+import { useSyncInfoV5V6 } from './useSyncInfoV5V6';
+import { useSyncInfoV7 } from './useSyncInfoV7';
 
+/**
+ * Role-aware sync info: V5/V6 on a central server, V7 on a remote site.
+ * Returns `{ syncStatus, numberOfRecordsInPushQueue }`. See `useSyncStatus`
+ * for the rationale on calling both hooks unconditionally.
+ */
 export const useSyncInfo = (
   refetchInterval: number | false = false,
   enabled: boolean = true
 ) => {
-  const api = useSyncApi();
-  const { token } = useAuthContext();
-
-  const isEnabled = !!token && enabled;
-
-  const { isSubscribed, data: subData } = useSubscription({
-    document: SyncInfoUpdatedDocument,
-    enabled: isEnabled,
-    select: (data: SyncInfoUpdatedSubscription) => data.syncInfoUpdated,
-  });
-
-  // Fallback to polling if subscription fails or is unavailable
-  const { data: queryData, ...rest } = useQuery(
-    api.keys.syncInfo(),
-    () => api.get.syncInfo(token),
-    {
-      refetchInterval: isSubscribed ? false : refetchInterval,
-      enabled: isEnabled,
-    }
-  );
-
-  return {
-    ...rest,
-    syncStatus: subData?.syncStatus ?? queryData?.syncStatus,
-    numberOfRecordsInPushQueue:
-      subData?.numberOfRecordsInPushQueue ??
-      queryData?.numberOfRecordsInPushQueue,
-  };
+  const isCentralServer = useIsCentralServerApi();
+  const v5 = useSyncInfoV5V6(refetchInterval, enabled && isCentralServer);
+  const v7 = useSyncInfoV7(refetchInterval, enabled && !isCentralServer);
+  return isCentralServer ? v5 : v7;
 };

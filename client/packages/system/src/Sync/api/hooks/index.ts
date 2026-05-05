@@ -2,6 +2,8 @@ import { Sync } from './sync';
 import { Utils } from './utils';
 import { Settings } from './settings';
 
+export * from './utils';
+
 export const useSync = {
   settings: {
     syncSettings: Settings.useSyncSettings,
@@ -13,7 +15,7 @@ export const useSync = {
   },
   utils: {
     syncStatus: Utils.useSyncStatus,
-    mutateSyncStatus: Utils.useMutateSyncStatus,
     syncInfo: Utils.useSyncInfo,
+    mutateSyncStatus: Utils.useMutateSyncStatus,
   },
 };

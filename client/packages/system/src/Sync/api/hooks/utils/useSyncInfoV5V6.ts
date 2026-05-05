@@ -1,0 +1,44 @@
+import {
+  useAuthContext,
+  useQuery,
+  useSubscription,
+} from '@openmsupply-client/common';
+import { useSyncApi } from './useSyncApi';
+import {
+  SyncInfoUpdatedDocument,
+  SyncInfoUpdatedSubscription,
+} from '../../operations.generated';
+
+export const useSyncInfoV5V6 = (
+  refetchInterval: number | false = false,
+  enabled: boolean = true
+) => {
+  const api = useSyncApi();
+  const { token } = useAuthContext();
+
+  const isEnabled = !!token && enabled;
+
+  const { isSubscribed, data: subData } = useSubscription({
+    document: SyncInfoUpdatedDocument,
+    enabled: isEnabled,
+    select: (data: SyncInfoUpdatedSubscription) => data.syncInfoUpdated,
+  });
+
+  // Fallback to polling if subscription fails or is unavailable
+  const { data: queryData, ...rest } = useQuery(
+    api.keys.syncInfo(),
+    () => api.get.syncInfo(token),
+    {
+      refetchInterval: isSubscribed ? false : refetchInterval,
+      enabled: isEnabled,
+    }
+  );
+
+  return {
+    ...rest,
+    syncStatus: subData?.syncStatus ?? queryData?.syncStatus,
+    numberOfRecordsInPushQueue:
+      subData?.numberOfRecordsInPushQueue ??
+      queryData?.numberOfRecordsInPushQueue,
+  };
+};

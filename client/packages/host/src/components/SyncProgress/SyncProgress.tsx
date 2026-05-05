@@ -8,56 +8,111 @@ import {
   HorizontalStepper,
   StepDefinition,
   StepperColour,
-  useIsCentralServerApi,
   useIsExtraSmallScreen,
   ChevronsDownIcon,
   DownloadIcon,
 } from '@openmsupply-client/common';
 import {
   FullSyncStatusFragment,
+  FullSyncStatusV7Fragment,
   SyncStatusFragment,
+  SyncStatusV7Fragment,
   SyncStatusWithProgressFragment,
-  mapSyncError,
+  SyncStatusWithProgressV7Fragment,
+  mapSyncErrorV5V6,
+  mapSyncErrorV7,
+  useSync,
 } from '@openmsupply-client/system';
 
-type SyncStatus = FullSyncStatusFragment | null;
-
 interface SyncProgressProps {
-  syncStatus?: SyncStatus;
-  // Prepare Initial status is only shown in initialisation mode
-  // and Push is only shown  in operational mode
+  // Push and waiting-for-integration are only shown in operational mode.
   isOperational: boolean;
   colour?: StepperColour;
 }
 
+/**
+ * Fetches sync status once and dispatches to the version-specific renderer
+ * based on the data's `__typename`. Renders nothing until data is available.
+ */
 export const SyncProgress: FC<SyncProgressProps> = ({
+  isOperational,
+  colour = 'primary',
+}) => {
+  const { data: syncStatus } = useSync.utils.syncStatus(
+    false,
+    undefined,
+    isOperational
+  );
+
+  if (!syncStatus) return null;
+
+  if (syncStatus.__typename === 'FullSyncStatusV7Node') {
+    return (
+      <SyncProgressV7
+        syncStatus={syncStatus}
+        isOperational={isOperational}
+        colour={colour}
+      />
+    );
+  }
+  return (
+    <SyncProgressV5V6
+      syncStatus={syncStatus}
+      isOperational={isOperational}
+      colour={colour}
+    />
+  );
+};
+
+interface VersionedProps<T> extends SyncProgressProps {
+  syncStatus: T;
+}
+
+const SyncProgressV5V6: FC<VersionedProps<FullSyncStatusFragment>> = ({
   syncStatus,
   isOperational,
   colour = 'primary',
 }) => {
   const t = useTranslation();
-  const isCentralServer = useIsCentralServerApi();
-  const error =
-    syncStatus?.error &&
-    mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
-  const steps = getSteps(
-    t,
-    colour,
-    isCentralServer,
-    syncStatus,
-    !!error,
-    isOperational
-  );
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
+  const error =
+    syncStatus?.error &&
+    mapSyncErrorV5V6(t, syncStatus.error, 'error.unknown-sync-error');
+  const steps = getV5V6Steps(t, colour, syncStatus, !!error, isOperational);
+
   return (
-    <Box display="flex" flexDirection={'column'}>
+    <Box display="flex" flexDirection="column">
       {!isExtraSmallScreen && (
         <HorizontalStepper steps={steps} colour={colour} />
       )}
     </Box>
   );
 };
+
+const SyncProgressV7: FC<VersionedProps<FullSyncStatusV7Fragment>> = ({
+  syncStatus,
+  isOperational,
+  colour = 'primary',
+}) => {
+  const t = useTranslation();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
+  const error =
+    syncStatus?.error &&
+    mapSyncErrorV7(t, syncStatus.error, 'error.unknown-sync-error');
+  const steps = getV7Steps(t, colour, syncStatus, !!error, isOperational);
+
+  return (
+    <Box display="flex" flexDirection="column">
+      {!isExtraSmallScreen && (
+        <HorizontalStepper steps={steps} colour={colour} />
+      )}
+    </Box>
+  );
+};
+
+type Progress = { total: number; done: number };
 
 const ProgressIndicator = ({
   progress,
@@ -67,7 +122,7 @@ const ProgressIndicator = ({
   colour: StepperColour;
 }) => (
   <Box
-    display={'flex'}
+    display="flex"
     justifyContent="center"
     fontSize={12}
     color={`${colour}.light`}
@@ -77,96 +132,156 @@ const ProgressIndicator = ({
   </Box>
 );
 
-type Progress = {
-  total: number;
-  done: number;
+const getProgress = (
+  status?:
+    | SyncStatusWithProgressFragment
+    | SyncStatusWithProgressV7Fragment
+    | SyncStatusFragment
+    | SyncStatusV7Fragment
+    | null
+): Progress | undefined => {
+  if (
+    !status ||
+    status.__typename === 'SyncStatusNode' ||
+    status.__typename === 'SyncStatusV7Node' ||
+    !status.total
+  ) {
+    return undefined;
+  }
+  return { total: status.total, done: status.done || 0 };
 };
 
-const getSteps = (
+const buildStep = (
   t: TypedTFunction<LocaleKey>,
   colour: StepperColour,
-  isCentralServer: boolean,
-  syncStatus?: SyncStatus,
-  isError?: boolean,
-  isOperational?: boolean
+  labelKey: LocaleKey,
+  status:
+    | SyncStatusWithProgressFragment
+    | SyncStatusWithProgressV7Fragment
+    | SyncStatusFragment
+    | SyncStatusV7Fragment
+    | null
+    | undefined,
+  iconKind: 'push' | 'pull' | 'integrate' | 'wait',
+  isError: boolean
+): StepDefinition => {
+  const completed = !!status?.finished;
+  const active = !completed && !!status?.started;
+  const isActiveAndError = isError && active && !completed;
+
+  let icon: React.ReactNode = null;
+  if (isActiveAndError) {
+    icon = <AlertIcon sx={{ color: 'error.main' }} />;
+  } else {
+    switch (iconKind) {
+      case 'push':
+        icon = <ChevronsDownIcon sx={{ transform: 'rotate(180deg)' }} />;
+        break;
+      case 'pull':
+        icon = <ChevronsDownIcon />;
+        break;
+      case 'integrate':
+        icon = <DownloadIcon sx={{ fontSize: '18px' }} />;
+        break;
+      case 'wait':
+        icon = null;
+        break;
+    }
+  }
+
+  return {
+    active,
+    completed,
+    error: isActiveAndError,
+    icon,
+    label: t(labelKey),
+    optional: (
+      <ProgressIndicator progress={getProgress(status)} colour={colour} />
+    ),
+  };
+};
+
+const getV5V6Steps = (
+  t: TypedTFunction<LocaleKey>,
+  colour: StepperColour,
+  syncStatus: FullSyncStatusFragment | null | undefined,
+  isError: boolean,
+  isOperational: boolean
 ): StepDefinition[] => {
-  const getProgress = (
-    progress?: SyncStatusWithProgressFragment | SyncStatusFragment | null
-  ) => {
-    if (progress?.__typename === 'SyncStatusNode' || !progress?.total) return;
-    const { total, done } = progress;
-    return { total, done: done || 0 };
-  };
-
-  const getStep = (
-    labelKey: LocaleKey,
-    progress?: SyncStatusWithProgressFragment | SyncStatusFragment | null
-  ): StepDefinition => {
-    const completed = !!progress?.finished;
-    const active = !completed && !!progress?.started;
-    const isActiveAndError = isError && active && !completed;
-    let icon;
-
-    if (isActiveAndError === true) {
-      icon = <AlertIcon sx={{ color: 'error.main' }} />;
-    }
-    if (progress !== null && progress !== undefined) {
-      switch (progress) {
-        case syncStatus?.pushV6:
-        case syncStatus?.push:
-          icon = <ChevronsDownIcon sx={{ transform: 'rotate(180deg)' }} />;
-          break;
-        case syncStatus?.pullCentral:
-        case syncStatus?.pullRemote:
-        case syncStatus?.pullV6:
-          icon = <ChevronsDownIcon />;
-          break;
-        case syncStatus?.integration:
-          icon = <DownloadIcon sx={{ fontSize: '18px' }} />;
-          break;
-        default:
-          null;
-      }
-    } else {
-      icon = null;
-    }
-
-    return {
-      active,
-      completed,
-      error: isActiveAndError,
-      icon,
-      label: t(labelKey),
-      optional: (
-        <ProgressIndicator progress={getProgress(progress)} colour={colour} />
-      ),
-    };
-  };
-
-  // This is the order of sync operations on server.
-  // Note that prepareInitial is only run when initialising
-  // and push is only run when operational.
-  const steps = [];
-
-  if (!isOperational) {
-    steps.push(getStep('sync-status.prepare', syncStatus?.prepareInitial));
-  }
-
+  const steps: StepDefinition[] = [];
   if (isOperational) {
-    if (!isCentralServer) {
-      steps.push(getStep('sync-status.push-v6', syncStatus?.pushV6));
-    }
-    steps.push(getStep('sync-status.push', syncStatus?.push));
+    steps.push(
+      buildStep(t, colour, 'sync-status.push', syncStatus?.push, 'push', isError)
+    );
   }
+  steps.push(
+    buildStep(
+      t,
+      colour,
+      'sync-status.pull-central',
+      syncStatus?.pullCentral,
+      'pull',
+      isError
+    )
+  );
+  steps.push(
+    buildStep(
+      t,
+      colour,
+      'sync-status.pull-remote',
+      syncStatus?.pullRemote,
+      'pull',
+      isError
+    )
+  );
+  steps.push(
+    buildStep(
+      t,
+      colour,
+      'sync-status.integrate',
+      syncStatus?.integration,
+      'integrate',
+      isError
+    )
+  );
+  return steps;
+};
 
-  steps.push(getStep('sync-status.pull-central', syncStatus?.pullCentral));
-  steps.push(getStep('sync-status.pull-remote', syncStatus?.pullRemote));
-
-  if (!isCentralServer) {
-    steps.push(getStep('sync-status.pull-v6', syncStatus?.pullV6));
+const getV7Steps = (
+  t: TypedTFunction<LocaleKey>,
+  colour: StepperColour,
+  syncStatus: FullSyncStatusV7Fragment | null | undefined,
+  isError: boolean,
+  isOperational: boolean
+): StepDefinition[] => {
+  const steps: StepDefinition[] = [];
+  if (isOperational) {
+    steps.push(
+      buildStep(t, colour, 'sync-status.push', syncStatus?.push, 'push', isError)
+    );
+    steps.push(
+      buildStep(
+        t,
+        colour,
+        'sync-status.waiting-for-integration',
+        syncStatus?.waitingForIntegration,
+        'wait',
+        isError
+      )
+    );
   }
-
-  steps.push(getStep('sync-status.integrate', syncStatus?.integration));
-
+  steps.push(
+    buildStep(t, colour, 'sync-status.pull', syncStatus?.pull, 'pull', isError)
+  );
+  steps.push(
+    buildStep(
+      t,
+      colour,
+      'sync-status.integrate',
+      syncStatus?.integration,
+      'integrate',
+      isError
+    )
+  );
   return steps;
 };

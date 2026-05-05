@@ -4,9 +4,14 @@ import {
   SyncSettingsInput,
   ErrorWithDetailsProps,
   SyncErrorVariant,
+  SyncErrorVariantV7,
 } from '@openmsupply-client/common';
 
-import { Sdk, SyncErrorFragment } from './operations.generated';
+import {
+  Sdk,
+  SyncErrorFragment,
+  SyncErrorV7Fragment,
+} from './operations.generated';
 
 export const getSyncQueries = (sdk: Sdk) => ({
   get: {
@@ -20,6 +25,12 @@ export const getSyncQueries = (sdk: Sdk) => ({
     },
     syncInfo: (token?: string) =>
       sdk.syncInfo({}, { Authorization: `Bearer ${token}` }),
+    syncStatusV7: async () => {
+      const result = await sdk.syncStatusV7();
+      return result?.syncStatus;
+    },
+    syncInfoV7: (token?: string) =>
+      sdk.syncInfoV7({}, { Authorization: `Bearer ${token}` }),
   },
   // manualSync is a trigger that returns a string result (don't need to capture it)
   manualSync: async (fetchPatientId?: string) =>
@@ -49,7 +60,7 @@ function cleanSyncSettings({
   return { username, password, url, intervalSeconds };
 }
 
-export function mapSyncError(
+export function mapSyncErrorV5V6(
   t: TypedTFunction<LocaleKey>,
   error: SyncErrorFragment,
   defaultKey?: LocaleKey
@@ -94,4 +105,72 @@ export function mapSyncError(
     details: error.fullError,
     hint: getHint(),
   };
+}
+
+export function mapSyncErrorV7(
+  t: TypedTFunction<LocaleKey>,
+  error: SyncErrorV7Fragment,
+  defaultKey?: LocaleKey
+): ErrorWithDetailsProps {
+  const errorMapping: { [key in SyncErrorVariantV7]: LocaleKey } = {
+    [SyncErrorVariantV7.ConnectionError]: 'error.connection-error',
+    [SyncErrorVariantV7.HardwareIdMismatch]: 'error.site-incorrect-hardware-id',
+    [SyncErrorVariantV7.InvalidSiteNameOrPassword]:
+      'error.site-incorrect-password',
+    [SyncErrorVariantV7.IntegrationTimeoutReached]:
+      'error.integration-timeout-reached',
+    [SyncErrorVariantV7.Authentication]: 'error.site-auth-timeout',
+    [SyncErrorVariantV7.NotACentralServer]: 'error.v6-server-not-configured',
+    [SyncErrorVariantV7.SyncVersionMismatch]: 'error.sync-api-incompatible',
+    [SyncErrorVariantV7.DatabaseError]: 'error.internal-error',
+    [SyncErrorVariantV7.SyncRecordSerializeError]: 'error.internal-error',
+    [SyncErrorVariantV7.RecordNotFound]: 'error.internal-error',
+    [SyncErrorVariantV7.TokenAlreadyAllocated]: 'error.internal-error',
+    [SyncErrorVariantV7.TokenNotFound]: 'error.internal-error',
+    [SyncErrorVariantV7.FailedToGetHardwareId]: 'error.internal-error',
+    [SyncErrorVariantV7.MissingAuthHeader]: 'error.internal-error',
+    [SyncErrorVariantV7.SiteLockError]: 'error.internal-error',
+    [SyncErrorVariantV7.ParsingError]: 'error.internal-error',
+    [SyncErrorVariantV7.SiteIdNotSet]: 'error.internal-error',
+    [SyncErrorVariantV7.GetCurrentSiteIdError]: 'error.internal-error',
+    [SyncErrorVariantV7.SiteIdMismatch]: 'error.site-mismatch',
+    [SyncErrorVariantV7.Other]: defaultKey || 'error.unknown-sync-error',
+  };
+
+  return {
+    error:
+      t(errorMapping[error.variant]) ||
+      defaultKey ||
+      'error.unknown-sync-error',
+    details: error.fullError,
+  };
+}
+
+/**
+ * Role-aware error mapper: dispatches by `__typename` so callers don't have
+ * to branch on server role to translate an error. Accepts either V5/V6 or V7
+ * sync error shape. For typed access to one variant, import
+ * `mapSyncErrorV5V6` or `mapSyncErrorV7` directly.
+ */
+export function mapSyncError(
+  t: TypedTFunction<LocaleKey>,
+  error: SyncErrorFragment | SyncErrorV7Fragment,
+  defaultKey?: LocaleKey
+): ErrorWithDetailsProps {
+  if (error.__typename === 'SyncErrorV7Node') {
+    return mapSyncErrorV7(t, error, defaultKey);
+  }
+  return mapSyncErrorV5V6(t, error, defaultKey);
+}
+
+/** Detects connection-style errors across V5 and V7 variants. */
+export function isSyncConnectionError(
+  error: SyncErrorFragment | SyncErrorV7Fragment
+): boolean {
+  return (
+    (error.__typename === 'SyncErrorV7Node' &&
+      error.variant === SyncErrorVariantV7.ConnectionError) ||
+    (error.__typename === 'SyncErrorNode' &&
+      error.variant === SyncErrorVariant.ConnectionError)
+  );
 }

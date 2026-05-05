@@ -43,11 +43,8 @@ interface SyncModalProps {
 }
 
 const useHostSync = (enabled: boolean) => {
-  // Polling whenever Sync page is opened
-  const { syncStatus, numberOfRecordsInPushQueue } = useSync.utils.syncInfo(
-    STATUS_POLLING_INTERVAL,
-    enabled
-  );
+  const { syncStatus, numberOfRecordsInPushQueue } =
+    useSync.utils.syncInfo(STATUS_POLLING_INTERVAL, enabled);
   const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
@@ -125,7 +122,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
   const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
   const error =
     syncStatus?.error &&
-    mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
+    mapSyncError(t, syncStatus.error, 'error.unknown-sync-error');
 
   const sync = async () => {
     await updateUser();
@@ -219,7 +216,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           <Typography textAlign="center" marginBottom="10">
             {getSyncStatusMessage()}
           </Typography>
-          <SyncProgress syncStatus={syncStatus} isOperational={true} />
+          <SyncProgress isOperational={true} />
         </Box>
 
         {error && (

@@ -4,14 +4,12 @@ import {
   AppNavLink,
   DateUtils,
   RadioIcon,
-  SyncErrorVariant,
   usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { BadgeProps } from '@mui/material';
-import { useSync } from '@openmsupply-client/system';
+import { isSyncConnectionError, useSync } from '@openmsupply-client/system';
 import { useSyncModal } from '../Sync';
-import { SyncInfoQuery } from '@openmsupply-client/system/src/Sync/api/operations.generated';
 
 const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000; // 1 minute
 
@@ -51,8 +49,10 @@ export const SyncNavLink = () => {
   );
 };
 
+type SyncStatus = ReturnType<typeof useSync.utils.syncInfo>['syncStatus'];
+
 const getBadge = (
-  syncStatus: SyncInfoQuery['syncStatus'],
+  syncStatus: SyncStatus,
   syncRecordCount: number,
   displayThreshold: number
 ): BadgeProps | undefined => {
@@ -61,11 +61,9 @@ const getBadge = (
   const { warningThreshold, errorThreshold, lastSuccessfulSync, error } =
     syncStatus;
 
-  const isSyncError =
-    error?.variant &&
-    // We allow connection errors until a threshold is reached (see below)
-    // all other errors should be flagged immediately
-    error.variant !== SyncErrorVariant.ConnectionError;
+  // We allow connection errors until a threshold is reached (see below);
+  // any other error variant should be flagged immediately.
+  const isSyncError = !!error && !isSyncConnectionError(error);
 
   const now = new Date();
   const daysSinceSuccessfulSync = DateUtils.differenceInDays(

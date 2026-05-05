@@ -36,7 +36,7 @@ export const Initialise = () => {
 
   const syncError =
     syncStatus?.error &&
-    mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
+    mapSyncError(t, syncStatus.error, 'error.unknown-sync-error');
 
   useEffect(() => {
     setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
@@ -88,11 +88,7 @@ export const Initialise = () => {
         />
       }
       SyncProgress={
-        <SyncProgress
-          syncStatus={syncStatus}
-          isOperational={false}
-          colour="secondary"
-        />
+        <SyncProgress isOperational={false} colour="secondary" />
       }
       Button={
         <LoadingButton

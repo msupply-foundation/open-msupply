@@ -9773,6 +9773,7 @@ export type Subscriptions = {
   /** Simple subscription to verify WebSocket connectivity */
   ping: Scalars['String']['output'];
   syncInfoUpdated: SyncInfoUpdatedNode;
+  syncInfoV7Updated: SyncInfoV7UpdatedNode;
 };
 
 export type Success = {
@@ -9939,6 +9940,12 @@ export type SyncInfoUpdatedNode = {
   __typename: 'SyncInfoUpdatedNode';
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
   syncStatus?: Maybe<FullSyncStatusNode>;
+};
+
+export type SyncInfoV7UpdatedNode = {
+  __typename: 'SyncInfoV7UpdatedNode';
+  numberOfRecordsInPushQueue: Scalars['Int']['output'];
+  syncStatus?: Maybe<FullSyncStatusV7Node>;
 };
 
 export type SyncSettingsInput = {

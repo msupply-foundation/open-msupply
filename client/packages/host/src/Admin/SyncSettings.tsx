@@ -15,7 +15,7 @@ import {
   useNotification,
 } from '@openmsupply-client/common';
 import { Setting } from './Setting';
-import { useSync, mapSyncError } from '@openmsupply-client/system';
+import { useSync, mapSyncErrorV5V6 } from '@openmsupply-client/system';
 
 const isValid = (syncSettings: SyncSettingsInput | null) => {
   if (!syncSettings) return false;
@@ -177,7 +177,7 @@ export const SyncSettings = ({}) => {
       const response = await update(syncSettings);
       // Map structured error
       if (response.__typename === 'SyncErrorNode') {
-        setError(mapSyncError(t, response, 'error.unable-to-save-settings'));
+        setError(mapSyncErrorV5V6(t, response, 'error.unable-to-save-settings'));
         return setIsSaving(false);
       }
     } catch (e) {

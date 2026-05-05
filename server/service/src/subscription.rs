@@ -1,13 +1,15 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use repository::SyncLogRow;
+use repository::{SyncLogRow, SyncLogV7Row};
 use tokio::sync::{broadcast, mpsc};
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
+use crate::initialisation_status::get_initialisation_status;
 use crate::service_provider::ServiceProvider;
 use crate::sync::sync_status::status::{FullSyncStatus, InitialisationStatus};
+use crate::sync_v7::sync_status::status::FullSyncStatusV7;
 
 const CHANNEL_BUFFER_SIZE: usize = 64;
 const PUSH_QUEUE_DEBOUNCE: Duration = Duration::from_secs(30);
@@ -18,6 +20,8 @@ const PUSH_QUEUE_DEBOUNCE: Duration = Duration::from_secs(30);
 pub enum SubscriptionTrigger {
     /// A sync log row was updated (step start/done, progress, error, completion)
     SyncStatus(SyncLogRow),
+    /// A V7 sync log row was updated (V7 runs only on remote sites)
+    SyncStatusV7(SyncLogV7Row),
     /// Changelogs were inserted (mutations created/modified data)
     PushQueueChanged,
 }
@@ -29,6 +33,11 @@ pub enum ResolvedSubscription {
     SyncInfo {
         status: FullSyncStatus,
         last_successful: Option<FullSyncStatus>,
+        push_queue_count: u64,
+    },
+    SyncInfoV7 {
+        status: FullSyncStatusV7,
+        last_successful: Option<FullSyncStatusV7>,
         push_queue_count: u64,
     },
     InitialisationStatus(InitialisationStatus),
@@ -91,6 +100,8 @@ async fn subscription_worker_loop(
 ) {
     let mut last_successful: Option<FullSyncStatus> = None;
     let mut last_status: Option<FullSyncStatus> = None;
+    let mut last_successful_v7: Option<FullSyncStatusV7> = None;
+    let mut last_status_v7: Option<FullSyncStatusV7> = None;
     // Once a sync has completed, the site is initialised. Don't emit
     // InitialisationStatus::Initialising during subsequent syncs, as that
     // would cause Host.tsx's PreInit to logout the user.
@@ -134,24 +145,31 @@ async fn subscription_worker_loop(
                     push_queue_count,
                 });
 
-                // Derive initialisation status from the same row.
                 if !initialised {
-                    match service_provider.basic_context() {
-                        Ok(ctx) => match service_provider
-                            .sync_status_service
-                            .get_initialisation_status(&ctx)
-                        {
-                            Ok(status) => {
-                                let _ = tx.send(ResolvedSubscription::InitialisationStatus(status));
-                            }
-                            Err(e) => {
-                                log::error!("Failed to get initialisation status: {e:?}");
-                            }
-                        },
-                        Err(e) => {
-                            log::error!("Failed to get DB connection for initialisation status: {e:?}");
-                        }
-                    }
+                    broadcast_initialisation_status(&service_provider, &tx);
+                }
+            }
+
+            SubscriptionTrigger::SyncStatusV7(row) => {
+                let status = FullSyncStatusV7::from_sync_log_v7_row(row.clone());
+
+                if status.summary.finished.is_some() && status.error.is_none() {
+                    last_successful_v7 = Some(status.clone());
+                }
+                last_status_v7 = Some(status.clone());
+
+                let push_queue_count = (row.push_progress_total.unwrap_or(0)
+                    - row.push_progress_done.unwrap_or(0))
+                    as u64;
+
+                let _ = tx.send(ResolvedSubscription::SyncInfoV7 {
+                    status,
+                    last_successful: last_successful_v7.clone(),
+                    push_queue_count,
+                });
+
+                if !initialised {
+                    broadcast_initialisation_status(&service_provider, &tx);
                 }
             }
 
@@ -171,7 +189,13 @@ async fn subscription_worker_loop(
                     };
                     last_push_query = Instant::now();
 
-                    if let Some(status) = &last_status {
+                    if let Some(status_v7) = &last_status_v7 {
+                        let _ = tx.send(ResolvedSubscription::SyncInfoV7 {
+                            status: status_v7.clone(),
+                            last_successful: last_successful_v7.clone(),
+                            push_queue_count: count,
+                        });
+                    } else if let Some(status) = &last_status {
                         let _ = tx.send(ResolvedSubscription::SyncInfo {
                             status: status.clone(),
                             last_successful: last_successful.clone(),
@@ -190,5 +214,24 @@ async fn subscription_worker_loop(
                 }
             }
         }
+    }
+}
+
+fn broadcast_initialisation_status(
+    service_provider: &ServiceProvider,
+    tx: &broadcast::Sender<ResolvedSubscription>,
+) {
+    let ctx = match service_provider.basic_context() {
+        Ok(ctx) => ctx,
+        Err(e) => {
+            log::error!("Failed to get DB connection for initialisation status: {e:?}");
+            return;
+        }
+    };
+    match get_initialisation_status(service_provider, &ctx) {
+        Ok(status) => {
+            let _ = tx.send(ResolvedSubscription::InitialisationStatus(status));
+        }
+        Err(e) => log::error!("Failed to get initialisation status: {e:?}"),
     }
 }

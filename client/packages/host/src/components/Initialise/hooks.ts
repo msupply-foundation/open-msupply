@@ -8,7 +8,7 @@ import {
   useInitialisationStatus,
   useNativeClient,
 } from '@openmsupply-client/common';
-import { useSync, mapSyncError } from '@openmsupply-client/system';
+import { useSync, mapSyncErrorV5V6 } from '@openmsupply-client/system';
 
 const STATUS_POLLING_INTERVAL = 500;
 const DEFAULT_SYNC_INTERVAL_IN_SECONDS = 300;
@@ -96,8 +96,13 @@ export const useInitialiseForm = () => {
   // to login when initialisation is finished, but syncStatus will be behind auth after
   // initialisation has finished, whereas syncStatus is always an open API
   const { data: initStatus } = useInitialisationStatus(refetchInterval);
-  // No auth during init — use unauthenticated subscription
-  const { data: syncStatus } = useSync.utils.syncStatus(refetchInterval, undefined, false);
+  // No auth during init. Role-aware: V5 on a fresh central server, V7 on a
+  // fresh remote site.
+  const { data: syncStatus } = useSync.utils.syncStatus(
+    refetchInterval,
+    undefined,
+    false
+  );
   const { data: syncSettings } = useSync.settings.syncSettings();
   const { allowSleep, keepAwake } = useNativeClient();
 
@@ -114,7 +119,7 @@ export const useInitialiseForm = () => {
       // Map structured error
       if (response.__typename === 'SyncErrorNode') {
         setSiteCredentialsError(
-          mapSyncError(t, response, 'error.unable-to-initialise')
+          mapSyncErrorV5V6(t, response, 'error.unable-to-initialise')
         );
         return setIsLoading(false);
       }
