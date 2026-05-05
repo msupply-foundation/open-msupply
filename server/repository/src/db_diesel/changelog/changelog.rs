@@ -296,6 +296,7 @@ impl<'a> ChangelogRepository<'a> {
         // Each sub-query scans at most this many cursor values. Bounding the cursor
         // range gives the planner a tight window to drive an index scan on
         // changelog_pkey, instead of a full bitmap scan + sort across the whole table.
+        // TODO make this configurable
         const CURSOR_WINDOW: i64 = 250_000;
 
         let max_cursor = self.max_cursor()? as i64;
@@ -535,6 +536,8 @@ mod print_query_tests {
     use crate::DBType;
     use diesel::debug_query;
 
+    // Remove ignore when you need to print the query
+    #[ignore]
     #[test]
     fn print_all_data_for_site_query_for_site_300() {
         let filter = ChangelogFilter::all_data_for_site(300, false, None);
