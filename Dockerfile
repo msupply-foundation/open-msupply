@@ -20,7 +20,6 @@ WORKDIR /usr/src/omsupply/server/configuration
 COPY server/configuration/base.yaml .
 COPY docker/local.yaml .
 
-RUN echo "test-uuid" > /etc/machine-id
 RUN mkdir -p /database
 
 WORKDIR /usr/src/omsupply/server
