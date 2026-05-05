@@ -131,7 +131,7 @@ export const InboundListView = () => {
         enableSorting: true,
       },
       {
-        header: t('label.linked-po-requisition'),
+        header: t('label.linked-order'),
         id: 'purchaseOrderNumber',
         size: 180,
         align: 'right',
