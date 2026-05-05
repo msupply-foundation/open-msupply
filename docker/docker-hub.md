@@ -74,13 +74,34 @@ docker run -e LOAD_REFERENCE_FILE=reference1 -e FAKETIME="@2023-05-20 11:30:00" 
 
 ## Production
 
-If used in production, it's important to persist database and to give each instance a unique UUID (hardware_id). Persisting database for sqlite flavour is done by mounting database folder (it's important to do this before initialising omSupply instance): `"$(pwd)/mydatabase":/database`. Default [test-uuid](https://github.com/msupply-foundation/open-msupply/blob/1f066619137959131866d291516d4b39e958b819/Dockerfile#L26) can be overwritten through `/etc/machine-id`. 
+If used in production, it's important to persist the database **and** to give each instance a stable, unique hardware id. The hardware id is what the central server uses to recognise a site — without it, a copied database could accidentally sync to the central API as if it were the original site.
 
-Example command for mac:
+Persist the database by mounting the database folder before initialising the omSupply instance:
+
+```bash
+docker run -v "$(pwd)/mydatabase":/database -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
+```
+
+### Hardware id — default behaviour
+
+On first start the container generates a UUID and writes it to `/database/machine-id`, alongside your database but **not inside it**. On every subsequent start the same id is reused. This gives you:
+
+- **Protection against an accidental dump-and-restore.** A logical database dump (`sqlite .dump`, `pg_dump`) only contains rows — it does not contain `/database/machine-id`. If the dump is restored into a fresh deployment, that deployment generates its own hardware id, and the central API will see the mismatch and reject the unauthorised sync.
+- **A recovery path for legitimate moves.** If you need to rebuild the container or move the deployment to a new host and keep the existing site identity, copy `machine-id` along with the database. Be conscious of the risk — only do this for a true migration, never for cloning a database to test against the same central instance.
+
+### Hardware id — using the host's `/etc/machine-id` instead
+
+If you'd rather bind the deployment to the host machine (so a copied database directory taken to a different host is also rejected), bind-mount the host's `/etc/machine-id` into the container. When `/etc/machine-id` is non-empty at startup, the container leaves it alone and `/database/machine-id` is ignored.
+
+```bash
+docker run -v "$(pwd)/mydatabase":/database -v /etc/machine-id:/etc/machine-id:ro -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
+```
+
+On macOS hosts, `/etc/machine-id` doesn't exist; you can synthesise an equivalent from the IOPlatformUUID:
 
 ```bash
 echo $(ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3 }') > machine-id
-docker run -v "$(pwd)/mydatabase":/database -v "$(pwd)/machine-id":/etc/machine-id -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
+docker run -v "$(pwd)/mydatabase":/database -v "$(pwd)/machine-id":/etc/machine-id:ro -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
 ```
 
 ## Dev 
