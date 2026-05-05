@@ -173,10 +173,12 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
     console.error(result.error);
   };
 
-  const { mutate: connectToServer } = useMutation(connect, {
+  const { mutate: connectToServer } = useMutation({
+    mutationFn: connect,
     onSuccess: handleConnectionResult,
+
     onError: (e: Error) =>
-      handleConnectionResult({ success: false, error: e.message }),
+      handleConnectionResult({ success: false, error: e.message })
   });
 
   return (

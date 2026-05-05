@@ -25,14 +25,12 @@ export const useSyncInfo = (
   });
 
   // Fallback to polling if subscription fails or is unavailable
-  const { data: queryData, ...rest } = useQuery(
-    api.keys.syncInfo(),
-    () => api.get.syncInfo(token),
-    {
-      refetchInterval: isSubscribed ? false : refetchInterval,
-      enabled: isEnabled,
-    }
-  );
+  const { data: queryData, ...rest } = useQuery({
+    queryKey: api.keys.syncInfo(),
+    queryFn: () => api.get.syncInfo(token),
+    refetchInterval: isSubscribed ? false : refetchInterval,
+    enabled: isEnabled,
+  });
 
   return {
     ...rest,

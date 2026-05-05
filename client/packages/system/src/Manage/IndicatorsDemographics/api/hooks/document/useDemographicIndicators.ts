@@ -19,10 +19,10 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
   const { queryParams } = useUrlQueryParams({
     filters: [{ key: 'name' }, { key: 'basePopulation' }, { key: 'id' }],
   });
-  const { data, isLoading } = useQuery(
-    api.keys.paramIndicatorList(queryParams),
-    () => api.getIndicators.list(queryParams)
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: api.keys.paramIndicatorList(queryParams),
+    queryFn: () => api.getIndicators.list(queryParams)
+  });
 
   // Populate from API data and calculate across rows when data or header changes
   useEffect(() => {

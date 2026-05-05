@@ -10,6 +10,9 @@ pub use self::item_variant::*;
 pub mod bundled_item;
 pub use self::bundled_item::*;
 
+pub mod ancillary_item;
+pub use self::ancillary_item::*;
+
 pub mod item_stats;
 pub use self::item_stats::*;
 

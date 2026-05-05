@@ -55,7 +55,7 @@ export const ExpiringStockSummary = ({
 
   return (
     <StatsPanel
-      error={error as ApiException}
+      error={error as unknown as ApiException}
       isError={isError}
       isLoading={isLoading}
       title={t('heading.expiring-stock')}

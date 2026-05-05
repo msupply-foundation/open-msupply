@@ -9,10 +9,10 @@ export const useDemographics = () => {
   const { queryParams } = useUrlQueryParams({
     filters: [{ key: 'name' }, { key: 'basePopulation' }, { key: 'id' }],
   });
-  const { data, isLoading } = useQuery(
-    api.keys.paramDemographicList(queryParams),
-    () => api.getDemographics.list(queryParams)
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: api.keys.paramDemographicList(queryParams),
+    queryFn: () => api.getDemographics.list(queryParams)
+  });
 
   return { draft, setDraft, isLoading, data };
 };

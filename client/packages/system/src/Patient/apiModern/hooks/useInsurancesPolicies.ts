@@ -34,13 +34,13 @@ export const useInsurancePolicies = (nameId: string, patientName?: string) => {
 
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate();
 
@@ -138,7 +138,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([INSURANCE_POLICIES]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [INSURANCE_POLICIES]
+    }),
   });
 };
 
@@ -176,6 +178,8 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([INSURANCE_POLICIES]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [INSURANCE_POLICIES]
+    }),
   });
 };

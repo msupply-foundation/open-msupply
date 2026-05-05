@@ -43,10 +43,10 @@ git push origin v2.8.0
 
 The workflow distinguishes between **release tags** and **non-release tags**:
 
-| Tag type | Pattern | Examples | What gets built |
-| --- | --- | --- | --- |
-| Release | `v{major}.{minor}.{patch}` (strict semver) | `v2.19.1`, `v2.8.0` | All variants: amd64 + arm64, dev images, plugin tests |
-| Non-release | Anything else starting with `v` | `v2.18.00-develop-04160443`, `v2.17.03-RC-04161543`, `v2.18.00-test` | amd64 only, no dev images, no plugin tests |
+| Tag type    | Pattern                                    | Examples                                                             | What gets built                                       |
+| ----------- | ------------------------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------- |
+| Release     | `v{major}.{minor}.{patch}` (strict semver) | `v2.19.1`, `v2.8.0`                                                  | All variants: amd64 + arm64, dev images, plugin tests |
+| Non-release | Anything else starting with `v`            | `v2.18.00-develop-04160443`, `v2.17.03-RC-04161543`, `v2.18.00-test` | amd64 only, no dev images, no plugin tests            |
 
 Non-release tags are typically created automatically by the nightly build process for develop and RC branches. Since these images are primarily used for testing on amd64 servers, skipping arm64 and dev builds saves significant CI time.
 
@@ -65,9 +65,9 @@ Non-release tags are typically created automatically by the nightly build proces
 
 Images are pushed to `msupplyfoundation/omsupply` with the naming convention:
 
-| Tag | Example | When built |
-| --- | ------- | ---------- |
-| `v{version}-{db}-{arch}` | `v2.8.0-sqlite-amd64` | All tags |
+| Tag                          | Example                   | When built        |
+| ---------------------------- | ------------------------- | ----------------- |
+| `v{version}-{db}-{arch}`     | `v2.8.0-sqlite-amd64`     | All tags          |
 | `v{version}-{db}-{arch}-dev` | `v2.8.0-sqlite-amd64-dev` | Release tags only |
 
 Dev images (which include Node/Yarn and the client source for frontend development) are only built for amd64 on release tags.

@@ -20,8 +20,12 @@ export const useDeleteResponseLines = (
   const api = useResponseApi();
   const responseId = useResponseId();
   const isDisabled = useResponse.utils.isDisabled();
-  const { mutateAsync } = useMutation(api.deleteLines, {
-    onSettled: () => queryClient.invalidateQueries(api.keys.detail(responseId)),
+  const { mutateAsync } = useMutation({
+    mutationFn: api.deleteLines,
+
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: api.keys.detail(responseId)
+    })
   });
   const errorsContext = useResponseRequisitionLineErrorContext();
   const { linkedRequisition } = useResponse.document.fields([

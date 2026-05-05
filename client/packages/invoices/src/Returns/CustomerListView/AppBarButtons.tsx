@@ -33,7 +33,7 @@ export const AppBarButtonsComponent = ({
   const { error } = useNotification();
 
   const { mutateAsync: onCreate } = useReturns.document.insertCustomerReturn();
-  const { fetchAsync, isLoading } = useReturns.document.listAllCustomer({
+  const { fetchAsync, isPending: isLoading } = useReturns.document.listAllCustomer({
     key: 'createdDateTime',
     direction: 'desc',
     isDesc: true,
