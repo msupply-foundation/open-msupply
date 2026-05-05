@@ -66,8 +66,8 @@ fn sync_type(table_name: &ChangelogTableName) -> &'static SyncType {
         ChangelogTableName::StockLine
         | ChangelogTableName::Invoice
         | ChangelogTableName::InvoiceLine => &SyncType::Remote,
-        // Default to Remote for unknown types
-        _ => &SyncType::Remote,
+        // Default to Central for unknown types
+        _ => &SyncType::Central,
     }
 }
 

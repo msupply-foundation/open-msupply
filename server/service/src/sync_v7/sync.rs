@@ -1,6 +1,7 @@
 use std::time::{Duration, SystemTime};
 
 use chrono::Utc;
+use log::info;
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
@@ -296,6 +297,8 @@ impl<'a> SyncV7<'a> {
             let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
                 break;
             };
+
+            info!("Pulled {record_count} max batch cursor {batch_max_cursor} cursor {cursor} max cursor {}", batch.max_cursor);
 
             // V7 pull: records arrive without an originating app_version (it isn't
             // carried through the central server), so app_version is None here.
