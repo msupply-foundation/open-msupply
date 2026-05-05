@@ -110,7 +110,6 @@ diesel_string_enum! {
         Document,
         IndicatorValue,
         InsuranceProvider,
-        Item,
         Location,
         LocationMovement,
         Name,
@@ -161,6 +160,7 @@ diesel_string_enum! {
         // ---- Central (not v6) ----
         Abbreviation,
         Category,
+        Item,
         Contact,
         ContactTrace,
         Context,
@@ -227,7 +227,7 @@ diesel_string_enum! {
     }
 }
 
-pub(crate) enum SourceSiteId {
+pub enum SourceSiteId {
     SourceSiteId(Option<i32>),
     CurrentSiteId,
 }
@@ -238,10 +238,7 @@ pub(crate) enum RowOrId<'a, T> {
 }
 
 impl SourceSiteId {
-    pub(crate) fn get_id(
-        &self,
-        connection: &StorageConnection,
-    ) -> Result<Option<i32>, RepositoryError> {
+    pub fn get_id(&self, connection: &StorageConnection) -> Result<Option<i32>, RepositoryError> {
         match self {
             SourceSiteId::SourceSiteId(id) => Ok(*id),
             SourceSiteId::CurrentSiteId => {
@@ -415,6 +412,8 @@ impl ChangelogFilter {
                 Central | File => C::And(vec![
                     // We have central and remote records with same table_name, so need to make sure to include only central ones (where store_id is null)
                     C::store_id::is_null(),
+                    // We have patients that are also central data, therefore patient_id should be null
+                    C::patient_id::is_null(),
                 ]),
                 ToLegacyCentralOnly | RemoteToCentral => {
                     // Don't sync
