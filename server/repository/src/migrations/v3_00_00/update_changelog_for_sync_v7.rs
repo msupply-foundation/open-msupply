@@ -8,10 +8,13 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Populate changelog with transfer_store_id and patient_id
+        // Add name_store_id to requisition and fill it based on the store_id → name_link → name relationship.
         sql!(
             connection,
             r#"
+                -- Add name_store_id for requisition. transfer_store_id for a changelog is name_store_id
+                ALTER TABLE requisition ADD COLUMN name_store_id TEXT;
+
                 -- Update requisition name_store_id column.
                 UPDATE requisition
                 SET name_store_id = store.id
@@ -20,8 +23,13 @@ impl MigrationFragment for Migrate {
                 JOIN name_link requisition_name_link ON requisition_name_link.name_id = store_name_link.name_id
                 WHERE requisition_name_link.id = requisition.name_link_id
                     AND requisition.name_store_id IS NULL;
+            "#
+        )?;
 
-                -- Changelog updates:
+        // Populate changelog with transfer_store_id and patient_id
+        sql!(
+            connection,
+            r#"
                 -- transfer_store_id: the store on the other side of the transfer
                 -- For invoices: invoice.name_store_id is already the resolved store of the other party
                 UPDATE changelog
