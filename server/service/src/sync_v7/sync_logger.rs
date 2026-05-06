@@ -73,9 +73,9 @@ impl<'a> SyncLogger<'a> {
     }
 
     pub(crate) fn start_step(&mut self, step: SyncStep) -> Result<(), RepositoryError> {
-        info!("Sync step started {:?}", step);
-
         self.finish_current_step()?;
+
+        info!("Sync step started {:?}", step);
 
         match step {
             SyncStep::Push => {
