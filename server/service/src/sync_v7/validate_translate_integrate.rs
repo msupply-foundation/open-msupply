@@ -165,7 +165,7 @@ fn validate_translate_integrate_one(
             is_initialising,
             active_stores,
         } => validate_on_remote(row, st, active_stores, *is_initialising)?,
-        SyncContext::PatientLookup => {}
+        SyncContext::PatientLookup => {} // Patient records belong to another store
     };
 
     match row.action {
