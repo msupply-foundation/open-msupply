@@ -19,6 +19,7 @@ import {
   BarcodeScanner,
   ScannerType,
   ConnectionResult,
+  DEFAULT_LOCAL_SERVER,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
@@ -33,6 +34,7 @@ const importDesktopTranslations = async (locale: string) =>
   import(`../../common/src/intl/locales/${locale}/desktop.json`);
 
 const SERVICE_TYPE = 'omsupply';
+const PREVIOUS_SERVER_KEY = 'previous_server';
 const PROTOCOL_KEY = 'protocol';
 const CLIENT_VERSION_KEY = 'client_version';
 const HARDWARE_ID_KEY = 'hardware_id';
@@ -142,6 +144,14 @@ const store = new ElectronStore() as unknown as {
   set: (key: string, value: string | null) => void;
 };
 
+const storePreviousServer = (server: FrontEndHost) =>
+  store.set(PREVIOUS_SERVER_KEY, JSON.stringify(server));
+
+const getStoredPreviousServer = (): FrontEndHost | null => {
+  const stored = store.get(PREVIOUS_SERVER_KEY, null);
+  return stored ? JSON.parse(stored) : null;
+};
+
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
 
 // Set by the standalone Setup Factory installer's desktop shortcut.
@@ -182,26 +192,37 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-// run a check to see if the server is available before attempting to connect
-const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
-  return new Promise<ConnectionResult>(resolve => {
+const HEALTH_CHECK_TIMEOUT = 1500;
+
+// Pure health check — no side effects, no auto-navigation.
+const isServerAlive = (server: FrontEndHost): Promise<boolean> =>
+  new Promise(resolve => {
     const lib = server.protocol === 'https' ? https : http;
-    const options = {
-      rejectUnauthorized: false,
-    };
-    const request = lib.get(frontEndHostUrl(server), options, response => {
-      if (response.statusCode === 200) {
-        connectToServer(window, server);
-        resolve({ success: true });
-      }
-      resolve({ success: false, error: `Status: ${response.statusMessage}` });
-    });
-    // handle the error to prevent an alert in the desktop app
+    const request = lib.get(
+      frontEndHostUrl(server),
+      { rejectUnauthorized: false },
+      response => resolve(response.statusCode === 200)
+    );
     request.on('error', e => {
       console.error('Error received connecting to server:', e);
-      resolve({ success: false, error: e.message });
+      resolve(false);
+    });
+    request.setTimeout(HEALTH_CHECK_TIMEOUT, () => {
+      request.destroy();
+      resolve(false);
     });
   });
+
+// Health check + navigate. Used by the CONNECT_TO_SERVER IPC handler.
+const tryToConnectToServer = async (
+  window: BrowserWindow,
+  server: FrontEndHost
+): Promise<ConnectionResult> => {
+  if (await isServerAlive(server)) {
+    connectToServer(window, server);
+    return { success: true };
+  }
+  return { success: false, error: 'Server not reachable' };
 };
 
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
@@ -221,7 +242,7 @@ const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   window.loadURL(url);
 };
 
-const start = (): void => {
+const start = async (): Promise<void> => {
   // Create the browser window.
   const window = new BrowserWindow({
     height: 800,
@@ -254,9 +275,6 @@ const start = (): void => {
       configureMenus(window, mergedTranslations);
     });
 
-  // and load discovery (with autoconnect=true by default)
-  window.loadURL(buildStartUrl());
-
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
     discovery.stop();
     discoveredServers = [];
@@ -269,7 +287,11 @@ const start = (): void => {
 
   ipcMain.handle(
     IPC_MESSAGES.CONNECT_TO_SERVER,
-    async (_event, server: FrontEndHost) => tryToConnectToServer(window, server)
+    async (_event, server: FrontEndHost) => {
+      const result = await tryToConnectToServer(window, server);
+      if (result.success) storePreviousServer(server);
+      return result;
+    }
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
@@ -369,6 +391,24 @@ const start = (): void => {
       );
     }
   );
+
+  // Attempt to connect directly to a known server before loading any URL so the
+  // discovery screen is never shown to returning users or standalone installs.
+  // IPC handlers must all be registered above before this point.
+  const serverToTry = isStandalone
+    ? DEFAULT_LOCAL_SERVER
+    : getStoredPreviousServer();
+
+  if (serverToTry) {
+    const result = await tryToConnectToServer(window, serverToTry);
+    if (!result.success) {
+      window.loadURL(buildStartUrl({ autoconnect: 'false' }));
+    }
+    // success: connectToServer already called window.loadURL(serverUrl)
+  } else {
+    // No reachable known server — show discovery
+    window.loadURL(buildStartUrl(isStandalone ? { autoconnect: 'false' } : {}));
+  }
 };
 
 const isLoopback = (ip: string) =>
