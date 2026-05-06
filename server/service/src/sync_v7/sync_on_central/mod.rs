@@ -1,9 +1,6 @@
 use crate::{
     apis::patient_v4::PatientV4,
-    programs::patient::{
-        patient_search as patient_search_local, patient_updated::create_patient_name_store_join,
-        PatientSearch,
-    },
+    programs::patient::patient_updated::create_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError},
     sync_v7::{
@@ -189,23 +186,15 @@ pub async fn patient_search(
 ) -> patient_search::Response {
     let (_, ctx) = validate(service_provider, &common)?;
 
-    let params = PatientSearch {
-        code: input.code,
-        code_2: None,
-        first_name: input.first_name,
-        last_name: input.last_name,
-        date_of_birth: input.date_of_birth,
-        gender: None,
-        identifier: None,
-        name: None,
-    };
-
-    let results = patient_search_local(&ctx, service_provider, params, None)?;
+    let results =
+        service_provider
+            .patient_service
+            .get_patients(&ctx, None, Some(input), None, None)?;
 
     Ok(results
         .rows
         .into_iter()
-        .map(|r| name_row_to_patient_v4(r.patient))
+        .map(name_row_to_patient_v4)
         .collect())
 }
 
