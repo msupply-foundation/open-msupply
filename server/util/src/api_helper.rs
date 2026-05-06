@@ -12,6 +12,13 @@ impl Default for RetrySeconds {
     }
 }
 
+// If a request burns more than this on a single attempt and times out, do not
+// retry it — the overall request timeout has effectively been hit and another
+// 30-minute attempt is unlikely to succeed where the first didn't, and we don't
+// want a single sync to block for ~90 minutes. Fast timeouts (connect-phase,
+// kernel TCP retransmit, etc.) still retry as before.
+const SLOW_TIMEOUT_RETRY_CUTOFF: Duration = Duration::from_secs(60 * 25);
+
 pub async fn with_retries<F>(connection_timeouts: RetrySeconds, f: F) -> Result<Response>
 where
     F: Fn(Client) -> RequestBuilder,
@@ -73,8 +80,9 @@ where
             }
         };
 
+        let timeout_was_slow = is_timeout_error && elapsed >= SLOW_TIMEOUT_RETRY_CUTOFF;
         let will_retry = (is_connect_error
-            || is_timeout_error
+            || (is_timeout_error && !timeout_was_slow)
             || status == Some(StatusCode::REQUEST_TIMEOUT))
             && (index + 1) < connection_timeouts.0.len();
 
