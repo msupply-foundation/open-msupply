@@ -1,7 +1,7 @@
 use crate::{
     service_provider::ServiceProvider,
     sync_v7::{
-        api::{patient_data_for_site, Common, SyncApiV7},
+        api::{patient_data_for_site, SyncApiV7},
         validate_translate_integrate::{validate_translate_integrate_in_memory, SyncContext},
     },
 };
@@ -26,18 +26,7 @@ pub async fn pull_and_integrate_patient_data(
         .sync_settings(&ctx)?
         .ok_or_else(|| SyncError::Other("Sync settings not configured".to_string()))?;
 
-    let common = Common::load(service_provider)?;
-    let auth_headers = common.to_auth_headers()?;
-    let api = SyncApiV7 {
-        url: settings
-            .url
-            .parse()
-            .map_err(|e: url::ParseError| SyncError::ConnectionError {
-                url: settings.url.clone(),
-                e: format!("Failed to parse central server url: {e}"),
-            })?,
-        auth_headers,
-    };
+    let api = SyncApiV7::new(service_provider, &settings.url)?;
 
     let response = api
         .patient_data_for_site(patient_data_for_site::Input {

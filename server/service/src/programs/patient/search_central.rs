@@ -12,17 +12,13 @@ use crate::{
             NameStoreJoinParamsV4, NameStoreJoinV2, PatientApiV4, PatientParamsV4, PatientV4,
         },
     },
-    programs::patient::patient_updated::create_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         api::SyncApiV5,
         settings::{SyncSettings, SYNC_V5_VERSION},
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
-    sync_v7::{
-        api::{Common, SyncApiV7},
-        patient_lookup::pull_and_integrate_patient_data,
-    },
+    sync_v7::{api::SyncApiV7, patient_lookup::pull_and_integrate_patient_data},
 };
 
 use super::{patient_search_to_filter, PatientSearch};
@@ -42,24 +38,6 @@ fn map_v7_sync_error(err: repository::syncv7::SyncError) -> CentralPatientReques
         }
         _ => CentralPatientRequestError::InternalError(format_error(&err)),
     }
-}
-
-fn build_v7_api(
-    service_provider: &ServiceProvider,
-    sync_settings: &SyncSettings,
-) -> Result<SyncApiV7, CentralPatientRequestError> {
-    let common = Common::load(service_provider).map_err(|e| {
-        CentralPatientRequestError::InternalError(format!("Failed to load v7 common: {e:?}"))
-    })?;
-    let auth_headers = common.to_auth_headers().map_err(|e| {
-        CentralPatientRequestError::InternalError(format!("Failed to build v7 auth headers: {e:?}"))
-    })?;
-    let url = Url::parse(&sync_settings.url).map_err(|err| {
-        CentralPatientRequestError::InternalError(format!(
-            "Failed to parse central server url: {err}"
-        ))
-    })?;
-    Ok(SyncApiV7 { url, auth_headers })
 }
 
 #[derive(Error, Debug)]
@@ -139,7 +117,7 @@ async fn patient_search_central_v7(
     sync_settings: &SyncSettings,
     params: PatientSearch,
 ) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
-    let api = build_v7_api(service_provider, sync_settings)?;
+    let api = SyncApiV7::new(service_provider, &sync_settings.url).map_err(map_v7_sync_error)?;
 
     api.patient_search(patient_search_to_filter(params))
         .await
@@ -161,7 +139,7 @@ pub async fn link_patient_to_store(
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
     if is_v7_remote(context)? {
-        return link_patient_to_store_v7(service_provider, context, store_id, name_id).await;
+        return link_patient_to_store_v7(service_provider, store_id, name_id).await;
     }
 
     let sync_settings = service_provider.settings.sync_settings(context)?.ok_or(
@@ -206,7 +184,6 @@ pub async fn link_patient_to_store(
 
 async fn link_patient_to_store_v7(
     service_provider: &ServiceProvider,
-    context: &ServiceContext,
     store_id: &str,
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
@@ -217,11 +194,8 @@ async fn link_patient_to_store_v7(
         .await
         .map_err(map_v7_sync_error)?;
 
-    let local_nsj_id =
-        create_patient_name_store_join(&context.connection, store_id, name_id, Some(nsj_id))?;
-
     Ok(NameStoreJoin {
-        id: local_nsj_id,
+        id: nsj_id,
         name_id: name_id.to_string(),
         store_id: store_id.to_string(),
     })
