@@ -3,7 +3,7 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use repository::SyncApiErrorCode;
 use service::sync::{
     api::{SyncApiError, SyncApiErrorVariantV5, SyncApiV5CreatingError, SyncErrorCodeV5},
-    site_info::RequestAndSetSiteInfoError,
+    site_auth::RequestAndSetSiteAuthError,
     sync_status::SyncLogError,
 };
 use util::format_error;
@@ -63,12 +63,12 @@ impl SyncErrorNode {
         }
     }
 
-    pub fn map_error(error: RequestAndSetSiteInfoError) -> Result<Self> {
-        use RequestAndSetSiteInfoError as from;
+    pub fn map_error(error: RequestAndSetSiteAuthError) -> Result<Self> {
+        use RequestAndSetSiteAuthError as from;
 
         let error = match &error {
             // Structured error
-            from::RequestSiteInfoError(api_error) => Self::from_sync_api_error(api_error),
+            from::RequestSiteAuthError(api_error) => Self::from_sync_api_error(api_error),
             from::SiteUUIDIsBeingChanged(_, _) => {
                 Self::from_error_variant(Variant::SiteUUIDIsBeingChanged, &error)
             }

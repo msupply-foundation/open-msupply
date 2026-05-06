@@ -20,7 +20,7 @@ use crate::{
         },
         settings::{BatchSize, SyncSettings},
         sync_status::{status::InitialisationStatus, SyncLogError},
-        synchroniser::{SyncError, Synchroniser},
+        synchroniser::{SyncError, SynchroniserV5V6},
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
@@ -571,7 +571,8 @@ async fn run_server_and_sync(
         },
     };
 
-    let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider.clone()).unwrap();
+    let synchroniser =
+        SynchroniserV5V6::new(sync_settings.clone(), service_provider.clone()).unwrap();
 
     async fn entry(path: web::Path<String>, tester: TesterData) -> String {
         tester.lock().await.try_route(path.to_string())
