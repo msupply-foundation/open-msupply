@@ -89,7 +89,7 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
               {
                 type: 'number',
                 name: t('label.linked-order-number'),
-                urlParameter: 'purchaseOrderNumber',
+                urlParameter: 'linkedOrderNumber',
                 wide: true,
               },
               {

@@ -157,6 +157,7 @@ pub struct InvoiceFilterInput {
     pub is_program_invoice: Option<bool>,
     pub purchase_order_id: Option<EqualFilterStringInput>,
     pub purchase_order_number: Option<EqualFilterBigNumberInput>,
+    pub linked_order_number: Option<EqualFilterBigNumberInput>,
     pub program_id: Option<EqualFilterStringInput>,
 }
 
@@ -325,6 +326,7 @@ impl InvoiceFilterInput {
             is_cancellation: None,
             purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
             purchase_order_number: self.purchase_order_number.map(EqualFilter::from),
+            linked_order_number: self.linked_order_number.map(EqualFilter::from),
         }
     }
 }
