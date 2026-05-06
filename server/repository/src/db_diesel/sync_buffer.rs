@@ -31,6 +31,34 @@ diesel_string_enum! {
     }
 }
 
+impl SyncVersion {
+    /// Single source of truth for which sync flow this site should run.
+    /// `is_central` is passed by the caller (`CentralServerConfig::is_central_server()`
+    /// lives in the `service` crate) — when true, V5V6 is forced regardless of the
+    /// stored value.
+    pub fn get(
+        connection: &StorageConnection,
+        is_central: bool,
+    ) -> Result<SyncVersion, RepositoryError> {
+        if is_central {
+            return Ok(SyncVersion::V5V6);
+        }
+        let raw = crate::KeyValueStoreRepository::new(connection)
+            .get_string(crate::KeyType::SettingsSyncVersion)?;
+        Ok(raw
+            .and_then(|s| std::str::FromStr::from_str(&s).ok())
+            .unwrap_or_default())
+    }
+
+    pub fn set(
+        connection: &StorageConnection,
+        version: SyncVersion,
+    ) -> Result<(), RepositoryError> {
+        crate::KeyValueStoreRepository::new(connection)
+            .set_string(crate::KeyType::SettingsSyncVersion, Some(version.to_string()))
+    }
+}
+
 diesel_string_enum! {
     #[derive(Clone, Copy, Serialize, Deserialize, Eq)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]

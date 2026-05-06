@@ -4,7 +4,7 @@ import {
   useQueryClient,
   useTranslation,
 } from '@openmsupply-client/common';
-import { mapSyncError, useSync } from '../../Sync';
+import { isSyncStatusV7, mapSyncError, useSync } from '../../Sync';
 import { useCallback, useRef, useState } from 'react';
 import { usePatientApi } from '../api/hooks/utils/usePatientApi';
 
@@ -64,13 +64,29 @@ export const useFetchPatient = () => {
         return;
       }
 
+      // V7 sync has no per-patient fetch endpoint yet — see follow-up in
+      // sync v7 plan. Surface a clear message and exit early.
+      const currentStatus = await getSyncStatus();
+      if (isSyncStatusV7(currentStatus)) {
+        setError(t('error.fetch-patient-not-supported-on-v7'));
+        return;
+      }
+
       setStep('Syncing');
       await manualSync(patientId);
       await pollTillSynced();
       await queryClient.invalidateQueries(api.keys.list());
       if (!hasErroredDuringSync.current) setStep('Synced');
     },
-    [api.keys, linkPatientToStore, manualSync, queryClient, pollTillSynced, t]
+    [
+      api.keys,
+      linkPatientToStore,
+      manualSync,
+      queryClient,
+      pollTillSynced,
+      getSyncStatus,
+      t,
+    ]
   );
 
   return { mutateAsync, error, step };

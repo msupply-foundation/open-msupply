@@ -135,13 +135,11 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     }
   };
 
-  const durationAsDate = new Date(
-    0,
-    0,
-    0,
-    0,
-    0,
-    syncStatus?.summary?.durationInSeconds || 0
+  const durationAsDate = DateUtils.secondsAsDate(
+    DateUtils.durationInSeconds(
+      syncStatus?.summary?.started,
+      syncStatus?.summary?.finished
+    )
   );
 
   const getSyncStatusMessage = (): string => {
@@ -219,7 +217,9 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           <Typography textAlign="center" marginBottom="10">
             {getSyncStatusMessage()}
           </Typography>
-          <SyncProgress syncStatus={syncStatus} isOperational={true} />
+          {syncStatus && (
+            <SyncProgress syncStatus={syncStatus} isOperational={true} />
+          )}
         </Box>
 
         {error && (

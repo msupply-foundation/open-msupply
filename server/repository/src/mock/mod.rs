@@ -218,7 +218,7 @@ pub struct MockData {
     pub sync_buffer_rows: Vec<SyncBufferRow>,
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
-    pub sync_logs: Vec<SyncLogRow>,
+    pub sync_logs: Vec<SyncLogV5V6Row>,
     pub sync_logs_v7: Vec<SyncLogV7Row>,
     pub name_tags: Vec<NameTagRow>,
     pub name_tag_joins: Vec<NameTagJoinRow>,
@@ -1286,7 +1286,7 @@ pub fn insert_mock_data(
 
         if inserts.sync_logs {
             for row in &mock_data.sync_logs {
-                let repo = SyncLogRowRepository::new(connection);
+                let repo = SyncLogV5V6RowRepository::new(connection);
                 repo.upsert_one(row).unwrap();
             }
         }

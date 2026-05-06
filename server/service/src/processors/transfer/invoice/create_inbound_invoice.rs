@@ -1,9 +1,8 @@
 use chrono::{Duration, Months, NaiveDateTime, Utc};
 use repository::{
-    ActivityLogType, DatetimeFilter, EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow,
-    InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType, Pagination, RepositoryError,
-    Requisition, Sort, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
-    SyncLogFilter, SyncLogRepository, SyncLogSortField,
+    ActivityLogType, EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, Requisition,
+    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
 };
 use util::uuid::uuid;
 
@@ -16,6 +15,7 @@ use crate::{
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
+    sync::sync_status::status::get_first_initialisation_finished_datetime,
 };
 
 use super::{
@@ -118,28 +118,14 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                         msg: e.to_string(),
                         extra: "".to_string(),
                     })?;
-                if pref_months > 0 {
-                    let sort = Sort {
-                        key: SyncLogSortField::DoneDatetime,
-                        desc: None,
-                    };
-
-                    let filter = SyncLogFilter::new()
-                        .integration_finished_datetime(DatetimeFilter::is_null(false));
-
-                    let first_initialisation_log = SyncLogRepository::new(&ctx.connection)
-                        .query(Pagination::one(), Some(filter), Some(sort))?
-                        .pop();
-
-                    if first_initialisation_log
-                        .and_then(|log| log.sync_log_row.integration_finished_datetime)
+                if pref_months > 0
+                    && get_first_initialisation_finished_datetime(&ctx.connection)?
                         .and_then(|initialisation_date| {
                             initialisation_date.checked_sub_months(Months::new(pref_months as u32))
                         })
                         .is_some_and(|cutoff_date| picked_date < cutoff_date)
-                    {
-                        return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
-                    }
+                {
+                    return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
                 }
             }
         }
@@ -320,12 +306,12 @@ mod test {
     use repository::{
         mock::{mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        InvoiceFilter, InvoiceRepository, PreferenceRow, SyncLogRow,
+        InvoiceFilter, InvoiceRepository, PreferenceRow, SyncLogV5V6Row,
     };
 
     #[actix_rt::test]
     async fn test_create_inbound_invoice_picked_cutoff() {
-        let log_1 = SyncLogRow {
+        let log_1 = SyncLogV5V6Row {
             id: "sync_log_1".to_string(),
             integration_finished_datetime: Some(
                 NaiveDate::from_ymd_opt(2025, 1, 1)
@@ -336,7 +322,7 @@ mod test {
             ..Default::default()
         };
 
-        let log_2 = SyncLogRow {
+        let log_2 = SyncLogV5V6Row {
             id: "sync_log_2".to_string(),
             integration_finished_datetime: Some(
                 NaiveDate::from_ymd_opt(2024, 1, 1)
@@ -347,7 +333,7 @@ mod test {
             ..Default::default()
         };
 
-        let log_3 = SyncLogRow {
+        let log_3 = SyncLogV5V6Row {
             id: "sync_log_3".to_string(),
             integration_finished_datetime: None,
             ..Default::default()

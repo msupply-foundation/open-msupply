@@ -85,6 +85,11 @@ create_condition!(
         NaiveDateTime,
         sync_log_v7::finished_datetime
     ),
+    (
+        IntegrationFinishedDatetime,
+        NaiveDateTime,
+        sync_log_v7::integration_finished_datetime
+    ),
     (Error, string, sync_log_v7::error),
 );
 

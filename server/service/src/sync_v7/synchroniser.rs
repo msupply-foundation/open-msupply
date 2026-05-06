@@ -39,6 +39,9 @@ impl SynchroniserV7 {
             return Ok(());
         }
 
+        // Check both v5_v6 and v7 sync logs — a site upgrading from v5_v6 to v7
+        // has a populated sync_log but an empty sync_log_v7, and must not be
+        // treated as initialising (which would skip Push/WaitForIntegration).
         let was_initialised = self
             .service_provider
             .sync_status_service

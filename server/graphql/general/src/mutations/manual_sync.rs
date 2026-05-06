@@ -6,7 +6,6 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    initialisation_status::get_initialisation_status,
     sync::sync_status::status::InitialisationStatus,
 };
 
@@ -28,8 +27,9 @@ pub fn manual_sync(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let initialisation_status =
-        get_initialisation_status(&service_provider, &service_context)?;
+    let initialisation_status = service_provider
+        .sync_status_service
+        .get_initialisation_status(&service_context)?;
 
     if initialisation_status == InitialisationStatus::PreInitialisation {
         return Err(StandardGraphqlError::BadUserInput(
