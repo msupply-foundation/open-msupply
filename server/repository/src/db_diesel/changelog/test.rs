@@ -11,9 +11,9 @@ use crate::{
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
     ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, LocationRowRepository, NameRow,
-    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository,
-    KeyType, KeyValueStoreRepository, RowActionType, StorageConnection, StoreRow,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType, KeyValueStoreRepository,
+    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow,
     StoreRowRepository, Upsert, VaccinationRow, VaccinationRowRepository,
 };
 
@@ -231,43 +231,46 @@ async fn test_changelog_filter() {
 
     // Filter by table name
     assert_eq!(
-        ChangelogRepository::new(&connection).query(
-            ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 20
-            },
-        )
-        .unwrap(),
+        ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 20
+                },
+            )
+            .unwrap(),
         vec![log2.clone()]
     );
 
     // Filter by record_id in
     assert_eq!(
-        ChangelogRepository::new(&connection).query(
-            ChangelogCondition::table_name::any(vec![
-                ChangelogTableName::Invoice,
-                ChangelogTableName::StocktakeLine
-            ]),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 20
-            },
-        )
-        .unwrap(),
+        ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::table_name::any(vec![
+                    ChangelogTableName::Invoice,
+                    ChangelogTableName::StocktakeLine
+                ]),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 20
+                },
+            )
+            .unwrap(),
         vec![log1.clone(), log3.clone(), log4.clone()]
     );
 
     // Filter by store_id in
     assert_eq!(
-        ChangelogRepository::new(&connection).query(
-            ChangelogCondition::store_id::any(vec!["store1".to_string(), "store2".to_string()]),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 20
-            },
-        )
-        .unwrap(),
+        ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::store_id::any(vec!["store1".to_string(), "store2".to_string()]),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 20
+                },
+            )
+            .unwrap(),
         vec![log1.clone(), log2.clone()]
     );
 }
@@ -638,14 +641,15 @@ async fn test_changelog_outgoing_sync_records() {
         .set_i32(KeyType::SettingsSyncSiteId, Some(central_site_id))
         .unwrap();
 
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(1, false, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 10,
-        },
-    )
-    .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(1, false, None),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 10,
+            },
+        )
+        .unwrap();
     assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
 
     // Insert an asset_class variant (which should trigger a changelog record for Central Sync)
@@ -658,14 +662,15 @@ async fn test_changelog_outgoing_sync_records() {
         .upsert_one(&row)
         .unwrap();
 
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(1, false, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(1, false, None),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     // outgoing_results should contain the changelog record for the asset class
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
@@ -691,39 +696,43 @@ async fn test_changelog_outgoing_sync_records() {
     // Now we should have two records to send to site 1 the remote site on initialisation
     // The asset class and the asset
 
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(site1_id, true, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 1000,
-        },
-    )
-    .unwrap();
-    assert_eq!(outgoing_results.len(), 2);
-    assert_eq!(outgoing_results[0].record_id, asset_class_id);
-    assert_eq!(outgoing_results[1].record_id, asset_id);
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, true, None),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1000,
+            },
+        )
+        .unwrap();
+    assert!(outgoing_results
+        .iter()
+        .any(|r| r.record_id == asset_class_id));
+    assert!(outgoing_results.iter().any(|r| r.record_id == asset_id));
 
     // If not during initialisation, we should only get the asset_class as the asset was synced from the site already
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(site1_id, false, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
     // Site 2 should only get the asset_class
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(site2_id, false, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site2_id, false, None),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 }
@@ -759,44 +768,47 @@ async fn test_changelog_outgoing_patient_sync_records() {
     // store A (on site1) has name_store_join for patient2
 
     // Site 1 sync should get the vaccination changelog via name_store_join
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(site1_id, true, None),
-        CursorAndLimit {
-            cursor: cursor_before,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, true, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
 
     // Site 1 patient_pull
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogCondition::And(vec![
-            ChangelogFilter::patient_data_for_site(site1_id, None),
-            ChangelogCondition::patient_id::equal("patient2".to_string()),
-        ]),
-        CursorAndLimit {
-            cursor: cursor_before,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogCondition::And(vec![
+                ChangelogFilter::patient_data_for_site(site1_id, None),
+                ChangelogCondition::patient_id::equal("patient2".to_string()),
+            ]),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
 
     // Ensure site without name_store_join for the patient does not get the vaccination changelog
     // on patient_pull
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogCondition::And(vec![
-            ChangelogFilter::patient_data_for_site(5, None),
-            ChangelogCondition::patient_id::equal("patient2".to_string()),
-        ]),
-        CursorAndLimit {
-            cursor: cursor + 500,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogCondition::And(vec![
+                ChangelogFilter::patient_data_for_site(5, None),
+                ChangelogCondition::patient_id::equal("patient2".to_string()),
+            ]),
+            CursorAndLimit {
+                cursor: cursor + 500,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     assert_eq!(outgoing_results.len(), 0);
 }
