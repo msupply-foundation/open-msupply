@@ -170,7 +170,12 @@ export const StockItemSearchInput = ({
           setSearch(value);
           debounceOnFilter(getItemNameFilterValue(value, selectedCode));
         },
-        onBlur: () => setSearch(currentItem ? getOptionLabel(currentItem) : ''),
+        // Keep typed text and filter on blur so an accidental click-out
+        // doesn't lose the user's search. If an item is selected, revert
+        // to its label so the display matches the form's actual state.
+        onBlur: () => {
+          if (currentItem) setSearch(getOptionLabel(currentItem));
+        },
       }}
     />
   );
