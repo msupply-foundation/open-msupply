@@ -54,33 +54,56 @@ where
             ),
         };
 
-        if (is_connect_error
+        // Surface the status code (or transport error) for any failed attempt so
+        // proxy/upstream errors like 502/503/504 — which we do not currently retry —
+        // still appear in the log instead of being hidden behind a downstream
+        // "could not parse response" message.
+        let attempt_failure = match result.as_ref() {
+            Ok(r) if !r.status().is_success() => Some(format!("HTTP {}", r.status().as_u16())),
+            Ok(_) => None,
+            Err(e) => {
+                let kind = if is_connect_error {
+                    "connection error"
+                } else if is_timeout_error {
+                    "request timeout"
+                } else {
+                    "request error"
+                };
+                Some(format!("{}: {}", kind, e))
+            }
+        };
+
+        let will_retry = (is_connect_error
             || is_timeout_error
             || status == Some(StatusCode::REQUEST_TIMEOUT))
-            && (index + 1) < connection_timeouts.0.len()
-        {
-            let reason = if is_connect_error {
-                "connection error"
-            } else if is_timeout_error {
-                "request timeout"
-            } else {
-                "HTTP 408 Request Timeout"
-            };
+            && (index + 1) < connection_timeouts.0.len();
+
+        if let Some(failure) = attempt_failure {
             let url_display = url.as_deref().unwrap_or("<unknown>");
-            let next_timeout = connection_timeouts.0[index + 1];
             let body_display = body_size
                 .map(|n| format!("{} bytes", n))
                 .unwrap_or_else(|| "unknown size".to_string());
+            let retry_note = if will_retry {
+                format!(
+                    "retrying (next connect timeout {}s)",
+                    connection_timeouts.0[index + 1]
+                )
+            } else {
+                "not retrying".to_string()
+            };
             log::info!(
-                "API request retry {}/{} for url '{}' due to {} after {:.1}s (request body: {}); next connect timeout {}s",
-                index + 1,
-                connection_timeouts.0.len() - 1,
+                "API request failed: url '{}', {}, attempt {}/{} after {:.1}s (request body: {}); {}",
                 url_display,
-                reason,
+                failure,
+                index + 1,
+                connection_timeouts.0.len(),
                 elapsed.as_secs_f64(),
                 body_display,
-                next_timeout
+                retry_note,
             );
+        }
+
+        if will_retry {
             index += 1;
             continue;
         }
