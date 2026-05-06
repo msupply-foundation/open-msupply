@@ -8,8 +8,9 @@ use crate::{
     sync::{ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError},
     sync_v7::{
         api::{
+            get_token::{GetTokenInput, GetTokenOutput},
             patient_data_for_site, patient_search, pull, push,
-            site_info::{SiteInfoInput, SiteInfoOutput},
+            status::{self},
             Common,
         },
         sync::{sync_record_to_buffer_row, SyncBatchV7},
@@ -23,18 +24,31 @@ use repository::{
     KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
     SiteRowRepository, StorageConnection, StringFilter, SyncBufferRepository,
 };
+use repository::{
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
+    ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
+    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId, StorageConnection,
+    StringFilter, SyncBufferRepository,
+};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
 };
 use thiserror::Error;
+use thiserror::Error;
+use util::format_error;
 use util::format_error;
 
 /// TODO: revisit token format
-pub fn get_site_info(
+pub fn get_token(
     service_provider: &ServiceProvider,
-    input: SiteInfoInput,
-) -> Result<SiteInfoOutput, SyncError> {
+    input: GetTokenInput,
+) -> Result<GetTokenOutput, SyncError> {
     if !CentralServerConfig::is_central_server() {
         return Err(SyncError::NotACentralServer);
     }
@@ -81,9 +95,11 @@ pub fn get_site_info(
                 ..site.clone()
             })?;
 
-            let central_site_id = get_central_site_id(connection)?;
+            let central_site_id = SourceSiteId::CurrentSiteId
+                .get_id(&ctx.connection)?
+                .ok_or(SyncError::SiteIdNotSet)?;
 
-            Ok(SiteInfoOutput {
+            Ok(GetTokenOutput {
                 token,
                 site_id: site.id,
                 central_site_id,
@@ -150,11 +166,18 @@ fn validate(
 
     Ok((site, ctx))
 }
-
-fn get_central_site_id(connection: &StorageConnection) -> Result<i32, SyncError> {
-    KeyValueStoreRepository::new(connection)
-        .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
-        .ok_or_else(|| SyncError::Other("Central site id not configured".to_string()))
+/// Report site status to a remote open-mSupply Server.
+/// Errors with `SiteLockError::IntegrationInProgress` while integration is running, so clients
+/// can poll until it clears.
+pub async fn site_status(service_provider: &ServiceProvider, common: Common) -> status::Response {
+    let (site, ctx) = validate(service_provider, &common)?;
+    let central_site_id = SourceSiteId::CurrentSiteId
+        .get_id(&ctx.connection)?
+        .ok_or(SyncError::SiteIdNotSet)?;
+    Ok(status::Output {
+        site_id: site.id,
+        central_site_id,
+    })
 }
 
 /// Send Records to a remote open-mSupply Server
@@ -346,6 +369,7 @@ async fn spawn_integration_inner(
         site_id,
         None,
         SyncContext::Central { active_stores },
+        false,
     )?;
     Ok(())
 }
@@ -405,8 +429,8 @@ mod tests {
         site
     }
 
-    fn input() -> SiteInfoInput {
-        SiteInfoInput {
+    fn input() -> GetTokenInput {
+        GetTokenInput {
             version: Version::from_package_json(),
             name: SITE_NAME.to_string(),
             password_sha256: PASSWORD_SHA256.to_string(),
@@ -421,7 +445,7 @@ mod tests {
             .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
             .unwrap();
         test_site(&context.connection, None);
-        let site_info = get_site_info(&context.service_provider, input()).unwrap();
+        let site_info = get_token(&context.service_provider, input()).unwrap();
         let common = Common {
             token: site_info.token,
             hardware_id: HARDWARE_ID.to_string(),
@@ -431,16 +455,16 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn get_site_info_allocates_token_and_sets_hardware_id() {
+    async fn get_token_allocates_token_and_sets_hardware_id() {
         let (_, connection, connection_manager, _) = setup_all(
-            "get_site_info_allocates_token_and_sets_hardware_id",
+            "get_token_allocates_token_and_sets_hardware_id",
             MockDataInserts::none(),
         )
         .await;
         test_util_set_is_central_server(true);
         test_site(&connection, None);
         let service_provider = ServiceProvider::new(connection_manager);
-        let output = get_site_info(&service_provider, input()).unwrap();
+        let output = get_token(&service_provider, input()).unwrap();
 
         assert!(!output.token.is_empty());
         assert_eq!(output.site_id, 1);
@@ -454,7 +478,7 @@ mod tests {
         assert_eq!(stored.hardware_id.as_deref(), Some(HARDWARE_ID));
 
         // Using same valid credentials must not reallocate a new token or change hardware id.
-        let err = get_site_info(&service_provider, input()).unwrap_err();
+        let err = get_token(&service_provider, input()).unwrap_err();
         assert!(matches!(err, SyncError::TokenAlreadyAllocated));
         let site = SiteRowRepository::new(&connection)
             .find_one_by_id(1)
@@ -465,31 +489,28 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn get_site_info_rejects_invalid_auth() {
-        let (_, connection, connection_manager, _) = setup_all(
-            "get_site_info_rejects_invalid_auth",
-            MockDataInserts::none(),
-        )
-        .await;
+    async fn get_token_rejects_invalid_auth() {
+        let (_, connection, connection_manager, _) =
+            setup_all("get_token_rejects_invalid_auth", MockDataInserts::none()).await;
         test_util_set_is_central_server(true);
         let service_provider = ServiceProvider::new(connection_manager);
 
         // Site not found
         let mut unknown = input();
         unknown.name = "nonexistent".to_string();
-        let err = super::get_site_info(&service_provider, unknown).unwrap_err();
+        let err = super::get_token(&service_provider, unknown).unwrap_err();
         assert!(matches!(err, SyncError::InvalidSiteNameOrPassword));
 
         // Bad password
         test_site(&connection, None);
         let mut bad = input();
         bad.password_sha256 = "wrong".to_string();
-        let err = super::get_site_info(&service_provider, bad).unwrap_err();
+        let err = super::get_token(&service_provider, bad).unwrap_err();
         assert!(matches!(err, SyncError::InvalidSiteNameOrPassword));
 
         // Token already set
         test_site(&connection, Some("existing_token".to_string()));
-        let err = super::get_site_info(&service_provider, input()).unwrap_err();
+        let err = super::get_token(&service_provider, input()).unwrap_err();
         assert!(matches!(err, SyncError::TokenAlreadyAllocated));
     }
 
@@ -504,7 +525,7 @@ mod tests {
         test_site(&connection, None);
         let sp = ServiceProvider::new(connection_manager);
 
-        let allocated = get_site_info(&sp, input()).unwrap();
+        let allocated = get_token(&sp, input()).unwrap();
 
         let common = Common {
             token: allocated.token.clone(),

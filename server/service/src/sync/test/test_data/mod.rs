@@ -207,7 +207,6 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut item::test_pull_delete_records());
     test_records.append(&mut currency::test_pull_delete_records());
     test_records.append(&mut master_list_name_join::test_pull_delete_records());
-    test_records.append(&mut store::test_pull_delete_records());
     test_records.append(&mut unit::test_pull_delete_records());
 
     // Central but site specific

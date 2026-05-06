@@ -284,8 +284,8 @@ async fn initialise_from_central(
     let service_context = service_provider.basic_context()?;
     info!("Initialising from central");
     service_provider
-        .site_info_service
-        .request_and_set_site_info(&service_provider, &sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(&service_provider, &sync_settings)
         .await?;
     service_provider
         .settings
@@ -393,7 +393,7 @@ async fn main() -> anyhow::Result<()> {
                 sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
                 users: synced_user_info_rows,
                 site_id: service_provider
-                    .site_info_service
+                    .site_auth_service
                     .get_site_id(&ctx)?
                     .unwrap(),
             };
