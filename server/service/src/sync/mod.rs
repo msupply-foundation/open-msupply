@@ -34,6 +34,7 @@ use self::api::SiteInfoV5;
 
 #[derive(Serialize, Deserialize, TS, Debug)]
 pub(crate) struct ActiveStoresOnSite {
+    site_id: i32,
     stores: Vec<Store>,
 }
 
@@ -58,7 +59,11 @@ impl ActiveStoresOnSite {
         let stores = StoreRepository::new(connection)
             .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
 
-        Ok(ActiveStoresOnSite { stores })
+        Ok(ActiveStoresOnSite { site_id, stores })
+    }
+
+    pub(crate) fn site_id(&self) -> i32 {
+        self.site_id
     }
 
     pub(crate) fn name_ids(&self) -> Vec<String> {

@@ -37,23 +37,33 @@ pub(crate) fn validate_on_remote(
                 (None, None) => Ok(()),
                 _ => Err(ValidationError::UnexpectedSyncStyleForV7),
             },
-            // Initialising sites only, store must be active.
-            // TODO sync store data when site has changed
+            // Store active on this site; post-init, reject own echoes only.
             Remote => match &sync_buffer_row.store_id {
                 None => Err(ValidationError::NoStoreId),
                 Some(id) if !active_store_ids.iter().any(|s| s == id) => {
                     Err(ValidationError::InactiveStore)
                 }
-                Some(_) if !is_initialising => Err(ValidationError::SiteAlreadyInitialised),
+                Some(_)
+                    if !is_initialising
+                        && sync_buffer_row.source_site_id == active_on_site.site_id() =>
+                {
+                    Err(ValidationError::SiteAlreadyInitialised)
+                }
                 Some(_) => Ok(()),
             },
             Transfer => match &sync_buffer_row.transfer_store_id {
                 Some(id) if active_store_ids.iter().any(|s| s == id) => Ok(()),
                 _ => Err(ValidationError::TransferStoreNotActiveOnThisSite),
             },
-            // Sanity check for patient would require name_store_join visibility check.
-            Patient => Ok(()),
-            File => Ok(()),
+            // Visibility already gated by the central pull filter.
+            Patient => match &sync_buffer_row.patient_id {
+                Some(_) => Ok(()),
+                None => Err(ValidationError::NoPatientId),
+            },
+            File => match (&sync_buffer_row.store_id, &sync_buffer_row.patient_id) {
+                (None, None) => Ok(()),
+                _ => Err(ValidationError::UnexpectedSyncStyleForV7),
+            },
             ToLegacyCentralOnly => Err(ValidationError::UnexpectedSyncStyleForV7),
             RemoteToCentral => Err(ValidationError::UnexpectedSyncStyleForV7),
         };
@@ -70,8 +80,7 @@ pub(crate) fn validate_on_remote(
 pub(crate) fn validate_on_central(
     sync_buffer_row: &SyncBufferRow,
     sync_styles: &[ChangeLogSyncStyle],
-    // Central's own active stores, not the source site's. Currently unused;
-    active_on_site: &ActiveStoresOnSite,
+    _active_on_site: &ActiveStoresOnSite,
 ) -> Result<(), ValidationError> {
     use ChangeLogSyncStyle::*;
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
@@ -79,13 +88,12 @@ pub(crate) fn validate_on_central(
     for style in sync_styles {
         let result = match style {
             Central => Err(ValidationError::UnexpectedSyncStyleForV7),
-            // Remote store validation is via auth
+            // Source site identity gated by auth.
             Remote | RemoteToCentral => match &sync_buffer_row.store_id {
                 Some(_) => Ok(()),
                 None => Err(ValidationError::NoStoreId),
             },
             Transfer => Ok(()),
-            // TODO don't allow central name changes only allow edits of patients from sites with name_store_join
             Patient => match &sync_buffer_row.patient_id {
                 Some(_) => Ok(()),
                 None => Err(ValidationError::NoPatientId),
