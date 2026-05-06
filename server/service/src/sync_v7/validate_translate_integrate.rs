@@ -10,10 +10,9 @@ use super::validate::*;
 use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
 use repository::{
     ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRowDelete, CursorDirection,
-    Delete, InvoiceLineRowDelete, InvoiceRowDelete, ItemRowDelete, LocationTypeRowDelete,
-    NameRowDelete, PendingQuery, RepositoryError, RowActionType, StockLineRowDelete,
-    StorageConnection, StoreRowDelete, SyncAction, SyncBufferRepository, SyncBufferRow,
-    SyncVersion, UnitRowDelete, Upsert,
+    Delete, InvoiceLineRowDelete, InvoiceRowDelete, ItemRowDelete, NameRowDelete, PendingQuery,
+    RepositoryError, RowActionType, StockLineRowDelete, StorageConnection, SyncAction,
+    SyncBufferRepository, SyncBufferRow, SyncVersion, UnitRowDelete, Upsert,
 };
 use serde::de::Error as _;
 use thiserror::Error;
@@ -100,8 +99,6 @@ fn translate_delete(
         ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
         ChangelogTableName::Currency => Box::new(CurrencyRowDelete(id)),
         ChangelogTableName::Name => Box::new(NameRowDelete(id)),
-        ChangelogTableName::Store => Box::new(StoreRowDelete(id)),
-        ChangelogTableName::LocationType => Box::new(LocationTypeRowDelete(id)),
         ChangelogTableName::Item => Box::new(ItemRowDelete(id)),
         ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
         ChangelogTableName::Invoice => Box::new(InvoiceRowDelete(id)),
@@ -197,9 +194,16 @@ pub fn validate_translate_integrate<'a>(
             sync_version: SyncVersion::V7,
             reference,
             table_name: &table.to_string(),
-            action,
+            action: action.clone(),
             direction,
         })?;
+
+        log::info!(
+            "Integrating {} records for table {:?} with action {:?}",
+            rows.len(),
+            table,
+            action
+        );
 
         let had_store_records = *table == ChangelogTableName::Store && !rows.is_empty();
 
