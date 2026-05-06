@@ -1,18 +1,15 @@
-use repository::{
-    syncv7::SyncError, KeyType, KeyValueStoreRepository, SyncBufferRepository, SyncBufferRowInsert,
-};
-
 use crate::{
     service_provider::ServiceProvider,
     sync_v7::{
         api::{patient_data_for_site, Common, SyncApiV7},
-        sync::sync_record_to_buffer_row,
-        validate_translate_integrate::{validate_translate_integrate, SyncContext},
+        validate_translate_integrate::{validate_translate_integrate_in_memory, SyncContext},
     },
 };
+use chrono::Utc;
+use repository::{
+    syncv7::SyncError, RowActionType, SyncAction, SyncBufferRow, SyncRecordData, SyncVersion,
+};
 
-/// Pulls all data for a single patient from central, writes it to sync_buffer
-/// with `reference = "patient_<id>"`, then integrates only those rows.
 pub async fn pull_and_integrate_patient_data(
     service_provider: &ServiceProvider,
     patient_id: &str,
@@ -42,11 +39,12 @@ pub async fn pull_and_integrate_patient_data(
         auth_headers,
     };
 
-    let reference = format!("patient_{patient_id}");
     let batch_size = settings.batch_size.remote_pull;
 
     let mut nsj_id: Option<String> = None;
     let mut cursor: i64 = 0;
+    let mut buffer_rows: Vec<SyncBufferRow> = Vec::new();
+
     loop {
         let response = api
             .patient_data_for_site(patient_data_for_site::Input {
@@ -63,26 +61,32 @@ pub async fn pull_and_integrate_patient_data(
         }
 
         let batch = response.batch;
-        let central_site_id = batch.site_id;
+        let source_site_id = batch.site_id;
         let record_count = batch.records.len();
 
         let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
             break;
         };
 
-        let rows: Vec<SyncBufferRowInsert> = batch
-            .records
-            .into_iter()
-            .map(|r| {
-                let mut row = sync_record_to_buffer_row(r, central_site_id, None);
-                row.reference = Some(reference.clone());
-                row
-            })
-            .collect();
-
-        connection
-            .transaction_sync(|con| SyncBufferRepository::new(con).insert_many(&rows))
-            .map_err(|e| e.to_inner_error())?;
+        for record in batch.records {
+            buffer_rows.push(SyncBufferRow {
+                cursor: record.cursor as i32,
+                record_id: record.record_id,
+                received_datetime: Utc::now().naive_utc(),
+                table_name: record.table_name.to_string(),
+                action: match record.action {
+                    RowActionType::Upsert => SyncAction::Upsert,
+                    RowActionType::Delete => SyncAction::Delete,
+                },
+                data: SyncRecordData(record.data),
+                sync_version: SyncVersion::V7,
+                source_site_id,
+                store_id: record.store_id,
+                transfer_store_id: record.transfer_store_id,
+                patient_id: record.patient_id,
+                ..Default::default()
+            });
+        }
 
         cursor = batch_max_cursor;
 
@@ -91,17 +95,7 @@ pub async fn pull_and_integrate_patient_data(
         }
     }
 
-    let central_site_id = KeyValueStoreRepository::new(connection)
-        .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
-        .ok_or_else(|| SyncError::Other("Central server site id not configured".to_string()))?;
-
-    validate_translate_integrate(
-        connection,
-        None,
-        central_site_id,
-        Some(&reference),
-        SyncContext::PatientLookup,
-    )?;
+    validate_translate_integrate_in_memory(connection, &buffer_rows, SyncContext::PatientLookup)?;
 
     nsj_id
         .ok_or_else(|| SyncError::Other("Central did not return a name_store_join_id".to_string()))
@@ -258,16 +252,13 @@ mod test {
         assert_eq!(requests[0]["nameStoreJoinId"], "nsj_1");
         assert_eq!(requests[0]["cursor"], 0);
 
-        // Sync buffer row tagged with the patient reference and integrated.
+        // Patient lookup integrates directly from memory, nothing persisted to sync_buffer.
         let buffers = SyncBufferRepository::new(&connection).get_all().unwrap();
-        let row = buffers
-            .iter()
-            .find(|b| b.record_id == "patient_1")
-            .expect("patient_1 row should be in sync_buffer");
-        assert_eq!(row.reference, Some("patient_patient_1".to_string()));
-        assert_eq!(row.source_site_id, 1);
-        assert!(row.integration_datetime.is_some());
-        assert_eq!(row.integration_error, None);
+        assert!(
+            buffers.is_empty(),
+            "patient lookup should not write to sync_buffer, got {:?}",
+            buffers
+        );
 
         // Patient name row landed locally.
         let stored = NameRowRepository::new(&connection)
