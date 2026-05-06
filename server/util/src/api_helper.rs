@@ -28,14 +28,33 @@ where
 
         let result = f(client).send().await;
 
-        let (status, is_connect_error) = match result.as_ref() {
-            Ok(r) => (Some(r.status()), false),
-            Err(e) => (e.status(), e.is_connect()),
+        let (status, is_connect_error, url) = match result.as_ref() {
+            Ok(r) => (Some(r.status()), false, Some(r.url().to_string())),
+            Err(e) => (
+                e.status(),
+                e.is_connect(),
+                e.url().map(|u| u.to_string()),
+            ),
         };
 
         if (is_connect_error || status == Some(StatusCode::REQUEST_TIMEOUT))
             && (index + 1) < connection_timeouts.0.len()
         {
+            let reason = if is_connect_error {
+                "connection error"
+            } else {
+                "request timeout"
+            };
+            let url_display = url.as_deref().unwrap_or("<unknown>");
+            let next_timeout = connection_timeouts.0[index + 1];
+            log::info!(
+                "API request retry {}/{} for url '{}' due to {}; next connect timeout {}s",
+                index + 1,
+                connection_timeouts.0.len() - 1,
+                url_display,
+                reason,
+                next_timeout
+            );
             index += 1;
             continue;
         }
