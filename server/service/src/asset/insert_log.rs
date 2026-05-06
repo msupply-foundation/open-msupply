@@ -1,6 +1,7 @@
 use std::ops::Not;
 
 use super::{
+    insert::InsertAssetError,
     query_log::get_asset_log,
     validate::{
         check_asset_exists, check_asset_log_exists, check_comment_required_for_reason,
@@ -10,7 +11,7 @@ use super::{
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 
 use repository::{
     asset_log_row::{AssetLogStatus, AssetLogType},
@@ -21,6 +22,9 @@ use repository::{
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
 };
+use util::uuid::uuid;
+
+pub const IMPORTED_FROM_CSV_COMMENT: &str = "Imported from CSV";
 
 #[derive(PartialEq, Debug)]
 pub enum InsertAssetLogError {
@@ -178,11 +182,10 @@ pub fn recalculate_mapping_dates(
         .find_one_by_id(asset_id)?
         .ok_or(InsertAssetLogError::AssetDoesNotExist)?;
 
-    let mut properties: serde_json::Map<String, serde_json::Value> =
-        match &asset_row.properties {
-            Some(props) => serde_json::from_str(props).unwrap_or_default(),
-            None => serde_json::Map::new(),
-        };
+    let mut properties: serde_json::Map<String, serde_json::Value> = match &asset_row.properties {
+        Some(props) => serde_json::from_str(props).unwrap_or_default(),
+        None => serde_json::Map::new(),
+    };
 
     let format_date = |dt: chrono::NaiveDateTime| dt.format("%Y-%m-%d").to_string();
 
@@ -214,6 +217,72 @@ pub fn recalculate_mapping_dates(
     updated_row.modified_datetime = Utc::now().naive_utc();
 
     AssetRowRepository::new(connection).upsert_one(&updated_row, None)?;
+
+    Ok(())
+}
+
+/// CSV imports persist `initial_mapping_date` / `most_recent_mapping_date` directly into
+/// `asset.properties`. Without a corresponding `TemperatureMapping` log, the next call to
+/// `recalculate_mapping_dates` (triggered by any UI-recorded mapping) would overwrite those
+/// values from the log table and the imported dates would be lost. This creates synthetic
+/// log entries so the recalc treats the imported dates as part of the history.
+pub fn create_logs_for_imported_mapping_dates(
+    connection: &StorageConnection,
+    asset_id: &str,
+    user_id: &str,
+    properties_json: &str,
+) -> Result<(), InsertAssetError> {
+    let props: serde_json::Map<String, serde_json::Value> =
+        match serde_json::from_str(properties_json) {
+            Ok(p) => p,
+            Err(_) => return Ok(()),
+        };
+
+    let mut dates: Vec<NaiveDate> = Vec::new();
+    for key in ["initial_mapping_date", "most_recent_mapping_date"] {
+        let Some(raw) = props.get(key).and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let trimmed = raw.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        // Canonical form is YYYY-MM-DD (what `recalculate_mapping_dates` writes
+        // and what the fixed client now sends). Accept DD/MM/YYYY too as a
+        // safety net for any caller that still sends the CSV display format.
+        let parsed = NaiveDate::parse_from_str(trimmed, "%Y-%m-%d")
+            .or_else(|_| NaiveDate::parse_from_str(trimmed, "%d/%m/%Y"))
+            .map_err(|_| InsertAssetError::InvalidMappingDate {
+                key: key.to_string(),
+                value: trimmed.to_string(),
+            })?;
+        dates.push(parsed);
+    }
+    dates.sort();
+    dates.dedup();
+
+    if dates.is_empty() {
+        return Ok(());
+    }
+
+    let now = Utc::now().naive_utc();
+    let repo = AssetLogRowRepository::new(connection);
+
+    for date in dates {
+        let log_datetime = date.and_hms_opt(0, 0, 0).unwrap_or(now);
+        let log = AssetLogRow {
+            id: uuid(),
+            asset_id: asset_id.to_string(),
+            user_id: user_id.to_string(),
+            status: None,
+            comment: Some(IMPORTED_FROM_CSV_COMMENT.to_string()),
+            r#type: Some(AssetLogType::TemperatureMapping),
+            reason_id: None,
+            log_datetime,
+            created_datetime: now,
+        };
+        repo.upsert_one(&log)?;
+    }
 
     Ok(())
 }

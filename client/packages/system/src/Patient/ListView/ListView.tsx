@@ -14,6 +14,7 @@ import {
   ColumnType,
   ChipTableCell,
   usePreferences,
+  NaiveDateCell,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -117,6 +118,7 @@ export const PatientListView = () => {
         accessorKey: 'dateOfBirth',
         header: t('label.date-of-birth'),
         columnType: ColumnType.Date,
+        Cell: NaiveDateCell,
         enableSorting: true,
         enableColumnFilter: true,
         dateFilterFormat: 'date',

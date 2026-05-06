@@ -7,9 +7,13 @@ export const useDeleteRequestLine = () => {
   const requestId = useRequestId();
 
   const queryClient = useQueryClient();
-  const { mutate } = useMutation(api.deleteLine, {
+  const { mutate } = useMutation({
+    mutationFn: api.deleteLine,
+
     onSettled: () =>
-      queryClient.invalidateQueries(api.keys.detail(requestId)),
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(requestId)
+      })
   });
   return mutate;
 };

@@ -12,9 +12,9 @@ export const useStocktakeLines = (id: string, itemId?: string) => {
   const api = useStocktakeApi();
   const stocktakeId = useStocktakeId();
 
-  return useQuery(
-    api.keys.lines(stocktakeId, queryParams),
-    () => api.get.lines(id, queryParams),
-    { enabled: !!id }
-  );
+  return useQuery({
+    queryKey: api.keys.lines(stocktakeId, queryParams),
+    queryFn: () => api.get.lines(id, queryParams),
+    enabled: !!id
+  });
 };

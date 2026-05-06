@@ -14,13 +14,17 @@ export const useAssetsDelete = (
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useAssetApi();
-  const { mutateAsync } = useMutation(async (id: string) =>
-    api.delete(id, api.storeId)
+  const { mutateAsync } = useMutation({
+    mutationFn: async (id: string) =>
+      api.delete(id, api.storeId)
+  }
   );
 
   const deleteAction = async () => {
     await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
+      .then(() => queryClient.invalidateQueries({
+      queryKey: api.keys.base()
+    }))
       .catch(err => {
         throw err;
       });
