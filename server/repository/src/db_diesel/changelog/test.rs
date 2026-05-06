@@ -6,7 +6,8 @@ use crate::{
     asset_row::AssetRow,
     mock::{
         mock_item_a, mock_location_1, mock_location_2, mock_location_in_another_store,
-        mock_location_on_hold, mock_store_a, mock_store_b, MockData, MockDataInserts,
+        mock_location_on_hold, mock_name_store_b, mock_store_a, mock_store_b, MockData,
+        MockDataInserts,
     },
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
@@ -638,10 +639,13 @@ async fn test_changelog_outgoing_sync_records() {
         .set_i32(KeyType::SettingsSyncSiteId, Some(central_site_id))
         .unwrap();
 
+    // Skip past changelog rows from mock setup (Central-style names/stores).
+    let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
     let outgoing_results = ChangelogRepository::new(&connection).query(
         ChangelogFilter::all_data_for_site(1, false, None),
         CursorAndLimit {
-            cursor: -1,
+            cursor: cursor_before,
             limit: 10,
         },
     )
@@ -661,7 +665,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection).query(
         ChangelogFilter::all_data_for_site(1, false, None),
         CursorAndLimit {
-            cursor: -1,
+            cursor: cursor_before,
             limit: 1000,
         },
     )
@@ -694,7 +698,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection).query(
         ChangelogFilter::all_data_for_site(site1_id, true, None),
         CursorAndLimit {
-            cursor: -1,
+            cursor: cursor_before,
             limit: 1000,
         },
     )
@@ -707,7 +711,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection).query(
         ChangelogFilter::all_data_for_site(site1_id, false, None),
         CursorAndLimit {
-            cursor: -1,
+            cursor: cursor_before,
             limit: 1000,
         },
     )
@@ -719,13 +723,47 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection).query(
         ChangelogFilter::all_data_for_site(site2_id, false, None),
         CursorAndLimit {
-            cursor: -1,
+            cursor: cursor_before,
             limit: 1000,
         },
     )
     .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
+
+    // A requisition at store_a addressed to the name backing store_b should
+    // reach site 1 via store_id (Remote) and site 2 via transfer_store_id (Transfer).
+    let req_id = "req_transfer".to_string();
+    RequisitionRowRepository::new(&connection)
+        .upsert_one(&RequisitionRow {
+            id: req_id.clone(),
+            store_id: site1_store_id.clone(),
+            name_id: mock_name_store_b().id,
+            ..Default::default()
+        })
+        .unwrap();
+
+    let outgoing_results = ChangelogRepository::new(&connection).query(
+        ChangelogFilter::all_data_for_site(site1_id, false, None),
+        CursorAndLimit {
+            cursor: cursor_before,
+            limit: 1000,
+        },
+    )
+    .unwrap();
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[1].record_id, req_id);
+
+    let outgoing_results = ChangelogRepository::new(&connection).query(
+        ChangelogFilter::all_data_for_site(site2_id, false, None),
+        CursorAndLimit {
+            cursor: cursor_before,
+            limit: 1000,
+        },
+    )
+    .unwrap();
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[1].record_id, req_id);
 }
 
 #[actix_rt::test]
