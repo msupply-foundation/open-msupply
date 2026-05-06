@@ -8,7 +8,6 @@ pub type Response = ApiResponse<Output>;
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Input {
-    pub cursor: i64,
     pub patient_id: String,
     pub store_id: String,
     pub name_store_join_id: String,
@@ -19,7 +18,7 @@ pub struct Input {
 pub struct Output {
     #[serde(flatten)]
     pub batch: SyncBatchV7,
-    pub name_store_join_id: Option<String>,
+    pub name_store_join_id: String,
 }
 
 static ROUTE: &str = "patient_data_for_site";
