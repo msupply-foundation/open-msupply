@@ -23,7 +23,7 @@ use crate::{
         api::{self, Common, SyncApiV7},
         get_current_site_id,
         prepare::prepare,
-        sync_logger::{SyncLogger, SyncStep},
+        sync_logger::{SyncLogger, SyncLoggerHandle, SyncStep},
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
@@ -117,7 +117,8 @@ pub(crate) async fn sync_v7(
     settings: SyncSettings,
     is_initialising: bool,
 ) -> Result<(), SyncError> {
-    let mut logger = SyncLogger::start(&ctx.connection)?;
+    let mut logger = SyncLogger::start(&ctx.connection)?
+        .with_subscription_trigger(service_provider.subscription_trigger.clone());
 
     let sync_result = sync_inner(
         &mut logger,
@@ -163,22 +164,30 @@ async fn sync_inner<'a>(
         Some(status.central_site_id),
     )?;
 
-    logger.start_step(SyncStep::Push)?;
-    sync_v7.push(logger, is_initialising).await?;
+    // During initialisation we have no local data to push and no integration to
+    // wait for — the central server hasn't seen this site yet. Skip both steps
+    // entirely so the sync_log_v7 row leaves their timestamps null and the UI
+    // hides them naturally.
+    if !is_initialising {
+        logger.start_step(SyncStep::Push)?;
+        sync_v7.push(logger).await?;
 
-    logger.start_step(SyncStep::WaitForIntegration)?;
-    sync_v7
-        .wait_for_integration(INTEGRATION_POLL_PERIOD_SECONDS, INTEGRATION_TIMEOUT_SECONDS)
-        .await?;
+        logger.start_step(SyncStep::WaitForIntegration)?;
+        sync_v7
+            .wait_for_integration(INTEGRATION_POLL_PERIOD_SECONDS, INTEGRATION_TIMEOUT_SECONDS)
+            .await?;
+    }
 
     logger.start_step(SyncStep::Pull)?;
     sync_v7.pull(logger, is_initialising).await?;
 
     logger.start_step(SyncStep::Integrate)?;
-    sync_v7.integrate(logger, is_initialising).await?;
+
+    sync_v7
+        .integrate(logger, service_provider, is_initialising)
+        .await?;
 
     logger.finish()?;
-
     run_post_sync_triggers(&ctx, service_provider, !is_initialising);
 
     Ok(())
@@ -191,16 +200,7 @@ pub(crate) struct SyncV7<'a> {
 }
 
 impl<'a> SyncV7<'a> {
-    pub(crate) async fn push<'b>(
-        &self,
-        logger: &mut SyncLogger<'b>,
-        is_initialising: bool,
-    ) -> Result<(), SyncError> {
-        if is_initialising {
-            logger.progress(0)?;
-            return Ok(());
-        }
-
+    pub(crate) async fn push<'b>(&self, logger: &mut SyncLogger<'b>) -> Result<(), SyncError> {
         let cursor_controller = CursorController::new(KeyType::SyncPushCursorV7);
         // TODO use SourceSiteId, and remove from other uses
         let site_id = get_current_site_id(self.connection)?;
@@ -291,12 +291,13 @@ impl<'a> SyncV7<'a> {
                 .await?;
 
             let record_count = batch.records.len();
-            logger.progress(record_count as i64)?;
+            let max_cursor = batch.max_cursor;
 
             let site_id = batch.site_id;
             let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
                 break;
             };
+            logger.progress(max_cursor as i64 - batch_max_cursor)?;
 
             info!("Pulled {record_count} max batch cursor {batch_max_cursor} cursor {cursor} max cursor {}", batch.max_cursor);
 
@@ -328,6 +329,7 @@ impl<'a> SyncV7<'a> {
     pub(crate) async fn integrate<'b>(
         &self,
         logger: &mut SyncLogger<'b>,
+        service_provider: &ServiceProvider,
         is_initialising: bool,
     ) -> Result<(), SyncError> {
         let active_stores = ActiveStoresOnSite::get(self.connection)
@@ -340,17 +342,31 @@ impl<'a> SyncV7<'a> {
             .map_err(SyncError::DatabaseError)?
             .ok_or(SyncError::SiteIdNotSet)?;
 
-        validate_translate_integrate(
-            self.connection,
-            Some(logger),
-            central_site_id,
-            None,
-            SyncContext::Remote {
-                active_stores,
-                is_initialising,
-            },
-            is_initialising,
-        )?;
+        let ctx = service_provider.basic_context()?;
+
+        let logger_handle = logger.into_handle();
+
+        let returned_logger_handle =
+            tokio::task::spawn_blocking(move || -> Result<SyncLoggerHandle, SyncError> {
+                let mut logger = logger_handle.with_connection(&ctx.connection);
+                validate_translate_integrate(
+                    &ctx.connection,
+                    Some(&mut logger),
+                    central_site_id,
+                    None,
+                    SyncContext::Remote {
+                        active_stores,
+                        is_initialising,
+                    },
+                    is_initialising,
+                )?;
+                Ok(logger.into_handle())
+            })
+            .await
+            .map_err(|e| SyncError::Other(format!("integrate join error: {e:?}")))??;
+
+        // Reattach to outer logger that lives on the runtime side
+        logger.restore(returned_logger_handle);
 
         Ok(())
     }

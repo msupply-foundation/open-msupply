@@ -25,7 +25,7 @@ use crate::{
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
 
-use super::status::FullSyncStatus;
+use super::status::{FullSyncStatus, FullSyncStatusV5V6};
 
 const PORT: u16 = 12345;
 
@@ -518,7 +518,6 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
                 new_status
                     .pull_central
                     .clone_from(&current_status.pull_central);
-                new_status.summary.duration_in_seconds = current_status.summary.duration_in_seconds;
 
                 assert_eq!(current_status, new_status);
 
@@ -605,16 +604,16 @@ struct TestInput {
     /// Timestamps of previously called route
     previous_datetime: NaiveDateTime,
     /// Status returned by previously called route
-    previous_status: FullSyncStatus,
+    previous_status: FullSyncStatusV5V6,
     /// Current status from database
-    current_status: FullSyncStatus,
+    current_status: FullSyncStatusV5V6,
     /// Iteration for a route
     iteration: u32,
 }
 
 struct TestOutput {
     /// Status to be passed on to next route
-    new_status: FullSyncStatus,
+    new_status: FullSyncStatusV5V6,
     response: String,
 }
 
@@ -623,7 +622,7 @@ type TesterData = Data<Mutex<Tester>>;
 /// Helper struct for defining mock server routes and tests within routes
 struct Tester {
     service_provider: Arc<ServiceProvider>,
-    previous_status: FullSyncStatus,
+    previous_status: FullSyncStatusV5V6,
     previous_date: NaiveDateTime,
     iterations: HashMap<String, u32>,
     tests: HashMap<String, fn(TestInput) -> TestOutput>,
@@ -658,14 +657,22 @@ impl Tester {
 
         let now = Utc::now().naive_utc();
 
+        let current_status = match self
+            .service_provider
+            .sync_status_service
+            .get_latest_sync_status(&ctx)
+            .unwrap()
+            .unwrap()
+        {
+            FullSyncStatus::V5V6(s) => s,
+            FullSyncStatus::V7(_) => {
+                panic!("V5/V6 sync_status_service test got V7 variant")
+            }
+        };
+
         let input = TestInput {
             now,
-            current_status: self
-                .service_provider
-                .sync_status_service
-                .get_latest_sync_status(&ctx)
-                .unwrap()
-                .unwrap(),
+            current_status,
             previous_status: self.previous_status.clone(),
             iteration: *iteration,
             previous_datetime: self.previous_date,
