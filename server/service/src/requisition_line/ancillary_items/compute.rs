@@ -186,6 +186,11 @@ fn chase<'a>(
     visited: &mut HashSet<&'a str>,
     depth: u32,
 ) {
+    // No demand from a zero-quantity parent — skip the whole subtree so we
+    // don't add ancillary lines for items the user hasn't actually requested.
+    if quantity <= 0.0 {
+        return;
+    }
     if depth >= MAX_ANCILLARY_DEPTH {
         return;
     }
@@ -416,6 +421,22 @@ mod tests {
             .unwrap();
         assert!(f64_approx_eq(syringe.required_quantity, 200.0));
         assert!(f64_approx_eq(safety_box.required_quantity, 2.0));
+    }
+
+    #[test]
+    fn zero_parent_quantity_adds_nothing() {
+        // A line with zero requested quantity shouldn't pull any ancillaries
+        // into the plan — there's no demand to fulfil.
+        let plan = compute_ancillary_plan(
+            &[line("l1", "vaccine", 0.0)],
+            &[
+                link("vaccine", "syringe", 1.0, 1.1),
+                link("syringe", "safety_box", 100.0, 1.0),
+            ],
+        );
+        assert_eq!(plan.state(), AncillaryState::None);
+        assert!(plan.to_add.is_empty());
+        assert!(plan.to_update.is_empty());
     }
 
     #[test]
