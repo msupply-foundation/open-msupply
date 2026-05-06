@@ -149,7 +149,14 @@ const storePreviousServer = (server: FrontEndHost) =>
 
 const getStoredPreviousServer = (): FrontEndHost | null => {
   const stored = store.get(PREVIOUS_SERVER_KEY, null);
-  return stored ? JSON.parse(stored) : null;
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    console.error('Corrupt previous_server in electron-store, clearing:', e);
+    store.set(PREVIOUS_SERVER_KEY, null);
+    return null;
+  }
 };
 
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
