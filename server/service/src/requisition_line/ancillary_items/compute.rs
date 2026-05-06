@@ -30,6 +30,9 @@ pub struct AncillaryDelta {
     /// The existing requisition line for this ancillary, if any. Present for
     /// updates, absent for adds.
     pub existing_line_id: Option<String>,
+    /// Quantity currently on the requisition line, if a line already exists.
+    /// Always populated for updates so callers can render before/after.
+    pub current_quantity: Option<f64>,
 }
 
 /// Breakdown of which ancillary items need action on a given requisition.
@@ -132,6 +135,7 @@ pub fn compute_ancillary_plan(
                 item_link_id,
                 required_quantity,
                 existing_line_id: None,
+                current_quantity: None,
             }),
             Some(line) => {
                 if !f64_approx_eq(line.requested_quantity, required_quantity) {
@@ -139,6 +143,7 @@ pub fn compute_ancillary_plan(
                         item_link_id,
                         required_quantity,
                         existing_line_id: Some(line.id.clone()),
+                        current_quantity: Some(line.requested_quantity),
                     });
                 }
             }

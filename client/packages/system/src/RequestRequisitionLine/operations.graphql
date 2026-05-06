@@ -71,6 +71,28 @@ fragment Request on RequisitionNode {
   ancillaryState {
     state
     count
+    toAdd {
+      itemId
+      requiredQuantity
+      currentQuantity
+      item {
+        id
+        name
+        code
+        unitName
+      }
+    }
+    toUpdate {
+      itemId
+      requiredQuantity
+      currentQuantity
+      item {
+        id
+        name
+        code
+        unitName
+      }
+    }
   }
   requisitionNumber
   colour

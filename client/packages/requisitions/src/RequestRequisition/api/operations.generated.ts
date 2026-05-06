@@ -101,6 +101,32 @@ export type RequestByNumberQuery = {
           __typename: 'AncillaryStateResponse';
           state: Types.AncillaryStateNode;
           count: number;
+          toAdd: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+          toUpdate: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
         };
         documents: {
           __typename: 'SyncFileReferenceConnector';
@@ -258,6 +284,32 @@ export type RequestByIdQuery = {
           __typename: 'AncillaryStateResponse';
           state: Types.AncillaryStateNode;
           count: number;
+          toAdd: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+          toUpdate: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
         };
         documents: {
           __typename: 'SyncFileReferenceConnector';

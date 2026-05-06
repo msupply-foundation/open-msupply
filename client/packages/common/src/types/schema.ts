@@ -342,6 +342,18 @@ export type AllocateProgramNumberInput = {
 
 export type AllocateProgramNumberResponse = NumberNode;
 
+export type AncillaryDeltaNode = {
+  __typename: 'AncillaryDeltaNode';
+  /**
+   * Current quantity on the existing requisition line. `None` for items that
+   * don't yet have a line (i.e. entries in `toAdd`).
+   */
+  currentQuantity?: Maybe<Scalars['Float']['output']>;
+  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  requiredQuantity: Scalars['Float']['output'];
+};
+
 export type AncillaryItemMutations = {
   __typename: 'AncillaryItemMutations';
   deleteAncillaryItem: DeleteAncillaryItemResponse;
@@ -389,6 +401,14 @@ export type AncillaryStateResponse = {
   /** Number of ancillary items in the banner-worthy state. Zero when state is `None`. */
   count: Scalars['Int']['output'];
   state: AncillaryStateNode;
+  /**
+   * Items missing from the requisition that need to be added. Always populated
+   * from the underlying plan, regardless of `state` — the client can show the
+   * full breakdown even when the banner-relevant state is `NeedsUpdate`.
+   */
+  toAdd: Array<AncillaryDeltaNode>;
+  /** Items present on the requisition with stale quantities. */
+  toUpdate: Array<AncillaryDeltaNode>;
 };
 
 export enum ApplyToLinesInput {
