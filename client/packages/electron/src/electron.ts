@@ -226,13 +226,11 @@ const tryToConnectToServer = async (
 };
 
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
-  if (isStandalone && server.isLocal) {
-    // Standalone build: always reach the bundled local server via loopback so
-    // the connection survives network changes (issue #10036).
-    server = { ...server, ip: '127.0.0.1' };
-  } else if (server.isLocal && isLoopback(server.ip)) {
+  if (!isStandalone && server.isLocal && isLoopback(server.ip)) {
     // Non-standalone desktop: translate loopback to public IP so the QR code
     // and SiteInfo show an externally-reachable URL for clients like CCA.
+    // Skipped in standalone mode so autoconnect to loopback survives network
+    // changes (issue #10036) and discovery picks keep their announced IP.
     server = { ...server, ip: getIpAddress('public') };
   }
   discovery.stop();
