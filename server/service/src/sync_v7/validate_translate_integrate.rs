@@ -65,8 +65,8 @@ fn sync_type(table_name: &ChangelogTableName) -> &'static SyncType {
         ChangelogTableName::StockLine
         | ChangelogTableName::Invoice
         | ChangelogTableName::InvoiceLine => &SyncType::Remote,
-        // Default to Remote for unknown types
-        _ => &SyncType::Remote,
+        // Default to Central for unknown types
+        _ => &SyncType::Central,
     }
 }
 
@@ -178,13 +178,57 @@ fn validate_translate_integrate_one(
     }
 }
 
-// TODO transactions
 pub fn validate_translate_integrate<'a>(
+    connection: &StorageConnection,
+    logger: Option<&mut SyncLogger<'a>>,
+    source_site_id: i32,
+    reference: Option<&str>,
+    sync_context: SyncContext,
+    is_initialising: bool,
+) -> Result<(), RepositoryError> {
+    // During initialisation we don't need transaction as user can't access database
+    // and processors are not running, however we still want it for sqlite as it speeds it up
+    let dont_wrap_in_tx = is_initialising && cfg!(not(feature = "postgres"));
+    let wrap_in_outer_tx = !dont_wrap_in_tx;
+
+    // When not initialising, isolate each record + changelog write in its own
+    // nested transaction so a single failure doesn't roll back the whole batch.
+    // This is not needed for sqlite as it doesn't poison transaction on failure
+    let wrap_record_in_tx = wrap_in_outer_tx && cfg!(feature = "postgres");
+
+    // Even when initialising
+    if wrap_in_outer_tx {
+        return connection
+            .transaction_sync(move |t_con| {
+                validate_translate_integrate_inner(
+                    t_con,
+                    logger,
+                    source_site_id,
+                    reference,
+                    sync_context,
+                    wrap_record_in_tx,
+                )
+            })
+            .map_err(|e| e.to_inner_error());
+    }
+
+    validate_translate_integrate_inner(
+        connection,
+        logger,
+        source_site_id,
+        reference,
+        sync_context,
+        wrap_record_in_tx,
+    )
+}
+
+fn validate_translate_integrate_inner<'a>(
     connection: &StorageConnection,
     mut logger: Option<&mut SyncLogger<'a>>,
     source_site_id: i32,
     reference: Option<&str>,
     sync_context: SyncContext,
+    wrap_record_in_tx: bool,
 ) -> Result<(), RepositoryError> {
     // TODO this is too hacky, prefer active store cache
     let mut sync_context = sync_context;
@@ -203,6 +247,8 @@ pub fn validate_translate_integrate<'a>(
                                action: SyncAction,
                                direction: CursorDirection|
      -> Result<(), RepositoryError> {
+        log::info!("Integrating table {table} with action {action}");
+
         let rows = repo.pending_ordered_by_cursor(PendingQuery {
             source_site_id,
             sync_version: SyncVersion::V7,
@@ -212,18 +258,23 @@ pub fn validate_translate_integrate<'a>(
             direction,
         })?;
 
-        log::info!(
-            "Integrating {} records for table {:?} with action {:?}",
-            rows.len(),
-            table,
-            action
-        );
+        log::info!("Number of records to integrate  {}", rows.len());
 
         let had_store_records = *table == ChangelogTableName::Store && !rows.is_empty();
 
         for row in &rows {
             let started = datetime_now();
-            match validate_translate_integrate_one(connection, row, &sync_context) {
+            let one_result = if wrap_record_in_tx {
+                connection
+                    .transaction_sync_etc(
+                        |sub| validate_translate_integrate_one(sub, row, &sync_context),
+                        false,
+                    )
+                    .map_err(|e| e.to_inner_error())
+            } else {
+                validate_translate_integrate_one(connection, row, &sync_context)
+            };
+            match one_result {
                 Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
                 Err(e) => {
                     write_sync_buffer_error(connection, row.cursor, started, &format_error(&e))?;
