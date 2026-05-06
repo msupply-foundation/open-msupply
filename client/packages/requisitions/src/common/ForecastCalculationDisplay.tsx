@@ -6,6 +6,7 @@ import {
   LocaleKey,
   useTranslation,
   useFormatNumber,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 
 interface PopulationCourseData {
@@ -79,7 +80,7 @@ interface EquationLine {
   /// under the `=` sign with no label).
   label?: string;
   rhs: React.ReactNode;
-  /// Optional unit suffix dimmed next to the value (e.g. "units").
+  /// Optional unit suffix dimmed next to the value (e.g. "vials", "doses").
   suffix?: string;
 }
 
@@ -209,7 +210,8 @@ type FormatFns = {
 const amcAdapter = (
   d: AmcSnapshot,
   t: TypedTFunction<LocaleKey>,
-  { format, round }: FormatFns
+  { format, round }: FormatFns,
+  units: string
 ): EquationDisplayProps => ({
   heading: t('label.amc-forecast-calculation'),
   groups: [
@@ -222,7 +224,7 @@ const amcAdapter = (
           },
           {
             rhs: format(Math.ceil(d.forecastUnits)),
-            suffix: t('label.units').toLowerCase(),
+            suffix: units,
           },
         ],
       ],
@@ -233,7 +235,8 @@ const amcAdapter = (
 const populationAdapter = (
   d: PopulationSnapshot,
   t: TypedTFunction<LocaleKey>,
-  { format, round }: FormatFns
+  { format, round }: FormatFns,
+  units: string
 ): EquationDisplayProps => ({
   heading: t('label.population-forecast-calculation'),
   groups: d.vaccineCourses.map(c => ({
@@ -272,7 +275,7 @@ const populationAdapter = (
         },
         {
           rhs: format(Math.ceil(c.forecastUnits)),
-          suffix: t('label.units').toLowerCase(),
+          suffix: units,
         },
       ],
     ],
@@ -282,7 +285,8 @@ const populationAdapter = (
 const ancillaryAdapter = (
   d: AncillaryRatioSnapshot,
   t: TypedTFunction<LocaleKey>,
-  { format, round }: FormatFns
+  { format, round }: FormatFns,
+  units: string
 ): EquationDisplayProps => ({
   heading: t('label.ancillary-ratio-forecast-calculation'),
   warning: d.fallback ? t('warning.ancillary-ratio-fallback') : undefined,
@@ -300,7 +304,7 @@ const ancillaryAdapter = (
           },
           {
             rhs: round(c.units, 2),
-            suffix: t('label.units').toLowerCase(),
+            suffix: units,
           },
         ],
       ],
@@ -311,7 +315,7 @@ const ancillaryAdapter = (
           {
             label: 'target',
             rhs: round(d.forecastUnits, 2),
-            suffix: t('label.units').toLowerCase(),
+            suffix: units,
           },
         ],
       ],
@@ -322,7 +326,8 @@ const ancillaryAdapter = (
 const pluginAdapter = (
   d: PluginSnapshot,
   t: TypedTFunction<LocaleKey>,
-  _fmt: FormatFns
+  _fmt: FormatFns,
+  units: string
 ): EquationDisplayProps => ({
   heading: d.pluginCode,
   groups: [
@@ -353,7 +358,7 @@ const pluginAdapter = (
           {
             label: t('label.total').toLowerCase(),
             rhs: d.forecastUnits,
-            suffix: t('label.units').toLowerCase(),
+            suffix: units,
           },
         ],
       ],
@@ -365,6 +370,9 @@ const pluginAdapter = (
 
 interface ForecastCalculationDisplayProps {
   forecastData?: string | null;
+  /// Item-specific unit label (e.g. "vials", "tablets") used as the suffix on
+  /// final-unit results. Falls back to the generic "units" string.
+  unitName?: string | null;
 }
 
 /// Parses the snapshot JSON, runs the appropriate adapter, and hands the
@@ -372,9 +380,11 @@ interface ForecastCalculationDisplayProps {
 /// requires writing one adapter — the rendering surface is shared.
 const ForecastCalculationDisplay = ({
   forecastData,
+  unitName,
 }: ForecastCalculationDisplayProps) => {
   const t = useTranslation();
   const { round, format } = useFormatNumber();
+  const { getPlural } = useIntlUtils();
   if (!forecastData) return null;
   let snapshot: ForecastSnapshot;
   try {
@@ -383,16 +393,20 @@ const ForecastCalculationDisplay = ({
     return null;
   }
   const fmt: FormatFns = { format, round };
+  const trimmed = unitName?.trim();
+  const units = trimmed
+    ? getPlural(trimmed.toLowerCase(), 2)
+    : t('label.units').toLowerCase();
   switch (snapshot.method) {
     case 'amc':
-      return <EquationDisplay {...amcAdapter(snapshot, t, fmt)} />;
+      return <EquationDisplay {...amcAdapter(snapshot, t, fmt, units)} />;
     case 'population':
       if (!snapshot.vaccineCourses?.length) return null;
-      return <EquationDisplay {...populationAdapter(snapshot, t, fmt)} />;
+      return <EquationDisplay {...populationAdapter(snapshot, t, fmt, units)} />;
     case 'ancillary_ratio':
-      return <EquationDisplay {...ancillaryAdapter(snapshot, t, fmt)} />;
+      return <EquationDisplay {...ancillaryAdapter(snapshot, t, fmt, units)} />;
     case 'plugin':
-      return <EquationDisplay {...pluginAdapter(snapshot, t, fmt)} />;
+      return <EquationDisplay {...pluginAdapter(snapshot, t, fmt, units)} />;
     default:
       return null;
   }

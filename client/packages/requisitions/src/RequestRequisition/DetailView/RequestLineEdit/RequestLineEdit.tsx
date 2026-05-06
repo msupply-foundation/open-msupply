@@ -355,7 +355,10 @@ export const RequestLineEdit = ({
           }}
         >
           {displayForecasting && isInfoVisible(FORECAST_QUANTITY_INFO) && (
-            <ForecastCalculationDisplay forecastData={line.forecastData} />
+            <ForecastCalculationDisplay
+              forecastData={line.forecastData}
+              unitName={currentItem?.unitName}
+            />
           )}
           {/* Stock distribution chart is AMC-framed (target = max_months ×
               AMC, monthly columns, min/max thresholds). Population and

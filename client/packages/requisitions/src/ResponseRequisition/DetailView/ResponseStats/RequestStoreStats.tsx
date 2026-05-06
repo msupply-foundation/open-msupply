@@ -176,7 +176,10 @@ export const RequestStoreStats = ({
       }}
     >
       {displayForecasting ? (
-        <ForecastCalculationDisplay forecastData={forecastData} />
+        <ForecastCalculationDisplay
+          forecastData={forecastData}
+          unitName={unitName}
+        />
       ) : (
         <>
           {formattedAmc === 0 && <CalculationError isAmcZero />}
