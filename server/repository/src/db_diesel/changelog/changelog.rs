@@ -455,24 +455,6 @@ impl ChangelogFilter {
         ])
     }
 
-    /// Patient-scoped records for the v7 patient-lookup pull; includes the
-    /// patient's `Name` row.
-    pub fn patient_data_for_v7_site(
-        site_id: i32,
-        sync_style_options: Option<SyncVersions>,
-    ) -> ChangelogCondition::Inner {
-        use ChangeLogSyncStyle::*;
-        use ChangelogCondition as C;
-
-        let mut table_names = Patient.get_table_names_for_sync_style(sync_style_options);
-        table_names.push(ChangelogTableName::Name);
-
-        C::And(vec![
-            C::table_name::any(table_names),
-            C::patient_site_id::equal(site_id),
-        ])
-    }
-
     pub fn data_for_store(store_id: i32) -> ChangelogCondition::Inner {
         use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
