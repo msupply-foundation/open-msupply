@@ -41,9 +41,11 @@ pub struct SubscriptionTriggerHandle {
 
 impl SubscriptionTriggerHandle {
     pub fn send(&self, trigger: SubscriptionTrigger) {
+        log::info!("Sending subscription trigger: {trigger:#?}");
         if let Err(error) = self.sender.try_send(trigger) {
             log::error!("Problem sending subscription trigger: {error:#?}");
         }
+        log::info!("Finished sending");
     }
 
     /// Empty handle for tests/CLI that don't use subscriptions
@@ -115,6 +117,8 @@ async fn subscription_worker_loop(
             break;
         };
 
+        log::debug!("Received subscription trigger: {trigger:#?}");
+
         match trigger {
             SubscriptionTrigger::SyncStatus(row) => {
                 let status = FullSyncStatus::from_sync_log_row(row.clone());
@@ -149,7 +153,9 @@ async fn subscription_worker_loop(
                             }
                         },
                         Err(e) => {
-                            log::error!("Failed to get DB connection for initialisation status: {e:?}");
+                            log::error!(
+                                "Failed to get DB connection for initialisation status: {e:?}"
+                            );
                         }
                     }
                 }

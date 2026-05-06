@@ -71,6 +71,8 @@ pub(crate) enum SyncError {
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
     IntegrationError(RepositoryError),
+    #[error("Other error: {0}")]
+    Other(String),
 }
 
 // For unwrap and expect debug implementation is used
@@ -282,13 +284,13 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
-            &ctx.connection,
-            Some(logger),
+        let (upserts, deletes, merges) = integrate_and_translate_sync_outer(
+            &self.service_provider,
+            logger,
             SyncBufferSource::Central(central_sync_server_id),
             !self.settings.disable_integration_transaction,
         )
-        .map_err(SyncError::IntegrationError)?;
+        .await?;
 
         warn!("Upsert Integration result: {:?}", upserts);
         warn!("Delete Integration result: {:?}", deletes);
@@ -329,6 +331,45 @@ impl Synchroniser {
 
         Ok(())
     }
+}
+
+async fn integrate_and_translate_sync_outer(
+    service_provider: &ServiceProvider,
+    logger: &mut SyncLogger<'_>,
+    record_type: SyncBufferSource,
+    use_transaction: bool,
+) -> Result<
+    (
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+    ),
+    SyncError,
+> {
+    let ctx = service_provider.basic_context()?;
+
+    let logger_handle = logger.into_handle();
+
+    let (returned_logger_handle, result) =
+        tokio::task::spawn_blocking(move || -> Result<_, SyncError> {
+            let mut logger = logger_handle.with_connection(&ctx.connection);
+
+            let result = integrate_and_translate_sync_buffer(
+                &ctx.connection,
+                Some(&mut logger),
+                record_type,
+                use_transaction,
+            )
+            .map_err(SyncError::IntegrationError)?;
+
+            Ok((logger.into_handle(), result))
+        })
+        .await
+        .map_err(|e| SyncError::Other(format!("integrate join error: {e:?}")))??;
+
+    logger.restore(returned_logger_handle);
+
+    Ok(result)
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI

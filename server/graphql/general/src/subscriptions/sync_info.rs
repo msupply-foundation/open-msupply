@@ -19,7 +19,9 @@ pub fn sync_info_stream(
 
     stream::unfold(rx, |mut rx| async move {
         loop {
-            match rx.recv().await {
+            let received = rx.recv().await;
+            log::info!("Received subscription trigger: {received:#?}");
+            match received {
                 Ok(ResolvedSubscription::SyncInfo {
                     status,
                     last_successful,

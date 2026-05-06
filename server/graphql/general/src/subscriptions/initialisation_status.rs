@@ -12,7 +12,10 @@ pub fn initialisation_status_stream(
 
     stream::unfold(rx, |mut rx| async move {
         loop {
-            match rx.recv().await {
+            let received = rx.recv().await;
+
+            log::info!("Received subscription trigger: {received:#?}");
+            match received {
                 Ok(ResolvedSubscription::InitialisationStatus(status)) => {
                     let node = InitialisationStatusNode::from_domain(status);
                     return Some((node, rx));
