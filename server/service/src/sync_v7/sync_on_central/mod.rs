@@ -266,6 +266,7 @@ async fn spawn_integration_inner(
         site_id,
         None,
         SyncContext::Central { active_stores },
+        false,
     )?;
     Ok(())
 }
