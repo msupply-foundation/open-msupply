@@ -8,6 +8,7 @@ mod alter_changelog_table_for_sync_v7;
 mod alter_sync_buffer_for_sync_v7;
 mod update_changelog_for_sync_v7;
 mod create_site_table;
+mod populate_changelog_with_rows_for_sync_v7_tables;
 mod rebuild_sync_buffer;
 
 pub(crate) struct V3_00_00;
@@ -30,6 +31,7 @@ impl Migration for V3_00_00 {
             Box::new(update_changelog_for_sync_v7::Migrate),
             Box::new(create_site_table::Migrate),
             Box::new(rebuild_sync_buffer::Migrate),
+            Box::new(populate_changelog_with_rows_for_sync_v7_tables::Migrate),
         ]
     }
 }
