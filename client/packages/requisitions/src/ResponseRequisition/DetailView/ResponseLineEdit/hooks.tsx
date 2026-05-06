@@ -60,7 +60,7 @@ export const useDraftRequisitionLine = (
   const t = useTranslation();
   const { lines } = useResponse.line.list();
   const { data } = useResponse.document.get();
-  const { mutateAsync: saveMutation, isLoading } = useResponse.line.save();
+  const { mutateAsync: saveMutation, isPending: isLoading } = useResponse.line.save();
   const [isReasonsError, setIsReasonsError] = useState(false);
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
