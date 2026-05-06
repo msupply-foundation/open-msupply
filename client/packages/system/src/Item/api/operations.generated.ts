@@ -233,8 +233,8 @@ export type AncillaryItemFragment = {
   id: string;
   itemQuantity: number;
   ancillaryQuantity: number;
-  itemLinkId: string;
-  ancillaryItemLinkId: string;
+  itemId: string;
+  ancillaryItemId: string;
   item?: {
     __typename: 'ItemNode';
     id: string;
@@ -526,8 +526,8 @@ export type ItemFragment = {
     id: string;
     itemQuantity: number;
     ancillaryQuantity: number;
-    itemLinkId: string;
-    ancillaryItemLinkId: string;
+    itemId: string;
+    ancillaryItemId: string;
     item?: {
       __typename: 'ItemNode';
       id: string;
@@ -770,8 +770,8 @@ export type ItemsWithStockLinesQuery = {
         id: string;
         itemQuantity: number;
         ancillaryQuantity: number;
-        itemLinkId: string;
-        ancillaryItemLinkId: string;
+        itemId: string;
+        ancillaryItemId: string;
         item?: {
           __typename: 'ItemNode';
           id: string;
@@ -1132,8 +1132,8 @@ export type ItemByIdQuery = {
         id: string;
         itemQuantity: number;
         ancillaryQuantity: number;
-        itemLinkId: string;
-        ancillaryItemLinkId: string;
+        itemId: string;
+        ancillaryItemId: string;
         item?: {
           __typename: 'ItemNode';
           id: string;
@@ -1565,8 +1565,8 @@ export type UpsertAncillaryItemMutation = {
             id: string;
             itemQuantity: number;
             ancillaryQuantity: number;
-            itemLinkId: string;
-            ancillaryItemLinkId: string;
+            itemId: string;
+            ancillaryItemId: string;
             item?: {
               __typename: 'ItemNode';
               id: string;
@@ -1615,6 +1615,7 @@ export type ItemLedgerFragment = {
   invoiceId: string;
   invoiceStatus: Types.InvoiceNodeStatus;
   invoiceType: Types.InvoiceNodeType;
+  isExternal: boolean;
   name: string;
   packSize: number;
   movementInUnits: number;
@@ -1649,6 +1650,7 @@ export type ItemLedgerQuery = {
       invoiceId: string;
       invoiceStatus: Types.InvoiceNodeStatus;
       invoiceType: Types.InvoiceNodeType;
+      isExternal: boolean;
       name: string;
       packSize: number;
       movementInUnits: number;
@@ -1894,8 +1896,8 @@ export const AncillaryItemFragmentDoc = gql`
     id
     itemQuantity
     ancillaryQuantity
-    itemLinkId
-    ancillaryItemLinkId
+    itemId
+    ancillaryItemId
     item {
       ...AncillaryItemRow
     }
@@ -2002,6 +2004,7 @@ export const ItemLedgerFragmentDoc = gql`
     invoiceId
     invoiceStatus
     invoiceType
+    isExternal
     name
     packSize
     movementInUnits

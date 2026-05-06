@@ -1,7 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, LocationMovementRow, LocationMovementRowRepository,
-    StorageConnection, SyncBufferRow,
+    LocationRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,10 @@ use crate::sync::translations::{
     location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
 };
 
-use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    to_legacy_time, utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
+};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
 };
@@ -64,7 +67,7 @@ impl SyncTranslation for LocationMovementTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyLocationMovementRow {
@@ -77,6 +80,16 @@ impl SyncTranslation for LocationMovementTranslation {
             exit_date,
             exit_time,
         } = serde_json::from_str::<LegacyLocationMovementRow>(&sync_record.data)?;
+
+        let location_id = clear_invalid_fk(
+            connection,
+            "location_movement",
+            &id,
+            "location_id",
+            location_id,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = LocationMovementRow {
             id,

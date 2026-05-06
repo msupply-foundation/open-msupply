@@ -41,8 +41,8 @@ export function useUpsertAncillaryItem({
         storeId,
         input: {
           id: existing?.id ?? FnUtils.generateUUID(),
-          itemLinkId: principalItemId,
-          ancillaryItemLinkId: draft.ancillaryItemId,
+          itemId: principalItemId,
+          ancillaryItemId: draft.ancillaryItemId,
           itemQuantity: draft.itemQuantity,
           ancillaryQuantity: draft.ancillaryQuantity,
         },

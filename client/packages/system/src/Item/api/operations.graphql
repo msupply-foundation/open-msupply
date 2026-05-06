@@ -172,8 +172,8 @@ fragment AncillaryItem on AncillaryItemNode {
   id
   itemQuantity
   ancillaryQuantity
-  itemLinkId
-  ancillaryItemLinkId
+  itemId
+  ancillaryItemId
   item {
     ...AncillaryItemRow
   }
@@ -575,6 +575,7 @@ fragment ItemLedger on ItemLedgerNode {
   invoiceId
   invoiceStatus
   invoiceType
+  isExternal
   name
   packSize
   movementInUnits

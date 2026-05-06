@@ -5,6 +5,18 @@ import gql from 'graphql-tag';
 import { ReasonOptionRowFragmentDoc } from '../ReasonOption/api/operations.generated';
 import { SyncFileReferenceFragmentDoc } from '../Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type ItemWithAvailableStockFragment = {
+  __typename: 'ItemNode';
+  id: string;
+  name: string;
+  code: string;
+  unitName?: string | null;
+  defaultPackSize: number;
+  isVaccine: boolean;
+  doses: number;
+  availableStockOnHand: number;
+};
+
 export type ItemWithStatsFragment = {
   __typename: 'ItemNode';
   id: string;
@@ -68,15 +80,6 @@ export type RequestLineFragment = {
     isVaccine: boolean;
     doses: number;
     availableStockOnHand: number;
-    stats: {
-      __typename: 'ItemStatsNode';
-      averageMonthlyConsumption: number;
-      availableStockOnHand: number;
-      availableMonthsOfStockOnHand?: number | null;
-      totalConsumption: number;
-      stockOnHand: number;
-      monthsOfStockOnHand?: number | null;
-    };
   };
   reason?: {
     __typename: 'ReasonOptionNode';
@@ -179,15 +182,6 @@ export type RequestFragment = {
         isVaccine: boolean;
         doses: number;
         availableStockOnHand: number;
-        stats: {
-          __typename: 'ItemStatsNode';
-          averageMonthlyConsumption: number;
-          availableStockOnHand: number;
-          availableMonthsOfStockOnHand?: number | null;
-          totalConsumption: number;
-          stockOnHand: number;
-          monthsOfStockOnHand?: number | null;
-        };
       };
       reason?: {
         __typename: 'ReasonOptionNode';
@@ -267,8 +261,8 @@ export type OnlyHereToAvoidUnusedWarningsQuery = {
   me: { __typename: 'UserNode' };
 };
 
-export const ItemWithStatsFragmentDoc = gql`
-  fragment ItemWithStats on ItemNode {
+export const ItemWithAvailableStockFragmentDoc = gql`
+  fragment ItemWithAvailableStock on ItemNode {
     id
     name
     code
@@ -277,6 +271,11 @@ export const ItemWithStatsFragmentDoc = gql`
     isVaccine
     doses
     availableStockOnHand(storeId: $storeId)
+  }
+`;
+export const ItemWithStatsFragmentDoc = gql`
+  fragment ItemWithStats on ItemNode {
+    ...ItemWithAvailableStock
     stats(storeId: $storeId) {
       averageMonthlyConsumption
       availableStockOnHand
@@ -285,8 +284,8 @@ export const ItemWithStatsFragmentDoc = gql`
       stockOnHand
       monthsOfStockOnHand
     }
-    isVaccine
   }
+  ${ItemWithAvailableStockFragmentDoc}
 `;
 export const RequestLineFragmentDoc = gql`
   fragment RequestLine on RequisitionLineNode {
@@ -316,7 +315,7 @@ export const RequestLineFragmentDoc = gql`
       approvalComment
     }
     item {
-      ...ItemWithStats
+      ...ItemWithAvailableStock
     }
     reason {
       ...ReasonOptionRow
@@ -332,7 +331,7 @@ export const RequestLineFragmentDoc = gql`
       unavailableReason
     }
   }
-  ${ItemWithStatsFragmentDoc}
+  ${ItemWithAvailableStockFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
 `;
 export const RequestFragmentDoc = gql`

@@ -362,16 +362,13 @@ export type AncillaryItemNode = {
   __typename: 'AncillaryItemNode';
   /** The ancillary item — the item to be added to the order as a supply for the principal. */
   ancillaryItem?: Maybe<ItemNode>;
-  ancillaryItemLinkId: Scalars['String']['output'];
+  ancillaryItemId: Scalars['String']['output'];
   /** Right-hand side of the stored `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['output'];
   id: Scalars['String']['output'];
-  /**
-   * The principal item — the item this ancillary supply should be ordered alongside.
-   * Resolved via `item_link_id`, which matches `item.id` in the common (unmerged) case.
-   */
+  /** The principal item — the item this ancillary supply should be ordered alongside. */
   item?: Maybe<ItemNode>;
-  itemLinkId: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
   /** Left-hand side of the stored `x:y` ratio (principal count). */
   itemQuantity: Scalars['Float']['output'];
 };
@@ -566,6 +563,7 @@ export type AssetLogFilterInput = {
   logDatetime?: InputMaybe<DatetimeFilterInput>;
   reasonId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStatusInput>;
+  type?: InputMaybe<EqualFilterAssetLogTypeInput>;
   user?: InputMaybe<StringFilterInput>;
 };
 
@@ -573,12 +571,13 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['DateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
-  type?: Maybe<Scalars['String']['output']>;
+  type: AssetLogTypeNodeType;
   user?: Maybe<UserNode>;
 };
 
@@ -654,6 +653,11 @@ export enum AssetLogStatusNodeType {
   NotFunctioning = 'NOT_FUNCTIONING',
   NotInUse = 'NOT_IN_USE',
   Unserviceable = 'UNSERVICEABLE',
+}
+
+export enum AssetLogTypeNodeType {
+  StatusUpdate = 'STATUS_UPDATE',
+  TemperatureMapping = 'TEMPERATURE_MAPPING',
 }
 
 export type AssetLogsResponse = AssetLogConnector;
@@ -2728,6 +2732,13 @@ export type EqualFilterActivityLogTypeInput = {
   notEqualTo?: InputMaybe<ActivityLogNodeType>;
 };
 
+export type EqualFilterAssetLogTypeInput = {
+  equalAny?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  equalTo?: InputMaybe<AssetLogTypeNodeType>;
+  notEqualAll?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  notEqualTo?: InputMaybe<AssetLogTypeNodeType>;
+};
+
 export type EqualFilterBigFloatingNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
   equalAnyOrNull?: InputMaybe<Array<Scalars['Float']['input']>>;
@@ -3007,6 +3018,12 @@ export type FormSchemaSortInput = {
 export type FrontendPluginMetadataNode = {
   __typename: 'FrontendPluginMetadataNode';
   code: Scalars['String']['output'];
+  /**
+   * Hash of the plugin's bundled file contents — clients append this as a
+   * cache-busting URL token (?v=...) so the browser only refetches when the
+   * bundle's bytes change.
+   */
+  hash: Scalars['String']['output'];
   path: Scalars['String']['output'];
 };
 
@@ -3229,9 +3246,10 @@ export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  logDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   reasonId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<AssetLogStatusNodeType>;
-  type?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<AssetLogTypeNodeType>;
 };
 
 export type InsertAssetLogReasonError = {
@@ -4560,6 +4578,7 @@ export type InvoiceNode = {
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
   purchaseOrder?: Maybe<PurchaseOrderNode>;
+  purchaseOrderId?: Maybe<Scalars['String']['output']>;
   receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
@@ -4801,6 +4820,13 @@ export type ItemLedgerNode = {
   invoiceNumber: Scalars['Int']['output'];
   invoiceStatus: InvoiceNodeStatus;
   invoiceType: InvoiceNodeType;
+  /**
+   * True when the invoice is an external inbound shipment (i.e. linked to a
+   * purchase order). The client uses this to route to the correct detail
+   * page, since internal and external inbound shipments live on separate
+   * routes.
+   */
+  isExternal: Scalars['Boolean']['output'];
   itemId: Scalars['String']['output'];
   movementInUnits: Scalars['Float']['output'];
   name: Scalars['String']['output'];
@@ -7293,6 +7319,7 @@ export type PropertyNode = {
 
 export enum PropertyNodeValueType {
   Boolean = 'BOOLEAN',
+  Date = 'DATE',
   Float = 'FLOAT',
   Integer = 'INTEGER',
   String = 'STRING',
@@ -7586,6 +7613,15 @@ export type Queries = {
   itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
   items: ItemsResponse;
+  /**
+   * Query for items that have at least one stock_line matching `filter`
+   * in `store_id`, sorted/paginated by item attributes. Companion to
+   * `stockLines`: same filter shape, but the result is one row per item
+   * (suitable for an aggregated/grouped stock view). Because the predicate
+   * is identical to what `stockLines` uses, an item appears here iff at
+   * least one of its stock lines would appear in `stockLines`.
+   */
+  itemsByStockLineFilter: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
@@ -8045,6 +8081,13 @@ export type QueriesItemVariantsConfiguredArgs = {
 
 export type QueriesItemsArgs = {
   filter?: InputMaybe<ItemFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ItemSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesItemsByStockLineFilterArgs = {
+  filter?: InputMaybe<StockLineFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
   storeId: Scalars['String']['input'];
@@ -9809,6 +9852,7 @@ export type SupplierReturnInput = {
   inboundShipmentId?: InputMaybe<Scalars['String']['input']>;
   supplierId: Scalars['String']['input'];
   supplierReturnLines: Array<SupplierReturnLineInput>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SupplierReturnLineConnector = {
@@ -10484,6 +10528,7 @@ export type UpdateOutboundShipmentError = {
 };
 
 export type UpdateOutboundShipmentInput = {
+  backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
@@ -11259,11 +11304,11 @@ export type UpsertAncillaryItemErrorInterface = {
 };
 
 export type UpsertAncillaryItemInput = {
-  ancillaryItemLinkId: Scalars['String']['input'];
+  ancillaryItemId: Scalars['String']['input'];
   /** Right-hand side of the user-entered `x:y` ratio (ancillary count). */
   ancillaryQuantity: Scalars['Float']['input'];
   id: Scalars['String']['input'];
-  itemLinkId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
   /** Left-hand side of the user-entered `x:y` ratio (principal count). */
   itemQuantity: Scalars['Float']['input'];
 };
@@ -11493,6 +11538,7 @@ export enum UserPermission {
   PrescriptionMutate = 'PRESCRIPTION_MUTATE',
   PrescriptionQuery = 'PRESCRIPTION_QUERY',
   PurchaseOrderAuthorise = 'PURCHASE_ORDER_AUTHORISE',
+  PurchaseOrderFinalise = 'PURCHASE_ORDER_FINALISE',
   PurchaseOrderMutate = 'PURCHASE_ORDER_MUTATE',
   PurchaseOrderQuery = 'PURCHASE_ORDER_QUERY',
   Report = 'REPORT',

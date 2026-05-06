@@ -149,7 +149,19 @@ fn get_historical_available_stock_lines(
         )?,
     };
 
-    Ok(historical_stock_lines.rows)
+    // For backdated outbounds, drop stock lines that had no availability at the historical date —
+    // they can't be picked.
+    let rows = if datetime.is_some() {
+        historical_stock_lines
+            .rows
+            .into_iter()
+            .filter(|line| line.stock_line_row.available_number_of_packs > 0.0)
+            .collect()
+    } else {
+        historical_stock_lines.rows
+    };
+
+    Ok(rows)
 }
 
 fn get_outgoing_invoice_lines(

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import {
+  ItemWithAvailableStockFragment,
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
   RequestFragment,
@@ -39,7 +40,7 @@ import ForecastMethodPicker from '../../../common/ForecastMethodPicker';
 interface RequestLineEditProps {
   requisition: RequestFragment;
   lines: RequestLineFragment[];
-  currentItem?: ItemWithStatsFragment;
+  currentItem?: ItemWithAvailableStockFragment;
   onChangeItem: (item: ItemWithStatsFragment) => void;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
@@ -284,7 +285,7 @@ export const RequestLineEdit = ({
               />
               <ValueInfoRow
                 {...valueRowProps}
-                label={t('label.amc/amd')}
+                label={t(showExtraFields ? 'label.area-amc' : 'label.amc/amd')}
                 value={draft?.itemStats.averageMonthlyConsumption}
               />
               <InfoRow

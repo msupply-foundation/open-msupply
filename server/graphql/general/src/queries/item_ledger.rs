@@ -2,7 +2,7 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
-    loader::UserLoader,
+    loader::{InvoiceByIdLoader, UserLoader},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -104,6 +104,23 @@ impl ItemLedgerNode {
 
     pub async fn number_of_packs(&self) -> &f64 {
         &self.item_ledger.number_of_packs
+    }
+
+    /// True when the invoice is an external inbound shipment (i.e. linked to a
+    /// purchase order). The client uses this to route to the correct detail
+    /// page, since internal and external inbound shipments live on separate
+    /// routes.
+    pub async fn is_external(&self, ctx: &Context<'_>) -> Result<bool> {
+        if !matches!(self.item_ledger.invoice_type, InvoiceType::InboundShipment) {
+            return Ok(false);
+        }
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+        let invoice = loader
+            .load_one(self.item_ledger.invoice_id.clone())
+            .await?;
+        Ok(invoice
+            .and_then(|i| i.invoice_row.purchase_order_id)
+            .is_some())
     }
 
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {

@@ -72,6 +72,7 @@ export type SupplierReturnFragment = {
     __typename: 'InvoiceNode';
     id: string;
     invoiceNumber: number;
+    purchaseOrderId?: string | null;
     createdDatetime: string;
     user?: { __typename: 'UserNode'; username: string } | null;
   } | null;
@@ -447,6 +448,7 @@ export type SupplierReturnByNumberQuery = {
           __typename: 'InvoiceNode';
           id: string;
           invoiceNumber: number;
+          purchaseOrderId?: string | null;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
         } | null;
@@ -521,6 +523,7 @@ export type SupplierReturnByIdQuery = {
           __typename: 'InvoiceNode';
           id: string;
           invoiceNumber: number;
+          purchaseOrderId?: string | null;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
         } | null;
@@ -898,6 +901,7 @@ export const SupplierReturnFragmentDoc = gql`
     originalShipment {
       id
       invoiceNumber
+      purchaseOrderId
       createdDatetime
       user {
         username
