@@ -73,7 +73,7 @@ use crate::{
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
     sync::{
-        site_info::{SiteInfoService, SiteInfoTrait},
+        site_auth::{SiteAuthService, SiteAuthTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
@@ -147,7 +147,7 @@ pub struct ServiceProvider {
     // App Data Service
     pub app_data_service: Box<dyn AppDataServiceTrait>,
     // Sync
-    pub site_info_service: Box<dyn SiteInfoTrait>,
+    pub site_auth_service: Box<dyn SiteAuthTrait>,
     pub sync_status_service: Box<dyn SyncStatusTrait>,
     pub sync_status_v7_service: Box<dyn SyncStatusV7Trait>,
     // Triggers
@@ -280,7 +280,7 @@ impl ServiceProvider {
             encounter_service: Box::new(EncounterService {}),
             contact_trace_service: Box::new(ContactTraceService {}),
             app_data_service: Box::new(AppDataService {}),
-            site_info_service: Box::new(SiteInfoService),
+            site_auth_service: Box::new(SiteAuthService),
             sync_status_service: Box::new(SyncStatusService),
             sync_status_v7_service: Box::new(SyncStatusV7Service),
             processors_trigger,

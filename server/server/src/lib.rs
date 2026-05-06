@@ -386,14 +386,14 @@ pub async fn start_server(
     // Need to set sync settings in database if they are provided via yaml configurations
     let force_trigger_sync_on_startup = match (database_sync_settings, yaml_sync_settings) {
         // If we are changing sync setting via yaml configurations, need to check against central server
-        // to confirm that site is still the same (request_and_set_site_info checks site UUID)
+        // to confirm that site is still the same (request_and_set_site_auth checks site UUID)
         (Some(database_sync_settings), Some(yaml_sync_settings)) => {
             if database_sync_settings.core_site_details_changed(&yaml_sync_settings) {
                 info!("Sync settings in configurations don't match database");
                 info!("Checking sync credentials are for the same site..");
                 service_provider
-                    .site_info_service
-                    .request_and_set_site_info(&service_provider, &yaml_sync_settings)
+                    .site_auth_service
+                    .request_and_set_site_auth(&service_provider, &yaml_sync_settings)
                     .await
                     .unwrap();
                 info!("Checking sync credentials are for the same site..done");
@@ -410,8 +410,8 @@ pub async fn start_server(
             info!("Checking sync credentials..");
             // If fresh sync settings provided in yaml, check credentials against central server and save them in database
             service_provider
-                .site_info_service
-                .request_and_set_site_info(&service_provider, &yaml_sync_settings)
+                .site_auth_service
+                .request_and_set_site_auth(&service_provider, &yaml_sync_settings)
                 .await
                 .unwrap();
             info!("Checking sync credentials..done");
