@@ -80,6 +80,12 @@ export type RequestLineFragment = {
     doses: number;
     availableStockOnHand: number;
   };
+  ancillaryParents: Array<{
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+  }>;
   reason?: {
     __typename: 'ReasonOptionNode';
     id: string;
@@ -200,6 +206,12 @@ export type RequestFragment = {
         doses: number;
         availableStockOnHand: number;
       };
+      ancillaryParents: Array<{
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+      }>;
       reason?: {
         __typename: 'ReasonOptionNode';
         id: string;
@@ -326,6 +338,11 @@ export const RequestLineFragmentDoc = gql`
     }
     item {
       ...ItemWithAvailableStock
+    }
+    ancillaryParents {
+      id
+      name
+      code
     }
     reason {
       ...ReasonOptionRow

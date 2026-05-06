@@ -51,6 +51,11 @@ fragment RequestLine on RequisitionLineNode {
   item {
     ...ItemWithAvailableStock
   }
+  ancillaryParents {
+    id
+    name
+    code
+  }
   reason {
     ...ReasonOptionRow
   }

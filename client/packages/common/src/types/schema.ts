@@ -8845,6 +8845,14 @@ export type RequisitionLineNode = {
   additionInUnits: Scalars['Float']['output'];
   /** Quantity already issued in outbound shipments */
   alreadyIssued: Scalars['Float']['output'];
+  /**
+   * Items that have this line's item configured as an ancillary. Empty when
+   * the line is not an ancillary of anything. Used by the UI to flag
+   * ancillary lines and surface their parents in a popover. Batched per
+   * request via dataloader so a 200-line requisition issues two queries
+   * (link rows + parent items), not 400.
+   */
+  ancillaryParents: Array<ItemNode>;
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
   availableStockOnHand: Scalars['Float']['output'];

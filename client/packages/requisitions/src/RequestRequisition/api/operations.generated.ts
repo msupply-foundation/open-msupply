@@ -188,6 +188,12 @@ export type RequestByNumberQuery = {
               doses: number;
               availableStockOnHand: number;
             };
+            ancillaryParents: Array<{
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+            }>;
             reason?: {
               __typename: 'ReasonOptionNode';
               id: string;
@@ -371,6 +377,12 @@ export type RequestByIdQuery = {
               doses: number;
               availableStockOnHand: number;
             };
+            ancillaryParents: Array<{
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+            }>;
             reason?: {
               __typename: 'ReasonOptionNode';
               id: string;

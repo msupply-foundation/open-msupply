@@ -2843,5 +2843,6 @@
   "warning.confirm-send-ancillary-items-stale_other": "{{count}} ancillary item lines have outdated quantities. Send anyway?",
   "label.ancillary-plan-to-add": "Items to add",
   "label.ancillary-plan-to-update": "Items to update",
+  "label.ancillary-of": "Ancillary of",
   "button.details": "Details"
 }
