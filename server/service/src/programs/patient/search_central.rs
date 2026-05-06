@@ -20,12 +20,12 @@ use crate::{
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
     sync_v7::{
-        api::{patient_search, Common, SyncApiV7},
+        api::{Common, SyncApiV7},
         patient_lookup::pull_and_integrate_patient_data,
     },
 };
 
-use super::PatientSearch;
+use super::{patient_search_to_filter, PatientSearch};
 
 // TODO: When standalone work done, also check OMS only central.
 fn is_v7_remote(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
@@ -141,22 +141,9 @@ async fn patient_search_central_v7(
 ) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
     let api = build_v7_api(service_provider, sync_settings)?;
 
-    let PatientSearch {
-        code,
-        first_name,
-        last_name,
-        date_of_birth,
-        ..
-    } = params;
-
-    api.patient_search(patient_search::Input {
-        code,
-        first_name,
-        last_name,
-        date_of_birth,
-    })
-    .await
-    .map_err(map_v7_sync_error)
+    api.patient_search(patient_search_to_filter(params))
+        .await
+        .map_err(map_v7_sync_error)
 }
 
 #[derive(Clone, Debug)]
