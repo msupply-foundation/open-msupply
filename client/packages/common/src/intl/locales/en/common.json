@@ -2380,7 +2380,7 @@
   "messages.stock-location-invalid": "This stock line is in an invalid location. Please select another location.",
   "messages.stock-location-invalid-many": "Some stock lines are in invalid locations. Please choose valid locations for them.",
   "messages.stock-on-hold": "Some stock lines are on hold and cannot be allocated.",
-  "messages.stocktake-after-backdate-warning": "Stocktake(s) have been recorded after {{date}}. Adding a new inbound shipment may result in stocktake counts that don't align with the ledger. Are you sure you want to continue with this date?",
+  "messages.stocktake-after-backdate-warning": "Stocktake(s) have been recorded after {{date}}. Adding a new shipment may result in stocktake counts that don't align with the ledger. Are you sure you want to continue with this date?",
   "messages.stopping-scanner": "Stopping scanner...",
   "messages.success-printing-label": "Label printed successfully.",
   "messages.supplier-return-created-shipped": "Supplier return successfully created as Shipped",
