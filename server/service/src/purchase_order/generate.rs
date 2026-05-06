@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, ItemRowRepository, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus,
-    PurchaseOrderRow, RepositoryError, StockOnHandFilter, StockOnHandRepository,
+    PurchaseOrderRow, RepositoryError, StockOnHandFilter, StockOnHandRepository, UnitRowRepository,
 };
 use util::uuid::uuid;
 
@@ -29,6 +29,16 @@ pub fn generate_empty_purchase_order_lines(
                     .iter()
                     .find(|s| s.item_id == item.id)
                     .map_or(0.0, |s| s.available_stock_on_hand);
+                let unit_name = item
+                    .unit_id
+                    .as_ref()
+                    .and_then(|unit_id| {
+                        UnitRowRepository::new(&ctx.connection)
+                            .find_one_by_id(unit_id)
+                            .ok()
+                            .flatten()
+                    })
+                    .map(|u| u.name);
                 result.push(PurchaseOrderLineRow {
                     id: uuid(),
                     purchase_order_id: purchase_order_row.id.clone(),
@@ -54,7 +64,7 @@ pub fn generate_empty_purchase_order_lines(
                     comment: None,
                     manufacturer_id: None,
                     note: None,
-                    unit: None,
+                    unit: unit_name,
                 });
             }
             Ok(None) => {}
