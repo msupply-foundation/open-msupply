@@ -359,6 +359,9 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
         test_site(&connection, None);
         let service_provider = ServiceProvider::new(connection_manager);
         let output = get_token(&service_provider, input()).unwrap();
@@ -419,6 +422,9 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
         test_site(&connection, None);
         let sp = ServiceProvider::new(connection_manager);
 
