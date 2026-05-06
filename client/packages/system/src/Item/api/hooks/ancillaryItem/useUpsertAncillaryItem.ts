@@ -58,7 +58,9 @@ export function useUpsertAncillaryItem({
       throw new Error(t('error.failed-to-save-ancillary-item'));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(keys.detail(principalItemId));
+      queryClient.invalidateQueries({
+        queryKey: keys.detail(principalItemId),
+      });
     },
   });
 
