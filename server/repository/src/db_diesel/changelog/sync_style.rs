@@ -122,19 +122,18 @@ impl ChangelogTableName {
             // more specific sync style.
             // ----------------------------------------------------------
             Abbreviation
+            | Barcode
             | Category
             | Contact
             | ContactTrace
             | Context
+            | Currency
             | DemographicIndicator
             | Diagnosis
             | DocumentRegistry
             | IndicatorColumn
             | IndicatorLine
             | Item
-            | Barcode
-            | Currency
-            | Name
             | ItemCategoryJoin
             | ItemDirection
             | ItemStoreJoin
@@ -143,6 +142,7 @@ impl ChangelogTableName {
             | MasterList
             | MasterListLine
             | MasterListNameJoin
+            | Name
             | NameTag
             | NameTagJoin
             | Period
@@ -199,19 +199,6 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             Encounter | Vaccination | Document => (
                 vec![Central, Patient],
-                SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // Remote + Patient (v6) — store-scoped patient records that
-            // also flow to sites where the patient is visible (via
-            // name_store_join on the patient_id).
-            // ----------------------------------------------------------
-            Encounter | Vaccination | Document => (
-                vec![Remote, Patient],
                 SyncVersions {
                     is_v6: true,
                     is_v5: false,
