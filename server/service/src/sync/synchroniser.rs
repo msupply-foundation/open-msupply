@@ -28,7 +28,7 @@ use super::{
 
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
 const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
-pub struct Synchroniser {
+pub struct SynchroniserV5V6 {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
     central: CentralDataSynchroniser,
@@ -92,7 +92,7 @@ impl std::fmt::Debug for SyncError {
 /// pulled from the central server through this queue.
 /// 3) Remote data is regularly pushed to the central server.
 ///
-impl Synchroniser {
+impl SynchroniserV5V6 {
     pub(crate) fn new(
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
@@ -107,7 +107,7 @@ impl Synchroniser {
     ) -> anyhow::Result<Self> {
         let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, sync_version)?;
         let sync_api_v5 = SyncApiV5::new(sync_v5_settings.clone())?;
-        Ok(Synchroniser {
+        Ok(SynchroniserV5V6 {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
             },
@@ -231,34 +231,45 @@ impl Synchroniser {
 
         if !is_initialised {
             self.remote.advance_push_cursor(&ctx.connection)?;
-            self.service_provider.site_is_initialised_trigger.trigger();
-            // Trigger ledger fix after initialisation
-            self.service_provider.ledger_fix_trigger.trigger();
         }
 
-        ctx.processors_trigger
-            .trigger_requisition_transfer_processors();
-        ctx.processors_trigger.trigger_invoice_transfer_processors();
-
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::ContactFormEmail);
-
-        // This should be before plugin processor below, in case there is a processor error, need to be able
-        // to sync new plugin version to avoid bricking the app
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::LoadPlugin);
-
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::AssignRequisitionNumber);
-
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::Plugins);
-
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::RequisitionAutoFinalise);
+        run_post_sync_triggers(ctx, &self.service_provider, is_initialised);
 
         Ok(())
     }
+}
+
+pub(crate) fn run_post_sync_triggers(
+    ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    was_initialised: bool,
+) {
+    if !was_initialised {
+        service_provider.site_is_initialised_trigger.trigger();
+        // Trigger ledger fix after initialisation
+        service_provider.ledger_fix_trigger.trigger();
+    }
+
+    ctx.processors_trigger
+        .trigger_requisition_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::ContactFormEmail);
+
+    // This should be before plugin processor below, in case there is a processor error, need to be able
+    // to sync new plugin version to avoid bricking the app
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::LoadPlugin);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::AssignRequisitionNumber);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::Plugins);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::RequisitionAutoFinalise);
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
@@ -373,7 +384,7 @@ mod tests {
 
         let ctx = service_provider.basic_context().unwrap();
         let service = &service_provider.settings;
-        let s = Synchroniser::new(
+        let s = SynchroniserV5V6::new(
             SyncSettings {
                 url: "http://0.0.0.0:0".to_string(),
                 ..Default::default()
