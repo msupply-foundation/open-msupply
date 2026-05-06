@@ -438,7 +438,6 @@ impl ChangelogFilter {
         C::And(outer_and_condition)
     }
 
-    /// Patient-scoped records for the v6 `patient_pull` endpoint; name from OG
     pub fn patient_data_for_site(
         site_id: i32,
         sync_style_options: Option<SyncVersions>,
