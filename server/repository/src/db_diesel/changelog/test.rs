@@ -695,7 +695,6 @@ async fn test_changelog_outgoing_sync_records() {
 
     // Now we should have two records to send to site 1 the remote site on initialisation
     // The asset class and the asset
-
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site1_id, true, None),

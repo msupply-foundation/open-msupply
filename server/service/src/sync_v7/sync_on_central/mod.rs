@@ -216,8 +216,7 @@ fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
     }
 }
 
-/// Send patient-scoped records to a remote open-mSupply Server, after a
-/// patient lookup.
+/// Send patient records to a remote
 pub async fn patient_data_for_site(
     service_provider: &ServiceProvider,
     common: Common,
