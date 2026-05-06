@@ -9,7 +9,6 @@ pub type Response = ApiResponse<Output>;
 #[serde(rename_all = "camelCase")]
 pub struct Input {
     pub cursor: i64,
-    pub batch_size: u32,
     pub patient_id: String,
     pub store_id: String,
     pub name_store_join_id: String,

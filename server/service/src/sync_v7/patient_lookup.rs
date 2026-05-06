@@ -39,61 +39,40 @@ pub async fn pull_and_integrate_patient_data(
         auth_headers,
     };
 
-    let batch_size = settings.batch_size.remote_pull;
+    let response = api
+        .patient_data_for_site(patient_data_for_site::Input {
+            cursor: 0,
+            patient_id: patient_id.to_string(),
+            store_id: store_id.to_string(),
+            name_store_join_id: name_store_join_id.to_string(),
+        })
+        .await?;
 
-    let mut nsj_id: Option<String> = None;
-    let mut cursor: i64 = 0;
-    let mut buffer_rows: Vec<SyncBufferRow> = Vec::new();
+    let nsj_id = response.name_store_join_id;
+    let batch = response.batch;
+    let source_site_id = batch.site_id;
 
-    loop {
-        let response = api
-            .patient_data_for_site(patient_data_for_site::Input {
-                cursor,
-                batch_size,
-                patient_id: patient_id.to_string(),
-                store_id: store_id.to_string(),
-                name_store_join_id: name_store_join_id.to_string(),
-            })
-            .await?;
-
-        if cursor == 0 {
-            nsj_id = response.name_store_join_id.clone();
-        }
-
-        let batch = response.batch;
-        let source_site_id = batch.site_id;
-        let record_count = batch.records.len();
-
-        let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
-            break;
-        };
-
-        for record in batch.records {
-            buffer_rows.push(SyncBufferRow {
-                cursor: record.cursor as i32,
-                record_id: record.record_id,
-                received_datetime: Utc::now().naive_utc(),
-                table_name: record.table_name.to_string(),
-                action: match record.action {
-                    RowActionType::Upsert => SyncAction::Upsert,
-                    RowActionType::Delete => SyncAction::Delete,
-                },
-                data: SyncRecordData(record.data),
-                sync_version: SyncVersion::V7,
-                source_site_id,
-                store_id: record.store_id,
-                transfer_store_id: record.transfer_store_id,
-                patient_id: record.patient_id,
-                ..Default::default()
-            });
-        }
-
-        cursor = batch_max_cursor;
-
-        if record_count < batch_size as usize {
-            break;
-        }
-    }
+    let buffer_rows: Vec<SyncBufferRow> = batch
+        .records
+        .into_iter()
+        .map(|record| SyncBufferRow {
+            cursor: record.cursor as i32,
+            record_id: record.record_id,
+            received_datetime: Utc::now().naive_utc(),
+            table_name: record.table_name.to_string(),
+            action: match record.action {
+                RowActionType::Upsert => SyncAction::Upsert,
+                RowActionType::Delete => SyncAction::Delete,
+            },
+            data: SyncRecordData(record.data),
+            sync_version: SyncVersion::V7,
+            source_site_id,
+            store_id: record.store_id,
+            transfer_store_id: record.transfer_store_id,
+            patient_id: record.patient_id,
+            ..Default::default()
+        })
+        .collect();
 
     validate_translate_integrate_in_memory(connection, &buffer_rows, SyncContext::PatientLookup)?;
 
