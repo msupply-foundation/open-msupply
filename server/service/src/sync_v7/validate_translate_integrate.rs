@@ -350,14 +350,26 @@ pub(crate) fn validate_translate_integrate_in_memory(
             for table in INTEGRATION_ORDER {
                 for row in by_table_action(table, SyncAction::Upsert) {
                     validate_translate_integrate_one(con, row, &sync_context).map_err(|e| {
-                        RepositoryError::as_db_error("Patient lookup integration", format_error(&e))
+                        RepositoryError::as_db_error(
+                            &format!(
+                                "Patient lookup integration ({} {} {})",
+                                row.table_name, row.action, row.record_id
+                            ),
+                            format_error(&e),
+                        )
                     })?;
                 }
             }
             for table in INTEGRATION_ORDER.iter().rev() {
                 for row in by_table_action(table, SyncAction::Delete) {
                     validate_translate_integrate_one(con, row, &sync_context).map_err(|e| {
-                        RepositoryError::as_db_error("Patient lookup integration", format_error(&e))
+                        RepositoryError::as_db_error(
+                            &format!(
+                                "Patient lookup integration ({} {} {})",
+                                row.table_name, row.action, row.record_id
+                            ),
+                            format_error(&e),
+                        )
                     })?;
                 }
             }
