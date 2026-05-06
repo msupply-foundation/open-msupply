@@ -3,7 +3,6 @@ import React from 'react';
 import { FormLabel } from '@mui/material';
 import {
   DialogButton,
-  InputWithLabelRow,
   Box,
   useTranslation,
   useDialog,
@@ -12,7 +11,6 @@ import {
   useNotification,
   Typography,
   NumericTextInput,
-  InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import { StockItemSearchInput } from '@openmsupply-client/system';
 import {
@@ -94,62 +92,57 @@ const AncillarySupplyForm = ({
 }) => {
   const t = useTranslation();
 
-  return (
-    <Box justifyContent="center" display="flex" gap={3}>
-      <Box display="flex" flexDirection="column" gap={1} flex={1}>
-        <InputWithLabelRow
-          label={t('label.ancillary-item')}
-          labelWidth="200"
-          Input={
-            <Box width="100%">
-              <StockItemSearchInput
-                autoFocus={!draft.ancillaryItemId}
-                openOnFocus={!draft.ancillaryItemId}
-                disabled={isEdit}
-                onChange={selected =>
-                  updateDraft({ ancillaryItemId: selected?.id })
-                }
-                currentItemId={draft.ancillaryItemId ?? undefined}
-                filter={{ id: { notEqualAll: [principalItemId] } }}
-              />
-            </Box>
-          }
-        />
+  const labelSx = {
+    fontWeight: 'bold',
+    display: 'flex',
+    alignItems: 'center',
+    height: '100%',
+  };
 
-        <Box display="flex" alignItems="center" gap={1}>
-          <FormLabel
-            sx={{
-              width: '200px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            {t('label.ratio')}
-            <InfoTooltipIcon title={t('description.ancillary-ratio')} />
-            :
-          </FormLabel>
-          <NumericTextInput
-            value={draft.itemQuantity}
-            min={0}
-            decimalLimit={4}
-            onChange={next =>
-              updateDraft({ itemQuantity: next ?? 0 })
-            }
-            style={{ justifyContent: 'flex-start', width: 120 }}
-          />
-          <Typography fontWeight="bold">:</Typography>
-          <NumericTextInput
-            value={draft.ancillaryQuantity}
-            min={0}
-            decimalLimit={4}
-            onChange={next =>
-              updateDraft({ ancillaryQuantity: next ?? 0 })
-            }
-            style={{ justifyContent: 'flex-start', width: 120 }}
-          />
-        </Box>
+  return (
+    <Box
+      display="grid"
+      gridTemplateColumns="150px 1fr"
+      columnGap={2}
+      rowGap={1}
+      alignItems="center"
+    >
+      <FormLabel sx={labelSx}>{t('label.ancillary-item')}:</FormLabel>
+      <StockItemSearchInput
+        autoFocus={!draft.ancillaryItemId}
+        openOnFocus={!draft.ancillaryItemId}
+        disabled={isEdit}
+        onChange={selected => updateDraft({ ancillaryItemId: selected?.id })}
+        currentItemId={draft.ancillaryItemId ?? undefined}
+        filter={{ id: { notEqualAll: [principalItemId] } }}
+      />
+
+      <FormLabel sx={labelSx}>{t('label.ratio')}:</FormLabel>
+      <Box display="flex" alignItems="center" gap={1}>
+        <NumericTextInput
+          value={draft.itemQuantity}
+          min={0}
+          decimalLimit={4}
+          onChange={next => updateDraft({ itemQuantity: next ?? 0 })}
+          style={{ justifyContent: 'flex-start', width: 120 }}
+        />
+        <Typography fontWeight="bold">:</Typography>
+        <NumericTextInput
+          value={draft.ancillaryQuantity}
+          min={0}
+          decimalLimit={4}
+          onChange={next => updateDraft({ ancillaryQuantity: next ?? 0 })}
+          style={{ justifyContent: 'flex-start', width: 120 }}
+        />
       </Box>
+
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ gridColumn: 2 }}
+      >
+        {t('description.ancillary-ratio')}
+      </Typography>
     </Box>
   );
 };
