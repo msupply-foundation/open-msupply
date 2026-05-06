@@ -30,7 +30,6 @@ pub async fn pull_and_integrate_patient_data(
 
     let response = api
         .patient_data_for_site(patient_data_for_site::Input {
-            cursor: 0,
             patient_id: patient_id.to_string(),
             store_id: store_id.to_string(),
             name_store_join_id: name_store_join_id.to_string(),
@@ -65,8 +64,7 @@ pub async fn pull_and_integrate_patient_data(
 
     validate_translate_integrate_in_memory(connection, &buffer_rows, SyncContext::PatientLookup)?;
 
-    nsj_id
-        .ok_or_else(|| SyncError::Other("Central did not return a name_store_join_id".to_string()))
+    Ok(nsj_id)
 }
 
 #[cfg(test)]
@@ -100,42 +98,26 @@ mod test {
         _req: HttpRequest,
         body: web::Json<serde_json::Value>,
     ) -> actix_web::HttpResponse {
-        let input = body.into_inner();
-        let mut requests = received_requests.lock().await;
-        requests.push(input);
-        let is_first = requests.len() == 1;
-        drop(requests);
-
-        if is_first {
-            actix_web::HttpResponse::Ok().json(json!({
-                "Ok": {
-                    "siteId": 1,
-                    "maxCursor": 1,
-                    "nameStoreJoinId": NSJ_ID,
-                    "records": [
-                        {
-                            "cursor": 1,
-                            "recordId": "patient_1",
-                            "tableName": "Name",
-                            "action": "Upsert",
-                            "data": patient(),
-                            "storeId": null,
-                            "transferStoreId": null,
-                            "patientId": "patient_1",
-                        }
-                    ]
-                }
-            }))
-        } else {
-            actix_web::HttpResponse::Ok().json(json!({
-                "Ok": {
-                    "siteId": 1,
-                    "maxCursor": 1,
-                    "nameStoreJoinId": null,
-                    "records": []
-                }
-            }))
-        }
+        received_requests.lock().await.push(body.into_inner());
+        actix_web::HttpResponse::Ok().json(json!({
+            "Ok": {
+                "siteId": 1,
+                "maxCursor": 1,
+                "nameStoreJoinId": NSJ_ID,
+                "records": [
+                    {
+                        "cursor": 1,
+                        "recordId": "patient_1",
+                        "tableName": "Name",
+                        "action": "Upsert",
+                        "data": patient(),
+                        "storeId": null,
+                        "transferStoreId": null,
+                        "patientId": "patient_1",
+                    }
+                ]
+            }
+        }))
     }
 
     #[actix_rt::test]
@@ -214,11 +196,10 @@ mod test {
 
         // Mock central received the request.
         let requests = received_requests.lock().await.clone();
-        assert!(!requests.is_empty());
+        assert_eq!(requests.len(), 1);
         assert_eq!(requests[0]["patientId"], "patient_1");
         assert_eq!(requests[0]["storeId"], "store_1");
         assert_eq!(requests[0]["nameStoreJoinId"], "nsj_1");
-        assert_eq!(requests[0]["cursor"], 0);
 
         // Patient lookup integrates directly from memory, nothing persisted to sync_buffer.
         let buffers = SyncBufferRepository::new(&connection).get_all().unwrap();

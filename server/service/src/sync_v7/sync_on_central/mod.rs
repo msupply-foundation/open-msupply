@@ -226,35 +226,24 @@ pub async fn patient_data_for_site(
     let (site, ctx) = validate(service_provider, &common)?;
 
     let patient_data_for_site::Input {
-        cursor,
         patient_id,
         store_id,
         name_store_join_id,
     } = input;
 
-    let nsj_id = if cursor == 0 {
-        let id = ctx
-            .connection
-            .transaction_sync(|con| {
-                create_patient_name_store_join(
-                    con,
-                    &store_id,
-                    &patient_id,
-                    Some(name_store_join_id),
-                )
-            })
-            .map_err(|e| e.to_inner_error())?;
-        Some(id)
-    } else {
-        None
-    };
+    let nsj_id = ctx
+        .connection
+        .transaction_sync(|con| {
+            create_patient_name_store_join(con, &store_id, &patient_id, Some(name_store_join_id))
+        })
+        .map_err(|e| e.to_inner_error())?;
 
     let filter = ChangelogCondition::And(vec![
         ChangelogFilter::patient_data_for_site(site.id, None),
         ChangelogCondition::patient_id::equal(patient_id),
     ]);
 
-    let batch = SyncBatchV7::generate(&ctx.connection, filter, cursor, None)?;
+    let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
 
     Ok(patient_data_for_site::Output {
         batch,
