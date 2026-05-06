@@ -103,12 +103,12 @@ impl MigrationFragment for Migrate {
                   AND changelog.record_id = nsj.id
                   AND changelog.transfer_store_id IS NULL;
 
-                -- patient_id: the patient's name_id for patient-related records
-                -- For prescription invoices: patient is the invoice's name
+                -- patient_id: the patient's name_id at the time the changelog row was written.
+
+                -- For prescription invoices: patient is the invoice's other-party name at the time of upsert
                 UPDATE changelog
-                SET patient_id = nl.name_id
+                SET patient_id = i.name_link_id
                 FROM invoice i
-                JOIN name_link nl ON nl.id = i.name_link_id
                 WHERE changelog.table_name = 'invoice'
                   AND changelog.record_id = i.id
                   AND i.type = 'PRESCRIPTION'
@@ -116,29 +116,26 @@ impl MigrationFragment for Migrate {
 
                 -- For prescription invoice lines: patient from parent invoice
                 UPDATE changelog
-                SET patient_id = nl.name_id
+                SET patient_id = i.name_link_id
                 FROM invoice_line il
                 JOIN invoice i ON i.id = il.invoice_id
-                JOIN name_link nl ON nl.id = i.name_link_id
                 WHERE changelog.table_name = 'invoice_line'
                   AND changelog.record_id = il.id
                   AND i.type = 'PRESCRIPTION'
                   AND changelog.patient_id IS NULL;
 
-                -- For vaccinations: resolve vaccination.patient_link_id through name_link to the name_id
+                -- For vaccinations: vaccination.patient_link_id is the patient id at the time of upsert
                 UPDATE changelog
-                SET patient_id = nl.name_id
+                SET patient_id = v.patient_link_id
                 FROM vaccination v
-                JOIN name_link nl ON nl.id = v.patient_link_id
                 WHERE changelog.table_name = 'vaccination'
                   AND changelog.record_id = v.id
                   AND changelog.patient_id IS NULL;
 
-                -- For encounters: resolve encounter.patient_link_id through name_link to the name_id
+                -- For encounters: encounter.patient_link_id is the patient id at the time of upsert
                 UPDATE changelog
-                SET patient_id = nl.name_id
+                SET patient_id = e.patient_link_id
                 FROM encounter e
-                JOIN name_link nl ON nl.id = e.patient_link_id
                 WHERE changelog.table_name = 'encounter'
                   AND changelog.record_id = e.id
                   AND changelog.patient_id IS NULL;
@@ -152,11 +149,10 @@ impl MigrationFragment for Migrate {
                   AND n.type = 'PATIENT'
                   AND changelog.patient_id IS NULL;
 
-                -- For documents: resolve owner_name_link_id through name_link to the name_id
+                -- For documents: owner_name_link_id is the patient id at the time of upsert
                 UPDATE changelog
-                SET patient_id = nl.name_id
+                SET patient_id = d.owner_name_link_id
                 FROM document d
-                JOIN name_link nl ON nl.id = d.owner_name_link_id
                 WHERE changelog.table_name = 'document'
                   AND changelog.record_id = d.id
                   AND d.owner_name_link_id IS NOT NULL
