@@ -184,18 +184,12 @@ pub fn validate_translate_integrate<'a>(
     source_site_id: i32,
     reference: Option<&str>,
     sync_context: SyncContext,
+    is_initialising: bool,
 ) -> Result<(), RepositoryError> {
-    let is_initialising = matches!(
-        sync_context,
-        SyncContext::Remote {
-            is_initialising: true,
-            ..
-        }
-    );
-
     // During initialisation we don't need transaction as user can't access database
     // and processors are not running, however we still want it for sqlite as it speeds it up
-    let wrap_in_outer_tx = !(is_initialising && cfg!(feature = "postgres"));
+    let dont_wrap_in_tx = is_initialising && cfg!(not(feature = "postgres"));
+    let wrap_in_outer_tx = !dont_wrap_in_tx;
 
     // When not initialising, isolate each record + changelog write in its own
     // nested transaction so a single failure doesn't roll back the whole batch.
