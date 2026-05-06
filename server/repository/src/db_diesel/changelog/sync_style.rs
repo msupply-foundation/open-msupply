@@ -193,9 +193,8 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Patient (v6) — store-scoped patient records that
-            // also flow to sites where the patient is visible (via
-            // name_store_join on the patient_id).
+            // Central + Patient (v6) — patient-scoped records, routed
+            // to every site where the patient is visible.
             // ----------------------------------------------------------
             Encounter | Vaccination | Document => (
                 vec![Central, Patient],
