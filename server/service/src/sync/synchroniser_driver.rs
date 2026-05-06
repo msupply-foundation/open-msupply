@@ -2,8 +2,10 @@ use std::{future::Future, sync::Arc};
 
 use crate::service_provider::ServiceProvider;
 use crate::sync::is_initialised;
+use crate::sync::CentralServerConfig;
+use crate::sync_v7::synchroniser::SynchroniserV7;
 
-use super::{settings::SyncSettings, synchroniser::Synchroniser};
+use super::{settings::SyncSettings, synchroniser::SynchroniserV5V6};
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
@@ -80,12 +82,18 @@ impl SynchroniserDriver {
         service_provider: Arc<ServiceProvider>,
         fetch_patient_id: Option<String>,
     ) {
-        // Error is already logged, keeping result with `_` to avoid compilation warning
-        // We initialise new instance of Syncrhoniser since SyncSettings could have changed
-        let _ = Synchroniser::new(get_sync_settings(&service_provider), service_provider)
-            .unwrap()
-            .sync(fetch_patient_id)
-            .await;
+        // Error is already logged inside the sync flow, keeping result with `_` to avoid compilation warning.
+        // We initialise a new instance on every tick since SyncSettings could have changed.
+        let settings = get_sync_settings(&service_provider);
+        if CentralServerConfig::is_central_server() {
+            let _ = SynchroniserV5V6::new(settings, service_provider)
+                .unwrap()
+                .sync(fetch_patient_id)
+                .await;
+        } else {
+            // V7 doesn't take fetch_patient_id (yet) — only V5/V6 uses it.
+            let _ = SynchroniserV7::new(settings, service_provider).sync().await;
+        }
     }
 }
 
