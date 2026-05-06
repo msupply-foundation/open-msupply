@@ -1917,7 +1917,7 @@ Screen.Back();
 <Script>-- These actions are performed when the Next button is clicked.
 -- Launch omSupply
 if (cbStartOmSupply) then
-	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe --standalone"));
+	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"), "--standalone", "");
 end
 -- advance to the next screen
 Screen.Next();
