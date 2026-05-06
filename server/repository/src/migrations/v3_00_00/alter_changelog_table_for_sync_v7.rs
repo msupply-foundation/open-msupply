@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "alter_changelog_and_related_tables_for_sync_v7"
+        "alter_changelog_table_for_sync_v7"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -24,9 +24,6 @@ impl MigrationFragment for Migrate {
 
                 -- Drop row_action index
                 DROP INDEX IF EXISTS index_changelog_row_action;
-
-                -- Add name_store_id for requisition. transfer_store_id for a changelog is name_store_id
-                ALTER TABLE requisition ADD COLUMN name_store_id TEXT;
             "#
         )?;
 
