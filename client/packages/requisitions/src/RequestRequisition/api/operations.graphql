@@ -157,6 +157,36 @@ query requests(
   }
 }
 
+mutation refreshAncillaryItems(
+  $storeId: String!
+  $input: RefreshAncillaryItemsInput!
+) {
+  refreshAncillaryItems(storeId: $storeId, input: $input) {
+    __typename
+    ... on RefreshAncillaryItemsSuccess {
+      __typename
+      lines {
+        id
+      }
+    }
+    ... on RefreshAncillaryItemsError {
+      __typename
+      error {
+        description
+        ... on CannotEditRequisition {
+          __typename
+          description
+        }
+        ... on ForeignKeyError {
+          __typename
+          description
+          key
+        }
+      }
+    }
+  }
+}
+
 mutation insertRequestLine(
   $storeId: String!
   $input: InsertRequestRequisitionLineInput!

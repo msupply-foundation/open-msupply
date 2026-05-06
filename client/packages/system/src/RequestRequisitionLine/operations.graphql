@@ -68,6 +68,10 @@ fragment Request on RequisitionNode {
   createdDatetime
   sentDatetime
   finalisedDatetime
+  ancillaryState {
+    state
+    count
+  }
   requisitionNumber
   colour
   theirReference
