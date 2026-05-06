@@ -338,7 +338,7 @@ impl<'a> SyncV7<'a> {
         let central_site_id = KeyValueStoreRepository::new(self.connection)
             .get_i32(KeyType::SettingsSyncCentralServerSiteId)
             .map_err(SyncError::DatabaseError)?
-            .ok_or_else(|| SyncError::Other("Central server site id not configured".to_string()))?;
+            .ok_or(SyncError::SiteIdNotSet)?;
 
         validate_translate_integrate(
             self.connection,
@@ -349,6 +349,7 @@ impl<'a> SyncV7<'a> {
                 active_stores,
                 is_initialising,
             },
+            is_initialising,
         )?;
 
         Ok(())
