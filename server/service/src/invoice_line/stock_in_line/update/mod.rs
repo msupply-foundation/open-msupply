@@ -151,7 +151,7 @@ mod test {
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
             mock_immunisation_program_a, mock_inbound_shipment_a, mock_item_a, mock_item_b,
             mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
-            mock_name_store_b, mock_store_a, mock_store_b, mock_supplier_return_a_invoice_line_a,
+            mock_name_a, mock_name_store_b, mock_store_a, mock_store_b, mock_supplier_return_a_invoice_line_a,
             mock_transferred_inbound_shipment_a, mock_user_account_a, mock_vaccine_item_a,
             mock_vvm_status_a, mock_vvm_status_b, MockData, MockDataInserts,
         },
@@ -778,6 +778,79 @@ mod test {
             UpdateStockInLine {
                 id: internal_supplier_line().id,
                 r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+            None
+        )
+        .is_ok());
+    }
+
+    /// For external inbound shipments linked to a Purchase Order, the cost
+    /// price is read-only on the UI and is derived client-side from the PO
+    /// line price * invoice currency rate. The backend must allow the client
+    /// to send any cost price (including a value that differs from the
+    /// currently-stored value) so that historical/legacy lines whose stored
+    /// cost has drifted (e.g. lines created before cost was stored in local
+    /// currency) can be corrected on save. See issue #11185.
+    #[actix_rt::test]
+    async fn update_stock_in_line_allows_cost_price_change_for_po_linked() {
+        use repository::mock::mock_purchase_order_a;
+
+        fn po_linked_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "po_linked_cost_inbound".to_string(),
+                store_id: mock_store_b().id,
+                name_id: mock_name_a().id,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        fn po_linked_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "po_linked_cost_line".to_string(),
+                invoice_id: po_linked_inbound().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                // Simulates a legacy line where the foreign-currency value
+                // (e.g. 84.6 USD) was stored instead of the local-currency
+                // value (e.g. 212.85 WST = 84.6 * 2.516).
+                cost_price_per_pack: 84.6,
+                sell_price_per_pack: 84.6,
+                number_of_packs: 12.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_stock_in_line_allows_cost_price_change_for_po_linked",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![po_linked_inbound()],
+                invoice_lines: vec![po_linked_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        // The client should be able to "correct" the stored cost price by
+        // sending the PO-derived local-currency value, even though it differs
+        // significantly from the current stored value. Previously this would
+        // fail with CannotEditCostPrice.
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: po_linked_line().id,
+                r#type: StockInType::InboundShipment,
+                cost_price_per_pack: Some(212.85),
                 ..Default::default()
             },
             None

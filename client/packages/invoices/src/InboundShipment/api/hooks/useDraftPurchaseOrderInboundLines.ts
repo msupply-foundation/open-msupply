@@ -114,8 +114,30 @@ export const useDraftPurchaseOrderInboundLines = (
     }
 
     if (existingLines.length > 0) {
-      // Editing existing lines for this PO line
-      setDraftLines(existingLines.map(line => ({ ...line })));
+      // Editing existing lines for this PO line.
+      // For PO-linked inbound shipment lines the cost price is read-only and
+      // must always reflect the PO line price converted to the local
+      // (home) currency. Re-deriving cost price here ensures we don't carry
+      // through (and re-persist) any stale or foreign-currency values that
+      // may exist on the stored line (e.g. legacy data, or after the PO's
+      // currency / exchange rate has been changed). If the existing sell
+      // price matches the existing cost price, we keep them in sync — this
+      // mirrors the backend behaviour in `generate_cost_price_update_for_lines`.
+      const exchangeRate = purchaseOrderLine.purchaseOrder?.foreignExchangeRate ?? 1;
+      const costPricePerPack =
+        purchaseOrderLine.pricePerPackAfterDiscount * exchangeRate;
+      setDraftLines(
+        existingLines.map(line => {
+          const sellMatchesCost = line.sellPricePerPack === line.costPricePerPack;
+          return {
+            ...line,
+            costPricePerPack,
+            sellPricePerPack: sellMatchesCost
+              ? costPricePerPack
+              : line.sellPricePerPack,
+          };
+        })
+      );
     } else {
       // Creating a new line for this PO line
       const pol = purchaseOrderLine;
