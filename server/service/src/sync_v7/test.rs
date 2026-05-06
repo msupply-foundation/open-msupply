@@ -231,6 +231,7 @@ mod test_sync_v7_client_api {
         let ServiceTestContext {
             service_provider,
             connection,
+            service_context,
             ..
         } = setup_all_with_data_and_service_provider(db_name, MockDataInserts::none(), mock_data)
             .await;
@@ -257,7 +258,7 @@ mod test_sync_v7_client_api {
 
         let result = sync_v7(
             &service_provider,
-            &connection,
+            &service_context,
             SyncSettings {
                 url: format!("http://{}/", addr),
                 username: "test_user".to_string(),

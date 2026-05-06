@@ -34,8 +34,8 @@ use self::api::SiteInfoV5;
 
 #[derive(Serialize, Deserialize, TS, Debug)]
 pub(crate) struct ActiveStoresOnSite {
-    site_id: i32,
-    stores: Vec<Store>,
+    pub(crate) site_id: i32,
+    pub(crate) stores: Vec<Store>,
 }
 
 #[derive(Error, Debug)]

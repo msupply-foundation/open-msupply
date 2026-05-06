@@ -1,9 +1,10 @@
 use repository::{ChangeLogSyncStyle, SyncBufferRow};
 use thiserror::Error;
+use ChangeLogSyncStyle::*;
 
 use crate::sync::ActiveStoresOnSite;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum ValidationError {
     #[error("Store is not active on site")]
     InactiveStore,
@@ -13,8 +14,6 @@ pub enum ValidationError {
     NoStoreId,
     #[error("No patient id found on sync buffer row")]
     NoPatientId,
-    #[error("Central records can only be edited on central")]
-    CentralRecordEditsOnCentralOnly,
     #[error("Transfer store is not active on this site")]
     TransferStoreNotActiveOnThisSite,
     #[error("Sync style is not expected on a v7 sync path")]
@@ -27,7 +26,6 @@ pub(crate) fn validate_on_remote(
     active_on_site: &ActiveStoresOnSite,
     is_initialising: bool,
 ) -> Result<(), ValidationError> {
-    use ChangeLogSyncStyle::*;
     let active_store_ids = active_on_site.store_ids();
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
 
@@ -80,9 +78,10 @@ pub(crate) fn validate_on_remote(
 pub(crate) fn validate_on_central(
     sync_buffer_row: &SyncBufferRow,
     sync_styles: &[ChangeLogSyncStyle],
+    // Central's own active stores, currently unused.
+    // kept for future (store merge?).
     _active_on_site: &ActiveStoresOnSite,
 ) -> Result<(), ValidationError> {
-    use ChangeLogSyncStyle::*;
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
 
     for style in sync_styles {
@@ -109,4 +108,268 @@ pub(crate) fn validate_on_central(
     }
 
     Err(last_err)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{NameRow, Store, StoreRow};
+
+    // Site 1 is "this site" with one active store, "store_a".
+    // Site 2 is some other site.
+    fn site() -> ActiveStoresOnSite {
+        ActiveStoresOnSite {
+            site_id: 1,
+            stores: vec![Store {
+                store_row: StoreRow {
+                    id: "store_a".into(),
+                    ..Default::default()
+                },
+                name_row: NameRow::default(),
+            }],
+        }
+    }
+
+    #[test]
+    fn on_remote() {
+        // CENTRAL — accepts only when the row has no routing metadata.
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Central],
+                &site(),
+                false,
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Central],
+                &site(),
+                false,
+            ),
+            Err(ValidationError::UnexpectedSyncStyleForV7)
+        );
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    patient_id: Some("patient_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Central],
+                &site(),
+                false,
+            ),
+            Err(ValidationError::UnexpectedSyncStyleForV7)
+        );
+
+        // REMOTE — store must be active; post-init, own echoes are rejected.
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Remote],
+                &site(),
+                true,
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Remote],
+                &site(),
+                false,
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Remote],
+                &site(),
+                true,
+            ),
+            Err(ValidationError::NoStoreId)
+        );
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("inactive_store".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Remote],
+                &site(),
+                true,
+            ),
+            Err(ValidationError::InactiveStore)
+        );
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 1,
+                    ..Default::default()
+                },
+                &[Remote],
+                &site(),
+                false,
+            ),
+            Err(ValidationError::SiteAlreadyInitialised)
+        );
+
+        // TRANSFER — transfer_store must be active.
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    transfer_store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Transfer],
+                &site(),
+                false,
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    transfer_store_id: Some("inactive_store".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Transfer],
+                &site(),
+                false,
+            ),
+            Err(ValidationError::TransferStoreNotActiveOnThisSite)
+        );
+
+        // PATIENT — patient_id must be present.
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    patient_id: Some("patient_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Patient],
+                &site(),
+                false,
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Patient],
+                &site(),
+                false,
+            ),
+            Err(ValidationError::NoPatientId)
+        );
+    }
+
+    #[test]
+    fn on_central() {
+        // CENTRAL — central data isn't edited on remotes, always rejected.
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Central],
+                &site(),
+            ),
+            Err(ValidationError::UnexpectedSyncStyleForV7)
+        );
+
+        // REMOTE — store_id must be present (source site verified by auth).
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Remote],
+                &site(),
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Remote],
+                &site(),
+            ),
+            Err(ValidationError::NoStoreId)
+        );
+
+        // TRANSFER — accepted (source site trusted via auth).
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Transfer],
+                &site(),
+            ),
+            Ok(())
+        );
+
+        // PATIENT — patient_id must be present.
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    patient_id: Some("patient_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Patient],
+                &site(),
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &[Patient],
+                &site(),
+            ),
+            Err(ValidationError::NoPatientId)
+        );
+    }
 }
