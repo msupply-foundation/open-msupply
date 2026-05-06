@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use reqwest::*;
 
@@ -26,33 +26,59 @@ where
             .build()
             .unwrap(); // This method fails if a TLS backend cannot be initialized, or the resolver cannot load the system configuration.
 
-        let result = f(client).send().await;
+        // Build the request up-front so we can inspect the body size for diagnostic
+        // logging on retry. `as_bytes()` returns None for streaming bodies (none of our
+        // current call sites use streaming, but the helper is generic).
+        let request_result = f(client.clone()).build();
+        let body_size = request_result
+            .as_ref()
+            .ok()
+            .and_then(|r| r.body())
+            .and_then(|b| b.as_bytes())
+            .map(|b| b.len());
 
-        let (status, is_connect_error, url) = match result.as_ref() {
-            Ok(r) => (Some(r.status()), false, Some(r.url().to_string())),
+        let started = Instant::now();
+        let result = match request_result {
+            Ok(request) => client.execute(request).await,
+            Err(e) => Err(e),
+        };
+        let elapsed = started.elapsed();
+
+        let (status, is_connect_error, is_timeout_error, url) = match result.as_ref() {
+            Ok(r) => (Some(r.status()), false, false, Some(r.url().to_string())),
             Err(e) => (
                 e.status(),
                 e.is_connect(),
+                e.is_timeout(),
                 e.url().map(|u| u.to_string()),
             ),
         };
 
-        if (is_connect_error || status == Some(StatusCode::REQUEST_TIMEOUT))
+        if (is_connect_error
+            || is_timeout_error
+            || status == Some(StatusCode::REQUEST_TIMEOUT))
             && (index + 1) < connection_timeouts.0.len()
         {
             let reason = if is_connect_error {
                 "connection error"
-            } else {
+            } else if is_timeout_error {
                 "request timeout"
+            } else {
+                "HTTP 408 Request Timeout"
             };
             let url_display = url.as_deref().unwrap_or("<unknown>");
             let next_timeout = connection_timeouts.0[index + 1];
+            let body_display = body_size
+                .map(|n| format!("{} bytes", n))
+                .unwrap_or_else(|| "unknown size".to_string());
             log::info!(
-                "API request retry {}/{} for url '{}' due to {}; next connect timeout {}s",
+                "API request retry {}/{} for url '{}' due to {} after {:.1}s (request body: {}); next connect timeout {}s",
                 index + 1,
                 connection_timeouts.0.len() - 1,
                 url_display,
                 reason,
+                elapsed.as_secs_f64(),
+                body_display,
                 next_timeout
             );
             index += 1;
