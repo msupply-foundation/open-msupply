@@ -20,14 +20,7 @@ use crate::{
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
-    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
-    SiteRowRepository, StorageConnection, StringFilter, SyncBufferRepository,
-};
-use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
-    ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
+    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, Pagination, RepositoryError,
     SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId, StorageConnection,
     StringFilter, SyncBufferRepository,
 };
@@ -35,13 +28,7 @@ use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
 };
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
 use thiserror::Error;
-use thiserror::Error;
-use util::format_error;
 use util::format_error;
 
 /// TODO: revisit token format
@@ -270,7 +257,7 @@ pub async fn patient_data_for_site(
     };
 
     let filter = ChangelogCondition::And(vec![
-        ChangelogFilter::patient_data_for_v7_site(site.id, None),
+        ChangelogFilter::patient_data_for_site(site.id, None),
         ChangelogCondition::patient_id::equal(patient_id),
     ]);
 
@@ -402,7 +389,10 @@ mod tests {
         sync::test_util_set_is_central_server,
         test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
-    use repository::{migrations::Version, mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
+        KeyValueStoreRepository,
+    };
 
     const SITE_NAME: &str = "test_site";
     const PASSWORD_SHA256: &str = "hashed_password_value";
