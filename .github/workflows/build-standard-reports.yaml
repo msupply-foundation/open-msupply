@@ -38,12 +38,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'yarn'
-          cache-dependency-path: 'standard_reports/yarn.lock'
 
       - name: Install standard_reports JS dependencies
         working-directory: ./standard_reports
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Build reports
         working-directory: ./server
