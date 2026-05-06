@@ -174,7 +174,12 @@ pub async fn pull(
 
     let filter = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
 
-    let batch = SyncBatchV7::generate(&ctx.connection, filter, input.cursor, input.batch_size)?;
+    let batch = SyncBatchV7::generate(
+        &ctx.connection,
+        filter,
+        input.cursor,
+        Some(input.batch_size),
+    )?;
 
     Ok(batch)
 }
@@ -222,7 +227,6 @@ pub async fn patient_data_for_site(
 
     let patient_data_for_site::Input {
         cursor,
-        batch_size,
         patient_id,
         store_id,
         name_store_join_id,
@@ -250,7 +254,7 @@ pub async fn patient_data_for_site(
         ChangelogCondition::patient_id::equal(patient_id),
     ]);
 
-    let batch = SyncBatchV7::generate(&ctx.connection, filter, cursor, batch_size)?;
+    let batch = SyncBatchV7::generate(&ctx.connection, filter, cursor, None)?;
 
     Ok(patient_data_for_site::Output {
         batch,
