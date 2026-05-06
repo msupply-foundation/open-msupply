@@ -13,6 +13,7 @@ import {
   createFilterOptions,
   CircularProgress,
   Box,
+  IconButton,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
 import { useDebounceCallback } from '@common/hooks';
@@ -22,6 +23,7 @@ import { ArrayUtils } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { useOpenStateWithKeyboard } from '@common/components';
 import { useTranslation } from '@common/intl';
+import { CloseIcon } from '@common/icons';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
@@ -98,6 +100,22 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     return newOptions;
   }, [pages, value]);
 
+  // Show a clear (X) button when the user has typed text but no option is
+  // selected. MUI's built-in clear only shows when `value` is non-null, so
+  // for the "typed without selecting" state we render our own. Clicking it
+  // dispatches a synthetic change event with empty value, so the consumer's
+  // existing `inputProps.onChange` handler clears its own state (input
+  // text, filter, etc.) using the same path as a normal keystroke.
+  const showInputClear = clearable && !!inputValue && value == null;
+  const handleInputClear = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Consumers' onChange handlers only read `e.target.value`, so a
+    // minimal stub is enough to drive their clear path.
+    inputProps?.onChange?.({
+      target: { value: '' },
+    } as unknown as React.ChangeEvent<HTMLInputElement>);
+    onInputChange?.(event, '', 'clear');
+  };
+
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
@@ -114,6 +132,16 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
             <>
               {isLoading || loading ? (
                 <CircularProgress color="primary" size={18} />
+              ) : null}
+              {showInputClear ? (
+                <IconButton
+                  size="small"
+                  aria-label={t('button.clear-results')}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={handleInputClear}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
               ) : null}
               {props.InputProps.endAdornment}
             </>
@@ -167,7 +195,6 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         },
       };
 
-
   useEffect(() => {
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
   }, [options]);
@@ -205,7 +232,10 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       }}
       slotProps={{
         popper: popperMinWidth
-          ? { placement: 'bottom-start' as const, style: { minWidth: popperMinWidth, width: 'auto' } }
+          ? {
+              placement: 'bottom-start' as const,
+              style: { minWidth: popperMinWidth, width: 'auto' },
+            }
           : undefined,
         listbox: {
           ...listboxProps,
