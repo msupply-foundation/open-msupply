@@ -66,6 +66,11 @@ pub fn add_from_master_list(
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
             }
 
+            super::recompute::recompute_forecasts_and_suggested_quantities(
+                ctx,
+                &input.request_requisition_id,
+            )?;
+
             match RequisitionLineRepository::new(connection).query_by_filter(
                 RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
                     input.request_requisition_id.to_string(),

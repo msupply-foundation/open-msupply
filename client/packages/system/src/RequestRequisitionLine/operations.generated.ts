@@ -55,9 +55,10 @@ export type RequestLineFragment = {
   expiringUnits: number;
   daysOutOfStock: number;
   pricePerUnit?: number | null;
-  forecastTotalUnits?: number | null;
+  forecastMonthlyUsage?: number | null;
   forecastTotalDoses?: number | null;
-  vaccineCourses?: string | null;
+  forecastMethod?: string | null;
+  forecastData?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     availableStockOnHand: number;
@@ -87,6 +88,13 @@ export type RequestLineFragment = {
     reason: string;
     isActive: boolean;
   } | null;
+  applicableForecastMethods: Array<{
+    __typename: 'ForecastMethodOptionNode';
+    code: string;
+    label: string;
+    isAvailable: boolean;
+    unavailableReason?: string | null;
+  }>;
 };
 
 export type RequestFragment = {
@@ -105,6 +113,7 @@ export type RequestFragment = {
   otherPartyId: string;
   maxMonthsOfStock: number;
   minMonthsOfStock: number;
+  expectedDeliveryDate?: string | null;
   approvalStatus: Types.RequisitionNodeApprovalStatus;
   programName?: string | null;
   orderType?: string | null;
@@ -149,9 +158,10 @@ export type RequestFragment = {
       expiringUnits: number;
       daysOutOfStock: number;
       pricePerUnit?: number | null;
-      forecastTotalUnits?: number | null;
+      forecastMonthlyUsage?: number | null;
       forecastTotalDoses?: number | null;
-      vaccineCourses?: string | null;
+      forecastMethod?: string | null;
+      forecastData?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         availableStockOnHand: number;
@@ -181,6 +191,13 @@ export type RequestFragment = {
         reason: string;
         isActive: boolean;
       } | null;
+      applicableForecastMethods: Array<{
+        __typename: 'ForecastMethodOptionNode';
+        code: string;
+        label: string;
+        isAvailable: boolean;
+        unavailableReason?: string | null;
+      }>;
     }>;
   };
   program?: { __typename: 'ProgramNode'; id: string } | null;
@@ -304,9 +321,16 @@ export const RequestLineFragmentDoc = gql`
     reason {
       ...ReasonOptionRow
     }
-    forecastTotalUnits
+    forecastMonthlyUsage
     forecastTotalDoses
-    vaccineCourses
+    forecastMethod
+    forecastData
+    applicableForecastMethods {
+      code
+      label
+      isAvailable
+      unavailableReason
+    }
   }
   ${ItemWithAvailableStockFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
@@ -332,6 +356,7 @@ export const RequestFragmentDoc = gql`
     otherPartyId
     maxMonthsOfStock
     minMonthsOfStock
+    expectedDeliveryDate
     approvalStatus
     documents {
       __typename

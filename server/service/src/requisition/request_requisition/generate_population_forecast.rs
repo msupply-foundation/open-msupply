@@ -3,45 +3,51 @@ use repository::{
     vaccine_course::vaccine_course_store_config::{
         VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
     },
-    EqualFilter, NameFilter, NameRepository, RepositoryError, StorageConnection, StoreFilter,
+    EqualFilter, MissingStoreField, NameFilter, NameRepository, PopulationCourseData,
+    PopulationSnapshot, RepositoryError, StorageConnection, StoreFilter,
     VaccinationCourseRepository, VaccinationCourseRow,
 };
-use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ForecastQuantityData {
-    pub forecast_total_units: f64,
-    pub forecast_total_doses: f64,
-    pub vaccine_courses: Vec<CourseData>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct CourseData {
-    pub course_title: String,
-    pub number_of_doses: i32,
-    pub coverage_rate: f64,
-    pub target_population: f64,
-    pub wastage_rate: f64,
-    pub loss_factor: f64,
-    pub annual_target_doses: f64,
-    pub buffer_stock_months: f64,
-    pub supply_period_months: f64,
-    pub doses_per_unit: i32,
-    pub forecast_doses: f64,
-    pub forecast_units: f64,
+/// Per-item result of attempting a Population forecast lookup. The dispatcher
+/// promotes these into per-line `PopulationOutcome::Error` snapshots only on
+/// lines whose chosen method is `Population` — items configured with another
+/// method don't surface population-specific failures.
+#[derive(Debug, Clone, PartialEq)]
+pub enum PopulationLookup {
+    Ok(PopulationSnapshot),
+    /// No vaccine course is mapped to this item.
+    NoCourseForItem,
+    /// Store is missing one or more required population properties; carries
+    /// which fields were missing so the UI can list them.
+    MissingStoreConfig {
+        missing_fields: Vec<MissingStoreField>,
+    },
 }
 
 pub fn calculate_forecasting_fields(
     ctx: &ServiceContext,
     item_ids: Vec<String>,
-) -> Result<HashMap<String, Option<ForecastQuantityData>>, RepositoryError> {
+) -> Result<HashMap<String, PopulationLookup>, RepositoryError> {
     let store_properties = match get_store_properties_and_validate(&ctx.connection, &ctx.store_id)?
     {
-        Some(props) => props,
-        None => return Ok(HashMap::new()),
+        StorePropertiesResult::Ok(props) => props,
+        StorePropertiesResult::Missing(missing_fields) => {
+            // Every requested item maps to MissingStoreConfig so the dispatcher
+            // can surface the failure on Population-method lines.
+            return Ok(item_ids
+                .into_iter()
+                .map(|id| {
+                    (
+                        id,
+                        PopulationLookup::MissingStoreConfig {
+                            missing_fields: missing_fields.clone(),
+                        },
+                    )
+                })
+                .collect());
+        }
     };
 
     calculate_forecast_quantities(&ctx.connection, &ctx.store_id, &store_properties, item_ids)
@@ -53,10 +59,15 @@ struct StoreProperties {
     population_served: f64,
 }
 
+enum StorePropertiesResult {
+    Ok(StoreProperties),
+    Missing(Vec<MissingStoreField>),
+}
+
 fn get_store_properties_and_validate(
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<Option<StoreProperties>, RepositoryError> {
+) -> Result<StorePropertiesResult, RepositoryError> {
     let store_properties: Map<String, Value> = NameRepository::new(connection)
         .query_by_filter(
             store_id,
@@ -82,16 +93,20 @@ fn get_store_properties_and_validate(
         .and_then(|v| v.as_f64());
 
     match (supply_period_months, population_served) {
-        (Some(supply), Some(population)) => Ok(Some(StoreProperties {
+        (Some(supply), Some(population)) => Ok(StorePropertiesResult::Ok(StoreProperties {
             buffer_stock_months,
             supply_period_months: supply,
             population_served: population,
         })),
         _ => {
-            log::debug!(
-                "Forecasting: Missing Store Properties for store_id {store_id}. Values:\n - Supply interval: {supply_period_months:?}\n - Population served: {population_served:?}"
-            );
-            Ok(None)
+            let mut missing = Vec::new();
+            if supply_period_months.is_none() {
+                missing.push(MissingStoreField::SupplyInterval);
+            }
+            if population_served.is_none() {
+                missing.push(MissingStoreField::PopulationServed);
+            }
+            Ok(StorePropertiesResult::Missing(missing))
         }
     }
 }
@@ -115,7 +130,7 @@ fn calculate_forecast_quantities(
         population_served,
     }: &StoreProperties,
     item_ids: Vec<String>,
-) -> Result<HashMap<String, Option<ForecastQuantityData>>, RepositoryError> {
+) -> Result<HashMap<String, PopulationLookup>, RepositoryError> {
     let vaccination_courses =
         VaccinationCourseRepository::new(connection).query_by_item_ids(item_ids.clone())?;
 
@@ -139,6 +154,7 @@ fn calculate_forecast_quantities(
 
         if item_vaccination_courses.is_empty() {
             log::debug!("Forecasting: No vaccine courses for item {item_id}");
+            results.insert(item_id, PopulationLookup::NoCourseForItem);
             continue;
         }
 
@@ -179,7 +195,7 @@ fn calculate_forecast_quantities(
 
         let mut forecast_values = Vec::new();
         let mut forecast_total_doses = 0.0;
-        let mut forecast_total_units = 0.0;
+        let mut forecast_monthly_usage = 0.0;
 
         for (_, group) in course_groups {
             let coverage_rate = group.coverage_rate;
@@ -201,6 +217,13 @@ fn calculate_forecast_quantities(
             let forecast_doses =
                 (annual_target_doses / 12.0) * (supply_period_months + buffer_stock_months);
             let forecast_units = forecast_doses / doses_per_unit as f64;
+            // Per-course rate: the period total divided by the period itself.
+            let course_period_months = supply_period_months + buffer_stock_months;
+            let course_monthly_usage = if course_period_months > 0.0 {
+                forecast_units / course_period_months
+            } else {
+                0.0
+            };
 
             let course_title = format!(
                 "{} ({})",
@@ -208,7 +231,7 @@ fn calculate_forecast_quantities(
                 group.demographic_name.as_deref().unwrap_or_default()
             );
 
-            forecast_values.push(CourseData {
+            forecast_values.push(PopulationCourseData {
                 course_title,
                 number_of_doses: number_of_doses as i32,
                 coverage_rate,
@@ -221,23 +244,24 @@ fn calculate_forecast_quantities(
                 doses_per_unit,
                 forecast_doses,
                 forecast_units,
+                forecast_monthly_usage: course_monthly_usage,
             });
 
             forecast_total_doses += forecast_doses;
-            forecast_total_units += forecast_units;
+            forecast_monthly_usage += course_monthly_usage;
         }
 
-        let forecast_data = if forecast_values.is_empty() {
-            None
+        let lookup = if forecast_values.is_empty() {
+            PopulationLookup::NoCourseForItem
         } else {
-            Some(ForecastQuantityData {
-                forecast_total_units,
+            PopulationLookup::Ok(PopulationSnapshot {
+                forecast_monthly_usage,
                 forecast_total_doses,
                 vaccine_courses: forecast_values,
             })
         };
 
-        results.insert(item_id, forecast_data);
+        results.insert(item_id, lookup);
     }
 
     Ok(results)
@@ -271,11 +295,12 @@ mod tests {
     // Annual target doses: 2500.0 * 3 * (60.0 / 100.0) * 2.0 = 9000.0
     // Forecast doses: (9000.0 / 12) * (3 + 2) = 3750.0
     // Forecast units: 3750.0 / 2 = 1875.0
-    fn forecast_result_store_specific_config() -> ForecastQuantityData {
-        ForecastQuantityData {
-            forecast_total_units: 1875.0,
+    fn forecast_result_store_specific_config() -> PopulationSnapshot {
+        // Per-course monthly usage: 1875 / (3 + 2) = 375
+        PopulationSnapshot {
+            forecast_monthly_usage: 375.0,
             forecast_total_doses: 3750.0,
-            vaccine_courses: vec![CourseData {
+            vaccine_courses: vec![PopulationCourseData {
                 course_title: "Vaccine Course A (demographic_1)".to_string(),
                 number_of_doses: 3,
                 coverage_rate: 60.0,
@@ -288,6 +313,7 @@ mod tests {
                 doses_per_unit: 2,
                 forecast_doses: 3750.0,
                 forecast_units: 1875.0,
+                forecast_monthly_usage: 375.0,
             }],
         }
     }
@@ -298,11 +324,12 @@ mod tests {
     // Annual target doses: 2500.0 * 3 * (80.0 / 100.0) * 1.1111111111111112 = 6666.666666666667
     // Forecast doses: (6666.666666666667 / 12) * (3 + 2) = 2777.777777777778
     // Forecast units: 2777.777777777778 / 2
-    fn forecast_result_global_rates() -> ForecastQuantityData {
-        ForecastQuantityData {
-            forecast_total_units: 1388.888888888889,
+    fn forecast_result_global_rates() -> PopulationSnapshot {
+        // Per-course monthly usage: 1388.888888888889 / (3 + 2) = 277.77777777777777
+        PopulationSnapshot {
+            forecast_monthly_usage: 277.77777777777777,
             forecast_total_doses: 2777.777777777778,
-            vaccine_courses: vec![CourseData {
+            vaccine_courses: vec![PopulationCourseData {
                 course_title: "Vaccine Course A (demographic_1)".to_string(),
                 number_of_doses: 3,
                 coverage_rate: 80.0,
@@ -315,6 +342,7 @@ mod tests {
                 doses_per_unit: 2,
                 forecast_doses: 2777.777777777778,
                 forecast_units: 1388.888888888889,
+                forecast_monthly_usage: 277.77777777777777,
             }],
         }
     }
@@ -353,12 +381,11 @@ mod tests {
 
         assert_eq!(result.len(), 1);
         let item_id = &mock_vaccine_item_a().id;
-        let forecast_data = result.get(item_id).unwrap();
-
-        if let Some(forecast) = forecast_data {
-            assert_eq!(forecast, &forecast_result_store_specific_config());
-        } else {
-            panic!("Expected forecast data but got None");
+        match result.get(item_id).unwrap() {
+            PopulationLookup::Ok(forecast) => {
+                assert_eq!(forecast, &forecast_result_store_specific_config());
+            }
+            other => panic!("Expected Ok forecast, got {other:?}"),
         }
     }
 
@@ -385,7 +412,7 @@ mod tests {
 
         let item_ids = vec![mock_vaccine_item_a().id.clone()];
 
-        let result: HashMap<String, Option<ForecastQuantityData>> = calculate_forecast_quantities(
+        let result: HashMap<String, PopulationLookup> = calculate_forecast_quantities(
             &connection,
             "store_b",
             &store_properties,
@@ -395,12 +422,11 @@ mod tests {
 
         assert_eq!(result.len(), 1);
         let item_id = &mock_vaccine_item_a().id;
-        let forecast_data = result.get(item_id).unwrap();
-
-        if let Some(forecast) = forecast_data {
-            assert_eq!(forecast, &forecast_result_global_rates());
-        } else {
-            panic!("Expected forecast data but got None");
+        match result.get(item_id).unwrap() {
+            PopulationLookup::Ok(forecast) => {
+                assert_eq!(forecast, &forecast_result_global_rates());
+            }
+            other => panic!("Expected Ok forecast, got {other:?}"),
         }
     }
 }

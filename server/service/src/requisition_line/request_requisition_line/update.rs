@@ -1,15 +1,20 @@
 use crate::{
     location::query::get_available_volume_by_location_type,
-    requisition::common::check_requisition_row_exists,
+    requisition::{
+        common::check_requisition_row_exists,
+        request_requisition::recompute::recompute_forecasts_and_suggested_quantities,
+    },
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
+    PluginOrRepositoryError,
 };
 
 use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
-    ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
-    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
+    ForecastMethod, ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError,
+    RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -18,6 +23,10 @@ pub struct UpdateRequestRequisitionLine {
     pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
     pub option_id: Option<String>,
+    /// Storage form (`"amc"`, `"population"`, `"ancillary_ratio"`, `"plugin:<code>"`).
+    /// When `Some`, recompute the snapshot for this line; `requested_quantity` is
+    /// always preserved (per design — user-authored).
+    pub forecast_method: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -42,11 +51,23 @@ pub fn update_request_requisition_line(
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let updated_requisition_line_row = generate(ctx, requisition_row, input)?;
+            let (existing_line, _requisition_row) = validate(connection, &ctx.store_id, &input)?;
+            let method_changed = input.forecast_method.is_some();
+            let updated_requisition_line_row = generate(ctx, existing_line, input)?;
 
             RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
+
+            // Method changes (and any other line update) need a forecast +
+            // suggested_quantity refresh across the whole requisition so
+            // ancillary children of this line — and the line itself — see
+            // consistent values.
+            if method_changed {
+                recompute_forecasts_and_suggested_quantities(
+                    ctx,
+                    &updated_requisition_line_row.requisition_id,
+                )?;
+            }
 
             get_requisition_line(ctx, &updated_requisition_line_row.id)
                 .map_err(OutError::DatabaseError)?
@@ -60,7 +81,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateRequestRequisitionLine,
-) -> Result<RequisitionLineRow, OutError> {
+) -> Result<(RequisitionLineRow, RequisitionRow), OutError> {
     let requisition_line = check_requisition_line_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?;
     let requisition_line_row = requisition_line.clone().requisition_line_row;
@@ -103,7 +124,7 @@ fn validate(
         }
     }
 
-    Ok(requisition_line_row)
+    Ok((requisition_line_row, requisition_row))
 }
 
 fn generate(
@@ -114,8 +135,9 @@ fn generate(
         requested_quantity: updated_requested_quantity,
         comment: updated_comment,
         option_id,
+        forecast_method,
     }: UpdateRequestRequisitionLine,
-) -> Result<RequisitionLineRow, RepositoryError> {
+) -> Result<RequisitionLineRow, PluginOrRepositoryError> {
     let available_volume_by_type = get_available_volume_by_location_type(
         &ctx.connection,
         &ctx.store_id,
@@ -125,19 +147,49 @@ fn generate(
     .cloned()
     .unwrap_or_default();
 
-    Ok(RequisitionLineRow {
+    // Persist the user-authored fields and (optionally) the new method tag.
+    // The forecast snapshot, monthly usage, and suggested_quantity are then
+    // refreshed by the recompute pipeline in the caller — this function does
+    // not touch them.
+    let new_method_tag = forecast_method
+        .as_deref()
+        .and_then(ForecastMethod::from_storage)
+        .map(|m| m.to_storage());
+
+    let updated = RequisitionLineRow {
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
-        comment: updated_comment.or(existing.comment),
-        option_id: option_id.or(existing.option_id),
+        comment: updated_comment.or(existing.comment.clone()),
+        option_id: option_id.or(existing.option_id.clone()),
         available_volume: available_volume_by_type.available_volume,
         location_type_id: available_volume_by_type.restricted_location_type_id.clone(),
+        forecast_method: new_method_tag.or(existing.forecast_method.clone()),
         ..existing
-    })
+    };
+
+    Ok(updated)
 }
 
 impl From<RepositoryError> for UpdateRequestRequisitionLineError {
     fn from(error: RepositoryError) -> Self {
         UpdateRequestRequisitionLineError::DatabaseError(error)
+    }
+}
+
+impl From<PluginOrRepositoryError> for UpdateRequestRequisitionLineError {
+    fn from(error: PluginOrRepositoryError) -> Self {
+        match error {
+            PluginOrRepositoryError::RepositoryError(e) => {
+                UpdateRequestRequisitionLineError::DatabaseError(e)
+            }
+            // Plugin failures during forecast dispatch surface as a database
+            // error so the existing error handling path still applies.
+            PluginOrRepositoryError::PluginError(e) => {
+                UpdateRequestRequisitionLineError::DatabaseError(RepositoryError::DBError {
+                    msg: format!("AMC plugin failed: {e}"),
+                    extra: Default::default(),
+                })
+            }
+        }
     }
 }
 
@@ -302,6 +354,7 @@ mod test {
                     requested_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
                     option_id: None,
+                    forecast_method: None,
                 },
             )
             .unwrap();

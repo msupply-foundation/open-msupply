@@ -14,8 +14,11 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
+    backend_plugin_row::{BackendPluginRowRepository, PluginType},
     requisition_row::{RequisitionRow, RequisitionType},
-    ItemRow, RequisitionLine, RequisitionLineRow,
+    vaccine_course::vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
+    AncillaryItemFilter, AncillaryItemRepository, EqualFilter, ItemRow, RequisitionLine,
+    RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
 };
 use service::{item_stats::ItemStats, usize_to_u32};
 
@@ -35,6 +38,15 @@ pub struct AvailableVolumeAtLocationTypeNode {
     location_type: LocationTypeNode,
     available_volume: f64,
     item_volume_per_unit: f64,
+}
+
+#[derive(PartialEq, Debug, SimpleObject)]
+pub struct ForecastMethodOptionNode {
+    /// Storage form: `"amc"`, `"population"`, `"ancillary_ratio"`, `"plugin:<code>"`
+    pub code: String,
+    pub label: String,
+    pub is_available: bool,
+    pub unavailable_reason: Option<String>,
 }
 
 #[Object]
@@ -335,15 +347,112 @@ impl RequisitionLineNode {
         None
     }
 
-    // Population-based forecasting fields
-    pub async fn forecast_total_doses(&self) -> &Option<f64> {
-        &self.row().forecast_total_doses
+    // Forecasting: per-line method tag, JSON snapshot, headline result.
+    // `forecast_total_doses` is derived from the snapshot when the method is
+    // Population — kept as a resolver for backwards-compatibility with the
+    // GraphQL surface even though it's no longer a column.
+    pub async fn forecast_method(&self) -> &Option<String> {
+        &self.row().forecast_method
     }
-    pub async fn forecast_total_units(&self) -> &Option<f64> {
-        &self.row().forecast_total_units
+    pub async fn forecast_data(&self) -> &Option<String> {
+        &self.row().forecast_data
     }
-    pub async fn vaccine_courses(&self) -> &Option<String> {
-        &self.row().vaccine_courses
+    pub async fn forecast_monthly_usage(&self) -> &Option<f64> {
+        &self.row().forecast_monthly_usage
+    }
+    pub async fn forecast_total_doses(&self) -> Option<f64> {
+        self.row().forecast_snapshot().and_then(|s| s.forecast_doses())
+    }
+
+    /// Methods this line can use, given its item and the rest of the
+    /// requisition. AMC always available; Population available when the item
+    /// is mapped to at least one vaccine course; AncillaryRatio available when
+    /// at least one ancillary parent of this item is also a line on the same
+    /// requisition. Plugin-supplied methods enumerate registered backend
+    /// plugins of `PluginType::ForecastMethod`. Unavailable options are
+    /// returned with `is_available = false` and a reason so the UI can
+    /// disable them with a tooltip rather than hide them.
+    pub async fn applicable_forecast_methods(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<ForecastMethodOptionNode>> {
+        let connection = &ctx.get_connection_manager().connection().map_err(|e| {
+            StandardGraphqlError::InternalError(format!("Connection error: {e:?}")).extend()
+        })?;
+        let item_id = &self.item_row().id;
+        let requisition_id = &self.row().requisition_id;
+
+        // Population: available iff item maps to at least one vaccine course.
+        let population_available = !VaccineCourseItemRepository::new(connection)
+            .query_by_filter(
+                VaccineCourseItemFilter::new().item_id(EqualFilter::equal_to(item_id.clone())),
+            )?
+            .is_empty();
+
+        // AncillaryRatio: available iff some parent of this item is also a
+        // line on the requisition (matches the dispatcher's resolution rule).
+        let parents = AncillaryItemRepository::new(connection).query_by_filter(
+            AncillaryItemFilter::new()
+                .ancillary_item_id(EqualFilter::equal_to(item_id.clone())),
+        )?;
+        let parent_item_ids: Vec<String> =
+            parents.iter().map(|r| r.item_id.clone()).collect();
+        let ancillary_available = if parent_item_ids.is_empty() {
+            false
+        } else {
+            !RequisitionLineRepository::new(connection)
+                .query_by_filter(
+                    RequisitionLineFilter::new()
+                        .requisition_id(EqualFilter::equal_to(requisition_id.clone()))
+                        .item_id(EqualFilter::equal_any(parent_item_ids)),
+                )?
+                .is_empty()
+        };
+
+        let mut options = vec![
+            ForecastMethodOptionNode {
+                code: "amc".to_string(),
+                label: "Average monthly consumption".to_string(),
+                is_available: true,
+                unavailable_reason: None,
+            },
+            ForecastMethodOptionNode {
+                code: "population".to_string(),
+                label: "Population".to_string(),
+                is_available: population_available,
+                unavailable_reason: if population_available {
+                    None
+                } else {
+                    Some("Item is not mapped to a vaccine course".to_string())
+                },
+            },
+            ForecastMethodOptionNode {
+                code: "ancillary_ratio".to_string(),
+                label: "Ancillary ratio".to_string(),
+                is_available: ancillary_available,
+                unavailable_reason: if ancillary_available {
+                    None
+                } else {
+                    Some("Parent item not on this requisition".to_string())
+                },
+            },
+        ];
+
+        // Plugin methods: enumerate any registered backend plugin tagged with
+        // `PluginType::ForecastMethod`. v1 ships no such plugins, but the
+        // surface is here for them to drop in.
+        for plugin in BackendPluginRowRepository::new(connection).all()? {
+            if plugin.types.0.iter().any(|t| matches!(t, PluginType::ForecastMethod)) {
+                options.push(ForecastMethodOptionNode {
+                    code: format!("plugin:{}", plugin.code),
+                    label: plugin.code.clone(),
+                    is_available: true,
+                    unavailable_reason: None,
+                });
+            }
+        }
+
+        Ok(options)
     }
 }
 

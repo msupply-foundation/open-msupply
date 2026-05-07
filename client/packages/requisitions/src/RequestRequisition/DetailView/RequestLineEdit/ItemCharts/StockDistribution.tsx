@@ -122,20 +122,9 @@ const MonthlyBar = ({
   );
 };
 
-const CalculationError = ({
-  isAmcZero,
-  isSohAndQtyZero,
-}: {
-  isAmcZero?: boolean;
-  isSohAndQtyZero?: boolean;
-}) => {
+const CalculationError = () => {
   const t = useTranslation();
-  const detail = isAmcZero
-    ? `: ${t('error.amc-is-zero')}`
-    : isSohAndQtyZero
-      ? `: ${t('error.soh-and-suggested-quantity-are-zero')}`
-      : '';
-  const message = `${t('error.unable-to-calculate')}${detail}`;
+  const message = `${t('error.unable-to-calculate')}: ${t('error.soh-and-suggested-quantity-are-zero')}`;
 
   return (
     <Box display="flex" padding={1} gap={1}>
@@ -223,14 +212,11 @@ const StockDistributionContent = ({
     [availableStockOnHand, averageMonthlyConsumption, suggestedQuantity]
   );
 
-  const isAmcZero = averageMonthlyConsumption === 0;
+  // AMC=0 is now reported on the forecast calculation panel as
+  // `noConsumptionHistory` — the chart hides itself rather than duplicate it.
+  if (averageMonthlyConsumption === 0) return null;
   const isSohAndQtyZero = suggestedQuantity === 0 && availableStockOnHand === 0;
-
-  return isAmcZero || isSohAndQtyZero ? (
-    <CalculationError isAmcZero={isAmcZero} isSohAndQtyZero={isSohAndQtyZero} />
-  ) : (
-    DistributionBars
-  );
+  return isSohAndQtyZero ? <CalculationError /> : DistributionBars;
 };
 
 export const StockDistribution = ({

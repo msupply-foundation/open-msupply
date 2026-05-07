@@ -94,6 +94,11 @@ pub fn insert_program_request_requisition(
                 requisition_line_repo.upsert_one(&requisition_line)?;
             }
 
+            super::recompute::recompute_forecasts_and_suggested_quantities(
+                ctx,
+                &new_requisition.id,
+            )?;
+
             let indicator_value_repo = IndicatorValueRowRepository::new(connection);
             for indicator_value in indicator_values {
                 indicator_value_repo.upsert_one(&indicator_value)?;

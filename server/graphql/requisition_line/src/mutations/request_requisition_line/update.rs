@@ -21,6 +21,9 @@ pub struct UpdateInput {
     pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
     pub option_id: Option<String>,
+    /// Storage form: `"amc"` | `"population"` | `"ancillary_ratio"` | `"plugin:<code>"`.
+    /// When set, recomputes the line's forecast snapshot + suggested quantity.
+    pub forecast_method: Option<String>,
 }
 
 #[derive(Interface)]
@@ -84,6 +87,7 @@ impl UpdateInput {
             requested_quantity,
             comment,
             option_id,
+            forecast_method,
         } = self;
 
         ServiceInput {
@@ -91,6 +95,7 @@ impl UpdateInput {
             requested_quantity,
             comment,
             option_id,
+            forecast_method,
         }
     }
 }
@@ -338,7 +343,8 @@ mod test {
                     id: "update line id input".to_string(),
                     requested_quantity: Some(1.0),
                     comment: Some("comment".to_string()),
-                    option_id: None
+                    option_id: None,
+                    forecast_method: None,
                 }
             );
             Ok(RequisitionLine {

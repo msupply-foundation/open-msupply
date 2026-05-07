@@ -55,9 +55,16 @@ fragment RequestLine on RequisitionLineNode {
     ...ReasonOptionRow
   }
 
-  forecastTotalUnits
+  forecastMonthlyUsage
   forecastTotalDoses
-  vaccineCourses
+  forecastMethod
+  forecastData
+  applicableForecastMethods {
+    code
+    label
+    isAvailable
+    unavailableReason
+  }
 }
 
 fragment Request on RequisitionNode {
@@ -80,6 +87,7 @@ fragment Request on RequisitionNode {
   otherPartyId
   maxMonthsOfStock
   minMonthsOfStock
+  expectedDeliveryDate
   approvalStatus
   documents {
     __typename

@@ -28,7 +28,7 @@ export interface RequestStoreStatsProps {
   availableVolumeAtLocationType?: AvailableVolumeAtLocationTypeFragment | null;
   itemVolume: number;
   displayForecasting: boolean;
-  vaccineCourses?: string | null;
+  forecastData?: string | null;
 }
 
 const MIN_MC_WIDTH_TO_SHOW_TEXT = 5;
@@ -130,7 +130,7 @@ export const RequestStoreStats = ({
   availableVolumeAtLocationType,
   itemVolume,
   displayForecasting,
-  vaccineCourses,
+  forecastData,
 }: RequestStoreStatsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -176,7 +176,10 @@ export const RequestStoreStats = ({
       }}
     >
       {displayForecasting ? (
-        <ForecastCalculationDisplay vaccineCourses={vaccineCourses} />
+        <ForecastCalculationDisplay
+          forecastData={forecastData}
+          unitName={unitName}
+        />
       ) : (
         <>
           {formattedAmc === 0 && <CalculationError isAmcZero />}

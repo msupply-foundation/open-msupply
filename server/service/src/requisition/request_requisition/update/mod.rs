@@ -83,16 +83,42 @@ pub fn update_request_requisition(
             let (requisition_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
             let GenerateResult {
                 updated_requisition_row,
-                updated_requisition_lines,
                 empty_lines_to_trim,
+                should_recalculate,
             } = generate(connection, requisition_row, input.clone())?;
 
             RequisitionRowRepository::new(connection).upsert_one(&updated_requisition_row)?;
 
+            // Trim empty lines first so the recompute pipeline doesn't refresh
+            // forecasts on rows that are about to be deleted.
+            if let Some(lines) = empty_lines_to_trim {
+                for line in lines {
+                    RequisitionLineRowRepository::new(connection).delete(&line.id)?;
+                }
+            }
+
+            // Refresh forecasts + suggested_quantity for every remaining line
+            // when min/max changed. Single owner of the forecast pipeline.
+            if should_recalculate {
+                super::recompute::recompute_forecasts_and_suggested_quantities(
+                    ctx,
+                    &updated_requisition_row.id,
+                )?;
+            }
+
+            // Plugin transform runs on the post-recompute lines so plugins
+            // get the last word over forecast-derived suggested_quantity.
+            let lines_for_plugin: Vec<_> = crate::requisition::common::get_lines_for_requisition(
+                connection,
+                &updated_requisition_row.id,
+            )?
+            .into_iter()
+            .map(|l| l.requisition_line_row)
+            .collect();
             let (updated_requisition_lines, plugin_data_rows) =
                 PluginInstance::transform_request_requisition_lines(
                     Context::UpdateRequestRequisition,
-                    updated_requisition_lines,
+                    lines_for_plugin,
                     &updated_requisition_row,
                 )
                 .map_err(OutError::PluginError)?;
@@ -105,12 +131,6 @@ pub fn update_request_requisition(
 
             for requisition_line_row in updated_requisition_lines {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
-            }
-
-            if let Some(lines) = empty_lines_to_trim {
-                for line in lines {
-                    RequisitionLineRowRepository::new(connection).delete(&line.id)?;
-                }
             }
 
             if status_changed {
@@ -138,5 +158,15 @@ pub fn update_request_requisition(
 impl From<RepositoryError> for UpdateRequestRequisitionError {
     fn from(error: RepositoryError) -> Self {
         UpdateRequestRequisitionError::DatabaseError(error)
+    }
+}
+
+impl From<crate::PluginOrRepositoryError> for UpdateRequestRequisitionError {
+    fn from(error: crate::PluginOrRepositoryError) -> Self {
+        use crate::PluginOrRepositoryError as from;
+        match error {
+            from::RepositoryError(e) => UpdateRequestRequisitionError::DatabaseError(e),
+            from::PluginError(e) => UpdateRequestRequisitionError::PluginError(e),
+        }
     }
 }

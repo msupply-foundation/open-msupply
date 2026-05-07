@@ -97,9 +97,10 @@ export type ResponseLineFragment = {
   requisitionId: string;
   approvedQuantity: number;
   approvalComment?: string | null;
-  forecastTotalUnits?: number | null;
+  forecastMonthlyUsage?: number | null;
   forecastTotalDoses?: number | null;
-  vaccineCourses?: string | null;
+  forecastMethod?: string | null;
+  forecastData?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     stockOnHand: number;
@@ -227,9 +228,10 @@ export type ResponseFragment = {
       requisitionId: string;
       approvedQuantity: number;
       approvalComment?: string | null;
-      forecastTotalUnits?: number | null;
+      forecastMonthlyUsage?: number | null;
       forecastTotalDoses?: number | null;
-      vaccineCourses?: string | null;
+      forecastMethod?: string | null;
+      forecastData?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         stockOnHand: number;
@@ -390,9 +392,10 @@ export type ResponseByNumberQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
-            forecastTotalUnits?: number | null;
+            forecastMonthlyUsage?: number | null;
             forecastTotalDoses?: number | null;
-            vaccineCourses?: string | null;
+            forecastMethod?: string | null;
+            forecastData?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -561,9 +564,10 @@ export type ResponseByIdQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
-            forecastTotalUnits?: number | null;
+            forecastMonthlyUsage?: number | null;
             forecastTotalDoses?: number | null;
-            vaccineCourses?: string | null;
+            forecastMethod?: string | null;
+            forecastData?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -1206,9 +1210,10 @@ export const ResponseLineFragmentDoc = gql`
     availableVolumeAtLocationType {
       ...AvailableVolumeAtLocationType
     }
-    forecastTotalUnits
+    forecastMonthlyUsage
     forecastTotalDoses
-    vaccineCourses
+    forecastMethod
+    forecastData
   }
   ${ItemWithAvailableStockFragmentDoc}
   ${ReasonOptionRowFragmentDoc}

@@ -1,4 +1,5 @@
 pub mod amc;
+pub mod forecast_method;
 pub mod get_consumption;
 pub mod graphql_query;
 pub mod processor;
@@ -31,6 +32,7 @@ pub mod generate_typescript_types {
     struct PluginTypes {
         // Fields here must match PluginTypes in backend_plugin_row repository
         average_monthly_consumption: Function<amc::Input, amc::Output>,
+        forecast_method: Function<forecast_method::Input, forecast_method::Output>,
         transform_request_requisition_lines: Function<
             transform_request_requisition_lines::Input,
             transform_request_requisition_lines::Output,

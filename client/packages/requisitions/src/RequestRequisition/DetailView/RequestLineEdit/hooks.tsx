@@ -49,6 +49,7 @@ const createDraftFromItem = (
     additionInUnits: 0,
     daysOutOfStock: 0,
     expiringUnits: 0,
+    applicableForecastMethods: [],
   };
 };
 
@@ -98,9 +99,15 @@ export const useDraftRequisitionLine = (
     setDraft(current => (current ? { ...current, ...patch } : null));
   }, []);
 
-  const save = useCallback(async () => {
+  const save = useCallback(async (overrides?: Partial<DraftRequestLine>) => {
     if (draft) {
-      const result = await saveMutation(draft);
+      // `overrides` lets callers send a one-shot save with a field that
+      // hasn't been committed to the draft yet — avoids the React state
+      // batching race when the user wants the save to reflect the value
+      // they just picked (e.g. `forecastMethod` switching).
+      const merged = overrides ? { ...draft, ...overrides } : draft;
+      if (overrides) setDraft(merged);
+      const result = await saveMutation(merged);
 
       setIsReasonsError(false);
       if (result?.__typename === 'UpdateRequestRequisitionLineError') {

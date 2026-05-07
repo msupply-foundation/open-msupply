@@ -129,7 +129,7 @@ export const ResponseLineEditModal = ({
     (draft?.availableVolumeAtLocationType?.itemVolumePerUnit ?? 0) *
     (draft?.supplyQuantity ?? 0);
   const displayForecasting =
-    (displayPopulationBasedForecasting && !!draft?.forecastTotalUnits) || false;
+    (displayPopulationBasedForecasting && !!draft?.forecastMonthlyUsage) || false;
 
   const tabs = [
     {
@@ -165,7 +165,7 @@ export const ResponseLineEditModal = ({
           availableVolumeAtLocationType={draft?.availableVolumeAtLocationType}
           itemVolume={itemVolume}
           displayForecasting={displayForecasting}
-          vaccineCourses={draft?.vaccineCourses}
+          forecastData={draft?.forecastData}
         />
       ),
       value: 'label.customer',

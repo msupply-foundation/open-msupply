@@ -10,7 +10,7 @@ use crate::{
     store_preference::get_store_preferences,
     PluginOrRepositoryError,
 };
-use chrono::{Duration, NaiveDate};
+use chrono::{Datelike, Duration, NaiveDate};
 use repository::{
     ConsumptionFilter, ConsumptionRepository, DateFilter, DaysOutOfStockFilter,
     DaysOutOfStockRepository, DaysOutOfStockRow, EqualFilter, PluginType, RepositoryError,
@@ -27,6 +27,44 @@ pub struct ItemStats {
     pub total_stock_on_hand: f64,
     pub item_id: String,
     pub item_name: String,
+    /// Breakdown of how `average_monthly_consumption` was produced. `None`
+    /// when constructed without a fresh AMC computation (e.g.
+    /// `from_requisition_line`).
+    pub amc_breakdown: Option<AmcBreakdown>,
+}
+
+/// How AMC was produced for an item — used by the forecasting layer to embed
+/// an explanation in the `AmcSnapshot`.
+#[derive(Clone, Debug, PartialEq)]
+pub enum AmcBreakdown {
+    Default(DefaultAmcBreakdown),
+    /// AMC came from a `PluginType::AverageMonthlyConsumption` hook —
+    /// distinct from `PluginType::ForecastMethod`.
+    Plugin { code: String },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct DefaultAmcBreakdown {
+    pub lookback_months: f64,
+    pub total_consumption: f64,
+    pub number_of_days: f64,
+    /// Total days out of stock over the lookback period. `None` when the
+    /// `AdjustForNumberOfDaysOutOfStock` preference is off.
+    pub days_out_of_stock: Option<f64>,
+    /// `number_of_days / (number_of_days − total_dos)` when DOS adjustment is
+    /// on; `1.0` otherwise.
+    pub dos_adjustment_factor: f64,
+    /// Per-month consumption that fed `total_consumption`. One entry per
+    /// month in the lookback window, oldest first; months with no
+    /// consumption are present with `consumption = 0`.
+    pub monthly_consumption: Vec<MonthlyConsumption>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct MonthlyConsumption {
+    /// First day of the month bucket.
+    pub month: NaiveDate,
+    pub consumption: f64,
 }
 
 pub trait ItemStatsServiceTrait: Sync + Send {
@@ -89,7 +127,23 @@ pub fn get_item_stats(
 
     let consumption_map = match PluginInstance::get_one(PluginType::GetConsumption) {
         Some(plugin) => get_consumption::Trait::call(&(*plugin), consumption)?,
-        None => get_consumption_map(connection, consumption_filter)?,
+        None => get_consumption_map(connection, consumption_filter.clone())?,
+    };
+
+    // Per-month buckets for the AMC calculation breakdown. Built off the same
+    // filter as the totals so the months sum back to `total_consumption`.
+    // Skipped when a `GetConsumption` plugin overrides totals — we can't
+    // attribute those to specific months without plugin support.
+    let monthly_consumption_map = if PluginInstance::get_one(PluginType::GetConsumption).is_none() {
+        get_monthly_consumption_map(
+            connection,
+            consumption_filter,
+            &item_ids,
+            start_date,
+            end_date,
+        )?
+    } else {
+        HashMap::new()
     };
 
     let adjust_for_days_out_of_stock = AdjustForNumberOfDaysOutOfStock
@@ -103,15 +157,16 @@ pub fn get_item_stats(
         to: end_date,
     };
 
-    let adjusted_days_out_of_stock_map = if adjust_for_days_out_of_stock {
+    let (raw_dos_map, adjusted_days_out_of_stock_map) = if adjust_for_days_out_of_stock {
         let dos_rows = DaysOutOfStockRepository::new(connection).query(dos_filter)?;
-
-        Some(get_days_out_of_stock_adjustment_map(
-            dos_rows,
-            number_of_days,
-        )?)
+        let raw: HashMap<String, f64> = dos_rows
+            .iter()
+            .map(|r| (r.item_id.clone(), r.total_dos))
+            .collect();
+        let adjusted = get_days_out_of_stock_adjustment_map(dos_rows, number_of_days)?;
+        (Some(raw), Some(adjusted))
     } else {
-        None
+        (None, None)
     };
 
     let input = amc::Input {
@@ -119,20 +174,78 @@ pub fn get_item_stats(
         amc_lookback_months,
         // Really don't like cloning this
         consumption_map: consumption_map.clone(),
-        adjusted_days_out_of_stock_map,
+        adjusted_days_out_of_stock_map: adjusted_days_out_of_stock_map.clone(),
         item_ids: item_ids.clone(),
     };
 
-    let amc_by_item = match PluginInstance::get_one(PluginType::AverageMonthlyConsumption) {
-        Some(plugin) => amc::Trait::call(&(*plugin), input),
-        None => amc::Trait::call(&DefaultAmc, input),
-    }?;
+    let (amc_by_item, breakdown_source) =
+        match PluginInstance::get_one(PluginType::AverageMonthlyConsumption) {
+            Some(plugin) => {
+                let code = plugin.code.clone();
+                (amc::Trait::call(&(*plugin), input)?, AmcSource::Plugin(code))
+            }
+            None => (amc::Trait::call(&DefaultAmc, input)?, AmcSource::Default),
+        };
+
+    let amc_breakdowns = build_amc_breakdowns(
+        &item_ids,
+        &breakdown_source,
+        amc_lookback_months,
+        number_of_days,
+        &consumption_map,
+        &monthly_consumption_map,
+        raw_dos_map.as_ref(),
+        adjusted_days_out_of_stock_map.as_ref(),
+    );
 
     Ok(ItemStats::new_vec(
         amc_by_item,
         consumption_map,
         get_stock_on_hand_rows(connection, store_id, Some(item_ids))?,
+        amc_breakdowns,
     ))
+}
+
+enum AmcSource {
+    Default,
+    Plugin(String),
+}
+
+fn build_amc_breakdowns(
+    item_ids: &[String],
+    source: &AmcSource,
+    lookback_months: f64,
+    number_of_days: f64,
+    consumption_map: &HashMap<String, f64>,
+    monthly_consumption_map: &HashMap<String, Vec<MonthlyConsumption>>,
+    raw_dos_map: Option<&HashMap<String, f64>>,
+    adjusted_dos_map: Option<&HashMap<String, f64>>,
+) -> HashMap<String, AmcBreakdown> {
+    item_ids
+        .iter()
+        .map(|item_id| {
+            let breakdown = match source {
+                AmcSource::Plugin(code) => AmcBreakdown::Plugin { code: code.clone() },
+                AmcSource::Default => AmcBreakdown::Default(DefaultAmcBreakdown {
+                    lookback_months,
+                    number_of_days,
+                    total_consumption: consumption_map.get(item_id).copied().unwrap_or(0.0),
+                    // `Some(...)` iff DOS adjustment is on (raw_dos_map is
+                    // `Some`); items absent from the map have 0 DOS.
+                    days_out_of_stock: raw_dos_map
+                        .map(|m| m.get(item_id).copied().unwrap_or(0.0)),
+                    dos_adjustment_factor: adjusted_dos_map
+                        .and_then(|m| m.get(item_id).copied())
+                        .unwrap_or(1.0),
+                    monthly_consumption: monthly_consumption_map
+                        .get(item_id)
+                        .cloned()
+                        .unwrap_or_default(),
+                }),
+            };
+            (item_id.clone(), breakdown)
+        })
+        .collect()
 }
 
 pub fn get_item_stats_map(
@@ -210,6 +323,65 @@ fn get_consumption_map(
     Ok(consumption_map)
 }
 
+/// Aggregate consumption rows into per-(item, month) buckets so the AMC
+/// breakdown can show month-by-month contributions. Each item's vec is
+/// sorted oldest → newest and includes every month in `[start_month,
+/// end_month]` (months with no rows present with `consumption = 0`) so the
+/// UI doesn't have a gap on quiet months.
+fn get_monthly_consumption_map(
+    connection: &StorageConnection,
+    filter: ConsumptionFilter,
+    item_ids: &[String],
+    start_date: NaiveDate,
+    end_date: NaiveDate,
+) -> Result<HashMap<String, Vec<MonthlyConsumption>>, RepositoryError> {
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
+
+    let mut buckets: HashMap<(String, NaiveDate), f64> = HashMap::new();
+    for row in consumption_rows.into_iter() {
+        let key = (row.item_id.clone(), month_start(row.date));
+        *buckets.entry(key).or_insert(0.0) += row.quantity;
+    }
+
+    let months: Vec<NaiveDate> = enumerate_months(start_date, end_date);
+    let mut out: HashMap<String, Vec<MonthlyConsumption>> = HashMap::new();
+    for item_id in item_ids {
+        let series: Vec<MonthlyConsumption> = months
+            .iter()
+            .map(|m| MonthlyConsumption {
+                month: *m,
+                consumption: buckets.get(&(item_id.clone(), *m)).copied().unwrap_or(0.0),
+            })
+            .collect();
+        out.insert(item_id.clone(), series);
+    }
+    Ok(out)
+}
+
+fn month_start(date: NaiveDate) -> NaiveDate {
+    NaiveDate::from_ymd_opt(date.year(), date.month(), 1).unwrap_or(date)
+}
+
+fn enumerate_months(start: NaiveDate, end: NaiveDate) -> Vec<NaiveDate> {
+    let mut months = Vec::new();
+    let mut cursor = month_start(start);
+    let last = month_start(end);
+    while cursor <= last {
+        months.push(cursor);
+        cursor = next_month(cursor);
+    }
+    months
+}
+
+fn next_month(d: NaiveDate) -> NaiveDate {
+    let (y, m) = (d.year(), d.month());
+    if m == 12 {
+        NaiveDate::from_ymd_opt(y + 1, 1, 1).unwrap()
+    } else {
+        NaiveDate::from_ymd_opt(y, m + 1, 1).unwrap()
+    }
+}
+
 fn get_days_out_of_stock_adjustment_map(
     dos_rows: Vec<DaysOutOfStockRow>,
     number_of_days: f64,
@@ -245,11 +417,13 @@ impl ItemStats {
         amc_by_item: amc::Output,
         consumption_map: HashMap<String /* item_id */, f64 /* total consumption */>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
+        mut amc_breakdowns: HashMap<String, AmcBreakdown>,
     ) -> Vec<Self> {
         stock_on_hand_rows
             .into_iter()
             .map(|stock_on_hand| ItemStats {
                 available_stock_on_hand: stock_on_hand.available_stock_on_hand,
+                amc_breakdown: amc_breakdowns.remove(&stock_on_hand.item_id),
                 item_id: stock_on_hand.item_id.clone(),
                 item_name: stock_on_hand.item_name.clone(),
                 average_monthly_consumption: amc_by_item
@@ -275,6 +449,7 @@ impl ItemStats {
             // TODO: Implement total consumption & total_stock_on_hand
             total_consumption: 0.0,
             total_stock_on_hand: 0.0,
+            amc_breakdown: None,
         }
     }
 }

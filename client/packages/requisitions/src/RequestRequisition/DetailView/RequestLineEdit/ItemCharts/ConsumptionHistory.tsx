@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Bar,
   CartesianGrid,
@@ -14,6 +14,7 @@ import {
 } from '@common/components';
 import {
   Box,
+  DateUtils,
   LocaleKey,
   useFormatDateTime,
   useTheme,
@@ -39,9 +40,16 @@ const getLabelLocaleKey = ({
 
 export interface ConsumptionHistoryProps {
   id: string;
+  /// Resolved by the parent: forecastMonthlyUsage (when forecasting is in
+  /// use) or AMC fallback. `null` means "no projection" (e.g. forecast
+  /// failed) — drop the trailing projected month.
+  monthlyUsage: number | null;
 }
 
-export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
+export const ConsumptionHistory = ({
+  id,
+  monthlyUsage,
+}: ConsumptionHistoryProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const { dayMonthShort } = useFormatDateTime();
@@ -51,7 +59,7 @@ export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
     value: number,
     name: string,
     props: {
-      payload?: ConsumptionHistoryFragment; // { date: string; isHistoric: boolean; isCurrent: boolean };
+      payload?: ConsumptionHistoryFragment;
     }
   ): [number, string] => {
     switch (name) {
@@ -63,9 +71,44 @@ export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
         return [value, name];
     }
   };
-  if (!data || !data.consumptionHistory) return null;
 
-  const consumptionHistory = data.consumptionHistory.nodes;
+  // Drop the server's trailing projected month (it was computed from AMC) and
+  // synthesize one from `monthlyUsage` so the bar reflects the forecast value.
+  // The historic + current nodes are passed through unchanged.
+  const chartData = useMemo<ConsumptionHistoryFragment[]>(() => {
+    const serverNodes = data?.consumptionHistory?.nodes ?? [];
+    const historicAndCurrent = serverNodes.filter(
+      n => n.isHistoric || n.isCurrent
+    );
+    if (monthlyUsage == null || historicAndCurrent.length === 0) {
+      return historicAndCurrent;
+    }
+
+    const lastDate = DateUtils.getDateOrNull(
+      historicAndCurrent[historicAndCurrent.length - 1]?.date ?? null
+    );
+    if (!lastDate) return historicAndCurrent;
+
+    // Last day of the next month — matches server's appended projection date.
+    const nextMonthLastDay = new Date(
+      lastDate.getFullYear(),
+      lastDate.getMonth() + 2,
+      0
+    );
+
+    const projected: ConsumptionHistoryFragment = {
+      __typename: 'ConsumptionHistoryNode',
+      consumption: Math.round(monthlyUsage),
+      averageMonthlyConsumption: monthlyUsage,
+      date: nextMonthLastDay.toISOString().slice(0, 10),
+      isHistoric: false,
+      isCurrent: false,
+    };
+
+    return [...historicAndCurrent, projected];
+  }, [data, monthlyUsage]);
+
+  if (!data || !data.consumptionHistory) return null;
 
   const tooltipLabelFormatter = (date: string) => dateFormatter(date);
 
@@ -94,10 +137,10 @@ export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
         </Typography>
       </Box>
       <Box>
-        {data.consumptionHistory.nodes?.length === 0 ? (
+        {chartData.length === 0 ? (
           <Typography width={450}>{t('error.no-data')}</Typography>
         ) : (
-          <ComposedChart width={450} height={255} data={consumptionHistory}>
+          <ComposedChart width={450} height={255} data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -125,12 +168,16 @@ export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
                   id: '2',
                   color: theme.palette.gray.main,
                 },
-                {
-                  value: t('label.projected'),
-                  type: 'rect',
-                  id: '3',
-                  color: theme.palette.primary.light,
-                },
+                ...(monthlyUsage != null
+                  ? [
+                      {
+                        value: t('label.projected'),
+                        type: 'rect' as const,
+                        id: '3',
+                        color: theme.palette.primary.light,
+                      },
+                    ]
+                  : []),
                 {
                   value: t('label.moving-average'),
                   type: 'rect',
@@ -140,7 +187,7 @@ export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
               ]}
             />
             <Bar dataKey="consumption">
-              {data.consumptionHistory.nodes?.map(entry => (
+              {chartData.map(entry => (
                 <Cell key={entry.date} fill={getFillColour(entry)} />
               ))}
             </Bar>

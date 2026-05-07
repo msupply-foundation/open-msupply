@@ -104,7 +104,6 @@ mod tests {
     use crate::db_diesel::backend_plugin_row::backend_plugin;
     use crate::db_diesel::changelog::changelog;
     use crate::db_diesel::plugin_data_row::plugin_data;
-    use crate::db_diesel::requisition_line_row::requisition_line;
     use crate::frontend_plugin_row;
     use crate::{
         migrations::{v2_16_00::V2_16_00, v2_17_00::V2_17_00},
@@ -241,29 +240,54 @@ mod tests {
         migrate(&connection, Some(version.clone())).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
-        let results = requisition_line::table
-            .select((
-                requisition_line::id,
-                requisition_line::forecast_total_units,
-                requisition_line::forecast_total_doses,
-                requisition_line::vaccine_courses,
-            ))
-            .order(requisition_line::id.asc())
-            .load::<(String, Option<f64>, Option<f64>, Option<String>)>(
-                connection.lock().connection(),
-            )
-            .unwrap();
+        // Query via raw SQL: `forecast_total_doses` and `vaccine_courses` were
+        // added by this migration but later replaced by `forecast_method` /
+        // `forecast_data` in v2.18.00. The Diesel schema no longer contains
+        // them, so use raw rows here instead of the typed table.
+        #[derive(QueryableByName, Debug, PartialEq)]
+        struct ForecastingFields {
+            #[diesel(sql_type = diesel::sql_types::Text)]
+            id: String,
+            #[diesel(sql_type = diesel::sql_types::Nullable<diesel::sql_types::Double>)]
+            forecast_total_units: Option<f64>,
+            #[diesel(sql_type = diesel::sql_types::Nullable<diesel::sql_types::Double>)]
+            forecast_total_doses: Option<f64>,
+            #[diesel(sql_type = diesel::sql_types::Nullable<diesel::sql_types::Text>)]
+            vaccine_courses: Option<String>,
+        }
+
+        let results: Vec<ForecastingFields> = sql_query(
+            "SELECT id, forecast_total_units, forecast_total_doses, vaccine_courses \
+             FROM requisition_line ORDER BY id ASC",
+        )
+        .load(connection.lock().connection())
+        .unwrap();
 
         let expected = vec![
-            (
-                "req_line_1".to_string(),
-                Some(100.5),
-                Some(200.25),
-                Some("course1,course2".to_string()),
-            ),
-            ("req_line_2".to_string(), Some(50.0), Some(75.5), None),
-            ("req_line_3".to_string(), None, None, None),
-            ("req_line_4".to_string(), None, None, None),
+            ForecastingFields {
+                id: "req_line_1".to_string(),
+                forecast_total_units: Some(100.5),
+                forecast_total_doses: Some(200.25),
+                vaccine_courses: Some("course1,course2".to_string()),
+            },
+            ForecastingFields {
+                id: "req_line_2".to_string(),
+                forecast_total_units: Some(50.0),
+                forecast_total_doses: Some(75.5),
+                vaccine_courses: None,
+            },
+            ForecastingFields {
+                id: "req_line_3".to_string(),
+                forecast_total_units: None,
+                forecast_total_doses: None,
+                vaccine_courses: None,
+            },
+            ForecastingFields {
+                id: "req_line_4".to_string(),
+                forecast_total_units: None,
+                forecast_total_doses: None,
+                vaccine_courses: None,
+            },
         ];
 
         assert_eq!(results, expected);
