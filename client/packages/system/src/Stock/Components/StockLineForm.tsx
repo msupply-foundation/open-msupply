@@ -494,13 +494,12 @@ export const StockLineForm = ({
                 {showVVMStatus && (
                   <StyledInputRow
                     label={t('label.vvm-status')}
-                    labelWidth={isNewModal ? '212px' : null}
                     Input={
                       <VVMStatusSearchInput
                         selected={draft?.vvmStatus ?? null}
                         onChange={vvmStatus => onUpdate({ vvmStatus })}
                         disabled={!isNewModal}
-                        width={!isNewModal ? 160 : undefined}
+                        width={160}
                         useDefault={isNewModal}
                       />
                     }
