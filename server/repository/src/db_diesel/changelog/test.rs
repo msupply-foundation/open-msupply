@@ -639,15 +639,12 @@ async fn test_changelog_outgoing_sync_records() {
         .set_i32(KeyType::SettingsSyncSiteId, Some(central_site_id))
         .unwrap();
 
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(1, false, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 10,
-        },
-    )
-    .unwrap();
-    assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
+    let repo = ChangelogRepository::new(&connection);
+
+    // Cursor baseline — populate_changelog_with_rows_for_sync_v7_tables seeds
+    // changelog rows for central reference tables during migration; query past
+    // them so we only see records inserted by this test.
+    let cursor_before = repo.max_cursor().unwrap() as i64;
 
     // Insert an asset_class variant (which should trigger a changelog record for Central Sync)
     let asset_class_id = "asset_class_id".to_string();
@@ -659,14 +656,15 @@ async fn test_changelog_outgoing_sync_records() {
         .upsert_one(&row)
         .unwrap();
 
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(1, false, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = repo
+        .query(
+            ChangelogFilter::all_data_for_site(1, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     // outgoing_results should contain the changelog record for the asset class
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
@@ -692,39 +690,42 @@ async fn test_changelog_outgoing_sync_records() {
     // Now we should have two records to send to site 1 the remote site on initialisation
     // The asset class and the asset
 
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(site1_id, true, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = repo
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, true, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
     assert_eq!(outgoing_results[1].record_id, asset_id);
 
     // If not during initialisation, we should only get the asset_class as the asset was synced from the site already
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(site1_id, false, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = repo
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
     // Site 2 should only get the asset_class
-    let outgoing_results = ChangelogRepository::new(&connection).query(
-        ChangelogFilter::all_data_for_site(site2_id, false, None),
-        CursorAndLimit {
-            cursor: -1,
-            limit: 1000,
-        },
-    )
-    .unwrap();
+    let outgoing_results = repo
+        .query(
+            ChangelogFilter::all_data_for_site(site2_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 }
