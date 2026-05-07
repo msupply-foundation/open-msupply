@@ -10,7 +10,7 @@ impl MigrationFragment for Migrate {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         // Central reference tables that need to surface their existing rows to sync v7.
-        // Each table's `id` column is the changelog `record_id`; row_action is 'upsert'.
+        // Each table's `id` column is the changelog `record_id`; row_action is 'UPSERT'.
         const TABLES: &[&str] = &[
             "abbreviation",
             "category",
@@ -60,7 +60,7 @@ impl MigrationFragment for Migrate {
         for table in TABLES {
             sql.push_str(&format!(
                 "INSERT INTO changelog (table_name, record_id, row_action, source_site_id) \
-                 SELECT '{table}', CAST(t.id AS TEXT), 'upsert', \
+                 SELECT '{table}', CAST(t.id AS TEXT), 'UPSERT', \
                      COALESCE( \
                          (SELECT value_int FROM key_value_store WHERE id = 'SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID'), \
                          0 \
@@ -180,7 +180,7 @@ mod tests {
         assert_eq!(count_for("user_account", "user_x"), 1);
         assert_eq!(count_for("abbreviation", "abbr1"), 1);
 
-        // Verify each backfilled row has the expected shape: row_action='upsert',
+        // Verify each backfilled row has the expected shape: row_action='UPSERT',
         // source_site_id populated from the seeded central site id (42),
         // and the other extra columns NULL.
         let row = changelog::table
@@ -199,8 +199,8 @@ mod tests {
             .unwrap();
         assert_eq!(
             row,
-            ("upsert".to_string(), None, Some(42), None, None),
-            "expected ('upsert', NULL, Some(42), NULL, NULL) for unit/unit1"
+            ("UPSERT".to_string(), None, Some(42), None, None),
+            "expected ('UPSERT', NULL, Some(42), NULL, NULL) for unit/unit1"
         );
     }
 
