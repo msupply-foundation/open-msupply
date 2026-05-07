@@ -1,7 +1,11 @@
 import React from 'react';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
+  ChevronDownIcon,
   Typography,
   TypedTFunction,
   LocaleKey,
@@ -203,66 +207,66 @@ const EquationBlock = ({ rows }: { rows: EquationLine[] }) => (
   </Box>
 );
 
-/// Renders the breakdown as a single card with stacked groups — no
-/// accordions, no expand/collapse. Each group has an optional small
-/// uppercased subtitle (e.g. one per vaccine course / per ancillary
-/// parent), and its equation blocks are visible inline.
+/// Renders the breakdown inside a collapsible accordion — heading is the
+/// summary row, groups (per-course / per-parent) live in the details. Closed
+/// by default so the modal stays compact; users expand to inspect the math.
 const EquationDisplay = ({
   heading,
   warning,
   groups,
 }: EquationDisplayProps) => (
-  <Box
+  <Accordion
     sx={{
-      width: '100%',
-      maxWidth: 900,
-      mx: 'auto',
-      p: 3,
-      borderRadius: 2,
       backgroundColor: 'background.menu',
+      borderRadius: 2,
+      '&:before': { display: 'none' },
     }}
   >
-    <Typography variant="body1" fontWeight={700} sx={{ mb: 1 }}>
-      {heading}
-    </Typography>
-    {warning && (
-      <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
-        {warning}
+    <AccordionSummary expandIcon={<ChevronDownIcon />}>
+      <Typography variant="body1" fontWeight={700}>
+        {heading}
       </Typography>
-    )}
-    {groups.map((group, gi) => (
-      <Box key={gi} sx={{ mt: gi === 0 ? 1 : 3 }}>
-        {group.title && (
-          <Typography
-            variant="caption"
+    </AccordionSummary>
+    <AccordionDetails sx={{ pt: 0 }}>
+      {warning && (
+        <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
+          {warning}
+        </Typography>
+      )}
+      {groups.map((group, gi) => (
+        <Box key={gi} sx={{ mt: gi === 0 ? 0 : 3 }}>
+          {group.title && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                fontWeight: 700,
+                letterSpacing: 0.5,
+              }}
+            >
+              {group.title}
+            </Typography>
+          )}
+          <Box
             sx={{
-              color: 'text.secondary',
-              textTransform: 'uppercase',
-              fontWeight: 700,
-              letterSpacing: 0.5,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2.5,
+              mt: group.title ? 1 : 0,
+              pl: group.title ? 1 : 0,
+              borderLeft: group.title ? '2px solid' : 'none',
+              borderColor: 'divider',
             }}
           >
-            {group.title}
-          </Typography>
-        )}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2.5,
-            mt: group.title ? 1 : 0,
-            pl: group.title ? 1 : 0,
-            borderLeft: group.title ? '2px solid' : 'none',
-            borderColor: 'divider',
-          }}
-        >
-          {group.equations.map((eq, ei) => (
-            <EquationBlock key={ei} rows={eq} />
-          ))}
+            {group.equations.map((eq, ei) => (
+              <EquationBlock key={ei} rows={eq} />
+            ))}
+          </Box>
         </Box>
-      </Box>
-    ))}
-  </Box>
+      ))}
+    </AccordionDetails>
+  </Accordion>
 );
 
 // --- Adapters: snapshot → EquationDisplayProps ------------------------------
@@ -349,9 +353,10 @@ const populationAdapter = (
   units: string
 ): EquationDisplayProps => ({
   heading: t('label.population-forecast-calculation'),
-  groups: d.vaccineCourses.map(c => ({
-    title: c.courseTitle,
-    equations: [
+  groups: [
+    ...d.vaccineCourses.map(c => ({
+      title: c.courseTitle,
+      equations: [
       [
         {
           label: 'annualDoses',
@@ -401,8 +406,20 @@ const populationAdapter = (
           suffix: `${units} / month`,
         },
       ],
-    ],
-  })),
+      ],
+    })),
+    {
+      equations: [
+        [
+          {
+            label: 'monthlyUsage',
+            rhs: round(d.forecastMonthlyUsage, 2),
+            suffix: `${units} / month`,
+          },
+        ],
+      ],
+    },
+  ],
 });
 
 const ancillaryAdapter = (
@@ -494,11 +511,9 @@ const pluginAdapter = (
 /// already used for warning banners elsewhere in the request line edit modal
 /// (see `<Alert severity="warning">` neighbours in RequestLineEdit.tsx).
 const ErrorDisplay = ({ message }: { message: string }) => (
-  <Box sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}>
-    <Alert severity="error" sx={{ mt: 1 }}>
-      {message}
-    </Alert>
-  </Box>
+  <Alert severity="error" sx={{ mt: 1 }}>
+    {message}
+  </Alert>
 );
 
 const errorMessage = (

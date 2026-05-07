@@ -357,6 +357,8 @@ export const RequestLineEdit = ({
         <Box
           sx={{
             width: '100%',
+            maxWidth: 950,
+            mx: 'auto',
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
@@ -376,14 +378,7 @@ export const RequestLineEdit = ({
               methods. `null` is the legacy/implicit AMC fallback. */}
           {isInfoVisible(STOCK_DISTRIBUTION_INFO) &&
             (line.forecastMethod === 'amc' || line.forecastMethod == null) && (
-              <Box
-                sx={{
-                  width: '100%',
-                  maxWidth: 900,
-                  mx: 'auto',
-                  p: '8px 16px',
-                }}
-              >
+              <Box sx={{ p: '8px 16px' }}>
                 <StockDistribution
                   availableStockOnHand={line.itemStats?.availableStockOnHand}
                   averageMonthlyConsumption={
