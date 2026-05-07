@@ -1,25 +1,12 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
-
-use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
-    ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
-    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId, StorageConnection,
-    StringFilter, SyncBufferRepository,
-};
-use thiserror::Error;
-use util::format_error;
-
 use crate::{
+    apis::patient_v4::PatientV4,
+    programs::patient::patient_updated::create_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError},
     sync_v7::{
         api::{
             get_token::{GetTokenInput, GetTokenOutput},
-            pull, push,
+            patient_data_for_site, patient_search, pull, push,
             status::{self},
             Common,
         },
@@ -27,6 +14,19 @@ use crate::{
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
+use repository::{
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
+    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, Pagination, RepositoryError,
+    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId, StorageConnection,
+    StringFilter, SyncBufferRepository,
+};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
+use thiserror::Error;
+use util::format_error;
 
 /// TODO: revisit token format
 pub fn get_token(
@@ -174,9 +174,80 @@ pub async fn pull(
 
     let filter = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
 
-    let batch = SyncBatchV7::generate(&ctx.connection, filter, input.cursor, input.batch_size)?;
+    let batch = SyncBatchV7::generate(
+        &ctx.connection,
+        filter,
+        input.cursor,
+        Some(input.batch_size),
+    )?;
 
     Ok(batch)
+}
+
+pub async fn patient_search(
+    service_provider: &ServiceProvider,
+    common: Common,
+    input: patient_search::Input,
+) -> patient_search::Response {
+    let (_, ctx) = validate(service_provider, &common)?;
+
+    let results =
+        service_provider
+            .patient_service
+            .get_patients(&ctx, None, Some(input), None, None)?;
+
+    Ok(results
+        .rows
+        .into_iter()
+        .map(name_row_to_patient_v4)
+        .collect())
+}
+
+fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
+    PatientV4 {
+        id: name.id,
+        name: name.name,
+        phone: name.phone.unwrap_or_default(),
+        email: name.email.unwrap_or_default(),
+        code: name.code,
+        last: name.last_name.unwrap_or_default(),
+        first: name.first_name.unwrap_or_default(),
+        date_of_birth: name.date_of_birth,
+    }
+}
+
+/// Send patient records to a remote
+pub async fn patient_data_for_site(
+    service_provider: &ServiceProvider,
+    common: Common,
+    input: patient_data_for_site::Input,
+) -> patient_data_for_site::Response {
+    let (site, ctx) = validate(service_provider, &common)?;
+
+    let patient_data_for_site::Input {
+        patient_id,
+        store_id,
+        name_store_join_id,
+    } = input;
+
+    let nsj_id = ctx
+        .connection
+        .transaction_sync(|con| {
+            create_patient_name_store_join(con, &store_id, &patient_id, Some(name_store_join_id))
+        })
+        .map_err(|e| e.to_inner_error())?;
+
+    let filter = ChangelogCondition::And(vec![
+        ChangelogFilter::patient_data_for_site(site.id, None),
+        ChangelogCondition::patient_id::equal(patient_id),
+    ]);
+
+    let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
+
+    Ok(patient_data_for_site::Output {
+        batch,
+        name_store_join_id: nsj_id,
+    })
 }
 
 /// Receive Records from a remote open-mSupply Server
@@ -299,7 +370,10 @@ mod tests {
         sync::test_util_set_is_central_server,
         test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
-    use repository::{migrations::Version, mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
+        KeyValueStoreRepository,
+    };
 
     const SITE_NAME: &str = "test_site";
     const PASSWORD_SHA256: &str = "hashed_password_value";
@@ -359,6 +433,9 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
         test_site(&connection, None);
         let service_provider = ServiceProvider::new(connection_manager);
         let output = get_token(&service_provider, input()).unwrap();
@@ -419,6 +496,9 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
         test_site(&connection, None);
         let sp = ServiceProvider::new(connection_manager);
 

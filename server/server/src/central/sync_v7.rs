@@ -20,6 +20,8 @@ pub fn sync_v7_on_central() -> impl HttpServiceFactory {
         .service(site_status)
         .service(pull)
         .service(push)
+        .service(patient_data_for_site)
+        .service(patient_search)
 }
 
 fn extract_common(req: &HttpRequest) -> Result<Common, SyncError> {
@@ -77,6 +79,34 @@ async fn push(
         Ok(common) => {
             handlers::push(service_provider.into_inner(), common, body.into_inner()).await
         }
+        Err(e) => Err(e),
+    };
+    Ok(web::Json(response))
+}
+
+#[post("/patient_data_for_site")]
+async fn patient_data_for_site(
+    http_req: HttpRequest,
+    body: Json<api::patient_data_for_site::Input>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response: api::patient_data_for_site::Response = match extract_common(&http_req) {
+        Ok(common) => {
+            handlers::patient_data_for_site(&service_provider, common, body.into_inner()).await
+        }
+        Err(e) => Err(e),
+    };
+    Ok(web::Json(response))
+}
+
+#[post("/patient_search")]
+async fn patient_search(
+    http_req: HttpRequest,
+    body: Json<api::patient_search::Input>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response: api::patient_search::Response = match extract_common(&http_req) {
+        Ok(common) => handlers::patient_search(&service_provider, common, body.into_inner()).await,
         Err(e) => Err(e),
     };
     Ok(web::Json(response))

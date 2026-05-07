@@ -25,7 +25,7 @@ pub struct PatientParamsV4 {
     pub code: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PatientV4 {
     #[serde(rename = "ID")]
     pub id: String,
