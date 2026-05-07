@@ -227,30 +227,41 @@ export const LoginStoreSelectorPanel = ({
     ]
   );
 
+  const selectedIdRef = useRef(selectedId);
+  const visibleStoresRef = useRef(visibleStores);
+  const confirmRef = useRef(confirm);
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+    visibleStoresRef.current = visibleStores;
+    confirmRef.current = confirm;
+  });
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (isLoggingIn) return;
+      const stores = visibleStoresRef.current;
+      const current = selectedIdRef.current;
       if (e.key === 'Enter') {
         e.preventDefault();
-        void confirm(selectedId);
+        void confirmRef.current(current);
         return;
       }
       const key =
         e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
-      if (!key || visibleStores.length === 0) return;
+      if (!key || stores.length === 0) return;
       e.preventDefault();
-      const len = visibleStores.length;
-      const idx = selectedId
-        ? visibleStores.findIndex(s => s.id === selectedId)
+      const len = stores.length;
+      const idx = current
+        ? stores.findIndex(s => s.id === current)
         : key === 1
           ? -1
           : 0;
-      setSelectedId(visibleStores[(idx + key + len) % len]?.id);
+      setSelectedId(stores[(idx + key + len) % len]?.id);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, visibleStores, selectedId, isLoggingIn, confirm]);
+  }, [open, isLoggingIn]);
 
   useEffect(() => {
     if (!selectedId) return;
