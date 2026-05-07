@@ -34,22 +34,22 @@ const getStatusOptions = (
     SplitButtonOption<RequisitionNodeStatus>,
     SplitButtonOption<RequisitionNodeStatus>,
   ] = [
-    {
-      value: RequisitionNodeStatus.Draft,
-      label: getButtonLabel(RequisitionNodeStatus.Draft),
-      isDisabled: true,
-    },
-    {
-      value: RequisitionNodeStatus.Sent,
-      label: getButtonLabel(RequisitionNodeStatus.Sent),
-      isDisabled: true,
-    },
-    {
-      value: RequisitionNodeStatus.Finalised,
-      label: getButtonLabel(RequisitionNodeStatus.Finalised),
-      isDisabled: true,
-    },
-  ];
+      {
+        value: RequisitionNodeStatus.Draft,
+        label: getButtonLabel(RequisitionNodeStatus.Draft),
+        isDisabled: true,
+      },
+      {
+        value: RequisitionNodeStatus.Sent,
+        label: getButtonLabel(RequisitionNodeStatus.Sent),
+        isDisabled: true,
+      },
+      {
+        value: RequisitionNodeStatus.Finalised,
+        label: getButtonLabel(RequisitionNodeStatus.Finalised),
+        isDisabled: true,
+      },
+    ];
 
   if (currentStatus === RequisitionNodeStatus.Draft) {
     options[1].isDisabled = false;
@@ -71,11 +71,11 @@ const getNextStatusOption = (
 
 const getButtonLabel =
   (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: RequisitionNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
+    (invoiceStatus: RequisitionNodeStatus): string => {
+      return t('button.save-and-confirm-status', {
+        status: t(getStatusTranslation(invoiceStatus)),
+      });
+    };
 
 const useStatusChangeButton = () => {
   const { id, status, comment, lines, ancillaryState } =
@@ -116,11 +116,11 @@ const useStatusChangeButton = () => {
 
     return store?.preferences.requestRequisitionRequiresAuthorisation
       ? t('template.requisition-sent', {
-          name,
-          job,
-          phone: user?.phoneNumber ?? UNDEFINED_STRING_VALUE,
-          email: user?.email ?? UNDEFINED_STRING_VALUE,
-        })
+        name,
+        job,
+        phone: user?.phoneNumber ?? UNDEFINED_STRING_VALUE,
+        email: user?.email ?? UNDEFINED_STRING_VALUE,
+      })
       : '';
   };
 
@@ -192,12 +192,12 @@ const useStatusChangeButton = () => {
     isSending && ancillaryState
       ? ancillaryState.state === AncillaryStateNode.NeedsAdd
         ? t('warning.confirm-send-ancillary-items-missing', {
-            count: ancillaryState.count,
-          })
+          count: ancillaryState.count,
+        })
         : ancillaryState.state === AncillaryStateNode.NeedsUpdate
           ? t('warning.confirm-send-ancillary-items-stale', {
-              count: ancillaryState.count,
-            })
+            count: ancillaryState.count,
+          })
           : undefined
       : undefined;
 
@@ -226,10 +226,14 @@ export const StatusChangeButton = () => {
   const t = useTranslation();
   const { selectedOption, getConfirmation, lines } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
-  const { userHasPermission } = useAuthContext();
+  const { userHasPermission, store } = useAuthContext();
+  const keepZeroRequested =
+    !!store?.preferences
+      ?.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised;
   const cantSend =
     lines?.totalCount === 0 ||
-    lines?.nodes?.every(line => line?.requestedQuantity === 0);
+    (!keepZeroRequested &&
+      lines?.nodes?.every(line => line?.requestedQuantity === 0));
   const showPermissionDenied = useDisabledNotificationToast(
     t('auth.permission-denied')
   );
