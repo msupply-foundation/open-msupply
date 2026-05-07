@@ -18,6 +18,8 @@ export type LoginLayoutProps = {
   SiteInfo: React.ReactNode;
   onLogin: () => Promise<void>;
   fullSize: boolean;
+  StoreSelector?: React.ReactNode;
+  showStoreSelector?: boolean;
 };
 
 export const LoginLayout = ({
@@ -28,6 +30,8 @@ export const LoginLayout = ({
   SiteInfo,
   onLogin,
   fullSize,
+  StoreSelector,
+  showStoreSelector = false,
 }: LoginLayoutProps) => {
   const t = useTranslation();
 
@@ -44,7 +48,7 @@ export const LoginLayout = ({
   );
 
   return !fullSize ? (
-    loginForm
+    showStoreSelector && StoreSelector ? <>{StoreSelector}</> : loginForm
   ) : (
     <Box display="flex" style={{ width: '100%' }}>
       <Box
@@ -102,25 +106,43 @@ export const LoginLayout = ({
       </Box>
       <Box
         flex="1 0 50%"
-        flexDirection="column"
-        alignItems="center"
-        display="flex"
         sx={{
           backgroundColor: 'background.login',
-          overflowY: 'scroll',
+          overflow: 'hidden',
+          position: 'relative',
         }}
       >
         <Box
-          display="flex"
-          flexGrow="1"
           sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
+            overflowY: 'auto',
+            transition: 'transform 0.35s ease-in-out',
+            transform: showStoreSelector ? 'translateX(-100%)' : 'translateX(0)',
           }}
         >
-          {loginForm}
+          <Box display="flex" flexGrow={1} sx={{ alignItems: 'center' }}>
+            {loginForm}
+          </Box>
+          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+          <LanguageButton />
         </Box>
-        <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
-        <LanguageButton />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto',
+            transition: 'transform 0.35s ease-in-out',
+            transform: showStoreSelector ? 'translateX(0)' : 'translateX(100%)',
+          }}
+        >
+          {StoreSelector}
+        </Box>
       </Box>
     </Box>
   );
