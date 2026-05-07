@@ -99,6 +99,7 @@ fn reshape_population_rows(connection: &StorageConnection) -> anyhow::Result<()>
 
         let snapshot = json!({
             "method": "population",
+            "status": "ok",
             "forecastMonthlyUsage": headline_monthly_usage,
             "forecastTotalDoses": row.forecast_total_doses.unwrap_or(0.0),
             "vaccineCourses": courses,
@@ -128,7 +129,7 @@ fn json_f64(v: &Value, key: &str) -> f64 {
 mod tests {
     use crate::migrations::*;
     use crate::test_db::*;
-    use crate::ForecastSnapshot;
+    use crate::{ForecastSnapshot, PopulationOutcome};
     use diesel::{sql_query, RunQueryDsl};
 
     #[derive(diesel::QueryableByName, Debug)]
@@ -231,7 +232,7 @@ mod tests {
         )
         .expect("snapshot parses");
         match snap {
-            ForecastSnapshot::Population(p) => {
+            ForecastSnapshot::Population(PopulationOutcome::Ok(p)) => {
                 assert_eq!(p.forecast_monthly_usage, 375.0);
                 assert_eq!(p.forecast_total_doses, 3750.0);
                 assert_eq!(p.vaccine_courses.len(), 1);
@@ -239,7 +240,7 @@ mod tests {
                 assert_eq!(p.vaccine_courses[0].forecast_units, 1875.0);
                 assert_eq!(p.vaccine_courses[0].forecast_monthly_usage, 375.0);
             }
-            _ => panic!("expected Population"),
+            _ => panic!("expected Population Ok"),
         }
 
         let amc = rows.iter().find(|r| r.id == "rl_amc").expect("rl_amc");

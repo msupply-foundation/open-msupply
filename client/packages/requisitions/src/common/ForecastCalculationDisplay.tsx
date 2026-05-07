@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Alert,
   Box,
   Typography,
   TypedTFunction,
@@ -66,7 +67,6 @@ interface AncillaryContribution {
 interface AncillaryRatioSnapshot {
   forecastMonthlyUsage: number;
   contributions: AncillaryContribution[];
-  fallback?: string | null;
 }
 
 interface DisplayRow {
@@ -84,13 +84,61 @@ interface PluginSnapshot {
   display: DisplayRow[];
 }
 
-// Server-side serde flattens the variant data alongside the `method` tag,
-// so each branch's fields sit at the top level next to `method`.
+// --- Per-method error spaces (closed unions) -------------------------------
+
+type AmcError = {
+  kind: 'noConsumptionHistory';
+  lookbackMonths: number;
+};
+
+type MissingStoreField = 'populationServed' | 'supplyInterval';
+
+type PopulationError =
+  | {
+      kind: 'missingStoreConfig';
+      storeId: string;
+      missingFields: MissingStoreField[];
+    }
+  | { kind: 'noVaccineCourseForItem'; itemId: string };
+
+type AncillaryRatioError = {
+  kind: 'noParentsInRequisition';
+  itemId: string;
+};
+
+type PluginError_ =
+  | { kind: 'notFound'; pluginCode: string }
+  | {
+      kind: 'invocationFailed';
+      pluginCode: string;
+      pluginVersion: string;
+      message: string;
+    };
+
+// Server-side serde flattens variant data alongside the `method`/`status` tags,
+// so each branch's fields sit at the top level. Each method has its own closed
+// error space — TS narrowing forces every render site to handle them.
 type ForecastSnapshot =
-  | ({ method: 'amc' } & AmcSnapshot)
-  | ({ method: 'population' } & PopulationSnapshot)
-  | ({ method: 'ancillary_ratio' } & AncillaryRatioSnapshot)
-  | ({ method: 'plugin' } & PluginSnapshot);
+  | ({ method: 'amc'; status: 'ok' } & AmcSnapshot)
+  | ({ method: 'amc'; status: 'error' } & AmcError)
+  | ({ method: 'population'; status: 'ok' } & PopulationSnapshot)
+  | ({ method: 'population'; status: 'error' } & PopulationError)
+  | ({ method: 'ancillary_ratio'; status: 'ok' } & AncillaryRatioSnapshot)
+  | ({ method: 'ancillary_ratio'; status: 'error' } & AncillaryRatioError)
+  | ({ method: 'plugin'; status: 'ok' } & PluginSnapshot)
+  | ({ method: 'plugin'; status: 'error' } & PluginError_);
+
+/// True for any Error outcome. Used by the detail-view column to dim the
+/// monthly-usage cell to "—" without re-parsing.
+export const isForecastSnapshotError = (forecastData?: string | null): boolean => {
+  if (!forecastData) return false;
+  try {
+    const snap = JSON.parse(forecastData) as { status?: string };
+    return snap.status === 'error';
+  } catch {
+    return false;
+  }
+};
 
 interface EquationLine {
   /// Left-hand label, only shown on the first row (subsequent rows align
@@ -364,7 +412,6 @@ const ancillaryAdapter = (
   units: string
 ): EquationDisplayProps => ({
   heading: t('label.ancillary-ratio-forecast-calculation'),
-  warning: d.fallback ? t('warning.ancillary-ratio-fallback') : undefined,
   groups: [
     ...d.contributions.map(c => ({
       title: c.parentItemName,
@@ -441,6 +488,60 @@ const pluginAdapter = (
   ],
 });
 
+// --- Error renderer --------------------------------------------------------
+
+/// Renders an Error outcome as an error severity Alert — matches the styling
+/// already used for warning banners elsewhere in the request line edit modal
+/// (see `<Alert severity="warning">` neighbours in RequestLineEdit.tsx).
+const ErrorDisplay = ({ message }: { message: string }) => (
+  <Box sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}>
+    <Alert severity="error" sx={{ mt: 1 }}>
+      {message}
+    </Alert>
+  </Box>
+);
+
+const errorMessage = (
+  snapshot: Extract<ForecastSnapshot, { status: 'error' }>,
+  t: TypedTFunction<LocaleKey>
+): string => {
+  switch (snapshot.method) {
+    case 'amc':
+      return t('error.forecast-no-consumption-history', {
+        months: snapshot.lookbackMonths,
+      });
+    case 'population':
+      switch (snapshot.kind) {
+        case 'missingStoreConfig': {
+          const fields = snapshot.missingFields
+            .map(f =>
+              f === 'populationServed'
+                ? t('label.population-served')
+                : t('label.supply-interval')
+            )
+            .join(', ');
+          return t('error.forecast-missing-store-config', { fields });
+        }
+        case 'noVaccineCourseForItem':
+          return t('error.forecast-no-vaccine-course');
+      }
+    // eslint-disable-next-line no-fallthrough
+    case 'ancillary_ratio':
+      return t('error.forecast-no-parents-in-requisition');
+    case 'plugin':
+      switch (snapshot.kind) {
+        case 'notFound':
+          return t('error.forecast-plugin-not-found', {
+            code: snapshot.pluginCode,
+          });
+        case 'invocationFailed':
+          return t('error.forecast-plugin-failed', {
+            message: snapshot.message,
+          });
+      }
+  }
+};
+
 // --- Top-level component ---------------------------------------------------
 
 interface ForecastCalculationDisplayProps {
@@ -466,6 +567,9 @@ const ForecastCalculationDisplay = ({
     snapshot = JSON.parse(forecastData) as ForecastSnapshot;
   } catch {
     return null;
+  }
+  if (snapshot.status === 'error') {
+    return <ErrorDisplay message={errorMessage(snapshot, t)} />;
   }
   const fmt: FormatFns = { format, round };
   const trimmed = unitName?.trim();

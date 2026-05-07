@@ -22,6 +22,7 @@
       "Bash(yarn prettier*)",
       "Bash(yarn lint-and-format*)",
       "Bash(yarn gql-codegen*)",
+      "Bash(yarn tsc *)",
       "Bash(git status*)",
       "Bash(git log*)",
       "Bash(git diff*)",

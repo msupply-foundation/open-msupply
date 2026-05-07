@@ -1,26 +1,37 @@
+use crate::backend_plugin::plugin_provider::PluginInstance;
+use crate::backend_plugin::types::forecast_method as plugin_forecast_method;
+use crate::backend_plugin::types::forecast_method::ForecastLineContext as PluginLineContext;
 use crate::item_stats::{get_item_stats, AmcBreakdown};
-use topological_sort::TopologicalSort;
 use crate::preference::preferences::DisplayPopulationBasedForecasting;
 use crate::preference::types::Preference;
-use crate::requisition::request_requisition::generate_population_forecast::calculate_forecasting_fields;
+use crate::requisition::request_requisition::generate_population_forecast::{
+    calculate_forecasting_fields, PopulationLookup,
+};
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
 use repository::{
-    AmcSnapshot, AmcSnapshotBreakdown, AncillaryContribution, AncillaryItemFilter,
-    AncillaryItemRepository, AncillaryRatioSnapshot, DefaultAmcSnapshotBreakdown, EqualFilter,
-    ForecastMethod, ForecastSnapshot, PopulationSnapshot, RepositoryError, RequisitionLineRow,
-    StorageConnection,
+    AmcError, AmcOutcome, AmcSnapshot, AmcSnapshotBreakdown, AncillaryContribution,
+    AncillaryItemFilter, AncillaryItemRepository, AncillaryRatioError, AncillaryRatioOutcome,
+    AncillaryRatioSnapshot, DefaultAmcSnapshotBreakdown, EqualFilter, ForecastMethod,
+    ForecastSnapshot, PluginError, PluginOutcome, PluginSnapshot, PluginType, PopulationError,
+    PopulationOutcome, RepositoryError, RequisitionLineRow, StorageConnection,
 };
+use topological_sort::TopologicalSort;
 use std::collections::{HashMap, HashSet};
 
 /// Per-line context the dispatcher needs to make its choice and compute
 /// snapshots. Built once up-front so each method receives a small, typed view.
 #[derive(Debug, Clone)]
 struct LineContext {
+    line_id: String,
     item_id: String,
     item_name: String,
     average_monthly_consumption: f64,
-    population: Option<PopulationSnapshot>,
+    available_stock_on_hand: f64,
+    /// `Ok` for items with course data, otherwise carries the population-side
+    /// failure (missing store config / no course mapped) so the dispatcher can
+    /// surface it on lines whose method is `Population`.
+    population: PopulationLookup,
     /// Parents of this item that have an ancillary edge `parent -> this`.
     /// Empty when the item isn't an ancillary of anything else.
     ancillary_parents: Vec<AncillaryParent>,
@@ -41,7 +52,7 @@ struct AncillaryParent {
 /// stock, course supply periods) live with the stock-management module.
 ///
 /// Two passes:
-/// 1. AMC + Population (independent, any order)
+/// 1. AMC + Population + Plugin (independent, any order)
 /// 2. AncillaryRatio (topo-sorted within the requisition's induced subgraph)
 pub fn run(
     ctx: &ServiceContext,
@@ -54,6 +65,10 @@ pub fn run(
     let display_population = DisplayPopulationBasedForecasting
         .load(&ctx.connection, None)
         .unwrap_or(false);
+    let requisition_id = lines
+        .first()
+        .map(|l| l.requisition_id.clone())
+        .unwrap_or_default();
 
     // Re-compute AMC breakdowns from current item stats every time so the
     // calculation explanation matches today's data — including method
@@ -77,12 +92,12 @@ pub fn run(
     // the user explicitly picks it. The `DisplayPopulationBasedForecasting`
     // preference only gates whether Population becomes the *default* method
     // for a vaccine item — see `resolve_default_method`.
-    let population_map: HashMap<String, Option<PopulationSnapshot>> =
+    let population_map: HashMap<String, PopulationLookup> =
         calculate_forecasting_fields(ctx, item_ids.clone())?;
 
     // Per-item ancillary parents — restricted to parents that are themselves
     // line items on this requisition. Children whose parent isn't on the
-    // requisition won't see any parent here and will fall back to AMC.
+    // requisition error out under the AncillaryRatio method.
     let ancillary_parents = build_ancillary_parents(&ctx.connection, &item_ids)?;
 
     let contexts: HashMap<String, LineContext> = lines
@@ -90,16 +105,19 @@ pub fn run(
         .map(|l| {
             let item_id = l.item_link_id.clone();
             let ancillary_parents = ancillary_parents.get(&item_id).cloned().unwrap_or_default();
+            let population = population_map
+                .get(&item_id)
+                .cloned()
+                .unwrap_or(PopulationLookup::NoCourseForItem);
             (
                 item_id.clone(),
                 LineContext {
+                    line_id: l.id.clone(),
                     item_id,
                     item_name: l.item_name.clone(),
                     average_monthly_consumption: l.average_monthly_consumption,
-                    population: l
-                        .item_link_id
-                        .clone()
-                        .pipe(|id| population_map.get(&id).and_then(|opt| opt.clone())),
+                    available_stock_on_hand: l.available_stock_on_hand,
+                    population,
                     ancillary_parents,
                 },
             )
@@ -140,6 +158,8 @@ pub fn run(
             ctx_line,
             method,
             amc_breakdowns.get(&ctx_line.item_id),
+            &ctx.store_id,
+            &requisition_id,
         );
         snapshots.insert(ctx_line.item_id.clone(), snap);
     }
@@ -183,9 +203,8 @@ pub fn run(
     }
 
     // Write back: method, forecast_data, forecast_monthly_usage. The method
-    // tag is derived from the snapshot variant rather than the requested
-    // method so a Population fallback to AMC (item not mapped to a vaccine
-    // course) doesn't drift the tag out of sync with the stored snapshot.
+    // tag is derived from the snapshot variant so a stored Error outcome
+    // still tags itself with the attempted method.
     for line in lines.iter_mut() {
         let snap = snapshots
             .get(&line.item_link_id)
@@ -201,7 +220,7 @@ fn resolve_default_method(c: &LineContext, display_population: bool) -> Forecast
     if !c.ancillary_parents.is_empty() {
         return ForecastMethod::AncillaryRatio;
     }
-    if display_population && c.population.is_some() {
+    if display_population && matches!(c.population, PopulationLookup::Ok(_)) {
         return ForecastMethod::Population;
     }
     ForecastMethod::AverageMonthlyConsumption
@@ -211,29 +230,47 @@ fn compute_non_ancillary(
     c: &LineContext,
     method: &ForecastMethod,
     fresh_breakdown: Option<&AmcBreakdown>,
+    store_id: &str,
+    requisition_id: &str,
 ) -> ForecastSnapshot {
     match method {
-        ForecastMethod::Population => match c.population.clone() {
-            Some(snap) => ForecastSnapshot::Population(snap),
-            // Defensive: the picker should disable Population for non-vaccine
-            // items, but if a stale `forecast_method='population'` ends up on
-            // a line whose item isn't (or is no longer) mapped to a course,
-            // fall back to AMC rather than panicking.
-            None => ForecastSnapshot::Amc(compute_amc(c, fresh_breakdown)),
+        ForecastMethod::Population => match &c.population {
+            PopulationLookup::Ok(snap) => {
+                ForecastSnapshot::Population(PopulationOutcome::Ok(snap.clone()))
+            }
+            PopulationLookup::NoCourseForItem => ForecastSnapshot::Population(
+                PopulationOutcome::Error(PopulationError::NoVaccineCourseForItem {
+                    item_id: c.item_id.clone(),
+                }),
+            ),
+            PopulationLookup::MissingStoreConfig { missing_fields } => ForecastSnapshot::Population(
+                PopulationOutcome::Error(PopulationError::MissingStoreConfig {
+                    store_id: store_id.to_string(),
+                    missing_fields: missing_fields.clone(),
+                }),
+            ),
         },
         ForecastMethod::AverageMonthlyConsumption => {
             ForecastSnapshot::Amc(compute_amc(c, fresh_breakdown))
         }
         ForecastMethod::AncillaryRatio => unreachable!("handled in pass 2"),
-        ForecastMethod::Plugin(_) => {
-            // Plugin seam: not invoked in v1 from this dispatcher; defaulting
-            // to AMC keeps the line shipping with a meaningful snapshot.
-            ForecastSnapshot::Amc(compute_amc(c, fresh_breakdown))
+        ForecastMethod::Plugin(code) => {
+            ForecastSnapshot::Plugin(invoke_plugin(c, code, store_id, requisition_id))
         }
     }
 }
 
-fn compute_amc(c: &LineContext, fresh_breakdown: Option<&AmcBreakdown>) -> AmcSnapshot {
+fn compute_amc(c: &LineContext, fresh_breakdown: Option<&AmcBreakdown>) -> AmcOutcome {
+    // No consumption recorded → rendering an empty AMC breakdown would be
+    // misleading. Surface the failure so the modal explains why suggested
+    // quantity is `0`.
+    if c.average_monthly_consumption <= 0.0 {
+        let lookback_months = match fresh_breakdown {
+            Some(AmcBreakdown::Default(d)) => d.lookback_months,
+            _ => 0.0,
+        };
+        return AmcOutcome::Error(AmcError::NoConsumptionHistory { lookback_months });
+    }
     // Breakdown is recomputed via `get_item_stats` at the top of `run`; the
     // empty fallback only fires for a line whose item didn't appear in the
     // results (shouldn't happen in practice — defensive).
@@ -248,9 +285,53 @@ fn compute_amc(c: &LineContext, fresh_breakdown: Option<&AmcBreakdown>) -> AmcSn
                 dos_adjustment_factor: 1.0,
             })
         });
-    AmcSnapshot {
-        forecast_monthly_usage: c.average_monthly_consumption.max(0.0),
+    AmcOutcome::Ok(AmcSnapshot {
+        forecast_monthly_usage: c.average_monthly_consumption,
         breakdown,
+    })
+}
+
+fn invoke_plugin(
+    c: &LineContext,
+    code: &str,
+    store_id: &str,
+    requisition_id: &str,
+) -> PluginOutcome {
+    let Some(instance) = PluginInstance::get_one_with_code(code, PluginType::ForecastMethod) else {
+        return PluginOutcome::Error(PluginError::NotFound {
+            plugin_code: code.to_string(),
+        });
+    };
+    let plugin_version = instance.version.to_string();
+    let input = plugin_forecast_method::Input {
+        store_id: store_id.to_string(),
+        requisition_id: requisition_id.to_string(),
+        line: PluginLineContext {
+            line_id: c.line_id.clone(),
+            item_id: c.item_id.clone(),
+            item_name: c.item_name.clone(),
+            average_monthly_consumption: c.average_monthly_consumption,
+            available_stock_on_hand: c.available_stock_on_hand,
+            forecast_monthly_usage: None,
+        },
+        // Plugin-defined methods don't get the parent context that Ancillary
+        // does — they run in pass 1, before any other line is computed. If we
+        // grow plugin methods that need parents, lift this into the topo pass.
+        parent_lines: Vec::new(),
+    };
+    match plugin_forecast_method::Trait::call(&*instance, input) {
+        Ok(output) => PluginOutcome::Ok(PluginSnapshot {
+            plugin_code: code.to_string(),
+            plugin_version,
+            forecast_monthly_usage: output.forecast_monthly_usage,
+            forecast_doses: output.forecast_doses,
+            display: output.display,
+        }),
+        Err(err) => PluginOutcome::Error(PluginError::InvocationFailed {
+            plugin_code: code.to_string(),
+            plugin_version,
+            message: format!("{err:?}"),
+        }),
     }
 }
 
@@ -259,7 +340,16 @@ fn method_for_snapshot(snap: &ForecastSnapshot) -> ForecastMethod {
         ForecastSnapshot::Amc(_) => ForecastMethod::AverageMonthlyConsumption,
         ForecastSnapshot::Population(_) => ForecastMethod::Population,
         ForecastSnapshot::AncillaryRatio(_) => ForecastMethod::AncillaryRatio,
-        ForecastSnapshot::Plugin(s) => ForecastMethod::Plugin(s.plugin_code.clone()),
+        ForecastSnapshot::Plugin(PluginOutcome::Ok(s)) => {
+            ForecastMethod::Plugin(s.plugin_code.clone())
+        }
+        ForecastSnapshot::Plugin(PluginOutcome::Error(e)) => {
+            let code = match e {
+                PluginError::NotFound { plugin_code }
+                | PluginError::InvocationFailed { plugin_code, .. } => plugin_code.clone(),
+            };
+            ForecastMethod::Plugin(code)
+        }
     }
 }
 
@@ -317,11 +407,17 @@ fn compute_ancillary_ratio(
             monthly_usage,
         });
     }
-    ForecastSnapshot::AncillaryRatio(AncillaryRatioSnapshot {
+    if contributions.is_empty() {
+        return ForecastSnapshot::AncillaryRatio(AncillaryRatioOutcome::Error(
+            AncillaryRatioError::NoParentsInRequisition {
+                item_id: c.item_id.clone(),
+            },
+        ));
+    }
+    ForecastSnapshot::AncillaryRatio(AncillaryRatioOutcome::Ok(AncillaryRatioSnapshot {
         forecast_monthly_usage: total_monthly_usage,
         contributions,
-        fallback: None,
-    })
+    }))
 }
 
 /// For each item in `item_ids`, list the parents (also items) whose ancillary
@@ -355,17 +451,10 @@ fn build_ancillary_parents(
     Ok(out)
 }
 
-// Small extension to chain a value through a closure inline.
-trait Pipe: Sized {
-    fn pipe<R>(self, f: impl FnOnce(Self) -> R) -> R {
-        f(self)
-    }
-}
-impl<T> Pipe for T {}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use repository::MissingStoreField;
 
     fn line(id: &str, item: &str, amc: f64, soh: f64) -> RequisitionLineRow {
         RequisitionLineRow {
@@ -378,17 +467,22 @@ mod tests {
         }
     }
 
+    fn ctx(item: &str, amc: f64) -> LineContext {
+        LineContext {
+            line_id: format!("l_{item}"),
+            item_id: item.into(),
+            item_name: item.into(),
+            average_monthly_consumption: amc,
+            available_stock_on_hand: 0.0,
+            population: PopulationLookup::NoCourseForItem,
+            ancillary_parents: vec![],
+        }
+    }
 
     #[test]
     fn amc_snapshot_uses_fresh_breakdown() {
         use crate::item_stats::DefaultAmcBreakdown;
-        let c = LineContext {
-            item_id: "x".into(),
-            item_name: "X".into(),
-            average_monthly_consumption: 7.0,
-            population: None,
-            ancillary_parents: vec![],
-        };
+        let c = ctx("x", 7.0);
         let fresh = AmcBreakdown::Default(DefaultAmcBreakdown {
             lookback_months: 6.0,
             total_consumption: 42.0,
@@ -396,35 +490,118 @@ mod tests {
             days_out_of_stock: Some(10.0),
             dos_adjustment_factor: 182.0 / 172.0,
         });
-        let snap = compute_amc(&c, Some(&fresh));
-        assert_eq!(snap.forecast_monthly_usage, 7.0);
-        match snap.breakdown {
-            AmcSnapshotBreakdown::Default(d) => {
-                assert_eq!(d.lookback_months, 6.0);
-                assert_eq!(d.total_consumption, 42.0);
-                assert_eq!(d.days_out_of_stock, Some(10.0));
+        match compute_amc(&c, Some(&fresh)) {
+            AmcOutcome::Ok(snap) => {
+                assert_eq!(snap.forecast_monthly_usage, 7.0);
+                match snap.breakdown {
+                    AmcSnapshotBreakdown::Default(d) => {
+                        assert_eq!(d.lookback_months, 6.0);
+                        assert_eq!(d.total_consumption, 42.0);
+                        assert_eq!(d.days_out_of_stock, Some(10.0));
+                    }
+                    _ => panic!("expected Default breakdown"),
+                }
             }
-            _ => panic!("expected Default breakdown"),
+            other => panic!("expected Ok, got {other:?}"),
         }
     }
 
     #[test]
-    fn amc_snapshot_falls_back_when_breakdown_missing() {
-        let c = LineContext {
-            item_id: "x".into(),
-            item_name: "X".into(),
-            average_monthly_consumption: 10.0,
-            population: None,
-            ancillary_parents: vec![],
-        };
-        let snap = compute_amc(&c, None);
-        assert_eq!(snap.forecast_monthly_usage, 10.0);
-        match snap.breakdown {
-            AmcSnapshotBreakdown::Default(d) => {
-                assert_eq!(d.lookback_months, 0.0);
-                assert_eq!(d.total_consumption, 0.0);
+    fn amc_errors_when_no_consumption() {
+        let c = ctx("x", 0.0);
+        match compute_amc(&c, None) {
+            AmcOutcome::Error(AmcError::NoConsumptionHistory { lookback_months }) => {
+                assert_eq!(lookback_months, 0.0);
             }
-            _ => panic!("expected Default fallback"),
+            other => panic!("expected NoConsumptionHistory, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn population_method_with_no_course_errors() {
+        let c = LineContext {
+            population: PopulationLookup::NoCourseForItem,
+            ..ctx("vaccine_x", 5.0)
+        };
+        let snap = compute_non_ancillary(&c, &ForecastMethod::Population, None, "store_a", "req_1");
+        match snap {
+            ForecastSnapshot::Population(PopulationOutcome::Error(
+                PopulationError::NoVaccineCourseForItem { item_id },
+            )) => {
+                assert_eq!(item_id, "vaccine_x");
+            }
+            other => panic!("expected NoVaccineCourseForItem, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn population_method_with_missing_store_config_errors() {
+        let c = LineContext {
+            population: PopulationLookup::MissingStoreConfig {
+                missing_fields: vec![
+                    MissingStoreField::PopulationServed,
+                    MissingStoreField::SupplyInterval,
+                ],
+            },
+            ..ctx("vaccine_y", 5.0)
+        };
+        let snap = compute_non_ancillary(&c, &ForecastMethod::Population, None, "store_a", "req_1");
+        match snap {
+            ForecastSnapshot::Population(PopulationOutcome::Error(
+                PopulationError::MissingStoreConfig {
+                    store_id,
+                    missing_fields,
+                },
+            )) => {
+                assert_eq!(store_id, "store_a");
+                assert_eq!(missing_fields.len(), 2);
+            }
+            other => panic!("expected MissingStoreConfig, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn plugin_method_with_unknown_code_errors() {
+        let c = ctx("x", 5.0);
+        let snap = compute_non_ancillary(
+            &c,
+            &ForecastMethod::Plugin("does_not_exist".into()),
+            None,
+            "store_a",
+            "req_1",
+        );
+        match snap {
+            ForecastSnapshot::Plugin(PluginOutcome::Error(PluginError::NotFound {
+                plugin_code,
+            })) => {
+                assert_eq!(plugin_code, "does_not_exist");
+            }
+            other => panic!("expected PluginError::NotFound, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn ancillary_ratio_errors_when_no_parents_on_requisition() {
+        let item_ctx = LineContext {
+            ancillary_parents: vec![AncillaryParent {
+                parent_item_id: "parent_not_on_requisition".into(),
+                item_quantity: 100.0,
+                ancillary_quantity: 1.0,
+            }],
+            ..ctx("safety_box", 0.0)
+        };
+        let mut ctxs = HashMap::new();
+        ctxs.insert(item_ctx.item_id.clone(), item_ctx.clone());
+        let snaps = HashMap::new();
+        let lines = vec![line("l_b", "safety_box", 0.0, 0.0)];
+        let snap = compute_ancillary_ratio(&item_ctx, &snaps, &ctxs, &lines);
+        match snap {
+            ForecastSnapshot::AncillaryRatio(AncillaryRatioOutcome::Error(
+                AncillaryRatioError::NoParentsInRequisition { item_id },
+            )) => {
+                assert_eq!(item_id, "safety_box");
+            }
+            other => panic!("expected NoParentsInRequisition, got {other:?}"),
         }
     }
 
@@ -432,7 +609,8 @@ mod tests {
     fn ancillary_ratio_pulls_from_parent_snapshot() {
         // Parent vaccine has rate 100/month; safety_box ratio 1 per 100 vaccines
         // → child rate is 1/month, regardless of stock-management horizons.
-        let parent_snap = ForecastSnapshot::Amc(AmcSnapshot {
+        use repository::DefaultAmcSnapshotBreakdown;
+        let parent_snap = ForecastSnapshot::Amc(AmcOutcome::Ok(AmcSnapshot {
             forecast_monthly_usage: 100.0,
             breakdown: AmcSnapshotBreakdown::Default(DefaultAmcSnapshotBreakdown {
                 lookback_months: 3.0,
@@ -441,30 +619,18 @@ mod tests {
                 days_out_of_stock: None,
                 dos_adjustment_factor: 1.0,
             }),
-        });
+        }));
         let mut snaps = HashMap::new();
         snaps.insert("vaccine".to_string(), parent_snap);
         let mut ctxs = HashMap::new();
-        ctxs.insert(
-            "vaccine".to_string(),
-            LineContext {
-                item_id: "vaccine".into(),
-                item_name: "Vaccine".into(),
-                average_monthly_consumption: 100.0,
-                population: None,
-                ancillary_parents: vec![],
-            },
-        );
+        ctxs.insert("vaccine".to_string(), ctx("vaccine", 100.0));
         let safety_box = LineContext {
-            item_id: "safety_box".into(),
-            item_name: "Safety Box".into(),
-            average_monthly_consumption: 0.0,
-            population: None,
             ancillary_parents: vec![AncillaryParent {
                 parent_item_id: "vaccine".into(),
                 item_quantity: 100.0,
                 ancillary_quantity: 1.0,
             }],
+            ..ctx("safety_box", 0.0)
         };
         let lines = vec![
             line("l_v", "vaccine", 0.0, 0.0),
@@ -472,13 +638,13 @@ mod tests {
         ];
         let snap = compute_ancillary_ratio(&safety_box, &snaps, &ctxs, &lines);
         match snap {
-            ForecastSnapshot::AncillaryRatio(s) => {
+            ForecastSnapshot::AncillaryRatio(AncillaryRatioOutcome::Ok(s)) => {
                 assert!((s.forecast_monthly_usage - 1.0).abs() < 1e-9);
                 assert_eq!(s.contributions.len(), 1);
                 assert_eq!(s.contributions[0].parent_line_id, "l_v");
                 assert!((s.contributions[0].monthly_usage - 1.0).abs() < 1e-9);
             }
-            _ => panic!("expected AncillaryRatio"),
+            _ => panic!("expected AncillaryRatio Ok"),
         }
     }
 }

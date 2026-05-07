@@ -1,4 +1,4 @@
-use repository::{ForecastMethod, ForecastSnapshot};
+use repository::{ForecastMethod, ForecastSnapshot, PopulationOutcome};
 
 /// Inputs the stock-management dispatcher needs alongside the forecast snapshot.
 /// All values come from the *current* requisition / line state, not from the
@@ -22,6 +22,12 @@ pub fn suggested_quantity(
     snapshot: Option<&ForecastSnapshot>,
     inputs: StockManagementInputs,
 ) -> f64 {
+    // A failed forecast has no rate to derive a suggestion from. Return 0
+    // rather than fall through to AMC (the legacy formula) — that fallback
+    // is what we're explicitly removing.
+    if matches!(snapshot, Some(s) if s.is_error()) {
+        return 0.0;
+    }
     match method {
         // Classic months-of-stock top-up using the forecast rate. Includes the
         // "skip if current months > min_months_of_stock" gate that's been on
@@ -84,7 +90,7 @@ fn population_deduct_stock(
     inputs: StockManagementInputs,
 ) -> f64 {
     let total_units = match snapshot {
-        Some(ForecastSnapshot::Population(p)) => p
+        Some(ForecastSnapshot::Population(PopulationOutcome::Ok(p))) => p
             .vaccine_courses
             .iter()
             .map(|c| c.forecast_monthly_usage * (c.supply_period_months + c.buffer_stock_months))
@@ -115,8 +121,9 @@ fn deduct_stock_on_hand(
 mod tests {
     use super::*;
     use repository::{
-        AmcSnapshot, AmcSnapshotBreakdown, AncillaryRatioSnapshot, DefaultAmcSnapshotBreakdown,
-        PopulationCourseData, PopulationSnapshot,
+        AmcError, AmcOutcome, AmcSnapshot, AmcSnapshotBreakdown, AncillaryRatioOutcome,
+        AncillaryRatioSnapshot, DefaultAmcSnapshotBreakdown, PopulationCourseData,
+        PopulationOutcome, PopulationSnapshot,
     };
 
     fn amc(forecast_monthly_usage: f64) -> AmcSnapshot {
@@ -136,7 +143,7 @@ mod tests {
     fn amc_topup_matches_legacy_formula() {
         // 10 monthly usage, 5 SOH, max=3, min=0 → max-active.
         // months_of_stock = 0.5; (3 - 0.5) * 10 = 25
-        let snap = ForecastSnapshot::Amc(amc(10.0));
+        let snap = ForecastSnapshot::Amc(AmcOutcome::Ok(amc(10.0)));
         let q = suggested_quantity(
             &ForecastMethod::AverageMonthlyConsumption,
             Some(&snap),
@@ -152,7 +159,7 @@ mod tests {
     #[test]
     fn amc_topup_skips_if_above_min() {
         // 10 monthly usage, 50 SOH, max=3, min=2. months_of_stock = 5 > 2 → 0.
-        let snap = ForecastSnapshot::Amc(amc(10.0));
+        let snap = ForecastSnapshot::Amc(AmcOutcome::Ok(amc(10.0)));
         let q = suggested_quantity(
             &ForecastMethod::AverageMonthlyConsumption,
             Some(&snap),
@@ -166,13 +173,33 @@ mod tests {
     }
 
     #[test]
+    fn error_outcome_yields_zero() {
+        // A failed forecast must not derive a suggestion via any fallback.
+        let snap =
+            ForecastSnapshot::Amc(AmcOutcome::Error(AmcError::NoConsumptionHistory {
+                lookback_months: 3.0,
+            }));
+        let q = suggested_quantity(
+            &ForecastMethod::AverageMonthlyConsumption,
+            Some(&snap),
+            StockManagementInputs {
+                available_stock_on_hand: 0.0,
+                min_months_of_stock: 0.0,
+                max_months_of_stock: 6.0,
+            },
+        );
+        assert_eq!(q, 0.0);
+    }
+
+    #[test]
     fn ancillary_uses_max_months_horizon() {
         // monthly_usage = 1, max = 6, SOH = 2 → 6 - 2 = 4
-        let snap = ForecastSnapshot::AncillaryRatio(AncillaryRatioSnapshot {
-            forecast_monthly_usage: 1.0,
-            contributions: vec![],
-            fallback: None,
-        });
+        let snap = ForecastSnapshot::AncillaryRatio(AncillaryRatioOutcome::Ok(
+            AncillaryRatioSnapshot {
+                forecast_monthly_usage: 1.0,
+                contributions: vec![],
+            },
+        ));
         let q = suggested_quantity(
             &ForecastMethod::AncillaryRatio,
             Some(&snap),
@@ -190,7 +217,7 @@ mod tests {
         // Course A: rate=100, supply=3, buffer=2, SOH=0 → 100*5 = 500
         // Course B: rate=10,  supply=6, buffer=0      → 10*6  = 60
         // SOH 100 → suggested = 500 + 60 - 100 = 460
-        let snap = ForecastSnapshot::Population(PopulationSnapshot {
+        let snap = ForecastSnapshot::Population(PopulationOutcome::Ok(PopulationSnapshot {
             forecast_monthly_usage: 110.0,
             forecast_total_doses: 0.0,
             vaccine_courses: vec![
@@ -225,7 +252,7 @@ mod tests {
                     forecast_monthly_usage: 10.0,
                 },
             ],
-        });
+        }));
         let q = suggested_quantity(
             &ForecastMethod::Population,
             Some(&snap),

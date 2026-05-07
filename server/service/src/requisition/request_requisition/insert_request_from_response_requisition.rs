@@ -217,9 +217,16 @@ fn generate(
         .iter()
         .map(|r| {
             let line = r.requisition_line.requisition_line_row.clone();
-            let population_forecast_for_item = population_forecast
-                .get(r.item_id())
-                .and_then(|opt| opt.as_ref());
+            // Seed forecast fields only when a population snapshot was actually
+            // produced; surface no error here — this path copies a peer's
+            // response requisition and isn't generating a new line forecast.
+            let population_forecast_for_item =
+                population_forecast.get(r.item_id()).and_then(|lookup| {
+                    match lookup {
+                        crate::requisition::request_requisition::generate_population_forecast::PopulationLookup::Ok(s) => Some(s),
+                        _ => None,
+                    }
+                });
 
             RequisitionLineRow {
                 id: uuid(),
@@ -245,7 +252,10 @@ fn generate(
                 forecast_monthly_usage: population_forecast_for_item.map(|s| s.forecast_monthly_usage),
                 forecast_method: population_forecast_for_item.map(|_| "population".to_string()),
                 forecast_data: population_forecast_for_item.and_then(|s| {
-                    serde_json::to_string(&repository::ForecastSnapshot::Population(s.clone())).ok()
+                    serde_json::to_string(&repository::ForecastSnapshot::Population(
+                        repository::PopulationOutcome::Ok(s.clone()),
+                    ))
+                    .ok()
                 }),
                 // Defaults
                 available_volume: None,

@@ -21,7 +21,11 @@ import {
   InfoRow,
   ValueInfoRow,
   RepresentationValue,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
+import ForecastCalculationDisplay, {
+  isForecastSnapshotError,
+} from '../../../common/ForecastCalculationDisplay';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
 import { RequestedSelection } from './RequestedSelection';
@@ -34,7 +38,6 @@ import {
   STOCK_DISTRIBUTION_INFO,
   STOCK_EVOLUTION_INFO,
 } from '../utils';
-import ForecastCalculationDisplay from '../../../common/ForecastCalculationDisplay';
 import ForecastMethodPicker from '../../../common/ForecastMethodPicker';
 
 interface RequestLineEditProps {
@@ -95,6 +98,12 @@ export const RequestLineEdit = ({
   // dispatch (i.e. has a method tag) — independent of the legacy population
   // preference and independent of whether the rate happens to be 0.
   const displayForecasting = !!draft?.forecastMethod;
+  // When the forecast itself failed (Error outcome) the headline rate and
+  // suggested quantity are 0 server-side. Render "—" for both so the user
+  // doesn't see a meaningless `0` next to the red error banner.
+  const forecastFailed = isForecastSnapshotError(draft?.forecastData);
+  const dimmedValue = (v?: number | null) =>
+    forecastFailed ? null : (v ?? null);
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -128,7 +137,8 @@ export const RequestLineEdit = ({
       <ValueInfoRow
         {...valueRowProps}
         label={t('label.suggested')}
-        value={draft.suggestedQuantity}
+        value={dimmedValue(draft.suggestedQuantity)}
+        nullDisplay={UNDEFINED_STRING_VALUE}
         sx={{
           background: theme => theme.palette.background.group.dark,
           pt: 0.5,
@@ -172,7 +182,8 @@ export const RequestLineEdit = ({
         <ValueInfoRow
           {...valueRowProps}
           label={t('label.suggested')}
-          value={draft.suggestedQuantity}
+          value={dimmedValue(draft.suggestedQuantity)}
+          nullDisplay={UNDEFINED_STRING_VALUE}
           sx={{ pl: 0, pt: 0.5 }}
           roundUp
         />
@@ -307,7 +318,8 @@ export const RequestLineEdit = ({
                 <ValueInfoRow
                   {...valueRowProps}
                   label={t('label.forecast-monthly-usage')}
-                  value={line?.forecastMonthlyUsage}
+                  value={dimmedValue(line?.forecastMonthlyUsage)}
+                  nullDisplay={UNDEFINED_STRING_VALUE}
                   decimalLimit={2}
                 />
               )}

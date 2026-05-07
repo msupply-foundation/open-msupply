@@ -2847,5 +2847,13 @@
   "label.forecast-method": "Forecast method",
   "label.forecast-monthly-usage": "Forecast monthly usage",
   "description.forecast-monthly-usage": "Forecasted average monthly usage of this item, produced by the chosen forecasting method.",
-  "label.amc-from-plugin": "Plugin: {{code}}"
+  "label.amc-from-plugin": "Plugin: {{code}}",
+  "label.population-served": "Population served",
+  "label.supply-interval": "Supply interval",
+  "error.forecast-no-consumption-history": "No consumption recorded over the last {{months}} months — the forecast cannot be derived from average monthly consumption.",
+  "error.forecast-missing-store-config": "Population forecast requires the following store properties: {{fields}}.",
+  "error.forecast-no-vaccine-course": "No vaccine course is mapped to this item, so a population forecast cannot be calculated.",
+  "error.forecast-no-parents-in-requisition": "Ancillary ratio requires at least one parent item on this requisition.",
+  "error.forecast-plugin-not-found": "Forecasting plugin '{{code}}' is not installed on this server.",
+  "error.forecast-plugin-failed": "Forecasting plugin failed: {{message}}"
 }

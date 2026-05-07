@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
+import { isForecastSnapshotError } from '../../common/ForecastCalculationDisplay';
 
 export const useRequestColumns = () => {
   const t = useTranslation();
@@ -118,15 +119,26 @@ export const useRequestColumns = () => {
         description: t('description.forecast-monthly-usage'),
         Cell: UnitsAndDosesCell,
         columnType: ColumnType.Number,
-        accessorFn: row => row.forecastMonthlyUsage ?? 0,
+        // Dim to "—" on a failed forecast — the line edit modal carries the
+        // detail; here we just signal that the rate is not meaningful.
+        accessorFn: row =>
+          isForecastSnapshotError(row.forecastData)
+            ? undefined
+            : (row.forecastMonthlyUsage ?? 0),
         defaultHideOnMobile: true,
       },
       {
-        accessorKey: 'suggestedQuantity',
+        id: 'suggestedQuantity',
         header: t('label.forecast-quantity'),
         description: t('description.forecast-quantity'),
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,
+        // Suggested quantity is derived from the forecast — if the forecast
+        // failed there's nothing meaningful to suggest, so dim to "—" too.
+        accessorFn: row =>
+          isForecastSnapshotError(row.forecastData)
+            ? undefined
+            : row.suggestedQuantity,
         enableSorting: true,
       },
       {

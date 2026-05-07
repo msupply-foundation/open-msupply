@@ -3,21 +3,51 @@ use repository::{
     vaccine_course::vaccine_course_store_config::{
         VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
     },
-    EqualFilter, NameFilter, NameRepository, PopulationCourseData, PopulationSnapshot,
-    RepositoryError, StorageConnection, StoreFilter, VaccinationCourseRepository,
-    VaccinationCourseRow,
+    EqualFilter, MissingStoreField, NameFilter, NameRepository, PopulationCourseData,
+    PopulationSnapshot, RepositoryError, StorageConnection, StoreFilter,
+    VaccinationCourseRepository, VaccinationCourseRow,
 };
 use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
 
+/// Per-item result of attempting a Population forecast lookup. The dispatcher
+/// promotes these into per-line `PopulationOutcome::Error` snapshots only on
+/// lines whose chosen method is `Population` — items configured with another
+/// method don't surface population-specific failures.
+#[derive(Debug, Clone, PartialEq)]
+pub enum PopulationLookup {
+    Ok(PopulationSnapshot),
+    /// No vaccine course is mapped to this item.
+    NoCourseForItem,
+    /// Store is missing one or more required population properties; carries
+    /// which fields were missing so the UI can list them.
+    MissingStoreConfig {
+        missing_fields: Vec<MissingStoreField>,
+    },
+}
+
 pub fn calculate_forecasting_fields(
     ctx: &ServiceContext,
     item_ids: Vec<String>,
-) -> Result<HashMap<String, Option<PopulationSnapshot>>, RepositoryError> {
+) -> Result<HashMap<String, PopulationLookup>, RepositoryError> {
     let store_properties = match get_store_properties_and_validate(&ctx.connection, &ctx.store_id)?
     {
-        Some(props) => props,
-        None => return Ok(HashMap::new()),
+        StorePropertiesResult::Ok(props) => props,
+        StorePropertiesResult::Missing(missing_fields) => {
+            // Every requested item maps to MissingStoreConfig so the dispatcher
+            // can surface the failure on Population-method lines.
+            return Ok(item_ids
+                .into_iter()
+                .map(|id| {
+                    (
+                        id,
+                        PopulationLookup::MissingStoreConfig {
+                            missing_fields: missing_fields.clone(),
+                        },
+                    )
+                })
+                .collect());
+        }
     };
 
     calculate_forecast_quantities(&ctx.connection, &ctx.store_id, &store_properties, item_ids)
@@ -29,10 +59,15 @@ struct StoreProperties {
     population_served: f64,
 }
 
+enum StorePropertiesResult {
+    Ok(StoreProperties),
+    Missing(Vec<MissingStoreField>),
+}
+
 fn get_store_properties_and_validate(
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<Option<StoreProperties>, RepositoryError> {
+) -> Result<StorePropertiesResult, RepositoryError> {
     let store_properties: Map<String, Value> = NameRepository::new(connection)
         .query_by_filter(
             store_id,
@@ -58,16 +93,20 @@ fn get_store_properties_and_validate(
         .and_then(|v| v.as_f64());
 
     match (supply_period_months, population_served) {
-        (Some(supply), Some(population)) => Ok(Some(StoreProperties {
+        (Some(supply), Some(population)) => Ok(StorePropertiesResult::Ok(StoreProperties {
             buffer_stock_months,
             supply_period_months: supply,
             population_served: population,
         })),
         _ => {
-            log::debug!(
-                "Forecasting: Missing Store Properties for store_id {store_id}. Values:\n - Supply interval: {supply_period_months:?}\n - Population served: {population_served:?}"
-            );
-            Ok(None)
+            let mut missing = Vec::new();
+            if supply_period_months.is_none() {
+                missing.push(MissingStoreField::SupplyInterval);
+            }
+            if population_served.is_none() {
+                missing.push(MissingStoreField::PopulationServed);
+            }
+            Ok(StorePropertiesResult::Missing(missing))
         }
     }
 }
@@ -91,7 +130,7 @@ fn calculate_forecast_quantities(
         population_served,
     }: &StoreProperties,
     item_ids: Vec<String>,
-) -> Result<HashMap<String, Option<PopulationSnapshot>>, RepositoryError> {
+) -> Result<HashMap<String, PopulationLookup>, RepositoryError> {
     let vaccination_courses =
         VaccinationCourseRepository::new(connection).query_by_item_ids(item_ids.clone())?;
 
@@ -115,6 +154,7 @@ fn calculate_forecast_quantities(
 
         if item_vaccination_courses.is_empty() {
             log::debug!("Forecasting: No vaccine courses for item {item_id}");
+            results.insert(item_id, PopulationLookup::NoCourseForItem);
             continue;
         }
 
@@ -211,17 +251,17 @@ fn calculate_forecast_quantities(
             forecast_monthly_usage += course_monthly_usage;
         }
 
-        let forecast_data = if forecast_values.is_empty() {
-            None
+        let lookup = if forecast_values.is_empty() {
+            PopulationLookup::NoCourseForItem
         } else {
-            Some(PopulationSnapshot {
+            PopulationLookup::Ok(PopulationSnapshot {
                 forecast_monthly_usage,
                 forecast_total_doses,
                 vaccine_courses: forecast_values,
             })
         };
 
-        results.insert(item_id, forecast_data);
+        results.insert(item_id, lookup);
     }
 
     Ok(results)
@@ -341,12 +381,11 @@ mod tests {
 
         assert_eq!(result.len(), 1);
         let item_id = &mock_vaccine_item_a().id;
-        let forecast_data = result.get(item_id).unwrap();
-
-        if let Some(forecast) = forecast_data {
-            assert_eq!(forecast, &forecast_result_store_specific_config());
-        } else {
-            panic!("Expected forecast data but got None");
+        match result.get(item_id).unwrap() {
+            PopulationLookup::Ok(forecast) => {
+                assert_eq!(forecast, &forecast_result_store_specific_config());
+            }
+            other => panic!("Expected Ok forecast, got {other:?}"),
         }
     }
 
@@ -373,7 +412,7 @@ mod tests {
 
         let item_ids = vec![mock_vaccine_item_a().id.clone()];
 
-        let result: HashMap<String, Option<PopulationSnapshot>> = calculate_forecast_quantities(
+        let result: HashMap<String, PopulationLookup> = calculate_forecast_quantities(
             &connection,
             "store_b",
             &store_properties,
@@ -383,12 +422,11 @@ mod tests {
 
         assert_eq!(result.len(), 1);
         let item_id = &mock_vaccine_item_a().id;
-        let forecast_data = result.get(item_id).unwrap();
-
-        if let Some(forecast) = forecast_data {
-            assert_eq!(forecast, &forecast_result_global_rates());
-        } else {
-            panic!("Expected forecast data but got None");
+        match result.get(item_id).unwrap() {
+            PopulationLookup::Ok(forecast) => {
+                assert_eq!(forecast, &forecast_result_global_rates());
+            }
+            other => panic!("Expected Ok forecast, got {other:?}"),
         }
     }
 }
