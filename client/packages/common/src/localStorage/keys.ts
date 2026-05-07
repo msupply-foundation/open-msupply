@@ -30,6 +30,7 @@ export type LocalStorageRecord = {
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
   '/printlabel/isusb': boolean;
+  '/login/skip-store-selector': Record<string, boolean>;
 };
 
 export type LocalStorageKey = keyof LocalStorageRecord;
