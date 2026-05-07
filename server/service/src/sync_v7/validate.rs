@@ -35,6 +35,7 @@ pub(crate) fn validate_on_remote(
 
     for style in sync_styles {
         match style {
+            // Reject rows that have a store id or patient id - these are remote or patient data, not central
             Central => match (&sync_buffer_row.store_id, &sync_buffer_row.patient_id) {
                 (None, None) => return Ok(()),
                 _ => last_err = ValidationError::UnexpectedSyncStyleForV7,
@@ -57,10 +58,7 @@ pub(crate) fn validate_on_remote(
                 Some(_) => return Ok(()),
                 None => last_err = ValidationError::NoPatientId,
             },
-            File => match (&sync_buffer_row.store_id, &sync_buffer_row.patient_id) {
-                (None, None) => return Ok(()),
-                _ => last_err = ValidationError::UnexpectedSyncStyleForV7,
-            },
+            File => return Ok(()),
             ToLegacyCentralOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
             RemoteToCentral => last_err = ValidationError::UnexpectedSyncStyleForV7,
         }
