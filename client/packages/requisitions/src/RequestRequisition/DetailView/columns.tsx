@@ -9,6 +9,7 @@ import {
   useTranslation,
   ColumnType,
   UnitsAndDosesCell,
+  NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
@@ -91,7 +92,7 @@ export const useRequestColumns = () => {
         header: t(showExtraColumns ? 'label.area-amc' : 'label.amc'),
         description: t('description.average-monthly-consumption'),
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: props => <UnitsAndDosesCell {...props} roundUp />,
         enableSorting: true,
       },
       {
@@ -99,6 +100,16 @@ export const useRequestColumns = () => {
         header: t('label.months-of-stock'),
         description: t('description.available-months-of-stock'),
         columnType: ColumnType.Number,
+        Cell: ({ cell }) => {
+          const value = cell.getValue<number | undefined>();
+          return (
+            <NumericTextDisplay
+              value={typeof value === 'number' ? value : undefined}
+              defaultValue={UNDEFINED_STRING_VALUE}
+              decimalLimit={1}
+            />
+          );
+        },
         enableSorting: true,
       },
       {
