@@ -1,4 +1,4 @@
-use repository::{ChangeLogSyncStyle, SyncBufferRow};
+use repository::{ChangeLogSyncStyle, ChangelogTableName, SyncBufferRow};
 use thiserror::Error;
 use ChangeLogSyncStyle::*;
 
@@ -18,57 +18,49 @@ pub enum ValidationError {
     TransferStoreNotActiveOnThisSite,
     #[error("Sync style is not expected on a v7 sync path")]
     UnexpectedSyncStyleForV7,
+    #[error("Central data is only editable by the central site")]
+    CentralOnlyEditableByCentral,
 }
 
 pub(crate) fn validate_on_remote(
     sync_buffer_row: &SyncBufferRow,
-    sync_styles: &[ChangeLogSyncStyle],
+    table_name: &ChangelogTableName,
     active_on_site: &ActiveStoresOnSite,
     is_initialising: bool,
 ) -> Result<(), ValidationError> {
+    let (sync_styles, _) = table_name.sync_style();
+
     let active_store_ids = active_on_site.store_ids();
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
 
     for style in sync_styles {
-        let result = match style {
+        match style {
+            // Reject rows that have a store id or patient id - these are remote or patient data, not central
             Central => match (&sync_buffer_row.store_id, &sync_buffer_row.patient_id) {
-                (None, None) => Ok(()),
-                _ => Err(ValidationError::UnexpectedSyncStyleForV7),
+                (None, None) => return Ok(()),
+                _ => last_err = ValidationError::UnexpectedSyncStyleForV7,
             },
-            // Store active on this site; post-init, reject own echoes only.
             Remote => match &sync_buffer_row.store_id {
-                None => Err(ValidationError::NoStoreId),
+                None => last_err = ValidationError::NoStoreId,
                 Some(id) if !active_store_ids.iter().any(|s| s == id) => {
-                    Err(ValidationError::InactiveStore)
+                    last_err = ValidationError::InactiveStore
                 }
-                Some(_)
-                    if !is_initialising
-                        && sync_buffer_row.source_site_id == active_on_site.site_id() =>
-                {
-                    Err(ValidationError::SiteAlreadyInitialised)
-                }
-                Some(_) => Ok(()),
+                // Must follow the active-store check — store is ours here.
+                Some(_) if !is_initialising => last_err = ValidationError::SiteAlreadyInitialised,
+                Some(_) => return Ok(()),
             },
             Transfer => match &sync_buffer_row.transfer_store_id {
-                Some(id) if active_store_ids.iter().any(|s| s == id) => Ok(()),
-                _ => Err(ValidationError::TransferStoreNotActiveOnThisSite),
+                Some(id) if active_store_ids.iter().any(|s| s == id) => return Ok(()),
+                _ => last_err = ValidationError::TransferStoreNotActiveOnThisSite,
             },
             // Visibility already gated by the central pull filter.
             Patient => match &sync_buffer_row.patient_id {
-                Some(_) => Ok(()),
-                None => Err(ValidationError::NoPatientId),
+                Some(_) => return Ok(()),
+                None => last_err = ValidationError::NoPatientId,
             },
-            File => match (&sync_buffer_row.store_id, &sync_buffer_row.patient_id) {
-                (None, None) => Ok(()),
-                _ => Err(ValidationError::UnexpectedSyncStyleForV7),
-            },
-            ToLegacyCentralOnly => Err(ValidationError::UnexpectedSyncStyleForV7),
-            RemoteToCentral => Err(ValidationError::UnexpectedSyncStyleForV7),
-        };
-
-        match result {
-            Ok(()) => return Ok(()),
-            Err(e) => last_err = e,
+            File => return Ok(()),
+            ToLegacyCentralOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
+            RemoteToCentral => last_err = ValidationError::UnexpectedSyncStyleForV7,
         }
     }
 
@@ -77,33 +69,30 @@ pub(crate) fn validate_on_remote(
 
 pub(crate) fn validate_on_central(
     sync_buffer_row: &SyncBufferRow,
-    sync_styles: &[ChangeLogSyncStyle],
+    table_name: &ChangelogTableName,
     // Central's own active stores, currently unused.
     // kept for future (store merge?).
     _active_on_site: &ActiveStoresOnSite,
 ) -> Result<(), ValidationError> {
+    let (sync_styles, _) = table_name.sync_style();
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
 
     for style in sync_styles {
-        let result = match style {
-            Central => Err(ValidationError::UnexpectedSyncStyleForV7),
+        match style {
+            Central => last_err = ValidationError::CentralOnlyEditableByCentral,
             // Source site identity gated by auth.
-            Remote | RemoteToCentral => match &sync_buffer_row.store_id {
-                Some(_) => Ok(()),
-                None => Err(ValidationError::NoStoreId),
+            Remote => match &sync_buffer_row.store_id {
+                Some(_) => return Ok(()),
+                None => last_err = ValidationError::NoStoreId,
             },
-            Transfer => Ok(()),
+            Transfer => return Ok(()),
             Patient => match &sync_buffer_row.patient_id {
-                Some(_) => Ok(()),
-                None => Err(ValidationError::NoPatientId),
+                Some(_) => return Ok(()),
+                None => last_err = ValidationError::NoPatientId,
             },
-            File => Ok(()),
-            ToLegacyCentralOnly => Err(ValidationError::UnexpectedSyncStyleForV7),
-        };
-
-        match result {
-            Ok(()) => return Ok(()),
-            Err(e) => last_err = e,
+            File => return Ok(()),
+            ToLegacyCentralOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
+            RemoteToCentral => return Ok(()),
         }
     }
 
@@ -114,6 +103,7 @@ pub(crate) fn validate_on_central(
 mod tests {
     use super::*;
     use repository::{NameRow, Store, StoreRow};
+    use ChangelogTableName::*;
 
     // Site 1 is "this site" with one active store, "store_a".
     // Site 2 is some other site.
@@ -132,14 +122,14 @@ mod tests {
 
     #[test]
     fn on_remote() {
-        // CENTRAL — accepts only when the row has no routing metadata.
+        // Sync style: Central — accepts only when the row has no routing metadata.
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Central],
+                &Item,
                 &site(),
                 false,
             ),
@@ -152,7 +142,7 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Central],
+                &Item,
                 &site(),
                 false,
             ),
@@ -165,14 +155,14 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Central],
+                &Item,
                 &site(),
                 false,
             ),
             Err(ValidationError::UnexpectedSyncStyleForV7)
         );
 
-        // REMOTE — store must be active; post-init, own echoes are rejected.
+        // Sync style: Remote — store must be active; post-init, own echoes are rejected.
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
@@ -180,7 +170,7 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Remote],
+                &Stocktake,
                 &site(),
                 true,
             ),
@@ -189,23 +179,10 @@ mod tests {
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
-                    store_id: Some("store_a".into()),
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Remote],
-                &site(),
-                false,
-            ),
-            Ok(())
-        );
-        assert_eq!(
-            validate_on_remote(
-                &SyncBufferRow {
-                    source_site_id: 2,
-                    ..Default::default()
-                },
-                &[Remote],
+                &Stocktake,
                 &site(),
                 true,
             ),
@@ -218,27 +195,30 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Remote],
+                &Stocktake,
                 &site(),
                 true,
             ),
             Err(ValidationError::InactiveStore)
         );
+        // Post-initialisation, reject a record for one of our own stores
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
                     store_id: Some("store_a".into()),
-                    source_site_id: 1,
+                    source_site_id: 2,
                     ..Default::default()
                 },
-                &[Remote],
+                &Stocktake,
                 &site(),
                 false,
             ),
             Err(ValidationError::SiteAlreadyInitialised)
         );
 
-        // TRANSFER — transfer_store must be active.
+        // Sync style: Transfer — transfer_store must be active.
+        // (Requisition's styles are Remote+Transfer; the Remote arm rejects
+        // with NoStoreId, but Transfer accepts.)
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
@@ -246,7 +226,7 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Transfer],
+                &Requisition,
                 &site(),
                 false,
             ),
@@ -259,14 +239,14 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Transfer],
+                &Requisition,
                 &site(),
                 false,
             ),
             Err(ValidationError::TransferStoreNotActiveOnThisSite)
         );
 
-        // PATIENT — patient_id must be present.
+        // Sync style: Patient — patient_id must be present.
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
@@ -274,7 +254,7 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Patient],
+                &Document,
                 &site(),
                 false,
             ),
@@ -286,7 +266,7 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Patient],
+                &Document,
                 &site(),
                 false,
             ),
@@ -296,20 +276,20 @@ mod tests {
 
     #[test]
     fn on_central() {
-        // CENTRAL — central data isn't edited on remotes, always rejected.
+        // Sync style: Central — central data isn't edited on remotes, always rejected.
         assert_eq!(
             validate_on_central(
                 &SyncBufferRow {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Central],
+                &Item,
                 &site(),
             ),
-            Err(ValidationError::UnexpectedSyncStyleForV7)
+            Err(ValidationError::CentralOnlyEditableByCentral)
         );
 
-        // REMOTE — store_id must be present (source site verified by auth).
+        // Sync style: Remote — store_id must be present (source site verified by auth).
         assert_eq!(
             validate_on_central(
                 &SyncBufferRow {
@@ -317,7 +297,7 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Remote],
+                &Stocktake,
                 &site(),
             ),
             Ok(())
@@ -328,26 +308,26 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Remote],
+                &Stocktake,
                 &site(),
             ),
             Err(ValidationError::NoStoreId)
         );
 
-        // TRANSFER — accepted (source site trusted via auth).
+        // Sync style: Transfer — accepted (source site trusted via auth).
         assert_eq!(
             validate_on_central(
                 &SyncBufferRow {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Transfer],
+                &Requisition,
                 &site(),
             ),
             Ok(())
         );
 
-        // PATIENT — patient_id must be present.
+        // Sync style: Patient — patient_id must be present.
         assert_eq!(
             validate_on_central(
                 &SyncBufferRow {
@@ -355,7 +335,7 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Patient],
+                &Document,
                 &site(),
             ),
             Ok(())
@@ -366,7 +346,7 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &[Patient],
+                &Document,
                 &site(),
             ),
             Err(ValidationError::NoPatientId)

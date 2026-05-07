@@ -40,9 +40,6 @@ pub struct SyncVersions {
 
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
-//
-// Variants are grouped to match the order of `ChangelogTableName` above and
-// sorted alphabetically within each group. Keep the two in sync.
 impl ChangelogTableName {
     pub fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncVersions) {
         use ChangeLogSyncStyle::*;
@@ -142,7 +139,6 @@ impl ChangelogTableName {
             | MasterList
             | MasterListLine
             | MasterListNameJoin
-            | Name
             | NameTag
             | NameTagJoin
             | Period
@@ -193,11 +189,32 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Central + Patient (v6) — patient-scoped records, routed
-            // to every site where the patient is visible.
+            // Central + Patient (not v6) — central rows, plus patient rows routed to visible sites
             // ----------------------------------------------------------
-            Encounter | Vaccination | Document => (
+            Name => (
                 vec![Central, Patient],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: true,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Remote + Patient (v6) — store-scoped data also routed to sites where the patient is visible
+            // ----------------------------------------------------------
+            Encounter | Vaccination => (
+                vec![Remote, Patient],
+                SyncVersions {
+                    is_v6: true,
+                    is_v5: false,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Patient (v6) — routed only to sites where the patient is visible
+            // ----------------------------------------------------------
+            Document => (
+                vec![Patient],
                 SyncVersions {
                     is_v6: true,
                     is_v5: false,
@@ -216,7 +233,7 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // RemoteAndCentral (v6) — Remote when store_id is set, otherwise Central
+            // Remote + Central (v6) — Remote when store_id is set, otherwise Central
             // ----------------------------------------------------------
             PluginData | Preference => (
                 vec![Remote, Central],
