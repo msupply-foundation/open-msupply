@@ -822,11 +822,7 @@ mod test {
             "update_outbound_shipment_backdate_errors",
             MockDataInserts::all(),
             MockData {
-                invoices: vec![
-                    new_outbound(),
-                    picked_outbound(),
-                    outbound_with_line(),
-                ],
+                invoices: vec![new_outbound(), picked_outbound(), outbound_with_line()],
                 invoice_lines: vec![line_for_outbound()],
                 ..Default::default()
             },
@@ -839,7 +835,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":30}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -893,6 +891,20 @@ mod test {
                 "Cannot set date in the future".to_string()
             ))
         );
+
+        // ExceedsMaximumBackdatingDays: older than max_days (30) configured above
+        let thirty_one_days_ago = Utc::now() - Duration::days(31);
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: new_outbound().id,
+                    backdated_datetime: Some(thirty_one_days_ago),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::ExceedsMaximumBackdatingDays)
+        );
     }
 
     #[actix_rt::test]
@@ -926,7 +938,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -955,12 +969,128 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            updated.backdated_datetime,
-            Some(two_days_ago.naive_utc())
-        );
+        assert_eq!(updated.backdated_datetime, Some(two_days_ago.naive_utc()));
         // Status datetimes should not be set (invoice is still New)
         assert_eq!(updated.allocated_datetime, None);
         assert_eq!(updated.picked_datetime, None);
+    }
+
+    // Regression test for #11546: after backdating, advancing the status to Picked
+    // / Shipped must stamp the backdated datetime onto picked_datetime and
+    // shipped_datetime so the item ledger reflects the backdated date.
+    #[actix_rt::test]
+    async fn update_outbound_shipment_backdate_status_transition_uses_backdated_datetime() {
+        use chrono::{Duration, Utc};
+
+        fn new_outbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "backdate_then_status_outbound".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_backdate_status_transition_uses_backdated_datetime",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![new_outbound()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        use repository::{PreferenceRow, PreferenceRowRepository};
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":30}"#
+                        .to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let two_days_ago = Utc::now() - Duration::days(2);
+
+        // Step 1: Backdate the New invoice
+        service
+            .update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: new_outbound().id,
+                    backdated_datetime: Some(two_days_ago),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Step 2: Advance to Picked (separate update, no backdated_datetime in patch)
+        service
+            .update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: new_outbound().id,
+                    status: Some(UpdateOutboundShipmentStatus::Picked),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let after_picked = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&new_outbound().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            after_picked.backdated_datetime,
+            Some(two_days_ago.naive_utc())
+        );
+        assert_eq!(
+            after_picked.allocated_datetime,
+            Some(two_days_ago.naive_utc())
+        );
+        assert_eq!(after_picked.picked_datetime, Some(two_days_ago.naive_utc()));
+
+        // Step 3: Advance to Shipped
+        service
+            .update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: new_outbound().id,
+                    status: Some(UpdateOutboundShipmentStatus::Shipped),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let after_shipped = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&new_outbound().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            after_shipped.shipped_datetime,
+            Some(two_days_ago.naive_utc())
+        );
+        // Earlier status datetimes should not have been bumped to "now"
+        assert_eq!(
+            after_shipped.picked_datetime,
+            Some(two_days_ago.naive_utc())
+        );
+        assert_eq!(
+            after_shipped.allocated_datetime,
+            Some(two_days_ago.naive_utc())
+        );
     }
 }
