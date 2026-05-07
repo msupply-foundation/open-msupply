@@ -113,6 +113,8 @@ export const LoginLayout = ({
         }}
       >
         <Box
+          inert={showStoreSelector}
+          aria-hidden={showStoreSelector}
           sx={{
             position: 'absolute',
             inset: 0,
@@ -131,6 +133,8 @@ export const LoginLayout = ({
           <LanguageButton />
         </Box>
         <Box
+          inert={!showStoreSelector}
+          aria-hidden={!showStoreSelector}
           sx={{
             position: 'absolute',
             inset: 0,
