@@ -194,7 +194,7 @@ export const StockLineForm = ({
             />
           </Box>
           <Box>
-            <Grid container gap={isNewModal ? undefined : 10}>
+            <Grid container gap={isNewModal ? 2 : 10}>
               <Grid container flex={1} flexDirection="column" gap={1}>
                 <StyledInputRow
                   label={t('label.pack-quantity')}
