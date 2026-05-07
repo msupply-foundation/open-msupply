@@ -105,6 +105,15 @@ export const RequestLineEdit = ({
   const dimmedValue = (v?: number | null) =>
     forecastFailed ? null : (v ?? null);
 
+  // The chart's projection rate: forecastMonthlyUsage when forecasting is in
+  // use, AMC for the legacy/no-forecast path, or `null` when the forecast
+  // failed (charts then drop the projection entirely).
+  const chartMonthlyUsage: number | null = forecastFailed
+    ? null
+    : displayForecasting
+      ? (draft?.forecastMonthlyUsage ?? null)
+      : (draft?.itemStats?.averageMonthlyConsumption ?? null);
+
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
     [lines, draft?.id]
@@ -402,10 +411,18 @@ export const RequestLineEdit = ({
             }}
           >
             {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
-              <ConsumptionHistory id={line.id} />
+              <ConsumptionHistory id={line.id} monthlyUsage={chartMonthlyUsage} />
             )}
             {isInfoVisible(STOCK_EVOLUTION_INFO) && (
-              <StockEvolution id={line.id} />
+              <StockEvolution
+                id={line.id}
+                monthlyUsage={chartMonthlyUsage}
+                requestedQuantity={draft.requestedQuantity}
+                expectedDeliveryDate={requisition.expectedDeliveryDate}
+                availableStockOnHand={line.itemStats?.availableStockOnHand ?? 0}
+                minMonthsOfStock={requisition.minMonthsOfStock}
+                maxMonthsOfStock={requisition.maxMonthsOfStock}
+              />
             )}
           </Box>
         </Box>

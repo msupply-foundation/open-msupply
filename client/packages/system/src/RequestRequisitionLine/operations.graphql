@@ -87,6 +87,7 @@ fragment Request on RequisitionNode {
   otherPartyId
   maxMonthsOfStock
   minMonthsOfStock
+  expectedDeliveryDate
   approvalStatus
   documents {
     __typename

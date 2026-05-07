@@ -380,7 +380,9 @@ const amcAdapter = (
 
   // Default formula: AMC = totalConsumption / lookbackMonths × dosAdjustment.
   // The DOS adjustment row only appears when the preference is on (otherwise
-  // the factor is always 1.0 and adds noise).
+  // the factor is always 1.0 and adds noise). Values stay in units — the
+  // calculation panel is a *breakdown* of the math; representation conversion
+  // is a presentation-layer concern handled by the modal's headline rows.
   const b = d.breakdown;
   const formulaRhs = b.daysOutOfStock != null
     ? 'totalConsumption / lookbackMonths × dosAdjustment'
@@ -462,55 +464,55 @@ const populationAdapter = (
     ...d.vaccineCourses.map(c => ({
       title: c.courseTitle,
       equations: [
-      [
-        {
-          label: 'annualDoses',
-          rhs: 'population × doses × coverage% × lossFactor',
-        },
-        {
-          rhs: `${format(c.targetPopulation)} × ${format(c.numberOfDoses)} × (${format(c.coverageRate)} / 100) × ${round(c.lossFactor, 3)}`,
-        },
-        {
-          rhs: round(c.annualTargetDoses, 2),
-          suffix: t('label.doses-per-year'),
-        },
-      ],
-      [
-        {
-          label: 'forecastDoses',
-          rhs: 'annualDoses / 12 × (supplyPeriod + buffer)',
-        },
-        {
-          rhs: `${round(c.annualTargetDoses, 2)} / 12 × (${format(c.supplyPeriodMonths)} + ${format(c.bufferStockMonths)})`,
-        },
-        {
-          rhs: round(c.forecastDoses, 2),
-          suffix: t('label.doses').toLowerCase(),
-        },
-      ],
-      [
-        { label: 'periodTotal', rhs: 'forecastDoses / dosesPerUnit' },
-        {
-          rhs: `${round(c.forecastDoses, 2)} / ${format(c.dosesPerUnit)}`,
-        },
-        {
-          rhs: format(Math.ceil(c.forecastUnits)),
-          suffix: units,
-        },
-      ],
-      [
-        {
-          label: 'monthlyUsage',
-          rhs: 'periodTotal / (supplyPeriod + buffer)',
-        },
-        {
-          rhs: `${format(Math.ceil(c.forecastUnits))} / (${format(c.supplyPeriodMonths)} + ${format(c.bufferStockMonths)})`,
-        },
-        {
-          rhs: round(c.forecastMonthlyUsage, 2),
-          suffix: `${units} / month`,
-        },
-      ],
+        [
+          {
+            label: 'annualDoses',
+            rhs: 'population × doses × coverage% × lossFactor',
+          },
+          {
+            rhs: `${format(c.targetPopulation)} × ${format(c.numberOfDoses)} × (${format(c.coverageRate)} / 100) × ${round(c.lossFactor, 3)}`,
+          },
+          {
+            rhs: round(c.annualTargetDoses, 2),
+            suffix: t('label.doses-per-year'),
+          },
+        ],
+        [
+          {
+            label: 'forecastDoses',
+            rhs: 'annualDoses / 12 × (supplyPeriod + buffer)',
+          },
+          {
+            rhs: `${round(c.annualTargetDoses, 2)} / 12 × (${format(c.supplyPeriodMonths)} + ${format(c.bufferStockMonths)})`,
+          },
+          {
+            rhs: round(c.forecastDoses, 2),
+            suffix: t('label.doses').toLowerCase(),
+          },
+        ],
+        [
+          { label: 'periodTotal', rhs: 'forecastDoses / dosesPerUnit' },
+          {
+            rhs: `${round(c.forecastDoses, 2)} / ${format(c.dosesPerUnit)}`,
+          },
+          {
+            rhs: format(Math.ceil(c.forecastUnits)),
+            suffix: units,
+          },
+        ],
+        [
+          {
+            label: 'monthlyUsage',
+            rhs: 'periodTotal / (supplyPeriod + buffer)',
+          },
+          {
+            rhs: `${format(Math.ceil(c.forecastUnits))} / (${format(c.supplyPeriodMonths)} + ${format(c.bufferStockMonths)})`,
+          },
+          {
+            rhs: round(c.forecastMonthlyUsage, 2),
+            suffix: `${units} / month`,
+          },
+        ],
       ],
     })),
     {
@@ -674,6 +676,12 @@ interface ForecastCalculationDisplayProps {
 /// Parses the snapshot JSON, runs the appropriate adapter, and hands the
 /// result to the single `EquationDisplay` renderer. Adding a new method only
 /// requires writing one adapter — the rendering surface is shared.
+///
+/// Values render in the underlying *units* — switching the modal's
+/// representation toggle (units/packs/doses) only converts the headline rows
+/// (`Suggested`, `Forecast monthly usage`) via `ValueInfoRow`. The
+/// calculation breakdown stays in units because the formula text refers to
+/// stored quantities and would mismatch any converted figures.
 const ForecastCalculationDisplay = ({
   forecastData,
   unitName,

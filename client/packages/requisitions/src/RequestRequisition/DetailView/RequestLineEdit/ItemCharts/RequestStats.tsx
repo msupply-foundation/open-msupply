@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box } from '@openmsupply-client/common';
+import { isForecastSnapshotError } from '../../../../common/ForecastCalculationDisplay';
 import { DraftRequestLine } from '../hooks';
 import { StockDistribution } from './StockDistribution';
 import { ConsumptionHistory } from './ConsumptionHistory';
@@ -7,9 +8,25 @@ import { StockEvolution } from './StockEvolution';
 
 export interface RequestStatsProps {
   draft?: DraftRequestLine | null;
+  expectedDeliveryDate?: string | null;
+  minMonthsOfStock: number;
+  maxMonthsOfStock: number;
 }
 
-export const RequestStats = ({ draft }: RequestStatsProps) => {
+export const RequestStats = ({
+  draft,
+  expectedDeliveryDate,
+  minMonthsOfStock,
+  maxMonthsOfStock,
+}: RequestStatsProps) => {
+  const forecastFailed = isForecastSnapshotError(draft?.forecastData);
+  const displayForecasting = !!draft?.forecastMethod;
+  const monthlyUsage: number | null = forecastFailed
+    ? null
+    : displayForecasting
+      ? (draft?.forecastMonthlyUsage ?? null)
+      : (draft?.itemStats?.averageMonthlyConsumption ?? null);
+
   return (
     <Box
       sx={{
@@ -38,9 +55,20 @@ export const RequestStats = ({ draft }: RequestStatsProps) => {
         ) : (
           <>
             <Box paddingBottom={2}>
-              <ConsumptionHistory id={draft?.id || ''} />
+              <ConsumptionHistory
+                id={draft?.id || ''}
+                monthlyUsage={monthlyUsage}
+              />
             </Box>
-            <StockEvolution id={draft?.id || ''} />
+            <StockEvolution
+              id={draft?.id || ''}
+              monthlyUsage={monthlyUsage}
+              requestedQuantity={draft?.requestedQuantity ?? 0}
+              expectedDeliveryDate={expectedDeliveryDate}
+              availableStockOnHand={draft?.itemStats?.availableStockOnHand ?? 0}
+              minMonthsOfStock={minMonthsOfStock}
+              maxMonthsOfStock={maxMonthsOfStock}
+            />
           </>
         )}
       </Box>

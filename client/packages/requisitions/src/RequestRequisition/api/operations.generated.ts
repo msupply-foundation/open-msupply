@@ -82,6 +82,7 @@ export type RequestByNumberQuery = {
         otherPartyId: string;
         maxMonthsOfStock: number;
         minMonthsOfStock: number;
+        expectedDeliveryDate?: string | null;
         approvalStatus: Types.RequisitionNodeApprovalStatus;
         programName?: string | null;
         orderType?: string | null;
@@ -247,6 +248,7 @@ export type RequestByIdQuery = {
         otherPartyId: string;
         maxMonthsOfStock: number;
         minMonthsOfStock: number;
+        expectedDeliveryDate?: string | null;
         approvalStatus: Types.RequisitionNodeApprovalStatus;
         programName?: string | null;
         orderType?: string | null;

@@ -113,6 +113,7 @@ export type RequestFragment = {
   otherPartyId: string;
   maxMonthsOfStock: number;
   minMonthsOfStock: number;
+  expectedDeliveryDate?: string | null;
   approvalStatus: Types.RequisitionNodeApprovalStatus;
   programName?: string | null;
   orderType?: string | null;
@@ -355,6 +356,7 @@ export const RequestFragmentDoc = gql`
     otherPartyId
     maxMonthsOfStock
     minMonthsOfStock
+    expectedDeliveryDate
     approvalStatus
     documents {
       __typename
