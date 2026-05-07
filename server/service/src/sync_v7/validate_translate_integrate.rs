@@ -30,6 +30,9 @@ pub(crate) enum SyncContext {
         is_initialising: bool,
         active_stores: ActiveStoresOnSite,
     },
+    /// Records arrived via a patient-lookup pull. They belong to other sites'
+    /// stores.
+    PatientLookup,
 }
 
 #[derive(Error, Debug)]
@@ -69,7 +72,6 @@ fn changelog(
         source_site_id: Some(row.source_site_id),
         transfer_store_id: row.transfer_store_id.clone(),
         patient_id: row.patient_id.clone(),
-        ..Default::default()
     }
 }
 
@@ -150,6 +152,7 @@ fn validate_translate_integrate_one(
             is_initialising,
             active_stores,
         } => validate_on_remote(row, &table_name, active_stores, *is_initialising)?,
+        SyncContext::PatientLookup => {} // Patient records belong to another store
     };
 
     match row.action {
@@ -165,7 +168,7 @@ fn validate_translate_integrate_one(
     }
 }
 
-pub fn validate_translate_integrate<'a>(
+pub(crate) fn validate_translate_integrate<'a>(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'a>>,
     source_site_id: i32,
@@ -240,7 +243,7 @@ fn validate_translate_integrate_inner<'a>(
             source_site_id,
             sync_version: SyncVersion::V7,
             reference,
-            table_name: &table.to_string(),
+            table_name: table.as_ref(),
             action: action.clone(),
             direction,
         })?;
@@ -312,4 +315,55 @@ fn validate_translate_integrate_inner<'a>(
     }
 
     Ok(())
+}
+
+pub(crate) fn validate_translate_integrate_in_memory(
+    connection: &StorageConnection,
+    rows: &[SyncBufferRow],
+    sync_context: SyncContext,
+) -> Result<(), RepositoryError> {
+    connection
+        .transaction_sync(|con| -> Result<(), RepositoryError> {
+            let by_table_action = |table: &ChangelogTableName, action: SyncAction| {
+                let table_name = table.to_string();
+                let mut filtered: Vec<&SyncBufferRow> = rows
+                    .iter()
+                    .filter(|r| r.table_name == table_name && r.action == action)
+                    .collect();
+                match action {
+                    SyncAction::Delete => filtered.sort_by_key(|r| std::cmp::Reverse(r.cursor)),
+                    _ => filtered.sort_by_key(|r| r.cursor),
+                };
+                filtered
+            };
+
+            for table in INTEGRATION_ORDER {
+                for row in by_table_action(table, SyncAction::Upsert) {
+                    validate_translate_integrate_one(con, row, &sync_context).map_err(|e| {
+                        RepositoryError::as_db_error(
+                            &format!(
+                                "Patient lookup integration ({} {} {})",
+                                row.table_name, row.action, row.record_id
+                            ),
+                            format_error(&e),
+                        )
+                    })?;
+                }
+            }
+            for table in INTEGRATION_ORDER.iter().rev() {
+                for row in by_table_action(table, SyncAction::Delete) {
+                    validate_translate_integrate_one(con, row, &sync_context).map_err(|e| {
+                        RepositoryError::as_db_error(
+                            &format!(
+                                "Patient lookup integration ({} {} {})",
+                                row.table_name, row.action, row.record_id
+                            ),
+                            format_error(&e),
+                        )
+                    })?;
+                }
+            }
+            Ok(())
+        })
+        .map_err(|e| e.to_inner_error())
 }
