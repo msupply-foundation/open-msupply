@@ -202,7 +202,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Remote + Patient (v6) — store-scoped data also routed to sites where the patient is visible
             // ----------------------------------------------------------
-            Encounter => (
+            Encounter | Vaccination => (
                 vec![Remote, Patient],
                 SyncVersions {
                     is_v6: true,
@@ -213,7 +213,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Patient (v6) — routed only to sites where the patient is visible
             // ----------------------------------------------------------
-            Document | Vaccination => (
+            Document => (
                 vec![Patient],
                 SyncVersions {
                     is_v6: true,
