@@ -164,17 +164,19 @@ export const StockItemSearchInput = ({
         )
       }
       inputValue={search}
+      // Default MUI behaviour clears typed text on blur; keep it so an
+      // accidental click-out doesn't lose the user's in-progress search.
+      clearOnBlur={false}
+      onClear={() => {
+        setSearch('');
+        setSelectedCode('');
+        onFilter('');
+      }}
       inputProps={{
         onChange: e => {
           const { value } = e.target;
           setSearch(value);
           debounceOnFilter(getItemNameFilterValue(value, selectedCode));
-        },
-        // Keep typed text and filter on blur so an accidental click-out
-        // doesn't lose the user's search. If an item is selected, revert
-        // to its label so the display matches the form's actual state.
-        onBlur: () => {
-          if (currentItem) setSearch(getOptionLabel(currentItem));
         },
       }}
     />
