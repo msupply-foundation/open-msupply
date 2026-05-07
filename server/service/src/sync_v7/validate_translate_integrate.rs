@@ -141,16 +141,15 @@ fn validate_translate_integrate_one(
     sync_context: &SyncContext,
 ) -> Result<(), Error> {
     let table_name = parse_table_name(&row.table_name)?;
-    let (sync_styles, _) = table_name.sync_style();
 
     match sync_context {
         SyncContext::Central { active_stores } => {
-            validate_on_central(row, &sync_styles, active_stores)?
+            validate_on_central(row, &table_name, active_stores)?
         }
         SyncContext::Remote {
             is_initialising,
             active_stores,
-        } => validate_on_remote(row, &sync_styles, active_stores, *is_initialising)?,
+        } => validate_on_remote(row, &table_name, active_stores, *is_initialising)?,
     };
 
     match row.action {
