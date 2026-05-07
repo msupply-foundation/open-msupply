@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_purchase_order_finalise_permission;
+mod fix_po_linked_inbound_line_prices;
 
 pub(crate) struct V2_19_00;
 impl Migration for V2_19_00 {
@@ -14,7 +15,10 @@ impl Migration for V2_19_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_purchase_order_finalise_permission::Migrate)]
+        vec![
+            Box::new(add_purchase_order_finalise_permission::Migrate),
+            Box::new(fix_po_linked_inbound_line_prices::Migrate),
+        ]
     }
 }
 
