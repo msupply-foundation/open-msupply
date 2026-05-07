@@ -20,8 +20,8 @@ export const useStockListCount = (filterBy: StockLineFilterInput) => {
       storeId,
       filter,
     });
-    const { totalCount } = query?.stockLines;
-    return { totalCount };
+    const { totalCount } = query?.stockLines ?? {};
+    return { totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({ queryKey, queryFn });

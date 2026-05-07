@@ -12,8 +12,8 @@ export function useShippingMethod(filterBy?: FilterBy) {
       filter: filterBy,
     });
 
-    const { nodes, totalCount } = query?.shippingMethods;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.shippingMethods ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   return useQuery({

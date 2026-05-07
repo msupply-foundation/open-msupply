@@ -22,8 +22,8 @@ export function useCurrencyList() {
       },
       filter: {},
     });
-    const { nodes, totalCount } = query?.currencies;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.currencies ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({ queryKey, queryFn });

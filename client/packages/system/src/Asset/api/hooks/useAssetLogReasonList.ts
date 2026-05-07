@@ -12,8 +12,8 @@ export const useAssetLogReasonList = (filterBy?: FilterBy | null) => {
       filter: filterBy,
     });
 
-    const { nodes, totalCount } = query?.assetLogReasons;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.assetLogReasons ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({

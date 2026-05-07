@@ -68,8 +68,8 @@ export const usePurchaseOrderLineList = (
       desc: sortBy.direction === 'desc',
       filter,
     });
-    const { nodes, totalCount } = query?.purchaseOrderLines;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.purchaseOrderLines ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const { data, isLoading, isError } = useQuery({ queryKey, queryFn });

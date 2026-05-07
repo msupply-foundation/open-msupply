@@ -50,8 +50,8 @@ export const useStockList = (
       desc: sortBy.isDesc,
       filter,
     });
-    const { nodes, totalCount } = query?.stockLines;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.stockLines ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({

@@ -61,8 +61,8 @@ export const usePrescriptionList = (queryParams?: ListParams) => {
       desc: sortBy.direction === 'desc',
       filter,
     });
-    const { nodes, totalCount } = query?.invoices;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.invoices ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const { data, isLoading, isError, isFetching } = useQuery({

@@ -45,8 +45,8 @@ export const useMasterLists = (props?: MasterListsProps) => {
       filter: filterBy,
       storeId,
     });
-    const { nodes, totalCount } = query?.masterLists;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.masterLists ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const { data, isLoading, isError } = useQuery({

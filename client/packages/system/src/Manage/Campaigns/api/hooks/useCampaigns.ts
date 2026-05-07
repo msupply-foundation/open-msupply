@@ -91,8 +91,8 @@ const useGetList = (queryParams?: ListParams) => {
       filter: filterBy,
       storeId,
     });
-    const { nodes, totalCount } = query?.campaigns;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.campaigns ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({

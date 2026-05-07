@@ -16,8 +16,8 @@ export const useAssetTypes = (filterBy?: FilterBy | null) => {
       sort: { key: AssetTypeSortFieldInput.Name, desc: false },
     });
 
-    const { nodes, totalCount } = query?.assetTypes;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.assetTypes ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({

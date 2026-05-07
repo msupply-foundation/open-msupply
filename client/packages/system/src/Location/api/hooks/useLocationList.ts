@@ -57,8 +57,8 @@ const useGetList = (enabled?: boolean, queryParams?: ListParams) => {
       filter: filterBy,
       storeId,
     });
-    const { nodes, totalCount } = query?.locations;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.locations ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({

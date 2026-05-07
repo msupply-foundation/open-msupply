@@ -11,8 +11,8 @@ export const useAssetClasses = () => {
       sort: { key: AssetClassSortFieldInput.Name, desc: false },
     });
 
-    const { nodes, totalCount } = query?.assetClasses;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.assetClasses ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({

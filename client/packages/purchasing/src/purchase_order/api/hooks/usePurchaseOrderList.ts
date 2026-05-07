@@ -62,8 +62,8 @@ export const usePurchaseOrderList = (queryParams?: ListParams) => {
       desc: sortBy.direction === 'desc',
       filter,
     });
-    const { nodes, totalCount } = query?.purchaseOrders;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.purchaseOrders ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const { data, isFetching, isError } = useQuery({

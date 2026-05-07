@@ -29,10 +29,10 @@ export const useItemLedger = (
       },
     });
 
-    const { nodes, totalCount } = query?.itemLedger;
+    const { nodes, totalCount } = query?.itemLedger ?? {};
     return {
-      ledgers: nodes,
-      totalCount,
+      ledgers: nodes ?? [],
+      totalCount: totalCount ?? 0,
     };
   };
 

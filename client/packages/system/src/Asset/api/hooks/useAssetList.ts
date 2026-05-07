@@ -37,8 +37,8 @@ export const useAssetList = (queryParams?: ListParams) => {
       desc: sortBy?.isDesc,
       filter: filterBy,
     });
-    const { nodes, totalCount } = query?.assetCatalogueItems;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.assetCatalogueItems ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const { data, isLoading, isError } = useQuery({
@@ -107,8 +107,8 @@ export const useAssetCatalogueListAll = () => {
       const query = await assetApi.assetCatalogueItems({
         key: AssetCatalogueItemSortFieldInput.Code,
       });
-      const { nodes, totalCount } = query?.assetCatalogueItems;
-      return { nodes, totalCount };
+      const { nodes, totalCount } = query?.assetCatalogueItems ?? {};
+      return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
     },
   });
 

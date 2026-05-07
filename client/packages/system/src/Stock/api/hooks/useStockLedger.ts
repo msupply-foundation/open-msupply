@@ -31,8 +31,8 @@ export function useStockLedger(
       desc: sortBy?.direction === 'desc',
       filter,
     });
-    const { nodes, totalCount } = query?.ledger;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.ledger ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({ queryKey, queryFn });

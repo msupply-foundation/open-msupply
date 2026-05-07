@@ -65,8 +65,8 @@ const useGet = (queryParams: StocktakesParams) => {
       },
       filter: filterBy,
     });
-    const { nodes, totalCount } = query?.stocktakes;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.stocktakes ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({ queryKey, queryFn, placeholderData: keepPreviousData });
