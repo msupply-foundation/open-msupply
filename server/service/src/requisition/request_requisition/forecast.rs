@@ -13,8 +13,9 @@ use repository::{
     AmcError, AmcOutcome, AmcSnapshot, AmcSnapshotBreakdown, AncillaryContribution,
     AncillaryItemFilter, AncillaryItemRepository, AncillaryRatioError, AncillaryRatioOutcome,
     AncillaryRatioSnapshot, DefaultAmcSnapshotBreakdown, EqualFilter, ForecastMethod,
-    ForecastSnapshot, PluginError, PluginOutcome, PluginSnapshot, PluginType, PopulationError,
-    PopulationOutcome, RepositoryError, RequisitionLineRow, StorageConnection,
+    ForecastSnapshot, MonthlyConsumption as SnapshotMonthlyConsumption, PluginError, PluginOutcome,
+    PluginSnapshot, PluginType, PopulationError, PopulationOutcome, RepositoryError,
+    RequisitionLineRow, StorageConnection,
 };
 use topological_sort::TopologicalSort;
 use std::collections::{HashMap, HashSet};
@@ -283,6 +284,7 @@ fn compute_amc(c: &LineContext, fresh_breakdown: Option<&AmcBreakdown>) -> AmcOu
                 number_of_days: 0.0,
                 days_out_of_stock: None,
                 dos_adjustment_factor: 1.0,
+                monthly_consumption: vec![],
             })
         });
     AmcOutcome::Ok(AmcSnapshot {
@@ -362,6 +364,14 @@ fn amc_breakdown_to_snapshot(b: &AmcBreakdown) -> AmcSnapshotBreakdown {
             number_of_days: d.number_of_days,
             days_out_of_stock: d.days_out_of_stock,
             dos_adjustment_factor: d.dos_adjustment_factor,
+            monthly_consumption: d
+                .monthly_consumption
+                .iter()
+                .map(|m| SnapshotMonthlyConsumption {
+                    month: m.month,
+                    consumption: m.consumption,
+                })
+                .collect(),
         }),
     }
 }
@@ -489,6 +499,7 @@ mod tests {
             number_of_days: 182.0,
             days_out_of_stock: Some(10.0),
             dos_adjustment_factor: 182.0 / 172.0,
+            monthly_consumption: vec![],
         });
         match compute_amc(&c, Some(&fresh)) {
             AmcOutcome::Ok(snap) => {
@@ -618,6 +629,7 @@ mod tests {
                 number_of_days: 91.0,
                 days_out_of_stock: None,
                 dos_adjustment_factor: 1.0,
+                monthly_consumption: vec![],
             }),
         }));
         let mut snaps = HashMap::new();

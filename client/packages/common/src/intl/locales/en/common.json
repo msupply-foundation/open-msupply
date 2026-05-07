@@ -2848,6 +2848,7 @@
   "label.forecast-monthly-usage": "Forecast monthly usage",
   "description.forecast-monthly-usage": "Forecasted average monthly usage of this item, produced by the chosen forecasting method.",
   "label.amc-from-plugin": "Plugin: {{code}}",
+  "label.monthly-consumption": "Monthly consumption",
   "label.population-served": "Population served",
   "label.supply-interval": "Supply interval",
   "error.forecast-no-consumption-history": "No consumption recorded over the last {{months}} months — the forecast cannot be derived from average monthly consumption.",

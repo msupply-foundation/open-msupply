@@ -135,6 +135,7 @@ mod tests {
                 number_of_days: 91.0,
                 days_out_of_stock: None,
                 dos_adjustment_factor: 1.0,
+                monthly_consumption: vec![],
             }),
         }
     }

@@ -29,6 +29,12 @@ interface PopulationCourseData {
   forecastMonthlyUsage: number;
 }
 
+interface MonthlyConsumption {
+  /// First day of the month, ISO format (e.g. `2025-09-01`).
+  month: string;
+  consumption: number;
+}
+
 interface DefaultAmcSnapshotBreakdown {
   source: 'default';
   lookbackMonths: number;
@@ -36,6 +42,7 @@ interface DefaultAmcSnapshotBreakdown {
   numberOfDays: number;
   daysOutOfStock?: number | null;
   dosAdjustmentFactor: number;
+  monthlyConsumption: MonthlyConsumption[];
 }
 
 interface PluginAmcSnapshotBreakdown {
@@ -161,6 +168,10 @@ interface EquationGroup {
   /// Each inner array is one equation block (formula / substitution / result
   /// rows that share a single `=` column).
   equations: EquationLine[][];
+  /// Optional custom node rendered inside the group instead of equations.
+  /// Used by the AMC adapter to lay the monthly contributions out as a
+  /// small two-column table rather than a stack of `label = value` rows.
+  body?: React.ReactNode;
 }
 
 /// Single renderer that every method funnels into. The per-method adapters
@@ -170,6 +181,64 @@ interface EquationDisplayProps {
   warning?: string;
   groups: EquationGroup[];
 }
+
+/// Compact two-column table — `label | value (suffix)`. Used by the AMC
+/// monthly contributions section; final row is bold-emphasised as a total.
+const MiniTable = ({
+  rows,
+  totalRow,
+}: {
+  rows: { label: string; value: string }[];
+  totalRow?: { label: string; value: string };
+}) => (
+  <Box
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: 'auto auto',
+      columnGap: 4,
+      rowGap: 0.25,
+      fontFamily: 'monospace',
+      fontSize: 13,
+      mt: 1,
+      ml: 1,
+      alignItems: 'baseline',
+    }}
+  >
+    {rows.map((r, i) => (
+      <React.Fragment key={i}>
+        <Box sx={{ color: 'text.secondary' }}>{r.label}</Box>
+        <Box sx={{ textAlign: 'right' }}>{r.value}</Box>
+      </React.Fragment>
+    ))}
+    {totalRow && (
+      <>
+        <Box
+          sx={{
+            fontWeight: 700,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            pt: 0.5,
+            mt: 0.25,
+          }}
+        >
+          {totalRow.label}
+        </Box>
+        <Box
+          sx={{
+            fontWeight: 700,
+            textAlign: 'right',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            pt: 0.5,
+            mt: 0.25,
+          }}
+        >
+          {totalRow.value}
+        </Box>
+      </>
+    )}
+  </Box>
+);
 
 /// Three-column grid: `label = rhs (suffix)`. Subsequent rows omit the label
 /// so all `=` and rhs values stack vertically aligned.
@@ -259,9 +328,10 @@ const EquationDisplay = ({
               borderColor: 'divider',
             }}
           >
-            {group.equations.map((eq, ei) => (
-              <EquationBlock key={ei} rows={eq} />
-            ))}
+            {group.body ??
+              group.equations.map((eq, ei) => (
+                <EquationBlock key={ei} rows={eq} />
+              ))}
           </Box>
         </Box>
       ))}
@@ -343,7 +413,42 @@ const amcAdapter = (
     ]);
   }
 
-  return { heading, groups: [{ equations }] };
+  const groups: EquationGroup[] = [];
+
+  // Per-month contributions that summed to `totalConsumption` — shown
+  // first so the formula below has its inputs already laid out. Empty
+  // months (consumption: 0) are included so the user can see every
+  // month in the lookback window. Rendered as a compact two-column table
+  // (rather than equation-style rows) since there's no formula to align.
+  if (b.monthlyConsumption?.length) {
+    groups.push({
+      title: t('label.monthly-consumption'),
+      equations: [],
+      body: (
+        <MiniTable
+          rows={b.monthlyConsumption.map(m => ({
+            label: formatMonth(m.month),
+            value: `${round(m.consumption, 2)} ${units}`,
+          }))}
+          totalRow={{
+            label: 'total',
+            value: `${round(b.totalConsumption, 2)} ${units}`,
+          }}
+        />
+      ),
+    });
+  }
+
+  groups.push({ equations });
+
+  return { heading, groups };
+};
+
+/// `2025-09-01` → `Sep 2025`.
+const formatMonth = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, { month: 'short', year: 'numeric' });
 };
 
 const populationAdapter = (

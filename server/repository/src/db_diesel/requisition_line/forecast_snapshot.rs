@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -135,6 +136,20 @@ pub struct DefaultAmcSnapshotBreakdown {
     /// `1.0` when DOS adjustment is off; otherwise `numberOfDays /
     /// (numberOfDays − daysOutOfStock)`.
     pub dos_adjustment_factor: f64,
+    /// Per-month consumption that fed `total_consumption`. One entry per
+    /// month in the lookback window — months with zero consumption are
+    /// included with `consumption: 0` so the UI can show every month, not
+    /// just the ones with activity.
+    pub monthly_consumption: Vec<MonthlyConsumption>,
+}
+
+#[derive(TS, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MonthlyConsumption {
+    /// First day of the month (e.g. `2025-09-01`). UI formats as
+    /// "September 2025" / "Sep 25" depending on space.
+    pub month: NaiveDate,
+    pub consumption: f64,
 }
 
 // ---- Population -------------------------------------------------------
@@ -319,6 +334,20 @@ mod tests {
                 number_of_days: 91.0,
                 days_out_of_stock: Some(5.0),
                 dos_adjustment_factor: 91.0 / 86.0,
+                monthly_consumption: vec![
+                    MonthlyConsumption {
+                        month: NaiveDate::from_ymd_opt(2025, 9, 1).unwrap(),
+                        consumption: 10.0,
+                    },
+                    MonthlyConsumption {
+                        month: NaiveDate::from_ymd_opt(2025, 10, 1).unwrap(),
+                        consumption: 12.0,
+                    },
+                    MonthlyConsumption {
+                        month: NaiveDate::from_ymd_opt(2025, 11, 1).unwrap(),
+                        consumption: 8.0,
+                    },
+                ],
             }),
         }));
         let json = serde_json::to_string(&default).unwrap();
