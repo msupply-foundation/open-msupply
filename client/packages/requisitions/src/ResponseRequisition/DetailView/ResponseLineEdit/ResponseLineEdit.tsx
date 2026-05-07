@@ -351,8 +351,8 @@ export const ResponseLineEdit = ({
             />
             {displayForecasting && (
               <ResponseNumInputRow
-                label={t('label.target-stock-population')}
-                value={draft?.forecastTotalUnits ?? 0}
+                label={t('label.forecast-monthly-usage')}
+                value={draft?.forecastMonthlyUsage ?? 0}
                 disabledOverride={true}
                 {...commonProps}
               />

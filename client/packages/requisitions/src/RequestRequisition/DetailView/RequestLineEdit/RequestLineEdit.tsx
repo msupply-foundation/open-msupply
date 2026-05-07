@@ -91,11 +91,10 @@ export const RequestLineEdit = ({
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
-  // Forecasting UI is shown for any line that has produced a forecast
-  // snapshot — independent of the legacy population preference, since method
-  // is now a per-line concept. The preference still drives default-method
-  // resolution at line generation time on the server.
-  const displayForecasting = !!draft?.forecastTotalUnits;
+  // Forecasting UI is shown for any line that has gone through forecast
+  // dispatch (i.e. has a method tag) — independent of the legacy population
+  // preference and independent of whether the rate happens to be 0.
+  const displayForecasting = !!draft?.forecastMethod;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -307,12 +306,9 @@ export const RequestLineEdit = ({
               {displayForecasting && (
                 <ValueInfoRow
                   {...valueRowProps}
-                  label={t('label.target-stock')}
-                  value={
-                    line?.forecastTotalUnits
-                      ? Math.ceil(line.forecastTotalUnits)
-                      : undefined
-                  }
+                  label={t('label.forecast-monthly-usage')}
+                  value={line?.forecastMonthlyUsage}
+                  decimalLimit={2}
                 />
               )}
               {showExtraFields && (

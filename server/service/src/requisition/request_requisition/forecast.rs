@@ -1,13 +1,17 @@
+use crate::item_stats::{get_item_stats, AmcBreakdown};
+use topological_sort::TopologicalSort;
 use crate::preference::preferences::DisplayPopulationBasedForecasting;
 use crate::preference::types::Preference;
 use crate::requisition::request_requisition::generate_population_forecast::calculate_forecasting_fields;
 use crate::service_provider::ServiceContext;
+use crate::PluginOrRepositoryError;
 use repository::{
-    AmcSnapshot, AncillaryContribution, AncillaryItemFilter, AncillaryItemRepository,
-    AncillaryRatioSnapshot, EqualFilter, ForecastMethod, ForecastSnapshot, PopulationSnapshot,
-    RepositoryError, RequisitionLineRow, StorageConnection,
+    AmcSnapshot, AmcSnapshotBreakdown, AncillaryContribution, AncillaryItemFilter,
+    AncillaryItemRepository, AncillaryRatioSnapshot, DefaultAmcSnapshotBreakdown, EqualFilter,
+    ForecastMethod, ForecastSnapshot, PopulationSnapshot, RepositoryError, RequisitionLineRow,
+    StorageConnection,
 };
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 /// Per-line context the dispatcher needs to make its choice and compute
 /// snapshots. Built once up-front so each method receives a small, typed view.
@@ -16,7 +20,6 @@ struct LineContext {
     item_id: String,
     item_name: String,
     average_monthly_consumption: f64,
-    available_stock_on_hand: f64,
     population: Option<PopulationSnapshot>,
     /// Parents of this item that have an ancillary edge `parent -> this`.
     /// Empty when the item isn't an ancillary of anything else.
@@ -30,24 +33,20 @@ struct AncillaryParent {
     ancillary_quantity: f64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct ForecastInputs {
-    pub min_months_of_stock: f64,
-    pub max_months_of_stock: f64,
-}
-
 /// For each line in `lines`, choose a default forecasting method and write a
-/// snapshot + headline units. Lines arrive without `forecast_method` /
-/// `forecast_data` populated; this fills them in.
+/// snapshot + headline monthly usage rate. Lines arrive without
+/// `forecast_method` / `forecast_data` populated; this fills them in.
+///
+/// Forecasting outputs a *rate* — stock-management settings (min/max months of
+/// stock, course supply periods) live with the stock-management module.
 ///
 /// Two passes:
 /// 1. AMC + Population (independent, any order)
 /// 2. AncillaryRatio (topo-sorted within the requisition's induced subgraph)
 pub fn run(
     ctx: &ServiceContext,
-    inputs: ForecastInputs,
     lines: &mut Vec<RequisitionLineRow>,
-) -> Result<(), RepositoryError> {
+) -> Result<(), PluginOrRepositoryError> {
     if lines.is_empty() {
         return Ok(());
     }
@@ -55,6 +54,24 @@ pub fn run(
     let display_population = DisplayPopulationBasedForecasting
         .load(&ctx.connection, None)
         .unwrap_or(false);
+
+    // Re-compute AMC breakdowns from current item stats every time so the
+    // calculation explanation matches today's data — including method
+    // switches like Population → AMC, where the line has no previous AMC
+    // breakdown to carry forward.
+    let amc_breakdowns: HashMap<String, AmcBreakdown> = get_item_stats(
+        &ctx.connection,
+        &ctx.store_id,
+        None,
+        item_ids.clone(),
+        None,
+    )?
+    .into_iter()
+    .filter_map(|s| {
+        let item_id = s.item_id.clone();
+        s.amc_breakdown.map(|b| (item_id, b))
+    })
+    .collect();
 
     // Always compute the population map so the Population method works when
     // the user explicitly picks it. The `DisplayPopulationBasedForecasting`
@@ -79,7 +96,6 @@ pub fn run(
                     item_id,
                     item_name: l.item_name.clone(),
                     average_monthly_consumption: l.average_monthly_consumption,
-                    available_stock_on_hand: l.available_stock_on_hand,
                     population: l
                         .item_link_id
                         .clone()
@@ -120,7 +136,11 @@ pub fn run(
         if matches!(method, ForecastMethod::AncillaryRatio) {
             continue;
         }
-        let snap = compute_non_ancillary(ctx_line, method, inputs);
+        let snap = compute_non_ancillary(
+            ctx_line,
+            method,
+            amc_breakdowns.get(&ctx_line.item_id),
+        );
         snapshots.insert(ctx_line.item_id.clone(), snap);
     }
 
@@ -136,26 +156,41 @@ pub fn run(
         })
         .collect();
 
-    if !ancillary_items.is_empty() {
-        let order = topological_order(&ancillary_items);
-        for item_id in order {
-            let ctx_line = contexts.get(&item_id).expect("present in topo set");
-            let snap = compute_ancillary_ratio(ctx_line, &snapshots, &contexts, lines);
-            snapshots.insert(item_id, snap);
+    // Topologically sort AncillaryRatio lines so each child's parents are
+    // computed before it. Items left after the iterator drains had a cycle
+    // (cycle detection at upsert time should prevent this); compute their
+    // snapshots anyway so the line still ships.
+    let item_set: HashSet<&str> = ancillary_items.iter().map(|c| c.item_id.as_str()).collect();
+    let mut ts = TopologicalSort::<String>::new();
+    for c in &ancillary_items {
+        ts.insert(c.item_id.clone());
+        for parent in &c.ancillary_parents {
+            if item_set.contains(parent.parent_item_id.as_str()) {
+                ts.add_dependency(parent.parent_item_id.clone(), c.item_id.clone());
+            }
+        }
+    }
+    while let Some(item_id) = ts.pop() {
+        let ctx_line = contexts.get(&item_id).expect("present in sort set");
+        let snap = compute_ancillary_ratio(ctx_line, &snapshots, &contexts, lines);
+        snapshots.insert(item_id, snap);
+    }
+    for c in &ancillary_items {
+        if !snapshots.contains_key(&c.item_id) {
+            let snap = compute_ancillary_ratio(c, &snapshots, &contexts, lines);
+            snapshots.insert(c.item_id.clone(), snap);
         }
     }
 
-    // Write back: method, forecast_data, forecast_total_units. Suggested
-    // quantity uses the headline units when forecasting actually produced one;
-    // otherwise the caller's existing AMC fallback (in generate.rs) takes over.
+    // Write back: method, forecast_data, forecast_monthly_usage. The method
+    // tag is derived from the snapshot variant rather than the requested
+    // method so a Population fallback to AMC (item not mapped to a vaccine
+    // course) doesn't drift the tag out of sync with the stored snapshot.
     for line in lines.iter_mut() {
-        let method = methods
-            .get(&line.item_link_id)
-            .expect("method resolved above");
         let snap = snapshots
             .get(&line.item_link_id)
             .expect("snapshot computed above");
-        line.forecast_method = Some(method.to_storage());
+        line.forecast_method = Some(method_for_snapshot(snap).to_storage());
         line.set_forecast_snapshot(snap);
     }
 
@@ -175,7 +210,7 @@ fn resolve_default_method(c: &LineContext, display_population: bool) -> Forecast
 fn compute_non_ancillary(
     c: &LineContext,
     method: &ForecastMethod,
-    inputs: ForecastInputs,
+    fresh_breakdown: Option<&AmcBreakdown>,
 ) -> ForecastSnapshot {
     match method {
         ForecastMethod::Population => match c.population.clone() {
@@ -184,26 +219,60 @@ fn compute_non_ancillary(
             // items, but if a stale `forecast_method='population'` ends up on
             // a line whose item isn't (or is no longer) mapped to a course,
             // fall back to AMC rather than panicking.
-            None => ForecastSnapshot::Amc(compute_amc(c, inputs)),
+            None => ForecastSnapshot::Amc(compute_amc(c, fresh_breakdown)),
         },
-        ForecastMethod::AverageMonthlyConsumption => ForecastSnapshot::Amc(compute_amc(c, inputs)),
+        ForecastMethod::AverageMonthlyConsumption => {
+            ForecastSnapshot::Amc(compute_amc(c, fresh_breakdown))
+        }
         ForecastMethod::AncillaryRatio => unreachable!("handled in pass 2"),
         ForecastMethod::Plugin(_) => {
             // Plugin seam: not invoked in v1 from this dispatcher; defaulting
             // to AMC keeps the line shipping with a meaningful snapshot.
-            ForecastSnapshot::Amc(compute_amc(c, inputs))
+            ForecastSnapshot::Amc(compute_amc(c, fresh_breakdown))
         }
     }
 }
 
-fn compute_amc(c: &LineContext, inputs: ForecastInputs) -> AmcSnapshot {
-    let months_of_stock_target = inputs.max_months_of_stock;
-    let forecast_units = (months_of_stock_target * c.average_monthly_consumption).max(0.0);
+fn compute_amc(c: &LineContext, fresh_breakdown: Option<&AmcBreakdown>) -> AmcSnapshot {
+    // Breakdown is recomputed via `get_item_stats` at the top of `run`; the
+    // empty fallback only fires for a line whose item didn't appear in the
+    // results (shouldn't happen in practice — defensive).
+    let breakdown = fresh_breakdown
+        .map(amc_breakdown_to_snapshot)
+        .unwrap_or_else(|| {
+            AmcSnapshotBreakdown::Default(DefaultAmcSnapshotBreakdown {
+                lookback_months: 0.0,
+                total_consumption: 0.0,
+                number_of_days: 0.0,
+                days_out_of_stock: None,
+                dos_adjustment_factor: 1.0,
+            })
+        });
     AmcSnapshot {
-        average_monthly_consumption: c.average_monthly_consumption,
-        months_of_stock_target,
-        available_stock_on_hand: c.available_stock_on_hand,
-        forecast_units,
+        forecast_monthly_usage: c.average_monthly_consumption.max(0.0),
+        breakdown,
+    }
+}
+
+fn method_for_snapshot(snap: &ForecastSnapshot) -> ForecastMethod {
+    match snap {
+        ForecastSnapshot::Amc(_) => ForecastMethod::AverageMonthlyConsumption,
+        ForecastSnapshot::Population(_) => ForecastMethod::Population,
+        ForecastSnapshot::AncillaryRatio(_) => ForecastMethod::AncillaryRatio,
+        ForecastSnapshot::Plugin(s) => ForecastMethod::Plugin(s.plugin_code.clone()),
+    }
+}
+
+fn amc_breakdown_to_snapshot(b: &AmcBreakdown) -> AmcSnapshotBreakdown {
+    match b {
+        AmcBreakdown::Plugin { code } => AmcSnapshotBreakdown::Plugin { code: code.clone() },
+        AmcBreakdown::Default(d) => AmcSnapshotBreakdown::Default(DefaultAmcSnapshotBreakdown {
+            lookback_months: d.lookback_months,
+            total_consumption: d.total_consumption,
+            number_of_days: d.number_of_days,
+            days_out_of_stock: d.days_out_of_stock,
+            dos_adjustment_factor: d.dos_adjustment_factor,
+        }),
     }
 }
 
@@ -214,7 +283,7 @@ fn compute_ancillary_ratio(
     lines: &[RequisitionLineRow],
 ) -> ForecastSnapshot {
     let mut contributions: Vec<AncillaryContribution> = Vec::new();
-    let mut total_units = 0.0;
+    let mut total_monthly_usage = 0.0;
     let line_id_by_item: HashMap<&str, &str> = lines
         .iter()
         .map(|l| (l.item_link_id.as_str(), l.id.as_str()))
@@ -223,12 +292,13 @@ fn compute_ancillary_ratio(
         let Some(parent_snap) = snapshots.get(&parent.parent_item_id) else {
             continue;
         };
-        let parent_units = parent_snap.forecast_units();
+        let parent_monthly_usage = parent_snap.forecast_monthly_usage();
         if parent.item_quantity <= 0.0 {
             continue;
         }
-        let units = parent_units * parent.ancillary_quantity / parent.item_quantity;
-        total_units += units;
+        let monthly_usage =
+            parent_monthly_usage * parent.ancillary_quantity / parent.item_quantity;
+        total_monthly_usage += monthly_usage;
         let parent_name = contexts
             .get(&parent.parent_item_id)
             .map(|p| p.item_name.clone())
@@ -241,70 +311,17 @@ fn compute_ancillary_ratio(
             parent_line_id,
             parent_item_id: parent.parent_item_id.clone(),
             parent_item_name: parent_name,
-            parent_forecast_units: parent_units,
+            parent_forecast_monthly_usage: parent_monthly_usage,
             item_quantity: parent.item_quantity,
             ancillary_quantity: parent.ancillary_quantity,
-            units,
+            monthly_usage,
         });
     }
     ForecastSnapshot::AncillaryRatio(AncillaryRatioSnapshot {
-        forecast_units: total_units,
+        forecast_monthly_usage: total_monthly_usage,
         contributions,
         fallback: None,
     })
-}
-
-/// Kahn's algorithm over the AncillaryRatio subset, with a defensive
-/// `MAX_ANCILLARY_DEPTH * |lines|` cap to bail in the unlikely case the
-/// ancillary cycle detector at upsert time was bypassed somehow.
-fn topological_order(items: &[&LineContext]) -> Vec<String> {
-    let item_set: HashSet<&str> = items.iter().map(|c| c.item_id.as_str()).collect();
-    let mut in_degree: HashMap<String, usize> = items
-        .iter()
-        .map(|c| (c.item_id.clone(), 0usize))
-        .collect();
-    let mut children: HashMap<String, Vec<String>> = HashMap::new();
-    for c in items {
-        for parent in &c.ancillary_parents {
-            if item_set.contains(parent.parent_item_id.as_str()) {
-                *in_degree.entry(c.item_id.clone()).or_insert(0) += 1;
-                children
-                    .entry(parent.parent_item_id.clone())
-                    .or_default()
-                    .push(c.item_id.clone());
-            }
-        }
-    }
-    let mut queue: VecDeque<String> = in_degree
-        .iter()
-        .filter(|(_, d)| **d == 0)
-        .map(|(k, _)| k.clone())
-        .collect();
-    let mut order: Vec<String> = Vec::with_capacity(items.len());
-    while let Some(item_id) = queue.pop_front() {
-        order.push(item_id.clone());
-        if let Some(kids) = children.get(&item_id) {
-            for child in kids {
-                if let Some(d) = in_degree.get_mut(child) {
-                    *d -= 1;
-                    if *d == 0 {
-                        queue.push_back(child.clone());
-                    }
-                }
-            }
-        }
-    }
-    if order.len() != items.len() {
-        // Cycle (shouldn't reach here given upsert-time validation). Append
-        // remaining items in any deterministic order — their snapshots will
-        // still be computed, just without the dependency guarantee.
-        for c in items {
-            if !order.iter().any(|id| id == &c.item_id) {
-                order.push(c.item_id.clone());
-            }
-        }
-    }
-    order
 }
 
 /// For each item in `item_ids`, list the parents (also items) whose ancillary
@@ -319,18 +336,18 @@ fn build_ancillary_parents(
     }
     let edges = AncillaryItemRepository::new(connection).query_by_filter(
         AncillaryItemFilter::new()
-            .ancillary_item_link_id(EqualFilter::equal_any(item_ids.to_vec())),
+            .ancillary_item_id(EqualFilter::equal_any(item_ids.to_vec())),
     )?;
     let item_set: HashSet<&str> = item_ids.iter().map(|s| s.as_str()).collect();
     let mut out: HashMap<String, Vec<AncillaryParent>> = HashMap::new();
     for edge in edges {
-        if !item_set.contains(edge.item_link_id.as_str()) {
+        if !item_set.contains(edge.item_id.as_str()) {
             continue;
         }
-        out.entry(edge.ancillary_item_link_id.clone())
+        out.entry(edge.ancillary_item_id.clone())
             .or_default()
             .push(AncillaryParent {
-                parent_item_id: edge.item_link_id,
+                parent_item_id: edge.item_id,
                 item_quantity: edge.item_quantity,
                 ancillary_quantity: edge.ancillary_quantity,
             });
@@ -361,61 +378,69 @@ mod tests {
         }
     }
 
+
     #[test]
-    fn topo_orders_parent_before_child() {
-        // a -> b -> c (ancillary chain). Topo order should respect dependencies.
-        let lc = |item: &str, parents: &[&str]| LineContext {
-            item_id: item.into(),
-            item_name: item.into(),
-            average_monthly_consumption: 0.0,
-            available_stock_on_hand: 0.0,
+    fn amc_snapshot_uses_fresh_breakdown() {
+        use crate::item_stats::DefaultAmcBreakdown;
+        let c = LineContext {
+            item_id: "x".into(),
+            item_name: "X".into(),
+            average_monthly_consumption: 7.0,
             population: None,
-            ancillary_parents: parents
-                .iter()
-                .map(|p| AncillaryParent {
-                    parent_item_id: (*p).into(),
-                    item_quantity: 1.0,
-                    ancillary_quantity: 1.0,
-                })
-                .collect(),
+            ancillary_parents: vec![],
         };
-        let a = lc("a", &[]);
-        let b = lc("b", &["a"]);
-        let c = lc("c", &["b"]);
-        let order = topological_order(&[&c, &b, &a]);
-        let pos = |id: &str| order.iter().position(|s| s == id).unwrap();
-        assert!(pos("a") < pos("b"));
-        assert!(pos("b") < pos("c"));
+        let fresh = AmcBreakdown::Default(DefaultAmcBreakdown {
+            lookback_months: 6.0,
+            total_consumption: 42.0,
+            number_of_days: 182.0,
+            days_out_of_stock: Some(10.0),
+            dos_adjustment_factor: 182.0 / 172.0,
+        });
+        let snap = compute_amc(&c, Some(&fresh));
+        assert_eq!(snap.forecast_monthly_usage, 7.0);
+        match snap.breakdown {
+            AmcSnapshotBreakdown::Default(d) => {
+                assert_eq!(d.lookback_months, 6.0);
+                assert_eq!(d.total_consumption, 42.0);
+                assert_eq!(d.days_out_of_stock, Some(10.0));
+            }
+            _ => panic!("expected Default breakdown"),
+        }
     }
 
     #[test]
-    fn amc_uses_max_months_of_stock_target() {
+    fn amc_snapshot_falls_back_when_breakdown_missing() {
         let c = LineContext {
             item_id: "x".into(),
             item_name: "X".into(),
             average_monthly_consumption: 10.0,
-            available_stock_on_hand: 5.0,
             population: None,
             ancillary_parents: vec![],
         };
-        let snap = compute_amc(
-            &c,
-            ForecastInputs {
-                min_months_of_stock: 1.0,
-                max_months_of_stock: 3.0,
-            },
-        );
-        assert_eq!(snap.forecast_units, 30.0);
-        assert_eq!(snap.months_of_stock_target, 3.0);
+        let snap = compute_amc(&c, None);
+        assert_eq!(snap.forecast_monthly_usage, 10.0);
+        match snap.breakdown {
+            AmcSnapshotBreakdown::Default(d) => {
+                assert_eq!(d.lookback_months, 0.0);
+                assert_eq!(d.total_consumption, 0.0);
+            }
+            _ => panic!("expected Default fallback"),
+        }
     }
 
     #[test]
     fn ancillary_ratio_pulls_from_parent_snapshot() {
+        // Parent vaccine has rate 100/month; safety_box ratio 1 per 100 vaccines
+        // → child rate is 1/month, regardless of stock-management horizons.
         let parent_snap = ForecastSnapshot::Amc(AmcSnapshot {
-            average_monthly_consumption: 100.0,
-            months_of_stock_target: 1.0,
-            available_stock_on_hand: 0.0,
-            forecast_units: 100.0,
+            forecast_monthly_usage: 100.0,
+            breakdown: AmcSnapshotBreakdown::Default(DefaultAmcSnapshotBreakdown {
+                lookback_months: 3.0,
+                total_consumption: 300.0,
+                number_of_days: 91.0,
+                days_out_of_stock: None,
+                dos_adjustment_factor: 1.0,
+            }),
         });
         let mut snaps = HashMap::new();
         snaps.insert("vaccine".to_string(), parent_snap);
@@ -426,7 +451,6 @@ mod tests {
                 item_id: "vaccine".into(),
                 item_name: "Vaccine".into(),
                 average_monthly_consumption: 100.0,
-                available_stock_on_hand: 0.0,
                 population: None,
                 ancillary_parents: vec![],
             },
@@ -435,7 +459,6 @@ mod tests {
             item_id: "safety_box".into(),
             item_name: "Safety Box".into(),
             average_monthly_consumption: 0.0,
-            available_stock_on_hand: 0.0,
             population: None,
             ancillary_parents: vec![AncillaryParent {
                 parent_item_id: "vaccine".into(),
@@ -450,12 +473,12 @@ mod tests {
         let snap = compute_ancillary_ratio(&safety_box, &snaps, &ctxs, &lines);
         match snap {
             ForecastSnapshot::AncillaryRatio(s) => {
-                assert!((s.forecast_units - 1.0).abs() < 1e-9);
+                assert!((s.forecast_monthly_usage - 1.0).abs() < 1e-9);
                 assert_eq!(s.contributions.len(), 1);
                 assert_eq!(s.contributions[0].parent_line_id, "l_v");
+                assert!((s.contributions[0].monthly_usage - 1.0).abs() < 1e-9);
             }
             _ => panic!("expected AncillaryRatio"),
         }
     }
-
 }

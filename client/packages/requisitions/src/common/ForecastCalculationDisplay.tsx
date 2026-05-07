@@ -21,17 +21,34 @@ interface PopulationCourseData {
   dosesPerUnit: number;
   forecastDoses: number;
   forecastUnits: number;
+  forecastMonthlyUsage: number;
 }
 
+interface DefaultAmcSnapshotBreakdown {
+  source: 'default';
+  lookbackMonths: number;
+  totalConsumption: number;
+  numberOfDays: number;
+  daysOutOfStock?: number | null;
+  dosAdjustmentFactor: number;
+}
+
+interface PluginAmcSnapshotBreakdown {
+  source: 'plugin';
+  code: string;
+}
+
+type AmcSnapshotBreakdown =
+  | DefaultAmcSnapshotBreakdown
+  | PluginAmcSnapshotBreakdown;
+
 interface AmcSnapshot {
-  averageMonthlyConsumption: number;
-  monthsOfStockTarget: number;
-  availableStockOnHand: number;
-  forecastUnits: number;
+  forecastMonthlyUsage: number;
+  breakdown: AmcSnapshotBreakdown;
 }
 
 interface PopulationSnapshot {
-  forecastTotalUnits: number;
+  forecastMonthlyUsage: number;
   forecastTotalDoses: number;
   vaccineCourses: PopulationCourseData[];
 }
@@ -40,14 +57,14 @@ interface AncillaryContribution {
   parentLineId: string;
   parentItemId: string;
   parentItemName: string;
-  parentForecastUnits: number;
+  parentForecastMonthlyUsage: number;
   itemQuantity: number;
   ancillaryQuantity: number;
-  units: number;
+  monthlyUsage: number;
 }
 
 interface AncillaryRatioSnapshot {
-  forecastUnits: number;
+  forecastMonthlyUsage: number;
   contributions: AncillaryContribution[];
   fallback?: string | null;
 }
@@ -62,7 +79,7 @@ interface DisplayRow {
 interface PluginSnapshot {
   pluginCode: string;
   pluginVersion: string;
-  forecastUnits: number;
+  forecastMonthlyUsage: number;
   forecastDoses?: number | null;
   display: DisplayRow[];
 }
@@ -212,25 +229,70 @@ const amcAdapter = (
   t: TypedTFunction<LocaleKey>,
   { format, round }: FormatFns,
   units: string
-): EquationDisplayProps => ({
-  heading: t('label.amc-forecast-calculation'),
-  groups: [
-    {
-      equations: [
-        [
-          { label: 'target', rhs: 'months × AMC' },
-          {
-            rhs: `${format(d.monthsOfStockTarget)} × ${round(d.averageMonthlyConsumption, 2)}`,
-          },
-          {
-            rhs: format(Math.ceil(d.forecastUnits)),
-            suffix: units,
-          },
-        ],
+): EquationDisplayProps => {
+  const heading = t('label.amc-forecast-calculation');
+  const monthlyUsageSuffix = `${units} / month`;
+
+  if (d.breakdown.source === 'plugin') {
+    return {
+      heading,
+      groups: [
+        {
+          equations: [
+            [
+              {
+                label: 'source',
+                rhs: t('label.amc-from-plugin', { code: d.breakdown.code }),
+              },
+              {
+                label: 'monthlyUsage',
+                rhs: round(d.forecastMonthlyUsage, 2),
+                suffix: monthlyUsageSuffix,
+              },
+            ],
+          ],
+        },
       ],
-    },
-  ],
-});
+    };
+  }
+
+  // Default formula: AMC = totalConsumption / lookbackMonths × dosAdjustment.
+  // The DOS adjustment row only appears when the preference is on (otherwise
+  // the factor is always 1.0 and adds noise).
+  const b = d.breakdown;
+  const formulaRhs = b.daysOutOfStock != null
+    ? 'totalConsumption / lookbackMonths × dosAdjustment'
+    : 'totalConsumption / lookbackMonths';
+  const substitutionRhs = b.daysOutOfStock != null
+    ? `${round(b.totalConsumption, 2)} / ${format(b.lookbackMonths)} × ${round(b.dosAdjustmentFactor, 3)}`
+    : `${round(b.totalConsumption, 2)} / ${format(b.lookbackMonths)}`;
+
+  const equations: EquationLine[][] = [
+    [
+      { label: 'monthlyUsage', rhs: formulaRhs },
+      { rhs: substitutionRhs },
+      {
+        rhs: round(d.forecastMonthlyUsage, 2),
+        suffix: monthlyUsageSuffix,
+      },
+    ],
+  ];
+
+  if (b.daysOutOfStock != null) {
+    equations.push([
+      {
+        label: 'dosAdjustment',
+        rhs: 'numberOfDays / (numberOfDays − daysOutOfStock)',
+      },
+      {
+        rhs: `${format(b.numberOfDays)} / (${format(b.numberOfDays)} − ${format(b.daysOutOfStock)})`,
+      },
+      { rhs: round(b.dosAdjustmentFactor, 3) },
+    ]);
+  }
+
+  return { heading, groups: [{ equations }] };
+};
 
 const populationAdapter = (
   d: PopulationSnapshot,
@@ -269,13 +331,26 @@ const populationAdapter = (
         },
       ],
       [
-        { label: 'target', rhs: 'forecastDoses / dosesPerUnit' },
+        { label: 'periodTotal', rhs: 'forecastDoses / dosesPerUnit' },
         {
           rhs: `${round(c.forecastDoses, 2)} / ${format(c.dosesPerUnit)}`,
         },
         {
           rhs: format(Math.ceil(c.forecastUnits)),
           suffix: units,
+        },
+      ],
+      [
+        {
+          label: 'monthlyUsage',
+          rhs: 'periodTotal / (supplyPeriod + buffer)',
+        },
+        {
+          rhs: `${format(Math.ceil(c.forecastUnits))} / (${format(c.supplyPeriodMonths)} + ${format(c.bufferStockMonths)})`,
+        },
+        {
+          rhs: round(c.forecastMonthlyUsage, 2),
+          suffix: `${units} / month`,
         },
       ],
     ],
@@ -297,14 +372,14 @@ const ancillaryAdapter = (
         [
           {
             label: 'contribution',
-            rhs: 'parentTarget × (ancillaryQty / itemQty)',
+            rhs: 'parentMonthlyUsage × (ancillaryQty / itemQty)',
           },
           {
-            rhs: `${round(c.parentForecastUnits, 2)} × (${format(c.ancillaryQuantity)} / ${format(c.itemQuantity)})`,
+            rhs: `${round(c.parentForecastMonthlyUsage, 2)} × (${format(c.ancillaryQuantity)} / ${format(c.itemQuantity)})`,
           },
           {
-            rhs: round(c.units, 2),
-            suffix: units,
+            rhs: round(c.monthlyUsage, 2),
+            suffix: `${units} / month`,
           },
         ],
       ],
@@ -313,9 +388,9 @@ const ancillaryAdapter = (
       equations: [
         [
           {
-            label: 'target',
-            rhs: round(d.forecastUnits, 2),
-            suffix: units,
+            label: 'monthlyUsage',
+            rhs: round(d.forecastMonthlyUsage, 2),
+            suffix: `${units} / month`,
           },
         ],
       ],
@@ -325,7 +400,7 @@ const ancillaryAdapter = (
 
 const pluginAdapter = (
   d: PluginSnapshot,
-  t: TypedTFunction<LocaleKey>,
+  _t: TypedTFunction<LocaleKey>,
   _fmt: FormatFns,
   units: string
 ): EquationDisplayProps => ({
@@ -356,9 +431,9 @@ const pluginAdapter = (
       equations: [
         [
           {
-            label: t('label.total').toLowerCase(),
-            rhs: d.forecastUnits,
-            suffix: units,
+            label: 'monthlyUsage',
+            rhs: d.forecastMonthlyUsage,
+            suffix: `${units} / month`,
           },
         ],
       ],

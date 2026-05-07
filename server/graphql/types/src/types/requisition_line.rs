@@ -357,8 +357,8 @@ impl RequisitionLineNode {
     pub async fn forecast_data(&self) -> &Option<String> {
         &self.row().forecast_data
     }
-    pub async fn forecast_total_units(&self) -> &Option<f64> {
-        &self.row().forecast_total_units
+    pub async fn forecast_monthly_usage(&self) -> &Option<f64> {
+        &self.row().forecast_monthly_usage
     }
     pub async fn forecast_total_doses(&self) -> Option<f64> {
         self.row().forecast_snapshot().and_then(|s| s.forecast_doses())
@@ -393,10 +393,10 @@ impl RequisitionLineNode {
         // line on the requisition (matches the dispatcher's resolution rule).
         let parents = AncillaryItemRepository::new(connection).query_by_filter(
             AncillaryItemFilter::new()
-                .ancillary_item_link_id(EqualFilter::equal_to(item_id.clone())),
+                .ancillary_item_id(EqualFilter::equal_to(item_id.clone())),
         )?;
         let parent_item_ids: Vec<String> =
-            parents.iter().map(|r| r.item_link_id.clone()).collect();
+            parents.iter().map(|r| r.item_id.clone()).collect();
         let ancillary_available = if parent_item_ids.is_empty() {
             false
         } else {

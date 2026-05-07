@@ -55,7 +55,7 @@ export type RequestLineFragment = {
   expiringUnits: number;
   daysOutOfStock: number;
   pricePerUnit?: number | null;
-  forecastTotalUnits?: number | null;
+  forecastMonthlyUsage?: number | null;
   forecastTotalDoses?: number | null;
   forecastMethod?: string | null;
   forecastData?: string | null;
@@ -157,7 +157,7 @@ export type RequestFragment = {
       expiringUnits: number;
       daysOutOfStock: number;
       pricePerUnit?: number | null;
-      forecastTotalUnits?: number | null;
+      forecastMonthlyUsage?: number | null;
       forecastTotalDoses?: number | null;
       forecastMethod?: string | null;
       forecastData?: string | null;
@@ -320,7 +320,7 @@ export const RequestLineFragmentDoc = gql`
     reason {
       ...ReasonOptionRow
     }
-    forecastTotalUnits
+    forecastMonthlyUsage
     forecastTotalDoses
     forecastMethod
     forecastData

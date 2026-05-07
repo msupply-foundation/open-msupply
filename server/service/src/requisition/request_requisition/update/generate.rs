@@ -1,23 +1,19 @@
 use super::{UpdateRequestRequisition, UpdateRequestRequisitionStatus};
-use crate::{
-    nullable_update,
-    requisition::{
-        common::get_lines_for_requisition,
-        request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
-    },
-    store_preference::get_store_preferences,
-};
+use crate::{nullable_update, store_preference::get_store_preferences};
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus},
-    EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRow, StorageConnection,
+    EqualFilter, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionLineRow, StorageConnection,
 };
 
 pub struct GenerateResult {
     pub(crate) updated_requisition_row: RequisitionRow,
-    pub(crate) updated_requisition_lines: Vec<RequisitionLineRow>,
     pub(crate) empty_lines_to_trim: Option<Vec<RequisitionLineRow>>,
+    /// `true` when min/max months of stock changed, signalling the caller
+    /// should refresh forecasts via
+    /// `recompute_forecasts_and_suggested_quantities` after upserting the row.
+    pub(crate) should_recalculate: bool,
 }
 
 pub fn generate(
@@ -40,7 +36,6 @@ pub fn generate(
         get_store_preferences(connection, &existing.store_id.clone())?
             .keep_requisition_lines_with_zero_requested_quantity_on_finalised;
 
-    // Recalculate lines only if max_months_of_stock or min_months_of_stock changed
     let update_threshold_months_of_stock =
         update_threshold_months_of_stock.unwrap_or(existing.min_months_of_stock);
     let update_max_months_of_stock =
@@ -75,12 +70,6 @@ pub fn generate(
         ..existing.clone()
     };
 
-    let updated_requisition_lines = if should_recalculate {
-        generate_updated_lines(connection, &updated_requisition_row)?
-    } else {
-        vec![]
-    };
-
     let empty_lines_to_trim = if keep_requisition_lines_with_zero_requested_quantity_on_finalised {
         None
     } else {
@@ -89,38 +78,9 @@ pub fn generate(
 
     Ok(GenerateResult {
         updated_requisition_row,
-        updated_requisition_lines,
         empty_lines_to_trim,
+        should_recalculate,
     })
-}
-
-pub fn generate_updated_lines(
-    connection: &StorageConnection,
-    requisition: &RequisitionRow,
-) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
-    let lines = get_lines_for_requisition(connection, &requisition.id)?;
-
-    let lines = lines
-        .into_iter()
-        .map(
-            |RequisitionLine {
-                 mut requisition_line_row,
-                 ..
-             }| {
-                requisition_line_row.suggested_quantity =
-                    generate_suggested_quantity(GenerateSuggestedQuantity {
-                        average_monthly_consumption: requisition_line_row
-                            .average_monthly_consumption,
-                        available_stock_on_hand: requisition_line_row.available_stock_on_hand,
-                        min_months_of_stock: requisition.min_months_of_stock,
-                        max_months_of_stock: requisition.max_months_of_stock,
-                    });
-                requisition_line_row
-            },
-        )
-        .collect();
-
-    Ok(lines)
 }
 
 pub fn empty_lines_to_trim(

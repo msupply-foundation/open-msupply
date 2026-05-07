@@ -137,7 +137,7 @@ export type RequestByNumberQuery = {
             expiringUnits: number;
             daysOutOfStock: number;
             pricePerUnit?: number | null;
-            forecastTotalUnits?: number | null;
+            forecastMonthlyUsage?: number | null;
             forecastTotalDoses?: number | null;
             forecastMethod?: string | null;
             forecastData?: string | null;
@@ -302,7 +302,7 @@ export type RequestByIdQuery = {
             expiringUnits: number;
             daysOutOfStock: number;
             pricePerUnit?: number | null;
-            forecastTotalUnits?: number | null;
+            forecastMonthlyUsage?: number | null;
             forecastTotalDoses?: number | null;
             forecastMethod?: string | null;
             forecastData?: string | null;

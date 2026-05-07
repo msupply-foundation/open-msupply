@@ -38,8 +38,8 @@ table! {
         expiring_units -> Double,
         days_out_of_stock -> Double,
         option_id -> Nullable<Text>,
-        // Forecasting: method tag + headline result + JSON snapshot of inputs/calculation
-        forecast_total_units -> Nullable<Double>,
+        // Forecasting: method tag + headline rate + JSON snapshot of inputs/calculation
+        forecast_monthly_usage -> Nullable<Double>,
         forecast_method -> Nullable<Text>,
         forecast_data -> Nullable<Text>,
     }
@@ -80,9 +80,9 @@ pub struct RequisitionLineRow {
     pub expiring_units: f64,
     pub days_out_of_stock: f64,
     pub option_id: Option<String>,
-    // Forecasting: method tag (`null` ≡ AMC implicit/legacy), headline units,
-    // and a JSON snapshot of the calculation. See `forecast_snapshot.rs`.
-    pub forecast_total_units: Option<f64>,
+    // Forecasting: method tag (`null` ≡ AMC implicit/legacy), headline monthly
+    // usage rate, and a JSON snapshot of the calculation. See `forecast_snapshot.rs`.
+    pub forecast_monthly_usage: Option<f64>,
     pub forecast_method: Option<String>,
     pub forecast_data: Option<String>,
 }
@@ -96,11 +96,11 @@ impl RequisitionLineRow {
             .and_then(|json| serde_json::from_str::<ForecastSnapshot>(json).ok())
     }
 
-    /// Serialize the snapshot into `forecast_data`. Sets `forecast_total_units`
-    /// from the snapshot's headline units.
+    /// Serialize the snapshot into `forecast_data`. Sets `forecast_monthly_usage`
+    /// from the snapshot's headline rate.
     pub fn set_forecast_snapshot(&mut self, snapshot: &ForecastSnapshot) {
         self.forecast_data = serde_json::to_string(snapshot).ok();
-        self.forecast_total_units = Some(snapshot.forecast_units());
+        self.forecast_monthly_usage = Some(snapshot.forecast_monthly_usage());
     }
 }
 

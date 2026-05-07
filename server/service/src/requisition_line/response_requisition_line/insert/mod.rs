@@ -88,7 +88,7 @@ pub fn insert_response_requisition_line(
                 approval_comment: None,
                 available_volume: None,
                 location_type_id: None,
-                forecast_total_units: None,
+                forecast_monthly_usage: None,
                 forecast_method: None,
                 forecast_data: None,
             };

@@ -32,13 +32,13 @@ pub struct ForecastLineContext {
     pub average_monthly_consumption: f64,
     pub available_stock_on_hand: f64,
     /// `Some` for parents whose forecast has already been computed in pass 1.
-    pub forecast_total_units: Option<f64>,
+    pub forecast_monthly_usage: Option<f64>,
 }
 
 #[derive(TS, Clone, Deserialize, Serialize)]
 #[ts(rename = "ForecastMethodOutput")]
 pub struct Output {
-    pub forecast_units: f64,
+    pub forecast_monthly_usage: f64,
     pub forecast_doses: Option<f64>,
     pub display: Vec<DisplayRow>,
 }

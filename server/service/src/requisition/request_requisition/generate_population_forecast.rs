@@ -155,7 +155,7 @@ fn calculate_forecast_quantities(
 
         let mut forecast_values = Vec::new();
         let mut forecast_total_doses = 0.0;
-        let mut forecast_total_units = 0.0;
+        let mut forecast_monthly_usage = 0.0;
 
         for (_, group) in course_groups {
             let coverage_rate = group.coverage_rate;
@@ -177,6 +177,13 @@ fn calculate_forecast_quantities(
             let forecast_doses =
                 (annual_target_doses / 12.0) * (supply_period_months + buffer_stock_months);
             let forecast_units = forecast_doses / doses_per_unit as f64;
+            // Per-course rate: the period total divided by the period itself.
+            let course_period_months = supply_period_months + buffer_stock_months;
+            let course_monthly_usage = if course_period_months > 0.0 {
+                forecast_units / course_period_months
+            } else {
+                0.0
+            };
 
             let course_title = format!(
                 "{} ({})",
@@ -197,17 +204,18 @@ fn calculate_forecast_quantities(
                 doses_per_unit,
                 forecast_doses,
                 forecast_units,
+                forecast_monthly_usage: course_monthly_usage,
             });
 
             forecast_total_doses += forecast_doses;
-            forecast_total_units += forecast_units;
+            forecast_monthly_usage += course_monthly_usage;
         }
 
         let forecast_data = if forecast_values.is_empty() {
             None
         } else {
             Some(PopulationSnapshot {
-                forecast_total_units,
+                forecast_monthly_usage,
                 forecast_total_doses,
                 vaccine_courses: forecast_values,
             })
@@ -248,8 +256,9 @@ mod tests {
     // Forecast doses: (9000.0 / 12) * (3 + 2) = 3750.0
     // Forecast units: 3750.0 / 2 = 1875.0
     fn forecast_result_store_specific_config() -> PopulationSnapshot {
+        // Per-course monthly usage: 1875 / (3 + 2) = 375
         PopulationSnapshot {
-            forecast_total_units: 1875.0,
+            forecast_monthly_usage: 375.0,
             forecast_total_doses: 3750.0,
             vaccine_courses: vec![PopulationCourseData {
                 course_title: "Vaccine Course A (demographic_1)".to_string(),
@@ -264,6 +273,7 @@ mod tests {
                 doses_per_unit: 2,
                 forecast_doses: 3750.0,
                 forecast_units: 1875.0,
+                forecast_monthly_usage: 375.0,
             }],
         }
     }
@@ -275,8 +285,9 @@ mod tests {
     // Forecast doses: (6666.666666666667 / 12) * (3 + 2) = 2777.777777777778
     // Forecast units: 2777.777777777778 / 2
     fn forecast_result_global_rates() -> PopulationSnapshot {
+        // Per-course monthly usage: 1388.888888888889 / (3 + 2) = 277.77777777777777
         PopulationSnapshot {
-            forecast_total_units: 1388.888888888889,
+            forecast_monthly_usage: 277.77777777777777,
             forecast_total_doses: 2777.777777777778,
             vaccine_courses: vec![PopulationCourseData {
                 course_title: "Vaccine Course A (demographic_1)".to_string(),
@@ -291,6 +302,7 @@ mod tests {
                 doses_per_unit: 2,
                 forecast_doses: 2777.777777777778,
                 forecast_units: 1388.888888888889,
+                forecast_monthly_usage: 277.77777777777777,
             }],
         }
     }

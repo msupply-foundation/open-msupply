@@ -2,47 +2,18 @@ use crate::item_stats::get_item_stats;
 use crate::location::query::get_available_volume_by_location_type;
 use crate::pricing::item_price::{get_pricing_for_items, ItemPriceLookup};
 use crate::requisition::common::get_indicative_price_pref;
-use crate::requisition::request_requisition::forecast::{self, ForecastInputs};
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
 use chrono::{NaiveDate, Utc};
 use repository::{RequisitionLineRow, RequisitionRow};
 use util::uuid::uuid;
 
-pub struct GenerateSuggestedQuantity {
-    pub average_monthly_consumption: f64,
-    pub available_stock_on_hand: f64,
-    pub min_months_of_stock: f64,
-    pub max_months_of_stock: f64,
-}
-
-pub fn generate_suggested_quantity(
-    GenerateSuggestedQuantity {
-        average_monthly_consumption,
-        available_stock_on_hand,
-        min_months_of_stock,
-        max_months_of_stock,
-    }: GenerateSuggestedQuantity,
-) -> f64 {
-    if average_monthly_consumption == 0.0 {
-        return 0.0;
-    }
-    let months_of_stock = available_stock_on_hand / average_monthly_consumption;
-
-    let default_min_months_of_stock = if min_months_of_stock == 0.0 {
-        max_months_of_stock
-    } else {
-        min_months_of_stock
-    };
-
-    if max_months_of_stock == 0.0 || (months_of_stock > default_min_months_of_stock) {
-        return 0.0;
-    }
-
-    // Suggested quantity should always round up - we order in units and otherwise we could under-order by a fraction
-    ((max_months_of_stock - months_of_stock) * average_monthly_consumption).ceil()
-}
-
+/// Build new `RequisitionLineRow`s from item stats — pure shape function.
+/// Forecast snapshot, headline monthly usage, and suggested quantity are all
+/// left at their defaults; the caller upserts these rows and then calls
+/// [`recompute_forecasts_and_suggested_quantities`] to populate them.
+///
+/// [`recompute_forecasts_and_suggested_quantities`]: crate::requisition::request_requisition::recompute::recompute_forecasts_and_suggested_quantities
 pub fn generate_requisition_lines(
     ctx: &ServiceContext,
     store_id: &str,
@@ -70,10 +41,7 @@ pub fn generate_requisition_lines(
     let available_volumes =
         get_available_volume_by_location_type(&ctx.connection, store_id, &item_ids)?;
 
-    // Build the lines first without forecast fields. The dispatcher fills
-    // those in below, so suggested_quantity computation has the snapshots
-    // available when it runs.
-    let mut lines: Vec<RequisitionLineRow> = item_stats_rows
+    let lines: Vec<RequisitionLineRow> = item_stats_rows
         .into_iter()
         .map(|item_stats| {
             let available_volume_by_type = available_volumes
@@ -99,12 +67,12 @@ pub fn generate_requisition_lines(
                 },
                 available_volume: available_volume_by_type.available_volume,
                 location_type_id: available_volume_by_type.restricted_location_type_id,
-                // Filled by `forecast::run`:
-                forecast_total_units: None,
+                // Filled by `recompute_forecasts_and_suggested_quantities`:
+                forecast_monthly_usage: None,
                 forecast_method: None,
                 forecast_data: None,
-                // Defaults:
                 suggested_quantity: 0.0,
+                // Other defaults:
                 comment: None,
                 supply_quantity: 0.0,
                 requested_quantity: 0.0,
@@ -121,36 +89,6 @@ pub fn generate_requisition_lines(
             }
         })
         .collect();
-
-    forecast::run(
-        ctx,
-        ForecastInputs {
-            min_months_of_stock: requisition_row.min_months_of_stock,
-            max_months_of_stock: requisition_row.max_months_of_stock,
-        },
-        &mut lines,
-    )?;
-
-    // Once forecast units exist, derive suggested_quantity. Lines whose method
-    // produced a positive forecast use it minus stock-on-hand; AMC-method
-    // lines fall back to the established months-of-stock formula so we don't
-    // change the suggested quantity for that pre-existing path.
-    for line in lines.iter_mut() {
-        line.suggested_quantity = match line.forecast_method.as_deref() {
-            Some("amc") | None => generate_suggested_quantity(GenerateSuggestedQuantity {
-                average_monthly_consumption: line.average_monthly_consumption,
-                available_stock_on_hand: line.available_stock_on_hand,
-                min_months_of_stock: requisition_row.min_months_of_stock,
-                max_months_of_stock: requisition_row.max_months_of_stock,
-            }),
-            Some(_) => match line.forecast_total_units {
-                Some(units) if units > line.available_stock_on_hand => {
-                    (units - line.available_stock_on_hand).ceil()
-                }
-                _ => 0.0,
-            },
-        };
-    }
 
     Ok(lines)
 }

@@ -242,7 +242,7 @@ fn generate(
                 } else {
                     None
                 },
-                forecast_total_units: population_forecast_for_item.map(|s| s.forecast_total_units),
+                forecast_monthly_usage: population_forecast_for_item.map(|s| s.forecast_monthly_usage),
                 forecast_method: population_forecast_for_item.map(|_| "population".to_string()),
                 forecast_data: population_forecast_for_item.and_then(|s| {
                     serde_json::to_string(&repository::ForecastSnapshot::Population(s.clone())).ok()

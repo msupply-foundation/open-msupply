@@ -113,13 +113,12 @@ export const useRequestColumns = () => {
         defaultHideOnMobile: true,
       },
       {
-        id: 'forecastQuantity',
-        header: t('label.target-stock-population'),
-        description: t('description.target-stock-population'),
+        id: 'forecastMonthlyUsage',
+        header: t('label.forecast-monthly-usage'),
+        description: t('description.forecast-monthly-usage'),
         Cell: UnitsAndDosesCell,
         columnType: ColumnType.Number,
-        accessorFn: row =>
-          row.forecastTotalUnits ? Math.ceil(row.forecastTotalUnits) : 0,
+        accessorFn: row => row.forecastMonthlyUsage ?? 0,
         defaultHideOnMobile: true,
       },
       {

@@ -112,7 +112,7 @@ fragment ResponseLine on RequisitionLineNode {
   availableVolumeAtLocationType {
     ...AvailableVolumeAtLocationType
   }
-  forecastTotalUnits
+  forecastMonthlyUsage
   forecastTotalDoses
   forecastMethod
   forecastData

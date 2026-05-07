@@ -97,7 +97,7 @@ export type ResponseLineFragment = {
   requisitionId: string;
   approvedQuantity: number;
   approvalComment?: string | null;
-  forecastTotalUnits?: number | null;
+  forecastMonthlyUsage?: number | null;
   forecastTotalDoses?: number | null;
   forecastMethod?: string | null;
   forecastData?: string | null;
@@ -228,7 +228,7 @@ export type ResponseFragment = {
       requisitionId: string;
       approvedQuantity: number;
       approvalComment?: string | null;
-      forecastTotalUnits?: number | null;
+      forecastMonthlyUsage?: number | null;
       forecastTotalDoses?: number | null;
       forecastMethod?: string | null;
       forecastData?: string | null;
@@ -392,7 +392,7 @@ export type ResponseByNumberQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
-            forecastTotalUnits?: number | null;
+            forecastMonthlyUsage?: number | null;
             forecastTotalDoses?: number | null;
             forecastMethod?: string | null;
             forecastData?: string | null;
@@ -564,7 +564,7 @@ export type ResponseByIdQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
-            forecastTotalUnits?: number | null;
+            forecastMonthlyUsage?: number | null;
             forecastTotalDoses?: number | null;
             forecastMethod?: string | null;
             forecastData?: string | null;
@@ -1210,7 +1210,7 @@ export const ResponseLineFragmentDoc = gql`
     availableVolumeAtLocationType {
       ...AvailableVolumeAtLocationType
     }
-    forecastTotalUnits
+    forecastMonthlyUsage
     forecastTotalDoses
     forecastMethod
     forecastData

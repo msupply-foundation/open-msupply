@@ -72,6 +72,11 @@ pub fn insert_request_requisition_line(
                 .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
 
+            crate::requisition::request_requisition::recompute::recompute_forecasts_and_suggested_quantities(
+                ctx,
+                &new_requisition_line_row.requisition_id,
+            )?;
+
             get_requisition_line(ctx, &new_requisition_line_row.id)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedRequisitionLineDoesNotExist)

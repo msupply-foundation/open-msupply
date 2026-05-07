@@ -55,7 +55,7 @@ fragment RequestLine on RequisitionLineNode {
     ...ReasonOptionRow
   }
 
-  forecastTotalUnits
+  forecastMonthlyUsage
   forecastTotalDoses
   forecastMethod
   forecastData

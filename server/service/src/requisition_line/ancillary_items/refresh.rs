@@ -110,6 +110,11 @@ pub fn refresh_ancillary_items(
                 }
             }
 
+            crate::requisition::request_requisition::recompute::recompute_forecasts_and_suggested_quantities(
+                ctx,
+                &input.requisition_id,
+            )?;
+
             Ok(changed)
         })
         .map_err(|e| e.to_inner_error())

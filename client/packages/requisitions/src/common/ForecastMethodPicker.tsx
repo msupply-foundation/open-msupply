@@ -65,7 +65,7 @@ export const ForecastMethodPicker = ({
     );
   };
 
-  // Mirror the `InfoRow`/`ValueInfoRow` grid (8/4 split, same padding +
+  // Mirror the `InfoRow`/`ValueInfoRow` grid (same padding +
   // margin) so the picker lines up with the surrounding stat rows.
   return (
     <Grid
@@ -77,12 +77,12 @@ export const ForecastMethodPicker = ({
       borderRadius={2}
       alignItems="center"
     >
-      <Grid size={8}>
+      <Grid size={6}>
         <Typography variant="body1" fontWeight={700}>
-          {t('label.target-stock-method')}:
+          {t('label.forecast-method')}:
         </Typography>
       </Grid>
-      <Grid size={4} display="flex" justifyContent="flex-end">
+      <Grid size={6} display="flex" justifyContent="flex-end">
         <Select
           options={selectOptions}
           renderOption={renderOption}

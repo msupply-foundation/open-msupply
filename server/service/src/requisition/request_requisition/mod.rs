@@ -33,3 +33,5 @@ mod generate_population_forecast;
 pub use self::generate_population_forecast::*;
 
 pub mod forecast;
+pub mod recompute;
+pub mod stock_management;

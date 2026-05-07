@@ -8855,8 +8855,8 @@ export type RequisitionLineNode = {
   expiringUnits: Scalars['Float']['output'];
   forecastData?: Maybe<Scalars['String']['output']>;
   forecastMethod?: Maybe<Scalars['String']['output']>;
+  forecastMonthlyUsage?: Maybe<Scalars['Float']['output']>;
   forecastTotalDoses?: Maybe<Scalars['Float']['output']>;
-  forecastTotalUnits?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
   /** InboundShipment lines linked to requisitions line */
   inboundShipmentLines: InvoiceLineConnector;
