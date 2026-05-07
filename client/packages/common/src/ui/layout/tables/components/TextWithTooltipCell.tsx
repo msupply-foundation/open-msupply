@@ -14,6 +14,7 @@ export const TextWithTooltipCell = <T extends MRT_RowData>({
         style={{
           overflow: 'hidden',
           textOverflow: 'ellipsis',
+          width: '100%',
         }}
       >
         {value}
