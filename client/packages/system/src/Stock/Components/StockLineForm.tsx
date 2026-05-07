@@ -418,6 +418,7 @@ export const StockLineForm = ({
                     <Checkbox
                       checked={draft.onHold}
                       onChange={(_, onHold) => onUpdate({ onHold })}
+                      sx={{ pr: 0 }}
                     />
                   }
                 />
