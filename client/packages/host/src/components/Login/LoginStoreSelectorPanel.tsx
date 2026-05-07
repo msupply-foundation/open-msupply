@@ -14,6 +14,7 @@ import {
   Checkbox,
   CircularProgress,
   LoadingButton,
+  SearchBar,
   Typography,
   UserStoreNodeFragment,
   getMostRecentCredentials,
@@ -155,15 +156,25 @@ export const LoginStoreSelectorPanel = ({
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [query, setQuery] = useState('');
   const activeRowRef = useRef<HTMLDivElement | null>(null);
   const hasScrolledOnceRef = useRef(false);
+  const hasInitializedRef = useRef(false);
   const handleStoreSelect = useCallback(
     (id: string) => setSelectedId(id),
     []
   );
 
+  const visibleStores = useMemo(() => {
+    if (!query) return orderedStores;
+    const q = query.toLowerCase();
+    return orderedStores.filter(s => s.name.toLowerCase().includes(q));
+  }, [orderedStores, query]);
+
   useEffect(() => {
-    if (isLoading || selectedId !== undefined || allStores.length === 0) return;
+    if (isLoading || hasInitializedRef.current || allStores.length === 0)
+      return;
+    hasInitializedRef.current = true;
     if (defaultStoreId && allStores.some(s => s.id === defaultStoreId)) {
       setSelectedId(defaultStoreId);
     } else if (
@@ -174,7 +185,16 @@ export const LoginStoreSelectorPanel = ({
     } else {
       setSelectedId(allStores[0]?.id);
     }
-  }, [isLoading, allStores, selectedId, defaultStoreId, lastUsedStoreId]);
+  }, [isLoading, allStores, defaultStoreId, lastUsedStoreId]);
+
+  // Re-anchor selection to the first visible row whenever the filter hides
+  // the previously-selected one.
+  useEffect(() => {
+    if (!selectedId) return;
+    if (!visibleStores.some(s => s.id === selectedId)) {
+      setSelectedId(visibleStores[0]?.id);
+    }
+  }, [visibleStores, selectedId]);
 
   const confirm = useCallback(
     async (id: string | undefined) => {
@@ -218,19 +238,19 @@ export const LoginStoreSelectorPanel = ({
       }
       const key =
         e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
-      if (!key || orderedStores.length === 0) return;
+      if (!key || visibleStores.length === 0) return;
       e.preventDefault();
-      const len = orderedStores.length;
+      const len = visibleStores.length;
       const idx = selectedId
-        ? orderedStores.findIndex(s => s.id === selectedId)
+        ? visibleStores.findIndex(s => s.id === selectedId)
         : key === 1
           ? -1
           : 0;
-      setSelectedId(orderedStores[(idx + key + len) % len]?.id);
+      setSelectedId(visibleStores[(idx + key + len) % len]?.id);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, orderedStores, selectedId, isLoggingIn, confirm]);
+  }, [open, visibleStores, selectedId, isLoggingIn, confirm]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -279,6 +299,23 @@ export const LoginStoreSelectorPanel = ({
 
       <Box
         sx={{
+          marginBottom: 2,
+          '& .MuiInputBase-root': {
+            backgroundColor: 'background.paper',
+          },
+        }}
+      >
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder={t('placeholder.search-by-name')}
+          debounceTime={0}
+          autoFocus
+        />
+      </Box>
+
+      <Box
+        sx={{
           flex: 1,
           backgroundColor: 'background.paper',
           borderRadius: '4px',
@@ -293,9 +330,15 @@ export const LoginStoreSelectorPanel = ({
           <Box display="flex" justifyContent="center" padding={4}>
             <CircularProgress size={24} />
           </Box>
+        ) : visibleStores.length === 0 ? (
+          <Box display="flex" justifyContent="center" padding={4}>
+            <Typography sx={{ color: 'text.secondary' }}>
+              {t('error.no-results')}
+            </Typography>
+          </Box>
         ) : (
           <Box sx={{ overflowY: 'auto', flex: 1 }}>
-            {orderedStores.map(s => {
+            {visibleStores.map(s => {
               const isActive = s.id === selectedId;
               return (
                 <StoreRow
