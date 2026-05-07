@@ -134,7 +134,6 @@ impl ChangelogTableName {
             | Item
             | Barcode
             | Currency
-            | Name
             | ItemCategoryJoin
             | ItemDirection
             | ItemStoreJoin
@@ -197,24 +196,27 @@ impl ChangelogTableName {
             // also flow to sites where the patient is visible (via
             // name_store_join on the patient_id).
             // ----------------------------------------------------------
-            Encounter | Vaccination | Document => (
-                vec![Central, Patient],
+            Encounter | Vaccination => (
+                vec![Remote, Patient],
                 SyncVersions {
                     is_v6: true,
                     is_v5: false,
                 },
             ),
 
-            // ----------------------------------------------------------
-            // Remote + Patient (v6) — store-scoped patient records that
-            // also flow to sites where the patient is visible (via
-            // name_store_join on the patient_id).
-            // ----------------------------------------------------------
-            Encounter | Vaccination | Document => (
-                vec![Remote, Patient],
+            Document => (
+                vec![Patient],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: true,
+                },
+            ),
+
+            Name => (
+                vec![Central, Patient],
                 SyncVersions {
                     is_v6: true,
-                    is_v5: false,
+                    is_v5: true,
                 },
             ),
 
