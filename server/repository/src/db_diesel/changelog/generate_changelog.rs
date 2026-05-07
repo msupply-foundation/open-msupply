@@ -669,6 +669,7 @@ impl VaccinationRow {
             table_name: ChangelogTableName::Vaccination,
             record_id: self.id.clone(),
             row_action: action,
+            store_id: Some(self.store_id.clone()),
             patient_id: Some(self.patient_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
