@@ -48,7 +48,7 @@ export const LoginLayout = ({
   );
 
   return !fullSize ? (
-    showStoreSelector && StoreSelector ? <>{StoreSelector}</> : loginForm
+    loginForm
   ) : (
     <Box display="flex" style={{ width: '100%' }}>
       <Box
