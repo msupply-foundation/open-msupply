@@ -89,21 +89,10 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // Sync changelog entries for the new property and the updated catalogue items.
-        sql!(
-            connection,
-            r#"
-            INSERT INTO changelog (table_name, record_id, row_action)
-            SELECT 'asset_property', id, 'UPSERT'
-            FROM asset_property
-            WHERE id = 'storage_capacity_5c-ic';
-
-            INSERT INTO changelog (table_name, record_id, row_action)
-            SELECT 'asset_catalogue_item', id, 'UPSERT'
-            FROM asset_catalogue_item
-            WHERE code LIKE 'E004/%' AND properties LIKE '%"storage_capacity_5c"%';
-            "#
-        )?;
+        // No changelog entries: matches the original asset insert migrations. This runs on
+        // every server, so emitting changelog rows would cause every site to sync the same
+        // data outward. If a particular client needs the update before upgrading, the
+        // changelog rows can be added manually on central.
 
         Ok(())
     }
