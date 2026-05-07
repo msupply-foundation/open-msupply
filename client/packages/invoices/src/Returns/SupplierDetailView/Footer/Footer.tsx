@@ -12,6 +12,7 @@ import {
   ActionsFooter,
   usePreferences,
   InvoiceNodeType,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { getStatusTranslator } from '../../../utils';
 import { createStatusLog, getStatusSequence } from '../../../statuses';
@@ -79,7 +80,11 @@ export const FooterComponent = ({
               <StatusCrumbs
                 statuses={statuses}
                 statusLog={createStatusLog(data, supplierReturnSequence)}
-                statusFormatter={getStatusTranslator(t)}
+                statusFormatter={status =>
+                  status === InvoiceNodeStatus.Received
+                    ? t('status.delivered')
+                    : getStatusTranslator(t)(status)
+                }
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
                 <ButtonWithIcon
