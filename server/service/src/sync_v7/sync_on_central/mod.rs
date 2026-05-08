@@ -554,10 +554,16 @@ mod tests {
     async fn pull_returns_empty_batch_when_no_changelog() {
         let (
             ServiceTestContext {
-                service_provider, ..
+                service_provider,
+                connection_manager,
+                ..
             },
             common,
         ) = setup("sync_v7_pull_empty").await;
+
+        // Clear the central-table rows the v3 populate fragment seeds during
+        // migration so the "no changelog" precondition actually holds.
+        connection_manager.execute("DELETE FROM changelog").unwrap();
 
         let batch = pull(
             &service_provider,
