@@ -30,13 +30,7 @@ pub struct PatientSearchResult {
     pub score: f64,
 }
 
-pub fn patient_search(
-    ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
-    input: PatientSearch,
-    allowed_ctx: Option<&[String]>,
-) -> Result<ListResult<PatientSearchResult>, RepositoryError> {
-    let mut filter = PatientFilter::new();
+pub fn patient_search_to_filter(input: PatientSearch) -> PatientFilter {
     let PatientSearch {
         code,
         code_2,
@@ -48,6 +42,7 @@ pub fn patient_search(
         identifier,
     } = input;
 
+    let mut filter = PatientFilter::new();
     if let Some(code) = code {
         filter = filter.code(StringFilter::equal_to(&code));
     }
@@ -67,19 +62,21 @@ pub fn patient_search(
         filter = filter.date_of_birth(DateFilter::equal_to(date_of_birth));
     }
     if let Some(gender) = gender {
-        filter = filter.gender(EqualFilter {
-            equal_to: Some(gender),
-            not_equal_to: None,
-            not_equal_to_or_null: None,
-            equal_any: None,
-            not_equal_all: None,
-            equal_any_or_null: None,
-            is_null: None,
-        });
+        filter = filter.gender(EqualFilter::equal_to(gender));
     }
     if let Some(identifier) = identifier {
         filter = filter.identifier(StringFilter::like(&identifier));
     }
+    filter
+}
+
+pub fn patient_search(
+    ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    input: PatientSearch,
+    allowed_ctx: Option<&[String]>,
+) -> Result<ListResult<PatientSearchResult>, RepositoryError> {
+    let filter = patient_search_to_filter(input);
     let results = service_provider.patient_service.get_patients(
         ctx,
         Some(PaginationOption {
