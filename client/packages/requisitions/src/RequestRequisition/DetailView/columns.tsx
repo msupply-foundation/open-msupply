@@ -10,6 +10,10 @@ import {
   ColumnType,
   UnitsAndDosesCell,
   NumericTextDisplay,
+  Box,
+  LinkIcon,
+  PaperPopover,
+  Typography,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
@@ -56,6 +60,12 @@ export const useRequestColumns = () => {
         size: 300,
         enableSorting: true,
         enableColumnFilter: true,
+        Cell: ({ row, cell }) => (
+          <ItemNameCell
+            name={cell.getValue<string>() ?? ''}
+            parents={row.original.ancillaryParents ?? []}
+          />
+        ),
       },
       {
         id: 'packUnit',
@@ -150,7 +160,7 @@ export const useRequestColumns = () => {
           const showAlert =
             warningForExcessRequest &&
             row.original.requestedQuantity - row.original.suggestedQuantity >=
-              1;
+            1;
           return (
             <UnitsAndDosesCell row={row} {...props} showAlert={showAlert} />
           );
@@ -264,4 +274,68 @@ export const useRequestColumns = () => {
   );
 
   return columns;
+};
+
+type AncillaryParent = NonNullable<
+  RequestLineFragment['ancillaryParents']
+>[number];
+
+const ItemNameCell = ({
+  name,
+  parents,
+}: {
+  name: string;
+  parents: AncillaryParent[];
+}) => {
+  const t = useTranslation();
+  if (parents.length === 0) return <>{name}</>;
+  return (
+    <Box
+      display="grid"
+      gridTemplateColumns="1fr auto"
+      alignItems="center"
+      gap={0.5}
+      width="100%"
+    >
+      <Box sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
+        {name}
+      </Box>
+      <Box onClick={e => e.stopPropagation()} display="inline-flex">
+        <PaperPopover
+          mode="hover"
+          width={280}
+          placement={{ vertical: 'bottom', horizontal: 'center' }}
+          Content={
+            <Box display="flex" flexDirection="column" gap={1} p={3}>
+              <Typography fontWeight={700}>
+                {t('label.ancillary-of')}
+              </Typography>
+              {parents.length > 1 ? (
+                <Box
+                  component="ul"
+                  sx={{ m: 0, pl: 2.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}
+                >
+                  {parents.map(p => (
+                    <Typography component="li" key={p.id} variant="body2">
+                      {p.name}
+                    </Typography>
+                  ))}
+                </Box>
+              ) : (
+                <Typography variant="body2">{parents[0]?.name}</Typography>
+              )}
+            </Box>
+          }
+        >
+          <LinkIcon
+            sx={{
+              fontSize: 14,
+              color: 'text.secondary',
+              verticalAlign: 'middle',
+            }}
+          />
+        </PaperPopover>
+      </Box>
+    </Box>
+  );
 };
