@@ -29,9 +29,9 @@ A "sync style" classifies what a changelog row *means* in routing terms. A singl
 
 | Sync style | Plain English | Recipient rule |
 |---|---|---|
-| **Central** | Authored on OMS central; everyone needs a copy. | Every site. |
+| **Central** | Authored centrally; everyone needs a copy. | Every site, but only when the changelog row carries no store and no patient (so hybrid tables don't double-deliver). |
 | **Remote** | Site-owned data. | The site that owns the store the record belongs to. |
-| **File** | Sync file references (the file blob is shipped separately). | Every site. |
+| **File** | Sync file references (the file blob is shipped separately). | Every site, when the row carries no store. |
 | **Transfer** | Cross-store record (requisitions, invoices). | The site that owns the *other* store referenced by the record. |
 | **Patient** | Patient-scoped record. | Every site that has the patient registered (via name-store-join). |
 | **ToLegacyCentralOnly** | Pushed up to legacy 4D central but never re-distributed. | None on remote pulls; only flows up to legacy. |
@@ -57,7 +57,7 @@ The classification below mirrors what's in the code. When a table appears in two
 
 ### Legacy, Remote
 
-`ActivityLog`, `Barcode`, `Clinician`, `ClinicianStoreJoin`, `Currency`, `IndicatorValue`, `InsuranceProvider`, `Item`, `Location`, `LocationMovement`, `Name`, `NameInsuranceJoin`, `NameStoreJoin`, `PurchaseOrder`, `PurchaseOrderLine`, `Sensor`, `StockLine`, `Stocktake`, `StocktakeLine`, `SyncMessage`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`
+`ActivityLog`, `Clinician`, `ClinicianStoreJoin`, `IndicatorValue`, `InsuranceProvider`, `Location`, `LocationMovement`, `NameInsuranceJoin`, `NameStoreJoin`, `PurchaseOrder`, `PurchaseOrderLine`, `Sensor`, `StockLine`, `Stocktake`, `StocktakeLine`, `SyncMessage`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`
 
 Site-owned data on the legacy transport. A remote pushes these up to legacy 4D central, which fans them back out via its own routing.
 
@@ -73,23 +73,29 @@ Same as above, but the changelog also records a *transfer* store, so the row can
 
 Adds patient routing on top of remote+transfer; an invoice also follows its patient through name-store-join.
 
-### OMS-native, Central
-
-`AssetCatalogueItem`, `AssetCatalogueType`, `AssetCategory`, `AssetClass`, `AssetLogReason`, `AssetProperty`, `BackendPlugin`, `BundledItem`, `Campaign`, `Demographic`, `FormSchema`, `FrontendPlugin`, `ItemVariant`, `NameOmsFields`, `NameProperty`, `PackagingVariant`, `Property`, `Report`, `VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`, `VaccineCourseStoreConfig`
-
-Authored on OMS central, fans out to every v6 site. A few of these (notably `NameOmsFields`) also allow remote → central writebacks. Some (notably the vaccine-course family) are re-published to legacy 4D so v5-only stores still receive them.
-
 ### Legacy, Central
 
-`Abbreviation`, `Category`, `Contact`, `ContactTrace`, `Context`, `DemographicIndicator`, `Diagnosis`, `DocumentRegistry`, `IndicatorColumn`, `IndicatorLine`, `ItemCategoryJoin`, `ItemDirection`, `ItemStoreJoin`, `ItemWarningJoin`, `LocationType`, `MasterList`, `MasterListLine`, `MasterListNameJoin`, `NameTag`, `NameTagJoin`, `Period`, `PeriodSchedule`, `Printer`, `Program`, `ProgramEnrolment`, `ProgramEvent`, `ProgramIndicator`, `ProgramRequisitionOrderType`, `ProgramRequisitionSettings`, `ReasonOption`, `ShippingMethod`, `Store`, `StorePreference`, `Unit`, `UserAccount`, `UserPermission`, `UserStoreJoin`, `VVMStatus`
+`Abbreviation`, `Barcode`, `Category`, `Contact`, `ContactTrace`, `Context`, `Currency`, `DemographicIndicator`, `Diagnosis`, `DocumentRegistry`, `IndicatorColumn`, `IndicatorLine`, `Item`, `ItemCategoryJoin`, `ItemDirection`, `ItemStoreJoin`, `ItemWarningJoin`, `LocationType`, `MasterList`, `MasterListLine`, `MasterListNameJoin`, `NameTag`, `NameTagJoin`, `Period`, `PeriodSchedule`, `Printer`, `Program`, `ProgramEnrolment`, `ProgramEvent`, `ProgramIndicator`, `ProgramRequisitionOrderType`, `ProgramRequisitionSettings`, `ReasonOption`, `ShippingMethod`, `Store`, `StorePreference`, `Unit`, `UserAccount`, `UserPermission`, `UserStoreJoin`, `VVMStatus`
 
 Central data still served from legacy 4D. This bucket also acts as a catch-all for tables that exist in the changelog but haven't been classified into a more specific style yet.
+
+### Legacy, Central + Patient
+
+`Name`
+
+Names are central data — every site needs the full directory — but a patient-typed name additionally carries its own id as `patient_id` on the changelog. Non-patient names route via the Central clause; patient names route via the Patient clause to every site that knows the patient.
 
 ### Legacy, ToLegacyCentralOnly
 
 `Site`
 
 Pushed to legacy 4D central; never re-sent down to remotes.
+
+### OMS-native, Central
+
+`AssetCatalogueItem`, `AssetCatalogueType`, `AssetCategory`, `AssetClass`, `AssetLogReason`, `AssetProperty`, `BackendPlugin`, `BundledItem`, `Campaign`, `Demographic`, `FormSchema`, `FrontendPlugin`, `ItemVariant`, `NameOmsFields`, `NameProperty`, `PackagingVariant`, `Property`, `Report`, `VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`, `VaccineCourseStoreConfig`
+
+Authored on OMS central, fans out to every v6 site. A few of these (notably `NameOmsFields`) also allow remote → central writebacks. Some (notably the vaccine-course family) are re-published to legacy 4D so v5-only stores still receive them.
 
 ### OMS-native, Remote
 
@@ -99,9 +105,15 @@ Site-owned data on the OMS-native transport.
 
 ### OMS-native, Remote + Patient
 
-`Document`, `Encounter`, `Vaccination`
+`Encounter`, `Vaccination`
 
-Patient-scoped store records. The changelog carries `patient_id` so the row also flows to any other site where the patient is registered. `Encounter` carries both store and patient. `Document` and `Vaccination` carry only the patient on their changelog row, so in practice they route purely by Patient — they follow the patient across stores rather than belonging to a store.
+Store-scoped clinical records that should also follow the patient. Each row carries the authoring store *and* the patient. The Remote clause delivers it to the owning site; the Patient clause delivers it to every other site that knows the patient. The Central clause never matches because `patient_id` is set.
+
+### OMS-native, Patient
+
+`Document`
+
+Pure patient-scoped data. The changelog carries only the patient, no store, so routing is purely by Patient and the record follows the patient across stores.
 
 ### OMS-native, File
 
@@ -136,7 +148,7 @@ Each changelog row carries a small set of metadata fields. Each filter joins thr
 | **table_name** | Which table the row refers to. | Every filter — "table is in the set of tables I care about". |
 | **record_id** | Primary key of the source row. | Used to fetch the actual record when batching. |
 | **row_action** | Upsert or Delete. | Controls whether the receiver upserts or deletes. |
-| **store_id** | The store this record belongs to (optional). | Remote routing (joined to the store's site). For Central/File rows this must be null, to disambiguate hybrid tables. |
+| **store_id** | The store this record belongs to (optional). | Remote routing (joined to the store's site). For Central / File rows this must be null, to disambiguate hybrid tables. |
 | **transfer_store_id** | The "other party" store for cross-store records. | Transfer routing (joined to the counterpart store's site). |
 | **patient_id** | The patient this record refers to. | Patient routing (joined via name-store-join → store → site, so any site that knows the patient receives the record). |
 | **source_site_id** | The site that originally caused this changelog row. | Echo guards (don't push back to where it came from); also the v7 push filter ("rows authored here"). |
@@ -151,15 +163,15 @@ When a record is mutated, a changelog row is generated. The patterns differ by w
 
 | Pattern | Tables (examples) | What the changelog records |
 |---|---|---|
-| Store + transfer-store | `Invoice`, `Requisition`, `RnrForm`, `NameStoreJoin` | The row's own store, plus the store backing a referenced name (resolved from the name's home store). Used for both Remote and Transfer routing. |
+| Store + transfer-store | `Invoice`, `Requisition`, `RnrForm`, `NameStoreJoin` | The row's own store, plus the store backing a referenced name (resolved from the name's home store). Used for both Remote and Transfer routing. `Invoice` additionally tags prescriptions with the patient id so they also route via Patient. |
 | Store only | `StockLine`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig` | Just the row's own store. |
-| Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / source-site, so they route together. |
+| Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / patient / source-site, so they route together. |
 | Line emits parent **and** child | `PurchaseOrderLine` → `PurchaseOrder` (upsert) + `PurchaseOrderLine` | Mutating a line also emits a changelog for the parent, so the parent re-syncs and is always at least as fresh as its children on the receiver. The parent entry is always an upsert, even when the line is a delete. |
-| Patient + store | `Encounter` | Carries both, so the row routes by Remote and Patient. |
-| Patient only | `Vaccination`, `Document` | The changelog row has no store; routing is purely by Patient. The record follows the patient across stores. |
+| Patient + store | `Encounter`, `Vaccination` | Carries both, so the Remote clause delivers to the owning site and the Patient clause fans out to every other site that knows the patient. |
+| Patient only | `Document` | The changelog row has no store; routing is purely by Patient. The record follows the patient across stores. |
 | Cross-table store lookup | `AssetLog` (looks up the asset's store), `AssetInternalLocation` (looks up the location's store, falls back to the asset's store) | The record itself doesn't carry a store directly, so the generator queries a related row to find one. |
 | `record_id` only | All Central-style tables (`Property`, `Demographic`, `VaccineCourse*`, `Abbreviation`, etc.) and a handful of legacy reference tables (`Clinician`, `Currency`, `Barcode`, `MasterList`, …) | No row metadata beyond table+id is needed — these tables filter purely by table name and route to everyone. |
-| `record_id` only, with patient flag | `Name` | Same as `record_id` only, except that when the name's type is *patient* the changelog row also carries the name's own id as `patient_id`. None of the current outgoing-sync filters route `Name` through patient routing (it's classified Remote, not Patient), so today this flag is a generation-time signal for in-process consumers — patient-aware processors and any future filter that wants to fan a patient-name change to every site that knows the patient. |
+| `record_id` only, with patient flag | `Name` | Same as `record_id` only, except that when the name's type is *patient* the changelog row also carries the name's own id as `patient_id`. Non-patient names match the Central clause (store and patient both null) and route to every site; patient names fail the Central clause and instead match the Patient clause, so they fan out to every site that knows the patient. |
 
 For deletes, the same generator is used; only the `row_action` field changes.
 
@@ -171,7 +183,7 @@ Five filters compose the metadata above into "this site, this transport" predica
 
 | Filter | Used by | What it returns | Echo guard |
 | --- | --- | --- | --- |
-| **all-data-for-site** | v6 central pull (OMS-native tables only); v7 central pull (all tables) | Per sync style: Central / File → store-id is null; Remote → store's site = this site; Transfer → transfer-store's site = this site; Patient → patient's site = this site (via name-store-join). ToLegacyCentralOnly and RemoteToCentral are skipped. | Once initialised, exclude rows whose source-site = this site. |
+| **all-data-for-site** | v6 central pull (OMS-native tables only); v7 central pull (all tables) | Per sync style: Central / File → store-id is null **and** patient-id is null; Remote → store's site = this site; Transfer → transfer-store's site = this site; Patient → patient's site = this site (via name-store-join). ToLegacyCentralOnly and RemoteToCentral are skipped. | Once initialised, exclude rows whose source-site = this site. |
 | **patient-data-for-site** | v6 patient pull (used together with an explicit patient id) | Just the Patient clause from above, intersected with the requested patient id. | None at this layer — caller composes additional conditions. |
 | **all-data-for-legacy-central** | v5 push (remote → legacy 4D) | Legacy-only tables in styles ToLegacyCentralOnly, Remote, Transfer, Patient. Central, RemoteToCentral, File are excluded. | Exclude rows whose source-site is the legacy central server itself. |
 | **all-data-edited-on-site** | v7 push (remote → OMS central) | Just "rows whose source-site = this site". No per-style filtering, no transport-flag filtering — the per-table translators are not consulted because v7 has no per-table translation. | Implicit — the predicate itself is the echo guard. |
@@ -181,8 +193,8 @@ Five filters compose the metadata above into "this site, this transport" predica
 
 | Sync style | Predicate added |
 |---|---|
-| Central | `store_id IS NULL` (so hybrid tables only match the central half here) |
-| File | `store_id IS NULL` |
+| Central | `store_id IS NULL AND patient_id IS NULL` (so hybrid tables only match the central half here, and rows that carry a patient never match this clause) |
+| File | `store_id IS NULL AND patient_id IS NULL` |
 | Remote | `store.site_id == this site` |
 | Transfer | `transfer_store.site_id == this site` |
 | Patient | `patient_store.site_id == this site` (via name-store-join) |
@@ -207,11 +219,12 @@ Notable special cases:
 
 | Table | Special behaviour |
 |---|---|
-| `Name`, `NameStoreJoin` | Legacy-classified, but their translators also opt in to push to OMS central, so they round-trip via OMS too — used to share patient details across sites. When the central server is processing them, the translator additionally guards against echoing rows that originated from a remote. |
+| `Name`, `NameStoreJoin` | Legacy-classified, but their translators also opt in to push to OMS central, so they round-trip via OMS too — used to share patient details across sites. When the central server is processing `Name` or `NameStoreJoin`, the translator additionally guards against echoing rows that originated from a remote (avoids the central pushing a remote-authored update straight back to legacy 4D). |
 | `NameOmsFields` | Central-style (authored on OMS central) but its translator opts in to push to OMS central, allowing remote → central writebacks. |
-| Vaccine-course family (`VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`) | Central-style on OMS, but a parallel set of "legacy" translators re-publishes them to legacy 4D when running on OMS central, so v5-only stores still receive them. |
-| `Encounter`, `Vaccination` | OMS-native; their main translators opt in to OMS push/pull only. Companion legacy translators re-publish them to legacy 4D when running on OMS central, so v5-only stores still receive them. |
-| `Vaccination`, `Document` | OMS-native, classified as Remote + Patient, but their changelog rows don't carry a store, so in practice they route purely by Patient. |
+| Vaccine-course family (`VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`) | Central-style on OMS, but a parallel set of legacy translators re-publishes them to legacy 4D when running on OMS central, so v5-only stores still receive them. |
+| `Encounter` | OMS-native, Remote + Patient. It has no main OMS translator on its own — the only translator is a companion legacy translator that re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
+| `Vaccination` | OMS-native, Remote + Patient. Its main translator opts in to OMS push/pull. A companion legacy translator re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
+| `Document` | OMS-native, classified as Patient only — the changelog row carries no store, so routing is purely by Patient. |
 | `MasterList` | Legacy/Central, but the translator declares no changelog mapping, so nothing pushes on any transport — it only ever flows down from legacy 4D. |
 
 For v7 there is **no** per-table translation step — the database row is serialised directly and deserialised on the other side. As a consequence, v7 push for a given table works whether or not its translator has a v6 opt-in.

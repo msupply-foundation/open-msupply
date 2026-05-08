@@ -15,7 +15,7 @@ mod partition_changelog_by_cursor;
 pub(crate) struct V3_00_00;
 impl Migration for V3_00_00 {
     fn version(&self) -> Version {
-        Version::from_str("2.19.0")
+        Version::from_str("3.00.0")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
