@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -31,6 +32,7 @@ interface LoginStoreSelectorPanelProps {
 }
 
 const StoreRow = React.memo(function StoreRow({
+  id,
   store,
   isActive,
   isDefault,
@@ -38,6 +40,7 @@ const StoreRow = React.memo(function StoreRow({
   onSelect,
   rowRef,
 }: {
+  id: string;
   store: UserStoreNodeFragment;
   isActive: boolean;
   isDefault: boolean;
@@ -48,10 +51,11 @@ const StoreRow = React.memo(function StoreRow({
   const t = useTranslation();
   return (
     <Box
+      id={id}
       ref={rowRef}
       onClick={() => onSelect(store.id)}
-      role="button"
-      tabIndex={-1}
+      role="option"
+      aria-selected={isActive}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -99,6 +103,11 @@ export const LoginStoreSelectorPanel = ({
   username,
 }: LoginStoreSelectorPanelProps) => {
   const t = useTranslation();
+  const listboxId = useId();
+  const optionId = useCallback(
+    (storeId: string) => `${listboxId}-${storeId}`,
+    [listboxId]
+  );
   const { token, store: currentStore, setStore } = useAuthContext();
   const { data, isLoading } = useUserDetails(token);
   const [skipPrefs, setSkipPrefs] = useLocalStorage(
@@ -348,12 +357,21 @@ export const LoginStoreSelectorPanel = ({
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ overflowY: 'auto', flex: 1 }}>
+          <Box
+            id={listboxId}
+            role="listbox"
+            aria-label={t('heading.select-store')}
+            aria-activedescendant={
+              selectedId ? optionId(selectedId) : undefined
+            }
+            sx={{ overflowY: 'auto', flex: 1 }}
+          >
             {visibleStores.map(s => {
               const isActive = s.id === selectedId;
               return (
                 <StoreRow
                   key={s.id}
+                  id={optionId(s.id)}
                   store={s}
                   isActive={isActive}
                   isDefault={s.id === defaultStoreId}
