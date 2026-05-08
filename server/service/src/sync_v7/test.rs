@@ -151,7 +151,7 @@ mod test_sync_v7_client_api {
     async fn site_status(req: HttpRequest) -> actix_web::HttpResponse {
         assert_auth_headers(&req);
         actix_web::HttpResponse::Ok().json(json!({
-            "Ok": { "siteId": 1, "centralSiteId": 0 }
+            "Ok": { "siteId": 1, "centralSiteId": 1 }
         }))
     }
 
@@ -231,6 +231,7 @@ mod test_sync_v7_client_api {
         let ServiceTestContext {
             service_provider,
             connection,
+            service_context,
             ..
         } = setup_all_with_data_and_service_provider(db_name, MockDataInserts::none(), mock_data)
             .await;
@@ -378,42 +379,45 @@ mod test_sync_v7_client_api {
         );
 
         // Assert: changelog entries
-        let changelogs = ChangelogRepository::new(&connection).query(
-            ChangelogCondition::source_site_id::equal(1),
-            CursorAndLimit {
-                cursor: -1,
-                limit: 100,
-            },
-        )
-        .unwrap();
+        let changelogs = ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::source_site_id::equal(1),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 100,
+                },
+            )
+            .unwrap();
         assert_eq!(changelogs.len(), 6);
+        // Changelog rows are written in INTEGRATION_ORDER (FK-dependency order),
+        // not the order records arrived in the pull batch.
         assert_eq!(
             changelogs,
             vec![
-                ChangelogRow {
-                    table_name: ChangelogTableName::Unit,
-                    record_id: "unit_test_1".to_string(),
-                    row_action: RowActionType::Upsert,
-                    source_site_id: Some(1),
-                    ..changelogs[0].clone()
-                },
                 ChangelogRow {
                     table_name: ChangelogTableName::Currency,
                     record_id: "currency_test_1".to_string(),
                     row_action: RowActionType::Upsert,
                     source_site_id: Some(1),
+                    ..changelogs[0].clone()
+                },
+                ChangelogRow {
+                    table_name: ChangelogTableName::Unit,
+                    record_id: "unit_test_1".to_string(),
+                    row_action: RowActionType::Upsert,
+                    source_site_id: Some(1),
                     ..changelogs[1].clone()
                 },
                 ChangelogRow {
-                    table_name: ChangelogTableName::Name,
-                    record_id: "name_test_1".to_string(),
+                    table_name: ChangelogTableName::Item,
+                    record_id: "item_test_1".to_string(),
                     row_action: RowActionType::Upsert,
                     source_site_id: Some(1),
                     ..changelogs[2].clone()
                 },
                 ChangelogRow {
-                    table_name: ChangelogTableName::Item,
-                    record_id: "item_test_1".to_string(),
+                    table_name: ChangelogTableName::Name,
+                    record_id: "name_test_1".to_string(),
                     row_action: RowActionType::Upsert,
                     source_site_id: Some(1),
                     ..changelogs[3].clone()
