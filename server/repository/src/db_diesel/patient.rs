@@ -13,10 +13,11 @@ use crate::{
 
 use chrono::NaiveDate;
 use diesel::{dsl::IntoBoxed, prelude::*};
+use serde::{Deserialize, Serialize};
 
 pub type Patient = NameRow;
 
-#[derive(Clone, Default, PartialEq, Debug)]
+#[derive(Clone, Default, PartialEq, Debug, Serialize, Deserialize)]
 pub struct PatientFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
